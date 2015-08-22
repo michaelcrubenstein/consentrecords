@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <h3> Hello, world. </h3>
+    <p>{% static "admin/css/base.css" %}</p>
+    <p>{{staticRoot}}</p>
+    <p>{% for child in children %}
+         {{ child.name }} <br>
+       {% endfor %}
+    </p>
+  </body>
+</html>
+
