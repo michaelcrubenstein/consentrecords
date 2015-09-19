@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Sign Up</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+<body class="site-body" max-width="100%">
+    <div class="container">
+		
+		<form class="form-simple">
+			<div class="site-title">Sign Up for Consent Records</div>
+			<div class="row">
+				<div id="myAlert" class="col-xs-12"></div>
+			</div>
+			<div class="row">
+				<div class="form-group col-xs-12">
+					<label for="id_username" class="control-label sr-only">Email Address</label> 
+					<input id="id_username" class="form-control" maxlength="254" name="username" 
+						   type="email" placeholder="Email address"/>
+				</div>
+				<div class="form-group col-xs-12">
+					<label for="id_password"  class="control-label sr-only">Password</label> 
+					<input id="id_password" class="form-control password-control" name="password" type="password" placeholder="Password" />
+				</div>
+				<div id="id_confirm_form_group" class="form-group col-xs-12 has-feedback">
+					<label for="id_confirmpassword"  class="control-label sr-only">Confirm Password</label> 
+					<input id="id_confirmpassword" class="form-control password-control" name="confirmpassword" type="password" placeholder="Confirm password" />
+					<span id="id_passwordOK" class="glyphicon form-control-feedback"></span>
+				</div>
+				<div class="form-group col-xs-12">
+
+					<!-- maxLength of firstname is the same as in the custom_user.AUser.firstName field --!>
+					<label for="id_firstname"  class="control-label sr-only">First Name</label> 
+					<input id="id_firstname" class="form-control" maxlength="30" name="firstName" type="text" placeholder="First name" required/>
+				</div>
+				<div class="form-group col-xs-12">
+					<!-- maxLength of lastname is the same as in the custom_user.AUser.lastName field --!>
+					<label for="id_lastname"  class="control-label sr-only">Last Name</label> 
+					<input id="id_lastname" class="form-control" maxlength="50" name="lastName" type="text" placeholder="Last name" required />
+				</div>
+			</div>
+			<div class="site-trio-container">
+				<span class="cancel-button site-trio-clipped site-active-text">Cancel</span>
+				<div class="site-trio-fill"></div>
+				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;Up</span>
+			</div>
+		</form>
+		
+        <hr />
+		<div class="row">
+			<a id="id_termsOfUseLink" class="btn btn-link btn-xs col-xs-12">Terms Of Use</a>
+		</div>
+		<div class="row">
+			<div id="id_termsAlert" class="col-xs-12">				
+			</div>
+		</div>
+	</div>
+
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+  </body>
+
+	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
+	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+			function checkStep1()
+			{
+				if ($("#id_username").val() === "") {
+					bootstrap_alert.warning("An email address is required.");
+					$("#id_username").focus();
+				}
+				else if ($("#id_password").val() === "") {
+					bootstrap_alert.warning("A password is required.");
+					$("#id_password").focus();
+				}
+				else if ($("#id_confirmpassword").val() != $("#id_password").val()) {
+					bootstrap_alert.warning("Your password is not confirmed.");
+					$("#id_confirmpassword").focus();
+				}
+				else if ($("#id_firstname").val() === "") {
+					bootstrap_alert.warning("A first name is required.");
+					$("#id_firstname").focus();
+				}
+				else if ($("#id_lastname").val() === "") {
+					bootstrap_alert.warning("A last name is required.");
+					$("#id_lastname").focus();
+				}
+				else
+					return true;	/* Everything is OK */
+				
+				return false;
+			}
+		
+			function submitForm()
+			{
+				bootstrap_alert.show($('#myAlert'), "Signing up...<br>(this may take a minute)", "alert-info");
+		
+				deferredObject = $.post("{% url 'newUser' %}", 
+					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+						"username": $("#id_username").val(),
+						"password": $("#id_password").val(),
+						"firstName": $("#id_firstname").val(),
+						"lastName": $("#id_lastname").val()
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json['success']) {
+							closealert();
+							window.location = "{{nextURL}}";
+						}
+						else {
+							bootstrap_alert.warning(json['error']);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown) {
+					console.log( "error: " + textStatus + "; " + errorThrown + ";");
+					console.log( jqXHR.status + "; " + jqXHR.statusText);
+					var s = jqXHR.status + "; " + jqXHR.statusText +
+						"<br>error: " + textStatus + "; " + errorThrown + ";"
+					if (jqXHR.status == 403) {
+						var csrftoken = $.cookie('csrftoken');
+						if (csrfToken == '{{ csrf_token }}')
+							s = s + " csrftoken OK";
+						else
+							s = s + " csrftoken mismatch: (" + csrftoken + ", " + "{{ csrf_token }})";
+					}
+					bootstrap_alert.warning(s);
+				  });
+			}
+		
+			$("form").on('submit', function (e) {
+				closealert();
+			
+				if (checkStep1())
+				{
+					submitForm();
+				}
+
+			   //stop form submission
+			   e.preventDefault();
+			});
+
+			$(".cancel-button").click(function(e) {
+				window.location = "{{ backURL }}";
+				e.preventDefault();
+			});
+		
+			function checkUnusedEmail() {
+				bootstrap_alert.show($('#myAlert'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
+		
+				deferredObject = $.post("{% url 'checkUnusedEmail' %}", 
+					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+						"email": $("#id_username").val(),
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json['success']) {
+							closealert();
+							showStep2();
+						}
+						else {
+							bootstrap_alert.warning(json['error']);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown) {
+					console.log( "error: " + textStatus + "; " + errorThrown + ";");
+					console.log( jqXHR.status + "; " + jqXHR.statusText);
+					var s = jqXHR.status + "; " + jqXHR.statusText +
+						"<br>error: " + textStatus + "; " + errorThrown + ";"
+					if (jqXHR.status == 403) {
+						var csrftoken = $.cookie('csrftoken');
+						if (csrfToken == '{{ csrf_token }}')
+							s = s + " csrftoken OK";
+						else
+							s = s + " csrftoken mismatch: (" + csrftoken + ", " + "{{ csrf_token }})";
+					}
+					bootstrap_alert.warning(s);
+				  });
+			}
+	
+			$(".submit-button").click(function(e) {
+				if (checkStep1())
+				{
+					checkUnusedEmail();
+					submitForm();
+				}
+
+				e.preventDefault();
+			});
+		
+			$("#id_termsOfUseLink").click(function(e) {
+				showTermsOfUse();
+				e.preventDefault();
+			});
+		
+			function showTermsOfUse() {
+				var message = "<p>Information in this system will only be used according to your consent except " +
+					" as required by law. By signing up for this system, you consent to allow this system to store" +
+					" the information you have entered.</p>" + 
+					"<p>In keeping with best security practices, passwords are not stored in this system.</p>" + 
+					"<p>These terms of use have not been subject to any revision based on" +  
+						" review by a lawyer." + 
+					"</p>";
+				$("#id_termsAlert").html('<div class="alert alert-info alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
+			}
+		
+			$("#id_username").focus()
+			$("input[type='text']").bind("keyup input paste", checkenabled);
+			$("input[type='password']").bind("keyup input paste", checkenabled);
+			checkenabled();
+		});
+	
+		function checkenabled() {			
+			if ($("#id_password").val() === "" ||
+				$("#id_confirmpassword").val() !== $("#id_password").val())
+			{
+				$( "#id_confirm_form_group" ).removeClass( "has-success");
+				$( "#id_passwordOK" ).removeClass( "glyphicon-ok" );
+			}
+			else
+			{
+				$( "#id_confirm_form_group" ).addClass( "has-success");
+				$( "#id_passwordOK" ).addClass( "glyphicon-ok" );
+			}
+		};
+	</script>
+</html>
+

@@ -20,5 +20,18 @@ from consentrecords import views
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^user/', include('custom_user.urls')),
+    url(r'^monitor/', include('monitor.urls')),
     url(r'^$', views.home, name='home'),
+    url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
+    url(r'^configure/configuration', views.configuration, name='configuration'),
+    url(r'^configure/submit/createinstance/', views.submitCreateInstance, name='submitCreateInstance'),
+    url(r'^configure/submit/updateValues/', views.submitUpdateValues, name='submitUpdateValues'),
+    url(r'^configure/submit/addValue/', views.submitAddValue, name='submitAddValue'),
+    url(r'^configure/get/rootobjects/', views.getRootObjects, name='getRootObjects'),
+    url(r'^configure/get/data/', views.getData, name='getData'),
+    url(r'^configure/get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
+    url(r'^configure/get/elements/', views.getElements, name='getElements'),
+    url(r'^configure/get/enumerations/', views.getEnumerations, name='getEnumerations'),
+    url(r'^configure/get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
 ]

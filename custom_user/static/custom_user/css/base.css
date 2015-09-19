@@ -1,0 +1,96 @@
+.site-two-nav-container {
+	padding-top: 55px;
+	padding-bottom: 55px;
+}
+.site-navbar {
+	background: #F8F8F8; /* #D1E1FF; */
+	border-radius:0px;
+	margin-bottom: 0px;
+	min-height: 40px;
+}
+
+/* Titles go in the lower center of the nav bar. */
+.site-title {
+	font-size: large;
+	padding-bottom: 6px;
+	display: block;
+    vertical-align: middle;
+    width: 100%;
+	text-align: center;
+	margin: 0;
+}
+/* Links go on the right or left over titles. */
+.site-navbar-link {
+	padding-top: 6px;
+	padding-bottom: 2px;
+}
+.site-spacer {
+	visibility: hidden;
+}
+
+/* A span that functions as a link to another page. */
+.site-span-link:hover {
+	text-decoration: none;
+	cursor: pointer;
+}
+
+/* The container for a trio of items. */
+.site-trio-container {
+	display: table;
+	width: 100%;
+}
+
+/* An item in the trio that fills as much space as possible, pushing other items. */
+.site-trio-fill {
+	display: table-cell;
+    vertical-align: middle;
+    width: 100%;
+	text-align: center;
+	margin: 0;
+}
+
+/* An item in a trio that is clipped to its contents. */
+.site-trio-clipped {
+	display: table-cell;
+    vertical-align: middle;
+    width: auto;
+}
+
+/* For text that responds to touches or clicks */
+.site-active-text {
+	color: #2C55CC;
+}
+
+.site-active-text:hover {
+	text-decoration: none;
+	cursor: pointer;
+	color: #2222FF;
+}
+
+.site-disabled-text {
+	color: #117788;
+}
+
+.site-disabled-text:hover {
+	text-decoration: none;
+}
+
+/* Only on the phone */
+@media (max-width: 767px) {
+	.navbar-brand {
+		display: none;
+	}
+	
+	.site-xs-hidden {
+		display: none;
+	}
+	
+	.site-nav-edge-link {
+		padding-left: 15px;
+		padding-right: 15px;
+		padding-top: 15px;
+		padding-bottom: 15px;
+	}
+}
+	
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <!-- Custom styles for this page -->
+    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
+	</head>
+	
+  	<body class="site-body">
+		<div class="site-trio-container">
+			<div class="site-trio-fill"></div>
+			<span class="sign-out-button site-trio-clipped site-active-text">Sign&nbsp;Out</span>
+		</div>
+	    <h3> Hello, {% if user.is_authenticated %}{{ user.get_full_name }}{% else %}world{% endif %}. </h3>
+	    <div id="myAlert"></div>
+
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+  	</body>
+
+	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
+	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+		var storedcsrftoken = "{{ csrf_token }}";
+
+		$(document).ready (function(e) {
+			$(".sign-out-button").click(function(e) {
+				closealert();
+				sign_out();
+				
+			   //stop form submission
+			   e.preventDefault();
+			});
+		});
+			
+		function sign_out() {
+			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
+		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: storedcsrftoken }, 
+		  								function(json){
+		  	if (json['success']) {
+		  		window.location = "{{backURL}}"
+		  	}
+		  	else
+				bootstrap_alert.warning(json['error']);
+		  })
+		  	.fail(function(jqXHR, textStatus, errorThrown)
+			{
+				bootstrap_alert.warning(jqXHR.status + "; " + jqXHR.statusText);
+				console.log( "error: " + textStatus + "; " + errorThrown + ";");
+				console.log( jqXHR.status + "; " + jqXHR.statusText);
+			});
+		}
+	</script>
+		
+</html>
+

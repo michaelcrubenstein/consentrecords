@@ -15,6 +15,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "consentrecords.settings")
 
 cwd = os.getcwd()
 sys.path.append(cwd)
-sys.path.insert(0,cwd + 'consentrecords')  #You must add your project here
+sys.path.insert(0,cwd + '/consentrecords')  #You must add your project here
+sys.path.insert(0,cwd + '/custom_user')  #You must add your project here
 
 application = get_wsgi_application()

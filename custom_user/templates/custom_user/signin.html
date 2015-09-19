@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Sign In</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body class="site-body">
+    <div class="container">
+      <form class="form-simple form-signin">
+		<div class="site-title">Sign In to Consent Records</div>
+	    <div id="myAlert"></div>
+        <label for="id_username" class="sr-only">Email address</label>
+        <input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
+        <label for="id_password" class="sr-only">Password</label>
+        <input type="password" id="id_password" name="password" class="form-control" placeholder="Password" required>
+        <div class="checkbox">
+          <label>
+            <input id="id_rememberme" type="checkbox" value="remember-me"> Remember me
+          </label>
+        </div>
+		<div class="site-trio-container">
+			<span class="cancel-button site-trio-clipped site-active-text">Cancel</span>
+			<div class="site-trio-fill"></div>
+			<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
+		</div>
+      </form>
+      
+      <hr />
+
+	  <div class="div-create-new-account">
+	  	Don't have an account? <a id="id_signup_link" class="site-active-text">Create one now.</a>
+	  </div>
+	  <div class="div-forgot-password">
+		Forgot your password? <a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
+	  </div>
+	  
+    </div> <!-- /container -->
+
+
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+  </body>
+  
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{% static "jquery/js/jquery.min.js" %}"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+    <script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
+	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+		var storedcsrftoken = "{{ csrf_token }}";
+		
+		$(document).ready (function(e) {
+        	var nextURL = encodeURIComponent("{{backURL}}");
+        	var backURL = encodeURIComponent(window.location.href);
+        	$("#id_forgot_password_link").attr("href", "{% url 'forgotPassword' %}?backURL="+backURL+";nextURL="+nextURL);
+        	$("#id_signup_link").attr("href", "{% url 'signup' %}?backURL="+backURL+";nextURL="+nextURL);
+
+			$(".cancel_button").click(function(e) {
+				var backURL = encodeURIComponent("{{backURL}}");
+				var backName = encodeURIComponent("{{backName}}");
+				window.location.href = "{{backURL}}";
+				e.preventDefault();
+			});
+
+			$(".submit-button").click(function(e) {
+				closealert();
+				sign_in();
+				
+			   //stop form submission
+			   e.preventDefault();
+			});
+			
+			$("input[type='password']").keypress(function(e) {
+				if (e.which == 13)
+				{
+					sign_in();
+					e.preventDefault();
+				}
+			});
+	
+			$("#id_username").val($.cookie("email"));
+			if ($("#id_username").val() !== "")
+			{
+				$("#id_rememberme").prop("checked", true);
+				$("#id_password").focus();
+			}
+			else
+				$("#id_username").focus();
+				
+			$("input[type='text']").bind("keyup input paste", checkenabled);
+			$("input[type='password']").bind("keyup input paste", checkenabled);
+			checkenabled();
+		});
+		
+		function canSubmit() {
+			return $("#id_password").val() !== "" &&
+				$("#id_username").val() !== "";
+		}
+		
+		function checkenabled() {			
+			if (!canSubmit())
+			{
+				$(".submit-button").addClass("site-disabled-text");
+				$(".submit-button").removeClass("site-active-text");
+			}
+			else
+			{
+				$(".submit-button").removeClass("site-disabled-text");
+				$(".submit-button").addClass("site-active-text");
+			}
+		};
+		
+		function sign_in() {
+			if (!canSubmit())
+				return;
+				
+			bootstrap_alert.show($('#myAlert'), "Signing In...", "alert-info");
+		    $.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
+		  								  "username" : $("#id_username").val(),
+		  								  "password" : $("#id_password").val(),
+		  								  "timezoneoffset" : new Date().getTimezoneOffset() }, 
+		  								function(json){
+		  	if (json['success']) {
+		  		if ($("#id_rememberme").prop("checked"))
+		  			$.cookie("email", $("#id_username").val(), { expires : 10 });
+		  		else
+		  			$.removeCookie("email");
+		  		$.cookie("authenticator", "email", { path: "/"});
+		  		window.location = "{{backURL}}"
+		  	}
+		  	else
+				bootstrap_alert.warning(json['error']);
+		  })
+		  	.fail(function(jqXHR, textStatus, errorThrown)
+			{
+				bootstrap_alert.warning(jqXHR.status + "; " + jqXHR.statusText);
+				console.log( "error: " + textStatus + "; " + errorThrown + ";");
+				console.log( jqXHR.status + "; " + jqXHR.statusText);
+			});
+		}
+	</script>
+	
+</html>

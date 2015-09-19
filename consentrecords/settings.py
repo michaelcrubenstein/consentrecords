@@ -38,6 +38,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'consentrecords',
+    'custom_user',
+    'monitor',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -77,16 +79,9 @@ WSGI_APPLICATION = 'consentrecords.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'consentrecords.mysql.connector.django',
-        'NAME': 'btcdb',
-        'USER': 'admin',
-        'PASSWORD': 'goLdXS1OPHj7',
-        'HOST': 'btcdbproduction.cgbhphj40gae.us-east-1.rds.amazonaws.com',   # Or an IP Address that your DB is hosted on
-        'PORT': '3306',
-        'OPTIONS': {
-          'autocommit': True,
-        },
-    }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    },
 }
 
 
@@ -110,3 +105,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT= os.path.join(BASE_DIR, 'static')
+
+# Auth User Model
+AUTH_USER_MODEL = 'custom_user.AuthUser'
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'consentrecordsinfo@gmail.com'
+EMAIL_HOST_PASSWORD = 'Hu7RHmjvNw7f'
+
+# Email address of the sender of the password reset email.
+PASSWORD_RESET_SENDER = r'consentrecordsinfo@gmail.com'
+
+# Path of the web page to reset the password of a user.
+PASSWORD_RESET_PATH = r'/user/passwordreset/'
