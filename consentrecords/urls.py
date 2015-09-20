@@ -31,7 +31,5 @@ urlpatterns = [
     url(r'^configure/get/rootobjects/', views.getRootObjects, name='getRootObjects'),
     url(r'^configure/get/data/', views.getData, name='getData'),
     url(r'^configure/get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
-    url(r'^configure/get/elements/', views.getElements, name='getElements'),
-    url(r'^configure/get/enumerations/', views.getEnumerations, name='getEnumerations'),
     url(r'^configure/get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
 ]

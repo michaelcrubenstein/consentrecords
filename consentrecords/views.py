@@ -275,22 +275,6 @@ def submitAddValue(request):
             
     return JsonResponse(results)
     
-def getEnumerations(request):
-    LogRecord.emit(request.user, 'consentrecords/getEnumerations', '')
-    
-    # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
-    
-    try:
-        results = {'success':True, 'values': UniqueObject.enumerations()}
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
-            
-    return JsonResponse(results)
-    
 def getRootObjects(request):
     LogRecord.emit(request.user, 'consentrecords/getRootObjects', '')
     
@@ -405,33 +389,6 @@ def getData(request):
             
     return JsonResponse(results)
     
-def getElements(request):
-    LogRecord.emit(request.user, 'consentrecords/getElements', '')
-    
-    # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
-    
-    try:
-        uuidString = request.GET.get('id', None)
-        
-        if not uuidString:
-            return JsonResponse({'success':False, 'error': "id was not specified in getElements"})
-
-        elementType = request.GET.get('elementType', None)
-        if not elementType:
-            return JsonResponse({'success':False, 'error': "elementType was not specified in getElements"})
-        
-        results = {'success':True, 'objects': UniqueObject(uuidString).elements(elementType)}
-    except Fact.NoEditsAllowedError:
-        return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
-            
-    return JsonResponse(results)
-
 # Returns in the values array an array of enumeration values with their name, uuid and index.
 # This request is made when getting the possible values for an enumeration pick operation.    
 def getEnumerationValues(request):

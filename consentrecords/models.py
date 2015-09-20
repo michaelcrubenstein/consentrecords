@@ -72,6 +72,9 @@ class Fact(models.Model):
     addObjectRuleFieldName = '_object add rule'
     pickObjectRuleName = '_pick object'
     createObjectRuleName = '_create object'
+    isDescriptorName = '_is descriptor'
+    yesName = '_yes'
+    noName = '_no'
     
     _initialKinds = [isAnInstanceOfName, # identifies the kind of an object.
         valueName,
@@ -91,6 +94,9 @@ class Fact(models.Model):
         addObjectRuleFieldName,         # defines the rule for adding objects to a field that supports multiple objects
         pickObjectRuleName,         # identifies fields where you add an object by picking it
         createObjectRuleName,       # identifies fields where you add an object by instantiating a new instance.
+        isDescriptorName,       # defines whether a field is a descriptor of its instance.
+        yesName,                # identifies the value yes.
+        noName,                 # identifies the value no.
         ]
     
     _initialUUNames = {}  
@@ -105,11 +111,7 @@ class Fact(models.Model):
 
     @property
     def verbString(self):
-        query_set = Fact.objects.filter(subject=self.verb, verb=Fact.uuNameUUID())
-        if query_set.count() > 0:
-            return query_set[0].directObject
-        else:
-            return str(self.verb)
+        return UniqueObject(self.verb).getSubData(Fact.uuNameUUID()) or str(self.verb)
             
     @property
     def directObjectString(self):
@@ -132,30 +134,23 @@ class Fact(models.Model):
         configObject = configurations[Fact._bootstrapName]
         
         configurationUUID = Fact.configurationUUID()
-        descriptorUUID = Fact.descriptorUUID()
-            
-        container.createMissingSubValue(descriptorUUID, uunameUUID.hex, 0, transactionState);
             
         configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
 
-        fieldValues = [uunameUUID.hex, configurationUUID.hex, descriptorUUID.hex]
+        fieldValues = [uunameUUID.hex, configurationUUID.hex]
 
         fields = configObject.createFields(fieldValues, transactionState)
         
         p = fields[uunameUUID.hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
         
         p = fields[configurationUUID.hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.ofKindUUID(), configurationUUID.hex, 0, transactionState)
         p.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
-    
-        p = fields[descriptorUUID.hex]
-        p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.ofKindUUID(), uunameUUID.hex, 0, transactionState)
-        p.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-        
+            
     # Create the configuration for the configuration uuname.    
     def createConfigurationConfiguration(transactionState):
         configurationUUID = Fact.configurationUUID()
@@ -165,8 +160,6 @@ class Fact(models.Model):
         configurations = container.createConfigurations(configurationValues, transactionState)
         configObject = configurations[Fact._bootstrapName]
                 
-        container.createMissingSubValue(Fact.descriptorUUID(), Fact.nameUUID().hex, 0, transactionState)
-
         configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
         
         fieldValues = [Fact.nameUUID().hex, Fact.fieldUUID().hex]
@@ -177,6 +170,7 @@ class Fact(models.Model):
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
         
         p = fields[Fact.fieldUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -193,13 +187,12 @@ class Fact(models.Model):
         configurations = container.createConfigurations(configurationValues, transactionState)
         configObject = configurations[Fact._bootstrapName]
         
-        container.createMissingSubValue(Fact.descriptorUUID(), Fact.nameUUID().hex, 0, transactionState)
-
         configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
         
         fieldValues = [Fact.nameUUID().hex, 
                        Fact.dataTypeUUID().hex,
                        Fact.maxCapacityUUID().hex,
+                       Fact.isDescriptorUUID().hex,
                        Fact.ofKindUUID().hex,
                        Fact.enumeratedValueUUID().hex,
                        Fact.addObjectRuleFieldUUID().hex,
@@ -212,6 +205,7 @@ class Fact(models.Model):
         f.createMissingSubValue(Fact.ofKindUUID(), Fact.uuNameUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
+        f.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
         
         f = fields[Fact.dataTypeUUID().hex]
         f.createMissingSubValue(Fact.dataTypeUUID(), Fact.enumeratedValueUUID().hex, 0, transactionState)
@@ -232,6 +226,17 @@ class Fact(models.Model):
         
         enums = [ Fact.uniqueValueUUID().hex,
                  Fact.multipleValuesUUID().hex,
+                ]
+        
+        f.createEnumerations(enums, transactionState)
+        
+        f = fields[Fact.isDescriptorUUID().hex]
+        f.createMissingSubValue(Fact.dataTypeUUID(), Fact.enumeratedValueUUID().hex, 0, transactionState)
+        f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
+        f.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
+        
+        enums = [ Fact.yesUUID().hex,
+                 Fact.noUUID().hex,
                 ]
         
         f.createEnumerations(enums, transactionState)
@@ -352,6 +357,10 @@ class Fact(models.Model):
     def pickObjectRuleUUID(): return Fact._getInitialUUID(Fact.pickObjectRuleName)
     def createObjectRuleUUID(): return Fact._getInitialUUID(Fact.createObjectRuleName)
 
+    def isDescriptorUUID(): return Fact._getInitialUUID(Fact.isDescriptorName)
+    def yesUUID(): return Fact._getInitialUUID(Fact.yesName)
+    def noUUID(): return Fact._getInitialUUID(Fact.noName)
+
     # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
     def getNamedUUID(uuname, transactionState=None):
         verb = Fact.uuNameUUID()
@@ -395,17 +404,13 @@ class UniqueObject():
         return "uo{%s}" % self.id.hex
         
     def verbString(verbID):
-        query_set = Fact.objects.filter(subject=verbID, verb=Fact.uuNameUUID())
-        if query_set.count() > 0:
-            return query_set[0].directObject
-        else:
-            return str(verbID)
+        return UniqueObject(verbID).getSubData(Fact.uuNameUUID()) or str(verbID)
     
     @property   
     def objectString(self):
-        query_set = Fact.objects.filter(subject=self.id, verb=Fact.instanceOfUUID())
-        if query_set.count() > 0:
-            verbString = UniqueObject.verbString(uuid.UUID(query_set[0].directObject))
+        instanceID = self.getSubData(Fact.instanceOfUUID())
+        if instanceID:
+            verbString = UniqueObject.verbString(uuid.UUID(instanceID))
             if verbString == Fact.uuNameName:
                 return "{%s}" % UniqueObject.verbString(self.id)
             else:
@@ -451,31 +456,6 @@ class UniqueObject():
     
     # Gets a dictionary with all of the names of the enumeration values in the specified type as keys,
     # and the uuid of the enumeration object as the value.
-    def elements(self, elementType):
-        with connection.cursor() as c:
-            sql = "SELECT f1.directObject, f4.directObject" + \
-                  " FROM consentrecords_fact f1, consentrecords_fact f2" + \
-                  "       LEFT OUTER JOIN consentrecords_fact f3 on (f3.verb = %s AND f3.directObject = %s)" + \
-                  "       LEFT OUTER JOIN consentrecords_fact f4 " + \
-                  "         on (f4.subject = f1.directObject AND f4.verb = f3.subject" + \
-                  "             AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f4.id))" + \
-                  " WHERE f1.subject = %s AND f1.verb = f2.subject" + \
-                  " AND   f2.verb = %s" + \
-                  " AND   f2.directObject = %s" + \
-                  " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)" + \
-                  " ORDER BY f4.directObject"
-            c.execute(sql, [Fact.uuNameUUID().hex,
-                            'name', 
-                            self.id.hex, 
-                            Fact.uuNameUUID().hex,
-                            elementType])
-            r = [];
-            for i in c.fetchall():
-                name = (i[1] or (elementType + " " + str(len(r) + 1)))
-                a = {'id': i[0], 'name' : name}
-                r.append(a)
-            return r
-    
     # Gets a dictionary of all of the universalObjects that are instances of the specified kind.
     # ofKindID is used as the directObject of an instanceOf verb to identify subjects that are root object IDs.
     # elementTypeName is the type used to identify what the descriptors are that describe each object.
@@ -500,29 +480,12 @@ class UniqueObject():
                     r.append({'name': i[1], 'id': i[0]})
             else:
                 ofKindObject = UniqueObject(ofKindID)
-                nameFieldUUIDs = ofKindObject.descriptors
+                nameFieldUUIDs = ofKindObject._descriptors
                 for e in ofKindObject.getAllInstances():
                     sequence = e.getSubDataArray(nameFieldUUIDs)
                     r.append({ 'id': e.id.hex,
                           'name': " ".join(sequence), })
 
-            return r
-    
-    # Gets a dictionary of all of the names of enumerations as keys,
-    # and the uuid of the enumeration as the value.       
-    def enumerations():
-        with connection.cursor() as c:
-            sql = "SELECT f1.subject, f1.directObject" + \
-                  " FROM consentrecords_fact f1" + \
-                  " WHERE f1.verb = %s" + \
-                  " AND   EXISTS(SELECT 1 FROM consentrecords_fact f2" + \
-                               " WHERE f2.subject = f1.subject AND f2.verb = %s" + \
-                               " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f2.id))" + \
-                  " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
-            c.execute(sql, [Fact.uuNameUUID().hex, Fact.enumeratedValueUUID().hex])
-            r = {};
-            for i in c.fetchall():
-                r[i[1]] = i[0]
             return r
     
     # verb is a UUID
@@ -760,12 +723,22 @@ class UniqueObject():
         
     # Returns a list of UUIDs that are used to generate the name of a reference to objects of this kind.
     @property
-    def descriptors(self):
-        return self.getSubUUIDs(verb=Fact.descriptorUUID())
+    def _descriptors(self):
+        configuration = self.getSubValueObject(verb=Fact.configurationUUID())
+        results = []
+        yesUUID = Fact.yesUUID()
+        if configuration:
+            for fieldObject in configuration._getSubValueObjects(verb=Fact.fieldUUID()):
+                r = fieldObject.getSubValueObject(verb=Fact.isDescriptorUUID())
+                if r and r.id == yesUUID:
+                    nameObject = fieldObject.getSubValueObject(verb=Fact.nameUUID())
+                    if nameObject:
+                        results.append(nameObject.id)
+        return results
         
     # Return enough data for a reference to this object and its human readable form.
     def getReferenceData(self, ofKindObject):
-        nameFieldUUIDs = ofKindObject.descriptors
+        nameFieldUUIDs = ofKindObject._descriptors
         
         # The container of the data may be a value object or the object itself.
         # It will be a value object for values that have multiple data, such as enumerations.
@@ -780,7 +753,7 @@ class UniqueObject():
         return f;
         
     def getValueData(self, ofKindObject):
-        nameFieldUUIDs = ofKindObject.descriptors
+        nameFieldUUIDs = ofKindObject._descriptors
         v = self.getSubObject(Fact.valueUUID()) or self
         sequence = v.getSubDataArray(nameFieldUUIDs)
         f = { "id": self.id.hex,
@@ -798,7 +771,7 @@ class UniqueObject():
                                                       nameObject.getSubData(Fact.uuNameUUID()), 
                                                       ofKindObject.getSubData(Fact.uuNameUUID())))
                                                       
-        nameFieldUUIDs = ofKindObject.descriptors
+        nameFieldUUIDs = ofKindObject._descriptors
         logger.error("  nameFieldUUIDs: %s" % str(nameFieldUUIDs))
 
         data = self._getSubValues(nameObject.id)
@@ -847,6 +820,9 @@ class UniqueObject():
                 fieldData["capacity"] = r[0]
             else:
                 fieldData["capacity"] = Fact.multipleValuesName
+                
+            r = self.getSubValueReference(verb=Fact.isDescriptorUUID())
+            fieldData["isDescriptor"] = r and (r[0] == Fact.yesName)
             
             r = self.getSubValueReference(verb=Fact.addObjectRuleFieldUUID())
             if r:
