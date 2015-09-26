@@ -66,13 +66,13 @@ def initializeFacts(request):
             
     return JsonResponse(results)
 
-def configuration(request):
-    LogRecord.emit(request.user, 'consentrecords/configuration', '')
+def list(request):
+    LogRecord.emit(request.user, 'consentrecords/list', '')
     
     # The type of the root object.
     rootType = request.GET.get('type', "_uuname")
-    elementType = request.GET.get('elementType', rootType)
-        
+    rootID = Fact.getNamedUUID(rootType);
+            
     template = loader.get_template('consentrecords/configuration.html')
     
     context = RequestContext(request, {
@@ -80,7 +80,7 @@ def configuration(request):
         'canShowObjects': request.user.is_superuser,
         'canAddObject': request.user.is_superuser,
         'rootType': rootType,
-        'elementType': elementType
+        'rootID': rootID.hex,
     })
         
     return HttpResponse(template.render(context))
@@ -105,13 +105,29 @@ def submitCreateInstance(request):
     try:
         # The type of the new object.
         instanceType = request.POST.get('typeName', None)
+        instanceUUID = request.POST.get('typeID', None)
+        if instanceUUID:
+            ofKindObject = UniqueObject(instanceUUID)
+        elif not instanceType:
+            return JsonResponse({'success':False, 'error': "type was not specified in submitCreateInstance"})
+        else:
+            ofKindObject = UniqueObject(Fact.getNamedUUID(instanceType))
         
         # An optional container for the new object.
         containerUUID = request.POST.get('containerUUID', None)
         
         # The element name for the type of element that the new object is to the container object
-        elementName = request.POST.get('elementName', None) or instanceType
-        
+        elementName = request.POST.get('elementName', None)
+        elementUUID = request.POST.get('elementUUID', None)
+        if elementUUID:
+            elementID = uuid.UUID(elementUUID)
+        elif elementName:
+            elementID = Fact.getNamedUUID(elementName)
+        elif instanceUUID:
+            elementID = uuid.UUID(instanceUUID)
+        elif instanceName: 
+            elementID = Fact.getNamedUUID(instanceName)
+            
         # An optional set of properties associated with the object.
         propertyString = request.POST.get('properties', "[]")
         propertyList = json.loads(propertyString)
@@ -122,48 +138,22 @@ def submitCreateInstance(request):
         # The client time zone offset, stored with the transaction.
         timezoneoffset = request.POST['timezoneoffset']
         
-        if not instanceType:
-            return JsonResponse({'success':False, 'error': "type was not specified in submitCreateInstance"})
-            
         with transaction.atomic():
             transactionState = TransactionState(request.user, timezoneoffset)
-            ofKindObject = UniqueObject(Fact.getNamedUUID(instanceType, transactionState))
-            item = ofKindObject.createInstance(transactionState)
-        
             if containerUUID:
-                logger.error("submitCreateInstance containerUUID: %s" % containerUUID)
-                elementID = Fact.getNamedUUID(elementName, transactionState)
-            
                 containerObject = UniqueObject(containerUUID)
                 # If containerObject is a reference, then get the value for the reference.
                 containerObject = containerObject.getSubObject(Fact.valueUUID()) or containerObject
+            else:
+                containerObject = None
+    
+            item, newValue = ofKindObject.createInstance(containerObject, elementID, index, propertyList, transactionState)
         
-                logger.error("submitCreateInstance elementID: %s" % elementID)
-                logger.error("submitCreateInstance index: %s" % index)
-                if index < 0:
-                    maxIndex = containerObject.getMaxElementIndex(elementID)
-                    if maxIndex == None:
-                        index = 0
-                    else:
-                        index = maxIndex + 1
-                logger.error("submitCreateInstance next index: %s" % index)
-                newIndex = containerObject.updateElementIndexes(elementID, index, transactionState)
-                newValue = containerObject.addValue(elementID, item.id.hex, newIndex, transactionState)
-                logger.error("  newValue: %s" % str(newValue.id))
-        
-            for i in request.POST.lists():
-                logger.error("    Request list: %s" % str(i))
-            logger.error("  PropertyList: %s" % str(propertyList))
-            for f in propertyList:
-                fieldData = f['field']
-                fieldID = fieldData['id']
-                fieldObject = UniqueObject(fieldID)
-                item.addData(fieldObject, f['data'], transactionState)
-        
-        if containerUUID:
+        if containerObject:
             results = {'success':True, 'object': newValue.getValueData(ofKindObject)}
         else:    
             results = {'success':True, 'object': item.getReferenceData(ofKindObject)}
+            
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -275,13 +265,10 @@ def submitAddValue(request):
             
     return JsonResponse(results)
     
-def getRootObjects(request):
-    LogRecord.emit(request.user, 'consentrecords/getRootObjects', '')
+def selectAll(request):
+    LogRecord.emit(request.user, 'consentrecords/selectAll', '')
     
     try:
-        logger = logging.getLogger(__name__)
-        logger.error("getRootObjects: %s" % str(request.GET))
-        
         ofKindName = request.GET.get("ofKindName", "_uuname")
         ofKindID = request.GET.get("ofKindID", None)
     
@@ -297,7 +284,6 @@ def getRootObjects(request):
         p = UniqueObject.rootDescriptors(ofKindUUID)
         
         results = {'success':True, 'objects': p}
-        logger.error("getRootObjects returns: %s" % str(results))
         
     except Fact.NoEditsAllowedError:
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
@@ -319,12 +305,14 @@ def getAddConfiguration(request):
         logger = logging.getLogger(__name__)
         # Get the uuid for the configuration.
         typeName = request.GET.get('typeName', None)
+        typeUUID = request.GET.get('typeID', None)
+        if typeUUID:
+            kindObject = UniqueObject(typeUUID)
+        elif not typeName:
+            return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
+        else:
+            kindObject = UniqueObject(Fact.getNamedUUID(typeName))
         
-        if not typeName:
-            return JsonResponse({'success':False, 'error': "typeName was not specified in getData"})
-
-        kindObject = UniqueObject(Fact.getNamedUUID(typeName))
-            
         configurationObject = kindObject.getSubValueObject(verb=Fact.configurationUUID())
         
         p = configurationObject.getData()
@@ -334,6 +322,8 @@ def getAddConfiguration(request):
         
         results = {'success':True, 'cells': p}
     except Fact.NoEditsAllowedError:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -406,8 +396,6 @@ def getEnumerationValues(request):
         
         fieldObject = UniqueObject(fieldID)
                 
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % str(fieldObject.enumerationValues))
         results = {'success':True, 'values': fieldObject.enumerationValues}
     except Exception as e:
         logger = logging.getLogger(__name__)

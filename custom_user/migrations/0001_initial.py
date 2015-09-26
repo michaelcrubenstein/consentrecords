@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-
+import uuid
 
 class Migration(migrations.Migration):
 
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('password', models.CharField(verbose_name='password', max_length=128)),
                 ('last_login', models.DateTimeField(verbose_name='last login', blank=True, null=True)),
                 ('is_superuser', models.BooleanField(verbose_name='superuser status', help_text='Designates that this user has all permissions without explicitly assigning them.', default=False)),
-                ('id', models.CharField(db_index=True, max_length=32, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid.uuid4, serialize=False, primary_key=True, editable=False)),
                 ('email', models.EmailField(verbose_name='email address', unique=True, max_length=255, db_index=True)),
                 ('first_name', models.CharField(max_length=30, blank=True, null=True)),
                 ('last_name', models.CharField(max_length=50, blank=True, null=True)),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PasswordReset',
             fields=[
-                ('id', models.CharField(db_index=True, max_length=32, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid.uuid4, serialize=False, primary_key=True, editable=False)),
                 ('email', models.EmailField(verbose_name='email address', max_length=255, db_index=True)),
                 ('creation_time', models.DateTimeField(db_index=True, db_column='creation_time', auto_now_add=True)),
             ],

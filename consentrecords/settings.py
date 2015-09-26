@@ -120,3 +120,4 @@ PASSWORD_RESET_SENDER = r'consentrecordsinfo@gmail.com'
 
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
+

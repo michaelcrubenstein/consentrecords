@@ -50,7 +50,7 @@ class Fact(models.Model):
     
     # These verbs are directly associated with objects.
     uuNameName = '_uuname'
-    isAnInstanceOfName = '_is an instance of'
+    instanceOfName = '_is an instance of'
     indexName = '_index'
     
     # This verb identifies a value.
@@ -65,7 +65,6 @@ class Fact(models.Model):
     objectName = '_object'
     enumeratedValueName = '_enumerated value from a list'
     ofKindName = '_of kind'
-    descriptorName = '_descriptor'
     maxCapacityName = '_max capacity'
     uniqueValueName = '_unique value'
     multipleValuesName = '_multiple values'
@@ -76,7 +75,7 @@ class Fact(models.Model):
     yesName = '_yes'
     noName = '_no'
     
-    _initialKinds = [isAnInstanceOfName, # identifies the kind of an object.
+    _initialKinds = [instanceOfName, # identifies the kind of an object.
         valueName,
         indexName,              # identifies the index of an object within its container
         configurationName,      # identifies a configuration instance  (contained by a kind)
@@ -90,7 +89,6 @@ class Fact(models.Model):
         maxCapacityName,        # defines the quantity relationship of a field within its container.
         uniqueValueName,        # identifies fields that have only one value.
         multipleValuesName,     # identifies fields that have multiple values.
-        descriptorName,         # The field that identifies which property (ies) describe this object.
         addObjectRuleFieldName,         # defines the rule for adding objects to a field that supports multiple objects
         pickObjectRuleName,         # identifies fields where you add an object by picking it
         createObjectRuleName,       # identifies fields where you add an object by instantiating a new instance.
@@ -109,6 +107,13 @@ class Fact(models.Model):
         def __str__(self):
             return "No edits are allowed for this operation."
 
+    class UnrecognizedNameError(ValueError):
+        def __init__(self, uuname):
+            self.uuname = uuname
+            
+        def __str__(self):
+            return "The term \"%s\" is not recognized" % self.uuname
+            
     @property
     def verbString(self):
         return UniqueObject(self.verb).getSubData(Fact.uuNameUUID()) or str(self.verb)
@@ -265,22 +270,28 @@ class Fact(models.Model):
     def initializeFacts(transactionState):
         
         # Initialize global variables.
-        _initialUUNames = {}  
+        Fact._initialUUNames = {}  
         
         #Instantiate the uuName uuName.
         with connection.cursor() as c:
-            sql = "SELECT COUNT(*)" + \
+            sql = "SELECT f1.subject" + \
                   " FROM consentrecords_fact f1" + \
                   " WHERE f1.verb = f1.subject AND f1.directObject = %s"
             c.execute(sql, [Fact.uuNameName])
             i = c.fetchone()
-            if i[0] == 0:
-                obj = uuid.uuid4()
+            if i:
+                uunameID = uuid.UUID(i[0])
+            else:
+                uunameID = uuid.uuid4()
                 Fact.objects.create(subject=obj, verb=obj, directObject=Fact.uuNameName, transaction=transactionState.transaction)
         
         # Instantiate all of the other core uuNames.
         for s in Fact._initialKinds:
-            id = Fact.getNamedUUID(s, transactionState)
+            try: 
+                id = Fact.getNamedUUID(s, transactionState)
+            except UnrecognizedNameError:
+                obj = uuid.uuid4()
+                Fact.objects.create(subject=obj.hex, verb=uunameID.hex, directObject = s, transaction=transactionState.transaction)
            
         # Mark all uunames as instances of uuname.
         UniqueObject(Fact.uuNameUUID()).createMissingSubFact(Fact.instanceOfUUID(), Fact.uuNameUUID().hex, transactionState)
@@ -304,22 +315,19 @@ class Fact(models.Model):
                 c.execute(sql, [Fact.uuNameName])
                 i = c.fetchone();
                 Fact._initialUUNames[name] = uuid.UUID(i[0])
-                logger = logging.getLogger(__name__)
-                logger.error("uuNameUUID: %s)" % (i[0]))
         
         return Fact._initialUUNames[name]
     
     def _getInitialUUID(name):
         if name not in Fact._initialUUNames:
-            try:
-                Fact._initialUUNames[name] = Fact.objects.get(directObject=name, verb=Fact.uuNameUUID()).subject
-            except Exception as e:
-                Fact._initialUUNames[name] = None
+            Fact._initialUUNames[name] = Fact.objects.get(directObject=name, verb=Fact.uuNameUUID().hex).subject
+            if isinstance(Fact._initialUUNames[name], str):
+                Fact._initialUUNames[name] = uuid.UUID(Fact._initialUUNames[name])
                 
         return Fact._initialUUNames[name]
 
     # Return the UUID for the 'is an instance of' ontology element. 
-    def instanceOfUUID(): return Fact._getInitialUUID(Fact.isAnInstanceOfName)
+    def instanceOfUUID(): return Fact._getInitialUUID(Fact.instanceOfName)
     
     # Return the UUID for the 'value' ontology element. 
     def valueUUID(): return Fact._getInitialUUID(Fact.valueName)
@@ -342,8 +350,6 @@ class Fact(models.Model):
     
     def indexUUID(): return Fact._getInitialUUID(Fact.indexName)
     
-    def descriptorUUID(): return Fact._getInitialUUID(Fact.descriptorName)
-
     # Gets the UUID for the quantity relationship of a field within its container.
     def maxCapacityUUID(): return Fact._getInitialUUID(Fact.maxCapacityName)
 
@@ -364,18 +370,18 @@ class Fact(models.Model):
     # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
     def getNamedUUID(uuname, transactionState=None):
         verb = Fact.uuNameUUID()
-        query_set = Fact.objects.filter(verb=verb, directObject=uuname)
-        if query_set.count() == 0:
-            if transactionState is None:
-                raise Fact.NoEditsAllowedError()
-            
-            logger = logging.getLogger(__name__)
-            logger.error("getNamedUUID(verb: %s, directObject: %s)" % (str(verb), uuname))
-            subject = uuid.uuid4()
-            f = Fact.objects.create(subject=subject, verb=verb, directObject=uuname, transaction=transactionState.transaction)
-            return subject
-        else:
-            return query_set[0].subject
+        with connection.cursor() as c:
+            sql = "SELECT f1.subject" + \
+                  " FROM consentrecords_fact f1" + \
+                  " WHERE f1.verb = %s" + \
+                  " AND   f1.directObject = %s" + \
+                  " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
+            c.execute(sql, [verb.hex, uuname])
+            r = c.fetchone()
+            if not r:
+                raise Fact.UnrecognizedNameError(uuname)
+            else:
+                return uuid.UUID(r[0])
             
     def markAsDeleted(self, transactionState):
         DeletedFact.objects.create(fact=self, transaction=transactionState.transaction)
@@ -408,14 +414,25 @@ class UniqueObject():
     
     @property   
     def objectString(self):
-        instanceID = self.getSubData(Fact.instanceOfUUID())
-        if instanceID:
+        logger = logging.getLogger(__name__)
+        logger.error("        objectString: %s" % str(self.id))
+        if Fact.instanceOfName not in Fact._initialUUNames:
+            logger.error("          instanceOfName does not exist %s" % str(Fact._initialUUNames))
+            return str(self.id)
+            
+        try:
+            instanceID = self.getSubData(Fact.instanceOfUUID())
+            if not instanceID:
+                logger.error("          object has no instanceOf element")
+                return str(self.id)
             verbString = UniqueObject.verbString(uuid.UUID(instanceID))
+            logger.error("          object verbString: %s" % verbString)
             if verbString == Fact.uuNameName:
                 return "{%s}" % UniqueObject.verbString(self.id)
             else:
                 return "{%s: %s}" % (verbString, str(self.id))
-        else:
+        except Exception:
+            logger.error("          objectstring exception: %s" % traceback.format_exc())
             return str(self.id)     
     
     # Return the UniqueObject for the specified unique name. If it doesn't exist, it is created with the specified transaction.   
@@ -425,9 +442,6 @@ class UniqueObject():
     # Gets an array of all of the enumeration value summary information: id, name and index.
     @property
     def enumerationValues(self):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s].enumerationValues" % str(self))
-
         with connection.cursor() as c:
             sql = "SELECT f2.directObject, f3.directObject" + \
                   " FROM consentrecords_fact f1" + \
@@ -446,13 +460,15 @@ class UniqueObject():
                             ])
             r = [];
             for i in c.fetchall():
-                d = {"id": i[0]}
+                d = {"id": None, 
+                     "value": {"id": i[0], "description": UniqueObject(i[0]).getSubData(Fact.uuNameUUID())}}
                 if i[1]: d["index"] = i[1]
                 
-                # The name is the programming name for this object.
-                d["name"] = UniqueObject(i[0]).getSubData(Fact.uuNameUUID())
                 r.append(d)
-            return r
+            return sorted(r, key=UniqueObject.getIndex)
+    
+    def getIndex(d):
+        return int(d["index"])
     
     # Gets a dictionary with all of the names of the enumeration values in the specified type as keys,
     # and the uuid of the enumeration object as the value.
@@ -463,13 +479,9 @@ class UniqueObject():
     # if there are objects that have two types (a parent type and a child type) and the child
     # type is used to identify the objects, but the parent type is used to get the description.
     def rootDescriptors(ofKindID):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s].rootDescriptors" % str(ofKindID))
-        logger.error("  uuNameUUID() = %s" % str(Fact.uuNameUUID()))
         with connection.cursor() as c:
             r = []
             if ofKindID == Fact.uuNameUUID():
-                logger.error("  special case")
                 sql = "SELECT f1.subject, f1.directObject" + \
                       " FROM consentrecords_fact f1" + \
                       " WHERE f1.verb = %s" + \
@@ -477,14 +489,13 @@ class UniqueObject():
                       " ORDER BY f1.directObject"
                 c.execute(sql, [ofKindID.hex])
                 for i in c.fetchall():
-                    r.append({'name': i[1], 'id': i[0]})
+                    r.append({'id': None, 'value': {'description': i[1], 'id': i[0]}})
             else:
                 ofKindObject = UniqueObject(ofKindID)
                 nameFieldUUIDs = ofKindObject._descriptors
                 for e in ofKindObject.getAllInstances():
-                    sequence = e.getSubDataArray(nameFieldUUIDs)
-                    r.append({ 'id': e.id.hex,
-                          'name': " ".join(sequence), })
+                    r.append({'id': None, 'value': { 'id': e.id.hex,
+                          'description': e._getDescription(nameFieldUUIDs), }})
 
             return r
     
@@ -525,8 +536,6 @@ class UniqueObject():
             return r
         
     def getSubObject(self, verb):
-        logger = logging.getLogger(__name__)
-        logger.error("  [%s].getSubObject(%s)" % (self.objectString, UniqueObject.verbString(verb)))
         with connection.cursor() as c:
             sql = "SELECT f1.directObject" + \
               " FROM consentrecords_fact f1" + \
@@ -534,9 +543,7 @@ class UniqueObject():
               " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
             c.execute(sql, [self.id.hex, verb.hex])
             for i in c.fetchall():
-                logger.error("  getSubObject return: %s" % UniqueObject(i[0]).objectString)
                 return UniqueObject(i[0])
-            logger.error("  getSubObject return: None")
             return None
     
     # verb is a UUID
@@ -556,8 +563,6 @@ class UniqueObject():
     # verb is a UUID
     # return value is an array of all objects with the specified verb for this object.
     def getSubObjects(self, verb):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s].getSubObjects(%s)" % (str(self), str(verb)))
         with connection.cursor() as c:
             sql = "SELECT f1.directObject" + \
               " FROM consentrecords_fact f1" + \
@@ -569,7 +574,6 @@ class UniqueObject():
                 # Confirm that the directObject is a uuid
                 if len(i[0]) == 32 and all(c in string.hexdigits for c in i[0]):
                     r.append(UniqueObject(i[0]))
-            logger.error("  (%s): %s" % (UniqueObject(verb).getSubData(Fact.uuNameUUID()), r))
             return r
             
     # verb is a UUID
@@ -592,52 +596,65 @@ class UniqueObject():
                     r.append(uuid.UUID(i[0]))
             return r
     
-    # verbs is an array of UUIDs
-    # return value is an array of strings. 
+    # Returns a description of this object with these verbs. 
+    # verbs is an array of pairs where the first of the pair is the field name and 
+    # the second is the field dataType.
     # The string can either be directly attached to the verb (f1), a uuname from the verb (f2), 
     # a value object from the verb (f3) or a uuname from the value from the verb (f4).       
-    def getSubDataArray(self, verbs):
+    def _getDescription(self, verbs):
         r = []
         logger = logging.getLogger(__name__)
-        logger.error("[%s].getSubDataArray(%s)" % (str(self), verbs))
         for verb in verbs:
-            with connection.cursor() as c:
-                sql = "SELECT f1.directObject, f2.directObject, f3.directObject, f4.directObject" + \
-                  " FROM consentrecords_fact f1" + \
-                  "      LEFT OUTER JOIN consentrecords_fact f2" + \
-                  "          ON (f2.subject = f1.directObject AND f2.verb = %s" + \
-                  "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f2.id))" + \
-                  "      LEFT OUTER JOIN consentrecords_fact f3" + \
-                  "          ON (f3.subject = f1.directObject AND f3.verb = %s" + \
-                  "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f3.id))" + \
-                  "      LEFT OUTER JOIN consentrecords_fact f4" + \
-                  "          ON (f4.subject = f3.directObject AND f4.verb = %s" + \
-                  "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f4.id))" + \
-                  " WHERE f1.subject = %s AND f1.verb = %s" + \
-                  " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
-                c.execute(sql, [Fact.uuNameUUID().hex, Fact.valueUUID().hex, Fact.uuNameUUID().hex, self.id.hex, verb.hex])
-                for i in c.fetchall():
-                    if i[3]:
-                        r.append(i[3])
-                    elif i[2]:
-                        r.append(i[2])
-                    elif i[1]:
-                        r.append(i[1])
-                    else:
-                        r.append(i[0])
+            name, dataType = verb[0], verb[1]
+            logger.error("    %s, %s" % (UniqueObject(name).objectString, UniqueObject(dataType).objectString))
+            if dataType == Fact.objectUUID().hex or dataType == Fact.enumeratedValueUUID().hex:
+                with connection.cursor() as c:
+                    sql = "SELECT f3.directObject" + \
+                      " FROM consentrecords_fact f1" + \
+                      "      LEFT OUTER JOIN consentrecords_fact f3" + \
+                      "          ON (f3.subject = f1.directObject AND f3.verb = %s" + \
+                      "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f3.id))" + \
+                      " WHERE f1.subject = %s AND f1.verb = %s" + \
+                      " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
+                    c.execute(sql, [Fact.valueUUID().hex, self.id.hex, name])
+                    r.extend([UniqueObject(i[0])._description for i in c.fetchall()])
+            else:
+                with connection.cursor() as c:
+                    sql = "SELECT f1.directObject, f2.directObject, f3.directObject, f4.directObject" + \
+                      " FROM consentrecords_fact f1" + \
+                      "      LEFT OUTER JOIN consentrecords_fact f2" + \
+                      "          ON (f2.subject = f1.directObject AND f2.verb = %s" + \
+                      "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f2.id))" + \
+                      "      LEFT OUTER JOIN consentrecords_fact f3" + \
+                      "          ON (f3.subject = f1.directObject AND f3.verb = %s" + \
+                      "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f3.id))" + \
+                      "      LEFT OUTER JOIN consentrecords_fact f4" + \
+                      "          ON (f4.subject = f3.directObject AND f4.verb = %s" + \
+                      "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f4.id))" + \
+                      " WHERE f1.subject = %s AND f1.verb = %s" + \
+                      " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
+                    c.execute(sql, [Fact.uuNameUUID().hex, Fact.valueUUID().hex, Fact.uuNameUUID().hex, self.id.hex, name])
+                    r.extend([(i[3] or i[2] or i[1] or i[0]) for i in c.fetchall()])
                     
-        logger.error("  getSubDataArray returns: %s" % r)
-
-        return r
+        return " ".join(r)
+    
+    @property
+    def _description(self):
+        instanceID = self.getSubData(Fact.instanceOfUUID())
+        if not instanceID: return "Object"
+        
+        ofKindObject = UniqueObject(instanceID)
+        nameFieldUUIDs = ofKindObject._descriptors
+        return self._getDescription(nameFieldUUIDs)
         
     def getSubData(self, verb):
         f = self.getSubFact(verb=verb)
-        if f:
-            return f.directObject
-        else:
-            return None
+        return f and f.directObject
     
     def getSubValue(self, verb):
+        if not verb:
+            raise ValueError("verb is not specified")
+            
         with connection.cursor() as c:
             sql = "SELECT f2.directObject" + \
               " FROM consentrecords_fact f1" + \
@@ -648,26 +665,24 @@ class UniqueObject():
               " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
             c.execute(sql, [Fact.valueUUID().hex, self.id.hex, verb.hex])
             r = c.fetchone()
-            if not r:
-                return None
-            else:
-                return r[0]
+            return r and r[0]
     
     def getSubValueObject(self, verb):
+        if not verb:
+            raise ValueError("verb is not specified")
+            
         v = self.getSubValue(verb)
         if v is not None:
             return UniqueObject(v)
         else:
             return None
-                    
+            
     # verb is a UUIDs
     # return value is an array of dictionaries with value strings. 
     # The string can either be directly attached to the verb (f1) or 
     # a value object from the verb (f2).       
     def _getSubValues(self, verb):
         r = []
-        logger = logging.getLogger(__name__)
-        logger.error("    [%s]._getSubValues(%s)" % (self.objectString, UniqueObject.verbString(verb)))
         with connection.cursor() as c:
             sql = "SELECT f1.directObject, f2.directObject, f3.directObject" + \
               " FROM consentrecords_fact f1" + \
@@ -694,8 +709,6 @@ class UniqueObject():
         r = []
         for i in sorted(indexedFields):
             r.append(indexedFields[i])
-            
-        logger.error("    _getSubValues returns: %s" % (r + unindexedFields))
 
         return (r + unindexedFields)
         
@@ -721,31 +734,34 @@ class UniqueObject():
                 
         self.addValue(verb, directObject, index, transactionState)
         
-    # Returns a list of UUIDs that are used to generate the name of a reference to objects of this kind.
+    # Returns a list of pairs of text that are used to generate the description of objects 
+    # of this kind.
+    # The first of the pair is the hex UUID of the name, the second is the hex UUID of the dataType
     @property
     def _descriptors(self):
         configuration = self.getSubValueObject(verb=Fact.configurationUUID())
         results = []
         yesUUID = Fact.yesUUID()
         if configuration:
+            elementIDs = [Fact.nameUUID(), Fact.dataTypeUUID()]
             for fieldObject in configuration._getSubValueObjects(verb=Fact.fieldUUID()):
                 r = fieldObject.getSubValueObject(verb=Fact.isDescriptorUUID())
                 if r and r.id == yesUUID:
-                    nameObject = fieldObject.getSubValueObject(verb=Fact.nameUUID())
-                    if nameObject:
-                        results.append(nameObject.id)
+                    n = [fieldObject.getSubValue(x) for x in elementIDs]
+                    if n[0] and n[1]:
+                        results.append(n)
         return results
         
     # Return enough data for a reference to this object and its human readable form.
+    # This method is called only for root instances that don't have containers.
     def getReferenceData(self, ofKindObject):
         nameFieldUUIDs = ofKindObject._descriptors
         
         # The container of the data may be a value object or the object itself.
         # It will be a value object for values that have multiple data, such as enumerations.
         v = self.getSubObject(Fact.valueUUID()) or self
-        sequence = v.getSubDataArray(nameFieldUUIDs)
-        f = { "id": self.id.hex,
-              "name": " ".join(sequence), }
+        f = { "id": None,
+              "value": {"id": self.id.hex, "description": v._getDescription(nameFieldUUIDs), }}
         index = self.getSubData(verb=Fact.indexUUID());
         if index:
             f["index"] = index
@@ -755,9 +771,8 @@ class UniqueObject():
     def getValueData(self, ofKindObject):
         nameFieldUUIDs = ofKindObject._descriptors
         v = self.getSubObject(Fact.valueUUID()) or self
-        sequence = v.getSubDataArray(nameFieldUUIDs)
         f = { "id": self.id.hex,
-              "value": {"id" : v.id.hex, "description": " ".join(sequence), }}
+              "value": {"id" : v.id.hex, "description": v._getDescription(nameFieldUUIDs), }}
         index = self.getSubData(verb=Fact.indexUUID());
         if index:
             f["index"] = index
@@ -766,19 +781,12 @@ class UniqueObject():
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
     def _getSubReferences(self, nameObject, ofKindObject):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s]._getSubReferences(%s, %s)" % (str(self), 
-                                                      nameObject.getSubData(Fact.uuNameUUID()), 
-                                                      ofKindObject.getSubData(Fact.uuNameUUID())))
-                                                      
         nameFieldUUIDs = ofKindObject._descriptors
-        logger.error("  nameFieldUUIDs: %s" % str(nameFieldUUIDs))
 
         data = self._getSubValues(nameObject.id)
         for d in data:
             v = UniqueObject(d["value"])
-            sequence = v.getSubDataArray(nameFieldUUIDs)
-            d["value"] = {"id" : d["value"], "description" : " ".join(sequence)}
+            d["value"] = {"id" : d["value"], "description" : v._getDescription(nameFieldUUIDs)}
         
         return data
     
@@ -802,13 +810,9 @@ class UniqueObject():
             return None
     
     def getFieldData(self):
-        logger = logging.getLogger(__name__)
-        logger.error("    getFieldData(%s):" % self.objectString)
         nameReference = self.getSubValueReference(verb=Fact.nameUUID())
         dataTypeReference = self.getSubValueReference(verb=Fact.dataTypeUUID())
         fieldData = None
-        logger.error("    nameReference: %s" % str(nameReference))
-        logger.error("    dataTypeReference: %s" % str(dataTypeReference))
         if nameReference and dataTypeReference:
             fieldData = {"id" : self.id.hex, 
                          "name" : nameReference[0],
@@ -830,6 +834,8 @@ class UniqueObject():
             
             if fieldData["dataType"] == Fact.objectName:
                 ofKindReference = self.getSubValueReference(verb=Fact.ofKindUUID())
+                if not ofKindReference:
+                    raise TypeError("the object field '%s' has no kind specified" % nameReference[0])
                 fieldData["ofKind"] = ofKindReference[0]
                 fieldData["ofKindID"] = ofKindReference[1].hex
         
@@ -837,8 +843,6 @@ class UniqueObject():
     
     # Returns an array of arrays.    
     def getData(self, dataObject=None):
-        logger = logging.getLogger(__name__)
-        logger.error("    getData(%s):" % self.objectString)
         cells = []
         
         i = 0
@@ -864,7 +868,7 @@ class UniqueObject():
         return cells
 
     # Returns a new instance of an object of this kind.
-    def createInstance(self, transactionState):
+    def createEmptyInstance(self, transactionState):
         obj = UniqueObject()
         f = Fact.objects.create(subject=obj.id, verb=Fact.instanceOfUUID(), directObject=self.id.hex, transaction = transactionState.transaction)
         return obj
@@ -907,7 +911,7 @@ class UniqueObject():
         for v in itemValues:
             if v not in items:
                 items[v] = self.addValue(elementUUID, v, index, transactionState)
-                ++index
+                index += 1
         
         return items
     
@@ -958,7 +962,7 @@ class UniqueObject():
             if not v in items:
                 items[v] = UniqueObject()
                 self.addValue(elementUUID, items[v].id.hex, index, transactionState)
-                ++index
+                index += 1
                 items[v].addValue(descriptorUUID, v, 0, transactionState)
                 items[v].createSubFact(Fact.instanceOfUUID(), elementUUID.hex, transactionState)
         
@@ -967,8 +971,6 @@ class UniqueObject():
     # Updates the value of the specified object
     # All existing facts that identify the value are marked as deleted.            
     def updateValue(self, verbID, directObject, transactionState):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s].updateValue(%s, %s)" % (str(self), UniqueObject(verbID).getSubData(Fact.uuNameUUID()), directObject))
         with connection.cursor() as c:
             sql = "SELECT f1.id" + \
                   " FROM consentrecords_fact f1" + \
@@ -979,7 +981,6 @@ class UniqueObject():
             for i in c.fetchall():
                 f = Fact.objects.get(id=i[0])
                 f.markAsDeleted(transactionState)
-                logger.error("  fact: %s" % i[0])
             
             self.createSubFact(verbID, directObject, transactionState)
     
@@ -1020,53 +1021,114 @@ class UniqueObject():
         dataObject.createSubFact(Fact.indexUUID(), str(index), transactionState)
         return dataObject
     
-    def addElementData(self, data, fieldData, nameObject, transactionState):
+    def _addElementData(self, data, fieldData, elementObject, transactionState):
         # If the data is iterable, then create a fact for each iteration of the data.
         # Otherwise, create a fact whose value is the data.
         # Note that this doesn't recur, so it can't handle arrays of dictionaries,
         # which would be the logical construction of a recursive add.
         if isinstance(data, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
-            raise TypeError("Element Data not in an array")
-            self.createSubFact(nameObject.id, data, transactionState) 
+            raise TypeError("Element data not in an array")
         else:           
             i = 0
+            ids = []
+            logger = logging.getLogger(__name__)
             for d in data:
-                if fieldData["name"] == Fact.uuNameName:
-                    self.createSubFact(nameObject.id, d, transactionState)
-                elif isinstance(d, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
-                    self.addValue(nameObject.id, d, i, transactionState)
+                logger.error("        Saving data:\n          %s" % str(d))
+                logger.error("        Field of data:\n          %s" % str(fieldData))
+                elementID = elementObject.id
+                v = d["value"]
+                if isinstance(v, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
+                    logger.error("        Creating value object")
+                    if elementID == Fact.uuNameUUID():
+                        self.createSubFact(elementID, v, transactionState)
+                        newObject = self
+                    else:
+                        newObject = self.addValue(elementID, v, i, transactionState)
+                    ids.append(newObject.id.hex)
+                elif "id" in v and v["id"] is not None:
+                    # This is a reference to an object or an enumerated value.
+                    logger.error("        Creating reference")
+                    newObject = self.addValue(elementID, v["id"], i, transactionState)
+                    ids.append(newObject.id.hex)
+                elif uuid.UUID(fieldData["dataTypeID"]) == Fact.objectUUID():
+                    logger.error("        Creating sub-instance")
+                    ofKindObject = UniqueObject(fieldData["ofKindID"])
+                    ofKindObject.createInstance(self, elementID, -1, v["cells"], transactionState)
                 else:
                     raise TypeError("Unrecognized type of data to save")
                 i += 1
+            return ids
     
     # Add the specified data as a field to self during the process of instantiating
     # self.            
-    def addData(self, fieldObject, data, transactionState):
-        logger = logging.getLogger(__name__)
-        logger.error("[%s].addData(%s, %s)" % (str(self), str(fieldObject), str(data)))
-        
+    def addData(self, fieldObject, data, transactionState):        
         fieldData = fieldObject.getFieldData()
         if fieldData:
             nameObject = UniqueObject(fieldData["nameID"])
-            self.addElementData(data, fieldData, nameObject, transactionState)
-                
-    # Creates a unique object which is an enumeration element of this object.
-    def createEnumerationValue(self, uuname, transactionState):
-        r = self.enumerationValues
-        if (uuname in r):
-            return UniqueObject(r[uuname])
-        else:
-            id = Fact.getNamedUUID(uuname, transactionState)
-            f = Fact.objects.create(subject=self.id, verb=Fact.enumeratedValueUUID(), directObject=id.hex, transaction=transactionState.transaction)
-            return UniqueObject(id)
+            self._addElementData(data, fieldData, nameObject, transactionState)
+
+    def createInstance(self, containerObject, elementID, index, propertyList, transactionState):
+        logger = logging.getLogger(__name__)
+        item = self.createEmptyInstance(transactionState)
     
+        if containerObject:
+            logger.error("createInstance containerObject: %s" % str(containerObject))
+            logger.error("createInstance elementID: %s" % elementID)
+            logger.error("createInstance index: %s" % index)
+            
+            if index < 0:
+                maxIndex = containerObject.getMaxElementIndex(elementID)
+                if maxIndex == None:
+                    index = 0
+                else:
+                    index = maxIndex + 1
+            logger.error("createInstance next index: %s" % index)
+            newIndex = containerObject.updateElementIndexes(elementID, index, transactionState)
+            newValue = containerObject.addValue(elementID, item.id.hex, newIndex, transactionState)
+            logger.error("  newValue: %s" % str(newValue.id))
+        else:
+            newValue = None
+    
+        logger.error("  PropertyList: %s" % str(propertyList))
+        for f in propertyList:
+            fieldData = f['field']
+            fieldID = fieldData['id']
+            fieldObject = UniqueObject(fieldID)
+            item.addData(fieldObject, f['data'], transactionState)
+            
+        return (item, newValue)
+                    
     # Marks all of the facts that match the specified property as deleted.   
     def deleteEnumerationProperty(self, propertyName=None, propertyUUID=None, valueName=None, valueUUID=None, transactionState=None):
         if propertyUUID is None:
             propertyUUID = Fact.getNamedUUID(propertyName, transactionState)
         if valueUUID is None:
             valueUUID = Fact.getNamedUUID(valueName, transactionState)
-        query_set = Fact.objects.filter(subject=self.id, verb=propertyUUID, directObject=valueUUID)
+        query_set = Fact.objects.filter(subject=self.id.hex, verb=propertyUUID.hex, directObject=valueUUID.hex)
         for f in query_set:
             f.markAsDeleted(transactionState)
         return self
+        
+class BootStrapper():
+    def initializeUUNames():
+        #Instantiate the uuName uuName.
+        with connection.cursor() as c:
+            sql = "SELECT f1.subject" + \
+                  " FROM consentrecords_fact f1" + \
+                  " WHERE f1.verb = f1.subject AND f1.directObject = %s"
+            c.execute(sql, [Fact.uuNameName])
+            i = c.fetchone()
+            if not i:
+                return
+            else:
+                Fact._initialUUNames[Fact.uuNameName] = uuid.UUID(i[0])
+        
+        # Instantiate all of the other core uuNames.
+        for s in Fact._initialKinds:
+            try: 
+                id = Fact._getInitialUUID(s)
+            except Fact.UnrecognizedNameError:
+                pass
+
+    initializeUUNames()
+    

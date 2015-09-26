@@ -11,13 +11,15 @@
 
 /* Titles go in the lower center of the nav bar. */
 .site-title {
-	font-size: large;
+	font-size: medium;
+	padding-top: 6px;
 	padding-bottom: 6px;
 	display: block;
     vertical-align: middle;
     width: 100%;
 	text-align: center;
 	margin: 0;
+	font-weight: 600;
 }
 /* Links go on the right or left over titles. */
 .site-navbar-link {
