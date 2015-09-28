@@ -142,6 +142,15 @@
 			padding-bottom: 6px;
 			background: white;
 		}
+		.element-spacing-div {
+			margin-top: 15px;
+		}
+		.string-input-container {
+			background: white;
+			width: 100%;
+			padding-left: 15px;
+			padding-right: 15px;
+		}
 		.string-input {
 			width: 100%;
 			background: white;
@@ -158,6 +167,7 @@
 			border: none;
 			border-color: transparent;
 		}
+		
 		.search-input-container {
 			display: inline-block;
 			vertical-align: middle;
@@ -271,6 +281,72 @@
 				});
 		}
 		
+		function show_edit_string_cell(obj, containerData, cell, containerUUID)
+		{
+			var sectionObj = d3.select(obj).classed("object-name-div", true);
+			
+			if (cell.field.capacity == "_unique value")
+			{
+				sectionObj.append("div").classed("element-spacing-div", true)
+			}
+			else
+			{
+				sectionObj.append("div").classed("element-label-div", true)
+						  .text(cell.field.name);
+				sectionObj.append("hr");
+			}
+
+			var itemsDiv = sectionObj.append("div").classed("items-div", true);
+
+			var divs = itemsDiv.selectAll("div")
+				.data(cell.data)
+				.enter()
+				.append("div")
+				.classed("string-input-container", true);	// So that each item appears on its own row.
+			
+			divs.append("input").classed("string-input", true)
+				.attr("type", "text")
+				.attr("placeholder", cell.field.name)
+				.property("value", function(d) { return d.value; });
+
+			if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
+			{
+				cell.add_target("valueAdded", itemsDiv.node());
+				$(itemsDiv.node()).on("valueAdded", function(e, newData)
+					{
+						d3.select(this).append("div").classed("string-input-container", true)
+							.data([newData])
+							.append("input").classed("string-input", true)
+							.attr("type", "text")
+							.attr("placeholder", cell.field.name)
+							.text(newData.value);
+					});
+				
+				/* Add one more button for the add Button item. */
+				var buttonDiv = sectionObj.append("div")
+					.append("button").classed("btn row-button site-active-text add-element-button", true)
+					.on("click", function(cell) {
+						if (!is_click_blocked(containerData.parentPanel))
+						{
+							block_click(containerData.parentPanel);
+							
+							var newData = dataTypes[cell.field.dataType].newValue();
+							cell.data.push(newData);
+							if (cell.field.isDescriptor)
+								newData.add_target("dataChanged", cell);
+							cell.trigger_event("valueAdded", [newData]);
+							
+							unblock_click(containerData.parentPanel);
+						}
+						d3.event.preventDefault();
+					})
+					.append("div").classed("pull-left", true);
+				buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
+				buttonDiv.append("span").text(" add " + cell.field.name);
+				sectionObj.append("hr");
+			}
+		}
+		
 		function show_add_string_cell(obj, containerData, cell, containerUUID)
 		{
 			/* With this field unique, there will be a data element in the cell
@@ -278,16 +354,26 @@
 
 			var sectionObj = d3.select(obj).classed("element-div", true);
 			
-			sectionObj.append("div").classed("element-label-div", true)
-				.text(cell.field.name);
-			sectionObj.append("hr");
+			if (cell.field.capacity == "_unique value")
+			{
+				sectionObj.append("div").classed("element-spacing-div", true)
+			}
+			else
+			{
+				sectionObj.append("div").classed("element-label-div", true)
+						  .text(cell.field.name);
+				sectionObj.append("hr");
+			}
+			
 			var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
-			itemsDiv
-				.selectAll("input")
+			var divs = itemsDiv.selectAll("div")
 				.data(cell.data)
 				.enter()
-				.append("input").classed("string-input", true)
+				.append("div")
+				.classed("string-input-container", true);	// So that each item appears on its own row.
+			
+			divs.append("input").classed("string-input", true)
 				.attr("type", "text")
 				.attr("placeholder", cell.field.name);
 
@@ -296,11 +382,12 @@
 				cell.add_target("valueAdded", itemsDiv.node());
 				$(itemsDiv.node()).on("valueAdded", function(e, newData)
 					{
-						d3.select(this).append("input").classed("string-input", true)
-									   .attr("type", "text")
-									   .attr("placeholder", cell.field.name)
-									   .text(newData.value)
-									   .data([newData]);
+						d3.select(this).append("div").classed("string-input-container", true)
+							.data([newData])
+							.append("input").classed("string-input", true)
+							.attr("type", "text")
+							.attr("placeholder", cell.field.name)
+							.text(newData.value);
 					});
 				
 				/* Add one more button for the add Button item. */
@@ -347,7 +434,7 @@
 						if (!is_click_blocked(containerData.parentPanel))
 						{
 							block_click(containerData.parentPanel);
-							var cell = itemsDiv.data()[0];
+							var cell = itemsDiv.datum();
 							viewFunction(d, cell, containerData);
 						}
 					});
@@ -524,7 +611,7 @@
 				var nameArray = [];
 				for (var i = 0; i < this.value.cells.length; ++i)
 				{
-					cell = this.value.cells[i];
+					var cell = this.value.cells[i];
 					if (cell.field.isDescriptor && cell.data)
 					{
 						for (var j = 0; j < cell.data.length; ++j)
@@ -639,16 +726,7 @@
 				},
 				showEdit: function(obj, containerData, cell, containerUUID)
 				{
-					var sectionObj = d3.select(obj).classed("object-name-div", true);
-					
-					sectionObj.selectAll("input")
-						.data(cell.data)
-						.enter()
-						.append("input")
-						.classed("string-input", true)
-						.attr("type", "text")
-						.attr("placeholder", cell.field.name)
-						.property("value", function(d) { return d.value; });
+					show_edit_string_cell(obj, containerData, cell, containerUUID);
 				},
 				showAdd: function(obj, containerData, cell, containerUUID)
 				{
@@ -1054,6 +1132,9 @@
 						   .animate({height: "100%", top: p.top}, 400, "swing",
 						   		function() {
 						   			$(window).trigger("resize");
+						   			inputObject = d3.select(obj).selectAll("input").node();
+						   			if (inputObject)
+						   				inputObject.focus();
 						   			if (containerData.parentPanel)
 						   				unblock_click(containerData.parentPanel);
 						   		});
