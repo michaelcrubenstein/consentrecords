@@ -85,6 +85,26 @@ def list(request):
         
     return HttpResponse(template.render(context))
     
+def serviceLocator(request):
+    LogRecord.emit(request.user, 'consentrecords/serviceLocator', '')
+    
+    # The type of the root object.
+    rootType = request.GET.get('type', "_uuname")
+    rootID = Fact.getNamedUUID(rootType);
+            
+    template = loader.get_template('consentrecords/servicelocator.html')
+    
+    context = RequestContext(request, {
+        'user': request.user,
+        'canShowObjects': request.user.is_superuser,
+        'canAddObject': request.user.is_superuser,
+        'rootType': rootType,
+        'rootID': rootID.hex,
+        'servicesID': Fact.getNamedUUID("Service")
+    })
+        
+    return HttpResponse(template.render(context))
+    
 # Handle a POST event to create a new instance of an object with a set of properties.
 def submitCreateInstance(request):
     

@@ -62,6 +62,8 @@ class Fact(models.Model):
     nameName = '_name'
     dataTypeName = '_data type'
     stringName = '_string'
+    numberName = '_number'
+    datestampName = '_datestamp'
     objectName = '_object'
     enumeratedValueName = '_enumerated value from a list'
     ofKindName = '_of kind'
@@ -84,6 +86,8 @@ class Fact(models.Model):
         ofKindName,             # identifies the type of object for a property of "object" data type.
         dataTypeName,           # defines the data type of a property
         stringName,             # identifies a string data type
+        numberName,             # identifies a string data type
+        datestampName,          # identifies a string data type
         objectName,             # identifies an object data type
         enumeratedValueName,    # identifies and enumerated value data type
         maxCapacityName,        # defines the quantity relationship of a field within its container.
@@ -218,6 +222,8 @@ class Fact(models.Model):
         f.createMissingSubValue(Fact.addObjectRuleFieldUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
         
         enums = [ Fact.stringUUID().hex,
+                 Fact.numberUUID().hex,
+                 Fact.datestampUUID().hex,
                  Fact.enumeratedValueUUID().hex,
                  Fact.objectUUID().hex,
                 ]
@@ -283,13 +289,13 @@ class Fact(models.Model):
                 uunameID = uuid.UUID(i[0])
             else:
                 uunameID = uuid.uuid4()
-                Fact.objects.create(subject=obj, verb=obj, directObject=Fact.uuNameName, transaction=transactionState.transaction)
+                Fact.objects.create(subject=uunameID.hex, verb=uunameID.hex, directObject=Fact.uuNameName, transaction=transactionState.transaction)
         
         # Instantiate all of the other core uuNames.
         for s in Fact._initialKinds:
             try: 
                 id = Fact.getNamedUUID(s, transactionState)
-            except UnrecognizedNameError:
+            except Fact.UnrecognizedNameError:
                 obj = uuid.uuid4()
                 Fact.objects.create(subject=obj.hex, verb=uunameID.hex, directObject = s, transaction=transactionState.transaction)
            
@@ -320,7 +326,11 @@ class Fact(models.Model):
     
     def _getInitialUUID(name):
         if name not in Fact._initialUUNames:
-            Fact._initialUUNames[name] = Fact.objects.get(directObject=name, verb=Fact.uuNameUUID().hex).subject
+            try:
+                Fact._initialUUNames[name] = Fact.objects.get(directObject=name, verb=Fact.uuNameUUID().hex).subject
+            except Fact.DoesNotExist:
+                raise Fact.UnrecognizedNameError(name)
+                
             if isinstance(Fact._initialUUNames[name], str):
                 Fact._initialUUNames[name] = uuid.UUID(Fact._initialUUNames[name])
                 
@@ -341,6 +351,8 @@ class Fact(models.Model):
     def dataTypeUUID(): return Fact._getInitialUUID(Fact.dataTypeName)
         
     def stringUUID(): return Fact._getInitialUUID(Fact.stringName)
+    def numberUUID(): return Fact._getInitialUUID(Fact.numberName)
+    def datestampUUID(): return Fact._getInitialUUID(Fact.datestampName)
         
     def objectUUID(): return Fact._getInitialUUID(Fact.objectName)
         
@@ -854,14 +866,15 @@ class UniqueObject():
                 cell = {"field": fieldData}                        
                 if dataObject:
                     nameObject = UniqueObject(fieldData["nameID"])
-                    if fieldData["dataType"] == Fact.stringName:
-                        cell["data"] = dataObject._getSubValues(nameObject.id)
-                    elif fieldData["dataType"] == Fact.enumeratedValueName:
+                    if fieldData["dataType"] == Fact.enumeratedValueName:
                         ofKindObject = UniqueObject(Fact.uuNameUUID())
                         cell["data"] = dataObject._getSubReferences(nameObject, ofKindObject)
                     elif fieldData["dataType"] == Fact.objectName:
                         ofKindObject = UniqueObject(fieldData["ofKindID"])
                         cell["data"] = dataObject._getSubReferences(nameObject, ofKindObject)
+                    else:
+                        # Default case is that this field contains a unique value.
+                        cell["data"] = dataObject._getSubValues(nameObject.id)
                 
                 cells.append(cell)
                 
@@ -1109,26 +1122,3 @@ class UniqueObject():
             f.markAsDeleted(transactionState)
         return self
         
-class BootStrapper():
-    def initializeUUNames():
-        #Instantiate the uuName uuName.
-        with connection.cursor() as c:
-            sql = "SELECT f1.subject" + \
-                  " FROM consentrecords_fact f1" + \
-                  " WHERE f1.verb = f1.subject AND f1.directObject = %s"
-            c.execute(sql, [Fact.uuNameName])
-            i = c.fetchone()
-            if not i:
-                return
-            else:
-                Fact._initialUUNames[Fact.uuNameName] = uuid.UUID(i[0])
-        
-        # Instantiate all of the other core uuNames.
-        for s in Fact._initialKinds:
-            try: 
-                id = Fact._getInitialUUID(s)
-            except Fact.UnrecognizedNameError:
-                pass
-
-    initializeUUNames()
-    

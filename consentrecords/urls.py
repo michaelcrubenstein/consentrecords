@@ -17,6 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 from consentrecords import views
+from consentrecords.bootstrap import BootStrapper
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
@@ -25,6 +26,7 @@ urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
     url(r'^list', views.list, name='list'),
+    url(r'^servicelocator', views.serviceLocator, name='serviceLocator'),
     url(r'^configure/submit/createinstance/', views.submitCreateInstance, name='submitCreateInstance'),
     url(r'^configure/submit/updateValues/', views.submitUpdateValues, name='submitUpdateValues'),
     url(r'^configure/submit/addValue/', views.submitAddValue, name='submitAddValue'),
@@ -33,3 +35,5 @@ urlpatterns = [
     url(r'^configure/get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
     url(r'^configure/get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
 ]
+
+BootStrapper.initializeUUNames()
