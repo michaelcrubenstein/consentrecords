@@ -1,8 +1,9 @@
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, connection
 from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import render, redirect
 from django.template import RequestContext, loader
+from django.views.decorators.csrf import requires_csrf_token
 
 from pathlib import Path
 import os
@@ -13,6 +14,7 @@ import uuid
 
 from monitor.models import LogRecord
 from consentrecords.models import TransactionState, Fact, UniqueObject
+from custom_user import views as userviews
 
 def home(request):
     if request.user.is_authenticated():
@@ -106,14 +108,14 @@ def serviceLocator(request):
     return HttpResponse(template.render(context))
     
 # Handle a POST event to create a new instance of an object with a set of properties.
-def submitCreateInstance(request):
+def createInstance(request):
     
-    LogRecord.emit(request.user, 'consentrecords/submitCreateInstance', '')
+    LogRecord.emit(request.user, 'consentrecords/createInstance', '')
     if not request.user.is_authenticated:
         return signin(request)
     
     if request.method != "POST":
-        raise Http404("submitCreateInstance only responds to POST methods")
+        raise Http404("createInstance only responds to POST methods")
     
     # Check the security access for this operation for the current user.
     if not request.user.is_superuser:
@@ -129,7 +131,7 @@ def submitCreateInstance(request):
         if instanceUUID:
             ofKindObject = UniqueObject(instanceUUID)
         elif not instanceType:
-            return JsonResponse({'success':False, 'error': "type was not specified in submitCreateInstance"})
+            return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
         else:
             ofKindObject = UniqueObject(Fact.getNamedUUID(instanceType))
         
@@ -181,14 +183,14 @@ def submitCreateInstance(request):
             
     return JsonResponse(results)
     
-def submitUpdateValues(request):
-    LogRecord.emit(request.user, 'consentrecords/submitUpdateValues', '')
+def updateValues(request):
+    LogRecord.emit(request.user, 'consentrecords/updateValues', '')
     
     if not request.user.is_authenticated:
         return signin(request)
     
     if request.method != "POST":
-        raise Http404("submitUpdateValues only responds to POST methods")
+        raise Http404("updateValues only responds to POST methods")
     
     # Check the security access for this operation for the current user.
     if not request.user.is_superuser:
@@ -201,19 +203,31 @@ def submitUpdateValues(request):
                 
         commandString = request.POST.get('commands', "[]")
         commands = json.loads(commandString)
-
+        
         # The client time zone offset, stored with the transaction.
         timezoneoffset = request.POST['timezoneoffset']
         
+        ids = []
         with transaction.atomic():
             transactionState = TransactionState(request.user, timezoneoffset)
             for c in commands:
-                obj = UniqueObject(c["id"])
-                elementName = c["elementID"]
-                elementID = Fact.getNamedUUID(elementName, None)
-                obj.updateValue(elementID, c["value"], transactionState);
+                if "id" in c:
+                    item = UniqueObject(c["id"])
+                    elementName = c["elementName"]
+                    elementID = Fact.getNamedUUID(elementName, None)
+                    item.updateValue(elementID, c["value"], transactionState);
+                elif "containerUUID" in c:
+                    container = UniqueObject(c["containerUUID"])
+                    elementID = c["elementUUID"]
+                    newValue = c["value"]
+                    newIndex = c["index"]
+                    item = container.addValue(elementID, newValue, newIndex, transactionState)
+                else:
+                    raise ValueError("subject id was not specified")
+                ids.append(item.id)
             
-            results = {'success':True}
+            results = {'success':True, 'ids': ids}
+            
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -222,14 +236,14 @@ def submitUpdateValues(request):
     return JsonResponse(results)
     
 # Handle a POST event to add a value to an object that references another other or data.
-def submitAddValue(request):
+def addValue(request):
     
-    LogRecord.emit(request.user, 'consentrecords/submitAddValue', '')
+    LogRecord.emit(request.user, 'consentrecords/addValue', '')
     if not request.user.is_authenticated:
         return signin(request)
     
     if request.method != "POST":
-        raise Http404("submitAddValue only responds to POST methods")
+        raise Http404("addValue only responds to POST methods")
     
     # Check the security access for this operation for the current user.
     if not request.user.is_superuser:
@@ -275,7 +289,7 @@ def submitAddValue(request):
                 else:
                     newIndex = maxIndex + 1
         
-            item = UniqueObject(containerUUID).addValue(elementID, valueUUID, newIndex, transactionState)
+            item = container.addValue(elementID, valueUUID, newIndex, transactionState)
         
         results = {'success':True, 'id': item.id.hex}
     except Exception as e:
@@ -422,5 +436,52 @@ def getEnumerationValues(request):
         logger.error("%s" % traceback.format_exc())
         results = {'success':False, 'error': str(e)}
             
+    return JsonResponse(results)
+
+class UserFactory:
+    def getUserObjectID(userID):
+        userElementID = Fact.getNamedUUID(Fact.userIDName)
+        with connection.cursor() as c:
+            sql = "SELECT f1.subject" + \
+              " FROM consentrecords_fact f1" + \
+              "      JOIN consentrecords_fact f2" + \
+              "          ON (f2.subject = f1.directObject" + \
+              "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f2.id))" + \
+              " WHERE f1.verb = %s and f2.verb = %s and f2.directObject = %s" + \
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
+            c.execute(sql, [userElementID.hex, Fact.valueUUID().hex, userElementID.hex])
+            r = c.fetchone()
+            return r and r[0]
+            
+    def createUserObjectID(user, timezoneOffset):
+        with transaction.atomic():
+            transactionState = TransactionState(user, timezoneOffset)
+            ofKindObject = UniqueObject(Fact.getNamedUUID(Fact.userName))
+            item, newValue = ofKindObject.createInstance(None, None, 0, [], transactionState)
+            item.addValue(Fact.getNamedUUID(Fact.userIDName), user.id, 0, transactionState)
+            item.addValue(Fact.getNamedUUID(Fact.emailName), user.email, 0, transactionState)
+            if user.first_name:
+                item.addValue(Fact.getNamedUUID(Fact.firstNameName), user.first_name, 0, transactionState)
+            if user.last_name:
+                item.addValue(Fact.getNamedUUID(Fact.lastNameName), user.last_name, 0, transactionState)
+            
+            return item.id.hex
+
+# Handles a post operation that contains the users username (email address) and password.
+def submitsignin(request):
+    LogRecord.emit(request.user, 'consentrecords/submitsignin', '')
+    
+    try:
+        timezoneOffset = request.POST["timezoneoffset"]
+    
+        results = userviews.signinResults(request)
+        if results["success"]:
+            userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
+            results["userID"] = userID         
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
     return JsonResponse(results)
     

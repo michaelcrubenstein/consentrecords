@@ -76,6 +76,11 @@ class Fact(models.Model):
     isDescriptorName = '_is descriptor'
     yesName = '_yes'
     noName = '_no'
+    userName = '_user'
+    userIDName = '_userID'
+    emailName = '_email'
+    firstNameName = '_first name'
+    lastNameName = '_last name'
     
     _initialKinds = [instanceOfName, # identifies the kind of an object.
         valueName,
@@ -99,6 +104,11 @@ class Fact(models.Model):
         isDescriptorName,       # defines whether a field is a descriptor of its instance.
         yesName,                # identifies the value yes.
         noName,                 # identifies the value no.
+        userName,               # identifies an instance of a user.
+        userIDName,             # identifies the user identifier for the user.
+        emailName,              # identifies an email address.
+        firstNameName,          # identifies the first name.
+        lastNameName,           # identifies the last name.
         ]
     
     _initialUUNames = {}  
@@ -426,25 +436,19 @@ class UniqueObject():
     
     @property   
     def objectString(self):
-        logger = logging.getLogger(__name__)
-        logger.error("        objectString: %s" % str(self.id))
         if Fact.instanceOfName not in Fact._initialUUNames:
-            logger.error("          instanceOfName does not exist %s" % str(Fact._initialUUNames))
             return str(self.id)
             
         try:
             instanceID = self.getSubData(Fact.instanceOfUUID())
             if not instanceID:
-                logger.error("          object has no instanceOf element")
                 return str(self.id)
             verbString = UniqueObject.verbString(uuid.UUID(instanceID))
-            logger.error("          object verbString: %s" % verbString)
             if verbString == Fact.uuNameName:
                 return "{%s}" % UniqueObject.verbString(self.id)
             else:
                 return "{%s: %s}" % (verbString, str(self.id))
         except Exception:
-            logger.error("          objectstring exception: %s" % traceback.format_exc())
             return str(self.id)     
     
     # Return the UniqueObject for the specified unique name. If it doesn't exist, it is created with the specified transaction.   

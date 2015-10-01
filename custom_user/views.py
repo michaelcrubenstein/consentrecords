@@ -178,10 +178,7 @@ class AuthFailedError(ValueError):
     def __str__(self):
         return "This login is invalid."
 
-# Handles a post operation that contains the users username (email address) and password.
-def submitsignin(request):
-    LogRecord.emit(request.user, 'custom_user/submitsignin', '')
-
+def signinResults(request):
     try:
         username = request.POST['username']
         password = request.POST['password']
@@ -189,7 +186,7 @@ def submitsignin(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                results = {'success':True}
+                return {'success':True}
             else:
                 raise AccountDisabledError()
         else:
@@ -197,17 +194,21 @@ def submitsignin(request):
     except AccountDisabledError as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % str(e))
-        results = {'success':False, 'error': str(e)}
+        return {'success':False, 'error': str(e)}
     except AuthFailedError as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % str(e))
-        results = {'success':False, 'error': str(e)}
+        return {'success':False, 'error': str(e)}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return {'success':False, 'error': str(e)}
+
+# Handles a post operation that contains the users username (email address) and password.
+def submitsignin(request):
+    LogRecord.emit(request.user, 'custom_user/submitsignin', '')
             
-    return JsonResponse(results)
+    return JsonResponse(signinResults(request))
     
 def submitSignout(request):
     LogRecord.emit(request.user, 'custom_user/submitsignout', '')

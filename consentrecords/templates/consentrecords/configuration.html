@@ -16,6 +16,7 @@
 
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -26,214 +27,7 @@
 	<!-- Styles for this web page -->
 	<style>
 		body {
-		  font-size: medium;
 		  background: #eee;
-		  overflow-y: hidden;
-		}
-		.site-panel {
-			position: absolute;
-			overflow-y: hidden;
-		}
-		
-		#id_panel1 {
-			width: 100%;
-			height: 100%;
-			max-height: 100%;
-			z-index: 1;
-		}
-		.panel-constrained {
-			height: 100%;
-			max-height: 100%;
-			overflow-y: hidden;
-		}
-		.panel-scrolling {
-			height: 100%;
-			max-height: 100%;
-			overflow-y: scroll;
-		}
-		.list-panel {
-			background: #eee;
-		}
-		.show-panel {
-			background: white;
-		}
-		.edit-panel {
-			background: #eee;
-		}
-		.configuration-panel
-		{
-			height: 0px;
-			width: 0px;
-			display: none;
-			overflow-y: hidden;
-		}
-		.configuration-header
-		{
-			width: 100%;
-			text-align: center;
-			font-weight: bold;
-			background: white;
-		}
-		#id_title {
-			width: 100%;
-		}
-		#valueContainer {
-			margin-top: 15px;
-			width: 100%;
-			background: #fff;
-		}
-		.add-button {
-			margin-top: 0px;
-			padding-top: 4px;
-			line-height: 22px;
-			font-size: x-large;
-			font-weight: 600;
-		}
-		.property-separator {
-			width: 100%;
-			text-align: right;
-		}
-		.property-text-box {
-			width: 100%;
-			border: none;
-		}
-		.value-text-box {
-			width: 100%;
-			border: none;
-		}
-		.row-button {
-			background: white;
-			width: 100%;
-			border: 0;
-			border-radius: 0;
-		}
-		.row-button:hover {
-			background: #f8f8f8;
-		}
-		.list-div {
-			display: inline-block;
-			padding: 6px 12px;
-			margin-bottom: 0;
-			font-size: 14px;
-			font-weight: 400;
-			line-height: 1.42857143;
-			text-align: center;
-			white-space: nowrap;
-			vertical-align: middle;
-			background: white;
-			width: 100%;
-		}
-		hr {
-			margin-top: 0px;
-			margin-bottom: 0px;
-		}
-		.element-div {
-			width: 100%;
-			padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
-			padding-right: 0px;
-		}
-		.element-edit-div {
-			margin-top: 15px;
-			background: white;
-		}
-		.element-label-div {
-			padding-top: 6px;
-			padding-bottom: 6px;
-			padding-left: 12px;
-			background: white;
-		}
-		.string-value-view {
-			position: relative;
-			width: 100%;
-			background: white;
-		}
-		.string-label-div {
-			padding-top: 6px;
-			padding-bottom: 6px;
-			padding-left: 12px;
-			padding-right: 12px;
-			vertical-align: center;
-		}
-		.left-label-div {
-			display: inline-block;
-			margin-left: 0px;
-			margin-right: auto;
-			padding-left: 12px;
-		}
-		.right-label-div {
-			display: inline-block;
-			position: absolute;
-			padding-top: 6px;
-			padding-bottom: 6px;
-			padding-right: 12px;
-			right: 0px;
-			text-align: right;
-		}
-		.string-input-container {
-			width: 100%;
-			padding: 3px;	/* For the highlight box of the input. */
-		}
-		.string-multi-input-container {
-			padding-left: 12px;
-			padding-right: 12px;
-		}
-		.string-unique-input-label {
-			width: auto;
-			float: left;
-			padding: 3px 12px;	/* For the highlight box of the input. */
-		}
-		.string-unique-table-cell {
-			overflow: hidden;
-			width:auto;
-			margin-right: 12px;
-		}
-		.string-unique-input {
-			width: 100%;
-			-webkit-appearance:none;
-			-moz-appearance:none;
-			appearance:none;
-			border: none;
-			border-color: transparent;
-			display: inline-block;
-			right: 0px;
-			text-align: right;
-		}
-		.string-input {
-			width: 100%;
-			-webkit-appearance:none;
-			-moz-appearance:none;
-			appearance:none;
-			border: none;
-			border-color: transparent;
-		}
-		.string-input:focus {
-			-webkit-appearance:none;
-			-moz-appearance:none;
-			appearance:none;
-			border: none;
-			border-color: transparent;
-		}
-
-		.search-input-container {
-			display: inline-block;
-			vertical-align: middle;
-			padding-left: 8px;
-		}
-		.search-input {
-			background: white;
-			margin: 2px;
-			width: 100%;
-		}
-		.searchbar {
-			position: relative;
-			background: #D3D3D3;
-		}
-		#id_searchCancelButton {
-			display: inline-block;
-			width: auto;
-			text-align: right;
-			margin-left: 6px;
-			margin-right: 15px;
 		}
 	</style>
 
@@ -262,11 +56,11 @@
 				<div class="alert-container"></div>
 			</div>
 			<div id="id_searchArea" class="searchbar">
-				<span id="id_searchInputContainer" class="search-input-container">
+				<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+				<div id="id_searchInputContainer" class="search-input-container">
 					<input id="id_searchInput" class="search-input" placeholder="Search">
 					</input>
-				</span>
-				<span id="id_searchCancelButton" class="site-disabled-text"><span>Cancel</span></span>
+				</div>
 			</div>
 			<div id="id_objects">
 			</div>
@@ -297,554 +91,6 @@
 							 d["_data"] has the data for the instance of this field.
 		 */
 		 
-		function prepare_click()
-		{
-			if (is_click_blocked())
-				return false;
-			closealert();
-			block_click();
-			return true;
-		}
-		 
-		function is_pick_field(field)
-		{
-			if (field["capacity"] == "_unique value")
-				return true;	/* This is true because there will always be a default blank item. */
-			else if (field.dataType == "_enumerated value from a list")
-				return true;
-			else if (("_object add rule" in field) &&
-					 (field["_object add rule"] == "_pick object" ||
-					  field["_object add rule"] == "_pick or create object"))
-				return true;
-			else
-				return false;
-		}
-		
-		function push_text_changed(d) {
-			d.add_target("dataChanged", this);
-			$(this).on("dataChanged", function(e) {
-					d3.select(this).text(d.getDescription());
-				});
-		}
-		
-		getDataValue = function(d) { return d.value; }
-		getDataDescription = function(d) { return d.getDescription() }
-		
-		function show_view_string_cell(obj, cell)
-		{
-			var sectionObj = d3.select(obj);
-			
-			sectionObj.classed("element-div", true);
-			
-			var labelDiv = sectionObj.append("div").classed("string-label-div", true)
-				.text(cell.field.name);
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-			if (cell.field.capacity == "_unique value")
-			{
-				labelDiv.classed("left-label-div", true);
-				itemsDiv.classed("right-label-div", true);
-			}
-
-			cell.add_target("valueAdded", itemsDiv.node());
-			$(itemsDiv.node()).on("valueAdded", function(e, newData)
-				{
-					d3.select(this).append("div").classed("string-value-view", true)
-						.datum(newData)
-						.text(getDataValue)
-						.each(push_text_changed);
-				});
-				
-			itemsDiv.selectAll("div")
-				.data(cell.data)
-				.enter()
-				.append("div").classed("string-value-view", true)
-				.text(getDataValue)
-				.each(push_text_changed);
-		}
-		
-		function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
-		{
-			var sectionObj = d3.select(obj).classed("element-div element-edit-div", true);
-			
-			if (cell.field.capacity == "_unique value")
-			{
-				var labelDiv = sectionObj.append("div").classed("string-label-div string-unique-input-label", true)
-					.text(cell.field.name);
-				var itemsDiv = sectionObj.append("div").classed("items-div string-unique-table-cell", true);
-
-				var divs = itemsDiv.selectAll("div")
-					.data(cell.data)
-					.enter()
-					.append("div")
-					.classed("string-input-container", true);	// So that each item appears on its own row.
-			
-				divs.append("input")
-					.classed("string-unique-input", true)
-					.attr("type", inputType)
-					.attr("placeholder", cell.field.name)
-					.property("value", getDataValue);
-
-				labelDiv
-					.style("line-height", divs.selectAll("input").style("line-height"));
-			}
-			else
-			{
-				var labelDiv = sectionObj.append("div").classed("string-label-div", true)
-					.text(cell.field.name);
-				sectionObj.append("hr");
-				var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-				var divs = itemsDiv.selectAll("div")
-					.data(cell.data)
-					.enter()
-					.append("div")
-					.classed("string-input-container", true)	// So that each item appears on its own row.
-					.classed("string-multi-input-container", true);
-			
-				divs.append("input")
-					.classed("string-input", true)
-					.attr("type", inputType)
-					.attr("placeholder", cell.field.name)
-					.property("value", getDataValue);
-
-				if (cell.field.capacity == "_unique value")
-				{
-					labelDiv
-						.style("line-height", divs.selectAll("input").style("line-height"));
-					itemsDiv.style("width", sectionObj.style("width") - labelDiv.style("width"));
-					$(window).resize(function()
-					{
-						$(itemsDiv.node()).width($(sectionObj.node()).width() 
-							- $(labelDiv.node()).width()
-							- labelDiv.style("padding-left")
-							- labelDiv.style("padding-right"));
-					});
-				}
-
-				if (["_over time", "_multiple values"].indexOf(cell.field.capacity) >= 0)
-				{
-					cell.add_target("valueAdded", itemsDiv.node());
-					$(itemsDiv.node()).on("valueAdded", function(e, newData)
-						{
-							d3.select(this).append("div").classed("string-input-container", true)
-								.classed("string-multi-input-container", true)
-								.datum(newData)
-								.append("input").classed("string-input", true)
-								.attr("type", inputType)
-								.attr("placeholder", cell.field.name)
-								.text(newData.value);
-						});
-				
-					/* Add one more button for the add Button item. */
-					var buttonDiv = sectionObj.append("div")
-						.append("button").classed("btn row-button site-active-text add-element-button", true)
-						.on("click", function(cell) {
-							if (prepare_click())
-							{
-								show_click_feedback(this);
-							
-								var newData = dataTypes[cell.field.dataType].newValue();
-								cell.data.push(newData);
-								if (cell.field.isDescriptor)
-									newData.add_target("dataChanged", cell);
-								cell.trigger_event("valueAdded", [newData]);
-							
-								unblock_click();
-							}
-							d3.event.preventDefault();
-						})
-						.append("div").classed("pull-left", true);
-					buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-					buttonDiv.append("span").text(" add " + cell.field.name);
-					sectionObj.append("hr");
-				}
-			}
-		}
-		
-		function show_add_string_cell(obj, panelDiv, cell, containerUUID, inputType)
-		{
-			/* With this field unique, there will be a data element in the cell
-			 */
-
-			var sectionObj = d3.select(obj).classed("element-div element-edit-div", true);
-			
-			if (cell.field.capacity != "_unique value")
-			{
-				sectionObj.append("div").classed("element-label-div", true)
-						  .text(cell.field.name);
-				sectionObj.append("hr");
-			}
-			
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-			var divs = itemsDiv.selectAll("div")
-				.data(cell.data)
-				.enter()
-				.append("div")
-				.classed("string-input-container", true);	// So that each item appears on its own row.
-			
-			divs.append("input").classed("string-input", true)
-				.attr("type", inputType)
-				.attr("placeholder", cell.field.name);
-
-			if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
-			{
-				cell.add_target("valueAdded", itemsDiv.node());
-				$(itemsDiv.node()).on("valueAdded", function(e, newData)
-					{
-						d3.select(this).append("div").classed("string-input-container", true)
-							.data([newData])
-							.append("input").classed("string-input", true)
-							.attr("type", inputType)
-							.attr("placeholder", cell.field.name)
-							.text(newData.value);
-					});
-				
-				/* Add one more button for the add Button item. */
-				var buttonDiv = sectionObj.append("div")
-					.append("button").classed("btn row-button site-active-text add-element-button", true)
-					.on("click", function(cell) {
-						if (prepare_click())
-						{
-							show_click_feedback(this);
-							
-							var newData = dataTypes[cell.field.dataType].newValue();
-							cell.data.push(newData);
-							if (cell.field.isDescriptor)
-								newData.add_target("dataChanged", cell);
-							cell.trigger_event("valueAdded", [newData]);
-							
-							unblock_click();
-						}
-						d3.event.preventDefault();
-					})
-					.append("div").classed("pull-left", true);
-				buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-				buttonDiv.append("span").text(" add " + cell.field.name);
-				sectionObj.append("hr");
-			}
-		}
-
-		/* Produces a function which adds new value view to a container view
-			when the new data is added.
-		 */
-		function get_on_value_added_function(panelDiv, viewFunction)
-		{
-			return function(e, newData)
-			{
-				var itemsDiv = d3.select(this);
-			
-				var divs = itemsDiv
-					.append("div")	// So that each button appears on its own row.
-					.datum(newData);
-				var buttons = divs.append("button")
-					.classed("btn row-button", true);
-				if (viewFunction)
-					buttons.on("click", function(d) {
-						if (prepare_click())
-						{
-							var cell = itemsDiv.datum();
-							viewFunction(d, cell, panelDiv);
-						}
-					});
-				buttons.append("span")
-					.classed("text-muted pull-left", true)
-					.text(getDataDescription)
-					.each(push_text_changed);
-				buttons.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-			}
-		}
-		
-		function show_view_object_cell(obj, containerPanel, cell)
-		{
-			var sectionObj = d3.select(obj).classed("element-div", true);
-			
-			sectionObj.append("div").classed("element-label-div", true)
-				.text(cell.field.name);
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-			cell.add_target("valueAdded", itemsDiv.node());
-			$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(containerPanel, show_view_object_panel));
-			
-			var clickFunction;
-			if (is_pick_field(cell.field))
-				clickFunction = null;
-			else
-				clickFunction = function(d) {
-					if (prepare_click())
-					{
-						show_view_object_panel(d, cell, containerPanel);
-					}
-				}
-			layout_objects(itemsDiv, cell.data, clickFunction);
-		}
-		
-		function show_view_value_cell(obj, containerPanel, cell)
-		{
-			var sectionObj = d3.select(obj).classed("element-div", true);
-			
-			sectionObj.append("div").classed("element-label-div", true)
-				.text(cell.field.name);
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-			
-			cell.add_target("valueAdded", itemsDiv.node());
-			$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(containerPanel, null));
-			
-			layout_objects(itemsDiv, cell.data, null);
-		}
-		
-		function show_edit_object_cell(obj, panelDiv, cell, containerUUID, viewFunction, pickFunction, addFunction, storeDataFunction)
-		{
-			var sectionObj = d3.select(obj).classed("element-div element-edit-div", true);
-			
-			sectionObj.append("div").classed("element-label-div", true)
-				.text(cell.field.name);
-			sectionObj.append("hr");
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-			layout_objects(itemsDiv, cell.data,
-				function(d) {
-					if (prepare_click())
-					{
-						if (is_pick_field(cell.field))
-							pickFunction(d, cell, containerUUID, panelDiv);
-						else if (viewFunction)
-							viewFunction(d, cell, panelDiv);
-					}
-				}
-				);
-			
-			if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
-			{
-				cell.add_target("valueAdded", itemsDiv.node());
-				$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(panelDiv, viewFunction));
-				
-				/* Add one more button for the add Button item. */
-				var buttonDiv = sectionObj.append("div")
-					.append("button").classed("btn row-button site-active-text add-element-button", true)
-					.on("click", function(cell) {
-						if (prepare_click())
-						{
-							if (is_pick_field(cell.field))
-								pickFunction(null, cell, containerUUID, panelDiv)
-							else
-								addFunction(cell, containerUUID, panelDiv, storeDataFunction);
-						}
-						d3.event.preventDefault();
-					})
-					.append("div").classed("pull-left", true);
-				buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-				buttonDiv.append("span").text(" add " + cell.field.name);
-				sectionObj.append("hr");
-			}
-		}
-		
-		/* For a new container that has an object cell, this function displays the UI for
-			adding an object to this cell.
-		 */
-		function show_add_object_cell(obj, containerPanel, cell, containerUUID, viewFunction, pickFunction, addFunction, storeDataFunction)
-		{
-			var sectionObj = d3.select(obj).classed("element-div element-edit-div", true);
-			
-			sectionObj.append("div").classed("element-label-div", true)
-				.text(cell.field.name);
-			sectionObj.append("hr");
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-			if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
-			{
-				cell.add_target("valueAdded", itemsDiv.node());
-				$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(containerPanel, viewFunction));
-
-				/* Add one more button for the add Button item. */
-				var buttonDiv = sectionObj.append("div")
-					.append("button").classed("btn row-button site-active-text add-element-button", true)
-					.on("click", function(cell) {
-						if (prepare_click())
-						{
-							if (is_pick_field(cell.field))	
-								pickFunction(null, cell, containerUUID, containerPanel)
-							else
-								addFunction(cell, containerUUID, containerPanel, storeDataFunction);
-						}
-						d3.event.preventDefault();
-					})
-					.append("div").classed("pull-left", true);
-				buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-				buttonDiv.append("span").text(" add " + cell.field.name);
-				sectionObj.append("hr");
-			}
-			else if (is_pick_field(cell.field))	
-			{
-				layout_objects(itemsDiv, cell.data,
-					function(d) {
-						if (prepare_click())
-						{
-							pickFunction(d, cell, containerUUID, containerPanel);
-						}
-					});
-			}
-		}
-		
-		var dataTypeViews = {
-			_string: {
-				show: function(obj, containerPanel, cell)
-				{
-					show_view_string_cell(obj, cell);
-				},
-				showEdit: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_edit_string_cell(obj, containerPanel, cell, containerUUID, "text");
-				},
-				showAdd: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_add_string_cell(obj, containerPanel, cell, containerUUID, "text");
-				},
-				appendUpdateCommands: function(sectionObj, cell, initialData)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								var command;
-								if (cell.field.name == "_uuname")
-									command = {id: d.id, elementID: "_uuname", value: this.value};
-								else
-									command = {id: d.id, elementID: "_value", value: this.value};
-								initialData.push(command);
-							}
-						}
-					);
-				},
-				updateCell: function(sectionObj, cell)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								d.value = this.value;
-								d.trigger_event("dataChanged", [d]);
-							}
-						}
-					);
-				}
-			},
-			_number: {
-				show: function(obj, containerPanel, cell)
-				{
-					show_view_string_cell(obj, cell);
-				},
-				showEdit: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_edit_string_cell(obj, containerPanel, cell, containerUUID, "number");
-				},
-				showAdd: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_add_string_cell(obj, containerPanel, cell, containerUUID, "number");
-				},
-				appendUpdateCommands: function(sectionObj, cell, initialData)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								var command;
-								if (cell.field.name == "_uuname")
-									command = {id: d.id, elementID: "_uuname", value: this.value};
-								else
-									command = {id: d.id, elementID: "_value", value: this.value};
-								initialData.push(command);
-							}
-						}
-					);
-				},
-				updateCell: function(sectionObj, cell)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								d.value = this.value;
-								d.trigger_event("dataChanged", [d]);
-							}
-						}
-					);
-				}
-			},
-			_datestamp: {
-				show: function(obj, containerPanel, cell)
-				{
-					show_view_string_cell(obj, cell);
-				},
-				showEdit: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_edit_string_cell(obj, containerPanel, cell, containerUUID, "date");
-				},
-				showAdd: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_add_string_cell(obj, containerPanel, cell, containerUUID, "date");
-				},
-				appendUpdateCommands: function(sectionObj, cell, initialData)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								var command;
-								if (cell.field.name == "_uuname")
-									command = {id: d.id, elementID: "_uuname", value: this.value};
-								else
-									command = {id: d.id, elementID: "_value", value: this.value};
-								initialData.push(command);
-							}
-						}
-					);
-				},
-				updateCell: function(sectionObj, cell)
-				{
-					d3.select(sectionObj).selectAll("input").each(function(d)
-						{
-							if (this.value != d.value)
-							{
-								d.value = this.value;
-								d.trigger_event("dataChanged", [d]);
-							}
-						}
-					);
-				}
-			},
-			_object: {
-				show: function(obj, containerPanel, cell)
-				{
-					show_view_object_cell(obj, containerPanel, cell);
-				},
-				showEdit: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_edit_object_cell(obj, containerPanel, cell, containerUUID, show_edit_object_panel, show_pick_object_panel, show_add_object_panel, submit_create_instance);
-				},
-				showAdd: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_add_object_cell(obj, containerPanel, cell, containerUUID, show_view_object_panel, show_pick_object_panel, show_add_object_panel, store_new_instance);
-				},
-			},
-			"_enumerated value from a list": {
-				show: function(obj, containerPanel, cell)
-				{
-					show_view_value_cell(obj, containerPanel, cell);
-				},
-				showEdit: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_edit_object_cell(obj, containerPanel, cell, containerUUID, null, show_pick_value_panel, show_add_value_panel, submit_add_value);
-				},
-				showAdd: function(obj, containerPanel, cell, containerUUID)
-				{
-					show_add_object_cell(obj, containerPanel, cell, containerUUID, null, show_pick_value_panel, show_add_value_panel, store_new_value);
-				},
-			},
-		};
-
 		$(document).ready (function(e) {
 			$("#id_cancelButton").click(function(e) {
 				window.location = "{{ backURL }}";
@@ -947,176 +193,6 @@
 		$(document).ready(function(e) { resetidObjectsHeight() });
 		$(window).resize(function(e) { resetidObjectsHeight() });
 		
-		$(document).ready(function(e) { resetSearchbarWidth() });
-		$(window).resize(function(e) { resetSearchbarWidth() });
-		
-		function appendButtons(divs)
-		{
-			var buttons = divs.append("button").classed("btn row-button", true);
-			
-			buttons.append("span")
-				.classed("text-muted pull-left", true)
-				.text(getDataDescription)
-				.each(push_text_changed);
-				
-			return buttons;
-		}
-		
-		function appendDivs(divs)
-		{
-			var buttons = divs.append("div").classed("list-div", true);
-			
-			buttons.append("span")
-				.classed("text-muted pull-left", true)
-				.text(getDataDescription)
-				.each(push_text_changed);
-				
-			return buttons;
-		}
-		
-		/* Returns the set of objects that contain the description of each data element */
-		function layout_objects(container, data, clickFunction)
-		{
-			// Remove any lingering contents from the set of full issues.
-			container.selectAll("div").remove();
-
-			var divs = container.selectAll("div")
-				.data(data)
-				.enter()
-				.append("div");	// So that each button appears on its own row.
-			
-			var buttons;
-			if (clickFunction) {
-				buttons = appendButtons(divs);
-				buttons.on("click", clickFunction);
-				buttons.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-			}
-			else
-			{
-				buttons = appendDivs(divs);
-			}
-			
-			return buttons;
-		}
-		
-		/* From the specified configuration array of objects, get the objects in index order. 
-			Indexes are retrieved using the getIndex function.*/
-		/* Creates a panel that sits atop the specified containerPanel in the same container. */
-		function create_panel(containerPanel, datum, headerText)
-		{
-			var rootPanel = d3.select($(containerPanel.node()).parents()[0]);
-			var zindex = parseInt(containerPanel.style("z-index"))+1;
-			var panelDiv = rootPanel
-							.append("div")
-							.classed("configuration-panel site-panel", true)
-							.style("z-index", zindex)
-							.datum(datum)
-							.attr("headerText", headerText);
-			
-			panelDiv.appendNavContainer = function()
-			{
-				var navContainer = this.append("nav").classed("navbar navbar-default site-navbar always-visible", true)
-							.attr("role", "navigation")
-							.append("div")
-							.classed("container-fluid", true);
-							
-				navContainer.appendLeftButton = function()
-				{
-					return this.append("div").classed("pull-left", true)
-							   .append("div") .classed("site-navbar-link site-active-text", true);
-				}
-			
-				navContainer.appendRightButton = function()
-				{
-					return this.append("div").classed("pull-right", true)
-							   .append("div") .classed("site-navbar-link site-active-text", true);
-				}
-			
-				return navContainer;
-			}
-			
-			panelDiv.appendScrollArea = function()
-			{
-				var panel2Div = panelDiv.append("div").classed("panel-scrolling", true);
-				
-				panel2Div.appendHeader = function()
-				{
-					return this.append("header").classed("configuration-header", true)
-						.text(headerText);
-				}
-			
-				panel2Div.appendSections = function(sectionData)
-				{
-					return panel2Div.selectAll("section")
-							.data(sectionData)
-							.enter()
-							.append("section")
-				}
-				panel2Div.resetHeight = function()
-				{
-					var newHeight = window.innerHeight;
-					panelDiv.selectAll(".always-visible").each(
-						function() { newHeight -= $(this).height(); }
-					);
-					$(panel2Div.node()).height(newHeight);
-				}
-				
-				panel2Div.show_view_cells = function(objectData, cell, panelDiv)
-				{
-					this.appendSections(objectData.value.cells)
-						.each(function(cell) {
-								if (!cell.field.isDescriptor)
-								{
-									dataTypeViews[cell.field.dataType].show(this, panelDiv, cell);
-									if (!cell.isEmpty())
-										$(this).css("display", "block");
-									else
-										$(this).css("display", "none");
-								
-									/* Make sure the section gets shown if a value is added to it. */
-									cell.add_target("valueAdded", this);
-									$(this).on("valueAdded", function(e, newData) {
-										$(this).css("display", "block");
-									});
-									d3.select(this).append("hr");
-								}
-							});
-				}
-				
-				panel2Div.show_edit_cells = function(objectData, cell, panelDiv)
-				{
-					this.appendSections(objectData.value.cells)
-						.each(function(cell) {
-								dataTypeViews[cell.field.dataType].showEdit(this, panelDiv, cell, objectData.getValueID());
-							});
-				}
-				
-				$(window).resize(panel2Div.resetHeight);
-				
-				return panel2Div;
-			}
-
-			return panelDiv;
-		}
-		
-		function resetSearchbarWidth()
-		{
-			var newWidth = window.innerWidth;
-			$("#id_searchArea").children().each(
-				function(i) { 
-					if (i > 0) newWidth -= $(this).width(); 
-					newWidth -= parseInt($(this).css("margin-right"));
-					newWidth -= parseInt($(this).css("margin-left"));
-					newWidth -= parseInt($(this).css("padding-right"));
-					newWidth -= parseInt($(this).css("padding-left"));
-					newWidth -= parseInt($(this).css("border-right"));
-					newWidth -= parseInt($(this).css("border-left"));
-				}
-			);
-			$("#id_searchInputContainer").width(newWidth - 5);
-		}
-
 		resetidObjectsHeight = function()
 		{
 			var newHeight = window.innerHeight;
@@ -1154,8 +230,8 @@
 		/* This is a storeDataFunction for adding a value to a saved cell. */
 		function submit_add_value(containerCell, containerUUID, initialData, onSuccessFunction) {
 			closealert();
-			$.post("{% url 'submitAddValue' %}", 
-					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+			$.post("{% url 'addValue' %}", 
+					{ csrfmiddlewaretoken: storedcsrftoken, 
 					  containerUUID: containerUUID,
 					  elementUUID: containerCell.field.nameID,
 					  valueUUID: initialData.getValueID(),
@@ -1350,37 +426,72 @@
 				{
 					show_click_feedback(this);
 					
-					var initialData = [];
 					var sections = panel2Div.selectAll("section");
-					sections.each(function(cell) {
-							if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
-								dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, initialData);
-						});
-					if (initialData.length > 0) {
-						$.post("{% url 'submitUpdateValues' %}", 
-								{ csrfmiddlewaretoken: '{{ csrf_token }}', 
-								  commands: JSON.stringify(initialData),
-								  timezoneoffset: new Date().getTimezoneOffset()
-								})
-							  .done(function(json, textStatus, jqXHR)
-								{
-									if (json.success) {
-										sections.each(function(cell) {
-												if ("updateCell" in dataTypeViews[cell.field.dataType])
-													dataTypeViews[cell.field.dataType].updateCell(this, cell);
-											});
-										hide_panel_down($(this).parents(".site-panel")[0]);
-									}
-									else
+					if (objectData.getValueID())
+					{
+						/* This object has been previously saved. Update the data. */
+						var initialData = [];
+						var sourceObjects = [];
+						sections.each(function(cell) {
+								if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
+									dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, objectData, initialData, sourceObjects);
+							});
+						if (initialData.length > 0) {
+							$.post("{% url 'updateValues' %}", 
+									{ csrfmiddlewaretoken: storedcsrftoken, 
+									  commands: JSON.stringify(initialData),
+									  timezoneoffset: new Date().getTimezoneOffset()
+									})
+								  .done(function(json, textStatus, jqXHR)
 									{
-										bootstrap_alert.warning(json.error, ".alert-container");
-										unblock_click();
-									}
-								})
-							  .fail(standard_fail_function);
+										if (json.success) {
+											sections.each(function(cell) {
+													if ("updateCell" in dataTypeViews[cell.field.dataType])
+														dataTypeViews[cell.field.dataType].updateCell(this, cell);
+												});
+											for (var i = 0; i < sourceObjects.length; ++i)
+											{
+												d = sourceObjects[i];
+												newID = json.ids[i];
+												if (d.id == newID)	/* An Update */
+												{
+													d.trigger_event("dataChanged");
+												}
+												else
+												{
+													d.id = newID;
+													d.trigger_event("dataChanged");
+												}
+											}
+											hide_panel_down($(doneButton.node()).parents(".site-panel")[0]);
+										}
+										else
+										{
+											bootstrap_alert.warning(json.error, ".alert-container");
+											unblock_click();
+										}
+									})
+								  .fail(standard_fail_function);
+						}
+						else
+						{
+							hide_panel_down($(this).parents(".site-panel")[0]);
+						}
 					}
 					else
 					{
+						/* In this case, we are editing an object that is contained in an object
+							that hasn't been saved. */
+						objectData.value.cells = [];
+						sections.each(
+							function(cell) {
+								if ("updateCell" in dataTypeViews[cell.field.dataType])
+									dataTypeViews[cell.field.dataType].updateCell(this, cell);
+								objectData.importCell(cell);
+							});
+				
+						objectData.calculateDescription();
+						objectData.trigger_event("dataChanged");
 						hide_panel_down($(this).parents(".site-panel")[0]);
 					}
 				}
@@ -1436,8 +547,8 @@
 										else
 										{
 											initialData = [{id: oldData.id, elementID: "_value", value: d.getValueID()}];
-											$.post("{% url 'submitUpdateValues' %}", 
-													{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+											$.post("{% url 'updateValues' %}", 
+													{ csrfmiddlewaretoken: storedcsrftoken, 
 														"commands": JSON.stringify(initialData),
 														"timezoneoffset": new Date().getTimezoneOffset()
 													})
@@ -1457,8 +568,8 @@
 									}
 									else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
 									{
-										$.post("{% url 'submitAddValue' %}", 
-												{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+										$.post("{% url 'addValue' %}", 
+												{ csrfmiddlewaretoken: storedcsrftoken, 
 												  containerUUID: containerUUID,
 												  elementUUID: cell.field.nameID,
 												  valueUUID: d.getValueID(),
@@ -1559,8 +670,8 @@
 										else
 										{
 											initialData = [{id: oldData.id, elementID: "_value", value: d.getValueID()}];
-											$.post("{% url 'submitUpdateValues' %}", 
-													{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+											$.post("{% url 'updateValues' %}", 
+													{ csrfmiddlewaretoken: storedcsrftoken, 
 														"commands": JSON.stringify(initialData),
 														"timezoneoffset": new Date().getTimezoneOffset()
 													})
@@ -1581,8 +692,8 @@
 									}
 									else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
 									{
-										$.post("{% url 'submitAddValue' %}", 
-												{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+										$.post("{% url 'addValue' %}", 
+												{ csrfmiddlewaretoken: storedcsrftoken, 
 												  containerUUID: containerUUID,
 												  elementUUID: cell.field.nameID,
 												  valueUUID: d.getValueID(),
@@ -1725,13 +836,13 @@
 					dataTypes[cell.field.dataType].appendData(cell, initialData);
 				});
 				
-			var jsonArray = { csrfmiddlewaretoken: '{{ csrf_token }}', 
+			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
 						typeID: containerCell.field.ofKindID,
 						properties: JSON.stringify(initialData),
 						timezoneoffset: new Date().getTimezoneOffset()
 					};
 			
-			$.post("{% url 'submitCreateInstance' %}", 
+			$.post("{% url 'createInstance' %}", 
 					jsonArray)
 				  .done(function(json, textStatus, jqXHR)
 					{
@@ -1766,7 +877,7 @@
 					dataTypes[cell.field.dataType].appendData(cell, initialData);
 				});
 				
-			var jsonArray = { csrfmiddlewaretoken: '{{ csrf_token }}', 
+			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
 						typeID: containerCell.field.ofKindID,
 						properties: JSON.stringify(initialData),
 						timezoneoffset: new Date().getTimezoneOffset()
@@ -1778,7 +889,7 @@
 			if (containerUUID)
 				jsonArray.containerUUID = containerUUID;
 			
-			$.post("{% url 'submitCreateInstance' %}", 
+			$.post("{% url 'createInstance' %}", 
 					jsonArray)
 				  .done(function(json, textStatus, jqXHR)
 					{

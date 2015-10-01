@@ -24,16 +24,21 @@ urlpatterns = [
     url(r'^user/', include('custom_user.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^$', views.home, name='home'),
-    url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
     url(r'^list', views.list, name='list'),
     url(r'^servicelocator', views.serviceLocator, name='serviceLocator'),
-    url(r'^configure/submit/createinstance/', views.submitCreateInstance, name='submitCreateInstance'),
-    url(r'^configure/submit/updateValues/', views.submitUpdateValues, name='submitUpdateValues'),
-    url(r'^configure/submit/addValue/', views.submitAddValue, name='submitAddValue'),
-    url(r'^configure/selectAll/', views.selectAll, name='selectAll'),
-    url(r'^configure/get/data/', views.getData, name='getData'),
-    url(r'^configure/get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
-    url(r'^configure/get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
+
+    url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
+
+    url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
+
+    url(r'^createinstance/', views.createInstance, name='createInstance'),
+    url(r'^updateValues/', views.updateValues, name='updateValues'),
+    url(r'^addValue/', views.addValue, name='addValue'),
+    
+    url(r'^selectAll/', views.selectAll, name='selectAll'),
+    url(r'^get/data/', views.getData, name='getData'),
+    url(r'^get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
+    url(r'^get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
 ]
 
 BootStrapper.initializeUUNames()
