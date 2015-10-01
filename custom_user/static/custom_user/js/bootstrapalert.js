@@ -9,11 +9,13 @@ $(document).ready(function(){
 		parentDiv.html('<div class="alert ' + alertClass + ' alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><span>'+message+'</span></div>')
 	}
 	bootstrap_alert.warning = function(message, divID) {
-		if (divID === 'undefined') { divID = '#myAlert'; }
+		divID = (typeof divID !== 'undefined' ? divID : '#myAlert');
+
 		bootstrap_alert.show($(divID), message, "alert-danger");
 	}
 	bootstrap_alert.success = function(message, divID) {
-		if (divID === 'undefined') { divID = '#myAlert'; }
+		divID = (typeof divID !== 'undefined' ? divID : '#myAlert');
+
 		bootstrap_alert.show($(divID), message, "alert-success");
 	}
 	closealert = function() { 
