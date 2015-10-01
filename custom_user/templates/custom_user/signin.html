@@ -144,11 +144,11 @@
 				
 			bootstrap_alert.show($('#myAlert'), "Signing In...", "alert-info");
 		    $.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
-		  								  "username" : $("#id_username").val(),
-		  								  "password" : $("#id_password").val(),
-		  								  "timezoneoffset" : new Date().getTimezoneOffset() }, 
+		  								  username : $("#id_username").val(),
+		  								  password : $("#id_password").val(),
+		  								  timezoneoffset : new Date().getTimezoneOffset() }, 
 		  								function(json){
-		  	if (json['success']) {
+		  	if (json.success) {
 		  		if ($("#id_rememberme").prop("checked"))
 		  			$.cookie("email", $("#id_username").val(), { expires : 10 });
 		  		else
@@ -157,7 +157,7 @@
 		  		window.location = "{{backURL}}"
 		  	}
 		  	else
-				bootstrap_alert.warning(json['error']);
+				bootstrap_alert.warning(json.error);
 		  })
 		  	.fail(function(jqXHR, textStatus, errorThrown)
 			{
