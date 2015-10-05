@@ -11,10 +11,13 @@ import json
 import logging
 import traceback
 import uuid
+import urllib.parse
+import html.parser
 
 from monitor.models import LogRecord
-from consentrecords.models import TransactionState, Fact, UniqueObject
+from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue
 from custom_user import views as userviews
+from parse.cssparser import parser as cssparser
 
 def home(request):
     if request.user.is_authenticated():
@@ -72,18 +75,26 @@ def list(request):
     LogRecord.emit(request.user, 'consentrecords/list', '')
     
     # The type of the root object.
-    rootType = request.GET.get('type', "_uuname")
-    rootID = Fact.getNamedUUID(rootType);
+    rootType = request.GET.get('type', None)
+    rootID = rootType and Fact.getNamedUUID(rootType);
+    path=request.GET.get('path', "_uuname")
+    header=request.GET.get('header', "List")
             
     template = loader.get_template('consentrecords/configuration.html')
     
-    context = RequestContext(request, {
+    logger = logging.getLogger(__name__)
+    logger.error("list path: %s" % str(urllib.parse.unquote_plus(path)))
+    
+    argList = {
         'user': request.user,
         'canShowObjects': request.user.is_superuser,
         'canAddObject': request.user.is_superuser,
-        'rootType': rootType,
-        'rootID': rootID.hex,
-    })
+        'path': urllib.parse.unquote_plus(path),
+        'header': header,
+        }
+    if rootID:
+        argList["rootID"] = rootID.hex
+    context = RequestContext(request, argList)
         
     return HttpResponse(template.render(context))
     
@@ -118,8 +129,8 @@ def createInstance(request):
         raise Http404("createInstance only responds to POST methods")
     
     # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
+    if not request.user.is_authenticated:
+        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     logger = logging.getLogger(__name__)
     logger.error("%s" % str(request.POST))
@@ -129,11 +140,11 @@ def createInstance(request):
         instanceType = request.POST.get('typeName', None)
         instanceUUID = request.POST.get('typeID', None)
         if instanceUUID:
-            ofKindObject = UniqueObject(instanceUUID)
+            ofKindObject = LazyInstance(instanceUUID)
         elif not instanceType:
             return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
         else:
-            ofKindObject = UniqueObject(Fact.getNamedUUID(instanceType))
+            ofKindObject = LazyInstance(Fact.getNamedUUID(instanceType))
         
         # An optional container for the new object.
         containerUUID = request.POST.get('containerUUID', None)
@@ -163,18 +174,16 @@ def createInstance(request):
         with transaction.atomic():
             transactionState = TransactionState(request.user, timezoneoffset)
             if containerUUID:
-                containerObject = UniqueObject(containerUUID)
-                # If containerObject is a reference, then get the value for the reference.
-                containerObject = containerObject.getSubObject(Fact.valueUUID()) or containerObject
+                containerObject = LazyInstance(containerUUID)
             else:
                 containerObject = None
     
             item, newValue = ofKindObject.createInstance(containerObject, elementID, index, propertyList, transactionState)
         
-        if containerObject:
-            results = {'success':True, 'object': newValue.getValueData(ofKindObject)}
-        else:    
-            results = {'success':True, 'object': item.getReferenceData(ofKindObject)}
+            if containerObject:
+                results = {'success':True, 'object': newValue.getReferenceData(item, ofKindObject)}
+            else:    
+                results = {'success':True, 'object': item.getReferenceData(ofKindObject)}
             
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -212,12 +221,10 @@ def updateValues(request):
             transactionState = TransactionState(request.user, timezoneoffset)
             for c in commands:
                 if "id" in c:
-                    item = UniqueObject(c["id"])
-                    elementName = c["elementName"]
-                    elementID = Fact.getNamedUUID(elementName, None)
-                    item.updateValue(elementID, c["value"], transactionState);
+                    item = LazyValue(c["id"])
+                    item.updateValue(c["value"], transactionState);
                 elif "containerUUID" in c:
-                    container = UniqueObject(c["containerUUID"])
+                    container = LazyInstance(c["containerUUID"])
                     elementID = c["elementUUID"]
                     newValue = c["value"]
                     newIndex = c["index"]
@@ -262,7 +269,7 @@ def addValue(request):
         if elementUUID is None:
             return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
             
-        # An value added to the container.
+        # A value added to the container.
         valueUUID = request.POST.get('valueUUID', None)
         
         if valueUUID is None:
@@ -278,7 +285,7 @@ def addValue(request):
             transactionState = TransactionState(request.user, timezoneoffset)
         
             elementID = uuid.UUID(elementUUID)
-            container = UniqueObject(containerUUID)
+            container = LazyInstance(containerUUID)
         
             if indexString:
                 newIndex = container.updateElementIndexes(elementID, int(indexString), transactionState)
@@ -302,23 +309,37 @@ def addValue(request):
 def selectAll(request):
     LogRecord.emit(request.user, 'consentrecords/selectAll', '')
     
+    logger = logging.getLogger(__name__)
+    logger.error("selectAll(%s)" % str(request))
+    
     try:
         ofKindName = request.GET.get("ofKindName", "_uuname")
         ofKindID = request.GET.get("ofKindID", None)
-    
-        if ofKindID:
-            ofKindUUID = uuid.UUID(ofKindID)
+        path = request.GET.get("path", None)
+        
+        if path:
+            html_parser = html.parser.HTMLParser()
+            unescaped = html_parser.unescape(path)
+            tokens = cssparser.tokenize(unescaped)
+            a, remainder = cssparser.cascade(tokens)
+            while len(remainder) > 0:
+            	newA, remainder = cssparser.cascade(remainder)
+            	a.extend(newA)
+            	
+            logger.error("selectAll tokens(%s)" % str(tokens))
+            logger.error("selectAll cascaded(%s)" % str(a))
+            p = LazyInstance.selectAll(a)
         else:
-            ofKindUUID = Fact.getNamedUUID(ofKindName, None)
+            if ofKindID:
+                ofKindUUID = uuid.UUID(ofKindID)
+            else:
+                ofKindUUID = Fact.getNamedUUID(ofKindName, None)
     
-        # Check the security access for this operation for the current user.
-        if not request.user.is_superuser:
-            return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
-    
-        p = UniqueObject.rootDescriptors(ofKindUUID)
+            p = LazyInstance.rootDescriptors(ofKindUUID)
         
         results = {'success':True, 'objects': p}
         
+        logger.error("selectAll results: %s" % str(results))
     except Fact.NoEditsAllowedError:
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
     except Exception as e:
@@ -332,8 +353,6 @@ def getAddConfiguration(request):
     LogRecord.emit(request.user, 'consentrecords/getAddConfiguration', '')
     
     # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
     
     try:
         logger = logging.getLogger(__name__)
@@ -341,13 +360,13 @@ def getAddConfiguration(request):
         typeName = request.GET.get('typeName', None)
         typeUUID = request.GET.get('typeID', None)
         if typeUUID:
-            kindObject = UniqueObject(typeUUID)
-        elif not typeName:
-            return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
+            kindObject = LazyInstance(typeUUID)
+        elif typeName:
+            kindObject = LazyInstance(Fact.getNamedUUID(typeName))
         else:
-            kindObject = UniqueObject(Fact.getNamedUUID(typeName))
+            return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
-        configurationObject = kindObject.getSubValueObject(verb=Fact.configurationUUID())
+        configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
         
         p = configurationObject.getData()
         
@@ -370,8 +389,6 @@ def getData(request):
     LogRecord.emit(request.user, 'consentrecords/getData', '')
     
     # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
     
     try:
         logger = logging.getLogger(__name__)
@@ -382,19 +399,11 @@ def getData(request):
         if not uuidString:
             return JsonResponse({'success':False, 'error': "id was not specified in getData"})
 
-        uuObject = UniqueObject(uuidString)
+        uuObject = LazyInstance(uuidString)
         
-        # If it is a reference, then get the value for the reference.
-        uuObject = uuObject.getSubObject(Fact.valueUUID()) or uuObject
-        
-        instanceOfFact = uuObject.getSubFact(verb=Fact.instanceOfUUID())
-        if instanceOfFact:
-            kindObject = UniqueObject(instanceOfFact.directObject)
-        else:
-            # In this case, the object is a uuName
-            kindObject = UniqueObject(Fact.uuNameUUID())
+        kindObject = LazyInstance(uuObject.typeID)
             
-        configurationObject = kindObject.getSubValueObject(verb=Fact.configurationUUID())
+        configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
         
         if not configurationObject:
             return JsonResponse({'success':False, 'error': "the specified item is not configured"})
@@ -413,52 +422,24 @@ def getData(request):
             
     return JsonResponse(results)
     
-# Returns in the values array an array of enumeration values with their name, uuid and index.
-# This request is made when getting the possible values for an enumeration pick operation.    
-def getEnumerationValues(request):
-    LogRecord.emit(request.user, 'consentrecords/getEnumerationValues', '')
-    
-    # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
-    
-    try:
-        fieldID = request.GET.get('id', None)
-        
-        if not fieldID:
-            return JsonResponse({'success':False, 'error': "type was not specified in getEnumerationValues"})
-        
-        fieldObject = UniqueObject(fieldID)
-                
-        results = {'success':True, 'values': fieldObject.enumerationValues}
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
-            
-    return JsonResponse(results)
-
 class UserFactory:
     def getUserObjectID(userID):
-        userElementID = Fact.getNamedUUID(Fact.userIDName)
+        fieldID = Fact.getNamedUUID(Fact.userIDName)
         with connection.cursor() as c:
-            sql = "SELECT f1.subject" + \
-              " FROM consentrecords_fact f1" + \
-              "      JOIN consentrecords_fact f2" + \
-              "          ON (f2.subject = f1.directObject" + \
-              "              AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f2.id))" + \
-              " WHERE f1.verb = %s and f2.verb = %s and f2.directObject = %s" + \
-              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedfact df WHERE df.fact_id = f1.id)"
-            c.execute(sql, [userElementID.hex, Fact.valueUUID().hex, userElementID.hex])
+            sql = "SELECT v1.instance_id" + \
+              " FROM consentrecords_value v1" + \
+              " WHERE v1.fieldid = %s and v1.stringvalue = %s" + \
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+            c.execute(sql, [fieldID.hex, userID.hex])
             r = c.fetchone()
             return r and r[0]
             
     def createUserObjectID(user, timezoneOffset):
         with transaction.atomic():
             transactionState = TransactionState(user, timezoneOffset)
-            ofKindObject = UniqueObject(Fact.getNamedUUID(Fact.userName))
+            ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
             item, newValue = ofKindObject.createInstance(None, None, 0, [], transactionState)
-            item.addValue(Fact.getNamedUUID(Fact.userIDName), user.id, 0, transactionState)
+            item.addValue(Fact.getNamedUUID(Fact.userIDName), user.id.hex, 0, transactionState)
             item.addValue(Fact.getNamedUUID(Fact.emailName), user.email, 0, transactionState)
             if user.first_name:
                 item.addValue(Fact.getNamedUUID(Fact.firstNameName), user.first_name, 0, transactionState)
@@ -484,4 +465,21 @@ def submitsignin(request):
         results = {'success':False, 'error': str(e)}
         
     return JsonResponse(results)
+
+def submitNewUser(request):
+    LogRecord.emit(request.user, 'consentrecords/submitNewUser', '')
+        
+    try:
+        timezoneOffset = request.POST["timezoneoffset"]
     
+        results = userviews.newUserResults(request)
+        if results["success"]:
+            userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
+            results["userID"] = userID         
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
+    return JsonResponse(results)
+

@@ -28,6 +28,7 @@ urlpatterns = [
     url(r'^servicelocator', views.serviceLocator, name='serviceLocator'),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
+    url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
 
     url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
 
@@ -38,7 +39,6 @@ urlpatterns = [
     url(r'^selectAll/', views.selectAll, name='selectAll'),
     url(r'^get/data/', views.getData, name='getData'),
     url(r'^get/addConfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
-    url(r'^get/enumerationvalues/', views.getEnumerationValues, name='getEnumerationValues'),
 ]
 
 BootStrapper.initializeUUNames()

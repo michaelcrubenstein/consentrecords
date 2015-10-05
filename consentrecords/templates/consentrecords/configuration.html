@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>{{rootType}}</title>
+    <title>{{header}}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
@@ -47,7 +47,7 @@
 					</div>
 				</div>
 				<div class="site-navbar-commands">
-					<div class="site-title site-fill"><span class="site-inner-fill">{{rootType}}</span></div>
+					<div class="site-title site-fill"><span class="site-inner-fill">{{header}}</span></div>
 				</div>
 			</div>
 		</nav>
@@ -80,11 +80,10 @@
 	<script type="text/JavaScript">
 	
 		var storedcsrftoken = "{{ csrf_token }}";
-		var pluralName = "{{rootType}}s";
-		var singularName = "{{rootType}}";
+		var headerText = "{{header}}";
 		
-		$("title").text(pluralName);
-		$(".site-navbar-commands .site-title .site-inner-fill").text(pluralName);
+		$("title").text(headerText);
+		$(".site-navbar-commands .site-title .site-inner-fill").text(headerText);
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.
@@ -129,12 +128,15 @@
 
 			var parentPanel = document.getElementById("id_panel1")
 			var panelDiv = d3.select(parentPanel);
-			panelDiv.attr("headerText", "{{rootType}}");
+			panelDiv.attr("headerText", headerText);
 
 			var cell = new Cell();
-			cell.field = {name: singularName,
-								dataType: "_object",
-								ofKindID : "{{rootID}}" };
+			cell.field = {name: headerText,
+						  dataType: "_object",
+			{% if rootID %}
+						  ofKindID: "{{rootID}}"
+			{% endif %}
+						  };
 			cell.setup(null);
 			
 			var itemsDiv = d3.select("#id_objects")
@@ -150,18 +152,22 @@
 				});
 			});
 			
-			$("#id_addUniversalObjectButton").click(function(e) {
-				if (prepare_click())
-				{
-					show_click_feedback(this);
+			{% if rootID %}
+				$("#id_addUniversalObjectButton").click(function(e) {
+					if (prepare_click())
+					{
+						show_click_feedback(this);
 				
-					show_add_object_panel(cell, null, panelDiv, submit_create_root_instance);
-				}
+						show_add_object_panel(cell, null, panelDiv, submit_create_root_instance);
+					}
 
-				e.preventDefault();
-			});
+					e.preventDefault();
+				});
+			{% else %}
+				$("#id_addUniversalObjectButton").css("display", "none");
+			{% endif %}
 			
-			$.getJSON("{% url 'selectAll' %}", { "ofKindName" : "{{rootType}}" }, function(json){
+			$.getJSON("{% url 'selectAll' %}", { "path" : "{{path}}" }, function(json){
 				if (json.success) {
 					var newObjects = [];
 					$(json.objects).each(function()
@@ -185,7 +191,7 @@
 				else
 				{
 					bootstrap_alert.warning(json.error, ".alert-container");
-					unblock_click();
+					/* Don't unblock here, because there was no block. */
 				}
 			});
 		});
@@ -256,99 +262,47 @@
 				  .fail(standard_fail_function);
 		}
 			
-		function show_add_value_panel(containerCell, containerUUID, containerPanel, storeDataFunction) {
-			var panelDiv = create_panel(containerPanel, containerCell, containerCell.field.name)
-				.classed("list-panel", true);
-		
-			var navContainer = panelDiv.appendNavContainer();
-		
-			var backButton = navContainer.appendLeftButton()
-				.on("click", handle_close_right_event);
-			backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
-			backButton.append("span").text(" " + containerPanel.attr("headerText"));
-		
-			var panel2Div = panelDiv.appendScrollArea();
-			panel2Div.appendHeader();
-			var alertContainer = panel2Div.append("div").classed("alert-container", true);
-			var onSuccessFunction = function(newData) {
-				hide_panel_down(panelDiv.node());
-			};
-			
-			$.getJSON("{% url 'getEnumerationValues' %}",
-				{ "id" : containerCell.field.id }, 
-				function(json)
-				{
-					if (json.success) {
-						var values = [];
-						$(json.values).each(function()
-						{
-							values.push(dataTypes[containerCell.field.dataType].copyValue(this));
-						});
-					
-						var sections = panel2Div.appendSections(values);
-					
-						var buttons = appendButtons(sections)
-							.on("click", function(d) {
-								if (prepare_click())
-								{
-									storeDataFunction(containerCell, containerUUID, d, onSuccessFunction);
-								}
-								d3.event.preventDefault();
-							});
-						sections.append("hr");
-					
-						window.scrollTo(0, 0);
-						show_panel_left(panelDiv.node());
-					}
-					else
-					{
-						alert(json.error);
-					}
-				}
-			);
-		}	
-			
 		/* Displays a panel in which the specified object's contents appear.
 		 */
 		function show_view_object_panel(objectData, containerCell, containerPanel) {
-			var panelDiv = create_panel(containerPanel, 
-										objectData, objectData.getDescription())
-				.classed("show-panel", true);
-	
-			var navContainer = panelDiv.appendNavContainer();
-		
-			var backButton = navContainer.appendLeftButton()
-				.on("click", handle_close_right_event);
-			backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
-			backButton.append("span").text(" " + containerPanel.attr("headerText"));
-			
-			var editButton = navContainer.appendRightButton()
-				.on("click", function(d) {
-					if (prepare_click())
-					{
-						show_click_feedback(this);
-						
-						show_edit_object_panel(objectData, containerCell, panelDiv);
-					}
-					d3.event.preventDefault();
-				});
-			editButton.append("span").text("Edit");
-			
-			var panel2Div = panelDiv.appendScrollArea();
-		
-			var headerDiv = panel2Div.appendHeader();
-			objectData.add_target("dataChanged", headerDiv.node());
-			$(headerDiv.node()).on("dataChanged", function(e) {
-					d3.select(this).text(objectData.getDescription());
-				});
-
-			var alertContainer = panel2Div.append("div").classed("alert-container", true);
-									
-			window.scrollTo(0, 0);
-			show_panel_left(panelDiv.node());
-			
 			if (objectData.value.cells)
 			{
+				var panelDiv = create_panel(containerPanel, 
+											objectData, objectData.getDescription())
+					.classed("show-panel", true);
+	
+				var navContainer = panelDiv.appendNavContainer();
+		
+				var backButton = navContainer.appendLeftButton()
+					.on("click", handle_close_right_event);
+				backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+				backButton.append("span").text(" " + containerPanel.attr("headerText"));
+			
+				var editButton = navContainer.appendRightButton()
+					.on("click", function(d) {
+						if (prepare_click())
+						{
+							show_click_feedback(this);
+						
+							show_edit_object_panel(objectData, containerCell, panelDiv);
+						}
+						d3.event.preventDefault();
+					});
+				editButton.append("span").text("Edit");
+			
+				var panel2Div = panelDiv.appendScrollArea();
+		
+				var headerDiv = panel2Div.appendHeader();
+				objectData.add_target("dataChanged", headerDiv.node());
+				$(headerDiv.node()).on("dataChanged", function(e) {
+						d3.select(this).text(objectData.getDescription());
+					});
+
+				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+									
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
+			
 				panel2Div.show_view_cells(objectData, containerCell, panelDiv);
 			}
 			else if (objectData.getValueID())
@@ -364,10 +318,12 @@
 								objectData.importCell(json.cells[i]);
 							}
 						
-							panel2Div.show_view_cells(objectData, containerCell, panelDiv);
+							/* Now that the cells are loaded, try again. */
+							show_view_object_panel(objectData, containerCell, containerPanel);
 						}
 						else {
-							alert(json['error']);
+							alert(json.error);
+							unblock_click();
 						}
 					}
 				);
@@ -416,6 +372,7 @@
 						}
 						else {
 							alert(json.error);
+							unblock_click();
 						}
 					}
 				);
@@ -499,125 +456,6 @@
 			});
 		}
 		
-		/* For root objects, the containerPanel.name is the type name of the container;
-		   for container objects, the containerPanel.name is the field name of the object within its container.
-		 */
-		function show_pick_value_panel(oldData, cell, containerUUID, containerPanel) {
-			$.getJSON("{% url 'getEnumerationValues' %}",
-				{ "id" : cell.field.id }, 
-				function(json)
-				{
-					if (json.success) {
-						var values = [];
-						$(json.values).each(function()
-						{
-							values.push(dataTypes[cell.field.dataType].copyValue(this));
-						});
-					
-						var panelDatum;
-						if (oldData && oldData.id)
-							panelDatum = oldData;
-						else
-							panelDatum = cell;
-						var panelDiv = create_panel(containerPanel, 
-													panelDatum, cell.field.name)
-							.classed("list-panel", true);
-					
-						var navContainer = panelDiv.appendNavContainer();
-					
-						var backButton = navContainer.appendLeftButton()
-							.on("click", handle_close_right_event);
-						backButton.append("span").text("Cancel");
-						
-						var panel2Div = panelDiv.appendScrollArea();
-						panel2Div.appendHeader();
-						var alertContainer = panel2Div.append("div").classed("alert-container", true);
-						
-						var sections = panel2Div.appendSections(values);
-					
-						var buttons = appendButtons(sections)
-							.on("click", function(d) {
-								if (prepare_click())
-								{
-									if (oldData && oldData.id != null)
-									{
-										if (d.getValueID() == oldData.getValueID()) {
-											hide_panel_right(panelDiv.node());
-										}
-										else
-										{
-											initialData = [{id: oldData.id, elementID: "_value", value: d.getValueID()}];
-											$.post("{% url 'updateValues' %}", 
-													{ csrfmiddlewaretoken: storedcsrftoken, 
-														"commands": JSON.stringify(initialData),
-														"timezoneoffset": new Date().getTimezoneOffset()
-													})
-												  .done(function(json, textStatus, jqXHR)
-													{
-														if (json.success) {
-															oldData.completeUpdateValue(d);
-															hide_panel_right(panelDiv.node());
-														}
-														else {
-															bootstrap_alert.warning(json.error, ".alert-container");
-															unblock_click();
-														}
-													})
-												  .fail(standard_fail_function);
-										}
-									}
-									else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
-									{
-										$.post("{% url 'addValue' %}", 
-												{ csrfmiddlewaretoken: storedcsrftoken, 
-												  containerUUID: containerUUID,
-												  elementUUID: cell.field.nameID,
-												  valueUUID: d.getValueID(),
-												  timezoneoffset: new Date().getTimezoneOffset()
-												})
-											  .done(function(json, textStatus, jqXHR)
-												{
-													if (json.success) {
-														closealert();
-														var newData = dataTypes[cell.field.dataType].newValue();
-														newData.id = json.id;
-														newData.value.description = d.getDescription();
-														newData.value.id = d.getValueID();
-														cell.addValue(newData);
-														hide_panel_right(panelDiv.node());
-													}
-													else {
-														bootstrap_alert.warning(json.error, ".alert-container");
-														unblock_click();
-													}
-												})
-											  .fail(standard_fail_function);
-									}
-									else 
-									{
-										closealert();
-										store_unsaved_picked_value(cell, oldData, d);
-										hide_panel_right(panelDiv.node());
-									}
-								}
-								d3.event.preventDefault();
-							});
-						buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-							function(d) { return oldData && d.getDescription() == oldData.getDescription(); });
-						sections.append("hr");
-					
-						window.scrollTo(0, 0);
-						show_panel_left(panelDiv.node());
-					}
-					else
-					{
-						alert(json.error);
-						unblock_click();
-					}
-				}
-			);
-		}
-		
 		/* Displays a panel from which a user can select an object of the kind required 
 			for objects in the specified cell.
 		 */
@@ -639,9 +477,16 @@
 			var panel2Div = panelDiv.appendScrollArea();
 			panel2Div.appendHeader();
 			var alertContainer = panel2Div.append("div").classed("alert-container", true);
+			var argList;
+			if ("pickObjectPath" in cell.field && cell.field.pickObjectPath)
+				argList = { "path" : cell.field.pickObjectPath }
+			else if ("ofKindID" in cell.field && cell.field.ofKindID)
+				argList = { "ofKindID" : cell.field.ofKindID }
+			else
+				throw "object field is not properly configured"
 			
 			$.getJSON("{% url 'selectAll' %}", 
-				{ "ofKindID" : cell.field.ofKindID },
+				argList,
 				function(json)
 				{
 					if (json.success) {
@@ -651,10 +496,13 @@
 							rootObjects.push(dataTypes._object.copyValue(this));
 						});
 						
-						rootObjects.sort(function(a, b)
-							{
-								return a.getDescription().localeCompare(b.getDescription());
-							});
+						if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
+						{
+							rootObjects.sort(function(a, b)
+								{
+									return a.getDescription().localeCompare(b.getDescription());
+								});
+						}
 					
 						var sections = panel2Div.appendSections(rootObjects);
 					
@@ -669,7 +517,7 @@
 										}
 										else
 										{
-											initialData = [{id: oldData.id, elementID: "_value", value: d.getValueID()}];
+											initialData = [{id: oldData.id, value: d.getValueID()}];
 											$.post("{% url 'updateValues' %}", 
 													{ csrfmiddlewaretoken: storedcsrftoken, 
 														"commands": JSON.stringify(initialData),
@@ -735,7 +583,8 @@
 					}
 					else
 					{
-						alert(json['error']);
+						alert(json.error);
+						unblock_click();
 					}
 				}
 			);
@@ -801,7 +650,10 @@
 						show_panel_up(panelDiv.node());
 					}
 					else
+					{
 						alert(json.error);
+						unblock_click();
+					}
 				}
 			);
 		}

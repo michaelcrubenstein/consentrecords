@@ -244,9 +244,7 @@ def checkUnusedEmail(request):
     
     return JsonResponse(results)
 
-def newUser(request):
-    LogRecord.emit(request.user, 'custom_user/newUser', '')
-
+def newUserResults(request):
     results = {'success':False, 'error': 'newUser failed'}
     try:
         if request.method != "POST":
@@ -267,22 +265,25 @@ def newUser(request):
                 if user.is_active:
                     login(request, user)
                     if request.user is None:
-                        results = {'success':False, 'error': 'user login failed.'}
+                        return {'success':False, 'error': 'user login failed.'}
                     else:
-                        results = {'success':True}
+                        return {'success':True}
                 else:
-                    results = {'success':False, 'error': 'this user is disabled.'}
+                    return {'success':False, 'error': 'this user is disabled.'}
                     # Return a 'disabled account' error message
             else:
-                results = {'success':False, 'error': 'This login is invalid.'}
+                return {'success':False, 'error': 'This login is invalid.'}
     except IntegrityError as e:
-        results = {'success':False, 'error': 'That email address has already been used to sign up.'}
+        return {'success':False, 'error': 'That email address has already been used to sign up.'}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return {'success':False, 'error': str(e)}
+
+def newUser(request):
+    LogRecord.emit(request.user, 'custom_user/newUser', '')
     
-    return JsonResponse(results)
+    return JsonResponse(newUserResults(results))
 
 def updatePassword(request):
     LogRecord.emit(request.user, 'custom_user/updatePassword', '')

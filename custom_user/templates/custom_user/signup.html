@@ -123,12 +123,13 @@
 			{
 				bootstrap_alert.show($('#myAlert'), "Signing up...<br>(this may take a minute)", "alert-info");
 		
-				deferredObject = $.post("{% url 'newUser' %}", 
+				deferredObject = $.post("{% url 'submitNewUser' %}", 
 					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
-						"username": $("#id_username").val(),
-						"password": $("#id_password").val(),
-						"firstName": $("#id_firstname").val(),
-						"lastName": $("#id_lastname").val()
+						username: $("#id_username").val(),
+						password: $("#id_password").val(),
+						firstName: $("#id_firstname").val(),
+						lastName: $("#id_lastname").val(),
+		  				timezoneoffset : new Date().getTimezoneOffset()
 					})
 				  .done(function(json, textStatus, jqXHR)
 					{

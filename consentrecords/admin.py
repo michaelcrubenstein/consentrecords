@@ -3,19 +3,19 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
 from django import forms
 
-from consentrecords.models import Fact, DeletedFact, Transaction
+from consentrecords.models import Instance, DeletedInstance, Value, DeletedValue, Transaction
 
-class FactAdmin(admin.ModelAdmin):
+class InstanceAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'subject', 'verb', 'directObject', 'verbString', 'transaction')
+    list_display = ('id', 'typeID', 'parentID', '_description', '_parentDescription', 'transaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'subject', 'verb', 'directObject', 'transaction')}),
+        (None, {'fields': ('id', 'typeID', 'parentID', '_description', '_parentDescription', 'transaction')}),
     )
-    readonly_fields = ('id','subject','verb','directObject','transaction')
-    search_fields = ('subject','verb','directObject',)
+    readonly_fields = ('id','typeID', 'parentID','transaction')
+    search_fields = ('typeID', 'parentID',)
 
-class DeletedFactAdmin(admin.ModelAdmin):
+class DeletedInstanceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('id', 'transaction')}),
@@ -23,15 +23,41 @@ class DeletedFactAdmin(admin.ModelAdmin):
     readonly_fields = ('id','transaction')
     search_fields = ('id',)
 
-class FactInline(admin.StackedInline):
-    model = Fact
+class InstanceInline(admin.StackedInline):
+    model = Instance
     extra = 0
     
-class DeletedFactInline(admin.StackedInline):
-    model = DeletedFact
+class DeletedInstanceInline(admin.StackedInline):
+    model = DeletedInstance
     extra = 0
     
-class TransactionFactAdmin(admin.ModelAdmin):
+class ValueAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'position', 'transaction')
+
+    fieldsets = (
+        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'position', 'transaction')}),
+    )
+    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'position','transaction')
+    search_fields = ('instance', 'fieldID', 'stringValue')
+
+class DeletedValueAdmin(admin.ModelAdmin):
+
+    fieldsets = (
+        (None, {'fields': ('id', 'transaction')}),
+    )
+    readonly_fields = ('id','transaction')
+    search_fields = ('id',)
+
+class ValueInline(admin.StackedInline):
+    model = Value
+    extra = 0
+    
+class DeletedValueInline(admin.StackedInline):
+    model = DeletedValue
+    extra = 0
+    
+class TransactionAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'user', 'creation_time', 'time_zone_offset')
     fieldsets = (
@@ -40,8 +66,10 @@ class TransactionFactAdmin(admin.ModelAdmin):
     readonly_fields = ('id','user', 'creation_time', 'time_zone_offset')
     search_fields = ('id',)
     
-    inlines = [FactInline, DeletedFactInline]
+    inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline]
 
-admin.site.register(Fact, FactAdmin)
-admin.site.register(DeletedFact, DeletedFactAdmin)
-admin.site.register(Transaction, TransactionFactAdmin)
+admin.site.register(Instance, InstanceAdmin)
+admin.site.register(DeletedInstance, DeletedInstanceAdmin)
+admin.site.register(Value, ValueAdmin)
+admin.site.register(DeletedValue, DeletedValueAdmin)
+admin.site.register(Transaction, TransactionAdmin)
