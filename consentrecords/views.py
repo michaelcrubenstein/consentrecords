@@ -40,6 +40,7 @@ def userHome(request):
     template = loader.get_template('consentrecords/userHome.html')
     context = RequestContext(request, {
         'user': request.user,
+        'userID': UserFactory.getUserObjectID(request.user.id),
         'backURL': '/',
     })
         
@@ -202,8 +203,6 @@ def updateValues(request):
         raise Http404("updateValues only responds to POST methods")
     
     # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
     
     logger = logging.getLogger(__name__)
     logger.error("%s" % request.POST)
@@ -253,8 +252,6 @@ def addValue(request):
         raise Http404("addValue only responds to POST methods")
     
     # Check the security access for this operation for the current user.
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
     
     logger = logging.getLogger(__name__)
     logger.error("%s" % str(request.POST))
@@ -309,9 +306,6 @@ def addValue(request):
 def selectAll(request):
     LogRecord.emit(request.user, 'consentrecords/selectAll', '')
     
-    logger = logging.getLogger(__name__)
-    logger.error("selectAll(%s)" % str(request))
-    
     try:
         ofKindName = request.GET.get("ofKindName", "_uuname")
         ofKindID = request.GET.get("ofKindID", None)
@@ -322,12 +316,7 @@ def selectAll(request):
             unescaped = html_parser.unescape(path)
             tokens = cssparser.tokenize(unescaped)
             a, remainder = cssparser.cascade(tokens)
-            while len(remainder) > 0:
-            	newA, remainder = cssparser.cascade(remainder)
-            	a.extend(newA)
-            	
-            logger.error("selectAll tokens(%s)" % str(tokens))
-            logger.error("selectAll cascaded(%s)" % str(a))
+                
             p = LazyInstance.selectAll(a)
         else:
             if ofKindID:
@@ -339,7 +328,6 @@ def selectAll(request):
         
         results = {'success':True, 'objects': p}
         
-        logger.error("selectAll results: %s" % str(results))
     except Fact.NoEditsAllowedError:
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
     except Exception as e:
@@ -355,7 +343,6 @@ def getAddConfiguration(request):
     # Check the security access for this operation for the current user.
     
     try:
-        logger = logging.getLogger(__name__)
         # Get the uuid for the configuration.
         typeName = request.GET.get('typeName', None)
         typeUUID = request.GET.get('typeID', None)
@@ -370,9 +357,6 @@ def getAddConfiguration(request):
         
         p = configurationObject.getData()
         
-        logger = logging.getLogger(__name__)
-        logger.error("getAddConfiguration result: %s" % str(p))
-        
         results = {'success':True, 'cells': p}
     except Fact.NoEditsAllowedError:
         logger = logging.getLogger(__name__)
@@ -384,6 +368,17 @@ def getAddConfiguration(request):
         results = {'success':False, 'error': str(e)}
             
     return JsonResponse(results)
+
+def getCells(uuObject):
+    kindObject = LazyInstance(uuObject.typeID)
+        
+    configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
+    
+    if not configurationObject:
+        return JsonResponse({'success':False, 'error': "the specified item is not configured"})
+    
+    cells = configurationObject.getData(uuObject)
+    return {"id": uuObject.id.hex, "parentID": uuObject.parentID, "cells" : cells }
     
 def getData(request):
     LogRecord.emit(request.user, 'consentrecords/getData', '')
@@ -391,28 +386,23 @@ def getData(request):
     # Check the security access for this operation for the current user.
     
     try:
-        logger = logging.getLogger(__name__)
-        logger.error("getData request: %s" % str(request.GET))
         # Get the uuid name of the kind for which we are getting the configuration.
-        uuidString = request.GET.get('id', None)
+        uuidString = request.GET.get('id', "")
         
-        if not uuidString:
-            return JsonResponse({'success':False, 'error': "id was not specified in getData"})
+        path = request.GET.get('path', '#' + uuidString)
+        
+        if not path:
+            return JsonResponse({'success':False, 'error': "path was not specified in getData"})
 
-        uuObject = LazyInstance(uuidString)
-        
-        kindObject = LazyInstance(uuObject.typeID)
+        html_parser = html.parser.HTMLParser()
+        unescaped = html_parser.unescape(path)
+        tokens = cssparser.tokenize(unescaped)
+        a, remainder = cssparser.cascade(tokens)
             
-        configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
+        uuObjects = LazyInstance.selectAllObjects(a)
+        p = [getCells(uuObject) for uuObject in uuObjects]        
         
-        if not configurationObject:
-            return JsonResponse({'success':False, 'error': "the specified item is not configured"})
-        
-        p = configurationObject.getData(uuObject)
-        
-        logger.error("%s" % str(p))
-        
-        results = {'success':True, 'cells': p}
+        results = {'success':True, 'data': p}
     except Fact.NoEditsAllowedError:
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
     except Exception as e:
@@ -425,12 +415,14 @@ def getData(request):
 class UserFactory:
     def getUserObjectID(userID):
         fieldID = Fact.getNamedUUID(Fact.userIDName)
+        if isinstance(userID, uuid.UUID):
+            userID = userID.hex
         with connection.cursor() as c:
             sql = "SELECT v1.instance_id" + \
               " FROM consentrecords_value v1" + \
               " WHERE v1.fieldid = %s and v1.stringvalue = %s" + \
               " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
-            c.execute(sql, [fieldID.hex, userID.hex])
+            c.execute(sql, [fieldID.hex, userID])
             r = c.fetchone()
             return r and r[0]
             

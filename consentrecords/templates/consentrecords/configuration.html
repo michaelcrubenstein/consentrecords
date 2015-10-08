@@ -79,6 +79,12 @@
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 	
+		function standard_json_fail_function(error)
+		{
+			bootstrap_alert.warning(error, ".alert-container");
+			unblock_click();
+		}
+ 
 		var storedcsrftoken = "{{ csrf_token }}";
 		var headerText = "{{header}}";
 		
@@ -130,7 +136,7 @@
 			var panelDiv = d3.select(parentPanel);
 			panelDiv.attr("headerText", headerText);
 
-			var cell = new Cell();
+			var cell = new cr.Cell();
 			cell.field = {name: headerText,
 						  dataType: "_object",
 			{% if rootID %}
@@ -158,7 +164,7 @@
 					{
 						show_click_feedback(this);
 				
-						show_add_object_panel(cell, null, panelDiv, submit_create_root_instance);
+						show_add_object_panel(cell, null, panelDiv, submit_create_instance);
 					}
 
 					e.preventDefault();
@@ -167,33 +173,29 @@
 				$("#id_addUniversalObjectButton").css("display", "none");
 			{% endif %}
 			
-			$.getJSON("{% url 'selectAll' %}", { "path" : "{{path}}" }, function(json){
-				if (json.success) {
-					var newObjects = [];
-					$(json.objects).each(function()
+			var successFunction = function(newValues)
+			{
+				newValues.sort(function(a, b)
 					{
-						newObjects.push(dataTypes._object.copyValue(this));
+						return a.getDescription().localeCompare(b.getDescription());
 					});
 				
-					newObjects.sort(function(a, b)
+				layout_objects(d3.select("#id_objects"), newValues,
+					function(d) {
+						if (prepare_click())
 						{
-							return a.getDescription().localeCompare(b.getDescription());
-						});
-					
-					layout_objects(d3.select("#id_objects"), newObjects,
-						function(d) {
-							if (prepare_click())
-							{
-								show_view_object_panel(d, cell, panelDiv);
-							}
-						});
-				}
-				else
-				{
-					bootstrap_alert.warning(json.error, ".alert-container");
-					/* Don't unblock here, because there was no block. */
-				}
-			});
+							show_view_object_panel(d, cell, panelDiv);
+						}
+					});
+			}
+			
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+			cr.getValues("{{path}}", undefined, successFunction, failFunction);
 		});
 		
 		$(document).ready(function(e) { resetidObjectsHeight() });
@@ -226,46 +228,10 @@
 			}
 		}
 		
-		/* This is a storeDataFunction for adding a value to an unsaved cell. */
-		function store_new_value(containerCell, containerUUID, initialData, onSuccessFunction) {
-			closealert();
-			containerCell.addValue(initialData);
-			onSuccessFunction();
-		}
-		
-		/* This is a storeDataFunction for adding a value to a saved cell. */
-		function submit_add_value(containerCell, containerUUID, initialData, onSuccessFunction) {
-			closealert();
-			$.post("{% url 'addValue' %}", 
-					{ csrfmiddlewaretoken: storedcsrftoken, 
-					  containerUUID: containerUUID,
-					  elementUUID: containerCell.field.nameID,
-					  valueUUID: initialData.getValueID(),
-					  timezoneoffset: new Date().getTimezoneOffset()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							var newData = dataTypes[containerCell.field.dataType].newValue();
-							newData.id = json.id;
-							newData.value.description = d.getDescription();
-							newData.value.id = d.getValueID();
-							cell.addValue(newData);
-							onSuccessFunction();
-						}
-						else {
-							bootstrap_alert.warning(json.error, ".alert-container");
-							unblock_click();
-						}
-					})
-				  .fail(standard_fail_function);
-		}
-			
 		/* Displays a panel in which the specified object's contents appear.
 		 */
 		function show_view_object_panel(objectData, containerCell, containerPanel) {
-			if (objectData.value.cells)
+			successFunction = function ()
 			{
 				var panelDiv = create_panel(containerPanel, 
 											objectData, objectData.getDescription())
@@ -305,364 +271,241 @@
 			
 				panel2Div.show_view_cells(objectData, containerCell, panelDiv);
 			}
-			else if (objectData.getValueID())
+			
+			failFunction = function(error)
 			{
-				$.getJSON("{% url 'getData' %}",
-					{ "id" : objectData.getValueID() }, 
-					function(json)
-					{
-						if (json.success) {
-							objectData.value.cells = [];
-							for (var i = 0; i < json.cells.length; ++i)
-							{
-								objectData.importCell(json.cells[i]);
-							}
-						
-							/* Now that the cells are loaded, try again. */
-							show_view_object_panel(objectData, containerCell, containerPanel);
-						}
-						else {
-							alert(json.error);
-							unblock_click();
-						}
-					}
-				);
+				alert(error);
+				unblock_click();
 			}
+			
+			objectData.checkCells(successFunction, failFunction)
 		}
 		
 		/* 
 			Displays a panel for editing the specified object. 
 		 */
 		function show_edit_object_panel(objectData, containerCell, containerPanel) {
-			var panelDiv = create_panel(containerPanel, 
-										objectData, "Edit " + containerCell.field.name)
-							.classed("edit-panel", true);
+			var successFunction = function()
+			{
+				var panelDiv = create_panel(containerPanel, 
+											objectData, "Edit " + containerCell.field.name)
+								.classed("edit-panel", true);
 	
-			var navContainer = panelDiv.appendNavContainer();
+				var navContainer = panelDiv.appendNavContainer();
 		
-			var header = "Edit " + containerCell.field.name;
+				var header = "Edit " + containerCell.field.name;
 			
-			var doneButton = navContainer.appendRightButton();
-			doneButton.append("span").text("Done");
+				var doneButton = navContainer.appendRightButton();
+				doneButton.append("span").text("Done");
 		
-			var panel2Div = panelDiv.appendScrollArea();
-			panel2Div.appendHeader();
-			var alertContainer = panel2Div.append("div").classed("alert-container", true);
-			window.scrollTo(0, 0);
-			show_panel_up(panelDiv.node());
+				var panel2Div = panelDiv.appendScrollArea();
+				panel2Div.appendHeader();
+				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+				window.scrollTo(0, 0);
+				show_panel_up(panelDiv.node());
 
-			if (objectData.value.cells)
-			{
 				panel2Div.show_edit_cells(objectData, containerCell, panelDiv);
-			}
-			else if (objectData.getValueID())
-			{
-				$.getJSON("{% url 'getData' %}",
-					{ "id" : objectData.getValueID() }, 
-					function(json)
+	
+				doneButton.on("click", function(d) {
+					if (prepare_click())
 					{
-						if (json.success) {
-							objectData.value.cells = [];
-							for (var i = 0; i < json.cells.length; ++i)
+						show_click_feedback(this);
+					
+						var sections = panel2Div.selectAll("section");
+						if (objectData.getValueID())
+						{
+							/* This object has been previously saved. Update the data. */
+							var initialData = [];
+							var sourceObjects = [];
+							sections.each(function(cell) {
+									if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
+										dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, objectData, initialData, sourceObjects);
+								});
+							var successFunction = function()
 							{
-								objectData.importCell(json.cells[i]);
+								hide_panel_down($(doneButton.node()).parents(".site-panel")[0]);
+							};
+							var updateValuesFunction = function()
+							{
+								sections.each(function(cell) {
+										if ("updateCell" in dataTypeViews[cell.field.dataType])
+											dataTypeViews[cell.field.dataType].updateCell(this, cell);
+									});
 							}
-						
-							panel2Div.show_edit_cells(objectData, containerCell, panelDiv);
-						}
-						else {
-							alert(json.error);
-							unblock_click();
-						}
-					}
-				);
-			}
-					
-			doneButton.on("click", function(d) {
-				if (prepare_click())
-				{
-					show_click_feedback(this);
-					
-					var sections = panel2Div.selectAll("section");
-					if (objectData.getValueID())
-					{
-						/* This object has been previously saved. Update the data. */
-						var initialData = [];
-						var sourceObjects = [];
-						sections.each(function(cell) {
-								if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, objectData, initialData, sourceObjects);
-							});
-						if (initialData.length > 0) {
-							$.post("{% url 'updateValues' %}", 
-									{ csrfmiddlewaretoken: storedcsrftoken, 
-									  commands: JSON.stringify(initialData),
-									  timezoneoffset: new Date().getTimezoneOffset()
-									})
-								  .done(function(json, textStatus, jqXHR)
-									{
-										if (json.success) {
-											sections.each(function(cell) {
-													if ("updateCell" in dataTypeViews[cell.field.dataType])
-														dataTypeViews[cell.field.dataType].updateCell(this, cell);
-												});
-											for (var i = 0; i < sourceObjects.length; ++i)
-											{
-												d = sourceObjects[i];
-												newID = json.ids[i];
-												if (d.id == newID)	/* An Update */
-												{
-													d.trigger_event("dataChanged");
-												}
-												else
-												{
-													d.id = newID;
-													d.trigger_event("dataChanged");
-												}
-											}
-											hide_panel_down($(doneButton.node()).parents(".site-panel")[0]);
-										}
-										else
-										{
-											bootstrap_alert.warning(json.error, ".alert-container");
-											unblock_click();
-										}
-									})
-								  .fail(standard_fail_function);
+							if (initialData.length > 0) {
+								cr.updateValues(storedcsrftoken, initialData, sourceObjects, updateValuesFunction, successFunction, standard_json_fail_function);
+							}
+							else
+							{
+								successFunction();
+							}
 						}
 						else
 						{
+							/* In this case, we are editing an object that is contained in an object
+								that hasn't been saved. */
+							objectData.value.cells = [];
+							sections.each(
+								function(cell) {
+									if ("updateCell" in dataTypeViews[cell.field.dataType])
+										dataTypeViews[cell.field.dataType].updateCell(this, cell);
+									objectData.importCell(cell);
+								});
+				
+							objectData.calculateDescription();
+							objectData.trigger_event("dataChanged");
 							hide_panel_down($(this).parents(".site-panel")[0]);
 						}
 					}
-					else
-					{
-						/* In this case, we are editing an object that is contained in an object
-							that hasn't been saved. */
-						objectData.value.cells = [];
-						sections.each(
-							function(cell) {
-								if ("updateCell" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].updateCell(this, cell);
-								objectData.importCell(cell);
-							});
-				
-						objectData.calculateDescription();
-						objectData.trigger_event("dataChanged");
-						hide_panel_down($(this).parents(".site-panel")[0]);
-					}
-				}
-				d3.event.preventDefault();
-			});
+					d3.event.preventDefault();
+				});
+			}
+			
+			failFunction = function(error)
+			{
+				alert(error);
+				unblock_click();
+			}
+			
+			objectData.checkCells(successFunction, failFunction);
 		}
 		
 		/* Displays a panel from which a user can select an object of the kind required 
 			for objects in the specified cell.
 		 */
 		function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
-			var panelDatum;
-			if (oldData && oldData.id)
-				panelDatum = oldData;	/* Replacing a new object. */
-			else
-				panelDatum = cell;		/* Adding a new object. */
-			var panelDiv = create_panel(containerPanel, panelDatum, cell.field.name)
-				.classed("list-panel", true);
-		
-			var navContainer = panelDiv.appendNavContainer();
-		
-			var backButton = navContainer.appendLeftButton()
-				.on("click", handle_close_right_event);
-			backButton.append("span").text("Cancel");
-		
-			var panel2Div = panelDiv.appendScrollArea();
-			panel2Div.appendHeader();
-			var alertContainer = panel2Div.append("div").classed("alert-container", true);
-			var argList;
-			if ("pickObjectPath" in cell.field && cell.field.pickObjectPath)
-				argList = { "path" : cell.field.pickObjectPath }
-			else if ("ofKindID" in cell.field && cell.field.ofKindID)
-				argList = { "ofKindID" : cell.field.ofKindID }
-			else
-				throw "object field is not properly configured"
+			var failFunction = standard_json_fail_function;
 			
-			$.getJSON("{% url 'selectAll' %}", 
-				argList,
-				function(json)
+			function selectAllSuccessFunction(rootObjects) {
+				if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
 				{
-					if (json.success) {
-						var rootObjects = [];
-						$(json.objects).each(function()
+					rootObjects.sort(function(a, b)
 						{
-							rootObjects.push(dataTypes._object.copyValue(this));
+							return a.getDescription().localeCompare(b.getDescription());
 						});
-						
-						if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
-						{
-							rootObjects.sort(function(a, b)
-								{
-									return a.getDescription().localeCompare(b.getDescription());
-								});
-						}
-					
-						var sections = panel2Div.appendSections(rootObjects);
-					
-						var buttons = appendButtons(sections)
-							.on("click", function(d) {
-								if (prepare_click())
-								{
-									if (oldData && oldData.id != null)
-									{
-										if (d.getValueID() == oldData.getValueID()) {
-											hide_panel_right(panelDiv.node());
-										}
-										else
-										{
-											initialData = [{id: oldData.id, value: d.getValueID()}];
-											$.post("{% url 'updateValues' %}", 
-													{ csrfmiddlewaretoken: storedcsrftoken, 
-														"commands": JSON.stringify(initialData),
-														"timezoneoffset": new Date().getTimezoneOffset()
-													})
-												  .done(function(json, textStatus, jqXHR)
-													{
-														if (json.success) {
-															closealert();
-															oldData.completeUpdateValue(d);
-															hide_panel_right(panelDiv.node());
-														}
-														else {
-															bootstrap_alert.warning(json.error, ".alert-container");
-															unblock_click();
-														}
-													})
-												  .fail(standard_fail_function);
-										}
-									}
-									else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
-									{
-										$.post("{% url 'addValue' %}", 
-												{ csrfmiddlewaretoken: storedcsrftoken, 
-												  containerUUID: containerUUID,
-												  elementUUID: cell.field.nameID,
-												  valueUUID: d.getValueID(),
-												  timezoneoffset: new Date().getTimezoneOffset()
-												})
-											  .done(function(json, textStatus, jqXHR)
-												{
-													if (json.success) {
-														closealert();
-														var newData = dataTypes[cell.field.dataType].newValue();
-														newData.id = json.id;
-														newData.value.description = d.getDescription();
-														newData.value.id = d.getValueID();
-														cell.addValue(newData);
-														hide_panel_right(panelDiv.node());
-													}
-													else {
-														bootstrap_alert.warning(json.error, ".alert-container");
-														unblock_click();
-													}
-												})
-											  .fail(standard_fail_function);
-									}
-									else 
-									{
-										closealert();
-										store_unsaved_picked_value(cell, oldData, d);
-										hide_panel_right(panelDiv.node());
-									}
-								}
-								d3.event.preventDefault();
-							});
-						buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-							function(d) { return oldData && d.getDescription() == oldData.getDescription(); });
-						sections.append("hr");
-					
-						window.scrollTo(0, 0);
-						show_panel_left(panelDiv.node());
-					}
-					else
-					{
-						alert(json.error);
-						unblock_click();
-					}
 				}
-			);
-		}
+			
+				var panelDatum;
+				if (oldData && oldData.id)
+					panelDatum = oldData;	/* Replacing an existing object. */
+				else
+					panelDatum = cell;		/* Adding a new object. */
+				var panelDiv = create_panel(containerPanel, panelDatum, cell.field.name)
+					.classed("list-panel", true);
 		
+				var navContainer = panelDiv.appendNavContainer();
+		
+				var backButton = navContainer.appendLeftButton()
+					.on("click", handle_close_right_event);
+				backButton.append("span").text("Cancel");
+		
+				var panel2Div = panelDiv.appendScrollArea();
+				panel2Div.appendHeader();
+				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+				
+				var sections = panel2Div.appendSections(rootObjects);
+			
+				var buttons = appendButtons(sections)
+					.on("click", function(d) {
+						var successFunction = function()
+						{
+							hide_panel_right(panelDiv.node());
+						}
+						
+						if (prepare_click())
+						{
+							if (oldData && oldData.id != null)
+							{
+								if (d.getValueID() == oldData.getValueID()) {
+									successFunction();
+								}
+								else
+								{
+									cr.updateValue(storedcsrftoken, oldData, d, successFunction, failFunction);
+								}
+							}
+							else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
+							{
+								cr.addObjectValue(storedcsrftoken, cell, containerUUID, d, 
+									successFunction,
+									failFunction);
+							}
+							else 
+							{
+								store_unsaved_picked_value(cell, oldData, d);
+								successFunction();
+							}
+						}
+						d3.event.preventDefault();
+					});
+				buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+					function(d) { return oldData && d.getDescription() == oldData.getDescription(); });
+				sections.append("hr");
+			
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
+			}
+			
+			cr.getValues(cell.field.pickObjectPath, cell.field.ofKindID, selectAllSuccessFunction, failFunction);
+		}
+				
 		/* This method gets called to bring up a configuration panel when adding
 			a new instance of an object to another object. For example, adding a 
 			configuration to an object with a uuname kind.
 		 */
 		function show_add_object_panel(containerCell, containerUUID, containerPanel, storeDataFunction) {
-			$.getJSON("{% url 'getAddConfiguration' %}",
-				{ "typeID" : containerCell.field.ofKindID }, 
-				function(json)
-				{
-					if (json.success)
-					{
-						var cells = [];
-						$(json.cells).each(function()
+			var successFunction = function(cells)
+			{
+				var panelDiv = create_panel(containerPanel, containerCell, "New " + containerCell.field.name)
+					.classed("edit-panel", true);
+	
+				var header = "New " + containerCell.field.name								 
+				var navContainer = panelDiv.appendNavContainer();
+	
+				var backButton = navContainer.appendLeftButton()
+					.on("click", handle_close_down_event);
+				
+				backButton.append("span").text("Cancel");
+	
+				var onSuccessFunction = function(newData) {
+					hide_panel_down(panelDiv.node());
+				};
+					
+				var addButton = navContainer.appendRightButton()
+					.on("click", function(d) {
+						if (prepare_click())
 						{
-							newCell = new Cell();
-							newCell.field = this.field;
-							newCell.setup(null);
-							cells.push(newCell);
-						});
-						
-						var panelDiv = create_panel(containerPanel, containerCell, "New " + containerCell.field.name)
-							.classed("edit-panel", true);
-			
-						var header = "New " + containerCell.field.name								 
-						var navContainer = panelDiv.appendNavContainer();
-			
-						var backButton = navContainer.appendLeftButton()
-							.on("click", handle_close_down_event);
-						
-						backButton.append("span").text("Cancel");
-			
-						var onSuccessFunction = function(newData) {
-							hide_panel_down(panelDiv.node());
-						};
+							show_click_feedback(this);
 							
-						var addButton = navContainer.appendRightButton()
-							.on("click", function(d) {
-								if (prepare_click())
-								{
-									show_click_feedback(this);
-									
-									storeDataFunction(containerCell, containerUUID, sections, onSuccessFunction);
-								}
-								d3.event.preventDefault();
-							});
-						addButton.append("span").text("Add");
+							storeDataFunction(containerCell, containerUUID, sections, onSuccessFunction);
+						}
+						d3.event.preventDefault();
+					});
+				addButton.append("span").text("Add");
+	
+				var panel2Div = panelDiv.appendScrollArea();
+				panel2Div.appendHeader();
+				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+				
+				var sections = panel2Div.appendSections(cells)
+					.each(function(cell) {
+							dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, null);
+						});
+	
+				window.scrollTo(0, 0);
+				show_panel_up(panelDiv.node());
+			}
 			
-						var panel2Div = panelDiv.appendScrollArea();
-						panel2Div.appendHeader();
-						var alertContainer = panel2Div.append("div").classed("alert-container", true);
-						
-						var sections = panel2Div.appendSections(cells)
-							.each(function(cell) {
-									dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, null);
-								});
+			var failFunction = standard_json_fail_function
 			
-						window.scrollTo(0, 0);
-						show_panel_up(panelDiv.node());
-					}
-					else
-					{
-						alert(json.error);
-						unblock_click();
-					}
-				}
-			);
+			cr.getConfiguration(containerCell.field.ofKindID, successFunction, failFunction);
 		}
 		
 		/* This is a storeDataFunction for adding an object within an unsaved object. */
 		function store_new_instance(containerCell, containerUUID, sections, onSuccessFunction)
 		{
 			closealert();
-			var newData = dataTypes._object.newValue();
+			var newData = cr.dataTypes._object.newValue();
 			newData.value.cells = [];
 			sections.each(
 				function(cell) {
@@ -676,48 +519,9 @@
 			if (onSuccessFunction) onSuccessFunction(newData);
 		}
 		
-		/* This is a storeDataFunction for creating a root object. */
-		function submit_create_root_instance(containerCell, containerUUID, sections, onSuccessFunction)
-		{
-			var initialData = []
-			sections.each(
-				function(cell) {
-					dt = dataTypeViews[cell.field.dataType]
-					if ("updateCell" in dt)
-						dt.updateCell(this, cell);
-					dataTypes[cell.field.dataType].appendData(cell, initialData);
-				});
-				
-			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
-						typeID: containerCell.field.ofKindID,
-						properties: JSON.stringify(initialData),
-						timezoneoffset: new Date().getTimezoneOffset()
-					};
-			
-			$.post("{% url 'createInstance' %}", 
-					jsonArray)
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData = dataTypes._object.newValue();
-							newData.value.id = json.object.value.id;
-							newData.value.description = json.object.value.description;
-							containerCell.addValue(newData);
-							if (onSuccessFunction) onSuccessFunction(newData);
-						}
-						else {
-							bootstrap_alert.warning(json.error, ".alert-container");
-							unblock_click();
-						}
-					})
-				  .fail(standard_fail_function);
-		}
-
-		/* This is a storeDataFunction for creating an object within a saved object. */
+		/* This is a storeDataFunction for creating an object. 
+			If this is a root object, then containerUUID will be null.
+		 */
 		function submit_create_instance(containerCell, containerUUID, sections, onSuccessFunction)
 		{
 			var initialData = []
@@ -726,46 +530,11 @@
 					dt = dataTypeViews[cell.field.dataType]
 					if ("updateCell" in dt)
 						dt.updateCell(this, cell);
-					dataTypes[cell.field.dataType].appendData(cell, initialData);
+					cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
 				});
 				
-			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
-						typeID: containerCell.field.ofKindID,
-						properties: JSON.stringify(initialData),
-						timezoneoffset: new Date().getTimezoneOffset()
-					};
-			if ('elementName' in containerCell.field)
-				jsonArray.elementName = containerCell.field.elementName;
-			if ('nameID' in containerCell.field)
-				jsonArray.elementUUID = containerCell.field.nameID;
-			if (containerUUID)
-				jsonArray.containerUUID = containerUUID;
+			cr.createInstance(storedcsrftoken, containerCell, containerUUID, initialData, onSuccessFunction, standard_json_fail_function)
 			
-			$.post("{% url 'createInstance' %}", 
-					jsonArray)
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData = dataTypes._object.newValue();
-							/* If there is a container, then the id in newData will contain
-								the id of the value object in the database. */
-							if (containerUUID)
-								newData.id = json.object.id;
-							newData.value.id = json.object.value.id;
-							newData.value.description = json.object.value.description;
-							containerCell.addValue(newData);
-							if (onSuccessFunction) onSuccessFunction(newData);
-						}
-						else {
-							bootstrap_alert.warning(json.error, ".alert-container");
-							unblock_click();
-						}
-					})
-				  .fail(standard_fail_function);
 		}
 	</script>
 

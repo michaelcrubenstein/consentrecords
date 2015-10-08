@@ -174,7 +174,7 @@
 				e.preventDefault();
 			});
 		
-			function checkUnusedEmail() {
+			function checkUnusedEmail(successFunction) {
 				bootstrap_alert.show($('#myAlert'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
 		
 				deferredObject = $.post("{% url 'checkUnusedEmail' %}", 
@@ -185,7 +185,8 @@
 					{
 						if (json['success']) {
 							closealert();
-							showStep2();
+							if (successFunction)
+								successFunction();
 						}
 						else {
 							bootstrap_alert.warning(json['error']);
@@ -210,8 +211,7 @@
 			$(".submit-button").click(function(e) {
 				if (checkStep1())
 				{
-					checkUnusedEmail();
-					submitForm();
+					checkUnusedEmail(submitForm);
 				}
 
 				e.preventDefault();

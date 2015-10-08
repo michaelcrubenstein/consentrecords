@@ -46,19 +46,19 @@ class TransactionState:
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     typeID = dbmodels.UUIDField(db_index=True, editable=False)
-    parentID = dbmodels.UUIDField(db_index=True, null=True, editable=False)
+    parent = dbmodels.ForeignKey('consentrecords.Instance', db_column='parentid', db_index=True, null=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
         
     def __str__(self):
-        return str(LazyInstance(self.id, self.typeID, self.parentID, self.transaction))
+        return str(LazyInstance(self.id, self.typeID, self.parent and self.parent.id, self.transaction, self))
     
     @property    
     def _description(self):
-        return str(LazyInstance(self.id, self.typeID, self.parentID, self.transaction))
+        return str(LazyInstance(self.id, self.typeID, self.parent and self.parent.id, self.transaction, self))
 
     @property    
     def _parentDescription(self):
-        return self.parentID and str(LazyInstance(self.parentID))
+        return self.parent and str(self.parent)
 
 class DeletedInstance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -82,10 +82,11 @@ class LazyObject():
         return "uo{%s}" % self.id.hex
         
 class LazyInstance(LazyObject):
-    def __init__(self, id, typeID=None, parentID=None, transactionID=None):
+    def __init__(self, id, typeID=None, parentID=None, transactionID=None, instance=None):
         self._typeID = typeID
         self._parentID = parentID
         self._transactionID = transactionID
+        self._instance = instance
         super(LazyInstance, self).__init__(id)
         
     def __str__(self):
@@ -121,9 +122,15 @@ class LazyInstance(LazyObject):
     
     @property
     def transactionID(self):
-        if self._transactionID is None: # Use typeID instead of parentID because parentID can be None
+        if self._transactionID is None:
             self._fill()
         return self._transactionID
+        
+    @property
+    def instance(self):
+        if self._instance is None:
+            self._instance = Instance.objects.get(id=self.id)
+        return self._instance
     
     def fieldName(fieldID):     #Previously verbString
         return LazyInstance(fieldID).getSubValue(Fact.uuNameUUID()).stringValue or str(fieldID)
@@ -143,11 +150,8 @@ class LazyInstance(LazyObject):
             return str(self.id)     
     
     def addValue(self, fieldID, value, position, transactionState):
-        logger = logging.getLogger(__name__)
-        logger.error("%s.addValue(%s, %s, %s)" % (str(self.id), str(fieldID), value, position))
         i = Instance.objects.get(id=self.id.hex)
         v = Value.objects.create(instance=i, fieldID=fieldID, stringValue = value, position=position, transaction=transactionState.transaction)
-        logger.error("  value id:(%s)" % (v.id))
         return LazyValue(v.id, self.id.hex, fieldID, position, value)
     
     def createMissingSubValue(self, fieldID, value, position, transactionState):
@@ -213,20 +217,25 @@ class LazyInstance(LazyObject):
     # The first of the pair is the hex UUID of the name, the second is the hex UUID of the dataType
     @property
     def _descriptors(self):
+        logger = logging.getLogger(__name__)
+        logger.error("_descriptors(%s)" % (self.id.hex))
         configuration = self.getSubInstance(fieldID=Fact.configurationUUID())
         results = []
-        yesUUID = Fact.yesUUID()
+        textUUID = Fact.textEnumUUID()
+        countUUID = Fact.countEnumUUID()
+        logger.error("  textUUID: %s" % (textUUID.hex))
+        logger.error("  countUUID: %s" % (countUUID.hex))
         if configuration:
             elementIDs = [Fact.nameUUID(), Fact.dataTypeUUID()]
             for fieldObject in configuration._getSubInstances(fieldID=Fact.fieldUUID()):
-                r = fieldObject.getSubInstance(fieldID=Fact.isDescriptorUUID())
-                if r and r.id == yesUUID:
+                r = fieldObject.getSubInstance(fieldID=Fact.descriptorTypeUUID())
+                if r:
                     n = [fieldObject.getSubValue(x) for x in elementIDs]
                     dataTypeInstance = n[1] and LazyInstance(n[1].stringValue)
                     dataTypeValue = dataTypeInstance and dataTypeInstance.getSubValue(Fact.nameUUID())
                     dataTypeName = dataTypeValue and dataTypeValue.stringValue
                     if n[0] and dataTypeName:
-                        results.append([n[0].stringValue, dataTypeName])
+                        results.append([n[0].stringValue, dataTypeName, r.id])
         return results
         
     # Returns a description of this object with these verbs. 
@@ -234,20 +243,32 @@ class LazyInstance(LazyObject):
     # the second is the field dataType.
     # The string is directly attached to the verb (v1).       
     def _getDescription(self, verbs):
+        textUUID = Fact.textEnumUUID()
+        countUUID = Fact.countEnumUUID()
         r = []
-        logger = logging.getLogger(__name__)
         for verb in verbs:
-            name, dataType = verb[0], verb[1]
-            with connection.cursor() as c:
-                sql = "SELECT v1.stringvalue" + \
-                      " FROM consentrecords_value v1" + \
-                      " WHERE v1.instance_id = %s AND v1.fieldID = %s" + \
-                      " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
-                c.execute(sql, [self.id.hex, name])
-                if dataType == Fact.objectName:
-                    r.extend([LazyInstance(i[0])._description for i in c.fetchall()])
-                else:
-                    r.extend([i[0] for i in c.fetchall()])
+            name, dataType, descriptorType = verb[0], verb[1], verb[2]
+            if descriptorType == textUUID:
+                with connection.cursor() as c:
+                    sql = "SELECT v1.stringvalue" + \
+                          " FROM consentrecords_value v1" + \
+                          " WHERE v1.instance_id = %s AND v1.fieldID = %s" + \
+                          " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+                    c.execute(sql, [self.id.hex, name])
+                    if dataType == Fact.objectName:
+                        r.extend([LazyInstance(i[0])._description for i in c.fetchall()])
+                    else:
+                        r.extend([i[0] for i in c.fetchall()])
+            elif descriptorType == countUUID:
+                with connection.cursor() as c:
+                    sql = "SELECT COUNT(*)" + \
+                          " FROM consentrecords_value v1" + \
+                          " WHERE v1.instance_id = %s AND v1.fieldID = %s" + \
+                          " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+                    c.execute(sql, [self.id.hex, name])
+                    r.extend([c.fetchone()[0]]);
+            else:
+                raise ValueError("unrecognized descriptorType %s" % LazyInstance(descriptorType).getSubValue(Fact.uuNameUUID()).stringValue);
                     
         return " ".join(r)
     
@@ -295,27 +316,27 @@ class LazyInstance(LazyObject):
             return c.fetchone()[0]
         
     def _getResultArray(sql, argList):
+        logger = logging.getLogger(__name__)
+        logger.error("_getResultArray(%s, %s)" % (sql, [i for i in argList]))
         with connection.cursor() as c:
             c.execute(sql, argList)
             return [i[0] for i in c.fetchall()]
         
     def refineResults(resultSet, path):
+        logger = logging.getLogger(__name__)
+        logger.error("refineResults(%s, %s)" % ([i for i in resultSet], path))
+        logger.error("refineResults(%s, %s)" % ([i for i in resultSet], path))
+        
         if path[0] == '#':
-            sql = 'SELECT i1.id FROM consentrecords_instance i1' + \
-                     ' WHERE i1.id=%s' + \
-                     ' AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.instance_id = i1.id)'
-            with connection.cursor() as c:
-                c.execute(sql, [path[1]])
-                return [r[0] for r in c.fetchall()], path[2:]
+            return [path[1]], path[2:]
         elif path[0] == '[':
             if len(path[1]) == 1:
-                lastTable = tableList[-1]
                 sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                       ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id))'
                 fieldID = Fact.getNamedUUID(path[1][0]).hex
                 newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID]), resultSet)
-                return newResults, path[2:]
+                return list(newResults), path[2:]
             elif len(path[1]) == 3:
                 fieldID = Fact.getNamedUUID(path[1][0]).hex
                 symbol = path[1][1]
@@ -325,21 +346,66 @@ class LazyInstance(LazyObject):
                       ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
                 newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID, testValue]), resultSet)
-                return newResults, path[2:]
+                return list(newResults), path[2:]
             else:
-                raise ValueError("not yet implemented")
-        elif path[0][0] == '>':
+                raise ValueError("unrecognized contents within [...]")
+        elif path[0] == '>':
             fieldID = Fact.getNamedUUID(path[1]).hex
             sql = 'SELECT v1.stringvalue id' + \
                      ' FROM consentrecords_value v1' + \
-                     ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
-                     ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
+                     ' WHERE v1.instance_id = %s AND v1.fieldid = %s' + \
+                     ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)' + \
+                     ' ORDER BY v1.position'
             m = map(lambda s: LazyInstance._getResultArray(sql, [s, fieldID]), resultSet)
             newResults = [item for sublist in m for item in sublist]
             return newResults, path[2:]         
+        elif path[0] == '::':
+            function = path[1]
+            if function == 'reference':
+                if path[2] == '(':
+                    typeID = Fact.getNamedUUID(path[3][0]).hex
+                    sql = 'SELECT v1.instance_id id' + \
+                          ' FROM consentrecords_value v1' + \
+                          ' JOIN consentrecords_instance i1 ON (i1.id = v1.instance_id)' + \
+                          ' WHERE v1.stringvalue = %s AND i1.typeid = %s' + \
+                          ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)' + \
+                          ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)'
+                    logger.error("  typeID: %s" % (typeID))
+                    logger.error("  sql: %s" % (sql))
+                    m = map(lambda s: LazyInstance._getResultArray(sql, [s, typeID]), resultSet)
+                    newResults = [item for sublist in m for item in sublist]
+                    return newResults, path[4:]
+                else:
+                    raise ValueError("malformed reference")
+            else:
+                raise ValueError("unrecognized function")
+        elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
+            if path[2] == '(':
+                if path[3][0] == '[':
+                    params = path[3][1]
+                    fieldID = Fact.getNamedUUID(params[0]).hex
+                    if len(params) == 1:
+                        sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
+                              ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
+                              ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id))'
+                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, [s, fieldID]), resultSet)
+                        return list(newResults), path[4:]
+                    elif len(params) == 3:
+                        symbol = params[1]
+                        testValue = params[2]
+                        sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
+                              ' WHERE v1.instance_id = %s' + \
+                              ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
+                              ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
+                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, [s, fieldID, testValue]), resultSet)
+                        return list(newResults), path[4:]
+                    else:
+                        raise ValueError("unrecognized contents within ':not([...])'")
+                else:
+                    raise ValueError("unimplemented 'not' expression")
+            else:
+                raise ValueError("malformed 'not' expression")
         else:   # Path[0] is a type.
-            logger = logging.getLogger(__name__)
-            logger.error( "path[0]: %s" % path[0])
             fieldID = Fact.getNamedUUID(path[0]).hex
             sql = 'SELECT i1.id' + \
                      ' FROM consentrecords_instance i1' + \
@@ -352,15 +418,11 @@ class LazyInstance(LazyObject):
         return newSQL, newArgList, remainder, newTableList
             
     def selectAllObjects(path):
-        logger = logging.getLogger(__name__)
-        logger.error("Entering selectAll: %s" % path)
-        
         resultSet = [([], path)]
         while len(resultSet[-1][1]) > 0:
             lastPair = resultSet[-1]
             nextPair = LazyInstance.refineResults(lastPair[0], lastPair[1])
             resultSet.append(nextPair)
-            logger.error("Iterate selectAllObjects: %s, %s" % nextPair)
         
         return [LazyInstance(i) for i in resultSet[-1][0]]
     
@@ -379,8 +441,6 @@ class LazyInstance(LazyObject):
     def selectAll(path):
         nameLists = {}
         m = LazyInstance.selectAllObjects(path)
-        logger = logging.getLogger(__name__)
-        logger.error("Entering selectAll: %s" % [str(i) for i in m])
         
         return [e.clientObject(nameLists) for e in m]
     
@@ -402,12 +462,8 @@ class LazyInstance(LazyObject):
         return v and (v.stringValue, i.id)
     
     def getFieldData(self):
-        logger = logging.getLogger(__name__)
-        logger.error("  %s.getFieldData()" % str(self))
         nameReference = self.getSubValueReference(Fact.nameUUID(), Fact.uuNameUUID())
         dataTypeReference = self.getSubValueReference(Fact.dataTypeUUID(), Fact.nameUUID())
-        logger.error("  getFieldData() nameReference: %s" % str(nameReference))
-        logger.error("  getFieldData() dataTypeReference: %s" % str(dataTypeReference))
         fieldData = None
         if nameReference and dataTypeReference:
             fieldData = {"id" : self.id.hex, 
@@ -421,8 +477,9 @@ class LazyInstance(LazyObject):
             else:
                 fieldData["capacity"] = Fact.multipleValuesName
                 
-            r = self.getSubInstance(Fact.isDescriptorUUID())
-            fieldData["isDescriptor"] = bool(r and r.id == Fact.yesUUID())
+            r = self.getSubValueReference(Fact.descriptorTypeUUID(), Fact.nameUUID())
+            if r:
+                fieldData["descriptorType"] = r[0]
             
             r = self.getSubValueReference(Fact.addObjectRuleUUID(), Fact.nameUUID())
             if r:
@@ -437,7 +494,6 @@ class LazyInstance(LazyObject):
                 if v:
                     fieldData["pickObjectPath"] = v.stringValue;
         
-        logger.error("  getFieldData() results: %s" % str(fieldData))
         return fieldData
     
     # Return an array where each element contains the id and description for an object that
@@ -475,7 +531,7 @@ class LazyInstance(LazyObject):
     def createEmptyInstance(self, parent, transactionState):
         id = uuid.uuid4()
         i = Instance.objects.create(id=id, typeID=self.id.hex, 
-                                    parentID = parent and parent.id.hex,
+                                    parent=parent.instance,
                                     transaction = transactionState.transaction)
         return LazyInstance(id, self.id.hex, parent and parent.id.hex, transactionState.transaction.id)
         
@@ -497,9 +553,6 @@ class LazyInstance(LazyObject):
             return 0
         else:
             sortedIndexes = sorted(ids)
-            logger = logging.getLogger(__name__)
-            logger.error("   %s" % (ids))
-            logger.error("   %s, %s" % (sortedIndexes, isinstance(sortedIndexes[-1], str)))
             if len(sortedIndexes) <= newIndex:
                 return sortedIndexes[-1]+1
             elif newIndex == 0 and sortedIndexes[0] > 0:
@@ -528,21 +581,15 @@ class LazyInstance(LazyObject):
         else:           
             i = 0
             ids = []
-            logger = logging.getLogger(__name__)
             for d in data:
-                logger.error("        Saving data:\n          %s" % str(d))
-                logger.error("        Field of data:\n          %s" % str(fieldData))
                 fieldID = uuid.UUID(fieldData["nameID"])
                 v = d["value"]
                 if isinstance(v, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
-                    logger.error("        Creating value object")
                     self.addValue(fieldID, v, i, transactionState)
                 elif "id" in v and v["id"] is not None:
                     # This is a reference to an object.
-                    logger.error("        Creating reference")
                     self.addValue(fieldID, v["id"], i, transactionState)
                 elif "cells" in v and "ofKindID" in fieldData:
-                    logger.error("        Creating sub-instance")
                     ofKindObject = LazyInstance(fieldData["ofKindID"])
                     ofKindObject.createInstance(self, fieldID, -1, v["cells"], transactionState)
                 else:
@@ -557,28 +604,20 @@ class LazyInstance(LazyObject):
             self._addElementData(data, fieldData, transactionState)
 
     def createInstance(self, parent, fieldID, position, propertyList, transactionState):
-        logger = logging.getLogger(__name__)
         item = self.createEmptyInstance(parent, transactionState)
     
         if parent:
-            logger.error("createInstance parent: %s" % str(parent))
-            logger.error("createInstance fieldID: %s" % str(LazyInstance(fieldID)))
-            logger.error("createInstance position: %s" % position)
-            
             if position < 0:
                 maxIndex = parent.getMaxElementIndex(fieldID)
                 if maxIndex == None:
                     position = 0
                 else:
                     position = maxIndex + 1
-            logger.error("createInstance next position: %s" % position)
             newIndex = parent.updateElementIndexes(fieldID, position, transactionState)
             newValue = parent.addValue(fieldID, item.id.hex, newIndex, transactionState)
-            logger.error("  newValue: %s" % str(newValue.id))
         else:
             newValue = None
     
-        logger.error("  PropertyList: %s" % str(propertyList))
         for f in propertyList:
             fieldData = f['field']
             fieldID = fieldData['id']
@@ -762,7 +801,7 @@ class Fact():
     addObjectRuleName = '_object add rule'
     pickObjectRuleName = '_pick one'
     createObjectRuleName = '_create one'
-    isDescriptorName = '_is descriptor'
+    descriptorTypeName = '_descriptor type'
     yesName = '_yes'
     noName = '_no'
     userName = '_user'
@@ -774,6 +813,8 @@ class Fact():
     englishName = 'English'
     translationName = '_translation'
     textName = '_text'
+    textEnumName = '_by text'
+    countEnumName = '_by count'
     
     
     _initialKinds = [
@@ -786,8 +827,8 @@ class Fact():
         enumeratorName,         # identifies an enumerator
         dataTypeName,           # defines the data type of a property
         maxCapacityName,        # defines the quantity relationship of a field within its container.
-        addObjectRuleName, # defines the rule for adding objects to a field that supports multiple objects
-        isDescriptorName,       # defines whether a field is a descriptor of its instance.
+        addObjectRuleName,      # defines the rule for adding objects to a field that supports multiple objects
+        descriptorTypeName,     # defines how the data of this field is used to describe its instance.
         userName,               # identifies an instance of a user.
         userIDName,             # identifies the user identifier for the user.
         emailName,              # identifies an email address.
@@ -808,6 +849,8 @@ class Fact():
 #         numberName,             # identifies a string data type
 #         datestampName,          # identifies a string data type
 #         objectName,             # identifies an object data type
+#         textEnumName,           # identifies fields that describe their containers by text.
+#         countEnumName,          # identifies fields that describe their containers by count
 
     _initialUUNames = {}  
         
@@ -857,9 +900,6 @@ class Fact():
                 item2.addValue(Fact.languageUUID().hex, englishUUID.hex, 0, transactionState)
     
     def _addEnumerators(uuNameID, enumerationNames, transactionState):
-        logger = logging.getLogger(__name__)
-        logger.error("_addEnumerators(%s, %s)" % (uuNameID, enumerationNames))
-        
         container = LazyInstance(uuNameID)
         ofKindObject = LazyInstance(Fact.enumeratorUUID())
         
@@ -879,28 +919,14 @@ class Fact():
     def createMaxCapacities(transactionState):
         Fact._addEnumerators(Fact.maxCapacityUUID(), [Fact.uniqueValueName, Fact.multipleValuesName], transactionState)
         
+    def createDescriptorTypes(transactionState):
+        Fact._addEnumerators(Fact.descriptorTypeUUID(), [Fact.textEnumName, Fact.countEnumName], transactionState)
+        
     def createLanguages(transactionState):
         Fact._addEnumerators(Fact.languageUUID(), [Fact.englishName], transactionState)
     
     def createBooleans(transactionState):
         Fact._addEnumeratorTranslations(Fact.booleanUUID(), [Fact.yesName, Fact.noName], transactionState)
-    
-    def createEnumerationConfiguration(uunameID, fieldID, transactionState):
-        container = LazyInstance(uunameID)
-        
-        configurationValues = [Fact._bootstrapName];
-        configurations = container.createConfigurations(configurationValues, transactionState)
-        configObject = configurations[Fact._bootstrapName]
-        
-        configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
-
-        fieldValues = [fieldID.hex]
-        
-        fields = configObject.createFields(fieldValues, transactionState)
-        p = fields[fieldID.hex]
-        p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
     
     def createTranslationConfiguration(transactionState):
         container = LazyInstance(Fact.translationUUID())
@@ -917,7 +943,7 @@ class Fact():
         p = fields[Fact.textUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
     
         p = fields[Fact.languageUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -942,13 +968,13 @@ class Fact():
         p = fields[Fact.nameUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
     
         p = fields[Fact.translationUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.ofKindUUID(), Fact.translationUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
     
     def createBooleanConfiguration(transactionState):
         container = LazyInstance(Fact.booleanUUID())
@@ -966,7 +992,7 @@ class Fact():
         p = fields[Fact.nameUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.ofKindUUID(), Fact.translationUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
     
     # Create the configuration for the uuname uuname.
     def createUUNameConfiguration(transactionState):
@@ -988,7 +1014,7 @@ class Fact():
         p = fields[uunameUUID.hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
         
         p = fields[configurationUUID.hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -1019,7 +1045,7 @@ class Fact():
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
         p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-        p.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
         
         p = fields[Fact.fieldUUID().hex]
         p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -1041,7 +1067,7 @@ class Fact():
         fieldValues = [Fact.nameUUID().hex, 
                        Fact.dataTypeUUID().hex,
                        Fact.maxCapacityUUID().hex,
-                       Fact.isDescriptorUUID().hex,
+                       Fact.descriptorTypeUUID().hex,
                        Fact.addObjectRuleUUID().hex,
                        Fact.ofKindUUID().hex,
                        Fact.pickObjectPathUUID().hex,
@@ -1054,7 +1080,7 @@ class Fact():
         f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.ofKindUUID(), Fact.uuNameUUID().hex, 0, transactionState)
-        f.createMissingSubValue(Fact.isDescriptorUUID(), Fact.yesUUID().hex, 0, transactionState)
+        f.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
         
         f = fields[Fact.dataTypeUUID().hex]
         f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -1070,11 +1096,11 @@ class Fact():
         pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.maxCapacityName, Fact.enumeratorName)
         f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
         
-        f = fields[Fact.isDescriptorUUID().hex]
+        f = fields[Fact.descriptorTypeUUID().hex]
         f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
         f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-        pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.booleanName, Fact.enumeratorName)
+        pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.descriptorTypeName, Fact.enumeratorName)
         f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
         
         f = fields[Fact.addObjectRuleUUID().hex]
@@ -1107,7 +1133,7 @@ class Fact():
             
     def createUUNameID(transactionState):
         uunameID = uuid.uuid4()
-        Instance.objects.create(id=uunameID.hex, typeID=uunameID.hex, parentID=None, transaction=transactionState.transaction)
+        Instance.objects.create(id=uunameID.hex, typeID=uunameID.hex, parent=None, transaction=transactionState.transaction)
         LazyInstance(uunameID).addValue(uunameID, Fact.uuNameName, 0, transactionState)
         return uunameID
        
@@ -1125,12 +1151,13 @@ class Fact():
                 id = Fact.getNamedUUID(s, transactionState)
             except Fact.UnrecognizedNameError:
                 obj = uuid.uuid4()
-                i = Instance.objects.create(id=obj.hex, typeID=uunameID.hex, parentID=None, transaction=transactionState.transaction)
+                i = Instance.objects.create(id=obj.hex, typeID=uunameID.hex, parent=None, transaction=transactionState.transaction)
                 LazyInstance(obj).addValue(uunameID, s, 0, transactionState)
         
         Fact.createDataTypes(transactionState)
         Fact.createAddObjectRules(transactionState)
         Fact.createMaxCapacities(transactionState)
+        Fact.createDescriptorTypes(transactionState)
         Fact.createLanguages(transactionState)
         Fact.createBooleans(transactionState)
         Fact.createTranslationConfiguration(transactionState)
@@ -1223,7 +1250,7 @@ class Fact():
     def createObjectRuleUUID():
         return Fact._getObjectUUID(Fact.addObjectRuleUUID(), Fact.createObjectRuleName)
 
-    def isDescriptorUUID(): return Fact._getInitialUUID(Fact.isDescriptorName)
+    def descriptorTypeUUID(): return Fact._getInitialUUID(Fact.descriptorTypeName)
     
     def yesUUID():
         return Fact._getTranslationObjectUUID(Fact.booleanUUID(), Fact.yesName)
@@ -1233,7 +1260,10 @@ class Fact():
     def languageUUID(): return Fact._getInitialUUID(Fact.languageName)
     def translationUUID(): return Fact._getInitialUUID(Fact.translationName)
     def textUUID(): return Fact._getInitialUUID(Fact.textName)
-        
+
+    def textEnumUUID(): return Fact._getObjectUUID(Fact.descriptorTypeUUID(), Fact.textEnumName);
+    def countEnumUUID(): return Fact._getObjectUUID(Fact.descriptorTypeUUID(), Fact.countEnumName);
+            
     # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
     def getNamedUUID(uuname, transactionState=None):
         fieldID = Fact.uuNameUUID()
@@ -1250,12 +1280,8 @@ class Fact():
             else:
                 return uuid.UUID(r[0])
             
-    # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
+    # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Fact.UnrecognizedNameError.   
     def getNamedEnumeratorID(uunameID, stringValue):
-        logger = logging.getLogger(__name__)
-        logger.error("getNamedEnumeratorID(%s, %s)" % (uunameID, stringValue))
-        logger.error("  enumeratorUUID: %s" % Fact.enumeratorUUID())
-        logger.error("  nameUUID: %s" % Fact.nameUUID())
         with connection.cursor() as c:
             sql = "SELECT v1.stringvalue" + \
                   " FROM consentrecords_value v1" + \
@@ -1275,7 +1301,7 @@ class Fact():
             else:
                 return uuid.UUID(r[0])
     
-    # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
+    # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Fact.UnrecognizedNameError.   
     def getTranslationNamedEnumeratorID(uunameID, stringValue):
         with connection.cursor() as c:
             sql = "SELECT v1.stringvalue" + \

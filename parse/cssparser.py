@@ -1,3 +1,5 @@
+import logging
+
 class parser:
     
     def countTrailingQuotes(s):
@@ -40,7 +42,7 @@ class parser:
                         lastString=c
                 else:
                     lastString = c
-            elif c in '#~^$|>+':
+            elif c in '#~^$|<>+':
                 if len(lastString) > 0:
                     a += [lastString]
                 lastString = c
@@ -48,13 +50,13 @@ class parser:
                 if len(lastString) > 0: a += [lastString]
                 lastString = c
             elif c == '=':
-                if lastString in '~^$|': # Check for characters that are combined with '='
+                if lastString in '~^$|<>': # Check for characters that are combined with '='
                     lastString += c
                 else:
                     if len(lastString) > 0: a += [lastString]
                     lastString = c
             else:
-                if len(lastString) > 0 and lastString[-1] in ' :#~^$|>+[()]=':
+                if len(lastString) > 0 and lastString[-1] in ' :#~^$|<>+[()]=':
                     a += [lastString]
                     lastString = ""
                 lastString += c
@@ -66,22 +68,27 @@ class parser:
         
         return a
 
-    def cascade(source, closer=None):
+    def cascade(source, i=0, closer=None):
+        logger = logging.getLogger(__name__)
+        logger.error("cascade(%s, %s)" % (source, closer))
+
         a = []
-        for i in range(0, len(source)):
+        while i < len(source):
             s = source[i]
             if s == closer:
-                return a, source[i+1:]
+                logger.error("  return(%s, %s)" % (a, i+1))
+                return a, i+1
             elif s == '[':
-                item, remainder = parser.cascade(source[i+1:], "]")
-                a += ['[', item]
-                return a, remainder
+                item, i = parser.cascade(source, i+1, "]")
+                a += [s, item]
             elif s == '(':
-                item, remainder = parser.cascade(source[i+1:], ')')
-                a += ['(', item]
-                return a, remainder
+                item, i = parser.cascade(source, i+1, ')')
+                a += [s, item]
             elif len(s) > 1 and s[0] == '"':
             	a += [s[1:-1].replace('""', '"')]
+            	i += 1
             else:
                 a += [s]
-        return a, []
+                i += 1
+        logger.error("  return(%s, %s)" % (a, i))
+        return a, i

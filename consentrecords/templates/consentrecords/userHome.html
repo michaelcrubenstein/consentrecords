@@ -12,15 +12,335 @@
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
+    
+    <style>
+    	.consent-record {
+    		margin-top: 3px;
+    	}
+    	.consent-form-title {
+    	}
+    	.consent-record-accept-button {
+    	}
+    	.button-section {
+    		background: white;
+    		opacity: 0.6;
+    		float: bottom;
+    	}
+    	.hidden-panel {
+    		top: 0;
+    		z-index: 2;
+    	}
+    	nav {
+    		opacity: 0.8;
+    	}
+    	.level-3-panel {
+    		top: 0;
+    		z-index: 3;
+    	}
+    	.sub-text {
+    		font-size: smaller;
+    	}
+    	.centered-right-glyph {
+			position: absolute;
+			top: 50%;
+			right: 12px;
+			-moz-transform: translateY(-50%);
+			-webkit-transform: translateY(-50%);
+			transform: translateY(-50%);
+			float: right;
+	   	}
+	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
+			width: auto;
+			float: right;
+			margin-right: 24px;
+			text-align: right;
+	   	}
+	   	.row-button {
+	   		position: relative;
+	   	}
+    </style>
 	</head>
 	
   	<body class="site-body">
-		<div class="site-trio-container">
-			<div class="site-trio-fill"></div>
-			<span class="sign-out-button site-trio-clipped site-active-text">Sign&nbsp;Out</span>
-		</div>
-	    <h3> Hello, {% if user.is_authenticated %}{{ user.get_full_name }}{% else %}world{% endif %}. </h3>
-	    <div id="myAlert"></div>
+  		<panel>
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<div class="pull-right">
+						<div class="sign-out-button site-trio-clipped site-active-text site-navbar-link site-active-text">
+							<span>Sign&nbsp;Out</span>
+						</div>
+					</div>
+				</div>
+			</nav>
+			<h3> Hello, {% if user.is_authenticated %}{{ user.get_full_name }}{% else %}world{% endif %}. </h3>
+			<div id="myAlert" class="alert-container"></div>
+			<section class="button-section">
+				<hr>
+				<button id="id_find_experience_button" panelID = "id_find_experience_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Find a New Experience</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+				<button id="id_your_pathway_button" panelID = "id_your_pathway_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Your Pathway</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+				<button id="id_your_plans_button" panelID = "id_your_plans_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Your Plans</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+				<button id="id_consent_forms_button" panelID = "id_consent_forms_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Consent Forms</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+				<button id="id_sharing_button" panelID = "id_sharing_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Sharing</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+				<button id="id_settings_button" panelID = "id_settings_panel"
+					class="btn row-button site-active-text show-panel-button">
+					<span class="pull-left">Settings</span>
+					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+				</button>
+				<hr>
+			</section>
+		</panel>
+	    <panel id="id_find_experience_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Find a New Experience</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_searchArea" class="searchbar">
+					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div id="id_searchInputContainer" class="search-input-container">
+						<input id="id_searchInput" class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_services">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_find_offering_panel" class="level-3-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Find a New Experience</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div class="searchbar">
+					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div class="search-input-container">
+						<input class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_offerings">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_your_pathway_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Your Pathway</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_pathway">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_your_plans_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Your Plans</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_searchArea" class="searchbar">
+					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div id="id_searchInputContainer" class="search-input-container">
+						<input id="id_searchInput" class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_plans">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_consent_forms_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Consent Forms</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_searchArea" class="searchbar">
+					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div id="id_searchInputContainer" class="search-input-container">
+						<input id="id_searchInput" class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_openConsentForms">
+				</div>
+			</div> <!-- /container-fluid -->
+			<div class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div class="searchbar">
+					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div class="search-input-container">
+						<input class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_openConsentForms">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_sharing_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Sharing</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_searchArea" class="searchbar">
+					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div class="search-input-container">
+						<input class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_sharing">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_settings_panel" class="hidden-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="pull-right">
+						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+							<span>+</span>
+						</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Settings</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_searchArea" class="searchbar">
+					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
+					<div id="id_searchInputContainer" class="search-input-container">
+						<input id="id_searchInput" class="search-input" placeholder="Search">
+						</input>
+					</div>
+				</div>
+				<div id="id_settings">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
 
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
@@ -29,13 +349,17 @@
 	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
 	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
 	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
+	<script src="{% static "d3/d3.v3.min.js" %}"></script>
 	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "consentrecords/js/models.js" %}"></script>
+	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		var storedcsrftoken = "{{ csrf_token }}";
 
+		var userInstance;
 		$(document).ready (function(e) {
 			$(".sign-out-button").click(function(e) {
 				closealert();
@@ -44,6 +368,36 @@
 			   //stop form submission
 			   e.preventDefault();
 			});
+			
+			userInstance = new cr.ObjectValue()
+			userInstance.value.id = "{{userID}}"
+			userInstance.description = "{{ user.get_full_name }}"
+			
+			$(".show-panel-button").click(show_find_experience_panel);
+			$(".done-button").click(hide_site_panel);
+			
+			$("#id_find_experience_panel").on("revealing", function(e, eventInfo)
+				{
+					show_services("#id_services");
+				});
+			$("#id_find_offering_panel").on("revealing", function(e, eventInfo)
+				{
+					datum = d3.select(this).datum();
+					show_offerings(datum, "#id_offerings");
+				});
+			$("#id_your_pathway_panel").on("revealing", function(e, eventInfo)
+			{
+				show_pathway("#id_pathway");
+			});
+			$("#id_your_plans_panel").on("revealing", function(e, eventInfo)
+			{
+				show_plans("#id_plans");
+			});
+			$("#id_consent_forms_panel").on("revealing", function(e, eventInfo)
+				{
+					show_consent_records("#id_openConsentForms");
+				});
+						
 		});
 			
 		function sign_out() {
@@ -63,6 +417,298 @@
 				console.log( jqXHR.status + "; " + jqXHR.statusText);
 			});
 		}
+		
+		function show_find_experience_panel(e)
+		{
+			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
+			if (prepare_click())
+			{
+				show_click_feedback(this);
+				
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
+			}
+		}
+				
+		function hide_site_panel(e)
+		{
+			if (prepare_click())
+			{
+				show_click_feedback(this);
+				hide_panel_right($(this).parents(".site-panel")[0], false);
+			}
+		}
+		
+		function show_consent_records(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				var divs = d3.select(containerDiv).selectAll('div')
+					.data(newInstances)
+					.enter()
+					.append('div').classed("consent-record cell-div", true);
+				
+				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div site-active-text", true)
+					.text("I Accept");
+				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
+					.text(function(d) { 
+						return d.value.cells[0].data[0].value.description;
+					});
+// 				newValues.sort(function(a, b)
+// 					{
+// 						return a.getDescription().localeCompare(b.getDescription());
+// 					});
+// 				
+// 				layout_objects(d3.select("#id_objects"), newValues,
+// 					function(d) {
+// 						if (prepare_click())
+// 						{
+// 							show_view_object_panel(d, cell, panelDiv);
+// 						}
+// 					});
+			}
+			
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+			path = "#" + "{{userID}}" + '>"Consent Record"';
+			cr.getData(path, successFunction, failFunction);
+		}
+		
+		function show_services(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				newInstances.sort(function(a, b)
+					{
+						return a.getDescription().localeCompare(b.getDescription());
+					});
+				
+				layout_objects(d3.select("#id_services"), newInstances,
+					function(d) {
+						if (prepare_click())
+						{
+							var panelDiv = d3.select("#id_find_offering_panel");
+							panelDiv.datum([d]);
+							show_click_feedback(this);
+				
+							window.scrollTo(0, 0);
+							show_panel_left(panelDiv.node());
+						}
+					});
+			}
+			
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+			path = "Service";
+			cr.getValues(path, ofKindID=undefined, successFunction, failFunction);
+		}
+		
+		function get_datum_by_name(d, name)
+		{
+			for (var i = 0; i < d.value.cells.length; ++i)
+			{
+				var cell = d.value.cells[i];
+				if (cell.field.name == name)
+					return cell.data[0].value;
+			}
+			return undefined;
+		}
+		
+		function show_pathway(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				var divs = d3.select(containerDiv).selectAll('div')
+					.data(newInstances)
+					.enter()
+					.append('div').classed("consent-record cell-div", true);
+				
+				divs.append('div').classed("right-label-div right-fixed-width-div right-label-div", true)
+					.text(function(d) {
+						startDate = get_datum_by_name(d, "Start Date");
+						if (startDate === undefined)
+							startDate = "";
+						endDate = get_datum_by_name(d, "End Date");
+						if (endDate === undefined)
+							endDate = "";
+						if (startDate || endDate)
+							connector = " - ";
+						else
+							connector = "";
+						return startDate + connector + endDate;
+					});
+				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
+					.text(function(d) { 
+						return get_datum_by_name(d, "Offering").description;
+					});
+// 				newValues.sort(function(a, b)
+// 					{
+// 						return a.getDescription().localeCompare(b.getDescription());
+// 					});
+// 				
+// 				layout_objects(d3.select("#id_objects"), newValues,
+// 					function(d) {
+// 						if (prepare_click())
+// 						{
+// 							show_view_object_panel(d, cell, panelDiv);
+// 						}
+// 					});
+			}
+			
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+			var path = "#" + "{{userID}}" + '>"Experience"';
+			cr.getData(path, successFunction, failFunction);
+		}
+		
+		function show_offerings(datum, container) {
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+
+			var successFunction = function(newInstances)
+			{
+				// Remove any lingering contents from the set of full issues.
+				var containerDiv = d3.select(container);
+				containerDiv.selectAll("div").remove();
+
+				var divs = d3.select(container).selectAll("div")
+					.data(newInstances)
+					.enter()
+					.append("div").classed("consent-record cell-div", true);	// So that each button appears on its own row.
+	
+				var buttons = divs.append("button").classed("btn row-button", true)
+					.on("click", show_offering_details);
+				divs.append("hr");
+	
+				buttons.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
+				var rightText = buttons.append('span').classed("centered-right-2", true);
+				
+				rightText.append('div')
+					.text(function(d) {
+						startDate = get_datum_by_name(d, "Start Date");
+						if (startDate === undefined)
+							startDate = "";
+						endDate = get_datum_by_name(d, "End Date");
+						if (endDate === undefined)
+							endDate = "";
+						if (startDate || endDate)
+							connector = " - ";
+						else
+							connector = "";
+						return startDate + connector + endDate;
+					});
+				rightText.append('div').classed("sub-text", true)
+					.text(function(d) {
+						registrationDeadline = get_datum_by_name(d, "Registration Deadline");
+						if (registrationDeadline)
+							return "register by " + registrationDeadline;
+						else
+							return "";
+					});
+				leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
+				
+				leftText.append('div')
+					.text(function(d) { 
+						return get_datum_by_name(d, "_name").description;
+					})
+					.each(function(d) {
+						path = "#" + d.value.parentID;
+						cr.getValues(path, undefined, 
+							function(newObjects) {
+								leftText.append('div').classed("sub-text", true)
+									.text(newObjects[0].value.description);
+							}, 
+							failFunction)
+					});
+				
+// 				newValues.sort(function(a, b)
+// 					{
+// 						return a.getDescription().localeCompare(b.getDescription());
+// 					});
+// 				
+// 				layout_objects(d3.select("#id_objects"), newValues,
+// 					function(d) {
+// 						if (prepare_click())
+// 						{
+// 							show_view_object_panel(d, cell, panelDiv);
+// 						}
+// 					});
+			}
+			
+			function show_offering_details()
+			{
+				alert(d3.select(this).datum());
+			}
+						
+			var currentDate = new Date();
+			var todayString = currentDate.toISOString().substring(0, 10);
+			var path = "#" + datum[0].value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
+			cr.getData(path, successFunction, failFunction);
+		}
+		
+		function show_plans(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				var divs = d3.select(containerDiv).selectAll('div')
+					.data(newInstances)
+					.enter()
+					.append('div').classed("consent-record cell-div", true);
+				
+				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div", true)
+					.text(function(d) {
+						startDate = get_datum_by_name(d, "Start Date");
+						if (startDate === undefined)
+							startDate = "";
+						endDate = get_datum_by_name(d, "End Date");
+						if (endDate === undefined)
+							endDate = "";
+						if (startDate || endDate)
+							connector = " - ";
+						else
+							connector = "";
+						return startDate + connector + endDate;
+					});
+				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
+					.text(function(d) { 
+						return get_datum_by_name(d, "_name").description;
+					});
+// 				newValues.sort(function(a, b)
+// 					{
+// 						return a.getDescription().localeCompare(b.getDescription());
+// 					});
+// 				
+// 				layout_objects(d3.select("#id_objects"), newValues,
+// 					function(d) {
+// 						if (prepare_click())
+// 						{
+// 							show_view_object_panel(d, cell, panelDiv);
+// 						}
+// 					});
+			}
+			
+			var failFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+			path = "#{{userID}}::reference(Enrollment)::reference(Offering)";
+			cr.getData(path, successFunction, failFunction);
+		}
+		
 	</script>
 		
 </html>

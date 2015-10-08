@@ -7,13 +7,13 @@ from consentrecords.models import Instance, DeletedInstance, Value, DeletedValue
 
 class InstanceAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'typeID', 'parentID', '_description', '_parentDescription', 'transaction')
+    list_display = ('id', 'typeID', 'parent', '_description', 'transaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parentID', '_description', '_parentDescription', 'transaction')}),
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
     )
-    readonly_fields = ('id','typeID', 'parentID','transaction')
-    search_fields = ('typeID', 'parentID',)
+    readonly_fields = ('id','typeID', 'parent','transaction')
+    search_fields = ('typeID', )
 
 class DeletedInstanceAdmin(admin.ModelAdmin):
 
