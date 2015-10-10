@@ -38,6 +38,10 @@
     		top: 0;
     		z-index: 3;
     	}
+    	.level-4-panel {
+    		top: 0;
+    		z-index: 4;
+    	}
     	.sub-text {
     		font-size: smaller;
     	}
@@ -176,6 +180,28 @@
 					</div>
 				</div>
 				<div id="id_offerings">
+				</div>
+			</div> <!-- /container-fluid -->
+	    </panel>
+	    <panel id="id_offering_details_panel" class="level-4-panel configuration-panel site-panel list-panel">
+			<nav class="navbar navbar-default site-navbar" role="navigation">
+				<div class="container-fluid">
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title site-fill"><span class="site-inner-fill">Sign-Up</span></div>
+					</div>
+				</div>
+			</nav>
+			<div id="id_scrollableArea" class="panel-scrolling">
+				<div>
+					<div class="alert-container"></div>
+				</div>
+				<div id="id_offering_details">
+				</div>
+				<div id="id_action_container">
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
@@ -509,15 +535,31 @@
 			cr.getValues(path, ofKindID=undefined, successFunction, failFunction);
 		}
 		
-		function get_datum_by_name(d, name)
+		function cells_get_cell_by_name(cells, name)
 		{
-			for (var i = 0; i < d.value.cells.length; ++i)
+			for (var i = 0; i < cells.length; ++i)
 			{
-				var cell = d.value.cells[i];
+				var cell = cells[i];
 				if (cell.field.name == name)
-					return cell.data[0].value;
+					return cell;
 			}
 			return undefined;
+		}
+		
+		function get_cell_by_name(d, name)
+		{
+			return cells_get_cell_by_name(d.value.cells, name);
+		}
+		
+		/* Gets the first value of the cell within the specified instance 
+			whose name equals the specified name. */
+		function get_datum_by_name(d, name)
+		{
+			var cell = get_cell_by_name(d, name);
+			if (cell)
+				return cell.data[0].value;
+			else
+				return undefined;
 		}
 		
 		function show_pathway(containerDiv) {
@@ -598,12 +640,13 @@
 				
 				rightText.append('div')
 					.text(function(d) {
-						startDate = get_datum_by_name(d, "Start Date");
+						var startDate = get_datum_by_name(d, "Start Date");
 						if (startDate === undefined)
 							startDate = "";
-						endDate = get_datum_by_name(d, "End Date");
+						var endDate = get_datum_by_name(d, "End Date");
 						if (endDate === undefined)
 							endDate = "";
+						var connector;
 						if (startDate || endDate)
 							connector = " - ";
 						else
@@ -612,45 +655,148 @@
 					});
 				rightText.append('div').classed("sub-text", true)
 					.text(function(d) {
-						registrationDeadline = get_datum_by_name(d, "Registration Deadline");
+						var registrationDeadline = get_datum_by_name(d, "Registration Deadline");
 						if (registrationDeadline)
 							return "register by " + registrationDeadline;
 						else
 							return "";
 					});
-				leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
+				var leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
 				
 				leftText.append('div')
 					.text(function(d) { 
 						return get_datum_by_name(d, "_name").description;
 					})
 					.each(function(d) {
-						path = "#" + d.value.parentID;
+						var path = "#" + d.value.parentID;
+						var thisText = this;
 						cr.getValues(path, undefined, 
 							function(newObjects) {
-								leftText.append('div').classed("sub-text", true)
+								d3.select(thisText).append('div').classed("sub-text", true)
 									.text(newObjects[0].value.description);
 							}, 
 							failFunction)
 					});
-				
-// 				newValues.sort(function(a, b)
-// 					{
-// 						return a.getDescription().localeCompare(b.getDescription());
-// 					});
-// 				
-// 				layout_objects(d3.select("#id_objects"), newValues,
-// 					function(d) {
-// 						if (prepare_click())
-// 						{
-// 							show_view_object_panel(d, cell, panelDiv);
-// 						}
-// 					});
 			}
 			
-			function show_offering_details()
+			function show_offering_details(d)
 			{
-				alert(d3.select(this).datum());
+				if (prepare_click())
+				{
+					show_click_feedback(this);
+
+					var panelDiv = d3.select("#id_offering_details_panel");
+					panelDiv.datum(d);
+					
+					var div = panelDiv.selectAll("#id_offering_details");
+					div.selectAll("div").remove();
+					div.append("div")
+						.text(get_datum_by_name(d, "_name").description);
+					div.append("div")
+						.text("Minimum Age: " + get_datum_by_name(d, "Minimum Age"));
+					div.append("div")
+						.text("Maximum Age: " + get_datum_by_name(d, "Maximum Age"));
+					div.append("div")
+						.text("Registration Deadline: " + get_datum_by_name(d, "Registration Deadline"));
+					cr.getValues("#"+d.value.id+">Service", undefined, function(newInstances)
+						{
+							newInstances.sort(function(a, b)
+								{
+									return a.getDescription().localeCompare(b.getDescription());
+								});
+				
+							div.append("div").text("Services");
+							div.append("div").selectAll("div")
+								.data(newInstances)
+								.enter()
+								.append("div")
+								.text(function(d) {
+									return d.getDescription();
+								});
+						},
+						failFunction);
+					var inquiriesCell = get_cell_by_name(d, "Inquiries")
+					var newInstances = inquiriesCell.data;
+					if (newInstances.length == 0)
+						failFunction("Access Failure for Inquiries");
+					else
+					{
+						var inquiriesInstance = newInstances[0];
+						var inquiryInstance = null;
+						var inquiryCell = null;
+						var emailCell = null;
+						var addInquiryFunction = function()
+						{
+							initialData = [{field: emailCell.field, data: [{ value:"{{ user.email }}"}]}];
+							cr.createInstance(storedcsrftoken, 
+								inquiryCell.field, 
+								inquiriesInstance.value.id,
+								initialData,
+								function(newData)
+								{
+									checkInquiryFunction([newData]);
+								},
+								failFunction);
+						}
+
+						var checkInquiryFunction = function(newInstances)
+						{
+							var actionDiv = panelDiv.selectAll("#id_action_container");
+							actionDiv.selectAll("div").remove();
+							buttonDiv = actionDiv.append("div")
+								.classed("sign-up-button site-active-text", true);
+				
+							if (newInstances.length > 0)
+							{
+								inquiryInstance = newInstances[0];
+								buttonDiv.text("Delete Inquiry");
+							}
+							else
+							{
+								inquiryInstance = null;
+								buttonDiv.text("Add My Name");
+								buttonDiv.on("click", function(e)
+									{
+										if (prepare_click())
+										{
+											show_click_feedback(this);
+											
+											if (inquiryCell && emailCell)
+											{
+												addInquiryFunction();
+											}
+											else
+											{
+												cr.getConfiguration(inquiriesCell.field.ofKindID, 
+													function(cells)
+													{
+														inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
+														cr.getConfiguration(inquiryCell.field.ofKindID,
+															function(cells)
+															{
+																emailCell = cells_get_cell_by_name(cells, "_email");
+																addInquiryFunction();
+															},
+															failFunction);
+													}, 
+													failFunction);
+											}
+											unblock_click();
+										}
+										d3.event.preventDefault();
+									});
+							}
+						};
+							
+						cr.getValues("#" + inquiriesInstance.value.id + ">Inquiry[_email={{ user.email }}]",
+							undefined,
+							checkInquiryFunction,
+							failFunction);
+					}
+		
+					window.scrollTo(0, 0);
+					show_panel_left(panelDiv.node());
+				}
 			}
 						
 			var currentDate = new Date();

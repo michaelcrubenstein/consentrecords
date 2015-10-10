@@ -224,10 +224,14 @@ def updateValues(request):
                     item.updateValue(c["value"], transactionState);
                 elif "containerUUID" in c:
                     container = LazyInstance(c["containerUUID"])
-                    elementID = c["elementUUID"]
-                    newValue = c["value"]
+                    fieldID = c["fieldID"]
                     newIndex = c["index"]
-                    item = container.addValue(elementID, newValue, newIndex, transactionState)
+                    newValue = c["value"]
+                    if isinstance(newValue, (str)):
+                        item = container.addValue(fieldID, newValue, newIndex, transactionState)
+                    else:
+                        ofKindObject = LazyInstance(c["ofKindID"])
+                        item, newValue = ofKindObject.createInstance(container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
                 else:
                     raise ValueError("subject id was not specified")
                 ids.append(item.id)

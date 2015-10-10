@@ -137,18 +137,19 @@
 			panelDiv.attr("headerText", headerText);
 
 			var cell = new cr.Cell();
-			cell.field = {name: headerText,
+			cell.field = {name: "Item",
 						  dataType: "_object",
 			{% if rootID %}
-						  ofKindID: "{{rootID}}"
+						  ofKindID: "{{rootID}}",
 			{% endif %}
+						  capacity: "_multiple values",
 						  };
 			cell.setup(null);
 			
 			var itemsDiv = d3.select("#id_objects")
 				.data([cell]);
 			cell.add_target("valueAdded", itemsDiv.node());
-			itemsDiv.node().onValueAdded = get_on_value_added_function(d3.select(parentPanel), show_view_object_panel);
+			itemsDiv.node().onValueAdded = get_on_value_added_function(d3.select(parentPanel), cell, null, show_view_object_panel);
 			$(itemsDiv.node()).on("valueAdded", function(e, newData)
 			{
 				this.onValueAdded(e, newData);
@@ -164,7 +165,7 @@
 					{
 						show_click_feedback(this);
 				
-						show_add_object_panel(cell, null, panelDiv, submit_create_instance);
+						show_add_object_panel(null, cell, null, panelDiv, submit_create_instance);
 					}
 
 					e.preventDefault();
@@ -184,7 +185,7 @@
 					function(d) {
 						if (prepare_click())
 						{
-							show_view_object_panel(d, cell, panelDiv);
+							show_view_object_panel(d, cell, null, panelDiv);
 						}
 					});
 			}
@@ -228,13 +229,27 @@
 			}
 		}
 		
+		function get_view_panel_header(objectData, containerCell)
+		{
+			var headerText = objectData.getDescription();
+			if (!objectData.hasTextDescription())
+			{
+				if (headerText.length > 0)
+					headerText = containerCell.field.name + " (" + headerText + ")";
+				else
+					headerText = containerCell.field.name;
+			}
+			return headerText;
+		}
+		
 		/* Displays a panel in which the specified object's contents appear.
 		 */
-		function show_view_object_panel(objectData, containerCell, containerPanel) {
+		function show_view_object_panel(objectData, containerCell, containerUUID, containerPanel) {
 			successFunction = function ()
 			{
+					
 				var panelDiv = create_panel(containerPanel, 
-											objectData, objectData.getDescription())
+											objectData, get_view_panel_header(objectData, containerCell))
 					.classed("show-panel", true);
 	
 				var navContainer = panelDiv.appendNavContainer();
@@ -250,7 +265,7 @@
 						{
 							show_click_feedback(this);
 						
-							show_edit_object_panel(objectData, containerCell, panelDiv);
+							show_edit_object_panel(objectData, containerCell, containerUUID, panelDiv);
 						}
 						d3.event.preventDefault();
 					});
@@ -261,7 +276,7 @@
 				var headerDiv = panel2Div.appendHeader();
 				objectData.add_target("dataChanged", headerDiv.node());
 				$(headerDiv.node()).on("dataChanged", function(e) {
-						d3.select(this).text(objectData.getDescription());
+						d3.select(this).text(get_view_panel_header(objectData, containerCell));
 					});
 
 				var alertContainer = panel2Div.append("div").classed("alert-container", true);
@@ -269,7 +284,7 @@
 				window.scrollTo(0, 0);
 				show_panel_left(panelDiv.node());
 			
-				panel2Div.show_view_cells(objectData, containerCell, panelDiv);
+				panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
 			}
 			
 			failFunction = function(error)
@@ -278,13 +293,13 @@
 				unblock_click();
 			}
 			
-			objectData.checkCells(successFunction, failFunction)
+			objectData.checkCells(containerCell, successFunction, failFunction)
 		}
 		
 		/* 
 			Displays a panel for editing the specified object. 
 		 */
-		function show_edit_object_panel(objectData, containerCell, containerPanel) {
+		function show_edit_object_panel(objectData, containerCell, containerUUID, containerPanel) {
 			var successFunction = function()
 			{
 				var panelDiv = create_panel(containerPanel, 
@@ -293,8 +308,6 @@
 	
 				var navContainer = panelDiv.appendNavContainer();
 		
-				var header = "Edit " + containerCell.field.name;
-			
 				var doneButton = navContainer.appendRightButton();
 				doneButton.append("span").text("Done");
 		
@@ -312,6 +325,10 @@
 						show_click_feedback(this);
 					
 						var sections = panel2Div.selectAll("section");
+						var successFunction = function()
+						{
+							hide_panel_down($(doneButton.node()).parents(".site-panel")[0]);
+						};
 						if (objectData.getValueID())
 						{
 							/* This object has been previously saved. Update the data. */
@@ -321,10 +338,6 @@
 									if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
 										dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, objectData, initialData, sourceObjects);
 								});
-							var successFunction = function()
-							{
-								hide_panel_down($(doneButton.node()).parents(".site-panel")[0]);
-							};
 							var updateValuesFunction = function()
 							{
 								sections.each(function(cell) {
@@ -340,6 +353,11 @@
 								successFunction();
 							}
 						}
+						else if (containerUUID != null)
+						{
+							submit_create_instance(objectData, containerCell, containerUUID, sections, successFunction);
+							/* Add this item to the contained object. */
+						}
 						else
 						{
 							/* In this case, we are editing an object that is contained in an object
@@ -354,7 +372,7 @@
 				
 							objectData.calculateDescription();
 							objectData.trigger_event("dataChanged");
-							hide_panel_down($(this).parents(".site-panel")[0]);
+							successFunction();
 						}
 					}
 					d3.event.preventDefault();
@@ -367,7 +385,7 @@
 				unblock_click();
 			}
 			
-			objectData.checkCells(successFunction, failFunction);
+			objectData.checkCells(containerCell, successFunction, failFunction);
 		}
 		
 		/* Displays a panel from which a user can select an object of the kind required 
@@ -453,13 +471,12 @@
 			a new instance of an object to another object. For example, adding a 
 			configuration to an object with a uuname kind.
 		 */
-		function show_add_object_panel(containerCell, containerUUID, containerPanel, storeDataFunction) {
+		function show_add_object_panel(oldValue, containerCell, containerUUID, containerPanel, storeDataFunction) {
 			var successFunction = function(cells)
 			{
 				var panelDiv = create_panel(containerPanel, containerCell, "New " + containerCell.field.name)
 					.classed("edit-panel", true);
 	
-				var header = "New " + containerCell.field.name								 
 				var navContainer = panelDiv.appendNavContainer();
 	
 				var backButton = navContainer.appendLeftButton()
@@ -477,7 +494,7 @@
 						{
 							show_click_feedback(this);
 							
-							storeDataFunction(containerCell, containerUUID, sections, onSuccessFunction);
+							storeDataFunction(oldValue, containerCell, containerUUID, sections, onSuccessFunction);
 						}
 						d3.event.preventDefault();
 					});
@@ -502,7 +519,7 @@
 		}
 		
 		/* This is a storeDataFunction for adding an object within an unsaved object. */
-		function store_new_instance(containerCell, containerUUID, sections, onSuccessFunction)
+		function store_new_instance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 		{
 			closealert();
 			var newData = cr.dataTypes._object.newValue();
@@ -515,14 +532,17 @@
 				});
 				
 			newData.calculateDescription();
-			containerCell.addValue(newData);
+			if (oldValue)
+				oldValue.completeUpdateValue(newData);
+			else
+				containerCell.addValue(newData);
 			if (onSuccessFunction) onSuccessFunction(newData);
 		}
 		
 		/* This is a storeDataFunction for creating an object. 
 			If this is a root object, then containerUUID will be null.
 		 */
-		function submit_create_instance(containerCell, containerUUID, sections, onSuccessFunction)
+		function submit_create_instance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 		{
 			var initialData = []
 			sections.each(
@@ -533,8 +553,7 @@
 					cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
 				});
 				
-			cr.createInstance(storedcsrftoken, containerCell, containerUUID, initialData, onSuccessFunction, standard_json_fail_function)
-			
+			cr.append(storedcsrftoken, oldValue, containerCell, containerUUID, initialData, onSuccessFunction, standard_json_fail_function)
 		}
 	</script>
 

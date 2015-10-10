@@ -4,5 +4,9 @@ __pycache__/
 
 *.log
 *.sqlite3
+*.tar
 
-static/
+static/*
+
+consentrecords/production_settings.py
+consentrecords/development_settings.py

@@ -1,0 +1,183 @@
+body {
+  font-size: medium;
+  overflow-y: hidden;
+}
+.site-panel {
+	position: absolute;
+	overflow-y: hidden;
+}
+
+#id_panel1 {
+	width: 100%;
+	height: 100%;
+	max-height: 100%;
+	z-index: 1;
+}
+.panel-scrolling {
+	height: 100%;
+	max-height: 100%;
+	overflow-y: scroll;
+}
+.list-panel {
+	background: #eee;
+}
+.show-panel {
+	background: white;
+}
+.edit-panel {
+	background: #eee;
+}
+.configuration-panel
+{
+	height: 0px;
+	width: 0px;
+	display: none;
+	overflow-y: hidden;
+}
+.configuration-header
+{
+	width: 100%;
+	text-align: center;
+	font-weight: bold;
+	background: white;
+}
+.add-button {
+	margin-top: 0px;
+	padding-top: 4px;
+	line-height: 22px;
+	font-size: x-large;
+	font-weight: 600;
+}
+.row-button {
+	font-size: medium;	/* To override the smaller button. */
+	background: white;
+	width: 100%;
+	border: 0;
+	border-radius: 0;
+}
+.row-button:hover {
+	background: #f8f8f8;
+}
+.list-div {
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 0;
+	font-weight: 400;
+	white-space: nowrap;
+	vertical-align: middle;
+	width: 100%;
+}
+hr {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.cell-div {
+	width: 100%;
+	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
+	padding-right: 0px;
+	background: white;	/* The background is white to override the grey background of edit or add panels. */
+}
+.cell-edit-div {
+	margin-top: 12px;
+}
+.cell-label-div {
+	padding: 6px 12px;
+}
+.string-value-view {
+	position: relative;
+	overflow: hidden;
+	width: auto;
+}
+.left-label-div {
+	margin-left: 0px;
+	margin-right: auto;
+	padding-left: 12px;
+}
+.right-label-div {
+	padding: 6px 12px;
+	text-align: right
+}
+.string-input-container {
+	width: 100%;
+	padding: 3px;	/* For the highlight box of the input. */
+}
+.string-multi-value-container {
+	text-align: left;
+}
+.string-unique-input-label {
+	width: auto;
+	float: left;
+	padding: 3px 12px;	/* For the highlight box of the input. */
+}
+.string-unique-labeled-input {
+	text-align: right;
+}
+.string-unique-item {
+	overflow: hidden;
+	width:auto;
+	margin-right: 12px;
+	margin-left: 12px;
+}
+.string-unique-input {
+	width: 100%;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	border: none;
+	border-color: transparent;
+	display: inline-block;
+	right: 0px;
+}
+.string-input {
+	width: 100%;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	border: none;
+	border-color: transparent;
+}
+.string-input:focus {
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	border: none;
+	border-color: transparent;
+}
+
+.expanding-div {
+	overflow: hidden;
+	width: auto;
+}
+.left-expanding-div {
+	overflow: hidden;
+	width: auto;
+	text-align: left;
+}
+.right-fixed-width-div {
+	width: auto;
+	float: right;
+}
+.left-fixed-width-div {
+	width: auto;
+	float: left;
+}
+
+.searchbar {
+	background: #D3D3D3;
+}
+.search-input-container {
+	display: block;
+	overflow: hidden;
+	width: auto;
+	padding: 3px 12px;
+}
+.search-input {
+	display: block;
+	background: white;
+	width: 100%;
+}
+.search-cancel-button {
+	padding: 7px 12px;	/* 7 pixels to match the height of the input to the left. */
+	width: auto;
+	float: right;
+}

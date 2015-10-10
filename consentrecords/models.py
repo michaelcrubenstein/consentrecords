@@ -217,14 +217,10 @@ class LazyInstance(LazyObject):
     # The first of the pair is the hex UUID of the name, the second is the hex UUID of the dataType
     @property
     def _descriptors(self):
-        logger = logging.getLogger(__name__)
-        logger.error("_descriptors(%s)" % (self.id.hex))
         configuration = self.getSubInstance(fieldID=Fact.configurationUUID())
         results = []
         textUUID = Fact.textEnumUUID()
         countUUID = Fact.countEnumUUID()
-        logger.error("  textUUID: %s" % (textUUID.hex))
-        logger.error("  countUUID: %s" % (countUUID.hex))
         if configuration:
             elementIDs = [Fact.nameUUID(), Fact.dataTypeUUID()]
             for fieldObject in configuration._getSubInstances(fieldID=Fact.fieldUUID()):
@@ -266,7 +262,7 @@ class LazyInstance(LazyObject):
                           " WHERE v1.instance_id = %s AND v1.fieldID = %s" + \
                           " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
                     c.execute(sql, [self.id.hex, name])
-                    r.extend([c.fetchone()[0]]);
+                    r.extend([str(c.fetchone()[0])]);
             else:
                 raise ValueError("unrecognized descriptorType %s" % LazyInstance(descriptorType).getSubValue(Fact.uuNameUUID()).stringValue);
                     
@@ -531,9 +527,9 @@ class LazyInstance(LazyObject):
     def createEmptyInstance(self, parent, transactionState):
         id = uuid.uuid4()
         i = Instance.objects.create(id=id, typeID=self.id.hex, 
-                                    parent=parent.instance,
+                                    parent=parent and parent.instance,
                                     transaction = transactionState.transaction)
-        return LazyInstance(id, self.id.hex, parent and parent.id.hex, transactionState.transaction.id)
+        return LazyInstance(id, self.id.hex, parent and parent.id.hex, transactionState.transaction.id, i)
         
     def getMaxElementIndex(self, fieldID):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
@@ -576,12 +572,17 @@ class LazyInstance(LazyObject):
         # Otherwise, create a fact whose value is the data.
         # Note that this doesn't recur, so it can't handle arrays of dictionaries,
         # which would be the logical construction of a recursive add.
-        if isinstance(data, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
-            raise TypeError("Element data not in an array")
+        if not isinstance(data, list):
+            raise ValueError("Data to add is not in a list")
         else:           
             i = 0
             ids = []
             for d in data:
+                if not isinstance(d, dict):
+                    raise ValueError("Item to add is not a dictionary with a value")
+                if "value" not in d or not d["value"]:
+                    raise ValueError("Item to add does not contain a non-null value")
+
                 fieldID = uuid.UUID(fieldData["nameID"])
                 v = d["value"]
                 if isinstance(v, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
@@ -593,33 +594,39 @@ class LazyInstance(LazyObject):
                     ofKindObject = LazyInstance(fieldData["ofKindID"])
                     ofKindObject.createInstance(self, fieldID, -1, v["cells"], transactionState)
                 else:
-                    raise TypeError("Unrecognized type of data to save")
+                    raise ValueError("Unrecognized type of data to save")
                 i += 1
     
     # Add the specified data as a field to self during the process of instantiating
     # self.            
-    def addData(self, fieldObject, data, transactionState):        
+    def addData(self, fieldObject, data, transactionState):
         fieldData = fieldObject.getFieldData()
         if fieldData:
             self._addElementData(data, fieldData, transactionState)
 
-    def createInstance(self, parent, fieldID, position, propertyList, transactionState):
+    def createInstance(self, parent, parentFieldID, position, propertyList, transactionState):
         item = self.createEmptyInstance(parent, transactionState)
     
         if parent:
             if position < 0:
-                maxIndex = parent.getMaxElementIndex(fieldID)
+                maxIndex = parent.getMaxElementIndex(parentFieldID)
                 if maxIndex == None:
                     position = 0
                 else:
                     position = maxIndex + 1
-            newIndex = parent.updateElementIndexes(fieldID, position, transactionState)
-            newValue = parent.addValue(fieldID, item.id.hex, newIndex, transactionState)
+            newIndex = parent.updateElementIndexes(parentFieldID, position, transactionState)
+            newValue = parent.addValue(parentFieldID, item.id.hex, newIndex, transactionState)
         else:
             newValue = None
     
         for f in propertyList:
+            if 'field' not in f:
+                raise ValueError('instance data element missing field key');
+            if 'data' not in f:
+                raise ValueError('instance data element missing data key');
             fieldData = f['field']
+            if 'id' not in fieldData:
+                raise ValueError('field data element missing id key');
             fieldID = fieldData['id']
             fieldObject = LazyInstance(fieldID)
             item.addData(fieldObject, f['data'], transactionState)
