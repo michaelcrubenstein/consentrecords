@@ -23,9 +23,16 @@
     	.consent-record-accept-button {
     	}
     	.button-section {
-    		background: white;
-    		opacity: 0.6;
     		float: bottom;
+    	}
+    	.button-group {
+    		padding-top: 12px;
+    	}
+    	.organization-section {
+    		padding-top: 12px;
+    	}
+    	.settings-section {
+    		padding-top: 12px;
     	}
     	.hidden-panel {
     		top: 0;
@@ -60,14 +67,26 @@
 			margin-right: 24px;
 			text-align: right;
 	   	}
-	   	.row-button {
+	   	.background-gradient-panel .row-button {
 	   		position: relative;
+    		background: white;
+    		opacity: 0.6;
+	   	}
+	   	.panel-input-container {
+	   		margin-top: 9px;
+	   		padding-top: 3px;
+	   		padding-left: 12px;
+	   		padding-right: 12px;
+	   		width: 100%;
+	   	}
+	   	.panel-input {
+	   		width: 100%;
 	   	}
     </style>
 	</head>
 	
   	<body class="site-body">
-  		<panel>
+  		<panel class="background-gradient-panel" >
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<div class="pull-right">
@@ -105,18 +124,23 @@
 					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
 				</button>
 				<hr>
-				<button id="id_sharing_button" panelID = "id_sharing_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Sharing</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
-				<button id="id_settings_button" panelID = "id_settings_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Settings</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
+				<section class="organization-section button-group">
+				</section>
+				<section class="button-group">
+					<hr>
+					<button id="id_sharing_button" panelID = "id_sharing_panel"
+						class="btn row-button site-active-text show-panel-button">
+						<span class="pull-left">Sharing</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
+					<hr>
+					<button id="id_settings_button" panelID = "id_settings_panel"
+						class="btn row-button site-active-text show-panel-button">
+						<span class="pull-left">Settings</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
+					<hr>
+				</section>
 			</section>
 		</panel>
 	    <panel id="id_find_experience_panel" class="hidden-panel configuration-panel site-panel list-panel">
@@ -141,11 +165,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div id="id_searchArea" class="searchbar">
-					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div id="id_searchInputContainer" class="search-input-container">
-						<input id="id_searchInput" class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_services">
 				</div>
@@ -173,11 +192,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div class="searchbar">
-					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div class="search-input-container">
-						<input class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_offerings">
 				</div>
@@ -252,11 +266,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div id="id_searchArea" class="searchbar">
-					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div id="id_searchInputContainer" class="search-input-container">
-						<input id="id_searchInput" class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_plans">
 				</div>
@@ -279,11 +288,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div id="id_searchArea" class="searchbar">
-					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div id="id_searchInputContainer" class="search-input-container">
-						<input id="id_searchInput" class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_openConsentForms">
 				</div>
@@ -293,11 +297,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div class="searchbar">
-					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div class="search-input-container">
-						<input class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_openConsentForms">
 				</div>
@@ -325,11 +324,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div id="id_searchArea" class="searchbar">
-					<span class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div class="search-input-container">
-						<input class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_sharing">
 				</div>
@@ -357,11 +351,6 @@
 					<div class="alert-container"></div>
 				</div>
 				<div id="id_searchArea" class="searchbar">
-					<span id="id_searchCancelButton" class="search-cancel-button site-disabled-text"><span>Cancel</span></span>
-					<div id="id_searchInputContainer" class="search-input-container">
-						<input id="id_searchInput" class="search-input" placeholder="Search">
-						</input>
-					</div>
 				</div>
 				<div id="id_settings">
 				</div>
@@ -386,6 +375,14 @@
 		var storedcsrftoken = "{{ csrf_token }}";
 
 		var userInstance;
+		
+		var asyncFailFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+
 		$(document).ready (function(e) {
 			$(".sign-out-button").click(function(e) {
 				closealert();
@@ -406,11 +403,16 @@
 				{
 					show_services("#id_services");
 				});
+			setup_search_bar("#id_find_experience_panel .panel-scrolling .searchbar",
+				get_filter("#id_services"));
 			$("#id_find_offering_panel").on("revealing", function(e, eventInfo)
 				{
 					datum = d3.select(this).datum();
 					show_offerings(datum, "#id_offerings");
 				});
+			setup_search_bar("#id_find_offering_panel .panel-scrolling .searchbar",
+				get_filter("#id_offerings"));
+				
 			$("#id_your_pathway_panel").on("revealing", function(e, eventInfo)
 			{
 				show_pathway("#id_pathway");
@@ -423,8 +425,36 @@
 				{
 					show_consent_records("#id_openConsentForms");
 				});
+				
+			load_organizations();
 						
 		});
+		
+		function get_filter(node)
+		{
+			return function()
+			{
+				var val = this.value.toLocaleLowerCase();
+				if (val.length == 0)
+				{
+					/* Show all of the items. */
+					d3.select(node).selectAll("div")
+						.style("display", "block");
+				}
+				else
+				{
+					/* Show the items whose description is this.value */
+					d3.select(node).selectAll("div")
+						.style("display", function(d)
+							{
+								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+									return "block";
+								else
+									return "none";
+							});
+				}
+			}
+		}
 			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
@@ -493,25 +523,26 @@
 // 					});
 			}
 			
-			var failFunction = function(error)
-			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
-			}
-			
-			path = "#" + "{{userID}}" + '>"Consent Record"';
-			cr.getData(path, successFunction, failFunction);
+			var path = "#" + "{{userID}}" + '>"Consent Record"';
+			cr.getData(path, successFunction, asyncFailFunction);
 		}
 		
 		function show_services(containerDiv) {
 			var successFunction = function(newInstances)
 			{
+				var cell = new cr.Cell();
+				cell.field = {
+							  dataType: "_object",
+							  name: "Service",
+							  capacity: "_multiple values",
+							  };
+				cell.setup(null);
 				newInstances.sort(function(a, b)
 					{
 						return a.getDescription().localeCompare(b.getDescription());
 					});
 				
-				layout_objects(d3.select("#id_services"), newInstances,
+				layout_objects(cell, d3.select("#id_services"), newInstances,
 					function(d) {
 						if (prepare_click())
 						{
@@ -525,14 +556,8 @@
 					});
 			}
 			
-			var failFunction = function(error)
-			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
-			}
-			
-			path = "Service";
-			cr.getValues(path, ofKindID=undefined, successFunction, failFunction);
+			var path = "Service";
+			cr.getValues(path, successFunction, asyncFailFunction);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -588,37 +613,13 @@
 					.text(function(d) { 
 						return get_datum_by_name(d, "Offering").description;
 					});
-// 				newValues.sort(function(a, b)
-// 					{
-// 						return a.getDescription().localeCompare(b.getDescription());
-// 					});
-// 				
-// 				layout_objects(d3.select("#id_objects"), newValues,
-// 					function(d) {
-// 						if (prepare_click())
-// 						{
-// 							show_view_object_panel(d, cell, panelDiv);
-// 						}
-// 					});
 			}
 			
-			var failFunction = function(error)
-			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
-			}
-			
-			var path = "#" + "{{userID}}" + '>"Experience"';
-			cr.getData(path, successFunction, failFunction);
+			var path = "#" + "{{userID}}" + '>Experiences>Experience';
+			cr.getData(path, successFunction, asyncFailFunction);
 		}
 		
 		function show_offerings(datum, container) {
-			var failFunction = function(error)
-			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
-			}
-
 			var successFunction = function(newInstances)
 			{
 				// Remove any lingering contents from the set of full issues.
@@ -668,14 +669,17 @@
 						return get_datum_by_name(d, "_name").description;
 					})
 					.each(function(d) {
-						var path = "#" + d.value.parentID;
-						var thisText = this;
-						cr.getValues(path, undefined, 
-							function(newObjects) {
-								d3.select(thisText).append('div').classed("sub-text", true)
-									.text(newObjects[0].value.description);
-							}, 
-							failFunction)
+						if (d.value.parentID)	/* This is an error condition. */
+						{
+							var path = "#" + d.value.parentID + "::reference(Organization)";
+							var thisText = this;
+							cr.getValues(path,
+								function(newObjects) {
+									d3.select(thisText).append('div').classed("sub-text", true)
+										.text(newObjects[0].value.description);
+								}, 
+								asyncFailFunction);
+						}
 					});
 			}
 			
@@ -698,7 +702,7 @@
 						.text("Maximum Age: " + get_datum_by_name(d, "Maximum Age"));
 					div.append("div")
 						.text("Registration Deadline: " + get_datum_by_name(d, "Registration Deadline"));
-					cr.getValues("#"+d.value.id+">Service", undefined, function(newInstances)
+					cr.getValues("#"+d.value.id+">Service", function(newInstances)
 						{
 							newInstances.sort(function(a, b)
 								{
@@ -714,11 +718,11 @@
 									return d.getDescription();
 								});
 						},
-						failFunction);
+						asyncFailFunction);
 					var inquiriesCell = get_cell_by_name(d, "Inquiries")
 					var newInstances = inquiriesCell.data;
 					if (newInstances.length == 0)
-						failFunction("Access Failure for Inquiries");
+						asyncFailFunction("Access Failure for Inquiries");
 					else
 					{
 						var inquiriesInstance = newInstances[0];
@@ -727,16 +731,12 @@
 						var emailCell = null;
 						var addInquiryFunction = function()
 						{
-							initialData = [{field: emailCell.field, data: [{ value:"{{ user.email }}"}]}];
-							cr.createInstance(storedcsrftoken, 
-								inquiryCell.field, 
-								inquiriesInstance.value.id,
-								initialData,
-								function(newData)
-								{
-									checkInquiryFunction([newData]);
-								},
-								failFunction);
+							add_single_field_instance(inquiriesInstance, 
+											   inquiryCell, 
+											   emailCell, 
+											   "{{ user.email }}", 
+											   function(newData) { checkInquiryFunction([newData]); },
+											   asyncFailFunction);
 						}
 
 						var checkInquiryFunction = function(newInstances)
@@ -777,9 +777,9 @@
 																emailCell = cells_get_cell_by_name(cells, "_email");
 																addInquiryFunction();
 															},
-															failFunction);
+															standard_json_fail_function);
 													}, 
-													failFunction);
+													standard_json_fail_function);
 											}
 											unblock_click();
 										}
@@ -789,9 +789,8 @@
 						};
 							
 						cr.getValues("#" + inquiriesInstance.value.id + ">Inquiry[_email={{ user.email }}]",
-							undefined,
 							checkInquiryFunction,
-							failFunction);
+							asyncFailFunction);
 					}
 		
 					window.scrollTo(0, 0);
@@ -802,7 +801,7 @@
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
 			var path = "#" + datum[0].value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
-			cr.getData(path, successFunction, failFunction);
+			cr.getData(path, successFunction, asyncFailFunction);
 		}
 		
 		function show_plans(containerDiv) {
@@ -831,28 +830,522 @@
 					.text(function(d) { 
 						return get_datum_by_name(d, "_name").description;
 					});
-// 				newValues.sort(function(a, b)
-// 					{
-// 						return a.getDescription().localeCompare(b.getDescription());
-// 					});
-// 				
-// 				layout_objects(d3.select("#id_objects"), newValues,
-// 					function(d) {
-// 						if (prepare_click())
-// 						{
-// 							show_view_object_panel(d, cell, panelDiv);
-// 						}
-// 					});
 			}
 			
-			var failFunction = function(error)
+			var path = "#{{userID}}::reference(Enrollment)::reference(Offering)";
+			cr.getData(path, successFunction, asyncFailFunction);
+		}
+		
+		function load_organizations()
+		{
+			var successFunction = function(newInstances)
 			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
+				var cell = new cr.Cell();
+				cell.field = {name: "Organization",
+							  dataType: "_object",
+							  capacity: "_multiple values",
+							  };
+				cell.setup(null);
+				
+				d3.select(".organization-section").append("hr");
+				
+				var divs = d3.select(".organization-section").selectAll("div")
+					.data(newInstances)
+					.enter()
+					.append("div");
+				
+				var buttons = divs.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				
+				buttons.append("span")
+					.classed("pull-left", true)
+					.text(function(d) { return d.getDescription(); });
+				
+				buttons.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+					
+				buttons.on("click", function(d) {
+					if (prepare_click())
+					{
+						show_organization_panel(d, cell, null, d3.select("body>panel"));
+					}
+				});
+					
+				divs.append("hr");
 			}
 			
-			path = "#{{userID}}::reference(Enrollment)::reference(Offering)";
-			cr.getData(path, successFunction, failFunction);
+			var path = '#{{userID}}::reference("Employee")::reference("Employees")::reference("Organization")';
+			cr.getValues(path, successFunction, asyncFailFunction);
+		}
+		
+		/* Displays a panel in which the specified object's contents appear.
+		 */
+		function show_organization_panel(objectData, containerCell, containerUUID, containerPanel) {
+			successFunction = function ()
+			{
+			
+				var panelDiv = create_panel(containerPanel, 
+											objectData, get_view_panel_header(objectData, containerCell))
+					.classed("background-gradient-panel", true);
+
+				var navContainer = panelDiv.appendNavContainer();
+
+				var backButton = navContainer.appendLeftButton()
+					.on("click", handle_close_right_event);
+				backButton.append("span").text("Done");
+	
+				var panel2Div = panelDiv.appendScrollArea();
+
+				var headerDiv = panel2Div.appendHeader();
+				objectData.add_target("dataChanged", headerDiv.node());
+				$(headerDiv.node()).on("dataChanged", function(e) {
+						d3.select(this).text(get_view_panel_header(objectData, containerCell));
+					});
+
+				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+							
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
+
+				var sectionObj = panel2Div.append("section")
+					.classed("button-group", true);
+					
+				sectionObj.append("hr");
+				
+				var addInquiryButton = sectionObj.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				addInquiryButton.append("span")
+					.classed("pull-left", true)
+					.text("Record an Inquiry");
+				addInquiryButton.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				addInquiryButton.on("click", function(d)
+				{
+					if (prepare_click())
+					{
+						add_inquiry(d, panelDiv);
+					}
+				});
+					
+				sectionObj.append("hr");
+				
+				var manageInquiryButton = sectionObj.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				manageInquiryButton.append("span")
+					.classed("pull-left", true)
+					.text("Manage Inquiries");
+				manageInquiryButton.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				manageInquiryButton.on("click", function(d)
+				{
+					if (prepare_click())
+					{
+						manage_inquiry(d, panelDiv);
+					}
+				});
+					
+				sectionObj.append("hr");
+
+				sectionObj = panel2Div.append("section")
+					.classed("button-group", true);
+					
+				sectionObj.append("hr");
+				
+				var enrollInquiryButton = sectionObj.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				enrollInquiryButton.append("span")
+					.classed("pull-left", true)
+					.text("Enroll an Inquiry");
+				enrollInquiryButton.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				enrollInquiryButton.on("click", function(d)
+				{
+					if (prepare_click())
+					{
+					/* Pick an offering. */
+						var successFunction = function(d, offeringPanelDiv)
+						{
+							hide_panel_right(offeringPanelDiv.node());
+						}
+						pick_offering(d, panelDiv, successFunction);
+					}
+				});
+					
+					
+				sectionObj.append("hr");
+				
+				var addEnrollmentButton = sectionObj.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				addEnrollmentButton.append("span")
+					.classed("pull-left", true)
+					.text("Add an Enrollment");
+				addEnrollmentButton.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				addEnrollmentButton.on("click", function(d)
+				{
+					if (prepare_click())
+					{
+						add_enrollment(d, panelDiv);
+					}
+				});
+					
+				sectionObj.append("hr");
+				
+				var manageEnrollmentButton = sectionObj.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				manageEnrollmentButton.append("span")
+					.classed("pull-left", true)
+					.text("Manage Enrollment");
+				manageEnrollmentButton.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				manageEnrollmentButton.on("click", function(d)
+				{
+					if (prepare_click())
+					{
+						manage_enrollment(d, panelDiv);
+					}
+				});
+					
+				sectionObj.append("hr");
+			}
+	
+			objectData.checkCells(containerCell, successFunction, asyncFailFunction)
+		}
+		
+		/*
+			This function should be called within a prepare_click block.
+		 */
+		function pick_offering(d, containerPanel, successFunction)
+		{
+			function selectAllSuccessFunction(rootObjects) {
+				rootObjects.sort(function(a, b)
+					{
+						return a.getDescription().localeCompare(b.getDescription());
+					});
+	
+				var panelDiv = create_panel(containerPanel, d, "Pick Offering")
+					.classed("list-panel", true);
+
+				var navContainer = panelDiv.appendNavContainer();
+
+				var backButton = navContainer.appendLeftButton()
+					.on("click", handle_close_right_event);
+				backButton.append("span").text("Cancel");
+		
+				var centerButton = navContainer.appendTitle("Pick Offering");
+
+				var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+
+				var panel2Div = panelDiv.appendScrollArea();
+				panel2Div.appendAlertContainer();
+		
+				var sections = panel2Div.appendSections(rootObjects);
+	
+				var buttons = appendButtons(sections)
+					.on("click", function(d) {
+						if (prepare_click())
+						{
+							successFunction(d, panelDiv);
+						}
+						d3.event.preventDefault();
+					});
+				sections.append("hr");
+	
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
+			}
+	
+			cr.getValues("#"+d.value.id+'>Offerings>Offering', 
+						 selectAllSuccessFunction, 
+						 standard_json_fail_function);
+		}
+		
+		/*
+			This function should be called within a prepare_click block. 
+		 */
+		function add_enrollment(organization, containerPanel)
+		{
+			var panelDiv = create_panel(containerPanel, organization, "Pick User")
+				.classed("list-panel", true);
+
+			var navContainer = panelDiv.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", handle_close_right_event);
+			backButton.append("span").text("Cancel");
+	
+			var centerButton = navContainer.appendTitle("Pick User");
+
+			var searchBar = panelDiv.appendSearchBar(show_users);
+
+			var panel2Div = panelDiv.appendScrollArea();
+			panel2Div.appendAlertContainer();
+	
+			window.scrollTo(0, 0);
+			show_panel_left(panelDiv.node());
+			
+			var searchText = "";
+			function show_users()
+			{
+				var val = this.value.toLocaleLowerCase();
+				var inputBox = this;
+				
+				if (val.length == 0)
+				{
+					panel2Div.selectAll("section").remove();
+					searchText = val;
+				}
+				else
+				{
+					var startVal = val;
+					var pickedUser = null;
+					
+					var pickOfferingSuccess = function(offering, offeringPanelDiv)
+					{
+						var checkCellsSuccess = function()
+						{
+							var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
+							var enrollmentsInstances = enrollmentsCell.data;
+							if (enrollmentsInstances.length == 0)
+								standard_json_fail_function("Offering Enrollments are not set up");
+							else
+							{
+								var enrollmentsInstance = enrollmentsInstances[0];
+								cr.getConfiguration(enrollmentsCell.field.ofKindID,
+									function(cells)
+									{
+										var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
+										cr.getConfiguration(enrollmentCell.field.ofKindID,
+											function(cells)
+											{
+												var userCell = cells_get_cell_by_name(cells, "_user");
+												add_single_field_instance(enrollmentsInstance, 
+																	   enrollmentCell, 
+																	   userCell, 
+																	   {id: pickedUser.getValueID()}, 
+																	   function(newData)
+																	   {
+																			bootstrap_alert.success(pickedUser.getDescription() + 
+																				  " enrolled in " + 
+																				  offering.getDescription(),
+																				  ".alert-container");
+																			hide_panel_right(offeringPanelDiv.node());
+																	   },
+																	   standard_json_fail_function);
+											},
+											standard_json_fail_function);
+									},
+									standard_json_fail_function);
+							}
+						}
+						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+					};
+					
+					var getValuesSuccess = function(userObjects)
+					{
+						if (inputBox.value.toLocaleLowerCase() == startVal)
+						{
+							panel2Div.selectAll("section").remove();
+							var sections = panel2Div.appendSections(userObjects);
+							var buttons = appendButtons(sections)
+								.on("click", function(user) {
+									pickedUser = user;
+									if (prepare_click())
+									{
+										pick_offering(organization, panelDiv, pickOfferingSuccess);
+									}
+									d3.event.preventDefault();
+								});
+							searchText = startVal;
+						}
+					}
+					
+					cr.getValues("_user[_email^="+val+"]", getValuesSuccess, asyncFailFunction);
+				}
+			}
+		}
+		
+		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
+		{
+			initialData = [{field: dataCell.field, data: [{ value: dataValue}]}];
+			cr.createInstance(storedcsrftoken, 
+				instanceCell.field, 
+				container.value.id,
+				initialData,
+				successFunction,
+				failFunction);
+		}
+		
+		function show_matching_descriptions(){
+			var panel2Div = d3.select($(this).parents(".site-panel").children(".panel-scrolling")[0]);
+			var val = this.value.toLocaleLowerCase();
+			if (val.length == 0)
+			{
+				/* Show all of the items. */
+				panel2Div.selectAll(".row-button")
+					.style("display", "block");
+			}
+			else
+			{
+				/* Show the items whose description is this.value */
+				panel2Div.selectAll(".row-button")
+					.style("display", function(d)
+						{
+							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+								return "block";
+							else
+								return "none";
+						});
+			}
+		}
+		function validateEmail(email) 
+		{
+			var re = /\S+@\S+\.\S\S+/;
+			return re.test(email);
+		}
+		
+		function add_inquiry(organization, containerPanel)
+		{
+			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			{
+				var addInquiryPanelDiv = create_panel(containerPanel, organization, "Add Inquiry")
+					.classed("list-panel", true);
+
+				var navContainer = addInquiryPanelDiv.appendNavContainer();
+
+				var backButton = navContainer.appendLeftButton()
+					.on("click", function(d)
+					{
+						closealert();
+						handle_close_right_event.call(this);
+					});
+				backButton.append("span").text("Done");
+				
+				var addButton = navContainer.appendRightButton()
+					.classed("site-disabled-text", true);
+				addButton.append("span").text("Add");
+	
+				var centerButton = navContainer.appendTitle("Record Inquiry");
+
+				var panel2Div = addInquiryPanelDiv.appendScrollArea();
+				panel2Div.appendAlertContainer();
+				
+				inquiryInput = panel2Div.append("div")
+					.classed("panel-input-container", true)
+					.append("input")
+					.attr("type", "email")
+					.classed("panel-input", true)
+					.attr("placeholder", "email address");
+					
+				
+				$(inquiryInput.node()).on("keyup input paste", function(e) {
+					isValid = validateEmail(this.value);
+					addButton
+						.classed("site-disabled-text", !isValid)
+						.classed("site-active-text", isValid)
+						.style("font-weight", (isValid ? 600 : 400));
+				});
+	
+				window.scrollTo(0, 0);
+				show_panel_left(addInquiryPanelDiv.node());
+			
+				/* Since d.getValueID() is not null, containerUUID is not needed. */
+				var createInquiry = function(d)
+				{
+					if (d3.select(this).classed("site-disabled-text"))
+						return;
+						
+					if (prepare_click())
+					{
+						var checkCellsSuccess = function() 
+						{
+							var inquiriesCell = get_cell_by_name(offering, "Inquiries");
+							var inquiriesInstances = inquiriesCell.data;
+							if (inquiriesInstances.length == 0)
+								standard_json_fail_function("Offering Inquiries are not set up");
+							else
+							{
+								var inquiriesInstance = inquiriesInstances[0];
+								cr.getConfiguration(inquiriesCell.field.ofKindID,
+									function(cells)
+									{
+										var inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
+										cr.getConfiguration(inquiryCell.field.ofKindID,
+											function(cells)
+											{
+												var emailCell = cells_get_cell_by_name(cells, "_email");
+												add_single_field_instance(inquiriesInstance, 
+																	   inquiryCell, 
+																	   emailCell, 
+																	   inquiryInput.node().value, 
+																	   function(newData)
+																	   {
+																			bootstrap_alert.success(inquiryInput.node().value + 
+																				  " inquiry added to " + 
+																				  offering.getDescription(),
+																				  ".alert-container");
+																			inquiryInput.node().value = "";
+																			$(inquiryInput.node()).trigger("input");
+																			unblock_click();
+																	   },
+																	   standard_json_fail_function);
+											},
+											standard_json_fail_function);
+									},
+									standard_json_fail_function);
+							}
+						}
+						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+					};
+				};
+				
+				addButton.on("click", createInquiry);
+			}
+			pick_offering(organization, containerPanel, pickOfferringSuccess);
+		}
+		
+		function manage_inquiry(organization, panelDiv)
+		{
+			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			{
+				/* Since d.getValueID() is not null, containerUUID is not needed. */
+				var checkCellsSuccess = function()
+				{
+					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
+					var inquiriesInstances = inquiriesCell.data;
+					if (inquiriesInstances.length == 0)
+						standard_json_fail_function("Offering Inquiries are not set up");
+					else
+					{
+						var inquiriesInstance = inquiriesInstances[0];
+						show_edit_object_panel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv);
+					}
+				}
+				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+			}
+			pick_offering(organization, panelDiv, pickOfferringSuccess);
+		}
+		
+		function manage_enrollment(organization, panelDiv)
+		{
+			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			{
+				/* Since d.getValueID() is not null, containerUUID is not needed. */
+				var checkCellsSuccess = function()
+				{
+					var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
+					var enrollmentsInstances = enrollmentsCell.data;
+					if (enrollmentsInstances.length == 0)
+						standard_json_fail_function("Offering Enrollments are not set up");
+					else
+					{
+						var enrollmentsInstance = enrollmentsInstances[0];
+						show_edit_object_panel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv);
+					}
+				}
+				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+			}
+			pick_offering(organization, panelDiv, pickOfferringSuccess);
 		}
 		
 	</script>

@@ -128,6 +128,7 @@ var cr = {
 			{
 				$(d).on("dataChanged", d.handleContentsChanged);
 				$(d).on("valueAdded", d.handleContentsChanged);
+				$(d).on("valueDeleted", d.handleContentsChanged);
 			},
 			newValue: function()
 			{
@@ -194,10 +195,12 @@ var cr = {
 	urls: {
 		selectAll : "/selectall/",
 		getData : "/get/data/",
-		getConfiguration : "/get/addconfiguration/",
+		getConfiguration : "/get/configuration/",
 		createInstance : "/createinstance/",
 		addValue : "/addvalue/",
 		updateValues : "/updatevalues/",
+		deleteValue : '/deletevalue/',
+		deleteInstances : '/deleteinstances/',
 	},
 	
 	appendStringData: function(cell, initialData)
@@ -223,15 +226,13 @@ var cr = {
 			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
 	},
 	
-	getValues: function (path, ofKindID, successFunction, failFunction)
+	getValues: function (path, successFunction, failFunction)
 	{
 		var argList = {};
 		if (path)
 			argList.path = path;
-		else if (ofKindID)
-			argList.ofKindID = ofKindID;
 		else
-			throw "neither path nor ofKindID were specified to selectAll"
+			throw "neither path was not specified to getValues"
 		
 		$.getJSON(cr.urls.selectAll, 
 			argList,
@@ -267,6 +268,7 @@ var cr = {
 			  .done(function(json, textStatus, jqXHR)
 				{
 					if (json.success) {
+						d.id = json.ids[0]
 						oldValue.completeUpdateValue(d);
 						successFunction();
 					}
@@ -310,6 +312,46 @@ var cr = {
 						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 					}
 				);
+	},
+	
+	deleteValue: function(storedcsrftoken, oldValue, containerCell, successFunction, failFunction)
+	{
+		if (oldValue.id == null)	/* It was never saved */
+		{
+			containerCell.deleteValue(oldValue);
+			successFunction(oldValue);
+		}
+		else
+		{
+			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
+						valueID: oldValue.id,
+						timezoneoffset: new Date().getTimezoneOffset()
+					};
+			$.post(cr.urls.deleteValue, jsonArray)
+				.done(function(json, textStatus, jqXHR)
+					{
+						if (json.success)
+						{
+							if (successFunction) 
+							{
+								/* Copy the data from json object into newData so that 
+									any functions are properly initialized.
+								 */
+								containerCell.deleteValue(oldValue);
+								successFunction(oldValue);
+							}
+						}
+						else
+						{
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown)
+						{
+							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						}
+					);
+		}
 	},
 			
 	createInstance: function(storedcsrftoken, field, containerUUID, initialData, successFunction, failFunction)
@@ -386,15 +428,8 @@ var cr = {
 					{
 						d = sourceObjects[i];
 						newID = json.ids[i];
-						if (d.id == newID)	/* An Update */
-						{
-							d.trigger_event("dataChanged");
-						}
-						else
-						{
-							d.id = newID;
-							d.trigger_event("dataChanged");
-						}
+						d.id = newID;
+						d.trigger_event("dataChanged");
 					}
 					if (successFunction)
 						successFunction();
@@ -505,6 +540,7 @@ cr.Cell.prototype.setup = function (objectData)
 	if (this.field.descriptorType !== undefined && objectData)
 	{
 		this.add_target("valueAdded", objectData);
+		this.add_target("valueDeleted", objectData);
 		this.add_target("dataChanged", objectData);
 		$(this).on("dataChanged", function(e) {
 			this.trigger_event("dataChanged");
@@ -546,11 +582,24 @@ cr.Cell.prototype.addValue = function(newData)
 	this.trigger_event("valueAdded", [newData]);
 }
 
+cr.Cell.prototype.deleteValue = function(oldData)
+{
+	function remove(arr, item) {
+		  for(var i = arr.length; i--;) {
+			  if(arr[i] === item) {
+				  arr.splice(i, 1);
+			  }
+		  }
+	  }
+  	remove(this.data, oldData);
+  	oldData.trigger_event("valueDeleted");
+  	this.trigger_event("valueDeleted", [oldData]);
+}
+
 cr.CellValue.prototype = new cr.EventHandler();
 cr.CellValue.prototype.completeUpdateValue = function(newData)
 {
-	if (!this.id)
-		this.id = newData.id;
+	this.id = newData.id;
 	/* Replace the value completely so that its cells are eliminated and will be
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};

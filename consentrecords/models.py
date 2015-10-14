@@ -7,6 +7,7 @@ import datetime
 import numbers
 import uuid
 import logging
+import re
 import string
 from multiprocessing import Lock
 from functools import reduce
@@ -61,12 +62,11 @@ class Instance(dbmodels.Model):
         return self.parent and str(self.parent)
 
 class DeletedInstance(dbmodels.Model):
-    id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
+    id = dbmodels.UUIDField(primary_key=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
     
     def __str__(self):
-        return str(self.instance.id)
+        return str(self.id)
         
 class LazyObject():
     # id can be a UUID or a string representation of a UUID
@@ -100,7 +100,7 @@ class LazyInstance(LazyObject):
             sql = "SELECT i1.typeid, i1.parentid, i1.transaction_id" + \
               " FROM consentrecords_instance i1" + \
               " WHERE i1.id = %s" + \
-              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.instance_id = i1.id)"
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)"
             c.execute(sql, [self.id.hex])
             r = c.fetchone()
             if r:
@@ -284,7 +284,7 @@ class LazyInstance(LazyObject):
             sql = "SELECT i1.id" + \
               " FROM consentrecords_instance i1" + \
               " WHERE typeid = %s" + \
-              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.instance_id = i1.id)"
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)"
             c.execute(sql, [self.id.hex])
             return [LazyInstance(i[0]) for i in c.fetchall()]
             
@@ -297,14 +297,13 @@ class LazyInstance(LazyObject):
     # if there are objects that have two types (a parent type and a child type) and the child
     # type is used to identify the objects, but the parent type is used to get the description.
     def rootDescriptors(ofKindID):
-        with connection.cursor() as c:
-            r = []
-            ofKindObject = LazyInstance(ofKindID)
-            nameFieldUUIDs = ofKindObject._descriptors
-            return [{'id': None, \
-                     'value': { 'id': e.id.hex, \
-                                'description': e._getDescription(nameFieldUUIDs) }} \
-                    for e in ofKindObject._getAllInstances()]
+        r = []
+        ofKindObject = LazyInstance(ofKindID)
+        nameFieldUUIDs = ofKindObject._descriptors
+        return [{'id': None, \
+                 'value': { 'id': e.id.hex, \
+                            'description': e._getDescription(nameFieldUUIDs) }} \
+                for e in ofKindObject._getAllInstances()]
     
     def _checkCount(sql, argList):
         with connection.cursor() as c:
@@ -319,10 +318,6 @@ class LazyInstance(LazyObject):
             return [i[0] for i in c.fetchall()]
         
     def refineResults(resultSet, path):
-        logger = logging.getLogger(__name__)
-        logger.error("refineResults(%s, %s)" % ([i for i in resultSet], path))
-        logger.error("refineResults(%s, %s)" % ([i for i in resultSet], path))
-        
         if path[0] == '#':
             return [path[1]], path[2:]
         elif path[0] == '[':
@@ -337,6 +332,9 @@ class LazyInstance(LazyObject):
                 fieldID = Fact.getNamedUUID(path[1][0]).hex
                 symbol = path[1][1]
                 testValue = path[1][2]
+                if symbol == '^=':
+                    symbol = 'LIKE'
+                    testValue += '%'
                 sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                       ' WHERE v1.instance_id = %s' + \
                       ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
@@ -366,8 +364,6 @@ class LazyInstance(LazyObject):
                           ' WHERE v1.stringvalue = %s AND i1.typeid = %s' + \
                           ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)' + \
                           ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)'
-                    logger.error("  typeID: %s" % (typeID))
-                    logger.error("  sql: %s" % (sql))
                     m = map(lambda s: LazyInstance._getResultArray(sql, [s, typeID]), resultSet)
                     newResults = [item for sublist in m for item in sublist]
                     return newResults, path[4:]
@@ -389,6 +385,9 @@ class LazyInstance(LazyObject):
                     elif len(params) == 3:
                         symbol = params[1]
                         testValue = params[2]
+                        if symbol == '^=':
+                            symbol = 'LIKE'
+                            testValue += '%'
                         sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                               ' WHERE v1.instance_id = %s' + \
                               ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
@@ -401,12 +400,15 @@ class LazyInstance(LazyObject):
                     raise ValueError("unimplemented 'not' expression")
             else:
                 raise ValueError("malformed 'not' expression")
-        else:   # Path[0] is a type.
-            fieldID = Fact.getNamedUUID(path[0]).hex
+        else:   # Path[0] is a typeID.
+            if re.search('^[a-fA-F0-9]{32}$', path[0]):
+                fieldID = path[0]
+            else:
+                fieldID = Fact.getNamedUUID(path[0]).hex
             sql = 'SELECT i1.id' + \
                      ' FROM consentrecords_instance i1' + \
                      ' WHERE i1.typeid = %s' + \
-                     ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.instance_id = i1.id)'
+                     ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)'
             with connection.cursor() as c:
                 c.execute(sql, [fieldID])
                 return [r[0] for r in c.fetchall()], path[1:]
@@ -680,6 +682,43 @@ class LazyInstance(LazyObject):
         
         return items
             
+    def deepDelete(self, transactionState):
+        logger = logging.getLogger(__name__)
+        logger.error("deepDelete(%s)" % self.id.hex)
+        
+        queue = [self.id.hex]
+        DeletedInstance.objects.create(id=self.id.hex, transaction=transactionState.transaction)
+        sql1 = "INSERT INTO consentrecords_deletedvalue(id, transaction_id)" + \
+              " SELECT id, %s from consentrecords_value v1 WHERE instance_id = %s" + \
+              " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+        sql2 = "SELECT id FROM consentrecords_instance i1 WHERE parentid = %s" + \
+               " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)"
+        sql3 = "INSERT INTO consentrecords_deletedinstance(id, transaction_id)" + \
+               " SELECT id, %s FROM consentrecords_instance i1 WHERE parentid = %s" + \
+               " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)"
+        while len(queue) > 0:
+            nextid = queue[0]
+            queue = queue[1:]
+            logger.error("  nextid, queue = (%s, %s)" % (nextid, queue))
+            with connection.cursor() as c:
+                c.execute(sql2, [nextid])
+                queue.extend([r[0] for r in c.fetchall()])
+                logger.error("  extended queue = (%s)" % (queue))
+            with connection.cursor() as c:
+                c.execute(sql3, [transactionState.transaction.id.hex, nextid])
+            with connection.cursor() as c:
+                c.execute(sql1, [transactionState.transaction.id.hex, nextid])
+        
+    def deleteOriginalReference(self, transactionState):
+        if self.parentID:
+            sql = "INSERT INTO consentrecords_deletedvalue(id, transaction_id)" + \
+              " SELECT id, %s from consentrecords_value v1" + \
+              " WHERE instance_id = %s AND stringvalue = %s" + \
+              " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+            with connection.cursor() as c:
+                c.execute(sql, [transactionState.transaction.id.hex, self.parentID, self.stringValue])
+                
+    
 class LazyValue(LazyObject):
     def __init__(self, id, instanceID=None, fieldID=None, position=None, stringValue=None):
         self._instanceID = instanceID
@@ -756,7 +795,7 @@ class LazyValue(LazyObject):
         if self._fieldID is None:
             self._fill()
         self.markAsDeleted(transactionState)
-        LazyInstance(self.instanceID).addValue(self.fieldID, newStringValue, self.position, transactionState);
+        return LazyInstance(self.instanceID).addValue(self.fieldID, newStringValue, self.position, transactionState);
     
     # Updates the position of the specified object
     # All existing facts that identify the value are marked as deleted.            
@@ -768,7 +807,12 @@ class LazyValue(LazyObject):
     
     def markAsDeleted(self, transactionState):
         DeletedValue.objects.create(id=self.id, transaction=transactionState.transaction)
-    
+        
+    @property
+    def isOriginalReference(self):
+        return self.instanceID == LazyInstance(self.stringValue).parentID
+            
+        
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
@@ -781,7 +825,7 @@ class Value(dbmodels.Model):
         return str(LazyValue(self.id, self.instance.id, self.fieldID, self.position, self.stringValue))
     
 class DeletedValue(dbmodels.Model):
-    id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = dbmodels.UUIDField(primary_key=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
     
     def __str__(self):

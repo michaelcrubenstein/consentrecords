@@ -95,6 +95,8 @@ def list(request):
         }
     if rootID:
         argList["rootID"] = rootID.hex
+        argList["singularName"] = LazyInstance(rootID)._description
+        
     context = RequestContext(request, argList)
         
     return HttpResponse(template.render(context))
@@ -220,8 +222,8 @@ def updateValues(request):
             transactionState = TransactionState(request.user, timezoneoffset)
             for c in commands:
                 if "id" in c:
-                    item = LazyValue(c["id"])
-                    item.updateValue(c["value"], transactionState);
+                    oldValue = LazyValue(c["id"])
+                    item = oldValue.updateValue(c["value"], transactionState);
                 elif "containerUUID" in c:
                     container = LazyInstance(c["containerUUID"])
                     fieldID = c["fieldID"]
@@ -231,10 +233,10 @@ def updateValues(request):
                         item = container.addValue(fieldID, newValue, newIndex, transactionState)
                     else:
                         ofKindObject = LazyInstance(c["ofKindID"])
-                        item, newValue = ofKindObject.createInstance(container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
+                        newInstance, item = ofKindObject.createInstance(container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
                 else:
                     raise ValueError("subject id was not specified")
-                ids.append(item.id)
+                ids.append(item.id.hex)
             
             results = {'success':True, 'ids': ids}
             
@@ -328,7 +330,11 @@ def selectAll(request):
             else:
                 ofKindUUID = Fact.getNamedUUID(ofKindName, None)
     
-            p = LazyInstance.rootDescriptors(ofKindUUID)
+            html_parser = html.parser.HTMLParser()
+            unescaped = html_parser.unescape(ofKindUUID.hex)
+            tokens = cssparser.tokenize(unescaped)
+            a, remainder = cssparser.cascade(tokens)
+            p = LazyInstance.rootDescriptors(a)
         
         results = {'success':True, 'objects': p}
         
@@ -341,7 +347,7 @@ def selectAll(request):
             
     return JsonResponse(results)
     
-def getAddConfiguration(request):
+def getConfiguration(request):
     LogRecord.emit(request.user, 'consentrecords/getAddConfiguration', '')
     
     # Check the security access for this operation for the current user.
@@ -407,6 +413,77 @@ def getData(request):
         p = [getCells(uuObject) for uuObject in uuObjects]        
         
         results = {'success':True, 'data': p}
+    except Fact.NoEditsAllowedError:
+        return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+            
+    return JsonResponse(results)
+    
+def deleteInstances(request):
+    LogRecord.emit(request.user, 'consentrecords/deleteInstances', '')
+    
+    if request.method != "POST":
+        raise Http404("deleteInstances only responds to POST methods")
+    
+    # Check the security access for this operation for the current user.
+    
+    try:
+        path = request.POST.get('path', None)
+        
+        if path:
+            html_parser = html.parser.HTMLParser()
+            unescaped = html_parser.unescape(path)
+            tokens = cssparser.tokenize(unescaped)
+            a, remainder = cssparser.cascade(tokens)
+            
+            # The client time zone offset, stored with the transaction.
+            timezoneoffset = request.POST['timezoneoffset']
+        
+            with transaction.atomic():
+                transactionState = TransactionState(request.user, timezoneoffset)
+                for uuObject in LazyInstance.selectAllObjects(a):
+                    uuObject.deleteOriginalReference(transactionState)
+                    uuObject.deepDelete(transactionState)
+        else:   
+            return JsonResponse({'success':False, 'error': "path was not specified in delete"})
+        results = {'success':True}
+    except Fact.NoEditsAllowedError:
+        return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+            
+    return JsonResponse(results)
+    
+def deleteValue(request):
+    LogRecord.emit(request.user, 'consentrecords/deleteValue', '')
+    
+    if request.method != "POST":
+        raise Http404("deleteValue only responds to POST methods")
+    
+    # Check the security access for this operation for the current user.
+    
+    try:
+        valueID = request.POST.get('valueID', None)
+        
+        if valueID:
+            v = LazyValue(valueID)
+
+            # The client time zone offset, stored with the transaction.
+            timezoneoffset = request.POST['timezoneoffset']
+
+            with transaction.atomic():
+                transactionState = TransactionState(request.user, timezoneoffset)
+                if v.isOriginalReference:
+                    i = LazyInstance(v.stringValue).deepDelete(transactionState)
+                v.markAsDeleted(transactionState)
+        else:   
+            return JsonResponse({'success':False, 'error': "valueID was not specified in delete"})
+        results = {'success':True}
     except Fact.NoEditsAllowedError:
         return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
     except Exception as e:

@@ -38,7 +38,9 @@ urlpatterns = [
     
     url(r'^selectall/', views.selectAll, name='selectAll'),
     url(r'^get/data/', views.getData, name='getData'),
-    url(r'^get/addconfiguration/', views.getAddConfiguration, name='getAddConfiguration'),
+    url(r'^get/configuration/', views.getConfiguration, name='getConfiguration'),
+    url(r'^deleteinstances/', views.deleteInstances, name='deleteInstances'),
+    url(r'^deletevalue/', views.deleteValue, name='deleteValue'),
 ]
 
 BootStrapper.initializeUUNames()

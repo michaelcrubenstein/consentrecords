@@ -1,3 +1,7 @@
+* {
+  margin: 0;
+  padding: 0;
+}
 body {
   font-size: medium;
   overflow-y: hidden;
@@ -39,7 +43,6 @@ body {
 	width: 100%;
 	text-align: center;
 	font-weight: bold;
-	background: white;
 }
 .add-button {
 	margin-top: 0px;
@@ -49,6 +52,7 @@ body {
 	font-weight: 600;
 }
 .row-button {
+	position: relative;
 	font-size: medium;	/* To override the smaller button. */
 	background: white;
 	width: 100%;
@@ -147,6 +151,7 @@ hr {
 .expanding-div {
 	overflow: hidden;
 	width: auto;
+	display: block;
 }
 .left-expanding-div {
 	overflow: hidden;
@@ -169,7 +174,10 @@ hr {
 	display: block;
 	overflow: hidden;
 	width: auto;
-	padding: 3px 12px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-left: 12px;
+	padding-right: 6px;
 }
 .search-input {
 	display: block;
@@ -177,7 +185,49 @@ hr {
 	width: 100%;
 }
 .search-cancel-button {
-	padding: 7px 12px;	/* 7 pixels to match the height of the input to the left. */
+	padding-left: 6px;
+	padding-right: 12px;
+	padding-top: 6px;
+	padding-bottom: 6px;
 	width: auto;
 	float: right;
+}
+.glyphicon-minus-sign {
+	margin-right: 12px;
+	color: red;
+	-ms-transform: rotate(90deg); /* IE 9 */
+	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+	transform: rotate(90deg);
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	background-color: transparent;
+	padding: 0px;
+}
+.glyphicon-minus-sign:focus {
+	outline: none;
+}
+.delete-confirm-button {
+	background: red;
+	color: white;
+	border: 0;
+	border-radius: 0;
+	padding: 6px 12px;
+}
+.delete-confirm-button:focus {
+	outline: none;
+}
+.right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
+								conjunction with right-fixed-width-div. */
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+ol, ul {
+	list-style-type: none;
+	-webkit-padding-start: 0px;
+	padding-start:
+}	
+li {
+	display: block;
+	list-style-type: none;
 }
