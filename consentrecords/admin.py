@@ -33,13 +33,13 @@ class DeletedInstanceInline(admin.StackedInline):
     
 class ValueAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'position', 'transaction')
+    list_display = ('id', 'instance', 'field', 'objectValue', 'instanceid', 'fieldID', 'stringValue', 'position', 'transaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'position', 'transaction')}),
+        (None, {'fields': ('id', 'instance', 'field',  'objectValue', 'instanceid', 'fieldID', 'stringValue','position', 'transaction')}),
     )
-    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'position','transaction')
-    search_fields = ('instance', 'fieldID', 'stringValue')
+    readonly_fields = ('id','instance', 'field', 'instanceid', 'fieldID', 'stringValue', 'objectValue', 'position','transaction')
+    search_fields = ('instance', 'instanceid', 'fieldID', 'stringValue')
 
 class DeletedValueAdmin(admin.ModelAdmin):
 

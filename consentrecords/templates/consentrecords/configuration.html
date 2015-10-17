@@ -8,7 +8,9 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-transluscent">
+	
     <title>{{header}}</title>
 
     <!-- Bootstrap core CSS -->
@@ -64,6 +66,7 @@
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
 <!-- 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
  -->
@@ -141,10 +144,19 @@
 			var itemsDiv = d3.select("#id_objects")
 				.data([cell]);
 			cell.add_target("valueAdded", itemsDiv.node());
+			cell.add_target("dataChanged", itemsDiv.node());
+			
 			itemsDiv.node().onValueAdded = get_on_value_added_function(d3.select(parentPanel), cell, null, true, show_view_object_panel);
 			$(itemsDiv.node()).on("valueAdded", function(e, newData)
 			{
 				this.onValueAdded(e, newData);
+				itemsDiv.selectAll("li").sort(function(a, b)
+				{
+					return a.getDescription().localeCompare(b.getDescription());
+				});
+			});
+			$(itemsDiv.node()).on("dataChanged", function(e, newData)
+			{
 				itemsDiv.selectAll("li").sort(function(a, b)
 				{
 					return a.getDescription().localeCompare(b.getDescription());
@@ -156,8 +168,10 @@
 					if (prepare_click())
 					{
 						show_click_feedback(this);
+						
+						var newValue = cell.addNewValue();
 				
-						show_add_object_panel(null, cell, null, panelDiv, submit_create_instance);
+						show_add_object_panel(newValue, null, panelDiv, submit_create_instance);
 					}
 
 					e.preventDefault();

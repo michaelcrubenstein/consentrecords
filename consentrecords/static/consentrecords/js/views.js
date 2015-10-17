@@ -72,34 +72,41 @@ function show_panel_up(panelNode)
 				   .animate({height: "100%", top: 0}, 400, "swing",
 						function() {
 							$(window).trigger("resize");
-							inputObject = d3.select(this).selectAll("input").node();
-							if (inputObject)
-								inputObject.focus();
 							unblock_click();
 						});
 }
 
 function show_panel_left(panelNode)
 {
-	$(panelNode).offset({top: 0, left: window.innerWidth})
-				   .height("100%")
-				   .width("100%")
-				   .css("display", "block")
-				   .trigger("revealing")
-				   .animate({width: "100%", left: 0}, 400, "swing",
-						function() {
+	$(panelNode).offset({top: 0, left: 0})
+				.height("100%")
+				.width("100%")
+				.css("display", "block")
+				.trigger("revealing");
+	$(window).trigger("resize");
+	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
 							$(window).trigger("resize");
-							inputObject = d3.select(this).selectAll("input").node();
-							if (inputObject)
-								inputObject.focus();
 							unblock_click();
 						});
+				
+// 	$(panelNode).offset({top: 0, left: window.innerWidth})
+// 				.css("position", "relative")
+// 				   .height("100%")
+// 				   .width("100%")	/* 100% so that it doesn't re-flow as it gets revealed. */
+// 				   .css("display", "block")
+// 				   .trigger("revealing");
+// 	$(panelNode).animate({left: 0}, 400, "swing",
+// 						function() {
+// 							$(window).trigger("resize");
+// 							unblock_click();
+// 						});
 }
 
 function hide_panel_down(panelNode, doRemove)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
+	closealert();
 	$(panelNode).animate({top: window.innerHeight}, 400, "swing", 
 		function() {
 			if (doRemove)
@@ -112,7 +119,8 @@ function hide_panel_right(panelNode, doRemove)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
-	$(panelNode).animate({left: window.innerWidth}, 400, "swing", 
+	closealert();
+	$(panelNode).hide("slide", {direction: "right"}, 400, 
 		function() {
 			if (doRemove)
 				$(this).remove();
@@ -253,8 +261,8 @@ function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
 	}
 	else
 	{
-		var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
-			.text(cell.field.name);
+		sectionObj.append("div").classed("cell-label-div", true)
+			      .text(cell.field.name);
 		sectionObj.append("hr");
 		var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
@@ -270,27 +278,12 @@ function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
 			.attr("placeholder", cell.field.name)
 			.property("value", getDataValue);
 
-		if (cell.field.capacity == "_unique value")
-		{
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
-			itemsDiv.style("width", sectionObj.style("width") - labelDiv.style("width"));
-			$(window).resize(function()
-			{
-				$(itemsDiv.node()).width($(sectionObj.node()).width() 
-					- $(labelDiv.node()).width()
-					- labelDiv.style("padding-left")
-					- labelDiv.style("padding-right"));
-			});
-		}
-
 		if (["_over time", "_multiple values"].indexOf(cell.field.capacity) >= 0)
 		{
 			cell.add_target("valueAdded", itemsDiv.node());
 			$(itemsDiv.node()).on("valueAdded", function(e, newData)
 				{
 					var div = d3.select(this).append("li")
-						.classed("value-div", true)
 						.datum(newData);
 						
 					setup_multi_value_container(div);
@@ -309,107 +302,7 @@ function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
 					{
 						show_click_feedback(this);
 					
-						var newData = cr.dataTypes[cell.field.dataType].newValue();
-						cell.data.push(newData);
-						newData.add_target("dataChanged", cell);
-						cell.trigger_event("valueAdded", [newData]);
-					
-						unblock_click();
-					}
-					d3.event.preventDefault();
-				})
-				.append("div").classed("pull-left", true);
-			buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-			buttonDiv.append("span").text(" add " + cell.field.name);
-			sectionObj.append("hr");
-		}
-	}
-}
-
-function show_add_string_cell(obj, panelDiv, cell, containerUUID, inputType)
-{
-	/* With this field unique, there will be a data element in the cell
-	 */
-
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
-	
-	if (cell.field.capacity == "_unique value")
-	{
-		var itemsDiv = sectionObj.append("div").classed("items-div string-unique-item", true);
-
-		var divs = itemsDiv.selectAll("li")
-			.data(cell.data)
-			.enter()
-			.append("li")
-			.classed("string-input-container", true);	// So that each item appears on its own row.
-	
-		divs.append("input")
-			.classed("string-unique-input", true)
-			.attr("type", inputType)
-			.attr("placeholder", cell.field.name)
-			.property("value", getDataValue);
-
-		if (cell.field.descriptorType != "_by text")
-		{
-			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label-div string-unique-input-label", true)
-				.text(cell.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
-
-			divs.selectAll("input").classed("string-unique-labeled-input", "true")
-		}
-	}
-	else
-	{
-		if (cell.field.capacity != "_unique value")
-		{
-			sectionObj.append("div").classed("cell-label-div", true)
-					  .text(cell.field.name);
-			sectionObj.append("hr");
-		}
-	
-		var itemsDiv = sectionObj.append("div").classed("items-div", true);
-
-		var divs = itemsDiv.selectAll("li")
-			.data(cell.data)
-			.enter()
-			.append("li")
-			.classed("value-div", true);
-			
-		setup_multi_value_container(divs);
-	
-		divs.append("input").classed("string-input", true)
-			.attr("type", inputType)
-			.attr("placeholder", cell.field.name);
-
-		if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
-		{
-			cell.add_target("valueAdded", itemsDiv.node());
-			$(itemsDiv.node()).on("valueAdded", function(e, newData)
-				{
-					var div = d3.select(this).append("li")
-						.datum(newData);
-						
-					setup_multi_value_container(div);
-						
-					div.append("input").classed("string-input", true)
-						.attr("type", inputType)
-						.attr("placeholder", cell.field.name)
-						.text(newData.value);
-				});
-		
-			/* Add one more button for the add Button item. */
-			var buttonDiv = sectionObj.append("div")
-				.append("button").classed("btn row-button site-active-text add-element-button", true)
-				.on("click", function(cell) {
-					if (prepare_click())
-					{
-						show_click_feedback(this);
-					
-						var newData = cr.dataTypes[cell.field.dataType].newValue();
-						cell.data.push(newData);
-						newData.add_target("dataChanged", cell);
-						cell.trigger_event("valueAdded", [newData]);
+						var newData = cell.addNewValue();
 					
 						unblock_click();
 					}
@@ -598,7 +491,7 @@ function show_view_object_cell(obj, containerPanel, cell, containerUUID)
 	appendButtonDescriptions(buttons, cell);
 }
 
-function show_edit_object_cell(obj, panelDiv, cell, containerUUID, storeDataFunction)
+function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
 		.classed("button row-button", cell.field.capacity == "_unique value");
@@ -615,9 +508,9 @@ function show_edit_object_cell(obj, panelDiv, cell, containerUUID, storeDataFunc
 			if (prepare_click())
 			{
 				if (is_pick_cell(cell))
-					show_pick_object_panel(cell.data[0], cell, containerUUID, panelDiv);
+					show_pick_object_panel(cell.data[0], cell, parent.getValueID(), panelDiv);
 				else
-					show_edit_object_panel(cell.data[0], cell, containerUUID, panelDiv);
+					show_edit_object_panel(cell.data[0], cell, parent.getValueID(), panelDiv);
 			}
 		});
 	}
@@ -625,7 +518,7 @@ function show_edit_object_cell(obj, panelDiv, cell, containerUUID, storeDataFunc
 		sectionObj.insert("hr", ".items-div");
 
 	cell.add_target("valueAdded", itemsDiv.node());
-	$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(panelDiv, cell, containerUUID, true, show_edit_object_panel));
+	$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(panelDiv, cell, parent.getValueID(), true, show_edit_object_panel));
 
 	var clickFunction;
 	if (cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -635,9 +528,9 @@ function show_edit_object_cell(obj, panelDiv, cell, containerUUID, storeDataFunc
 				if (prepare_click())
 				{
 					if (is_pick_cell(cell))
-						show_pick_object_panel(d, cell, containerUUID, panelDiv);
+						show_pick_object_panel(d, cell, parent.getValueID(), panelDiv);
 					else
-						show_edit_object_panel(d, cell, containerUUID, panelDiv);
+						show_edit_object_panel(d, cell, parent.getValueID(), panelDiv);
 				}
 			};
 		
@@ -667,10 +560,12 @@ function show_edit_object_cell(obj, panelDiv, cell, containerUUID, storeDataFunc
 			.on("click", function(cell) {
 				if (prepare_click())
 				{
+					var newValue = cell.addNewValue();
+					
 					if (is_pick_cell(cell))
-						show_pick_object_panel(null, cell, containerUUID, panelDiv)
+						show_pick_object_panel(newValue, cell, parent.getValueID(), panelDiv)
 					else
-						show_add_object_panel(null, cell, containerUUID, panelDiv, storeDataFunction);
+						show_add_object_panel(newValue, parent.getValueID(), panelDiv, storeDataFunction);
 				}
 				d3.event.preventDefault();
 			})
@@ -876,13 +771,13 @@ var dataTypeViews = {
 		{
 			show_view_string_cell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, containerUUID)
+		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, containerUUID, "text");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
-		showAdd: function(obj, containerPanel, cell, containerUUID)
+		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_add_string_cell(obj, containerPanel, cell, containerUUID, "text");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
 		appendUpdateCommands: append_update_string_commands,
 		updateCell: update_string_cell,
@@ -892,13 +787,13 @@ var dataTypeViews = {
 		{
 			show_view_string_cell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, containerUUID)
+		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, containerUUID, "number");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
-		showAdd: function(obj, containerPanel, cell, containerUUID)
+		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_add_string_cell(obj, containerPanel, cell, containerUUID, "number");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
 		appendUpdateCommands: append_update_string_commands,
 		updateCell: update_string_cell
@@ -908,13 +803,13 @@ var dataTypeViews = {
 		{
 			show_view_string_cell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, containerUUID)
+		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, containerUUID, "date");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
-		showAdd: function(obj, containerPanel, cell, containerUUID)
+		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_add_string_cell(obj, containerPanel, cell, containerUUID, "date");
+			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
 		appendUpdateCommands: append_update_datestamp_commands,
 		updateCell: update_datestamp_cell,
@@ -924,22 +819,22 @@ var dataTypeViews = {
 		{
 			show_view_object_cell(obj, containerPanel, cell, containerUUID);
 		},
-		showEdit: function(obj, containerPanel, cell, containerUUID)
+		showEdit: function(obj, containerPanel, cell, parent)
 		{
 			/* If containerUUID is null during an edit operation, then the container
 				is new and was not saved. */
-			if (containerUUID)
-				show_edit_object_cell(obj, containerPanel, cell, containerUUID, submit_create_instance);
+			if (parent.getValueID())
+				show_edit_object_cell(obj, containerPanel, cell, parent, submit_create_instance);
 			else
-				show_edit_object_cell(obj, containerPanel, cell, containerUUID, store_new_instance);
+				show_edit_object_cell(obj, containerPanel, cell, parent, store_new_instance);
 		},
-		showAdd: function(obj, containerPanel, cell, containerUUID)
+		showAdd: function(obj, containerPanel, cell, parent)
 		{
 			/* If containerUUID is null, then the object being added is either within a new root object
 				or an object contained within an item that wasn't saved. In either case, 
 				store any item added to this cell as part of the data of the cell.
 			 */
-			show_edit_object_cell(obj, containerPanel, cell, containerUUID, store_new_instance);
+			show_edit_object_cell(obj, containerPanel, cell, parent, store_new_instance);
 		},
 		appendUpdateCommands: append_update_object_commands,
 		updateCell: update_object_cell
@@ -1117,7 +1012,7 @@ function create_panel(containerPanel, datum, headerText)
 		{
 			this.appendSections(objectData.value.cells)
 				.each(function(cell) {
-						dataTypeViews[cell.field.dataType].showEdit(this, panelDiv, cell, objectData.getValueID());
+						dataTypeViews[cell.field.dataType].showEdit(this, panelDiv, cell, objectData);
 					});
 		}
 		
@@ -1352,8 +1247,12 @@ function _store_unsaved_picked_value(cell, oldData, newData)
 
 /* Displays a panel from which a user can select an object of the kind required 
 	for objects in the specified cell.
+	containerUUID is the id of the instance that contains the specified cell.
  */
 function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
+	if (!oldData)
+		throw "oldData is not defined";
+		
 	var failFunction = standard_json_fail_function;
 	
 	function selectAllSuccessFunction(rootObjects) {
@@ -1366,7 +1265,7 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 		}
 	
 		var panelDatum;
-		if (oldData && oldData.id)
+		if (oldData.id)
 			panelDatum = oldData;	/* Replacing an existing object. */
 		else
 			panelDatum = cell;		/* Adding a new object. */
@@ -1376,7 +1275,20 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 		var navContainer = panelDiv.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handle_close_right_event);
+			.on("click", function()
+			{
+				if (!is_click_blocked())
+				{
+					block_click();
+					if (!oldData.getValueID() && cell.field.maxCapacity != "_unique value")
+					{
+						// In this case, delete the item on cancel. 
+						cell.deleteValue(oldData);
+					}
+					hide_panel_right($(this).parents(".site-panel")[0]);
+				}
+				d3.event.preventDefault();
+			});
 		backButton.append("span").text("Cancel");
 		
 		var textChanged = function(){
@@ -1421,7 +1333,7 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 				
 				if (prepare_click())
 				{
-					if (oldData && oldData.id != null)
+					if (oldData.id != null)
 					{
 						if (d.getValueID() == oldData.getValueID()) {
 							successFunction();
@@ -1446,7 +1358,7 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 				d3.event.preventDefault();
 			});
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-			function(d) { return oldData && d.getDescription() == oldData.getDescription(); });
+			function(d) { return d.getDescription() == oldData.getDescription(); });
 		sections.append("hr");
 	
 		window.scrollTo(0, 0);
@@ -1454,7 +1366,39 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 	}
 	
 	if (cell.field.pickObjectPath)
-		cr.getValues(cell.field.pickObjectPath, selectAllSuccessFunction, failFunction);
+	{
+		pickObjectPath = cell.field.pickObjectPath;
+		if (pickObjectPath.indexOf("parent") == 0 &&
+			">:=<".indexOf(pickObjectPath.charAt(6)) > 0)
+		{
+			var currentObject = cell.parent;
+			pickObjectPath = pickObjectPath.slice(6);
+			while (currentObject != null &&
+				   pickObjectPath.indexOf("::reference(") == 0 &&
+				   !currentObject.getValueID())
+			{
+				currentObject = currentObject.cell.parent;
+				pickObjectPath = pickObjectPath.slice("::reference(".length);
+				/* While the next string is quoted, skip it. */
+				while (pickObjectPath[0] == '"')
+				{
+					pickObjectPath = pickObjectPath.slice(1);
+					pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf('"')+1);
+				}
+				/* Skip over the next close parenthesis */
+				pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf(')')+1);
+			}
+			if (currentObject != null && currentObject.getValueID())
+			{
+				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
+				cr.getValues(pickObjectPath, selectAllSuccessFunction, failFunction);
+			}
+			else
+				failFunction("The container has not yet been saved.");
+		}
+		else	
+			cr.getValues(pickObjectPath, selectAllSuccessFunction, failFunction);
+	}
 	else
 		cr.getValues(cell.field.ofKindID, selectAllSuccessFunction, failFunction);
 }
@@ -1463,16 +1407,34 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 	a new instance of an object to another object. For example, adding a 
 	configuration to an object with a uuname kind.
  */
-function show_add_object_panel(oldValue, containerCell, containerUUID, containerPanel, storeDataFunction) {
+function show_add_object_panel(oldValue, containerUUID, containerPanel, storeDataFunction) {
+	if (!oldValue)
+		throw "oldValue is not defined";
+	if (!oldValue.cell)
+		throw "oldValue.cell is not defined";
+		
 	var successFunction = function(cells)
 	{
-		var panelDiv = create_panel(containerPanel, containerCell, "New " + containerCell.field.name)
+		var panelDiv = create_panel(containerPanel, oldValue.cell, "New " + oldValue.cell.field.name)
 			.classed("edit-panel", true);
 
 		var navContainer = panelDiv.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handle_close_down_event);
+			.on("click", function()
+			{
+				if (!is_click_blocked())
+				{
+					block_click();
+					if (!oldValue.getValueID() && oldValue.cell.field.maxCapacity != "_unique value")
+					{
+						// In this case, delete the item on cancel. 
+						oldValue.cell.deleteValue(oldValue);
+					}
+					hide_panel_down($(this).parents(".site-panel")[0]);
+				}
+				d3.event.preventDefault();
+			});
 		
 		backButton.append("span").text("Cancel");
 
@@ -1486,7 +1448,7 @@ function show_add_object_panel(oldValue, containerCell, containerUUID, container
 				{
 					show_click_feedback(this);
 					
-					storeDataFunction(oldValue, containerCell, containerUUID, sections, onSuccessFunction);
+					storeDataFunction(oldValue, oldValue.cell, containerUUID, sections, onSuccessFunction);
 				}
 				d3.event.preventDefault();
 			});
@@ -1498,7 +1460,7 @@ function show_add_object_panel(oldValue, containerCell, containerUUID, container
 		
 		var sections = panel2Div.appendSections(cells)
 			.each(function(cell) {
-					dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, null);
+					dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, oldValue);
 				});
 
 		window.scrollTo(0, 0);
@@ -1507,6 +1469,6 @@ function show_add_object_panel(oldValue, containerCell, containerUUID, container
 	
 	var failFunction = standard_json_fail_function
 	
-	cr.getConfiguration(containerCell.field.ofKindID, successFunction, failFunction);
+	cr.getConfiguration(oldValue, oldValue.cell.field.ofKindID, successFunction, failFunction);
 }
 

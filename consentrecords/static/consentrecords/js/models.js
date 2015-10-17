@@ -447,7 +447,7 @@ var cr = {
 			);
 	},
 
-	getConfiguration: function(typeID, successFunction, failFunction)
+	getConfiguration: function(parent, typeID, successFunction, failFunction)
 	{
 		$.getJSON(cr.urls.getConfiguration,
 			{ "typeID" : typeID }, 
@@ -460,7 +460,7 @@ var cr = {
 					{
 						newCell = new cr.Cell();
 						newCell.field = this.field;
-						newCell.setup(null);
+						newCell.setup(parent);
 						cells.push(newCell);
 					});
 				
@@ -474,10 +474,11 @@ var cr = {
 		);
 	},
 	
-	getData: function(path, successFunction, failFunction)
+	getData: function(path, fields, successFunction, failFunction)
 	{
 		$.getJSON(cr.urls.getData,
-			{ "path" : path }, 
+			{ "path" : path, 
+			  "fields" : JSON.stringify(fields) },
 			function(json)
 			{
 				if (json.success) {
@@ -503,7 +504,12 @@ var cr = {
 					failFunction(json.error);
 				}
 			}
-		);
+		)
+		.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					}
+				);
 	}
 }
 		
@@ -537,6 +543,7 @@ cr.EventHandler.prototype.clear_events = function()
 cr.Cell.prototype = new cr.EventHandler();
 cr.Cell.prototype.setup = function (objectData)
 {
+	this.parent = objectData;
 	if (this.field.descriptorType !== undefined && objectData)
 	{
 		this.add_target("valueAdded", objectData);
@@ -565,6 +572,13 @@ cr.Cell.prototype.isEmpty = function()
 	}
 	return true;
 };
+
+cr.Cell.prototype.pushValue = function(newValue)
+{
+	newValue.cell = this;		
+	this.data.push(newValue);
+	newValue.add_target("dataChanged", this);
+}
 		
 cr.Cell.prototype.addValue = function(newData)
 {
@@ -576,10 +590,17 @@ cr.Cell.prototype.addValue = function(newData)
 			oldData.completeUpdateValue(newData);
 			return;
 		}
-	}				
-	this.data.push(newData);
-	newData.add_target("dataChanged", this);
+	}
+	this.pushValue(newData);
 	this.trigger_event("valueAdded", [newData]);
+}
+
+cr.Cell.prototype.addNewValue = function()
+{
+	var newData = cr.dataTypes[this.field.dataType].newValue();
+	this.pushValue(newData);
+	this.trigger_event("valueAdded", [newData]);
+	return newData;
 }
 
 cr.Cell.prototype.deleteValue = function(oldData)
@@ -592,6 +613,7 @@ cr.Cell.prototype.deleteValue = function(oldData)
 		  }
 	  }
   	remove(this.data, oldData);
+  	oldData.cell = undefined;
   	oldData.trigger_event("valueDeleted");
   	this.trigger_event("valueDeleted", [oldData]);
 }
@@ -670,8 +692,7 @@ cr.ObjectValue.prototype.importCell = function(oldCell)
 		$(oldCell.data).each(function()
 		{
 			newValue = dt.copyValue(this);
-			newValue.add_target("dataChanged", newCell);
-			newCell.data.push(newValue);
+			newCell.pushValue(newValue);
 		});
 	}
 	newCell.setup(this);
@@ -712,7 +733,7 @@ cr.ObjectValue.prototype.checkCells = function(containerCell, successFunction, f
 	{
 		v = this;
 		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-		cr.getConfiguration(containerCell.field.ofKindID, 
+		cr.getConfiguration(this, containerCell.field.ofKindID, 
 			function(newCells)
 			{
 				v.value.cells = newCells;

@@ -231,3 +231,13 @@ li {
 	display: block;
 	list-style-type: none;
 }
+input[type="date"]
+{
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+	height: 34px;
+	border: 0px;
+}
+input[type="date"]:focus {
+	color: #2C55CC;
+}

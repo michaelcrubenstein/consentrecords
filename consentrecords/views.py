@@ -83,9 +83,6 @@ def list(request):
             
     template = loader.get_template('consentrecords/configuration.html')
     
-    logger = logging.getLogger(__name__)
-    logger.error("list path: %s" % str(urllib.parse.unquote_plus(path)))
-    
     argList = {
         'user': request.user,
         'canShowObjects': request.user.is_superuser,
@@ -135,9 +132,6 @@ def createInstance(request):
     if not request.user.is_authenticated:
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
-    logger = logging.getLogger(__name__)
-    logger.error("%s" % str(request.POST))
-
     try:
         # The type of the new object.
         instanceType = request.POST.get('typeName', None)
@@ -206,9 +200,6 @@ def updateValues(request):
     
     # Check the security access for this operation for the current user.
     
-    logger = logging.getLogger(__name__)
-    logger.error("%s" % request.POST)
-    
     try:
                 
         commandString = request.POST.get('commands', "[]")
@@ -259,9 +250,6 @@ def addValue(request):
     
     # Check the security access for this operation for the current user.
     
-    logger = logging.getLogger(__name__)
-    logger.error("%s" % str(request.POST))
-
     try:
         # An optional container for the new object.
         containerUUID = request.POST.get('containerUUID', None)
@@ -379,7 +367,7 @@ def getConfiguration(request):
             
     return JsonResponse(results)
 
-def getCells(uuObject):
+def getCells(uuObject, fields):
     kindObject = LazyInstance(uuObject.typeID)
         
     configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
@@ -388,7 +376,22 @@ def getCells(uuObject):
         return JsonResponse({'success':False, 'error': "the specified item is not configured"})
     
     cells = configurationObject.getData(uuObject)
-    return {"id": uuObject.id.hex, "parentID": uuObject.parentID, "cells" : cells }
+    
+    data = {"id": uuObject.id.hex, "parentID": uuObject.parentID, "cells" : cells }
+    
+    if 'parents' in fields:
+        while uuObject.parentID:
+            uuObject = LazyInstance(uuObject.parentID)
+            kindObject = LazyInstance(uuObject.typeID)
+            fieldData = kindObject.getParentReferenceFieldData()
+            nameFieldUUIDs = kindObject._descriptors
+            
+            parentData = {'id': None, 
+                    'value': {'id': uuObject.id.hex, 'description': uuObject._getDescription(nameFieldUUIDs)},
+                    'position': 0}
+            data["cells"].append({"field": fieldData, "data": parentData})
+        
+    return data;
     
 def getData(request):
     LogRecord.emit(request.user, 'consentrecords/getData', '')
@@ -403,6 +406,9 @@ def getData(request):
         
         if not path:
             return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+            
+        fieldString = request.GET.get('fields', "[]")
+        fields = json.loads(fieldString)
 
         html_parser = html.parser.HTMLParser()
         unescaped = html_parser.unescape(path)
@@ -410,7 +416,7 @@ def getData(request):
         a, remainder = cssparser.cascade(tokens)
             
         uuObjects = LazyInstance.selectAllObjects(a)
-        p = [getCells(uuObject) for uuObject in uuObjects]        
+        p = [getCells(uuObject, fields) for uuObject in uuObjects]        
         
         results = {'success':True, 'data': p}
     except Fact.NoEditsAllowedError:
@@ -509,10 +515,15 @@ class UserFactory:
             
     def createUserObjectID(user, timezoneOffset):
         with transaction.atomic():
+            if isinstance(user.id, uuid.UUID):
+                userID = user.id.hex    # SQLite
+            else:
+                userID = user.id        # MySQL
+
             transactionState = TransactionState(user, timezoneOffset)
             ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
             item, newValue = ofKindObject.createInstance(None, None, 0, [], transactionState)
-            item.addValue(Fact.getNamedUUID(Fact.userIDName), user.id.hex, 0, transactionState)
+            item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
             item.addValue(Fact.getNamedUUID(Fact.emailName), user.email, 0, transactionState)
             if user.first_name:
                 item.addValue(Fact.getNamedUUID(Fact.firstNameName), user.first_name, 0, transactionState)

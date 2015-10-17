@@ -129,7 +129,10 @@ class LazyInstance(LazyObject):
     @property
     def instance(self):
         if self._instance is None:
-            self._instance = Instance.objects.get(id=self.id)
+            try:
+                self._instance = Instance.objects.get(id=self.id)
+            except Instance.DoesNotExist:
+                raise Instance.DoesNotExist('The instance id "%s" is not recognized.' % self.id)
         return self._instance
     
     def fieldName(fieldID):     #Previously verbString
@@ -311,13 +314,16 @@ class LazyInstance(LazyObject):
             return c.fetchone()[0]
         
     def _getResultArray(sql, argList):
-        logger = logging.getLogger(__name__)
-        logger.error("_getResultArray(%s, %s)" % (sql, [i for i in argList]))
+#         logger = logging.getLogger(__name__)
+#         logger.error("_getResultArray(%s, %s)" % (sql, str(argList)))
         with connection.cursor() as c:
             c.execute(sql, argList)
             return [i[0] for i in c.fetchall()]
         
     def refineResults(resultSet, path):
+#         logger = logging.getLogger(__name__)
+#         logger.error("refineResults(%s, %s)" % (str(resultSet), path))
+        
         if path[0] == '#':
             return [path[1]], path[2:]
         elif path[0] == '[':
@@ -325,11 +331,11 @@ class LazyInstance(LazyObject):
                 sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                       ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id))'
-                fieldID = Fact.getNamedUUID(path[1][0]).hex
+                fieldID = Fact.getUUIDHex(path[1][0])
                 newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID]), resultSet)
                 return list(newResults), path[2:]
             elif len(path[1]) == 3:
-                fieldID = Fact.getNamedUUID(path[1][0]).hex
+                fieldID = Fact.getUUIDHex(path[1][0])
                 symbol = path[1][1]
                 testValue = path[1][2]
                 if symbol == '^=':
@@ -344,7 +350,7 @@ class LazyInstance(LazyObject):
             else:
                 raise ValueError("unrecognized contents within [...]")
         elif path[0] == '>':
-            fieldID = Fact.getNamedUUID(path[1]).hex
+            fieldID = Fact.getUUIDHex(path[1])
             sql = 'SELECT v1.stringvalue id' + \
                      ' FROM consentrecords_value v1' + \
                      ' WHERE v1.instance_id = %s AND v1.fieldid = %s' + \
@@ -357,7 +363,7 @@ class LazyInstance(LazyObject):
             function = path[1]
             if function == 'reference':
                 if path[2] == '(':
-                    typeID = Fact.getNamedUUID(path[3][0]).hex
+                    typeID = Fact.getUUIDHex(path[3][0])
                     sql = 'SELECT v1.instance_id id' + \
                           ' FROM consentrecords_value v1' + \
                           ' JOIN consentrecords_instance i1 ON (i1.id = v1.instance_id)' + \
@@ -368,14 +374,14 @@ class LazyInstance(LazyObject):
                     newResults = [item for sublist in m for item in sublist]
                     return newResults, path[4:]
                 else:
-                    raise ValueError("malformed reference")
+                    raise ValueError("malformed reference (missing parentheses)")
             else:
-                raise ValueError("unrecognized function")
+                raise ValueError("unrecognized function: %s" % function)
         elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
             if path[2] == '(':
                 if path[3][0] == '[':
                     params = path[3][1]
-                    fieldID = Fact.getNamedUUID(params[0]).hex
+                    fieldID = Fact.getUUIDHex(params[0])
                     if len(params) == 1:
                         sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                               ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
@@ -401,10 +407,7 @@ class LazyInstance(LazyObject):
             else:
                 raise ValueError("malformed 'not' expression")
         else:   # Path[0] is a typeID.
-            if re.search('^[a-fA-F0-9]{32}$', path[0]):
-                fieldID = path[0]
-            else:
-                fieldID = Fact.getNamedUUID(path[0]).hex
+            fieldID = Fact.getUUIDHex(path[0])
             sql = 'SELECT i1.id' + \
                      ' FROM consentrecords_instance i1' + \
                      ' WHERE i1.typeid = %s' + \
@@ -412,8 +415,6 @@ class LazyInstance(LazyObject):
             with connection.cursor() as c:
                 c.execute(sql, [fieldID])
                 return [r[0] for r in c.fetchall()], path[1:]
-        
-        return newSQL, newArgList, remainder, newTableList
             
     def selectAllObjects(path):
         resultSet = [([], path)]
@@ -459,6 +460,16 @@ class LazyInstance(LazyObject):
         v = i and i.getSubValue(descriptorID)
         return v and (v.stringValue, i.id)
     
+    def getParentReferenceFieldData(self):
+        fieldData = {"name" : self.getSubValue(Fact.uuNameUUID()).stringValue,
+                     "nameID" : self.id.hex,
+                     "dataType" : Fact.objectName,
+                     "dataTypeID" : Fact.objectUUID().hex,
+                     "capacity" : Fact.uniqueValueName,
+                     "ofKind" : self.getSubValue(Fact.uuNameUUID()).stringValue,
+                     "ofKindID" : self.id.hex}
+        return fieldData
+                     
     def getFieldData(self):
         nameReference = self.getSubValueReference(Fact.nameUUID(), Fact.uuNameUUID())
         dataTypeReference = self.getSubValueReference(Fact.dataTypeUUID(), Fact.nameUUID())
@@ -683,9 +694,6 @@ class LazyInstance(LazyObject):
         return items
             
     def deepDelete(self, transactionState):
-        logger = logging.getLogger(__name__)
-        logger.error("deepDelete(%s)" % self.id.hex)
-        
         queue = [self.id.hex]
         DeletedInstance.objects.create(id=self.id.hex, transaction=transactionState.transaction)
         sql1 = "INSERT INTO consentrecords_deletedvalue(id, transaction_id)" + \
@@ -699,11 +707,9 @@ class LazyInstance(LazyObject):
         while len(queue) > 0:
             nextid = queue[0]
             queue = queue[1:]
-            logger.error("  nextid, queue = (%s, %s)" % (nextid, queue))
             with connection.cursor() as c:
                 c.execute(sql2, [nextid])
                 queue.extend([r[0] for r in c.fetchall()])
-                logger.error("  extended queue = (%s)" % (queue))
             with connection.cursor() as c:
                 c.execute(sql3, [transactionState.transaction.id.hex, nextid])
             with connection.cursor() as c:
@@ -823,6 +829,21 @@ class Value(dbmodels.Model):
     
     def __str__(self):
         return str(LazyValue(self.id, self.instance.id, self.fieldID, self.position, self.stringValue))
+    
+    @property
+    def instanceid(self):
+        return self.instance.id
+    
+    @property
+    def field(self):
+        return LazyInstance(self.fieldID)
+        
+    @property
+    def objectValue(self):
+        if re.search('^[a-fA-F0-9]{32}$', self.stringValue):
+            return str(LazyInstance(self.stringValue))
+        else:
+            return self.stringValue
     
 class DeletedValue(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, editable=False)
@@ -1316,7 +1337,7 @@ class Fact():
     def countEnumUUID(): return Fact._getObjectUUID(Fact.descriptorTypeUUID(), Fact.countEnumName);
             
     # Return the UUID for the specified Ontology object. If it doesn't exist, it is created with the specified transaction.   
-    def getNamedUUID(uuname, transactionState=None):
+    def getNamedUUID(uuname):
         fieldID = Fact.uuNameUUID()
         with connection.cursor() as c:
             sql = "SELECT v1.instance_id" + \
@@ -1330,6 +1351,15 @@ class Fact():
                 raise Fact.UnrecognizedNameError(uuname)
             else:
                 return uuid.UUID(r[0])
+    
+    # Return a 32 character hex string which represents the ID of the specified universal name.
+    # If the argument is a 32 character hex string, then it is considered that ID. Otherwise,
+    # it is looked up by name.
+    def getUUIDHex(uuname):
+        if re.search('^[a-fA-F0-9]{32}$', uuname):
+            return uuname
+        else:
+            return Fact.getNamedUUID(uuname).hex
             
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Fact.UnrecognizedNameError.   
     def getNamedEnumeratorID(uunameID, stringValue):

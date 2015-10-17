@@ -362,6 +362,7 @@
   	</body>
 
 	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
 	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
 	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
 	<script src="{% static "d3/d3.v3.min.js" %}"></script>
@@ -509,22 +510,10 @@
 					.text(function(d) { 
 						return d.value.cells[0].data[0].value.description;
 					});
-// 				newValues.sort(function(a, b)
-// 					{
-// 						return a.getDescription().localeCompare(b.getDescription());
-// 					});
-// 				
-// 				layout_objects(d3.select("#id_objects"), newValues,
-// 					function(d) {
-// 						if (prepare_click())
-// 						{
-// 							show_view_object_panel(d, cell, panelDiv);
-// 						}
-// 					});
 			}
 			
 			var path = "#" + "{{userID}}" + '>"Consent Record"';
-			cr.getData(path, successFunction, asyncFailFunction);
+			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
 		function show_services(containerDiv) {
@@ -590,18 +579,21 @@
 		function show_pathway(containerDiv) {
 			var successFunction = function(newInstances)
 			{
+				d3.select(containerDiv).selectAll('div').remove();
+				
 				var divs = d3.select(containerDiv).selectAll('div')
 					.data(newInstances)
 					.enter()
-					.append('div').classed("consent-record cell-div", true);
+					.append('div');
+				divs.classed("consent-record cell-div", true);
 				
 				divs.append('div').classed("right-label-div right-fixed-width-div right-label-div", true)
 					.text(function(d) {
 						startDate = get_datum_by_name(d, "Start Date");
-						if (startDate === undefined)
+						if (startDate === undefined || startDate === null)
 							startDate = "";
 						endDate = get_datum_by_name(d, "End Date");
-						if (endDate === undefined)
+						if (endDate === undefined || endDate === null)
 							endDate = "";
 						if (startDate || endDate)
 							connector = " - ";
@@ -609,14 +601,23 @@
 							connector = "";
 						return startDate + connector + endDate;
 					});
-				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
+				var titleDivs = divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true);
+				titleDivs.append("div")
 					.text(function(d) { 
 						return get_datum_by_name(d, "Offering").description;
 					});
+				titleDivs.append("div")
+					.text(function(d) {
+						var datum = get_datum_by_name(d, "Organization");
+						if (datum)
+							return datum.description;
+						else
+							return "None";
+					});
 			}
 			
-			var path = "#" + "{{userID}}" + '>Experiences>Experience';
-			cr.getData(path, successFunction, asyncFailFunction);
+			var path = "#" + "{{userID}}" + '::reference(Experience)';
+			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
 		function show_offerings(datum, container) {
@@ -667,19 +668,10 @@
 				leftText.append('div')
 					.text(function(d) { 
 						return get_datum_by_name(d, "_name").description;
-					})
-					.each(function(d) {
-						if (d.value.parentID)	/* This is an error condition. */
-						{
-							var path = "#" + d.value.parentID + "::reference(Organization)";
-							var thisText = this;
-							cr.getValues(path,
-								function(newObjects) {
-									d3.select(thisText).append('div').classed("sub-text", true)
-										.text(newObjects[0].value.description);
-								}, 
-								asyncFailFunction);
-						}
+					});
+				leftText.append('div').classed("sub-text", true)
+					.text(function(d) {
+						return get_datum_by_name(d, "Organization").description;
 					});
 			}
 			
@@ -767,11 +759,11 @@
 											}
 											else
 											{
-												cr.getConfiguration(inquiriesCell.field.ofKindID, 
+												cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
 													function(cells)
 													{
 														inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-														cr.getConfiguration(inquiryCell.field.ofKindID,
+														cr.getConfiguration(null, inquiryCell.field.ofKindID,
 															function(cells)
 															{
 																emailCell = cells_get_cell_by_name(cells, "_email");
@@ -801,7 +793,7 @@
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
 			var path = "#" + datum[0].value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
-			cr.getData(path, successFunction, asyncFailFunction);
+			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
 		function show_plans(containerDiv) {
@@ -833,7 +825,7 @@
 			}
 			
 			var path = "#{{userID}}::reference(Enrollment)::reference(Offering)";
-			cr.getData(path, successFunction, asyncFailFunction);
+			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
 		function load_organizations()
@@ -847,7 +839,8 @@
 							  };
 				cell.setup(null);
 				
-				d3.select(".organization-section").append("hr");
+				if (newInstances.length > 0)
+					d3.select(".organization-section").append("hr");
 				
 				var divs = d3.select(".organization-section").selectAll("div")
 					.data(newInstances)
@@ -883,7 +876,22 @@
 		function show_organization_panel(objectData, containerCell, containerUUID, containerPanel) {
 			successFunction = function ()
 			{
-			
+				var b;
+				
+				var addButton = function(sectionObj, title, clickFunction)
+				{
+					var b = sectionObj.append("button")
+						.classed("btn row-button site-active-text show-panel-button", true);
+					b.append("span")
+						.classed("pull-left", true)
+						.text(title);
+					b.append("span")
+						.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+					b.on("click", clickFunction);
+					
+					sectionObj.append("hr");
+				}
+				
 				var panelDiv = create_panel(containerPanel, 
 											objectData, get_view_panel_header(objectData, containerCell))
 					.classed("background-gradient-panel", true);
@@ -912,99 +920,79 @@
 					
 				sectionObj.append("hr");
 				
-				var addInquiryButton = sectionObj.append("button")
-					.classed("btn row-button site-active-text show-panel-button", true);
-				addInquiryButton.append("span")
-					.classed("pull-left", true)
-					.text("Record an Inquiry");
-				addInquiryButton.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-				addInquiryButton.on("click", function(d)
-				{
-					if (prepare_click())
+				addButton(sectionObj, "Record an Inquiry",
+					function(d)
 					{
-						add_inquiry(d, panelDiv);
-					}
-				});
+						if (prepare_click())
+						{
+							add_inquiry(d, panelDiv);
+						}
+					});
 					
-				sectionObj.append("hr");
-				
-				var manageInquiryButton = sectionObj.append("button")
-					.classed("btn row-button site-active-text show-panel-button", true);
-				manageInquiryButton.append("span")
-					.classed("pull-left", true)
-					.text("Manage Inquiries");
-				manageInquiryButton.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-				manageInquiryButton.on("click", function(d)
-				{
-					if (prepare_click())
+				addButton(sectionObj, "Manage Inquiries",
+					function(d)
 					{
-						manage_inquiry(d, panelDiv);
-					}
-				});
+						if (prepare_click())
+						{
+							manage_inquiry(d, panelDiv);
+						}
+					});
 					
-				sectionObj.append("hr");
-
 				sectionObj = panel2Div.append("section")
 					.classed("button-group", true);
 					
 				sectionObj.append("hr");
 				
-				var enrollInquiryButton = sectionObj.append("button")
-					.classed("btn row-button site-active-text show-panel-button", true);
-				enrollInquiryButton.append("span")
-					.classed("pull-left", true)
-					.text("Enroll an Inquiry");
-				enrollInquiryButton.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-				enrollInquiryButton.on("click", function(d)
-				{
-					if (prepare_click())
+				addButton(sectionObj, "Enroll an Inquiry",
+					function(d)
 					{
-					/* Pick an offering. */
-						var successFunction = function(d, offeringPanelDiv)
+						if (prepare_click())
 						{
-							hide_panel_right(offeringPanelDiv.node());
+							enroll_inquiry(d, panelDiv);
 						}
-						pick_offering(d, panelDiv, successFunction);
-					}
-				});
+					});
 					
+				addButton(sectionObj, "Add an Enrollment",
+					function(d)
+					{
+						if (prepare_click())
+						{
+							add_enrollment(d, panelDiv);
+						}
+					});
+					
+				addButton(sectionObj, "Manage Enrollment",
+					function(d)
+					{
+						if (prepare_click())
+						{
+							manage_enrollment(d, panelDiv);
+						}
+					});
+					
+				sectionObj = panel2Div.append("section")
+					.classed("button-group", true);
 					
 				sectionObj.append("hr");
 				
-				var addEnrollmentButton = sectionObj.append("button")
-					.classed("btn row-button site-active-text show-panel-button", true);
-				addEnrollmentButton.append("span")
-					.classed("pull-left", true)
-					.text("Add an Enrollment");
-				addEnrollmentButton.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-				addEnrollmentButton.on("click", function(d)
-				{
-					if (prepare_click())
+				addButton(sectionObj, "Record Participation",
+					function(d)
 					{
-						add_enrollment(d, panelDiv);
-					}
-				});
+						if (prepare_click())
+						{
+							record_participation(d, panelDiv);
+						}
+					});
 					
-				sectionObj.append("hr");
-				
-				var manageEnrollmentButton = sectionObj.append("button")
-					.classed("btn row-button site-active-text show-panel-button", true);
-				manageEnrollmentButton.append("span")
-					.classed("pull-left", true)
-					.text("Manage Enrollment");
-				manageEnrollmentButton.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
-				manageEnrollmentButton.on("click", function(d)
-				{
-					if (prepare_click())
+				addButton(sectionObj, "Manage Participation",
+					function(d)
 					{
-						manage_enrollment(d, panelDiv);
-					}
-				});
+						if (prepare_click())
+						{
+							manage_participation(d, panelDiv);
+						}
+					});
+					
 					
 				sectionObj.append("hr");
 			}
@@ -1060,6 +1048,94 @@
 						 standard_json_fail_function);
 		}
 		
+		function enroll_inquiry(organization, containerPanel)
+		{
+			/* Pick an offering. */
+			var successFunction = function(offering, offeringPanelDiv)
+			{
+				var checkCellsSuccess = function()
+				{
+					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
+					var inquiriesInstances = inquiriesCell.data;
+					if (inquiriesInstances.length == 0)
+						standard_json_fail_function("Offering Inquiries are not set up");
+					else
+					{
+						var inquiriesInstance = inquiriesInstances[0];
+						inquiriesInstance.checkCells(inquiriesCell, function()
+							{
+								inquiryCell = get_cell_by_name(inquiriesInstance, "Inquiry");
+								
+								var panelDiv = create_panel(containerPanel, organization, "Pick User")
+									.classed("list-panel", true);
+
+								var navContainer = panelDiv.appendNavContainer();
+
+								var backButton = navContainer.appendLeftButton()
+									.on("click", handle_close_right_event);
+								backButton.append("span").text("Cancel");
+								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
+								
+								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+
+								var panel2Div = panelDiv.appendScrollArea();
+								panel2Div.appendAlertContainer();
+	
+								window.scrollTo(0, 0);
+								show_panel_left(panelDiv.node());
+								
+								panel2Div.selectAll("section").remove();
+								var sections = panel2Div.appendSections(inquiryCell.data);
+								var buttons = appendButtons(sections)
+									.on("click", function(inquiry)
+									{
+										if (prepare_click())
+										{
+											inquiry.checkCells(inquiryCell, 
+												function()
+												{
+													add_enrollment_by_inquiry(offering, inquiry);
+												}, 
+												standard_json_fail_function);
+											
+										}
+									});
+							},
+							standard_json_fail_function);
+					}
+				}
+				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+			}
+			
+			pick_offering(organization, containerPanel, successFunction);
+		}
+		
+		function add_enrollment_by_inquiry(offering, inquiry)
+		{
+			var emailCell = get_cell_by_name(inquiry, "_email");
+			if (emailCell.data.length == 0)
+				standard_json_fail_function("The email is not set up.");
+			else
+			{
+				var email = emailCell.data[0].value;
+				var getValuesSuccess = function(userObjects)
+				{
+					if (userObjects.length == 0)
+						standard_json_fail_function('There is no user set up with the email "' + email + '".');
+					else
+					{
+						add_enrollment_function(offering, userObjects[0], 
+							function()
+							{
+								unblock_click();
+							})();
+					}
+				};
+			
+				cr.getValues("_user[_email="+email+"]", getValuesSuccess, standard_json_fail_function);
+			}
+		}
+		
 		/*
 			This function should be called within a prepare_click block. 
 		 */
@@ -1102,42 +1178,11 @@
 					
 					var pickOfferingSuccess = function(offering, offeringPanelDiv)
 					{
-						var checkCellsSuccess = function()
-						{
-							var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
-							var enrollmentsInstances = enrollmentsCell.data;
-							if (enrollmentsInstances.length == 0)
-								standard_json_fail_function("Offering Enrollments are not set up");
-							else
+						var checkCellsSuccess = add_enrollment_function(offering, pickedUser, 
+							function()
 							{
-								var enrollmentsInstance = enrollmentsInstances[0];
-								cr.getConfiguration(enrollmentsCell.field.ofKindID,
-									function(cells)
-									{
-										var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
-										cr.getConfiguration(enrollmentCell.field.ofKindID,
-											function(cells)
-											{
-												var userCell = cells_get_cell_by_name(cells, "_user");
-												add_single_field_instance(enrollmentsInstance, 
-																	   enrollmentCell, 
-																	   userCell, 
-																	   {id: pickedUser.getValueID()}, 
-																	   function(newData)
-																	   {
-																			bootstrap_alert.success(pickedUser.getDescription() + 
-																				  " enrolled in " + 
-																				  offering.getDescription(),
-																				  ".alert-container");
-																			hide_panel_right(offeringPanelDiv.node());
-																	   },
-																	   standard_json_fail_function);
-											},
-											standard_json_fail_function);
-									},
-									standard_json_fail_function);
-							}
-						}
+								hide_panel_right(offeringPanelDiv.node());
+							});
 						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
 					};
 					
@@ -1163,6 +1208,83 @@
 					cr.getValues("_user[_email^="+val+"]", getValuesSuccess, asyncFailFunction);
 				}
 			}
+		}
+		
+		function add_enrollment_function(offering, user, successFunction)
+		{
+			return function()
+			{
+				var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
+				var enrollmentsInstances = enrollmentsCell.data;
+				if (enrollmentsInstances.length == 0)
+					standard_json_fail_function("Offering Enrollments are not set up");
+				else
+				{
+					var enrollmentsInstance = enrollmentsInstances[0];
+					cr.getConfiguration(null, enrollmentsCell.field.ofKindID,
+						function(cells)
+						{
+							var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
+							cr.getConfiguration(null, enrollmentCell.field.ofKindID,
+								function(cells)
+								{
+									var userCell = cells_get_cell_by_name(cells, "_user");
+									check_single_field_instance(enrollmentsInstance, 
+										[enrollmentCell],
+										userCell.field.nameID,
+										user.getValueID(), 
+										function(newData)
+										{
+											standard_json_fail_function(user.getDescription() + 
+												  " already enrolled in " + 
+												  offering.getDescription());
+										},
+										function()
+										{
+											add_single_field_instance(enrollmentsInstance, 
+											   enrollmentCell, 
+											   userCell, 
+											   {id: user.getValueID()}, 
+											   function(newData)
+											   {
+													bootstrap_alert.success(user.getDescription() + 
+														  " enrolled in " + 
+														  offering.getDescription(),
+														  ".alert-container");
+													successFunction();
+											   },
+											   standard_json_fail_function);
+										},
+										standard_json_fail_function);
+								},
+								standard_json_fail_function);
+						},
+						standard_json_fail_function);
+				}
+			}
+		}
+		
+		function check_single_field_instance(container, childCells, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
+		{
+			var path = "#"+container.value.id;
+			for (i = 0; i < childCells.length; ++i)
+			{
+				path += ">" + childCells[i].field.nameID;
+			}
+			path += "[" + fieldName + "=" + dataValue + "]";
+			
+			var successFunction = function(newInstances)
+			{
+				if (newInstances.length > 0)
+				{
+					existsFunction(newInstances);
+				}
+				else
+				{
+					doesntExistFunction();
+				}
+			}
+			cr.getValues(path, successFunction, failFunction);
 		}
 		
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
@@ -1198,6 +1320,7 @@
 						});
 			}
 		}
+		
 		function validateEmail(email) 
 		{
 			var re = /\S+@\S+\.\S\S+/;
@@ -1206,7 +1329,7 @@
 		
 		function add_inquiry(organization, containerPanel)
 		{
-			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			var pickOfferingSuccess = function(offering, pickOfferingDiv)
 			{
 				var addInquiryPanelDiv = create_panel(containerPanel, organization, "Add Inquiry")
 					.classed("list-panel", true);
@@ -1266,11 +1389,11 @@
 							else
 							{
 								var inquiriesInstance = inquiriesInstances[0];
-								cr.getConfiguration(inquiriesCell.field.ofKindID,
+								cr.getConfiguration(null, inquiriesCell.field.ofKindID,
 									function(cells)
 									{
 										var inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-										cr.getConfiguration(inquiryCell.field.ofKindID,
+										cr.getConfiguration(null, inquiryCell.field.ofKindID,
 											function(cells)
 											{
 												var emailCell = cells_get_cell_by_name(cells, "_email");
@@ -1301,12 +1424,12 @@
 				
 				addButton.on("click", createInquiry);
 			}
-			pick_offering(organization, containerPanel, pickOfferringSuccess);
+			pick_offering(organization, containerPanel, pickOfferingSuccess);
 		}
 		
 		function manage_inquiry(organization, panelDiv)
 		{
-			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			var pickOfferingSuccess = function(offering, pickOfferingDiv)
 			{
 				/* Since d.getValueID() is not null, containerUUID is not needed. */
 				var checkCellsSuccess = function()
@@ -1323,12 +1446,12 @@
 				}
 				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
 			}
-			pick_offering(organization, panelDiv, pickOfferringSuccess);
+			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
 		
 		function manage_enrollment(organization, panelDiv)
 		{
-			var pickOfferringSuccess = function(offering, pickOfferingDiv)
+			var pickOfferingSuccess = function(offering, pickOfferingDiv)
 			{
 				/* Since d.getValueID() is not null, containerUUID is not needed. */
 				var checkCellsSuccess = function()
@@ -1345,7 +1468,51 @@
 				}
 				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
 			}
-			pick_offering(organization, panelDiv, pickOfferringSuccess);
+			pick_offering(organization, panelDiv, pickOfferingSuccess);
+		}
+		
+		function record_participation(organization, panelDiv)
+		{
+			var pickOfferingSuccess = function(offering, pickOfferingDiv)
+			{
+				/* Since d.getValueID() is not null, containerUUID is not needed. */
+				var checkCellsSuccess = function()
+				{
+					var listCell = get_cell_by_name(offering, "Experiences");
+					var listInstances = listCell.data;
+					if (listInstances.length == 0)
+						standard_json_fail_function("Offering Experiences are not set up");
+					else
+					{
+						var instance = listInstances[0];
+						show_edit_object_panel(listInstances, listCell, undefined, pickOfferingDiv);
+					}
+				}
+				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+			}
+			pick_offering(organization, panelDiv, pickOfferingSuccess);
+		}
+		
+		function manage_participation(organization, panelDiv)
+		{
+			var pickOfferingSuccess = function(offering, pickOfferingDiv)
+			{
+				/* Since d.getValueID() is not null, containerUUID is not needed. */
+				var checkCellsSuccess = function()
+				{
+					var listCell = get_cell_by_name(offering, "Experiences");
+					var listInstances = listCell.data;
+					if (listInstances.length == 0)
+						standard_json_fail_function("Offering Experiences are not set up");
+					else
+					{
+						var instance = listInstances[0];
+						show_edit_object_panel(instance, listCell, undefined, pickOfferingDiv);
+					}
+				}
+				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+			}
+			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
 		
 	</script>

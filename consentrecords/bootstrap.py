@@ -13,6 +13,8 @@ from consentrecords.models import Fact
 
 class BootStrapper():
     def initializeUUNames():
+        Fact._initialUUNames = {}
+        
         #Instantiate the uuName uuName.
         uuNameID = Fact.getUUNameID()
         if uuNameID:

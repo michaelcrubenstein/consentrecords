@@ -69,14 +69,14 @@ class parser:
         return a
 
     def cascade(source, i=0, closer=None):
-        logger = logging.getLogger(__name__)
-        logger.error("cascade(%s, %s)" % (source, closer))
+#         logger = logging.getLogger(__name__)
+#         logger.error("cascade(%s, %s)" % (source, closer))
 
         a = []
         while i < len(source):
             s = source[i]
             if s == closer:
-                logger.error("  return(%s, %s)" % (a, i+1))
+#                 logger.error("  return(%s, %s)" % (a, i+1))
                 return a, i+1
             elif s == '[':
                 item, i = parser.cascade(source, i+1, "]")
@@ -90,5 +90,5 @@ class parser:
             else:
                 a += [s]
                 i += 1
-        logger.error("  return(%s, %s)" % (a, i))
+#         logger.error("  return(%s, %s)" % (a, i))
         return a, i
