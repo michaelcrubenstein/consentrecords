@@ -741,7 +741,9 @@ function store_new_instance(oldValue, containerCell, containerUUID, sections, on
 	newData.calculateDescription();
 	if (oldValue)
 	{
-		oldValue.completeUpdateValue(newData);
+		/* Replace the new data into the oldValue, which has already been added. */
+		oldValue.value = newData.value;
+		oldValue.trigger_event("dataChanged");
 	}
 	else
 		containerCell.addValue(newData);
