@@ -36,7 +36,7 @@
   </head>
 
   <body>
-	<div id="id_panel1" class="site-panel list-panel">
+	<panel id="id_panel1" class="base-panel site-panel list-panel">
 		<nav class="navbar navbar-default site-navbar" role="navigation">
 			<div class="container-fluid">
 				<!-- Collect the nav links, forms, and other content for toggling -->
@@ -62,7 +62,7 @@
 			<ol id="id_objects">
 			</ol>
 		</div> <!-- /container-fluid -->
-	</div>
+	</panel>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
@@ -146,7 +146,7 @@
 			cell.add_target("valueAdded", itemsDiv.node());
 			cell.add_target("dataChanged", itemsDiv.node());
 			
-			itemsDiv.node().onValueAdded = get_on_value_added_function(d3.select(parentPanel), cell, null, true, show_view_object_panel);
+			itemsDiv.node().onValueAdded = getOnValueAddedFunction(d3.select(parentPanel), cell, null, true, true, show_view_object_panel);
 			$(itemsDiv.node()).on("valueAdded", function(e, newData)
 			{
 				this.onValueAdded(e, newData);
@@ -186,8 +186,11 @@
 					{
 						return a.getDescription().localeCompare(b.getDescription());
 					});
+					
+				for (var i = 0; i < newValues.length; i++)
+					cell.pushValue(newValues[i]);
 				
-				layout_objects(cell, d3.select("#id_objects"), newValues,
+				layout_objects(cell, d3.select("#id_objects"), 
 					function(d) {
 						if (prepare_click())
 						{

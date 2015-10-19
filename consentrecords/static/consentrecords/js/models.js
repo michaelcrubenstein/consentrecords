@@ -400,6 +400,10 @@ var cr = {
 	
 	append: function(storedcsrftoken, oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
+		if (containerCell.parent == null && containerUUID != null)
+			throw ("setup error 1 in append");
+		else if (containerCell.parent != null && containerCell.parent.getValueID() != containerUUID)
+			throw ("setup error 2 in append");
 		cr.createInstance(storedcsrftoken, containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{

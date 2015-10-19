@@ -20,10 +20,7 @@ from custom_user import views as userviews
 from parse.cssparser import parser as cssparser
 
 def home(request):
-    if request.user.is_authenticated():
-        return userHome(request)
-    else:
-        return anonymousHome(request)
+    return userHome(request)
 
 def anonymousHome(request):
     LogRecord.emit(request.user, 'consentrecords/anonymousHome', '')
@@ -38,11 +35,14 @@ def userHome(request):
     LogRecord.emit(request.user, 'consentrecords/userHome', '')
     
     template = loader.get_template('consentrecords/userHome.html')
-    context = RequestContext(request, {
+    args = {
         'user': request.user,
-        'userID': UserFactory.getUserObjectID(request.user.id),
         'backURL': '/',
-    })
+    }
+    if request.user.is_authenticated():
+        args['userID'] = UserFactory.getUserObjectID(request.user.id)
+
+    context = RequestContext(request, args)
         
     return HttpResponse(template.render(context))
 
@@ -542,7 +542,7 @@ def submitsignin(request):
         results = userviews.signinResults(request)
         if results["success"]:
             userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
-            results["userID"] = userID         
+            results["user"] = { "id": userID, "description" : request.user.get_full_name() }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -559,7 +559,7 @@ def submitNewUser(request):
         results = userviews.newUserResults(request)
         if results["success"]:
             userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
-            results["userID"] = userID         
+            results["user"] = { "id": userID, "description" : request.user.get_full_name() }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

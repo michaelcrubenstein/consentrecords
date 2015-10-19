@@ -76,6 +76,17 @@ function show_panel_up(panelNode)
 						});
 }
 
+/* Note that this function doesn't unblock_click */
+function show_panel_now(panelNode)
+{
+	$(panelNode).offset({top: 0, left: 0})
+				.height("100%")
+				.width("100%")
+				.css("display", "block")
+				.trigger("revealing");
+	$(window).trigger("resize");
+}
+
 function show_panel_left(panelNode)
 {
 	$(panelNode).offset({top: 0, left: 0})
@@ -175,11 +186,43 @@ function push_text_changed(d) {
 getDataValue = function(d) { return d.value; }
 getDataDescription = function(d) { return d.getDescription() }
 
-function show_view_string_cell(obj, cell)
+function checkItemsDivDisplay(itemsDiv, cell)
+{
+	var isVisible = (cell.field.capacity == "_unique value");
+	var dt = cr.dataTypes[cell.field.dataType];
+	// Loop over cell.data instead of itemsDiv cells in case this test is done before
+	// the deleted cell is deleted or the added cell is added. 
+	for (var i = 0; i < cell.data.length; i++)
+		isVisible |= !dt.isEmpty(cell.data[i]);
+	itemsDiv.style("display", isVisible ? "block" : "none");
+}
+
+function setupItemsDivHandlers(itemsDiv, cell)
+{
+	cell.add_target("valueAdded", itemsDiv.node());
+	cell.add_target("valueDeleted", itemsDiv.node());
+	cell.add_target("dataChanged", itemsDiv.node());
+	$(itemsDiv.node()).on("dataChanged valueDeleted valueAdded", function(e)
+		{
+			checkItemsDivDisplay(itemsDiv, cell);
+		});
+}
+
+function setupItemHandlers(d)
+{
+	$(this).on("valueDeleted", function(e, newData)
+	{
+		$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+	});
+	d.add_target("valueDeleted", this);
+}
+
+function showViewStringCell(obj, cell)
 {
 	var sectionObj = d3.select(obj);
 	
-	sectionObj.classed("cell-div", true);
+	sectionObj.classed("cell-div", true)
+		.classed("border-below", cell.field.capacity == "_unique value");
 	
 	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
 		.text(cell.field.name);
@@ -190,6 +233,8 @@ function show_view_string_cell(obj, cell)
 		labelDiv.classed("left-label-div left-fixed-width-div", true);
 		itemsDiv.classed("right-label-div expanding-div", true);
 	}
+	else
+		itemsDiv.classed("border-above border-below", true);
 
 	var setupItems = function(divs, cell) {
 		divs.classed("list-div", cell.field.capacity != "_unique value")
@@ -200,38 +245,21 @@ function show_view_string_cell(obj, cell)
 		.each(push_text_changed);
 	}
 	
-	cell.add_target("valueAdded", itemsDiv.node());
+	setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded", function(e, newData)
 		{
 			setupItems(
 				d3.select(this).append("li"), cell);
 		});
 	
-		
-	var divs = itemsDiv.selectAll("li")
-		.data(cell.data)
-		.enter()
-		.append("li");
+	var divs = refresh_divs(itemsDiv, cell.data);
 	setupItems(divs, cell);
 }
 
-function setup_multi_value_container(div)
+function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 {
-	div.classed("string-input-container", true)
-		.classed("string-multi-value-container", true)
-		.each(function(d)
-		{
-			$(this).on("valueDeleted", function(e, newData)
-			{
-				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-			});
-			d.add_target("valueDeleted", this);
-		});						
-}
-
-function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
-{
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
+		.classed("border-below", cell.field.capacity == "_unique value");
 	
 	if (cell.field.capacity == "_unique value")
 	{
@@ -263,63 +291,68 @@ function show_edit_string_cell(obj, panelDiv, cell, containerUUID, inputType)
 	{
 		sectionObj.append("div").classed("cell-label-div", true)
 			      .text(cell.field.name);
-		sectionObj.append("hr");
-		var itemsDiv = sectionObj.append("div").classed("items-div", true);
+		var itemsDiv = sectionObj.append("div")
+			.classed("items-div border-above", true);
 
-		var divs = itemsDiv.selectAll("li")
-			.data(cell.data)
-			.enter()
-			.append("li");
-		setup_multi_value_container(divs);
-	
-		divs.append("input")
-			.classed("string-input", true)
-			.attr("type", inputType)
-			.attr("placeholder", cell.field.name)
-			.property("value", getDataValue);
-
-		if (["_over time", "_multiple values"].indexOf(cell.field.capacity) >= 0)
-		{
-			cell.add_target("valueAdded", itemsDiv.node());
-			$(itemsDiv.node()).on("valueAdded", function(e, newData)
-				{
-					var div = d3.select(this).append("li")
-						.datum(newData);
-						
-					setup_multi_value_container(div);
-					
-					div.append("input").classed("string-input", true)
-						.attr("type", inputType)
-						.attr("placeholder", cell.field.name)
-						.text(newData.value);
-				});
+		var divs = refresh_divs(itemsDiv, cell.data);
 		
-			/* Add one more button for the add Button item. */
-			var buttonDiv = sectionObj.append("div")
-				.append("button").classed("btn row-button site-active-text add-element-button", true)
-				.on("click", function(cell) {
-					if (prepare_click())
-					{
-						show_click_feedback(this);
-					
-						var newData = cell.addNewValue();
-					
-						unblock_click();
-					}
-					d3.event.preventDefault();
-				})
-				.append("div").classed("pull-left", true);
-			buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-			buttonDiv.append("span").text(" add " + cell.field.name);
-			sectionObj.append("hr");
+		var appendControls = function(divs, cell)
+		{	
+			appendConfirmDeleteControls(divs, cell);
+			
+			/* Inner layer needed so that padding is applied to inner content but not 
+				confirm delete control
+			 */
+			var innerDivs = divs.append("div")
+				.classed("multi-row-content", true);
+		
+			appendDeleteControls(innerDivs);
+
+			inputContainers = innerDivs.append("div")
+				.classed("string-input-container string-multi-value-container", true);						
+	
+			inputContainers.append("input")
+				.classed("string-input", true)
+				.attr("type", inputType)
+				.attr("placeholder", cell.field.name)
+				.property("value", getDataValue);
 		}
+		
+		appendControls(divs, cell);
+
+		setupItemsDivHandlers(itemsDiv, cell);
+		$(itemsDiv.node()).on("valueAdded", function(e, newData)
+			{
+				var div = d3.select(this).append("li")
+					.datum(newData);
+				
+				appendControls(div, cell);	
+			});
+			
+		/* Add one more button for the add Button item. */
+		var buttonDiv = sectionObj.append("div")
+			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+			.on("click", function(cell) {
+				if (prepare_click())
+				{
+					show_click_feedback(this);
+				
+					var newData = cell.addNewValue();
+				
+					unblock_click();
+				}
+				d3.event.preventDefault();
+			})
+			.append("div").classed("pull-left", true);
+		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
+		buttonDiv.append("span").text(" add " + cell.field.name);
 	}
 }
 
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
  */
-function get_on_value_added_function(panelDiv, cell, containerUUID, canDelete, viewFunction)
+function getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canShowDetails, viewFunction)
 {
 	return function(e, newData)
 	{
@@ -327,8 +360,24 @@ function get_on_value_added_function(panelDiv, cell, containerUUID, canDelete, v
 	
 		var divs = itemsDiv
 			.append("li")	// So that each button appears on its own row.
-			.datum(newData);
-			
+			.datum(newData)
+			.each(setupItemHandlers);
+		
+		checkItemsDivDisplay(itemsDiv, cell);
+		
+		/* Hide the new button if it is blank, and then show it if the data changes. */
+		divs.style("display", 
+				   (cell.field.capacity == "_unique value" || newData.getValueID()) ? "block" : "none");
+				   
+		if (cell.field.capacity != "_unique value")
+		{
+			newData.add_target("dataChanged", divs.node());
+			$(divs.node()).on("dataChanged", function(e) {
+					d3.select(this).style("display", 
+					   newData.getValueID() || newData.value.cells.length > 0 ? "block" : "none");
+				});
+		}
+
 		if (canDelete && cell.field.capacity != "_unique value")
 			appendConfirmDeleteControls(divs, cell);
 		
@@ -343,7 +392,8 @@ function get_on_value_added_function(panelDiv, cell, containerUUID, canDelete, v
 		});
 		if (canDelete && cell.field.capacity != "_unique value")
 			appendDeleteControls(buttons);
-		appendRightChevrons(buttons);
+		if (canShowDetails)
+			appendRightChevrons(buttons);
 
 		appendButtonDescriptions(buttons, cell);
 	}
@@ -352,12 +402,13 @@ function get_on_value_added_function(panelDiv, cell, containerUUID, canDelete, v
 function appendRowButtons(divs, cell)
 {
 	return divs.append("div")
-			.classed("btn row-button expanding-div", cell.field.capacity != "_unique value");
+			.classed("btn row-button multi-row-content expanding-div", cell.field.capacity != "_unique value");
 }
 
 function appendConfirmDeleteControls(divs, containerCell)
 {
-	divs.each(function(d)
+	divs.classed("delete-confirm-container", true)
+		.each(function(d)
 		{
 			$(this).on("valueDeleted", function(e, newData)
 			{
@@ -397,13 +448,13 @@ function appendConfirmDeleteControls(divs, containerCell)
 function appendDeleteControls(buttons)
 {
 	buttons.append("button")
-		.classed("glyphicon glyphicon-minus-sign text-muted pull-left", true)
+		.classed("glyphicon glyphicon-minus-sign pull-left", true)
 		.on("click", function(e)
 		{
 			if (prepare_click())
 			{
 				$(this).animateRotate(90, 180, 600, 'swing');
-				var confirmButton = $($(this).parents()[1]).children(".delete-confirm-button");
+				var confirmButton = $($(this).parents(".delete-confirm-container")[0]).children(".delete-confirm-button");
 				autoWidth = confirmButton.css('width', 'auto')
 					.width();
 				confirmButton.width(0)
@@ -435,10 +486,11 @@ function appendButtonDescriptions(buttons, cell)
 		.each(push_text_changed);
 }
 
-function show_view_object_cell(obj, containerPanel, cell, containerUUID)
+function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 {
 	var sectionObj = d3.select(obj).classed("cell-div", true)
-		.classed("btn row-button", cell.field.capacity == "_unique value" && !is_pick_cell(cell));
+		.classed("btn row-button unique-row-button", cell.field.capacity == "_unique value" && !is_pick_cell(cell))
+		.classed("border-below", cell.field.capacity == "_unique value");
 	
 	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
 		.text(cell.field.name);
@@ -456,9 +508,11 @@ function show_view_object_cell(obj, containerPanel, cell, containerUUID)
 				}
 			});
 	}
+	else
+		itemsDiv.classed("border-above border-below", true);
 
-	cell.add_target("valueAdded", itemsDiv.node());
-	$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(containerPanel, cell, containerUUID, false, show_view_object_panel));
+	setupItemsDivHandlers(itemsDiv, cell);
+	$(itemsDiv.node()).on("valueAdded", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !is_pick_cell(cell), show_view_object_panel));
 	
 	var clickFunction;
 	if (is_pick_cell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -480,8 +534,7 @@ function show_view_object_cell(obj, containerPanel, cell, containerUUID)
 		if (clickFunction)
 			buttons.on("click", clickFunction);
 		
-		buttons.append("span")
-			.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+		appendRightChevrons(buttons);
 	}
 	else
 	{
@@ -491,10 +544,10 @@ function show_view_object_cell(obj, containerPanel, cell, containerUUID)
 	appendButtonDescriptions(buttons, cell);
 }
 
-function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
+function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
-		.classed("button row-button", cell.field.capacity == "_unique value");
+		.classed("btn row-button unique-row-button border-below", cell.field.capacity == "_unique value");
 	
 	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
 		.text(cell.field.name);
@@ -515,10 +568,10 @@ function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
 		});
 	}
 	else
-		sectionObj.insert("hr", ".items-div");
+		itemsDiv.classed("border-above", true);
 
-	cell.add_target("valueAdded", itemsDiv.node());
-	$(itemsDiv.node()).on("valueAdded", get_on_value_added_function(panelDiv, cell, parent.getValueID(), true, show_edit_object_panel));
+	setupItemsDivHandlers(itemsDiv, cell);
+	$(itemsDiv.node()).on("valueAdded", getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, show_edit_object_panel));
 
 	var clickFunction;
 	if (cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -539,8 +592,7 @@ function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs, cell);
 		
-	var buttons;
-	buttons = appendRowButtons(divs, cell);
+	var buttons = appendRowButtons(divs, cell);
 
 	if (clickFunction)
 		buttons.on("click", clickFunction);
@@ -556,7 +608,7 @@ function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
 	{
 		/* Add one more button for the add Button item. */
 		var buttonDiv = sectionObj.append("div")
-			.append("button").classed("btn row-button site-active-text add-element-button", true)
+			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 			.on("click", function(cell) {
 				if (prepare_click())
 				{
@@ -572,7 +624,6 @@ function show_edit_object_cell(obj, panelDiv, cell, parent, storeDataFunction)
 			.append("div").classed("pull-left", true);
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add " + cell.field.name);
-		sectionObj.append("hr");
 	}
 }
 
@@ -771,15 +822,15 @@ var dataTypeViews = {
 	_string: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			show_view_string_cell(obj, cell);
+			showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "text");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "text");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
 		appendUpdateCommands: append_update_string_commands,
 		updateCell: update_string_cell,
@@ -787,15 +838,15 @@ var dataTypeViews = {
 	_number: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			show_view_string_cell(obj, cell);
+			showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "number");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "number");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
 		appendUpdateCommands: append_update_string_commands,
 		updateCell: update_string_cell
@@ -803,15 +854,15 @@ var dataTypeViews = {
 	_datestamp: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			show_view_string_cell(obj, cell);
+			showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "date");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			show_edit_string_cell(obj, containerPanel, cell, parent.getValueID(), "date");
+			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
 		appendUpdateCommands: append_update_datestamp_commands,
 		updateCell: update_datestamp_cell,
@@ -819,16 +870,16 @@ var dataTypeViews = {
 	_object: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			show_view_object_cell(obj, containerPanel, cell, containerUUID);
+			showViewObjectCell(obj, containerPanel, cell, containerUUID);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
 			/* If containerUUID is null during an edit operation, then the container
 				is new and was not saved. */
 			if (parent.getValueID())
-				show_edit_object_cell(obj, containerPanel, cell, parent, submit_create_instance);
+				showEditObjectCell(obj, containerPanel, cell, parent, submit_create_instance);
 			else
-				show_edit_object_cell(obj, containerPanel, cell, parent, store_new_instance);
+				showEditObjectCell(obj, containerPanel, cell, parent, store_new_instance);
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
@@ -836,16 +887,17 @@ var dataTypeViews = {
 				or an object contained within an item that wasn't saved. In either case, 
 				store any item added to this cell as part of the data of the cell.
 			 */
-			show_edit_object_cell(obj, containerPanel, cell, parent, store_new_instance);
+			showEditObjectCell(obj, containerPanel, cell, parent, store_new_instance);
 		},
 		appendUpdateCommands: append_update_object_commands,
 		updateCell: update_object_cell
 	},
 };
 
-function appendButtons(divs)
+/* Append a set of buttons to each div for displaying the text for each item. */
+function appendViewButtons(divs)
 {
-	var buttons = divs.append("div").classed("btn row-button expanding-div", true);
+	var buttons = divs.append("div").classed("btn row-button multi-row-content expanding-div", true);
 	
 	buttons.append("span")
 		.classed("text-muted pull-left", true)
@@ -864,20 +916,13 @@ function refresh_divs(container, data)
 		.data(data)
 		.enter()
 		.append("li")	// So that each button appears on its own row.
-		.each(function(d)
-		{
-			$(this).on("valueDeleted", function(e, newData)
-			{
-				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-			});
-			d.add_target("valueDeleted", this);
-		});
+		.each(setupItemHandlers);
 }
 
 /* Returns the set of objects that contain the description of each data element */
-function layout_objects(cell, container, data, clickFunction)
+function layout_objects(cell, container, clickFunction)
 {
-	var divs = refresh_divs(container, data);
+	var divs = refresh_divs(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs, cell);
@@ -903,7 +948,7 @@ function create_panel(containerPanel, datum, headerText)
 	var rootPanel = d3.select($(containerPanel.node()).parents()[0]);
 	var zindex = parseInt(containerPanel.style("z-index"))+1;
 	var panelDiv = rootPanel
-					.append("div")
+					.append("panel")
 					.classed("configuration-panel site-panel", true)
 					.style("z-index", zindex)
 					.datum(datum)
@@ -1005,7 +1050,6 @@ function create_panel(containerPanel, datum, headerText)
 							$(this).on("dataChanged", function(e) {
 								$(this).css("display", "block");
 							});
-							d3.select(this).append("hr");
 						}
 					});
 		}
@@ -1194,9 +1238,9 @@ function show_edit_object_panel(objectData, containerCell, containerUUID, contai
 						successFunction();
 					}
 				}
-				else if (containerUUID != null)
+				else if (containerCell.parent != null && containerCell.parent.getValueID())
 				{
-					submit_create_instance(objectData, containerCell, containerUUID, sections, successFunction);
+					submit_create_instance(objectData, containerCell, containerCell.parent.getValueID(), sections, successFunction);
 					/* Add this item to the contained object. */
 				}
 				else
@@ -1321,12 +1365,16 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 		panel2Div.appendHeader();
 		panel2Div.appendAlertContainer();
 		
-		var sections = panel2Div.selectAll("li")
+		var itemsDiv = panel2Div.append("div")
+			.classed("border-above", true);
+		
+		var sections = itemsDiv.selectAll("li")
 					.data(rootObjects)
 					.enter()
 					.append("li")
+					.classed("border-below", true);
 	
-		var buttons = appendButtons(sections)
+		var buttons = appendViewButtons(sections)
 			.on("click", function(d) {
 				var successFunction = function()
 				{
@@ -1361,7 +1409,6 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 			});
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
 			function(d) { return d.getDescription() == oldData.getDescription(); });
-		sections.append("hr");
 	
 		window.scrollTo(0, 0);
 		show_panel_left(panelDiv.node());

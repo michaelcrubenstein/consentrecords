@@ -11,7 +11,7 @@ body {
 	overflow-y: hidden;
 }
 
-#id_panel1 {
+.base-panel {
 	width: 100%;
 	height: 100%;
 	max-height: 100%;
@@ -51,6 +51,10 @@ body {
 	font-size: x-large;
 	font-weight: 600;
 }
+.row-button-group {
+	margin-top: 12px;
+	border-bottom: 1px solid #eee;
+}
 .row-button {
 	position: relative;
 	font-size: medium;	/* To override the smaller button. */
@@ -61,6 +65,19 @@ body {
 }
 .row-button:hover {
 	background: #f8f8f8;
+	opacity: 1.0;
+}
+.unique-row-button {
+	padding: 0px 12px;		/* To override btn style. */
+}
+.multi-row-content {
+	padding: 6px 12px;
+}
+.border-above {
+	border-top: 1px solid #eee;
+}
+.border-below {
+	border-bottom: 1px solid #eee;
 }
 .list-div {
 	display: inline-block;
@@ -70,10 +87,6 @@ body {
 	white-space: nowrap;
 	vertical-align: middle;
 	width: 100%;
-}
-hr {
-	margin-top: 0px;
-	margin-bottom: 0px;
 }
 .cell-div {
 	width: 100%;
@@ -102,7 +115,8 @@ hr {
 	text-align: right
 }
 .string-input-container {
-	width: 100%;
+	overflow: hidden;	/* This causes the input container to expand.
+	width: auto;
 	padding: 3px;	/* For the highlight box of the input. */
 }
 .string-multi-value-container {
@@ -203,6 +217,7 @@ hr {
 	background: transparent;
 	background-color: transparent;
 	padding: 0px;
+	padding-top: 1px;	/* A hack for Safari icon */
 }
 .glyphicon-minus-sign:focus {
 	outline: none;

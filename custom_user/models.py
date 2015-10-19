@@ -93,8 +93,8 @@ class PasswordReset(models.Model):
             return "This email address is no longer valid."
 
     def createPasswordReset(email):
-        PasswordReset.objects.create(email=email)
-        return newKey
+        pr = PasswordReset.objects.create(email=email)
+        return pr.id.hex
         
     def updatePassword(self, email, password):
         if self.email != email:

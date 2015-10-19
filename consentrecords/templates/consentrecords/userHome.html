@@ -14,6 +14,9 @@
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
     
+    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
+
     <style>
     	.consent-record {
     		margin-top: 3px;
@@ -25,21 +28,12 @@
     	.button-section {
     		float: bottom;
     	}
-    	.button-group {
-    		padding-top: 12px;
-    	}
     	.organization-section {
-    		padding-top: 12px;
+    		display: none;
     	}
-    	.settings-section {
-    		padding-top: 12px;
-    	}
-    	.hidden-panel {
+    	.level-2-panel {
     		top: 0;
     		z-index: 2;
-    	}
-    	nav {
-    		opacity: 0.8;
     	}
     	.level-3-panel {
     		top: 0;
@@ -48,6 +42,9 @@
     	.level-4-panel {
     		top: 0;
     		z-index: 4;
+    	}
+    	nav {
+    		opacity: 0.8;
     	}
     	.sub-text {
     		font-size: smaller;
@@ -72,6 +69,9 @@
     		background: white;
     		opacity: 0.6;
 	   	}
+		.background-gradient-panel .row-button:hover {
+			opacity: 0.8;
+		}
 	   	.panel-input-container {
 	   		margin-top: 9px;
 	   		padding-top: 3px;
@@ -82,73 +82,194 @@
 	   	.panel-input {
 	   		width: 100%;
 	   	}
+    	.sign-in-button {
+    	    padding-top: 6px;
+    	    padding-right: 15px;
+    	}
+    	.option-label {
+    		margin-top: 15px;
+    		margin-left: 15px;
+    	}
+    	.option-item {
+    		margin-top: 15px;
+    		margin-left: 45px;
+    	}
     </style>
 	</head>
 	
   	<body class="site-body">
-  		<panel class="background-gradient-panel" >
+  		<panel id="id_user_home_panel" class="base-panel site-panel background-gradient-panel" >
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<div class="pull-right">
-						<div class="sign-out-button site-trio-clipped site-active-text site-navbar-link site-active-text">
-							<span>Sign&nbsp;Out</span>
+						<div class="sign-in-button site-trio-clipped site-active-text site-navbar-link site-active-text">
+							<span id="sign-in-span">Sign&nbsp;In</span>
 						</div>
 					</div>
 				</div>
 			</nav>
-			<h3> Hello, {% if user.is_authenticated %}{{ user.get_full_name }}{% else %}world{% endif %}. </h3>
-			<div id="myAlert" class="alert-container"></div>
+			<h3 class="username-label left-label-div"> </h3>
+			<div class="alert-container"></div>
 			<section class="button-section">
-				<hr>
-				<button id="id_find_experience_button" panelID = "id_find_experience_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Find a New Experience</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
-				<button id="id_your_pathway_button" panelID = "id_your_pathway_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Your Pathway</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
-				<button id="id_your_plans_button" panelID = "id_your_plans_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Your Plans</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
-				<button id="id_consent_forms_button" panelID = "id_consent_forms_panel"
-					class="btn row-button site-active-text show-panel-button">
-					<span class="pull-left">Consent Forms</span>
-					<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
-				</button>
-				<hr>
-				<section class="organization-section button-group">
+				<section class="row-button-group">
+					<button panelID = "id_find_experience_panel"
+						class="btn row-button site-active-text find_experience_button show-panel-button">
+						<span class="pull-left">Find a New Experience</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
+					<button panelID = "id_your_pathway_panel"
+						class="btn row-button site-active-text show-panel-button">
+						<span class="pull-left">My Pathway</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
+					<button panelID = "id_your_plans_panel"
+						class="btn row-button site-active-text show-panel-button">
+						<span class="pull-left">My Plans</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
+					<button panelID = "id_consent_forms_panel"
+						class="btn row-button site-active-text show-panel-button">
+						<span class="pull-left">Consent Forms</span>
+						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+					</button>
 				</section>
-				<section class="button-group">
-					<hr>
-					<button id="id_sharing_button" panelID = "id_sharing_panel"
+				<section class="organization-section row-button-group">
+				</section>
+				<section class="row-button-group">
+					<button panelID = "id_sharing_panel"
 						class="btn row-button site-active-text show-panel-button">
 						<span class="pull-left">Sharing</span>
 						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
 					</button>
-					<hr>
-					<button id="id_settings_button" panelID = "id_settings_panel"
+					<button panelID = "id_settings_panel"
 						class="btn row-button site-active-text show-panel-button">
 						<span class="pull-left">Settings</span>
 						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
 					</button>
-					<hr>
 				</section>
 			</section>
 		</panel>
-	    <panel id="id_find_experience_panel" class="hidden-panel configuration-panel site-panel list-panel">
+		
+		<panel id="id_sign_in_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
+		  <form class="form-simple form-signin">
+			<div class="site-title">Sign In to Consent Records</div>
+			<div class="alert-container"></div>
+			<label for="id_username" class="sr-only">Email address</label>
+			<input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
+			<label for="id_password" class="sr-only">Password</label>
+			<input type="password" id="id_password" name="password" class="form-control" placeholder="Password" required>
+			<div class="checkbox">
+			  <label>
+				<input id="id_rememberme" type="checkbox" value="remember-me"> Remember me
+			  </label>
+			</div>
+			<div class="site-trio-container">
+				<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+				<div class="site-trio-fill"></div>
+				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
+			</div>
+		  </form>
+	  
+		  <hr />
+
+		  <div class="div-create-new-account">
+			Don't have an account? <a id="id_signup_link" class="site-active-text">Create one now.</a>
+		  </div>
+		  <div class="div-forgot-password">
+			Forgot your password? <a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
+		  </div>
+		</panel> <!-- /container -->
+		
+		<panel id="id_sign_up_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
+			<form class="form-simple">
+				<div class="site-title">Sign Up for Consent Records</div>
+				<div class="row">
+					<div class="alert-container" class="col-xs-12"></div>
+				</div>
+				<div class="row">
+					<div class="form-group col-xs-12">
+						<label for="id_username" class="control-label sr-only">Email Address</label> 
+						<input id="id_username" class="form-control" maxlength="254" name="username" 
+							   type="email" placeholder="Email address"/>
+					</div>
+					<div class="form-group col-xs-12">
+						<label for="id_password"  class="control-label sr-only">Password</label> 
+						<input id="id_password" class="form-control password-control" name="password" type="password" placeholder="Password" />
+					</div>
+					<div id="id_confirm_form_group" class="form-group col-xs-12 has-feedback">
+						<label for="id_confirmpassword"  class="control-label sr-only">Confirm Password</label> 
+						<input id="id_confirmpassword" class="form-control password-control" name="confirmpassword" type="password" placeholder="Confirm password" />
+						<span id="id_passwordOK" class="glyphicon form-control-feedback"></span>
+					</div>
+					<div class="form-group col-xs-12">
+
+						<!-- maxLength of firstname is the same as in the custom_user.AUser.firstName field --!>
+						<label for="id_firstname"  class="control-label sr-only">First Name</label> 
+						<input id="id_firstname" class="form-control" maxlength="30" name="firstName" type="text" placeholder="First name" required/>
+					</div>
+					<div class="form-group col-xs-12">
+						<!-- maxLength of lastname is the same as in the custom_user.AUser.lastName field --!>
+						<label for="id_lastname"  class="control-label sr-only">Last Name</label> 
+						<input id="id_lastname" class="form-control" maxlength="50" name="lastName" type="text" placeholder="Last name" required />
+					</div>
+				</div>
+				<div class="site-trio-container">
+					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+					<div class="site-trio-fill"></div>
+					<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;Up</span>
+				</div>
+			</form>
+		
+			<hr />
+			<div class="row">
+				<a id="id_termsOfUseLink" class="btn btn-link btn-xs col-xs-12">Terms Of Use</a>
+			</div>
+			<div class="row">
+				<div id="id_termsAlert" class="col-xs-12">				
+				</div>
+			</div>
+		</panel>
+
+		<panel id="id_forgot_password_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
+			<form class="form-simple">
+				<div class="site-title">Forgot your Password?</div>
+				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
+
+				<div class="row">
+					<div class="alert-container col-xs-12"></div>
+				</div>
+
+			  <div class="row">
+					<style>
+						.feedback-control {
+							width: calc(100% - 30px);
+						}
+					</style>
+					<div class="col-xs-12">
+						<div id="id_email_group" class="form-group has-feedback">
+							<label for="id_email"  class="control-label sr-only">Email Address</label>
+							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
+							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
+						</div>
+					</div> 
+			  </div>
+				<div class="form-group site-trio-container">
+					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+					<div class="site-trio-fill"></div>
+					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
+				</div>
+				<div class="row">
+					<div id="id_alert_success" class="col-xs-12 div-success"></div>
+				</div>
+			</form>
+		</panel>
+
+	    <panel id="id_find_experience_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -175,7 +296,7 @@
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -202,7 +323,7 @@
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="site-navbar-commands">
 						<div class="site-title site-fill"><span class="site-inner-fill">Sign-Up</span></div>
@@ -217,14 +338,14 @@
 				</div>
 				<div id="id_action_container">
 				</div>
-			</div> <!-- /container-fluid -->
+			</div>
 	    </panel>
-	    <panel id="id_your_pathway_panel" class="hidden-panel configuration-panel site-panel list-panel">
+	    <panel id="id_your_pathway_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -232,7 +353,7 @@
 						</div>
 					</div>
 					<div class="site-navbar-commands">
-						<div class="site-title site-fill"><span class="site-inner-fill">Your Pathway</span></div>
+						<div class="site-title site-fill"><span class="site-inner-fill">My Pathway</span></div>
 					</div>
 				</div>
 			</nav>
@@ -244,12 +365,12 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_your_plans_panel" class="hidden-panel configuration-panel site-panel list-panel">
+	    <panel id="id_your_plans_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -257,7 +378,7 @@
 						</div>
 					</div>
 					<div class="site-navbar-commands">
-						<div class="site-title site-fill"><span class="site-inner-fill">Your Plans</span></div>
+						<div class="site-title site-fill"><span class="site-inner-fill">My Plans</span></div>
 					</div>
 				</div>
 			</nav>
@@ -271,12 +392,12 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_consent_forms_panel" class="hidden-panel configuration-panel site-panel list-panel">
+	    <panel id="id_consent_forms_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="site-navbar-commands">
 						<div class="site-title site-fill"><span class="site-inner-fill">Consent Forms</span></div>
@@ -302,12 +423,12 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_sharing_panel" class="hidden-panel configuration-panel site-panel list-panel">
+	    <panel id="id_sharing_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -329,12 +450,12 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_settings_panel" class="hidden-panel configuration-panel site-panel list-panel">
+	    <panel id="id_settings_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button cancel-button site-navbar-link site-active-text">Done</div>
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
 					<div class="pull-right">
 						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
@@ -383,36 +504,68 @@
 				/* Don't unblock here, because there was no block. */
 			}
 			
+		userInstance = new cr.ObjectValue()
+		userInstance.value.id = "{{userID}}"
+		userInstance.value.description = "{{ user.get_full_name }}"
+		
+		function showCurrentUser()
+		{
+			if (userInstance.getValueID())
+			{
+				$(".username-label").text(userInstance.getDescription());
+				load_organizations();
+				$("#sign-in-span").text("Sign Out");
+			}
+			else
+			{
+				$(".username-label").text("");
+				hide_organizations();
+				$("#sign-in-span").text("Sign In");
+			}
+		}
+		showCurrentUser();
 
 		$(document).ready (function(e) {
-			$(".sign-out-button").click(function(e) {
-				closealert();
-				sign_out();
-				
-			   //stop form submission
-			   e.preventDefault();
+			$(".sign-in-button").click(function(e) {
+				if (prepare_click())
+				{
+					if (userInstance.getValueID())
+					{
+						var successFunction = function()
+						{
+							userInstance.value = {id: "", description: ""};
+							showCurrentUser();
+							unblock_click();
+						};
+						
+						sign_out(successFunction, standard_json_fail_function);
+					}
+					else
+					{
+						showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_in_panel");
+					}
+				}
+				e.preventDefault();
 			});
-			
-			userInstance = new cr.ObjectValue()
-			userInstance.value.id = "{{userID}}"
-			userInstance.description = "{{ user.get_full_name }}"
-			
-			$(".show-panel-button").click(show_find_experience_panel);
+
+			$(".show-panel-button").click(showPanel);
 			$(".done-button").click(hide_site_panel);
 			
 			$("#id_find_experience_panel").on("revealing", function(e, eventInfo)
 				{
 					show_services("#id_services");
 				});
+				
 			setup_search_bar("#id_find_experience_panel .panel-scrolling .searchbar",
-				get_filter("#id_services"));
+				getFilter("#id_services"));
+				
 			$("#id_find_offering_panel").on("revealing", function(e, eventInfo)
 				{
 					datum = d3.select(this).datum();
 					show_offerings(datum, "#id_offerings");
 				});
 			setup_search_bar("#id_find_offering_panel .panel-scrolling .searchbar",
-				get_filter("#id_offerings"));
+				getFilter("#id_offerings"));
 				
 			$("#id_your_pathway_panel").on("revealing", function(e, eventInfo)
 			{
@@ -425,13 +578,349 @@
 			$("#id_consent_forms_panel").on("revealing", function(e, eventInfo)
 				{
 					show_consent_records("#id_openConsentForms");
-				});
+				});	
+			
+			var signInSuccess = function(userData)
+			{
+				userInstance.value = userData;
+				showCurrentUser();
+				hide_panel_right($("#id_sign_in_panel")[0], false)
+			}
 				
-			load_organizations();
-						
+			/* Items for the sign-in panel. */
+			$("#id_sign_in_panel .submit-button").click(function(e) {
+				if (prepare_click())
+				{
+					signIn.submit(signInSuccess, standard_json_fail_function);
+				}
+				
+			   //stop form submission
+			   e.preventDefault();
+			});
+			
+			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
+				if (e.which == 13)
+				{
+					if (prepare_click())
+					{
+						signIn.submit(signInSuccess, standard_json_fail_function);
+					}
+					e.preventDefault();
+				}
+			});
+	
+			$("#id_sign_in_panel input[type='text']").bind("keyup input paste", signIn.checkenabled);
+			$("#id_sign_in_panel input[type='password']").bind("keyup input paste", signIn.checkenabled);
+
+			$("#id_sign_in_panel").on("revealing", function()
+			{
+				$("#id_sign_in_panel #id_username").val($.cookie("email"));
+				$("#id_sign_in_panel #id_password").val("");
+				if ($("#id_sign_in_panel #id_username").val() !== "")
+				{
+					$("#id_sign_in_panel #id_rememberme").prop("checked", true);
+					$("#id_sign_in_panel #id_password").focus();
+				}
+				else
+					$("#id_sign_in_panel #id_username").focus();
+				
+				signIn.checkenabled();
+			});	
+			
+			$("#id_sign_in_panel #id_signup_link").click(function(e) {
+				if (prepare_click())
+				{
+					showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_up_panel");
+				}
+				e.preventDefault();
+			});
+
+			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
+				if (prepare_click())
+				{
+					showFixedPanel($(this).parents(".site-panel")[0], "#id_forgot_password_panel");
+				}
+				e.preventDefault();
+			});
+
+			var signUpSuccess = function(userData)
+			{
+				userInstance.value = userData;
+				showCurrentUser();
+				$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+				hide_panel_right($("#id_sign_up_panel")[0], false)
+			}
+
+			$("#id_sign_up_panel .submit-button").click(function(e) {
+				if (signUp.canSubmit())
+				{
+					if (prepare_click())
+					{
+						signUp.checkUnusedEmail(
+							function() {
+								signUp.submit(signUpSuccess, standard_json_fail_function);
+							});
+					}
+				}
+
+				e.preventDefault();
+			});
+		
+			$("#id_sign_up_panel #id_termsOfUseLink").click(function(e) {
+				signUp.showTermsOfUse();
+				e.preventDefault();
+			});
+		
+			$("#id_sign_up_panel").on("revealing", function()
+			{
+				$("#id_sign_up_panel #id_username").focus();
+				signUp.checkenabled();
+			});
+			
+			$("#id_sign_up_panel input[type='text']").bind("keyup input paste", signUp.checkenabled);
+			$("#id_sign_up_panel input[type='password']").bind("keyup input paste", signUp.checkenabled);
+
+			$("#id_forgot_password_panel .submit-button").click(function(e) {
+				if (forgotPassword.canSubmit())
+				{
+					if (prepare_click())
+					{
+						var successFunction = function()
+						{
+							$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+							hide_panel_right($("#id_forgot_password_panel")[0], false)
+						}
+						forgotPassword.submit(successFunction, standard_json_fail_function);
+					}
+				}
+			   //stop form submission
+			   e.preventDefault();
+			});
+
+			$("#id_forgot_password_panel #id_email").bind("keyup input paste", forgotPassword.checkenabled);
+			$("#id_forgot_password_panel").on("revealing", function()
+			{
+				$("#id_forgot_password_panel #id_email").val("");
+				$("#id_forgot_password_panel #id_email").focus();
+				forgotPassword.checkenabled();
+			});
 		});
 		
-		function get_filter(node)
+		signUp = {
+			checkenabled: function() {			
+				if ($("#id_sign_up_panel #id_password").val() === "" ||
+					$("#id_sign_up_panel #id_confirmpassword").val() !== $("#id_sign_up_panel #id_password").val())
+				{
+					$( "#id_sign_up_panel #id_confirm_form_group" ).removeClass( "has-success");
+					$( "#id_sign_up_panel #id_passwordOK" ).removeClass( "glyphicon-ok" );
+				}
+				else
+				{
+					$( "#id_sign_up_panel #id_confirm_form_group" ).addClass( "has-success");
+					$( "#id_sign_up_panel #id_passwordOK" ).addClass( "glyphicon-ok" );
+				}
+			},
+			
+			canSubmit: function ()
+			{
+				if ($("#id_sign_up_panel #id_username").val() === "") {
+					bootstrap_alert.warning("An email address is required.", ".alert-container");
+					$("#id_sign_up_panel #id_username").focus();
+				}
+				else if ($("#id_sign_up_panel #id_password").val() === "") {
+					bootstrap_alert.warning("A password is required.", ".alert-container");
+					$("#id_sign_up_panel #id_password").focus();
+				}
+				else if ($("#id_sign_up_panel #id_confirmpassword").val() != $("#id_sign_up_panel #id_password").val()) {
+					bootstrap_alert.warning("Your password is not confirmed.", ".alert-container");
+					$("#id_sign_up_panel #id_confirmpassword").focus();
+				}
+				else if ($("#id_sign_up_panel #id_firstname").val() === "") {
+					bootstrap_alert.warning("A first name is required.", ".alert-container");
+					$("#id_sign_up_panel #id_firstname").focus();
+				}
+				else if ($("#id_sign_up_panel #id_lastname").val() === "") {
+					bootstrap_alert.warning("A last name is required.", ".alert-container");
+					$("#id_sign_up_panel #id_lastname").focus();
+				}
+				else
+					return true;	/* Everything is OK */
+				
+				return false;
+			},
+		
+			showTermsOfUse: function() {
+				var message = "<p>Information in this system will only be used according to your consent except " +
+					" as required by law. By signing up for this system, you consent to allow this system to store" +
+					" the information you have entered.</p>" + 
+					"<p>In keeping with best security practices, passwords are not stored in this system.</p>" + 
+					"<p>These terms of use have not been subject to any revision based on" +  
+						" review by a lawyer." + 
+					"</p>";
+				$("#id_sign_up_panel #id_termsAlert").html('<div class="alert alert-info alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
+			},
+			
+			checkUnusedEmail: function(successFunction, failFunction) {
+				bootstrap_alert.show($('.alert-container'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
+		
+				deferredObject = $.post("{% url 'checkUnusedEmail' %}", 
+					{ csrfmiddlewaretoken: storedcsrftoken, 
+					  email: $("#id_username").val(),
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json.success) {
+							closealert();
+							if (successFunction)
+								successFunction();
+						}
+						else {
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown) {
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					});
+			},
+			
+			submit: function(successFunction, failFunction)
+			{
+				bootstrap_alert.show($('alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		
+				deferredObject = $.post("{% url 'submitNewUser' %}", 
+					{ csrfmiddlewaretoken: storedcsrftoken, 
+						username: $("#id_sign_up_panel #id_username").val(),
+						password: $("#id_sign_up_panel #id_password").val(),
+						firstName: $("#id_sign_up_panel #id_firstname").val(),
+						lastName: $("#id_sign_up_panel #id_lastname").val(),
+		  				timezoneoffset : new Date().getTimezoneOffset()
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json['success']) {
+							/* A successful sign-up updates the storedcsrftoken */
+							storedcsrftoken = $.cookie("csrftoken");
+							
+							successFunction(json.user);
+						}
+						else {
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown) {
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				  });
+			},
+		}
+		
+		signIn = {
+			canSubmit: function() {
+			return $("#id_sign_in_panel #id_password").val() !== "" &&
+				$("#id_sign_in_panel #id_username").val() !== "";
+			},
+		
+			checkenabled: function() {			
+				if (!signIn.canSubmit())
+				{
+					$("#id_sign_in_panel .submit-button").addClass("site-disabled-text");
+					$("#id_sign_in_panel .submit-button").removeClass("site-active-text");
+				}
+				else
+				{
+					$("#id_sign_in_panel .submit-button").removeClass("site-disabled-text");
+					$("#id_sign_in_panel .submit-button").addClass("site-active-text");
+				}
+			},
+		
+			submit: function(successFunction, failFunction) {
+				if (!signIn.canSubmit())
+					return;
+				
+				bootstrap_alert.show($('.alert_container'), "Signing In...", "alert-info");
+				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
+											  username : $("#id_username").val(),
+											  password : $("#id_password").val(),
+											  timezoneoffset : new Date().getTimezoneOffset() }, 
+											function(json){
+				if (json.success) {
+					/* A successful sign-in updates the storedcsrftoken */
+					storedcsrftoken = $.cookie("csrftoken");
+					
+					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
+						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
+					else
+						$.removeCookie("email");
+						
+					$("#id_sign_in_panel #id_username").val("")
+					$("#id_sign_in_panel #id_password").val("")
+						
+					$.cookie("authenticator", "email", { path: "/"});
+					if (successFunction)
+					{
+						successFunction(json.user);
+					}
+				}
+				else
+					failFunction(json.error);
+			  })
+				.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				});
+			}
+		};
+
+		forgotPassword = {
+			canSubmit: function() {
+				testusername = $("#id_email").val();
+				return validateEmail(testusername);
+			},
+		
+			checkenabled: function() {			
+				if (!forgotPassword.canSubmit())
+				{
+					$(".submit-button").addClass("site-disabled-text")
+									   .removeClass("site-active-text")
+									   .prop( "disabled", true );
+					$( "#id_email_group" ).removeClass( "has-success");
+					$( "#id_emailOK" ).removeClass( "glyphicon-ok" );
+				}
+				else
+				{
+					$(".submit-button").removeClass("site-disabled-text")
+									   .addClass("site-active-text")
+									   .prop( "disabled", false );
+					$( "#id_email_group" ).addClass( "has-success");
+					$( "#id_emailOK" ).addClass( "glyphicon-ok" );
+				}
+			},
+			
+			submit: function(successFunction, failFunction) {
+				bootstrap_alert.success('Sending email (this may take a few minutes)...', '#id_alert_success');
+				
+				deferredObject = $.post("{% url 'resetPassword' %}", 
+					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
+						"email": $("#id_email").val()
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						closealert();
+						if (json.success) {
+							bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
+							successFunction();
+						}
+						else {
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown) {
+				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				  });
+			},
+			
+		};
+				
+		function getFilter(node)
 		{
 			return function()
 			{
@@ -456,26 +945,34 @@
 				}
 			}
 		}
+		
+		function showFixedPanel(containerPanel, newNode)
+		{
+			var zIndex = parseInt($(containerPanel).css("z-index"))+1;
+			var panel = d3.select(newNode);
+			panel.style("z-index", zIndex);
 			
-		function sign_out() {
+			window.scrollTo(0, 0);
+			show_panel_left(panel.node());
+		}
+			
+		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: storedcsrftoken }, 
 		  								function(json){
 		  	if (json['success']) {
-		  		window.location = "{{backURL}}"
+		  		successFunction();
 		  	}
 		  	else
-				bootstrap_alert.warning(json['error']);
+		  		failFunction(json.error);
 		  })
 		  	.fail(function(jqXHR, textStatus, errorThrown)
 			{
-				bootstrap_alert.warning(jqXHR.status + "; " + jqXHR.statusText);
-				console.log( "error: " + textStatus + "; " + errorThrown + ";");
-				console.log( jqXHR.status + "; " + jqXHR.statusText);
+				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 			});
 		}
 		
-		function show_find_experience_panel(e)
+		function showPanel(e)
 		{
 			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
 			if (prepare_click())
@@ -512,7 +1009,7 @@
 					});
 			}
 			
-			var path = "#" + "{{userID}}" + '>"Consent Record"';
+			var path = "#" + userInstance.getValueID() + '>"Consent Record"';
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
@@ -530,8 +1027,11 @@
 					{
 						return a.getDescription().localeCompare(b.getDescription());
 					});
+					
+				for (var i = 0; i < newInstances.length; i++)
+					cell.pushValue(newInstances[i]);
 				
-				layout_objects(cell, d3.select("#id_services"), newInstances,
+				layout_objects(cell, d3.select("#id_services"),
 					function(d) {
 						if (prepare_click())
 						{
@@ -616,7 +1116,7 @@
 					});
 			}
 			
-			var path = "#" + "{{userID}}" + '::reference(Experience)';
+			var path = "#" + userInstance.getValueID() + '::reference(Experience)';
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
@@ -634,7 +1134,6 @@
 	
 				var buttons = divs.append("button").classed("btn row-button", true)
 					.on("click", show_offering_details);
-				divs.append("hr");
 	
 				buttons.append("span")
 					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
@@ -802,7 +1301,8 @@
 				var divs = d3.select(containerDiv).selectAll('div')
 					.data(newInstances)
 					.enter()
-					.append('div').classed("consent-record cell-div", true);
+					.append('div').classed("consent-record cell-div cell-label-div", true);
+					/* Add cell-label-div to match the vertical padding of right-label-div */
 				
 				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div", true)
 					.text(function(d) {
@@ -824,8 +1324,15 @@
 					});
 			}
 			
-			var path = "#{{userID}}::reference(Enrollment)::reference(Offering)";
+			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Offering)";
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
+		}
+		
+		function hide_organizations()
+		{
+			var orgSection = d3.select(".organization-section");
+			orgSection.style("display", "none");
+			orgSection.selectAll("div").remove();
 		}
 		
 		function load_organizations()
@@ -839,10 +1346,10 @@
 							  };
 				cell.setup(null);
 				
-				if (newInstances.length > 0)
-					d3.select(".organization-section").append("hr");
+				var orgSection = d3.select(".organization-section");
+				orgSection.style("display", newInstances.length > 0 ? "block" : "none");
 				
-				var divs = d3.select(".organization-section").selectAll("div")
+				var divs = orgSection.selectAll("div")
 					.data(newInstances)
 					.enter()
 					.append("div");
@@ -863,11 +1370,9 @@
 						show_organization_panel(d, cell, null, d3.select("body>panel"));
 					}
 				});
-					
-				divs.append("hr");
 			}
 			
-			var path = '#{{userID}}::reference("Employee")::reference("Employees")::reference("Organization")';
+			var path = '#'+userInstance.getValueID()+'::reference(Employee)::reference(Employees)::reference(Organization)';
 			cr.getValues(path, successFunction, asyncFailFunction);
 		}
 		
@@ -888,8 +1393,6 @@
 					b.append("span")
 						.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
 					b.on("click", clickFunction);
-					
-					sectionObj.append("hr");
 				}
 				
 				var panelDiv = create_panel(containerPanel, 
@@ -916,10 +1419,8 @@
 				show_panel_left(panelDiv.node());
 
 				var sectionObj = panel2Div.append("section")
-					.classed("button-group", true);
+					.classed("row-button-group", true);
 					
-				sectionObj.append("hr");
-				
 				addButton(sectionObj, "Record an Inquiry",
 					function(d)
 					{
@@ -939,10 +1440,8 @@
 					});
 					
 				sectionObj = panel2Div.append("section")
-					.classed("button-group", true);
+					.classed("row-button-group", true);
 					
-				sectionObj.append("hr");
-				
 				addButton(sectionObj, "Enroll an Inquiry",
 					function(d)
 					{
@@ -971,10 +1470,8 @@
 					});
 					
 				sectionObj = panel2Div.append("section")
-					.classed("button-group", true);
+					.classed("row-button-group", true);
 					
-				sectionObj.append("hr");
-				
 				addButton(sectionObj, "Record Participation",
 					function(d)
 					{
@@ -992,9 +1489,6 @@
 							manage_participation(d, panelDiv);
 						}
 					});
-					
-					
-				sectionObj.append("hr");
 			}
 	
 			objectData.checkCells(containerCell, successFunction, asyncFailFunction)
@@ -1029,7 +1523,7 @@
 		
 				var sections = panel2Div.appendSections(rootObjects);
 	
-				var buttons = appendButtons(sections)
+				var buttons = appendViewButtons(sections)
 					.on("click", function(d) {
 						if (prepare_click())
 						{
@@ -1037,7 +1531,6 @@
 						}
 						d3.event.preventDefault();
 					});
-				sections.append("hr");
 	
 				window.scrollTo(0, 0);
 				show_panel_left(panelDiv.node());
@@ -1073,7 +1566,7 @@
 
 								var backButton = navContainer.appendLeftButton()
 									.on("click", handle_close_right_event);
-								backButton.append("span").text("Cancel");
+								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 								
 								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
@@ -1086,7 +1579,7 @@
 								
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
-								var buttons = appendButtons(sections)
+								var buttons = appendViewButtons(sections)
 									.on("click", function(inquiry)
 									{
 										if (prepare_click())
@@ -1148,7 +1641,7 @@
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handle_close_right_event);
-			backButton.append("span").text("Cancel");
+			backButton.append("span").text("Done");
 	
 			var centerButton = navContainer.appendTitle("Pick User");
 
@@ -1192,7 +1685,7 @@
 						{
 							panel2Div.selectAll("section").remove();
 							var sections = panel2Div.appendSections(userObjects);
-							var buttons = appendButtons(sections)
+							var buttons = appendViewButtons(sections)
 								.on("click", function(user) {
 									pickedUser = user;
 									if (prepare_click())
@@ -1485,7 +1978,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						show_edit_object_panel(listInstances, listCell, undefined, pickOfferingDiv);
+						show_edit_object_panel(instance, listCell, undefined, pickOfferingDiv);
 					}
 				}
 				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
