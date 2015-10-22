@@ -1087,7 +1087,23 @@
 			else
 				return undefined;
 		}
-		
+
+		function getDateRange(d)
+		{
+			var startDate = get_datum_by_name(d, "Start Date");
+			if (startDate === undefined || startDate === null)
+				startDate = "";
+			var endDate = get_datum_by_name(d, "End Date");
+			if (endDate === undefined || endDate === null)
+				endDate = "";
+			var connector;
+			if (startDate || endDate)
+				connector = " - ";
+			else
+				connector = "";
+			return startDate + connector + endDate;
+		}
+				
 		function show_pathway(containerDiv) {
 			var successFunction = function(newInstances)
 			{
@@ -1100,19 +1116,7 @@
 				divs.classed("consent-record cell-div", true);
 				
 				divs.append('div').classed("right-label-div right-fixed-width-div right-label-div", true)
-					.text(function(d) {
-						startDate = get_datum_by_name(d, "Start Date");
-						if (startDate === undefined || startDate === null)
-							startDate = "";
-						endDate = get_datum_by_name(d, "End Date");
-						if (endDate === undefined || endDate === null)
-							endDate = "";
-						if (startDate || endDate)
-							connector = " - ";
-						else
-							connector = "";
-						return startDate + connector + endDate;
-					});
+					.text(getDateRange);
 				var titleDivs = divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true);
 				titleDivs.append("div")
 					.text(function(d) { 
@@ -1152,20 +1156,7 @@
 				var rightText = buttons.append('span').classed("centered-right-2", true);
 				
 				rightText.append('div')
-					.text(function(d) {
-						var startDate = get_datum_by_name(d, "Start Date");
-						if (startDate === undefined)
-							startDate = "";
-						var endDate = get_datum_by_name(d, "End Date");
-						if (endDate === undefined)
-							endDate = "";
-						var connector;
-						if (startDate || endDate)
-							connector = " - ";
-						else
-							connector = "";
-						return startDate + connector + endDate;
-					});
+					.text(getDateRange);
 				rightText.append('div').classed("sub-text", true)
 					.text(function(d) {
 						var registrationDeadline = get_datum_by_name(d, "Registration Deadline");
@@ -1317,19 +1308,7 @@
 					/* Add cell-label-div to match the vertical padding of right-label-div */
 				
 				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div", true)
-					.text(function(d) {
-						startDate = get_datum_by_name(d, "Start Date");
-						if (startDate === undefined)
-							startDate = "";
-						endDate = get_datum_by_name(d, "End Date");
-						if (endDate === undefined)
-							endDate = "";
-						if (startDate || endDate)
-							connector = " - ";
-						else
-							connector = "";
-						return startDate + connector + endDate;
-					});
+					.text(getDateRange);
 				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
 					.text(function(d) { 
 						return get_datum_by_name(d, "_name").description;

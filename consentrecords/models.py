@@ -816,7 +816,11 @@ class LazyValue(LazyObject):
         
     @property
     def isOriginalReference(self):
-        return self.instanceID == LazyInstance(self.stringValue).parentID
+        # If it is not an id, then return false.
+        if not re.search('^[a-fA-F0-9]{32}$', self.stringValue):
+            return False
+        i = LazyInstance(self.stringValue)
+        return self.instanceID == i.parentID
             
         
 class Value(dbmodels.Model):

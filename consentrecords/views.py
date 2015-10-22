@@ -176,7 +176,13 @@ class api:
                 for c in commands:
                     if "id" in c:
                         oldValue = LazyValue(c["id"])
-                        item = oldValue.updateValue(c["value"], transactionState);
+                        if "value" in c:
+                            item = oldValue.updateValue(c["value"], transactionState);
+                        else:
+                            if oldValue.isOriginalReference:
+                                i = LazyInstance(oldValue.stringValue).deepDelete(transactionState)
+                            oldValue.markAsDeleted(transactionState)
+                            item = None
                     elif "containerUUID" in c:
                         container = LazyInstance(c["containerUUID"])
                         fieldID = c["fieldID"]
@@ -189,7 +195,10 @@ class api:
                             newInstance, item = ofKindObject.createInstance(container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
                     else:
                         raise ValueError("subject id was not specified")
-                    ids.append(item.id.hex)
+                    if item:
+                        ids.append(item.id.hex)
+                    else:
+                    	ids.append(None)
             
                 results = {'success':True, 'ids': ids}
             

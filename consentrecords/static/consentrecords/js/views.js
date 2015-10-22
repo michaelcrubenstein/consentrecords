@@ -181,6 +181,13 @@ function push_text_changed(d) {
 	$(this).on("dataChanged", function(e) {
 			d3.select(this).text(d.getDescription());
 		});
+	if (d.cell && d.cell.field.capacity == "_unique value")
+	{
+		d.add_target("value_deleted", this);
+		$(this).on("valueDeleted", function(e) {
+			d3.select(this).text(d.getDescription());
+		});
+	}
 }
 
 getDataValue = function(d) { return d.value; }
@@ -212,7 +219,8 @@ function setupItemHandlers(d)
 {
 	$(this).on("valueDeleted", function(e, newData)
 	{
-		$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+		if (d.cell.field.capacity != "_unique value")
+			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
 	});
 	d.add_target("valueDeleted", this);
 }

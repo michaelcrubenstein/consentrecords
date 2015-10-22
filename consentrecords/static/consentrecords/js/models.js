@@ -25,6 +25,10 @@ var cr = {
 			{
 				return !d.value;
 			},
+			clearValue: function(d)
+			{
+				d.value = null;
+			},
 			setupValue: function(d)
 			{
 				d.getDescription = function() { return this.value; };
@@ -57,6 +61,10 @@ var cr = {
 			isEmpty: function(d)
 			{
 				return !d.value;
+			},
+			clearValue: function(d)
+			{
+				d.value = null;
 			},
 			setupValue: function(d)
 			{
@@ -91,6 +99,10 @@ var cr = {
 			{
 				return !d.value;
 			},
+			clearValue: function(d)
+			{
+				d.value = {id: null, description: "None" };
+			},
 			setupValue: function(d)
 			{
 				d.getDescription = function() { return this.value; };
@@ -123,6 +135,10 @@ var cr = {
 			isEmpty: function(d)
 			{
 				return !d.value.id && !d.value.cells;
+			},
+			clearValue: function(d)
+			{
+				d.value = null;
 			},
 			setupValue: function(d)
 			{
@@ -433,8 +449,16 @@ var cr = {
 					{
 						d = sourceObjects[i];
 						newID = json.ids[i];
-						d.id = newID;
-						d.trigger_event("dataChanged");
+						if (newID)
+						{
+							d.id = newID;
+							d.trigger_event("dataChanged");
+						}
+						else
+						{
+							var cell = d.cell;
+							cell.deleteValue(d);
+						}
 					}
 					if (successFunction)
 						successFunction();
@@ -593,7 +617,7 @@ cr.Cell.prototype.setup = function (objectData)
 	/* If this is a unique value and there is no value, set up an unspecified one. */
 	if (this.data.length == 0 &&
 		this.field.capacity == "_unique value") {
-		this.data = [cr.dataTypes[this.field.dataType].newValue()];
+		this.pushValue(cr.dataTypes[this.field.dataType].newValue());
 	}
 };
 
@@ -648,8 +672,16 @@ cr.Cell.prototype.deleteValue = function(oldData)
 			  }
 		  }
 	  }
-  	remove(this.data, oldData);
-  	oldData.cell = undefined;
+	if (this.field.capacity == "_unique value")
+	{
+		oldData.id = null;
+		cr.dataTypes[this.field.dataType].clearValue(oldData);
+	}
+	else
+	{
+		remove(this.data, oldData);
+		oldData.cell = undefined;
+  	}
   	oldData.trigger_event("valueDeleted");
   	this.trigger_event("valueDeleted", [oldData]);
 }
