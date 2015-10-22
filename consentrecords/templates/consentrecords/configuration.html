@@ -75,6 +75,7 @@
 	<script src="{% static "d3/d3.v3.min.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
+	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
 	<!-- Scripts for this web page -->
@@ -91,6 +92,18 @@
 							 d["_data"] has the data for the instance of this field.
 		 */
 		 
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", storedcsrftoken);
+				}
+			}
+		});
+
 		$(document).ready (function(e) {
 			$("#id_cancelButton").click(function(e) {
 				window.location = "{{ backURL }}";

@@ -1,0 +1,91 @@
+	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
+	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
+	<script src="{% static "d3/d3.v3.min.js" %}"></script>
+	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
+	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="{% static "consentrecords/js/models.js" %}"></script>
+	<script src="{% static "consentrecords/js/views.js" %}"></script>
+
+	<script type="text/JavaScript">
+
+		var accessToken = "{% if access_token %}{{access_token}}{% endif %}";
+		var refresh_token = "{% if refresh_token %}{{refresh_token}}{% endif %}";
+		var expires_in = {% if expires_in %}parseInt({{expires_in}}){% else %}0{% endif %};
+		var token_type = "{% if token_type %}{{token_type}}{% endif %}";
+
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (token_type && accessToken)
+					xhr.setRequestHeader("Authorization", token_type + " " + accessToken);
+			}
+		});
+
+		var asyncFailFunction = function(error)
+			{
+				bootstrap_alert.warning(error, ".alert-container");
+				/* Don't unblock here, because there was no block. */
+			}
+			
+		function showCurrentUser()
+		{
+			if (userInstance.getValueID())
+			{
+				$(".username-label").text(userInstance.getDescription());
+				load_organizations();
+				$("#sign-in-span").text("Sign Out");
+			}
+			else
+			{
+				$(".username-label").text("");
+				hide_organizations();
+				$("#sign-in-span").text("Sign In");
+			}
+		}
+
+		if (accessToken)
+		{
+			var successFunction = function(userID)
+			{
+				userInstance.value.id = userID;
+				var successFunction = function(newInstances)
+				{
+					userInstance = newInstances[0];
+					userInstance.calculateDescription();
+					showCurrentUser();
+				}
+				cr.getData("#" + userInstance.getValueID(), [], successFunction, asyncFailFunction);
+			};
+			cr.getUserID(accessToken, successFunction, asyncFailFunction)
+		}
+		
+		$(document).ready (function(e) {
+			$(".sign-in-button").click(function(e) {
+				if (prepare_click())
+				{
+					if (userInstance.getValueID())
+					{
+						var successFunction = function()
+						{
+							userInstance.value = {id: "", description: ""};
+							showCurrentUser();
+							unblock_click();
+						};
+						
+						sign_out(successFunction, standard_json_fail_function);
+					}
+					else
+					{
+						window.location = "/o/authorize/?state=random_state_string&response_type=code&client_id=JYXSrHWpBLvVbiOUmJs98XbYbwiG4YwNyBS30IJQ"
+						//showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_in_panel");
+					}
+				}
+				e.preventDefault();
+			});
+		});
+
+	</script>
+		
+</html>
+

@@ -203,7 +203,7 @@
 					</div>
 					<div class="form-group col-xs-12">
 
-						<!-- maxLength of firstname is the same as in the custom_user.AUser.firstName field --!>
+						<!-- maxLength of firstname is the same as in the custom_user.AUser.firstName field -->
 						<label for="id_firstname"  class="control-label sr-only">First Name</label> 
 						<input id="id_firstname" class="form-control" maxlength="30" name="firstName" type="text" placeholder="First name" required/>
 					</div>
@@ -490,24 +490,35 @@
 	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
+	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		var storedcsrftoken = "{{ csrf_token }}";
-
-		var userInstance;
 		
+		var userInstance = new cr.ObjectValue();
+		userInstance.value.id = "{{userID}}"
+		userInstance.value.description = "{{ user.get_full_name }}"
+		
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", storedcsrftoken);
+				}
+			}
+		});
+
 		var asyncFailFunction = function(error)
 			{
 				bootstrap_alert.warning(error, ".alert-container");
 				/* Don't unblock here, because there was no block. */
 			}
 			
-		userInstance = new cr.ObjectValue()
-		userInstance.value.id = "{{userID}}"
-		userInstance.value.description = "{{ user.get_full_name }}"
-		
 		function showCurrentUser()
 		{
 			if (userInstance.getValueID())
@@ -524,7 +535,7 @@
 			}
 		}
 		showCurrentUser();
-
+		
 		$(document).ready (function(e) {
 			$(".sign-in-button").click(function(e) {
 				if (prepare_click())
@@ -837,11 +848,12 @@
 					return;
 				
 				bootstrap_alert.show($('.alert_container'), "Signing In...", "alert-info");
+				
 				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
 											  username : $("#id_username").val(),
 											  password : $("#id_password").val(),
 											  timezoneoffset : new Date().getTimezoneOffset() }, 
-											function(json){
+					function(json){
 				if (json.success) {
 					/* A successful sign-in updates the storedcsrftoken */
 					storedcsrftoken = $.cookie("csrftoken");
@@ -1783,8 +1795,7 @@
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
 		{
 			initialData = [{field: dataCell.field, data: [{ value: dataValue}]}];
-			cr.createInstance(storedcsrftoken, 
-				instanceCell.field, 
+			cr.createInstance(instanceCell.field, 
 				container.value.id,
 				initialData,
 				successFunction,

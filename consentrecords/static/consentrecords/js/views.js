@@ -440,7 +440,7 @@ function appendConfirmDeleteControls(divs, containerCell)
 				{
 					unblock_click();
 				}
-				cr.deleteValue(storedcsrftoken, d, containerCell, successFunction, failFunction);
+				cr.deleteValue(d, containerCell, successFunction, failFunction);
 			}
 		});
 }
@@ -815,7 +815,7 @@ function submit_create_instance(oldValue, containerCell, containerUUID, sections
 			cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
 		});
 		
-	cr.append(storedcsrftoken, oldValue, containerCell, containerUUID, initialData, onSuccessFunction, standard_json_fail_function)
+	cr.append(oldValue, containerCell, containerUUID, initialData, onSuccessFunction, standard_json_fail_function)
 }
 
 var dataTypeViews = {
@@ -1231,7 +1231,7 @@ function show_edit_object_panel(objectData, containerCell, containerUUID, contai
 							});
 					}
 					if (initialData.length > 0) {
-						cr.updateValues(storedcsrftoken, initialData, sourceObjects, updateValuesFunction, successFunction, standard_json_fail_function);
+						cr.updateValues(initialData, sourceObjects, updateValuesFunction, successFunction, standard_json_fail_function);
 					}
 					else
 					{
@@ -1390,12 +1390,12 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 						}
 						else
 						{
-							cr.updateValue(storedcsrftoken, oldData, d, successFunction, failFunction);
+							cr.updateObjectValue(oldData, d, successFunction, failFunction);
 						}
 					}
 					else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
 					{
-						cr.addObjectValue(storedcsrftoken, cell, containerUUID, d, 
+						cr.addObjectValue(cell, containerUUID, d, 
 							successFunction,
 							failFunction);
 					}

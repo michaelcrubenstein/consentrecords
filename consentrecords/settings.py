@@ -37,20 +37,29 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'oauth2_provider',
+    'corsheaders',
     'consentrecords',
     'custom_user',
     'monitor',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'oauth2_provider.backends.OAuth2Backend',
+)
+
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
 )
 
 ROOT_URLCONF = 'consentrecords.urls'
@@ -98,6 +107,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
@@ -121,3 +132,9 @@ PASSWORD_RESET_SENDER = r'consentrecordsinfo@gmail.com'
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
 
+CR_TOKEN_URL = r'http://localhost:8000/o/token/'
+CR_GETUSERID_URL = r'http://localhost:8000/getuserid'
+CR_REDIRECT_URL = r'http://localhost:8000/'
+CR_REQ_HOST = r'http://localhost:8000/'
+CR_CLIENT_ID = b'JYXSrHWpBLvVbiOUmJs98XbYbwiG4YwNyBS30IJQ'
+CR_SECRET_ID = b'vX9uEtloHxt0c2YeIU1ayQyxBAcvCYzzONr8NIILwssX62HIBof37dTURtPJIEibNQAQqTB3HmZOimQc2b81AlRjeVS1XR7wkPzxtdxv71lG1VTqHtsS49PxXDDeHZvy'

@@ -193,15 +193,20 @@ var cr = {
 	},
 	
 	urls: {
-		selectAll : "/selectall/",
-		getData : "/get/data/",
-		getConfiguration : "/get/configuration/",
-		createInstance : "/createinstance/",
-		addValue : "/addvalue/",
-		updateValues : "/updatevalues/",
-		deleteValue : '/deletevalue/',
-		deleteInstances : '/deleteinstances/',
+		selectAll : "/api/selectall/",
+		getUserID : "/api/getuserid/",
+		getData : "/api/getdata/",
+		getConfiguration : "/api/getconfiguration/",
+		createInstance : "/api/createinstance/",
+		addValue : "/api/addvalue/",
+		updateValues : "/api/updatevalues/",
+		deleteValue : '/api/deletevalue/',
+		deleteInstances : '/api/deleteinstances/',
 	},
+	
+	accessToken: null,
+	refreshToken: null,
+	tokenType: null,
 	
 	appendStringData: function(cell, initialData)
 	{
@@ -257,13 +262,12 @@ var cr = {
 		);
 	},
 	
-	updateValue: function(storedcsrftoken, oldValue, d, successFunction, failFunction)
+	updateObjectValue: function(oldValue, d, successFunction, failFunction)
 	{
 		var initialData = [{id: oldValue.id, value: d.getValueID()}];
 		$.post(cr.urls.updateValues, 
-				{ csrfmiddlewaretoken: storedcsrftoken, 
-					"commands": JSON.stringify(initialData),
-					"timezoneoffset": new Date().getTimezoneOffset()
+				{ commands: JSON.stringify(initialData),
+				  timezoneoffset: new Date().getTimezoneOffset()
 				})
 			  .done(function(json, textStatus, jqXHR)
 				{
@@ -283,11 +287,10 @@ var cr = {
 				);
 	},
 	
-	addObjectValue: function (storedcsrftoken, containerCell, containerUUID, initialData, successFunction, failFunction)
+	addObjectValue: function (containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
 		$.post(cr.urls.addValue, 
-				{ csrfmiddlewaretoken: storedcsrftoken, 
-				  containerUUID: containerUUID,
+				{ containerUUID: containerUUID,
 				  elementUUID: containerCell.field.nameID,
 				  valueUUID: initialData.getValueID(),
 				  timezoneoffset: new Date().getTimezoneOffset()
@@ -314,7 +317,7 @@ var cr = {
 				);
 	},
 	
-	deleteValue: function(storedcsrftoken, oldValue, containerCell, successFunction, failFunction)
+	deleteValue: function(oldValue, containerCell, successFunction, failFunction)
 	{
 		if (oldValue.id == null)	/* It was never saved */
 		{
@@ -323,8 +326,7 @@ var cr = {
 		}
 		else
 		{
-			var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
-						valueID: oldValue.id,
+			var jsonArray = { valueID: oldValue.id,
 						timezoneoffset: new Date().getTimezoneOffset()
 					};
 			$.post(cr.urls.deleteValue, jsonArray)
@@ -354,9 +356,9 @@ var cr = {
 		}
 	},
 			
-	createInstance: function(storedcsrftoken, field, containerUUID, initialData, successFunction, failFunction)
+	createInstance: function(field, containerUUID, initialData, successFunction, failFunction)
 	{
-		var jsonArray = { csrfmiddlewaretoken: storedcsrftoken, 
+		var jsonArray = {
 					elementUUID: field.nameID,
 					typeID: field.ofKindID,
 					properties: JSON.stringify(initialData),
@@ -398,13 +400,13 @@ var cr = {
 				);
 	},
 	
-	append: function(storedcsrftoken, oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
+	append: function(oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
 		if (containerCell.parent == null && containerUUID != null)
 			throw ("setup error 1 in append");
 		else if (containerCell.parent != null && containerCell.parent.getValueID() != containerUUID)
 			throw ("setup error 2 in append");
-		cr.createInstance(storedcsrftoken, containerCell.field, containerUUID, initialData, 
+		cr.createInstance(containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{
 				if (oldValue)
@@ -416,11 +418,10 @@ var cr = {
 			failFunction);
 	},
 	
-	updateValues: function(storedcsrftoken, initialData, sourceObjects, updateValuesFunction, successFunction, failFunction)
+	updateValues: function(initialData, sourceObjects, updateValuesFunction, successFunction, failFunction)
 	{
 		$.post(cr.urls.updateValues, 
-			{ csrfmiddlewaretoken: storedcsrftoken, 
-			  commands: JSON.stringify(initialData),
+			{ commands: JSON.stringify(initialData),
 			  timezoneoffset: new Date().getTimezoneOffset()
 			})
 		  .done(function(json, textStatus, jqXHR)
@@ -449,6 +450,27 @@ var cr = {
 					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 				}
 			);
+	},
+	
+	getUserID: function(successFunction, failFunction)
+	{
+		$.getJSON(cr.urls.getUserID,
+			{"access_token": cr.accessToken,
+			 "timezoneoffset": new Date().getTimezoneOffset()},
+			function(json)
+			{
+				if (json.success)
+				{
+					successFunction(json.userID);
+				}
+				else
+					failFunction(json.error);
+			})
+		.fail(function(jqXHR, textStatus, errorThrown)
+			{
+				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+			}
+		);
 	},
 
 	getConfiguration: function(parent, typeID, successFunction, failFunction)
@@ -480,9 +502,19 @@ var cr = {
 	
 	getData: function(path, fields, successFunction, failFunction)
 	{
-		$.getJSON(cr.urls.getData,
-			{ "path" : path, 
-			  "fields" : JSON.stringify(fields) },
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+		if (!path)
+			throw ("path is not specified");
+		
+		data = {"path" : path, 
+			    "fields" : JSON.stringify(fields) };
+		if (cr.accessToken)
+			data["access_token"] = cr.accessToken;
+				  
+		$.getJSON(cr.urls.getData, data,
 			function(json)
 			{
 				if (json.success) {
