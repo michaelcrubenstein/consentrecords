@@ -1219,6 +1219,11 @@
 						asyncFailFunction("Access Failure for Inquiries");
 					else
 					{
+						var actionDiv = panelDiv.selectAll("#id_action_container");
+						actionDiv.selectAll("div").remove();
+						var buttonDiv = actionDiv.append("div")
+							.classed("sign-up-button site-active-text", true);
+							
 						var inquiriesInstance = newInstances[0];
 						var inquiryInstance = null;
 						var inquiryCell = null;
@@ -1237,55 +1242,73 @@
 							}
 							else
 							{
+								/* User has to sign in. */
 							}
 						}
-
+						
+						var addNameFunction = function(e)
+						{
+							if (prepare_click())
+							{
+								show_click_feedback(this);
+								
+								if (inquiryCell && emailCell)
+								{
+									addInquiryFunction();
+									unblock_click();
+								}
+								else
+								{
+									cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
+										function(cells)
+										{
+											inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
+											cr.getConfiguration(null, inquiryCell.field.ofKindID,
+												function(cells)
+												{
+													emailCell = cells_get_cell_by_name(cells, "_email");
+													addInquiryFunction();
+													unblock_click();
+												},
+												standard_json_fail_function);
+										}, 
+										standard_json_fail_function);
+								}
+							}
+							d3.event.preventDefault();
+						};
+						
+						var deleteInquiryFunction = function(e)
+						{
+							if (prepare_click())
+							{
+								show_click_feedback(this);
+								
+								var successFunction = function(oldValue)
+								{
+									checkInquiryFunction([]);
+								}
+								
+								cr.deleteValue(inquiryInstance, inquiryInstance.cell, successFunction, asyncFailFunction);
+								
+								unblock_click();
+							}
+							d3.event.preventDefault();
+						};
+						
 						var checkInquiryFunction = function(newInstances)
 						{
-							var actionDiv = panelDiv.selectAll("#id_action_container");
-							actionDiv.selectAll("div").remove();
-							buttonDiv = actionDiv.append("div")
-								.classed("sign-up-button site-active-text", true);
-				
 							if (newInstances.length > 0)
 							{
 								inquiryInstance = newInstances[0];
 								buttonDiv.text("Delete Inquiry");
+								buttonDiv.on("click", deleteInquiryFunction);
 							}
 							else
 							{
 								inquiryInstance = null;
 								buttonDiv.text("Add My Name");
-								buttonDiv.on("click", function(e)
-									{
-										if (prepare_click())
-										{
-											show_click_feedback(this);
-											
-											if (inquiryCell && emailCell)
-											{
-												addInquiryFunction();
-											}
-											else
-											{
-												cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
-													function(cells)
-													{
-														inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-														cr.getConfiguration(null, inquiryCell.field.ofKindID,
-															function(cells)
-															{
-																emailCell = cells_get_cell_by_name(cells, "_email");
-																addInquiryFunction();
-															},
-															standard_json_fail_function);
-													}, 
-													standard_json_fail_function);
-											}
-											unblock_click();
-										}
-										d3.event.preventDefault();
-									});
+								buttonDiv.on("click", addNameFunction);
 							}
 						};
 						
@@ -1786,6 +1809,12 @@
 				}
 			}
 			cr.getValues(path, successFunction, failFunction);
+		}
+		
+		function delete_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
+		{
+			path = "#"+container.value.id+">"+instanceCell.field.nameID+"["+dataCell.field.nameID + "=" + dataValue + "]";
+			cr.deleteValue(successFunction, failFunction);
 		}
 		
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)

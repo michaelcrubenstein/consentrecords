@@ -14,6 +14,7 @@ var cr = {
 		cr.EventHandler.call(this);
 		this.id = null; 
 		this.value = null;
+		this.cell = null;	/* Initialize the container cell to empty. */
 	},
 	ObjectValue: function() {
 		cr.CellValue.call(this);
@@ -249,6 +250,10 @@ var cr = {
 	
 	getValues: function (path, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		var argList = {};
 		if (path)
 			argList.path = path;
@@ -280,6 +285,10 @@ var cr = {
 	
 	updateObjectValue: function(oldValue, d, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		var initialData = [{id: oldValue.id, value: d.getValueID()}];
 		$.post(cr.urls.updateValues, 
 				{ commands: JSON.stringify(initialData),
@@ -305,6 +314,10 @@ var cr = {
 	
 	addObjectValue: function (containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		$.post(cr.urls.addValue, 
 				{ containerUUID: containerUUID,
 				  elementUUID: containerCell.field.nameID,
@@ -335,9 +348,17 @@ var cr = {
 	
 	deleteValue: function(oldValue, containerCell, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+		if (oldValue.cell != containerCell)
+			throw ("Invalid containerCell in deletevalue");
+			
 		if (oldValue.id == null)	/* It was never saved */
 		{
-			containerCell.deleteValue(oldValue);
+			if (oldValue.cell)
+				oldValue.cell.deleteValue(oldValue);
 			successFunction(oldValue);
 		}
 		else
@@ -347,33 +368,34 @@ var cr = {
 					};
 			$.post(cr.urls.deleteValue, jsonArray)
 				.done(function(json, textStatus, jqXHR)
+				{
+					if (json.success)
 					{
-						if (json.success)
+						if (successFunction) 
 						{
-							if (successFunction) 
-							{
-								/* Copy the data from json object into newData so that 
-									any functions are properly initialized.
-								 */
-								containerCell.deleteValue(oldValue);
-								successFunction(oldValue);
-							}
+							if (oldValue.cell)
+								oldValue.cell.deleteValue(oldValue);
+							successFunction(oldValue);
 						}
-						else
-						{
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown)
-						{
-							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-						}
-					);
+					}
+					else
+					{
+						failFunction(json.error);
+					}
+				})
+				.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				});
 		}
 	},
 			
 	createInstance: function(field, containerUUID, initialData, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		var jsonArray = {
 					elementUUID: field.nameID,
 					typeID: field.ofKindID,
@@ -418,6 +440,10 @@ var cr = {
 	
 	append: function(oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		if (containerCell.parent == null && containerUUID != null)
 			throw ("setup error 1 in append");
 		else if (containerCell.parent != null && containerCell.parent.getValueID() != containerUUID)
@@ -436,6 +462,10 @@ var cr = {
 	
 	updateValues: function(initialData, sourceObjects, updateValuesFunction, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		$.post(cr.urls.updateValues, 
 			{ commands: JSON.stringify(initialData),
 			  timezoneoffset: new Date().getTimezoneOffset()
@@ -478,6 +508,10 @@ var cr = {
 	
 	getUserID: function(successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		$.getJSON(cr.urls.getUserID,
 			{"access_token": cr.accessToken,
 			 "timezoneoffset": new Date().getTimezoneOffset()},
@@ -499,6 +533,10 @@ var cr = {
 
 	getConfiguration: function(parent, typeID, successFunction, failFunction)
 	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
 		$.getJSON(cr.urls.getConfiguration,
 			{ "typeID" : typeID }, 
 			function(json)
