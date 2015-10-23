@@ -248,7 +248,7 @@ var cr = {
 			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
 	},
 	
-	getValues: function (path, successFunction, failFunction)
+	selectAll: function (path, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
@@ -258,7 +258,7 @@ var cr = {
 		if (path)
 			argList.path = path;
 		else
-			throw "neither path was not specified to getValues"
+			throw "neither path was not specified to selectAll"
 		
 		$.getJSON(cr.urls.selectAll, 
 			argList,

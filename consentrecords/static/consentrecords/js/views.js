@@ -220,12 +220,14 @@ function setupItemsDivHandlers(itemsDiv, cell)
 
 function setupItemHandlers(d)
 {
-	$(this).on("valueDeleted", function(e, newData)
+	if (d.cell.field.capacity != "_unique value")
 	{
-		if (d.cell.field.capacity != "_unique value")
+		$(this).on("valueDeleted", function(e, newData)
+		{
 			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-	});
-	d.add_target("valueDeleted", this);
+		});
+		d.add_target("valueDeleted", this);
+	}
 }
 
 function showViewStringCell(obj, cell)
@@ -1451,16 +1453,16 @@ function show_pick_object_panel(oldData, cell, containerUUID, containerPanel) {
 			if (currentObject != null && currentObject.getValueID())
 			{
 				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
-				cr.getValues(pickObjectPath, selectAllSuccessFunction, failFunction);
+				cr.selectAll(pickObjectPath, selectAllSuccessFunction, failFunction);
 			}
 			else
 				failFunction("The container has not yet been saved.");
 		}
 		else	
-			cr.getValues(pickObjectPath, selectAllSuccessFunction, failFunction);
+			cr.selectAll(pickObjectPath, selectAllSuccessFunction, failFunction);
 	}
 	else
-		cr.getValues(cell.field.ofKindID, selectAllSuccessFunction, failFunction);
+		cr.selectAll(cell.field.ofKindID, selectAllSuccessFunction, failFunction);
 }
 		
 /* This method gets called to bring up a configuration panel when adding

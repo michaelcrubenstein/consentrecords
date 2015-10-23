@@ -218,7 +218,7 @@
 				/* Don't unblock here, because there was no block. */
 			}
 			
-			cr.getValues("{{path}}", successFunction, failFunction);
+			cr.selectAll("{{path}}", successFunction, failFunction);
 		});
 		
 		$(document).ready(function(e) { resetidObjectsHeight() });

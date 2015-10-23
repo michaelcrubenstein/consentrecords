@@ -1058,7 +1058,7 @@
 			}
 			
 			var path = "Service";
-			cr.getValues(path, successFunction, asyncFailFunction);
+			cr.selectAll(path, successFunction, asyncFailFunction);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -1196,7 +1196,7 @@
 						.text("Maximum Age: " + get_datum_by_name(d, "Maximum Age"));
 					div.append("div")
 						.text("Registration Deadline: " + get_datum_by_name(d, "Registration Deadline"));
-					cr.getValues("#"+d.value.id+">Service", function(newInstances)
+					cr.selectAll("#"+d.value.id+">Service", function(newInstances)
 						{
 							newInstances.sort(function(a, b)
 								{
@@ -1318,7 +1318,7 @@
 							{
 								var userEmailCell = get_cell_by_name(userInstance, "_email");
 								var newEmail = userEmailCell.data[0].value;
-								cr.getValues("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+								cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
 									checkInquiryFunction,
 									asyncFailFunction);
 							}, asyncFailFunction);
@@ -1404,7 +1404,7 @@
 			}
 			
 			var path = '#'+userInstance.getValueID()+'::reference(Employee)::reference(Employees)::reference(Organization)';
-			cr.getValues(path, successFunction, asyncFailFunction);
+			cr.selectAll(path, successFunction, asyncFailFunction);
 		}
 		
 		/* Displays a panel in which the specified object's contents appear.
@@ -1567,7 +1567,7 @@
 				show_panel_left(panelDiv.node());
 			}
 	
-			cr.getValues("#"+d.value.id+'>Offerings>Offering', 
+			cr.selectAll("#"+d.value.id+'>Offerings>Offering', 
 						 selectAllSuccessFunction, 
 						 standard_json_fail_function);
 		}
@@ -1642,7 +1642,7 @@
 			else
 			{
 				var email = emailCell.data[0].value;
-				var getValuesSuccess = function(userObjects)
+				var selectAllSuccess = function(userObjects)
 				{
 					if (userObjects.length == 0)
 						standard_json_fail_function('There is no user set up with the email "' + email + '".');
@@ -1656,7 +1656,7 @@
 					}
 				};
 			
-				cr.getValues("_user[_email="+email+"]", getValuesSuccess, standard_json_fail_function);
+				cr.selectAll("_user[_email="+email+"]", selectAllSuccess, standard_json_fail_function);
 			}
 		}
 		
@@ -1710,7 +1710,7 @@
 						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
 					};
 					
-					var getValuesSuccess = function(userObjects)
+					var selectAllSuccess = function(userObjects)
 					{
 						if (inputBox.value.toLocaleLowerCase() == startVal)
 						{
@@ -1729,7 +1729,7 @@
 						}
 					}
 					
-					cr.getValues("_user[_email^="+val+"]", getValuesSuccess, asyncFailFunction);
+					cr.selectAll("_user[_email^="+val+"]", selectAllSuccess, asyncFailFunction);
 				}
 			}
 		}
@@ -1808,13 +1808,7 @@
 					doesntExistFunction();
 				}
 			}
-			cr.getValues(path, successFunction, failFunction);
-		}
-		
-		function delete_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
-		{
-			path = "#"+container.value.id+">"+instanceCell.field.nameID+"["+dataCell.field.nameID + "=" + dataValue + "]";
-			cr.deleteValue(successFunction, failFunction);
+			cr.selectAll(path, successFunction, failFunction);
 		}
 		
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)

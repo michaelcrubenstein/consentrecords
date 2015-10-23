@@ -308,31 +308,51 @@ class LazyInstance(LazyObject):
                             'description': e._getDescription(nameFieldUUIDs) }} \
                 for e in ofKindObject._getAllInstances()]
     
-    def _checkCount(sql, argList):
+    def _checkCount(sql, item, argList):
+        """ 
+            item is either a string which is an instance id, or a tuple
+            which is a value id and an instance id.
+        """ 
+        if isinstance(item, str):
+            newArgList = [item]
+        else:
+            newArgList = [item[-1]]
+        newArgList.extend(argList)
+            
         with connection.cursor() as c:
-            c.execute(sql, argList)
+            c.execute(sql, newArgList)
             return c.fetchone()[0]
         
-    def _getResultArray(sql, argList):
-#         logger = logging.getLogger(__name__)
-#         logger.error("_getResultArray(%s, %s)" % (sql, str(argList)))
+    def _getResultArray(sql, item, argList):
+        """ 
+            item is either a string which is an instance id, or a tuple
+            which is a value id and an instance id.
+        """ 
+        logger = logging.getLogger(__name__)
+        logger.error("_getResultArray(%s, %s, %s)" % (sql, str(item), str(argList)))
+        if isinstance(item, str):
+            newArgList = [item]
+        else:
+            newArgList = [item[-1]]
+        newArgList.extend(argList)
+        logger.error("  newArgList(%s)" % (str(newArgList)))
         with connection.cursor() as c:
-            c.execute(sql, argList)
-            return [i[0] for i in c.fetchall()]
+            c.execute(sql, newArgList)
+            return [i for i in c.fetchall()]
         
     def refineResults(resultSet, path):
-#         logger = logging.getLogger(__name__)
-#         logger.error("refineResults(%s, %s)" % (str(resultSet), path))
+        logger = logging.getLogger(__name__)
+        logger.error("refineResults(%s, %s)" % (str(resultSet), path))
         
         if path[0] == '#':
-            return [path[1]], path[2:]
+            return [(None, path[1])], path[2:]
         elif path[0] == '[':
             if len(path[1]) == 1:
                 sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                       ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id))'
                 fieldID = Fact.getUUIDHex(path[1][0])
-                newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID]), resultSet)
+                newResults = filter(lambda s: LazyInstance._checkCount(sql, s, [fieldID]), resultSet)
                 return list(newResults), path[2:]
             elif len(path[1]) == 3:
                 fieldID = Fact.getUUIDHex(path[1][0])
@@ -345,18 +365,20 @@ class LazyInstance(LazyObject):
                       ' WHERE v1.instance_id = %s' + \
                       ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
-                newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID, testValue]), resultSet)
-                return list(newResults), path[2:]
+                newResults = filter(lambda s: LazyInstance._checkCount(sql, s, [fieldID, testValue]), resultSet)
+                newList = list(newResults)
+                logger.error("  list: %s" % str(newList))
+                return newList, path[2:]
             else:
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
         elif path[0] == '>':
             fieldID = Fact.getUUIDHex(path[1])
-            sql = 'SELECT v1.stringvalue id' + \
+            sql = 'SELECT v1.id, v1.stringvalue id' + \
                      ' FROM consentrecords_value v1' + \
                      ' WHERE v1.instance_id = %s AND v1.fieldid = %s' + \
                      ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)' + \
                      ' ORDER BY v1.position'
-            m = map(lambda s: LazyInstance._getResultArray(sql, [s, fieldID]), resultSet)
+            m = map(lambda s: LazyInstance._getResultArray(sql, s, [fieldID]), resultSet)
             newResults = [item for sublist in m for item in sublist]
             return newResults, path[2:]         
         elif path[0] == '::':
@@ -364,13 +386,13 @@ class LazyInstance(LazyObject):
             if function == 'reference':
                 if path[2] == '(':
                     typeID = Fact.getUUIDHex(path[3][0])
-                    sql = 'SELECT v1.instance_id id' + \
+                    sql = 'SELECT v1.id, v1.instance_id' + \
                           ' FROM consentrecords_value v1' + \
                           ' JOIN consentrecords_instance i1 ON (i1.id = v1.instance_id)' + \
                           ' WHERE v1.stringvalue = %s AND i1.typeid = %s' + \
                           ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)' + \
                           ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)'
-                    m = map(lambda s: LazyInstance._getResultArray(sql, [s, typeID]), resultSet)
+                    m = map(lambda s: LazyInstance._getResultArray(sql, s, [typeID]), resultSet)
                     newResults = [item for sublist in m for item in sublist]
                     return newResults, path[4:]
                 else:
@@ -386,7 +408,7 @@ class LazyInstance(LazyObject):
                         sql = 'SELECT COUNT(*) FROM consentrecords_value v1' + \
                               ' WHERE v1.instance_id = %s AND v1.fieldID = %s' + \
                               ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id))'
-                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, [s, fieldID]), resultSet)
+                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, s, [fieldID]), resultSet)
                         return list(newResults), path[4:]
                     elif len(params) == 3:
                         symbol = params[1]
@@ -398,7 +420,7 @@ class LazyInstance(LazyObject):
                               ' WHERE v1.instance_id = %s' + \
                               ' AND v1.fieldID = %s AND v1.stringvalue ' + symbol + ' %s' + \
                               ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
-                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, [s, fieldID, testValue]), resultSet)
+                        newResults = filter(lambda s: not LazyInstance._checkCount(sql, s, [fieldID, testValue]), resultSet)
                         return list(newResults), path[4:]
                     else:
                         raise ValueError("unrecognized contents within ':not([...])'")
@@ -414,7 +436,16 @@ class LazyInstance(LazyObject):
                      ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedinstance di WHERE di.id = i1.id)'
             with connection.cursor() as c:
                 c.execute(sql, [fieldID])
-                return [r[0] for r in c.fetchall()], path[1:]
+                return [r for r in c.fetchall()], path[1:]
+    
+    def getValueFromPair(data, nameLists):
+        if len(data) == 2:
+            i = LazyInstance(data[1])
+            v = LazyValue(id=data[0], stringValue=data[1])
+            return v.clientObject(nameLists, i)
+        else:
+            i = LazyInstance(data[-1])
+            return i.clientObject(nameLists)
             
     def selectAllObjects(path):
         resultSet = [([], path)]
@@ -423,7 +454,19 @@ class LazyInstance(LazyObject):
             nextPair = LazyInstance.refineResults(lastPair[0], lastPair[1])
             resultSet.append(nextPair)
         
-        return [LazyInstance(i) for i in resultSet[-1][0]]
+        logger = logging.getLogger(__name__)
+        logger.error("selectAllObjects result: %s" % str(resultSet[-1][0]))
+        return [LazyInstance(i[-1]) for i in resultSet[-1][0]]
+    
+    def selectAllDescriptors(path):
+        resultSet = [([], path)]
+        while len(resultSet[-1][1]) > 0:
+            lastPair = resultSet[-1]
+            nextPair = LazyInstance.refineResults(lastPair[0], lastPair[1])
+            resultSet.append(nextPair)
+        
+        nameLists = {}
+        return [LazyInstance.getValueFromPair(i, nameLists) for i in resultSet[-1][0]]
     
     # returns a dictionary of info describing self.
     def clientObject(self, nameLists):
@@ -438,10 +481,7 @@ class LazyInstance(LazyObject):
         return {'id': None, 'value': {'description': self._getDescription(nameFieldUUIDs), 'id': self.id.hex}}
     
     def selectAll(path):
-        nameLists = {}
-        m = LazyInstance.selectAllObjects(path)
-        
-        return [e.clientObject(nameLists) for e in m]
+        return LazyInstance.selectAllClientValues(path)
     
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
@@ -821,7 +861,6 @@ class LazyValue(LazyObject):
             return False
         i = LazyInstance(self.stringValue)
         return self.instanceID == i.parentID
-            
         
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -198,7 +198,7 @@ class api:
                     if item:
                         ids.append(item.id.hex)
                     else:
-                    	ids.append(None)
+                        ids.append(None)
             
                 results = {'success':True, 'ids': ids}
             
@@ -269,7 +269,7 @@ class api:
                 tokens = cssparser.tokenize(unescaped)
                 a, remainder = cssparser.cascade(tokens)
                 
-                p = LazyInstance.selectAll(a)
+                p = LazyInstance.selectAllDescriptors(a)
             else:
                 if ofKindID:
                     ofKindUUID = uuid.UUID(ofKindID)
