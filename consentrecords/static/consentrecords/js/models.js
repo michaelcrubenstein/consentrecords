@@ -102,7 +102,7 @@ var cr = {
 			},
 			clearValue: function(d)
 			{
-				d.value = {id: null, description: "None" };
+				d.value = null;
 			},
 			setupValue: function(d)
 			{
@@ -139,7 +139,7 @@ var cr = {
 			},
 			clearValue: function(d)
 			{
-				d.value = null;
+				d.value = {id: null, description: "None" };
 			},
 			setupValue: function(d)
 			{
