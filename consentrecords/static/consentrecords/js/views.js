@@ -59,7 +59,10 @@ function show_click_feedback(obj)
 {
 	oldOpacity = $(obj).css("opacity");
 	$(obj).animate({opacity: "0.2"}, 200)
-		   .animate({opacity: oldOpacity}, 200);
+		   .animate({opacity: oldOpacity}, 200, "swing",
+		   	function() {
+		   		$(obj).css("opacity", "");
+		   	});
 }
 
 function show_panel_up(panelNode)
