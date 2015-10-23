@@ -348,7 +348,7 @@ class LazyInstance(LazyObject):
                 newResults = filter(lambda s: LazyInstance._checkCount(sql, [s, fieldID, testValue]), resultSet)
                 return list(newResults), path[2:]
             else:
-                raise ValueError("unrecognized contents within [...]")
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
         elif path[0] == '>':
             fieldID = Fact.getUUIDHex(path[1])
             sql = 'SELECT v1.stringvalue id' + \

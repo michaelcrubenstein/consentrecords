@@ -1225,12 +1225,19 @@
 						var emailCell = null;
 						var addInquiryFunction = function()
 						{
-							add_single_field_instance(inquiriesInstance, 
-											   inquiryCell, 
-											   emailCell, 
-											   "{{ user.email }}", 
-											   function(newData) { checkInquiryFunction([newData]); },
-											   asyncFailFunction);
+							if (userInstance.getValueID())
+							{
+								userEmailCell = get_cell_by_name(userInstance, "_email");
+								add_single_field_instance(inquiriesInstance, 
+												   inquiryCell, 
+												   emailCell, 
+												   userEmailCell.data[0].value, 
+												   function(newData) { checkInquiryFunction([newData]); },
+												   asyncFailFunction);
+							}
+							else
+							{
+							}
 						}
 
 						var checkInquiryFunction = function(newInstances)
@@ -1281,10 +1288,20 @@
 									});
 							}
 						};
-							
-						cr.getValues("#" + inquiriesInstance.value.id + ">Inquiry[_email={{ user.email }}]",
-							checkInquiryFunction,
-							asyncFailFunction);
+						
+						if (userInstance.getValueID())
+						{
+							userInstance.checkCells(undefined, function()
+							{
+								var userEmailCell = get_cell_by_name(userInstance, "_email");
+								var newEmail = userEmailCell.data[0].value;
+								cr.getValues("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+									checkInquiryFunction,
+									asyncFailFunction);
+							}, asyncFailFunction);
+						}
+						else
+							checkInquiryFunction([]);
 					}
 		
 					window.scrollTo(0, 0);
