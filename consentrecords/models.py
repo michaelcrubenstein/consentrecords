@@ -328,21 +328,21 @@ class LazyInstance(LazyObject):
             item is either a string which is an instance id, or a tuple
             which is a value id and an instance id.
         """ 
-        logger = logging.getLogger(__name__)
-        logger.error("_getResultArray(%s, %s, %s)" % (sql, str(item), str(argList)))
+#         logger = logging.getLogger(__name__)
+#         logger.error("_getResultArray(%s, %s, %s)" % (sql, str(item), str(argList)))
         if isinstance(item, str):
             newArgList = [item]
         else:
             newArgList = [item[-1]]
         newArgList.extend(argList)
-        logger.error("  newArgList(%s)" % (str(newArgList)))
+#         logger.error("  newArgList(%s)" % (str(newArgList)))
         with connection.cursor() as c:
             c.execute(sql, newArgList)
             return [i for i in c.fetchall()]
         
     def refineResults(resultSet, path):
-        logger = logging.getLogger(__name__)
-        logger.error("refineResults(%s, %s)" % (str(resultSet), path))
+#         logger = logging.getLogger(__name__)
+#         logger.error("refineResults(%s, %s)" % (str(resultSet), path))
         
         if path[0] == '#':
             return [(None, path[1])], path[2:]
@@ -367,7 +367,7 @@ class LazyInstance(LazyObject):
                       ' AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)'
                 newResults = filter(lambda s: LazyInstance._checkCount(sql, s, [fieldID, testValue]), resultSet)
                 newList = list(newResults)
-                logger.error("  list: %s" % str(newList))
+#                 logger.error("  list: %s" % str(newList))
                 return newList, path[2:]
             else:
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
@@ -454,8 +454,8 @@ class LazyInstance(LazyObject):
             nextPair = LazyInstance.refineResults(lastPair[0], lastPair[1])
             resultSet.append(nextPair)
         
-        logger = logging.getLogger(__name__)
-        logger.error("selectAllObjects result: %s" % str(resultSet[-1][0]))
+#         logger = logging.getLogger(__name__)
+#         logger.error("selectAllObjects result: %s" % str(resultSet[-1][0]))
         return [LazyInstance(i[-1]) for i in resultSet[-1][0]]
     
     def selectAllDescriptors(path):
