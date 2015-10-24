@@ -727,7 +727,7 @@
 				userInstance.value = userData;
 				userInstance.checkCells(undefined, function()
 					{
-						userInstance.triggerEvent("signin.cr");
+						userInstance.trigger_event("signin.cr", userInstance);
 						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
 						hide_panel_right($("#id_sign_up_panel")[0], false);
 					},
