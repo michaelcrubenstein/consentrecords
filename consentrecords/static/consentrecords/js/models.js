@@ -546,7 +546,7 @@ var cr = {
 					var cells = [];
 					$(json.cells).each(function()
 					{
-						newCell = new cr.Cell();
+						var newCell = new cr.Cell();
 						newCell.field = this.field;
 						newCell.setup(parent);
 						cells.push(newCell);
@@ -613,6 +613,9 @@ var cr = {
 		
 cr.EventHandler.prototype.add_target = function(e, target)
 {
+	if (!target)
+		throw "target is not specified";
+		
 	if (!(e in this.events))
 		this.events[e] = [];
 	this.events[e].push(target);
@@ -620,6 +623,9 @@ cr.EventHandler.prototype.add_target = function(e, target)
 
 cr.EventHandler.prototype.remove_target = function(e, target)
 {
+	if (!target)
+		throw "target is not specified";
+		
 	if (e in this.events)
 	{
 		var a = this.events[e]
@@ -797,7 +803,7 @@ cr.ObjectValue.prototype.importCell = function(oldCell)
 		var dt = cr.dataTypes[newCell.field.dataType];
 		$(oldCell.data).each(function()
 		{
-			newValue = dt.copyValue(this);
+			var newValue = dt.copyValue(this);
 			newCell.pushValue(newValue);
 		});
 	}

@@ -57,7 +57,7 @@ function unblock_click()
 
 function show_click_feedback(obj)
 {
-	oldOpacity = $(obj).css("opacity");
+	var oldOpacity = $(obj).css("opacity");
 	$(obj).animate({opacity: "0.2"}, 200)
 		   .animate({opacity: oldOpacity}, 200, "swing",
 		   	function() {
@@ -102,18 +102,6 @@ function show_panel_left(panelNode)
 							$(window).trigger("resize");
 							unblock_click();
 						});
-				
-// 	$(panelNode).offset({top: 0, left: window.innerWidth})
-// 				.css("position", "relative")
-// 				   .height("100%")
-// 				   .width("100%")	/* 100% so that it doesn't re-flow as it gets revealed. */
-// 				   .css("display", "block")
-// 				   .trigger("revealing");
-// 	$(panelNode).animate({left: 0}, 400, "swing",
-// 						function() {
-// 							$(window).trigger("resize");
-// 							unblock_click();
-// 						});
 }
 
 function hide_panel_down(panelNode, doRemove)
@@ -121,6 +109,7 @@ function hide_panel_down(panelNode, doRemove)
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
 	closealert();
+	$(panelNode).trigger("hiding.cr");
 	$(panelNode).animate({top: window.innerHeight}, 400, "swing", 
 		function() {
 			if (doRemove)
@@ -134,6 +123,7 @@ function hide_panel_right(panelNode, doRemove)
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
 	closealert();
+	$(panelNode).trigger("hiding.cr");
 	$(panelNode).hide("slide", {direction: "right"}, 400, 
 		function() {
 			if (doRemove)

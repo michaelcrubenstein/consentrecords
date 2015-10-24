@@ -497,10 +497,6 @@
 	<script type="text/JavaScript">
 		var storedcsrftoken = "{{ csrf_token }}";
 		
-		var userInstance = new cr.ObjectValue();
-		userInstance.value.id = "{{userID}}"
-		userInstance.value.description = "{{ user.get_full_name }}"
-		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
 			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
@@ -513,61 +509,128 @@
 			}
 		});
 
+		/* The global object used to identify the current user. */
+		var userInstance = new cr.ObjectValue();
+		userInstance.value.id = "{{userID}}"
+		userInstance.value.description = "{{ user.get_full_name }}"
+		
+		/* A default function used to report an error during an asynchronous operation
+			without unblocking a user event. */
 		var asyncFailFunction = function(error)
-			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
-			}
-			
-		function showCurrentUser()
 		{
-			if (userInstance.getValueID())
+			bootstrap_alert.warning(error, ".alert-container");
+			/* Don't unblock here, because there was no block. */
+		}
+		
+		/* Update the username label when a user signs in or out. */	
+		var usernameLabel = $(".username-label");
+		userInstance.add_target("signin.cr", usernameLabel[0]);
+		userInstance.add_target("signout.cr", usernameLabel[0]);
+		usernameLabel.on("signin.cr", function(e, eventInfo)
+		{
+			$(this).text(eventInfo.getDescription());
+		});
+		usernameLabel.on("signout.cr", function(e, eventInfo)
+		{
+			$(this).text("");
+		});
+		
+		/* Update the text of the signin button when a user signs in or out. */
+		var signinSpan = $("#sign-in-span")
+		userInstance.add_target("signin.cr", signinSpan[0]);
+		userInstance.add_target("signout.cr", signinSpan[0]);
+		signinSpan.on("signin.cr", function(e, eventInfo)
+		{
+			$(this).text("Sign Out");
+		});
+		signinSpan.on("signout.cr", function(e, eventInfo)
+		{
+			$(this).text("Sign In");
+		});
+		
+		/* Update the list of organizations associated with the user when a user signs in or out. */
+		var orgSection = $(".organization-section");
+		userInstance.add_target("signin.cr", orgSection[0]);
+		userInstance.add_target("signout.cr", orgSection[0]);
+		orgSection.on("signin.cr", function(e, eventInfo)
+		{
+			load_organizations.call(this, eventInfo)
+		});
+		orgSection.on("signout.cr", function(e, eventInfo)
+		{
+			hide_organizations.call(this, eventInfo)
+		});
+		
+		/* Initialize all of the objects that are dependent on whether or not the user is
+			signed in.
+		 */
+		if (userInstance.getValueID())
+			userInstance.trigger_event("signin.cr", userInstance);
+		else
+			userInstance.trigger_event("signout.cr", userInstance);
+
+		/* Handle a click event on the sign-in button to either sign in or sign out
+			the current user.
+		 */
+		$(".sign-in-button").click(function(e) {
+			if (prepare_click())
 			{
-				$(".username-label").text(userInstance.getDescription());
-				load_organizations();
-				$("#sign-in-span").text("Sign Out");
+				if (userInstance.getValueID())
+				{
+					var successFunction = function()
+					{
+						userInstance.value = {id: "", description: ""};
+						userInstance.trigger_event("signout.cr", userInstance);
+						unblock_click();
+					};
+					
+					sign_out(successFunction, standard_json_fail_function);
+				}
+				else
+				{
+					showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_in_panel");
+				}
 			}
-			else
+			e.preventDefault();
+		});
+
+		/* Show a pre-defined panel associated with this button. */
+		function showPanel(e)
+		{
+			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
+			if (prepare_click())
 			{
-				$(".username-label").text("");
-				hide_organizations();
-				$("#sign-in-span").text("Sign In");
+				show_click_feedback(this);
+				
+				window.scrollTo(0, 0);
+				show_panel_left(panelDiv.node());
 			}
 		}
-		showCurrentUser();
+		
+		/* Hide the currently displaying panel with no further action. */		
+		function hide_site_panel(e)
+		{
+			if (prepare_click())
+			{
+				show_click_feedback(this);
+				hide_panel_right($(this).parents(".site-panel")[0], false);
+			}
+		}
+		
+		/* Initialize the buttons that show a pre-defined panel. */
+		$(".show-panel-button").click(showPanel);
+		
+		/* Initialize the buttons that hide the currently displaying panel with no further action. */
+		$(".done-button").click(hide_site_panel);
 		
 		$(document).ready (function(e) {
-			$(".sign-in-button").click(function(e) {
-				if (prepare_click())
-				{
-					if (userInstance.getValueID())
-					{
-						var successFunction = function()
-						{
-							userInstance.value = {id: "", description: ""};
-							showCurrentUser();
-							unblock_click();
-						};
-						
-						sign_out(successFunction, standard_json_fail_function);
-					}
-					else
-					{
-						showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_in_panel");
-					}
-				}
-				e.preventDefault();
-			});
-
-			$(".show-panel-button").click(showPanel);
-			$(".done-button").click(hide_site_panel);
 			
 			$("#id_find_experience_panel").on("revealing", function(e, eventInfo)
 				{
 					show_services("#id_services");
 				});
 				
-			setup_search_bar("#id_find_experience_panel .panel-scrolling .searchbar",
+			setup_search_bar("#id_find_experience_panel .searchbar",
 				getFilter("#id_services"));
 				
 			$("#id_find_offering_panel").on("revealing", function(e, eventInfo)
@@ -575,7 +638,8 @@
 					datum = d3.select(this).datum();
 					show_offerings(datum, "#id_offerings");
 				});
-			setup_search_bar("#id_find_offering_panel .panel-scrolling .searchbar",
+				
+			setup_search_bar("#id_find_offering_panel .searchbar",
 				getFilter("#id_offerings"));
 				
 			$("#id_your_pathway_panel").on("revealing", function(e, eventInfo)
@@ -594,8 +658,12 @@
 			var signInSuccess = function(userData)
 			{
 				userInstance.value = userData;
-				showCurrentUser();
-				hide_panel_right($("#id_sign_in_panel")[0], false)
+				userInstance.checkCells(undefined, function()
+					{
+						userInstance.trigger_event("signin.cr", userInstance);
+						hide_panel_right($("#id_sign_in_panel")[0], false)
+					},
+					asyncFailFunction);
 			}
 				
 			/* Items for the sign-in panel. */
@@ -657,9 +725,13 @@
 			var signUpSuccess = function(userData)
 			{
 				userInstance.value = userData;
-				showCurrentUser();
-				$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-				hide_panel_right($("#id_sign_up_panel")[0], false)
+				userInstance.checkCells(undefined, function()
+					{
+						userInstance.triggerEvent("signin.cr");
+						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
+						hide_panel_right($("#id_sign_up_panel")[0], false);
+					},
+				asyncFailFunction);
 			}
 
 			$("#id_sign_up_panel .submit-button").click(function(e) {
@@ -847,7 +919,7 @@
 				if (!signIn.canSubmit())
 					return;
 				
-				bootstrap_alert.show($('.alert_container'), "Signing In...", "alert-info");
+				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 				
 				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
 											  username : $("#id_username").val(),
@@ -884,7 +956,7 @@
 
 		forgotPassword = {
 			canSubmit: function() {
-				testusername = $("#id_email").val();
+				var testusername = $("#id_email").val();
 				return validateEmail(testusername);
 			},
 		
@@ -982,27 +1054,6 @@
 			{
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 			});
-		}
-		
-		function showPanel(e)
-		{
-			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
-			if (prepare_click())
-			{
-				show_click_feedback(this);
-				
-				window.scrollTo(0, 0);
-				show_panel_left(panelDiv.node());
-			}
-		}
-				
-		function hide_site_panel(e)
-		{
-			if (prepare_click())
-			{
-				show_click_feedback(this);
-				hide_panel_right($(this).parents(".site-panel")[0], false);
-			}
 		}
 		
 		function show_consent_records(containerDiv) {
@@ -1139,6 +1190,32 @@
 		function show_offerings(datum, container) {
 			var successFunction = function(newInstances)
 			{
+				newInstances.sort(function(a, b)
+					{
+						var aDate = get_datum_by_name(a, "Start Date");
+						var bDate = get_datum_by_name(b, "Start Date");
+						if (aDate)
+						{
+							if (bDate)
+							{
+								result = aDate.localeCompare(bDate);
+								if (result == 0)
+									return a.getDescription().localeCompare(b.getDescription());
+								else
+									return result;
+							}
+							else
+								return -1;
+						}
+						else
+						{
+							if (bDate)
+								return 1;
+							else
+								return a.getDescription().localeCompare(b.getDescription());
+						}
+					});
+				
 				// Remove any lingering contents from the set of full issues.
 				var containerDiv = d3.select(container);
 				containerDiv.selectAll("div").remove();
@@ -1179,6 +1256,8 @@
 			
 			function show_offering_details(d)
 			{
+				d.calculateDescription();
+				
 				if (prepare_click())
 				{
 					show_click_feedback(this);
@@ -1189,7 +1268,7 @@
 					var div = panelDiv.selectAll("#id_offering_details");
 					div.selectAll("div").remove();
 					div.append("div")
-						.text(get_datum_by_name(d, "_name").description);
+						.text(d.getDescription());
 					div.append("div")
 						.text("Minimum Age: " + get_datum_by_name(d, "Minimum Age"));
 					div.append("div")
@@ -1213,37 +1292,78 @@
 								});
 						},
 						asyncFailFunction);
+						
+					var actionDiv = panelDiv.selectAll("#id_action_container");
+					actionDiv.selectAll("div").remove();
+					var buttonDiv = actionDiv.append("div")
+						.classed("sign-up-button site-active-text", true);
+						
+					userInstance.add_target("signin.cr", panelDiv.node());
+					$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
+					{
+						var userEmailCell = get_cell_by_name(eventInfo, "_email");
+						var newEmail = userEmailCell.data[0].value;
+						cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+							function(newInstances)
+							{
+								if (newInstances.length > 0)
+								{
+									inquiryInstance = newInstances[0];
+									offering = panelDiv.datum();
+									buttonDiv.text("Delete Inquiry");
+									buttonDiv.on("click", deleteInquiryFunction);
+									bootstrap_alert.success(userInstance.getDescription() + 
+														  " already inquired into " + 
+														  offering.getDescription(),
+														  ".alert-container");
+								}
+								else
+								{
+									addInquiry();
+								}
+							},
+							asyncFailFunction);
+					});
+					
+					/* Tear down all of the events registered with this panel. */
+					$(panelDiv.node()).on("hiding.cr", function()
+					{
+						userInstance.remove_target("signin.cr", panelDiv.node());
+						$(panelDiv.node()).off("signin.cr");
+						$(panelDiv.node()).off("hiding.cr");
+					});
+						
 					var inquiriesCell = get_cell_by_name(d, "Inquiries")
 					var newInstances = inquiriesCell.data;
 					if (newInstances.length == 0)
 						asyncFailFunction("Access Failure for Inquiries");
 					else
 					{
-						var actionDiv = panelDiv.selectAll("#id_action_container");
-						actionDiv.selectAll("div").remove();
-						var buttonDiv = actionDiv.append("div")
-							.classed("sign-up-button site-active-text", true);
-							
 						var inquiriesInstance = newInstances[0];
 						var inquiryInstance = null;
 						var inquiryCell = null;
 						var emailCell = null;
-						var addInquiryFunction = function()
+						
+						var addInquiry = function()
+						{
+							userEmailCell = get_cell_by_name(userInstance, "_email");
+							add_single_field_instance(inquiriesInstance, 
+											   inquiryCell, 
+											   emailCell, 
+											   userEmailCell.data[0].value, 
+											   function(newData) { checkInquiryFunction([newData]); },
+											   asyncFailFunction);
+						}
+						
+						var tryAddInquiry = function()
 						{
 							if (userInstance.getValueID())
 							{
-								userEmailCell = get_cell_by_name(userInstance, "_email");
-								add_single_field_instance(inquiriesInstance, 
-												   inquiryCell, 
-												   emailCell, 
-												   userEmailCell.data[0].value, 
-												   function(newData) { checkInquiryFunction([newData]); },
-												   asyncFailFunction);
+								addInquiry();
+								unblock_click();
 							}
 							else
-							{
-								/* User has to sign in. */
-							}
+								showFixedPanel(panelDiv.node(), "#id_sign_in_panel");
 						}
 						
 						var addNameFunction = function(e)
@@ -1254,8 +1374,7 @@
 								
 								if (inquiryCell && emailCell)
 								{
-									addInquiryFunction();
-									unblock_click();
+									tryAddInquiry();
 								}
 								else
 								{
@@ -1267,8 +1386,7 @@
 												function(cells)
 												{
 													emailCell = cells_get_cell_by_name(cells, "_email");
-													addInquiryFunction();
-													unblock_click();
+													tryAddInquiry();
 												},
 												standard_json_fail_function);
 										}, 
@@ -1361,13 +1479,14 @@
 		
 		function hide_organizations()
 		{
-			var orgSection = d3.select(".organization-section");
+			var orgSection = d3.select(this);
 			orgSection.style("display", "none");
-			orgSection.selectAll("div").remove();
+			orgSection.selectAll("li").remove();
 		}
 		
 		function load_organizations()
 		{
+			var orgSection = d3.select(this);
 			var successFunction = function(newInstances)
 			{
 				var cell = new cr.Cell();
@@ -1377,13 +1496,12 @@
 							  };
 				cell.setup(null);
 				
-				var orgSection = d3.select(".organization-section");
 				orgSection.style("display", newInstances.length > 0 ? "block" : "none");
 				
-				var divs = orgSection.selectAll("div")
+				var divs = orgSection.selectAll("li")
 					.data(newInstances)
 					.enter()
-					.append("div");
+					.append("li");
 				
 				var buttons = divs.append("button")
 					.classed("btn row-button site-active-text show-panel-button", true);
