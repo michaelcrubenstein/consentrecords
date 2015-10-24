@@ -156,11 +156,11 @@
 			
 			var itemsDiv = d3.select("#id_objects")
 				.data([cell]);
-			cell.add_target("valueAdded", itemsDiv.node());
-			cell.add_target("dataChanged", itemsDiv.node());
+			cell.add_target("valueAdded.cr", itemsDiv.node());
+			cell.add_target("dataChanged.cr", itemsDiv.node());
 			
 			itemsDiv.node().onValueAdded = getOnValueAddedFunction(d3.select(parentPanel), cell, null, true, true, show_view_object_panel);
-			$(itemsDiv.node()).on("valueAdded", function(e, newData)
+			$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 			{
 				this.onValueAdded(e, newData);
 				itemsDiv.selectAll("li").sort(function(a, b)
@@ -168,7 +168,7 @@
 					return a.getDescription().localeCompare(b.getDescription());
 				});
 			});
-			$(itemsDiv.node()).on("dataChanged", function(e, newData)
+			$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
 			{
 				itemsDiv.selectAll("li").sort(function(a, b)
 				{

@@ -71,7 +71,7 @@ function show_panel_up(panelNode)
 				   .height(0)
 				   .width("100%")
 				   .css("display", "block")
-				   .trigger("revealing")
+				   .trigger("revealing.cr")
 				   .animate({height: "100%", top: 0}, 400, "swing",
 						function() {
 							$(window).trigger("resize");
@@ -86,7 +86,7 @@ function show_panel_now(panelNode)
 				.height("100%")
 				.width("100%")
 				.css("display", "block")
-				.trigger("revealing");
+				.trigger("revealing.cr");
 	$(window).trigger("resize");
 }
 
@@ -96,7 +96,7 @@ function show_panel_left(panelNode)
 				.height("100%")
 				.width("100%")
 				.css("display", "block")
-				.trigger("revealing");
+				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
 							$(window).trigger("resize");
@@ -170,14 +170,14 @@ function is_pick_cell(cell)
 }
 
 function push_text_changed(d) {
-	d.add_target("dataChanged", this);
-	$(this).on("dataChanged", function(e) {
+	d.add_target("dataChanged.cr", this);
+	$(this).on("dataChanged.cr", function(e) {
 			d3.select(this).text(d.getDescription());
 		});
 	if (d.cell && d.cell.field.capacity == "_unique value")
 	{
 		d.add_target("value_deleted", this);
-		$(this).on("valueDeleted", function(e) {
+		$(this).on("valueDeleted.cr", function(e) {
 			d3.select(this).text(d.getDescription());
 		});
 	}
@@ -199,10 +199,10 @@ function checkItemsDivDisplay(itemsDiv, cell)
 
 function setupItemsDivHandlers(itemsDiv, cell)
 {
-	cell.add_target("valueAdded", itemsDiv.node());
-	cell.add_target("valueDeleted", itemsDiv.node());
-	cell.add_target("dataChanged", itemsDiv.node());
-	$(itemsDiv.node()).on("dataChanged valueDeleted valueAdded", function(e)
+	cell.add_target("valueAdded.cr", itemsDiv.node());
+	cell.add_target("valueDeleted.cr", itemsDiv.node());
+	cell.add_target("dataChanged.cr", itemsDiv.node());
+	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
 		{
 			checkItemsDivDisplay(itemsDiv, cell);
 		});
@@ -212,11 +212,11 @@ function setupItemHandlers(d)
 {
 	if (d.cell.field.capacity != "_unique value")
 	{
-		$(this).on("valueDeleted", function(e, newData)
+		$(this).on("valueDeleted.cr", function(e, newData)
 		{
 			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
 		});
-		d.add_target("valueDeleted", this);
+		d.add_target("valueDeleted.cr", this);
 	}
 }
 
@@ -249,7 +249,7 @@ function showViewStringCell(obj, cell)
 	}
 	
 	setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded", function(e, newData)
+	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 		{
 			setupItems(
 				d3.select(this).append("li"), cell);
@@ -324,7 +324,7 @@ function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 		appendControls(divs, cell);
 
 		setupItemsDivHandlers(itemsDiv, cell);
-		$(itemsDiv.node()).on("valueAdded", function(e, newData)
+		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 			{
 				var div = d3.select(this).append("li")
 					.datum(newData);
@@ -374,8 +374,8 @@ function getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canSh
 				   
 		if (cell.field.capacity != "_unique value")
 		{
-			newData.add_target("dataChanged", divs.node());
-			$(divs.node()).on("dataChanged", function(e) {
+			newData.add_target("dataChanged.cr", divs.node());
+			$(divs.node()).on("dataChanged.cr", function(e) {
 					d3.select(this).style("display", 
 					   newData.getValueID() || newData.value.cells.length > 0 ? "block" : "none");
 				});
@@ -413,11 +413,11 @@ function appendConfirmDeleteControls(divs, containerCell)
 	divs.classed("delete-confirm-container", true)
 		.each(function(d)
 		{
-			$(this).on("valueDeleted", function(e, newData)
+			$(this).on("valueDeleted.cr", function(e, newData)
 			{
 				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
 			});
-			d.add_target("valueDeleted", this);
+			d.add_target("valueDeleted.cr", this);
 		});						
 	
 	divs.append("button")
@@ -515,7 +515,7 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		itemsDiv.classed("border-above border-below", true);
 
 	setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !is_pick_cell(cell), show_view_object_panel));
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !is_pick_cell(cell), show_view_object_panel));
 	
 	var clickFunction;
 	if (is_pick_cell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -574,7 +574,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 		itemsDiv.classed("border-above", true);
 
 	setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded", getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, show_edit_object_panel));
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, show_edit_object_panel));
 
 	var clickFunction;
 	if (cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -797,7 +797,7 @@ function store_new_instance(oldValue, containerCell, containerUUID, sections, on
 	{
 		/* Replace the new data into the oldValue, which has already been added. */
 		oldValue.value = newData.value;
-		oldValue.trigger_event("dataChanged");
+		oldValue.trigger_event("dataChanged.cr");
 	}
 	else
 		containerCell.addValue(newData);
@@ -1037,20 +1037,20 @@ function create_panel(containerPanel, datum, headerText)
 								$(this).css("display", "none");
 						
 							/* Make sure the section gets shown if a value is added to it. */
-							cell.add_target("valueAdded", this);
-							$(this).on("valueAdded", function(e, newData) {
+							cell.add_target("valueAdded.cr", this);
+							$(this).on("valueAdded.cr", function(e, newData) {
 								$(this).css("display", "block");
 							});
 							
-							cell.add_target("valueDeleted", this);
-							$(this).on("valueDeleted", function(e, newData) {
+							cell.add_target("valueDeleted.cr", this);
+							$(this).on("valueDeleted.cr", function(e, newData) {
 								if (!cell.isEmpty())
 									$(this).css("display", "block");
 								else
 									$(this).css("display", "none");
 							});
 							
-							$(this).on("dataChanged", function(e) {
+							$(this).on("dataChanged.cr", function(e) {
 								$(this).css("display", "block");
 							});
 						}
@@ -1161,8 +1161,8 @@ function show_view_object_panel(objectData, containerCell, containerUUID, contai
 		var panel2Div = panelDiv.appendScrollArea();
 
 		var headerDiv = panel2Div.appendHeader();
-		objectData.add_target("dataChanged", headerDiv.node());
-		$(headerDiv.node()).on("dataChanged", function(e) {
+		objectData.add_target("dataChanged.cr", headerDiv.node());
+		$(headerDiv.node()).on("dataChanged.cr", function(e) {
 				var newText = get_view_panel_header(objectData, containerCell);
 				panelDiv.attr("headerText", newText);
 				d3.select(this).text(newText);
@@ -1259,7 +1259,7 @@ function show_edit_object_panel(objectData, containerCell, containerUUID, contai
 						});
 		
 					objectData.calculateDescription();
-					objectData.trigger_event("dataChanged");
+					objectData.trigger_event("dataChanged.cr");
 					successFunction();
 				}
 			}

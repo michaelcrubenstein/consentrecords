@@ -33,8 +33,8 @@ var cr = {
 			setupValue: function(d)
 			{
 				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged", function(e) {
-					d.trigger_event("dataChanged");
+				$(d).on("dataChanged.cr", function(e) {
+					d.trigger_event("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -70,8 +70,8 @@ var cr = {
 			setupValue: function(d)
 			{
 				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged", function(e) {
-					d.trigger_event("dataChanged");
+				$(d).on("dataChanged.cr", function(e) {
+					d.trigger_event("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -107,8 +107,8 @@ var cr = {
 			setupValue: function(d)
 			{
 				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged", function(e) {
-					d.trigger_event("dataChanged");
+				$(d).on("dataChanged.cr", function(e) {
+					d.trigger_event("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -143,9 +143,9 @@ var cr = {
 			},
 			setupValue: function(d)
 			{
-				$(d).on("dataChanged", d.handleContentsChanged);
-				$(d).on("valueAdded", d.handleContentsChanged);
-				$(d).on("valueDeleted", d.handleContentsChanged);
+				$(d).on("dataChanged.cr", d.handleContentsChanged);
+				$(d).on("valueAdded.cr", d.handleContentsChanged);
+				$(d).on("valueDeleted.cr", d.handleContentsChanged);
 			},
 			newValue: function()
 			{
@@ -482,7 +482,7 @@ var cr = {
 						if (newID)
 						{
 							d.id = newID;
-							d.trigger_event("dataChanged");
+							d.trigger_event("dataChanged.cr");
 						}
 						else
 						{
@@ -650,11 +650,11 @@ cr.Cell.prototype.setup = function (objectData)
 	this.parent = objectData;
 	if (this.field.descriptorType !== undefined && objectData)
 	{
-		this.add_target("valueAdded", objectData);
-		this.add_target("valueDeleted", objectData);
-		this.add_target("dataChanged", objectData);
-		$(this).on("dataChanged", function(e) {
-			this.trigger_event("dataChanged");
+		this.add_target("valueAdded.cr", objectData);
+		this.add_target("valueDeleted.cr", objectData);
+		this.add_target("dataChanged.cr", objectData);
+		$(this).on("dataChanged.cr", function(e) {
+			this.trigger_event("dataChanged.cr");
 		});
 	}
 	
@@ -681,7 +681,7 @@ cr.Cell.prototype.pushValue = function(newValue)
 {
 	newValue.cell = this;		
 	this.data.push(newValue);
-	newValue.add_target("dataChanged", this);
+	newValue.add_target("dataChanged.cr", this);
 }
 		
 cr.Cell.prototype.addValue = function(newData)
@@ -696,14 +696,14 @@ cr.Cell.prototype.addValue = function(newData)
 		}
 	}
 	this.pushValue(newData);
-	this.trigger_event("valueAdded", [newData]);
+	this.trigger_event("valueAdded.cr", [newData]);
 }
 
 cr.Cell.prototype.addNewValue = function()
 {
 	var newData = cr.dataTypes[this.field.dataType].newValue();
 	this.pushValue(newData);
-	this.trigger_event("valueAdded", [newData]);
+	this.trigger_event("valueAdded.cr", [newData]);
 	return newData;
 }
 
@@ -726,8 +726,8 @@ cr.Cell.prototype.deleteValue = function(oldData)
 		remove(this.data, oldData);
 		oldData.cell = undefined;
   	}
-  	oldData.trigger_event("valueDeleted");
-  	this.trigger_event("valueDeleted", [oldData]);
+  	oldData.trigger_event("valueDeleted.cr");
+  	this.trigger_event("valueDeleted.cr", [oldData]);
 }
 
 cr.CellValue.prototype = new cr.EventHandler();
@@ -737,7 +737,7 @@ cr.CellValue.prototype.completeUpdateValue = function(newData)
 	/* Replace the value completely so that its cells are eliminated and will be
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};
-	this.trigger_event("dataChanged");
+	this.trigger_event("dataChanged.cr");
 }
 
 cr.ObjectValue.prototype = new cr.CellValue();
@@ -791,7 +791,7 @@ cr.ObjectValue.prototype.handleContentsChanged = function(e)
 	var oldDescription = this.getDescription();
 	this.calculateDescription();
 	if (this.getDescription() != oldDescription)
-		this.trigger_event("dataChanged");
+		this.trigger_event("dataChanged.cr");
 }
 
 cr.ObjectValue.prototype.importCell = function(oldCell)

@@ -625,7 +625,7 @@
 		
 		$(document).ready (function(e) {
 			
-			$("#id_find_experience_panel").on("revealing", function(e, eventInfo)
+			$("#id_find_experience_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_services("#id_services");
 				});
@@ -633,7 +633,7 @@
 			setup_search_bar("#id_find_experience_panel .searchbar",
 				getFilter("#id_services"));
 				
-			$("#id_find_offering_panel").on("revealing", function(e, eventInfo)
+			$("#id_find_offering_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					datum = d3.select(this).datum();
 					show_offerings(datum, "#id_offerings");
@@ -642,15 +642,15 @@
 			setup_search_bar("#id_find_offering_panel .searchbar",
 				getFilter("#id_offerings"));
 				
-			$("#id_your_pathway_panel").on("revealing", function(e, eventInfo)
+			$("#id_your_pathway_panel").on("revealing.cr", function(e, eventInfo)
 			{
 				show_pathway("#id_pathway");
 			});
-			$("#id_your_plans_panel").on("revealing", function(e, eventInfo)
+			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
 				show_plans("#id_plans");
 			});
-			$("#id_consent_forms_panel").on("revealing", function(e, eventInfo)
+			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_consent_records("#id_openConsentForms");
 				});	
@@ -691,7 +691,7 @@
 			$("#id_sign_in_panel input[type='text']").bind("keyup input paste", signIn.checkenabled);
 			$("#id_sign_in_panel input[type='password']").bind("keyup input paste", signIn.checkenabled);
 
-			$("#id_sign_in_panel").on("revealing", function()
+			$("#id_sign_in_panel").on("revealing.cr", function()
 			{
 				$("#id_sign_in_panel #id_username").val($.cookie("email"));
 				$("#id_sign_in_panel #id_password").val("");
@@ -754,7 +754,7 @@
 				e.preventDefault();
 			});
 		
-			$("#id_sign_up_panel").on("revealing", function()
+			$("#id_sign_up_panel").on("revealing.cr", function()
 			{
 				$("#id_sign_up_panel #id_username").focus();
 				signUp.checkenabled();
@@ -781,7 +781,7 @@
 			});
 
 			$("#id_forgot_password_panel #id_email").bind("keyup input paste", forgotPassword.checkenabled);
-			$("#id_forgot_password_panel").on("revealing", function()
+			$("#id_forgot_password_panel").on("revealing.cr", function()
 			{
 				$("#id_forgot_password_panel #id_email").val("");
 				$("#id_forgot_password_panel #id_email").focus();
@@ -1557,8 +1557,8 @@
 				var panel2Div = panelDiv.appendScrollArea();
 
 				var headerDiv = panel2Div.appendHeader();
-				objectData.add_target("dataChanged", headerDiv.node());
-				$(headerDiv.node()).on("dataChanged", function(e) {
+				objectData.add_target("dataChanged.cr", headerDiv.node());
+				$(headerDiv.node()).on("dataChanged.cr", function(e) {
 						d3.select(this).text(get_view_panel_header(objectData, containerCell));
 					});
 
