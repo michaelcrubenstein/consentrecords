@@ -45,6 +45,10 @@ def userHome(request):
     
     if request.user.is_authenticated():
         args['userID'] = UserFactory.getUserObjectID(request.user.id)
+    
+    state = request.GET.get('state', None)
+    if state:
+    	args['state'] = state
 
     context = RequestContext(request, args)
         

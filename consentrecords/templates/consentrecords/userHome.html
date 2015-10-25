@@ -787,6 +787,51 @@
 				$("#id_forgot_password_panel #id_email").focus();
 				forgotPassword.checkenabled();
 			});
+			
+			{% if state %}
+			var stateString = "{{state}}"
+				if (stateString.startsWith("findNewExperience"))
+				{
+					stateString = stateString.substring("findNewExperience".length);
+					if (stateString.length > 0)
+					{
+						var serviceValueID = stateString.substring(0, 32);
+						stateString = stateString.substring(32);
+						$("#id_find_experience_panel").on("servicesShown.cr", function()
+						{
+							var cell = d3.select("#id_services").datum();
+							for (var i = 0; i < cell.data.length; ++i)
+							{
+								var d = cell.data[i];
+								if (d.getValueID() == serviceValueID)
+								{
+									d3.select("#id_find_offering_panel").datum(d);
+									show_panel_now("#id_find_offering_panel");
+									break;
+								}
+							}
+							$("#id_find_experience_panel").on("servicesShown.cr", null);
+						});
+						var offeringString = stateString.substring(0, 32);
+						stateString = stateString.substring(32);
+						$("#id_find_offering_panel").on("offeringsShown.cr", function()
+						{
+							var containerDiv = d3.select("#id_offerings");
+							containerDiv.selectAll("li").each(function(d)
+							{
+								if (d.getValueID() == offeringString)
+								{
+									show_offering_details(d);
+									show_panel_now("#id_offering_details_panel");
+								}
+							});
+							$("#id_find_offering_panel").on("offeringsShown.cr", null);
+						});
+					}
+					show_panel_now("#id_find_experience_panel");
+					
+				}
+			{% endif %}
 		});
 		
 		signUp = {
@@ -1094,18 +1139,21 @@
 				for (var i = 0; i < newInstances.length; i++)
 					cell.pushValue(newInstances[i]);
 				
-				layout_objects(cell, d3.select("#id_services"),
+				var container = d3.select(containerDiv);
+				container.datum(cell);
+				layout_objects(cell, container,
 					function(d) {
 						if (prepare_click())
 						{
 							var panelDiv = d3.select("#id_find_offering_panel");
-							panelDiv.datum([d]);
+							panelDiv.datum(d);
 							show_click_feedback(this);
 				
 							window.scrollTo(0, 0);
 							show_panel_left(panelDiv.node());
 						}
 					});
+				$(containerDiv).trigger("servicesShown.cr");
 			}
 			
 			var path = "Service";
@@ -1187,6 +1235,194 @@
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
+		function show_offering_details(offering)
+		{
+			offering.calculateDescription();
+			
+			var panelDiv = d3.select("#id_offering_details_panel");
+			panelDiv.datum(offering);
+			
+			var div = panelDiv.selectAll("#id_offering_details");
+			div.selectAll("div").remove();
+			div.append("div")
+				.text(offering.getDescription());
+			div.append("div")
+				.text("Minimum Age: " + get_datum_by_name(offering, "Minimum Age"));
+			div.append("div")
+				.text("Maximum Age: " + get_datum_by_name(offering, "Maximum Age"));
+			div.append("div")
+				.text("Registration Deadline: " + get_datum_by_name(offering, "Registration Deadline"));
+			cr.selectAll("#"+offering.value.id+">Service", function(newInstances)
+				{
+					newInstances.sort(function(a, b)
+						{
+							return a.getDescription().localeCompare(b.getDescription());
+						});
+		
+					div.append("div").text("Services");
+					div.append("div").selectAll("div")
+						.data(newInstances)
+						.enter()
+						.append("div")
+						.text(function(d) {
+							return d.getDescription();
+						});
+				},
+				asyncFailFunction);
+				
+			var actionDiv = panelDiv.selectAll("#id_action_container");
+			actionDiv.selectAll("div").remove();
+			var buttonDiv = actionDiv.append("div")
+				.classed("sign-up-button site-active-text", true);
+				
+			userInstance.add_target("signin.cr", panelDiv.node());
+			$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
+			{
+				var userEmailCell = get_cell_by_name(eventInfo, "_email");
+				var newEmail = userEmailCell.data[0].value;
+				cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+					function(newInstances)
+					{
+						if (newInstances.length > 0)
+						{
+							inquiryInstance = newInstances[0];
+							offering = panelDiv.datum();
+							buttonDiv.text("Delete Inquiry");
+							buttonDiv.on("click", deleteInquiryFunction);
+							bootstrap_alert.success(userInstance.getDescription() + 
+												  " already inquired into " + 
+												  offering.getDescription(),
+												  ".alert-container");
+						}
+						else
+						{
+							addInquiry();
+						}
+					},
+					asyncFailFunction);
+			});
+			
+			/* Tear down all of the events registered with this panel. */
+			$(panelDiv.node()).on("hiding.cr", function()
+			{
+				userInstance.remove_target("signin.cr", panelDiv.node());
+				$(panelDiv.node()).off("signin.cr");
+				$(panelDiv.node()).off("hiding.cr");
+			});
+				
+			var inquiriesCell = get_cell_by_name(offering, "Inquiries")
+			var newInstances = inquiriesCell.data;
+			if (newInstances.length == 0)
+				asyncFailFunction("Access Failure for Inquiries");
+			else
+			{
+				var inquiriesInstance = newInstances[0];
+				var inquiryInstance = null;
+				var inquiryCell = null;
+				var emailCell = null;
+				
+				var addInquiry = function()
+				{
+					userEmailCell = get_cell_by_name(userInstance, "_email");
+					add_single_field_instance(inquiriesInstance, 
+									   inquiryCell, 
+									   emailCell, 
+									   userEmailCell.data[0].value, 
+									   function(newData) { checkInquiryFunction([newData]); },
+									   asyncFailFunction);
+				}
+				
+				var tryAddInquiry = function()
+				{
+					if (userInstance.getValueID())
+					{
+						addInquiry();
+						unblock_click();
+					}
+					else
+						showFixedPanel(panelDiv.node(), "#id_sign_in_panel");
+				}
+				
+				var addNameFunction = function(e)
+				{
+					if (prepare_click())
+					{
+						show_click_feedback(this);
+						
+						if (inquiryCell && emailCell)
+						{
+							tryAddInquiry();
+						}
+						else
+						{
+							cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
+								function(cells)
+								{
+									inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
+									cr.getConfiguration(null, inquiryCell.field.ofKindID,
+										function(cells)
+										{
+											emailCell = cells_get_cell_by_name(cells, "_email");
+											tryAddInquiry();
+										},
+										standard_json_fail_function);
+								}, 
+								standard_json_fail_function);
+						}
+					}
+					d3.event.preventDefault();
+				};
+				
+				var deleteInquiryFunction = function(e)
+				{
+					if (prepare_click())
+					{
+						show_click_feedback(this);
+						
+						var successFunction = function(oldValue)
+						{
+							checkInquiryFunction([]);
+						}
+						
+						cr.deleteValue(inquiryInstance, inquiryInstance.cell, successFunction, asyncFailFunction);
+						
+						unblock_click();
+					}
+					d3.event.preventDefault();
+				};
+				
+				var checkInquiryFunction = function(newInstances)
+				{
+					if (newInstances.length > 0)
+					{
+						inquiryInstance = newInstances[0];
+						buttonDiv.text("Delete Inquiry");
+						buttonDiv.on("click", deleteInquiryFunction);
+					}
+					else
+					{
+						inquiryInstance = null;
+						buttonDiv.text("Add My Name");
+						buttonDiv.on("click", addNameFunction);
+					}
+				};
+				
+				if (userInstance.getValueID())
+				{
+					userInstance.checkCells(undefined, function()
+					{
+						var userEmailCell = get_cell_by_name(userInstance, "_email");
+						var newEmail = userEmailCell.data[0].value;
+						cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+							checkInquiryFunction,
+							asyncFailFunction);
+					}, asyncFailFunction);
+				}
+				else
+					checkInquiryFunction([]);
+			}
+		}
+					
 		function show_offerings(datum, container) {
 			var successFunction = function(newInstances)
 			{
@@ -1218,15 +1454,26 @@
 				
 				// Remove any lingering contents from the set of full issues.
 				var containerDiv = d3.select(container);
-				containerDiv.selectAll("div").remove();
+				containerDiv.selectAll("li").remove();
 
-				var divs = d3.select(container).selectAll("div")
+				var divs = d3.select(container).selectAll("li")
 					.data(newInstances)
 					.enter()
-					.append("div").classed("consent-record cell-div", true);	// So that each button appears on its own row.
+					.append("li").classed("consent-record cell-div", true);	// So that each button appears on its own row.
 	
 				var buttons = divs.append("button").classed("btn row-button", true)
-					.on("click", show_offering_details);
+					.on("click", function(offering)
+					{
+						if (prepare_click())
+						{
+							show_click_feedback(this);
+
+							show_offering_details(offering);
+							
+							window.scrollTo(0, 0);
+							show_panel_left("#id_offering_details_panel");
+						}
+					});
 	
 				buttons.append("span")
 					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
@@ -1252,207 +1499,12 @@
 					.text(function(d) {
 						return get_datum_by_name(d, "Organization").description;
 					});
+				$("#id_find_offering_panel").trigger("offeringsShown.cr");
 			}
 			
-			function show_offering_details(d)
-			{
-				d.calculateDescription();
-				
-				if (prepare_click())
-				{
-					show_click_feedback(this);
-
-					var panelDiv = d3.select("#id_offering_details_panel");
-					panelDiv.datum(d);
-					
-					var div = panelDiv.selectAll("#id_offering_details");
-					div.selectAll("div").remove();
-					div.append("div")
-						.text(d.getDescription());
-					div.append("div")
-						.text("Minimum Age: " + get_datum_by_name(d, "Minimum Age"));
-					div.append("div")
-						.text("Maximum Age: " + get_datum_by_name(d, "Maximum Age"));
-					div.append("div")
-						.text("Registration Deadline: " + get_datum_by_name(d, "Registration Deadline"));
-					cr.selectAll("#"+d.value.id+">Service", function(newInstances)
-						{
-							newInstances.sort(function(a, b)
-								{
-									return a.getDescription().localeCompare(b.getDescription());
-								});
-				
-							div.append("div").text("Services");
-							div.append("div").selectAll("div")
-								.data(newInstances)
-								.enter()
-								.append("div")
-								.text(function(d) {
-									return d.getDescription();
-								});
-						},
-						asyncFailFunction);
-						
-					var actionDiv = panelDiv.selectAll("#id_action_container");
-					actionDiv.selectAll("div").remove();
-					var buttonDiv = actionDiv.append("div")
-						.classed("sign-up-button site-active-text", true);
-						
-					userInstance.add_target("signin.cr", panelDiv.node());
-					$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
-					{
-						var userEmailCell = get_cell_by_name(eventInfo, "_email");
-						var newEmail = userEmailCell.data[0].value;
-						cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
-							function(newInstances)
-							{
-								if (newInstances.length > 0)
-								{
-									inquiryInstance = newInstances[0];
-									offering = panelDiv.datum();
-									buttonDiv.text("Delete Inquiry");
-									buttonDiv.on("click", deleteInquiryFunction);
-									bootstrap_alert.success(userInstance.getDescription() + 
-														  " already inquired into " + 
-														  offering.getDescription(),
-														  ".alert-container");
-								}
-								else
-								{
-									addInquiry();
-								}
-							},
-							asyncFailFunction);
-					});
-					
-					/* Tear down all of the events registered with this panel. */
-					$(panelDiv.node()).on("hiding.cr", function()
-					{
-						userInstance.remove_target("signin.cr", panelDiv.node());
-						$(panelDiv.node()).off("signin.cr");
-						$(panelDiv.node()).off("hiding.cr");
-					});
-						
-					var inquiriesCell = get_cell_by_name(d, "Inquiries")
-					var newInstances = inquiriesCell.data;
-					if (newInstances.length == 0)
-						asyncFailFunction("Access Failure for Inquiries");
-					else
-					{
-						var inquiriesInstance = newInstances[0];
-						var inquiryInstance = null;
-						var inquiryCell = null;
-						var emailCell = null;
-						
-						var addInquiry = function()
-						{
-							userEmailCell = get_cell_by_name(userInstance, "_email");
-							add_single_field_instance(inquiriesInstance, 
-											   inquiryCell, 
-											   emailCell, 
-											   userEmailCell.data[0].value, 
-											   function(newData) { checkInquiryFunction([newData]); },
-											   asyncFailFunction);
-						}
-						
-						var tryAddInquiry = function()
-						{
-							if (userInstance.getValueID())
-							{
-								addInquiry();
-								unblock_click();
-							}
-							else
-								showFixedPanel(panelDiv.node(), "#id_sign_in_panel");
-						}
-						
-						var addNameFunction = function(e)
-						{
-							if (prepare_click())
-							{
-								show_click_feedback(this);
-								
-								if (inquiryCell && emailCell)
-								{
-									tryAddInquiry();
-								}
-								else
-								{
-									cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
-										function(cells)
-										{
-											inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-											cr.getConfiguration(null, inquiryCell.field.ofKindID,
-												function(cells)
-												{
-													emailCell = cells_get_cell_by_name(cells, "_email");
-													tryAddInquiry();
-												},
-												standard_json_fail_function);
-										}, 
-										standard_json_fail_function);
-								}
-							}
-							d3.event.preventDefault();
-						};
-						
-						var deleteInquiryFunction = function(e)
-						{
-							if (prepare_click())
-							{
-								show_click_feedback(this);
-								
-								var successFunction = function(oldValue)
-								{
-									checkInquiryFunction([]);
-								}
-								
-								cr.deleteValue(inquiryInstance, inquiryInstance.cell, successFunction, asyncFailFunction);
-								
-								unblock_click();
-							}
-							d3.event.preventDefault();
-						};
-						
-						var checkInquiryFunction = function(newInstances)
-						{
-							if (newInstances.length > 0)
-							{
-								inquiryInstance = newInstances[0];
-								buttonDiv.text("Delete Inquiry");
-								buttonDiv.on("click", deleteInquiryFunction);
-							}
-							else
-							{
-								inquiryInstance = null;
-								buttonDiv.text("Add My Name");
-								buttonDiv.on("click", addNameFunction);
-							}
-						};
-						
-						if (userInstance.getValueID())
-						{
-							userInstance.checkCells(undefined, function()
-							{
-								var userEmailCell = get_cell_by_name(userInstance, "_email");
-								var newEmail = userEmailCell.data[0].value;
-								cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
-									checkInquiryFunction,
-									asyncFailFunction);
-							}, asyncFailFunction);
-						}
-						else
-							checkInquiryFunction([]);
-					}
-		
-					window.scrollTo(0, 0);
-					show_panel_left(panelDiv.node());
-				}
-			}
-						
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
-			var path = "#" + datum[0].value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
+			var path = "#" + datum.value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
