@@ -133,7 +133,7 @@
 			}
 			
 			var searchBar = $(".searchbar");
-			setup_search_bar(".searchbar", textChanged);
+			setupSearchBar(".searchbar", textChanged);
 			
 			var parentPanel = document.getElementById("id_panel1")
 			var panelDiv = d3.select(parentPanel);
@@ -156,10 +156,10 @@
 			
 			var itemsDiv = d3.select("#id_objects")
 				.data([cell]);
-			cell.add_target("valueAdded.cr", itemsDiv.node());
-			cell.add_target("dataChanged.cr", itemsDiv.node());
+			cell.addTarget("valueAdded.cr", itemsDiv.node());
+			cell.addTarget("dataChanged.cr", itemsDiv.node());
 			
-			itemsDiv.node().onValueAdded = getOnValueAddedFunction(d3.select(parentPanel), cell, null, true, true, show_view_object_panel);
+			itemsDiv.node().onValueAdded = getOnValueAddedFunction(d3.select(parentPanel), cell, null, true, true, showViewObjectPanel);
 			$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 			{
 				this.onValueAdded(e, newData);
@@ -178,13 +178,13 @@
 			
 			{% if rootID %}
 				$("#id_addUniversalObjectButton").click(function(e) {
-					if (prepare_click())
+					if (prepareClick())
 					{
-						show_click_feedback(this);
+						showClickFeedback(this);
 						
 						var newValue = cell.addNewValue();
 				
-						show_add_object_panel(newValue, null, panelDiv, submit_create_instance);
+						showAddObjectPanel(newValue, null, panelDiv, submitCreateInstance);
 					}
 
 					e.preventDefault();
@@ -203,11 +203,11 @@
 				for (var i = 0; i < newValues.length; i++)
 					cell.pushValue(newValues[i]);
 				
-				layout_objects(cell, d3.select("#id_objects"), 
+				appendCellItems(d3.select("#id_objects"), cell, 
 					function(d) {
-						if (prepare_click())
+						if (prepareClick())
 						{
-							show_view_object_panel(d, cell, null, panelDiv);
+							showViewObjectPanel(d, cell, null, panelDiv);
 						}
 					});
 			}

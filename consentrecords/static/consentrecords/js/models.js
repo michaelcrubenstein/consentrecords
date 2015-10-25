@@ -34,7 +34,7 @@ var cr = {
 			{
 				d.getDescription = function() { return this.value; };
 				$(d).on("dataChanged.cr", function(e) {
-					d.trigger_event("dataChanged.cr");
+					d.triggerEvent("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -71,7 +71,7 @@ var cr = {
 			{
 				d.getDescription = function() { return this.value; };
 				$(d).on("dataChanged.cr", function(e) {
-					d.trigger_event("dataChanged.cr");
+					d.triggerEvent("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -108,7 +108,7 @@ var cr = {
 			{
 				d.getDescription = function() { return this.value; };
 				$(d).on("dataChanged.cr", function(e) {
-					d.trigger_event("dataChanged.cr");
+					d.triggerEvent("dataChanged.cr");
 				});
 			},
 			newValue: function()
@@ -482,7 +482,7 @@ var cr = {
 						if (newID)
 						{
 							d.id = newID;
-							d.trigger_event("dataChanged.cr");
+							d.triggerEvent("dataChanged.cr");
 						}
 						else
 						{
@@ -611,7 +611,7 @@ var cr = {
 	}
 }
 		
-cr.EventHandler.prototype.add_target = function(e, target)
+cr.EventHandler.prototype.addTarget = function(e, target)
 {
 	if (!target)
 		throw "target is not specified";
@@ -621,7 +621,7 @@ cr.EventHandler.prototype.add_target = function(e, target)
 	this.events[e].push(target);
 }
 
-cr.EventHandler.prototype.remove_target = function(e, target)
+cr.EventHandler.prototype.removeTarget = function(e, target)
 {
 	if (!target)
 		throw "target is not specified";
@@ -633,13 +633,13 @@ cr.EventHandler.prototype.remove_target = function(e, target)
 	}
 }
 	
-cr.EventHandler.prototype.trigger_event = function(e, eventInfo)
+cr.EventHandler.prototype.triggerEvent = function(e, eventInfo)
 {
 	if (e in this.events)
 		$(this.events[e]).trigger(e, eventInfo);
 }
 
-cr.EventHandler.prototype.clear_events = function()
+cr.EventHandler.prototype.clearEvents = function()
 {
 	this.events = {};
 }
@@ -650,11 +650,11 @@ cr.Cell.prototype.setup = function (objectData)
 	this.parent = objectData;
 	if (this.field.descriptorType !== undefined && objectData)
 	{
-		this.add_target("valueAdded.cr", objectData);
-		this.add_target("valueDeleted.cr", objectData);
-		this.add_target("dataChanged.cr", objectData);
+		this.addTarget("valueAdded.cr", objectData);
+		this.addTarget("valueDeleted.cr", objectData);
+		this.addTarget("dataChanged.cr", objectData);
 		$(this).on("dataChanged.cr", function(e) {
-			this.trigger_event("dataChanged.cr");
+			this.triggerEvent("dataChanged.cr");
 		});
 	}
 	
@@ -681,7 +681,7 @@ cr.Cell.prototype.pushValue = function(newValue)
 {
 	newValue.cell = this;		
 	this.data.push(newValue);
-	newValue.add_target("dataChanged.cr", this);
+	newValue.addTarget("dataChanged.cr", this);
 }
 		
 cr.Cell.prototype.addValue = function(newData)
@@ -696,14 +696,14 @@ cr.Cell.prototype.addValue = function(newData)
 		}
 	}
 	this.pushValue(newData);
-	this.trigger_event("valueAdded.cr", [newData]);
+	this.triggerEvent("valueAdded.cr", [newData]);
 }
 
 cr.Cell.prototype.addNewValue = function()
 {
 	var newData = cr.dataTypes[this.field.dataType].newValue();
 	this.pushValue(newData);
-	this.trigger_event("valueAdded.cr", [newData]);
+	this.triggerEvent("valueAdded.cr", [newData]);
 	return newData;
 }
 
@@ -726,8 +726,8 @@ cr.Cell.prototype.deleteValue = function(oldData)
 		remove(this.data, oldData);
 		oldData.cell = undefined;
   	}
-  	oldData.trigger_event("valueDeleted.cr");
-  	this.trigger_event("valueDeleted.cr", [oldData]);
+  	oldData.triggerEvent("valueDeleted.cr");
+  	this.triggerEvent("valueDeleted.cr", [oldData]);
 }
 
 cr.CellValue.prototype = new cr.EventHandler();
@@ -737,7 +737,7 @@ cr.CellValue.prototype.completeUpdateValue = function(newData)
 	/* Replace the value completely so that its cells are eliminated and will be
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};
-	this.trigger_event("dataChanged.cr");
+	this.triggerEvent("dataChanged.cr");
 }
 
 cr.ObjectValue.prototype = new cr.CellValue();
@@ -791,7 +791,7 @@ cr.ObjectValue.prototype.handleContentsChanged = function(e)
 	var oldDescription = this.getDescription();
 	this.calculateDescription();
 	if (this.getDescription() != oldDescription)
-		this.trigger_event("dataChanged.cr");
+		this.triggerEvent("dataChanged.cr");
 }
 
 cr.ObjectValue.prototype.importCell = function(oldCell)

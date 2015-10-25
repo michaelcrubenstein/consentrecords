@@ -514,18 +514,10 @@
 		userInstance.value.id = "{{userID}}"
 		userInstance.value.description = "{{ user.get_full_name }}"
 		
-		/* A default function used to report an error during an asynchronous operation
-			without unblocking a user event. */
-		var asyncFailFunction = function(error)
-		{
-			bootstrap_alert.warning(error, ".alert-container");
-			/* Don't unblock here, because there was no block. */
-		}
-		
 		/* Update the username label when a user signs in or out. */	
 		var usernameLabel = $(".username-label");
-		userInstance.add_target("signin.cr", usernameLabel[0]);
-		userInstance.add_target("signout.cr", usernameLabel[0]);
+		userInstance.addTarget("signin.cr", usernameLabel[0]);
+		userInstance.addTarget("signout.cr", usernameLabel[0]);
 		usernameLabel.on("signin.cr", function(e, eventInfo)
 		{
 			$(this).text(eventInfo.getDescription());
@@ -537,8 +529,8 @@
 		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
-		userInstance.add_target("signin.cr", signinSpan[0]);
-		userInstance.add_target("signout.cr", signinSpan[0]);
+		userInstance.addTarget("signin.cr", signinSpan[0]);
+		userInstance.addTarget("signout.cr", signinSpan[0]);
 		signinSpan.on("signin.cr", function(e, eventInfo)
 		{
 			$(this).text("Sign Out");
@@ -550,8 +542,8 @@
 		
 		/* Update the list of organizations associated with the user when a user signs in or out. */
 		var orgSection = $(".organization-section");
-		userInstance.add_target("signin.cr", orgSection[0]);
-		userInstance.add_target("signout.cr", orgSection[0]);
+		userInstance.addTarget("signin.cr", orgSection[0]);
+		userInstance.addTarget("signout.cr", orgSection[0]);
 		orgSection.on("signin.cr", function(e, eventInfo)
 		{
 			load_organizations.call(this, eventInfo)
@@ -565,26 +557,26 @@
 			signed in.
 		 */
 		if (userInstance.getValueID())
-			userInstance.trigger_event("signin.cr", userInstance);
+			userInstance.triggerEvent("signin.cr", userInstance);
 		else
-			userInstance.trigger_event("signout.cr", userInstance);
+			userInstance.triggerEvent("signout.cr", userInstance);
 
 		/* Handle a click event on the sign-in button to either sign in or sign out
 			the current user.
 		 */
 		$(".sign-in-button").click(function(e) {
-			if (prepare_click())
+			if (prepareClick())
 			{
 				if (userInstance.getValueID())
 				{
 					var successFunction = function()
 					{
 						userInstance.value = {id: "", description: ""};
-						userInstance.trigger_event("signout.cr", userInstance);
-						unblock_click();
+						userInstance.triggerEvent("signout.cr", userInstance);
+						unblockClick();
 					};
 					
-					sign_out(successFunction, standard_json_fail_function);
+					sign_out(successFunction, syncFailFunction);
 				}
 				else
 				{
@@ -598,22 +590,22 @@
 		function showPanel(e)
 		{
 			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
-			if (prepare_click())
+			if (prepareClick())
 			{
-				show_click_feedback(this);
+				showClickFeedback(this);
 				
 				window.scrollTo(0, 0);
-				show_panel_left(panelDiv.node());
+				showPanelLeft(panelDiv.node());
 			}
 		}
 		
 		/* Hide the currently displaying panel with no further action. */		
 		function hide_site_panel(e)
 		{
-			if (prepare_click())
+			if (prepareClick())
 			{
-				show_click_feedback(this);
-				hide_panel_right($(this).parents(".site-panel")[0], false);
+				showClickFeedback(this);
+				hidePanelRight($(this).parents(".site-panel")[0], false);
 			}
 		}
 		
@@ -630,7 +622,7 @@
 					show_services("#id_services");
 				});
 				
-			setup_search_bar("#id_find_experience_panel .searchbar",
+			setupSearchBar("#id_find_experience_panel .searchbar",
 				getFilter("#id_services"));
 				
 			$("#id_find_offering_panel").on("revealing.cr", function(e, eventInfo)
@@ -639,7 +631,7 @@
 					show_offerings(datum, "#id_offerings");
 				});
 				
-			setup_search_bar("#id_find_offering_panel .searchbar",
+			setupSearchBar("#id_find_offering_panel .searchbar",
 				getFilter("#id_offerings"));
 				
 			$("#id_your_pathway_panel").on("revealing.cr", function(e, eventInfo)
@@ -660,17 +652,17 @@
 				userInstance.value = userData;
 				userInstance.checkCells(undefined, function()
 					{
-						userInstance.trigger_event("signin.cr", userInstance);
-						hide_panel_right($("#id_sign_in_panel")[0], false)
+						userInstance.triggerEvent("signin.cr", userInstance);
+						hidePanelRight($("#id_sign_in_panel")[0], false)
 					},
 					asyncFailFunction);
 			}
 				
 			/* Items for the sign-in panel. */
 			$("#id_sign_in_panel .submit-button").click(function(e) {
-				if (prepare_click())
+				if (prepareClick())
 				{
-					signIn.submit(signInSuccess, standard_json_fail_function);
+					signIn.submit(signInSuccess, syncFailFunction);
 				}
 				
 			   //stop form submission
@@ -680,9 +672,9 @@
 			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
 				if (e.which == 13)
 				{
-					if (prepare_click())
+					if (prepareClick())
 					{
-						signIn.submit(signInSuccess, standard_json_fail_function);
+						signIn.submit(signInSuccess, syncFailFunction);
 					}
 					e.preventDefault();
 				}
@@ -707,7 +699,7 @@
 			});	
 			
 			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepare_click())
+				if (prepareClick())
 				{
 					showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_up_panel");
 				}
@@ -715,7 +707,7 @@
 			});
 
 			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
-				if (prepare_click())
+				if (prepareClick())
 				{
 					showFixedPanel($(this).parents(".site-panel")[0], "#id_forgot_password_panel");
 				}
@@ -727,9 +719,9 @@
 				userInstance.value = userData;
 				userInstance.checkCells(undefined, function()
 					{
-						userInstance.trigger_event("signin.cr", userInstance);
+						userInstance.triggerEvent("signin.cr", userInstance);
 						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-						hide_panel_right($("#id_sign_up_panel")[0], false);
+						hidePanelRight($("#id_sign_up_panel")[0], false);
 					},
 				asyncFailFunction);
 			}
@@ -737,11 +729,11 @@
 			$("#id_sign_up_panel .submit-button").click(function(e) {
 				if (signUp.canSubmit())
 				{
-					if (prepare_click())
+					if (prepareClick())
 					{
 						signUp.checkUnusedEmail(
 							function() {
-								signUp.submit(signUpSuccess, standard_json_fail_function);
+								signUp.submit(signUpSuccess, syncFailFunction);
 							});
 					}
 				}
@@ -766,14 +758,14 @@
 			$("#id_forgot_password_panel .submit-button").click(function(e) {
 				if (forgotPassword.canSubmit())
 				{
-					if (prepare_click())
+					if (prepareClick())
 					{
 						var successFunction = function()
 						{
 							$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-							hide_panel_right($("#id_forgot_password_panel")[0], false)
+							hidePanelRight($("#id_forgot_password_panel")[0], false)
 						}
-						forgotPassword.submit(successFunction, standard_json_fail_function);
+						forgotPassword.submit(successFunction, syncFailFunction);
 					}
 				}
 			   //stop form submission
@@ -806,7 +798,7 @@
 								if (d.getValueID() == serviceValueID)
 								{
 									d3.select("#id_find_offering_panel").datum(d);
-									show_panel_now("#id_find_offering_panel");
+									showPanelNow("#id_find_offering_panel");
 									break;
 								}
 							}
@@ -822,13 +814,13 @@
 								if (d.getValueID() == offeringString)
 								{
 									show_offering_details(d);
-									show_panel_now("#id_offering_details_panel");
+									showPanelNow("#id_offering_details_panel");
 								}
 							});
 							$("#id_find_offering_panel").on("offeringsShown.cr", null);
 						});
 					}
-					show_panel_now("#id_find_experience_panel");
+					showPanelNow("#id_find_experience_panel");
 					
 				}
 			{% endif %}
@@ -1082,7 +1074,7 @@
 			panel.style("z-index", zIndex);
 			
 			window.scrollTo(0, 0);
-			show_panel_left(panel.node());
+			showPanelLeft(panel.node());
 		}
 			
 		function sign_out(successFunction, failFunction) {
@@ -1141,16 +1133,16 @@
 				
 				var container = d3.select(containerDiv);
 				container.datum(cell);
-				layout_objects(cell, container,
+				appendCellItems(container, cell, 
 					function(d) {
-						if (prepare_click())
+						if (prepareClick())
 						{
 							var panelDiv = d3.select("#id_find_offering_panel");
 							panelDiv.datum(d);
-							show_click_feedback(this);
+							showClickFeedback(this);
 				
 							window.scrollTo(0, 0);
-							show_panel_left(panelDiv.node());
+							showPanelLeft(panelDiv.node());
 						}
 					});
 				$(containerDiv).trigger("servicesShown.cr");
@@ -1275,7 +1267,7 @@
 			var buttonDiv = actionDiv.append("div")
 				.classed("sign-up-button site-active-text", true);
 				
-			userInstance.add_target("signin.cr", panelDiv.node());
+			userInstance.addTarget("signin.cr", panelDiv.node());
 			$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
 			{
 				var userEmailCell = get_cell_by_name(eventInfo, "_email");
@@ -1305,7 +1297,7 @@
 			/* Tear down all of the events registered with this panel. */
 			$(panelDiv.node()).on("hiding.cr", function()
 			{
-				userInstance.remove_target("signin.cr", panelDiv.node());
+				userInstance.removeTarget("signin.cr", panelDiv.node());
 				$(panelDiv.node()).off("signin.cr");
 				$(panelDiv.node()).off("hiding.cr");
 			});
@@ -1337,7 +1329,7 @@
 					if (userInstance.getValueID())
 					{
 						addInquiry();
-						unblock_click();
+						unblockClick();
 					}
 					else
 						showFixedPanel(panelDiv.node(), "#id_sign_in_panel");
@@ -1345,9 +1337,9 @@
 				
 				var addNameFunction = function(e)
 				{
-					if (prepare_click())
+					if (prepareClick())
 					{
-						show_click_feedback(this);
+						showClickFeedback(this);
 						
 						if (inquiryCell && emailCell)
 						{
@@ -1365,9 +1357,9 @@
 											emailCell = cells_get_cell_by_name(cells, "_email");
 											tryAddInquiry();
 										},
-										standard_json_fail_function);
+										syncFailFunction);
 								}, 
-								standard_json_fail_function);
+								syncFailFunction);
 						}
 					}
 					d3.event.preventDefault();
@@ -1375,9 +1367,9 @@
 				
 				var deleteInquiryFunction = function(e)
 				{
-					if (prepare_click())
+					if (prepareClick())
 					{
-						show_click_feedback(this);
+						showClickFeedback(this);
 						
 						var successFunction = function(oldValue)
 						{
@@ -1386,7 +1378,7 @@
 						
 						cr.deleteValue(inquiryInstance, inquiryInstance.cell, successFunction, asyncFailFunction);
 						
-						unblock_click();
+						unblockClick();
 					}
 					d3.event.preventDefault();
 				};
@@ -1464,14 +1456,14 @@
 				var buttons = divs.append("button").classed("btn row-button", true)
 					.on("click", function(offering)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
-							show_click_feedback(this);
+							showClickFeedback(this);
 
 							show_offering_details(offering);
 							
 							window.scrollTo(0, 0);
-							show_panel_left("#id_offering_details_panel");
+							showPanelLeft("#id_offering_details_panel");
 						}
 					});
 	
@@ -1566,7 +1558,7 @@
 					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
 					
 				buttons.on("click", function(d) {
-					if (prepare_click())
+					if (prepareClick())
 					{
 						show_organization_panel(d, cell, null, d3.select("body>panel"));
 					}
@@ -1596,28 +1588,28 @@
 					b.on("click", clickFunction);
 				}
 				
-				var panelDiv = create_panel(containerPanel, 
-											objectData, get_view_panel_header(objectData, containerCell))
+				var panelDiv = createPanel(containerPanel, 
+											objectData, getViewPanelHeader(objectData, containerCell))
 					.classed("background-gradient-panel", true);
 
 				var navContainer = panelDiv.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
-					.on("click", handle_close_right_event);
+					.on("click", handleCloseRightEvent);
 				backButton.append("span").text("Done");
 	
 				var panel2Div = panelDiv.appendScrollArea();
 
 				var headerDiv = panel2Div.appendHeader();
-				objectData.add_target("dataChanged.cr", headerDiv.node());
+				objectData.addTarget("dataChanged.cr", headerDiv.node());
 				$(headerDiv.node()).on("dataChanged.cr", function(e) {
-						d3.select(this).text(get_view_panel_header(objectData, containerCell));
+						d3.select(this).text(getViewPanelHeader(objectData, containerCell));
 					});
 
 				var alertContainer = panel2Div.append("div").classed("alert-container", true);
 							
 				window.scrollTo(0, 0);
-				show_panel_left(panelDiv.node());
+				showPanelLeft(panelDiv.node());
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
@@ -1625,7 +1617,7 @@
 				addButton(sectionObj, "Record an Inquiry",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							add_inquiry(d, panelDiv);
 						}
@@ -1634,7 +1626,7 @@
 				addButton(sectionObj, "Manage Inquiries",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							manage_inquiry(d, panelDiv);
 						}
@@ -1646,7 +1638,7 @@
 				addButton(sectionObj, "Enroll an Inquiry",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							enroll_inquiry(d, panelDiv);
 						}
@@ -1655,7 +1647,7 @@
 				addButton(sectionObj, "Add an Enrollment",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							add_enrollment(d, panelDiv);
 						}
@@ -1664,7 +1656,7 @@
 				addButton(sectionObj, "Manage Enrollment",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							manage_enrollment(d, panelDiv);
 						}
@@ -1676,7 +1668,7 @@
 				addButton(sectionObj, "Record Participation",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							record_participation(d, panelDiv);
 						}
@@ -1685,7 +1677,7 @@
 				addButton(sectionObj, "Manage Participation",
 					function(d)
 					{
-						if (prepare_click())
+						if (prepareClick())
 						{
 							manage_participation(d, panelDiv);
 						}
@@ -1696,7 +1688,7 @@
 		}
 		
 		/*
-			This function should be called within a prepare_click block.
+			This function should be called within a prepareClick block.
 		 */
 		function pick_offering(d, containerPanel, successFunction)
 		{
@@ -1706,13 +1698,13 @@
 						return a.getDescription().localeCompare(b.getDescription());
 					});
 	
-				var panelDiv = create_panel(containerPanel, d, "Pick Offering")
+				var panelDiv = createPanel(containerPanel, d, "Pick Offering")
 					.classed("list-panel", true);
 
 				var navContainer = panelDiv.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
-					.on("click", handle_close_right_event);
+					.on("click", handleCloseRightEvent);
 				backButton.append("span").text("Cancel");
 		
 				var centerButton = navContainer.appendTitle("Pick Offering");
@@ -1726,7 +1718,7 @@
 	
 				var buttons = appendViewButtons(sections)
 					.on("click", function(d) {
-						if (prepare_click())
+						if (prepareClick())
 						{
 							successFunction(d, panelDiv);
 						}
@@ -1734,12 +1726,12 @@
 					});
 	
 				window.scrollTo(0, 0);
-				show_panel_left(panelDiv.node());
+				showPanelLeft(panelDiv.node());
 			}
 	
 			cr.selectAll("#"+d.value.id+'>Offerings>Offering', 
 						 selectAllSuccessFunction, 
-						 standard_json_fail_function);
+						 syncFailFunction);
 		}
 		
 		function enroll_inquiry(organization, containerPanel)
@@ -1752,7 +1744,7 @@
 					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
-						standard_json_fail_function("Offering Inquiries are not set up");
+						syncFailFunction("Offering Inquiries are not set up");
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
@@ -1760,13 +1752,13 @@
 							{
 								inquiryCell = get_cell_by_name(inquiriesInstance, "Inquiry");
 								
-								var panelDiv = create_panel(containerPanel, organization, "Pick User")
+								var panelDiv = createPanel(containerPanel, organization, "Pick User")
 									.classed("list-panel", true);
 
 								var navContainer = panelDiv.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
-									.on("click", handle_close_right_event);
+									.on("click", handleCloseRightEvent);
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 								
@@ -1776,29 +1768,29 @@
 								panel2Div.appendAlertContainer();
 	
 								window.scrollTo(0, 0);
-								show_panel_left(panelDiv.node());
+								showPanelLeft(panelDiv.node());
 								
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
 								var buttons = appendViewButtons(sections)
 									.on("click", function(inquiry)
 									{
-										if (prepare_click())
+										if (prepareClick())
 										{
 											inquiry.checkCells(inquiryCell, 
 												function()
 												{
 													add_enrollment_by_inquiry(offering, inquiry);
 												}, 
-												standard_json_fail_function);
+												syncFailFunction);
 											
 										}
 									});
 							},
-							standard_json_fail_function);
+							syncFailFunction);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
 			
 			pick_offering(organization, containerPanel, successFunction);
@@ -1808,40 +1800,36 @@
 		{
 			var emailCell = get_cell_by_name(inquiry, "_email");
 			if (emailCell.data.length == 0)
-				standard_json_fail_function("The email is not set up.");
+				syncFailFunction("The email is not set up.");
 			else
 			{
 				var email = emailCell.data[0].value;
 				var selectAllSuccess = function(userObjects)
 				{
 					if (userObjects.length == 0)
-						standard_json_fail_function('There is no user set up with the email "' + email + '".');
+						syncFailFunction('There is no user set up with the email "' + email + '".');
 					else
 					{
-						add_enrollment_function(offering, userObjects[0], 
-							function()
-							{
-								unblock_click();
-							})();
+						add_enrollment_function(offering, userObjects[0], unblockClick)();
 					}
 				};
 			
-				cr.selectAll("_user[_email="+email+"]", selectAllSuccess, standard_json_fail_function);
+				cr.selectAll("_user[_email="+email+"]", selectAllSuccess, syncFailFunction);
 			}
 		}
 		
 		/*
-			This function should be called within a prepare_click block. 
+			This function should be called within a prepareClick block. 
 		 */
 		function add_enrollment(organization, containerPanel)
 		{
-			var panelDiv = create_panel(containerPanel, organization, "Pick User")
+			var panelDiv = createPanel(containerPanel, organization, "Pick User")
 				.classed("list-panel", true);
 
 			var navContainer = panelDiv.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handle_close_right_event);
+				.on("click", handleCloseRightEvent);
 			backButton.append("span").text("Done");
 	
 			var centerButton = navContainer.appendTitle("Pick User");
@@ -1852,7 +1840,7 @@
 			panel2Div.appendAlertContainer();
 	
 			window.scrollTo(0, 0);
-			show_panel_left(panelDiv.node());
+			showPanelLeft(panelDiv.node());
 			
 			var searchText = "";
 			function show_users()
@@ -1875,9 +1863,9 @@
 						var checkCellsSuccess = add_enrollment_function(offering, pickedUser, 
 							function()
 							{
-								hide_panel_right(offeringPanelDiv.node());
+								hidePanelRight(offeringPanelDiv.node());
 							});
-						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+						offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 					};
 					
 					var selectAllSuccess = function(userObjects)
@@ -1889,7 +1877,7 @@
 							var buttons = appendViewButtons(sections)
 								.on("click", function(user) {
 									pickedUser = user;
-									if (prepare_click())
+									if (prepareClick())
 									{
 										pick_offering(organization, panelDiv, pickOfferingSuccess);
 									}
@@ -1911,7 +1899,7 @@
 				var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
 				var enrollmentsInstances = enrollmentsCell.data;
 				if (enrollmentsInstances.length == 0)
-					standard_json_fail_function("Offering Enrollments are not set up");
+					syncFailFunction("Offering Enrollments are not set up");
 				else
 				{
 					var enrollmentsInstance = enrollmentsInstances[0];
@@ -1929,7 +1917,7 @@
 										user.getValueID(), 
 										function(newData)
 										{
-											standard_json_fail_function(user.getDescription() + 
+											syncFailFunction(user.getDescription() + 
 												  " already enrolled in " + 
 												  offering.getDescription());
 										},
@@ -1947,13 +1935,13 @@
 														  ".alert-container");
 													successFunction();
 											   },
-											   standard_json_fail_function);
+											   syncFailFunction);
 										},
-										standard_json_fail_function);
+										syncFailFunction);
 								},
-								standard_json_fail_function);
+								syncFailFunction);
 						},
-						standard_json_fail_function);
+						syncFailFunction);
 				}
 			}
 		}
@@ -2024,17 +2012,13 @@
 		{
 			var pickOfferingSuccess = function(offering, pickOfferingDiv)
 			{
-				var addInquiryPanelDiv = create_panel(containerPanel, organization, "Add Inquiry")
+				var addInquiryPanelDiv = createPanel(containerPanel, organization, "Add Inquiry")
 					.classed("list-panel", true);
 
 				var navContainer = addInquiryPanelDiv.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
-					.on("click", function(d)
-					{
-						closealert();
-						handle_close_right_event.call(this);
-					});
+					.on("click", handleCloseRightEvent);
 				backButton.append("span").text("Done");
 				
 				var addButton = navContainer.appendRightButton()
@@ -2063,7 +2047,7 @@
 				});
 	
 				window.scrollTo(0, 0);
-				show_panel_left(addInquiryPanelDiv.node());
+				showPanelLeft(addInquiryPanelDiv.node());
 			
 				/* Since d.getValueID() is not null, containerUUID is not needed. */
 				var createInquiry = function(d)
@@ -2071,14 +2055,14 @@
 					if (d3.select(this).classed("site-disabled-text"))
 						return;
 						
-					if (prepare_click())
+					if (prepareClick())
 					{
 						var checkCellsSuccess = function() 
 						{
 							var inquiriesCell = get_cell_by_name(offering, "Inquiries");
 							var inquiriesInstances = inquiriesCell.data;
 							if (inquiriesInstances.length == 0)
-								standard_json_fail_function("Offering Inquiries are not set up");
+								syncFailFunction("Offering Inquiries are not set up");
 							else
 							{
 								var inquiriesInstance = inquiriesInstances[0];
@@ -2102,16 +2086,16 @@
 																				  ".alert-container");
 																			inquiryInput.node().value = "";
 																			$(inquiryInput.node()).trigger("input");
-																			unblock_click();
+																			unblockClick();
 																	   },
-																	   standard_json_fail_function);
+																	   syncFailFunction);
 											},
-											standard_json_fail_function);
+											syncFailFunction);
 									},
-									standard_json_fail_function);
+									syncFailFunction);
 							}
 						}
-						offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+						offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 					};
 				};
 				
@@ -2130,14 +2114,14 @@
 					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
-						standard_json_fail_function("Offering Inquiries are not set up");
+						syncFailFunction("Offering Inquiries are not set up");
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						show_edit_object_panel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
 			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
@@ -2152,14 +2136,14 @@
 					var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
 					if (enrollmentsInstances.length == 0)
-						standard_json_fail_function("Offering Enrollments are not set up");
+						syncFailFunction("Offering Enrollments are not set up");
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						show_edit_object_panel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
 			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
@@ -2174,14 +2158,14 @@
 					var listCell = get_cell_by_name(offering, "Experiences");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
-						standard_json_fail_function("Offering Experiences are not set up");
+						syncFailFunction("Offering Experiences are not set up");
 					else
 					{
 						var instance = listInstances[0];
-						show_edit_object_panel(instance, listCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
 			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
@@ -2196,14 +2180,14 @@
 					var listCell = get_cell_by_name(offering, "Experiences");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
-						standard_json_fail_function("Offering Experiences are not set up");
+						syncFailFunction("Offering Experiences are not set up");
 					else
 					{
 						var instance = listInstances[0];
-						show_edit_object_panel(instance, listCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, standard_json_fail_function);
+				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
 			pick_offering(organization, panelDiv, pickOfferingSuccess);
 		}
