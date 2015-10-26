@@ -206,13 +206,24 @@ body {
 	width: auto;
 	float: right;
 }
+.info-button {
+	display: flex;
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	background-color: transparent;
+}
+.info-button:focus {
+	outline: none;
+}
+
 .glyphicon-minus-sign {
 	margin-right: 12px;
 	color: red;
 	-ms-transform: rotate(90deg); /* IE 9 */
 	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
 	transform: rotate(90deg);
-	border: 0;
+	border: none;
 	border-radius: 0;
 	background: transparent;
 	background-color: transparent;
@@ -225,7 +236,7 @@ body {
 .delete-confirm-button {
 	background: red;
 	color: white;
-	border: 0;
+	border: none;
 	border-radius: 0;
 	padding: 6px 12px;
 }

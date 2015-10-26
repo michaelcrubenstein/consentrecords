@@ -218,13 +218,19 @@ function setupItemsDivHandlers(itemsDiv, cell)
 
 function setupItemHandlers(d)
 {
-	if (d.cell.field.capacity != "_unique value")
+	/* This method may be called for a set of items that were gotten directly and are not
+		part of a cell.
+	 */
+	if (d.cell)
 	{
-		$(this).on("valueDeleted.cr", function(e, newData)
+		if (d.cell.field.capacity != "_unique value")
 		{
-			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-		});
-		d.addTarget("valueDeleted.cr", this);
+			$(this).on("valueDeleted.cr", function(e, newData)
+			{
+				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+			});
+			d.addTarget("valueDeleted.cr", this);
+		}
 	}
 }
 
@@ -263,7 +269,7 @@ function showViewStringCell(obj, cell)
 				d3.select(this).append("li"), cell);
 		});
 	
-	var divs = _appendItems(itemsDiv, cell.data);
+	var divs = appendItems(itemsDiv, cell.data);
 	setupItems(divs, cell);
 }
 
@@ -305,7 +311,7 @@ function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 		var itemsDiv = sectionObj.append("div")
 			.classed("items-div border-above", true);
 
-		var divs = _appendItems(itemsDiv, cell.data);
+		var divs = appendItems(itemsDiv, cell.data);
 		
 		var appendControls = function(divs, cell)
 		{	
@@ -492,7 +498,7 @@ function appendButtonDescriptions(buttons, cell)
 	buttons.append("span")
 		.classed("text-muted", true)
 		.classed("string-value-view expanding-div", true)
-		.classed("string-multi-value-container pull-left", cell.field.capacity != "_unique value")
+		.classed("string-multi-value-container pull-left", !cell || cell.field.capacity != "_unique value")
 		.text(getDataDescription)
 		.each(pushTextChanged);
 }
@@ -536,7 +542,7 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 			}
 		}
 
-	var divs = _appendItems(itemsDiv, cell.data);
+	var divs = appendItems(itemsDiv, cell.data);
 	
 	var buttons;
 	if (!isPickCell(cell)) {
@@ -598,7 +604,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 				}
 			};
 		
-	var divs = _appendItems(itemsDiv, cell.data);
+	var divs = appendItems(itemsDiv, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs, cell);
@@ -918,7 +924,7 @@ function appendViewButtons(divs)
 	return buttons;
 }
 
-function _appendItems(container, data)
+function appendItems(container, data)
 {
 	// Remove any lingering contents from the set of full issues.
 	container.selectAll("li").remove();
@@ -933,7 +939,7 @@ function _appendItems(container, data)
 /* Returns the set of objects that contain the description of each data element */
 function appendCellItems(container, cell, clickFunction)
 {
-	var divs = _appendItems(container, cell.data);
+	var divs = appendItems(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs, cell);
@@ -1137,6 +1143,37 @@ function getViewPanelHeader(objectData, containerCell)
 	return headerText;
 }
 
+/* Displays a panel in which the specified object's contents appear without being able to edit.
+ */
+function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, containerPanel) {
+	successFunction = function ()
+	{
+		var panelDiv = createPanel(containerPanel, 
+									objectData, getViewPanelHeader(objectData, containerCell))
+			.classed("show-panel", true);
+
+		var navContainer = panelDiv.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+		backButton.append("span").text(" " + containerPanel.attr("headerText"));
+	
+		var panel2Div = panelDiv.appendScrollArea();
+
+		var headerDiv = panel2Div.appendHeader();
+
+		panel2Div.appendAlertContainer();
+							
+		window.scrollTo(0, 0);
+		showPanelLeft(panelDiv.node());
+	
+		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
+	}
+	
+	objectData.checkCells(containerCell, successFunction, syncFailFunction)
+}
+
 /* Displays a panel in which the specified object's contents appear.
  */
 function showViewObjectPanel(objectData, containerCell, containerUUID, containerPanel) {
@@ -1184,13 +1221,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
 	}
 	
-	failFunction = function(error)
-	{
-		alert(error);
-		unblockClick();
-	}
-	
-	objectData.checkCells(containerCell, successFunction, failFunction)
+	objectData.checkCells(containerCell, successFunction, syncFailFunction)
 }
 
 /* 

@@ -94,6 +94,12 @@
     		margin-top: 15px;
     		margin-left: 45px;
     	}
+    	.share-container {
+    		position: fixed;
+    		bottom: 0px;
+    		width: 100%;
+    		padding: 6px 12px;
+    	}
     </style>
 	</head>
 	
@@ -318,28 +324,6 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_offering_details_panel" class="level-4-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title site-fill"><span class="site-inner-fill">Sign-Up</span></div>
-					</div>
-				</div>
-			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
-				<div>
-					<div class="alert-container"></div>
-				</div>
-				<div id="id_offering_details">
-				</div>
-				<div id="id_action_container">
-				</div>
-			</div>
-	    </panel>
 	    <panel id="id_your_pathway_panel" class="level-2-panel configuration-panel site-panel list-panel">
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
@@ -493,9 +477,30 @@
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
+	{% if facebookIntegration %}
+	<script>
+	  window.fbAsyncInit = function() {
+		FB.init({
+		  appId      : '1503871976607590',
+		  xfbml      : true,
+		  version    : 'v2.5'
+		});
+	  };
+
+	  (function(d, s, id){
+		 var js, fjs = d.getElementsByTagName(s)[0];
+		 if (d.getElementById(id)) {return;}
+		 js = d.createElement(s); js.id = id;
+		 js.src = "//connect.facebook.net/en_US/sdk.js";
+		 fjs.parentNode.insertBefore(js, fjs);
+	   }(document, 'script', 'facebook-jssdk'));
+	</script>
+	{% endif %}
+
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		var storedcsrftoken = "{{ csrf_token }}";
+		var activeColor = "#2C55CC"
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
@@ -813,8 +818,9 @@
 							{
 								if (d.getValueID() == offeringString)
 								{
-									show_offering_details(d);
-									showPanelNow("#id_offering_details_panel");
+									
+									var panelDiv = show_offering_details(d, d3.select("#id_find_offering_panel"));
+									showPanelNow(panelDiv.node());
 								}
 							});
 							$("#id_find_offering_panel").on("offeringsShown.cr", null);
@@ -1227,23 +1233,118 @@
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
-		function show_offering_details(offering)
+		function appendStringItem(obj, label, text)
+		{
+			var sectionObj = d3.select(obj);
+	
+			sectionObj.classed("cell-div", true)
+				.classed("border-below", true);
+	
+			var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
+				.text(label);
+			var itemsDiv = sectionObj.append("div").classed("items-div", true);
+
+			
+			if (text)
+			{
+				labelDiv.classed("left-label-div left-fixed-width-div", true);
+				itemsDiv.classed("right-label-div expanding-div", true);
+
+				var setupItems = function(divs) {
+					divs.append("div")
+					.classed("string-value-view", true)
+					.text(function(d) { return d; });
+				}
+	
+				var divs = appendItems(itemsDiv, [text]);
+				setupItems(divs);
+			}
+			else
+				labelDiv.classed("left-label-div expanding-div", true);
+				
+		}
+
+		function show_offering_details(offering, containerPanel)
 		{
 			offering.calculateDescription();
 			
-			var panelDiv = d3.select("#id_offering_details_panel");
-			panelDiv.datum(offering);
+			var panelDiv = createPanel(containerPanel, offering, offering.getDescription())
+				.classed("list-panel", true);
 			
-			var div = panelDiv.selectAll("#id_offering_details");
-			div.selectAll("div").remove();
-			div.append("div")
-				.text(offering.getDescription());
-			div.append("div")
-				.text("Minimum Age: " + get_datum_by_name(offering, "Minimum Age"));
-			div.append("div")
-				.text("Maximum Age: " + get_datum_by_name(offering, "Maximum Age"));
-			div.append("div")
-				.text("Registration Deadline: " + get_datum_by_name(offering, "Registration Deadline"));
+			var navContainer = panelDiv.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", handleCloseRightEvent);
+			backButton.append("span").text("Done");
+			
+			var buttonDiv = navContainer.appendRightButton();
+			
+			var shareDiv = panelDiv.append("div");
+			shareDiv.classed("share-container site-navbar border-above", true);
+
+			{% if facebookIntegration %}
+			shareDiv.append("div")
+				.classed("fb-like", true)
+				.attr("data-share", "true")
+				.attr("data-width", "450")
+				.attr("data-show-faces", "true");
+
+			var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+			full = "http://www.consentrecords.org"
+			var service = d3.select("#id_find_offering_panel").datum()
+			FB.ui({
+			  method: 'share',
+			  href: full+"/?state=findNewExperience"+service.value.id+offering.value.id,
+			}, function(response){});
+			{% endif %}
+
+// <div
+//   class="fb-like"
+//   data-share="true"
+//   data-width="450"
+//   data-show-faces="true">
+// </div>
+
+			var panel2Div = panelDiv.appendScrollArea();
+			panel2Div.appendHeader();
+			panel2Div.appendAlertContainer();
+			
+			var orgValue = get_datum_by_name(offering, "Organization");
+			if (orgValue)
+			{
+				var orgDiv = panel2Div.append("div");
+				appendStringItem(orgDiv.node(), orgValue.description, null);
+			}
+			
+			function appendStringDatum(cellName)
+			{
+				var v = get_datum_by_name(offering, cellName);
+				if (v)
+				{
+					var deadlineDiv = panel2Div.append("div");
+					appendStringItem(deadlineDiv.node(), cellName, v);
+					return deadlineDiv;
+				}
+				else
+					return null;
+			}
+			
+			var firstDiv = null;
+			var nextDiv;
+			firstDiv = appendStringDatum("Registration Deadline");
+			
+			nextDiv = appendStringDatum("Start Date");
+			if (!firstDiv)
+				firstDiv = nextDiv;
+				
+			nextDiv = appendStringDatum("End Date");
+			if (!firstDiv)
+				firstDiv = nextDiv;
+			if (firstDiv)
+				firstDiv.classed("cell-edit-div", true);	/* Add a leading space */			
+
+			var cellDiv = panel2Div.append("div")
+				.classed("cell-div cell-edit-div", true);
 			cr.selectAll("#"+offering.value.id+">Service", function(newInstances)
 				{
 					newInstances.sort(function(a, b)
@@ -1251,22 +1352,46 @@
 							return a.getDescription().localeCompare(b.getDescription());
 						});
 		
-					div.append("div").text("Services");
-					div.append("div").selectAll("div")
-						.data(newInstances)
-						.enter()
-						.append("div")
-						.text(function(d) {
-							return d.getDescription();
-						});
+					if (newInstances.length > 0)
+					{
+						var labelDiv = cellDiv.append("div").classed("cell-label-div", true)
+							.text("Services");
+						var itemsDiv = cellDiv.append("div").classed("items-div", true);
+
+						var divs = appendItems(itemsDiv, newInstances);
+						var buttons = divs.append("div").classed("list-div", true);
+						appendButtonDescriptions(buttons, null);
+						itemsDiv.classed("border-below", true);
+					}
 				},
 				asyncFailFunction);
-				
-			var actionDiv = panelDiv.selectAll("#id_action_container");
-			actionDiv.selectAll("div").remove();
-			var buttonDiv = actionDiv.append("div")
-				.classed("sign-up-button site-active-text", true);
-				
+			
+			var min = get_datum_by_name(offering, "Minimum Age");
+			var max = get_datum_by_name(offering, "Maximum Age");
+			var newText = "";
+			if (min)
+			{
+				if (max)
+				{
+					if (min == max)
+						newText = min;
+					else
+						newText = min + " - " + max;
+				}
+				else
+					newText = min + " or older";
+			}
+			else if (max)
+			{
+				newText = "up to " + max;
+			}
+			if (newText)
+			{
+				var agesDiv = panel2Div.append("div");
+				appendStringItem(agesDiv.node(), "Ages", newText);
+				agesDiv.classed("cell-edit-div", true);
+			}
+
 			userInstance.addTarget("signin.cr", panelDiv.node());
 			$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
 			{
@@ -1277,12 +1402,12 @@
 					{
 						if (newInstances.length > 0)
 						{
-							inquiryInstance = newInstances[0];
 							offering = panelDiv.datum();
-							buttonDiv.text("Delete Inquiry");
+							inquiryInstance = newInstances[0];
+							buttonDiv.text("Back Out");
 							buttonDiv.on("click", deleteInquiryFunction);
 							bootstrap_alert.success(userInstance.getDescription() + 
-												  " already inquired into " + 
+												  " already signed up for " + 
 												  offering.getDescription(),
 												  ".alert-container");
 						}
@@ -1320,7 +1445,13 @@
 									   inquiryCell, 
 									   emailCell, 
 									   userEmailCell.data[0].value, 
-									   function(newData) { checkInquiryFunction([newData]); },
+									   function(newData) { 
+									   		bootstrap_alert.success("You have signed up for " + 
+														  offering.getDescription() + "." +
+														  " Look out for a notice when you are enrolled.",
+														  ".alert-container");
+									   		checkInquiryFunction([newData]); 
+									   	},
 									   asyncFailFunction);
 				}
 				
@@ -1373,6 +1504,9 @@
 						
 						var successFunction = function(oldValue)
 						{
+							bootstrap_alert.success("You have backed out of " + 
+										  offering.getDescription() + ".",
+										  ".alert-container");
 							checkInquiryFunction([]);
 						}
 						
@@ -1388,13 +1522,13 @@
 					if (newInstances.length > 0)
 					{
 						inquiryInstance = newInstances[0];
-						buttonDiv.text("Delete Inquiry");
+						buttonDiv.text("Back Out");
 						buttonDiv.on("click", deleteInquiryFunction);
 					}
 					else
 					{
 						inquiryInstance = null;
-						buttonDiv.text("Add My Name");
+						buttonDiv.text("Sign Up");
 						buttonDiv.on("click", addNameFunction);
 					}
 				};
@@ -1413,9 +1547,11 @@
 				else
 					checkInquiryFunction([]);
 			}
+			
+			return panelDiv;
 		}
 					
-		function show_offerings(datum, container) {
+		function show_offerings(service, container) {
 			var successFunction = function(newInstances)
 			{
 				newInstances.sort(function(a, b)
@@ -1460,10 +1596,11 @@
 						{
 							showClickFeedback(this);
 
-							show_offering_details(offering);
+							var containerPanel = d3.select("#id_find_offering_panel");
+							var panelDiv = show_offering_details(offering, containerPanel);
 							
 							window.scrollTo(0, 0);
-							showPanelLeft("#id_offering_details_panel");
+							showPanelLeft(panelDiv.node());
 						}
 					});
 	
@@ -1496,7 +1633,7 @@
 			
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
-			var path = "#" + datum.value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
+			var path = "#" + service.value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
@@ -1606,7 +1743,7 @@
 						d3.select(this).text(getViewPanelHeader(objectData, containerCell));
 					});
 
-				var alertContainer = panel2Div.append("div").classed("alert-container", true);
+				var alertContainer = panel2Div.appendAlertContainer();
 							
 				window.scrollTo(0, 0);
 				showPanelLeft(panelDiv.node());
@@ -1786,6 +1923,9 @@
 											
 										}
 									});
+									
+								buttons.insert("span", ":first-child")
+									.classed("glyphicon glyphicon-info-sign pull-right", true);
 							},
 							syncFailFunction);
 					}
@@ -1816,6 +1956,34 @@
 			
 				cr.selectAll("_user[_email="+email+"]", selectAllSuccess, syncFailFunction);
 			}
+		}
+		
+		function drawInfoButtons(infoButtons)
+		{
+			var svg = infoButtons.append("svg")
+				.attr("width", "24px")
+				.attr("height", "24px");
+			var circles = svg.append("circle")
+				.attr("cx", "12px")
+				.attr("cy", "12px")
+				.attr("r", "11px")
+				.attr("fill", "transparent")
+				.attr("stroke", activeColor)
+				.attr("stroke-width", "1");
+			var text = svg.append("text")
+				.attr("x", "12px")
+				.attr("y", "17px")
+				.attr("text-anchor", "middle")
+				.attr("font-family", "serif")
+				.attr("font-weight", "bold")
+				.attr("font-size", "16px")
+				.attr("fill", activeColor)
+				.text("i");
+		}
+		
+		function show_user(user, containerPanel)
+		{
+			showViewOnlyObjectPanel(user, user.cell, undefined, containerPanel);
 		}
 		
 		/*
@@ -1883,6 +2051,17 @@
 									}
 									d3.event.preventDefault();
 								});
+							var infoButtons =  buttons.insert("div", ":first-child")
+								.classed("info-button right-fixed-width-div", true)
+								.on("click", function(user) {
+									if (prepareClick())
+									{
+										show_user(user, panelDiv);
+									}
+									d3.event.preventDefault();
+								});
+							drawInfoButtons(infoButtons);
+
 							searchText = startVal;
 						}
 					}
