@@ -45,6 +45,9 @@ def userHome(request):
     
     if request.user.is_authenticated():
         args['userID'] = UserFactory.getUserObjectID(request.user.id)
+        
+    if settings.FACEBOOK_SHOW:
+    	args['facebookIntegration'] = True
     
     state = request.GET.get('state', None)
     if state:

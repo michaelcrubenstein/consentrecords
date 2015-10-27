@@ -1278,19 +1278,13 @@
 			shareDiv.classed("share-container site-navbar border-above", true);
 
 			{% if facebookIntegration %}
-			shareDiv.append("div")
-				.classed("fb-like", true)
-				.attr("data-share", "true")
-				.attr("data-width", "450")
-				.attr("data-show-faces", "true");
-
-			var full = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
-			full = "http://www.consentrecords.org"
 			var service = d3.select("#id_find_offering_panel").datum()
-			FB.ui({
-			  method: 'share',
-			  href: full+"/?state=findNewExperience"+service.value.id+offering.value.id,
-			}, function(response){});
+			var targetHRef = window.location.href+"/?state=findNewExperience"+service.value.id+offering.value.id;
+
+			shareDiv.append("div")
+				.classed("fb-share-button", true)
+				.attr("data-href", targetHRef)
+				.attr("data-layout", "button_count");
 			{% endif %}
 
 // <div
