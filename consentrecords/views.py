@@ -643,10 +643,3 @@ def submitNewUser(request):
         
     return JsonResponse(results)
 
-
-def certTest(request):
-    template = loader.get_template('consentrecords/FA3BF151A80668B165AF2D7279E685DD.txt')
-    context = RequestContext(request, {
-    })
-        
-    return HttpResponse(template.render(context))
