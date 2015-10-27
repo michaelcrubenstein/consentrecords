@@ -369,6 +369,7 @@ class api:
         return data;
     
     def getData(user, data):
+        path=None
         try:
             # Get the uuid name of the kind for which we are getting the configuration.
             uuidString = data.get('id', "")
@@ -395,6 +396,8 @@ class api:
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
+            logger.error("getData data:%s" % str(data))
+            
             results = {'success':False, 'error': str(e)}
             
         return JsonResponse(results)
@@ -640,3 +643,10 @@ def submitNewUser(request):
         
     return JsonResponse(results)
 
+
+def certTest(request):
+    template = loader.get_template('consentrecords/FA3BF151A80668B165AF2D7279E685DD.txt')
+    context = RequestContext(request, {
+    })
+        
+    return HttpResponse(template.render(context))

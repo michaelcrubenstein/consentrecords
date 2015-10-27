@@ -318,4 +318,3 @@ def updatePassword(request):
         results = {'success':False, 'error': str(e)}
     
     return JsonResponse(results)
-

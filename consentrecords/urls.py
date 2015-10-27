@@ -56,6 +56,7 @@ urlpatterns = [
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
+    url(r'^FA3BF151A80668B165AF2D7279E685DD.txt', views.certTest),
 ]
 
 BootStrapper.initializeUUNames()

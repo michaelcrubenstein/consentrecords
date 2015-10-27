@@ -12,7 +12,7 @@ class InstanceAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
     )
-    readonly_fields = ('id','typeID', 'parent','transaction')
+    readonly_fields = ('id','typeID', 'parent', '_description', 'transaction')
     search_fields = ('typeID', )
 
 class DeletedInstanceAdmin(admin.ModelAdmin):
