@@ -23,22 +23,21 @@ logout
 
 ##################################################################
 # Step 2: ftp the tar file to the EC2 instance.
-##################################################################
-# Start a remote connection with this command:
-sftp -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
-cd eb_django_app/prod/consentrecords
-lcd GitHub/consentrecords
-put c.tar
-exit
-
-
-
-##################################################################
-# Step 3: extract from the tar file, remove unnecessary files,
+ extract from the tar file, remove unnecessary files,
   update the settings file for deployment,
   collect static files
   migrate the database
   deploy to elastic beanstalk.
+##################################################################
+# Start a remote connection with this command:
+sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
+cd eb_django_app/prod/consentrecords
+lcd ~/GitHub/consentrecords
+put c.tar
+exit
+
+##################################################################
+# Step 3:
 ##################################################################
 # Start a remote ssh connection with this command.
 ssh -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
