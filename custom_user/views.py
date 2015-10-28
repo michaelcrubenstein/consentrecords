@@ -225,10 +225,10 @@ def submitSignout(request):
 def checkUnusedEmail(request):
     LogRecord.emit(request.user, 'custom_user/checkUnusedEmail', '')
 
-    results = {'success':False, 'error': 'checkEmail failed'}
+    results = {'success':False, 'error': 'checkUnusedEmail failed'}
     try:
         if request.method != "POST":
-            raise Exception("checkEmail only responds to POST requests")
+            raise Exception("checkUnusedEmail only responds to POST requests")
 
         email = request.POST['email']
         
@@ -240,6 +240,7 @@ def checkUnusedEmail(request):
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
+        logger.error("%s" % str(request.POST))
         results = {'success':False, 'error': str(e)}
     
     return JsonResponse(results)

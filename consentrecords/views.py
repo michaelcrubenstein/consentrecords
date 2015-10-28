@@ -47,11 +47,38 @@ def userHome(request):
         args['userID'] = UserFactory.getUserObjectID(request.user.id)
         
     if settings.FACEBOOK_SHOW:
-    	args['facebookIntegration'] = True
+        args['facebookIntegration'] = True
     
     state = request.GET.get('state', None)
     if state:
-    	args['state'] = state
+        args['state'] = state
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def find(request, serviceid, offeringid):
+    LogRecord.emit(request.user, 'consentrecords/find', '')
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        args['userID'] = UserFactory.getUserObjectID(request.user.id)
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = "findNewExperience" + serviceid + offeringid
+    
+    if settings.FACEBOOK_SHOW:
+        offering = LazyInstance(offeringid)
+        args['fbURL'] = request.build_absolute_uri()
+        args['fbTitle'] = offering._description
+        args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
 
     context = RequestContext(request, args)
         

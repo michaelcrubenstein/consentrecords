@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^user/', include('custom_user.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^$', views.home, name='home'),
+    url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^list', views.list, name='list'),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),

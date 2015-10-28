@@ -135,6 +135,10 @@ class LazyInstance(LazyObject):
                 raise Instance.DoesNotExist('The instance id "%s" is not recognized.' % self.id)
         return self._instance
     
+    @property
+    def parent(self):
+        return self.parentID and LazyInstance(self.parentID)
+        
     def fieldName(fieldID):     #Previously verbString
         return LazyInstance(fieldID).getSubValue(Fact.uuNameUUID()).stringValue or str(fieldID)
     
@@ -1263,7 +1267,7 @@ class Fact():
         # Instantiate all of the other core uuNames.
         for s in Fact._initialKinds:
             try: 
-                id = Fact.getNamedUUID(s, transactionState)
+                id = Fact.getNamedUUID(s)
             except Fact.UnrecognizedNameError:
                 obj = uuid.uuid4()
                 i = Instance.objects.create(id=obj.hex, typeID=uunameID.hex, parent=None, transaction=transactionState.transaction)

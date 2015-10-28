@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="https://www.facebook.com/2008/fbml">
 {% load staticfiles %}
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	{% if fbURL %}
+    <meta property="og:url" content="{{fbURL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{fbTitle}}">
+    <meta property="og:description" content="{{fbDescription}}">
+    {% endif %}
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
@@ -104,6 +112,30 @@
 	</head>
 	
   	<body class="site-body">
+  	
+		{% if facebookIntegration %}
+  		<div id="fb-root"></div>
+		<script>
+		  window.fbAsyncInit = function() {
+			FB.init({
+			  appId      : '1503871976607590',
+			  status     : true,
+			  cookie     : true,
+			  xfbml      : true,
+			  version    : 'v2.5'
+			});
+		  };
+
+		  (function(d, s, id){
+			 var js, fjs = d.getElementsByTagName(s)[0];
+			 if (d.getElementById(id)) {return;}
+			 js = d.createElement(s); js.id = id;
+			 js.src = "//connect.facebook.net/en_US/sdk.js";
+			 fjs.parentNode.insertBefore(js, fjs);
+		   }(document, 'script', 'facebook-jssdk'));
+		</script>
+		{% endif %}
+		
   		<panel id="id_user_home_panel" class="base-panel site-panel background-gradient-panel" >
 			<nav class="navbar navbar-default site-navbar" role="navigation">
 				<div class="container-fluid">
@@ -472,26 +504,6 @@
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
-	{% if facebookIntegration %}
-	<script>
-	  window.fbAsyncInit = function() {
-		FB.init({
-		  appId      : '1503871976607590',
-		  xfbml      : true,
-		  version    : 'v2.5'
-		});
-	  };
-
-	  (function(d, s, id){
-		 var js, fjs = d.getElementsByTagName(s)[0];
-		 if (d.getElementById(id)) {return;}
-		 js = d.createElement(s); js.id = id;
-		 js.src = "//connect.facebook.net/en_US/sdk.js";
-		 fjs.parentNode.insertBefore(js, fjs);
-	   }(document, 'script', 'facebook-jssdk'));
-	</script>
-	{% endif %}
-
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		var storedcsrftoken = "{{ csrf_token }}";
@@ -616,7 +628,6 @@
 		$(".done-button").click(hide_site_panel);
 		
 		$(document).ready (function(e) {
-			
 			$("#id_find_experience_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_services("#id_services");
@@ -1259,6 +1270,30 @@
 				
 		}
 
+		function setMetaProperties(offering, targetHRef)
+		{
+			var headDiv = d3.select("head");
+			headDiv.selectAll("meta").each(function()
+			{
+				var metaObj = d3.select(this);
+				if (metaObj.attr("property") &&
+					metaObj.attr("property").startsWith("og:"))
+					metaObj.remove();
+			});
+			var orgValue = get_datum_by_name(offering, "Organization");
+			var a = [{property: "og:url", content: targetHRef},
+					 {property: "og:type", content: "website" },
+					 {property: "og:title", content: offering.getDescription()},
+					 {property: "og:description", content: orgValue.description}];
+			for (var i = 0; i < a.length; i++)
+			{
+				if (a[i].content)
+					headDiv.append("meta")
+						.attr("property", a[i].property)
+						.attr("content", a[i].content);
+			}
+		}
+		
 		function show_offering_details(offering, containerPanel)
 		{
 			offering.calculateDescription();
@@ -1277,14 +1312,26 @@
 			var shareDiv = panelDiv.append("div");
 			shareDiv.classed("share-container site-navbar border-above", true);
 
-			{% if facebookIntegration %}
 			var service = d3.select("#id_find_offering_panel").datum()
-			var targetHRef = window.location.href+"/?state=findNewExperience"+service.value.id+offering.value.id;
+			var targetHRef = window.location.origin+"/find/"+service.value.id+"/"+offering.value.id;
 
-			shareDiv.append("div")
+			setMetaProperties(offering, targetHRef);
+			var fbDiv = shareDiv.append("div")
 				.classed("fb-share-button", true)
 				.attr("data-href", targetHRef)
 				.attr("data-layout", "button_count");
+			var fbImage = fbDiv.append("img")
+				.attr("src", "{% static "consentrecords/png/fb.png" %}")
+				.style("height", "22px")
+				.style("weight", "22px");
+			{% if facebookIntegration %}
+			fbDiv.on("click", function() {
+				FB.ui({
+				      method     : 'share',
+					  href       : targetHRef
+					  }, function(response){});
+				d3.event.preventDefault();
+			});
 			{% endif %}
 
 // <div
