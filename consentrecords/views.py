@@ -341,6 +341,9 @@ class api:
         
             configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
         
+            if not configurationObject:
+                return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
+                
             p = configurationObject.getData()
         
             results = {'success':True, 'cells': p}
@@ -401,10 +404,7 @@ class api:
     def getData(user, data):
         path=None
         try:
-            # Get the uuid name of the kind for which we are getting the configuration.
-            uuidString = data.get('id', "")
-        
-            path = data.get('path', '#' + uuidString)
+            path = data.get('path', None)
         
             if not path:
                 return JsonResponse({'success':False, 'error': "path was not specified in getData"})
