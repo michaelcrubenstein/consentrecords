@@ -298,7 +298,7 @@ var cr = {
 				{
 					if (json.success) {
 						d.id = json.ids[0]
-						oldValue.completeUpdateValue(d);
+						oldValue.completeUpdate(d);
 						successFunction();
 					}
 					else {
@@ -452,7 +452,7 @@ var cr = {
 			function(newData)
 			{
 				if (oldValue)
-					oldValue.completeUpdateValue(newData);
+					oldValue.completeUpdate(newData);
 				else
 					containerCell.addValue(newData);
 				if (successFunction) successFunction(newData);
@@ -691,7 +691,7 @@ cr.Cell.prototype.addValue = function(newData)
 	{
 		var oldData = this.data[i];
 		if (!oldData.id && isEmpty(oldData)) {
-			oldData.completeUpdateValue(newData);
+			oldData.completeUpdate(newData);
 			return;
 		}
 	}
@@ -733,11 +733,16 @@ cr.Cell.prototype.deleteValue = function(oldData)
 cr.CellValue.prototype = new cr.EventHandler();
 cr.CellValue.prototype.completeUpdateValue = function(newData)
 {
-	this.id = newData.id;
 	/* Replace the value completely so that its cells are eliminated and will be
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};
 	this.triggerEvent("dataChanged.cr");
+}
+
+cr.CellValue.prototype.completeUpdate = function(newData)
+{
+	this.id = newData.id;
+	this.completeUpdateValue(newData);
 }
 
 cr.ObjectValue.prototype = new cr.CellValue();

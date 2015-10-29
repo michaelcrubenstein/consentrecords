@@ -1315,21 +1315,14 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 	objectData.checkCells(containerCell, successFunction, failFunction);
 }
 
-function _storeUnsavedPickedValue(cell, oldData, newData)
+function _storeUnsavedPickedValue(oldData, newData)
 {
-	if (oldData)
-	{
-		/* In this case, we are replacing an old value for
-		   an item that was added to the item but not saved;
-		   a placeholder or a previously picked value.
-		 */
-		if (newData.getValueID() != oldData.getValueID()) {
-			oldData.completeUpdateValue(newData);
-		}
-	}
-	else	/* In this case, we are adding an object to a new object. */
-	{
-		cell.addValue(newData);
+	/* In this case, we are replacing an old value for
+	   an item that was added to the item but not saved;
+	   a placeholder or a previously picked value.
+	 */
+	if (newData.getValueID() != oldData.getValueID()) {
+		oldData.completeUpdateValue(newData);
 	}
 }
 
@@ -1443,7 +1436,7 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 					}
 					else 
 					{
-						_storeUnsavedPickedValue(cell, oldData, d);
+						_storeUnsavedPickedValue(oldData, d);
 						successFunction();
 					}
 				}
