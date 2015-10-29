@@ -1219,6 +1219,7 @@
 				divs.classed("consent-record cell-div", true);
 				
 				divs.append('div').classed("right-label-div right-fixed-width-div right-label-div", true)
+					.classed("sub-text", true)
 					.text(getDateRange);
 				var titleDivs = divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true);
 				titleDivs.append("div")
@@ -1645,6 +1646,7 @@
 				var rightText = buttons.append('span').classed("centered-right-2", true);
 				
 				rightText.append('div')
+					.classed("sub-text", true)
 					.text(getDateRange);
 				rightText.append('div').classed("sub-text", true)
 					.text(function(d) {
@@ -1683,6 +1685,7 @@
 					/* Add cell-label-div to match the vertical padding of right-label-div */
 				
 				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div", true)
+					.classed("sub-text", true)
 					.text(getDateRange);
 				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
 					.text(function(d) { 
