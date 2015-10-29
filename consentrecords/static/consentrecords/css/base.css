@@ -133,8 +133,7 @@ body {
 .string-unique-item {
 	overflow: hidden;
 	width:auto;
-	margin-right: 12px;
-	margin-left: 12px;
+	padding: 6px 12px;
 }
 .string-unique-input {
 	width: 100%;
