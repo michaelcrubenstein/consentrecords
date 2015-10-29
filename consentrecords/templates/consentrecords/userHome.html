@@ -523,8 +523,10 @@
 
 		/* The global object used to identify the current user. */
 		var userInstance = new cr.ObjectValue();
+		{% if userID %}
 		userInstance.value.id = "{{userID}}"
 		userInstance.value.description = "{{ user.get_full_name }}"
+		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
 		var usernameLabel = $(".username-label");
@@ -1336,13 +1338,6 @@
 				d3.event.preventDefault();
 			});
 			{% endif %}
-
-// <div
-//   class="fb-like"
-//   data-share="true"
-//   data-width="450"
-//   data-show-faces="true">
-// </div>
 
 			var panel2Div = panelDiv.appendScrollArea();
 			panel2Div.appendHeader();
