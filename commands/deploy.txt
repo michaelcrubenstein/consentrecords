@@ -9,7 +9,7 @@ export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 
 # Create a local tar file of all of the website.
 cd ~/GitHub/consentrecords
-tar -cf c.tar consentrecords custom_user manage.py monitor parse static
+tar -cf c.tar consentrecords custom_user manage.py monitor parse static developer
 
 # Start a remote ssh connection with this command.
 ssh -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
@@ -54,6 +54,7 @@ rm custom_user/__pycache__/*
 rm custom_user/migrations/__pycache__/* 
 rm monitor/__pycache__/* 
 rm parse/__pycache__/* 
+rm developer/__pycache__/* 
 
 # Make sure that the database is set properly in consentrecords/settings.py
 # Add the following line of text.
