@@ -536,7 +536,7 @@ class LazyInstance(LazyObject):
             
             r = self.getSubValueReference(Fact.addObjectRuleUUID(), Fact.nameUUID())
             if r:
-                fieldData[Fact.addObjectRuleName] = r[0]
+                fieldData["objectAddRule"] = r[0]
             
             if fieldData["dataType"] == Fact.objectName:
                 ofKindReference = self.getSubValueReference(Fact.ofKindUUID(), Fact.uuNameUUID())

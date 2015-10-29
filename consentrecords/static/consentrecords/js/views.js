@@ -169,9 +169,9 @@ function handleCloseDownEvent() {
 
 function isPickCell(cell)
 {
-	if (("_object add rule" in cell.field) &&
-			 (cell.field["_object add rule"] == "_pick one" ||
-			  cell.field["_object add rule"] == "_pick or create one"))
+	if (("objectAddRule" in cell.field) &&
+			 (cell.field["objectAddRule"] == "_pick one" ||
+			  cell.field["objectAddRule"] == "_pick or create one"))
 		return true;
 	else
 		return false;
