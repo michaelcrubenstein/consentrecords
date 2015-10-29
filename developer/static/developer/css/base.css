@@ -1,0 +1,38 @@
+body {
+	padding: 12px 12px;
+}
+td {
+	border: 1 solid #ddd;
+}
+.last-modified-div {
+	width: auto;
+	float: right;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+	display: table
+}
+.site-table {
+	border: 1px solid #ccc;
+	margin: 16px 0px;
+}
+.site-table tr {
+	border-bottom:1px solid #d0d0d0
+}
+.site-table tr:nth-child(odd) {
+	background-color: #fff
+}
+.site-table tr:nth-child(even) {
+	background-color: #f2f2f2
+}
+.site-table td, .site-table th {
+	padding:6px 8px;display:table-cell;text-align:left;vertical-align:top
+}
+.site-table td, .site-table th {
+	padding:8px;
+}
+.site-table th:first-child,.site-table td:first-child {
+	padding-left:16px
+}

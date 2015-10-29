@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Business Layer Overview</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav><a href="/developer/">Overview</a> > </nav>
+		<h1>Business Layer Overview</h1>
+		<ul>
+			<li><a href="/developer/business/api/">Web API Calls Including OAuth2</a></li>
+			<li><a href="/developer/business/reference/">Web API Reference</a></li>
+			<li><a href="/developer/business/paths/">Path Definitions</a></li>
+			<li><a href="/developer/business/pathexamples/">Path Examples</a></li>
+			<li><a href="/developer/business/datatypes/">Data Types</a></li>
+		</ul>
+		<article>
+		<title>Business Layer Overview</title>
+		<p>This page provides an overview of the business layer of the BC&YI platform.</p>
+		<p>The business layer is implemented as a Python/Django web server running on Amazon
+		Web Services. The business layer is accessed from client systems and other systems
+		via <a href="https://en.wikipedia.org/wiki/HTTPS">https</a>, a protocol for secure 
+		communication over a computer network which is widely used on the Internet.</p>
+		<p>The managed in the business layer are not domain specific. Instead, they represent
+		a set of typed objects that are connected in a hierarchy as well as a set of links
+		between objects in the system. The types of the objects are determined by 
+		<a href="/developer/configuration/">configuration</a>,
+		which is stored in the database just like other objects. For example, the configuration
+		includes users, organizations and offerings of those organizations.</p>
+		<p>Each object in the system has one or more sets of values that are associated 
+		with an object. For example, a user has email addresses, first names and last names.
+		The specification of what values are associated with an object are determined by
+		<a href="/developer/configuration/">configuration</a> as well.</p>
+		<p>Each object and each value is represented by a Universial Unique Identifier (UUID)
+		based on version 4 of <a src="https://www.ietf.org/rfc/rfc4122.txt">RFC 4122</a>. 
+		The UUIDs are represented as a 
+		<a href="https://en.wikipedia.org/wiki/Hexadecimal">hexidecimal</a> 32-digit string.
+		<p>The business layer provides an Application Programming Interface 
+		(<a href="/developer/business/api/">API</a>) which 
+		other systems can use to interact with the objects represented in the business layer.
+		</p>
+		<p>Objects in the system are identified using path string in a format similar to 
+		<a src="http://www.w3.org/TR/css3-selectors/#selectors">CSS</a>,
+		a standard from the world-wide-web consortium. The paths supported in this system are 
+		a subset of the CSS specification.</p>
+		</article>
+	</body>
+</html>

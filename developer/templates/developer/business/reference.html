@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Web API Reference Overview</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav>
+		<a href="/developer/">Overview</a> > <a href="/developer/business/">Business Layer</a> > 
+		</nav>
+
+		<h1>Web API Reference Overview</h1>
+		<article>
+		<p>This page provides a reference for all of the API calls that can be made for the
+		BC&YI web site.</p>
+		<p>In the table below, all of the URLs must start with "https://www.consentrecords.org/" 
+		followed by a URL path from below. 
+		<table class="site-table">
+		<tbody><tr><th>URL Path</th><th>Method</th><th>Description</th></tr>
+			<tr><td><a href="#getuserid">api/getuserid/</a></td><td>GET</td>
+			<td>Retrieves the UUID of the object associated with the currently logged-in user.
+			</td></tr>
+			<tr><td><a href="#getdata">api/getdata/</a></td><td>GET</td>
+			<td>Retrieves the values associated with a set of objects described by an object path.
+			</td></tr>
+			<tr><td><a href="#getconfiguration">api/getconfiguration/</a></td><td>GET</td>
+			<td>Retrieves data describing the configuration of objects of a specified type.
+			</td></tr>
+			<tr><td><a href="#selectall">api/selectall/</a></td><td>GET</td>
+			<td>Retrieves the object specifications associated with a set of objects
+			described by an object path.
+			</td></tr>
+	
+			<tr><td><a href="#createinstance">api/createinstance/</a></td><td>POST</td>
+			<td>Creates a new object, with associated values and contained objects.
+			<p>This operation requires an access token generated to validate the current user.</p>
+			</td></tr>
+			<tr><td><a href="#updatevalues">api/updatevalues/</a></td><td>POST</td>
+			<td>Updates one or more values.
+			<p>This operation requires an access token generated to validate the current user.</p>
+			</td></tr>
+			<tr><td><a href="#addvalue">api/addvalue/</a></td><td>POST</td>
+			<td>
+			<p>This operation requires an access token generated to validate the current user.</p>
+			</td></tr>
+			<tr><td><a href="#deleteinstances">api/deleteinstances/</a></td><td>POST</td>
+			<td>Deletes the set of objects associated with a path.
+			<p>This operation requires an access token generated to validate the current user.</p>
+			</td></tr>
+			<tr><td><a href="#deletevalue">api/deletevalue/</a></td><td>POST</td>
+			<td>Deletes a value associated with an object.
+			<p>This operation requires an access token generated to validate the current user.</p>
+			</td></tr>
+		</tbody>
+		</table>
+		<a name="getuserid"></a>
+		<h4>api/getuserid</h4>
+		<p>Retrieves the UUID of the object associated with the currently logged-in user.</p>
+		<h5>Input Parameters</h5>
+		<p>The input parameters are used as part of the GET command to provide details for
+		this operation.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Parameter</th><th>Description</th></tr>
+				<tr><td>access_token</td>
+				<td>The access token provided during authentication for the currently 
+				logged-in user.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Return Values</h5>
+		<p>The return values contain data provided by the server to the caller of this method.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>success</td>
+				<td>True if the operation was successful; otherwise, false.</td></tr>
+				<tr><td>error</td>
+				<td>This key is  present if the operation was unsuccessful. In this case,
+				the error is a description of why the operation failed.</td></tr>
+				<tr><td>userID</td>
+				<td>This key is present if the operation was successful. The userID is
+				a 32-digit hexadecimal string which identifies the currently logged-in user.</td></tr>
+			</tbody>
+		</table> 
+		<a name="getdata"></a> 
+		<h4>api/getdata</h4>
+		<p>Retrieves the values associated with a set of objects described by an object path.
+		The cells that are retrieved are determined by the configuration for the type of each object.</p>
+		<h5>Input Parameters</h5>
+		<p>The input parameters are used as part of the GET command to provide details for
+		this operation.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Parameter</th><th>Description</th></tr>
+				<tr><td>access_token</td>
+				<td>The access token provided during authentication for the currently 
+				logged-in user. If this parameter is included, then the results will include
+				any data for objects to which the user has read access. Otherwise, only results
+				that have public access will be returned.</td></tr>
+				<tr><td>path</td>
+				<td>A string representing a <a href="/developer/business/paths/">path</a> 
+				to the objects for which data should be retrieved.
+				This parameter is required.</td></tr>
+				<tr><td>fields</td>
+				<td>An array of strings describing meta-data to be retrieved along with the 
+				cells contained by the object. Current values for metadata include "parents".  
+				This parameter is optional.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Return Values</h5>
+		<p>The return values contain data provided by the server to the caller of this method.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>success</td>
+				<td>True if the operation was successful; otherwise, false.</td></tr>
+				<tr><td>error</td>
+				<td>This key is  present if the operation was unsuccessful. In this case,
+				the error is a description of why the operation failed.</td></tr>
+				<tr><td>data</td>
+				<td>This key is present if the operation was successful. The data contains an
+				array for each object that is identified by the path. Each object is a dictionary
+				with the keys below.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Data Return Value</h5>
+		<p>This table describes the elements of the "data" field that is contained within the return 
+		values of the getData command.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>id</td>
+				<td>The 32-digit hexadecimal string that represents this object.</td></tr>
+				<tr><td>parentID</td>
+				<td>The 32-digit hexadecimal string that represents the object that contains
+				this object. If this is a root object, the parentID is null.</td></tr>
+				<tr><td>cells</td>
+				<td>An array of objects for each cell that contains values associated with this object.
+				Each object is a dictionary with the keys below.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Data Cells Return Value</h5>
+		<p>This table describes the elements of the "cells" field that is contained within 
+		the "data" field.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>field</td>
+				<td>An object that describes the configuration of the objects in this cell.
+				Each object is a dictionary with the keys below.</td></tr>
+				<tr><td>data</td>
+				<td>An array of objects for each value associated with this cell. Each 
+				object is a dictionary with the keys below.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Data Cells Field Return Value</h5>
+		<p>This table describes the elements of the "field" field that is contained within 
+		a "cells" field.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>id</td>
+				<td>The unique identifier for this field of the configuration of the type of
+				the instance that contains this cell.</td></tr>
+				<tr><td>index</td>
+				<td>The zero-based index of this field within the list of fields contained
+				within this cell.</td></tr>
+				<tr><td>nameID</td>
+				<td>The unique identifier for the name of this cell. This identifier refers
+				to a _uuname.</td></tr>
+				<tr><td>name</td>
+				<td>The human readable form of the name of this cell.</td></tr>
+				<tr><td>dataTypeID</td>
+				<td>The unique identifier for the data type of this cell. This identifier refers
+				to an enumeration of the "_data type" _uuname.</td></tr>
+				<tr><td>dataType</td>
+				<td>The human readable form of the data type of this cell.</td></tr>
+				<tr><td>descriptorType</td>
+				<td>If this cell is configured to describe the instance, then this identifier
+				describes how the data is used. If the value is "_by text" then each value's
+				description is joined with space separators to be the description of this instance.
+				If the value is "_by count" then the number of values in the instance becomes
+				the description of this instance.</td></tr>
+				<tr><td>capacity</td>
+				<td>If this cell is configured to describe the instance, then this identifier
+				describes how the data is used. If the value is "_unique value" then at most
+				one value is associated with this cell.
+				If the value is "_multiple values" then the number of values associated with
+				this cell is unlimited. If not specified, then the default value is "_multiple values".</td></tr>
+				<tr><td>ofKindID</td>
+				<td>If the data type of this cell is "_object", then this identifier is the
+				unique identifier that specifies the _uuname for the type of objects that 
+				are contained within this cell.</td></tr>
+				<tr><td>ofKind</td>
+				<td>If the data type of this cell is "_object", then this identifier is the
+				 human readable form of the type of objects that 
+				are contained within this cell.</td></tr>
+				<tr><td>objectAddRule</td>
+				<td>If the data type of this cell is "_object", then this identifier
+				describes how objects should be associated with this cell. If the value is 
+				"_pick one" then values should be references to existing objects.
+				If the value is "_create one" then a new value contained within this cell
+				should contain a newly created object whose type is specified by the ofKindID.
+				If not specified, then the default value is "_create one".</td></tr>
+				<tr><td>pickObjectPath</td>
+				<td>If the data type of this cell is "_object" and the objectAddRule of this
+				cell is "_pick one", then this identifier
+				describes from which objects a value for this field can be picked. The value
+				of this field is a path to the set of objects to be picked.
+				If not specified, then the default value is all of the objects of the type
+				specified by the ofKindID.</td></tr>
+			</tbody>
+		</table> 
+		<h5>Data Cells Data Return Value</h5>
+		<p>This table describes the elements of the "data" field that is contained within 
+		a "cells" field which is contained within the "data" field of the return values.</p>
+		<table class="site-table">
+			<tbody>
+				<tr><th>Key</th><th>Description</th></tr>
+				<tr><td>id</td>
+				<td>The unique identifier for this value within the instance that contains 
+				this cell.</td></tr>
+				<tr><td>value</td>
+				<td>The contents of the value. The format of the value field is dependent on
+				the <a href="/developer/business/datatypes/">data type</a> of the cell.</td></tr>
+			</tbody>
+		</table>
+		<p>
+		Here is an example of the getData command that gets information about all of the terms:
+		<br>
+		<a href="/api/getdata/?path=_uuname">/api/getdata/?path=_uuname</a></p>
+		<p>
+		Here is a getData command that gets information about all of the fields for the 
+		configuration of the "_field" term:
+		<br>
+		<a href="/api/getdata/?path=_uuname[_uuname=_field]>_configuration>_field">
+		/api/getdata/?path=_uuname[_uuname=_field]>_configuration>E_field</a></p>
+		<a name="getconfiguration"></a></p>
+		<h4>api/getconfiguration</h4>
+		<p>Retrieves data describing the configuration of objects of a specified type.</p>
+		<a name="selectall"></a>
+		<h4>api/selectall</h4>
+		<p>Retrieves the object specifications associated with a set of objects
+			described by an object path.</p>
+		<a name="createinstance"></a> 
+		<h4>api/createinstance</h4>
+		<p>Creates a new object, with associated values and contained objects.</p>
+		<a name="updatevalues"></a> 
+		<h4>api/updatevalues</h4>
+		<a name="addvalue"></a> 
+		<h4>api/addvalue</h4>
+		<a name="deleteinstances"></a> 
+		<h4>api/deleteinstances</h4>
+		<a name="deletevalue"></a> 
+		<h4>api/deletevalue</h4>
+		</article>
+	</body>
+</html>

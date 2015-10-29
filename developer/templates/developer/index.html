@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>BC&YI Overview</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<h1>Overview</h1>
+		<ul>
+		<li><a href="/developer/data/">Data Layer Overview</a></li>
+		<li><a href="/developer/business/">Business Layer Overview</a></li>
+			<ul>
+			<li><a href="/developer/business/api/">Web API Calls Including OAuth2</a></li>
+			<li><a href="/developer/business/reference/">Web API Reference</a></li>
+			<li><a href="/developer/business/paths/">Path Definitions</a></li>
+			<li><a href="/developer/business/pathexamples/">Path Examples</a></li>
+			<li><a href="/developer/business/datatypes/">Data Types</a></li>
+			</ul>
+		<li><a href="/developer/presentation/">Presentation Layer Overview</a></li>
+			<ul>
+			<li><a href="/developer/presentation/model/">Model JavaScript</a></li>
+			<li><a href="/developer/presentation/styles/">Styles</a></li>
+			<li><a href="/developer/presentation/views/">Views JavaScript</a></li>
+			</ul>
+		<li><a href="/developer/configuration/">Configurations Overview</a></li>
+			<ul>
+			<li><a href="/developer/configuration/configuration/">Configuration Structure</a></li>
+			<li><a href="/developer/configuration/organization/">Organization Structure</a></li>
+			</ul>
+		</ul>
+		<article>
+		<title>Overview</title>
+		<p>This page provides an overview of the BC&YI platform.</p>
+		<p>The platform consists of a configurable 3-tier system, including the following layers:</p>
+		<ul>
+		<li>Data Layer</li>
+		<li>Business Layer</li>
+		<li>Presentation Layer</li>
+		<li>Configuration Layer</li>
+		<p>The Data layer is build as a SQL database using MySQL. The Business Layer is a 
+		web server built using Python3 and Django. The Presentation Layer is built using JavaScript other 
+		web technologies that are all served from the Business Layer.</p>
+		<p>The Configuration layer is built and maintained using the other three layers. The
+		Configuration layer describes the types of objects that the system models. The data for
+		the Configuration layer is contained within the Data layer.</p>
+		<p>The entire system is served using Amazon Web Services.</p>
+		</article>
+	</body>
+</html>

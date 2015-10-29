@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Data Types</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav>
+		<a href="/developer/">Overview</a> > <a href="/developer/business/">Business Layer</a> > 
+		</nav>
+
+		<h1>Data Types</h1>
+		<article>
+		<p>This page describes all of the data types for values of objects in the system.</p>
+		<p>The list of data types is identified as enumerator values of the "_data type" _uuname. </p>
+		<table class="site-table">
+		<tbody>
+			<tr><th style="width:25%">Data&nbsp;Type</th><th>Description</th></tr>
+			<tr><td>_object</td>
+			<td><p>A value that represents another object.</p>
+			<p>The JSON representation of this field is an object that contains two fields:
+			an "id" field that contains the unique descriptor of the instance which is 
+			referenced by this value and a "description" field that contains a human readable 
+			version of that instance.</p>
+			</td></tr>
+			<tr><td>_string</td>
+			<td>A value of up to 255 unicode characters.
+			<p>The JSON representation of this field is a string.</p>
+			</td></tr>
+			<tr><td>_number</td>
+			<td>A whole or real number.
+			<p>The JSON representation of this field is a string.</p>
+			</td></tr>
+			<tr><td>_datestamp</td>
+			<td>A date in the calendar. The date is stored internally as a string in the 
+			following format: "yyyy-mm-dd" where yyyy is the year, mm is the number of the 
+			month (01-12) and dd is the number of the day (01-31). This format conforms with
+			<a href="https://en.wikipedia.org/wiki/ISO_8601#Dates">ISO 8601 date format</a>.
+			<p>The JSON representation of this field is a string in ISO 8601 date format.</p>
+			</td></tr>
+		</tbody>
+		</table>
+		</article>
+	</body>
+</html>

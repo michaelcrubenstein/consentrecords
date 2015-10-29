@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Path Examples</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav>
+		<a href="/developer/">Overview</a> > <a href="/developer/business/">Business Layer</a> > 
+		</nav>
+
+		<h1>Path Examples</h1>
+		<article>
+		<p>Following are examples of paths constructed using different forms.</p>
+		<p>Javascript code to create a path to all of the Experience objects that 
+		contain the specified user.</p>
+		<code>var path = "#" + userInstance.getValueID() + '::reference(Experience)';</code>
+		<p>Javascript code to create a path to all of the Service objects whose name is housing.</p>
+		<code>path = "Service>_name[_text="Housing"]::reference(Service)"</code>
+		<p>Javascript code to create a path to all of the _user objects whose email 
+		address starts with the string 'val'.</p>
+		<code>path = "_user[_email^="+val+"]"</code>
+		<p>See Also:</p>
+		<p><a href="/developer/business/paths/">Path Overview</a></p>
+		</article>
+	</body>
+</html>

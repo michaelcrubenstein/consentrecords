@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Path Definitions</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav>
+		<a href="/developer/">Overview</a> > <a href="/developer/business/">Business Layer</a> > 
+		</nav>
+
+		<h1>Path Definitions</h1>
+		<article>
+		<p>Objects in the system are identified using path string in a format similar to 
+		<a src="http://www.w3.org/TR/css3-selectors/#selectors">CSS</a>,
+		a standard from the world-wide-web consortium. The paths supported in this system are 
+		a subset of the CSS specification. The CSS specification includes ways to identify
+		single objects or groups of objects based on common characteristics.</p>
+		<p>Paths can be relatively simple or complex, and objects can be identified by name
+		or by id. In general, if a path is being constructed, using an id is more robust 
+		and is recommended.</p>
+		<p>In its simplest form, a path an consist of a single ID, which is identified by by a 
+		hash symbol (#) followed by a 32-digit hexidecimal character. This represents a 
+		unique object in the system.</p>
+		<p>Objects can be identified by type, either using a name or an ID for the type.</p>
+		<p>Objects can be identified as descendents of other objects, by following a path 
+		specification with a right chevron (>) followed by the name or id of a field within
+		objects of that type. For example, one can identify an offering and get a list of the
+		services associated with that offering.</p>
+		<code>https://www.consentrecords.org/api/selectall/?path=Service</code>
+		<p>See Also:</p>
+		<p><a href="/developer/business/pathexamples/">Path Examples</a></p>
+		</article>
+	</body>
+</html>

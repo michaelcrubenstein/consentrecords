@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'corsheaders',
     'consentrecords',
     'custom_user',
+    'developer',
     'monitor',
 )
 

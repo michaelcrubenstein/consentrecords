@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Web API Calls</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav>
+		<a href="/developer/">Overview</a> > <a href="/developer/business/">Business Layer</a> > 
+		</nav>
+
+		<h1>Web API Calls</h1>
+		<article>
+		<p>The BC&YI system provides an Application Programming Interface (API) which other 
+		systems can use to interact with the objects represented in the business layer. This 
+		API is accessed over the Internet using the https: protocol. As such, it can be
+		implemented on web pages, on other web servers or any program that accesses the library.</p>
+		<p>There are two methods of the HTTPS protocol that are used in the API: GET and POST. 
+		Each API call also has additional parameters that are included using the standard scheme
+		for GET and POST methods. In the following example, a GET method (which can be called 
+		using a browser), is used to get information about all of the Service objects in the system:</p>
+		<code>https://www.consentrecords.org/api/selectall/?path=Service</code>
+		<p>Each of the APIs returns its data in json format. The API reference describes the
+		keys for each field in data returned.
+		<p>See Also:</p>
+		<p><a href="/developer/business/reference/">Web API Reference</a></p>
+		</article>
+	</body>
+</html>

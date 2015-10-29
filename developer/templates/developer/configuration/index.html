@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml"">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Configuration Layer Overview</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+    <link href="{% static "developer/css/base.css" %}" rel="stylesheet">
+
+    </head>
+	<body>
+		<div class="last-modified-div">Last Modified: October 29, 2015</div>
+		<nav><a href="/developer/">Overview</a> > </nav>
+		<h1>Configuration Layer Overview</h1>
+		<ul>
+			<li><a href="/developer/configuration/configuration/">Configuration Structure</a></li>
+			<li><a href="/developer/configuration/organization/">Organization Structure</a></li>
+		</ul>
+		<article>
+		<title>Overview</title>
+		<p>This page provides an overview of the configurations of information in the 
+		BC&YI platform.</p>
+		<p>The configuration layer is stored in as data in the system that is used to 
+		identify the objects that are modeled in the system.
+		</p>
+		<p>Configuration terms whose name begins with an underscore ("_") are reserved by
+		the system for bootstrapping the configuration of other elements.
+		</p>
+		</article>
+	</body>
+</html>
