@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
 
 	{% if fbURL %}
     <meta property="og:url" content="{{fbURL}}">
@@ -813,7 +813,8 @@
 									break;
 								}
 							}
-							$("#id_find_experience_panel").on("servicesShown.cr", null);
+							/* Only do this once, so turn it off. */
+							$("#id_find_experience_panel").off("servicesShown.cr");
 						});
 						var offeringString = stateString.substring(0, 32);
 						stateString = stateString.substring(32);
@@ -829,11 +830,12 @@
 									showPanelNow(panelDiv.node());
 								}
 							});
-							$("#id_find_offering_panel").on("offeringsShown.cr", null);
+							/* Only do this once, so turn it off. */
+							$("#id_find_offering_panel").off("offeringsShown.cr");
 						});
 					}
 					showPanelNow("#id_find_experience_panel");
-					
+					stateString = "";	/* So it only happens once. */
 				}
 			{% endif %}
 		});
