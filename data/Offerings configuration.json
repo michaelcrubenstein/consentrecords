@@ -1,0 +1,81 @@
+[{
+"field": {"name": "_configuration", "ofKind": "_configuration"},
+  "initialData": 
+[
+  {
+    "field": { "name": "_name" },
+    "data": [
+      { "value": "Boston" }
+    ]
+  },
+  {
+    "field": { "name": "_field" },
+    "data": [
+      {
+        "value": {
+          "cells": [
+            {
+              "field": { "name": "_name" },
+              "data": [
+                {
+                  "value": {
+                    "path": "_uuname[_uuname=Offering]"
+                  }
+                }
+              ]
+            },
+            {
+              "field": { "name": "_data type" },
+              "data": [
+                {
+                  "value": {
+                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
+                  }
+                }
+              ]
+            },
+            {
+              "field": { "name": "_max capacity" },
+              "data": [
+                {
+                  "value": {
+                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]"
+                  }
+                }
+              ]
+            },
+            {
+              "field": { "name": "_descriptor type" },
+              "data": [ {
+                  "value": {
+                    "path": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by count\"]"
+                  }
+              } ]
+            },
+            {
+              "field": { "name": "_object add rule" },
+              "data": [
+                {
+                  "value": {
+                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]"
+                  }
+                }
+              ]
+            },
+            {
+              "field": { "name": "_of kind" },
+              "data": [
+                {
+                  "value": { "path": "_uuname[_uuname=Offering]" }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
+  }]
+  
+  

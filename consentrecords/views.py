@@ -15,12 +15,13 @@ import logging
 import traceback
 import uuid
 import urllib.parse
-import html.parser
 
 from monitor.models import LogRecord
-from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue
 from custom_user import views as userviews
-from parse.cssparser import parser as cssparser
+from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue
+from consentrecords import instancecreator
+from consentrecords import pathparser
+from consentrecords import bootstrap
 
 def home(request):
     return userHome(request)
@@ -101,7 +102,7 @@ def initializeFacts(request):
         
         with transaction.atomic():    
             transactionState = TransactionState(request.user, timezoneoffset)
-            Fact.initializeFacts(transactionState) 
+            bootstrap.initializeFacts(transactionState) 
         results = {'success':True}
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -182,7 +183,7 @@ class api:
                 else:
                     containerObject = None
     
-                item, newValue = ofKindObject.createInstance(containerObject, elementID, index, propertyList, transactionState)
+                item, newValue = instancecreator.createInstance(ofKindObject, containerObject, elementID, index, propertyList, transactionState)
         
                 if containerObject:
                     results = {'success':True, 'object': newValue.getReferenceData(item, ofKindObject)}
@@ -226,7 +227,7 @@ class api:
                             item = container.addValue(fieldID, newValue, newIndex, transactionState)
                         else:
                             ofKindObject = LazyInstance(c["ofKindID"])
-                            newInstance, item = ofKindObject.createInstance(container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
+                            newInstance, item = instancecreator.createInstance(ofKindObject, container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
                     else:
                         raise ValueError("subject id was not specified")
                     if item:
@@ -298,22 +299,15 @@ class api:
             path = data.get("path", None)
         
             if path:
-                html_parser = html.parser.HTMLParser()
-                unescaped = html_parser.unescape(path)
-                tokens = cssparser.tokenize(unescaped)
-                a, remainder = cssparser.cascade(tokens)
-                
-                p = LazyInstance.selectAllDescriptors(a)
+                a = pathparser.tokenize(path)
+                p = pathparser.selectAllDescriptors(a)
             else:
                 if ofKindID:
                     ofKindUUID = uuid.UUID(ofKindID)
                 else:
                     ofKindUUID = Fact.getNamedUUID(ofKindName, None)
     
-                html_parser = html.parser.HTMLParser()
-                unescaped = html_parser.unescape(ofKindUUID.hex)
-                tokens = cssparser.tokenize(unescaped)
-                a, remainder = cssparser.cascade(tokens)
+                a = pathparser.tokenize(ofKindUUID.hex)
                 p = LazyInstance.rootDescriptors(a)
         
             results = {'success':True, 'objects': p}
@@ -412,12 +406,9 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
 
-            html_parser = html.parser.HTMLParser()
-            unescaped = html_parser.unescape(path)
-            tokens = cssparser.tokenize(unescaped)
-            a, remainder = cssparser.cascade(tokens)
+            a = pathparser.tokenize(path)
             
-            uuObjects = LazyInstance.selectAllObjects(a)
+            uuObjects = pathparser.selectAllObjects(a)
             p = [api.getCells(uuObject, fields) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
@@ -437,17 +428,14 @@ class api:
             path = data.get('path', None)
         
             if path:
-                html_parser = html.parser.HTMLParser()
-                unescaped = html_parser.unescape(path)
-                tokens = cssparser.tokenize(unescaped)
-                a, remainder = cssparser.cascade(tokens)
+                a = pathparser.tokenize(path)
             
                 # The client time zone offset, stored with the transaction.
                 timezoneoffset = data['timezoneoffset']
         
                 with transaction.atomic():
                     transactionState = TransactionState(user, timezoneoffset)
-                    for uuObject in LazyInstance.selectAllObjects(a):
+                    for uuObject in pathparser.selectAllObjects(a):
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
@@ -628,7 +616,7 @@ class UserFactory:
 
             transactionState = TransactionState(user, timezoneOffset)
             ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
-            item, newValue = ofKindObject.createInstance(None, None, 0, [], transactionState)
+            item, newValue = instancecreator.createInstance(ofKindObject, None, None, 0, [], transactionState)
             item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
             item.addValue(Fact.getNamedUUID(Fact.emailName), user.email, 0, transactionState)
             if user.first_name:

@@ -17,7 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 from consentrecords import views
-from consentrecords.bootstrap import BootStrapper
+from consentrecords import bootstrap
 
 urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
@@ -59,4 +59,4 @@ urlpatterns = [
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
 ]
 
-BootStrapper.initializeUUNames()
+bootstrap.initializeUUNames()

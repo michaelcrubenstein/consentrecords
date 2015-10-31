@@ -1304,6 +1304,66 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 			}
 			d3.event.preventDefault();
 		});
+		$(panelDiv.node()).on('dragover',
+			function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		)
+		$(panelDiv.node()).on('dragenter',
+			function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		)
+		$(panelDiv.node()).on('drop', function(e)
+		{
+			if (e.originalEvent.dataTransfer) {
+				if (e.originalEvent.dataTransfer.files.length) {
+					e.preventDefault();
+					e.stopPropagation();
+					jQuery.each( e.originalEvent.dataTransfer.files, function(index, file){
+							var fileReader = new FileReader();
+								fileReader.onload = function(e) {
+									 if (e.target.result.startsWith("data:application/json") &&
+									 	 e.target.result.indexOf("base64,") > 0)
+									 {
+									 	var start = e.target.result.indexOf("base64,") + "base64,".length;
+									 	var s = e.target.result.substring(start);
+									 	try
+									 	{
+									 		var data = JSON.parse(atob(s));
+									 		for (var j = 0; j < data.length; ++j)
+									 		{
+									 			var d = data[j];
+									 			var name = d.field.name;
+												for (var i = 0; i < objectData.value.cells.length; ++i)
+												{
+													var cell = objectData.value.cells[i];
+													if (cell.field.name == name)
+													{
+														cr.createInstance(cell.field, objectData.getValueID(), d.initialData, 
+															function(newData)
+															{
+																cell.addValue(newData);
+															},
+															asyncFailFunction);
+														break;
+													}
+												}
+											}
+									 	}
+									 	catch(err)
+									 	{
+									 		bootstrap_alert.warning(err.message, '.alert-container');
+									 	}
+									 }
+								};
+							fileReader.readAsDataURL(file);
+						  });
+				} 
+			}  
+		});
 	}
 	
 	failFunction = function(error)
@@ -1313,17 +1373,6 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 	}
 	
 	objectData.checkCells(containerCell, successFunction, failFunction);
-}
-
-function _storeUnsavedPickedValue(oldData, newData)
-{
-	/* In this case, we are replacing an old value for
-	   an item that was added to the item but not saved;
-	   a placeholder or a previously picked value.
-	 */
-	if (newData.getValueID() != oldData.getValueID()) {
-		oldData.completeUpdateValue(newData);
-	}
 }
 
 /* Displays a panel from which a user can select an object of the kind required 
@@ -1336,6 +1385,17 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		
 	var failFunction = syncFailFunction;
 	
+	function _storeUnsavedPickedValue(oldData, newData)
+	{
+		/* In this case, we are replacing an old value for
+		   an item that was added to the item but not saved;
+		   a placeholder or a previously picked value.
+		 */
+		if (newData.getValueID() != oldData.getValueID()) {
+			oldData.completeUpdateValue(newData);
+		}
+	}
+
 	function selectAllSuccessFunction(rootObjects) {
 		if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
 		{
