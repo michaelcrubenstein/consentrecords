@@ -37,31 +37,6 @@
 
   <body>
 	<panel id="id_panel1" class="base-panel site-panel list-panel">
-		<nav class="navbar navbar-default site-navbar" role="navigation">
-			<div class="container-fluid">
-				<!-- Collect the nav links, forms, and other content for toggling -->
-				<div class="pull-left">
-					<div id="id_cancelButton" class="cancel-button site-navbar-link site-active-text">Done</div>
-				</div>
-				<div class="pull-right">
-					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-						<span>+</span>
-					</div>
-				</div>
-				<div class="site-navbar-commands">
-					<div class="site-title site-fill"><span class="site-inner-fill">{{header}}</span></div>
-				</div>
-			</div>
-		</nav>
-		<div id="id_scrollableArea" class="panel-scrolling">
-			<div>
-				<div class="alert-container"></div>
-			</div>
-			<div id="id_searchArea" class="searchbar">
-			</div>
-			<ol id="id_objects">
-			</ol>
-		</div> <!-- /container-fluid -->
 	</panel>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -85,7 +60,6 @@
 		var headerText = "{{header}}";
 		
 		$("title").text(headerText);
-		$(".site-navbar-commands .site-title .site-inner-fill").text(headerText);
 		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.
@@ -110,35 +84,6 @@
 				e.preventDefault();
 			});
 			
-			var textChanged = function(){
-				val = this.value.toLocaleLowerCase();
-				if (val.length == 0)
-				{
-					/* Show all of the items. */
-					d3.select("#id_objects").selectAll("li")
-						.style("display", "block");
-				}
-				else
-				{
-					/* Show the items whose description is this.value */
-					d3.select("#id_objects").selectAll("li")
-						.style("display", function(d)
-							{
-								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-									return "block";
-								else
-									return "none";
-							});
-				}
-			}
-			
-			var searchBar = $(".searchbar");
-			setupSearchBar(".searchbar", textChanged);
-			
-			var parentPanel = document.getElementById("id_panel1")
-			var panelDiv = d3.select(parentPanel);
-			panelDiv.attr("headerText", headerText);
-
 			var cell = new cr.Cell();
 			cell.field = {
 						  dataType: "_object",
@@ -154,84 +99,32 @@
 						  };
 			cell.setup(null);
 			
-			var itemsDiv = d3.select("#id_objects")
-				.data([cell]);
-			cell.addTarget("valueAdded.cr", itemsDiv.node());
-			cell.addTarget("dataChanged.cr", itemsDiv.node());
-			
-			itemsDiv.node().onValueAdded = getOnValueAddedFunction(d3.select(parentPanel), cell, null, true, true, showViewObjectPanel);
-			$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+			var containerPanel = d3.select("#id_panel1");
+			function sortByDescription(a, b)
 			{
-				this.onValueAdded(e, newData);
-				itemsDiv.selectAll("li").sort(function(a, b)
-				{
-					return a.getDescription().localeCompare(b.getDescription());
-				});
-			});
-			$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
-			{
-				itemsDiv.selectAll("li").sort(function(a, b)
-				{
-					return a.getDescription().localeCompare(b.getDescription());
-				});
-			});
-			
-			{% if rootID %}
-				$("#id_addUniversalObjectButton").click(function(e) {
-					if (prepareClick())
-					{
-						showClickFeedback(this);
-						
-						var newValue = cell.addNewValue();
-				
-						showAddObjectPanel(newValue, null, panelDiv, submitCreateInstance);
-					}
-
-					e.preventDefault();
-				});
-			{% else %}
-				$("#id_addUniversalObjectButton").css("display", "none");
-			{% endif %}
-			
-			var successFunction = function(newValues)
-			{
-				newValues.sort(function(a, b)
-					{
-						return a.getDescription().localeCompare(b.getDescription());
-					});
-					
-				for (var i = 0; i < newValues.length; i++)
-					cell.pushValue(newValues[i]);
-				
-				appendCellItems(d3.select("#id_objects"), cell, 
-					function(d) {
-						if (prepareClick())
-						{
-							showViewObjectPanel(d, cell, null, panelDiv);
-						}
-					});
+				return a.getDescription().localeCompare(b.getDescription());
 			}
-			
-			var failFunction = function(error)
+			function showFunction(panelDiv)
 			{
-				bootstrap_alert.warning(error, ".alert-container");
-				/* Don't unblock here, because there was no block. */
+				window.scrollTo(0, 0);
+				showPanelNow(panelDiv);
 			}
-			
-			cr.selectAll("{{path}}", successFunction, failFunction);
+			cr.selectAll("{{path}}", 
+				getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
+				syncFailFunction);
 		});
 		
-		$(document).ready(function(e) { resetidObjectsHeight() });
-		$(window).resize(function(e) { resetidObjectsHeight() });
-		
-		resetidObjectsHeight = function()
-		{
-			var newHeight = window.innerHeight;
-			$("#id_panel1").children().each(
-				function() { if (this != document.getElementById("id_scrollableArea")) newHeight -= $(this).height(); }
-			);
-			$("#id_scrollableArea").height(newHeight);
-		}
+// 		$(document).ready(function(e) { resetidObjectsHeight() });
+// 		$(window).resize(function(e) { resetidObjectsHeight() });
+// 		
+// 		resetidObjectsHeight = function()
+// 		{
+// 			var newHeight = window.innerHeight;
+// 			$("#id_panel1").children().each(
+// 				function() { if (this != document.getElementById("id_scrollableArea")) newHeight -= $(this).height(); }
+// 			);
+// 			$("#id_scrollableArea").height(newHeight);
+// 		}
 	</script>
 
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->

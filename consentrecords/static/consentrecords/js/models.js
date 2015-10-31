@@ -346,20 +346,52 @@ var cr = {
 				);
 	},
 	
-	deleteValue: function(oldValue, containerCell, successFunction, failFunction)
+	deleteValue: function(oldValue, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
-		if (oldValue.cell != containerCell)
-			throw ("Invalid containerCell in deletevalue");
 			
 		if (oldValue.id == null)	/* It was never saved */
 		{
-			if (oldValue.cell)
-				oldValue.cell.deleteValue(oldValue);
-			successFunction(oldValue);
+			if (oldValue.cell != null && 
+				oldValue.cell.parent == null &&
+				oldValue.getValueID() != null)
+			{
+				/* In this case, oldValue is a root object, so we just need to 
+					delete the instance. */
+				var jsonArray = { path: "#" + oldValue.getValueID(),
+							timezoneoffset: new Date().getTimezoneOffset()
+						};
+				$.post(cr.urls.deleteInstances, jsonArray)
+					.done(function(json, textStatus, jqXHR)
+					{
+						if (json.success)
+						{
+							if (successFunction) 
+							{
+								if (oldValue.cell)
+									oldValue.cell.deleteValue(oldValue);
+								successFunction(oldValue);
+							}
+						}
+						else
+						{
+							failFunction(json.error);
+						}
+					})
+					.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					});
+			}
+			else
+			{
+				if (oldValue.cell)
+					oldValue.cell.deleteValue(oldValue);
+				successFunction(oldValue);
+			}
 		}
 		else
 		{

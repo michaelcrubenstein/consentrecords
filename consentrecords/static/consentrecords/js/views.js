@@ -200,7 +200,7 @@ function _checkItemsDivDisplay(itemsDiv, cell)
 	var dt = cr.dataTypes[cell.field.dataType];
 	// Loop over cell.data instead of itemsDiv cells in case this test is done before
 	// the deleted cell is deleted or the added cell is added. 
-	for (var i = 0; i < cell.data.length; i++)
+	for (var i = 0; i < cell.data.length && !isVisible; i++)
 		isVisible |= !dt.isEmpty(cell.data[i]);
 	itemsDiv.style("display", isVisible ? "block" : "none");
 }
@@ -457,7 +457,7 @@ function appendConfirmDeleteControls(divs, containerCell)
 				{
 					unblockClick();
 				}
-				cr.deleteValue(d, containerCell, successFunction, failFunction);
+				cr.deleteValue(d, successFunction, failFunction);
 			}
 		});
 }
@@ -937,12 +937,9 @@ function appendItems(container, data)
 }
 
 /* Returns the set of objects that contain the description of each data element */
-function appendCellItems(container, cell, clickFunction)
+function appendViewCellItems(container, cell, clickFunction)
 {
 	var divs = appendItems(container, cell.data);
-	
-	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs, cell);
 	
 	var buttons = appendRowButtons(divs, cell);
 	
@@ -953,6 +950,27 @@ function appendCellItems(container, cell, clickFunction)
 		
 	buttons.on("click", clickFunction);
 	appendRightChevrons(buttons);
+	
+	return buttons;
+}
+
+/* Returns the set of objects that contain the description of each data element */
+function appendEditCellItems(container, cell, clickFunction)
+{
+	var divs = appendItems(container, cell.data);
+	
+	if (cell.field.capacity != "_unique value")
+		appendConfirmDeleteControls(divs, cell);
+	
+	var buttons = appendRowButtons(divs, cell);
+	
+	if (cell.field.capacity != "_unique value")
+		appendDeleteControls(buttons);
+	appendRightChevrons(buttons);
+
+	appendButtonDescriptions(buttons, cell);
+		
+	buttons.on("click", clickFunction);
 	
 	return buttons;
 }
@@ -1375,6 +1393,250 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 	objectData.checkCells(containerCell, successFunction, failFunction);
 }
 
+/* This method gets called to bring up a configuration panel when adding
+	a new instance of an object to another object. For example, adding a 
+	configuration to an object with a uuname kind.
+ */
+function showAddObjectPanel(oldValue, containerUUID, containerPanel, storeDataFunction) {
+	if (!oldValue)
+		throw "oldValue is not defined";
+	if (!oldValue.cell)
+		throw "oldValue.cell is not defined";
+		
+	var successFunction = function(cells)
+	{
+		var panelDiv = createPanel(containerPanel, oldValue.cell, "New " + oldValue.cell.field.name)
+			.classed("edit-panel", true);
+
+		var navContainer = panelDiv.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (!_isClickBlocked())
+				{
+					_blockClick();
+					if (!oldValue.getValueID() && oldValue.cell.field.maxCapacity != "_unique value")
+					{
+						// In this case, delete the item on cancel. 
+						oldValue.cell.deleteValue(oldValue);
+					}
+					hidePanelDown($(this).parents(".site-panel")[0]);
+				}
+				d3.event.preventDefault();
+			});
+		
+		backButton.append("span").text("Cancel");
+
+		var onSuccessFunction = function(newData) {
+			hidePanelDown(panelDiv.node());
+		};
+			
+		var addButton = navContainer.appendRightButton()
+			.on("click", function(d) {
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+					
+					storeDataFunction(oldValue, oldValue.cell, containerUUID, sections, onSuccessFunction);
+				}
+				d3.event.preventDefault();
+			});
+		addButton.append("span").text("Add");
+
+		var panel2Div = panelDiv.appendScrollArea();
+		panel2Div.appendHeader();
+		panel2Div.appendAlertContainer();
+		
+		var sections = panel2Div.appendSections(cells)
+			.each(function(cell) {
+					dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, oldValue);
+				});
+
+		window.scrollTo(0, 0);
+		showPanelUp(panelDiv.node());
+	}
+	
+	var failFunction = syncFailFunction
+	
+	cr.getConfiguration(oldValue, oldValue.cell.field.ofKindID, successFunction, failFunction);
+}
+
+function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, successFunction)
+{
+	return function(rootObjects)
+	{
+		if (sortFunction)
+			rootObjects.sort(sortFunction);
+			
+		for (var i = 0; i < rootObjects.length; i++)
+			cell.pushValue(rootObjects[i]);
+		
+		var panelDiv = createPanel(containerPanel, cell, header)
+			.classed("list-panel", true);
+
+		var navContainer = panelDiv.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		
+		var editButton = navContainer.appendRightButton()
+			.on("click", function(d) {
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+				
+					showEditRootObjectsPanel(cell, panelDiv, "Edit " + header, sortFunction);
+				}
+				d3.event.preventDefault();
+			});
+		editButton.append("span").text("Edit");
+		
+		navContainer.appendTitle(header);
+		
+		function textChanged(){
+			var val = this.value.toLocaleLowerCase();
+			if (val.length == 0)
+			{
+				/* Show all of the items. */
+				panel2Div.selectAll("li")
+					.style("display", "block");
+			}
+			else
+			{
+				/* Show the items whose description is this.value */
+				panel2Div.selectAll("li")
+					.style("display", function(d)
+						{
+							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+								return "block";
+							else
+								return "none";
+						});
+			}
+		}
+	
+		var searchBar = panelDiv.appendSearchBar(textChanged);
+
+		var panel2Div = panelDiv.appendScrollArea();
+		panel2Div.appendAlertContainer();
+		
+		var itemsDiv = panel2Div.append("section")
+			.classed("items-div border-above", true)
+			.datum(cell);
+		
+		_setupItemsDivHandlers(itemsDiv, cell);
+		itemsDiv.node().onValueAdded = getOnValueAddedFunction(panelDiv, cell, null, false, true, showViewObjectPanel);
+		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		{
+			this.onValueAdded(e, newData);
+			if (sortFunction)
+				itemsDiv.selectAll("li").sort(sortFunction);
+		});
+		$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
+		{
+			if (sortFunction)
+				itemsDiv.selectAll("li").sort(sortFunction);
+		});
+
+		appendViewCellItems(itemsDiv, cell, 
+			function(d) {
+				if (prepareClick())
+				{
+					showViewObjectPanel(d, cell, null, panelDiv);
+				}
+			});
+
+		if (successFunction)
+			successFunction(panelDiv.node());
+	}
+}
+
+function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
+{
+	var panelDiv = createPanel(containerPanel, cell, header)
+		.classed("list-panel", true);
+
+	var navContainer = panelDiv.appendNavContainer();
+
+	var backButton = navContainer.appendLeftButton()
+		.on("click", handleCloseRightEvent);
+	backButton.append("span").text("Done");
+	
+	var addButton = navContainer.appendRightButton()
+		.classed("add-button", true)
+		.on("click", function(d) {
+			if (prepareClick())
+			{
+				showClickFeedback(this);
+			
+				var newValue = cell.addNewValue();
+				
+				showAddObjectPanel(newValue, null, panelDiv, submitCreateInstance);
+			}
+			d3.event.preventDefault();
+		});
+	addButton.append("span").text("+");
+	navContainer.appendTitle(header);	
+	
+	var textChanged = function(){
+		var val = this.value.toLocaleLowerCase();
+		if (val.length == 0)
+		{
+			/* Show all of the items. */
+			panel2Div.selectAll("li")
+				.style("display", "block");
+		}
+		else
+		{
+			/* Show the items whose description is this.value */
+			panel2Div.selectAll("li")
+				.style("display", function(d)
+					{
+						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+							return "block";
+						else
+							return "none";
+					});
+		}
+	}
+
+	var searchBar = panelDiv.appendSearchBar(textChanged);
+
+	var panel2Div = panelDiv.appendScrollArea();
+	panel2Div.appendAlertContainer();
+	
+	var itemsDiv = panel2Div.append("section")
+		.classed("items-div border-above", true)
+		.datum(cell);
+
+	_setupItemsDivHandlers(itemsDiv, cell);
+	itemsDiv.node().onValueAdded = getOnValueAddedFunction(panelDiv, cell, null, true, true, showEditObjectPanel);
+	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+	{
+		this.onValueAdded(e, newData);
+		if (sortFunction)
+			itemsDiv.selectAll("li").sort(sortFunction);
+	});
+	$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
+	{
+		if (sortFunction)
+			itemsDiv.selectAll("li").sort(sortFunction);
+	});
+
+	appendEditCellItems(itemsDiv, cell, 
+		function(d) {
+			if (prepareClick())
+			{
+				showEditObjectPanel(d, cell, null, panelDiv);
+			}
+		});
+
+	window.scrollTo(0, 0);
+	showPanelLeft(panelDiv.node());
+}
+
 /* Displays a panel from which a user can select an object of the kind required 
 	for objects in the specified cell.
 	containerUUID is the id of the instance that contains the specified cell.
@@ -1418,9 +1680,8 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (!_isClickBlocked())
+				if (prepareClick())
 				{
-					_blockClick();
 					if (!oldData.getValueID() && cell.field.maxCapacity != "_unique value")
 					{
 						// In this case, delete the item on cancel. 
@@ -1547,72 +1808,3 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		cr.selectAll(cell.field.ofKindID, selectAllSuccessFunction, failFunction);
 }
 		
-/* This method gets called to bring up a configuration panel when adding
-	a new instance of an object to another object. For example, adding a 
-	configuration to an object with a uuname kind.
- */
-function showAddObjectPanel(oldValue, containerUUID, containerPanel, storeDataFunction) {
-	if (!oldValue)
-		throw "oldValue is not defined";
-	if (!oldValue.cell)
-		throw "oldValue.cell is not defined";
-		
-	var successFunction = function(cells)
-	{
-		var panelDiv = createPanel(containerPanel, oldValue.cell, "New " + oldValue.cell.field.name)
-			.classed("edit-panel", true);
-
-		var navContainer = panelDiv.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (!_isClickBlocked())
-				{
-					_blockClick();
-					if (!oldValue.getValueID() && oldValue.cell.field.maxCapacity != "_unique value")
-					{
-						// In this case, delete the item on cancel. 
-						oldValue.cell.deleteValue(oldValue);
-					}
-					hidePanelDown($(this).parents(".site-panel")[0]);
-				}
-				d3.event.preventDefault();
-			});
-		
-		backButton.append("span").text("Cancel");
-
-		var onSuccessFunction = function(newData) {
-			hidePanelDown(panelDiv.node());
-		};
-			
-		var addButton = navContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-					
-					storeDataFunction(oldValue, oldValue.cell, containerUUID, sections, onSuccessFunction);
-				}
-				d3.event.preventDefault();
-			});
-		addButton.append("span").text("Add");
-
-		var panel2Div = panelDiv.appendScrollArea();
-		panel2Div.appendHeader();
-		panel2Div.appendAlertContainer();
-		
-		var sections = panel2Div.appendSections(cells)
-			.each(function(cell) {
-					dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, oldValue);
-				});
-
-		window.scrollTo(0, 0);
-		showPanelUp(panelDiv.node());
-	}
-	
-	var failFunction = syncFailFunction
-	
-	cr.getConfiguration(oldValue, oldValue.cell.field.ofKindID, successFunction, failFunction);
-}
-

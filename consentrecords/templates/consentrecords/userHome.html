@@ -1149,7 +1149,7 @@
 				
 				var container = d3.select(containerDiv);
 				container.datum(cell);
-				appendCellItems(container, cell, 
+				appendViewCellItems(container, cell, 
 					function(d) {
 						if (prepareClick())
 						{
@@ -1544,7 +1544,7 @@
 							checkInquiryFunction([]);
 						}
 						
-						cr.deleteValue(inquiryInstance, inquiryInstance.cell, successFunction, asyncFailFunction);
+						cr.deleteValue(inquiryInstance, successFunction, asyncFailFunction);
 						
 						unblockClick();
 					}
