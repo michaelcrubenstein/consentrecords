@@ -167,7 +167,7 @@ function handleCloseDownEvent() {
 	d3.event.preventDefault();
 }
 
-function isPickCell(cell)
+function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
 			 (cell.field["objectAddRule"] == "_pick one" ||
@@ -177,7 +177,7 @@ function isPickCell(cell)
 		return false;
 }
 
-function pushTextChanged(d) {
+function _pushTextChanged(d) {
 	d.addTarget("dataChanged.cr", this);
 	$(this).on("dataChanged.cr", function(e) {
 			d3.select(this).text(d.getDescription());
@@ -191,10 +191,10 @@ function pushTextChanged(d) {
 	}
 }
 
-getDataValue = function(d) { return d.value; }
-getDataDescription = function(d) { return d.getDescription() }
+function _getDataValue(d) { return d.value; }
+function _getDataDescription(d) { return d.getDescription() }
 
-function checkItemsDivDisplay(itemsDiv, cell)
+function _checkItemsDivDisplay(itemsDiv, cell)
 {
 	var isVisible = (cell.field.capacity == "_unique value");
 	var dt = cr.dataTypes[cell.field.dataType];
@@ -205,21 +205,21 @@ function checkItemsDivDisplay(itemsDiv, cell)
 	itemsDiv.style("display", isVisible ? "block" : "none");
 }
 
-function setupItemsDivHandlers(itemsDiv, cell)
+function _setupItemsDivHandlers(itemsDiv, cell)
 {
 	cell.addTarget("valueAdded.cr", itemsDiv.node());
 	cell.addTarget("valueDeleted.cr", itemsDiv.node());
 	cell.addTarget("dataChanged.cr", itemsDiv.node());
 	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
 		{
-			checkItemsDivDisplay(itemsDiv, cell);
+			_checkItemsDivDisplay(itemsDiv, cell);
 		});
 }
 
-function setupItemHandlers(d)
+function _setupItemHandlers(d)
 {
 	/* This method may be called for a set of items that were gotten directly and are not
-		part of a cell.
+		part of a cell. Therefore, we have to test whether d.cell is not null.
 	 */
 	if (d.cell)
 	{
@@ -234,7 +234,7 @@ function setupItemHandlers(d)
 	}
 }
 
-function showViewStringCell(obj, cell)
+function _showViewStringCell(obj, cell)
 {
 	var sectionObj = d3.select(obj);
 	
@@ -258,11 +258,11 @@ function showViewStringCell(obj, cell)
 		.append("div")
 		.classed("string-value-view", true)
 		.classed("string-multi-value-container", cell.field.capacity != "_unique value")
-		.text(getDataValue)
-		.each(pushTextChanged);
+		.text(_getDataValue)
+		.each(_pushTextChanged);
 	}
 	
-	setupItemsDivHandlers(itemsDiv, cell);
+	_setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 		{
 			setupItems(
@@ -273,7 +273,7 @@ function showViewStringCell(obj, cell)
 	setupItems(divs, cell);
 }
 
-function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
+function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
 		.classed("border-below", cell.field.capacity == "_unique value");
@@ -292,7 +292,7 @@ function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 			.classed("string-unique-input", true)
 			.attr("type", inputType)
 			.attr("placeholder", cell.field.name)
-			.property("value", getDataValue);
+			.property("value", _getDataValue);
 
 		if (cell.field.descriptorType != "_by text")
 		{
@@ -332,12 +332,12 @@ function showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 				.classed("string-input", true)
 				.attr("type", inputType)
 				.attr("placeholder", cell.field.name)
-				.property("value", getDataValue);
+				.property("value", _getDataValue);
 		}
 		
 		appendControls(divs, cell);
 
-		setupItemsDivHandlers(itemsDiv, cell);
+		_setupItemsDivHandlers(itemsDiv, cell);
 		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 			{
 				var div = d3.select(this).append("li")
@@ -378,9 +378,9 @@ function getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canSh
 		var divs = itemsDiv
 			.append("li")	// So that each button appears on its own row.
 			.datum(newData)
-			.each(setupItemHandlers);
+			.each(_setupItemHandlers);
 		
-		checkItemsDivDisplay(itemsDiv, cell);
+		_checkItemsDivDisplay(itemsDiv, cell);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		divs.style("display", 
@@ -499,14 +499,14 @@ function appendButtonDescriptions(buttons, cell)
 		.classed("text-muted", true)
 		.classed("string-value-view expanding-div", true)
 		.classed("string-multi-value-container pull-left", !cell || cell.field.capacity != "_unique value")
-		.text(getDataDescription)
-		.each(pushTextChanged);
+		.text(_getDataDescription)
+		.each(_pushTextChanged);
 }
 
-function showViewObjectCell(obj, containerPanel, cell, containerUUID)
+function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 {
 	var sectionObj = d3.select(obj).classed("cell-div", true)
-		.classed("btn row-button unique-row-button", cell.field.capacity == "_unique value" && !isPickCell(cell))
+		.classed("btn row-button unique-row-button", cell.field.capacity == "_unique value" && !_isPickCell(cell))
 		.classed("border-below", cell.field.capacity == "_unique value");
 	
 	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
@@ -517,7 +517,7 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	{
 		labelDiv.classed("left-label-div left-fixed-width-div", true);
 		itemsDiv.classed("right-label-div expanding-div", true);
-		if (!isPickCell(cell))
+		if (!_isPickCell(cell))
 			sectionObj.on("click", function(cell) {
 				if (prepareClick())
 				{
@@ -528,11 +528,11 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	else
 		itemsDiv.classed("border-above border-below", true);
 
-	setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !isPickCell(cell), showViewObjectPanel));
+	_setupItemsDivHandlers(itemsDiv, cell);
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !_isPickCell(cell), showViewObjectPanel));
 	
 	var clickFunction;
-	if (isPickCell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
+	if (_isPickCell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
@@ -545,7 +545,7 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	var divs = appendItems(itemsDiv, cell.data);
 	
 	var buttons;
-	if (!isPickCell(cell)) {
+	if (!_isPickCell(cell)) {
 		buttons = appendRowButtons(divs, cell);
 	
 		if (clickFunction)
@@ -561,7 +561,7 @@ function showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	appendButtonDescriptions(buttons, cell);
 }
 
-function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
+function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
 		.classed("btn row-button unique-row-button border-below", cell.field.capacity == "_unique value");
@@ -577,7 +577,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 		sectionObj.on("click", function(cell) {
 			if (prepareClick())
 			{
-				if (isPickCell(cell))
+				if (_isPickCell(cell))
 					showPickObjectPanel(cell.data[0], cell, parent.getValueID(), panelDiv);
 				else
 					showEditObjectPanel(cell.data[0], cell, parent.getValueID(), panelDiv);
@@ -587,7 +587,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	else
 		itemsDiv.classed("border-above", true);
 
-	setupItemsDivHandlers(itemsDiv, cell);
+	_setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, showEditObjectPanel));
 
 	var clickFunction;
@@ -597,7 +597,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 		clickFunction = function(d) {
 				if (prepareClick())
 				{
-					if (isPickCell(cell))
+					if (_isPickCell(cell))
 						showPickObjectPanel(d, cell, parent.getValueID(), panelDiv);
 					else
 						showEditObjectPanel(d, cell, parent.getValueID(), panelDiv);
@@ -631,7 +631,7 @@ function showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 				{
 					var newValue = cell.addNewValue();
 					
-					if (isPickCell(cell))
+					if (_isPickCell(cell))
 						showPickObjectPanel(newValue, cell, parent.getValueID(), panelDiv)
 					else
 						showAddObjectPanel(newValue, parent.getValueID(), panelDiv, storeDataFunction);
@@ -839,15 +839,15 @@ var dataTypeViews = {
 	_string: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			showViewStringCell(obj, cell);
+			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell,
@@ -855,15 +855,15 @@ var dataTypeViews = {
 	_number: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			showViewStringCell(obj, cell);
+			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
@@ -871,15 +871,15 @@ var dataTypeViews = {
 	_datestamp: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			showViewStringCell(obj, cell);
+			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
-			showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
 		appendUpdateCommands: _appendUpdateDatestampCommands,
 		updateCell: _updateDatestampCell,
@@ -887,16 +887,16 @@ var dataTypeViews = {
 	_object: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
-			showViewObjectCell(obj, containerPanel, cell, containerUUID);
+			_showViewObjectCell(obj, containerPanel, cell, containerUUID);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
 			/* If containerUUID is null during an edit operation, then the container
 				is new and was not saved. */
 			if (parent.getValueID())
-				showEditObjectCell(obj, containerPanel, cell, parent, submitCreateInstance);
+				_showEditObjectCell(obj, containerPanel, cell, parent, submitCreateInstance);
 			else
-				showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
+				_showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
 		},
 		showAdd: function(obj, containerPanel, cell, parent)
 		{
@@ -904,7 +904,7 @@ var dataTypeViews = {
 				or an object contained within an item that wasn't saved. In either case, 
 				store any item added to this cell as part of the data of the cell.
 			 */
-			showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
+			_showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
 		},
 		appendUpdateCommands: _appendUpdateObjectCommands,
 		updateCell: _updateObjectCell
@@ -918,8 +918,8 @@ function appendViewButtons(divs)
 	
 	buttons.append("span")
 		.classed("text-muted pull-left", true)
-		.text(getDataDescription)
-		.each(pushTextChanged);
+		.text(_getDataDescription)
+		.each(_pushTextChanged);
 		
 	return buttons;
 }
@@ -933,7 +933,7 @@ function appendItems(container, data)
 		.data(data)
 		.enter()
 		.append("li")	// So that each button appears on its own row.
-		.each(setupItemHandlers);
+		.each(_setupItemHandlers);
 }
 
 /* Returns the set of objects that contain the description of each data element */
@@ -948,8 +948,8 @@ function appendCellItems(container, cell, clickFunction)
 	
 	buttons.append("span")
 		.classed("text-muted pull-left", true)
-		.text(getDataDescription)
-		.each(pushTextChanged);
+		.text(_getDataDescription)
+		.each(_pushTextChanged);
 		
 	buttons.on("click", clickFunction);
 	appendRightChevrons(buttons);
