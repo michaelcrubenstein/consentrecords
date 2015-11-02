@@ -26,6 +26,7 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
 function syncFailFunction(error)
 {
 	bootstrap_alert.warning(error, ".alert-container");
+	$(".alert-container").parents(".panel-scrolling").scrollTop(0);
 	unblockClick();
 }
 
@@ -34,6 +35,7 @@ function syncFailFunction(error)
 function asyncFailFunction(error)
 {
 	bootstrap_alert.warning(error, ".alert-container");
+	$(".alert-container").parents(".panel-scrolling").scrollTop(0);
 	/* Don't unblock here, because there was no block. */
 }
 		
@@ -1252,6 +1254,11 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 	objectData.checkCells(containerCell, successFunction, syncFailFunction)
 }
 
+function _b64_to_utf8( str ) {
+    str = str.replace(/\s/g, '');    
+    return decodeURIComponent(escape(window.atob( str )));
+}
+
 /* 
 	Displays a panel for editing the specified object. 
  */
@@ -1370,7 +1377,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 									 	var s = e.target.result.substring(start);
 									 	try
 									 	{
-									 		var data = JSON.parse(atob(s));
+									 		var data = JSON.parse(_b64_to_utf8(s));
 									 		for (var j = 0; j < data.length; ++j)
 									 		{
 									 			var d = data[j];
@@ -1685,7 +1692,7 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 									var s = e.target.result.substring(start);
 									try
 									{
-										var data = JSON.parse(atob(s));
+										var data = JSON.parse(_b64_to_utf8(s));
 										for (var j = 0; j < data.length; ++j)
 										{
 											var d = data[j];
