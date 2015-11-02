@@ -2186,7 +2186,8 @@
 		
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
 		{
-			initialData = [{field: dataCell.field, data: [{ value: dataValue}]}];
+			initialData = {}
+			initialData[dataCell.field.id] = [{ value: dataValue}];
 			cr.createInstance(instanceCell.field, 
 				container.value.id,
 				initialData,
@@ -2333,7 +2334,7 @@
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						showEditObjectPanel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv, revealPanelLeft);
 					}
 				}
 				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
@@ -2355,7 +2356,7 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv, revealPanelLeft);
 					}
 				}
 				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
@@ -2377,7 +2378,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv, revealPanelLeft);
 					}
 				}
 				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
@@ -2399,7 +2400,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv);
+						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv, revealPanelLeft);
 					}
 				}
 				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);

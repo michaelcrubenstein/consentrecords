@@ -369,7 +369,7 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
  */
-function getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canShowDetails, viewFunction)
+function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canShowDetails, viewFunction, successFunction)
 {
 	return function(e, newData)
 	{
@@ -404,7 +404,7 @@ function getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canSh
 			if (prepareClick())
 			{
 				var cell = itemsDiv.datum();
-				viewFunction(d, cell, containerUUID, panelDiv);
+				viewFunction(d, cell, containerUUID, panelDiv, successFunction);
 			}
 		});
 		if (canDelete && cell.field.capacity != "_unique value")
@@ -521,7 +521,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 			sectionObj.on("click", function(cell) {
 				if (prepareClick())
 				{
-					showViewObjectPanel(cell.data[0], cell, containerUUID, containerPanel);
+					showViewObjectPanel(cell.data[0], cell, containerUUID, containerPanel, revealPanelLeft);
 				}
 			});
 	}
@@ -529,7 +529,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		itemsDiv.classed("border-above border-below", true);
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !_isPickCell(cell), showViewObjectPanel));
+	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !_isPickCell(cell), showViewObjectPanel, revealPanelLeft));
 	
 	var clickFunction;
 	if (_isPickCell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -538,7 +538,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		clickFunction = function(d) {
 			if (prepareClick())
 			{
-				showViewObjectPanel(d, cell, containerUUID, containerPanel);
+				showViewObjectPanel(d, cell, containerUUID, containerPanel, revealPanelLeft);
 			}
 		}
 
@@ -580,7 +580,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 				if (_isPickCell(cell))
 					showPickObjectPanel(cell.data[0], cell, parent.getValueID(), panelDiv);
 				else
-					showEditObjectPanel(cell.data[0], cell, parent.getValueID(), panelDiv);
+					showEditObjectPanel(cell.data[0], cell, parent.getValueID(), panelDiv, revealPanelLeft);
 			}
 		});
 	}
@@ -588,7 +588,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 		itemsDiv.classed("border-above", true);
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, showEditObjectPanel));
+	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, showEditObjectPanel, revealPanelLeft));
 
 	var clickFunction;
 	if (cell.field.capacity == "_unique value")	/* Unique value handles the click above */
@@ -600,7 +600,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 					if (_isPickCell(cell))
 						showPickObjectPanel(d, cell, parent.getValueID(), panelDiv);
 					else
-						showEditObjectPanel(d, cell, parent.getValueID(), panelDiv);
+						showEditObjectPanel(d, cell, parent.getValueID(), panelDiv, revealPanelLeft);
 				}
 			};
 		
@@ -730,7 +730,7 @@ function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, 
 				var newDatum = {id: null, value: {cells: []}};
 				$(d.value.cells).each(function()
 				{
-					cr.dataTypes[this.field.dataType].appendData(this, newDatum.value.cells);
+					cr.dataTypes[this.field.dataType].appendCell(this, newDatum.value.cells);
 				});
 				{
 					var command;
@@ -823,7 +823,7 @@ function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onS
  */
 function submitCreateInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 {
-	var initialData = []
+	var initialData = {}
 	sections.each(
 		function(cell) {
 			dt = dataTypeViews[cell.field.dataType]
@@ -1161,6 +1161,18 @@ function getViewPanelHeader(objectData, containerCell)
 	return headerText;
 }
 
+function revealPanelLeft(panelDiv)
+{
+	window.scrollTo(0, 0);
+	showPanelLeft(panelDiv);
+}
+
+function revealPanelUp(panelDiv)
+{
+	window.scrollTo(0, 0);
+	showPanelUp(panelDiv);
+}
+
 /* Displays a panel in which the specified object's contents appear without being able to edit.
  */
 function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, containerPanel) {
@@ -1194,10 +1206,9 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, conta
 
 /* Displays a panel in which the specified object's contents appear.
  */
-function showViewObjectPanel(objectData, containerCell, containerUUID, containerPanel) {
+function showViewObjectPanel(objectData, containerCell, containerUUID, containerPanel, showSuccessFunction) {
 	successFunction = function ()
 	{
-			
 		var panelDiv = createPanel(containerPanel, 
 									objectData, getViewPanelHeader(objectData, containerCell))
 			.classed("show-panel", true);
@@ -1215,7 +1226,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 				{
 					showClickFeedback(this);
 				
-					showEditObjectPanel(objectData, containerCell, containerUUID, panelDiv);
+					showEditObjectPanel(objectData, containerCell, containerUUID, panelDiv, revealPanelUp);
 				}
 				d3.event.preventDefault();
 			});
@@ -1233,10 +1244,9 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 
 		panel2Div.appendAlertContainer();
 							
-		window.scrollTo(0, 0);
-		showPanelLeft(panelDiv.node());
-	
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
+		
+		showSuccessFunction(panelDiv.node());
 	}
 	
 	objectData.checkCells(containerCell, successFunction, syncFailFunction)
@@ -1245,7 +1255,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 /* 
 	Displays a panel for editing the specified object. 
  */
-function showEditObjectPanel(objectData, containerCell, containerUUID, containerPanel) {
+function showEditObjectPanel(objectData, containerCell, containerUUID, containerPanel, showSuccessFunction) {
 	var successFunction = function()
 	{
 		var panelDiv = createPanel(containerPanel, 
@@ -1254,14 +1264,28 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 
 		var navContainer = panelDiv.appendNavContainer();
 
-		var doneButton = navContainer.appendRightButton();
+		var doneButton;
+		var hideSuccessFunction;
+		if (showSuccessFunction == revealPanelUp)
+		{
+			doneButton = navContainer.appendRightButton();
+			hideSuccessFunction = function()
+				{
+					hidePanelDown($(doneButton.node()).parents(".site-panel")[0]);
+				};
+		}
+		else
+		{
+			doneButton = navContainer.appendLeftButton();
+			hideSuccessFunction = function()
+				{
+					hidePanelRight($(doneButton.node()).parents(".site-panel")[0]);
+				};
+		}
 		doneButton.append("span").text("Done");
 
 		var panel2Div = panelDiv.appendScrollArea();
 		panel2Div.appendAlertContainer();
-		window.scrollTo(0, 0);
-		showPanelUp(panelDiv.node());
-
 		panel2Div.show_edit_cells(objectData, containerCell, panelDiv);
 
 		doneButton.on("click", function(d) {
@@ -1270,10 +1294,6 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 				showClickFeedback(this);
 			
 				var sections = panel2Div.selectAll("section");
-				var successFunction = function()
-				{
-					hidePanelDown($(doneButton.node()).parents(".site-panel")[0]);
-				};
 				if (objectData.getValueID())
 				{
 					/* This object has been previously saved. Update the data. */
@@ -1291,16 +1311,16 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 							});
 					}
 					if (initialData.length > 0) {
-						cr.updateValues(initialData, sourceObjects, updateValuesFunction, successFunction, syncFailFunction);
+						cr.updateValues(initialData, sourceObjects, updateValuesFunction, hideSuccessFunction, syncFailFunction);
 					}
 					else
 					{
-						successFunction();
+						hideSuccessFunction();
 					}
 				}
 				else if (containerCell.parent != null && containerCell.parent.getValueID())
 				{
-					submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, successFunction);
+					submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, hideSuccessFunction);
 					/* Add this item to the contained object. */
 				}
 				else
@@ -1317,7 +1337,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 		
 					objectData.calculateDescription();
 					objectData.triggerEvent("dataChanged.cr");
-					successFunction();
+					hideSuccessFunction();
 				}
 			}
 			d3.event.preventDefault();
@@ -1354,19 +1374,21 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 									 		for (var j = 0; j < data.length; ++j)
 									 		{
 									 			var d = data[j];
-									 			var name = d.field.name;
-												for (var i = 0; i < objectData.value.cells.length; ++i)
-												{
-													var cell = objectData.value.cells[i];
-													if (cell.field.name == name)
+									 			for (var name in d)
+									 			{
+													for (var i = 0; i < objectData.value.cells.length; ++i)
 													{
-														cr.createInstance(cell.field, objectData.getValueID(), d.initialData, 
-															function(newData)
-															{
-																cell.addValue(newData);
-															},
-															asyncFailFunction);
-														break;
+														var cell = objectData.value.cells[i];
+														if (cell.field.name == name)
+														{
+															cr.createInstance(cell.field, objectData.getValueID(), d[name], 
+																function(newData)
+																{
+																	cell.addValue(newData);
+																},
+																asyncFailFunction);
+															break;
+														}
 													}
 												}
 											}
@@ -1382,6 +1404,8 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 				} 
 			}  
 		});
+		
+		showSuccessFunction(panelDiv.node());
 	}
 	
 	failFunction = function(error)
@@ -1527,7 +1551,7 @@ function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, 
 			.datum(cell);
 		
 		_setupItemsDivHandlers(itemsDiv, cell);
-		itemsDiv.node().onValueAdded = getOnValueAddedFunction(panelDiv, cell, null, false, true, showViewObjectPanel);
+		itemsDiv.node().onValueAdded = _getOnValueAddedFunction(panelDiv, cell, null, false, true, showViewObjectPanel, revealPanelLeft);
 		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 		{
 			this.onValueAdded(e, newData);
@@ -1544,7 +1568,7 @@ function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, 
 			function(d) {
 				if (prepareClick())
 				{
-					showViewObjectPanel(d, cell, null, panelDiv);
+					showViewObjectPanel(d, cell, null, panelDiv, revealPanelLeft);
 				}
 			});
 
@@ -1561,7 +1585,7 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 	var navContainer = panelDiv.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", handleCloseRightEvent);
+		.on("click", handleCloseDownEvent);
 	backButton.append("span").text("Done");
 	
 	var addButton = navContainer.appendRightButton()
@@ -1612,7 +1636,7 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 		.datum(cell);
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	itemsDiv.node().onValueAdded = getOnValueAddedFunction(panelDiv, cell, null, true, true, showEditObjectPanel);
+	itemsDiv.node().onValueAdded = _getOnValueAddedFunction(panelDiv, cell, null, true, true, showEditObjectPanel, revealPanelLeft);
 	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 	{
 		this.onValueAdded(e, newData);
@@ -1629,12 +1653,64 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 		function(d) {
 			if (prepareClick())
 			{
-				showEditObjectPanel(d, cell, null, panelDiv);
+				showEditObjectPanel(d, cell, null, panelDiv, revealPanelLeft);
 			}
 		});
 
+	$(panelDiv.node()).on('dragover',
+		function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+	)
+	$(panelDiv.node()).on('dragenter',
+		function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+	)
+	$(panelDiv.node()).on('drop', function(e)
+	{
+		if (e.originalEvent.dataTransfer) {
+			if (e.originalEvent.dataTransfer.files.length) {
+				e.preventDefault();
+				e.stopPropagation();
+				jQuery.each( e.originalEvent.dataTransfer.files, function(index, file){
+						var fileReader = new FileReader();
+							fileReader.onload = function(e) {
+								 if (e.target.result.startsWith("data:application/json") &&
+									 e.target.result.indexOf("base64,") > 0)
+								 {
+									var start = e.target.result.indexOf("base64,") + "base64,".length;
+									var s = e.target.result.substring(start);
+									try
+									{
+										var data = JSON.parse(atob(s));
+										for (var j = 0; j < data.length; ++j)
+										{
+											var d = data[j];
+											cr.createInstance(cell.field, null, d, 
+												function(newData)
+												{
+													cell.addValue(newData);
+												},
+												asyncFailFunction);
+										}
+									}
+									catch(err)
+									{
+										bootstrap_alert.warning(err.message, '.alert-container');
+									}
+								 }
+							};
+						fileReader.readAsDataURL(file);
+					  });
+			} 
+		}  
+	});
+	
 	window.scrollTo(0, 0);
-	showPanelLeft(panelDiv.node());
+	showPanelUp(panelDiv.node());
 }
 
 /* Displays a panel from which a user can select an object of the kind required 

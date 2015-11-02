@@ -9,43 +9,35 @@ from consentrecords.models import LazyInstance, Fact
 from consentrecords import pathparser
 
 def _addElementData(parent, data, fieldData, transactionState):
-    # If the data is iterable, then create a fact for each iteration of the data.
-    # Otherwise, create a fact whose value is the data.
-    # Note that this doesn't recur, so it can't handle arrays of dictionaries,
-    # which would be the logical construction of a recursive add.
+    # If the data is not a list, then treat it as a list of one item.
     if not isinstance(data, list):
-        raise ValueError("Data to add is not in a list")
-    else:           
-        i = 0
-        ids = []
-        for d in data:
-            if not isinstance(d, dict):
-                raise ValueError("Item to add is not a dictionary with a value")
-            if "value" not in d or not d["value"]:
-                raise ValueError("Item to add does not contain a non-null value")
+        data = [data]
 
-            fieldID = uuid.UUID(fieldData["nameID"])
-            v = d["value"]
-            if isinstance(v, (str, numbers.Number, datetime.date, datetime.time, datetime.timedelta)):
-                parent.addValue(fieldID, v, i, transactionState)
-            elif "id" in v and v["id"] is not None:
-                # This is a reference to an object.
-                parent.addValue(fieldID, v["id"], i, transactionState)
-            elif "path" in v and v["path"] is not None:
-                a = pathparser.tokenize(v["path"])
-                ids = pathparser.selectAllIDs(a)
-                if len(ids):
-                    logger = logging.getLogger(__name__)
-                    logger.error("id: %s" % len(ids[0]))
-                    parent.addValue(fieldID, ids[0][-1], i, transactionState)
-                else:
-                    raise ValueError("Path does not parse to an object: %s" % v["path"])
-            elif "cells" in v and "ofKindID" in fieldData:
-                ofKindObject = LazyInstance(fieldData["ofKindID"])
-                createInstance(ofKindObject, parent, fieldID, -1, v["cells"], transactionState)
+    i = 0
+    ids = []
+    for d in data:
+        fieldID = uuid.UUID(fieldData["nameID"])
+        if fieldData["dataTypeID"] == Fact.objectUUID().hex:
+            if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
+                if Fact.isUUID(d) is not None:
+                    # This is a reference to an object.
+                    parent.addValue(fieldID, d, i, transactionState)
+                elif d is not None:
+                    a = pathparser.tokenize(d)
+                    ids = pathparser.selectAllIDs(a)
+                    if len(ids):
+                        parent.addValue(fieldID, ids[0][-1], i, transactionState)
+                    else:
+                        raise ValueError("Path does not parse to an object: %s" % d)
             else:
-                raise ValueError("Unrecognized type of data to save")
-            i += 1
+                if isinstance(d, dict) and "ofKindID" in fieldData:
+                    ofKindObject = LazyInstance(fieldData["ofKindID"])
+                    createInstance(ofKindObject, parent, fieldID, -1, d, transactionState)
+                else:
+                    raise ValueError("Unrecognized type of data to save")
+        else:
+            parent.addValue(fieldID, d, i, transactionState)
+        i += 1
 
 # Add the specified data as a field to parent during the process of instantiating
 # parent.            
@@ -55,8 +47,9 @@ def addData(parent, fieldObject, data, transactionState):
         _addElementData(parent, data, fieldData, transactionState)
 
 def createInstance(typeInstance, parent, parentFieldID, position, propertyList, transactionState):
-    logger = logging.getLogger(__name__)
-    logger.error("typeInstance: %s" % typeInstance._description)
+#     logger = logging.getLogger(__name__)
+#     logger.error("typeInstance: %s" % typeInstance._description)
+#     logger.error("propertyList: %s" % str(propertyList))
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
     if parent:
@@ -71,28 +64,21 @@ def createInstance(typeInstance, parent, parentFieldID, position, propertyList, 
     else:
         newValue = None
 
-    configuration = None
-    for f in propertyList:
-        logger.error("field: %s" % str(f))
-        if 'field' not in f:
-            raise ValueError('instance data element missing field key');
-        if 'data' not in f:
-            raise ValueError('instance data element missing data key');
-        fieldData = f['field']
-        if 'id' in fieldData:
-            fieldID = fieldData['id']
-            fieldObject = LazyInstance(fieldID)
-        elif 'name' in fieldData:
-            if not configuration:
-                configuration = typeInstance.getSubInstance(fieldID=Fact.configurationUUID())
-            logger.error(configuration.id.hex)
-            name = fieldData['name']
-            id = Fact.getFieldNamedID(configuration.id, name)
-            logger.error(id)
-            fieldObject = LazyInstance(id)
+    if propertyList:
+        configuration = None
+        if isinstance(propertyList, dict):
+            for key in propertyList:
+                data = propertyList[key]
+                if Fact.isUUID(key):
+                    fieldObject = LazyInstance(key)
+                else:
+                    if not configuration:
+                        configuration = typeInstance.getSubInstance(fieldID=Fact.configurationUUID())
+                    id = Fact.getFieldNamedID(configuration.id, key)
+                    fieldObject = LazyInstance(id)
+                addData(item, fieldObject, data, transactionState)
         else:
-            raise ValueError('field data element missing id key');
-        addData(item, fieldObject, f['data'], transactionState)
+            raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
         
     return (item, newValue)
                 
@@ -126,6 +112,7 @@ def createMissingInstances(parent, fieldUUID, typeUUID, descriptorUUID, itemValu
             if i[1] in itemValues:
                 items[i[1]] = LazyInstance(i[0])
 
+    ofKindObject = LazyInstance(typeUUID)
     position = parent.getMaxElementIndex(fieldUUID)
     if position == None:
         position = 0
@@ -133,7 +120,6 @@ def createMissingInstances(parent, fieldUUID, typeUUID, descriptorUUID, itemValu
         position = position + 1
     for v in itemValues:
         if not v in items:
-            ofKindObject = LazyInstance(typeUUID)
             items[v] = createInstance(ofKindObject, parent, fieldUUID, position, [], transactionState)[0]
             position += 1
             items[v].addValue(descriptorUUID, v, 0, transactionState)

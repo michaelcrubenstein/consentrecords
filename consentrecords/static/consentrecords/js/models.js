@@ -53,6 +53,10 @@ var cr = {
 					newValue.value = oldValue.value;
 				return newValue;
 			},
+			appendCell: function(cell, initialData)
+			{
+				cr.appendStringCell(cell, initialData);
+			},
 			appendData: function(cell, initialData)
 			{
 				cr.appendStringData(cell, initialData);
@@ -90,6 +94,10 @@ var cr = {
 					newValue.value = oldValue.value;
 				return newValue;
 			},
+			appendCell: function(cell, initialData)
+			{
+				cr.appendStringCell(cell, initialData);
+			},
 			appendData: function(cell, initialData)
 			{
 				cr.appendStringData(cell, initialData);
@@ -126,6 +134,10 @@ var cr = {
 				if (oldValue.value !== null && oldValue.value !== undefined)
 					newValue.value = oldValue.value;
 				return newValue;
+			},
+			appendCell: function(cell, initialData)
+			{
+				cr.appendStringCell(cell, initialData);
 			},
 			appendData: function(cell, initialData)
 			{
@@ -176,7 +188,7 @@ var cr = {
 				}
 				return newValue;
 			},
-			appendData: function(cell, initialData)
+			appendCell: function(cell, initialData)
 			{
 				var newData = [];
 				if (cell.data)
@@ -196,7 +208,7 @@ var cr = {
 							var newDatum = {id: null, value: {cells: []}};
 							$(d.value.cells).each(function()
 							{
-								cr.dataTypes[this.field.dataType].appendData(this, newDatum.value.cells);
+								cr.dataTypes[this.field.dataType].appendCell(this, newDatum.value.cells);
 							});
 							
 							newData.push(newDatum);
@@ -204,7 +216,36 @@ var cr = {
 						/* Otherwise, it is blank and shouldn't be saved. */
 					}
 				}
-				initialData.push({"data": newData, "field": cell.field});
+				initialData.push({"field": cell.field, "data": newData});
+			},
+			appendData: function(cell, initialData)
+			{
+				var newData = [];
+				if (cell.data)
+				{
+					for (var i = 0; i < cell.data.length; ++i)
+					{
+						var d = cell.data[i];
+						if (d.getValueID())
+						{
+							/* This case is true if we are picking an object. */
+							newData.push(d.getValueID());
+						}
+						else if ("cells" in d.value)
+						{
+							/* This case is true if we are creating an object */
+							var newDatum = {};
+							$(d.value.cells).each(function()
+							{
+								cr.dataTypes[this.field.dataType].appendData(this, newDatum);
+							});
+							
+							newData.push(newDatum);
+						}
+						/* Otherwise, it is blank and shouldn't be saved. */
+					}
+				}
+				initialData[cell.field.id] = newData;
 			},
 		},
 	},
@@ -225,7 +266,7 @@ var cr = {
 	refreshToken: null,
 	tokenType: null,
 	
-	appendStringData: function(cell, initialData)
+	appendStringCell: function(cell, initialData)
 	{
 		var newData = [];
 		$(cell.data).each(function()
@@ -237,7 +278,22 @@ var cr = {
 				}
 			});
 		if (newData.length > 0)
-			initialData.push({"data": newData, "field": cell.field});
+			initialData.push({"field": cell.field, "data": newData});
+	},
+	
+	appendStringData: function(cell, initialData)
+	{
+		var newData = [];
+		$(cell.data).each(function()
+			{
+				if (this.value)
+				{
+					var newDatum = this.value;
+					newData.push(newDatum);
+				}
+			});
+		if (newData.length > 0)
+			initialData[cell.field.id] = newData;
 	},
 	
 	postFailed: function(jqXHR, textStatus, errorThrown, failFunction)

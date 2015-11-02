@@ -35,12 +35,11 @@ class TransactionState:
         self.currentTransaction = None
         self.user = user
         self.timeZoneOffset = timeZoneOffset
-    
+            
     @property    
     def transaction(self):
-        with TransactionState.mutex:
-            if self.currentTransaction == None:
-                self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
+        if self.currentTransaction == None:
+            self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
 
         return self.currentTransaction
         
@@ -594,7 +593,7 @@ class LazyValue(LazyObject):
     @property
     def isOriginalReference(self):
         # If it is not an id, then return false.
-        if not re.search('^[a-fA-F0-9]{32}$', self.stringValue):
+        if not Fact.isUUID(self.stringValue):
             return False
         i = LazyInstance(self.stringValue)
         return self.instanceID == i.parentID
@@ -620,7 +619,7 @@ class Value(dbmodels.Model):
         
     @property
     def objectValue(self):
-        if re.search('^[a-fA-F0-9]{32}$', self.stringValue):
+        if Fact.isUUID(self.stringValue):
             return str(LazyInstance(self.stringValue))
         else:
             return self.stringValue
@@ -850,11 +849,14 @@ class Fact():
             else:
                 return uuid.UUID(r[0])
     
+    def isUUID(s):
+        return re.search('^[a-fA-F0-9]{32}$', s)
+    
     # Return a 32 character hex string which represents the ID of the specified universal name.
     # If the argument is a 32 character hex string, then it is considered that ID. Otherwise,
     # it is looked up by name.
     def getUUIDHex(uuname):
-        if re.search('^[a-fA-F0-9]{32}$', uuname):
+        if Fact.isUUID(uuname):
             return uuname
         else:
             return Fact.getNamedUUID(uuname).hex

@@ -100,8 +100,8 @@ def initializeFacts(request):
         elif request.method == "GET":
             timezoneoffset = request.GET['timezoneoffset']
         
-        with transaction.atomic():    
-            transactionState = TransactionState(request.user, timezoneoffset)
+        with transaction.atomic():
+            transactionState = TransactionState(request.user, timezoneoffset)  
             bootstrap.initializeFacts(transactionState) 
         results = {'success':True}
     except Exception as e:
@@ -136,7 +136,7 @@ def list(request):
     context = RequestContext(request, argList)
         
     return HttpResponse(template.render(context))
-    
+
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
     def createInstance(user, data):
@@ -167,7 +167,7 @@ class api:
                 elementID = Fact.getNamedUUID(instanceName)
             
             # An optional set of properties associated with the object.
-            propertyString = data.get('properties', "[]")
+            propertyString = data.get('properties', None)
             propertyList = json.loads(propertyString)
         
             indexString = data.get('index', "-1")
@@ -182,9 +182,9 @@ class api:
                     containerObject = LazyInstance(containerUUID)
                 else:
                     containerObject = None
-    
+
                 item, newValue = instancecreator.createInstance(ofKindObject, containerObject, elementID, index, propertyList, transactionState)
-        
+    
                 if containerObject:
                     results = {'success':True, 'object': newValue.getReferenceData(item, ofKindObject)}
                 else:    
@@ -234,14 +234,14 @@ class api:
                         ids.append(item.id.hex)
                     else:
                         ids.append(None)
-            
+        
                 results = {'success':True, 'ids': ids}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             results = {'success':False, 'error': str(e)}
-            
+               
         return JsonResponse(results)
 
     def addValue(user, data):
@@ -269,10 +269,9 @@ class api:
         
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
-        
                 elementID = uuid.UUID(elementUUID)
                 container = LazyInstance(containerUUID)
-        
+    
                 if indexString:
                     newIndex = container.updateElementIndexes(elementID, int(indexString), transactionState)
                 else:
@@ -281,7 +280,7 @@ class api:
                         newIndex = 0
                     else:
                         newIndex = maxIndex + 1
-        
+    
                 item = container.addValue(elementID, valueUUID, newIndex, transactionState)
         
             results = {'success':True, 'id': item.id.hex}
@@ -609,21 +608,20 @@ class UserFactory:
             
     def createUserObjectID(user, timezoneOffset):
         with transaction.atomic():
+            transactionState = TransactionState(user, timezoneoffset)
             if isinstance(user.id, uuid.UUID):
                 userID = user.id.hex    # SQLite
             else:
                 userID = user.id        # MySQL
 
-            transactionState = TransactionState(user, timezoneOffset)
             ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
-            item, newValue = instancecreator.createInstance(ofKindObject, None, None, 0, [], transactionState)
-            item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
-            item.addValue(Fact.getNamedUUID(Fact.emailName), user.email, 0, transactionState)
+            propertyList = {Fact.userIDName: userID, Fact.emailName: user.email}
             if user.first_name:
-                item.addValue(Fact.getNamedUUID(Fact.firstNameName), user.first_name, 0, transactionState)
+                propertyList[Fact.firstNameName] = user.first_name
             if user.last_name:
-                item.addValue(Fact.getNamedUUID(Fact.lastNameName), user.last_name, 0, transactionState)
-            
+                propertyList[Fact.lastNameName] = user.last_name
+            item, newValue = instancecreator.createInstance(ofKindObject, None, None, 0, propertyList, transactionState)
+        
             return item.id.hex
 
 # Handles a post operation that contains the users username (email address) and password.

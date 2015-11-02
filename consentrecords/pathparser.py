@@ -46,8 +46,8 @@ def _getResultArray(sql, item, argList):
         return [i for i in c.fetchall()]
     
 def refineResults(resultSet, path):
-    logger = logging.getLogger(__name__)
-    logger.error("refineResults(%s, %s)" % (str(resultSet), path))
+#     logger = logging.getLogger(__name__)
+#     logger.error("refineResults(%s, %s)" % (str(resultSet), path))
     
     if path[0] == '#':
         return [(None, path[1])], path[2:]
@@ -161,8 +161,8 @@ def selectAllIDs(path, startSet=[]):
         lastPair = resultSet[-1]
         nextPair = refineResults(lastPair[0], lastPair[1])
         resultSet.append(nextPair)
-    logger = logging.getLogger(__name__)
-    logger.error("selectAllIDs result: %s" % str(resultSet[-1][0]))
+#     logger = logging.getLogger(__name__)
+#     logger.error("selectAllIDs result: %s" % str(resultSet[-1][0]))
     return resultSet[-1][0]
            
 def selectAllObjects(path):

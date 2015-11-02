@@ -9,7 +9,8 @@ import logging
 import string
 from multiprocessing import Lock
 
-from consentrecords.models import Fact, LazyInstance
+from consentrecords.models import Fact, LazyInstance, Instance
+from consentrecords import instancecreator
 
 def initializeUUNames():
     Fact.initialUUNames = {}
@@ -38,8 +39,8 @@ def _addEnumeratorTranslations(uuNameID, enumerationNames, transactionState):
         try:
             item = LazyInstance(Fact.getTranslationNamedEnumeratorID(uuNameID, name))
         except Fact.UnrecognizedNameError:
-            item, value1 = enumeratorInstance.createInstance(container, Fact.enumeratorUUID(), -1, [], transactionState)
-            item2, value2 = translationInstance.createInstance(item, Fact.translationUUID(), 0, [], transactionState)
+            item, value1 = instancecreator.createInstance(enumeratorInstance, container, Fact.enumeratorUUID(), -1, None, transactionState)
+            item2, value2 = instancecreator.createInstance(translationInstance, item, Fact.translationUUID(), 0, None, transactionState)
             item2.addValue(Fact.textUUID().hex, name, 0, transactionState)
             item2.addValue(Fact.languageUUID().hex, englishUUID.hex, 0, transactionState)
 
@@ -51,8 +52,14 @@ def _addEnumerators(uuNameID, enumerationNames, transactionState):
         try:
             item = LazyInstance(Fact.getNamedEnumeratorID(uuNameID, name))
         except Fact.UnrecognizedNameError:
-            item, newValue = ofKindObject.createInstance(container, Fact.enumeratorUUID(), -1, [], transactionState)
+            item, newValue = instancecreator.createInstance(ofKindObject, container, Fact.enumeratorUUID(), -1, None, transactionState)
             item.addValue(Fact.nameUUID(), name, 0, transactionState)
+
+def createConfigurations(container, itemValues, transactionState):
+	return instancecreator.createMissingInstances(container, Fact.configurationUUID(), Fact.configurationUUID(), Fact.nameUUID(), itemValues, transactionState)
+	
+def createFields(container, itemValues, transactionState):
+	return instancecreator.createMissingInstances(container, Fact.fieldUUID(), Fact.fieldUUID(), Fact.nameUUID(), itemValues, transactionState)
 
 def createDataTypes(transactionState):
     _addEnumerators(Fact.dataTypeUUID(), [Fact.objectName, Fact.stringName, Fact.datestampName, Fact.numberName], transactionState)
@@ -76,14 +83,14 @@ def createTranslationConfiguration(transactionState):
     container = LazyInstance(Fact.translationUUID())
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
     
     configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
 
     fieldValues = [Fact.textUUID().hex, Fact.languageUUID().hex]
     
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
     p = fields[Fact.textUUID().hex]
     p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
     p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
@@ -101,14 +108,14 @@ def createEnumeratorConfiguration(transactionState):
     container = LazyInstance(Fact.enumeratorUUID())
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
     
     configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
 
     fieldValues = [Fact.nameUUID().hex, Fact.translationUUID().hex]
     
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
     p = fields[Fact.nameUUID().hex]
     p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
     p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
@@ -124,14 +131,14 @@ def createBooleanConfiguration(transactionState):
     container = LazyInstance(Fact.booleanUUID())
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
     
     configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
 
     fieldValues = [Fact.nameUUID().hex]
     
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
 
     p = fields[Fact.nameUUID().hex]
     p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
@@ -144,7 +151,7 @@ def createUUNameConfiguration(transactionState):
     container = LazyInstance(uunameUUID)
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
     
     configurationUUID = Fact.configurationUUID()
@@ -153,7 +160,7 @@ def createUUNameConfiguration(transactionState):
 
     fieldValues = [uunameUUID.hex, configurationUUID.hex, Fact.enumeratorUUID().hex]
 
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
     
     p = fields[uunameUUID.hex]
     p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
@@ -176,14 +183,14 @@ def createConfigurationConfiguration(transactionState):
     container = LazyInstance(configurationUUID)
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
             
     configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
     
     fieldValues = [Fact.nameUUID().hex, Fact.fieldUUID().hex]
 
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
     
     p = fields[Fact.nameUUID().hex]
     p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
@@ -203,7 +210,7 @@ def createFieldConfiguration(transactionState):
     configurationUUID = Fact.configurationUUID()
     
     configurationValues = [Fact._bootstrapName];
-    configurations = container.createConfigurations(configurationValues, transactionState)
+    configurations = createConfigurations(container, configurationValues, transactionState)
     configObject = configurations[Fact._bootstrapName]
     
     configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
@@ -217,7 +224,7 @@ def createFieldConfiguration(transactionState):
                    Fact.pickObjectPathUUID().hex,
                   ]
 
-    fields = configObject.createFields(fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, transactionState)
     
     f = fields[Fact.nameUUID().hex]
     f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
