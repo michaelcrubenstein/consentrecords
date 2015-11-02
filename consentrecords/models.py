@@ -109,6 +109,8 @@ class LazyInstance(LazyObject):
                 self._typeID = r[0]
                 self._parentID = r[1]
                 self._transactionID = r[2]
+            else:
+                raise ValueError('the ID "%s" is not an instance ID' % self.id.hex)
 
     @property
     def typeID(self):
