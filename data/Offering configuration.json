@@ -1,477 +1,59 @@
-[{
-"field": {"name": "_configuration", "ofKind": "_configuration"},
-  "initialData": 
-[
-  {
-    "field": { "name": "_name" },
-    "data": [
-      { "value": "Boston" }
-    ]
-  },
-  {
-    "field": { "name": "_field" },
-    "data": [
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=_name]"
-                  }
-                }
-              ]
+[ 
+	{ "_configuration":
+		{ "_name" : "Boston" ,
+		  "_field": [
+			{ "_name": "_uuname[_uuname=_name]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]",
+              "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
+              "_of kind": "_uuname[_uuname=\"_translation\"]"
             },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
-                  }
-                }
-              ]
+            { "_name": "_uuname[_uuname=Service]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_pick one\"]",
+              "_of kind": "_uuname[_uuname=Service]"
             },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]"
-                  }
-                }
-              ]
+            { "_name" : "_uuname[_uuname=\"Minimum Age\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_number]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
             },
-            {
-              "field": { "name": "_descriptor type" },
-              "data": [ {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]"
-                  }
-              } ]
+            { "_name": "_uuname[_uuname=\"Maximum Age\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_number]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
             },
-            {
-              "field": { "name": "_object add rule" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]"
-                  }
-                }
-              ]
+            { "_name": "_uuname[_uuname=\"Registration Deadline\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
             },
-            {
-              "field": { "name": "_of kind" },
-              "data": [
-                {
-                  "value": { "path": "_uuname[_uuname=\"_translation\"]" }
-                }
-              ]
+            { "_name": "_uuname[_uuname=\"Start Date\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
+            },
+            { "_name": "_uuname[_uuname=\"End Date\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
+            },
+            { "_name": "_uuname[_uuname=Inquiries]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
+              "_of kind": "_uuname[_uuname=Inquiries]"
+            },
+            { "_name": "_uuname[_uuname=Enrollments]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
+              "_of kind": "_uuname[_uuname=Enrollments]"
+            },
+            { "_name": "_uuname[_uuname=Experiences]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
+              "_of kind": "_uuname[_uuname=Experiences]"
             }
           ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=Service]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_object add rule" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_pick one\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_of kind" },
-              "data": [
-                {
-                  "value": { "path": "_uuname[_uuname=Service]" }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"Minimum Age\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_number]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"Maximum Age\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_number]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"Registration Deadline\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"Start Date\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"End Date\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=Inquiries]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_object add rule" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_of kind" },
-              "data": [
-                {
-                  "value": { "path": "_uuname[_uuname=Inquiries]" }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=Enrollments]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_object add rule" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_of kind" },
-              "data": [
-                {
-                  "value": { "path": "_uuname[_uuname=Enrollments]" }
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "value": {
-          "cells": [
-            {
-              "field": { "name": "_name" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=Experiences]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_data type" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_max capacity" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_object add rule" },
-              "data": [
-                {
-                  "value": {
-                    "path": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]"
-                  }
-                }
-              ]
-            },
-            {
-              "field": { "name": "_of kind" },
-              "data": [
-                {
-                  "value": { "path": "_uuname[_uuname=Experiences]" }
-                }
-              ]
-            }
-          ]
-        }
       }
-    ]
   }
 ]
-  }]
-  
-  

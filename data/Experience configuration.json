@@ -1,0 +1,23 @@
+[ 
+	{ "_configuration":
+		{ "_name" : "Boston" ,
+		  "_field": [
+			{ "_name": "_uuname[_uuname=_user]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+              "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]",
+              "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_pick one\"]",
+              "_of kind": "_uuname[_uuname=_user]"
+            },
+            { "_name": "_uuname[_uuname=\"Start Date\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
+            },
+            { "_name": "_uuname[_uuname=\"End Date\"]",
+              "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_datestamp]",
+              "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]"
+            }
+          ]
+      }
+  }
+]
