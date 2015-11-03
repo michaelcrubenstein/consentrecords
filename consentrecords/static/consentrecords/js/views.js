@@ -218,6 +218,17 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 		});
 }
 
+function _setupEditItemsDivHandlers(itemsDiv, cell)
+{
+	cell.addTarget("valueAdded.cr", itemsDiv.node());
+	cell.addTarget("valueDeleted.cr", itemsDiv.node());
+	cell.addTarget("dataChanged.cr", itemsDiv.node());
+	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
+		{
+			itemsDiv.style("display", cell.data.length ? "block" : "none");
+		});
+}
+
 function _setupItemHandlers(d)
 {
 	/* This method may be called for a set of items that were gotten directly and are not
@@ -339,7 +350,7 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 		
 		appendControls(divs, cell);
 
-		_setupItemsDivHandlers(itemsDiv, cell);
+		_setupEditItemsDivHandlers(itemsDiv, cell);
 		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
 			{
 				var div = d3.select(this).append("li")
