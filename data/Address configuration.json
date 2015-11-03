@@ -1,0 +1,32 @@
+[ 
+	{ "_configuration":
+		{ "_name" : "Boston",
+		  "_field": [
+    		{ "_name": "_uuname[_uuname=Street]", 
+			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_string]", 
+			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_multiple values\"]",
+			  "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]"
+			},
+			{ "_name": "_uuname[_uuname=City]", 
+			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_string]", 
+			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+			  "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]"
+			},
+			{ "_name": "_uuname[_uuname=State]", 
+			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]", 
+			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+			  "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]",
+			  "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_pick one\"]",
+			  "_of kind": "_uuname[_uuname=enumerator]",
+			  "_pick object path": "_uuname[_uuname=State]>enumerator"
+			},
+			{ "_name": "_uuname[_uuname=\"Zip Code\"]", 
+			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_number]", 
+			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
+			  "_descriptor type": "_uuname[_uuname=\"_descriptor type\"]>enumerator[_name=\"_by text\"]"
+			}
+          ]
+        }
+	}
+]
+  

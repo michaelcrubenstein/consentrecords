@@ -1,5 +1,7 @@
 [
+{ "_uuname": "Address" },
 { "_uuname": "Birthday" },
+{ "_uuname": "City" },
 { "_uuname": "Consent Form" },
 { "_uuname": "Consent Record" },
 { "_uuname": "Employee" },
@@ -18,5 +20,15 @@
 { "_uuname": "Organization" },
 { "_uuname": "Registration Deadline" },
 { "_uuname": "Service" },
-{ "_uuname": "Start Date" }
+{ "_uuname": "Session" },
+{ "_uuname": "Sessions" },
+{ "_uuname": "Site" },
+{ "_uuname": "Sites" },
+{ "_uuname": "Start Date" },
+{ "_uuname": "State", 
+  "enumerator": [ { "_name": "MA" },
+                  { "_name": "NH" } ]
+  },
+{ "_uuname": "Street" },
+{ "_uuname": "Zip Code" }
 ]

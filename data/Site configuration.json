@@ -9,23 +9,17 @@
 			  "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
 			  "_of kind": "_uuname[_uuname=\"_translation\"]"
 			},
-			{ "_name": "_uuname[_uuname=Employees]", 
+			{ "_name": "_uuname[_uuname=Address]", 
 			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]", 
 			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
 			  "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
-			  "_of kind": "_uuname[_uuname=Employees]"
+			  "_of kind": "_uuname[_uuname=Address]"
 			},
 			{ "_name": "_uuname[_uuname=Offerings]", 
 			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]", 
 			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
 			  "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
 			  "_of kind": "_uuname[_uuname=Offerings]"
-			},
-			{ "_name": "_uuname[_uuname=Sites]", 
-			  "_data type": "_uuname[_uuname=\"_data type\"]>enumerator[_name=_object]", 
-			  "_max capacity": "_uuname[_uuname=\"_max capacity\"]>enumerator[_name=\"_unique value\"]",
-			  "_object add rule": "_uuname[_uuname=\"_object add rule\"]>enumerator[_name=\"_create one\"]",
-			  "_of kind": "_uuname[_uuname=Sites]"
 			}
           ]
         }
