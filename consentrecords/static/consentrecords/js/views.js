@@ -86,6 +86,7 @@ function showClickFeedback(obj)
 
 function showPanelUp(panelNode)
 {
+	window.scrollTo(0, 0);
 	$(panelNode).offset({top: window.innerHeight, left: 0})
 				   .height(0)
 				   .width("100%")
@@ -111,6 +112,7 @@ function showPanelNow(panelNode)
 
 function showPanelLeft(panelNode)
 {
+	window.scrollTo(0, 0);
 	$(panelNode).offset({top: 0, left: 0})
 				.height("100%")
 				.width("100%")
@@ -645,9 +647,9 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 					var newValue = cell.addNewValue();
 					
 					if (_isPickCell(cell))
-						showPickObjectPanel(newValue, cell, parent.getValueID(), panelDiv)
+						showPickObjectPanel(newValue, newValue.cell, parent.getValueID(), panelDiv)
 					else
-						showAddObjectPanel(newValue, parent.getValueID(), panelDiv, storeDataFunction);
+						showEditObjectPanel(newValue, newValue.cell, parent.getValueID(), panelDiv, revealPanelUp);
 				}
 				d3.event.preventDefault();
 			})
@@ -834,7 +836,7 @@ function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onS
 /* This is a storeDataFunction for creating an object. 
 	If this is a root object, then containerUUID will be null.
  */
-function submitCreateInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
+function _submitCreateInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 {
 	var initialData = {}
 	sections.each(
@@ -907,7 +909,7 @@ var dataTypeViews = {
 			/* If containerUUID is null during an edit operation, then the container
 				is new and was not saved. */
 			if (parent.getValueID())
-				_showEditObjectCell(obj, containerPanel, cell, parent, submitCreateInstance);
+				_showEditObjectCell(obj, containerPanel, cell, parent, _submitCreateInstance);
 			else
 				_showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
 		},
@@ -1176,13 +1178,11 @@ function getViewPanelHeader(objectData, containerCell)
 
 function revealPanelLeft(panelDiv)
 {
-	window.scrollTo(0, 0);
 	showPanelLeft(panelDiv);
 }
 
 function revealPanelUp(panelDiv)
 {
-	window.scrollTo(0, 0);
 	showPanelUp(panelDiv);
 }
 
@@ -1208,13 +1208,12 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, conta
 
 		panel2Div.appendAlertContainer();
 							
-		window.scrollTo(0, 0);
 		showPanelLeft(panelDiv.node());
 	
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
 	}
 	
-	objectData.checkCells(containerCell, successFunction, syncFailFunction)
+	objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction)
 }
 
 /* Displays a panel in which the specified object's contents appear.
@@ -1262,7 +1261,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 		showSuccessFunction(panelDiv.node());
 	}
 	
-	objectData.checkCells(containerCell, successFunction, syncFailFunction)
+	objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction)
 }
 
 function _b64_to_utf8( str ) {
@@ -1274,19 +1273,30 @@ function _b64_to_utf8( str ) {
 	Displays a panel for editing the specified object. 
  */
 function showEditObjectPanel(objectData, containerCell, containerUUID, containerPanel, showSuccessFunction) {
+	if (!objectData)
+		throw "objectData is not initialized";
+		
 	var successFunction = function()
 	{
-		var panelDiv = createPanel(containerPanel, 
-									objectData, "Edit")
+		var header;
+		if (objectData.getValueID())
+			header = "Edit";
+		else
+			header = "New " + objectData.cell.field.name;
+			
+		var panelDiv = createPanel(containerPanel, objectData, header)
 						.classed("edit-panel", true);
 
 		var navContainer = panelDiv.appendNavContainer();
+
+		var panel2Div = panelDiv.appendScrollArea();
+		panel2Div.appendAlertContainer();
+		panel2Div.show_edit_cells(objectData, containerCell, panelDiv);
 
 		var doneButton;
 		var hideSuccessFunction;
 		if (showSuccessFunction == revealPanelUp)
 		{
-			doneButton = navContainer.appendRightButton();
 			hideSuccessFunction = function()
 				{
 					hidePanelDown($(doneButton.node()).parents(".site-panel")[0]);
@@ -1294,27 +1304,24 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 		}
 		else
 		{
-			doneButton = navContainer.appendLeftButton();
 			hideSuccessFunction = function()
 				{
 					hidePanelRight($(doneButton.node()).parents(".site-panel")[0]);
 				};
 		}
-		doneButton.append("span").text("Done");
-
-		var panel2Div = panelDiv.appendScrollArea();
-		panel2Div.appendAlertContainer();
-		panel2Div.show_edit_cells(objectData, containerCell, panelDiv);
-
-		doneButton.on("click", function(d) {
-			if (prepareClick())
-			{
-				showClickFeedback(this);
-			
-				var sections = panel2Div.selectAll("section");
-				if (objectData.getValueID())
+		if (objectData.getValueID())
+		{
+			if (showSuccessFunction == revealPanelUp)
+				doneButton = navContainer.appendRightButton();
+			else
+				doneButton = navContainer.appendLeftButton();
+			doneButton.append("span").text("Done");
+			doneButton.on("click", function(d) {
+				if (prepareClick())
 				{
-					/* This object has been previously saved. Update the data. */
+					showClickFeedback(this);
+			
+					var sections = panel2Div.selectAll("section");
 					var initialData = [];
 					var sourceObjects = [];
 					sections.each(function(cell) {
@@ -1336,30 +1343,66 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 						hideSuccessFunction();
 					}
 				}
-				else if (containerCell.parent != null && containerCell.parent.getValueID())
+				d3.event.preventDefault();
+			});
+		}
+		else
+		{
+			doneButton = navContainer.appendRightButton();
+			doneButton.append("span").text("Add");
+			doneButton.on("click", function(d) {
+				if (prepareClick())
 				{
-					submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, hideSuccessFunction);
-					/* Add this item to the contained object. */
-				}
-				else
-				{
-					/* In this case, we are editing an object that is contained in an object
-						that hasn't been saved. */
-					objectData.value.cells = [];
-					sections.each(
-						function(cell) {
-							if ("updateCell" in dataTypeViews[cell.field.dataType])
-								dataTypeViews[cell.field.dataType].updateCell(this, cell);
-							objectData.importCell(cell);
-						});
+					showClickFeedback(this);
+			
+					var sections = panel2Div.selectAll("section");
+					if (containerCell.parent == null)
+					{
+						_submitCreateInstance(objectData, containerCell, null, sections, hideSuccessFunction);
+						/* Add this new root object. */
+					}
+					else if (containerCell.parent.getValueID())
+					{
+						_submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, hideSuccessFunction);
+						/* Add this item to the contained object. */
+					}
+					else
+					{
+						/* In this case, we are editing an object that is contained in an object
+							that hasn't been saved. */
+						objectData.value.cells = [];
+						sections.each(
+							function(cell) {
+								if ("updateCell" in dataTypeViews[cell.field.dataType])
+									dataTypeViews[cell.field.dataType].updateCell(this, cell);
+								objectData.importCell(cell);
+							});
 		
-					objectData.calculateDescription();
-					objectData.triggerEvent("dataChanged.cr");
-					hideSuccessFunction();
+						objectData.calculateDescription();
+						objectData.triggerEvent("dataChanged.cr");
+						hideSuccessFunction();
+					}
 				}
-			}
-			d3.event.preventDefault();
-		});
+				d3.event.preventDefault();
+			});
+			var backButton = navContainer.appendLeftButton()
+				.on("click", function()
+				{
+					if (prepareClick())
+					{
+						if (objectData.cell.field.maxCapacity != "_unique value")
+						{
+							// In this case, delete the item on cancel. 
+							objectData.cell.deleteValue(objectData);
+						}
+						hideSuccessFunction();
+					}
+					d3.event.preventDefault();
+				});
+			backButton.append("span").text("Cancel");
+		}
+		navContainer.appendTitle(header);
+
 		$(panelDiv.node()).on('dragover',
 			function(e) {
 				e.preventDefault();
@@ -1426,82 +1469,10 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 		showSuccessFunction(panelDiv.node());
 	}
 	
-	failFunction = function(error)
-	{
-		alert(error);
-		unblockClick();
-	}
-	
-	objectData.checkCells(containerCell, successFunction, failFunction);
-}
-
-/* This method gets called to bring up a configuration panel when adding
-	a new instance of an object to another object. For example, adding a 
-	configuration to an object with a uuname kind.
- */
-function showAddObjectPanel(oldValue, containerUUID, containerPanel, storeDataFunction) {
-	if (!oldValue)
-		throw "oldValue is not defined";
-	if (!oldValue.cell)
-		throw "oldValue.cell is not defined";
-		
-	var successFunction = function(cells)
-	{
-		var panelDiv = createPanel(containerPanel, oldValue.cell, "New " + oldValue.cell.field.name)
-			.classed("edit-panel", true);
-
-		var navContainer = panelDiv.appendNavContainer();
-
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (!_isClickBlocked())
-				{
-					_blockClick();
-					if (!oldValue.getValueID() && oldValue.cell.field.maxCapacity != "_unique value")
-					{
-						// In this case, delete the item on cancel. 
-						oldValue.cell.deleteValue(oldValue);
-					}
-					hidePanelDown($(this).parents(".site-panel")[0]);
-				}
-				d3.event.preventDefault();
-			});
-		
-		backButton.append("span").text("Cancel");
-
-		var onSuccessFunction = function(newData) {
-			hidePanelDown(panelDiv.node());
-		};
-			
-		var addButton = navContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-					
-					storeDataFunction(oldValue, oldValue.cell, containerUUID, sections, onSuccessFunction);
-				}
-				d3.event.preventDefault();
-			});
-		addButton.append("span").text("Add");
-
-		var panel2Div = panelDiv.appendScrollArea();
-		panel2Div.appendHeader();
-		panel2Div.appendAlertContainer();
-		
-		var sections = panel2Div.appendSections(cells)
-			.each(function(cell) {
-					dataTypeViews[cell.field.dataType].showAdd(this, panelDiv, cell, oldValue);
-				});
-
-		window.scrollTo(0, 0);
-		showPanelUp(panelDiv.node());
-	}
-	
-	var failFunction = syncFailFunction
-	
-	cr.getConfiguration(oldValue, oldValue.cell.field.ofKindID, successFunction, failFunction);
+	if (objectData.getValueID())
+		objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction);
+	else
+		objectData.checkConfiguration(successFunction, syncFailFunction);
 }
 
 function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, successFunction)
@@ -1614,8 +1585,7 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 				showClickFeedback(this);
 			
 				var newValue = cell.addNewValue();
-				
-				showAddObjectPanel(newValue, null, panelDiv, submitCreateInstance);
+				showEditObjectPanel(newValue, newValue.cell, null, panelDiv, revealPanelUp);
 			}
 			d3.event.preventDefault();
 		});
@@ -1727,7 +1697,6 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 		}  
 	});
 	
-	window.scrollTo(0, 0);
 	showPanelUp(panelDiv.node());
 }
 
@@ -1860,7 +1829,6 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
 			function(d) { return d.getDescription() == oldData.getDescription(); });
 	
-		window.scrollTo(0, 0);
 		showPanelLeft(panelDiv.node());
 	}
 	

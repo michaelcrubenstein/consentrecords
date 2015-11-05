@@ -304,7 +304,7 @@ class api:
                 if ofKindID:
                     ofKindUUID = uuid.UUID(ofKindID)
                 else:
-                    ofKindUUID = Fact.getNamedUUID(ofKindName, None)
+                    ofKindUUID = Fact.getNamedUUID(ofKindName)
     
                 a = pathparser.tokenize(ofKindUUID.hex)
                 p = LazyInstance.rootDescriptors(a)
@@ -608,20 +608,23 @@ class UserFactory:
             
     def createUserObjectID(user, timezoneOffset):
         with transaction.atomic():
-            transactionState = TransactionState(user, timezoneoffset)
+            transactionState = TransactionState(user, timezoneOffset)
             if isinstance(user.id, uuid.UUID):
                 userID = user.id.hex    # SQLite
             else:
                 userID = user.id        # MySQL
 
             ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
-            propertyList = {Fact.userIDName: userID, Fact.emailName: user.email}
+            propertyList = {Fact.emailName: user.email}
             if user.first_name:
                 propertyList[Fact.firstNameName] = user.first_name
             if user.last_name:
                 propertyList[Fact.lastNameName] = user.last_name
             item, newValue = instancecreator.createInstance(ofKindObject, None, None, 0, propertyList, transactionState)
-        
+            
+            # Add userID explicitly in case it isn't part of the configuration.
+            item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
+            
             return item.id.hex
 
 # Handles a post operation that contains the users username (email address) and password.

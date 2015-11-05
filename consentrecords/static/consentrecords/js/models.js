@@ -19,6 +19,7 @@ var cr = {
 	ObjectValue: function() {
 		cr.CellValue.call(this);
 		this.value = {id: null, description: "None" };
+		this.isDataLoaded = false;
 	},
 	dataTypes: {
 		_string: {
@@ -179,11 +180,7 @@ var cr = {
 						newValue.value.description = oldValue.value.description;
 					if (oldValue.value.cells)
 					{
-						newValue.value.cells = [];
-						$(oldValue.value.cells).each(function()
-						{
-							newValue.importCell(this);
-						});
+						newValue.importCells(oldValue.value.cells);
 					}
 				}
 				return newValue;
@@ -528,6 +525,8 @@ var cr = {
 	
 	append: function(oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
 	{
+		if (!oldValue)
+			throw "oldValue is not specified";
 		if (!failFunction)
 			throw ("failFunction is not specified");
 		if (!successFunction)
@@ -539,10 +538,8 @@ var cr = {
 		cr.createInstance(containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{
-				if (oldValue)
-					oldValue.completeUpdate(newData);
-				else
-					containerCell.addValue(newData);
+				oldValue.completeUpdate(newData);
+				oldValue.isDataLoaded = true;
 				if (successFunction) successFunction(newData);
 			}, 
 			failFunction);
@@ -659,8 +656,8 @@ var cr = {
 		if (!path)
 			throw ("path is not specified");
 		
-		data = {"path" : path, 
-			    "fields" : JSON.stringify(fields) };
+		var data = {path : path, 
+			    fields : JSON.stringify(fields) };
 		if (cr.accessToken)
 			data["access_token"] = cr.accessToken;
 				  
@@ -673,14 +670,10 @@ var cr = {
 					{
 						var datum = json.data[i];
 						var v = cr.dataTypes._object.newValue();
-						v.value.cells = [];
-						var cells = datum.cells;
-						for (var j = 0; j < cells.length; ++j)
-						{
-							v.importCell(cells[j]);
-						}
+						v.importCells(datum.cells);
 						v.value.id = datum.id;
 						v.value.parentID = datum.parentID;
+						v.isDataLoaded = true;
 						instances.push(v);
 					}
 				
@@ -720,7 +713,7 @@ cr.EventHandler.prototype.removeTarget = function(e, target)
 		a.splice($.inArray(target, a), 1);
 	}
 }
-	
+
 cr.EventHandler.prototype.triggerEvent = function(e, eventInfo)
 {
 	if (e in this.events)
@@ -730,21 +723,28 @@ cr.EventHandler.prototype.triggerEvent = function(e, eventInfo)
 cr.EventHandler.prototype.clearEvents = function()
 {
 	this.events = {};
+	$(this).off("dataChanged.cr");
 }
 		
 cr.Cell.prototype = new cr.EventHandler();
-cr.Cell.prototype.setup = function (objectData)
+
+cr.Cell.prototype.setParent = function (parent)
 {
-	this.parent = objectData;
-	if (this.field.descriptorType !== undefined && objectData)
+	this.parent = parent;
+	if (this.field.descriptorType !== undefined && parent)
 	{
-		this.addTarget("valueAdded.cr", objectData);
-		this.addTarget("valueDeleted.cr", objectData);
-		this.addTarget("dataChanged.cr", objectData);
+		this.addTarget("valueAdded.cr", parent);
+		this.addTarget("valueDeleted.cr", parent);
+		this.addTarget("dataChanged.cr", parent);
 		$(this).on("dataChanged.cr", function(e) {
 			this.triggerEvent("dataChanged.cr");
 		});
 	}
+};
+
+cr.Cell.prototype.setup = function (objectData)
+{
+	this.setParent(objectData);
 	
 	/* If this is a unique value and there is no value, set up an unspecified one. */
 	if (this.data.length == 0 &&
@@ -905,26 +905,56 @@ cr.ObjectValue.prototype.importCell = function(oldCell)
 	return newCell;
 }
 
-cr.ObjectValue.prototype.checkCells = function(containerCell, successFunction, failFunction)
+cr.ObjectValue.prototype.importCells = function(oldCells)
+{
+	this.value.cells = [];
+	for (var j = 0; j < oldCells.length; ++j)
+	{
+		this.importCell(oldCells[j]);
+	}
+}
+
+cr.ObjectValue.prototype.setCells = function(oldCells)
 {
 	if (this.value.cells)
+	{
+		for (var j = 0; j < this.value.cells.length; ++j)
+		{
+			this.value.cells[j].clearEvents();
+		}
+	}
+		
+	this.value.cells = oldCells;
+	for (var j = 0; j < oldCells.length; ++j)
+	{
+		oldCells[j].clearEvents();
+		oldCells[j].setParent(this);
+	}
+}
+
+cr.ObjectValue.prototype.checkCells = function(containerCell, fields, successFunction, failFunction)
+{
+	if (typeof(successFunction) != "function")
+		throw "successFunction is not a function";
+	if (typeof(failFunction) != "function")
+		throw "failFunction is not a function";
+	
+	if (this.value.cells && this.isDataLoaded)
 	{
 		successFunction();
 	}
 	else if (this.getValueID())
 	{
-		var v = this;
+		var _this = this;
+		var jsonArray = { "path" : "#" + this.getValueID() };
+		if (fields)
+			jsonArray["fields"] = JSON.stringify(fields);
 		$.getJSON(cr.urls.getData,
-			{ "path" : "#" + this.getValueID() }, 
+			jsonArray, 
 			function(json)
 			{
 				if (json.success) {
-					datum = json.data[0].cells;
-					v.value.cells = [];
-					for (var i = 0; i < datum.length; ++i)
-					{
-						v.importCell(datum[i]);
-					}
+					_this.importCells(json.data[0].cells);
 				
 					successFunction();
 				}
@@ -936,12 +966,39 @@ cr.ObjectValue.prototype.checkCells = function(containerCell, successFunction, f
 	}
 	else if (containerCell.field.ofKindID)
 	{
-		v = this;
+		_this = this;
 		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
 		cr.getConfiguration(this, containerCell.field.ofKindID, 
 			function(newCells)
 			{
-				v.value.cells = newCells;
+				_this.value.cells = newCells;
+				successFunction();
+			},
+			failFunction);
+	}
+}
+
+cr.ObjectValue.prototype.checkConfiguration = function(successFunction, failFunction)
+{
+	if (!failFunction)
+		throw ("failFunction is not specified");
+	if (!successFunction)
+		throw ("successFunction is not specified");
+	if (!this.cell)
+		throw "cell is not specified for this object";
+		
+	if (this.value.cells)
+	{
+		successFunction();
+	}
+	else
+	{
+		_this = this;
+		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
+		cr.getConfiguration(this, this.cell.field.ofKindID, 
+			function(newCells)
+			{
+				_this.value.cells = newCells;
 				successFunction();
 			},
 			failFunction);

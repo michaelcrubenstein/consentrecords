@@ -502,6 +502,7 @@
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
+	<script src="{% static "consentrecords/js/queue.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
 	<!-- Scripts for this web page -->
@@ -608,7 +609,6 @@
 			{
 				showClickFeedback(this);
 				
-				window.scrollTo(0, 0);
 				showPanelLeft(panelDiv.node());
 			}
 		}
@@ -641,7 +641,7 @@
 			$("#id_find_offering_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					datum = d3.select(this).datum();
-					show_offerings(datum, "#id_offerings");
+					showSessions(datum, "#id_offerings");
 				});
 				
 			setupSearchBar("#id_find_offering_panel .searchbar",
@@ -663,7 +663,7 @@
 			var signInSuccess = function(userData)
 			{
 				userInstance.value = userData;
-				userInstance.checkCells(undefined, function()
+				userInstance.checkCells(undefined, undefined, function()
 					{
 						userInstance.triggerEvent("signin.cr", userInstance);
 						hidePanelRight($("#id_sign_in_panel")[0], false)
@@ -730,7 +730,7 @@
 			var signUpSuccess = function(userData)
 			{
 				userInstance.value = userData;
-				userInstance.checkCells(undefined, function()
+				userInstance.checkCells(undefined, undefined, function()
 					{
 						userInstance.triggerEvent("signin.cr", userInstance);
 						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
@@ -747,7 +747,8 @@
 						signUp.checkUnusedEmail(
 							function() {
 								signUp.submit(signUpSuccess, syncFailFunction);
-							});
+							},
+							syncFailFunction);
 					}
 				}
 
@@ -828,7 +829,9 @@
 								if (d.getValueID() == offeringString)
 								{
 									
-									var panelDiv = show_offering_details(d, d3.select("#id_find_offering_panel"));
+									var panelDiv = showSessionDetails(d, 
+										d3.select("#id_find_offering_panel").datum(),
+										d3.select("#id_find_offering_panel"));
 									showPanelNow(panelDiv.node());
 								}
 							});
@@ -1089,7 +1092,6 @@
 			var panel = d3.select(newNode);
 			panel.style("z-index", zIndex);
 			
-			window.scrollTo(0, 0);
 			showPanelLeft(panel.node());
 		}
 			
@@ -1145,7 +1147,10 @@
 					});
 					
 				for (var i = 0; i < newInstances.length; i++)
+				{
+					crp.pushInstance(newInstances[i]);
 					cell.pushValue(newInstances[i]);
+				}
 				
 				var container = d3.select(containerDiv);
 				container.datum(cell);
@@ -1157,7 +1162,6 @@
 							panelDiv.datum(d);
 							showClickFeedback(this);
 				
-							window.scrollTo(0, 0);
 							showPanelLeft(panelDiv.node());
 						}
 					});
@@ -1181,6 +1185,7 @@
 		
 		function get_cell_by_name(d, name)
 		{
+			d = crp.pushInstance(d);
 			return cells_get_cell_by_name(d.value.cells, name);
 		}
 		
@@ -1191,6 +1196,15 @@
 			var cell = get_cell_by_name(d, name);
 			if (cell)
 				return cell.data[0].value;
+			else
+				return undefined;
+		}
+		
+		function getValueByName(d, name)
+		{
+			var cell = get_cell_by_name(d, name);
+			if (cell)
+				return cell.data[0];
 			else
 				return undefined;
 		}
@@ -1228,15 +1242,13 @@
 				var titleDivs = divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true);
 				titleDivs.append("div")
 					.text(function(d) { 
-						return get_datum_by_name(d, "Offering").description;
+						return getValueByName(d, "Offering").getDescription();
 					});
 				titleDivs.append("div")
 					.text(function(d) {
-						var datum = get_datum_by_name(d, "Organization");
-						if (datum)
-							return datum.description;
-						else
-							return "None";
+						var v = getValueByName(d, "Organization");
+						if (v)
+							return v.getDescription();
 					});
 			}
 			
@@ -1275,7 +1287,7 @@
 				
 		}
 
-		function setMetaProperties(offering, targetHRef)
+		function setMetaProperties(session, targetHRef)
 		{
 			var headDiv = d3.select("head");
 			headDiv.selectAll("meta").each(function()
@@ -1285,11 +1297,12 @@
 					metaObj.attr("property").startsWith("og:"))
 					metaObj.remove();
 			});
-			var orgValue = get_datum_by_name(offering, "Organization");
+			var offering = getValueByName(session, "Offering");
+			var organization = getValueByName(session, "Organization");
 			var a = [{property: "og:url", content: targetHRef},
 					 {property: "og:type", content: "website" },
 					 {property: "og:title", content: offering.getDescription()},
-					 {property: "og:description", content: orgValue.description}];
+					 {property: "og:description", content: session.getDescription() + "\n" + organization.getDescription()}];
 			for (var i = 0; i < a.length; i++)
 			{
 				if (a[i].content)
@@ -1299,11 +1312,48 @@
 			}
 		}
 		
-		function show_offering_details(offering, containerPanel)
+		function showAgeRange(offering, successFunction)
 		{
-			offering.calculateDescription();
+			crp.pushCheckCells(offering, 
+				function()
+				{
+					var min = get_datum_by_name(offering, "Minimum Age");
+					var max = get_datum_by_name(offering, "Maximum Age");
+					var newText = "";
+					if (min)
+					{
+						if (max)
+						{
+							if (min == max)
+								newText = min;
+							else
+								newText = min + " - " + max;
+						}
+						else
+							newText = min + " or older";
+					}
+					else if (max)
+					{
+						newText = "up to " + max;
+					}
+					successFunction(newText);
+				},
+				function()
+				{
+					successFunction("!");
+				}
+			);
+		}
+		
+		function showSessionDetails(session, service, containerPanel)
+		{
+			var organization = getValueByName(session, "Organization");
+			var offering = getValueByName(session, "Offering");
+			var site = getValueByName(session, "Site");
 			
-			var panelDiv = createPanel(containerPanel, offering, offering.getDescription())
+			session.calculateDescription();
+			
+			var panelDiv = createPanel(containerPanel, session, offering.getDescription())
 				.classed("list-panel", true);
 			
 			var navContainer = panelDiv.appendNavContainer();
@@ -1315,44 +1365,60 @@
 			var buttonDiv = navContainer.appendRightButton();
 			
 			var shareDiv = panelDiv.append("div");
-			shareDiv.classed("share-container site-navbar border-above", true);
-
-			var service = d3.select("#id_find_offering_panel").datum()
-			var targetHRef = window.location.origin+"/find/"+service.value.id+"/"+offering.value.id;
-
-			setMetaProperties(offering, targetHRef);
-			var fbDiv = shareDiv.append("div")
-				.classed("fb-share-button", true)
-				.attr("data-href", targetHRef)
-				.attr("data-layout", "button_count");
-			var fbImage = fbDiv.append("img")
-				.attr("src", "{% static "consentrecords/png/fb.png" %}")
-				.style("height", "22px")
-				.style("weight", "22px");
-			{% if facebookIntegration %}
-			fbDiv.on("click", function() {
-				FB.ui({
-				      method     : 'share',
-					  href       : targetHRef
-					  }, function(response){});
-				d3.event.preventDefault();
-			});
-			{% endif %}
+			var targetHRef;
 
 			var panel2Div = panelDiv.appendScrollArea();
 			panel2Div.appendHeader();
 			panel2Div.appendAlertContainer();
 			
-			var orgValue = get_datum_by_name(offering, "Organization");
-			if (orgValue)
+			if (organization)
 			{
 				var orgDiv = panel2Div.append("div");
-				appendStringItem(orgDiv.node(), orgValue.description, null);
+				appendStringItem(orgDiv.node(), organization.getDescription(), null);
+				if (site.getDescription() && (site.getDescription() !== organization.getDescription()))
+				{
+					orgDiv.append('div')
+						.classed("left-label-div sub-text", true)
+						.text(site.getDescription());
+				}
+				
+				crp.pushCheckCells(site, function()
+				{
+					var address = getValueByName(site, "Address");
+					crp.pushCheckCells(address, function()
+					{
+						var streetCell = get_cell_by_name(address, "Street");
+						var cityCell = get_cell_by_name(address, "City");
+						var stateCell = get_cell_by_name(address, "State");
+						var zipCell = get_cell_by_name(address, "Zip Code");
+						if (streetCell)
+							$(streetCell.data).each(function() {
+								orgDiv.append('div')
+									.classed("left-label-div sub-text", true)
+									.text(this.value);
+							});
+						line = "";
+						if (cityCell && cityCell.data.length)
+							line += cityCell.data[0].value;
+						if (stateCell && stateCell.data.length)
+							line += ", " + stateCell.data[0].getDescription();
+						if (zipCell && zipCell.data.length && zipCell.data[0].value)
+							line += "  " + zipCell.data[0].value;
+						if (line.trim())
+							orgDiv.append('div')
+								.classed('left-label-div sub-text', true)
+								.text(line.trim());
+					},
+					function() { }
+					);
+				},
+				function() { }
+				);
 			}
 			
 			function appendStringDatum(cellName)
 			{
-				var v = get_datum_by_name(offering, cellName);
+				var v = get_datum_by_name(session, cellName);
 				if (v)
 				{
 					var deadlineDiv = panel2Div.append("div");
@@ -1379,14 +1445,40 @@
 
 			var cellDiv = panel2Div.append("div")
 				.classed("cell-div cell-edit-div", true);
-			cr.selectAll("#"+offering.value.id+">Service", function(newInstances)
+			
+			crp.pushCheckCells(offering, function()
 				{
-					newInstances.sort(function(a, b)
-						{
-							return a.getDescription().localeCompare(b.getDescription());
+					var serviceCell = get_cell_by_name(offering, "Service");
+					if (!service && serviceCell.data.length > 0)
+						service = serviceCell.data[0];
+						
+					if (service)
+					{
+						shareDiv.classed("share-container site-navbar border-above", true);
+
+						targetHRef = window.location.origin+"/find/"+service.value.id+"/"+session.value.id;
+
+						setMetaProperties(session, targetHRef);
+						var fbDiv = shareDiv.append("div")
+							.classed("fb-share-button", true)
+							.attr("data-href", targetHRef)
+							.attr("data-layout", "button_count");
+						var fbImage = fbDiv.append("img")
+							.attr("src", "{% static "consentrecords/png/fb.png" %}")
+							.style("height", "22px")
+							.style("weight", "22px");
+						{% if facebookIntegration %}
+						fbDiv.on("click", function() {
+							FB.ui({
+								  method     : 'share',
+								  href       : targetHRef
+								  }, function(response){});
+							d3.event.preventDefault();
 						});
-		
-					if (newInstances.length > 0)
+						{% endif %}
+					}
+
+					if (serviceCell.length > 0)
 					{
 						var labelDiv = cellDiv.append("div").classed("cell-label-div", true)
 							.text("Services");
@@ -1400,49 +1492,32 @@
 				},
 				asyncFailFunction);
 			
-			var min = get_datum_by_name(offering, "Minimum Age");
-			var max = get_datum_by_name(offering, "Maximum Age");
-			var newText = "";
-			if (min)
-			{
-				if (max)
+			var agesDiv = panel2Div.append("div");
+			showAgeRange(offering, function(newText)
 				{
-					if (min == max)
-						newText = min;
-					else
-						newText = min + " - " + max;
-				}
-				else
-					newText = min + " or older";
-			}
-			else if (max)
-			{
-				newText = "up to " + max;
-			}
-			if (newText)
-			{
-				var agesDiv = panel2Div.append("div");
-				appendStringItem(agesDiv.node(), "Ages", newText);
-				agesDiv.classed("cell-edit-div", true);
-			}
+					if (newText)
+					{
+						appendStringItem(agesDiv.node(), "Ages", newText);
+						agesDiv.classed("cell-edit-div", true);
+					}
+				});
 
 			userInstance.addTarget("signin.cr", panelDiv.node());
 			$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
 			{
 				var userEmailCell = get_cell_by_name(eventInfo, "_email");
 				var newEmail = userEmailCell.data[0].value;
-				cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+				cr.selectAll("#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
 					function(newInstances)
 					{
 						if (newInstances.length > 0)
 						{
-							offering = panelDiv.datum();
 							inquiryInstance = newInstances[0];
 							buttonDiv.text("Back Out");
 							buttonDiv.on("click", deleteInquiryFunction);
 							bootstrap_alert.success(userInstance.getDescription() + 
 												  " already signed up for " + 
-												  offering.getDescription(),
+												  offering.getDescription() + "/" + session.getDescription(),
 												  ".alert-container");
 						}
 						else
@@ -1461,9 +1536,9 @@
 				$(panelDiv.node()).off("hiding.cr");
 			});
 				
-			var inquiriesCell = get_cell_by_name(offering, "Inquiries")
+			var inquiriesCell = get_cell_by_name(session, "Inquiries")
 			var newInstances = inquiriesCell.data;
-			if (newInstances.length == 0)
+			if (newInstances.length == 0 || !newInstances[0].getValueID())
 				asyncFailFunction("Access Failure for Inquiries");
 			else
 			{
@@ -1481,7 +1556,7 @@
 									   userEmailCell.data[0].value, 
 									   function(newData) { 
 									   		bootstrap_alert.success("You have signed up for " + 
-														  offering.getDescription() + "." +
+														  offering.getDescription() + "/" + session.getDescription() + "." +
 														  " Look out for a notice when you are enrolled.",
 														  ".alert-container");
 									   		checkInquiryFunction([newData]); 
@@ -1539,7 +1614,7 @@
 						var successFunction = function(oldValue)
 						{
 							bootstrap_alert.success("You have backed out of " + 
-										  offering.getDescription() + ".",
+										  offering.getDescription() + "/" + session.getDescription() + ".",
 										  ".alert-container");
 							checkInquiryFunction([]);
 						}
@@ -1569,7 +1644,7 @@
 				
 				if (userInstance.getValueID())
 				{
-					userInstance.checkCells(undefined, function()
+					userInstance.checkCells(undefined, undefined, function()
 					{
 						var userEmailCell = get_cell_by_name(userInstance, "_email");
 						var newEmail = userEmailCell.data[0].value;
@@ -1584,59 +1659,82 @@
 			
 			return panelDiv;
 		}
-					
-		function show_offerings(service, container) {
-			var successFunction = function(newInstances)
+		
+		function compareSessions(a, b)
+		{
+			var aDate = get_datum_by_name(a, "Start Date");
+			var bDate = get_datum_by_name(b, "Start Date");
+			if (aDate)
 			{
-				newInstances.sort(function(a, b)
-					{
-						var aDate = get_datum_by_name(a, "Start Date");
-						var bDate = get_datum_by_name(b, "Start Date");
-						if (aDate)
-						{
-							if (bDate)
-							{
-								result = aDate.localeCompare(bDate);
-								if (result == 0)
-									return a.getDescription().localeCompare(b.getDescription());
-								else
-									return result;
-							}
-							else
-								return -1;
-						}
-						else
-						{
-							if (bDate)
-								return 1;
-							else
-								return a.getDescription().localeCompare(b.getDescription());
-						}
-					});
-				
-				// Remove any lingering contents from the set of full issues.
-				var containerDiv = d3.select(container);
-				containerDiv.selectAll("li").remove();
+				if (bDate)
+				{
+					result = aDate.localeCompare(bDate);
+					if (result == 0)
+						return a.getDescription().localeCompare(b.getDescription());
+					else
+						return result;
+				}
+				else
+					return -1;
+			}
+			else
+			{
+				if (bDate)
+					return 1;
+				else
+					return a.getDescription().localeCompare(b.getDescription());
+			}
+		}
+		
+		function showSessionDetailPanel(session, service)
+		{
+		}
+		
+		function appendSessionDescriptions(buttons)
+		{
+			var leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
+			
+			leftText.append('div')
+				.text(function(d) { 
+					return getValueByName(d, "Offering").getDescription();
+				});
+			leftText.append('div').classed("sub-text", true)
+				.text(function(d) {
+					return d.getDescription();
+				});
+			leftText.append('div').classed("sub-text", true)
+				.text(function(d) {
+					return getValueByName(d, "Organization").getDescription();
+				});
+		}
+						
+		function showSessions(service, container) {
+			// Remove any lingering contents from the set of full issues.
+			var containerPanel = d3.select(container);
+			containerPanel.selectAll("li").remove();
 
-				var divs = d3.select(container).selectAll("li")
-					.data(newInstances)
+			var successFunction = function(sessions)
+			{
+				$(sessions).each(function() { this.calculateDescription(); });
+				sessions.sort(compareSessions);
+				
+				var divs = containerPanel.selectAll("li")
+					.data(sessions)
 					.enter()
 					.append("li").classed("consent-record cell-div", true);	// So that each button appears on its own row.
 	
 				var buttons = divs.append("button").classed("btn row-button", true)
-					.on("click", function(offering)
-					{
-						if (prepareClick())
+					.on("click", function(session)
 						{
-							showClickFeedback(this);
+							if (prepareClick())
+							{
+								showClickFeedback(this);
 
-							var containerPanel = d3.select("#id_find_offering_panel");
-							var panelDiv = show_offering_details(offering, containerPanel);
-							
-							window.scrollTo(0, 0);
-							showPanelLeft(panelDiv.node());
-						}
-					});
+								var panelDiv = showSessionDetails(session, service, containerPanel);
+				
+								showPanelLeft(panelDiv.node());
+							}
+						});
 	
 				buttons.append("span")
 					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
@@ -1653,44 +1751,66 @@
 						else
 							return "";
 					});
-				var leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
+				rightText.each(function(d) {
+					var offering = getValueByName(d, "Offering");
+					showAgeRange(offering, 
+						function(newText) {
+							if (newText)
+							{
+								rightText.append('div').classed("sub-text", true)
+									.text("Ages: " + newText);
+							}
+						});
+				});
 				
-				leftText.append('div')
-					.text(function(d) { 
-						return get_datum_by_name(d, "_name").description;
-					});
-				leftText.append('div').classed("sub-text", true)
-					.text(function(d) {
-						return get_datum_by_name(d, "Organization").description;
-					});
-				$("#id_find_offering_panel").trigger("offeringsShown.cr");
+				appendSessionDescriptions(buttons);
+				$($(container).parents(".site-panel")[0]).trigger("offeringsShown.cr");
 			}
 			
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
-			var path = "#" + service.value.id + '::reference(Offering):not(["Registration Deadline"<"' + todayString + '"])';
+			var path = "#" + service.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
-		function show_plans(containerDiv) {
-			var successFunction = function(newInstances)
+		function show_plans(container) {
+			var successFunction = function(sessions)
 			{
-				var divs = d3.select(containerDiv).selectAll('div')
-					.data(newInstances)
-					.enter()
-					.append('div').classed("consent-record cell-div cell-label-div", true);
-					/* Add cell-label-div to match the vertical padding of right-label-div */
+				$(sessions).each(function() { this.calculateDescription(); });
+				sessions.sort(compareSessions);
 				
-				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div", true)
+				var containerPanel = d3.select(container);
+				var divs = containerPanel.selectAll("li")
+					.data(sessions)
+					.enter()
+					.append("li").classed("consent-record cell-div", true);	// So that each button appears on its own row.
+	
+				var buttons = divs.append("button").classed("btn row-button", true)
+					.on("click", function(session)
+					{
+						if (prepareClick())
+						{
+							showClickFeedback(this);
+
+							var panelDiv = showSessionDetails(session, null, containerPanel);
+			
+							showPanelLeft(panelDiv.node());
+						}
+					});
+	
+				buttons.append("span")
+					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
+				var rightText = buttons.append('span').classed("centered-right-2", true);
+				
+				rightText.append('div')
 					.classed("sub-text", true)
 					.text(getDateRange);
-				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
-					.text(function(d) { 
-						return get_datum_by_name(d, "_name").description;
-					});
+				
+				appendSessionDescriptions(buttons);
+				$($(container).parents(".site-panel")[0]).trigger("offeringsShown.cr");
 			}
 			
-			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Offering)";
+			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
 		}
 		
@@ -1781,27 +1901,26 @@
 
 				var alertContainer = panel2Div.appendAlertContainer();
 							
-				window.scrollTo(0, 0);
 				showPanelLeft(panelDiv.node());
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
 					
 				addButton(sectionObj, "Record an Inquiry",
-					function(d)
+					function(organization)
 					{
 						if (prepareClick())
 						{
-							add_inquiry(d, panelDiv);
+							pick_inquiry_site(organization, panelDiv);
 						}
 					});
 					
 				addButton(sectionObj, "Manage Inquiries",
-					function(d)
+					function(organization)
 					{
 						if (prepareClick())
 						{
-							manage_inquiry(d, panelDiv);
+							manage_inquiry(organization, panelDiv);
 						}
 					});
 					
@@ -1857,75 +1976,132 @@
 					});
 			}
 	
-			objectData.checkCells(containerCell, successFunction, asyncFailFunction)
+			objectData.checkCells(containerCell, undefined, successFunction, asyncFailFunction)
+		}
+		
+		function pickChild(parent, data, containerPanel, header, successFunction)
+		{
+			data.sort(function(a, b)
+				{
+					return a.getDescription().localeCompare(b.getDescription());
+				});
+
+			var panelDiv = createPanel(containerPanel, parent, header)
+				.classed("list-panel", true);
+
+			var navContainer = panelDiv.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", handleCloseRightEvent);
+			backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+			backButton.append("span").text(" " + containerPanel.attr("headerText"));
+	
+			var centerButton = navContainer.appendTitle(header);
+
+			var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+
+			var panel2Div = panelDiv.appendScrollArea();
+			panel2Div.appendAlertContainer();
+	
+			var sections = panel2Div.appendSections(data);
+
+			var buttons = appendViewButtons(sections)
+				.on("click", function(d) {
+					if (prepareClick())
+					{
+						successFunction(d, panelDiv);
+					}
+					d3.event.preventDefault();
+				});
+
+			showPanelLeft(panelDiv.node());
+		}
+		/*
+			Displays a panel from which the user can pick a session from
+			the specified offering.
+			
+			This function should be called within a prepareClick block.
+		 */
+		function pick_session(offering, containerPanel, successFunction)
+		{
+			offering.checkCells(undefined, undefined, function()
+				{
+					var sessions = getValueByName(offering, "Sessions");
+					if (!sessions)
+						syncFailFunction("the sessions are not set up");
+					else
+						sessions.checkCells(undefined, undefined, function()
+							{
+								var sessionCell = get_cell_by_name(sessions, "Session");
+								pickChild(offering, sessionCell.data, containerPanel, "Pick Session", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
+		}
+		
+		/*
+			Displays a panel from which the user can pick an offering from
+			the specified site.
+			
+			This function should be called within a prepareClick block.
+		 */
+		function pick_offering(site, containerPanel, successFunction)
+		{
+			site.checkCells(undefined, undefined, function()
+				{
+					var offerings = getValueByName(site, "Offerings");
+					if (!offerings)
+						syncFailFunction("the offerings are not set up");
+					else
+						offerings.checkCells(undefined, undefined, function()
+							{
+								var offeringCell = get_cell_by_name(offerings, "Offering");
+								pickChild(site, offeringCell.data, containerPanel, "Pick Offering", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
 		}
 		
 		/*
 			This function should be called within a prepareClick block.
 		 */
-		function pick_offering(d, containerPanel, successFunction)
+		function pick_site(organization, containerPanel, successFunction)
 		{
-			function selectAllSuccessFunction(rootObjects) {
-				rootObjects.sort(function(a, b)
-					{
-						return a.getDescription().localeCompare(b.getDescription());
-					});
-	
-				var panelDiv = createPanel(containerPanel, d, "Pick Offering")
-					.classed("list-panel", true);
-
-				var navContainer = panelDiv.appendNavContainer();
-
-				var backButton = navContainer.appendLeftButton()
-					.on("click", handleCloseRightEvent);
-				backButton.append("span").text("Cancel");
-		
-				var centerButton = navContainer.appendTitle("Pick Offering");
-
-				var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
-
-				var panel2Div = panelDiv.appendScrollArea();
-				panel2Div.appendAlertContainer();
-		
-				var sections = panel2Div.appendSections(rootObjects);
-	
-				var buttons = appendViewButtons(sections)
-					.on("click", function(d) {
-						if (prepareClick())
-						{
-							successFunction(d, panelDiv);
-						}
-						d3.event.preventDefault();
-					});
-	
-				window.scrollTo(0, 0);
-				showPanelLeft(panelDiv.node());
-			}
-	
-			cr.selectAll("#"+d.value.id+'>Offerings>Offering', 
-						 selectAllSuccessFunction, 
-						 syncFailFunction);
+			organization.checkCells(undefined, undefined, function()
+				{
+					var sites = getValueByName(organization, "Sites");
+					if (!sites)
+						syncFailFunction("the sites are not set up");
+					else
+						sites.checkCells(undefined, undefined, function()
+							{
+								var siteCell = get_cell_by_name(sites, "Site");
+								pickChild(organization, siteCell.data, containerPanel, "Pick Site", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
 		}
 		
-		function enroll_inquiry(organization, containerPanel)
+		function enroll_inquiry(organization, panelDiv)
 		{
-			/* Pick an offering. */
-			var successFunction = function(offering, offeringPanelDiv)
-			{
-				var checkCellsSuccess = function()
+			pickSessionFromOrganization(organization, panelDiv,
+				function(session, containerPanel)
 				{
-					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
+					var inquiriesCell = get_cell_by_name(session, "Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
-						syncFailFunction("Offering Inquiries are not set up");
+						syncFailFunction("Session Inquiries are not set up");
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						inquiriesInstance.checkCells(inquiriesCell, function()
+						inquiriesInstance.checkCells(inquiriesCell, undefined, function()
 							{
 								inquiryCell = get_cell_by_name(inquiriesInstance, "Inquiry");
-								
-								var panelDiv = createPanel(containerPanel, organization, "Pick User")
+						
+								var panelDiv = createPanel(containerPanel, session, "Pick User")
 									.classed("list-panel", true);
 
 								var navContainer = panelDiv.appendNavContainer();
@@ -1934,15 +2110,14 @@
 									.on("click", handleCloseRightEvent);
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
-								
+						
 								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
 
 								var panel2Div = panelDiv.appendScrollArea();
 								panel2Div.appendAlertContainer();
-	
-								window.scrollTo(0, 0);
+
 								showPanelLeft(panelDiv.node());
-								
+						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
 								var buttons = appendViewButtons(sections)
@@ -1950,48 +2125,79 @@
 									{
 										if (prepareClick())
 										{
-											inquiry.checkCells(inquiryCell, 
+											inquiry.checkCells(inquiryCell, undefined, 
 												function()
 												{
-													add_enrollment_by_inquiry(offering, inquiry);
+													addEnrollmentByInquiry(session, inquiry);
 												}, 
 												syncFailFunction);
-											
+									
 										}
 									});
-									
-								buttons.insert("span", ":first-child")
-									.classed("glyphicon glyphicon-info-sign pull-right", true);
+							
+								var infoButtons =  buttons.insert("div", ":first-child")
+									.classed("info-button right-fixed-width-div", true)
+									.on("click", function(inquiry) {
+										if (prepareClick())
+										{
+											checkUserByInquiry(inquiry,
+												function(user) {
+													show_user(user, panelDiv);
+												},
+												syncFailFunction);
+										}
+										d3.event.preventDefault();
+									});
+								drawInfoButtons(infoButtons);
 							},
 							syncFailFunction);
 					}
-				}
-				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-			}
-			
-			pick_offering(organization, containerPanel, successFunction);
+				});
 		}
 		
-		function add_enrollment_by_inquiry(offering, inquiry)
+		function checkUserByInquiry(inquiry, successFunction, failFunction)
 		{
-			var emailCell = get_cell_by_name(inquiry, "_email");
-			if (emailCell.data.length == 0)
-				syncFailFunction("The email is not set up.");
-			else
+			var checkSuccessFunction = function() 
 			{
-				var email = emailCell.data[0].value;
-				var selectAllSuccess = function(userObjects)
+				var email = getValueByName(inquiry, "_email");
+				if (!email)
+					failFunction("The email is not set up.");
+				else
 				{
-					if (userObjects.length == 0)
-						syncFailFunction('There is no user set up with the email "' + email + '".');
-					else
+					var selectAllSuccess = function(userObjects)
 					{
-						add_enrollment_function(offering, userObjects[0], unblockClick)();
-					}
-				};
-			
-				cr.selectAll("_user[_email="+email+"]", selectAllSuccess, syncFailFunction);
+						if (userObjects.length == 0)
+							failFunction('There is no user set up with the email "' + email.value + '".');
+						else
+						{
+							successFunction(userObjects[0]);
+						}
+					};
+		
+					cr.selectAll("_user[_email="+email.value+"]", selectAllSuccess, syncFailFunction);
+				}
 			}
+			inquiry.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
+		}
+		
+		function addEnrollmentByInquiry(session, inquiry)
+		{
+			checkUserByInquiry(inquiry,
+				function(user)
+				{
+					getAddEnrollmentFunction(session, user, unblockClick)();
+				},
+				syncFailFunction);
+		}
+		
+		function addExperienceByEnrollment(session, enrollment, containerPanel)
+		{
+			checkUserByEnrollment(enrollment,
+				function(user)
+				{
+					getAddExperienceFunction(session, user, containerPanel)();
+				},
+				syncFailFunction);
 		}
 		
 		function drawInfoButtons(infoButtons)
@@ -2043,7 +2249,6 @@
 			var panel2Div = panelDiv.appendScrollArea();
 			panel2Div.appendAlertContainer();
 	
-			window.scrollTo(0, 0);
 			showPanelLeft(panelDiv.node());
 			
 			var searchText = "";
@@ -2062,15 +2267,26 @@
 					var startVal = val;
 					var pickedUser = null;
 					
+					var pickSessionSuccess = function(session, sessionPanelDiv)
+					{
+						var checkCellsSuccess = getAddEnrollmentFunction(session, pickedUser, unblockClick);
+// 							function()
+// 							{
+// 								unblockClick();
+// 								hidePanelRight(sessionPanelDiv.node());
+// 							});
+						session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
+					};
+					
 					var pickOfferingSuccess = function(offering, offeringPanelDiv)
 					{
-						var checkCellsSuccess = add_enrollment_function(offering, pickedUser, 
-							function()
-							{
-								hidePanelRight(offeringPanelDiv.node());
-							});
-						offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-					};
+						pick_session(offering, offeringPanelDiv, pickSessionSuccess);
+					}
+					
+					var pickSiteSuccess = function(site, sitePanelDiv)
+					{
+						pick_offering(site, sitePanelDiv, pickOfferingSuccess);
+					}
 					
 					var selectAllSuccess = function(userObjects)
 					{
@@ -2083,7 +2299,7 @@
 									pickedUser = user;
 									if (prepareClick())
 									{
-										pick_offering(organization, panelDiv, pickOfferingSuccess);
+										pick_site(organization, panelDiv, pickSiteSuccess);
 									}
 									d3.event.preventDefault();
 								});
@@ -2107,50 +2323,110 @@
 			}
 		}
 		
-		function add_enrollment_function(offering, user, successFunction)
+		function getAddEnrollmentFunction(session, user, successFunction)
 		{
 			return function()
 			{
-				var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
-				var enrollmentsInstances = enrollmentsCell.data;
-				if (enrollmentsInstances.length == 0)
-					syncFailFunction("Offering Enrollments are not set up");
+				var checkCellsSuccessFunction = function()
+				{
+					var offering = session.cell.parent.cell.parent;
+					var enrollmentsCell = get_cell_by_name(session, "Enrollments");
+					var enrollmentsInstances = enrollmentsCell.data;
+					if (enrollmentsInstances.length == 0)
+						syncFailFunction("Session enrollments are not set up");
+					else
+					{
+						var enrollmentsInstance = enrollmentsInstances[0];
+						cr.getConfiguration(null, enrollmentsCell.field.ofKindID,
+							function(cells)
+							{
+								var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
+								cr.getConfiguration(null, enrollmentCell.field.ofKindID,
+									function(cells)
+									{
+										var userCell = cells_get_cell_by_name(cells, "_user");
+										check_single_field_instance(enrollmentsInstance, 
+											["Enrollment"],
+											"_user",
+											user.getValueID(), 
+											function(newData)
+											{
+												syncFailFunction(user.getDescription() + 
+													  " already enrolled in " + 
+													  offering.getDescription() + "/" + session.getDescription());
+											},
+											function()
+											{
+												add_single_field_instance(enrollmentsInstance, 
+												   enrollmentCell, 
+												   userCell, 
+												   user.getValueID(), 
+												   function(newData)
+												   {
+														bootstrap_alert.success(user.getDescription() + 
+															  " enrolled in " + 
+															  offering.getDescription() + "/" + session.getDescription(),
+															  ".alert-container");
+														successFunction();
+												   },
+												   syncFailFunction);
+											},
+											syncFailFunction);
+									},
+									syncFailFunction);
+							},
+							syncFailFunction);
+					}
+				}
+				session.checkCells(undefined, ["parents"], checkCellsSuccessFunction, syncFailFunction);
+			}
+		}
+		
+		function getAddExperienceFunction(session, user, containerPanel)
+		{
+			return function()
+			{
+				var offering = session.cell.parent.cell.parent;
+				var experiencesCell = get_cell_by_name(session, "Experiences");
+				var experiencesInstances = experiencesCell.data;
+				if (experiencesInstances.length == 0)
+					syncFailFunction("Session experiences are not set up");
 				else
 				{
-					var enrollmentsInstance = enrollmentsInstances[0];
-					cr.getConfiguration(null, enrollmentsCell.field.ofKindID,
-						function(cells)
+					var experiences = experiencesInstances[0];
+					experiences.checkConfiguration(
+						function()
 						{
-							var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
-							cr.getConfiguration(null, enrollmentCell.field.ofKindID,
+							var experienceCell = get_cell_by_name(experiences, "Experience");
+							cr.getConfiguration(null, experienceCell.field.ofKindID,
 								function(cells)
 								{
 									var userCell = cells_get_cell_by_name(cells, "_user");
-									check_single_field_instance(enrollmentsInstance, 
-										[enrollmentCell],
-										userCell.field.nameID,
+									check_single_field_instance(experiences, 
+										["Experience"],
+										"_user",
 										user.getValueID(), 
-										function(newData)
+										function(data)
 										{
-											syncFailFunction(user.getDescription() + 
-												  " already enrolled in " + 
-												  offering.getDescription());
+											var experience = data[0];
+											if (!experience.getValueID())
+												throw "experience value ID not specified"
+											experienceCell.pushValue(experience);
+											showEditObjectPanel(experience, experience.cell, experiences.getValueID(), containerPanel, revealPanelUp);
 										},
 										function()
 										{
-											add_single_field_instance(enrollmentsInstance, 
-											   enrollmentCell, 
-											   userCell, 
-											   {id: user.getValueID()}, 
-											   function(newData)
-											   {
-													bootstrap_alert.success(user.getDescription() + 
-														  " enrolled in " + 
-														  offering.getDescription(),
-														  ".alert-container");
-													successFunction();
-											   },
-											   syncFailFunction);
+											var experience = experienceCell.addNewValue();
+											experience.checkConfiguration(
+												function() {
+													/* Copy the user into the data set. */
+													userCell = get_cell_by_name(experience, "_user");
+													var userValue = cr.dataTypes._object.copyValue(user);
+													userCell.addValue(userValue);
+													
+													showEditObjectPanel(experience, experience.cell, experiences.getValueID(), containerPanel, revealPanelUp);
+												},
+												syncFailFunction);
 										},
 										syncFailFunction);
 								},
@@ -2161,12 +2437,12 @@
 			}
 		}
 		
-		function check_single_field_instance(container, childCells, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
+		function check_single_field_instance(container, childFields, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
 		{
-			var path = "#"+container.value.id;
-			for (i = 0; i < childCells.length; ++i)
+			var path = "#"+container.getValueID();
+			for (i = 0; i < childFields.length; ++i)
 			{
-				path += ">" + childCells[i].field.nameID;
+				path += ">" + childFields[i];
 			}
 			path += "[" + fieldName + "=" + dataValue + "]";
 			
@@ -2187,7 +2463,7 @@
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
 		{
 			initialData = {}
-			initialData[dataCell.field.id] = [{ value: dataValue}];
+			initialData[dataCell.field.id] = dataValue;
 			cr.createInstance(instanceCell.field, 
 				container.value.id,
 				initialData,
@@ -2224,188 +2500,264 @@
 			return re.test(email);
 		}
 		
-		function add_inquiry(organization, containerPanel)
+		function pick_inquiry_site(organization, panelDiv)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingDiv)
+			function pickSiteSuccess(site, pickSitePanel)
 			{
-				var addInquiryPanelDiv = createPanel(containerPanel, organization, "Add Inquiry")
-					.classed("list-panel", true);
+				var pickOfferingSuccess = function(offering, pickOfferingPanel)
+				{
+					function pickSessionSuccess(session, containerPanel)
+					{
+						var addInquiryPanelDiv = createPanel(containerPanel, session, "Add Inquiry")
+							.classed("list-panel", true);
 
-				var navContainer = addInquiryPanelDiv.appendNavContainer();
+						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
-				var backButton = navContainer.appendLeftButton()
-					.on("click", handleCloseRightEvent);
-				backButton.append("span").text("Done");
+						var backButton = navContainer.appendLeftButton()
+							.on("click", handleCloseRightEvent);
+						backButton.append("span").text("Done");
 				
-				var addButton = navContainer.appendRightButton()
-					.classed("site-disabled-text", true);
-				addButton.append("span").text("Add");
+						var addButton = navContainer.appendRightButton()
+							.classed("site-disabled-text", true);
+						addButton.append("span").text("Add");
 	
-				var centerButton = navContainer.appendTitle("Record Inquiry");
+						var centerButton = navContainer.appendTitle("Record Inquiry");
 
-				var panel2Div = addInquiryPanelDiv.appendScrollArea();
-				panel2Div.appendAlertContainer();
+						var panel2Div = addInquiryPanelDiv.appendScrollArea();
+						panel2Div.appendAlertContainer();
 				
-				inquiryInput = panel2Div.append("div")
-					.classed("panel-input-container", true)
-					.append("input")
-					.attr("type", "email")
-					.classed("panel-input", true)
-					.attr("placeholder", "email address");
+						inquiryInput = panel2Div.append("div")
+							.classed("panel-input-container", true)
+							.append("input")
+							.attr("type", "email")
+							.classed("panel-input", true)
+							.attr("placeholder", "email address");
 					
 				
-				$(inquiryInput.node()).on("keyup input paste", function(e) {
-					isValid = validateEmail(this.value);
-					addButton
-						.classed("site-disabled-text", !isValid)
-						.classed("site-active-text", isValid)
-						.style("font-weight", (isValid ? 600 : 400));
-				});
+						$(inquiryInput.node()).on("keyup input paste", function(e) {
+							isValid = validateEmail(this.value);
+							addButton
+								.classed("site-disabled-text", !isValid)
+								.classed("site-active-text", isValid)
+								.style("font-weight", (isValid ? 600 : 400));
+						});
 	
-				window.scrollTo(0, 0);
-				showPanelLeft(addInquiryPanelDiv.node());
+						showPanelLeft(addInquiryPanelDiv.node());
 			
-				/* Since d.getValueID() is not null, containerUUID is not needed. */
-				var createInquiry = function(d)
-				{
-					if (d3.select(this).classed("site-disabled-text"))
-						return;
-						
-					if (prepareClick())
-					{
-						var checkCellsSuccess = function() 
+						/* Since d.getValueID() is not null, containerUUID is not needed. */
+						var createInquiry = function(d)
 						{
-							var inquiriesCell = get_cell_by_name(offering, "Inquiries");
-							var inquiriesInstances = inquiriesCell.data;
-							if (inquiriesInstances.length == 0)
-								syncFailFunction("Offering Inquiries are not set up");
-							else
+							if (d3.select(this).classed("site-disabled-text"))
+								return;
+						
+							if (prepareClick())
 							{
-								var inquiriesInstance = inquiriesInstances[0];
-								cr.getConfiguration(null, inquiriesCell.field.ofKindID,
-									function(cells)
+								var checkCellsSuccess = function() 
+								{
+									var inquiriesCell = get_cell_by_name(session, "Inquiries");
+									var inquiriesInstances = inquiriesCell.data;
+									if (inquiriesInstances.length == 0)
+										syncFailFunction("Session Inquiries are not set up");
+									else
 									{
-										var inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-										cr.getConfiguration(null, inquiryCell.field.ofKindID,
+										var inquiriesInstance = inquiriesInstances[0];
+										cr.getConfiguration(null, inquiriesCell.field.ofKindID,
 											function(cells)
 											{
-												var emailCell = cells_get_cell_by_name(cells, "_email");
-												add_single_field_instance(inquiriesInstance, 
-																	   inquiryCell, 
-																	   emailCell, 
-																	   inquiryInput.node().value, 
-																	   function(newData)
-																	   {
-																			bootstrap_alert.success(inquiryInput.node().value + 
-																				  " inquiry added to " + 
-																				  offering.getDescription(),
-																				  ".alert-container");
-																			inquiryInput.node().value = "";
-																			$(inquiryInput.node()).trigger("input");
-																			unblockClick();
-																	   },
-																	   syncFailFunction);
+												var inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
+												cr.getConfiguration(null, inquiryCell.field.ofKindID,
+													function(cells)
+													{
+														var emailCell = cells_get_cell_by_name(cells, "_email");
+														add_single_field_instance(inquiriesInstance, 
+																			   inquiryCell, 
+																			   emailCell, 
+																			   inquiryInput.node().value, 
+																			   function(newData)
+																			   {
+																					bootstrap_alert.success(inquiryInput.node().value + 
+																						  " inquiry added to " + 
+																						  session.getDescription(),
+																						  ".alert-container");
+																					inquiryInput.node().value = "";
+																					$(inquiryInput.node()).trigger("input");
+																					unblockClick();
+																			   },
+																			   syncFailFunction);
+													},
+													syncFailFunction);
 											},
 											syncFailFunction);
-									},
-									syncFailFunction);
-							}
-						}
-						offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-					};
-				};
-				
-				addButton.on("click", createInquiry);
+									}
+								}
+								session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
+							};
+						};
+						addButton.on("click", createInquiry);
+					}
+					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+				}
+				pick_offering(site, pickSitePanel, pickOfferingSuccess);
 			}
-			pick_offering(organization, containerPanel, pickOfferingSuccess);
+			pick_site(organization, panelDiv, pickSiteSuccess);
+		}
+		
+		function pickSessionFromOrganization(organization, panelDiv, sessionSuccess)
+		{
+			function pickSiteSuccess(site, pickSitePanel)
+			{
+				var pickOfferingSuccess = function(offering, pickOfferingPanel)
+				{
+					function pickSessionSuccess(session, containerPanel)
+					{
+						/* Since d.getValueID() is not null, containerUUID is not needed. */
+						var checkCellsSuccess = function()
+						{
+							sessionSuccess(session, containerPanel);
+						}
+						session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
+					}
+					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+				}
+				pick_offering(site, pickSitePanel, pickOfferingSuccess);
+			}
+			pick_site(organization, panelDiv, pickSiteSuccess);
 		}
 		
 		function manage_inquiry(organization, panelDiv)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingDiv)
-			{
-				/* Since d.getValueID() is not null, containerUUID is not needed. */
-				var checkCellsSuccess = function()
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, containerPanel)
 				{
-					var inquiriesCell = get_cell_by_name(offering, "Inquiries");
+					var inquiriesCell = get_cell_by_name(session, "Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
-						syncFailFunction("Offering Inquiries are not set up");
+						syncFailFunction("Inquiries are not set up");
 					else
 					{
-						var inquiriesInstance = inquiriesInstances[0];
-						showEditObjectPanel(inquiriesInstance, inquiriesCell, undefined, pickOfferingDiv, revealPanelLeft);
+						var inquiries = inquiriesInstances[0];
+						showEditObjectPanel(inquiries, inquiriesCell, undefined, containerPanel, revealPanelLeft);
 					}
-				}
-				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-			}
-			pick_offering(organization, panelDiv, pickOfferingSuccess);
+				});
 		}
 		
 		function manage_enrollment(organization, panelDiv)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingDiv)
-			{
-				/* Since d.getValueID() is not null, containerUUID is not needed. */
-				var checkCellsSuccess = function()
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, containerPanel)
 				{
-					var enrollmentsCell = get_cell_by_name(offering, "Enrollments");
+					var enrollmentsCell = get_cell_by_name(session, "Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
 					if (enrollmentsInstances.length == 0)
-						syncFailFunction("Offering Enrollments are not set up");
+						syncFailFunction("Session Enrollments are not set up");
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, pickOfferingDiv, revealPanelLeft);
+						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, containerPanel, revealPanelLeft);
 					}
 				}
-				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-			}
-			pick_offering(organization, panelDiv, pickOfferingSuccess);
+				);
 		}
 		
 		function record_participation(organization, panelDiv)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingDiv)
-			{
-				/* Since d.getValueID() is not null, containerUUID is not needed. */
-				var checkCellsSuccess = function()
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, containerPanel)
 				{
-					var listCell = get_cell_by_name(offering, "Experiences");
+					var listCell = get_cell_by_name(session, "Enrollments");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
-						syncFailFunction("Offering Experiences are not set up");
+						syncFailFunction("Session Enrollments are not set up");
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv, revealPanelLeft);
+						instance.checkCells(listCell, undefined, function()
+							{
+								enrollmentCell = get_cell_by_name(instance, "Enrollment");
+						
+								var panelDiv = createPanel(containerPanel, session, "Record Participation")
+									.classed("list-panel", true);
+
+								var navContainer = panelDiv.appendNavContainer();
+
+								var backButton = navContainer.appendLeftButton()
+									.on("click", handleCloseRightEvent);
+								backButton.append("span").text("Done");
+								var centerButton = navContainer.appendTitle("Record Participation");
+						
+								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+
+								var panel2Div = panelDiv.appendScrollArea();
+								panel2Div.appendAlertContainer();
+
+								panel2Div.selectAll("section").remove();
+								var sections = panel2Div.appendSections(enrollmentCell.data);
+								var buttons = appendViewButtons(sections)
+									.on("click", function(enrollment)
+									{
+										if (prepareClick())
+										{
+											enrollment.checkCells(enrollmentCell, undefined, 
+												function()
+												{
+													addExperienceByEnrollment(session, enrollment, panelDiv);
+												}, 
+												syncFailFunction);
+										}
+									});
+							
+								var infoButtons =  buttons.insert("div", ":first-child")
+									.classed("info-button right-fixed-width-div", true)
+									.on("click", function(enrollment) {
+										if (prepareClick())
+										{
+											checkUserByEnrollment(enrollment,
+												function(user) {
+													show_user(user, panelDiv);
+												},
+												syncFailFunction);
+										}
+										d3.event.preventDefault();
+									});
+								drawInfoButtons(infoButtons);
+								
+								showPanelLeft(panelDiv.node());
+							},
+							syncFailFunction);
 					}
+				});
+		}
+		
+		function checkUserByEnrollment(enrollment, successFunction, failFunction)
+		{
+			var checkSuccessFunction = function() 
+			{
+				var user = getValueByName(enrollment, "_user");
+				if (!user)
+					failFunction("The user is not set up.");
+				else
+				{
+					successFunction(user);
 				}
-				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 			}
-			pick_offering(organization, panelDiv, pickOfferingSuccess);
+			enrollment.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
 		}
 		
 		function manage_participation(organization, panelDiv)
 		{
-			var pickOfferingSuccess = function(offering, pickOfferingDiv)
-			{
-				/* Since d.getValueID() is not null, containerUUID is not needed. */
-				var checkCellsSuccess = function()
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, containerPanel)
 				{
-					var listCell = get_cell_by_name(offering, "Experiences");
+					var listCell = get_cell_by_name(session, "Experiences");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
-						syncFailFunction("Offering Experiences are not set up");
+						syncFailFunction("Session Experiences are not set up");
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, pickOfferingDiv, revealPanelLeft);
+						showEditObjectPanel(instance, listCell, undefined, containerPanel, revealPanelLeft);
 					}
-				}
-				offering.checkCells(undefined, checkCellsSuccess, syncFailFunction);
-			}
-			pick_offering(organization, panelDiv, pickOfferingSuccess);
+				});
 		}
 		
 	</script>
