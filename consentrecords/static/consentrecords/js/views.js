@@ -222,13 +222,20 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 
 function _setupEditItemsDivHandlers(itemsDiv, cell)
 {
-	cell.addTarget("valueAdded.cr", itemsDiv.node());
-	cell.addTarget("valueDeleted.cr", itemsDiv.node());
-	cell.addTarget("dataChanged.cr", itemsDiv.node());
-	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
+	node = itemsDiv.node();
+	cell.addTarget("valueAdded.cr", node);
+	cell.addTarget("valueDeleted.cr", node);
+	cell.addTarget("dataChanged.cr", node);
+	$(node).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
 		{
 			itemsDiv.style("display", cell.data.length ? "block" : "none");
 		});
+	$(node).on("remove", function(e)
+	{
+		cell.removeTarget("valueAdded.cr", node);
+		cell.removeTarget("valueDeleted.cr", node);
+		cell.removeTarget("dataChanged.cr", node);
+	});
 }
 
 function _setupItemHandlers(d)
@@ -242,11 +249,17 @@ function _setupItemHandlers(d)
 		{
 			$(this).on("valueDeleted.cr", function(e, newData)
 			{
+				$(this).off("valueDeleted.cr");
 				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
 			});
 			d.addTarget("valueDeleted.cr", this);
 		}
 	}
+	$(this).on("remove", function(e)
+	{
+		d.removeTarget("valueDeleted.cr");
+		d.removeTarget("dataChanged.cr");
+	});
 }
 
 function _showViewStringCell(obj, cell)

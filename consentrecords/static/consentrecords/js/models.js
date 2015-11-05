@@ -955,7 +955,7 @@ cr.ObjectValue.prototype.checkCells = function(containerCell, fields, successFun
 			{
 				if (json.success) {
 					_this.importCells(json.data[0].cells);
-				
+					_this.isDataLoaded = true;
 					successFunction();
 				}
 				else {
