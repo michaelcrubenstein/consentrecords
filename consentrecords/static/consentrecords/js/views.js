@@ -678,7 +678,10 @@ function _appendUpdateStringCommands(sectionObj, cell, objectData, initialData, 
 		{
 			if (d.id)
 			{
-				if (this.value != d.value)
+				/* Check to ensure that the values are different and at least one of them
+					is not null.
+				 */
+				if (this.value != d.value && (this.value || d.value))
 				{
 					initialData.push({id: d.id, value: this.value});
 					sourceObjects.push(d);
@@ -686,7 +689,10 @@ function _appendUpdateStringCommands(sectionObj, cell, objectData, initialData, 
 			}
 			else
 			{
-				if (this.value != d.value)
+				/* Check to ensure that the values are different and at least one of them
+					is not null.
+				 */
+				if (this.value != d.value && (this.value || d.value))
 				{
 					var command;
 					command = {containerUUID: objectData.getValueID(), 
@@ -746,7 +752,7 @@ function _appendUpdateDatestampCommands(sectionObj, cell, objectData, initialDat
 
 function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, sourceObjects)
 {
-	d3.select(sectionObj).selectAll(".items-div>div").each(function(d, i)
+	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
 		{
 			if (d.id)
 			{
