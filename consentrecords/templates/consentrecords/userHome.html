@@ -1345,6 +1345,39 @@
 			);
 		}
 		
+		function showGradeRange(offering, successFunction)
+		{
+			crp.pushCheckCells(offering, 
+				function()
+				{
+					var min = get_datum_by_name(offering, "Minimum Grade");
+					var max = get_datum_by_name(offering, "Maximum Grade");
+					var newText = "";
+					if (min)
+					{
+						if (max)
+						{
+							if (min == max)
+								newText = min;
+							else
+								newText = min + " - " + max;
+						}
+						else
+							newText = min + " or beyond";
+					}
+					else if (max)
+					{
+						newText = "up to " + max;
+					}
+					successFunction(newText);
+				},
+				function()
+				{
+					successFunction("!");
+				}
+			);
+		}
+		
 		function showSessionDetails(session, service, containerPanel)
 		{
 			var organization = getValueByName(session, "Organization");
@@ -1499,6 +1532,15 @@
 					{
 						appendStringItem(agesDiv.node(), "Ages", newText);
 						agesDiv.classed("cell-edit-div", true);
+					}
+				});
+			var gradesDiv = panel2Div.append("div");
+			showGradeRange(offering, function(newText)
+				{
+					if (newText)
+					{
+						appendStringItem(gradesDiv.node(), "Grades", newText);
+						gradesDiv.classed("cell-edit-div", true);
 					}
 				});
 
@@ -1759,6 +1801,14 @@
 							{
 								rightText.append('div').classed("sub-text", true)
 									.text("Ages: " + newText);
+							}
+						});
+					showGradeRange(offering, function(newText)
+						{
+							if (newText)
+							{
+								rightText.append('div').classed("sub-text", true)
+									.text("Grades: " + newText);
 							}
 						});
 				});
