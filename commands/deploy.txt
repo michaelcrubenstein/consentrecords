@@ -68,9 +68,6 @@ export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
 django-admin collectstatic --noinput
 python3 manage.py migrate
 
-# Create a superuser if necessary (this is a fresh database)
-# python3 manage.py createsuperuser
-
 cd ../..
 eb deploy
 logout
