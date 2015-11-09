@@ -498,6 +498,7 @@
 	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
 	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
 	<script src="{% static "d3/d3.v3.min.js" %}"></script>
+	<script src="{% static "datejs/date.js" %}"></script>
 	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
@@ -1378,6 +1379,21 @@
 			);
 		}
 		
+		function showWebSite(offering, successFunction)
+		{
+			crp.pushCheckCells(offering, 
+				function()
+				{
+					var newText = get_datum_by_name(offering, "Web Site");
+					successFunction(newText);
+				},
+				function()
+				{
+					successFunction("!");
+				}
+			);
+		}
+		
 		function showSessionDetails(session, service, containerPanel)
 		{
 			var organization = getValueByName(session, "Organization");
@@ -1541,6 +1557,26 @@
 					{
 						appendStringItem(gradesDiv.node(), "Grades", newText);
 						gradesDiv.classed("cell-edit-div", true);
+					}
+				});
+			
+			var webSiteDiv = panel2Div.append("div");	
+			showWebSite(offering, function(newText)
+				{
+					if (newText)
+					{
+						webSiteDiv.classed("cell-div cell-edit-div", true)
+							.classed("border-below", true);
+	
+						var labelDiv = webSiteDiv.append("div")
+							.classed("cell-label-div sub-text", true);
+						var link = labelDiv
+							.append("a")
+							.classed("site-active-text", true)
+							.attr("href", newText)
+							.attr("target", "_blank")
+							.text("More Info");
+						labelDiv.classed("left-label-div expanding-div", true);
 					}
 				});
 

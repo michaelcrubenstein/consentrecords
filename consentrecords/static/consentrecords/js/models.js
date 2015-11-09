@@ -2,6 +2,72 @@
 			trigger events on them. This allows events to be fired on model objects.
 		 */
 
+function _setupStringValue(d)
+{
+	d.getDescription = function() { return this.value; };
+	$(d).on("dataChanged.cr", function(e) {
+		d.triggerEvent("dataChanged.cr");
+	});
+}
+
+function _newStringValue()
+{
+	var d = new cr.CellValue();
+	this.setupValue(d);
+	return d;
+}
+		
+function _copyStringValue(oldValue)
+{
+	var newValue = new cr.CellValue();
+	this.setupValue(newValue);
+	if (oldValue.id !== null && oldValue.id !== undefined)
+		newValue.id = oldValue.id;
+	if (oldValue.value !== null && oldValue.value !== undefined)
+		newValue.value = oldValue.value;
+	return newValue;
+}
+
+function _appendStringCell(cell, initialData)
+{
+	var newData = [];
+	$(cell.data).each(function()
+		{
+			if (this.value)
+			{
+				var newDatum = {id: null, value: this.value};
+				newData.push(newDatum);
+			}
+		});
+	if (newData.length > 0)
+		initialData.push({"field": cell.field, "data": newData});
+}
+
+function _appendStringData(cell, initialData)
+{
+	var newData = [];
+	$(cell.data).each(function()
+		{
+			if (this.value)
+			{
+				var newDatum = this.value;
+				newData.push(newDatum);
+			}
+		});
+	if (newData.length > 0)
+		initialData[cell.field.id] = newData;
+}
+	
+var _stringFunctions = {
+		isEmpty: function(d) { return !d.value; },
+		clearValue: function(d) { d.value = null; },
+		setupValue: _setupStringValue,
+		newValue: _newStringValue,
+		copyValue: _copyStringValue,
+		appendCell: _appendStringCell,
+		appendData: _appendStringData,
+	};
+	
 var cr = {		
 	EventHandler: function () { 
 		this.events = {};
@@ -22,129 +88,13 @@ var cr = {
 		this.isDataLoaded = false;
 	},
 	dataTypes: {
-		_string: {
-			isEmpty: function(d)
-			{
-				return !d.value;
-			},
-			clearValue: function(d)
-			{
-				d.value = null;
-			},
-			setupValue: function(d)
-			{
-				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged.cr", function(e) {
-					d.triggerEvent("dataChanged.cr");
-				});
-			},
-			newValue: function()
-			{
-				var d = new cr.CellValue();
-				this.setupValue(d);
-				return d;
-			},
-			copyValue: function(oldValue)
-			{
-				var newValue = new cr.CellValue();
-				this.setupValue(newValue);
-				if (oldValue.id !== null && oldValue.id !== undefined)
-					newValue.id = oldValue.id;
-				if (oldValue.value !== null && oldValue.value !== undefined)
-					newValue.value = oldValue.value;
-				return newValue;
-			},
-			appendCell: function(cell, initialData)
-			{
-				cr.appendStringCell(cell, initialData);
-			},
-			appendData: function(cell, initialData)
-			{
-				cr.appendStringData(cell, initialData);
-			},
-		},
-		_number: {
-			isEmpty: function(d)
-			{
-				return !d.value;
-			},
-			clearValue: function(d)
-			{
-				d.value = null;
-			},
-			setupValue: function(d)
-			{
-				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged.cr", function(e) {
-					d.triggerEvent("dataChanged.cr");
-				});
-			},
-			newValue: function()
-			{
-				var d = new cr.CellValue();
-				this.setupValue(d);
-				return d;
-			},
-			copyValue: function(oldValue)
-			{
-				var newValue = new cr.CellValue();
-				this.setupValue(newValue);
-				if (oldValue.id !== null && oldValue.id !== undefined)
-					newValue.id = oldValue.id;
-				if (oldValue.value !== null && oldValue.value !== undefined)
-					newValue.value = oldValue.value;
-				return newValue;
-			},
-			appendCell: function(cell, initialData)
-			{
-				cr.appendStringCell(cell, initialData);
-			},
-			appendData: function(cell, initialData)
-			{
-				cr.appendStringData(cell, initialData);
-			},
-		},
-		_datestamp: {
-			isEmpty: function(d)
-			{
-				return !d.value;
-			},
-			clearValue: function(d)
-			{
-				d.value = null;
-			},
-			setupValue: function(d)
-			{
-				d.getDescription = function() { return this.value; };
-				$(d).on("dataChanged.cr", function(e) {
-					d.triggerEvent("dataChanged.cr");
-				});
-			},
-			newValue: function()
-			{
-				var d = new cr.CellValue();
-				this.setupValue(d);
-				return d;
-			},
-			copyValue: function(oldValue)
-			{
-				var newValue = new cr.CellValue();
-				this.setupValue(newValue);
-				if (oldValue.id !== null && oldValue.id !== undefined)
-					newValue.id = oldValue.id;
-				if (oldValue.value !== null && oldValue.value !== undefined)
-					newValue.value = oldValue.value;
-				return newValue;
-			},
-			appendCell: function(cell, initialData)
-			{
-				cr.appendStringCell(cell, initialData);
-			},
-			appendData: function(cell, initialData)
-			{
-				cr.appendStringData(cell, initialData);
-			},
-		},
+		_string: _stringFunctions,
+		_number: _stringFunctions,
+		_email: _stringFunctions,
+		_url: _stringFunctions,
+		_telephone: _stringFunctions,
+		_datestamp: _stringFunctions,
+		_time: _stringFunctions,
 		_object: {
 			isEmpty: function(d)
 			{
@@ -262,36 +212,6 @@ var cr = {
 	accessToken: null,
 	refreshToken: null,
 	tokenType: null,
-	
-	appendStringCell: function(cell, initialData)
-	{
-		var newData = [];
-		$(cell.data).each(function()
-			{
-				if (this.value)
-				{
-					var newDatum = {id: null, value: this.value};
-					newData.push(newDatum);
-				}
-			});
-		if (newData.length > 0)
-			initialData.push({"field": cell.field, "data": newData});
-	},
-	
-	appendStringData: function(cell, initialData)
-	{
-		var newData = [];
-		$(cell.data).each(function()
-			{
-				if (this.value)
-				{
-					var newDatum = this.value;
-					newData.push(newDatum);
-				}
-			});
-		if (newData.length > 0)
-			initialData[cell.field.id] = newData;
-	},
 	
 	postFailed: function(jqXHR, textStatus, errorThrown, failFunction)
 	{

@@ -750,6 +750,49 @@ function _appendUpdateDatestampCommands(sectionObj, cell, objectData, initialDat
 	);
 }
 
+function _appendUpdateTimeCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+{
+	d3.select(sectionObj).selectAll("input").each(function(d, i)
+		{
+			var newValue;
+			try
+			{
+				if (!this.value)
+					newValue = undefined;
+				else
+					newValue = Date.parse(this.value).toString("HH:mm");
+			}
+			catch(err)
+			{
+				newValue = undefined;
+			}
+			
+			/* If both are null, then they are equal. */
+			if (!newValue && !d.value)
+				newValue = d.value;
+				
+			if (newValue != d.value)
+			{
+				if (d.id)
+				{
+					initialData.push({id: d.id, value: newValue});
+					sourceObjects.push(d);
+				}
+				else
+				{
+					var command;
+					command = {containerUUID: objectData.getValueID(), 
+							   fieldID: cell.field.nameID, 
+							   value: newValue,
+							   index: i};
+					initialData.push(command);
+					sourceObjects.push(d);
+				}
+			}
+		}
+	);
+}
+
 function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
@@ -804,6 +847,35 @@ function _updateDatestampCell(sectionObj, cell)
 					newValue = undefined;
 				else
 					newValue = (new Date(this.value)).toISOString().substring(0, 10);
+			}
+			catch(err)
+			{
+				newValue = undefined;
+			}
+			
+			/* If both are null, then they are equal. */
+			if (!newValue && !d.value)
+				newValue = d.value;
+
+			if (newValue != d.value)
+			{
+				d.value = newValue;
+			}
+		}
+	);
+}
+
+function _updateTimeCell(sectionObj, cell)
+{
+	d3.select(sectionObj).selectAll("input").each(function(d)
+		{
+			var newValue;
+			try
+			{
+				if (!this.value)
+					newValue = undefined;
+				else
+					newValue = Date.parse(this.value).toString("HH:mm");
 			}
 			catch(err)
 			{
@@ -902,6 +974,54 @@ var dataTypeViews = {
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
 	},
+	_email: {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "email");
+		},
+		showAdd: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "email");
+		},
+		appendUpdateCommands: _appendUpdateStringCommands,
+		updateCell: _updateStringCell
+	},
+	_url: {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "url");
+		},
+		showAdd: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "url");
+		},
+		appendUpdateCommands: _appendUpdateStringCommands,
+		updateCell: _updateStringCell
+	},
+	_telephone: {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "tel");
+		},
+		showAdd: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "tel");
+		},
+		appendUpdateCommands: _appendUpdateStringCommands,
+		updateCell: _updateStringCell
+	},
 	_datestamp: {
 		show: function(obj, containerPanel, cell, containerUUID)
 		{
@@ -917,6 +1037,22 @@ var dataTypeViews = {
 		},
 		appendUpdateCommands: _appendUpdateDatestampCommands,
 		updateCell: _updateDatestampCell,
+	},
+	_time: {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "time");
+		},
+		showAdd: function(obj, containerPanel, cell, parent)
+		{
+			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "time");
+		},
+		appendUpdateCommands: _appendUpdateTimeCommands,
+		updateCell: _updateTimeCell,
 	},
 	_object: {
 		show: function(obj, containerPanel, cell, containerUUID)
