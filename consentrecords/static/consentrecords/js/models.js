@@ -768,10 +768,12 @@ cr.ObjectValue.prototype.calculateDescription = function()
 			var cell = this.value.cells[i];
 			if (cell.field.descriptorType == "_by text")
 			{
-				cellNames = []
+				var cellNames = [];
+				var dt = cr.dataTypes[cell.field.dataType];
 				for (var j = 0; j < cell.data.length; ++j)
 				{
-					cellNames.push(cell.data[j].getDescription());
+					if (!dt.isEmpty(cell.data[j]))
+						cellNames.push(cell.data[j].getDescription());
 				}
 				nameArray.push(cellNames.join(separator='/'));
 			}
