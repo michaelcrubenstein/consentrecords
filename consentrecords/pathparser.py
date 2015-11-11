@@ -11,7 +11,7 @@ import uuid
 from functools import reduce
 
 from parse.cssparser import parser as cssparser
-from consentrecords.models import LazyInstance, LazyValue, Fact
+from consentrecords.models import LazyInstance, LazyValue, Fact, NameList
 
 def _checkCount(sql, item, argList):
     """ 
@@ -175,7 +175,7 @@ def selectAllObjects(path):
 def selectAllDescriptors(path):
     resultSet = selectAllIDs(path)
     
-    nameLists = {}
+    nameLists = NameList()
     return [_getValueFromPair(i, nameLists) for i in resultSet]
     
 def tokenize(path):

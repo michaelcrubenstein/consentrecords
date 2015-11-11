@@ -15,10 +15,11 @@ import logging
 import traceback
 import uuid
 import urllib.parse
+import datetime
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue
+from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue, NameList
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords import bootstrap
@@ -337,7 +338,7 @@ class api:
             if not configurationObject:
                 return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
                 
-            p = configurationObject.getData()
+            p = configurationObject.getConfiguration()
         
             results = {'success':True, 'cells': p}
         except Fact.NoEditsAllowedError:
@@ -368,15 +369,21 @@ class api:
             
         return JsonResponse(results)
     
-    def getCells(uuObject, fields):
-        kindObject = LazyInstance(uuObject.typeID)
+    def getCells(uuObject, fields, fieldsDataDictionary, nameLists):
+        if uuObject.typeID in fieldsDataDictionary:
+            fieldsData = fieldsDataDictionary[uuObject.typeID]
+        else:
+            kindObject = LazyInstance(uuObject.typeID)
         
-        configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
+            configuration = kindObject.getSubInstance(Fact.configurationUUID())
     
-        if not configurationObject:
-            raise ValueError("the specified item is not configured")
+            if not configuration:
+                raise ValueError("the specified item is not configured")
     
-        cells = configurationObject.getData(uuObject)
+            fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Fact.fieldUUID())]
+            fieldsDataDictionary[uuObject.typeID] = fieldsData
+            
+        cells = uuObject.getData(fieldsData, nameLists)
     
         data = {"id": uuObject.id.hex, "parentID": uuObject.parentID, "cells" : cells }
     
@@ -385,7 +392,7 @@ class api:
                 uuObject = LazyInstance(uuObject.parentID)
                 kindObject = LazyInstance(uuObject.typeID)
                 fieldData = kindObject.getParentReferenceFieldData()
-                nameFieldUUIDs = kindObject._descriptors
+                nameFieldUUIDs = nameLists.getNameUUIDs(uuObject.typeID)
             
                 parentData = {'id': None, 
                         'value': {'id': uuObject.id.hex, 'description': uuObject._getDescription(nameFieldUUIDs)},
@@ -408,7 +415,9 @@ class api:
             a = pathparser.tokenize(path)
             
             uuObjects = pathparser.selectAllObjects(a)
-            p = [api.getCells(uuObject, fields) for uuObject in uuObjects]        
+            fieldsDataDictionary = {}
+            nameLists = NameList()
+            p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
         except Fact.NoEditsAllowedError:

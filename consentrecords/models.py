@@ -187,6 +187,21 @@ class LazyInstance(LazyObject):
             c.execute(sql, [self.id.hex, fieldID.hex])
             return [LazyValue(i[0], i[1], i[2], i[3], i[4]) for i in c.fetchall()]
     
+    def _getValues(self):
+        with connection.cursor() as c:
+            sql = "SELECT v1.id, v1.instance_id, v1.fieldID, v1.position, v1.stringvalue" + \
+              " FROM consentrecords_value v1" + \
+              " WHERE v1.instance_id = %s" + \
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)" + \
+              " ORDER BY v1.fieldID, v1.position"
+            c.execute(sql, [self.id.hex])
+            values = {}
+            for i in c.fetchall():
+                if i[2] not in values:
+                    values[i[2]] = []
+                values[i[2]].append(LazyValue(i[0], i[1], i[2], i[3], i[4]))
+            return values
+    
     def _getSubInstances(self, fieldID): # Previously _getSubValueObjects
         return [LazyInstance(v.stringValue) for v in self._getSubValues(fieldID)]
         
@@ -203,7 +218,7 @@ class LazyInstance(LazyObject):
             r = c.fetchone()
             return r and r[0]
     
-    def getSubValue(self, fieldID): # Previously getSubValueObject
+    def getSubValue(self, fieldID):
         if not fieldID:
             raise ValueError("fieldID is not specified")
             
@@ -216,7 +231,7 @@ class LazyInstance(LazyObject):
             r = c.fetchone()
             return r and LazyValue(r[0], r[1], r[2], r[3], r[4])
     
-    def getSubInstance(self, fieldID):      # Previously getSubValueObject
+    def getSubInstance(self, fieldID):
         if not fieldID:
             raise ValueError("fieldID is not specified")
             
@@ -318,13 +333,7 @@ class LazyInstance(LazyObject):
     
     # returns a dictionary of info describing self.
     def clientObject(self, nameLists):
-        typeID = self.typeID
-        if typeID in nameLists:
-            nameFieldUUIDs = nameLists[typeID]
-        else:
-            ofKindObject = LazyInstance(typeID)
-            nameFieldUUIDs = ofKindObject._descriptors
-            nameLists[typeID] = nameFieldUUIDs
+        nameFieldUUIDs = nameLists.getNameUUIDs(self.typeID)
             
         return {'id': None, 'value': {'description': self._getDescription(nameFieldUUIDs), 'id': self.id.hex}}
     
@@ -342,11 +351,22 @@ class LazyInstance(LazyObject):
             
         return f;
         
-    # Returns a duple containing the name and id of an item referenced by self.
-    def getSubValueReference(self, fieldID, descriptorID):
-        i = self.getSubInstance(fieldID)
-        v = i and i.getSubValue(descriptorID)
-        return v and (v.stringValue, i.id)
+    # Returns a dictionary by field id where each value is
+    # a duple containing the name and id of an item referenced by self from the key field.
+    def _getSubValueReferences(self):
+        with connection.cursor() as c:
+            sql = "SELECT v1.fieldID, v2.stringvalue, v1.stringvalue" + \
+              " FROM consentrecords_value v1" + \
+              " JOIN consentrecords_value v2 ON (v2.instance_id = v1.stringvalue)" + \
+              " WHERE v1.instance_id = %s" + \
+              " AND   v2.fieldID IN (%s, %s)" + \
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)" + \
+              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v2.id)"
+            c.execute(sql, [self.id.hex, Fact.nameUUID().hex, Fact.uuNameUUID().hex])
+            d = {}
+            for r in c.fetchall():
+                d[uuid.UUID(r[0])] = (r[1], uuid.UUID(r[2]))
+            return d
     
     def getParentReferenceFieldData(self):
         fieldData = {"name" : self.getSubValue(Fact.uuNameUUID()).stringValue,
@@ -359,32 +379,30 @@ class LazyInstance(LazyObject):
         return fieldData
                      
     def getFieldData(self):
-        nameReference = self.getSubValueReference(Fact.nameUUID(), Fact.uuNameUUID())
-        dataTypeReference = self.getSubValueReference(Fact.dataTypeUUID(), Fact.nameUUID())
+        d = self._getSubValueReferences()
         fieldData = None
-        if nameReference and dataTypeReference:
+        if Fact.nameUUID() in d and Fact.dataTypeUUID() in d:
+            nameReference = d[Fact.nameUUID()]
+            dataTypeReference = d[Fact.dataTypeUUID()]
             fieldData = {"id" : self.id.hex, 
                          "name" : nameReference[0],
                          "nameID" : nameReference[1].hex,
                          "dataType" : dataTypeReference[0],
                          "dataTypeID" : dataTypeReference[1].hex}
-            r = self.getSubValueReference(Fact.maxCapacityUUID(), Fact.nameUUID())
-            if r:
-                fieldData["capacity"] = r[0]
+            if Fact.maxCapacityUUID() in d:
+                fieldData["capacity"] = d[Fact.maxCapacityUUID()][0]
             else:
                 fieldData["capacity"] = Fact.multipleValuesName
                 
-            r = self.getSubValueReference(Fact.descriptorTypeUUID(), Fact.nameUUID())
-            if r:
-                fieldData["descriptorType"] = r[0]
+            if Fact.descriptorTypeUUID() in d:
+                fieldData["descriptorType"] = d[Fact.descriptorTypeUUID()][0]
             
-            r = self.getSubValueReference(Fact.addObjectRuleUUID(), Fact.nameUUID())
-            if r:
-                fieldData["objectAddRule"] = r[0]
+            if Fact.addObjectRuleUUID() in d:
+                fieldData["objectAddRule"] = d[Fact.addObjectRuleUUID()][0]
             
             if fieldData["dataType"] == Fact.objectName:
-                ofKindReference = self.getSubValueReference(Fact.ofKindUUID(), Fact.uuNameUUID())
-                if ofKindReference:
+                if Fact.ofKindUUID() in d:
+                    ofKindReference = d[Fact.ofKindUUID()]
                     fieldData["ofKind"] = ofKindReference[0]
                     fieldData["ofKindID"] = ofKindReference[1].hex
                 v = self.getSubValue(Fact.pickObjectPathUUID())
@@ -396,33 +414,29 @@ class LazyInstance(LazyObject):
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
     def _getSubReferences(self, fieldID):
-        nameLists = {}
+        nameLists = NameList()
 
         return [v.clientObject(nameLists) for v in self._getSubValues(fieldID)]
     
-    # Returns an array of arrays.    
-    def getData(self, dataObject=None):
-        cells = []
-        
-        i = 0
-        for fieldObject in self._getSubInstances(Fact.fieldUUID()):
-            fieldData = fieldObject.getFieldData()
-            if fieldData:
-                fieldData["index"] = i
-                i += 1
-                cell = {"field": fieldData}                        
-                if dataObject:
-                    fieldID = uuid.UUID(fieldData["nameID"])
-                    if fieldData["dataType"] == Fact.objectName:
-                        nameLists={}
-                        cell["data"] = [v.clientObject(nameLists) for v in dataObject._getSubValues(fieldID)]
-                    else:
-                        # Default case is that this field contains a unique value.
-                        cell["data"] = [{"id": v.id.hex, "value": v.stringValue} for v in dataObject._getSubValues(fieldID)]
+    # Returns an array of arrays.
+    def _getCellData(self, fieldData, nameLists, values):
+        cell = {"field": fieldData}                        
+        fieldID = fieldData["nameID"]
+        if fieldID not in values:
+            cell["data"] = []
+        elif fieldData["dataType"] == Fact.objectName:
+            cell["data"] = [v.clientObject(nameLists) for v in values[fieldID]]
+        else:
+            # Default case is that each datum in this cell contains a unique value.
+            cell["data"] = [{"id": v.id.hex, "value": v.stringValue} for v in values[fieldID]]
+        return cell
                 
-                cells.append(cell)
-                
-        return cells
+    def getData(self, fieldsData, nameLists):
+        values = self._getValues()
+        return [self._getCellData(fieldData, nameLists, values) for fieldData in fieldsData]
+
+    def getConfiguration(self):
+        return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Fact.fieldUUID())]
 
     # Returns a new instance of an object of this kind.
     def createEmptyInstance(self, parent, transactionState):
@@ -502,6 +516,18 @@ class LazyInstance(LazyObject):
             with connection.cursor() as c:
                 c.execute(sql, [transactionState.transaction.id.hex, self.parentID, self.stringValue])
                 
+class NameList():
+    def __init__(self):
+        self.items = {}
+    
+    def getNameUUIDs(self, typeID):
+        if typeID in self.items:
+            return self.items[typeID]
+        else:
+            ofKindObject = LazyInstance(typeID)
+            nameFieldUUIDs = ofKindObject._descriptors
+            self.items[typeID] = nameFieldUUIDs
+            return nameFieldUUIDs
     
 class LazyValue(LazyObject):
     def __init__(self, id, instanceID=None, fieldID=None, position=None, stringValue=None):
@@ -555,13 +581,7 @@ class LazyValue(LazyObject):
     def clientObject(self, nameLists, instance=None):
         if not instance:
             instance = LazyInstance(self.stringValue)
-        typeID = instance.typeID
-        if typeID in nameLists:
-            nameFieldUUIDs = nameLists[typeID]
-        else:
-            ofKindObject = LazyInstance(typeID)
-            nameFieldUUIDs = ofKindObject._descriptors
-            nameLists[typeID] = nameFieldUUIDs
+        nameFieldUUIDs = nameLists.getNameUUIDs(instance.typeID)
             
         return {'id': self.id.hex, 
                 'value': {'id': self.stringValue, 'description': instance._getDescription(nameFieldUUIDs)},
