@@ -526,6 +526,7 @@
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
 		userInstance.value.description = "{{ user.get_full_name }}"
+		crp.pushCheckCells(userInstance, function() { }, asyncFailFunction);
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
@@ -1254,7 +1255,9 @@
 				.attr("height", container.style("height"))
 				.attr("fill", pathBackground);
 				
-			var experienceGroup = svg.append('g');
+			var experienceGroup = svg.append('g')
+					.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
+					.attr("font-size", "1.3rem");
 			var yearGroup = svg.append('g');
 			
 			var dataLeftMargin = 40;
@@ -1267,9 +1270,17 @@
 					this.value.description = getValueByName(this, "Offering").getDescription();
 				});
 				
-				var path = "#" + userInstance.getValueID() + '>"More Experiences">"More Experience"';
-				cr.getData(path, undefined, successFunction2, asyncFailFunction);
+				crp.pushCheckCells(userInstance, function() {
+						var m = getValueByName(userInstance, "More Experiences");
+						if (m)
+						{
+							var path = "#" + m.getValueID() + '>"More Experience"';
+							cr.getData(path, undefined, successFunction2, asyncFailFunction);
+						}
+					},
+					asyncFailFunction);
 			}
+
 			var sortExperiences = function(a, b)
 			{
 				var aStartDate = getStartDate(a);
@@ -1354,7 +1365,12 @@
 				
 				allExperiences.sort(sortExperiences);
 				
-				minDate = new Date().toISOString();
+				var birthday = getValueByName(userInstance, "Birthday");
+				if (birthday && birthday.value)
+					minDate = birthday.value;
+				else
+					minDate = new Date().toISOString();
+					
 				maxDate = "1900-01-01T00:00:00.000Z";
 				$(allExperiences).each(function()
 					{
@@ -1429,8 +1445,6 @@
 					.on("click", clickExperienceRect);
 
 				var t = g.append('text')
-					.attr("font", "sans-serif")
-					.attr("font-size", "smaller")
 					.attr("x", "10")
 					.attr("y", "0")
 					.attr("dy", "1.1")
