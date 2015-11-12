@@ -352,7 +352,7 @@
 			</div> <!-- /container-fluid -->
 	    </panel>
 	    <panel id="id_your_pathway_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
+			<nav class="navbar-default site-navbar site-navbar-top" role="navigation">
 				<div class="container-fluid">
 					<!-- Collect the nav links, forms, and other content for toggling -->
 					<div class="pull-left">
@@ -368,12 +368,9 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
-				<div>
-					<div class="alert-container"></div>
-				</div>
-				<div id="id_pathway">
-				</div>
+			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
+				<div id="id_pathway" class="site-fill-panel"></div>
+				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
 	    </panel>
 	    <panel id="id_your_plans_panel" class="level-2-panel configuration-panel site-panel list-panel">
@@ -499,6 +496,7 @@
 	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
 	<script src="{% static "d3/d3.v3.min.js" %}"></script>
 	<script src="{% static "datejs/date.js" %}"></script>
+	<script src="{% static "datejs/time.js" %}"></script>
 	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
@@ -1209,13 +1207,22 @@
 			else
 				return undefined;
 		}
+		
+		function getStartDate(d)
+		{
+			return get_datum_by_name(d, "Start Date");
+		}
+		
+		function getEndDate(d) {
+			return get_datum_by_name(d, "End Date") || new Date().toISOString().substr(0, 10);
+		}	
 
 		function getDateRange(d)
 		{
-			var startDate = get_datum_by_name(d, "Start Date");
+			var startDate = getStartDate(d);
 			if (startDate === undefined || startDate === null)
 				startDate = "";
-			var endDate = get_datum_by_name(d, "End Date");
+			var endDate = getEndDate(d);
 			if (endDate === undefined || endDate === null)
 				endDate = "";
 			var connector;
@@ -1227,34 +1234,270 @@
 		}
 				
 		function show_pathway(containerDiv) {
-			var successFunction = function(newInstances)
+			var allExperiences = [];
+			
+			var container = d3.select(containerDiv);
+			var containerHeight = parseInt(container.style("height"));
+
+			var pathBackground = "yellow";
+			
+			container.selectAll('svg').remove();
+			var svg = container.append('svg')
+				.style("width", "100%")
+				.style("height", "100%");
+				
+			var defs = svg.append('defs');
+			
+			var bg = svg.append('rect')
+				.attr("x", 0).attr("y", 0)
+				.attr("width", container.style("width"))
+				.attr("height", container.style("height"))
+				.attr("fill", pathBackground);
+				
+			var experienceGroup = svg.append('g');
+			var yearGroup = svg.append('g');
+			
+			var dataLeftMargin = 40;
+				
+			var successFunction1 = function(experiences)
 			{
-				d3.select(containerDiv).selectAll('div').remove();
+				allExperiences = experiences;
+				$(experiences).each(function()
+				{
+					this.value.description = getValueByName(this, "Offering").getDescription();
+				});
 				
-				var divs = d3.select(containerDiv).selectAll('div')
-					.data(newInstances)
+				var path = "#" + userInstance.getValueID() + '>"More Experiences">"More Experience"';
+				cr.getData(path, undefined, successFunction2, asyncFailFunction);
+			}
+			var sortExperiences = function(a, b)
+			{
+				var aStartDate = getStartDate(a);
+				var bStartDate = getStartDate(b);
+				if (aStartDate > bStartDate) return 1;
+				else if (aStartDate < bStartDate) return -1;
+				else
+				{
+					var aEndDate = getEndDate(a);
+					var bEndDate = getEndDate(b);
+					if (aEndDate > bEndDate) return 1;
+					else if (aEndDate < bEndDate) return -1;
+					else return 0;
+				}
+				return aStartDate - bStartDate;
+			}
+			var minDate, maxDate, timespan;
+			var years = [];
+
+			//This is the accessor function we talked about above
+			var lineFunction = d3.svg.line()
+				.x(function(d) { return d.x; })
+				.y(function(d) { return d.y; })
+				.interpolate("linear");
+
+			function getExperiencePath(experience, i)
+			{
+				var t = this.parentNode.children[1];	/* The text node. */
+				var bbox = t.getBBox();
+				var stem = parseFloat(this.parentNode.getAttribute("stem"));
+				var h = getExperienceHeight(experience, i);
+				var newH = bbox.height + 3;
+				var x1 = 0;
+				var x2 = x1 + stem + 35 + 20;
+				var x3 = x1 + stem;
+				var x4 = x1 + 05;
+				var y1 = 0;
+				var y2 = y1 + newH;
+				var y3;
+				if (h < 3)
+					y3 = y1 + h;
+				else
+					y3 = y1 + 3;
+				var y4 = y1 + h;
+				return lineFunction([{x: x1, y: y1}, 
+									 {x: x2, y: y1}, 
+									 {x: x2, y: y2}, 
+									 {x: x3, y: y2}, 
+									 {x: x3, y: y3}, 
+									 {x: x4, y: y3}, 
+									 {x: x4, y: y4}, 
+									 {x: x1, y: y4}, 
+									 {x: x1, y: y1}]);
+			}
+			
+			function DateToY(d)
+			{
+				var daySpan = (new TimeSpan(d-Date.parse(minDate))).days;
+				return (timespan - daySpan) * containerHeight / timespan;
+			}
+			
+			function getExperienceY(experience, i)
+			{
+				return DateToY(Date.parse(getEndDate(experience)));
+			}
+				
+			function getExperienceHeight(experience)
+			{
+				var startDate = getStartDate(experience);
+				var endDate = getEndDate(experience);
+				var days = (new TimeSpan(Date.parse(endDate)-Date.parse(startDate))).days;
+				return days * containerHeight / timespan;
+			}
+				
+			var successFunction2 = function(experiences)
+			{
+				allExperiences = allExperiences.concat(experiences);
+				$(experiences).each(function()
+				{
+					this.calculateDescription();
+				});
+				
+				allExperiences.sort(sortExperiences);
+				
+				minDate = new Date().toISOString();
+				maxDate = "1900-01-01T00:00:00.000Z";
+				$(allExperiences).each(function()
+					{
+						startDate = getStartDate(this);
+						endDate = getEndDate(this);
+						if (minDate > startDate)
+							minDate = startDate;
+						if (maxDate < endDate)
+							maxDate = endDate;
+					});
+				
+				timespan = new TimeSpan(Date.parse(maxDate) - Date.parse(minDate)).days;
+
+				var minYear = parseInt(minDate.substr(0, 4));
+				var maxYear = parseInt(maxDate.substr(0, 4));
+				for (var y = minYear; y <= maxYear; ++y)
+					years.push(y);
+				
+				function getExperienceFill(experience)
+				{
+					return "green";
+				}
+				
+				function getExperienceStroke(experience)
+				{
+					return "blue";
+				}
+				
+				function clickExperienceRect(experience, i)
+				{
+					bootstrap_alert.warning(experience.getDescription(), ".alert-container");
+				}
+				
+				var g = experienceGroup.selectAll('g')
+					.data(allExperiences)
 					.enter()
-					.append('div');
-				divs.classed("consent-record cell-div", true);
+					.append('g');
+					
+				var rect = g.append('path')
+					.attr("fill", getExperienceFill)
+					.attr("stroke", getExperienceStroke)
+					.attr("opacity", "0.5")
+					.on("click", clickExperienceRect);
+
+				var t = g.append('text')
+					.attr("font", "sans-serif")
+					.attr("font-size", "smaller")
+					.attr("x", "10")
+					.attr("y", "0")
+					.attr("dy", "1.1")
+					.text(function(d) { return d.getDescription(); })
+					.on("click", clickExperienceRect);
 				
-				divs.append('div').classed("right-label-div right-fixed-width-div right-label-div", true)
-					.classed("sub-text", true)
-					.text(getDateRange);
-				var titleDivs = divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true);
-				titleDivs.append("div")
-					.text(function(d) { 
-						return getValueByName(d, "Offering").getDescription();
+				t.attr("y", function(experience)
+					{
+						var bbox = this.getBBox();
+						return 0 - bbox.y;
 					});
-				titleDivs.append("div")
-					.text(function(d) {
-						var v = getValueByName(d, "Organization");
-						if (v)
-							return v.getDescription();
+				
+				var y = yearGroup
+					.selectAll('text')
+					.data(years)
+					.enter()
+					.append('text')
+					.text(function(d) { return d; })
+					.attr("font", "sans-serif")
+					.attr("font-size", "10px")
+					.attr("x", 10);
+					
+				function layoutExperiences()
+				{
+					containerHeight = parseInt(container.style("height"));
+					
+					bg.attr("width", container.style("width"))
+					  .attr("height", container.style("height"));
+
+					var columns = [];
+					var g = experienceGroup.selectAll('g');
+						g.attr("y", getExperienceY);	
+					g.each(function(e, i)
+					{
+						var j;
+						for (j = 0; j < columns.length; ++j)
+						{
+							// If this item's height + y is greater than the last item,
+							// then add this to the column.
+							lastTop = parseFloat(columns[j][columns[j].length - 1].getAttribute("y"));
+							if (lastTop >
+								parseFloat(this.getAttribute("y")) + 
+								getExperienceHeight(e, i) &&
+								lastTop > parseFloat(this.getAttribute("y")) + 
+								this.children[1].getBBox().height + 3)
+							{
+								columns[j].push(this);
+								break;
+							}
+						}
+						if (j == columns.length)
+						{
+							columns.push([this]);
+						}
 					});
+					defs.selectAll('clipPath').remove();
+					for (var j = 0; j < columns.length; ++j)
+					{
+						var x = dataLeftMargin + (10 * j);
+						var stemLength = (10 * columns.length) + (50 * j);
+					
+						/* Add a clipPath for every column. */
+						defs.append('clipPath')
+							.attr('id', 'id_clipPath' + j)
+							.append('rect')
+							.attr('x', 0)
+							.attr('y', 0)
+							.attr('height', columns[j][0].children[1].getBBox().height)
+							.attr('width', stemLength + 35 + 10);
+
+						for (var i = 0; i < columns[j].length; ++i)
+						{
+							var g = columns[j][i];
+							g.setAttribute("transform", 
+								"translate(" + x + "," + g.getAttribute("y") + ")");
+							g.setAttribute("stem", stemLength);
+							g.children[1].setAttribute('clip-path', 'url(#id_clipPath'+j+')');
+						}
+					}
+					rect.attr("d", getExperiencePath);
+					t.attr("x", function(e, i)
+					{
+						var stem = this.parentNode.getAttribute("stem");
+						return parseFloat(stem) + 10;
+					});
+				
+					y.attr("y", function(d) { 
+							return DateToY(new Date(d, 0, 0));
+						});
+				}
+				$(window).resize(layoutExperiences);
+				layoutExperiences();
 			}
 			
 			var path = "#" + userInstance.getValueID() + '::reference(Experience)';
-			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
+			cr.getData(path, ["parents"], successFunction1, asyncFailFunction);
 		}
 		
 		function appendStringItem(obj, label, text)
