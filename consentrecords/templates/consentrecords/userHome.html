@@ -1383,9 +1383,38 @@
 					return "blue";
 				}
 				
+				function pickedOrCreatedValue(i, pickedName, createdName)
+				{
+					var v = getValueByName(i, pickedName);
+					if (v && v.getValueID())
+						return v.getDescription();
+					else {
+						v = getValueByName(i, createdName);
+						if (v)
+							return v.value;
+						else
+							return undefined;
+					}
+				}
+				
 				function clickExperienceRect(experience, i)
 				{
-					bootstrap_alert.warning(experience.getDescription(), ".alert-container");
+					var lines = [];
+					
+					var s;
+					s = pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+					if (s && lines.indexOf(s) < 0)
+						lines.push(s);
+
+					s = pickedOrCreatedValue(experience, "Site", "User Entered Site");
+					if (s && lines.indexOf(s) < 0)
+						lines.push(s);
+
+					s = pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+					if (s && lines.indexOf(s) < 0)
+						lines.push(s);
+
+					bootstrap_alert.warning(lines.join(separator="<br>"), ".alert-container");
 				}
 				
 				var g = experienceGroup.selectAll('g')
