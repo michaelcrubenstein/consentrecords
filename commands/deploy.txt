@@ -7,18 +7,11 @@
 ##################################################################
 export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 
-# Create a local tar file of all of the website.
-cd ~/GitHub/consentrecords
-tar -cf c.tar consentrecords custom_user manage.py monitor parse static developer
-
 # Start a remote ssh connection with this command.
 ssh -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 
 # Remove the old files with these commands.
-cd eb_django_app/
-. prod/bin/activate
-cd prod/consentrecords
-rm -r *
+rm -r ~/eb_django_app/prod/consentrecords/*
 logout
 
 ##################################################################
@@ -29,6 +22,12 @@ logout
   migrate the database
   deploy to elastic beanstalk.
 ##################################################################
+export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
+
+# Create a local tar file of all of the website.
+cd ~/GitHub/consentrecords
+tar -cf c.tar consentrecords custom_user manage.py monitor parse static developer
+
 # Start a remote connection with this command:
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/prod/consentrecords
