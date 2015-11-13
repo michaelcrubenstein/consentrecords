@@ -739,7 +739,7 @@ class Fact():
             self.uuname = uuname
             
         def __str__(self):
-            return "The term \"%s\" is not recognized" % self.uuname
+            return 'The term "%s" is not recognized' % self.uuname
             
     # Gets the ID of the uuName uuName from the database, or None if it isn't initialized.
     def getUUNameID():
