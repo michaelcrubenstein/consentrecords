@@ -115,28 +115,31 @@ def initializeFacts(request):
 def list(request):
     LogRecord.emit(request.user, 'consentrecords/list', '')
     
-    # The type of the root object.
-    rootType = request.GET.get('type', None)
-    rootID = rootType and Fact.getNamedUUID(rootType);
-    path=request.GET.get('path', "_uuname")
-    header=request.GET.get('header', "List")
+    try:
+        # The type of the root object.
+        rootType = request.GET.get('type', None)
+        rootID = rootType and Fact.getNamedUUID(rootType);
+        path=request.GET.get('path', "_uuname")
+        header=request.GET.get('header', "List")
             
-    template = loader.get_template('consentrecords/configuration.html')
+        template = loader.get_template('consentrecords/configuration.html')
     
-    argList = {
-        'user': request.user,
-        'canShowObjects': request.user.is_superuser,
-        'canAddObject': request.user.is_superuser,
-        'path': urllib.parse.unquote_plus(path),
-        'header': header,
-        }
-    if rootID:
-        argList["rootID"] = rootID.hex
-        argList["singularName"] = LazyInstance(rootID)._description
+        argList = {
+            'user': request.user,
+            'canShowObjects': request.user.is_superuser,
+            'canAddObject': request.user.is_superuser,
+            'path': urllib.parse.unquote_plus(path),
+            'header': header,
+            }
+        if rootID:
+            argList["rootID"] = rootID.hex
+            argList["singularName"] = LazyInstance(rootID)._description
         
-    context = RequestContext(request, argList)
+        context = RequestContext(request, argList)
         
-    return HttpResponse(template.render(context))
+        return HttpResponse(template.render(context))
+    except Exception as e:
+        return HttpResponse(str(e))
 
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
