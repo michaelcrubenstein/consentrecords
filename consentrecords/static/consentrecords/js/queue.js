@@ -50,15 +50,34 @@ var Queue = (function () {
 
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
+	CRP.prototype.paths = {};
 	CRP.prototype.queue = null;
 	
     function CRP() {
     	this.instances = {};
+    	this.paths = {};
         this.queue = new Queue(true); //initialize the queue
     };
+    
+    /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
+    CRP.prototype.getInstance = function(id)
+    {
+    	if (!id)
+    		throw("id is not defined");
+    	if (id in this.instances)
+    		return this.instances[id];
+    	else
+    		return undefined;
+    }
 
 	CRP.prototype.pushID = function(id, successFunction, failFunction)
 	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+    	if (!id)
+    		throw("id is not defined");
 		var _this = this;
 		this.queue.add(
 			function() {
@@ -120,6 +139,33 @@ var CRP = (function() {
 		}
 		else
 			return i;	/* This isn't an object. */
+	};
+	
+	CRP.prototype.getData = function(path, fields, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+		if (!path)
+			throw "path is not defined";
+		var _this = this;
+		this.queue.add(
+			function() {
+				if (path in _this.paths)
+					successFunction(_this.paths[path]);
+				else
+				{
+					cr.getData(path, fields,
+						function(newInstances) {
+							_this.paths[path] = newInstances;
+							$(newInstances).each(function()
+								{ crp.pushInstance(this); });
+							successFunction(newInstances);
+							_this.queue.next();
+						}, failFunction);
+				}
+			});
 	};
 	
 	return CRP;

@@ -1169,7 +1169,7 @@
 			}
 			
 			var path = "Service";
-			cr.selectAll(path, successFunction, asyncFailFunction);
+			crp.getData(path, undefined, successFunction, asyncFailFunction);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -1240,7 +1240,7 @@
 			var container = d3.select(containerDiv);
 			var containerHeight = parseInt(container.style("height"));
 
-			var pathBackground = "yellow";
+			var pathBackground = "white";
 			
 			container.selectAll('svg').remove();
 			var svg = container.append('svg')
@@ -1261,6 +1261,7 @@
 			var yearGroup = svg.append('g');
 			
 			var dataLeftMargin = 40;
+			var otherColor = "#bbbbbb";
 				
 			var successFunction1 = function(experiences)
 			{
@@ -1270,15 +1271,34 @@
 					this.value.description = getValueByName(this, "Offering").getDescription();
 				});
 				
-				crp.pushCheckCells(userInstance, function() {
-						var m = getValueByName(userInstance, "More Experiences");
-						if (m)
+				crp.getData("Service", undefined, function(newInstances)
+				{
+					crp.getData('"Service Domain"', undefined, function(newInstances)
+					{
+						for (i = 0; i < newInstances.length; ++i)
 						{
-							var path = "#" + m.getValueID() + '>"More Experience"';
-							cr.getData(path, undefined, successFunction2, asyncFailFunction);
+							if (newInstances[i].getDescription() == "Other")
+							{
+								color = getValueByName(newInstances[i], "Color");
+								if (color && color.value)
+									otherColor = color;
+								break;
+							}
 						}
+						
+						crp.pushCheckCells(userInstance, function() {
+								var m = getValueByName(userInstance, "More Experiences");
+								if (m)
+								{
+									var path = "#" + m.getValueID() + '>"More Experience"';
+									cr.getData(path, undefined, successFunction2, asyncFailFunction);
+								}
+							},
+							asyncFailFunction);
 					},
 					asyncFailFunction);
+				},
+				asyncFailFunction);
 			}
 
 			var sortExperiences = function(a, b)
@@ -1389,14 +1409,50 @@
 				for (var y = minYear; y <= maxYear; ++y)
 					years.push(y);
 				
-				function getExperienceFill(experience)
+				function setColor(experience)
 				{
-					return "green";
-				}
-				
-				function getExperienceStroke(experience)
-				{
-					return "blue";
+					var _this = d3.select(this);
+					function setColorByService(service)
+					{
+						var serviceInstance = crp.getInstance(service.getValueID());
+						var serviceDomain = getValueByName(serviceInstance, "Service Domain");
+						if (serviceDomain && serviceDomain.getValueID())
+						{
+							var sdInstance = crp.getInstance(serviceDomain.getValueID());
+							color = getValueByName(sdInstance, "Color");
+							if (color && color.value)
+								_this.attr("fill", color.value)
+									 .attr("stroke", color.value);
+						}
+						else
+							_this.attr("fill", otherColor)
+								 .attr("stroke", otherColor);
+					}
+					
+					var offering = getValueByName(experience, "Offering");
+					if (offering && offering.getValueID())
+					{
+						var experienceColor = otherColor;
+						crp.pushCheckCells(offering, function()
+						{
+							var service = getValueByName(offering, "Service");
+							if (service)
+								setColorByService(service);
+							else
+								_this.attr("fill", otherColor)
+									 .attr("stroke", otherColor);
+						},
+						asyncFailFunction);
+					}
+					else
+					{
+						var service = getValueByName(experience, "Service");
+						if (service)
+							setColorByService(service);
+						else
+							_this.attr("fill", otherColor)
+								 .attr("stroke", otherColor);
+					}
 				}
 				
 				function pickedOrCreatedValue(i, pickedName, createdName)
@@ -1439,10 +1495,10 @@
 					.append('g');
 					
 				var rect = g.append('path')
-					.attr("fill", getExperienceFill)
-					.attr("stroke", getExperienceStroke)
-					.attr("opacity", "0.5")
+					.attr("fill-opacity", "0.3")
+					.attr("stroke-opacity", "0.7")
 					.on("click", clickExperienceRect);
+				rect.each(setColor);
 
 				var t = g.append('text')
 					.attr("x", "10")
