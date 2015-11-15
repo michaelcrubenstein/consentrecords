@@ -34,8 +34,6 @@ urlpatterns = [
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
 
-    url(r'^configure/initializefacts/', views.initializeFacts, name='initializeFacts'),
-
     url(r'^local/getuserid/', views.getUserID),
     url(r'^local/getdata/', views.getData),
     url(r'^local/getconfiguration/', views.getConfiguration),

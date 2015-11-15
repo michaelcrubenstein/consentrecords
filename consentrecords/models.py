@@ -45,23 +45,42 @@ class TransactionState:
         
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    typeID = dbmodels.UUIDField(db_index=True, editable=False)
-    parent = dbmodels.ForeignKey('consentrecords.Instance', db_column='parentid', db_index=True, null=True, editable=False)
+    typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstance', db_column='typeid', db_index=True, editable=False)
+    parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='parentInstance', db_column='parentid', db_index=True, null=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
         
     def __str__(self):
-        return str(LazyInstance(self.id, self.typeID, self.parent and self.parent.id, self.transaction, self))
+        d = Description.objects.filter(instance=self, language_id__isnull=True)
+        if d.count(): 
+            return d[0].text
+        else:
+            return "Deleted"
     
     @property    
     def _description(self):
-        return str(LazyInstance(self.id, self.typeID, self.parent and self.parent.id, self.transaction, self))
+        d = Description.objects.filter(instance=self, language_id__isnull=True)
+        if d.count(): 
+            return d[0].text
+        else:
+            return "Deleted"
 
     @property    
     def _parentDescription(self):
         return self.parent and str(self.parent)
+        
+    @property
+    def lazyInstance(self):
+        return LazyInstance(self.id, instance=self)
 
+    # Returns a new instance of an object of this kind.
+    def createEmptyInstance(self, parent, transactionState):
+        id = uuid.uuid4()
+        i = Instance.objects.create(id=id, typeID=self, parent=parent,
+                                    transaction = transactionState.transaction)
+        return i
+        
 class DeletedInstance(dbmodels.Model):
-    id = dbmodels.UUIDField(primary_key=True, editable=False)
+    id = dbmodels.OneToOneField('consentrecords.Instance', primary_key=True, db_column='id', db_index=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
     
     def __str__(self):
@@ -272,13 +291,19 @@ class LazyInstance(LazyObject):
             name, dataType, descriptorType = verb[0], verb[1], verb[2]
             if descriptorType == textUUID:
                 with connection.cursor() as c:
-                    sql = "SELECT v1.stringvalue" + \
+                    sql = "SELECT v1.stringvalue, v1.position" + \
                           " FROM consentrecords_value v1" + \
                           " WHERE v1.instance_id = %s AND v1.fieldID = %s" + \
-                          " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
+                          " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)" + \
+                          " ORDER BY v1.position"
                     c.execute(sql, [self.id.hex, name])
                     if dataType == Fact.objectName:
-                        r.extend([LazyInstance(i[0])._description for i in c.fetchall()])
+                        for i in c.fetchall():
+                            ds = Description.objects.filter(instance_id=i[0], language_id__isnull=True)
+                            if ds.count() > 0:
+                                r.append(ds[0].text)
+                            else:
+                                r.append(LazyInstance(i[0])._description)
                     else:
                         r.extend([i[0] for i in c.fetchall()])
             elif descriptorType == countUUID:
@@ -293,6 +318,30 @@ class LazyInstance(LazyObject):
                 raise ValueError("unrecognized descriptorType %s" % LazyInstance(descriptorType).getSubValue(Fact.uuNameUUID()).stringValue);
                     
         return " ".join(r)
+        
+    def cacheDescription(self, nameLists):
+        s = self._getDescription(nameLists.getNameUUIDs(self.typeID))
+        Description.objects.update_or_create(instance_id = self.id.hex, 
+                                             language_id = None, 
+                                             defaults={'text': s})
+        return s
+    
+    @property
+    def _descriptionReferences(self):
+        values = Value.objects.filter(stringValue=self.id.hex)\
+            .filter(deletedvalue__isnull=True)
+        return [v.instance.lazyInstance for v in filter(lambda v: v.isDescriptor, values)]
+
+    def updateDescriptions(queue, nameLists):
+        queue = list(queue) # Make a local copy of the list.
+        calculated = []
+        while len(queue) > 0:
+            i = queue[0]
+            queue = queue[1:]
+            if i not in calculated:
+                i.cacheDescription(nameLists)
+                queue.extend(i._descriptionReferences)
+                calculated.append(i)
     
     @property
     def _description(self):
@@ -332,24 +381,21 @@ class LazyInstance(LazyObject):
                 for e in ofKindObject._getAllInstances()]
     
     # returns a dictionary of info describing self.
-    def clientObject(self, nameLists):
-        nameFieldUUIDs = nameLists.getNameUUIDs(self.typeID)
-            
-        return {'id': None, 'value': {'description': self._getDescription(nameFieldUUIDs), 'id': self.id.hex}}
+    def clientObject(self, language_id=None):
+        description = Description.objects.get(instance_id=self.id.hex, language_id__isnull=True)    
+        return {'id': None, 'value': {'description': description.text, 'id': self.id.hex}}
     
     def selectAll(path):
         return LazyInstance.selectAllClientValues(path)
     
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
-    def getReferenceData(self, ofKindObject):        
+    def getReferenceData(self, languageID=None):        
         # The container of the data may be a value object or the object itself.
         # It will be a value object for values that have multiple data, such as enumerations.
+        description = Description.objects.get(instance_id=self.id.hex, language_id__isnull=True)
         return { "id": None,
-                 "value": {"id": self.id.hex, 
-                        "description": self._getDescription(ofKindObject._descriptors), }}
-            
-        return f;
+                 "value": {"id": self.id.hex, "description": description.text }}
         
     # Returns a dictionary by field id where each value is
     # a duple containing the name and id of an item referenced by self from the key field.
@@ -414,18 +460,16 @@ class LazyInstance(LazyObject):
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
     def _getSubReferences(self, fieldID):
-        nameLists = NameList()
-
-        return [v.clientObject(nameLists) for v in self._getSubValues(fieldID)]
+        return [v.clientObject() for v in self._getSubValues(fieldID)]
     
     # Returns an array of arrays.
-    def _getCellData(self, fieldData, nameLists, values):
+    def _getCellData(self, fieldData, values):
         cell = {"field": fieldData}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
             cell["data"] = []
         elif fieldData["dataType"] == Fact.objectName:
-            cell["data"] = [v.clientObject(nameLists) for v in values[fieldID]]
+            cell["data"] = [v.clientObject() for v in values[fieldID]]
         else:
             # Default case is that each datum in this cell contains a unique value.
             cell["data"] = [{"id": v.id.hex, "value": v.stringValue} for v in values[fieldID]]
@@ -433,19 +477,11 @@ class LazyInstance(LazyObject):
                 
     def getData(self, fieldsData, nameLists):
         values = self._getValues()
-        return [self._getCellData(fieldData, nameLists, values) for fieldData in fieldsData]
+        return [self._getCellData(fieldData, values) for fieldData in fieldsData]
 
     def getConfiguration(self):
         return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Fact.fieldUUID())]
 
-    # Returns a new instance of an object of this kind.
-    def createEmptyInstance(self, parent, transactionState):
-        id = uuid.uuid4()
-        i = Instance.objects.create(id=id, typeID=self.id.hex, 
-                                    parent=parent and parent.instance,
-                                    transaction = transactionState.transaction)
-        return LazyInstance(id, self.id.hex, parent and parent.id.hex, transactionState.transaction.id, i)
-        
     def getMaxElementIndex(self, fieldID):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
                                  [e.position for e in self._getSubValues(fieldID)],
@@ -483,11 +519,11 @@ class LazyInstance(LazyObject):
                 return movingIndexes[0]
         
     def markAsDeleted(self, transactonState):
-        DeletedInstance.objects.create(id=self.id, transaction=transactionState.transaction)
+        DeletedInstance.objects.create(id=Instance.objects.get(pk=self.id), transaction=transactionState.transaction)
 
     def deepDelete(self, transactionState):
         queue = [self.id.hex]
-        DeletedInstance.objects.create(id=self.id.hex, transaction=transactionState.transaction)
+        DeletedInstance.objects.create(id=Instance.objects.get(pk=self.id.hex), transaction=transactionState.transaction)
         sql1 = "INSERT INTO consentrecords_deletedvalue(id, transaction_id)" + \
               " SELECT id, %s from consentrecords_value v1 WHERE instance_id = %s" + \
               " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
@@ -558,6 +594,10 @@ class LazyValue(LazyObject):
         if self._instanceID is None:
             self._fill()
         return self._instanceID
+        
+    @property
+    def instance(self):
+        return LazyInstance(self.instanceID)
     
     @property
     def fieldID(self):
@@ -578,19 +618,16 @@ class LazyValue(LazyObject):
         return self._stringValue
     
     # returns a dictionary of info describing self.
-    def clientObject(self, nameLists, instance=None):
-        if not instance:
-            instance = LazyInstance(self.stringValue)
-        nameFieldUUIDs = nameLists.getNameUUIDs(instance.typeID)
-            
+    def clientObject(self, language_id=None, instance=None):
+        description = Description.objects.get(instance_id=self.stringValue, language_id__isnull=True) 
         return {'id': self.id.hex, 
-                'value': {'id': self.stringValue, 'description': instance._getDescription(nameFieldUUIDs)},
+                'value': {'id': self.stringValue, 'description': description.text},
                 'position': self.position}
     
-    def getReferenceData(self, instance, ofKindObject):
-        nameFieldUUIDs = ofKindObject._descriptors
+    def getReferenceData(self, languageID=None):
+        description = Description.objects.get(instance_id=self.stringValue, language_id__isnull=True)
         return { "id": self.id.hex,
-              "value": {"id" : self.stringValue, "description": instance._getDescription(nameFieldUUIDs), },
+              "value": {"id" : self.stringValue, "description": description.text },
               "position": self.position }
             
     # Updates the value of the specified object
@@ -610,7 +647,7 @@ class LazyValue(LazyObject):
         LazyInstance(self.instanceID).addValue(self.fieldID, self.stringValue, newIndex, transactionState);
     
     def markAsDeleted(self, transactionState):
-        DeletedValue.objects.create(id=self.id, transaction=transactionState.transaction)
+        DeletedValue.objects.create(id=Value.objects.get(pk=self.id), transaction=transactionState.transaction)
         
     @property
     def isOriginalReference(self):
@@ -620,6 +657,25 @@ class LazyValue(LazyObject):
         i = LazyInstance(self.stringValue)
         return self.instanceID == i.parentID
         
+    @property
+    def isDescriptor(self):
+        container = Instance.objects.get(pk=self.instanceID)
+        configurationInstance = Instance.objects.filter(parent=container.typeID, typeID_id=Fact.configurationUUID().hex) \
+            .get(deletedinstance__isnull=True)
+        if isinstance(self.fieldID, str):
+            fieldID = self.fieldID
+        else:
+            fieldID = self.fieldID.hex
+        fields = Instance.objects.filter(parent__parent=container.typeID, 
+                    parent__typeID_id=Fact.configurationUUID().hex,
+                    parent__deletedinstance__isnull=True,
+                    typeID_id=Fact.fieldUUID().hex) \
+            .filter(deletedinstance__isnull=True)\
+            .filter(value__fieldID=Fact.nameUUID().hex,\
+                    value__stringValue=fieldID)\
+            .filter(value__fieldID=Fact.descriptorTypeUUID().hex)
+        return fields.count() > 0
+                    
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
@@ -642,16 +698,44 @@ class Value(dbmodels.Model):
     @property
     def objectValue(self):
         if Fact.isUUID(self.stringValue):
-            return str(LazyInstance(self.stringValue))
+            try:
+                return str(LazyInstance(self.stringValue))
+            except Exception:
+                return self.stringValue
         else:
             return self.stringValue
     
+    @property
+    def isDescriptor(self):
+        container = self.instance
+        typeInstance = container.typeID
+        configurationInstance = Instance.objects.filter(parent=typeInstance, typeID_id=Fact.configurationUUID().hex) \
+            .get(deletedinstance__isnull=True)
+        if isinstance(self.fieldID, str):
+            fieldID = self.fieldID
+        else:
+            fieldID = self.fieldID.hex
+        fields = Instance.objects.filter(parent=configurationInstance, typeID_id=Fact.fieldUUID().hex) \
+            .filter(deletedinstance__isnull=True)\
+            .filter(value__fieldID=Fact.nameUUID().hex,\
+                    value__stringValue=fieldID)\
+            .filter(value__fieldID=Fact.descriptorTypeUUID().hex)
+        return fields.count() > 0
+
 class DeletedValue(dbmodels.Model):
-    id = dbmodels.UUIDField(primary_key=True, editable=False)
+    id = dbmodels.OneToOneField('consentrecords.Value', primary_key=True, db_column='id', db_index=True, editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
     
     def __str__(self):
         return str(LazyValue(self.id))
+        
+class Description(dbmodels.Model):
+    id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
+    language = dbmodels.ForeignKey('consentrecords.Instance', related_name='language', db_index=True, null=True, editable=False)
+    text = dbmodels.CharField(max_length=255, db_index=True, editable=True)
+    
+    
 
 class Fact():
     # These verbs are associated with field IDs of values.
@@ -754,7 +838,7 @@ class Fact():
             
     def createUUNameID(transactionState):
         uunameID = uuid.uuid4()
-        Instance.objects.create(id=uunameID.hex, typeID=uunameID.hex, parent=None, transaction=transactionState.transaction)
+        Instance.objects.create(id=uunameID.hex, typeID_id=uunameID.hex, parent=None, transaction=transactionState.transaction)
         LazyInstance(uunameID).addValue(uunameID, Fact.uuNameName, 0, transactionState)
         return uunameID
        

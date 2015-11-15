@@ -5,10 +5,10 @@ import datetime
 import numbers
 import uuid
 
-from consentrecords.models import LazyInstance, Fact
+from consentrecords.models import LazyInstance, Fact, NameList
 from consentrecords import pathparser
 
-def _addElementData(parent, data, fieldData, transactionState):
+def _addElementData(parent, data, fieldData, nameLists, transactionState):
     # If the data is not a list, then treat it as a list of one item.
     if not isinstance(data, list):
         data = [data]
@@ -32,25 +32,18 @@ def _addElementData(parent, data, fieldData, transactionState):
             else:
                 if isinstance(d, dict) and "ofKindID" in fieldData:
                     ofKindObject = LazyInstance(fieldData["ofKindID"])
-                    createInstance(ofKindObject, parent, fieldID, -1, d, transactionState)
+                    newItem, newValue = create(ofKindObject, parent, fieldID, -1, d, nameLists, transactionState)
                 else:
                     raise ValueError("Unrecognized type of data to save")
         else:
             parent.addValue(fieldID, d, i, transactionState)
         i += 1
 
-# Add the specified data as a field to parent during the process of instantiating
-# parent.            
-def addData(parent, fieldObject, data, transactionState):
-    fieldData = fieldObject.getFieldData()
-    if fieldData:
-        _addElementData(parent, data, fieldData, transactionState)
-
-def createInstance(typeInstance, parent, parentFieldID, position, propertyList, transactionState):
+def create(typeInstance, parent, parentFieldID, position, propertyList, nameLists, transactionState):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
-    item = typeInstance.createEmptyInstance(parent, transactionState)
+    item = typeInstance.instance.createEmptyInstance(parent.instance, transactionState).lazyInstance
 
     if parent:
         if position < 0:
@@ -76,10 +69,13 @@ def createInstance(typeInstance, parent, parentFieldID, position, propertyList, 
                         configuration = typeInstance.getSubInstance(fieldID=Fact.configurationUUID())
                     id = Fact.getFieldNamedID(configuration.id, key)
                     fieldObject = LazyInstance(id)
-                addData(item, fieldObject, data, transactionState)
+                fieldData = fieldObject.getFieldData()
+                if fieldData:
+                    _addElementData(item, data, fieldData, nameLists, transactionState)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
-        
+    
+    item.cacheDescription(nameLists)    
     return (item, newValue)
                 
 def createConfigurations(parent, itemValues, transactionState):
@@ -118,9 +114,12 @@ def createMissingInstances(parent, fieldUUID, typeUUID, descriptorUUID, itemValu
         position = 0
     else:
         position = position + 1
+        
+    nameLists = NameList()
+    
     for v in itemValues:
         if not v in items:
-            items[v] = createInstance(ofKindObject, parent, fieldUUID, position, [], transactionState)[0]
+            items[v] = create(ofKindObject, parent, fieldUUID, position, [], nameLists, transactionState)[0]
             position += 1
             items[v].addValue(descriptorUUID, v, 0, transactionState)
     

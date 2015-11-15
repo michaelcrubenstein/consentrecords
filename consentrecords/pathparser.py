@@ -143,14 +143,14 @@ def refineResults(resultSet, path):
             c.execute(sql, [fieldID])
             return [r for r in c.fetchall()], path[1:]
 
-def _getValueFromPair(data, nameLists):
+def _getValueFromPair(data, languageID=None):
     if len(data) == 2:
         i = LazyInstance(data[1])
         v = LazyValue(id=data[0], stringValue=data[1])
-        return v.clientObject(nameLists, i)
+        return v.clientObject(languageID, i)
     else:
         i = LazyInstance(data[-1])
-        return i.clientObject(nameLists)
+        return i.clientObject()
 
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
@@ -173,10 +173,7 @@ def selectAllObjects(path):
     return [LazyInstance(i[-1]) for i in resultSet]
     
 def selectAllDescriptors(path):
-    resultSet = selectAllIDs(path)
-    
-    nameLists = NameList()
-    return [_getValueFromPair(i, nameLists) for i in resultSet]
+    return [_getValueFromPair(i) for i in selectAllIDs(path)]
     
 def tokenize(path):
     html_parser = html.parser.HTMLParser()

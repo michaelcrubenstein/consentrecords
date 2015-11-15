@@ -9,7 +9,7 @@ import logging
 import string
 from multiprocessing import Lock
 
-from consentrecords.models import Fact, LazyInstance, Instance
+from consentrecords.models import Fact, LazyInstance, Instance, NameList
 from consentrecords import instancecreator
 
 def initializeUUNames():
@@ -35,12 +35,13 @@ def _addEnumeratorTranslations(uuNameID, enumerationNames, transactionState):
     translationInstance = LazyInstance(Fact.translationUUID())
     englishUUID = Fact.getNamedEnumeratorID(Fact.languageUUID(), Fact.englishName)
     
+    nameLists = NameList()
     for name in enumerationNames:
         try:
             item = LazyInstance(Fact.getTranslationNamedEnumeratorID(uuNameID, name))
         except Fact.UnrecognizedNameError:
-            item, value1 = instancecreator.createInstance(enumeratorInstance, container, Fact.enumeratorUUID(), -1, None, transactionState)
-            item2, value2 = instancecreator.createInstance(translationInstance, item, Fact.translationUUID(), 0, None, transactionState)
+            item, value1 = instancecreator.create(enumeratorInstance, container, Fact.enumeratorUUID(), -1, None, nameLists, transactionState)
+            item2, value2 = instancecreator.create(translationInstance, item, Fact.translationUUID(), 0, None, nameLists, transactionState)
             item2.addValue(Fact.textUUID().hex, name, 0, transactionState)
             item2.addValue(Fact.languageUUID().hex, englishUUID.hex, 0, transactionState)
 
@@ -48,11 +49,12 @@ def _addEnumerators(uuNameID, enumerationNames, transactionState):
     container = LazyInstance(uuNameID)
     ofKindObject = LazyInstance(Fact.enumeratorUUID())
     
+    nameLists = NameList()
     for name in enumerationNames:
         try:
             item = LazyInstance(Fact.getNamedEnumeratorID(uuNameID, name))
         except Fact.UnrecognizedNameError:
-            item, newValue = instancecreator.createInstance(ofKindObject, container, Fact.enumeratorUUID(), -1, None, transactionState)
+            item, newValue = instancecreator.createInstance(ofKindObject, container, Fact.enumeratorUUID(), -1, None, nameLists, transactionState)
             item.addValue(Fact.nameUUID(), name, 0, transactionState)
 
 def createConfigurations(container, itemValues, transactionState):

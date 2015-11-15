@@ -86,32 +86,6 @@ def find(request, serviceid, offeringid):
         
     return HttpResponse(template.render(context))
 
-def initializeFacts(request):
-    LogRecord.emit(request.user, 'consentrecords/initializeFacts', '')
-
-    if not request.user.is_authenticated:
-        return signin(request)
-    
-    if not request.user.is_superuser:
-        return JsonResponse({'success':False, 'error': 'the current user is not an administrator'})
-    
-    try:
-        if request.method == "POST":
-            timezoneoffset = request.POST['timezoneoffset']
-        elif request.method == "GET":
-            timezoneoffset = request.GET['timezoneoffset']
-        
-        with transaction.atomic():
-            transactionState = TransactionState(request.user, timezoneoffset)  
-            bootstrap.initializeFacts(transactionState) 
-        results = {'success':True}
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
-            
-    return JsonResponse(results)
-
 def list(request):
     LogRecord.emit(request.user, 'consentrecords/list', '')
     
@@ -179,6 +153,7 @@ class api:
         
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
+            languageID = None
         
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
@@ -187,12 +162,16 @@ class api:
                 else:
                     containerObject = None
 
-                item, newValue = instancecreator.createInstance(ofKindObject, containerObject, elementID, index, propertyList, transactionState)
+                nameLists = NameList()
+                item, newValue = instancecreator.create(ofKindObject, containerObject, elementID, index, propertyList, nameLists, transactionState)
+    
+                if newValue and newValue.isDescriptor:
+                    LazyInstance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData(item, ofKindObject)}
+                    results = {'success':True, 'object': newValue.getReferenceData()}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData(ofKindObject)}
+                    results = {'success':True, 'object': item.getReferenceData()}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -210,11 +189,17 @@ class api:
             timezoneoffset = data['timezoneoffset']
         
             ids = []
+            nameLists = NameList()
+            descriptionQueue = []
+            
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
                 for c in commands:
                     if "id" in c:
                         oldValue = LazyValue(c["id"])
+                        if oldValue.isDescriptor:
+                            container = LazyInstance(oldValue.instanceID);
+                            descriptionQueue.append(container)
                         if "value" in c:
                             item = oldValue.updateValue(c["value"], transactionState);
                         else:
@@ -231,14 +216,18 @@ class api:
                             item = container.addValue(fieldID, newValue, newIndex, transactionState)
                         else:
                             ofKindObject = LazyInstance(c["ofKindID"])
-                            newInstance, item = instancecreator.createInstance(ofKindObject, container, uuid.UUID(fieldID), newIndex, newValue, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, uuid.UUID(fieldID), newIndex, newValue, nameLists, transactionState)
+                        if item.isDescriptor:
+                            descriptionQueue.append(container)
                     else:
                         raise ValueError("subject id was not specified")
                     if item:
                         ids.append(item.id.hex)
                     else:
                         ids.append(None)
-        
+                                
+                LazyInstance.updateDescriptions(descriptionQueue, nameLists)
+                
                 results = {'success':True, 'ids': ids}
             
         except Exception as e:
@@ -286,6 +275,8 @@ class api:
                         newIndex = maxIndex + 1
     
                 item = container.addValue(elementID, valueUUID, newIndex, transactionState)
+                if item.isDescriptor:
+                    LazyInstance.updateDescriptions([container], nameLists)
         
             results = {'success':True, 'id': item.id.hex}
         except Exception as e:
@@ -434,6 +425,8 @@ class api:
             
         return JsonResponse(results)
     
+    # This should only be done for root instances. Otherwise, the value should
+    # be deleted, which will delete this as well.
     def deleteInstances(user, data):
         try:
             path = data.get('path', None)
@@ -446,7 +439,11 @@ class api:
         
                 with transaction.atomic():
                     transactionState = TransactionState(user, timezoneoffset)
+                    descriptionCache = []
+                    nameLists = NameList()
                     for uuObject in pathparser.selectAllObjects(a):
+                        if uuObject.parentID:
+                            raise ValueException("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
@@ -476,6 +473,10 @@ class api:
                     if v.isOriginalReference:
                         i = LazyInstance(v.stringValue).deepDelete(transactionState)
                     v.markAsDeleted(transactionState)
+                    
+                    if v.isDescriptor:
+                        nameLists = NameList()
+                        LazyInstance.updateDescriptions([v.instance], nameLists)
             else:   
                 return JsonResponse({'success':False, 'error': "valueID was not specified in delete"})
             results = {'success':True}
@@ -490,6 +491,7 @@ class api:
 
 def createInstance(request):
     LogRecord.emit(request.user, 'consentrecords/createInstance', '')
+    print ("consentrecords/createInstance")
 
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
@@ -632,7 +634,7 @@ class UserFactory:
                 propertyList[Fact.firstNameName] = user.first_name
             if user.last_name:
                 propertyList[Fact.lastNameName] = user.last_name
-            item, newValue = instancecreator.createInstance(ofKindObject, None, None, 0, propertyList, transactionState)
+            item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
             
             # Add userID explicitly in case it isn't part of the configuration.
             item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
