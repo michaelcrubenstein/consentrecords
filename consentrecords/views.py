@@ -376,20 +376,22 @@ class api:
     
             fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Fact.fieldUUID())]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
-            
+        
         cells = uuObject.getData(fieldsData, nameLists)
     
-        data = {"id": uuObject.id.hex, "parentID": uuObject.parentID, "cells" : cells }
+        data = {"id": uuObject.id.hex, 
+                "description": uuObject.description(),
+                "parentID": uuObject.parentID, 
+                "cells" : cells }
     
         if 'parents' in fields:
             while uuObject.parentID:
                 uuObject = LazyInstance(uuObject.parentID)
                 kindObject = LazyInstance(uuObject.typeID)
                 fieldData = kindObject.getParentReferenceFieldData()
-                nameFieldUUIDs = nameLists.getNameUUIDs(uuObject.typeID)
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id.hex, 'description': uuObject._getDescription(nameFieldUUIDs)},
+                        'value': {'id': uuObject.id.hex, 'description': uuObject.description()},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
@@ -413,6 +415,7 @@ class api:
             nameLists = NameList()
             p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
         
+            print(str(p))
             results = {'success':True, 'data': p}
         except Fact.NoEditsAllowedError:
             return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})

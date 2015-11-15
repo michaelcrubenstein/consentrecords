@@ -351,6 +351,13 @@ class LazyInstance(LazyObject):
             return self._getDescription(nameFieldUUIDs)
         else:
             return "{%s}" % ofKindObject.id
+    
+    # Get the cached description of this LazyInstance.        
+    def description(self, language_id=None):
+        if language_id:
+            return Description.objects.get(instance_id=self.id.hex, language_id=language_id).text
+        else:
+            return Description.objects.get(instance_id=self.id.hex, language_id__isnull=True).text
         
     # verb is a UUID
     # return value is an array of all objects with the specified verb for this object.

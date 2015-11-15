@@ -592,6 +592,7 @@ var cr = {
 						var v = cr.dataTypes._object.newValue();
 						v.importCells(datum.cells);
 						v.value.id = datum.id;
+						v.value.description = datum.description;
 						v.value.parentID = datum.parentID;
 						v.isDataLoaded = true;
 						instances.push(v);
