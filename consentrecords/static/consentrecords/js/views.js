@@ -1150,6 +1150,9 @@ function appendEditCellItems(container, cell, clickFunction)
 /* Creates a panel that sits atop the specified containerPanel in the same container. */
 function createPanel(containerPanel, datum, headerText)
 {
+	if (isNaN(parseInt(containerPanel.style("z-index"))))
+		throw "containerPanel's z-index is not specified";
+		
 	var rootPanel = d3.select($(containerPanel.node()).parents()[0]);
 	var zindex = parseInt(containerPanel.style("z-index"))+1;
 	var panelDiv = rootPanel

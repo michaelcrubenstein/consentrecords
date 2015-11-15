@@ -831,7 +831,7 @@
 									
 									var panelDiv = showSessionDetails(d, 
 										d3.select("#id_find_offering_panel").datum(),
-										d3.select("#id_find_offering_panel"));
+										"#id_find_offering_panel");
 									showPanelNow(panelDiv.node());
 								}
 							});
@@ -1736,8 +1736,9 @@
 			);
 		}
 		
-		function showSessionDetails(session, service, containerPanel)
+		function showSessionDetails(session, service, container)
 		{
+			var containerPanel = d3.select(container);
 			var organization = getValueByName(session, "Organization");
 			var offering = getValueByName(session, "Offering");
 			var site = getValueByName(session, "Site");
@@ -2150,7 +2151,7 @@
 							{
 								showClickFeedback(this);
 
-								var panelDiv = showSessionDetails(session, service, containerPanel);
+								var panelDiv = showSessionDetails(session, service, $(container).parents(".site-panel")[0]);
 				
 								showPanelLeft(panelDiv.node());
 							}
@@ -2220,7 +2221,7 @@
 						{
 							showClickFeedback(this);
 
-							var panelDiv = showSessionDetails(session, null, containerPanel);
+							var panelDiv = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
 			
 							showPanelLeft(panelDiv.node());
 						}
