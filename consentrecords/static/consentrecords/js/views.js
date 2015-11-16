@@ -1705,12 +1705,18 @@ function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, 
 		{
 			this.onValueAdded(e, newData);
 			if (sortFunction)
+			{
 				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
 		});
 		$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
 		{
 			if (sortFunction)
+			{
 				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
 		});
 
 		appendViewCellItems(itemsDiv, cell, 
