@@ -501,7 +501,6 @@
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
-	<script src="{% static "consentrecords/js/queue.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 
 	<!-- Scripts for this web page -->
@@ -690,6 +689,7 @@
 			{
 				show_pathway("#id_pathway");
 			});
+			$("#id_your_pathway_panel").on("hiding.cr", hidePathway);
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
 				show_plans("#id_plans");
@@ -1208,8 +1208,8 @@
 					
 				for (var i = 0; i < newInstances.length; i++)
 				{
-					crp.pushInstance(newInstances[i]);
-					cell.pushValue(newInstances[i]);
+					var newI = crp.pushInstance(newInstances[i]);
+					cell.pushValue(newI);
 				}
 				
 				var container = d3.select(containerDiv);
@@ -1249,33 +1249,13 @@
 			return cells_get_cell_by_name(d.value.cells, name);
 		}
 		
-		/* Gets the first value of the cell within the specified instance 
-			whose name equals the specified name. */
-		function get_datum_by_name(d, name)
-		{
-			var cell = get_cell_by_name(d, name);
-			if (cell)
-				return cell.data[0].value;
-			else
-				return undefined;
-		}
-		
-		function getValueByName(d, name)
-		{
-			var cell = get_cell_by_name(d, name);
-			if (cell)
-				return cell.data[0];
-			else
-				return undefined;
-		}
-		
 		function getStartDate(d)
 		{
-			return get_datum_by_name(d, "Start Date");
+			return d.getDatum("Start Date");
 		}
 		
 		function getEndDate(d) {
-			return get_datum_by_name(d, "End Date") || new Date().toISOString().substr(0, 10);
+			return d.getDatum("End Date") || new Date().toISOString().substr(0, 10);
 		}	
 
 		function getDateRange(d)
@@ -1293,7 +1273,29 @@
 				connector = "";
 			return startDate + connector + endDate;
 		}
-				
+		
+		function hidePathway() {
+			var container = d3.select(this);
+			container.selectAll('svg').remove();
+		}
+			
+		function setColorByService(service)
+		{
+			var serviceInstance = crp.getInstance(service.getValueID());
+			var serviceDomain = serviceInstance.getValue("Service Domain");
+			if (serviceDomain && serviceDomain.getValueID())
+			{
+				var sdInstance = crp.getInstance(serviceDomain.getValueID());
+				color = sdInstance.getValue("Color");
+				if (color && color.value)
+					this.attr("fill", color.value)
+						 .attr("stroke", color.value);
+			}
+			else
+				this.attr("fill", otherColor)
+					.attr("stroke", otherColor);
+		}
+
 		function show_pathway(containerDiv) {
 			var allExperiences = [];
 			
@@ -1332,7 +1334,7 @@
 				allExperiences = experiences;
 				$(experiences).each(function()
 				{
-					this.value.description = getValueByName(this, "Offering").getDescription();
+					this.value.description = this.getValue("Offering").getDescription();
 				});
 				
 				crp.getData("Service", undefined, function(newInstances)
@@ -1343,7 +1345,7 @@
 						{
 							if (newInstances[i].getDescription() == "Other")
 							{
-								color = getValueByName(newInstances[i], "Color");
+								color = newInstances[i].getValue("Color");
 								if (color && color.value)
 									otherColor = color;
 								break;
@@ -1351,7 +1353,7 @@
 						}
 						
 						crp.pushCheckCells(userInstance, function() {
-								var m = getValueByName(userInstance, "More Experiences");
+								var m = userInstance.getValue("More Experiences");
 								if (m)
 								{
 									var path = "#" + m.getValueID() + '>"More Experience"';
@@ -1447,7 +1449,7 @@
 				
 				allExperiences.sort(sortExperiences);
 				
-				var birthday = getValueByName(userInstance, "Birthday");
+				var birthday = userInstance.getValue("Birthday");
 				if (birthday && birthday.value)
 					minDate = birthday.value;
 				else
@@ -1474,32 +1476,16 @@
 				function setColor(experience)
 				{
 					var _this = d3.select(this);
-					function setColorByService(service)
-					{
-						var serviceInstance = crp.getInstance(service.getValueID());
-						var serviceDomain = getValueByName(serviceInstance, "Service Domain");
-						if (serviceDomain && serviceDomain.getValueID())
-						{
-							var sdInstance = crp.getInstance(serviceDomain.getValueID());
-							color = getValueByName(sdInstance, "Color");
-							if (color && color.value)
-								_this.attr("fill", color.value)
-									 .attr("stroke", color.value);
-						}
-						else
-							_this.attr("fill", otherColor)
-								 .attr("stroke", otherColor);
-					}
 					
-					var offering = getValueByName(experience, "Offering");
+					var offering = experience.getValue("Offering");
 					if (offering && offering.getValueID())
 					{
 						var experienceColor = otherColor;
 						crp.pushCheckCells(offering, function()
 						{
-							var service = getValueByName(offering, "Service");
+							var service = offering.getValue("Service");
 							if (service)
-								setColorByService(service);
+								setColorByService.call(_this, service);
 							else
 								_this.attr("fill", otherColor)
 									 .attr("stroke", otherColor);
@@ -1508,9 +1494,9 @@
 					}
 					else
 					{
-						var service = getValueByName(experience, "Service");
+						var service = experience.getValue("Service");
 						if (service)
-							setColorByService(service);
+							setColorByService.call(_this, service);
 						else
 							_this.attr("fill", otherColor)
 								 .attr("stroke", otherColor);
@@ -1519,11 +1505,11 @@
 				
 				function pickedOrCreatedValue(i, pickedName, createdName)
 				{
-					var v = getValueByName(i, pickedName);
+					var v = i.getValue(pickedName);
 					if (v && v.getValueID())
 						return v.getDescription();
 					else {
-						v = getValueByName(i, createdName);
+						v = i.getValue(createdName);
 						if (v)
 							return v.value;
 						else
@@ -1653,7 +1639,11 @@
 							return DateToY(new Date(d, 0, 0));
 						});
 				}
-				$(window).resize(layoutExperiences);
+				$(window).on("resize", layoutExperiences);
+				$(panelDiv).on("hiding.cr", function()
+				{
+					$(window).off("resize", layoutExperiences);
+				});
 				layoutExperiences();
 			}
 			
@@ -1702,8 +1692,8 @@
 					metaObj.attr("property").startsWith("og:"))
 					metaObj.remove();
 			});
-			var offering = getValueByName(session, "Offering");
-			var organization = getValueByName(session, "Organization");
+			var offering = session.getValue("Offering");
+			var organization = session.getValue("Organization");
 			var a = [{property: "og:url", content: targetHRef},
 					 {property: "og:type", content: "website" },
 					 {property: "og:title", content: offering.getDescription()},
@@ -1722,8 +1712,8 @@
 			crp.pushCheckCells(offering, 
 				function()
 				{
-					var min = get_datum_by_name(offering, "Minimum Age");
-					var max = get_datum_by_name(offering, "Maximum Age");
+					var min = offering.getDatum("Minimum Age");
+					var max = offering.getDatum("Maximum Age");
 					var newText = "";
 					if (min)
 					{
@@ -1755,8 +1745,8 @@
 			crp.pushCheckCells(offering, 
 				function()
 				{
-					var min = get_datum_by_name(offering, "Minimum Grade");
-					var max = get_datum_by_name(offering, "Maximum Grade");
+					var min = offering.getDatum("Minimum Grade");
+					var max = offering.getDatum("Maximum Grade");
 					var newText = "";
 					if (min)
 					{
@@ -1788,7 +1778,7 @@
 			crp.pushCheckCells(offering, 
 				function()
 				{
-					var newText = get_datum_by_name(offering, "Web Site");
+					var newText = offering.getDatum("Web Site");
 					successFunction(newText);
 				},
 				function()
@@ -1801,9 +1791,9 @@
 		function showSessionDetails(session, service, container)
 		{
 			var containerPanel = d3.select(container);
-			var organization = getValueByName(session, "Organization");
-			var offering = getValueByName(session, "Offering");
-			var site = getValueByName(session, "Site");
+			var organization = session.getValue("Organization");
+			var offering = session.getValue("Offering");
+			var site = session.getValue("Site");
 			
 			session.calculateDescription();
 			
@@ -1839,13 +1829,13 @@
 				
 				crp.pushCheckCells(site, function()
 				{
-					var address = getValueByName(site, "Address");
+					var address = site.getValue("Address");
 					crp.pushCheckCells(address, function()
 					{
-						var streetCell = get_cell_by_name(address, "Street");
-						var cityCell = get_cell_by_name(address, "City");
-						var stateCell = get_cell_by_name(address, "State");
-						var zipCell = get_cell_by_name(address, "Zip Code");
+						var streetCell = address.getCell("Street");
+						var cityCell = address.getCell("City");
+						var stateCell = address.getCell("State");
+						var zipCell = address.getCell("Zip Code");
 						if (streetCell)
 							$(streetCell.data).each(function() {
 								orgDiv.append('div')
@@ -1873,7 +1863,7 @@
 			
 			function appendStringDatum(cellName)
 			{
-				var v = get_datum_by_name(session, cellName);
+				var v = session.getDatum(cellName);
 				if (v)
 				{
 					var deadlineDiv = panel2Div.append("div");
@@ -1903,7 +1893,7 @@
 			
 			crp.pushCheckCells(offering, function()
 				{
-					var serviceCell = get_cell_by_name(offering, "Service");
+					var serviceCell = offering.getCell("Service");
 					if (!service && serviceCell.data.length > 0)
 						service = serviceCell.data[0];
 						
@@ -1986,7 +1976,7 @@
 					}
 				});
 
-			var inquiriesCell = get_cell_by_name(session, "Inquiries")
+			var inquiriesCell = session.getCell("Inquiries")
 			var newInstances = inquiriesCell.data;
 			if (newInstances.length == 0 || !newInstances[0].getValueID())
 				asyncFailFunction("Access Failure for Inquiries");
@@ -1999,11 +1989,11 @@
 				
 				var addInquiry = function()
 				{
-					userEmailCell = get_cell_by_name(userInstance, "_email");
+					email = userInstance.getDatum("_email");
 					add_single_field_instance(inquiriesInstance, 
 									   inquiryCell, 
 									   emailCell, 
-									   userEmailCell.data[0].value, 
+									   email, 
 									   function(newData) { 
 									   		bootstrap_alert.success("You have signed up for " + 
 														  offering.getDescription() + "/" + session.getDescription() + "." +
@@ -2029,7 +2019,7 @@
 						{
 							removeSignin(this);
 							
-							var userEmailCell = get_cell_by_name(eventInfo, "_email");
+							var userEmailCell = eventInfo.getCell("_email");
 							var newEmail = userEmailCell.data[0].value;
 							cr.selectAll("#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
 								function(newInstances)
@@ -2132,8 +2122,7 @@
 				{
 					userInstance.checkCells(undefined, undefined, function()
 					{
-						var userEmailCell = get_cell_by_name(userInstance, "_email");
-						var newEmail = userEmailCell.data[0].value;
+						var newEmail = userInstance.getDatum("_email");
 						cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
 							checkInquiryFunction,
 							asyncFailFunction);
@@ -2148,8 +2137,8 @@
 		
 		function compareSessions(a, b)
 		{
-			var aDate = get_datum_by_name(a, "Start Date");
-			var bDate = get_datum_by_name(b, "Start Date");
+			var aDate = a.getDatum("Start Date");
+			var bDate = b.getDatum("Start Date");
 			if (aDate)
 			{
 				if (bDate)
@@ -2182,7 +2171,7 @@
 			
 			leftText.append('div')
 				.text(function(d) { 
-					return getValueByName(d, "Offering").getDescription();
+					return d.getValue("Offering").getDescription();
 				});
 			leftText.append('div').classed("sub-text", true)
 				.text(function(d) {
@@ -2190,7 +2179,7 @@
 				});
 			leftText.append('div').classed("sub-text", true)
 				.text(function(d) {
-					return getValueByName(d, "Organization").getDescription();
+					return d.getValue("Organization").getDescription();
 				});
 		}
 						
@@ -2231,14 +2220,14 @@
 					.text(getDateRange);
 				rightText.append('div').classed("sub-text", true)
 					.text(function(d) {
-						var registrationDeadline = get_datum_by_name(d, "Registration Deadline");
+						var registrationDeadline = d.getDatum("Registration Deadline");
 						if (registrationDeadline)
 							return "register by " + registrationDeadline;
 						else
 							return "";
 					});
 				rightText.each(function(d) {
-					var offering = getValueByName(d, "Offering");
+					var offering = d.getValue("Offering");
 					showAgeRange(offering, 
 						function(newText) {
 							if (newText)
@@ -2520,13 +2509,13 @@
 		{
 			offering.checkCells(undefined, undefined, function()
 				{
-					var sessions = getValueByName(offering, "Sessions");
+					var sessions = offering.getValue("Sessions");
 					if (!sessions)
 						syncFailFunction("the sessions are not set up");
 					else
 						sessions.checkCells(undefined, undefined, function()
 							{
-								var sessionCell = get_cell_by_name(sessions, "Session");
+								var sessionCell = sessions.getCell("Session");
 								pickChild(offering, sessionCell.data, containerPanel, "Pick Session", successFunction);
 							},
 							syncFailFunction);
@@ -2544,13 +2533,13 @@
 		{
 			site.checkCells(undefined, undefined, function()
 				{
-					var offerings = getValueByName(site, "Offerings");
+					var offerings = site.getValue("Offerings");
 					if (!offerings)
 						syncFailFunction("the offerings are not set up");
 					else
 						offerings.checkCells(undefined, undefined, function()
 							{
-								var offeringCell = get_cell_by_name(offerings, "Offering");
+								var offeringCell = offerings.getCell("Offering");
 								pickChild(site, offeringCell.data, containerPanel, "Pick Offering", successFunction);
 							},
 							syncFailFunction);
@@ -2565,13 +2554,13 @@
 		{
 			organization.checkCells(undefined, undefined, function()
 				{
-					var sites = getValueByName(organization, "Sites");
+					var sites = organization.getValue("Sites");
 					if (!sites)
 						syncFailFunction("the sites are not set up");
 					else
 						sites.checkCells(undefined, undefined, function()
 							{
-								var siteCell = get_cell_by_name(sites, "Site");
+								var siteCell = sites.getCell("Site");
 								pickChild(organization, siteCell.data, containerPanel, "Pick Site", successFunction);
 							},
 							syncFailFunction);
@@ -2584,7 +2573,7 @@
 			pickSessionFromOrganization(organization, panelDiv,
 				function(session, containerPanel)
 				{
-					var inquiriesCell = get_cell_by_name(session, "Inquiries");
+					var inquiriesCell = session.getCell("Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
 						syncFailFunction("Session Inquiries are not set up");
@@ -2593,7 +2582,7 @@
 						var inquiriesInstance = inquiriesInstances[0];
 						inquiriesInstance.checkCells(inquiriesCell, undefined, function()
 							{
-								inquiryCell = get_cell_by_name(inquiriesInstance, "Inquiry");
+								inquiryCell = inquiriesInstance.getCell("Inquiry");
 						
 								var panelDiv = createPanel(containerPanel, session, "Pick User")
 									.classed("list-panel", true);
@@ -2653,7 +2642,7 @@
 		{
 			var checkSuccessFunction = function() 
 			{
-				var email = getValueByName(inquiry, "_email");
+				var email = inquiry.getDatum("_email");
 				if (!email)
 					failFunction("The email is not set up.");
 				else
@@ -2661,14 +2650,14 @@
 					var selectAllSuccess = function(userObjects)
 					{
 						if (userObjects.length == 0)
-							failFunction('There is no user set up with the email "' + email.value + '".');
+							failFunction('There is no user set up with the email "' + email + '".');
 						else
 						{
 							successFunction(userObjects[0]);
 						}
 					};
 		
-					cr.selectAll("_user[_email="+email.value+"]", selectAllSuccess, syncFailFunction);
+					cr.selectAll("_user[_email="+email+"]", selectAllSuccess, syncFailFunction);
 				}
 			}
 			inquiry.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
@@ -2824,7 +2813,7 @@
 				var checkCellsSuccessFunction = function()
 				{
 					var offering = session.cell.parent.cell.parent;
-					var enrollmentsCell = get_cell_by_name(session, "Enrollments");
+					var enrollmentsCell = session.getCell("Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
 					if (enrollmentsInstances.length == 0)
 						syncFailFunction("Session enrollments are not set up");
@@ -2881,7 +2870,7 @@
 			return function()
 			{
 				var offering = session.cell.parent.cell.parent;
-				var experiencesCell = get_cell_by_name(session, "Experiences");
+				var experiencesCell = session.getCell("Experiences");
 				var experiencesInstances = experiencesCell.data;
 				if (experiencesInstances.length == 0)
 					syncFailFunction("Session experiences are not set up");
@@ -2891,7 +2880,7 @@
 					experiences.checkConfiguration(
 						function()
 						{
-							var experienceCell = get_cell_by_name(experiences, "Experience");
+							var experienceCell = experiences.getCell("Experience");
 							cr.getConfiguration(null, experienceCell.field.ofKindID,
 								function(cells)
 								{
@@ -2914,7 +2903,7 @@
 											experience.checkConfiguration(
 												function() {
 													/* Copy the user into the data set. */
-													userCell = get_cell_by_name(experience, "_user");
+													userCell = experience.getCell("_user");
 													var userValue = cr.dataTypes._object.copyValue(user);
 													userCell.addValue(userValue);
 													
@@ -3048,7 +3037,7 @@
 							{
 								var checkCellsSuccess = function() 
 								{
-									var inquiriesCell = get_cell_by_name(session, "Inquiries");
+									var inquiriesCell = session.getCell("Inquiries");
 									var inquiriesInstances = inquiriesCell.data;
 									if (inquiriesInstances.length == 0)
 										syncFailFunction("Session Inquiries are not set up");
@@ -3123,7 +3112,7 @@
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, containerPanel)
 				{
-					var inquiriesCell = get_cell_by_name(session, "Inquiries");
+					var inquiriesCell = session.getCell("Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
 					if (inquiriesInstances.length == 0)
 						syncFailFunction("Inquiries are not set up");
@@ -3140,7 +3129,7 @@
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, containerPanel)
 				{
-					var enrollmentsCell = get_cell_by_name(session, "Enrollments");
+					var enrollmentsCell = session.getCell("Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
 					if (enrollmentsInstances.length == 0)
 						syncFailFunction("Session Enrollments are not set up");
@@ -3158,7 +3147,7 @@
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, containerPanel)
 				{
-					var listCell = get_cell_by_name(session, "Enrollments");
+					var listCell = session.getCell("Enrollments");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
 						syncFailFunction("Session Enrollments are not set up");
@@ -3167,7 +3156,7 @@
 						var instance = listInstances[0];
 						instance.checkCells(listCell, undefined, function()
 							{
-								enrollmentCell = get_cell_by_name(instance, "Enrollment");
+								enrollmentCell = instance.getCell("Enrollment");
 						
 								var panelDiv = createPanel(containerPanel, session, "Record Participation")
 									.classed("list-panel", true);
@@ -3226,7 +3215,7 @@
 		{
 			var checkSuccessFunction = function() 
 			{
-				var user = getValueByName(enrollment, "_user");
+				var user = enrollment.getValue("_user");
 				if (!user)
 					failFunction("The user is not set up.");
 				else
@@ -3242,7 +3231,7 @@
 			pickSessionFromOrganization(organization, panelDiv, 
 				function(session, containerPanel)
 				{
-					var listCell = get_cell_by_name(session, "Experiences");
+					var listCell = session.getCell("Experiences");
 					var listInstances = listCell.data;
 					if (listInstances.length == 0)
 						syncFailFunction("Session Experiences are not set up");

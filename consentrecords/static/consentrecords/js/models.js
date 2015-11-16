@@ -68,6 +68,181 @@ var _stringFunctions = {
 		appendData: _appendStringData,
 	};
 	
+var Queue = (function () {
+
+    Queue.prototype.autorun = true;
+    Queue.prototype.running = false;
+    Queue.prototype.queue = [];
+
+    function Queue(autorun) {
+        if (typeof autorun !== "undefined") {
+            this.autorun = autorun;
+        }
+        this.queue = []; //initialize the queue
+    };
+
+    Queue.prototype.add = function (callback) {
+        var _this = this;
+        //add callback to the queue
+        this.queue.push(function () {
+            var finished = callback();
+            if (typeof finished === "undefined" || finished) {
+                //  if callback returns `false`, then you have to 
+                //  call `next` somewhere in the callback
+                _this.dequeue();
+            }
+        });
+
+        if (this.autorun && !this.running) {
+            // if nothing is running, then start the engines!
+            this.dequeue();
+        }
+
+        return this; // for chaining fun!
+    };
+
+    Queue.prototype.dequeue = function () {
+        this.running = false;
+        //get the first element off the queue
+        var shift = this.queue.shift();
+        if (shift) {
+            this.running = true;
+            shift();
+        }
+        return shift;
+    };
+
+    Queue.prototype.next = Queue.prototype.dequeue;
+
+    return Queue;
+
+})();
+
+var CRP = (function() {
+	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
+	CRP.prototype.paths = {};
+	CRP.prototype.queue = null;
+	
+    function CRP() {
+    	this.instances = {};
+    	this.paths = {};
+        this.queue = new Queue(true); //initialize the queue
+    };
+    
+    /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
+    CRP.prototype.getInstance = function(id)
+    {
+    	if (!id)
+    		throw("id is not defined");
+    	if (id in this.instances)
+    		return this.instances[id];
+    	else
+    		return undefined;
+    }
+
+	CRP.prototype.pushID = function(id, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+    	if (!id)
+    		throw("id is not defined");
+		var _this = this;
+		this.queue.add(
+			function() {
+				if (id in _this.instances) {
+					successFunction(_this.instances[id]);
+				}
+				else
+				{
+					cr.selectAll("#"+id, function(newInstances)
+						{
+							_this.instances[id] = newInstances[0];
+							successFunction(newInstances[0]);
+						}, failFunction);
+				}
+				return true;
+			});
+	};
+	
+	CRP.prototype.pushCheckCells = function(i, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+		if (!i)
+			throw "i is not defined";
+		var _this = this;
+		this.queue.add(
+			function() {
+				i.checkCells(undefined, undefined,
+					function() {
+						successFunction();
+						_this.queue.next();
+					},
+					failFunction);
+				return false;
+			});
+	};
+	
+	CRP.prototype.pushInstance = function(i)
+	{
+		if ("value" in i && "id" in i.value)
+		{
+			if (!(i.getValueID() in this.instances))
+			{
+				this.instances[i.getValueID()] = i;
+				return i;
+			}
+			else
+			{
+				oldInstance = this.instances[i.getValueID()];
+				if (!oldInstance.value.cells && i.isDataLoaded)
+				{
+					oldInstance.value.setCells(i.value.cells);
+					oldInstance.isDataLoaded = true;
+				}
+				return oldInstance;
+			}
+		}
+		else
+			return i;	/* This isn't an object. */
+	};
+	
+	CRP.prototype.getData = function(path, fields, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+		if (!path)
+			throw "path is not defined";
+		var _this = this;
+		this.queue.add(
+			function() {
+				if (path in _this.paths)
+					successFunction(_this.paths[path]);
+				else
+				{
+					cr.getData(path, fields,
+						function(newInstances) {
+							_this.paths[path] = newInstances;
+							newInstances.forEach(function(i)
+								{ crp.pushInstance(i); });
+							successFunction(newInstances);
+							_this.queue.next();
+						}, failFunction);
+				}
+			});
+	};
+	
+	return CRP;
+})();
+
+var crp = new CRP();
+
 var cr = {		
 	EventHandler: function () { 
 		this.events = {};
@@ -153,9 +328,9 @@ var cr = {
 						{
 							/* This case is true if we are creating an object */
 							var newDatum = {id: null, value: {cells: []}};
-							$(d.value.cells).each(function()
+							d.value.cells.forEach(function(cell)
 							{
-								cr.dataTypes[this.field.dataType].appendCell(this, newDatum.value.cells);
+								cr.dataTypes[cell.field.dataType].appendCell(cell, newDatum.value.cells);
 							});
 							
 							newData.push(newDatum);
@@ -182,9 +357,9 @@ var cr = {
 						{
 							/* This case is true if we are creating an object */
 							var newDatum = {};
-							$(d.value.cells).each(function()
+							d.value.cells.forEach(function(cell)
 							{
-								cr.dataTypes[this.field.dataType].appendData(this, newDatum);
+								cr.dataTypes[cell.field.dataType].appendData(cell, newDatum);
 							});
 							
 							newData.push(newDatum);
@@ -239,9 +414,9 @@ var cr = {
 			{
 				if (json.success) {
 					var newObjects = [];
-					$(json.objects).each(function()
+					json.objects.forEach(function(v)
 					{
-						newObjects.push(cr.dataTypes._object.copyValue(this));
+						newObjects.push(cr.dataTypes._object.copyValue(v));
 					});
 					
 					if (successFunction)
@@ -549,10 +724,10 @@ var cr = {
 				if (json.success)
 				{
 					var cells = [];
-					$(json.cells).each(function()
+					json.cells.forEach(function(cell)
 					{
 						var newCell = new cr.Cell();
-						newCell.field = this.field;
+						newCell.field = cell.field;
 						newCell.setup(parent);
 						cells.push(newCell);
 					});
@@ -802,6 +977,29 @@ cr.ObjectValue.prototype.hasTextDescription = function()
 	return false;
 }
 
+cr.ObjectValue.prototype.getCell = function(name)
+{
+	for (var i = 0; i < this.value.cells.length; ++i)
+	{
+		var cell = this.value.cells[i];
+		if (cell.field.name == name)
+			return cell;
+	}
+	return undefined;
+}
+
+cr.ObjectValue.prototype.getDatum = function(name)
+{
+	var cell = this.getCell(name);
+	return cell && cell.data.length && cell.data[0].value;
+}
+		
+cr.ObjectValue.prototype.getValue = function(name)
+{
+	var cell = this.getCell(name);
+	return cell && cell.data.length && cell.data[0];
+}
+		
 cr.ObjectValue.prototype.handleContentsChanged = function(e)
 {
 	var oldDescription = this.getDescription();
