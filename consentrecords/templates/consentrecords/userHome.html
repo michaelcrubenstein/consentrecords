@@ -156,7 +156,7 @@
 						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
 					</button>
 					<button panelID = "id_your_pathway_panel"
-						class="btn row-button site-active-text show-panel-button">
+						class="my-pathway-button btn row-button site-active-text">
 						<span class="pull-left">My Pathway</span>
 						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
 					</button>
@@ -202,7 +202,7 @@
 			  </label>
 			</div>
 			<div class="site-trio-container">
-				<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+				<span class="signin-cancel-button site-trio-clipped site-active-text">Cancel</span>
 				<div class="site-trio-fill"></div>
 				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
 			</div>
@@ -608,13 +608,12 @@
 			if (prepareClick())
 			{
 				showClickFeedback(this);
-				
 				showPanelLeft(panelDiv.node());
 			}
 		}
 		
 		/* Hide the currently displaying panel with no further action. */		
-		function hide_site_panel(e)
+		function hidePanel(e)
 		{
 			if (prepareClick())
 			{
@@ -623,11 +622,51 @@
 			}
 		}
 		
+		/* Remove all of the functions associated with a target that handles a signin
+			message */
+		function removeSignin(target)
+		{
+			$(target).off("signin.cr");
+			$(target).off("signinCanceled.cr");
+			userInstance.removeTarget("signin.cr", target);
+			userInstance.removeTarget("signinCanceled.cr", target);
+		}
+		
 		/* Initialize the buttons that show a pre-defined panel. */
 		$(".show-panel-button").click(showPanel);
 		
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
-		$(".done-button").click(hide_site_panel);
+		$(".done-button").click(hidePanel);
+		
+		$(".my-pathway-button").click(function(e)
+		{
+			if (userInstance.getValueID())
+				showPanel.call(this, e);
+			else
+			{
+				var _this = this;
+				var panel = $(this).parents(".site-panel")[0];
+				userInstance.addTarget("signin.cr", panel);
+				userInstance.addTarget("signinCanceled.cr", panel);
+				
+				$(panel).on("signin.cr", function()
+				{
+					removeSignin(this);
+					if (prepareClick())
+						showPanelLeft("#" + _this.getAttribute("panelID"));
+				});
+				
+				$(panel).on("signinCanceled.cr", function()
+				{
+					removeSignin(this);
+				});
+				
+				if (prepareClick())
+					showFixedPanel(panel, "#id_sign_in_panel");
+			}
+
+			e.preventDefault();
+		});
 		
 		$(document).ready (function(e) {
 			$("#id_find_experience_panel").on("revealing.cr", function(e, eventInfo)
@@ -640,7 +679,7 @@
 				
 			$("#id_find_offering_panel").on("revealing.cr", function(e, eventInfo)
 				{
-					datum = d3.select(this).datum();
+					var datum = d3.select(this).datum();
 					showSessions(datum, "#id_offerings");
 				});
 				
@@ -665,10 +704,14 @@
 				userInstance.value = userData;
 				userInstance.checkCells(undefined, undefined, function()
 					{
-						userInstance.triggerEvent("signin.cr", userInstance);
-						hidePanelRight($("#id_sign_in_panel")[0], false)
+						hidePanelRight($("#id_sign_in_panel")[0], false,
+							function()
+							{
+								userInstance.triggerEvent("signin.cr", userInstance);
+							});
+						
 					},
-					asyncFailFunction);
+					syncFailFunction);
 			}
 				
 			/* Items for the sign-in panel. */
@@ -679,6 +722,20 @@
 				}
 				
 			   //stop form submission
+			   e.preventDefault();
+			});
+			
+			$("#id_sign_in_panel .signin-cancel-button").click(function(e) {
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+					hidePanelRight($("#id_sign_in_panel")[0], false,
+						function()
+						{
+							userInstance.triggerEvent("signinCanceled.cr", userInstance);
+						});
+				}
+				
 			   e.preventDefault();
 			});
 			
@@ -732,11 +789,14 @@
 				userInstance.value = userData;
 				userInstance.checkCells(undefined, undefined, function()
 					{
-						userInstance.triggerEvent("signin.cr", userInstance);
 						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-						hidePanelRight($("#id_sign_up_panel")[0], false);
+						hidePanelRight($("#id_sign_up_panel")[0], false,
+							function()
+							{
+								userInstance.triggerEvent("signin.cr", userInstance);
+							});
 					},
-				asyncFailFunction);
+				syncFailFunction);
 			}
 
 			$("#id_sign_up_panel .submit-button").click(function(e) {
@@ -1237,6 +1297,7 @@
 		function show_pathway(containerDiv) {
 			var allExperiences = [];
 			
+			var panelDiv = $(containerDiv).parents(".site-panel")[0];
 			var container = d3.select(containerDiv);
 			var containerHeight = parseInt(container.style("height"));
 
@@ -1263,6 +1324,9 @@
 			var dataLeftMargin = 40;
 			var otherColor = "#bbbbbb";
 				
+			var minDate, maxDate, timespan;
+			var years = [];
+
 			var successFunction1 = function(experiences)
 			{
 				allExperiences = experiences;
@@ -1317,8 +1381,6 @@
 				}
 				return aStartDate - bStartDate;
 			}
-			var minDate, maxDate, timespan;
-			var years = [];
 
 			//This is the accessor function we talked about above
 			var lineFunction = d3.svg.line()
@@ -1747,6 +1809,7 @@
 			
 			var panelDiv = createPanel(containerPanel, session, offering.getDescription())
 				.classed("list-panel", true);
+			var panel = panelDiv.node();
 			
 			var navContainer = panelDiv.appendNavContainer();
 
@@ -1923,40 +1986,6 @@
 					}
 				});
 
-			userInstance.addTarget("signin.cr", panelDiv.node());
-			$(panelDiv.node()).on("signin.cr", function(e, eventInfo)
-			{
-				var userEmailCell = get_cell_by_name(eventInfo, "_email");
-				var newEmail = userEmailCell.data[0].value;
-				cr.selectAll("#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
-					function(newInstances)
-					{
-						if (newInstances.length > 0)
-						{
-							inquiryInstance = newInstances[0];
-							buttonDiv.text("Back Out");
-							buttonDiv.on("click", deleteInquiryFunction);
-							bootstrap_alert.success(userInstance.getDescription() + 
-												  " already signed up for " + 
-												  offering.getDescription() + "/" + session.getDescription(),
-												  ".alert-container");
-						}
-						else
-						{
-							addInquiry();
-						}
-					},
-					asyncFailFunction);
-			});
-			
-			/* Tear down all of the events registered with this panel. */
-			$(panelDiv.node()).on("hiding.cr", function()
-			{
-				userInstance.removeTarget("signin.cr", panelDiv.node());
-				$(panelDiv.node()).off("signin.cr");
-				$(panelDiv.node()).off("hiding.cr");
-			});
-				
 			var inquiriesCell = get_cell_by_name(session, "Inquiries")
 			var newInstances = inquiriesCell.data;
 			if (newInstances.length == 0 || !newInstances[0].getValueID())
@@ -1993,7 +2022,43 @@
 						unblockClick();
 					}
 					else
-						showFixedPanel(panelDiv.node(), "#id_sign_in_panel");
+					{
+						userInstance.addTarget("signin.cr", panel);
+						userInstance.addTarget("signinCanceled.cr", panel);
+						$(panel).on("signin.cr", function(e, eventInfo)
+						{
+							removeSignin(this);
+							
+							var userEmailCell = get_cell_by_name(eventInfo, "_email");
+							var newEmail = userEmailCell.data[0].value;
+							cr.selectAll("#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
+								function(newInstances)
+								{
+									if (newInstances.length > 0)
+									{
+										inquiryInstance = newInstances[0];
+										buttonDiv.text("Back Out");
+										buttonDiv.on("click", deleteInquiryFunction);
+										bootstrap_alert.success(userInstance.getDescription() + 
+															  " already signed up for " + 
+															  offering.getDescription() + "/" + session.getDescription(),
+															  ".alert-container");
+									}
+									else
+									{
+										addInquiry();
+									}
+								},
+								asyncFailFunction);
+						});
+								
+						$(panel).on("signinCanceled.cr", function()
+						{
+							removeSignin(this);
+						});
+						
+						showFixedPanel(panel, "#id_sign_in_panel");
+					}
 				}
 				
 				var addNameFunction = function(e)

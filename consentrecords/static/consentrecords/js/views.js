@@ -139,7 +139,7 @@ function hidePanelDown(panelNode, doRemove)
 		});
 }
 
-function hidePanelRight(panelNode, doRemove)
+function hidePanelRight(panelNode, doRemove, completeFunction)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
@@ -150,6 +150,8 @@ function hidePanelRight(panelNode, doRemove)
 			if (doRemove)
 				$(this).remove();
 			unblockClick();
+			if (completeFunction)
+				completeFunction();
 		});
 }
 		
