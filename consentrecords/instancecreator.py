@@ -43,7 +43,7 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
-    item = typeInstance.instance.createEmptyInstance(parent.instance, transactionState).lazyInstance
+    item = typeInstance.instance.createEmptyInstance(parent and parent.instance, transactionState).lazyInstance
 
     if parent:
         if position < 0:
