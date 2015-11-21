@@ -9,285 +9,236 @@ import logging
 import string
 from multiprocessing import Lock
 
-from consentrecords.models import Fact, LazyInstance, Instance, NameList
+from consentrecords.models import Instance, NameList, Terms, TermNames, Value
 from consentrecords import instancecreator
 
-def initializeUUNames():
-    Fact.initialUUNames = {}
+_bootstrapName = 'Bootstrap'
     
-    #Instantiate the uuName uuName.
-    uuNameID = Fact.getUUNameID()
-    if uuNameID:
-        Fact.initialUUNames[Fact.uuNameName] = uuNameID
-    else:
-        return
-        
-    # Instantiate all of the other core uuNames.
-    for s in Fact.initialKinds:
-        try: 
-            id = Fact._getInitialUUID(s)
-        except Fact.UnrecognizedNameError:
-            pass
-
-def _addEnumeratorTranslations(uuNameID, enumerationNames, transactionState):
-    container = LazyInstance(uuNameID)
-    enumeratorInstance = LazyInstance(Fact.enumeratorUUID())
-    translationInstance = LazyInstance(Fact.translationUUID())
-    englishUUID = Fact.getNamedEnumeratorID(Fact.languageUUID(), Fact.englishName)
+def _addEnumeratorTranslations(container, enumerationNames, transactionState):
+    enumeratorInstance = Terms.enumerator
+    translationInstance = Terms.translation
+    english = Terms.getNamedEnumerator(Terms.language, TermNames.english)
     
     nameLists = NameList()
     for name in enumerationNames:
         try:
-            item = LazyInstance(Fact.getTranslationNamedEnumeratorID(uuNameID, name))
-        except Fact.UnrecognizedNameError:
-            item, value1 = instancecreator.create(enumeratorInstance, container, Fact.enumeratorUUID(), -1, None, nameLists, transactionState)
-            item2, value2 = instancecreator.create(translationInstance, item, Fact.translationUUID(), 0, None, nameLists, transactionState)
-            item2.addValue(Fact.textUUID().hex, name, 0, transactionState)
-            item2.addValue(Fact.languageUUID().hex, englishUUID.hex, 0, transactionState)
+            item = Terms.getTranslationNamedEnumerator(container, name)
+        except Value.DoesNotExist:
+            item, value1 = instancecreator.create(enumeratorInstance, container, Terms.enumerator, -1, None, nameLists, transactionState)
+            item2, value2 = instancecreator.create(translationInstance, item, Terms.translation, 0, None, nameLists, transactionState)
+            item2.addStringValue(Terms.text, name, 0, transactionState)
+            item2.addReferenceValue(Terms.language, english, 0, transactionState)
 
-def _addEnumerators(uuNameID, enumerationNames, transactionState):
-    container = LazyInstance(uuNameID)
-    ofKindObject = LazyInstance(Fact.enumeratorUUID())
-    
+def _addEnumerators(container, enumerationNames, transactionState):
     nameLists = NameList()
     for name in enumerationNames:
         try:
-            item = LazyInstance(Fact.getNamedEnumeratorID(uuNameID, name))
-        except Fact.UnrecognizedNameError:
-            item, newValue = instancecreator.createInstance(ofKindObject, container, Fact.enumeratorUUID(), -1, None, nameLists, transactionState)
-            item.addValue(Fact.nameUUID(), name, 0, transactionState)
+            item = Terms.getNamedEnumerator(container, name)
+        except Value.DoesNotExist:
+            item, newValue = instancecreator.create(Terms.enumerator, container, Terms.enumerator, -1, None, nameLists, transactionState)
+            item.addStringValue(Terms.name, name, 0, transactionState)
 
 def createConfigurations(container, itemValues, transactionState):
-	return instancecreator.createMissingInstances(container, Fact.configurationUUID(), Fact.configurationUUID(), Fact.nameUUID(), itemValues, transactionState)
-	
+    return instancecreator.createMissingInstances(container, Terms.configuration, Terms.configuration, Terms.name, itemValues, transactionState)
+    
 def createFields(container, itemValues, transactionState):
-	return instancecreator.createMissingInstances(container, Fact.fieldUUID(), Fact.fieldUUID(), Fact.nameUUID(), itemValues, transactionState)
+    return instancecreator.createMissingInstances(container, Terms.field, Terms.field, Terms.name, itemValues, transactionState)
 
 def createDataTypes(transactionState):
-    _addEnumerators(Fact.dataTypeUUID(), [Fact.objectName, Fact.stringName, Fact.datestampName, Fact.numberName], transactionState)
+    _addEnumerators(Terms.dataType, [TermNames.object, TermNames.string, TermNames.datestamp, TermNames.number], transactionState)
     
 def createAddObjectRules(transactionState):
-    _addEnumerators(Fact.addObjectRuleUUID(), [Fact.pickObjectRuleName, Fact.createObjectRuleName], transactionState)
+    _addEnumerators(Terms.addObjectRule, [TermNames.pickObjectRule, TermNames.createObjectRule], transactionState)
     
 def createMaxCapacities(transactionState):
-    _addEnumerators(Fact.maxCapacityUUID(), [Fact.uniqueValueName, Fact.multipleValuesName], transactionState)
+    _addEnumerators(Terms.maxCapacity, [TermNames.uniqueValue, TermNames.multipleValues], transactionState)
     
 def createDescriptorTypes(transactionState):
-    _addEnumerators(Fact.descriptorTypeUUID(), [Fact.textEnumName, Fact.countEnumName], transactionState)
+    _addEnumerators(Terms.descriptorType, [TermNames.textEnum, TermNames.countEnum], transactionState)
     
 def createLanguages(transactionState):
-    _addEnumerators(Fact.languageUUID(), [Fact.englishName], transactionState)
+    _addEnumerators(Terms.language, [TermNames.english], transactionState)
 
 def createBooleans(transactionState):
-    _addEnumeratorTranslations(Fact.booleanUUID(), [Fact.yesName, Fact.noName], transactionState)
+    _addEnumeratorTranslations(Terms.boolean, [TermNames.yes, TermNames.no], transactionState)
 
 def createTranslationConfiguration(transactionState):
-    container = LazyInstance(Fact.translationUUID())
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.translation, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
     
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
     
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
-
-    fieldValues = [Fact.textUUID().hex, Fact.languageUUID().hex]
+    fieldValues = [Terms.text, Terms.language]
     
     fields = createFields(configObject, fieldValues, transactionState)
-    p = fields[Fact.textUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.text]
+    p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
-    p = fields[Fact.languageUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), Fact.languageUUID().hex, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.languageName, Fact.enumeratorName)
-    p.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
+    p = fields[Terms.language]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.language, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.language, TermNames.enumerator)
+    p.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
 
 def createEnumeratorConfiguration(transactionState):
-    container = LazyInstance(Fact.enumeratorUUID())
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.enumerator, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
     
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
-    
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
 
-    fieldValues = [Fact.nameUUID().hex, Fact.translationUUID().hex]
+    fieldValues = [Terms.name, Terms.translation]
     
     fields = createFields(configObject, fieldValues, transactionState)
-    p = fields[Fact.nameUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.name]
+    p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
-    p = fields[Fact.translationUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), Fact.translationUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.translation]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.translation, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
 def createBooleanConfiguration(transactionState):
-    container = LazyInstance(Fact.booleanUUID())
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.boolean, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
     
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
-    
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
 
-    fieldValues = [Fact.nameUUID().hex]
+    fieldValues = [Terms.name]
     
     fields = createFields(configObject, fieldValues, transactionState)
 
-    p = fields[Fact.nameUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), Fact.translationUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.name]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.translation, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
 # Create the configuration for the uuname uuname.
 def createUUNameConfiguration(transactionState):
-    uunameUUID = Fact.uuNameUUID()
-    container = LazyInstance(uunameUUID)
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.uuName, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
     
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
-    
-    configurationUUID = Fact.configurationUUID()
-        
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
 
-    fieldValues = [uunameUUID.hex, configurationUUID.hex, Fact.enumeratorUUID().hex]
+    fieldValues = [Terms.uuName, Terms.configuration, Terms.enumerator]
 
     fields = createFields(configObject, fieldValues, transactionState)
     
-    p = fields[uunameUUID.hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.uuName]
+    p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
     
-    p = fields[configurationUUID.hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), configurationUUID.hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
+    p = fields[Terms.configuration]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.configuration, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
         
-    p = fields[Fact.enumeratorUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), Fact.enumeratorUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
+    p = fields[Terms.enumerator]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.enumerator, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
         
 # Create the configuration for the configuration uuname.    
 def createConfigurationConfiguration(transactionState):
-    configurationUUID = Fact.configurationUUID()
-    container = LazyInstance(configurationUUID)
-    
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.configuration, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
             
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
     
-    fieldValues = [Fact.nameUUID().hex, Fact.fieldUUID().hex]
+    fieldValues = [Terms.name, Terms.field]
 
     fields = createFields(configObject, fieldValues, transactionState)
     
-    p = fields[Fact.nameUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    p = fields[Terms.name]
+    p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
     
-    p = fields[Fact.fieldUUID().hex]
-    p.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.ofKindUUID(), Fact.fieldUUID().hex, 0, transactionState)
-    p.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.createObjectRuleUUID().hex, 0, transactionState)
+    p = fields[Terms.field]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.field, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
     
 # Create the configuration for the configuration uuname.    
 def createFieldConfiguration(transactionState):
-    containerUUID = Fact.fieldUUID()
-    container = LazyInstance(containerUUID)
-    configurationUUID = Fact.configurationUUID()
+    configurationValues = [_bootstrapName];
+    configurations = createConfigurations(Terms.field, configurationValues, transactionState)
+    configObject = configurations[_bootstrapName]
     
-    configurationValues = [Fact._bootstrapName];
-    configurations = createConfigurations(container, configurationValues, transactionState)
-    configObject = configurations[Fact._bootstrapName]
+    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
     
-    configObject.createMissingSubValue(Fact.nameUUID(), Fact._bootstrapName, 0, transactionState)
-    
-    fieldValues = [Fact.nameUUID().hex, 
-                   Fact.dataTypeUUID().hex,
-                   Fact.maxCapacityUUID().hex,
-                   Fact.descriptorTypeUUID().hex,
-                   Fact.addObjectRuleUUID().hex,
-                   Fact.ofKindUUID().hex,
-                   Fact.pickObjectPathUUID().hex,
+    fieldValues = [Terms.name, 
+                   Terms.dataType,
+                   Terms.maxCapacity,
+                   Terms.descriptorType,
+                   Terms.addObjectRule,
+                   Terms.ofKind,
+                   Terms.pickObjectPath,
                   ]
 
     fields = createFields(configObject, fieldValues, transactionState)
     
-    f = fields[Fact.nameUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.ofKindUUID(), Fact.uuNameUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.descriptorTypeUUID(), Fact.textEnumUUID().hex, 0, transactionState)
+    f = fields[Terms.name]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.ofKind, Terms.uuName, 0, transactionState)
+    f.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
     
-    f = fields[Fact.dataTypeUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.dataTypeName, Fact.enumeratorName)
-    f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
+    f = fields[Terms.dataType]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.dataType, TermNames.enumerator)
+    f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
-    f = fields[Fact.maxCapacityUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.maxCapacityName, Fact.enumeratorName)
-    f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
+    f = fields[Terms.maxCapacity]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.maxCapacity, TermNames.enumerator)
+    f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
-    f = fields[Fact.descriptorTypeUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.descriptorTypeName, Fact.enumeratorName)
-    f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
+    f = fields[Terms.descriptorType]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.descriptorType, TermNames.enumerator)
+    f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
-    f = fields[Fact.addObjectRuleUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (Fact.uuNameName, Fact.uuNameName, Fact.addObjectRuleName, Fact.enumeratorName)
-    f.createMissingSubValue(Fact.pickObjectPathUUID(), pickObjectPath, 0, transactionState)
+    f = fields[Terms.addObjectRule]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.addObjectRule, TermNames.enumerator)
+    f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
-    f = fields[Fact.ofKindUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.objectUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.ofKindUUID(), Fact.uuNameUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)        
-    f.createMissingSubValue(Fact.addObjectRuleUUID(), Fact.pickObjectRuleUUID().hex, 0, transactionState)
+    f = fields[Terms.ofKind]
+    f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.ofKind, Terms.uuName, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)        
+    f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
 
-    f = fields[Fact.pickObjectPathUUID().hex]
-    f.createMissingSubValue(Fact.dataTypeUUID(), Fact.stringUUID().hex, 0, transactionState)
-    f.createMissingSubValue(Fact.maxCapacityUUID(), Fact.uniqueValueUUID().hex, 0, transactionState)
+    f = fields[Terms.pickObjectPath]
+    f.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
+    f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     
 def initializeFacts(transactionState):
     # Initialize global variables.
-    Fact.initialUUNames = {}  
-    
-    #Instantiate the uuName uuName.
-    uunameID = Fact.getUUNameID() or Fact.createUUNameID(transactionState)
-    
-    # Instantiate all of the other core uuNames.
-    for s in Fact.initialKinds:
-        try: 
-            id = Fact.getNamedUUID(s)
-        except Fact.UnrecognizedNameError:
-            obj = uuid.uuid4()
-            i = Instance.objects.create(id=obj.hex, typeID=uunameID.hex, parent=None, transaction=transactionState.transaction)
-            LazyInstance(obj).addValue(uunameID, s, 0, transactionState)
+    Terms.initialize()
     
     createDataTypes(transactionState)
     createAddObjectRules(transactionState)

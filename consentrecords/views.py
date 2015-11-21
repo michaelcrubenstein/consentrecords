@@ -19,10 +19,10 @@ import datetime
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue, NameList
+from consentrecords.models import TransactionState, Terms, Instance, Value, NameList
 from consentrecords import instancecreator
 from consentrecords import pathparser
-from consentrecords import bootstrap
+from consentrecords.userfactory import UserFactory
 
 def home(request):
     return userHome(request)
@@ -46,7 +46,11 @@ def userHome(request):
     }
     
     if request.user.is_authenticated():
-        args['userID'] = UserFactory.getUserObjectID(request.user.id)
+        user = UserFactory.getUserInstance(request.user.id)
+        if not user:
+            print ("user is not set up: %s" % (request.user.get_full_name()))
+            return ("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -69,7 +73,7 @@ def find(request, serviceid, offeringid):
     }
     
     if request.user.is_authenticated():
-        args['userID'] = UserFactory.getUserObjectID(request.user.id)
+        args['userID'] = UserFactory.getUserInstance(request.user.id).id
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -77,7 +81,7 @@ def find(request, serviceid, offeringid):
     args['state'] = "findNewExperience" + serviceid + offeringid
     
     if settings.FACEBOOK_SHOW:
-        offering = LazyInstance(offeringid)
+        offering = Instance.objects.get(pk=offeringid)
         args['fbURL'] = request.build_absolute_uri()
         args['fbTitle'] = offering._description
         args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
@@ -92,7 +96,7 @@ def list(request):
     try:
         # The type of the root object.
         rootType = request.GET.get('type', None)
-        rootID = rootType and Fact.getNamedUUID(rootType);
+        root = rootType and Terms.getNamedInstance(rootType);
         path=request.GET.get('path', "_uuname")
         header=request.GET.get('header', "List")
             
@@ -105,9 +109,9 @@ def list(request):
             'path': urllib.parse.unquote_plus(path),
             'header': header,
             }
-        if rootID:
-            argList["rootID"] = rootID.hex
-            argList["singularName"] = LazyInstance(rootID)._description
+        if root:
+            argList["rootID"] = root.id
+            argList["singularName"] = root._description
         
         context = RequestContext(request, argList)
         
@@ -123,11 +127,11 @@ class api:
             instanceType = data.get('typeName', None)
             instanceUUID = data.get('typeID', None)
             if instanceUUID:
-                ofKindObject = LazyInstance(instanceUUID)
+                ofKindObject = Instance.objects.get(pk=instanceUUID)
             elif not instanceType:
                 return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
             else:
-                ofKindObject = LazyInstance(Fact.getNamedUUID(instanceType))
+                ofKindObject = Terms.getNamedInstance(instanceType)
         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
@@ -136,13 +140,13 @@ class api:
             elementName = data.get('elementName', None)
             elementUUID = data.get('elementUUID', None)
             if elementUUID:
-                elementID = uuid.UUID(elementUUID)
+                field = Instance.objects.get(pk=elementUUID)
             elif elementName:
-                elementID = Fact.getNamedUUID(elementName)
+                field = Terms.getNamedInstance(elementName)
             elif instanceUUID:
-                elementID = uuid.UUID(instanceUUID)
+                field = Instance.objects.get(pk=instanceUUID)
             elif instanceName: 
-                elementID = Fact.getNamedUUID(instanceName)
+                field = Terms.getNamedInstance(instanceName)
             
             # An optional set of properties associated with the object.
             propertyString = data.get('properties', None)
@@ -158,15 +162,15 @@ class api:
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
                 if containerUUID:
-                    containerObject = LazyInstance(containerUUID)
+                    containerObject = Instance.objects.get(pk=containerUUID)
                 else:
                     containerObject = None
 
                 nameLists = NameList()
-                item, newValue = instancecreator.create(ofKindObject, containerObject, elementID, index, propertyList, nameLists, transactionState)
+                item, newValue = instancecreator.create(ofKindObject, containerObject, field, index, propertyList, nameLists, transactionState)
     
                 if newValue and newValue.isDescriptor:
-                    LazyInstance.updateDescriptions([item], nameLists)
+                    Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
                     results = {'success':True, 'object': newValue.getReferenceData()}
@@ -196,37 +200,38 @@ class api:
                 transactionState = TransactionState(user, timezoneoffset)
                 for c in commands:
                     if "id" in c:
-                        oldValue = LazyValue(c["id"])
+                        oldValue = Value.objects.get(pk=c["id"])
                         if oldValue.isDescriptor:
-                            container = LazyInstance(oldValue.instanceID);
+                            container = oldValue.instance;
                             descriptionQueue.append(container)
                         if "value" in c:
                             item = oldValue.updateValue(c["value"], transactionState);
                         else:
                             if oldValue.isOriginalReference:
-                                i = LazyInstance(oldValue.stringValue).deepDelete(transactionState)
+                                i = oldValue.referenceValue.deepDelete(transactionState)
                             oldValue.markAsDeleted(transactionState)
                             item = None
                     elif "containerUUID" in c:
-                        container = LazyInstance(c["containerUUID"])
-                        fieldID = c["fieldID"]
+                        container = Instance.objects.get(pk=c["containerUUID"])
+                        fieldID = Instance.objects.get(pk=c["fieldID"])
                         newIndex = c["index"]
                         newValue = c["value"]
-                        if isinstance(newValue, (str)):
-                            item = container.addValue(fieldID, newValue, newIndex, transactionState)
+                        if "ofKindID" in c:
+                            ofKindObject = Instance.objects.get(pk=c["ofKindID"])
+                            propertyList = newValue
+                            newInstance, item = instancecreator.create(ofKindObject, container, fieldID, propertyList, newValue, nameLists, transactionState)
                         else:
-                            ofKindObject = LazyInstance(c["ofKindID"])
-                            newInstance, item = instancecreator.create(ofKindObject, container, uuid.UUID(fieldID), newIndex, newValue, nameLists, transactionState)
+                            item = container.addValue(fieldID, newValue, newIndex, transactionState)
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
                         raise ValueError("subject id was not specified")
                     if item:
-                        ids.append(item.id.hex)
+                        ids.append(item.id)
                     else:
                         ids.append(None)
                                 
-                LazyInstance.updateDescriptions(descriptionQueue, nameLists)
+                Instance.updateDescriptions(descriptionQueue, nameLists)
                 
                 results = {'success':True, 'ids': ids}
             
@@ -254,6 +259,8 @@ class api:
             if valueUUID is None:
                 return JsonResponse({'success':False, 'error': 'the value was not specified'})
             
+            referenceValue = Instance.objects.get(pk=valueUUID)
+            
             # The index of the value within the container.
             indexString = data.get('index', None)
         
@@ -262,23 +269,23 @@ class api:
         
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
-                elementID = uuid.UUID(elementUUID)
-                container = LazyInstance(containerUUID)
+                field = Instance.objects.get(pk=elementUUID)
+                container = Instance.objects.get(pk=containerUUID)
     
                 if indexString:
-                    newIndex = container.updateElementIndexes(elementID, int(indexString), transactionState)
+                    newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
                 else:
-                    maxIndex = container.getMaxElementIndex(elementID)
+                    maxIndex = container.getMaxElementIndex(field)
                     if maxIndex == None: # Note that it could be 0.
                         newIndex = 0
                     else:
                         newIndex = maxIndex + 1
     
-                item = container.addValue(elementID, valueUUID, newIndex, transactionState)
+                item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
                 if item.isDescriptor:
-                    LazyInstance.updateDescriptions([container], nameLists)
+                    Instance.updateDescriptions([container], NameList())
         
-            results = {'success':True, 'id': item.id.hex}
+            results = {'success':True, 'id': item.id}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -288,26 +295,21 @@ class api:
         
     def selectAll(user, data):
         try:
-            ofKindName = data.get("ofKindName", "_uuname")
-            ofKindID = data.get("ofKindID", None)
             path = data.get("path", None)
         
             if path:
                 a = pathparser.tokenize(path)
                 p = pathparser.selectAllDescriptors(a)
             else:
-                if ofKindID:
-                    ofKindUUID = uuid.UUID(ofKindID)
-                else:
-                    ofKindUUID = Fact.getNamedUUID(ofKindName)
-    
-                a = pathparser.tokenize(ofKindUUID.hex)
-                p = LazyInstance.rootDescriptors(a)
+                try:
+                    ofKindName = data.get("ofKindName", "_uuname")
+                    ofKindID = data.get("ofKindID", Terms.getNamedInstance(ofKindName).id)
+                except Instance.DoesNotExist:
+                    return JsonResponse({'success':False, 'error': 'the term "%s" was not recognized' % ofKindName })
+                a = pathparser.tokenize(ofKindID)
+                p = Instance.rootDescriptors(a)
         
             results = {'success':True, 'objects': p}
-        
-        except Fact.NoEditsAllowedError:
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -321,13 +323,13 @@ class api:
             typeName = data.get('typeName', None)
             typeUUID = data.get('typeID', None)
             if typeUUID:
-                kindObject = LazyInstance(typeUUID)
+                kindObject = Instance.objects.get(pk=typeUUID)
             elif typeName:
-                kindObject = LazyInstance(Fact.getNamedUUID(typeName))
+                kindObject = Terms.getNamedInstance(typeName)
             else:
                 return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
-            configurationObject = kindObject.getSubInstance(Fact.configurationUUID())
+            configurationObject = kindObject.getSubInstance(Terms.configuration)
         
             if not configurationObject:
                 return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
@@ -335,7 +337,7 @@ class api:
             p = configurationObject.getConfiguration()
         
             results = {'success':True, 'cells': p}
-        except Fact.NoEditsAllowedError:
+        except Instance.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
@@ -354,7 +356,7 @@ class api:
                 raise ValueError("the access token is not specified")
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
-            userID = UserFactory.getUserObjectID(accessToken.user.id)
+            userID = UserFactory.getUserInstance(accessToken.user.id).id
             results = {'success':True, 'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -367,38 +369,35 @@ class api:
         if uuObject.typeID in fieldsDataDictionary:
             fieldsData = fieldsDataDictionary[uuObject.typeID]
         else:
-            kindObject = LazyInstance(uuObject.typeID)
-        
-            configuration = kindObject.getSubInstance(Fact.configurationUUID())
+            configuration = uuObject.typeID.getSubInstance(Terms.configuration)
     
             if not configuration:
                 raise ValueError("the specified item is not configured")
     
-            fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Fact.fieldUUID())]
+            fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
         
         cells = uuObject.getData(fieldsData, nameLists)
     
-        data = {"id": uuObject.id.hex, 
+        data = {"id": uuObject.id, 
                 "description": uuObject.description(),
-                "parentID": uuObject.parentID, 
+                "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
         if 'parents' in fields:
-            while uuObject.parentID:
-                uuObject = LazyInstance(uuObject.parentID)
-                kindObject = LazyInstance(uuObject.typeID)
+            while uuObject.parent:
+                uuObject = uuObject.parent
+                kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id.hex, 'description': uuObject.description()},
+                        'value': {'id': uuObject.id, 'description': uuObject.description()},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         return data;
     
     def getData(user, data):
-        path=None
         try:
             path = data.get('path', None)
         
@@ -415,17 +414,14 @@ class api:
             nameLists = NameList()
             p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
         
-            print(str(p))
             results = {'success':True, 'data': p}
-        except Fact.NoEditsAllowedError:
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             logger.error("getData data:%s" % str(data))
             
             results = {'success':False, 'error': str(e)}
-            
+        
         return JsonResponse(results)
     
     # This should only be done for root instances. Otherwise, the value should
@@ -445,15 +441,13 @@ class api:
                     descriptionCache = []
                     nameLists = NameList()
                     for uuObject in pathparser.selectAllObjects(a):
-                        if uuObject.parentID:
+                        if uuObject.parent:
                             raise ValueException("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
                 return JsonResponse({'success':False, 'error': "path was not specified in delete"})
             results = {'success':True}
-        except Fact.NoEditsAllowedError:
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -466,7 +460,7 @@ class api:
             valueID = data.get('valueID', None)
         
             if valueID:
-                v = LazyValue(valueID)
+                v = Value.objects.get(pk=valueID)
 
                 # The client time zone offset, stored with the transaction.
                 timezoneoffset = data['timezoneoffset']
@@ -474,17 +468,17 @@ class api:
                 with transaction.atomic():
                     transactionState = TransactionState(user, timezoneoffset)
                     if v.isOriginalReference:
-                        i = LazyInstance(v.stringValue).deepDelete(transactionState)
+                        i = v.referenceValue.deepDelete(transactionState)
                     v.markAsDeleted(transactionState)
                     
                     if v.isDescriptor:
                         nameLists = NameList()
-                        LazyInstance.updateDescriptions([v.instance], nameLists)
+                        Instance.updateDescriptions([v.instance], nameLists)
             else:   
                 return JsonResponse({'success':False, 'error': "valueID was not specified in delete"})
             results = {'success':True}
-        except Fact.NoEditsAllowedError:
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
+        except Value.DoesNotExist:
+            return JsonResponse({'success':False, 'error': "the specified value ID was not recognized"})
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -494,7 +488,6 @@ class api:
 
 def createInstance(request):
     LogRecord.emit(request.user, 'consentrecords/createInstance', '')
-    print ("consentrecords/createInstance")
 
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
@@ -609,41 +602,6 @@ class ApiGetUserIDEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         return getUserID(request)
         
-class UserFactory:
-    def getUserObjectID(userID):
-        fieldID = Fact.getNamedUUID(Fact.userIDName)
-        if isinstance(userID, uuid.UUID):
-            userID = userID.hex
-        with connection.cursor() as c:
-            sql = "SELECT v1.instance_id" + \
-              " FROM consentrecords_value v1" + \
-              " WHERE v1.fieldid = %s and v1.stringvalue = %s" + \
-              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
-            c.execute(sql, [fieldID.hex, userID])
-            r = c.fetchone()
-            return r and r[0]
-            
-    def createUserObjectID(user, timezoneOffset):
-        with transaction.atomic():
-            transactionState = TransactionState(user, timezoneOffset)
-            if isinstance(user.id, uuid.UUID):
-                userID = user.id.hex    # SQLite
-            else:
-                userID = user.id        # MySQL
-
-            ofKindObject = LazyInstance(Fact.getNamedUUID(Fact.userName))
-            propertyList = {Fact.emailName: user.email}
-            if user.first_name:
-                propertyList[Fact.firstNameName] = user.first_name
-            if user.last_name:
-                propertyList[Fact.lastNameName] = user.last_name
-            item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
-            
-            # Add userID explicitly in case it isn't part of the configuration.
-            item.addValue(Fact.getNamedUUID(Fact.userIDName), userID, 0, transactionState)
-            
-            return item.id.hex
-
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
     LogRecord.emit(request.user, 'consentrecords/submitsignin', '')
@@ -653,8 +611,8 @@ def submitsignin(request):
     
         results = userviews.signinResults(request)
         if results["success"]:
-            userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
-            results["user"] = { "id": userID, "description" : request.user.get_full_name() }        
+            user = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, timezoneOffset)
+            results["user"] = { "id": user.id, "description" : request.user.get_full_name() }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -670,8 +628,8 @@ def submitNewUser(request):
     
         results = userviews.newUserResults(request)
         if results["success"]:
-            userID = UserFactory.getUserObjectID(request.user.id) or UserFactory.createUserObjectID(request.user, timezoneOffset)
-            results["user"] = { "id": userID, "description" : request.user.get_full_name() }
+            userInstance = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, timezoneOffset)
+            results["user"] = { "id": userInstance.id, "description" : request.user.get_full_name() }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

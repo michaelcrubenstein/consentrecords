@@ -2341,7 +2341,7 @@
 				});
 			}
 			
-			var path = '#'+userInstance.getValueID()+'::reference(Employee)::reference(Employees)::reference(Organization)';
+			var path = '#'+userInstance.getValueID()+'::reference(_users)::reference(_group)::reference(Organization)';
 			cr.selectAll(path, successFunction, asyncFailFunction);
 		}
 		

@@ -3,14 +3,10 @@ import django
 import tzlocal
 import getpass
 
-from django.conf import settings
-from django.db import transaction, connection
+from django.db import transaction
 from django.contrib.auth import authenticate
 
-from custom_user import views as userviews
-from consentrecords.models import TransactionState, Fact, LazyInstance, LazyValue, NameList
-from consentrecords import instancecreator
-from consentrecords import pathparser
+from consentrecords.models import TransactionState
 from consentrecords import bootstrap
 
 if __name__ == "__main__":

@@ -5,24 +5,6 @@ from django import forms
 
 from consentrecords.models import Instance, DeletedInstance, Value, DeletedValue, Transaction
 
-class InstanceAdmin(admin.ModelAdmin):
-
-    list_display = ('id', 'typeID', 'parent', '_description', 'transaction')
-
-    fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
-    )
-    readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
-    search_fields = ('typeID', )
-
-class DeletedInstanceAdmin(admin.ModelAdmin):
-
-    fieldsets = (
-        (None, {'fields': ('id', 'transaction')}),
-    )
-    readonly_fields = ('id','transaction')
-    search_fields = ('id',)
-
 class InstanceInline(admin.StackedInline):
     model = Instance
     extra = 0
@@ -31,15 +13,48 @@ class DeletedInstanceInline(admin.StackedInline):
     model = DeletedInstance
     extra = 0
     
-class ValueAdmin(admin.ModelAdmin):
-
-    list_display = ('id', 'instance', 'field', 'objectValue', 'instanceid', 'fieldID', 'stringValue', 'position', 'transaction')
+class ValueInline(admin.StackedInline):
+    model = Value
+    extra = 0
+    
+class InstanceValueInline(admin.StackedInline):
+    model = Value
+    fk_name = 'instance'
+    extra = 0
+    
+class DeletedValueInline(admin.StackedInline):
+    model = DeletedValue
+    extra = 0
+    
+class DeletedInstanceAdmin(admin.ModelAdmin):
 
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'field',  'objectValue', 'instanceid', 'fieldID', 'stringValue','position', 'transaction')}),
+        (None, {'fields': ('id', 'transaction')}),
     )
-    readonly_fields = ('id','instance', 'field', 'instanceid', 'fieldID', 'stringValue', 'objectValue', 'position','transaction')
-    search_fields = ('instance', 'instanceid', 'fieldID', 'stringValue')
+    readonly_fields = ('id','transaction')
+    search_fields = ('id',)
+
+class InstanceAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'typeID', 'parent', '_description', 'transaction')
+
+    fieldsets = (
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
+    )
+    readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
+    search_fields = ('id',)
+
+    inlines = [DeletedInstanceInline, InstanceValueInline]
+    
+class ValueAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')
+
+    fieldsets = (
+        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')}),
+    )
+    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'position','transaction')
+    search_fields = ('id', 'stringValue')
 
 class DeletedValueAdmin(admin.ModelAdmin):
 
@@ -49,14 +64,6 @@ class DeletedValueAdmin(admin.ModelAdmin):
     readonly_fields = ('id','transaction')
     search_fields = ('id',)
 
-class ValueInline(admin.StackedInline):
-    model = Value
-    extra = 0
-    
-class DeletedValueInline(admin.StackedInline):
-    model = DeletedValue
-    extra = 0
-    
 class TransactionAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'user', 'creation_time', 'time_zone_offset')

@@ -3,15 +3,10 @@ import django
 import tzlocal
 import getpass
 
-from django.conf import settings
-from django.db import transaction, connection
+from django.db import transaction
 from django.contrib.auth import authenticate
 
-from custom_user import views as userviews
-from consentrecords.models import Instance, TransactionState, Fact, LazyInstance, LazyValue, NameList, Description
-from consentrecords import instancecreator
-from consentrecords import pathparser
-from consentrecords import bootstrap
+from consentrecords.models import Instance, NameList,Terms
 
 if __name__ == "__main__":
     django.setup()
@@ -21,13 +16,13 @@ if __name__ == "__main__":
     password = getpass.getpass("Password: ")
 
     user = authenticate(username=username, password=password)
+    
+    Terms.initialize()
 
     with transaction.atomic():
-        Description.objects.all().delete()
-        print ("deleted all descriptions")
         print ("all instance count: %s" % str(Instance.objects.all().count()))
-        print ("current instance count: %s" % str(Instance.objects.exclude(deletedinstance__isnull=False).count()))
+        print ("current instance count: %s" % str(Instance.objects.filter(deletedinstance__isnull=True).count()))
         nameList = NameList()
-        for i in Instance.objects.exclude(deletedinstance__isnull=False):
-            LazyInstance(i.id).cacheDescription(nameList)
+        for i in Instance.objects.filter(deletedinstance__isnull=True):
+            i.cacheDescription(nameList)
         print ("Done")

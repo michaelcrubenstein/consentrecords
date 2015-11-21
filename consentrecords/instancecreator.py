@@ -5,7 +5,7 @@ import datetime
 import numbers
 import uuid
 
-from consentrecords.models import LazyInstance, Fact, NameList
+from consentrecords.models import Instance, Value, Terms, NameList
 from consentrecords import pathparser
 
 def _addElementData(parent, data, fieldData, nameLists, transactionState):
@@ -16,34 +16,37 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     i = 0
     ids = []
     for d in data:
-        fieldID = uuid.UUID(fieldData["nameID"])
-        if fieldData["dataTypeID"] == Fact.objectUUID().hex:
+        field = Instance.objects.get(pk=fieldData["nameID"])
+        if fieldData["dataTypeID"] == Terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-                if Fact.isUUID(d) is not None:
+                if Terms.isUUID(d) is not None:
                     # This is a reference to an object.
-                    parent.addValue(fieldID, d, i, transactionState)
+                    parent.addReferenceValue(field, Instance.objects.get(pk=d), i, transactionState)
                 elif d is not None:
                     a = pathparser.tokenize(d)
                     ids = pathparser.selectAllIDs(a)
                     if len(ids):
-                        parent.addValue(fieldID, ids[0][-1], i, transactionState)
+                        parent.addReferenceValue(field, ids[0][-1], i, transactionState)
                     else:
                         raise ValueError("Path does not parse to an object: %s" % d)
             else:
                 if isinstance(d, dict) and "ofKindID" in fieldData:
-                    ofKindObject = LazyInstance(fieldData["ofKindID"])
-                    newItem, newValue = create(ofKindObject, parent, fieldID, -1, d, nameLists, transactionState)
+                    ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
+                    newItem, newValue = create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
                 else:
                     raise ValueError("Unrecognized type of data to save")
         else:
-            parent.addValue(fieldID, d, i, transactionState)
+            parent.addValue(field, d, i, transactionState)
         i += 1
 
 def create(typeInstance, parent, parentFieldID, position, propertyList, nameLists, transactionState):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
-    item = typeInstance.instance.createEmptyInstance(parent and parent.instance, transactionState).lazyInstance
+    if not typeInstance:
+        raise ValueError("typeInstance is null")
+        
+    item = typeInstance.createEmptyInstance(parent, transactionState)
 
     if parent:
         if position < 0:
@@ -53,7 +56,7 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
             else:
                 position = maxIndex + 1
         newIndex = parent.updateElementIndexes(parentFieldID, position, transactionState)
-        newValue = parent.addValue(parentFieldID, item.id.hex, newIndex, transactionState)
+        newValue = parent.addReferenceValue(parentFieldID, item, newIndex, transactionState)
     else:
         newValue = None
 
@@ -62,13 +65,12 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
         if isinstance(propertyList, dict):
             for key in propertyList:
                 data = propertyList[key]
-                if Fact.isUUID(key):
-                    fieldObject = LazyInstance(key)
+                if Terms.isUUID(key):
+                    fieldObject = Instance.objects.get(pk=key)
                 else:
                     if not configuration:
-                        configuration = typeInstance.getSubInstance(fieldID=Fact.configurationUUID())
-                    id = Fact.getFieldNamedID(configuration.id, key)
-                    fieldObject = LazyInstance(id)
+                        configuration = typeInstance.getSubInstance(fieldID=Terms.configuration)
+                    fieldObject = configuration.getFieldByName(key)
                 fieldData = fieldObject.getFieldData()
                 if fieldData:
                     _addElementData(item, data, fieldData, nameLists, transactionState)
@@ -78,38 +80,25 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
     item.cacheDescription(nameLists)    
     return (item, newValue)
                 
-def createConfigurations(parent, itemValues, transactionState):
-    return createMissingInstances(parent, Fact.configurationUUID(), Fact.configurationUUID(), Fact.nameUUID(), itemValues, transactionState)
-    
-def createFields(self, itemValues, transactionState):
-    return createMissingInstances(parent, Fact.fieldUUID(), Fact.fieldUUID(), Fact.nameUUID(), itemValues, transactionState)
-
-# items is a dictionary whose keys are the missing values and whose values start as None
-# and end with the items that represent the values.    
-# Updates the items dictionary by inserting the newly created values for the keys
-def createMissingInstances(parent, fieldUUID, typeUUID, descriptorUUID, itemValues, transactionState):
+# itemValues is a dictionary whose keys are the values to be found.
+def createMissingInstances(parent, field, type, descriptor, itemValues, transactionState):
     items = {}
 
     # See if there is an field of parent which has a value that points to a name which has a value in items.
-    with connection.cursor() as c:
-        sql = "SELECT v2.instance_id, v2.stringvalue" + \
-              " FROM consentrecords_value v1" + \
-                   " JOIN consentrecords_value v2" + \
-                    " ON (v2.instance_id = v1.stringvalue AND v2.fieldid = %s" + \
-                    " AND NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v2.id))" + \
-              " WHERE v1.instance_id = %s AND v1.fieldid = %s" + \
-              " AND   NOT EXISTS(SELECT 1 FROM consentrecords_deletedvalue dv WHERE dv.id = v1.id)"
-        c.execute(sql, [descriptorUUID.hex, 
-                        parent.id.hex, 
-                        fieldUUID.hex,
-                        ])
-                        
-        for i in c.fetchall():
-            if i[1] in itemValues:
-                items[i[1]] = LazyInstance(i[0])
-
-    ofKindObject = LazyInstance(typeUUID)
-    position = parent.getMaxElementIndex(fieldUUID)
+    vs = Value.objects.filter(fieldID=descriptor, deletedvalue__isnull=True)\
+            .filter(instance__parent=parent)
+            
+    # See if there is an field of parent which has a value that points to a name which has a value in items.
+    vs = Value.objects.filter(fieldID=descriptor, deletedvalue__isnull=True)\
+            .filter(instance__parent=parent,instance__referenceValues__fieldID=field)
+            
+    for v in vs:
+        if v.stringValue in itemValues:
+            items[v.stringValue] = v.instance
+        elif v.referenceValue in itemValues:
+        	items[v.referenceValue] = v.instance
+            
+    position = parent.getMaxElementIndex(field)
     if position == None:
         position = 0
     else:
@@ -117,11 +106,11 @@ def createMissingInstances(parent, fieldUUID, typeUUID, descriptorUUID, itemValu
         
     nameLists = NameList()
     
-    for v in itemValues:
-        if not v in items:
-            items[v] = create(ofKindObject, parent, fieldUUID, position, [], nameLists, transactionState)[0]
+    for s in itemValues:
+        if not s in items:
+            items[s] = create(type, parent, field, position, [], nameLists, transactionState)[0]
             position += 1
-            items[v].addValue(descriptorUUID, v, 0, transactionState)
+            items[s].addValue(descriptor, s, 0, transactionState)
     
     return items
         
