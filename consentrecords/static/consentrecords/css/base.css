@@ -44,7 +44,8 @@ body {
 .configuration-header
 {
 	width: 100%;
-	text-align: center;
+	padding: 6px 12px;
+	text-align: left;
 	font-weight: bold;
 }
 .add-button {
@@ -82,7 +83,16 @@ body {
 .border-below {
 	border-bottom: 1px solid #eee;
 }
-.list-div {
+.cell-div {
+	width: 100%;
+	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
+	padding-right: 0px;
+}
+.cell-border-below {
+	margin-left: 12px;
+	border-bottom: 1px solid #eee;
+}
+.multi-line-item {
 	display: inline-block;
 	padding: 6px 12px;
 	margin-bottom: 0;
@@ -91,16 +101,11 @@ body {
 	vertical-align: middle;
 	width: 100%;
 }
-.cell-div {
-	width: 100%;
-	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
-	padding-right: 0px;
-	background: white;	/* The background is white to override the grey background of edit or add panels. */
-}
 .cell-edit-div {
 	margin-top: 12px;
 }
-.cell-label-div {
+.cell-label {
+    color: #222;
 	padding: 6px 12px;
 }
 .string-value-view {
@@ -108,14 +113,30 @@ body {
 	overflow: hidden;
 	width: auto;
 }
-.left-label-div {
+.left-label {
 	margin-left: 0px;
 	margin-right: auto;
 	padding-left: 12px;
+	line-height: 1.5em; 
+	vertical-align: middle;
 }
-.right-label-div {
+.right-label {
 	padding: 6px 12px;
-	text-align: right
+	line-height: 1.5em; 
+	vertical-align: middle;
+	text-align: right;
+}
+.top-label {
+	padding-top: 12px;
+}
+.description-text {
+	color: #777;
+}
+.site-chevron-right {
+	color: #777;
+}
+.unique-cell {
+	background: white;
 }
 .string-input-container {
 	overflow: hidden;	/* This causes the input container to expand.
@@ -178,7 +199,7 @@ body {
 	width: auto;
 	float: right;
 }
-.left-fixed-width-div {
+.left-fixed-width {
 	width: auto;
 	float: left;
 }
@@ -247,12 +268,19 @@ body {
 }
 .right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
 								conjunction with right-fixed-width-div. */
+	line-height: 1.3em;
+	vertical-align: middle;
+/* 
 	margin-top: 3px;
 	margin-bottom: 3px;
+ */
 }
 ol, ul {
 	list-style-type: none;
 	-webkit-padding-start: 0px;
+}
+.items-div > li {
+	background: white;
 }	
 li {
 	display: block;

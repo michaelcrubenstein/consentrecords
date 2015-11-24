@@ -60,11 +60,11 @@
     	.centered-right-glyph {
 			position: absolute;
 			top: 50%;
-			right: 12px;
 			-moz-transform: translateY(-50%);
 			-webkit-transform: translateY(-50%);
 			transform: translateY(-50%);
 			float: right;
+			right: 12px;
 	   	}
 	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
 			width: auto;
@@ -146,43 +146,43 @@
 					</div>
 				</div>
 			</nav>
-			<h3 class="username-label left-label-div"> </h3>
+			<h3 class="username-label left-label"> </h3>
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
 					<button panelID = "id_find_experience_panel"
 						class="btn row-button site-active-text find_experience_button show-panel-button">
 						<span class="pull-left">Find a New Experience</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 					<button panelID = "id_your_pathway_panel"
-						class="my-pathway-button btn row-button site-active-text">
+						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">My Pathway</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 					<button panelID = "id_your_plans_panel"
-						class="btn row-button site-active-text show-panel-button">
+						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">My Plans</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 					<button panelID = "id_consent_forms_panel"
-						class="btn row-button site-active-text show-panel-button">
+						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">Consent Forms</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 				</section>
 				<section class="organization-section row-button-group">
 				</section>
 				<section class="row-button-group">
 					<button panelID = "id_sharing_panel"
-						class="btn row-button site-active-text show-panel-button">
+						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">Sharing</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 					<button panelID = "id_settings_panel"
-						class="btn row-button site-active-text show-panel-button">
+						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">Settings</span>
-						<span class="glyphicon glyphicon-chevron-right text-muted pull-right"></span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
 				</section>
 			</section>
@@ -438,24 +438,71 @@
 					<div class="pull-left">
 						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
 					</div>
-					<div class="pull-right">
-						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-							<span>+</span>
-						</div>
-					</div>
 					<div class="site-navbar-commands">
 						<div class="site-title site-fill"><span class="site-inner-fill">Sharing</span></div>
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
-				<div>
-					<div class="alert-container"></div>
+			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
+				<div id="id_sharing" class="site-fill-panel">
+				<div class="cell-div">
+					<div class="cell-label top-label">Who Can Find You</div>
+					<div class="cell-items">
+					</div>
+					<div>
+						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
+						        privilege="_find">
+							<div class="pull-left">
+								<span class="glyphicon glyphicon-plus"></span>
+								<span> add user or group</span>
+							</div>
+						</button>
+					</div>
 				</div>
-				<div id="id_searchArea" class="searchbar">
+				<div class="cell-div">
+					<div class="cell-label top-label">Who Can Learn About You</div>
+					<div class="cell-items">
+					</div>
+					<div>
+						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
+						        privilege="_read">
+							<div class="pull-left">
+								<span class="glyphicon glyphicon-plus"></span>
+								<span> add user or group</span>
+							</div>
+						</button>
+					</div>
 				</div>
-				<div id="id_sharing">
+				<div class="cell-div">
+					<div class="cell-label top-label">Who Can Add Information About You</div>
+					<div class="cell-items">
+					</div>
+					<div>
+						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
+						        privilege="_write">
+							<div class="pull-left">
+								<span class="glyphicon glyphicon-plus"></span>
+								<span> add user or group</span>
+							</div>
+						</button>
+					</div>
 				</div>
+				<div class="cell-div">
+					<div class="cell-label top-label">Who Can Manage Your Account</div>
+					<div class="cell-items">
+					</div>
+					<div>
+						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
+						        privilege="_administer">
+							<div class="pull-left">
+								<span class="glyphicon glyphicon-plus"></span>
+								<span> add user or group</span>
+							</div>
+						</button>
+					</div>
+				</div>
+				</div>
+				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
 	    </panel>
 	    <panel id="id_settings_panel" class="level-2-panel configuration-panel site-panel list-panel">
@@ -502,9 +549,14 @@
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
+	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
+	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
+		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
+
 		var storedcsrftoken = "{{ csrf_token }}";
 		var activeColor = "#2C55CC"
 		
@@ -637,7 +689,7 @@
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
 		$(".done-button").click(hidePanel);
 		
-		$(".my-pathway-button").click(function(e)
+		$(".check-signin-button").click(function(e)
 		{
 			if (userInstance.getValueID())
 				showPanel.call(this, e);
@@ -667,6 +719,11 @@
 			e.preventDefault();
 		});
 		
+		$(".add-accessor-button").click(function(e)
+		{
+			addAccessor.call(this, userInstance, this.getAttribute("privilege"));
+		});
+		
 		$(document).ready (function(e) {
 			$("#id_find_experience_panel").on("revealing.cr", function(e, eventInfo)
 				{
@@ -687,7 +744,7 @@
 				
 			$("#id_your_pathway_panel").on("revealing.cr", function(e, eventInfo)
 			{
-				show_pathway("#id_pathway");
+				showPathway("#id_pathway");
 			});
 			$("#id_your_pathway_panel").on("hiding.cr", hidePathway);
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
@@ -697,6 +754,11 @@
 			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_consent_records("#id_openConsentForms");
+				});	
+			
+			$("#id_sharing_panel").on("revealing.cr", function(e, eventInfo)
+				{
+					showSharing("#id_sharing");
 				});	
 			
 			var signInSuccess = function(userData)
@@ -1179,9 +1241,9 @@
 					.enter()
 					.append('div').classed("consent-record cell-div", true);
 				
-				divs.append('div').classed("consent-record-accept-button right-label-div right-fixed-width-div right-label-div site-active-text", true)
+				divs.append('div').classed("consent-record-accept-button right-label right-fixed-width-div right-label site-active-text", true)
 					.text("I Accept");
-				divs.append('div').classed("consent-form-title left-label-div string-label-div expanding-div", true)
+				divs.append('div').classed("consent-form-title left-label string-label-div expanding-div", true)
 					.text(function(d) { 
 						return d.value.cells[0].data[0].value.description;
 					});
@@ -1274,383 +1336,6 @@
 			return startDate + connector + endDate;
 		}
 		
-		function hidePathway() {
-			var container = d3.select(this);
-			container.selectAll('svg').remove();
-		}
-			
-		function setColorByService(service)
-		{
-			var serviceInstance = crp.getInstance(service.getValueID());
-			var serviceDomain = serviceInstance.getValue("Service Domain");
-			if (serviceDomain && serviceDomain.getValueID())
-			{
-				var sdInstance = crp.getInstance(serviceDomain.getValueID());
-				color = sdInstance.getValue("Color");
-				if (color && color.value)
-					this.attr("fill", color.value)
-						 .attr("stroke", color.value);
-			}
-			else
-				this.attr("fill", otherColor)
-					.attr("stroke", otherColor);
-		}
-
-		function show_pathway(containerDiv) {
-			var allExperiences = [];
-			
-			var panelDiv = $(containerDiv).parents(".site-panel")[0];
-			var container = d3.select(containerDiv);
-			var containerHeight = parseInt(container.style("height"));
-
-			var pathBackground = "white";
-			
-			container.selectAll('svg').remove();
-			var svg = container.append('svg')
-				.style("width", "100%")
-				.style("height", "100%");
-				
-			var defs = svg.append('defs');
-			
-			var bg = svg.append('rect')
-				.attr("x", 0).attr("y", 0)
-				.attr("width", container.style("width"))
-				.attr("height", container.style("height"))
-				.attr("fill", pathBackground);
-				
-			var experienceGroup = svg.append('g')
-					.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
-					.attr("font-size", "1.3rem");
-			var yearGroup = svg.append('g');
-			
-			var dataLeftMargin = 40;
-			var otherColor = "#bbbbbb";
-				
-			var minDate, maxDate, timespan;
-			var years = [];
-
-			var successFunction1 = function(experiences)
-			{
-				allExperiences = experiences;
-				$(experiences).each(function()
-				{
-					this.value.description = this.getValue("Offering").getDescription();
-				});
-				
-				crp.getData("Service", undefined, function(newInstances)
-				{
-					crp.getData('"Service Domain"', undefined, function(newInstances)
-					{
-						for (i = 0; i < newInstances.length; ++i)
-						{
-							if (newInstances[i].getDescription() == "Other")
-							{
-								color = newInstances[i].getValue("Color");
-								if (color && color.value)
-									otherColor = color;
-								break;
-							}
-						}
-						
-						crp.pushCheckCells(userInstance, function() {
-								var m = userInstance.getValue("More Experiences");
-								if (m)
-								{
-									var path = "#" + m.getValueID() + '>"More Experience"';
-									cr.getData(path, undefined, successFunction2, asyncFailFunction);
-								}
-							},
-							asyncFailFunction);
-					},
-					asyncFailFunction);
-				},
-				asyncFailFunction);
-			}
-
-			var sortExperiences = function(a, b)
-			{
-				var aStartDate = getStartDate(a);
-				var bStartDate = getStartDate(b);
-				if (aStartDate > bStartDate) return 1;
-				else if (aStartDate < bStartDate) return -1;
-				else
-				{
-					var aEndDate = getEndDate(a);
-					var bEndDate = getEndDate(b);
-					if (aEndDate > bEndDate) return 1;
-					else if (aEndDate < bEndDate) return -1;
-					else return 0;
-				}
-				return aStartDate - bStartDate;
-			}
-
-			//This is the accessor function we talked about above
-			var lineFunction = d3.svg.line()
-				.x(function(d) { return d.x; })
-				.y(function(d) { return d.y; })
-				.interpolate("linear");
-
-			function getExperiencePath(experience, i)
-			{
-				var t = this.parentNode.children[1];	/* The text node. */
-				var bbox = t.getBBox();
-				var stem = parseFloat(this.parentNode.getAttribute("stem"));
-				var h = getExperienceHeight(experience, i);
-				var newH = bbox.height + 3;
-				var x1 = 0;
-				var x2 = x1 + stem + 35 + 20;
-				var x3 = x1 + stem;
-				var x4 = x1 + 05;
-				var y1 = 0;
-				var y2 = y1 + newH;
-				var y3;
-				if (h < 3)
-					y3 = y1 + h;
-				else
-					y3 = y1 + 3;
-				var y4 = y1 + h;
-				return lineFunction([{x: x1, y: y1}, 
-									 {x: x2, y: y1}, 
-									 {x: x2, y: y2}, 
-									 {x: x3, y: y2}, 
-									 {x: x3, y: y3}, 
-									 {x: x4, y: y3}, 
-									 {x: x4, y: y4}, 
-									 {x: x1, y: y4}, 
-									 {x: x1, y: y1}]);
-			}
-			
-			function DateToY(d)
-			{
-				var daySpan = (new TimeSpan(d-Date.parse(minDate))).days;
-				return (timespan - daySpan) * containerHeight / timespan;
-			}
-			
-			function getExperienceY(experience, i)
-			{
-				return DateToY(Date.parse(getEndDate(experience)));
-			}
-				
-			function getExperienceHeight(experience)
-			{
-				var startDate = getStartDate(experience);
-				var endDate = getEndDate(experience);
-				var days = (new TimeSpan(Date.parse(endDate)-Date.parse(startDate))).days;
-				return days * containerHeight / timespan;
-			}
-				
-			var successFunction2 = function(experiences)
-			{
-				allExperiences = allExperiences.concat(experiences);
-				$(experiences).each(function()
-				{
-					this.calculateDescription();
-				});
-				
-				allExperiences.sort(sortExperiences);
-				
-				var birthday = userInstance.getValue("Birthday");
-				if (birthday && birthday.value)
-					minDate = birthday.value;
-				else
-					minDate = new Date().toISOString();
-					
-				maxDate = "1900-01-01T00:00:00.000Z";
-				$(allExperiences).each(function()
-					{
-						startDate = getStartDate(this);
-						endDate = getEndDate(this);
-						if (minDate > startDate)
-							minDate = startDate;
-						if (maxDate < endDate)
-							maxDate = endDate;
-					});
-				
-				timespan = new TimeSpan(Date.parse(maxDate) - Date.parse(minDate)).days;
-
-				var minYear = parseInt(minDate.substr(0, 4));
-				var maxYear = parseInt(maxDate.substr(0, 4));
-				for (var y = minYear; y <= maxYear; ++y)
-					years.push(y);
-				
-				function setColor(experience)
-				{
-					var _this = d3.select(this);
-					
-					var offering = experience.getValue("Offering");
-					if (offering && offering.getValueID())
-					{
-						var experienceColor = otherColor;
-						crp.pushCheckCells(offering, function()
-						{
-							var service = offering.getValue("Service");
-							if (service)
-								setColorByService.call(_this, service);
-							else
-								_this.attr("fill", otherColor)
-									 .attr("stroke", otherColor);
-						},
-						asyncFailFunction);
-					}
-					else
-					{
-						var service = experience.getValue("Service");
-						if (service)
-							setColorByService.call(_this, service);
-						else
-							_this.attr("fill", otherColor)
-								 .attr("stroke", otherColor);
-					}
-				}
-				
-				function pickedOrCreatedValue(i, pickedName, createdName)
-				{
-					var v = i.getValue(pickedName);
-					if (v && v.getValueID())
-						return v.getDescription();
-					else {
-						v = i.getValue(createdName);
-						if (v)
-							return v.value;
-						else
-							return undefined;
-					}
-				}
-				
-				function clickExperienceRect(experience, i)
-				{
-					var lines = [];
-					
-					var s;
-					s = pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
-					if (s && lines.indexOf(s) < 0)
-						lines.push(s);
-
-					s = pickedOrCreatedValue(experience, "Site", "User Entered Site");
-					if (s && lines.indexOf(s) < 0)
-						lines.push(s);
-
-					s = pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
-					if (s && lines.indexOf(s) < 0)
-						lines.push(s);
-
-					bootstrap_alert.warning(lines.join(separator="<br>"), ".alert-container");
-				}
-				
-				var g = experienceGroup.selectAll('g')
-					.data(allExperiences)
-					.enter()
-					.append('g');
-					
-				var rect = g.append('path')
-					.attr("fill-opacity", "0.3")
-					.attr("stroke-opacity", "0.7")
-					.on("click", clickExperienceRect);
-				rect.each(setColor);
-
-				var t = g.append('text')
-					.attr("x", "10")
-					.attr("y", "0")
-					.attr("dy", "1.1")
-					.text(function(d) { return d.getDescription(); })
-					.on("click", clickExperienceRect);
-				
-				t.attr("y", function(experience)
-					{
-						var bbox = this.getBBox();
-						return 0 - bbox.y;
-					});
-				
-				var y = yearGroup
-					.selectAll('text')
-					.data(years)
-					.enter()
-					.append('text')
-					.text(function(d) { return d; })
-					.attr("font", "sans-serif")
-					.attr("font-size", "10px")
-					.attr("x", 10);
-					
-				function layoutExperiences()
-				{
-					containerHeight = parseInt(container.style("height"));
-					
-					bg.attr("width", container.style("width"))
-					  .attr("height", container.style("height"));
-
-					var columns = [];
-					var g = experienceGroup.selectAll('g');
-						g.attr("y", getExperienceY);	
-					g.each(function(e, i)
-					{
-						var j;
-						for (j = 0; j < columns.length; ++j)
-						{
-							// If this item's height + y is greater than the last item,
-							// then add this to the column.
-							lastTop = parseFloat(columns[j][columns[j].length - 1].getAttribute("y"));
-							if (lastTop >
-								parseFloat(this.getAttribute("y")) + 
-								getExperienceHeight(e, i) &&
-								lastTop > parseFloat(this.getAttribute("y")) + 
-								this.children[1].getBBox().height + 3)
-							{
-								columns[j].push(this);
-								break;
-							}
-						}
-						if (j == columns.length)
-						{
-							columns.push([this]);
-						}
-					});
-					defs.selectAll('clipPath').remove();
-					for (var j = 0; j < columns.length; ++j)
-					{
-						var x = dataLeftMargin + (10 * j);
-						var stemLength = (10 * columns.length) + (50 * j);
-					
-						/* Add a clipPath for every column. */
-						defs.append('clipPath')
-							.attr('id', 'id_clipPath' + j)
-							.append('rect')
-							.attr('x', 0)
-							.attr('y', 0)
-							.attr('height', columns[j][0].children[1].getBBox().height)
-							.attr('width', stemLength + 35 + 10);
-
-						for (var i = 0; i < columns[j].length; ++i)
-						{
-							var g = columns[j][i];
-							g.setAttribute("transform", 
-								"translate(" + x + "," + g.getAttribute("y") + ")");
-							g.setAttribute("stem", stemLength);
-							g.children[1].setAttribute('clip-path', 'url(#id_clipPath'+j+')');
-						}
-					}
-					rect.attr("d", getExperiencePath);
-					t.attr("x", function(e, i)
-					{
-						var stem = this.parentNode.getAttribute("stem");
-						return parseFloat(stem) + 10;
-					});
-				
-					y.attr("y", function(d) { 
-							return DateToY(new Date(d, 0, 0));
-						});
-				}
-				$(window).on("resize", layoutExperiences);
-				$(panelDiv).on("hiding.cr", function()
-				{
-					$(window).off("resize", layoutExperiences);
-				});
-				layoutExperiences();
-			}
-			
-			var path = "#" + userInstance.getValueID() + '::reference(Experience)';
-			cr.getData(path, ["parents"], successFunction1, asyncFailFunction);
-		}
-		
 		function appendStringItem(obj, label, text)
 		{
 			var sectionObj = d3.select(obj);
@@ -1658,15 +1343,14 @@
 			sectionObj.classed("cell-div", true)
 				.classed("border-below", true);
 	
-			var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
+			var labelDiv = sectionObj.append("div").classed("cell-label", true)
 				.text(label);
 			var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
-			
 			if (text)
 			{
-				labelDiv.classed("left-label-div left-fixed-width-div", true);
-				itemsDiv.classed("right-label-div expanding-div", true);
+				labelDiv.classed("left-label left-fixed-width", true);
+				itemsDiv.classed("right-label expanding-div", true);
 
 				var setupItems = function(divs) {
 					divs.append("div")
@@ -1678,7 +1362,7 @@
 				setupItems(divs);
 			}
 			else
-				labelDiv.classed("left-label-div expanding-div", true);
+				labelDiv.classed("left-label expanding-div", true);
 				
 		}
 
@@ -1823,7 +1507,7 @@
 				if (site.getDescription() && (site.getDescription() !== organization.getDescription()))
 				{
 					orgDiv.append('div')
-						.classed("left-label-div sub-text", true)
+						.classed("left-label sub-text", true)
 						.text(site.getDescription());
 				}
 				
@@ -1839,7 +1523,7 @@
 						if (streetCell)
 							$(streetCell.data).each(function() {
 								orgDiv.append('div')
-									.classed("left-label-div sub-text", true)
+									.classed("left-label sub-text", true)
 									.text(this.value);
 							});
 						line = "";
@@ -1851,7 +1535,7 @@
 							line += "  " + zipCell.data[0].value;
 						if (line.trim())
 							orgDiv.append('div')
-								.classed('left-label-div sub-text', true)
+								.classed('left-label sub-text', true)
 								.text(line.trim());
 					},
 					function() { }
@@ -1925,12 +1609,12 @@
 
 					if (serviceCell.length > 0)
 					{
-						var labelDiv = cellDiv.append("div").classed("cell-label-div", true)
+						var labelDiv = cellDiv.append("div").classed("cell-label", true)
 							.text("Services");
 						var itemsDiv = cellDiv.append("div").classed("items-div", true);
 
 						var divs = appendItems(itemsDiv, newInstances);
-						var buttons = divs.append("div").classed("list-div", true);
+						var buttons = divs.append("div").classed("multi-line-item", true);
 						appendButtonDescriptions(buttons, null);
 						itemsDiv.classed("border-below", true);
 					}
@@ -1965,14 +1649,14 @@
 							.classed("border-below", true);
 	
 						var labelDiv = webSiteDiv.append("div")
-							.classed("cell-label-div sub-text", true);
+							.classed("cell-label sub-text", true);
 						var link = labelDiv
 							.append("a")
 							.classed("site-active-text", true)
 							.attr("href", newText)
 							.attr("target", "_blank")
 							.text("More Info");
-						labelDiv.classed("left-label-div expanding-div", true);
+						labelDiv.classed("left-label expanding-div", true);
 					}
 				});
 
@@ -2211,8 +1895,7 @@
 							}
 						});
 	
-				buttons.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
+				appendRightChevrons(buttons);
 				var rightText = buttons.append('span').classed("centered-right-2", true);
 				
 				rightText.append('div')
@@ -2281,8 +1964,7 @@
 						}
 					});
 	
-				buttons.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted centered-right-glyph", true);
+				appendRightChevrons(buttons);
 				var rightText = buttons.append('span').classed("centered-right-2", true);
 				
 				rightText.append('div')
@@ -2330,8 +2012,7 @@
 					.classed("pull-left", true)
 					.text(function(d) { return d.getDescription(); });
 				
-				buttons.append("span")
-					.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+				appendRightChevrons(buttons);
 					
 				buttons.on("click", function(d) {
 					if (prepareClick())
@@ -2359,8 +2040,7 @@
 					b.append("span")
 						.classed("pull-left", true)
 						.text(title);
-					b.append("span")
-						.classed("glyphicon glyphicon-chevron-right text-muted pull-right", true);
+					appendRightChevrons(b);
 					b.on("click", clickFunction);
 				}
 				
@@ -2476,7 +2156,7 @@
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
-			backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("span").text(" " + containerPanel.attr("headerText"));
 	
 			var centerButton = navContainer.appendTitle(header);

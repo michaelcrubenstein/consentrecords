@@ -268,23 +268,23 @@ function _showViewStringCell(obj, cell)
 {
 	var sectionObj = d3.select(obj);
 	
-	sectionObj.classed("cell-div", true)
-		.classed("border-below", cell.field.capacity == "_unique value");
-	
-	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
+	var labelDiv = sectionObj.append("div").classed("cell-label", true)
 		.text(cell.field.name);
 	var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
 	if (cell.field.capacity == "_unique value")
 	{
-		labelDiv.classed("left-label-div left-fixed-width-div", true);
-		itemsDiv.classed("right-label-div expanding-div", true);
+		sectionObj.classed("unique-cell", true);
+		labelDiv.classed("left-label left-fixed-width", true);
+		itemsDiv.classed("right-label expanding-div", true);
 	}
 	else
-		itemsDiv.classed("border-above border-below", true);
+	{
+		labelDiv.classed("top-label", true);
+	}
 
 	var setupItems = function(divs, cell) {
-		divs.classed("list-div", cell.field.capacity != "_unique value")
+		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
 		.append("div")
 		.classed("string-value-view", true)
 		.classed("string-multi-value-container", cell.field.capacity != "_unique value")
@@ -305,13 +305,13 @@ function _showViewStringCell(obj, cell)
 
 function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 {
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
-		.classed("border-below", cell.field.capacity == "_unique value");
+	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
 	
 	if (cell.field.capacity == "_unique value")
 	{
 		var itemsDiv = sectionObj.append("div").classed("items-div string-unique-item", true);
 
+		sectionObj.classed("border-below unique-cell", true);
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
@@ -326,7 +326,7 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 
 		if (cell.field.descriptorType != "_by text")
 		{
-			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label-div string-unique-input-label", true)
+			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label string-unique-input-label", true)
 				.text(cell.field.name);
 			labelDiv
 				.style("line-height", divs.selectAll("input").style("line-height"));
@@ -336,10 +336,10 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 	}
 	else
 	{
-		sectionObj.append("div").classed("cell-label-div", true)
+		sectionObj.append("div").classed("cell-label top-label", true)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("div")
-			.classed("items-div border-above", true);
+			.classed("items-div border-above border-below", true);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -398,6 +398,8 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
+	the viewFunction is called when the item is clicked.
+	the successfunction is called when the viewFunction succeeds.
  */
 function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canShowDetails, viewFunction, successFunction)
 {
@@ -405,11 +407,7 @@ function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canS
 	{
 		var itemsDiv = d3.select(this);
 	
-		var divs = itemsDiv
-			.append("li")	// So that each button appears on its own row.
-			.datum(newData)
-			.each(_setupItemHandlers);
-		
+		var divs = appendItem(itemsDiv, newData);
 		_checkItemsDivDisplay(itemsDiv, cell);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
@@ -519,15 +517,27 @@ function appendDeleteControls(buttons)
 function appendRightChevrons(buttons)
 {
 	buttons.append("span")
-		.classed("glyphicon glyphicon-chevron-right text-muted right-fixed-width-div right-vertical-chevron", true);
+		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron pull-right", true)
+		.append("img")
+		.attr("src", rightChevronPath)
+		.attr("height", "18px");
+}
+
+function appendLeftChevrons(buttons)
+{
+	return buttons.append("span")
+		.append("img")
+		.attr("src", leftChevronPath)
+		.attr("height", "22px")
+		.style("margin-top", "-3px")
+		.style("margin-right", "-6px");
 }
 
 /* This function appends the descriptions of each object to the button. */
 function appendButtonDescriptions(buttons, cell)
 {
 	buttons.append("span")
-		.classed("text-muted", true)
-		.classed("string-value-view expanding-div", true)
+		.classed("description-text string-value-view expanding-div", true)
 		.classed("string-multi-value-container pull-left", !cell || cell.field.capacity != "_unique value")
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
@@ -535,20 +545,20 @@ function appendButtonDescriptions(buttons, cell)
 
 function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 {
-	var sectionObj = d3.select(obj).classed("cell-div", true)
-		.classed("btn row-button unique-row-button", cell.field.capacity == "_unique value" && !_isPickCell(cell))
-		.classed("border-below", cell.field.capacity == "_unique value");
+	var sectionObj = d3.select(obj);
 	
-	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
+	var labelDiv = sectionObj.append("div").classed("cell-label", true)
 		.text(cell.field.name);
 	var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
 	if (cell.field.capacity == "_unique value")
 	{
-		labelDiv.classed("left-label-div left-fixed-width-div", true);
-		itemsDiv.classed("right-label-div expanding-div", true);
+		sectionObj.classed("unique-cell", true);
+		labelDiv.classed("left-label left-fixed-width", true);
+		itemsDiv.classed("right-label expanding-div", true);
 		if (!_isPickCell(cell))
-			sectionObj.on("click", function(cell) {
+			sectionObj.classed("btn row-button unique-row-button", true)
+			          .on("click", function(cell) {
 				if (prepareClick())
 				{
 					showViewObjectPanel(cell.data[0], cell, containerUUID, containerPanel, revealPanelLeft);
@@ -556,7 +566,9 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 			});
 	}
 	else
-		itemsDiv.classed("border-above border-below", true);
+	{
+		labelDiv.classed("top-label", true);
+	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !_isPickCell(cell), showViewObjectPanel, revealPanelLeft));
@@ -585,7 +597,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	}
 	else
 	{
-		buttons = divs.append("div").classed("list-div", cell.field.capacity != "_unique value");
+		buttons = divs.append("div").classed("multi-line-item", cell.field.capacity != "_unique value");
 	}
 	
 	appendButtonDescriptions(buttons, cell);
@@ -593,17 +605,17 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 
 function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 {
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true)
-		.classed("btn row-button unique-row-button border-below", cell.field.capacity == "_unique value");
+	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
 	
-	var labelDiv = sectionObj.append("div").classed("cell-label-div", true)
+	var labelDiv = sectionObj.append("div").classed("cell-label", true)
 		.text(cell.field.name);
 	var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
 	if (cell.field.capacity == "_unique value")
 	{
-		labelDiv.classed("left-label-div left-fixed-width-div", true);
-		itemsDiv.classed("right-label-div expanding-div", true);
+		sectionObj.classed("unique-cell btn row-button unique-row-button border-below", true);
+		labelDiv.classed("left-label left-fixed-width", true);
+		itemsDiv.classed("right-label expanding-div", true);
 		sectionObj.on("click", function(cell) {
 			if (prepareClick())
 			{
@@ -615,7 +627,10 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 		});
 	}
 	else
+	{
+		labelDiv.classed("top-label", true);
 		itemsDiv.classed("border-above", true);
+	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, showEditObjectPanel, revealPanelLeft));
@@ -1089,7 +1104,7 @@ function appendViewButtons(divs)
 	var buttons = divs.append("div").classed("btn row-button multi-row-content expanding-div", true);
 	
 	buttons.append("span")
-		.classed("text-muted pull-left", true)
+		.classed("description-text pull-left", true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
 		
@@ -1108,6 +1123,14 @@ function appendItems(container, data)
 		.each(_setupItemHandlers);
 }
 
+function appendItem(container, data)
+{
+	return container
+		.append("li")	// So that each button appears on its own row.
+		.datum(data)
+		.each(_setupItemHandlers);
+}
+
 /* Returns the set of objects that contain the description of each data element */
 function appendViewCellItems(container, cell, clickFunction)
 {
@@ -1116,7 +1139,7 @@ function appendViewCellItems(container, cell, clickFunction)
 	var buttons = appendRowButtons(divs, cell);
 	
 	buttons.append("span")
-		.classed("text-muted pull-left", true)
+		.classed("description-text pull-left", true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
 		
@@ -1217,10 +1240,12 @@ function createPanel(containerPanel, datum, headerText)
 	
 		panel2Div.appendSections = function(sectionData)
 		{
-			return panel2Div.selectAll("section")
+			panel2Div.append("div").classed("cell-border-below", true);
+			return panel2Div
+					.selectAll("section")
 					.data(sectionData)
 					.enter()
-					.append("section")
+					.append("section");
 		}
 		panel2Div.resetHeight = function()
 		{
@@ -1234,6 +1259,7 @@ function createPanel(containerPanel, datum, headerText)
 		panel2Div.show_view_cells = function(objectData, cell, containerUUID, panelDiv)
 		{
 			this.appendSections(objectData.value.cells)
+				.classed("cell-div", true)
 				.each(function(cell) {
 						if (cell.field.descriptorType != "_by text")
 						{
@@ -1261,7 +1287,9 @@ function createPanel(containerPanel, datum, headerText)
 								$(this).css("display", "block");
 							});
 						}
-					});
+					})
+				.append("div").classed("cell-border-below", 
+					function(cell) { return cell.field.descriptorType != "_by text" } );
 		}
 		
 		panel2Div.show_edit_cells = function(objectData, cell, panelDiv)
@@ -1359,7 +1387,7 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, conta
 
 		var backButton = navContainer.appendLeftButton()
 			.on("click", handleCloseRightEvent);
-		backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text(" " + containerPanel.attr("headerText"));
 	
 		var panel2Div = panelDiv.appendScrollArea();
@@ -1389,7 +1417,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 
 		var backButton = navContainer.appendLeftButton()
 			.on("click", handleCloseRightEvent);
-		backButton.append("span").classed("glyphicon glyphicon-chevron-left site-active-text", true);
+		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text(" " + containerPanel.attr("headerText"));
 	
 		var editButton = navContainer.appendRightButton()

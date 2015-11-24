@@ -121,11 +121,13 @@ var Queue = (function () {
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.paths = {};
+	CRP.prototype.configurations = {};
 	CRP.prototype.queue = null;
 	
     function CRP() {
     	this.instances = {};
     	this.paths = {};
+    	this.configurations = {};
         this.queue = new Queue(true); //initialize the queue
     };
     
@@ -232,6 +234,28 @@ var CRP = (function() {
 							newInstances.forEach(function(i)
 								{ crp.pushInstance(i); });
 							successFunction(newInstances);
+							_this.queue.next();
+						}, failFunction);
+				}
+			});
+	};
+	CRP.prototype.getConfiguration = function(ofKindID, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+		var _this = this;
+		this.queue.add(
+			function() {
+				if (ofKindID in _this.configurations)
+					successFunction(_this.configurations[ofKindID]);
+				else
+				{
+					cr.getConfiguration(null, ofKindID,
+						function(cells) {
+							_this.configurations[ofKindID] = cells;
+							successFunction(cells);
 							_this.queue.next();
 						}, failFunction);
 				}
