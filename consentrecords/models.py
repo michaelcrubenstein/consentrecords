@@ -383,13 +383,19 @@ class Instance(dbmodels.Model):
     # Self is of type configuration.
     def getFieldByName(self, name):
         vs = self.value_set.filter(deletedvalue__isnull=True,
-                              fieldID=Terms.field,
-                              referenceValue__value_set__fieldID=Terms.name,
-                              referenceValue__value_set__deletedvalue__isnull=True,
-                              referenceValue__value_set__referenceValue__value_set__fieldID=Terms.uuName,
-                              referenceValue__value_set__referenceValue__value_set__stringValue=name,
-                              referenceValue__value_set__referenceValue__value_set__deletedvalue__isnull=True)
-        return vs[0].referenceValue
+                              fieldID=Terms.field)\
+                              .select_related('referenceValue')
+        for v in vs:
+            vs2 = v.referenceValue.value_set.filter(deletedvalue__isnull=True,
+                              fieldID=Terms.name)\
+                              .select_related('referenceValue')
+            for v2 in vs2:
+                vs3 = v2.referenceValue.value_set.filter(deletedvalue__isnull=True,
+                              fieldID=Terms.uuName,
+                              stringValue=name)
+                for v3 in vs3:
+                    return v.referenceValue
+        raise Value.DoesNotExist
 
     @property
     def inheritsSecurity(self):
@@ -1475,32 +1481,32 @@ class Terms():
     pickObjectRuleEnum = None
     createObjectRuleEnum = None
     
-    def initialize():
+    def initialize(transactionState=None):
         try:
             Terms.uuName = Terms.getUUName()
-            Terms.configuration = Terms.getOrCreateNamedInstance(TermNames.configuration)
-            Terms.field = Terms.getOrCreateNamedInstance(TermNames.field)
-            Terms.boolean = Terms.getOrCreateNamedInstance(TermNames.boolean)
-            Terms.name = Terms.getOrCreateNamedInstance(TermNames.name)
-            Terms.ofKind = Terms.getOrCreateNamedInstance(TermNames.ofKind)
-            Terms.pickObjectPath = Terms.getOrCreateNamedInstance(TermNames.pickObjectPath)
-            Terms.enumerator = Terms.getOrCreateNamedInstance(TermNames.enumerator)
-            Terms.dataType = Terms.getOrCreateNamedInstance(TermNames.dataType)
-            Terms.maxCapacity = Terms.getOrCreateNamedInstance(TermNames.maxCapacity)
-            Terms.addObjectRule = Terms.getOrCreateNamedInstance(TermNames.addObjectRule)
-            Terms.descriptorType = Terms.getOrCreateNamedInstance(TermNames.descriptorType)
-            Terms.user = Terms.getOrCreateNamedInstance(TermNames.user)
-            Terms.userID = Terms.getOrCreateNamedInstance(TermNames.userID)
-            Terms.email = Terms.getOrCreateNamedInstance(TermNames.email)
-            Terms.firstName = Terms.getOrCreateNamedInstance(TermNames.firstName)
-            Terms.lastName = Terms.getOrCreateNamedInstance(TermNames.lastName)
-            Terms.language = Terms.getOrCreateNamedInstance(TermNames.language)
-            Terms.translation = Terms.getOrCreateNamedInstance(TermNames.translation)
-            Terms.text = Terms.getOrCreateNamedInstance(TermNames.text)
-            Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord)
-            Terms.privilege = Terms.getOrCreateNamedInstance(TermNames.privilege)
-            Terms.group = Terms.getOrCreateNamedInstance(TermNames.group)
-            Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord)
+            Terms.configuration = Terms.getOrCreateNamedInstance(TermNames.configuration, transactionState)
+            Terms.field = Terms.getOrCreateNamedInstance(TermNames.field, transactionState)
+            Terms.boolean = Terms.getOrCreateNamedInstance(TermNames.boolean, transactionState)
+            Terms.name = Terms.getOrCreateNamedInstance(TermNames.name, transactionState)
+            Terms.ofKind = Terms.getOrCreateNamedInstance(TermNames.ofKind, transactionState)
+            Terms.pickObjectPath = Terms.getOrCreateNamedInstance(TermNames.pickObjectPath, transactionState)
+            Terms.enumerator = Terms.getOrCreateNamedInstance(TermNames.enumerator, transactionState)
+            Terms.dataType = Terms.getOrCreateNamedInstance(TermNames.dataType, transactionState)
+            Terms.maxCapacity = Terms.getOrCreateNamedInstance(TermNames.maxCapacity, transactionState)
+            Terms.addObjectRule = Terms.getOrCreateNamedInstance(TermNames.addObjectRule, transactionState)
+            Terms.descriptorType = Terms.getOrCreateNamedInstance(TermNames.descriptorType, transactionState)
+            Terms.user = Terms.getOrCreateNamedInstance(TermNames.user, transactionState)
+            Terms.userID = Terms.getOrCreateNamedInstance(TermNames.userID, transactionState)
+            Terms.email = Terms.getOrCreateNamedInstance(TermNames.email, transactionState)
+            Terms.firstName = Terms.getOrCreateNamedInstance(TermNames.firstName, transactionState)
+            Terms.lastName = Terms.getOrCreateNamedInstance(TermNames.lastName, transactionState)
+            Terms.language = Terms.getOrCreateNamedInstance(TermNames.language, transactionState)
+            Terms.translation = Terms.getOrCreateNamedInstance(TermNames.translation, transactionState)
+            Terms.text = Terms.getOrCreateNamedInstance(TermNames.text, transactionState)
+            Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord, transactionState)
+            Terms.privilege = Terms.getOrCreateNamedInstance(TermNames.privilege, transactionState)
+            Terms.group = Terms.getOrCreateNamedInstance(TermNames.group, transactionState)
+            Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord, transactionState)
             
             Terms.textEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.textEnum);
             Terms.countEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.countEnum);
@@ -1533,7 +1539,7 @@ class Terms():
         except Instance.DoesNotExist:
             raise Instance.DoesNotExist('the term "%s" is not recognized' % uuname)
     
-    def getOrCreateNamedInstance(uuname):
+    def getOrCreateNamedInstance(uuname, transactionState):
         try:
             return Terms.getNamedInstance(uuname)
         except Instance.DoesNotExist:

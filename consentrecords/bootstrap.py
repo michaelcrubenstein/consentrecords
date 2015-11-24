@@ -238,7 +238,7 @@ def createFieldConfiguration(transactionState):
     
 def initializeFacts(transactionState):
     # Initialize global variables.
-    Terms.initialize()
+    Terms.initialize(transactionState)
     
     createDataTypes(transactionState)
     createAddObjectRules(transactionState)

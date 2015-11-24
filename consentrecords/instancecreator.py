@@ -19,7 +19,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
         field = Instance.objects.get(pk=fieldData["nameID"])
         if fieldData["dataTypeID"] == Terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-                if Terms.isUUID(d) is not None:
+                if Terms.isUUID(d):
                     # This is a reference to an object.
                     parent.addReferenceValue(field, Instance.objects.get(pk=d), i, transactionState)
                 elif d is not None:
@@ -69,7 +69,7 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
                     fieldObject = Instance.objects.get(pk=key)
                 else:
                     if not configuration:
-                        configuration = typeInstance.getSubInstance(fieldID=Terms.configuration)
+                        configuration = typeInstance.getSubInstance(Terms.configuration)
                     fieldObject = configuration.getFieldByName(key)
                 fieldData = fieldObject.getFieldData()
                 if fieldData:
