@@ -78,9 +78,9 @@ class Instance(dbmodels.Model):
     def getDataType(self, fieldID):
         configuration = self.typeID.children.filter(typeID=Terms.configuration,deletedinstance__isnull=True)[0]
         fields = configuration.children.filter(typeID=Terms.field,deletedinstance__isnull=True)
-        f = fields.filter(value__fieldID=Terms.name,
+        f = fields.get(value__fieldID=Terms.name,
                           value__referenceValue=fieldID,
-                          value__deletedvalue__isnull=True)[0]
+                          value__deletedvalue__isnull=True)
         v = f.value_set.filter(fieldID=Terms.dataType,deletedvalue__isnull=True)[0]
         return v.referenceValue
                
@@ -1507,20 +1507,21 @@ class Terms():
             Terms.privilege = Terms.getOrCreateNamedInstance(TermNames.privilege, transactionState)
             Terms.group = Terms.getOrCreateNamedInstance(TermNames.group, transactionState)
             Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord, transactionState)
-            
+        
             Terms.textEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.textEnum);
             Terms.countEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.countEnum);
-            
+        
             Terms.objectEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.object);
             Terms.stringEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.string);
-            
+        
             Terms.uniqueValueEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.uniqueValue);
             Terms.multipleValuesEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.multipleValues);
-    
+
             Terms.pickObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.pickObjectRule);
             Terms.createObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.createObjectRule);
             
         except Instance.DoesNotExist: pass
+        except Value.DoesNotExist: pass
     
     def getUUName():
         try:
