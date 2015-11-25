@@ -6,10 +6,10 @@ var crs = {
 	
 	initialize: function()
 	{
-		privileges = {};
-		privilegeIDs = {};
-		sortedAccessRecords = {"_find": [], "_read": [], "_write": [], "_administer": []};
-		sortedAccessors = {"_find": [], "_read": [], "_write": [], "_administer": []};
+		crs.privileges = {};
+		crs.privilegeIDs = {};
+		crs.sortedAccessRecords = {"_find": [], "_read": [], "_write": [], "_administer": []};
+		crs.sortedAccessors = {"_find": [], "_read": [], "_write": [], "_administer": []};
 	}
 };
 
@@ -35,17 +35,17 @@ function showSharing(containerDiv) {
 				if (d.getValueID() in privileges)
 				{
 					var sa = crs.sortedAccessRecords[privileges[d.getValueID()]];
-					sa.append(a);
+					sa.push(a);
 					sa = crs.sortedAccessors[privileges[d.getValueID()]];
 					var userCell = a.getValueByName("_user");
 					var groupCell = a.getValueByName("_group");
 					for (var j = 0; j < userCell.data.length; ++j)
 					{
-						sa.append(userCell.data[j]);
+						sa.push(userCell.data[j]);
 					}
 					for (var j = 0; j < groupCell.data.length; ++j)
 					{
-						sa.append(groupCell.data[j]);
+						sa.push(groupCell.data[j]);
 					}
 				}
 			}
@@ -155,11 +155,11 @@ function addAccessor(userInstance, accessorLevel)
 		function successFunction(pickedUser, panelDiv)
 		{
 			var accessorID = privilegeIDs[accessorLevel];
-			if (sortedAccessRecords[accessorLevel].length == 0)
+			if (crs.sortedAccessRecords[accessorLevel].length == 0)
 			{
 				function _createAccessRecordSuccess(newData)
 				{
-					sortedAccessRecords[accessorLevel].append(newData);
+					crs.sortedAccessRecords[accessorLevel].push(newData);
 					var itemsDiv = d3.select($(_this).parents(".cell-div")[0].children(".cell-items")[0]);
 					_getOnValueAddedFunction(panelDiv, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft)(null, newData);
 				}
