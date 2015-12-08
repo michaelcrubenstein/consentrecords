@@ -24,9 +24,9 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     parent.addReferenceValue(field, Instance.objects.get(pk=d), i, transactionState)
                 elif d is not None:
                     a = pathparser.tokenize(d)
-                    ids = pathparser.selectAllIDs(a)
+                    ids = pathparser.selectAllObjects(a)
                     if len(ids):
-                        parent.addReferenceValue(field, ids[0][-1], i, transactionState)
+                        parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
                         raise ValueError("Path does not parse to an object: %s" % d)
             else:
@@ -57,6 +57,8 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
                 position = maxIndex + 1
         newIndex = parent.updateElementIndexes(parentFieldID, position, transactionState)
         newValue = parent.addReferenceValue(parentFieldID, item, newIndex, transactionState)
+        item.parentValue = newValue
+        item.save()
     else:
         newValue = None
 

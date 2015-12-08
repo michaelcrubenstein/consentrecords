@@ -55,7 +55,9 @@
 					userInstance.calculateDescription();
 					showCurrentUser();
 				}
-				cr.getData("#" + userInstance.getValueID(), [], successFunction, asyncFailFunction);
+				cr.getData({path: "#" + userInstance.getValueID(), 
+							done: successFunction, 
+							fail: asyncFailFunction});
 			};
 			cr.getUserID(accessToken, successFunction, asyncFailFunction)
 		}

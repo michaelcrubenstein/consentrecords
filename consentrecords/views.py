@@ -49,7 +49,7 @@ def userHome(request):
         user = UserFactory.getUserInstance(request.user.id)
         if not user:
             print ("user is not set up: %s" % (request.user.get_full_name()))
-            return ("user is not set up: %s" % request.user.get_full_name())
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
         
     if settings.FACEBOOK_SHOW:
@@ -296,10 +296,11 @@ class api:
     def selectAll(user, data):
         try:
             path = data.get("path", None)
+            limit = int(data.get("limit", "0"))
         
             if path:
                 a = pathparser.tokenize(path)
-                p = pathparser.selectAllDescriptors(a)
+                p = pathparser.selectAllDescriptors(path=a, limit=limit)
             else:
                 try:
                     ofKindName = data.get("ofKindName", "_uuname")
@@ -307,7 +308,7 @@ class api:
                 except Instance.DoesNotExist:
                     return JsonResponse({'success':False, 'error': 'the term "%s" was not recognized' % ofKindName })
                 a = pathparser.tokenize(ofKindID)
-                p = Instance.rootDescriptors(a)
+                p = Instance.rootDescriptors(a, limit)
         
             results = {'success':True, 'objects': p}
         except Exception as e:

@@ -280,6 +280,7 @@ function _showViewStringCell(obj, cell)
 	}
 	else
 	{
+		sectionObj.classed("multiple-values-cell", true);
 		labelDiv.classed("top-label", true);
 	}
 
@@ -336,6 +337,7 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 	}
 	else
 	{
+		sectionObj.classed("multiple-values-cell", true);
 		sectionObj.append("div").classed("cell-label top-label", true)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("div")
@@ -345,7 +347,7 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 		
 		var appendControls = function(divs, cell)
 		{	
-			appendConfirmDeleteControls(divs, cell);
+			appendConfirmDeleteControls(divs);
 			
 			/* Inner layer needed so that padding is applied to inner content but not 
 				confirm delete control
@@ -424,7 +426,7 @@ function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canS
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
-			appendConfirmDeleteControls(divs, cell);
+			appendConfirmDeleteControls(divs);
 		
 		var buttons = appendRowButtons(divs, cell);
 
@@ -450,7 +452,7 @@ function appendRowButtons(divs, cell)
 			.classed("btn row-button multi-row-content expanding-div", cell.field.capacity != "_unique value");
 }
 
-function appendConfirmDeleteControls(divs, containerCell)
+function appendConfirmDeleteControls(divs)
 {
 	divs.classed("delete-confirm-container", true)
 		.each(function(d)
@@ -567,6 +569,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	}
 	else
 	{
+		sectionObj.classed("multiple-values-cell", true);
 		labelDiv.classed("top-label", true);
 	}
 
@@ -628,6 +631,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	}
 	else
 	{
+		sectionObj.classed("multiple-values-cell", true);
 		labelDiv.classed("top-label", true);
 		itemsDiv.classed("border-above", true);
 	}
@@ -652,7 +656,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	var divs = appendItems(itemsDiv, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs, cell);
+		appendConfirmDeleteControls(divs);
 		
 	var buttons = appendRowButtons(divs, cell);
 
@@ -1155,7 +1159,7 @@ function appendEditCellItems(container, cell, clickFunction)
 	var divs = appendItems(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs, cell);
+		appendConfirmDeleteControls(divs);
 	
 	var buttons = appendRowButtons(divs, cell);
 	
@@ -1240,7 +1244,6 @@ function createPanel(containerPanel, datum, headerText)
 	
 		panel2Div.appendSections = function(sectionData)
 		{
-			panel2Div.append("div").classed("cell-border-below", true);
 			return panel2Div
 					.selectAll("section")
 					.data(sectionData)
@@ -1322,12 +1325,17 @@ function setupSearchBar(searchBarNode, textChanged)
 		.append("input")
 		.classed("search-input", true)
 		.attr("placeholder", "Search");
-		
+	
+	var lastText = "";	
 	$(searchInput.node()).on("keyup input paste", function(e) {
 		searchCancelButton
 			.classed("site-disabled-text", this.value.length == 0)
 			.classed("site-active-text", this.value.length > 0);
-		textChanged.call(this);
+		if (lastText != this.value)
+		{
+			lastText = this.value;
+			textChanged.call(this);
+		}
 	});
 	
 	$(searchCancelButton.node()).on("click", function(e) {
@@ -1398,6 +1406,7 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, conta
 							
 		showPanelLeft(panelDiv.node());
 	
+		panel2Div.append("div").classed("cell-border-below", true);
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
 	}
 	
@@ -1444,6 +1453,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, container
 
 		panel2Div.appendAlertContainer();
 							
+		panel2Div.append("div").classed("cell-border-below", true);
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID, panelDiv);
 		
 		showSuccessFunction(panelDiv.node());
@@ -2052,15 +2062,15 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 			if (currentObject != null && currentObject.getValueID())
 			{
 				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
-				cr.selectAll(pickObjectPath, selectAllSuccessFunction, failFunction);
+				cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: failFunction});
 			}
 			else
 				failFunction("The container has not yet been saved.");
 		}
 		else	
-			cr.selectAll(pickObjectPath, selectAllSuccessFunction, failFunction);
+			cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: failFunction});
 	}
 	else
-		cr.selectAll(cell.field.ofKindID, selectAllSuccessFunction, failFunction);
+		cr.selectAll({path: cell.field.ofKindID, done: selectAllSuccessFunction, fail: failFunction});
 }
 		

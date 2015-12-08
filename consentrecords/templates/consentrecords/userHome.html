@@ -444,64 +444,7 @@
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
-				<div id="id_sharing" class="site-fill-panel">
-				<div class="cell-div">
-					<div class="cell-label top-label">Who Can Find You</div>
-					<div class="cell-items">
-					</div>
-					<div>
-						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
-						        privilege="_find">
-							<div class="pull-left">
-								<span class="glyphicon glyphicon-plus"></span>
-								<span> add user or group</span>
-							</div>
-						</button>
-					</div>
-				</div>
-				<div class="cell-div">
-					<div class="cell-label top-label">Who Can Learn About You</div>
-					<div class="cell-items">
-					</div>
-					<div>
-						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
-						        privilege="_read">
-							<div class="pull-left">
-								<span class="glyphicon glyphicon-plus"></span>
-								<span> add user or group</span>
-							</div>
-						</button>
-					</div>
-				</div>
-				<div class="cell-div">
-					<div class="cell-label top-label">Who Can Add Information About You</div>
-					<div class="cell-items">
-					</div>
-					<div>
-						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
-						        privilege="_write">
-							<div class="pull-left">
-								<span class="glyphicon glyphicon-plus"></span>
-								<span> add user or group</span>
-							</div>
-						</button>
-					</div>
-				</div>
-				<div class="cell-div">
-					<div class="cell-label top-label">Who Can Manage Your Account</div>
-					<div class="cell-items">
-					</div>
-					<div>
-						<button class="add-accessor-button btn row-button multi-row-content site-active-text border-above border-below"
-						        privilege="_administer">
-							<div class="pull-left">
-								<span class="glyphicon glyphicon-plus"></span>
-								<span> add user or group</span>
-							</div>
-						</button>
-					</div>
-				</div>
-				</div>
+				<div id="id_sharing" class="site-fill-panel"></div>
 				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
 	    </panel>
@@ -717,11 +660,6 @@
 			}
 
 			e.preventDefault();
-		});
-		
-		$(".add-accessor-button").click(function(e)
-		{
-			addAccessor.call(this, userInstance, this.getAttribute("privilege"));
 		});
 		
 		$(document).ready (function(e) {
@@ -1250,7 +1188,10 @@
 			}
 			
 			var path = "#" + userInstance.getValueID() + '>"Consent Record"';
-			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
 		}
 		
 		function show_services(containerDiv) {
@@ -1291,7 +1232,9 @@
 			}
 			
 			var path = "Service";
-			crp.getData(path, undefined, successFunction, asyncFailFunction);
+			crp.getData({path: path, 
+						 done: successFunction, 
+						 fail: asyncFailFunction});
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -1336,12 +1279,12 @@
 			return startDate + connector + endDate;
 		}
 		
-		function appendStringItem(obj, label, text)
+		function appendStringItem(obj, label, text, addBorder)
 		{
+			addBorder = (addBorder === undefined) ? true : addBorder;
 			var sectionObj = d3.select(obj);
 	
-			sectionObj.classed("cell-div", true)
-				.classed("border-below", true);
+			sectionObj.classed("cell-div", true);
 	
 			var labelDiv = sectionObj.append("div").classed("cell-label", true)
 				.text(label);
@@ -1364,6 +1307,9 @@
 			else
 				labelDiv.classed("left-label expanding-div", true);
 				
+			if (addBorder)
+				sectionObj.append("div").classed("cell-border-below", true);	
+
 		}
 
 		function setMetaProperties(session, targetHRef)
@@ -1482,7 +1428,7 @@
 			session.calculateDescription();
 			
 			var panelDiv = createPanel(containerPanel, session, offering.getDescription())
-				.classed("list-panel", true);
+				.classed("show-panel", true);
 			var panel = panelDiv.node();
 			
 			var navContainer = panelDiv.appendNavContainer();
@@ -1503,7 +1449,7 @@
 			if (organization)
 			{
 				var orgDiv = panel2Div.append("div");
-				appendStringItem(orgDiv.node(), organization.getDescription(), null);
+				appendStringItem(orgDiv.node(), organization.getDescription(), null, false);
 				if (site.getDescription() && (site.getDescription() !== organization.getDescription()))
 				{
 					orgDiv.append('div')
@@ -1537,9 +1483,11 @@
 							orgDiv.append('div')
 								.classed('left-label sub-text', true)
 								.text(line.trim());
+						orgDiv.append('div').classed('cell-edit-div cell-border-below', true);
 					},
-					function() { }
-					);
+					function() {
+						orgDiv.append('div').classed('cell-edit-div cell-border-below', true);
+					});
 				},
 				function() { }
 				);
@@ -1569,11 +1517,9 @@
 			nextDiv = appendStringDatum("End Date");
 			if (!firstDiv)
 				firstDiv = nextDiv;
-			if (firstDiv)
-				firstDiv.classed("cell-edit-div", true);	/* Add a leading space */			
 
 			var cellDiv = panel2Div.append("div")
-				.classed("cell-div cell-edit-div", true);
+				.classed("cell-div", true);
 			
 			crp.pushCheckCells(offering, function()
 				{
@@ -1627,7 +1573,7 @@
 					if (newText)
 					{
 						appendStringItem(agesDiv.node(), "Ages", newText);
-						agesDiv.classed("cell-edit-div", true);
+						agesDiv.classed("cell-div", true);
 					}
 				});
 			var gradesDiv = panel2Div.append("div");
@@ -1636,7 +1582,7 @@
 					if (newText)
 					{
 						appendStringItem(gradesDiv.node(), "Grades", newText);
-						gradesDiv.classed("cell-edit-div", true);
+						gradesDiv.classed("cell-div", true);
 					}
 				});
 			
@@ -1645,7 +1591,7 @@
 				{
 					if (newText)
 					{
-						webSiteDiv.classed("cell-div cell-edit-div", true)
+						webSiteDiv.classed("cell-div", true)
 							.classed("border-below", true);
 	
 						var labelDiv = webSiteDiv.append("div")
@@ -1705,8 +1651,8 @@
 							
 							var userEmailCell = eventInfo.getCell("_email");
 							var newEmail = userEmailCell.data[0].value;
-							cr.selectAll("#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
-								function(newInstances)
+							cr.selectAll({path: "#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
+								done: function(newInstances)
 								{
 									if (newInstances.length > 0)
 									{
@@ -1723,7 +1669,7 @@
 										addInquiry();
 									}
 								},
-								asyncFailFunction);
+								fail: asyncFailFunction});
 						});
 								
 						$(panel).on("signinCanceled.cr", function()
@@ -1807,9 +1753,9 @@
 					userInstance.checkCells(undefined, undefined, function()
 					{
 						var newEmail = userInstance.getDatum("_email");
-						cr.selectAll("#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
-							checkInquiryFunction,
-							asyncFailFunction);
+						cr.selectAll({path: "#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
+							done: checkInquiryFunction,
+							fail: asyncFailFunction});
 					}, asyncFailFunction);
 				}
 				else
@@ -1936,7 +1882,10 @@
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
 			var path = "#" + service.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
-			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
 		}
 		
 		function show_plans(container) {
@@ -1976,7 +1925,10 @@
 			}
 			
 			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
-			cr.getData(path, ["parents"], successFunction, asyncFailFunction);
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
 		}
 		
 		function hide_organizations()
@@ -2023,7 +1975,7 @@
 			}
 			
 			var path = '#'+userInstance.getValueID()+'::reference(_users)::reference(_group)::reference(Organization)';
-			cr.selectAll(path, successFunction, asyncFailFunction);
+			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
 		}
 		
 		/* Displays a panel in which the specified object's contents appear.
@@ -2337,7 +2289,7 @@
 						}
 					};
 		
-					cr.selectAll("_user[_email="+email+"]", selectAllSuccess, syncFailFunction);
+					cr.selectAll({path: "_user[_email="+email+"]", limit: 50, done: selectAllSuccess, fail: syncFailFunction});
 				}
 			}
 			inquiry.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
@@ -2481,7 +2433,10 @@
 						}
 					}
 					
-					cr.selectAll("_user[_email^="+val+"]", selectAllSuccess, asyncFailFunction);
+					if (val.length < 3)
+						cr.selectAll({path: '_user[_email^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+					else
+						cr.selectAll({path: '_user[_email*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 				}
 			}
 		}
@@ -2620,7 +2575,7 @@
 					doesntExistFunction();
 				}
 			}
-			cr.selectAll(path, successFunction, failFunction);
+			cr.selectAll({path: path, done: successFunction, fail: failFunction} );
 		}
 		
 		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)

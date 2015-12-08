@@ -49,6 +49,7 @@ class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False)
     parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False)
+    parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
         
     def __str__(self):
@@ -72,7 +73,7 @@ class Instance(dbmodels.Model):
     def createEmptyInstance(self, parent, transactionState):
         id = uuid.uuid4()
         i = Instance.objects.create(id=id, typeID=self, parent=parent,
-                                    transaction = transactionState.transaction)
+                                    transaction=transactionState.transaction)
         return i
     
     def getDataType(self, fieldID):
@@ -262,6 +263,19 @@ class Instance(dbmodels.Model):
                 d[v1.fieldID] = (v1.referenceValue.name_values[0], v1.referenceValue)
         return d
     
+    # For a parent field when getting data, construct this special field record
+    # that can be used to display this field data.
+    def getParentReferenceFieldData(self):
+        name = self.getSubValue(Terms.uuName).stringValue
+        fieldData = {"name" : name,
+                     "nameID" : self.id,
+                     "dataType" : TermNames.object,
+                     "dataTypeID" : Terms.objectEnum.id,
+                     "capacity" : TermNames.uniqueValue,
+                     "ofKind" : name,
+                     "ofKindID" : self.id}
+        return fieldData
+                     
     def getFieldData(self, language=None):
         d = self._getSubValueReferences()
         fieldData = None

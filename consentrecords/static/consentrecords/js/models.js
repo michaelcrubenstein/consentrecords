@@ -158,11 +158,13 @@ var CRP = (function() {
 				}
 				else
 				{
-					cr.selectAll("#"+id, function(newInstances)
+					cr.selectAll({path: "#"+id, 
+						done: function(newInstances)
 						{
 							_this.instances[id] = newInstances[0];
 							successFunction(newInstances[0]);
-						}, failFunction);
+						}, 
+						fail: failFunction} );
 				}
 				return true;
 			});
@@ -213,29 +215,34 @@ var CRP = (function() {
 			return i;	/* This isn't an object. */
 	};
 	
-	CRP.prototype.getData = function(path, fields, successFunction, failFunction)
+	/*
+		args has the following fields: path, fields, done, fail
+	 */
+	CRP.prototype.getData = function(args)
 	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
-		if (!path)
+		if (typeof(args.done) != "function")
+			throw "done is not a function";
+		if (typeof(args.fail) != "function")
+			throw "fail is not a function";
+		if (!args.path)
 			throw "path is not defined";
 		var _this = this;
 		this.queue.add(
 			function() {
-				if (path in _this.paths)
-					successFunction(_this.paths[path]);
+				if (args.path in _this.paths)
+					args.done(_this.paths[args.path]);
 				else
 				{
-					cr.getData(path, fields,
-						function(newInstances) {
-							_this.paths[path] = newInstances;
-							newInstances.forEach(function(i)
-								{ crp.pushInstance(i); });
-							successFunction(newInstances);
-							_this.queue.next();
-						}, failFunction);
+					cr.getData({path: args.path, 
+								fields: args.fields,
+								done: function(newInstances) {
+											_this.paths[args.path] = newInstances;
+											newInstances.forEach(function(i)
+												{ crp.pushInstance(i); });
+											args.done(newInstances);
+											_this.queue.next();
+										}, 
+								fail: args.fail});
 				}
 			});
 	};
@@ -420,17 +427,21 @@ var cr = {
 			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
 	},
 	
-	selectAll: function (path, successFunction, failFunction)
+	/* args is an object with up to four parameters: path, limit, done, fail */
+	selectAll: function (args)
 	{
-		if (!failFunction)
+		if (!args.fail)
 			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!args.done)
+			throw ("done function is not specified");
 		var argList = {};
-		if (path)
-			argList.path = path;
+		if (args.path)
+			argList.path = args.path;
 		else
-			throw "neither path was not specified to selectAll"
+			throw "path was not specified to selectAll"
+			
+		if (args.limit !== undefined)
+			argList.limit = args.limit;
 		
 		$.getJSON(cr.urls.selectAll, 
 			argList,
@@ -443,13 +454,13 @@ var cr = {
 						newObjects.push(cr.dataTypes._object.copyValue(v));
 					});
 					
-					if (successFunction)
-						successFunction(newObjects);
+					if (args.done)
+						args.done(newObjects);
 				}
 				else
 				{
-					if (failFunction)
-						failFunction(json.error);
+					if (args.fail)
+						args.fail(json.error);
 				}
 			}
 		);
@@ -766,17 +777,21 @@ var cr = {
 		);
 	},
 	
-	getData: function(path, fields, successFunction, failFunction)
+	/*
+		args is an object with up to four parameters: path, fields, done, fail
+	 */
+	getData: function(args)
 	{
-		if (!failFunction)
+		if (!args.fail)
 			throw ("failFunction is not specified");
-		if (!successFunction)
+		if (!args.done)
 			throw ("successFunction is not specified");
-		if (!path)
+		if (!args.path)
 			throw ("path is not specified");
 		
-		var data = {path : path, 
-			    fields : JSON.stringify(fields) };
+		var data = {path : args.path}
+		if (args.fields)
+			data['fields'] = JSON.stringify(args.fields); 
 		if (cr.accessToken)
 			data["access_token"] = cr.accessToken;
 				  
@@ -797,16 +812,16 @@ var cr = {
 						instances.push(v);
 					}
 				
-					successFunction(instances);
+					args.done(instances);
 				}
 				else {
-					failFunction(json.error);
+					args.fail(json.error);
 				}
 			}
 		)
 		.fail(function(jqXHR, textStatus, errorThrown)
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
 					}
 				);
 	}

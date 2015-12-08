@@ -50,7 +50,7 @@ class parser:
                 if len(lastString) > 0: a += [lastString]
                 lastString = c
             elif c == '=':
-                if lastString in '~^$|<>': # Check for characters that are combined with '='
+                if lastString in '~^*$|<>': # Check for characters that are combined with '='
                     lastString += c
                 else:
                     if len(lastString) > 0: a += [lastString]

@@ -86,11 +86,13 @@ var CRP = (function() {
 				}
 				else
 				{
-					cr.selectAll("#"+id, function(newInstances)
+					cr.selectAll({path: "#"+id, 
+						done: function(newInstances)
 						{
 							_this.instances[id] = newInstances[0];
 							successFunction(newInstances[0]);
-						}, failFunction);
+						}, 
+						fail: failFunction);
 				}
 				return true;
 			});
@@ -156,14 +158,16 @@ var CRP = (function() {
 					successFunction(_this.paths[path]);
 				else
 				{
-					cr.getData(path, fields,
-						function(newInstances) {
+					cr.getData({path: path, 
+								fields: fields,
+								done: function(newInstances) {
 							_this.paths[path] = newInstances;
 							$(newInstances).each(function()
 								{ crp.pushInstance(this); });
 							successFunction(newInstances);
 							_this.queue.next();
-						}, failFunction);
+						}, 
+								fail: failFunction});
 				}
 			});
 	};

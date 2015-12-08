@@ -111,9 +111,9 @@
 			{
 				showPanelNow(panelDiv);
 			}
-			cr.selectAll("{{path}}", 
-				getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
-				asyncFailFunction);
+			cr.selectAll({path: "{{path}}", 
+				done: getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
+				fail: asyncFailFunction});
 		});
 		
 // 		$(document).ready(function(e) { resetidObjectsHeight() });
