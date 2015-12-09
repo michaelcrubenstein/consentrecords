@@ -33,6 +33,13 @@ class parser:
                 if len(lastString) > 0:
                     a += [lastString]
                     lastString = ""
+            elif c == ',':
+                if len(lastString) > 0:
+                    if len(a) >= 2 and a[-2] == ',':
+                        a[-1] += [lastString]
+                    else:
+                        a += [',', [lastString]]
+                    lastString=''
             elif c in ':*':
                 if len(lastString) > 0:
                     if lastString.count(c) == len(lastString):
@@ -85,8 +92,8 @@ class parser:
                 item, i = parser.cascade(source, i+1, ')')
                 a += [s, item]
             elif len(s) > 1 and s[0] == '"':
-            	a += [s[1:-1].replace('""', '"')]
-            	i += 1
+                a += [s[1:-1].replace('""', '"')]
+                i += 1
             else:
                 a += [s]
                 i += 1
