@@ -14,9 +14,14 @@ def refineResults(resultSet, path):
     
     if path[0] == '#':
         return Instance.objects.filter(pk=path[1]), path[2:]
+    elif path[0] == '*':
+    	return Instance.objects.filter(deletedinstance__isnull=True)
     elif path[0] == '[':
         params = path[1]
-        i = Terms.getInstance(params[0])
+        if params[0] != '?':
+            i = Terms.getInstance(params[0])
+        else:
+            i = None
         if len(params) == 1:
             f = resultSet.filter(value__fieldID=i, value__deletedvalue__isnull=True)
         elif len(params) == 3:
@@ -38,8 +43,12 @@ def refineResults(resultSet, path):
                 stringText = Q(value__stringValue__gte=testValue)
             else:
                 raise ValueError("unrecognized symbol: %s" & symbol)
-            f = resultSet.filter(stringText, value__fieldID=i,
-                                 value__deletedvalue__isnull=True)
+            if i:
+                f = resultSet.filter(stringText, value__fieldID=i,
+                                     value__deletedvalue__isnull=True)
+            else:
+                f = resultSet.filter(stringText,
+                                     value__deletedvalue__isnull=True)
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
         return f, path[2:]

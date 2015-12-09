@@ -192,9 +192,9 @@ function pickAccessor(header, containerPanel, successFunction)
 			}
 			
 			if (val.length < 3)
-				cr.selectAll({path: '_user[_email^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+				cr.selectAll({path: '_user[?^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
 			else
-				cr.selectAll({path: '_user[_email*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+				cr.selectAll({path: '_user[?*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 		}
 	}
 	
