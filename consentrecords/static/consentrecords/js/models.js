@@ -795,6 +795,9 @@ var cr = {
 		if (cr.accessToken)
 			data["access_token"] = cr.accessToken;
 				  
+		if (args.limit !== undefined)
+			data.limit = args.limit;
+		
 		$.getJSON(cr.urls.getData, data,
 			function(json)
 			{
