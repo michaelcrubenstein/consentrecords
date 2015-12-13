@@ -401,6 +401,7 @@ class api:
     def getData(user, data):
         try:
             path = data.get('path', None)
+            limit = int(data.get("limit", "0"))
         
             if not path:
                 return JsonResponse({'success':False, 'error': "path was not specified in getData"})
@@ -410,7 +411,7 @@ class api:
 
             a = pathparser.tokenize(path)
             
-            uuObjects = pathparser.selectAllObjects(a)
+            uuObjects = pathparser.selectAllObjects(path=a, limit=limit)
             fieldsDataDictionary = {}
             nameLists = NameList()
             p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
