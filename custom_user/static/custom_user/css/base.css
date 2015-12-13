@@ -28,7 +28,7 @@
 	top: 0px;
 	opacity: 0.8;
 }
-.site-fill-panel {	/* A content panel that fills the entier container. */
+.site-fill-panel {	/* A content panel that fills the entire container. */
 	position: absolute;
 	left: 0px;
 	right: 0px;
@@ -41,7 +41,6 @@
 	right: 0px;
 	top: 40px;
 	bottom: 0px;
-	overflow-y: scroll;
 }
 .site-content-panel-under-over {	/* A content panel that has a navbar above and below. */
 	position: absolute;
@@ -49,7 +48,6 @@
 	right: 0px;
 	top: 40px;
 	bottom: 40px;
-	overflow-y: scroll;
 }
 
 /* Titles go in the lower center of the nav bar. */
