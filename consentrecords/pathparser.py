@@ -15,7 +15,7 @@ def refineResults(resultSet, path):
     if path[0] == '#':
         return Instance.objects.filter(pk=path[1]), path[2:]
     elif path[0] == '*':
-    	return Instance.objects.filter(deletedinstance__isnull=True)
+        return Instance.objects.filter(deletedinstance__isnull=True)
     elif path[0] == '[':
         params = path[1]
         if params[0] != '?':
@@ -63,10 +63,16 @@ def refineResults(resultSet, path):
         function = path[1]
         if function == 'reference':
             if path[2] == '(':
-                t = Terms.getInstance(path[3][0])
-                f = Instance.objects.filter(typeID=t,
-                                            value__deletedvalue__isnull=True,
-                                            value__referenceValue__in=resultSet)
+                if path[3][0] == ',':
+                    t = map(Terms.getInstance, path[3][1])
+                    f = Instance.objects.filter(typeID__in=t,
+                                                value__deletedvalue__isnull=True,
+                                                value__referenceValue__in=resultSet)
+                else:
+                    t = Terms.getInstance(path[3][0])
+                    f = Instance.objects.filter(typeID=t,
+                                                value__deletedvalue__isnull=True,
+                                                value__referenceValue__in=resultSet)
                 return f, path[4:]
             else:
                 raise ValueError("malformed reference (missing parentheses)")
