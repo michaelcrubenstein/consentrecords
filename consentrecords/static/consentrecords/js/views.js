@@ -26,7 +26,7 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
 function syncFailFunction(error)
 {
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".panel-scrolling").scrollTop(0);
+	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	unblockClick();
 }
 
@@ -35,7 +35,7 @@ function syncFailFunction(error)
 function asyncFailFunction(error)
 {
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".panel-scrolling").scrollTop(0);
+	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	/* Don't unblock here, because there was no block. */
 }
 		
@@ -87,13 +87,13 @@ function showClickFeedback(obj)
 function showPanelUp(panelNode)
 {
 	window.scrollTo(0, 0);
-	$(panelNode).offset({top: window.innerHeight, left: 0})
-				   .height(0)
-				   .width("100%")
-				   .css("display", "block")
-				   .trigger("revealing.cr")
-				   .animate({height: "100%", top: 0}, 400, "swing",
-						function() {
+	$(panelNode).hide("slide", {direction: "down"}, 0);
+	$(panelNode).height("100%")
+				.width("100%")
+				.css("display", "block")
+				.trigger("revealing.cr");
+	$(window).trigger("resize");
+	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
 							$(window).trigger("resize");
 							unblockClick();
 						});
@@ -113,8 +113,8 @@ function showPanelNow(panelNode)
 function showPanelLeft(panelNode)
 {
 	window.scrollTo(0, 0);
-	$(panelNode).offset({top: 0, left: 0})
-				.height("100%")
+	$(panelNode).hide("slide", {direction: "right"}, 0);
+	$(panelNode).height("100%")
 				.width("100%")
 				.css("display", "block")
 				.trigger("revealing.cr");
@@ -131,7 +131,7 @@ function hidePanelDown(panelNode, doRemove)
 	
 	closealert();
 	$(panelNode).trigger("hiding.cr");
-	$(panelNode).animate({top: window.innerHeight}, 400, "swing", 
+	$(panelNode).hide("slide", {direction: "down"}, 400,
 		function() {
 			if (doRemove)
 				$(this).remove();
@@ -304,6 +304,14 @@ function _showViewStringCell(obj, cell)
 	setupItems(divs, cell);
 }
 
+function _confirmDeleteClick(d)
+{
+	if (prepareClick())
+	{
+		cr.deleteValue(d, unblockClick, syncFailFunction);
+	}
+}
+
 function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
@@ -347,7 +355,8 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 		
 		var appendControls = function(divs, cell)
 		{	
-			appendConfirmDeleteControls(divs);
+			appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
 			
 			/* Inner layer needed so that padding is applied to inner content but not 
 				confirm delete control
@@ -426,7 +435,8 @@ function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canS
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
-			appendConfirmDeleteControls(divs);
+			appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
 		
 		var buttons = appendRowButtons(divs, cell);
 
@@ -442,14 +452,15 @@ function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canS
 		if (canShowDetails)
 			appendRightChevrons(buttons);
 
-		appendButtonDescriptions(buttons, cell);
+		appendButtonDescriptions(buttons, cell)
+			.each(_pushTextChanged);
 	}
 }
 
 function appendRowButtons(divs, cell)
 {
 	return divs.append("div")
-			.classed("btn row-button multi-row-content expanding-div", cell.field.capacity != "_unique value");
+			.classed("btn row-button multi-row-content expanding-div", !cell || cell.field.capacity != "_unique value");
 }
 
 function appendConfirmDeleteControls(divs)
@@ -464,7 +475,7 @@ function appendConfirmDeleteControls(divs)
 			d.addTarget("valueDeleted.cr", this);
 		});						
 	
-	divs.append("button")
+	return divs.append("button")
 		.classed("delete-confirm-button right-fixed-width-div", true)
 		.text("Delete")
 		.style("width", "0px")
@@ -476,19 +487,6 @@ function appendConfirmDeleteControls(divs)
 			deleteButton.animateRotate(180, 90, 400);
 			$(this).animate({width: "0px", "padding-left": "0px", "padding-right": "0px"},
 				400);
-		})
-		.on('click', function(d)
-		{
-			if (prepareClick())
-			{
-				var deleteDiv = $(this).parents()[0];
-				var failFunction = syncFailFunction;
-				var successFunction = function()
-				{
-					unblockClick();
-				}
-				cr.deleteValue(d, successFunction, failFunction);
-			}
 		});
 }
 
@@ -538,11 +536,10 @@ function appendLeftChevrons(buttons)
 /* This function appends the descriptions of each object to the button. */
 function appendButtonDescriptions(buttons, cell)
 {
-	buttons.append("span")
+	return buttons.append("span")
 		.classed("description-text string-value-view expanding-div", true)
 		.classed("string-multi-value-container pull-left", !cell || cell.field.capacity != "_unique value")
-		.text(_getDataDescription)
-		.each(_pushTextChanged);
+		.text(_getDataDescription);
 }
 
 function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
@@ -603,7 +600,8 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		buttons = divs.append("div").classed("multi-line-item", cell.field.capacity != "_unique value");
 	}
 	
-	appendButtonDescriptions(buttons, cell);
+	appendButtonDescriptions(buttons, cell)
+		.each(_pushTextChanged);
 }
 
 function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
@@ -656,7 +654,8 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	var divs = appendItems(itemsDiv, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs);
+		appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
 		
 	var buttons = appendRowButtons(divs, cell);
 
@@ -668,9 +667,10 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 
 	appendRightChevrons(buttons);	
 		
-	appendButtonDescriptions(buttons, cell);
+	appendButtonDescriptions(buttons, cell)
+		.each(_pushTextChanged);
 	
-	if (["_over time", "_multiple values"].indexOf(cell.field["capacity"]) >= 0)
+	if (cell.field.capacity != "_unique value")
 	{
 		/* Add one more button for the add Button item. */
 		var buttonDiv = sectionObj.append("div")
@@ -1102,15 +1102,39 @@ var dataTypeViews = {
 	},
 };
 
-/* Append a set of buttons to each div for displaying the text for each item. */
-function appendViewButtons(divs)
+function appendDescriptions(buttons)
 {
-	var buttons = divs.append("div").classed("btn row-button multi-row-content expanding-div", true);
-	
 	buttons.append("span")
 		.classed("description-text pull-left", true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
+}
+
+function appendButtons(panelDiv, rootObjects, buttonClicked, fill)
+{
+	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
+	
+	var itemsDiv = panelDiv.append("ol")
+		.classed("items-div border-above", true);
+
+	var sections = itemsDiv.selectAll("li")
+				.data(rootObjects)
+				.enter()
+				.append("li")
+				.classed("border-below", true);
+
+	var buttons = appendViewButtons(sections, fill)
+		.on("click", buttonClicked);
+}
+
+/* Append a set of buttons to each div for displaying the text for each item. */
+function appendViewButtons(divs, fill)
+{
+	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
+
+	var buttons = divs.append("div").classed("btn row-button multi-row-content expanding-div", true);
+	
+	fill(buttons);
 		
 	return buttons;
 }
@@ -1159,7 +1183,8 @@ function appendEditCellItems(container, cell, clickFunction)
 	var divs = appendItems(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs);
+		appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
 	
 	var buttons = appendRowButtons(divs, cell);
 	
@@ -1167,7 +1192,8 @@ function appendEditCellItems(container, cell, clickFunction)
 		appendDeleteControls(buttons);
 	appendRightChevrons(buttons);
 
-	appendButtonDescriptions(buttons, cell);
+	appendButtonDescriptions(buttons, cell)
+		.each(_pushTextChanged);
 		
 	buttons.on("click", clickFunction);
 	
@@ -1239,15 +1265,15 @@ function createPanel(containerPanel, datum, headerText)
 		return navContainer;
 	}
 	
-	panelDiv.appendSearchBar = function(textChangedFunction)
+	panelDiv.appendSearchBar = function(textChanged)
 	{
 		var searchBarDiv = this.append("div").classed("searchbar always-visible", true);
-		setupSearchBar(searchBarDiv.node(), textChangedFunction)
+		return setupSearchBar(searchBarDiv.node(), textChanged)
 	}
 	
 	panelDiv.appendScrollArea = function()
 	{
-		var panel2Div = this.append("div").classed("panel-scrolling", true);
+		var panel2Div = this.append("div").classed("panel-fill vertical-scrolling", true);
 		
 		panel2Div.appendHeader = function()
 		{
@@ -1329,6 +1355,7 @@ function createPanel(containerPanel, datum, headerText)
 	return panelDiv;
 }
 
+/* Returns the input DOM element that contains the text being searched. */
 function setupSearchBar(searchBarNode, textChanged)
 {
 	var searchBar = d3.select(searchBarNode);
@@ -1374,6 +1401,8 @@ function setupSearchBar(searchBarNode, textChanged)
 	$(document).ready(function(e) { resizeSearchCancelHeight() });
 	$(window).resize(function(e) { resizeSearchCancelHeight() });
 	resizeSearchCancelHeight();
+	
+	return searchInput.node();
 }
 
 /* Gets the text for the header of a view panel based on the specified data. */
@@ -2006,48 +2035,41 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		panel2Div.appendHeader();
 		panel2Div.appendAlertContainer();
 		
-		var itemsDiv = panel2Div.append("div")
-			.classed("border-above", true);
-		
-		var sections = itemsDiv.selectAll("li")
-					.data(rootObjects)
-					.enter()
-					.append("li")
-					.classed("border-below", true);
-	
-		var buttons = appendViewButtons(sections)
-			.on("click", function(d) {
-				var successFunction = function()
+		function buttonClicked(d) {
+			var successFunction = function()
+			{
+				hidePanelRight(panelDiv.node());
+			}
+			
+			if (prepareClick())
+			{
+				if (oldData.id != null)
 				{
-					hidePanelRight(panelDiv.node());
-				}
-				
-				if (prepareClick())
-				{
-					if (oldData.id != null)
-					{
-						if (d.getValueID() == oldData.getValueID()) {
-							successFunction();
-						}
-						else
-						{
-							cr.updateObjectValue(oldData, d, successFunction, failFunction);
-						}
-					}
-					else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
-					{
-						cr.addObjectValue(cell, containerUUID, d, 
-							successFunction,
-							failFunction);
-					}
-					else 
-					{
-						_storeUnsavedPickedValue(oldData, d);
+					if (d.getValueID() == oldData.getValueID()) {
 						successFunction();
 					}
+					else
+					{
+						cr.updateObjectValue(oldData, d, successFunction, failFunction);
+					}
 				}
-				d3.event.preventDefault();
-			});
+				else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
+				{
+					cr.addObjectValue(cell, containerUUID, d, 
+						successFunction,
+						failFunction);
+				}
+				else 
+				{
+					_storeUnsavedPickedValue(oldData, d);
+					successFunction();
+				}
+			}
+			d3.event.preventDefault();
+		}
+		
+		var buttons = appendButtons(panel2Div, rootObjects, buttonClicked);
+		
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
 			function(d) { return d.getDescription() == oldData.getDescription(); });
 	

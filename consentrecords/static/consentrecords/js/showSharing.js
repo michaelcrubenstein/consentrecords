@@ -72,7 +72,12 @@ function showSharing(containerDiv) {
 			.enter()
 			.append("li");
 			
-		appendConfirmDeleteControls(items);
+		appendConfirmDeleteControls(items)
+				.on('click', function(d)
+					{
+						if (prepareClick())
+							cr.deleteValue(d, unblockClick, syncFailFunction);
+					});
 		
 		var buttons = items.append("div")
 			.classed("btn row-button multi-row-content expanding-div", true);

@@ -320,7 +320,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
+			<div id="id_scrollableArea" class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -342,7 +342,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
+			<div id="id_scrollableArea" class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -369,7 +369,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
+			<div id="id_scrollableArea" class="site-content-panel-under">
 				<div id="id_pathway" class="site-fill-panel"></div>
 				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
@@ -391,7 +391,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
+			<div id="id_scrollableArea" class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -413,7 +413,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
+			<div id="id_scrollableArea" class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -422,7 +422,7 @@
 				<div id="id_openConsentForms">
 				</div>
 			</div> <!-- /container-fluid -->
-			<div class="panel-scrolling">
+			<div class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -466,7 +466,7 @@
 					</div>
 				</div>
 			</nav>
-			<div id="id_scrollableArea" class="panel-scrolling">
+			<div id="id_scrollableArea" class="vertical-scrolling">
 				<div>
 					<div class="alert-container"></div>
 				</div>
@@ -1798,7 +1798,7 @@
 		
 		function appendSessionDescriptions(buttons)
 		{
-			var leftText = buttons.append('div').classed("consent-form-title left-expanding-div", true);
+			var leftText = buttons.append('div').classed("left-expanding-div", true);
 			
 			leftText.append('div')
 				.text(function(d) { 
@@ -2591,7 +2591,7 @@
 		}
 		
 		function show_matching_descriptions(){
-			var panel2Div = d3.select($(this).parents(".site-panel").children(".panel-scrolling")[0]);
+			var panel2Div = d3.select($(this).parents(".site-panel").children(".vertical-scrolling")[0]);
 			var val = this.value.toLocaleLowerCase();
 			if (val.length == 0)
 			{

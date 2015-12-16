@@ -5,25 +5,30 @@
 body {
   font-size: medium;
   overflow-y: hidden;
+  overflow-x: hidden;
 }
 .site-panel {
 	position: absolute;
 	overflow-y: hidden;
 }
-
 .base-panel {
 	width: 100%;
 	height: 100%;
 	max-height: 100%;
 	z-index: 1;
 }
-.vertical-scrolling {
-	overflow-y: scroll;
-}
-.panel-scrolling {
+.panel-fill {
 	height: 100%;
 	max-height: 100%;
+	position: relative;
+}
+.vertical-scrolling {
 	overflow-y: scroll;
+	overflow-x: hidden;
+}
+.no-scrolling {
+	overflow-y: hidden;
+	overflow-x: hidden;
 }
 .list-panel {
 	background: #eee;

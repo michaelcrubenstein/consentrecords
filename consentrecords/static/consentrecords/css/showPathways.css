@@ -1,0 +1,87 @@
+/* showPathways.css */
+	.dots {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+		position: fixed;
+		bottom: -30px;
+	}
+    .dots ol {
+		display: inline-block
+        list-style: none;
+        padding: 0;
+    }
+    .dots ol li {
+        display: inline-block;
+        background: #888;
+        border-radius: 50%;
+        width:20px;
+        height:20px;
+        cursor: pointer;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .dots ol .active {
+    	background: white;
+    }
+    
+    .date-row {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+		height: 100%;
+    }
+    
+    .date-row > select {
+    	display: inline-block;
+    }
+    
+    .new-experience-panel .panel-fill panel {
+    	display: table;
+    	height: calc(100% - 50px);
+    	width: 100%;
+    	background: transparent;
+    	position: absolute;
+    	top: 0;
+    	left: 0;
+    }
+    
+	.new-experience-panel .panel-fill panel p {
+		margin: 10px;
+	}
+	
+	/* The following are used to have a set of fixed-height divs within a container and
+	   one variable height div that takes up the remaining space and whose contents scroll
+	   vertically if necessary. This is used in panel one.
+	 */
+	.table {
+		display: table;
+	}
+
+	.table-row {
+		display: table-row;
+	}
+
+	/* This is associated with the variable height div. */
+	.body {
+		display: table-row;
+		height: 100%;
+	}
+
+	.body > div {
+		display: table-cell;
+		height: 100%;
+	}
+
+	.body > div > div {
+		height: 100%;
+		position: relative;
+		overflow-y: scroll;
+		overflow-x: hidden;
+	}
+
+	.month-select {
+		margin-left: 12px;
+		margin-right: 12px;
+	}
