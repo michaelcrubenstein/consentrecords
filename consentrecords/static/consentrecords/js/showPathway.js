@@ -105,13 +105,15 @@ function showPathway(containerDiv) {
 
 							crp.pushCheckCells(userInstance, function() {
 									var m = userInstance.getValue("More Experiences");
-									if (m)
+									if (m && m.getValueID())
 									{
 										var path = "#" + m.getValueID() + '>"More Experience"';
 										cr.getData({path: path, 
 													done: successFunction2, 
 													fail: asyncFailFunction});
 									}
+									else
+										successFunction2([]);	/* There are none. */
 								},
 								asyncFailFunction);
 						},
@@ -144,8 +146,6 @@ function showPathway(containerDiv) {
 	var successFunction2 = function(experiences)
 	{
 		allExperiences = allExperiences.concat(experiences);
-		if (allExperiences.length == 0)
-			return;
 			
 		$(experiences).each(function()
 		{
@@ -575,7 +575,12 @@ function showPathway(containerDiv) {
 			.on("click.cr", showDetail);
 		
 		/* bbox is used for various height calculations. */
-		var bbox = t.node().getBBox();
+		var bbox;
+		if (t.node())
+			bbox = t.node().getBBox();
+		else
+			bbox = {height: 20, y: -18};
+
 		t.each(function(d)
 			{
 				var g = this.parentNode;
@@ -1336,6 +1341,7 @@ var DateInput = (function () {
     
 	DateInput.prototype.append = function(node, dots)
 	{
+		var _this = this;
 		var p = d3.select(node);
 		
 		var row = p.append('div')
@@ -1356,7 +1362,7 @@ var DateInput = (function () {
 		if (birthday && birthday.value)
 			minYear = parseInt(birthday.value.substr(0, 4));
 		else
-			minYear = maxDate.getUTCFullYear()-100;
+			minYear = maxYear-100;
 		
 		var years = ['year'];
 		for (var i = maxYear; i >= minYear; --i)
@@ -1386,15 +1392,15 @@ var DateInput = (function () {
 				yearInput.selectAll(":first-child").attr('disabled', true);
 				monthInput.style('visibility', 'visible');
 				if (yearNode.selectedIndex == 0)
-					this.year = undefined;
+					_this.year = undefined;
 				else
-					this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
+					_this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
 			});
 		
 		$(dateNode).change(function()
 			{
 				dateInput.selectAll(":first-child").attr('disabled', true);
-				this.day = dateNode.selectedIndex;
+				_this.day = dateNode.selectedIndex;
 			});
 	
 		$(monthNode).change(function()
@@ -1418,10 +1424,33 @@ var DateInput = (function () {
 					dateNode.selectedIndex = oldDate;
 				dateInput.style('visibility', 'visible');
 				if (monthNode.selectedIndex == 0)
-					this.month = undefined;
+					_this.month = undefined;
 				else
-					this.month = monthNode.selectedIndex;
+					_this.month = monthNode.selectedIndex;
 			});
+	}
+	
+	DateInput.prototype.getDescription = function()
+	{
+		if (this.year && this.month)
+		{
+			var m = this.month.toString();
+			if (m.length == 1)
+				m = "0" + m;
+			var t = this.year.toString() + "-" + m;
+			if (this.day)
+			{
+				var d = this.day.toString();
+				if (d.length == 1)
+					d = "0" + d;
+				t += "-" + d;
+			}
+			return t;
+		}
+		else if (this.year)
+			return this.year.toString();
+		else
+			return "";
 	}
 	
 	return DateInput;
@@ -1451,6 +1480,52 @@ function setupPanel6(dots)
 	this.onReveal = null;
 }
 
+function setupPanel7(dots)
+{
+	var p = d3.select(this);
+	
+	p.selectAll("*").remove();
+	
+	if (dots.offeringName)
+		p.append('div')
+			.append('p').text("Offering: " + dots.offeringName);
+			
+	if (dots.organizationName)
+		p.append('div')
+			.append('p').text("Organization: " + dots.organizationName);
+			
+	if (dots.siteName)
+		p.append('div')
+			.append('p').text("Site: " + dots.siteName);
+	
+	if (dots.services.length > 0)
+	{
+		var servicesDiv = p.append('div');
+		
+		servicesDiv.append('p').text("Services");
+		for (var i = 0; i < dots.services.length; ++i)
+		{
+			servicesDiv.append('p').text(dots.services[i].getDescription());
+		}
+	}
+	
+	{
+		var startDate = dots.startDateInput.getDescription();
+		var endDate = dots.endDateInput.getDescription();
+		if (startDate && endDate)
+			t = startDate + " - " + endDate;
+		else if (startDate)
+			t = startDate + " - ";
+		else if (endDate)
+			t = " - " + endDate;
+		else
+			t = "";
+		if (t.length)
+			p.append('div')
+				.append('p').text(t);
+	}
+}
+
 /* 
 	objectData contains the MoreExperiences object.
  */
@@ -1468,7 +1543,7 @@ function showAddExperiencePanel(objectData, containerPanel) {
 		
 		panel2Div.appendAlertContainer();
 		
-		var dots = appendDots(panel2Div, panelDiv, 7);		
+		var dots = appendDots(panel2Div, panelDiv, 8);		
 
 		var hideSuccessFunction = function()
 			{
@@ -1522,6 +1597,7 @@ function showAddExperiencePanel(objectData, containerPanel) {
 		dots.nthPanel(4).onReveal = setupPanel4;
 		dots.nthPanel(5).onReveal = setupPanel5;
 		dots.nthPanel(6).onReveal = setupPanel6;
+		dots.nthPanel(7).onReveal = setupPanel7;
 				
 		showPanelUp(panelDiv.node());
 		dots.showDots();
