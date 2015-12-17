@@ -2007,6 +2007,8 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 			});
 		backButton.append("span").text("Cancel");
 		
+		navContainer.appendTitle(cell.field.name);
+
 		var textChanged = function(){
 			var val = this.value.toLocaleLowerCase();
 			if (val.length == 0)
@@ -2032,7 +2034,6 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 		var searchBar = panelDiv.appendSearchBar(textChanged);
 
 		var panel2Div = panelDiv.appendScrollArea();
-		panel2Div.appendHeader();
 		panel2Div.appendAlertContainer();
 		
 		function buttonClicked(d) {
