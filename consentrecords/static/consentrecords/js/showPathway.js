@@ -1082,7 +1082,7 @@ function setupPanel1(dots)
 		})
 		.append("div").classed("pull-left", true);
 	buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-	buttonDiv.append("span").text(" add experience");
+	buttonDiv.append("span").text(" add value");
 	
 	this.onReveal = null;
 }
