@@ -902,7 +902,11 @@ function getObjectByDescription(a, description)
 
 function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, dots, success)
 {
-	var header = "Add Value";
+	var header;
+	if (oldReportedObject)
+		header = "Change Value";
+	else
+		header = "Add Value";
 		
 	var panelDiv = createPanel(containerPanel, rootObjects, header)
 					.classed("list-panel", true);
@@ -919,6 +923,8 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 			d3.event.preventDefault();
 		});
 	backButton.append("span").text("Cancel");
+	
+	navContainer.appendTitle(header);
 	
 	var addButton = navContainer.appendRightButton()
 		.on("click", function()
@@ -977,8 +983,16 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 	
 	if (oldReportedObject)
 	{
-		searchInputNode.value = oldReportedObject.getDescription();
-		$(searchInputNode).trigger("input");
+		if (oldReportedObject.value)
+		{
+			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return d == oldReportedObject.value; });
+		}
+		else
+		{
+			searchInputNode.value = oldReportedObject.getDescription();
+			$(searchInputNode).trigger("input");
+		}
 	}
 	
 	showPanelLeft(panelDiv.node());
@@ -990,20 +1004,21 @@ function setupPanel1(dots)
 	var p1 = d3.select(this);
 	p1.append('div')
 		.classed('table-row', true)
-		.append('p').text("Some experiences provide more than one kind of value, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one kind of value, choose other values here to add them to this experience.");
+		.append('p').text("Some experiences provide more than one kind of value, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one kind of value, add other values here for this experience.");
+
+	var labelDiv = p1.append("div").classed("table-row", true)
+		.append('span')
+		.classed("cell-label", true)
+		.text("Values");
 
 	var obj = p1.append('div')
 		.classed('body', true)
 		.append('div')
 		.append('div');
 	
-	var sectionObj = obj.classed("cell-div cell-edit-div", true);
-	
-	var labelDiv = sectionObj.append("div").classed("cell-label", true)
-		.text("Values");
-	var itemsDiv = sectionObj.append("div").classed("items-div", true);
+	var itemsDiv = obj.append("div").classed("items-div panel-fill", true);
 
-	sectionObj.classed("multiple-values-cell", true);
+	obj.classed("cell-div multiple-values-cell", true);
 	labelDiv.classed("top-label", true);
 	itemsDiv.classed("border-above", true);
 
@@ -1530,7 +1545,7 @@ function setupPanel7(dots)
 	objectData contains the MoreExperiences object.
  */
 function showAddExperiencePanel(objectData, containerPanel) {
-		var header = "New Experience";
+		var header = "Add Experience";
 			
 		var panelDiv = createPanel(containerPanel, objectData, header)
 						.classed("edit-panel new-experience-panel", true);
