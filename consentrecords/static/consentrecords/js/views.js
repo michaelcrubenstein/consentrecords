@@ -78,7 +78,7 @@ function showClickFeedback(obj)
 {
 	var oldOpacity = $(obj).css("opacity");
 	$(obj).animate({opacity: "0.2"}, 200)
-		   .animate({opacity: oldOpacity}, 200, "swing",
+		   .animate({opacity: oldOpacity}, 600, "swing",
 		   	function() {
 		   		$(obj).css("opacity", "");
 		   	});
