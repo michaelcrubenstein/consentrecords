@@ -23,6 +23,9 @@ body {
 	position: relative;
 }
 .vertical-scrolling {
+	height: 100%;	/* Must set height to 100% so that this element doesn't expand to more than 
+						the height of its container. */
+	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
 }
