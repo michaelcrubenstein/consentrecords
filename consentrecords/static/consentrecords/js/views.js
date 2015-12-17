@@ -1123,7 +1123,7 @@ function appendButtons(panelDiv, rootObjects, buttonClicked, fill)
 				.append("li")
 				.classed("border-below", true);
 
-	var buttons = appendViewButtons(sections, fill)
+	return appendViewButtons(sections, fill)
 		.on("click", buttonClicked);
 }
 
