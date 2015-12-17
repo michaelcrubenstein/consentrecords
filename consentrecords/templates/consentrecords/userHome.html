@@ -2188,7 +2188,7 @@
 			organization.checkCells(undefined, undefined, function()
 				{
 					var sites = organization.getValue("Sites");
-					if (!sites)
+					if (!sites || !sites.id)
 						syncFailFunction("the sites are not set up");
 					else
 						sites.checkCells(undefined, undefined, function()
