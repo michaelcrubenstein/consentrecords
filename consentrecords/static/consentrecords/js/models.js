@@ -300,6 +300,7 @@ var cr = {
 		_url: _stringFunctions,
 		_telephone: _stringFunctions,
 		_datestamp: _stringFunctions,
+		"_datestamp (day optional)": _stringFunctions,
 		_time: _stringFunctions,
 		_object: {
 			isEmpty: function(d)
@@ -612,11 +613,23 @@ var cr = {
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		var jsonArray = {
-					elementUUID: field.nameID,
-					typeID: field.ofKindID,
 					properties: JSON.stringify(initialData),
 					timezoneoffset: new Date().getTimezoneOffset()
 				};
+		if (field.nameID)
+			jsonArray.elementUUID = field.nameID;
+		else if (field.name)
+			jsonArray.elementName = field.name;
+		else
+			throw ("neither field name nor field name ID is specified");
+			
+		if (field.ofKindID)
+			jsonArray.typeID = field.ofKindID;
+		else if (field.ofKind)
+			jsonArray.typeName = field.ofKind;
+		else
+			throw ("neither field.ofKindID nor field.ofKind is specified");
+			
 		if (containerUUID)
 			jsonArray.containerUUID = containerUUID;
 	

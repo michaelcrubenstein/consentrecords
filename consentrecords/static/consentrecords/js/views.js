@@ -60,7 +60,7 @@ function _blockClick()
 /* Unblocks clicks on the page. */			
 function unblockClick()
 {
-	if (clickBlockCount == 0)
+	if (clickBlockCount === 0)
 		throw ("Click unblocked.");
 	clickBlockCount -= 1;
 }
@@ -339,8 +339,6 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 				.text(cell.field.name);
 			labelDiv
 				.style("line-height", divs.selectAll("input").style("line-height"));
-			
-			divs.selectAll("input").classed("string-unique-labeled-input", "true")
 		}
 	}
 	else
@@ -370,10 +368,146 @@ function _showEditStringCell(obj, panelDiv, cell, containerUUID, inputType)
 				.classed("string-input-container string-multi-value-container", true);						
 	
 			inputContainers.append("input")
-				.classed("string-input", true)
 				.attr("type", inputType)
 				.attr("placeholder", cell.field.name)
 				.property("value", _getDataValue);
+		}
+		
+		appendControls(divs, cell);
+
+		_setupEditItemsDivHandlers(itemsDiv, cell);
+		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+			{
+				var div = d3.select(this).append("li")
+					.datum(newData);
+				
+				appendControls(div, cell);	
+			});
+			
+		/* Add one more button for the add Button item. */
+		var buttonDiv = sectionObj.append("div")
+			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+			.on("click", function(cell) {
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+				
+					var newData = cell.addNewValue();
+				
+					unblockClick();
+				}
+				d3.event.preventDefault();
+			})
+			.append("div").classed("pull-left", true);
+		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
+		buttonDiv.append("span").text(" add " + cell.field.name);
+	}
+}
+
+function checkDateInput() {
+    var input = document.createElement('input');
+    input.setAttribute('type','date');
+
+    var notADateValue = 'not-a-date';
+    input.setAttribute('value', notADateValue); 
+
+    return (input.value !== notADateValue);
+}
+
+function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
+{
+	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	
+	function appendInputs(divs, className)
+	{
+		divs.append("input")
+			.classed(className, true)
+			.attr("type", "month")
+			.attr("placeholder", cell.field.name)
+			.property("value", function (d) 
+				{ 
+					if (!d.value || d.value.length < 7)
+						return "";
+					else
+						return d.value.substring(0, 7); 
+				})
+			.on("change", function()
+				{
+					var d = new Date(d3.select(this).property("value"));
+					var daysInMonth = (new Date(d.getUTCFullYear(), d.getUTCMonth()+1, 0)).getDate();
+					$($(this).parents()[0]).children("input[type=number]")[0].setAttribute("max", daysInMonth);
+				});
+		divs.append("input")
+			.attr("type", "checkbox")
+			.property("value", function(d)
+				{
+					if (d.value && d.value.length > 8)
+						return 1;
+					else
+						return 0;
+				});
+		divs.append("span")
+			.text(" + day");
+		divs.append("input")
+			.attr("type", "number")
+			.property("value", function(d)
+				{
+					if (d.value && d.value.length > 8)
+						return d.value.substring(8, 2);
+					else
+						return null;
+				})
+			.property("min", 1)
+			.property("max", 31);
+	}
+	
+	if (cell.field.capacity === "_unique value")
+	{
+		var itemsDiv = sectionObj.append("div").classed("items-div string-unique-item", true);
+
+		sectionObj.classed("border-below unique-cell", true);
+		var divs = itemsDiv.selectAll("li")
+			.data(cell.data)
+			.enter()
+			.append("li")
+			.classed("string-input-container", true);	// So that each item appears on its own row.
+		appendInputs(divs, "string-unique-input");
+	
+		if (cell.field.descriptorType != "_by text")
+		{
+			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label string-unique-input-label", true)
+				.text(cell.field.name);
+			labelDiv
+				.style("line-height", divs.selectAll("input").style("line-height"));
+		}
+	}
+	else
+	{
+		sectionObj.classed("multiple-values-cell", true);
+		sectionObj.append("div").classed("cell-label top-label", true)
+			      .text(cell.field.name);
+		var itemsDiv = sectionObj.append("div")
+			.classed("items-div border-above border-below", true);
+
+		var divs = appendItems(itemsDiv, cell.data);
+		
+		var appendControls = function(divs, cell)
+		{	
+			appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
+			
+			/* Inner layer needed so that padding is applied to inner content but not 
+				confirm delete control
+			 */
+			var innerDivs = divs.append("div")
+				.classed("multi-row-content", true);
+		
+			appendDeleteControls(innerDivs);
+
+			inputContainers = innerDivs.append("div")
+				.classed("string-input-container string-multi-value-container", true);						
+	
+			appendInputs(inputContainers, "string-input");
 		}
 		
 		appendControls(divs, cell);
@@ -423,7 +557,7 @@ function _getOnValueAddedFunction(panelDiv, cell, containerUUID, canDelete, canS
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		divs.style("display", 
-				   (cell.field.capacity == "_unique value" || newData.getValueID()) ? "block" : "none");
+				   (cell.field.capacity === "_unique value" || newData.getValueID()) ? "block" : "none");
 				   
 		if (cell.field.capacity != "_unique value")
 		{
@@ -550,7 +684,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		.text(cell.field.name);
 	var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
-	if (cell.field.capacity == "_unique value")
+	if (cell.field.capacity === "_unique value")
 	{
 		sectionObj.classed("unique-cell", true);
 		labelDiv.classed("left-label left-fixed-width", true);
@@ -574,7 +708,7 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(containerPanel, cell, containerUUID, false, !_isPickCell(cell), showViewObjectPanel, revealPanelLeft));
 	
 	var clickFunction;
-	if (_isPickCell(cell) || cell.field.capacity == "_unique value")	/* Unique value handles the click above */
+	if (_isPickCell(cell) || cell.field.capacity === "_unique value")	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
@@ -604,15 +738,21 @@ function _showViewObjectCell(obj, containerPanel, cell, containerUUID)
 		.each(_pushTextChanged);
 }
 
-function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
+function _showEditObjectCell(obj, panelDiv, cell, parent)
 {
 	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	var storeDataFunction;
+
+	if (parent.getValueID())
+		storeDataFunction = _submitCreateInstance;
+	else
+		storeDataFunction = _storeNewInstance;
 	
 	var labelDiv = sectionObj.append("div").classed("cell-label", true)
 		.text(cell.field.name);
 	var itemsDiv = sectionObj.append("div").classed("items-div", true);
 
-	if (cell.field.capacity == "_unique value")
+	if (cell.field.capacity === "_unique value")
 	{
 		sectionObj.classed("unique-cell btn row-button unique-row-button border-below", true);
 		labelDiv.classed("left-label left-fixed-width", true);
@@ -638,7 +778,7 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(panelDiv, cell, parent.getValueID(), true, true, showEditObjectPanel, revealPanelLeft));
 
 	var clickFunction;
-	if (cell.field.capacity == "_unique value")	/* Unique value handles the click above */
+	if (cell.field.capacity === "_unique value")	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
@@ -693,37 +833,110 @@ function _showEditObjectCell(obj, panelDiv, cell, parent, storeDataFunction)
 	}
 }
 
+function _appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects)
+{
+	/* If both are null, then they are equal. */
+	if (!newValue && !d.value)
+		newValue = d.value;
+		
+	if (newValue != d.value)
+	{
+		if (d.id)
+		{
+			initialData.push({id: d.id, value: newValue});
+			sourceObjects.push(d);
+		}
+		else
+		{
+			var command;
+			command = {containerUUID: objectData.getValueID(), 
+					   fieldID: cell.field.nameID, 
+					   value: newValue,
+					   index: i};
+			initialData.push(command);
+			sourceObjects.push(d);
+		}
+	}
+}
+
+function _updateTextValue(d, newValue)
+{
+	/* If both are null, then they are equal. */
+	if (!newValue && !d.value)
+		newValue = d.value;
+
+	if (newValue != d.value)
+	{
+		d.value = newValue;
+	}
+}
+
+function _getDatestampValue()
+{
+	try
+	{
+		if (!this.value)
+			return undefined;
+		else
+			return (new Date(this.value)).toISOString().substring(0, 10);
+	}
+	catch(err)
+	{
+		return undefined;
+	}
+}
+
+function _getDatestampDayOptionalValue()
+{
+	var obj = d3.select(this);
+	var monthInput = obj.selectAll("input[type=month]");
+	var includeDayInput = obj.selectAll("input[type=checkbox]");
+	var dayInput = obj.selectAll("input[type=number]");
+	
+	try
+	{
+		if (!monthInput.node().value)
+			return undefined;
+		else
+		{
+			var monthString = monthInput.node().value;
+			var dateObj = new Date(monthInput.node().value);
+			if (includeDayInput.node().value)
+			{
+				dateObj.setUTCDate(dayInput.node().value);
+				return dateObj.toISOString().substring(0, 10);
+			}
+			else
+				return dateObj.toISOString().substring(0, 7);
+		}
+	}
+	catch(err)
+	{
+		return undefined;
+	}
+}
+
+function _getTimeValue()
+{
+	try
+	{
+		if (!this.value)
+			return undefined;
+		else
+			return Date.parse(this.value).toString("HH:mm");
+	}
+	catch(err)
+	{
+		return undefined;
+	}
+}
+
 function _appendUpdateStringCommands(sectionObj, cell, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
-			if (d.id)
-			{
-				/* Check to ensure that the values are different and at least one of them
-					is not null.
-				 */
-				if (this.value != d.value && (this.value || d.value))
-				{
-					initialData.push({id: d.id, value: this.value});
-					sourceObjects.push(d);
-				}
-			}
-			else
-			{
-				/* Check to ensure that the values are different and at least one of them
-					is not null.
-				 */
-				if (this.value != d.value && (this.value || d.value))
-				{
-					var command;
-					command = {containerUUID: objectData.getValueID(), 
-							   fieldID: cell.field.nameID, 
-							   value: this.value,
-							   index: i};
-					initialData.push(command);
-					sourceObjects.push(d);
-				}
-			}
+			var newValue = this.value;
+			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
 		}
 	);
 }
@@ -732,41 +945,18 @@ function _appendUpdateDatestampCommands(sectionObj, cell, objectData, initialDat
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
-			var newValue;
-			try
-			{
-				if (!this.value)
-					newValue = undefined;
-				else
-					newValue = (new Date(this.value)).toISOString().substring(0, 10);
-			}
-			catch(err)
-			{
-				newValue = undefined;
-			}
-			
-			/* If both are null, then they are equal. */
-			if (!newValue && !d.value)
-				newValue = d.value;
-				
-			if (newValue != d.value)
-			{
-				if (d.id)
-				{
-					initialData.push({id: d.id, value: newValue});
-					sourceObjects.push(d);
-				}
-				else
-				{
-					var command;
-					command = {containerUUID: objectData.getValueID(), 
-							   fieldID: cell.field.nameID, 
-							   value: newValue,
-							   index: i};
-					initialData.push(command);
-					sourceObjects.push(d);
-				}
-			}
+			var newValue = _getDatestampValue.call(this);			
+			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+		}
+	);
+}
+
+function _appendUpdateDatestampDayOptionalCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+{
+	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
+		{
+			var newValue = _getDatestampDayOptionalValue.call(this);
+			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
 		}
 	);
 }
@@ -775,41 +965,8 @@ function _appendUpdateTimeCommands(sectionObj, cell, objectData, initialData, so
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
-			var newValue;
-			try
-			{
-				if (!this.value)
-					newValue = undefined;
-				else
-					newValue = Date.parse(this.value).toString("HH:mm");
-			}
-			catch(err)
-			{
-				newValue = undefined;
-			}
-			
-			/* If both are null, then they are equal. */
-			if (!newValue && !d.value)
-				newValue = d.value;
-				
-			if (newValue != d.value)
-			{
-				if (d.id)
-				{
-					initialData.push({id: d.id, value: newValue});
-					sourceObjects.push(d);
-				}
-				else
-				{
-					var command;
-					command = {containerUUID: objectData.getValueID(), 
-							   fieldID: cell.field.nameID, 
-							   value: newValue,
-							   index: i};
-					initialData.push(command);
-					sourceObjects.push(d);
-				}
-			}
+			var newValue = _getTimeValue.call(this);
+			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
 		}
 	);
 }
@@ -849,10 +1006,7 @@ function _updateStringCell(sectionObj, cell)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
-			if (this.value != d.value)
-			{
-				d.value = this.value;
-			}
+			_updateTextValue(d, this.value);
 		}
 	);
 }
@@ -861,27 +1015,18 @@ function _updateDatestampCell(sectionObj, cell)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
-			var newValue;
-			try
-			{
-				if (!this.value)
-					newValue = undefined;
-				else
-					newValue = (new Date(this.value)).toISOString().substring(0, 10);
-			}
-			catch(err)
-			{
-				newValue = undefined;
-			}
-			
-			/* If both are null, then they are equal. */
-			if (!newValue && !d.value)
-				newValue = d.value;
+			var newValue = _getDatestampValue.call(this);			
+			_updateTextValue(d, newValue);
+		}
+	);
+}
 
-			if (newValue != d.value)
-			{
-				d.value = newValue;
-			}
+function _updateDatestampDayOptionalCell(sectionObj, cell)
+{
+	d3.select(sectionObj).selectAll(".string-input-container").each(function(d)
+		{
+			var newValue = _getDatestampDayOptionalValue.call(this);
+			_updateTextValue(d, newValue);
 		}
 	);
 }
@@ -890,27 +1035,8 @@ function _updateTimeCell(sectionObj, cell)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
-			var newValue;
-			try
-			{
-				if (!this.value)
-					newValue = undefined;
-				else
-					newValue = Date.parse(this.value).toString("HH:mm");
-			}
-			catch(err)
-			{
-				newValue = undefined;
-			}
-			
-			/* If both are null, then they are equal. */
-			if (!newValue && !d.value)
-				newValue = d.value;
-
-			if (newValue != d.value)
-			{
-				d.value = newValue;
-			}
+			var newValue = _getTimeValue.call(this);
+			_updateTextValue(d, newValue);
 		}
 	);
 }
@@ -972,10 +1098,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
 		},
-		showAdd: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "text");
-		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell,
 	},
@@ -985,10 +1107,6 @@ var dataTypeViews = {
 			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
-		},
-		showAdd: function(obj, containerPanel, cell, parent)
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "number");
 		},
@@ -1004,10 +1122,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "email");
 		},
-		showAdd: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "email");
-		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
 	},
@@ -1017,10 +1131,6 @@ var dataTypeViews = {
 			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "url");
-		},
-		showAdd: function(obj, containerPanel, cell, parent)
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "url");
 		},
@@ -1036,10 +1146,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "tel");
 		},
-		showAdd: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "tel");
-		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
 	},
@@ -1052,11 +1158,19 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
 		},
-		showAdd: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "date");
-		},
 		appendUpdateCommands: _appendUpdateDatestampCommands,
+		updateCell: _updateDatestampCell,
+	},
+	"_datestamp (day optional)": {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell, parent)
+		{
+			_showEditDateStampDayOptionalCell(obj, containerPanel, cell, parent.getValueID());
+		},
+		appendUpdateCommands: _appendUpdateDatestampDayOptionalCommands,
 		updateCell: _updateDatestampCell,
 	},
 	_time: {
@@ -1065,10 +1179,6 @@ var dataTypeViews = {
 			_showViewStringCell(obj, cell);
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
-		{
-			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "time");
-		},
-		showAdd: function(obj, containerPanel, cell, parent)
 		{
 			_showEditStringCell(obj, containerPanel, cell, parent.getValueID(), "time");
 		},
@@ -1082,20 +1192,7 @@ var dataTypeViews = {
 		},
 		showEdit: function(obj, containerPanel, cell, parent)
 		{
-			/* If containerUUID is null during an edit operation, then the container
-				is new and was not saved. */
-			if (parent.getValueID())
-				_showEditObjectCell(obj, containerPanel, cell, parent, _submitCreateInstance);
-			else
-				_showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
-		},
-		showAdd: function(obj, containerPanel, cell, parent)
-		{
-			/* If containerUUID is null, then the object being added is either within a new root object
-				or an object contained within an item that wasn't saved. In either case, 
-				store any item added to this cell as part of the data of the cell.
-			 */
-			_showEditObjectCell(obj, containerPanel, cell, parent, _storeNewInstance);
+			_showEditObjectCell(obj, containerPanel, cell, parent);
 		},
 		appendUpdateCommands: _appendUpdateObjectCommands,
 		updateCell: _updateObjectCell
@@ -1374,7 +1471,7 @@ function setupSearchBar(searchBarNode, textChanged)
 	var lastText = "";	
 	$(searchInput.node()).on("keyup input paste", function(e) {
 		searchCancelButton
-			.classed("site-disabled-text", this.value.length == 0)
+			.classed("site-disabled-text", this.value.length === 0)
 			.classed("site-active-text", this.value.length > 0);
 		if (lastText != this.value)
 		{
@@ -1540,7 +1637,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 
 		var doneButton;
 		var hideSuccessFunction;
-		if (showSuccessFunction == revealPanelUp)
+		if (showSuccessFunction === revealPanelUp)
 		{
 			hideSuccessFunction = function()
 				{
@@ -1556,7 +1653,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 		}
 		if (objectData.getValueID())
 		{
-			if (showSuccessFunction == revealPanelUp)
+			if (showSuccessFunction === revealPanelUp)
 				doneButton = navContainer.appendRightButton();
 			else
 				doneButton = navContainer.appendLeftButton();
@@ -1685,7 +1782,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 													for (var i = 0; i < objectData.value.cells.length; ++i)
 													{
 														var cell = objectData.value.cells[i];
-														if (cell.field.name == name)
+														if (cell.field.name === name)
 														{
 															cr.createInstance(cell.field, objectData.getValueID(), d[name], 
 																function(newData)
@@ -1755,7 +1852,7 @@ function getViewRootObjectsFunction(cell, containerPanel, header, sortFunction, 
 		
 		function textChanged(){
 			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
+			if (val.length === 0)
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
@@ -1845,7 +1942,7 @@ function showEditRootObjectsPanel(cell, containerPanel, header, sortFunction)
 	
 	var textChanged = function(){
 		var val = this.value.toLocaleLowerCase();
-		if (val.length == 0)
+		if (val.length === 0)
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
@@ -2011,7 +2108,7 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 
 		var textChanged = function(){
 			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
+			if (val.length === 0)
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
@@ -2046,7 +2143,7 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 			{
 				if (oldData.id != null)
 				{
-					if (d.getValueID() == oldData.getValueID()) {
+					if (d.getValueID() === oldData.getValueID()) {
 						successFunction();
 					}
 					else
@@ -2080,19 +2177,19 @@ function showPickObjectPanel(oldData, cell, containerUUID, containerPanel) {
 	if (cell.field.pickObjectPath)
 	{
 		pickObjectPath = cell.field.pickObjectPath;
-		if (pickObjectPath.indexOf("parent") == 0 &&
+		if (pickObjectPath.indexOf("parent") === 0 &&
 			">:=<".indexOf(pickObjectPath.charAt(6)) > 0)
 		{
 			var currentObject = cell.parent;
 			pickObjectPath = pickObjectPath.slice(6);
 			while (currentObject != null &&
-				   pickObjectPath.indexOf("::reference(") == 0 &&
+				   pickObjectPath.indexOf("::reference(") === 0 &&
 				   !currentObject.getValueID())
 			{
 				currentObject = currentObject.cell.parent;
 				pickObjectPath = pickObjectPath.slice("::reference(".length);
 				/* While the next string is quoted, skip it. */
-				while (pickObjectPath[0] == '"')
+				while (pickObjectPath[0] === '"')
 				{
 					pickObjectPath = pickObjectPath.slice(1);
 					pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf('"')+1);

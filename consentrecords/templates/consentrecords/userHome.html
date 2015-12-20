@@ -686,7 +686,7 @@
 				
 			$("#id_your_pathway_panel").on("revealing.cr", function(e, eventInfo)
 			{
-				showPathway("#id_pathway");
+				var pathway = new Pathway("#id_pathway");
 			});
 			$("#id_your_pathway_panel").on("hiding.cr", hidePathway);
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)

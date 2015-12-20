@@ -147,9 +147,10 @@ body {
 	background: white;
 }
 .string-input-container {
-	overflow: hidden;	/* This causes the input container to expand.
-	width: auto;
-	padding: 3px;	/* For the highlight box of the input. */
+	overflow: hidden;	/* This causes the input container to expand. */
+}
+.string-input-container > input:only-child {
+	width: 100%;
 }
 .string-multi-value-container {
 	text-align: left;
@@ -159,33 +160,33 @@ body {
 	float: left;
 	padding: 3px 12px;	/* For the highlight box of the input. */
 }
-.string-unique-labeled-input {
-	text-align: right;
-}
 .string-unique-item {
 	overflow: hidden;
 	width:auto;
 	padding: 6px 12px;
 }
+
 .string-unique-input {
-	width: 100%;
-	-webkit-appearance:none;
-	-moz-appearance:none;
-	appearance:none;
-	border: none;
-	border-color: transparent;
 	display: inline-block;
 	right: 0px;
 }
-.string-input {
-	width: 100%;
+.string-unique-input-label+div>.string-input-container {
+	text-align: right;
+}
+.string-unique-input-label+div>.string-input-container>input {
+	text-align: right;
+}
+.string-input-container input[type=text],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
 	appearance:none;
 	border: none;
 	border-color: transparent;
 }
-.string-input:focus {
+.string-input-container input[type=month] {
+	margin-right: 3px;
+}
+.string-input-container input[type=text],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date]:focus {
 	-webkit-appearance:none;
 	-moz-appearance:none;
 	appearance:none;
