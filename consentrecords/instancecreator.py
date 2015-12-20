@@ -15,8 +15,8 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
 
     i = 0
     ids = []
+    field = Instance.objects.get(pk=fieldData["nameID"])
     for d in data:
-        field = Instance.objects.get(pk=fieldData["nameID"])
         if fieldData["dataTypeID"] == Terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
                 if Terms.isUUID(d):
