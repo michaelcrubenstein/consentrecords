@@ -1199,6 +1199,8 @@
 		}
 		
 		function show_services(containerDiv) {
+			var container = d3.select(containerDiv);
+			
 			var successFunction = function(newInstances)
 			{
 				var cell = new cr.Cell();
@@ -1219,7 +1221,6 @@
 					cell.pushValue(newI);
 				}
 				
-				var container = d3.select(containerDiv);
 				container.datum(cell);
 				appendViewCellItems(container, cell, 
 					function(d) {
@@ -1232,9 +1233,15 @@
 							showPanelLeft(panelDiv.node());
 						}
 					});
+					
+				container.selectAll('p').remove();
 				$(containerDiv).trigger("servicesShown.cr");
 			}
 			
+			container.append('p')
+				.classed("help-block", true)
+				.text("Loading...");
+				
 			var path = "Service";
 			crp.getData({path: path, 
 						 done: successFunction, 
