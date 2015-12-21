@@ -332,6 +332,23 @@ var Pathway = (function () {
 		y.attr("y", function(d) { 
 				return _thisPathway.DateToY(new Date(d, 0, 0));
 			});
+			
+		if (y.size() >= 2)
+		{
+			oldD0 = y[0][0];
+			var thisHeight = oldD0.getBBox().height;
+			var spacing = 365 * this.dayHeight;
+			
+			var yearPeriod = parseInt(thisHeight / spacing) + 1;
+			if (yearPeriod == 1)
+				y.attr("fill", null);
+			else
+			{
+				// Set the target so that the latest year is always visible.
+				var target = (y.size() - 1) % yearPeriod;
+				y.attr("fill", function(d, i) { if (i % yearPeriod == target) return null; else return "transparent";});
+			}
+		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
 		this.hideDetail();
@@ -356,6 +373,19 @@ var Pathway = (function () {
 				if (_this.maxDate < endDate)
 					_this.maxDate = endDate;
 			});
+		
+		if (this.maxDate < this.minDate)
+		{
+			/* Make sure that the maxDate is at least 365 days after the minDate, but no later than today. */
+			this.maxDate = (new Date(this.minDate)).addDays(365);
+			if (this.maxDate > new Date())
+				this.maxDate = new Date();
+		}
+		
+		/* Now make sure that the minimum date is at least a year before the maximum date. */
+		var maxMinDate = (new Date(this.maxDate)).addDays(-365);
+		if (this.minDate > maxMinDate)
+			this.minDate = maxMinDate;
 	
 		this.timespan = new TimeSpan(this.maxDate - this.minDate).days;
 
@@ -629,10 +659,21 @@ var Pathway = (function () {
 			.attr("height", "100%")
 			.attr("fill", this.pathBackground);
 		
+		var loadingText = this.svg.append('text')
+			.attr("x", this.dataLeftMargin).attr("y", 0)
+			.attr("width", "100%")
+			.attr("height", "100%")
+			.attr("fill", "#777")
+			.text("Loading...");
+			
+		loadingText.attr("y", loadingText.node().getBBox().height);
+		
 		this.experienceGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem");
-		this.yearGroup = this.svg.append('g');
+		this.yearGroup = this.svg.append('g')
+			.attr("fill", "#777");
+			
 		this.detailGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem")
@@ -723,6 +764,8 @@ var Pathway = (function () {
 			_thisPathway.setDateRange.call(_thisPathway);
 			
 			_thisPathway.appendExperiences.call(_thisPathway);
+			
+			loadingText.remove();
 		}
 	
 		var path = "#" + userInstance.getValueID() + '::reference(Experience)';
