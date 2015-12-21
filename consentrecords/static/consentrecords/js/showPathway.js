@@ -5,19 +5,28 @@ function hidePathway() {
 	
 function setColorByService(service)
 {
-	var serviceInstance = crp.getInstance(service.getValueID());
-	var serviceDomain = serviceInstance.getValue("Service Domain");
-	if (serviceDomain && serviceDomain.getValueID())
-	{
-		var sdInstance = crp.getInstance(serviceDomain.getValueID());
-		color = sdInstance.getValue("Color");
-		if (color && color.value)
-			this.attr("fill", color.value)
-				 .attr("stroke", color.value);
-	}
-	else
-		this.attr("fill", otherColor)
-			.attr("stroke", otherColor);
+	var _this = this;
+	crp.pushID(service.getValueID(),
+		function(serviceInstance)
+		{
+			var serviceDomain = serviceInstance.getValue("Service Domain");
+			if (serviceDomain && serviceDomain.getValueID())
+			{
+				crp.pushID(serviceDomain.getValueID(),
+					function(sdInstance) 
+					{
+						color = sdInstance.getValue("Color");
+						if (color && color.value)
+							_this.attr("fill", color.value)
+								 .attr("stroke", color.value);
+					},
+					asyncFailFunction);
+			}
+			else
+				_this.attr("fill", otherColor)
+					.attr("stroke", otherColor);
+		},
+		asyncFailFunction);
 }
 
 function setColor(experience)
@@ -795,9 +804,22 @@ var Pathway = (function () {
 						}
 						d3.event.preventDefault();
 					})
-					.attr("x", bbox.x + bbox.width + _thisPathway.textLeftMargin)
-					.attr("y", _thisPathway.loadingText.attr("y"))
 					.attr("cursor", "pointer");
+				
+				var newBBox = _thisPathway.promptAddText.node().getBBox();
+				var containerWidth = $(_thisPathway.containerDiv).width();
+				if (bbox.x + bbox.width + _thisPathway.textLeftMargin + newBBox.width >
+					containerWidth - _thisPathway.flagsRightMargin)
+				{
+					_thisPathway.promptAddText.attr("x", _thisPathway.loadingText.attr("x"))
+						.attr("y", _thisPathway.loadingText.attr("y") + bbox.height);
+				}
+				else
+				{
+					_thisPathway.promptAddText.attr("x", bbox.x + bbox.width + _thisPathway.textLeftMargin)
+						.attr("y", _thisPathway.loadingText.attr("y"));
+				}
+
 			}
 		}
 	

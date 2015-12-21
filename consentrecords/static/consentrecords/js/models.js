@@ -84,14 +84,16 @@ var Queue = (function () {
     Queue.prototype.add = function (callback) {
         var _this = this;
         //add callback to the queue
-        this.queue.push(function () {
-            var finished = callback();
-            if (typeof finished === "undefined" || finished) {
-                //  if callback returns `false`, then you have to 
-                //  call `next` somewhere in the callback
-                _this.dequeue();
-            }
-        });
+        this.queue.push(
+        	function () {
+				var finished = callback();
+				if (typeof finished === "undefined" || finished) {
+					//  if callback returns `false`, then you have to 
+					//  call `next` somewhere in the callback
+					_this.dequeue();
+				}
+        	}
+        );
 
         if (this.autorun && !this.running) {
             // if nothing is running, then start the engines!
@@ -163,10 +165,11 @@ var CRP = (function() {
 						{
 							_this.instances[id] = newInstances[0];
 							successFunction(newInstances[0]);
+							_this.queue.next();
 						}, 
 						fail: failFunction} );
+					return false;
 				}
-				return true;
 			});
 	};
 	
@@ -243,6 +246,7 @@ var CRP = (function() {
 											_this.queue.next();
 										}, 
 								fail: args.fail});
+					return false;
 				}
 			});
 	};
@@ -256,7 +260,10 @@ var CRP = (function() {
 		this.queue.add(
 			function() {
 				if (ofKindID in _this.configurations)
+				{
 					successFunction(_this.configurations[ofKindID]);
+					return true;
+				}
 				else
 				{
 					cr.getConfiguration(null, ofKindID,
@@ -265,6 +272,7 @@ var CRP = (function() {
 							successFunction(cells);
 							_this.queue.next();
 						}, failFunction);
+					return false;
 				}
 			});
 	};
