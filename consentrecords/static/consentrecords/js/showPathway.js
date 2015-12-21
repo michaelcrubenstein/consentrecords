@@ -812,7 +812,7 @@ var Pathway = (function () {
 					containerWidth - _thisPathway.flagsRightMargin)
 				{
 					_thisPathway.promptAddText.attr("x", _thisPathway.loadingText.attr("x"))
-						.attr("y", _thisPathway.loadingText.attr("y") + bbox.height);
+						.attr("y", parseFloat(_thisPathway.loadingText.attr("y")) + bbox.height);
 				}
 				else
 				{
