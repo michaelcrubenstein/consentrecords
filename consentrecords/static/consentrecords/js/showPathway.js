@@ -76,6 +76,8 @@ var Pathway = (function () {
 	Pathway.prototype.svg = null;
 	Pathway.prototype.defs = null;
 	Pathway.prototype.bg = null;
+	Pathway.prototype.loadingText = null;
+	Pathway.prototype.promptAddText = null;
 	Pathway.prototype.experienceGroup = null;
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
@@ -636,9 +638,18 @@ var Pathway = (function () {
 		this.allExperiences.push(experience);
 		this.allExperiences.sort(this._compareExperiences);
 		this.appendExperiences();
+		
+		if (this.loadingText)
+		{
+			this.loadingText.remove();
+			this.promptAddText.remove();
+			this.loadingText = null;
+			this.promptAddText = null;
+		}
 	}
 		
-	function Pathway(containerDiv) {
+	function Pathway(containerDiv, editable) {
+		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.flagDown = false;
@@ -659,14 +670,12 @@ var Pathway = (function () {
 			.attr("height", "100%")
 			.attr("fill", this.pathBackground);
 		
-		var loadingText = this.svg.append('text')
+		this.loadingText = this.svg.append('text')
 			.attr("x", this.dataLeftMargin).attr("y", 0)
-			.attr("width", "100%")
-			.attr("height", "100%")
 			.attr("fill", "#777")
 			.text("Loading...");
 			
-		loadingText.attr("y", loadingText.node().getBBox().height);
+		this.loadingText.attr("y", this.loadingText.node().getBBox().height);
 		
 		this.experienceGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
@@ -765,7 +774,31 @@ var Pathway = (function () {
 			
 			_thisPathway.appendExperiences.call(_thisPathway);
 			
-			loadingText.remove();
+			if (_thisPathway.allExperiences.length > 0)
+			{
+				_thisPathway.loadingText.remove();
+				_thisPathway.loadingText = null;
+			}
+			else if (editable)
+			{
+				_thisPathway.loadingText.text('Ready to record an experience?');
+				var bbox = _thisPathway.loadingText.node().getBBox();
+				_thisPathway.promptAddText = _thisPathway.svg.append('text')
+					.attr("fill", "#2C55CC")
+					.text(" Record one now.")
+					.on("click", function(d) {
+						if (prepareClick())
+						{
+							showClickFeedback(this);
+		
+							showAddExperiencePanel(_thisPathway, null, panelDiv);
+						}
+						d3.event.preventDefault();
+					})
+					.attr("x", bbox.x + bbox.width + _thisPathway.textLeftMargin)
+					.attr("y", _thisPathway.loadingText.attr("y"))
+					.attr("cursor", "pointer");
+			}
 		}
 	
 		var path = "#" + userInstance.getValueID() + '::reference(Experience)';
