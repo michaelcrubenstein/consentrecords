@@ -217,12 +217,12 @@ class Instance(dbmodels.Model):
     @property
     def _description(self):
         d = Description.objects.filter(instance=self, language_id__isnull=True)
-        if d.count(): 
+        if d.exists(): 
             return d[0].text
         else:
             return "Deleted"
 
-    # Get the cached description of this LazyInstance.        
+    # Get the cached description of this Instance.        
     def description(self, language=None):
         if language:
             return Description.objects.get(instance=self, language=language).text
