@@ -62,11 +62,11 @@ class AuthUserAdmin(UserAdmin):
     form = CustomUserChangeForm
     add_form = CustomUserCreationForm
 
-    list_display = ('email', 'is_staff', 'is_superuser')
+    list_display = ('id', 'email', 'is_staff', 'is_superuser')
     list_filter = ('is_superuser',)
 
     fieldsets = (
-        (None, {'fields': ('email', 'password', 'first_name', 'last_name')}),
+        (None, {'fields': ('id', 'email', 'password', 'first_name', 'last_name')}),
         ('Permissions', {'fields': ('is_active', 'is_superuser', 'is_staff')}),
     )
 
@@ -77,6 +77,7 @@ class AuthUserAdmin(UserAdmin):
         ),
     )
 
+    readonly_fields = ('id',)
     search_fields = ('email',)
     ordering = ('email',)
     filter_horizontal = ('groups', 'user_permissions',)
