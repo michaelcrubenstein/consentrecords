@@ -850,7 +850,7 @@ function _appendUpdateTextValueCommands(d, i, newValue, objectData, initialData,
 		{
 			var command;
 			command = {containerUUID: objectData.getValueID(), 
-					   fieldID: cell.field.nameID, 
+					   fieldID: d.cell.field.nameID, 
 					   value: newValue,
 					   index: i};
 			initialData.push(command);
@@ -931,7 +931,7 @@ function _getTimeValue()
 	}
 }
 
-function _appendUpdateStringCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+function _appendUpdateStringCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
@@ -941,7 +941,7 @@ function _appendUpdateStringCommands(sectionObj, cell, objectData, initialData, 
 	);
 }
 
-function _appendUpdateDatestampCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+function _appendUpdateDatestampCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
@@ -951,7 +951,7 @@ function _appendUpdateDatestampCommands(sectionObj, cell, objectData, initialDat
 	);
 }
 
-function _appendUpdateDatestampDayOptionalCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+function _appendUpdateDatestampDayOptionalCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
 		{
@@ -961,7 +961,7 @@ function _appendUpdateDatestampDayOptionalCommands(sectionObj, cell, objectData,
 	);
 }
 
-function _appendUpdateTimeCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+function _appendUpdateTimeCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
@@ -971,7 +971,7 @@ function _appendUpdateTimeCommands(sectionObj, cell, objectData, initialData, so
 	);
 }
 
-function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, sourceObjects)
+function _appendUpdateObjectCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
 		{
@@ -990,8 +990,8 @@ function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, 
 				{
 					var command;
 					command = {containerUUID: objectData.getValueID(), 
-							   fieldID: cell.field.nameID, 
-							   ofKindID: cell.field.ofKindID,
+							   fieldID: d.cell.field.nameID, 
+							   ofKindID: d.cell.field.ofKindID,
 							   value: newDatum.value,
 							   index: i};
 					initialData.push(command);
@@ -1002,7 +1002,7 @@ function _appendUpdateObjectCommands(sectionObj, cell, objectData, initialData, 
 	);
 }
 
-function _updateStringCell(sectionObj, cell)
+function _updateStringCell(sectionObj)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
@@ -1011,7 +1011,7 @@ function _updateStringCell(sectionObj, cell)
 	);
 }
 
-function _updateDatestampCell(sectionObj, cell)
+function _updateDatestampCell(sectionObj)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
@@ -1021,7 +1021,7 @@ function _updateDatestampCell(sectionObj, cell)
 	);
 }
 
-function _updateDatestampDayOptionalCell(sectionObj, cell)
+function _updateDatestampDayOptionalCell(sectionObj)
 {
 	d3.select(sectionObj).selectAll(".string-input-container").each(function(d)
 		{
@@ -1031,7 +1031,7 @@ function _updateDatestampDayOptionalCell(sectionObj, cell)
 	);
 }
 
-function _updateTimeCell(sectionObj, cell)
+function _updateTimeCell(sectionObj)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
@@ -1041,7 +1041,7 @@ function _updateTimeCell(sectionObj, cell)
 	);
 }
 
-function _updateObjectCell(sectionObj, cell)
+function _updateObjectCell(sectionObj)
 {
 	/* Do nothing at the moment. */
 }
@@ -1055,7 +1055,7 @@ function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onS
 	sections.each(
 		function(cell) {
 			if ("updateCell" in dataTypeViews[cell.field.dataType])
-				dataTypeViews[cell.field.dataType].updateCell(this, cell);
+				dataTypeViews[cell.field.dataType].updateCell(this);
 			newData.importCell(cell);
 		});
 		
@@ -1081,7 +1081,7 @@ function _submitCreateInstance(oldValue, containerCell, containerUUID, sections,
 		function(cell) {
 			dt = dataTypeViews[cell.field.dataType]
 			if ("updateCell" in dt)
-				dt.updateCell(this, cell);
+				dt.updateCell(this);
 			cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
 		});
 		
@@ -1668,13 +1668,13 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 					var sourceObjects = [];
 					sections.each(function(cell) {
 							if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
-								dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell, objectData, initialData, sourceObjects);
+								dataTypeViews[cell.field.dataType].appendUpdateCommands(this, objectData, initialData, sourceObjects);
 						});
 					var updateValuesFunction = function()
 					{
 						sections.each(function(cell) {
 								if ("updateCell" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].updateCell(this, cell);
+									dataTypeViews[cell.field.dataType].updateCell(this);
 							});
 					}
 					if (initialData.length > 0) {
@@ -1716,7 +1716,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, container
 						sections.each(
 							function(cell) {
 								if ("updateCell" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].updateCell(this, cell);
+									dataTypeViews[cell.field.dataType].updateCell(this);
 								objectData.importCell(cell);
 							});
 		
