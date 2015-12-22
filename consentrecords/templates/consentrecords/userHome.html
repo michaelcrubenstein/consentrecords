@@ -1897,10 +1897,16 @@
 				if (offerings.length > 0)
 				{
 					var rightText = containerPanel.selectAll("li>button>.centered-right-2");
+					var offeringsList = {};
+					for (var i = 0; i < offerings.length; ++i)
+					{
+						var offering = offerings[i];
+						offeringsList[offering.getValueID()] = offering;
+					}
 					rightText.each(function(d, i)
 						{
-							var offering = offerings[i];
 							var thisBlock = d3.select(this);
+							var offering = offeringsList[d.getValue("Offering").getValueID()];
 							var ageText = getOfferingAgeRange(offering);
 							var gradeText = getOfferingGradeRange(offering);
 							if (ageText.length > 0)
