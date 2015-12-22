@@ -1886,44 +1886,48 @@
 							else
 								return "";
 						});
-					rightText.each(function(d) {
-						var offering = d.getValue("Offering");
-						var thisBlock = d3.select(this);
-						offering.checkCells(undefined, undefined,  
-							function()
-							{
-								var ageText = getOfferingAgeRange(offering);
-								var gradeText = getOfferingGradeRange(offering);
-								if (ageText.length > 0)
-								{
-									thisBlock.append('div').classed("sub-text", true)
-										.text("Ages: " + ageText);
-								}
-								if (gradeText.length > 0)
-								{
-									thisBlock.append('div').classed("sub-text", true)
-										.text("Grades: " + gradeText);
-								}
-							},
-							function()
-							{
-								thisBlock.append('div').classed("sub-text", true)
-										.text("Network Error");
-							}
-						);
-					});
 				
 					appendSessionDescriptions(buttons);
 				}
 				$($(container).parents(".site-panel")[0]).trigger("offeringsShown.cr");
 			}
 			
+			var offeringSuccessFunction = function(offerings)
+			{
+				if (offerings.length > 0)
+				{
+					var rightText = containerPanel.selectAll("li>button>.centered-right-2");
+					rightText.each(function(d, i)
+						{
+							var offering = offerings[i];
+							var thisBlock = d3.select(this);
+							var ageText = getOfferingAgeRange(offering);
+							var gradeText = getOfferingGradeRange(offering);
+							if (ageText.length > 0)
+							{
+								thisBlock.append('div').classed("sub-text", true)
+									.text("Ages: " + ageText);
+							}
+							if (gradeText.length > 0)
+							{
+								thisBlock.append('div').classed("sub-text", true)
+									.text("Grades: " + gradeText);
+							}
+						});
+				}
+			}
+						
 			var currentDate = new Date();
 			var todayString = currentDate.toISOString().substring(0, 10);
 			var path = "#" + service.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
-			cr.getData({path: path, 
+			crp.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
+						fail: asyncFailFunction});
+			var path = "#" + service.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])::reference(Sessions)::reference(Offering)';
+			crp.getData({path: path, 
+						fields: ["parents"], 
+						done: offeringSuccessFunction, 
 						fail: asyncFailFunction});
 		}
 		
