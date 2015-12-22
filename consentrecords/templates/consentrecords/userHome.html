@@ -1348,31 +1348,60 @@
 			}
 		}
 		
+		function getOfferingAgeRange(offering)
+		{
+			var min = offering.getDatum("Minimum Age");
+			var max = offering.getDatum("Maximum Age");
+			if (min)
+			{
+				if (max)
+				{
+					if (min == max)
+						return min;
+					else
+						return min + " - " + max;
+				}
+				else
+					return min + " or older";
+			}
+			else if (max)
+			{
+				return "up to " + max;
+			}
+			else
+				return "";
+		}
+		
+		function getOfferingGradeRange(offering)
+		{
+			var min = offering.getDatum("Minimum Grade");
+			var max = offering.getDatum("Maximum Grade");
+			if (min)
+			{
+				if (max)
+				{
+					if (min == max)
+						return min;
+					else
+						return min + " - " + max;
+				}
+				else
+					return min + " or beyond";
+			}
+			else if (max)
+			{
+				return "up to " + max;
+			}
+			else
+				return "";
+		}
+		
 		function showAgeRange(offering, successFunction)
 		{
 			crp.pushCheckCells(offering, 
 				function()
 				{
-					var min = offering.getDatum("Minimum Age");
-					var max = offering.getDatum("Maximum Age");
-					var newText = "";
-					if (min)
-					{
-						if (max)
-						{
-							if (min == max)
-								newText = min;
-							else
-								newText = min + " - " + max;
-						}
-						else
-							newText = min + " or older";
-					}
-					else if (max)
-					{
-						newText = "up to " + max;
-					}
-					successFunction(newText);
+					successFunction(getOfferingAgeRange(offering));
 				},
 				function()
 				{
@@ -1386,26 +1415,7 @@
 			crp.pushCheckCells(offering, 
 				function()
 				{
-					var min = offering.getDatum("Minimum Grade");
-					var max = offering.getDatum("Maximum Grade");
-					var newText = "";
-					if (min)
-					{
-						if (max)
-						{
-							if (min == max)
-								newText = min;
-							else
-								newText = min + " - " + max;
-						}
-						else
-							newText = min + " or beyond";
-					}
-					else if (max)
-					{
-						newText = "up to " + max;
-					}
-					successFunction(newText);
+					successFunction(getOfferingGradeRange(offering));
 				},
 				function()
 				{
@@ -1879,22 +1889,28 @@
 					rightText.each(function(d) {
 						var offering = d.getValue("Offering");
 						var thisBlock = d3.select(this);
-						showAgeRange(offering, 
-							function(newText) {
-								if (newText)
-								{
-									thisBlock.append('div').classed("sub-text", true)
-										.text("Ages: " + newText);
-								}
-							});
-						showGradeRange(offering, function(newText)
+						offering.checkCells(undefined, undefined,  
+							function()
 							{
-								if (newText)
+								var ageText = getOfferingAgeRange(offering);
+								var gradeText = getOfferingGradeRange(offering);
+								if (ageText.length > 0)
 								{
 									thisBlock.append('div').classed("sub-text", true)
-										.text("Grades: " + newText);
+										.text("Ages: " + ageText);
 								}
-							});
+								if (gradeText.length > 0)
+								{
+									thisBlock.append('div').classed("sub-text", true)
+										.text("Grades: " + gradeText);
+								}
+							},
+							function()
+							{
+								thisBlock.append('div').classed("sub-text", true)
+										.text("Network Error");
+							}
+						);
 					});
 				
 					appendSessionDescriptions(buttons);
