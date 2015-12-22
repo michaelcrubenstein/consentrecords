@@ -439,12 +439,9 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 				});
 		divs.append("input")
 			.attr("type", "checkbox")
-			.property("value", function(d)
+			.property("checked", function(d)
 				{
-					if (d.value && d.value.length > 8)
-						return 1;
-					else
-						return 0;
+					return d.value && d.value.length > 8;
 				});
 		divs.append("span")
 			.text(" + day");
@@ -453,7 +450,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 			.property("value", function(d)
 				{
 					if (d.value && d.value.length > 8)
-						return d.value.substring(8, 2);
+						return parseInt(d.value.substring(8));
 					else
 						return null;
 				})
@@ -901,13 +898,16 @@ function _getDatestampDayOptionalValue()
 		{
 			var monthString = monthInput.node().value;
 			var dateObj = new Date(monthInput.node().value);
-			if (includeDayInput.node().value)
+			if (includeDayInput.node().checked)
 			{
 				dateObj.setUTCDate(dayInput.node().value);
 				return dateObj.toISOString().substring(0, 10);
 			}
 			else
+			{
+				dateObj.setUTCDate(1);	/* Set the date to 1 so that the ISO string returns the correct month. */
 				return dateObj.toISOString().substring(0, 7);
+			}
 		}
 	}
 	catch(err)
@@ -1171,7 +1171,7 @@ var dataTypeViews = {
 			_showEditDateStampDayOptionalCell(obj, containerPanel, cell, parent.getValueID());
 		},
 		appendUpdateCommands: _appendUpdateDatestampDayOptionalCommands,
-		updateCell: _updateDatestampCell,
+		updateCell: _updateDatestampDayOptionalCell,
 	},
 	_time: {
 		show: function(obj, containerPanel, cell, containerUUID)
