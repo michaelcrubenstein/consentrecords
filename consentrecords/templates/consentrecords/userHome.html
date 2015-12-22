@@ -1878,11 +1878,12 @@
 						});
 					rightText.each(function(d) {
 						var offering = d.getValue("Offering");
+						var thisBlock = d3.select(this);
 						showAgeRange(offering, 
 							function(newText) {
 								if (newText)
 								{
-									rightText.append('div').classed("sub-text", true)
+									thisBlock.append('div').classed("sub-text", true)
 										.text("Ages: " + newText);
 								}
 							});
@@ -1890,7 +1891,7 @@
 							{
 								if (newText)
 								{
-									rightText.append('div').classed("sub-text", true)
+									thisBlock.append('div').classed("sub-text", true)
 										.text("Grades: " + newText);
 								}
 							});
