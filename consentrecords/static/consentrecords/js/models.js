@@ -422,6 +422,9 @@ var cr = {
 		updateValues : "/api/updatevalues/",
 		deleteValue : '/api/deletevalue/',
 		deleteInstances : '/api/deleteinstances/',
+		checkUnusedEmail : '/user/checkunusedemail/',
+		submitSignin: '/submitsignin/',
+		submitNewUser: '/submitnewuser/',
 	},
 	
 	accessToken: null,

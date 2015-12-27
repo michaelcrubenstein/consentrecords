@@ -37,7 +37,7 @@
     	display: inline-block;
     }
     
-    .new-experience-panel .panel-fill panel {
+    .dots ~ panel {
     	display: table;
     	height: calc(100% - 50px);
     	width: 100%;
@@ -47,7 +47,7 @@
     	left: 0;
     }
     
-	.new-experience-panel .panel-fill panel p {
+	.dots ~ panel p {
 		margin: 10px;
 	}
 	

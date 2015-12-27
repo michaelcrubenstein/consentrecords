@@ -15,5 +15,8 @@ cr.urls = {
 		updateValues : "/local/updatevalues/",
 		deleteValue : '/local/deletevalue/',
 		deleteInstances : '/local/deleteinstances/',
+		checkUnusedEmail : '/user/checkunusedemail/',
+		submitSignin: '/submitsignin/',
+		submitNewUser: '/submitnewuser/',
 	};
 	

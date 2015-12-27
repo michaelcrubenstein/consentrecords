@@ -22,6 +22,7 @@
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showPathways.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/signup.css" %}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
@@ -222,56 +223,6 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_sign_up_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
-			<form class="form-simple">
-				<div class="site-title">Sign Up for Consent Records</div>
-				<div class="row">
-					<div class="alert-container" class="col-xs-12"></div>
-				</div>
-				<div class="row">
-					<div class="form-group col-xs-12">
-						<label for="id_username" class="control-label sr-only">Email Address</label> 
-						<input id="id_username" class="form-control" maxlength="254" name="username" 
-							   type="email" placeholder="Email address"/>
-					</div>
-					<div class="form-group col-xs-12">
-						<label for="id_password"  class="control-label sr-only">Password</label> 
-						<input id="id_password" class="form-control password-control" name="password" type="password" placeholder="Password" />
-					</div>
-					<div id="id_confirm_form_group" class="form-group col-xs-12 has-feedback">
-						<label for="id_confirmpassword"  class="control-label sr-only">Confirm Password</label> 
-						<input id="id_confirmpassword" class="form-control password-control" name="confirmpassword" type="password" placeholder="Confirm password" />
-						<span id="id_passwordOK" class="glyphicon form-control-feedback"></span>
-					</div>
-					<div class="form-group col-xs-12">
-
-						<!-- maxLength of firstname is the same as in the custom_user.AUser.firstName field -->
-						<label for="id_firstname"  class="control-label sr-only">First Name</label> 
-						<input id="id_firstname" class="form-control" maxlength="30" name="firstName" type="text" placeholder="First name" required/>
-					</div>
-					<div class="form-group col-xs-12">
-						<!-- maxLength of lastname is the same as in the custom_user.AUser.lastName field --!>
-						<label for="id_lastname"  class="control-label sr-only">Last Name</label> 
-						<input id="id_lastname" class="form-control" maxlength="50" name="lastName" type="text" placeholder="Last name" required />
-					</div>
-				</div>
-				<div class="site-trio-container">
-					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
-					<div class="site-trio-fill"></div>
-					<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;Up</span>
-				</div>
-			</form>
-		
-			<hr />
-			<div class="row">
-				<a id="id_termsOfUseLink" class="btn btn-link btn-xs col-xs-12">Terms Of Use</a>
-			</div>
-			<div class="row">
-				<div id="id_termsAlert" class="col-xs-12">				
-				</div>
-			</div>
-		</panel>
-
 		<panel id="id_forgot_password_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
 			<form class="form-simple">
 				<div class="site-title">Forgot your Password?</div>
@@ -498,6 +449,7 @@
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
@@ -775,7 +727,7 @@
 			$("#id_sign_in_panel #id_signup_link").click(function(e) {
 				if (prepareClick())
 				{
-					showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_up_panel");
+					var signUp = new Signup($(this).parents(".site-panel")[0]);
 				}
 				e.preventDefault();
 			});
@@ -787,51 +739,6 @@
 				}
 				e.preventDefault();
 			});
-
-			var signUpSuccess = function(userData)
-			{
-				userInstance.value = userData;
-				userInstance.checkCells(undefined, undefined, function()
-					{
-						$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-						hidePanelRight($("#id_sign_up_panel")[0], false,
-							function()
-							{
-								userInstance.triggerEvent("signin.cr", userInstance);
-							});
-					},
-				syncFailFunction);
-			}
-
-			$("#id_sign_up_panel .submit-button").click(function(e) {
-				if (signUp.canSubmit())
-				{
-					if (prepareClick())
-					{
-						signUp.checkUnusedEmail(
-							function() {
-								signUp.submit(signUpSuccess, syncFailFunction);
-							},
-							syncFailFunction);
-					}
-				}
-
-				e.preventDefault();
-			});
-		
-			$("#id_sign_up_panel #id_termsOfUseLink").click(function(e) {
-				signUp.showTermsOfUse();
-				e.preventDefault();
-			});
-		
-			$("#id_sign_up_panel").on("revealing.cr", function()
-			{
-				$("#id_sign_up_panel #id_username").focus();
-				signUp.checkenabled();
-			});
-			
-			$("#id_sign_up_panel input[type='text']").bind("keyup input paste", signUp.checkenabled);
-			$("#id_sign_up_panel input[type='password']").bind("keyup input paste", signUp.checkenabled);
 
 			$("#id_forgot_password_panel .submit-button").click(function(e) {
 				if (forgotPassword.canSubmit())
@@ -908,113 +815,6 @@
 				}
 			{% endif %}
 		});
-		
-		signUp = {
-			checkenabled: function() {			
-				if ($("#id_sign_up_panel #id_password").val() === "" ||
-					$("#id_sign_up_panel #id_confirmpassword").val() !== $("#id_sign_up_panel #id_password").val())
-				{
-					$( "#id_sign_up_panel #id_confirm_form_group" ).removeClass( "has-success");
-					$( "#id_sign_up_panel #id_passwordOK" ).removeClass( "glyphicon-ok" );
-				}
-				else
-				{
-					$( "#id_sign_up_panel #id_confirm_form_group" ).addClass( "has-success");
-					$( "#id_sign_up_panel #id_passwordOK" ).addClass( "glyphicon-ok" );
-				}
-			},
-			
-			canSubmit: function ()
-			{
-				if ($("#id_sign_up_panel #id_username").val() === "") {
-					bootstrap_alert.warning("An email address is required.", ".alert-container");
-					$("#id_sign_up_panel #id_username").focus();
-				}
-				else if ($("#id_sign_up_panel #id_password").val() === "") {
-					bootstrap_alert.warning("A password is required.", ".alert-container");
-					$("#id_sign_up_panel #id_password").focus();
-				}
-				else if ($("#id_sign_up_panel #id_confirmpassword").val() != $("#id_sign_up_panel #id_password").val()) {
-					bootstrap_alert.warning("Your password is not confirmed.", ".alert-container");
-					$("#id_sign_up_panel #id_confirmpassword").focus();
-				}
-				else if ($("#id_sign_up_panel #id_firstname").val() === "") {
-					bootstrap_alert.warning("A first name is required.", ".alert-container");
-					$("#id_sign_up_panel #id_firstname").focus();
-				}
-				else if ($("#id_sign_up_panel #id_lastname").val() === "") {
-					bootstrap_alert.warning("A last name is required.", ".alert-container");
-					$("#id_sign_up_panel #id_lastname").focus();
-				}
-				else
-					return true;	/* Everything is OK */
-				
-				return false;
-			},
-		
-			showTermsOfUse: function() {
-				var message = "<p>Information in this system will only be used according to your consent except " +
-					" as required by law. By signing up for this system, you consent to allow this system to store" +
-					" the information you have entered.</p>" + 
-					"<p>In keeping with best security practices, passwords are not stored in this system.</p>" + 
-					"<p>These terms of use have not been subject to any revision based on" +  
-						" review by a lawyer." + 
-					"</p>";
-				$("#id_sign_up_panel #id_termsAlert").html('<div class="alert alert-info alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
-			},
-			
-			checkUnusedEmail: function(successFunction, failFunction) {
-				bootstrap_alert.show($('.alert-container'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
-		
-				deferredObject = $.post("{% url 'checkUnusedEmail' %}", 
-					{ csrfmiddlewaretoken: storedcsrftoken, 
-					  email: $("#id_username").val(),
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							if (successFunction)
-								successFunction();
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown) {
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					});
-			},
-			
-			submit: function(successFunction, failFunction)
-			{
-				bootstrap_alert.show($('alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
-		
-				deferredObject = $.post("{% url 'submitNewUser' %}", 
-					{ csrfmiddlewaretoken: storedcsrftoken, 
-						username: $("#id_sign_up_panel #id_username").val(),
-						password: $("#id_sign_up_panel #id_password").val(),
-						firstName: $("#id_sign_up_panel #id_firstname").val(),
-						lastName: $("#id_sign_up_panel #id_lastname").val(),
-		  				timezoneoffset : new Date().getTimezoneOffset()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json['success']) {
-							/* A successful sign-up updates the storedcsrftoken */
-							storedcsrftoken = $.cookie("csrftoken");
-							
-							successFunction(json.user);
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown) {
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				  });
-			},
-		}
 		
 		signIn = {
 			canSubmit: function() {

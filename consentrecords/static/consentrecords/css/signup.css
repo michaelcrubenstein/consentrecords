@@ -1,0 +1,117 @@
+/* signup.css */
+	.sign-up-panel {
+		background: white;
+		font-family: 'San Francisco', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	}
+	
+	.sign-up-panel h1 {
+		width: 100%;
+		text-align: center;
+		padding-top: 32px;
+		padding-bottom: 32px;
+		font-size: 32px;
+		font-weight: normal;
+	}
+	
+	.sign-up-panel input[type=text],input[type=password],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date] {
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		appearance:none;
+		border: none;
+		border-color: transparent;
+		padding: 6px 20px;
+		width: 100%;
+	}
+	
+	.sign-up-panel select {
+		margin-top: 6px;
+		margin-bottom: 6px;
+	}
+	
+	.sign-up-panel table {
+		border-top: 1px solid #eee;
+		cellspacing: 0;
+		font-size: 18px;
+		width: 100%;
+	}
+
+	.sign-up-panel table td {
+		border-bottom: 1px solid #eee;
+	}
+
+	.sign-up-panel table td:first-child {
+		padding-left: 12px;
+		white-space: nowrap;
+	}
+	
+	.labeled-table td:first-child {
+		text-align: right;
+	}
+
+	.option-table td:first-child {
+		text-align: left;
+	}
+
+	.option-table td:first-child span {
+		padding-left: 6px;
+		padding-right: 12px;
+		text-align: left;
+	}
+	
+	td:last-child {
+		padding-right: 12px;
+	}
+
+	.full-width {
+		width: 100%;
+		min-width: 100%;
+	}
+
+	.sign-up-panel td p {
+		padding: 0px 18px;
+	}
+	
+	.sign-up-panel input:focus {
+		outline-style: none;
+	}
+	
+	.sign-up-panel p {
+		width: 100%;
+		padding: 6px 32px;
+		color: #777;
+		font-size: 16px;
+		font-weight: normal;
+	}
+	
+	.sign-up-panel .alert p {
+		width: 100%;
+		padding: 0;
+		color: #777;
+		font-size: 14px;
+		text-align: left;
+		font-weight: normal;
+	}
+	
+	.sign-up-panel #id_termsAlert {
+		position: absolute;
+		top: fixed;
+	}
+	
+    .sign-up-panel .dots ol li {
+        background: #888;
+    }
+    
+    .sign-up-panel .dots ol .active {
+    	background: #CCC;
+    }
+    
+    .sign-up-panel .dots ~ panel > div {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+    }
+    
+    .sign-up-panel .dots ~ panel > div > select {
+    	display: inline-block;
+    }
+    
