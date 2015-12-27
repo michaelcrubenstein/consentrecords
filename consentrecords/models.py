@@ -71,7 +71,7 @@ class Instance(dbmodels.Model):
     
     # Returns a new instance of an object of this kind.
     def createEmptyInstance(self, parent, transactionState):
-        id = uuid.uuid4()
+        id = uuid.uuid4().hex
         i = Instance.objects.create(id=id, typeID=self, parent=parent,
                                     transaction=transactionState.transaction)
         return i
@@ -409,7 +409,7 @@ class Instance(dbmodels.Model):
                               stringValue=name)
                 for v3 in vs3:
                     return v.referenceValue
-        raise Value.DoesNotExist
+        raise Value.DoesNotExist('field "%s" does not exist' % name)
 
     @property
     def inheritsSecurity(self):
@@ -1075,8 +1075,8 @@ class Value(dbmodels.Model):
     
     def getReferenceData(self, languageID=None):
         description = Description.objects.get(instance=self.referenceValue, language_id__isnull=True)
-        return { "id": self.id.hex,
-              "value": {"id" : self.referenceValue.id.hex, "description": description.text },
+        return { "id": self.id,
+              "value": {"id" : self.referenceValue.id, "description": description.text },
               "position": self.position }
             
     # Updates the value of the specified object
