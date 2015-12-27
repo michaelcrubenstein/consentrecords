@@ -608,13 +608,16 @@ class ApiGetUserIDEndpoint(ProtectedResourceView):
 def submitsignin(request):
     LogRecord.emit(request.user, 'consentrecords/submitsignin', '')
     
+    if request.method != "POST":
+        raise Http404("submitsignin only responds to POST methods")
+    
     try:
         timezoneOffset = request.POST["timezoneoffset"]
     
         results = userviews.signinResults(request)
         if results["success"]:
-            user = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, timezoneOffset)
-            results["user"] = { "id": user.id, "description" : request.user.get_full_name() }        
+            user = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
+            results["user"] = { "id": user.id, "description" : user.description(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -625,13 +628,20 @@ def submitsignin(request):
 def submitNewUser(request):
     LogRecord.emit(request.user, 'consentrecords/submitNewUser', '')
         
+    if request.method != "POST":
+        raise Http404("submitNewUser only responds to POST methods")
+    
     try:
         timezoneOffset = request.POST["timezoneoffset"]
     
+        # An optional set of properties associated with the object.
+        propertyString = request.POST.get('properties', "")
+        propertyList = json.loads(propertyString)
+    
         results = userviews.newUserResults(request)
         if results["success"]:
-            userInstance = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, timezoneOffset)
-            results["user"] = { "id": userInstance.id, "description" : request.user.get_full_name() }
+            userInstance = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
+            results["user"] = { "id": userInstance.id, "description" : userInstance.description(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

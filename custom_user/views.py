@@ -251,10 +251,11 @@ def newUserResults(request):
         if request.method != "POST":
             raise Exception("newUser only responds to POST requests")
 
-        username = request.POST['username']
-        password = request.POST['password']
-        firstName = request.POST['firstName']
-        lastName = request.POST['lastName']
+        data = request.POST
+        username = data['username']
+        password = data['password']
+        firstName = data.get('firstName', None)
+        lastName = data.get('lastName', None)
 
         manager = get_user_model().objects
         with transaction.atomic():

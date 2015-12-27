@@ -16,7 +16,7 @@ class UserFactory:
             deletedvalue__isnull=True)
         return len(qs) and qs[0].instance
     
-    def createUserInstance(user, timezoneOffset):
+    def createUserInstance(user, propertyList, timezoneOffset):
         with transaction.atomic():
             transactionState = TransactionState(user, timezoneOffset)
             if isinstance(user.id, uuid.UUID):
@@ -25,7 +25,8 @@ class UserFactory:
                 userID = user.id        # MySQL
 
             ofKindObject = Terms.getNamedInstance(TermNames.user)
-            propertyList = {TermNames.email: user.email}
+            if not propertyList: propertyList = {}
+            propertyList[TermNames.email] = user.email
             if user.first_name:
                 propertyList[TermNames.firstName] = user.first_name
             if user.last_name:
