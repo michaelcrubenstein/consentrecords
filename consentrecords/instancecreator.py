@@ -34,7 +34,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
                     newItem, newValue = create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
                 else:
-                    raise ValueError("Unrecognized type of data to save")
+                    raise ValueError("Unrecognized type of data to save: %s" % str(d))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
