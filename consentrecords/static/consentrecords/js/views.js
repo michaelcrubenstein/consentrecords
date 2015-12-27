@@ -125,7 +125,7 @@ function showPanelLeft(panelNode)
 						});
 }
 
-function hidePanelDown(panelNode, doRemove)
+function hidePanelDown(panelNode, doRemove, completeFunction)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
@@ -136,6 +136,8 @@ function hidePanelDown(panelNode, doRemove)
 			if (doRemove)
 				$(this).remove();
 			unblockClick();
+			if (completeFunction)
+				completeFunction();
 		});
 }
 
