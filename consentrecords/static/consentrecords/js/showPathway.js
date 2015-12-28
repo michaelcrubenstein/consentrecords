@@ -1680,13 +1680,18 @@ var DateInput = (function () {
 	DateInput.prototype.month = undefined;
 	DateInput.prototype.day = undefined;
 	
-    function DateInput() {
+    function DateInput(node) {
     	this.year = undefined;
     	this.month = undefined;
     	this.day = undefined;
+    	
+    	if (node !== undefined)
+    	{
+    		this.append(node);
+    	}
     };
     
-	DateInput.prototype.append = function(node, dots)
+	DateInput.prototype.append = function(node)
 	{
 		var _this = this;
 		var p = d3.select(node);
@@ -1755,9 +1760,9 @@ var DateInput = (function () {
 				monthInput.selectAll(":first-child").attr('disabled', true);
 				var oldDate = dateNode.selectedIndex;
 				dateInput.selectAll('option').remove();
-				dots.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
-				dots.month = monthNode.selectedIndex;
-				var daysInMonth = (new Date(dots.year, dots.month, 0)).getDate();
+				var selectedYear = parseInt(yearNode.options[yearNode.selectedIndex].text);
+				var selectedMonth = monthNode.selectedIndex;
+				var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
 				dates = ['date (optional)'];
 				for (var i = 1; i <= daysInMonth; ++i)
 					dates.push(i);
@@ -1809,8 +1814,7 @@ function setupPanel5(dots)
 	p.append('div')
 		.append('p').text("When did you start " + dots.offeringName + "?");
 		
-	dots.startDateInput = new DateInput();
-	dots.startDateInput.append(this, dots);
+	dots.startDateInput = new DateInput(this);
 				
 	this.onReveal = null;
 }
@@ -1821,8 +1825,7 @@ function setupPanel6(dots)
 	p.append('div')
 		.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
 
-	dots.endDateInput = new DateInput()
-	dots.endDateInput.append(this, dots);
+	dots.endDateInput = new DateInput(this)
 
 	this.onReveal = null;
 }
