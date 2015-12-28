@@ -1,10 +1,10 @@
 /* signup.css */
-	.sign-up-panel {
+	panel.sign-up {
 		background: white;
 		font-family: 'San Francisco', 'Helvetica Neue', Arial, Helvetica, sans-serif;
 	}
 	
-	.sign-up-panel h1 {
+	panel.sign-up h1 {
 		width: 100%;
 		text-align: center;
 		padding-top: 32px;
@@ -13,7 +13,13 @@
 		font-weight: normal;
 	}
 	
-	.sign-up-panel input[type=text],input[type=password],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date] {
+	panel.sign-up input[type=text],
+	panel.sign-up input[type=password],
+	panel.sign-up input[type=number],
+	panel.sign-up input[type=month],
+	panel.sign-up input[type=email],
+	panel.sign-up input[type=url],
+	panel.sign-up input[type=date] {
 		-webkit-appearance:none;
 		-moz-appearance:none;
 		appearance:none;
@@ -23,36 +29,36 @@
 		width: 100%;
 	}
 	
-	.sign-up-panel select {
+	panel.sign-up select {
 		margin-top: 6px;
 		margin-bottom: 6px;
 	}
 	
-	.sign-up-panel table {
+	panel.sign-up table {
 		border-top: 1px solid #eee;
 		cellspacing: 0;
 		font-size: 18px;
 		width: 100%;
 	}
 
-	.sign-up-panel table td {
+	panel.sign-up table td {
 		border-bottom: 1px solid #eee;
 	}
 
-	.sign-up-panel table td:first-child {
+	panel.sign-up table td:first-child {
 		padding-left: 12px;
 		white-space: nowrap;
 	}
 	
-	.labeled-table td:first-child {
+	table.labeled-table td:first-child {
 		text-align: right;
 	}
 
-	.option-table td:first-child {
+	table.option-table td:first-child {
 		text-align: left;
 	}
 
-	.option-table td:first-child span {
+	table.option-table td:first-child span {
 		padding-left: 6px;
 		padding-right: 12px;
 		text-align: left;
@@ -62,20 +68,20 @@
 		padding-right: 12px;
 	}
 
-	.full-width {
+	td.full-width {
 		width: 100%;
 		min-width: 100%;
 	}
 
-	.sign-up-panel td p {
+	panel.sign-up td p {
 		padding: 0px 18px;
 	}
 	
-	.sign-up-panel input:focus {
+	panel.sign-up input:focus {
 		outline-style: none;
 	}
 	
-	.sign-up-panel p {
+	panel.sign-up p {
 		width: 100%;
 		padding: 6px 32px;
 		color: #777;
@@ -83,7 +89,7 @@
 		font-weight: normal;
 	}
 	
-	.sign-up-panel .alert p {
+	panel.sign-up .alert p {
 		width: 100%;
 		padding: 0;
 		color: #777;
@@ -92,26 +98,26 @@
 		font-weight: normal;
 	}
 	
-	.sign-up-panel #id_termsAlert {
+	panel.sign-up #id_termsAlert {
 		position: absolute;
 		top: fixed;
 	}
 	
-    .sign-up-panel .dots ol li {
+    panel.sign-up .dots ol li {
         background: #888;
     }
     
-    .sign-up-panel .dots ol .active {
+    panel.sign-up .dots ol .active {
     	background: #CCC;
     }
     
-    .sign-up-panel .dots ~ panel > div {
+    panel.sign-up .dots ~ panel > div {
 		overflow: hidden;
 		text-align: center;
 		width: 100%;
     }
     
-    .sign-up-panel .dots ~ panel > div > select {
+    panel.sign-up .dots ~ panel > div > select {
     	display: inline-block;
     }
     

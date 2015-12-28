@@ -56,7 +56,7 @@ var Signup = (function () {
 	
 		var _thisSignup = this;
 		var panelDiv = createPanel(d3.select(previousPanel), null, "Sign Up for Consent Records")
-						.classed("configuration-panel sign-up-panel", true);
+						.classed("configuration-panel sign-up", true);
 
 		var navContainer = panelDiv.appendNavContainer();
 
