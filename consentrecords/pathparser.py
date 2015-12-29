@@ -43,12 +43,14 @@ def refineResults(resultSet, path):
                 stringText = Q(value__stringValue__gte=testValue)
             else:
                 raise ValueError("unrecognized symbol: %s" & symbol)
+            # Need to add distinct after the tests to prevent duplicates if there is
+            # more than one value of the instance that matches.
             if i:
                 f = resultSet.filter(stringText, value__fieldID=i,
-                                     value__deletedvalue__isnull=True)
+                                     value__deletedvalue__isnull=True).distinct()
             else:
                 f = resultSet.filter(stringText,
-                                     value__deletedvalue__isnull=True)
+                                     value__deletedvalue__isnull=True).distinct()
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
         return f, path[2:]
