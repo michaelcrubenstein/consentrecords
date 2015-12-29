@@ -55,16 +55,15 @@ var Signup = (function () {
 	function Signup(previousPanel, editable) {
 	
 		var _thisSignup = this;
-		var panelDiv = createPanel(d3.select(previousPanel), null, "Sign Up for Consent Records")
-						.classed("configuration-panel sign-up", true);
+		var sitePanel = new SitePanel(d3.select(previousPanel), null, "Sign Up for Consent Records", "configuration-panel sign-up");
 
-		var navContainer = panelDiv.appendNavContainer();
+		var navContainer = sitePanel.appendNavContainer();
 
-		var panel2Div = panelDiv.appendScrollArea()
+		var panel2Div = sitePanel.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, panelDiv, 4);
+		this.dots = new DotsNavigator(panel2Div, sitePanel, 4);
 		this.dots.datum = this;		
 
 		this.dots.appendForwardButton(navContainer, function()
@@ -80,7 +79,7 @@ var Signup = (function () {
 						userInstance.checkCells(undefined, undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								hidePanelDown(panelDiv.node(), false,
+								hidePanelDown(sitePanel.node(), false,
 									function()
 									{
 										userInstance.triggerEvent("signin.cr", userInstance);
@@ -441,7 +440,7 @@ var Signup = (function () {
 
 		panel2Div.appendAlertContainer();
 		
-		showPanelUp(panelDiv.node());
+		showPanelUp(sitePanel.node());
 		this.dots.showDots();
 	}
 	

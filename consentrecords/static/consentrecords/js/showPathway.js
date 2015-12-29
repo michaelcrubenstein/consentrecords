@@ -97,7 +97,7 @@ var DotsNavigator = (function () {
 	
 	DotsNavigator.prototype.appendBackButton = function(navContainer)
 	{
-		_this = this;
+		var _this = this;
 		this.backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
@@ -149,7 +149,7 @@ var DotsNavigator = (function () {
 	
 	DotsNavigator.prototype.appendForwardButton = function(navContainer, done)
 	{
-		_this = this;
+		var _this = this;
 		this.done = done;
 		
 		this.doneButton = navContainer.appendRightButton();
@@ -179,7 +179,7 @@ var DotsNavigator = (function () {
 			.classed("site-active-text", isEnabled);
 	}
 	
-	function DotsNavigator(panel2Div, panelDiv, numDots) {
+	function DotsNavigator(panel2Div, sitePanel, numDots) {
 		/* By default, the data is the dots object itself for backward compatibility.
 		 */
 		this.datum = this;
@@ -210,7 +210,7 @@ var DotsNavigator = (function () {
 		this.doneButton = null;
 		this.backButton = null;
 	
-		_this = this;
+		var _this = this;
 		function layoutPanels()
 		{
 			var containerWidth = $(_this.div.node()).parent().width();
@@ -226,7 +226,7 @@ var DotsNavigator = (function () {
 		}
 	
 		$(window).on("resize", layoutPanels);
-		panelDiv.on("hiding.cr", function()
+		sitePanel.panelDiv.on("hiding.cr", function()
 		{
 			$(window).off("resize", layoutPanels);
 		});
@@ -318,6 +318,7 @@ var Pathway = (function () {
 	
 	Pathway.prototype.allExperiences = [];
 	Pathway.prototype.flagColumns = [];
+	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
 	Pathway.prototype.svg = null;
 	Pathway.prototype.defs = null;
@@ -902,13 +903,13 @@ var Pathway = (function () {
 		}
 	}
 		
-	function Pathway(containerDiv, editable) {
+	function Pathway(sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.flagDown = false;
+		this.sitePanel = sitePanel;
 		
-		var panelDiv = d3.select($(containerDiv).parents(".site-panel")[0]);
 		var container = d3.select(containerDiv);
 		
 		this.svg = container.append('svg')
@@ -947,24 +948,13 @@ var Pathway = (function () {
 
 		this.svg.on("click", function() { _thisPathway.hideDetail(); });
 		
-		panelDiv.selectAll(".add-button")
-			.on("click", function(d) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-		
-					showAddExperiencePanel(_thisPathway, null, panelDiv);
-				}
-				d3.event.preventDefault();
-			});
-		
 		function resizeFunction()
 		{
 			_thisPathway.layoutExperiences();
 		}
 		
 		$(window).on("resize", resizeFunction);
-		panelDiv.on("hiding.cr", function()
+		sitePanel.panelDiv.on("hiding.cr", function()
 		{
 			$(window).off("resize", resizeFunction);
 		});
@@ -1024,9 +1014,9 @@ var Pathway = (function () {
 		
 			_thisPathway.allExperiences.sort(_thisPathway._compareExperiences);
 			
-			_thisPathway.setDateRange.call(_thisPathway);
+			_thisPathway.setDateRange();
 			
-			_thisPathway.appendExperiences.call(_thisPathway);
+			_thisPathway.appendExperiences();
 			
 			if (_thisPathway.allExperiences.length > 0)
 			{
@@ -1045,7 +1035,7 @@ var Pathway = (function () {
 						{
 							showClickFeedback(this);
 		
-							showAddExperiencePanel(_thisPathway, null, panelDiv);
+							showAddExperiencePanel(_thisPathway, null, sitePanel);
 						}
 						d3.event.preventDefault();
 					})
@@ -1232,7 +1222,7 @@ function getObjectByDescription(a, description)
 	return null;
 }
 
-function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, dots, success)
+function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject, dots, success)
 {
 	var header;
 	if (oldReportedObject)
@@ -1240,10 +1230,9 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 	else
 		header = "Add Value";
 		
-	var panelDiv = createPanel(containerPanel, rootObjects, header)
-					.classed("list-panel", true);
+	var sitePanel = new SitePanel(previousPanelNode, rootObjects, header, "list-panel");
 
-	var navContainer = panelDiv.appendNavContainer();
+	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
 		.on("click", function()
@@ -1296,9 +1285,9 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 		}
 	}
 
-	var searchInputNode = panelDiv.appendSearchBar(textChanged);
+	var searchInputNode = sitePanel.appendSearchBar(textChanged);
 
-	var panel2Div = panelDiv.appendScrollArea();
+	var panel2Div = sitePanel.appendScrollArea();
 	
 	panel2Div.appendAlertContainer();
 	
@@ -1306,7 +1295,7 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 		if (prepareClick())
 		{
 			success(new ReportedObject({value: d}));
-			hidePanelRight(panelDiv.node());
+			hidePanelRight(sitePanel.node());
 		}
 		d3.event.preventDefault();
 	}
@@ -1327,12 +1316,12 @@ function showPickServicePanel(containerPanel, rootObjects, oldReportedObject, do
 		}
 	}
 	
-	showPanelLeft(panelDiv.node());
+	showPanelLeft(sitePanel.node());
 }
 
 function setupServicesPanel(dots)
 {
-	var panelDiv = d3.select($(this).parents(".site-panel")[0]);
+	var sitePanel = dots.sitePanel;
 	var p1 = d3.select(this);
 	p1.append('div')
 		.classed('table-row', true)
@@ -1354,8 +1343,6 @@ function setupServicesPanel(dots)
 	labelDiv.classed("top-label", true);
 	itemsDiv.classed("border-above", true);
 
-	// $(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(panelDiv, cell, null, true, true, showEditObjectPanel, revealPanelLeft));
-
 	var clickFunction;
 	clickFunction = function(d, i) {
 			var _this = this;
@@ -1371,7 +1358,7 @@ function setupServicesPanel(dots)
 						var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
 						dots.services[i] = newReportedObject;
 					}
-					showPickServicePanel(panelDiv, rootObjects, d, dots, success);
+					showPickServicePanel(sitePanel.node(), rootObjects, d, dots, success);
 				}, 
 				fail: syncFailFunction});
 			}
@@ -1421,7 +1408,7 @@ function setupServicesPanel(dots)
 						appendRightChevrons(buttons);
 						appendButtonDescriptions(buttons, null);
 					}
-					showPickServicePanel(panelDiv, rootObjects, null, dots, success);
+					showPickServicePanel(sitePanel.node(), rootObjects, null, dots, success);
 				}, 
 				fail: syncFailFunction});
 			}
@@ -1675,146 +1662,18 @@ function setupPanel4(dots)
 	this.onReveal = next;
 }
 
-var DateInput = (function () {
-	DateInput.prototype.year = undefined;
-	DateInput.prototype.month = undefined;
-	DateInput.prototype.day = undefined;
-	
-    function DateInput(node) {
-    	this.year = undefined;
-    	this.month = undefined;
-    	this.day = undefined;
-    	
-    	if (node !== undefined)
-    	{
-    		this.append(node);
-    	}
-    };
-    
-	DateInput.prototype.append = function(node)
-	{
-		var _this = this;
-		var p = d3.select(node);
-		
-		var row = p.append('div')
-			   .classed('date-row', true);
-		var yearInput = row.append('select').style('display', 'inline');
-		var monthInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
-			.classed('month-select', true);
-		var dateInput = row.append('select').style('display', 'inline').style('visibility', 'hidden');
-	
-		var yearNode = yearInput.node();
-		var monthNode = monthInput.node();
-		var dateNode = dateInput.node();
-
-		var minYear, maxYear;
-		maxYear = (new Date()).getFullYear();
-	
-		var birthday = userInstance.getValue("Birthday");
-		if (birthday && birthday.value)
-			minYear = parseInt(birthday.value.substr(0, 4));
-		else
-			minYear = maxYear-100;
-		
-		var years = ['year'];
-		for (var i = maxYear; i >= minYear; --i)
-			years.push(i);
-		yearInput.selectAll('option')
-			.data(years)
-			.enter()
-			.append('option')
-			.text(function(d) { return d; });
-					
-		var months = ['month'].concat(Date.CultureInfo.monthNames)
-		monthInput.selectAll('option')
-			.data(months)
-			.enter()
-			.append('option')
-			.text(function(d) { return d; });
-	
-		var dates = ['date (optional)'];
-		dateInput.selectAll('option')
-			.data(dates)
-			.enter()
-			.append('option')
-			.text(function(d) { return d; });
-	
-		$(yearNode).change(function()
-			{
-				yearInput.selectAll(":first-child").attr('disabled', true);
-				monthInput.style('visibility', 'visible');
-				if (yearNode.selectedIndex == 0)
-					_this.year = undefined;
-				else
-					_this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
-			});
-		
-		$(dateNode).change(function()
-			{
-				dateInput.selectAll(":first-child").attr('disabled', true);
-				_this.day = dateNode.selectedIndex;
-			});
-	
-		$(monthNode).change(function()
-			{
-				monthInput.selectAll(":first-child").attr('disabled', true);
-				var oldDate = dateNode.selectedIndex;
-				dateInput.selectAll('option').remove();
-				var selectedYear = parseInt(yearNode.options[yearNode.selectedIndex].text);
-				var selectedMonth = monthNode.selectedIndex;
-				var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
-				dates = ['date (optional)'];
-				for (var i = 1; i <= daysInMonth; ++i)
-					dates.push(i);
-				dateInput.selectAll('option').remove();
-				dateInput.selectAll('option')
-					.data(dates)
-					.enter()
-					.append('option')
-					.text(function(d) { return d; });
-				if (oldDate > 0 && oldDate <= daysInMonth)
-					dateNode.selectedIndex = oldDate;
-				dateInput.style('visibility', 'visible');
-				if (monthNode.selectedIndex == 0)
-					_this.month = undefined;
-				else
-					_this.month = monthNode.selectedIndex;
-			});
-	}
-	
-	DateInput.prototype.getDescription = function()
-	{
-		if (this.year && this.month)
-		{
-			var m = this.month.toString();
-			if (m.length == 1)
-				m = "0" + m;
-			var t = this.year.toString() + "-" + m;
-			if (this.day)
-			{
-				var d = this.day.toString();
-				if (d.length == 1)
-					d = "0" + d;
-				t += "-" + d;
-			}
-			return t;
-		}
-		else if (this.year)
-			return this.year.toString();
-		else
-			return "";
-	}
-	
-	return DateInput;
-})();
-
 function setupPanel5(dots)
 {
 	var p = d3.select(this);
 	p.append('div')
 		.append('p').text("When did you start " + dots.offeringName + "?");
-		
-	dots.startDateInput = new DateInput(this);
+	
+	var minYear = undefined;	
+	var birthday = userInstance.getValue("Birthday");
+	if (birthday && birthday.value)
+		minYear = parseInt(birthday.value.substr(0, 4));
+
+	dots.startDateInput = new DateInput(this, minYear);
 				
 	this.onReveal = null;
 }
@@ -1825,7 +1684,17 @@ function setupPanel6(dots)
 	p.append('div')
 		.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
 
-	dots.endDateInput = new DateInput(this)
+	var minYear = undefined;
+	if (dots.startDateInput.year)
+		minYear = dots.startDateInput.year;
+	else
+	{
+		var birthday = userInstance.getValue("Birthday");
+		if (birthday && birthday.value)
+			minYear = parseInt(birthday.value.substr(0, 4));
+	}
+
+	dots.endDateInput = new DateInput(this, minYear)
 
 	this.onReveal = null;
 }
@@ -1860,8 +1729,8 @@ function setupConfirmPanel(dots)
 	}
 	
 	{
-		var startDate = dots.startDateInput.getDescription();
-		var endDate = dots.endDateInput.getDescription();
+		var startDate = dots.startDateInput.value();
+		var endDate = dots.endDateInput.value();
 		if (startDate && endDate)
 			t = startDate + " - " + endDate;
 		else if (startDate)
@@ -1879,21 +1748,20 @@ function setupConfirmPanel(dots)
 /* 
 	objectData contains the MoreExperiences object.
  */
-function showAddExperiencePanel(pathway, objectData, containerPanel) {
+function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		var header = "Add Experience";
 			
-		var panelDiv = createPanel(containerPanel, objectData, header)
-						.classed("edit-panel new-experience-panel", true);
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit-panel new-experience-panel");
 
-		var navContainer = panelDiv.appendNavContainer();
+		var navContainer = sitePanel.appendNavContainer();
 
-		var panel2Div = panelDiv.appendScrollArea()
+		var panel2Div = sitePanel.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
 		panel2Div.appendAlertContainer();
 		
-		var dots = new DotsNavigator(panel2Div, panelDiv, 8);	
+		var dots = new DotsNavigator(panel2Div, sitePanel, 8);	
 		dots.finalText = "Sign Up";	
 
 		var hideSuccessFunction = function()
@@ -1921,8 +1789,8 @@ function showAddExperiencePanel(pathway, objectData, containerPanel) {
 					
 					field = {ofKind: "More Experience", name: "More Experience"};
 					var initialData = {};
-					var startDate = dots.startDateInput.getDescription();
-					var endDate = dots.endDateInput.getDescription();
+					var startDate = dots.startDateInput.value();
+					var endDate = dots.endDateInput.value();
 					
 					if (startDate.length > 0)
 						initialData["Start Date"] = [startDate];
@@ -1993,6 +1861,41 @@ function showAddExperiencePanel(pathway, objectData, containerPanel) {
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
-		showPanelUp(panelDiv.node());
+		showPanelUp(sitePanel.node());
 		dots.showDots();
 }
+
+var PathwayPanel = (function () {
+	PathwayPanel.prototype = new SitePanel();
+	PathwayPanel.prototype.pathway = null;
+	
+	function PathwayPanel(previousPanel) {
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit-panel");
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		var _this = this;
+		
+		var addExperienceButton = navContainer.appendRightButton()
+			.classed('add-button', true)
+			.on("click", function(d) {
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+		
+					showAddExperiencePanel(_this.pathway, null, _this.node());
+				}
+				d3.event.preventDefault();
+			});
+		addExperienceButton.append("span").text("+");
+		
+		var panel2Div = this.appendScrollArea();
+		panel2Div.appendAlertContainer();
+		showPanelLeft(this.node());
+		this.pathway = new Pathway(this, panel2Div.node(), true);
+	}
+	
+	return PathwayPanel;
+})();

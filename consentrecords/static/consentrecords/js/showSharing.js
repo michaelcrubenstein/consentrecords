@@ -134,12 +134,11 @@ function showSharing(containerDiv) {
 /*
 	This function should be called within a prepareClick block. 
  */
-function pickAccessor(header, containerPanel, successFunction)
+function pickAccessor(header, previousPanelNode, successFunction)
 {
-	var panelDiv = createPanel(containerPanel, null, header)
-		.classed("list-panel", true);
+	var sitePanel = new SitePanel(previousPanelNode, null, header, "list-panel");
 
-	var navContainer = panelDiv.appendNavContainer();
+	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
 		.on("click", handleCloseRightEvent);
@@ -162,9 +161,9 @@ function pickAccessor(header, containerPanel, successFunction)
 		{
 			var startVal = val;
 						
-			function show_user(user, containerPanel)
+			function show_user(user, previousPanelNode)
 			{
-				showViewOnlyObjectPanel(user, user.cell, undefined, containerPanel);
+				showViewOnlyObjectPanel(user, user.cell, undefined, previousPanelNode);
 			}
 	
 			var selectAllSuccess = function(userObjects)
@@ -177,7 +176,7 @@ function pickAccessor(header, containerPanel, successFunction)
 						.on("click", function(user) {
 							if (prepareClick())
 							{
-								successFunction(user, panelDiv);
+								successFunction(user, sitePanel.node());
 							}
 							d3.event.preventDefault();
 						});
@@ -186,7 +185,7 @@ function pickAccessor(header, containerPanel, successFunction)
 						.on("click", function(user) {
 							if (prepareClick())
 							{
-								show_user(user, panelDiv);
+								show_user(user, sitePanel.node());
 							}
 							d3.event.preventDefault();
 						});
@@ -203,12 +202,12 @@ function pickAccessor(header, containerPanel, successFunction)
 		}
 	}
 	
-	var searchBar = panelDiv.appendSearchBar(show_users);
+	var searchBar = sitePanel.appendSearchBar(show_users);
 
-	var panel2Div = panelDiv.appendScrollArea();
+	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendAlertContainer();
 
-	showPanelLeft(panelDiv.node());
+	showPanelLeft(sitePanel.node());
 }
 
 function addAccessor(userInstance, accessorLevel)
@@ -216,9 +215,9 @@ function addAccessor(userInstance, accessorLevel)
 	if (prepareClick())
 	{
 		var _this = this;
-		var panelDiv = d3.select($(this).parents(".site-panel")[0]);
+		var previousPanelNode = $(this).parents(".site-panel")[0];
 		var accessRecordCell = userInstance.getCell("_access record");
-		function successFunction(pickedUser, panelDiv)
+		function successFunction(pickedUser, currentPanelNode)
 		{
 			if (accessorLevel.accessRecords.length == 0)
 			{
@@ -226,8 +225,8 @@ function addAccessor(userInstance, accessorLevel)
 				{
 					accessorLevel.accessRecords.push(newData);
 					var itemsDiv = $(_this).parents(".cell-div").children(".cell-items")[0];
-					_getOnValueAddedFunction(panelDiv, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
-					hidePanelRight(panelDiv.node());
+					_getOnValueAddedFunction(currentPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
+					hidePanelRight(currentPanelNode);
 				}
 
 				// Create an instance of an access record with this accessor level
@@ -243,15 +242,18 @@ function addAccessor(userInstance, accessorLevel)
 				{
 					accessorLevel.accessRecords.push(newData);
 					var itemsDiv = $(_this).parents(".cell-div").children(".cell-items")[0];
-					_getOnValueAddedFunction(panelDiv, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
-					hidePanelRight(panelDiv.node());
+					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
+					hidePanelRight(currentPanelNode);
 				}
 
 				// Add this user to the access record associated with this accessor level.
 				var ar = accessorLevel.accessRecords[0]
-				cr.addObjectValue(ar.getCell("_user"), ar.getValueID(), pickedUser, _createAccessRecordSuccess, syncFailFunction);
+				ar.checkCells(undefined, undefined, function()
+				{
+					cr.addObjectValue(ar.getCell("_user"), ar.getValueID(), pickedUser, _createAccessRecordSuccess, syncFailFunction);
+				}, syncFailFunction);
 			}
 		}
-		pickAccessor("Add User Or Group", panelDiv, successFunction);
+		pickAccessor("Add User Or Group", previousPanelNode, successFunction);
 	}
 }

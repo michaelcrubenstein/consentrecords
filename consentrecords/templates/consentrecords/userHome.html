@@ -84,10 +84,9 @@
 		}
 	   	.panel-input-container {
 	   		margin-top: 9px;
-	   		padding-top: 3px;
-	   		padding-left: 12px;
-	   		padding-right: 12px;
+	   		padding: 6px 12px;
 	   		width: 100%;
+	   		background: white;
 	   	}
 	   	.panel-input {
 	   		width: 100%;
@@ -160,8 +159,8 @@
 						<span class="pull-left">Find a New Experience</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
-					<button panelID = "id_your_pathway_panel"
-						class="check-signin-button btn row-button site-active-text">
+					<button id="id_pathway_button"
+						class="btn row-button site-active-text">
 						<span class="pull-left">My Pathway</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
@@ -184,8 +183,8 @@
 						<span class="pull-left">Sharing</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
-					<button panelID = "id_settings_panel"
-						class="check-signin-button btn row-button site-active-text">
+					<button id="id_settings_button"
+						class="btn row-button site-active-text">
 						<span class="pull-left">Settings</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
@@ -304,28 +303,6 @@
 				</div>
 				<div id="id_offerings">
 				</div>
-			</div> <!-- /container-fluid -->
-	    </panel>
-	    <panel id="id_your_pathway_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar-default site-navbar site-navbar-top" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="pull-right">
-						<div id="id_addExperienceButton" class="site-navbar-link site-active-text add-button">
-							<span>+</span>
-						</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Pathway</span></div>
-					</div>
-				</div>
-			</nav>
-			<div id="id_scrollableArea" class="site-content-panel-under">
-				<div id="id_pathway" class="site-fill-panel"></div>
-				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
 	    </panel>
 	    <panel id="id_your_plans_panel" class="level-2-panel configuration-panel site-panel list-panel">
@@ -447,9 +424,11 @@
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
+	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
+	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
@@ -552,7 +531,7 @@
 		});
 
 		/* Show a pre-defined panel associated with this button. */
-		function showPanel(e)
+		function showPanel()
 		{
 			var panelDiv = d3.select("#" + d3.select(this).attr("panelID"));
 			if (prepareClick())
@@ -563,7 +542,7 @@
 		}
 		
 		/* Hide the currently displaying panel with no further action. */		
-		function hidePanel(e)
+		function hidePanel()
 		{
 			if (prepareClick())
 			{
@@ -588,33 +567,70 @@
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
 		$(".done-button").click(hidePanel);
 		
+		function checkSignin(userInstance, panel, done)
+		{
+			if (prepareClick())
+			{
+				showClickFeedback(this);
+				if (userInstance.getValueID())
+					done();
+				else
+				{
+					userInstance.addTarget("signin.cr", panel);
+					userInstance.addTarget("signinCanceled.cr", panel);
+				
+					$(panel).on("signin.cr", function()
+					{
+						removeSignin(this);
+						if (prepareClick())
+							done();
+					});
+				
+					$(panel).on("signinCanceled.cr", function()
+					{
+						removeSignin(this);
+					});
+				
+					showFixedPanel(panel, "#id_sign_in_panel");
+				}
+			}
+		}
+		
 		$(".check-signin-button").click(function(e)
 		{
-			if (userInstance.getValueID())
-				showPanel.call(this, e);
-			else
+			var panel = $(this).parents(".site-panel")[0];
+			var panelID = this.getAttribute("panelID");
+			var done = function()
 			{
-				var _this = this;
-				var panel = $(this).parents(".site-panel")[0];
-				userInstance.addTarget("signin.cr", panel);
-				userInstance.addTarget("signinCanceled.cr", panel);
-				
-				$(panel).on("signin.cr", function()
-				{
-					removeSignin(this);
-					if (prepareClick())
-						showPanelLeft("#" + _this.getAttribute("panelID"));
-				});
-				
-				$(panel).on("signinCanceled.cr", function()
-				{
-					removeSignin(this);
-				});
-				
-				if (prepareClick())
-					showFixedPanel(panel, "#id_sign_in_panel");
+				showPanelLeft("#" + panelID);
 			}
+			
+			checkSignin.call(this, userInstance, panel, done);
 
+			e.preventDefault();
+		});
+		
+		$("#id_pathway_button").click(function(e)
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var done = function()
+			{
+				var pathway = new PathwayPanel(panel);
+			}
+			
+			checkSignin.call(this, userInstance, panel, done);
+			e.preventDefault();
+		});
+		
+		$("#id_settings_button").click(function(e)
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var done = function()
+			{
+				var settings = new Settings(panel);
+			}
+			
+			checkSignin.call(this, userInstance, panel, done);
 			e.preventDefault();
 		});
 		
@@ -636,11 +652,6 @@
 			setupSearchBar("#id_find_offering_panel .searchbar",
 				getFilter("#id_offerings"));
 				
-			$("#id_your_pathway_panel").on("revealing.cr", function(e, eventInfo)
-			{
-				var pathway = new Pathway("#id_pathway");
-			});
-			$("#id_your_pathway_panel").on("hiding.cr", hidePathway);
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
 				show_plans("#id_plans");
@@ -655,6 +666,14 @@
 					showSharing("#id_sharing");
 				});	
 			
+			$("#id_sign_in_panel #id_signup_link").click(function(e) {
+				if (prepareClick())
+				{
+					var signUp = new Signup($(this).parents(".site-panel")[0]);
+				}
+				e.preventDefault();
+			});
+
 			var signInSuccess = function(userData)
 			{
 				userInstance.value = userData;
@@ -800,10 +819,10 @@
 								if (d.getValueID() == offeringString)
 								{
 									
-									var panelDiv = showSessionDetails(d, 
+									var sitePanel = showSessionDetails(d, 
 										d3.select("#id_find_offering_panel").datum(),
 										"#id_find_offering_panel");
-									showPanelNow(panelDiv.node());
+									showPanelNow(sitePanel.node());
 								}
 							});
 							/* Only do this once, so turn it off. */
@@ -950,9 +969,9 @@
 			}
 		}
 		
-		function showFixedPanel(containerPanel, newNode)
+		function showFixedPanel(previousPanel, newNode)
 		{
-			var zIndex = parseInt($(containerPanel).css("z-index"))+1;
+			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
 			var panel = d3.select(newNode);
 			panel.style("z-index", zIndex);
 			
@@ -1241,18 +1260,16 @@
 		
 		function showSessionDetails(session, service, container)
 		{
-			var containerPanel = d3.select(container);
 			var organization = session.getValue("Organization");
 			var offering = session.getValue("Offering");
 			var site = session.getValue("Site");
 			
 			session.calculateDescription();
 			
-			var panelDiv = createPanel(containerPanel, session, offering.getDescription())
-				.classed("show-panel", true);
-			var panel = panelDiv.node();
+			var sitePanel = new SitePanel(container, session, offering.getDescription(), "show-panel");
+			var panel = sitePanel.node();
 			
-			var navContainer = panelDiv.appendNavContainer();
+			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
@@ -1260,10 +1277,10 @@
 			
 			var buttonDiv = navContainer.appendRightButton();
 			
-			var shareDiv = panelDiv.append("div");
+			var shareDiv = sitePanel.panelDiv.append("div");
 			var targetHRef;
 
-			var panel2Div = panelDiv.appendScrollArea();
+			var panel2Div = sitePanel.appendScrollArea();
 			panel2Div.appendHeader();
 			panel2Div.appendAlertContainer();
 			
@@ -1583,7 +1600,7 @@
 					checkInquiryFunction([]);
 			}
 			
-			return panelDiv;
+			return sitePanel;
 		}
 		
 		function compareSessions(a, b)
@@ -1634,9 +1651,9 @@
 				});
 		}
 						
-		function showSessions(service, container) {
+		function showSessions(service, containerNode) {
 			// Remove any lingering contents from the set of full issues.
-			var containerPanel = d3.select(container);
+			var containerPanel = d3.select(containerNode);
 			containerPanel.selectAll("li").remove();
 			containerPanel.selectAll("p").remove();
 
@@ -1666,9 +1683,9 @@
 								{
 									showClickFeedback(this);
 
-									var panelDiv = showSessionDetails(session, service, $(container).parents(".site-panel")[0]);
+									var sitePanel = showSessionDetails(session, service, $(containerNode).parents(".site-panel")[0]);
 				
-									showPanelLeft(panelDiv.node());
+									showPanelLeft(sitePanel.node());
 								}
 							});
 	
@@ -1689,7 +1706,7 @@
 				
 					appendSessionDescriptions(buttons);
 				}
-				$($(container).parents(".site-panel")[0]).trigger("offeringsShown.cr");
+				$($(containerNode).parents(".site-panel")[0]).trigger("offeringsShown.cr");
 			}
 			
 			var offeringSuccessFunction = function(offerings)
@@ -1756,9 +1773,9 @@
 						{
 							showClickFeedback(this);
 
-							var panelDiv = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
+							var sitePanel = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
 			
-							showPanelLeft(panelDiv.node());
+							showPanelLeft(sitePanel.node());
 						}
 					});
 	
@@ -1818,7 +1835,7 @@
 				buttons.on("click", function(d) {
 					if (prepareClick())
 					{
-						show_organization_panel(d, cell, null, d3.select("body>panel"));
+						show_organization_panel(d, cell, null, d3.select("body>panel").node());
 					}
 				});
 			}
@@ -1845,17 +1862,16 @@
 					b.on("click", clickFunction);
 				}
 				
-				var panelDiv = createPanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData, containerCell))
-					.classed("background-gradient-panel", true);
+				var sitePanel = new SitePanel(containerPanel, 
+											objectData, getViewPanelHeader(objectData, containerCell), "background-gradient-panel");
 
-				var navContainer = panelDiv.appendNavContainer();
+				var navContainer = sitePanel.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
 					.on("click", handleCloseRightEvent);
 				backButton.append("span").text("Done");
 	
-				var panel2Div = panelDiv.appendScrollArea();
+				var panel2Div = sitePanel.appendScrollArea();
 
 				var headerDiv = panel2Div.appendHeader();
 				objectData.addTarget("dataChanged.cr", headerDiv.node());
@@ -1865,7 +1881,7 @@
 
 				var alertContainer = panel2Div.appendAlertContainer();
 							
-				showPanelLeft(panelDiv.node());
+				showPanelLeft(sitePanel.node());
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
@@ -1875,7 +1891,7 @@
 					{
 						if (prepareClick())
 						{
-							pick_inquiry_site(organization, panelDiv);
+							pick_inquiry_site(organization, sitePanel.node());
 						}
 					});
 					
@@ -1884,7 +1900,7 @@
 					{
 						if (prepareClick())
 						{
-							manage_inquiry(organization, panelDiv);
+							manage_inquiry(organization, sitePanel.node());
 						}
 					});
 					
@@ -1896,7 +1912,7 @@
 					{
 						if (prepareClick())
 						{
-							enroll_inquiry(d, panelDiv);
+							enroll_inquiry(d, sitePanel.node());
 						}
 					});
 					
@@ -1905,7 +1921,7 @@
 					{
 						if (prepareClick())
 						{
-							add_enrollment(d, panelDiv);
+							add_enrollment(d, sitePanel.node());
 						}
 					});
 					
@@ -1914,7 +1930,7 @@
 					{
 						if (prepareClick())
 						{
-							manage_enrollment(d, panelDiv);
+							manage_enrollment(d, sitePanel.node());
 						}
 					});
 					
@@ -1926,7 +1942,7 @@
 					{
 						if (prepareClick())
 						{
-							record_participation(d, panelDiv);
+							record_participation(d, sitePanel.node());
 						}
 					});
 					
@@ -1935,7 +1951,7 @@
 					{
 						if (prepareClick())
 						{
-							manage_participation(d, panelDiv);
+							manage_participation(d, sitePanel.node());
 						}
 					});
 			}
@@ -1943,28 +1959,27 @@
 			objectData.checkCells(containerCell, undefined, successFunction, asyncFailFunction)
 		}
 		
-		function pickChild(parent, data, containerPanel, header, successFunction)
+		function pickChild(parent, data, previousPanelNode, header, successFunction)
 		{
 			data.sort(function(a, b)
 				{
 					return a.getDescription().localeCompare(b.getDescription());
 				});
 
-			var panelDiv = createPanel(containerPanel, parent, header)
-				.classed("list-panel", true);
+			var sitePanel = new SitePanel(previousPanelNode, parent, header, "list-panel");
 
-			var navContainer = panelDiv.appendNavContainer();
+			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
 			appendLeftChevrons(backButton).classed("site-active-text", true);
-			backButton.append("span").text(" " + containerPanel.attr("headerText"));
+			backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
 	
 			var centerButton = navContainer.appendTitle(header);
 
-			var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+			var searchBar = sitePanel.appendSearchBar(show_matching_descriptions);
 
-			var panel2Div = panelDiv.appendScrollArea();
+			var panel2Div = sitePanel.appendScrollArea();
 			panel2Div.appendAlertContainer();
 	
 			var sections = panel2Div.appendSections(data);
@@ -1973,12 +1988,12 @@
 				.on("click", function(d) {
 					if (prepareClick())
 					{
-						successFunction(d, panelDiv);
+						successFunction(d, sitePanel.node());
 					}
 					d3.event.preventDefault();
 				});
 
-			showPanelLeft(panelDiv.node());
+			showPanelLeft(sitePanel.node());
 		}
 		/*
 			Displays a panel from which the user can pick a session from
@@ -1986,7 +2001,7 @@
 			
 			This function should be called within a prepareClick block.
 		 */
-		function pick_session(offering, containerPanel, successFunction)
+		function pick_session(offering, previousPanelNode, successFunction)
 		{
 			offering.checkCells(undefined, undefined, function()
 				{
@@ -1997,7 +2012,7 @@
 						sessions.checkCells(undefined, undefined, function()
 							{
 								var sessionCell = sessions.getCell("Session");
-								pickChild(offering, sessionCell.data, containerPanel, "Pick Session", successFunction);
+								pickChild(offering, sessionCell.data, previousPanelNode, "Pick Session", successFunction);
 							},
 							syncFailFunction);
 				},
@@ -2010,7 +2025,7 @@
 			
 			This function should be called within a prepareClick block.
 		 */
-		function pick_offering(site, containerPanel, successFunction)
+		function pick_offering(site, previousPanelNode, successFunction)
 		{
 			site.checkCells(undefined, undefined, function()
 				{
@@ -2021,7 +2036,7 @@
 						offerings.checkCells(undefined, undefined, function()
 							{
 								var offeringCell = offerings.getCell("Offering");
-								pickChild(site, offeringCell.data, containerPanel, "Pick Offering", successFunction);
+								pickChild(site, offeringCell.data, previousPanelNode, "Pick Offering", successFunction);
 							},
 							syncFailFunction);
 				},
@@ -2031,7 +2046,7 @@
 		/*
 			This function should be called within a prepareClick block.
 		 */
-		function pick_site(organization, containerPanel, successFunction)
+		function pick_site(organization, previousPanelNode, successFunction)
 		{
 			organization.checkCells(undefined, undefined, function()
 				{
@@ -2042,17 +2057,17 @@
 						sites.checkCells(undefined, undefined, function()
 							{
 								var siteCell = sites.getCell("Site");
-								pickChild(organization, siteCell.data, containerPanel, "Pick Site", successFunction);
+								pickChild(organization, siteCell.data, previousPanelNode, "Pick Site", successFunction);
 							},
 							syncFailFunction);
 				},
 				syncFailFunction);
 		}
 		
-		function enroll_inquiry(organization, panelDiv)
+		function enroll_inquiry(organization, previousPanelNode)
 		{
-			pickSessionFromOrganization(organization, panelDiv,
-				function(session, containerPanel)
+			pickSessionFromOrganization(organization, previousPanelNode,
+				function(session, currentPanelNode)
 				{
 					var inquiriesCell = session.getCell("Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
@@ -2065,22 +2080,21 @@
 							{
 								inquiryCell = inquiriesInstance.getCell("Inquiry");
 						
-								var panelDiv = createPanel(containerPanel, session, "Pick User")
-									.classed("list-panel", true);
+								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list-panel");
 
-								var navContainer = panelDiv.appendNavContainer();
+								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
 									.on("click", handleCloseRightEvent);
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 						
-								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+								var searchBar = sitePanel.appendSearchBar(show_matching_descriptions);
 
-								var panel2Div = panelDiv.appendScrollArea();
+								var panel2Div = sitePanel.appendScrollArea();
 								panel2Div.appendAlertContainer();
 
-								showPanelLeft(panelDiv.node());
+								showPanelLeft(sitePanel.node());
 						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
@@ -2106,7 +2120,7 @@
 										{
 											checkUserByInquiry(inquiry,
 												function(user) {
-													show_user(user, panelDiv);
+													show_user(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}
@@ -2154,12 +2168,12 @@
 				syncFailFunction);
 		}
 		
-		function addExperienceByEnrollment(session, enrollment, containerPanel)
+		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
 		{
 			checkUserByEnrollment(enrollment,
 				function(user)
 				{
-					getAddExperienceFunction(session, user, containerPanel)();
+					getAddExperienceFunction(session, user, previousPanelNode)();
 				},
 				syncFailFunction);
 		}
@@ -2187,20 +2201,19 @@
 				.text("i");
 		}
 		
-		function show_user(user, containerPanel)
+		function show_user(user, previousPanelNode)
 		{
-			showViewOnlyObjectPanel(user, user.cell, undefined, containerPanel);
+			showViewOnlyObjectPanel(user, user.cell, undefined, previousPanelNode);
 		}
 		
 		/*
 			This function should be called within a prepareClick block. 
 		 */
-		function add_enrollment(organization, containerPanel)
+		function add_enrollment(organization, previousPanel)
 		{
-			var panelDiv = createPanel(containerPanel, organization, "Pick User")
-				.classed("list-panel", true);
+			var sitePanel = new SitePanel(previousPanel, organization, "Pick User", "list-panel");
 
-			var navContainer = panelDiv.appendNavContainer();
+			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
@@ -2208,12 +2221,12 @@
 	
 			var centerButton = navContainer.appendTitle("Pick User");
 
-			var searchBar = panelDiv.appendSearchBar(show_users);
+			var searchBar = sitePanel.appendSearchBar(show_users);
 
-			var panel2Div = panelDiv.appendScrollArea();
+			var panel2Div = sitePanel.appendScrollArea();
 			panel2Div.appendAlertContainer();
 	
-			showPanelLeft(panelDiv.node());
+			showPanelLeft(sitePanel.node());
 			
 			var searchText = "";
 			function show_users()
@@ -2263,7 +2276,7 @@
 									pickedUser = user;
 									if (prepareClick())
 									{
-										pick_site(organization, panelDiv, pickSiteSuccess);
+										pick_site(organization, sitePanel.node(), pickSiteSuccess);
 									}
 									d3.event.preventDefault();
 								});
@@ -2272,7 +2285,7 @@
 								.on("click", function(user) {
 									if (prepareClick())
 									{
-										show_user(user, panelDiv);
+										show_user(user, sitePanel.node());
 									}
 									d3.event.preventDefault();
 								});
@@ -2349,7 +2362,7 @@
 			}
 		}
 		
-		function getAddExperienceFunction(session, user, containerPanel)
+		function getAddExperienceFunction(session, user, previousPanel)
 		{
 			return function()
 			{
@@ -2379,7 +2392,7 @@
 											if (!experience.getValueID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
-											showEditObjectPanel(experience, experience.cell, experiences.getValueID(), containerPanel, revealPanelUp);
+											showEditObjectPanel(experience, experience.cell, experiences.getValueID(), previousPanel, revealPanelUp);
 										},
 										function()
 										{
@@ -2391,7 +2404,7 @@
 													var userValue = cr.dataTypes._object.copyValue(user);
 													userCell.addValue(userValue);
 													
-													showEditObjectPanel(experience, experience.cell, experiences.getValueID(), containerPanel, revealPanelUp);
+													showEditObjectPanel(experience, experience.cell, experiences.getValueID(), previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
 										},
@@ -2473,10 +2486,9 @@
 			{
 				var pickOfferingSuccess = function(offering, pickOfferingPanel)
 				{
-					function pickSessionSuccess(session, containerPanel)
+					function pickSessionSuccess(session, previousPanel)
 					{
-						var addInquiryPanelDiv = createPanel(containerPanel, session, "Add Inquiry")
-							.classed("list-panel", true);
+						var addInquiryPanelDiv = new SitePanel(previousPanel, session, "Add Inquiry", "list-panel");
 
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
@@ -2494,14 +2506,14 @@
 						panel2Div.appendAlertContainer();
 				
 						inquiryInput = panel2Div.append("div")
-							.classed("panel-input-container", true)
+							.classed("panel-input-container string-input-container", true)
 							.append("input")
 							.attr("type", "email")
 							.classed("panel-input", true)
 							.attr("placeholder", "email address");
 					
 				
-						$(inquiryInput.node()).on("keyup input paste", function(e) {
+						$(inquiryInput.node()).on("input", function(e) {
 							isValid = validateEmail(this.value);
 							addButton
 								.classed("site-disabled-text", !isValid)
@@ -2569,18 +2581,18 @@
 			pick_site(organization, panelDiv, pickSiteSuccess);
 		}
 		
-		function pickSessionFromOrganization(organization, panelDiv, sessionSuccess)
+		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
 		{
 			function pickSiteSuccess(site, pickSitePanel)
 			{
 				var pickOfferingSuccess = function(offering, pickOfferingPanel)
 				{
-					function pickSessionSuccess(session, containerPanel)
+					function pickSessionSuccess(session, previousPanel)
 					{
 						/* Since d.getValueID() is not null, containerUUID is not needed. */
 						var checkCellsSuccess = function()
 						{
-							sessionSuccess(session, containerPanel);
+							sessionSuccess(session, previousPanel);
 						}
 						session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
 					}
@@ -2588,13 +2600,13 @@
 				}
 				pick_offering(site, pickSitePanel, pickOfferingSuccess);
 			}
-			pick_site(organization, panelDiv, pickSiteSuccess);
+			pick_site(organization, previousPanelNode, pickSiteSuccess);
 		}
 		
 		function manage_inquiry(organization, panelDiv)
 		{
 			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, containerPanel)
+				function(session, previousPanel)
 				{
 					var inquiriesCell = session.getCell("Inquiries");
 					var inquiriesInstances = inquiriesCell.data;
@@ -2603,7 +2615,7 @@
 					else
 					{
 						var inquiries = inquiriesInstances[0];
-						showEditObjectPanel(inquiries, inquiriesCell, undefined, containerPanel, revealPanelLeft);
+						showEditObjectPanel(inquiries, inquiriesCell, undefined, previousPanel, revealPanelLeft);
 					}
 				});
 		}
@@ -2611,7 +2623,7 @@
 		function manage_enrollment(organization, panelDiv)
 		{
 			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, containerPanel)
+				function(session, previousPanel)
 				{
 					var enrollmentsCell = session.getCell("Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
@@ -2620,16 +2632,16 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, containerPanel, revealPanelLeft);
+						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, previousPanel, revealPanelLeft);
 					}
 				}
 				);
 		}
 		
-		function record_participation(organization, panelDiv)
+		function record_participation(organization, previousNode)
 		{
-			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, containerPanel)
+			pickSessionFromOrganization(organization, previousNode, 
+				function(session, previousPanel)
 				{
 					var listCell = session.getCell("Enrollments");
 					var listInstances = listCell.data;
@@ -2642,19 +2654,18 @@
 							{
 								enrollmentCell = instance.getCell("Enrollment");
 						
-								var panelDiv = createPanel(containerPanel, session, "Record Participation")
-									.classed("list-panel", true);
+								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list-panel");
 
-								var navContainer = panelDiv.appendNavContainer();
+								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
 									.on("click", handleCloseRightEvent);
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Record Participation");
 						
-								var searchBar = panelDiv.appendSearchBar(show_matching_descriptions);
+								var searchBar = sitePanel.appendSearchBar(show_matching_descriptions);
 
-								var panel2Div = panelDiv.appendScrollArea();
+								var panel2Div = sitePanel.appendScrollArea();
 								panel2Div.appendAlertContainer();
 
 								panel2Div.selectAll("section").remove();
@@ -2667,7 +2678,7 @@
 											enrollment.checkCells(enrollmentCell, undefined, 
 												function()
 												{
-													addExperienceByEnrollment(session, enrollment, panelDiv);
+													addExperienceByEnrollment(session, enrollment, sitePanel.node());
 												}, 
 												syncFailFunction);
 										}
@@ -2680,7 +2691,7 @@
 										{
 											checkUserByEnrollment(enrollment,
 												function(user) {
-													show_user(user, panelDiv);
+													show_user(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}
@@ -2688,7 +2699,7 @@
 									});
 								drawInfoButtons(infoButtons);
 								
-								showPanelLeft(panelDiv.node());
+								showPanelLeft(sitePanel.node());
 							},
 							syncFailFunction);
 					}
@@ -2710,10 +2721,10 @@
 			enrollment.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
 		}
 		
-		function manage_participation(organization, panelDiv)
+		function manage_participation(organization, previousPanelNode)
 		{
-			pickSessionFromOrganization(organization, panelDiv, 
-				function(session, containerPanel)
+			pickSessionFromOrganization(organization, previousPanelNode, 
+				function(session, currentPanelNode)
 				{
 					var listCell = session.getCell("Experiences");
 					var listInstances = listCell.data;
@@ -2722,7 +2733,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, containerPanel, revealPanelLeft);
+						showEditObjectPanel(instance, listCell, undefined, currentPanelNode, revealPanelLeft);
 					}
 				});
 		}
