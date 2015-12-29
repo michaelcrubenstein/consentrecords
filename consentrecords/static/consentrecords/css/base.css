@@ -176,22 +176,28 @@ body {
 .string-unique-input-label+div>.string-input-container>input {
 	text-align: right;
 }
-.string-input-container input[type=text],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date] {
+.string-input-container input[type=text],
+.string-input-container input[type=number],
+.string-input-container input[type=month],
+.string-input-container input[type=email],
+.string-input-container input[type=url],
+.string-input-container input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
 	appearance:none;
 	border: none;
 	border-color: transparent;
+}
+.string-input-container input[type=text]:focus,
+.string-input-container input[type=number]:focus,
+.string-input-container input[type=month]:focus,
+.string-input-container input[type=email]:focus,
+.string-input-container input[type=url]:focus,
+.string-input-container input[type=date]:focus {
+	outline: none;
 }
 .string-input-container input[type=month] {
 	margin-right: 3px;
-}
-.string-input-container input[type=text],input[type=number],input[type=month],input[type=email],input[type=url],input[type=date]:focus {
-	-webkit-appearance:none;
-	-moz-appearance:none;
-	appearance:none;
-	border: none;
-	border-color: transparent;
 }
 
 .expanding-div {
