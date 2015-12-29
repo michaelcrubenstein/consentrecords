@@ -67,7 +67,12 @@ var Settings = (function () {
 			.classed('string-unique-input', true)
 			.attr('type', 'text')
 			.attr('placeholder', 'First Name')
-			.property('value', function(cell) {return cell.data[0].value;});
+			.property('value', function(cell) {
+				if (cell.data.length > 0) 
+					return cell.data[0].value;
+				else
+					return null;
+			});
 			
 		var lastNameInput = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true)
 			.datum(userInstance.getCell("_last name"))
@@ -76,7 +81,12 @@ var Settings = (function () {
 			.append('input')
 			.attr('type', 'text')
 			.attr('placeholder', 'Last Name')
-			.property('value', function(cell) {return cell.data[0].value;});
+			.property('value', function(cell) {
+				if (cell.data.length > 0) 
+					return cell.data[0].value;
+				else
+					return null;
+			});
 			
 		var emailInput = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true)
 			.datum(userInstance.getCell("_email"))
