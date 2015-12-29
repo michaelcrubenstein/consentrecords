@@ -1153,7 +1153,7 @@ cr.ObjectValue.prototype.checkCells = function(containerCell, fields, successFun
 	}
 	else if (containerCell.field.ofKindID)
 	{
-		_this = this;
+		var _this = this;
 		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
 		cr.getConfiguration(this, containerCell.field.ofKindID, 
 			function(newCells)
@@ -1180,7 +1180,7 @@ cr.ObjectValue.prototype.checkConfiguration = function(successFunction, failFunc
 	}
 	else
 	{
-		_this = this;
+		var _this = this;
 		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
 		cr.getConfiguration(this, this.cell.field.ofKindID, 
 			function(newCells)
