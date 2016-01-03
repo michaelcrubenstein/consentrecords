@@ -654,8 +654,8 @@ function appendDeleteControls(buttons)
 
 function appendRightChevrons(buttons)
 {
-	buttons.append("span")
-		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron pull-right", true)
+	buttons.append("div")
+		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true)
 		.append("img")
 		.attr("src", rightChevronPath)
 		.attr("height", "18px");
@@ -674,9 +674,9 @@ function appendLeftChevrons(buttons)
 /* This function appends the descriptions of each object to the button. */
 function appendButtonDescriptions(buttons, cell)
 {
-	return buttons.append("span")
-		.classed("description-text string-value-view expanding-div", true)
-		.classed("string-multi-value-container pull-left", !cell || cell.field.capacity != "_unique value")
+	return buttons.append("div")
+		.classed("description-text string-value-view", true)
+		.classed("string-multi-value-container", !cell || cell.field.capacity != "_unique value")
 		.text(_getDataDescription);
 }
 
@@ -1207,8 +1207,8 @@ var dataTypeViews = {
 
 function appendDescriptions(buttons)
 {
-	buttons.append("span")
-		.classed("description-text pull-left", true)
+	return buttons.append("div")
+		.classed("description-text", true)
 		.text(_getDataDescription)
 		.each(_pushTextChanged);
 }
@@ -1268,13 +1268,11 @@ function appendViewCellItems(container, cell, clickFunction)
 	
 	var buttons = appendRowButtons(divs, cell);
 	
-	buttons.append("span")
-		.classed("description-text pull-left", true)
-		.text(_getDataDescription)
-		.each(_pushTextChanged);
+	appendRightChevrons(buttons);
+
+	appendDescriptions(buttons);
 		
 	buttons.on("click", clickFunction);
-	appendRightChevrons(buttons);
 	
 	return buttons;
 }

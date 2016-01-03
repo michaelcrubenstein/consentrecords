@@ -54,6 +54,8 @@ panel.view>.panel-fill>header
 	padding: 6px 12px;
 	text-align: left;
 	font-weight: bold;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .cell.unique {
 	background: white;
@@ -162,9 +164,18 @@ section.cell {
 }
 .description-text {
 	color: #777;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+panel.list .description-text {
+	text-align: left;
 }
 .site-chevron-right {
 	color: #777;
+}
+.site-chevron-right+.description-text {
+	margin-right: 18px;
 }
 .string-input-container {
 	overflow: hidden;	/* This causes the input container to expand. */
