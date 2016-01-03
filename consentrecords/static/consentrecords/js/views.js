@@ -663,12 +663,11 @@ function appendRightChevrons(buttons)
 
 function appendLeftChevrons(buttons)
 {
-	return buttons.append("span")
+	return buttons.append("div")
+		.classed("site-left-chevron-span", true)
 		.append("img")
-		.attr("src", leftChevronPath)
-		.attr("height", "22px")
-		.style("margin-top", "-3px")
-		.style("margin-right", "-6px");
+		.classed("site-left-chevron", true)
+		.attr("src", leftChevronPath);
 }
 
 /* This function appends the descriptions of each object to the button. */
@@ -1369,13 +1368,25 @@ var SitePanel = (function () {
 					
 		navContainer.appendLeftButton = function()
 		{
-			return this.append("div").classed("pull-left", true)
+			return this.append("div").classed("left-link pull-left", true)
 					   .append("div") .classed("site-navbar-link site-active-text", true);
 		}
 	
 		navContainer.appendRightButton = function()
 		{
-			return this.append("div").classed("pull-right", true)
+			var firstChild = this.selectAll('div');
+			var rightChild;
+			if (firstChild.empty())
+			{
+				rightChild = this.append("div");
+			}
+			else
+			{
+				rightChild = this.insert("div", ":first-child");
+				firstChild.classed("pull-left", !this.selectAll('div.site-navbar-commands').empty());
+			}
+				
+			return rightChild.classed("right-link pull-right", true)
 					   .append("div") .classed("site-navbar-link site-active-text", true);
 		}
 		
@@ -1385,6 +1396,7 @@ var SitePanel = (function () {
 					   .append("div").classed("site-title", true)
 					   .text(newTitle);
 			h.style("width", (getTextWidth(newTitle, h.style("font"))+1).toString() + "px")
+			this.selectAll('.left-link').classed('pull-left', true);
 			return h;
 		}
 	
@@ -1575,7 +1587,7 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, previ
 		var backButton = navContainer.appendLeftButton()
 			.on("click", handleCloseRightEvent);
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
+		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
 		var panel2Div = sitePanel.appendScrollArea();
 
@@ -1605,7 +1617,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, previousP
 		var backButton = navContainer.appendLeftButton()
 			.on("click", handleCloseRightEvent);
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
+		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
 		var editButton = navContainer.appendRightButton()
 			.on("click", function(d) {

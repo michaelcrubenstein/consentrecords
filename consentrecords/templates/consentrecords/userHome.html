@@ -1998,7 +1998,7 @@
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
 			appendLeftChevrons(backButton).classed("site-active-text", true);
-			backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
+			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
 			var centerButton = navContainer.appendTitle(header);
 
