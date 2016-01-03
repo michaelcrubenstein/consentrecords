@@ -2,7 +2,7 @@ var Settings = (function () {
 	
 	function Settings(previousPanel) {
 	
-		var sitePanel = new SitePanel(previousPanel, null, "Settings", "configuration-panel edit-panel settings-panel");
+		var sitePanel = new SitePanel(previousPanel, null, "Settings", "edit settings-panel");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -59,12 +59,11 @@ var Settings = (function () {
 			
 		panel2Div.appendAlertContainer();
 	
-		var firstNameInput = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true)
+		var firstNameInput = panel2Div.append('section').classed('cell edit unique string', true)
 			.datum(userInstance.getCell("_first name"))
-			.append('div').classed('items-div string-unique-item', true)
+			.append('ol').classed('items-div', true)
 			.append('li').classed('string-input-container', true)
 			.append('input')
-			.classed('string-unique-input', true)
 			.attr('type', 'text')
 			.attr('placeholder', 'First Name')
 			.property('value', function(cell) {
@@ -74,9 +73,9 @@ var Settings = (function () {
 					return null;
 			});
 			
-		var lastNameInput = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true)
+		var lastNameInput = panel2Div.append('section').classed('cell edit unique string', true)
 			.datum(userInstance.getCell("_last name"))
-			.append('div').classed('items-div string-unique-item', true)
+			.append('ol').classed('items-div', true)
 			.append('li').classed('string-input-container', true)
 			.append('input')
 			.attr('type', 'text')
@@ -88,20 +87,19 @@ var Settings = (function () {
 					return null;
 			});
 			
-		var emailInput = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true)
+		var emailInput = panel2Div.append('section').classed('cell edit unique string', true)
 			.datum(userInstance.getCell("_email"))
-			.append('div').classed('items-div string-unique-item', true)
+			.append('ol').classed('items-div', true)
 			.append('li').classed('string-input-container', true)
 			.append('input')
-			.classed('string-unique-input', true)
 			.attr('type', 'email')
 			.attr('placeholder', 'email address')
 			.property('value', function(cell) {return cell.data[0].value;});
 			
-		var div = panel2Div.append('section').classed('cell-div cell-edit-div border-below unique-cell', true);
-		div.append('div')
-			.classed('cell-label left-label string-unique-input-label', true).text('Birthday');
-		var c = div.append('div').classed('items-div string-unique-item', true)
+		var div = panel2Div.append('section').classed('cell edit unique string', true);
+		div.append('label')
+			.text('Birthday');
+		var c = div.append('ol').classed('items-div', true)
 			.append('li').classed('string-input-container', true)
 		
 		var birthdayInput = new DateInput(c.node());

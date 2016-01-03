@@ -11,11 +11,17 @@ body {
 	position: absolute;
 	overflow-y: hidden;
 }
-.base-panel {
+panel.initial {
 	width: 100%;
 	height: 100%;
 	max-height: 100%;
 	z-index: 1;
+}
+panel.reveal	/* This sets up a panel for subsequent revealing using animation. */
+{
+	height: 0px;
+	width: 0px;
+	display: none;
 }
 .panel-fill {
 	height: 100%;
@@ -33,28 +39,24 @@ body {
 	overflow-y: hidden;
 	overflow-x: hidden;
 }
-.list-panel {
+panel.list {
 	background: #eee;
 }
-.show-panel {
+panel.view {
 	background: white;
 }
-.edit-panel {
+panel.edit {
 	background: #eee;
 }
-.configuration-panel
-{
-	height: 0px;
-	width: 0px;
-	display: none;
-	overflow-y: hidden;
-}
-.configuration-header
+panel.view>.panel-fill>header
 {
 	width: 100%;
 	padding: 6px 12px;
 	text-align: left;
 	font-weight: bold;
+}
+.cell.unique {
+	background: white;
 }
 .add-button {
 	margin-top: 0px;
@@ -71,6 +73,7 @@ body {
 	position: relative;
 	font-size: medium;	/* To override the smaller button. */
 	background: white;
+	display: block;		/* To override inline-block from btn */
 	width: 100%;
 	border: 0;
 	border-radius: 0;
@@ -79,8 +82,11 @@ body {
 	background: #f8f8f8;
 	opacity: 1.0;
 }
-.unique-row-button {
-	padding: 0px 12px;		/* To override btn style. */
+.cell.btn {
+	padding: 0px 0px;		/* To override btn style. */
+}
+.cell>ol {
+	margin: 0;				/* To override bootstrap ol style */
 }
 .multi-row-content {
 	padding: 6px 12px;
@@ -91,7 +97,7 @@ body {
 .border-below {
 	border-bottom: 1px solid #eee;
 }
-.cell-div {
+section.cell {
 	width: 100%;
 	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
 	padding-right: 0px;
@@ -109,11 +115,16 @@ body {
 	vertical-align: middle;
 	width: 100%;
 }
-.cell-edit-div {
+.cell.edit {
 	margin-top: 12px;
 }
-.cell-label {
+.cell.unique.edit {
+	border-bottom: 1px solid #eee;
+}
+.cell>label {
     color: #222;
+	font-weight: normal;
+	margin: 0;
 	padding: 6px 12px;
 }
 .string-value-view {
@@ -121,30 +132,39 @@ body {
 	overflow: hidden;
 	width: auto;
 }
-.left-label {
+.cell.unique.view>label {
+	width: auto;
+	float: left;
 	margin-left: 0px;
 	margin-right: auto;
 	padding-left: 12px;
 	line-height: 1.5em; 
 	vertical-align: middle;
 }
+.cell.unique.edit>label {
+	width: auto;
+	float: left;
+}
+
 .right-label {
 	padding: 6px 12px;
 	line-height: 1.5em; 
 	vertical-align: middle;
 	text-align: right;
 }
-.top-label {
-	padding-top: 12px;
+.cell.multiple.edit>label {
+	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
+}
+.cell.multiple.edit > .items-div {
+	background: white;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
 }
 .description-text {
 	color: #777;
 }
 .site-chevron-right {
 	color: #777;
-}
-.unique-cell {
-	background: white;
 }
 .string-input-container {
 	overflow: hidden;	/* This causes the input container to expand. */
@@ -155,48 +175,42 @@ body {
 .string-multi-value-container {
 	text-align: left;
 }
-.string-unique-input-label {
-	width: auto;
-	float: left;
+.cell.unique.edit.string>label {
 	padding: 3px 12px;	/* For the highlight box of the input. */
 }
-.string-unique-item {
+.cell.unique.edit.string>.items-div {
 	overflow: hidden;
 	width:auto;
 	padding: 6px 12px;
 }
-
-.string-unique-input {
-	display: inline-block;
-	right: 0px;
-}
-.string-unique-input-label+div>.string-input-container {
+/* If there is a label for a unique string item, right-align the input and its container. */
+.cell.unique.edit.string label+.items-div .string-input-container {
 	text-align: right;
 }
-.string-unique-input-label+div>.string-input-container>input {
+.cell.unique.edit.string label+.items-div input {
 	text-align: right;
 }
-.string-input-container input[type=text],
-.string-input-container input[type=number],
-.string-input-container input[type=month],
-.string-input-container input[type=email],
-.string-input-container input[type=url],
-.string-input-container input[type=date] {
+.cell.edit input[type=text],
+.cell.edit input[type=number],
+.cell.edit input[type=month],
+.cell.edit input[type=email],
+.cell.edit input[type=url],
+.cell.edit input[type=date] {
 	-webkit-appearance:none;
 	-moz-appearance:none;
 	appearance:none;
 	border: none;
 	border-color: transparent;
 }
-.string-input-container input[type=text]:focus,
-.string-input-container input[type=number]:focus,
-.string-input-container input[type=month]:focus,
-.string-input-container input[type=email]:focus,
-.string-input-container input[type=url]:focus,
-.string-input-container input[type=date]:focus {
+.cell.edit input[type=text]:focus,
+.cell.edit input[type=number]:focus,
+.cell.edit input[type=month]:focus,
+.cell.edit input[type=email]:focus,
+.cell.edit input[type=url]:focus,
+.cell.edit input[type=date]:focus {
 	outline: none;
 }
-.string-input-container input[type=month] {
+.cell.edit input[type=month] {
 	margin-right: 3px;
 }
 
@@ -214,9 +228,15 @@ body {
 	width: auto;
 	float: right;
 }
-.left-fixed-width {
-	width: auto;
-	float: left;
+div.add-value {
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
+}
+div.add-value>button {
+	overflow: hidden;
+	display: block;
+	width: 100%;
+	text-align: left;
 }
 
 .searchbar {
@@ -294,9 +314,6 @@ ol, ul {
 	list-style-type: none;
 	-webkit-padding-start: 0px;
 }
-.multiple-values-cell > .items-div {
-	background: white;
-}	
 li {
 	display: block;
 	list-style-type: none;

@@ -270,20 +270,18 @@ function _showViewStringCell(obj, cell)
 {
 	var sectionObj = d3.select(obj);
 	
-	var labelDiv = sectionObj.append("div").classed("cell-label", true)
+	var labelDiv = sectionObj.append("label")
 		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("div").classed("items-div", true);
+	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
 	if (cell.field.capacity == "_unique value")
 	{
-		sectionObj.classed("unique-cell", true);
-		labelDiv.classed("left-label left-fixed-width", true);
+		sectionObj.classed("unique", true);
 		itemsDiv.classed("right-label expanding-div", true);
 	}
 	else
 	{
-		sectionObj.classed("multiple-values-cell", true);
-		labelDiv.classed("top-label", true);
+		sectionObj.classed("multiple", true);
 	}
 
 	var setupItems = function(divs, cell) {
@@ -316,13 +314,14 @@ function _confirmDeleteClick(d)
 
 function _showEditStringCell(obj, cell, containerUUID, inputType)
 {
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	var sectionObj = d3.select(obj).classed("cell edit string", true);
 	
 	if (cell.field.capacity == "_unique value")
 	{
-		var itemsDiv = sectionObj.append("div").classed("items-div string-unique-item", true);
+		sectionObj.classed("unique", true);
 
-		sectionObj.classed("border-below unique-cell", true);
+		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
@@ -330,14 +329,13 @@ function _showEditStringCell(obj, cell, containerUUID, inputType)
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 	
 		divs.append("input")
-			.classed("string-unique-input", true)
 			.attr("type", inputType)
 			.attr("placeholder", cell.field.name)
 			.property("value", _getDataValue);
 
 		if (cell.field.descriptorType != "_by text")
 		{
-			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label string-unique-input-label", true)
+			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(cell.field.name);
 			labelDiv
 				.style("line-height", divs.selectAll("input").style("line-height"));
@@ -345,11 +343,11 @@ function _showEditStringCell(obj, cell, containerUUID, inputType)
 	}
 	else
 	{
-		sectionObj.classed("multiple-values-cell", true);
-		sectionObj.append("div").classed("cell-label top-label", true)
+		sectionObj.classed("multiple", true);
+		sectionObj.append("label")
 			      .text(cell.field.name);
-		var itemsDiv = sectionObj.append("div")
-			.classed("items-div border-above border-below", true);
+		var itemsDiv = sectionObj.append("ol")
+			.classed("items-div", true);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -387,8 +385,8 @@ function _showEditStringCell(obj, cell, containerUUID, inputType)
 			});
 			
 		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div")
-			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+		var buttonDiv = sectionObj.append("div").classed('add-value', true)
+			.append("button").classed("btn row-button multi-row-content site-active-text", true)
 			.on("click", function(cell) {
 				if (prepareClick())
 				{
@@ -418,12 +416,11 @@ function checkDateInput() {
 
 function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 {
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	var sectionObj = d3.select(obj).classed("cell edit string", true);
 	
-	function appendInputs(divs, className)
+	function appendInputs(divs)
 	{
 		divs.append("input")
-			.classed(className, true)
 			.attr("type", "month")
 			.attr("placeholder", cell.field.name)
 			.property("value", function (d) 
@@ -462,19 +459,19 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 	
 	if (cell.field.capacity === "_unique value")
 	{
-		var itemsDiv = sectionObj.append("div").classed("items-div string-unique-item", true);
+		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
-		sectionObj.classed("border-below unique-cell", true);
+		sectionObj.classed("unique", true);
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
 			.append("li")
 			.classed("string-input-container", true);	// So that each item appears on its own row.
-		appendInputs(divs, "string-unique-input");
+		appendInputs(divs);
 	
 		if (cell.field.descriptorType != "_by text")
 		{
-			var labelDiv = sectionObj.insert("div", ":first-child").classed("cell-label string-unique-input-label", true)
+			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(cell.field.name);
 			labelDiv
 				.style("line-height", divs.selectAll("input").style("line-height"));
@@ -482,11 +479,11 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 	}
 	else
 	{
-		sectionObj.classed("multiple-values-cell", true);
-		sectionObj.append("div").classed("cell-label top-label", true)
+		sectionObj.classed("multiple", true);
+		sectionObj.append("label")
 			      .text(cell.field.name);
-		var itemsDiv = sectionObj.append("div")
-			.classed("items-div border-above border-below", true);
+		var itemsDiv = sectionObj.append("ol")
+			.classed("items-div", true);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -506,7 +503,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 			inputContainers = innerDivs.append("div")
 				.classed("string-input-container string-multi-value-container", true);						
 	
-			appendInputs(inputContainers, "string-input");
+			appendInputs(inputContainers);
 		}
 		
 		appendControls(divs, cell);
@@ -521,8 +518,8 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 			});
 			
 		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div")
-			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+		var buttonDiv = sectionObj.append("div").classed('add-value', true)
+			.append("button").classed("btn row-button multi-row-content site-active-text", true)
 			.on("click", function(cell) {
 				if (prepareClick())
 				{
@@ -642,6 +639,14 @@ function appendDeleteControls(buttons)
 						unblockClick(); 
 						this.focus();
 					});
+
+// 				confirmButton
+// 					.animate({left: "calc(100% - " + autoWidth + "px)"}, 600, 'swing', 
+// 					function () 
+// 					{ 
+// 						unblockClick(); 
+// 						this.focus();
+// 					});
 			};
 			d3.event.preventDefault();
 		});
@@ -679,17 +684,16 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 {
 	var sectionObj = d3.select(obj);
 	
-	var labelDiv = sectionObj.append("div").classed("cell-label", true)
+	var labelDiv = sectionObj.append("label")
 		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("div").classed("items-div", true);
+	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
 	if (cell.field.capacity === "_unique value")
 	{
-		sectionObj.classed("unique-cell", true);
-		labelDiv.classed("left-label left-fixed-width", true);
+		sectionObj.classed("unique", true);
 		itemsDiv.classed("right-label expanding-div", true);
 		if (!_isPickCell(cell))
-			sectionObj.classed("btn row-button unique-row-button", true)
+			sectionObj.classed("btn row-button", true)
 			          .on("click", function(cell) {
 				if (prepareClick())
 				{
@@ -699,8 +703,7 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 	}
 	else
 	{
-		sectionObj.classed("multiple-values-cell", true);
-		labelDiv.classed("top-label", true);
+		sectionObj.classed("multiple", true);
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -739,7 +742,7 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 
 function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 {
-	var sectionObj = d3.select(obj).classed("cell-div cell-edit-div", true);
+	var sectionObj = d3.select(obj).classed("cell edit", true);
 	var storeDataFunction;
 
 	if (parent.getValueID())
@@ -747,14 +750,13 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 	else
 		storeDataFunction = _storeNewInstance;
 	
-	var labelDiv = sectionObj.append("div").classed("cell-label", true)
+	var labelDiv = sectionObj.append("label")
 		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("div").classed("items-div", true);
+	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
 	if (cell.field.capacity === "_unique value")
 	{
-		sectionObj.classed("unique-cell btn row-button unique-row-button border-below", true);
-		labelDiv.classed("left-label left-fixed-width", true);
+		sectionObj.classed("unique btn row-button", true);
 		itemsDiv.classed("right-label expanding-div", true);
 		sectionObj.on("click", function(cell) {
 			if (prepareClick())
@@ -768,9 +770,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 	}
 	else
 	{
-		sectionObj.classed("multiple-values-cell", true);
-		labelDiv.classed("top-label", true);
-		itemsDiv.classed("border-above", true);
+		sectionObj.classed("multiple", true);
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -812,8 +812,8 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 	if (cell.field.capacity != "_unique value")
 	{
 		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div")
-			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+		var buttonDiv = sectionObj.append("div").classed('add-value', true)
+			.append("button").classed("btn row-button multi-row-content site-active-text", true)
 			.on("click", function(cell) {
 				if (prepareClick())
 				{
@@ -1218,24 +1218,23 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 	
 	var itemsDiv = panel2Div.append("ol")
-		.classed("items-div border-above", true);
+		.classed("items-div", true);
 
 	var sections = itemsDiv.selectAll("li")
 				.data(rootObjects)
 				.enter()
-				.append("li")
-				.classed("border-below", true);
+				.append("li");
 
 	return appendViewButtons(sections, fill)
 		.on("click", buttonClicked);
 }
 
-/* Append a set of buttons to each div for displaying the text for each item. */
-function appendViewButtons(divs, fill)
+/* Append a set of buttons to each section for displaying the text for each item. */
+function appendViewButtons(sections, fill)
 {
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 
-	var buttons = divs.append("div").classed("btn row-button multi-row-content expanding-div", true);
+	var buttons = sections.append("div").classed("btn row-button multi-row-content expanding-div", true);
 	
 	fill(buttons);
 		
@@ -1348,7 +1347,7 @@ var SitePanel = (function () {
 			var zindex = previousZIndex+1;
 			this.panelDiv = rootPanel
 							.append("panel")
-							.classed("configuration-panel site-panel", true)
+							.classed("site-panel reveal", true)
 							.style("z-index", zindex)
 							.datum(datum)
 							.attr("headerText", headerText);
@@ -1367,10 +1366,8 @@ var SitePanel = (function () {
     
     SitePanel.prototype.appendNavContainer = function()
     {
-		var navContainer = this.panelDiv.append("nav").classed("navbar navbar-default site-navbar always-visible", true)
-					.attr("role", "navigation")
-					.append("div")
-					.classed("container-fluid", true);
+		var navContainer = this.panelDiv.append("nav").classed("always-visible", true)
+					.attr("role", "navigation");
 					
 		navContainer.appendLeftButton = function()
 		{
@@ -1409,7 +1406,7 @@ var SitePanel = (function () {
 		
 		panel2Div.appendHeader = function()
 		{
-			return this.append("header").classed("configuration-header", true)
+			return this.append("header")
 				.text(_this.headerText);
 		}
 		
@@ -1429,8 +1426,14 @@ var SitePanel = (function () {
 		panel2Div.resetHeight = function()
 		{
 			var newHeight = window.innerHeight;
-			_this.panelDiv.selectAll(".always-visible").each(
-				function() { newHeight -= $(this).height(); }
+			_this.panelDiv.selectAll(".always-visible")
+				.filter(function() { 
+					return this.parentNode === _this.panelDiv.node(); 
+				})	/* Only direct children. */
+				.each(
+				function() { 
+					newHeight -= $(this).outerHeight(); 
+				}
 			);
 			$(this.node()).height(newHeight);
 		}
@@ -1438,7 +1441,7 @@ var SitePanel = (function () {
 		panel2Div.show_view_cells = function(objectData, cell, containerUUID)
 		{
 			this.appendSections(objectData.value.cells)
-				.classed("cell-div", true)
+				.classed("cell view", true)
 				.each(function(cell) {
 						if (cell.field.descriptorType != "_by text")
 						{
@@ -1567,7 +1570,7 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, previ
 	successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData, containerCell), "show-panel");
+									objectData, getViewPanelHeader(objectData, containerCell), "view");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1597,7 +1600,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, previousP
 	successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData, containerCell), "show-panel");
+									objectData, getViewPanelHeader(objectData, containerCell), "view");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1659,7 +1662,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 		else
 			header = "New " + objectData.cell.field.name;
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit-panel");
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1861,7 +1864,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		for (var i = 0; i < rootObjects.length; i++)
 			cell.pushValue(rootObjects[i]);
 		
-		var sitePanel = new SitePanel(previousPanelNode, cell, header, "list-panel");
+		var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1910,7 +1913,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		var panel2Div = sitePanel.appendScrollArea();
 		panel2Div.appendAlertContainer();
 		
-		var itemsDiv = panel2Div.append("section")
+		var itemsDiv = panel2Div.append("ol")
 			.classed("items-div border-above", true)
 			.datum(cell);
 		
@@ -1949,7 +1952,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 
 function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 {
-	var sitePanel = new SitePanel(previousPanelNode, cell, header, "list-panel");
+	var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
 
 	var navContainer = sitePanel.appendNavContainer();
 
@@ -1999,7 +2002,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendAlertContainer();
 	
-	var itemsDiv = panel2Div.append("section")
+	var itemsDiv = panel2Div.append("ol")
 		.classed("items-div border-above", true)
 		.datum(cell);
 
@@ -2115,7 +2118,7 @@ function showPickObjectPanel(oldData, cell, containerUUID, previousPanelNode) {
 			panelDatum = oldData;	/* Replacing an existing object. */
 		else
 			panelDatum = cell;		/* Adding a new object. */
-		var sitePanel = new SitePanel(previousPanelNode, panelDatum, cell.field.name, "list-panel");
+		var sitePanel = new SitePanel(previousPanelNode, panelDatum, cell.field.name, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 

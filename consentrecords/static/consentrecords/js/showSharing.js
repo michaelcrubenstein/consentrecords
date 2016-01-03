@@ -55,14 +55,13 @@ function showSharing(containerDiv) {
 			}
 		}
 		
-		container.selectAll("div").remove();
-		var cells = container.selectAll("div")
+		container.selectAll("section").remove();
+		var cells = container.selectAll("section")
 			.data(crs.privileges)
 			.enter()
-			.append("div")
-			.classed("cell-div", true);
-		cells.append("div")
-			.classed("cell-label top-label", true)
+			.append("section")
+			.classed("cell multiple", true);
+		cells.append("label")
 			.text(function(d) { return d.label });
 		var itemCells = cells.append("div")
 			.classed("cell-items", true);
@@ -136,7 +135,7 @@ function showSharing(containerDiv) {
  */
 function pickAccessor(header, previousPanelNode, successFunction)
 {
-	var sitePanel = new SitePanel(previousPanelNode, null, header, "list-panel");
+	var sitePanel = new SitePanel(previousPanelNode, null, header, "list");
 
 	var navContainer = sitePanel.appendNavContainer();
 
@@ -224,7 +223,7 @@ function addAccessor(userInstance, accessorLevel)
 				function _createAccessRecordSuccess(newData)
 				{
 					accessorLevel.accessRecords.push(newData);
-					var itemsDiv = $(_this).parents(".cell-div").children(".cell-items")[0];
+					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
 					_getOnValueAddedFunction(currentPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
 					hidePanelRight(currentPanelNode);
 				}
@@ -241,7 +240,7 @@ function addAccessor(userInstance, accessorLevel)
 				function _createAccessRecordSuccess(newData)
 				{
 					accessorLevel.accessRecords.push(newData);
-					var itemsDiv = $(_this).parents(".cell-div").children(".cell-items")[0];
+					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
 					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
 					hidePanelRight(currentPanelNode);
 				}

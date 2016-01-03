@@ -79,9 +79,9 @@ var DotsNavigator = (function () {
 	
 	DotsNavigator.prototype.showDots = function() {
 		this.checkForwardEnabled();
-		$(this.div.node()).animate({bottom: "30px"}, 400, "swing",
-						function() {
-						});
+// 		$(this.div.node()).animate({bottom: "30px"}, 400, "swing",
+// 						function() {
+// 						});
 
 	}
 	
@@ -1230,7 +1230,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	else
 		header = "Add Value";
 		
-	var sitePanel = new SitePanel(previousPanelNode, rootObjects, header, "list-panel");
+	var sitePanel = new SitePanel(previousPanelNode, rootObjects, header, "list");
 
 	var navContainer = sitePanel.appendNavContainer();
 
@@ -1328,19 +1328,17 @@ function setupServicesPanel(dots)
 		.append('p').text("Some experiences provide more than one kind of value, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one kind of value, add other values here for this experience.");
 
 	var labelDiv = p1.append("div").classed("table-row", true)
-		.append('span')
-		.classed("cell-label", true)
+		.append('label')
 		.text("Values");
 
 	var obj = p1.append('div')
 		.classed('body', true)
 		.append('div')
-		.append('div');
+		.append('section');
 	
-	var itemsDiv = obj.append("div").classed("items-div panel-fill", true);
+	var itemsDiv = obj.append("ol").classed("items-div panel-fill", true);
 
-	obj.classed("cell-div multiple-values-cell", true);
-	labelDiv.classed("top-label", true);
+	obj.classed("cell multiple", true);
 	itemsDiv.classed("border-above", true);
 
 	var clickFunction;
@@ -1751,7 +1749,7 @@ function setupConfirmPanel(dots)
 function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		var header = "Add Experience";
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit-panel new-experience-panel");
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit new-experience-panel");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1870,7 +1868,7 @@ var PathwayPanel = (function () {
 	PathwayPanel.prototype.pathway = null;
 	
 	function PathwayPanel(previousPanel) {
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit-panel");
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit");
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()

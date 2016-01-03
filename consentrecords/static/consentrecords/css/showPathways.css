@@ -4,12 +4,14 @@
 		text-align: center;
 		width: 100%;
 		position: fixed;
-		bottom: -30px;
+		bottom: 0px;
 	}
     .dots ol {
 		display: inline-block
         list-style: none;
         padding: 0;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
     .dots ol li {
         display: inline-block;

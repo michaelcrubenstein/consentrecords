@@ -75,8 +75,7 @@
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
-		var storedcsrftoken = "{{ csrf_token }}";
-		
+
 		$(document).ready (function(e) {
         	var nextURL = encodeURIComponent("{{backURL}}");
         	var backURL = encodeURIComponent(window.location.href);
@@ -143,7 +142,7 @@
 				return;
 				
 			bootstrap_alert.show($('#myAlert'), "Signing In...", "alert-info");
-		    $.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
+		    $.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
 		  								  username : $("#id_username").val(),
 		  								  password : $("#id_password").val(),
 		  								  timezoneoffset : new Date().getTimezoneOffset() }, 

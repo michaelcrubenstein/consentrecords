@@ -38,6 +38,12 @@
     	.button-section {
     		float: bottom;
     	}
+    	panel.organization header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
     	.organization-section {
     		display: none;
     	}
@@ -55,6 +61,9 @@
     	}
     	nav {
     		opacity: 0.8;
+    	}
+    	.username-label {
+    		padding-left: 15px;
     	}
     	.sub-text {
     		font-size: smaller;
@@ -82,19 +91,15 @@
 		.background-gradient-panel .row-button:hover {
 			opacity: 0.8;
 		}
+/* 
 	   	.panel-input-container {
-	   		margin-top: 9px;
 	   		padding: 6px 12px;
 	   		width: 100%;
-	   		background: white;
 	   	}
 	   	.panel-input {
 	   		width: 100%;
 	   	}
-    	.sign-in-button {
-    	    padding-top: 6px;
-    	    padding-right: 15px;
-    	}
+ */
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -110,6 +115,34 @@
     		padding: 6px 12px;
     	}
     	#id_offerings > p {
+    		padding: 6px 12px;
+    	}
+    	panel.session {
+    		background: white;
+    	}
+    	panel.session header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
+    	panel.session .organization {
+    		margin-left: 12px;
+    		padding-bottom: 5px;
+    		border-bottom: 1px solid #eee;
+    	}
+    	panel.session .organization>label {
+    		font-weight: normal;
+    	}
+    	panel.session .address-line {
+    		margin-left: 0px;
+    		font-size: smaller;
+    	}
+    	panel.session .more-info {
+			overflow: hidden;
+			width: auto;
+			display: block;
+    		font-size: smaller;
     		padding: 6px 12px;
     	}
     </style>
@@ -140,17 +173,15 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="base-panel site-panel background-gradient-panel" >
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<div class="pull-right">
-						<div class="sign-in-button site-trio-clipped site-active-text site-navbar-link site-active-text">
-							<span id="sign-in-span">Sign&nbsp;In</span>
-						</div>
+  		<panel id="id_user_home_panel" class="site-panel initial background-gradient-panel" >
+			<nav role="navigation">
+				<div class="pull-right">
+					<div class="sign-in-button site-navbar-link site-active-text">
+						<span id="sign-in-span">Sign&nbsp;In</span>
 					</div>
 				</div>
 			</nav>
-			<h3 class="username-label left-label"> </h3>
+			<h3 class="username-label"> </h3>
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
@@ -192,7 +223,7 @@
 			</section>
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
+		<panel id="id_sign_in_panel" class="level-2-panel site-panel reveal background-gradient-panel">
 		  <form class="form-simple form-signin">
 			<div class="site-title">Sign In to Consent Records</div>
 			<div class="alert-container"></div>
@@ -222,7 +253,7 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_forgot_password_panel" class="level-2-panel site-panel configuration-panel background-gradient-panel">
+		<panel id="id_forgot_password_panel" class="level-2-panel site-panel reveal background-gradient-panel">
 			<form class="form-simple">
 				<div class="site-title">Forgot your Password?</div>
 				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
@@ -256,21 +287,19 @@
 			</form>
 		</panel>
 
-	    <panel id="id_find_experience_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+	    <panel id="id_find_experience_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="pull-right">
+					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+						<span>+</span>
 					</div>
-					<div class="pull-right">
-						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-							<span>+</span>
-						</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Find a New Experience</span></div>
-					</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>Find a New Experience</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling">
@@ -283,16 +312,14 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_find_offering_panel" class="level-3-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Find a New Experience</span></div>
-					</div>
+	    <panel id="id_find_offering_panel" class="level-3-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>Find a New Experience</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling">
@@ -305,21 +332,19 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_your_plans_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+	    <panel id="id_your_plans_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="pull-right">
+					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+						<span>+</span>
 					</div>
-					<div class="pull-right">
-						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-							<span>+</span>
-						</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Plans</span></div>
-					</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>My Plans</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling">
@@ -332,16 +357,14 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_consent_forms_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Consent Forms</span></div>
-					</div>
+	    <panel id="id_consent_forms_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>Consent Forms</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling">
@@ -363,16 +386,14 @@
 				</div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_sharing_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Sharing</span></div>
-					</div>
+	    <panel id="id_sharing_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>Sharing</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
@@ -380,21 +401,19 @@
 				<div class="alert-container site-alert-under"></div>
 			</div> <!-- /container-fluid -->
 	    </panel>
-	    <panel id="id_settings_panel" class="level-2-panel configuration-panel site-panel list-panel">
-			<nav class="navbar navbar-default site-navbar" role="navigation">
-				<div class="container-fluid">
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+	    <panel id="id_settings_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="pull-left">
+					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+				</div>
+				<div class="pull-right">
+					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
+						<span>+</span>
 					</div>
-					<div class="pull-right">
-						<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-							<span>+</span>
-						</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Settings</span></div>
-					</div>
+				</div>
+				<div class="site-navbar-commands">
+					<div class="site-title"><span>Settings</span></div>
 				</div>
 			</nav>
 			<div id="id_scrollableArea" class="vertical-scrolling">
@@ -445,7 +464,7 @@
 		$.ajaxSetup({
 			beforeSend: function(xhr, settings) {
 				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-					xhr.setRequestHeader("X-CSRFToken", storedcsrftoken);
+					xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
 				}
 			}
 		});
@@ -455,7 +474,10 @@
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
 		userInstance.value.description = "{{ user.get_full_name }}"
-		crp.pushCheckCells(userInstance, function() { }, asyncFailFunction);
+		crp.pushCheckCells(userInstance, function() 
+			{
+				userInstance.triggerEvent("signin.cr", userInstance);
+			}, asyncFailFunction);
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
@@ -464,7 +486,20 @@
 		userInstance.addTarget("signout.cr", usernameLabel[0]);
 		usernameLabel.on("signin.cr", function(e, eventInfo)
 		{
-			$(this).text(eventInfo.getDescription());
+			var firstName = eventInfo.getDatum("_first name");
+			var lastName = eventInfo.getDatum("_last name");
+			var s;
+			if (firstName)
+			{
+				if (lastName)
+					s = firstName + " " + lastName;
+				else
+					s = firstName;
+			}
+			else
+				s = lastName;
+				
+			$(this).text(s);
 		});
 		usernameLabel.on("signout.cr", function(e, eventInfo)
 		{
@@ -500,10 +535,9 @@
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
-		if (userInstance.getValueID())
-			userInstance.triggerEvent("signin.cr", userInstance);
-		else
+		if (!userInstance.getValueID())
 			userInstance.triggerEvent("signout.cr", userInstance);
+		/* Otherwise, the signin.cr event will be triggered after the userInstance data loads. */
 
 		/* Handle a click event on the sign-in button to either sign in or sign out
 			the current user.
@@ -860,15 +894,12 @@
 				
 				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 				
-				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: storedcsrftoken, 
+				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
 											  username : $("#id_username").val(),
 											  password : $("#id_password").val(),
 											  timezoneoffset : new Date().getTimezoneOffset() }, 
 					function(json){
 				if (json.success) {
-					/* A successful sign-in updates the storedcsrftoken */
-					storedcsrftoken = $.cookie("csrftoken");
-					
 					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
 						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
 					else
@@ -980,7 +1011,7 @@
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: storedcsrftoken }, 
+		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
 		  								function(json){
 		  	if (json['success']) {
 		  		successFunction();
@@ -997,14 +1028,14 @@
 		function show_consent_records(containerDiv) {
 			var successFunction = function(newInstances)
 			{
-				var divs = d3.select(containerDiv).selectAll('div')
+				var divs = d3.select(containerDiv).selectAll('section')
 					.data(newInstances)
 					.enter()
-					.append('div').classed("consent-record cell-div", true);
+					.append('section').classed("consent-record cell", true);
 				
 				divs.append('div').classed("consent-record-accept-button right-label right-fixed-width-div right-label site-active-text", true)
 					.text("I Accept");
-				divs.append('div').classed("consent-form-title left-label string-label-div expanding-div", true)
+				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
 						return d.value.cells[0].data[0].value.description;
 					});
@@ -1114,32 +1145,24 @@
 			addBorder = (addBorder === undefined) ? true : addBorder;
 			var sectionObj = d3.select(obj);
 	
-			sectionObj.classed("cell-div", true);
+			sectionObj.classed("cell unique view", true);
 	
-			var labelDiv = sectionObj.append("div").classed("cell-label", true)
+			var labelDiv = sectionObj.append("label")
 				.text(label);
-			var itemsDiv = sectionObj.append("div").classed("items-div", true);
+			var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
-			if (text)
-			{
-				labelDiv.classed("left-label left-fixed-width", true);
-				itemsDiv.classed("right-label expanding-div", true);
+			itemsDiv.classed("right-label expanding-div", true);
 
-				var setupItems = function(divs) {
-					divs.append("div")
-					.classed("string-value-view", true)
-					.text(function(d) { return d; });
-				}
-	
-				var divs = appendItems(itemsDiv, [text]);
-				setupItems(divs);
+			var setupItems = function(divs) {
+				divs.append("div")
+				.classed("string-value-view", true)
+				.text(function(d) { return d; });
 			}
-			else
-				labelDiv.classed("left-label expanding-div", true);
-				
 			if (addBorder)
 				sectionObj.append("div").classed("cell-border-below", true);	
 
+			var divs = appendItems(itemsDiv, [text]);
+			setupItems(divs);
 		}
 
 		function setMetaProperties(session, targetHRef)
@@ -1266,7 +1289,7 @@
 			
 			session.calculateDescription();
 			
-			var sitePanel = new SitePanel(container, session, offering.getDescription(), "show-panel");
+			var sitePanel = new SitePanel(container, session, offering.getDescription(), "session");
 			var panel = sitePanel.node();
 			
 			var navContainer = sitePanel.appendNavContainer();
@@ -1277,7 +1300,7 @@
 			
 			var buttonDiv = navContainer.appendRightButton();
 			
-			var shareDiv = sitePanel.panelDiv.append("div");
+			var shareDiv = sitePanel.panelDiv.append("nav");
 			var targetHRef;
 
 			var panel2Div = sitePanel.appendScrollArea();
@@ -1286,12 +1309,16 @@
 			
 			if (organization)
 			{
-				var orgDiv = panel2Div.append("div");
-				appendStringItem(orgDiv.node(), organization.getDescription(), null, false);
+				var orgDiv = panel2Div.append("section");
+				orgDiv.classed("organization", true);
+
+				var labelDiv = orgDiv.append("label")
+					.text(organization.getDescription());
+
 				if (site.getDescription() && (site.getDescription() !== organization.getDescription()))
 				{
 					orgDiv.append('div')
-						.classed("left-label sub-text", true)
+						.classed("address-line", true)
 						.text(site.getDescription());
 				}
 				
@@ -1307,7 +1334,7 @@
 						if (streetCell)
 							$(streetCell.data).each(function() {
 								orgDiv.append('div')
-									.classed("left-label sub-text", true)
+									.classed("address-line", true)
 									.text(this.value);
 							});
 						line = "";
@@ -1319,12 +1346,10 @@
 							line += "  " + zipCell.data[0].value;
 						if (line.trim())
 							orgDiv.append('div')
-								.classed('left-label sub-text', true)
+								.classed('address-line', true)
 								.text(line.trim());
-						orgDiv.append('div').classed('cell-edit-div cell-border-below', true);
 					},
 					function() {
-						orgDiv.append('div').classed('cell-edit-div cell-border-below', true);
 					});
 				},
 				function() { }
@@ -1336,7 +1361,7 @@
 				var v = session.getDatum(cellName);
 				if (v)
 				{
-					var deadlineDiv = panel2Div.append("div");
+					var deadlineDiv = panel2Div.append("section");
 					appendStringItem(deadlineDiv.node(), cellName, v);
 					return deadlineDiv;
 				}
@@ -1356,8 +1381,8 @@
 			if (!firstDiv)
 				firstDiv = nextDiv;
 
-			var cellDiv = panel2Div.append("div")
-				.classed("cell-div", true);
+			var cellDiv = panel2Div.append("section")
+				.classed("cell", true);
 			
 			crp.pushCheckCells(offering, function()
 				{
@@ -1367,7 +1392,7 @@
 						
 					if (service)
 					{
-						shareDiv.classed("share-container site-navbar border-above", true);
+						shareDiv.classed("share-container always-visible border-above", true);
 
 						targetHRef = window.location.origin+"/find/"+service.value.id+"/"+session.value.id;
 
@@ -1393,9 +1418,9 @@
 
 					if (serviceCell.length > 0)
 					{
-						var labelDiv = cellDiv.append("div").classed("cell-label", true)
+						var labelDiv = cellDiv.append("label")
 							.text("Services");
-						var itemsDiv = cellDiv.append("div").classed("items-div", true);
+						var itemsDiv = cellDiv.append("ol").classed("items-div", true);
 
 						var divs = appendItems(itemsDiv, newInstances);
 						var buttons = divs.append("div").classed("multi-line-item", true);
@@ -1405,42 +1430,38 @@
 				},
 				asyncFailFunction);
 			
-			var agesDiv = panel2Div.append("div");
+			var agesDiv = panel2Div.append("section");
 			showAgeRange(offering, function(newText)
 				{
 					if (newText)
 					{
 						appendStringItem(agesDiv.node(), "Ages", newText);
-						agesDiv.classed("cell-div", true);
 					}
 				});
-			var gradesDiv = panel2Div.append("div");
+			var gradesDiv = panel2Div.append("section");
 			showGradeRange(offering, function(newText)
 				{
 					if (newText)
 					{
 						appendStringItem(gradesDiv.node(), "Grades", newText);
-						gradesDiv.classed("cell-div", true);
 					}
 				});
 			
-			var webSiteDiv = panel2Div.append("div");	
+			var webSiteDiv = panel2Div.append("section");	
 			showWebSite(offering, function(newText)
 				{
 					if (newText)
 					{
-						webSiteDiv.classed("cell-div", true)
-							.classed("border-below", true);
+						// webSiteDiv.classed("cell unique view", true);
 	
 						var labelDiv = webSiteDiv.append("div")
-							.classed("cell-label sub-text", true);
+							.classed("more-info", true);
 						var link = labelDiv
 							.append("a")
 							.classed("site-active-text", true)
 							.attr("href", newText)
 							.attr("target", "_blank")
 							.text("More Info");
-						labelDiv.classed("left-label expanding-div", true);
 					}
 				});
 
@@ -1654,7 +1675,7 @@
 		function showSessions(service, containerNode) {
 			// Remove any lingering contents from the set of full issues.
 			var containerPanel = d3.select(containerNode);
-			containerPanel.selectAll("li").remove();
+			containerPanel.selectAll("section").remove();
 			containerPanel.selectAll("p").remove();
 
 			var successFunction = function(sessions)
@@ -1671,10 +1692,12 @@
 				{
 					sessions.sort(compareSessions);
 				
-					var divs = containerPanel.selectAll("li")
+					var section = containerPanel.append("section")
+						.classed("cell", true);
+					var divs = section.selectAll("li")
 						.data(sessions)
 						.enter()
-						.append("li").classed("consent-record cell-div", true);	// So that each button appears on its own row.
+						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
 	
 					var buttons = divs.append("button").classed("btn row-button", true)
 						.on("click", function(session)
@@ -1761,10 +1784,12 @@
 				sessions.sort(compareSessions);
 				
 				var containerPanel = d3.select(container);
-				var divs = containerPanel.selectAll("li")
+				var section = containerPanel.append("section")
+					.classed("cell", true);
+				var divs = section.selectAll("li")
 					.data(sessions)
 					.enter()
-					.append("li").classed("consent-record cell-div", true);	// So that each button appears on its own row.
+					.append("li").classed("consent-record", true);	// So that each button appears on its own row.
 	
 				var buttons = divs.append("button").classed("btn row-button", true)
 					.on("click", function(session)
@@ -1863,7 +1888,7 @@
 				}
 				
 				var sitePanel = new SitePanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData, containerCell), "background-gradient-panel");
+											objectData, getViewPanelHeader(objectData, containerCell), "organization background-gradient-panel");
 
 				var navContainer = sitePanel.appendNavContainer();
 
@@ -1966,7 +1991,7 @@
 					return a.getDescription().localeCompare(b.getDescription());
 				});
 
-			var sitePanel = new SitePanel(previousPanelNode, parent, header, "list-panel");
+			var sitePanel = new SitePanel(previousPanelNode, parent, header, "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
@@ -2080,7 +2105,7 @@
 							{
 								inquiryCell = inquiriesInstance.getCell("Inquiry");
 						
-								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list-panel");
+								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 
@@ -2211,7 +2236,7 @@
 		 */
 		function add_enrollment(organization, previousPanel)
 		{
-			var sitePanel = new SitePanel(previousPanel, organization, "Pick User", "list-panel");
+			var sitePanel = new SitePanel(previousPanel, organization, "Pick User", "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
@@ -2488,7 +2513,7 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						var addInquiryPanelDiv = new SitePanel(previousPanel, session, "Add Inquiry", "list-panel");
+						var addInquiryPanelDiv = new SitePanel(previousPanel, session, "Add Inquiry", "list");
 
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
@@ -2505,7 +2530,11 @@
 						var panel2Div = addInquiryPanelDiv.appendScrollArea();
 						panel2Div.appendAlertContainer();
 				
-						inquiryInput = panel2Div.append("div")
+						inquiryInput = panel2Div.append("section")
+							.classed("cell edit unique string", true)
+							.append("ol")
+							.classed("items-div", true)
+							.append("li")
 							.classed("panel-input-container string-input-container", true)
 							.append("input")
 							.attr("type", "email")
@@ -2654,7 +2683,7 @@
 							{
 								enrollmentCell = instance.getCell("Enrollment");
 						
-								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list-panel");
+								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 
