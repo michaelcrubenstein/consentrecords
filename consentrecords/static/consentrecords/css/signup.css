@@ -50,15 +50,15 @@
 		white-space: nowrap;
 	}
 	
-	table.labeled-table td:first-child {
+	table.labeled td:first-child {
 		text-align: right;
 	}
 
-	table.option-table td:first-child {
+	table.option td:first-child {
 		text-align: left;
 	}
 
-	table.option-table td:first-child span {
+	table.option td:first-child span {
 		padding-left: 6px;
 		padding-right: 12px;
 		text-align: left;
@@ -120,4 +120,3 @@
     panel.sign-up .dots ~ panel > div > select {
     	display: inline-block;
     }
-    

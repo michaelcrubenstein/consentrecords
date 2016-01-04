@@ -96,18 +96,18 @@ var Signup = (function () {
 			p.append('h1')
 				.text('Birthday');
 				
-			var row = p.append('table').classed('labeled-table', true)
+			var row = p.append('table').classed('labeled', true)
 				.append('tr');
 			row.append('td').text('Birth Month and Year');
 			var monthInput = row.append('td')
 				.append('select')
-				.classed('month-select', true)
+				.classed('month', true)
 				.on('change', function(d)
 					{
 						signup.dots.checkForwardEnabled();
 					});
 			var yearInput = row.append('td')
-				.classed('full-width', true)
+				.classed('year full-width', true)
 				.append('select')
 				.on('change', function(d)
 					{
@@ -197,7 +197,7 @@ var Signup = (function () {
 			p.append('h1').classed('', true)
 				.text('Email Address');
 
-			var tr = p.append('table').classed('labeled-table', true)
+			var tr = p.append('table').classed('labeled', true)
 				.append('tr');
 			tr.append('td').text('Email');
 			var emailInput = tr.append('td')
@@ -268,7 +268,7 @@ var Signup = (function () {
 			p.append('h1').classed('', true)
 				.text('Password');
 			
-			var t = p.append('table').classed('labeled-table', true);
+			var t = p.append('table').classed('labeled', true);
 				
 			var row = t.append('tr');
 			row.append('td').text('Password');
@@ -349,7 +349,7 @@ var Signup = (function () {
 			p.append('p')
 				.text('How much of your data do you want to be publicly available?');
 			
-			var t = p.append('table').classed('option-table', true);	
+			var t = p.append('table').classed('option', true);	
 			var row = t.append('tr');
 			var cell = row.append('td');
 			cell.append('input')

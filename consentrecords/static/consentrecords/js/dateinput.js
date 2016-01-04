@@ -29,10 +29,12 @@ var DateInput = (function () {
 		var row = p.append('div')
 			   .classed('date-row', true);
 		row.node().dateInput = this;
-		this.yearInput = row.append('select').style('display', 'inline');
+		this.yearInput = row.append('select').style('display', 'inline')
+			.classed('year', true);
 		this.monthInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
-			.classed('month-select', true);
-		this.dateInput = row.append('select').style('display', 'inline').style('visibility', 'hidden');
+			.classed('month', true);
+		this.dateInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
+			.classed('day', true);
 	
 		var yearNode = this.yearInput.node();
 		var monthNode = this.monthInput.node();

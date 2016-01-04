@@ -369,3 +369,16 @@ input[type="date"]
 input[type="date"]:focus {
 	color: #2C55CC;
 }
+
+/* select.year, select.month and select.day are used for dateInput */
+select.year {
+	margin-left: 12px;
+}
+
+select.month {
+	margin-left: 12px;
+}
+
+select.day {
+	margin-left: 12px;
+}
