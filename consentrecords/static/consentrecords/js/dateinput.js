@@ -60,7 +60,7 @@ var DateInput = (function () {
 			.append('option')
 			.text(function(d) { return d; });
 	
-		var dates = ['date (optional)'];
+		var dates = ['(no day)'];
 		this.dateInput.selectAll('option')
 			.data(dates)
 			.enter()
@@ -90,7 +90,7 @@ var DateInput = (function () {
 				var selectedYear = parseInt(yearNode.options[yearNode.selectedIndex].text);
 				var selectedMonth = monthNode.selectedIndex;
 				var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
-				dates = ['date (optional)'];
+				dates = ['(no day)'];
 				for (var i = 1; i <= daysInMonth; ++i)
 					dates.push(i);
 				_this.dateInput.selectAll('option').remove();
