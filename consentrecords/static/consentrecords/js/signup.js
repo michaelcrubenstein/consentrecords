@@ -52,7 +52,7 @@ var Signup = (function () {
 	function Signup(previousPanel, editable) {
 	
 		var _thisSignup = this;
-		var sitePanel = new SitePanel(d3.select(previousPanel), null, "Sign Up for Consent Records", "sign-up");
+		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up");
 
 		var navContainer = sitePanel.appendNavContainer();
 
