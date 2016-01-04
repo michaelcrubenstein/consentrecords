@@ -312,7 +312,7 @@ function _confirmDeleteClick(d)
 	}
 }
 
-function _showEditStringCell(obj, cell, containerUUID, inputType)
+function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("cell edit string", true);
 	
@@ -404,57 +404,19 @@ function _showEditStringCell(obj, cell, containerUUID, inputType)
 	}
 }
 
-function checkDateInput() {
-    var input = document.createElement('input');
-    input.setAttribute('type','date');
-
-    var notADateValue = 'not-a-date';
-    input.setAttribute('value', notADateValue); 
-
-    return (input.value !== notADateValue);
-}
-
-function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
+function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 {
 	var sectionObj = d3.select(obj).classed("cell edit string", true);
 	
 	function appendInputs(divs)
 	{
-		divs.append("input")
-			.attr("type", "month")
-			.attr("placeholder", cell.field.name)
-			.property("value", function (d) 
-				{ 
-					if (!d.value || d.value.length < 7)
-						return "";
-					else
-						return d.value.substring(0, 7); 
-				})
-			.on("change", function()
-				{
-					var d = new Date(d3.select(this).property("value"));
-					var daysInMonth = (new Date(d.getUTCFullYear(), d.getUTCMonth()+1, 0)).getDate();
-					$($(this).parents()[0]).children("input[type=number]")[0].setAttribute("max", daysInMonth);
-				});
-		divs.append("input")
-			.attr("type", "checkbox")
-			.property("checked", function(d)
-				{
-					return d.value && d.value.length > 8;
-				});
-		divs.append("span")
-			.text(" + day");
-		divs.append("input")
-			.attr("type", "number")
-			.property("value", function(d)
-				{
-					if (d.value && d.value.length > 8)
-						return parseInt(d.value.substring(8));
-					else
-						return null;
-				})
-			.property("min", 1)
-			.property("max", 31);
+	    divs.each(function(d)
+	    {
+	    	var input = new DateInput(this);
+	    	var newValue = d.value;
+	    	if (newValue && newValue.length > 0)
+ 				input.value(newValue);
+	    });
 	}
 	
 	if (cell.field.capacity === "_unique value")
@@ -474,7 +436,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell, containerUUID)
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(cell.field.name);
 			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
+				.style("line-height", divs.selectAll(".date-row").style("line-height"));
 		}
 	}
 	else
@@ -739,12 +701,12 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 		.each(_pushTextChanged);
 }
 
-function _showEditObjectCell(obj, previousPanelNode, cell, parent)
+function _showEditObjectCell(obj, previousPanelNode, cell)
 {
 	var sectionObj = d3.select(obj).classed("cell edit", true);
 	var storeDataFunction;
 
-	if (parent.getValueID())
+	if (cell.parent.getValueID())
 		storeDataFunction = _submitCreateInstance;
 	else
 		storeDataFunction = _storeNewInstance;
@@ -761,9 +723,9 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 			if (prepareClick())
 			{
 				if (_isPickCell(cell))
-					showPickObjectPanel(cell.data[0], cell, parent.getValueID(), previousPanelNode);
+					showPickObjectPanel(cell.data[0], cell, cell.parent.getValueID(), previousPanelNode);
 				else
-					showEditObjectPanel(cell.data[0], cell, parent.getValueID(), previousPanelNode, revealPanelLeft);
+					showEditObjectPanel(cell.data[0], cell, cell.parent.getValueID(), previousPanelNode, revealPanelLeft);
 			}
 		});
 	}
@@ -773,7 +735,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(previousPanelNode, cell, parent.getValueID(), true, true, showEditObjectPanel, revealPanelLeft));
+	$(itemsDiv.node()).on("valueAdded.cr", _getOnValueAddedFunction(previousPanelNode, cell, cell.parent.getValueID(), true, true, showEditObjectPanel, revealPanelLeft));
 
 	var clickFunction;
 	if (cell.field.capacity === "_unique value")	/* Unique value handles the click above */
@@ -783,9 +745,9 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 				if (prepareClick())
 				{
 					if (_isPickCell(cell))
-						showPickObjectPanel(d, cell, parent.getValueID(), previousPanelNode);
+						showPickObjectPanel(d, cell, cell.parent.getValueID(), previousPanelNode);
 					else
-						showEditObjectPanel(d, cell, parent.getValueID(), previousPanelNode, revealPanelLeft);
+						showEditObjectPanel(d, cell, cell.parent.getValueID(), previousPanelNode, revealPanelLeft);
 				}
 			};
 		
@@ -819,9 +781,9 @@ function _showEditObjectCell(obj, previousPanelNode, cell, parent)
 					var newValue = cell.addNewValue();
 					
 					if (_isPickCell(cell))
-						showPickObjectPanel(newValue, newValue.cell, parent.getValueID(), previousPanelNode)
+						showPickObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode)
 					else
-						showEditObjectPanel(newValue, newValue.cell, parent.getValueID(), previousPanelNode, revealPanelUp);
+						showEditObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode, revealPanelUp);
 				}
 				d3.event.preventDefault();
 			})
@@ -887,34 +849,8 @@ function _getDatestampValue()
 function _getDatestampDayOptionalValue()
 {
 	var obj = d3.select(this);
-	var monthInput = obj.selectAll("input[type=month]");
-	var includeDayInput = obj.selectAll("input[type=checkbox]");
-	var dayInput = obj.selectAll("input[type=number]");
-	
-	try
-	{
-		if (!monthInput.node().value)
-			return undefined;
-		else
-		{
-			var monthString = monthInput.node().value;
-			var dateObj = new Date(monthInput.node().value);
-			if (includeDayInput.node().checked)
-			{
-				dateObj.setUTCDate(dayInput.node().value);
-				return dateObj.toISOString().substring(0, 10);
-			}
-			else
-			{
-				dateObj.setUTCDate(1);	/* Set the date to 1 so that the ISO string returns the correct month. */
-				return dateObj.toISOString().substring(0, 7);
-			}
-		}
-	}
-	catch(err)
-	{
-		return undefined;
-	}
+	var dateObj = obj.selectAll(".date-row");
+	return dateObj.node().dateInput.value();
 }
 
 function _getTimeValue()
@@ -1099,9 +1035,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "text");
+			_showEditStringCell(obj, cell, "text");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell,
@@ -1111,9 +1047,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "number");
+			_showEditStringCell(obj, cell, "number");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
@@ -1123,9 +1059,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "email");
+			_showEditStringCell(obj, cell, "email");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
@@ -1135,9 +1071,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "url");
+			_showEditStringCell(obj, cell, "url");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
@@ -1147,9 +1083,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "tel");
+			_showEditStringCell(obj, cell, "tel");
 		},
 		appendUpdateCommands: _appendUpdateStringCommands,
 		updateCell: _updateStringCell
@@ -1159,9 +1095,9 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "date");
+			_showEditStringCell(obj, cell, "date");
 		},
 		appendUpdateCommands: _appendUpdateDatestampCommands,
 		updateCell: _updateDatestampCell,
@@ -1171,10 +1107,7 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
-		{
-			_showEditDateStampDayOptionalCell(obj, containerPanel, cell, parent.getValueID());
-		},
+		showEdit: _showEditDateStampDayOptionalCell,
 		appendUpdateCommands: _appendUpdateDatestampDayOptionalCommands,
 		updateCell: _updateDatestampDayOptionalCell,
 	},
@@ -1183,22 +1116,16 @@ var dataTypeViews = {
 		{
 			_showViewStringCell(obj, cell);
 		},
-		showEdit: function(obj, containerPanel, cell, parent)
+		showEdit: function(obj, containerPanel, cell)
 		{
-			_showEditStringCell(obj, cell, parent.getValueID(), "time");
+			_showEditStringCell(obj, cell, "time");
 		},
 		appendUpdateCommands: _appendUpdateTimeCommands,
 		updateCell: _updateTimeCell,
 	},
 	_object: {
-		show: function(obj, containerPanel, cell, containerUUID)
-		{
-			_showViewObjectCell(obj, containerPanel, cell, containerUUID);
-		},
-		showEdit: function(obj, containerPanel, cell, parent)
-		{
-			_showEditObjectCell(obj, containerPanel, cell, parent);
-		},
+		show: _showViewObjectCell,
+		showEdit: _showEditObjectCell,
 		appendUpdateCommands: _appendUpdateObjectCommands,
 		updateCell: _updateObjectCell
 	},
@@ -1322,6 +1249,7 @@ var SitePanel = (function () {
 	SitePanel.prototype.navContainer = undefined;
 	SitePanel.prototype.panel2Div = undefined;
 	SitePanel.prototype.headerText = null;
+	SitePanel.prototype.hide = null;
 	
     function SitePanel(containerPanel, datum, headerText, panelClass, showFunction) {
     	if (containerPanel === undefined)
@@ -1333,6 +1261,7 @@ var SitePanel = (function () {
     		this.navContainer = undefined;
     		this.panel2Div = undefined;
     		this.headerText = null;
+			this.hide = null;
     	}
     	else
     	{
@@ -1353,6 +1282,21 @@ var SitePanel = (function () {
 				this.panelDiv.classed(panelClass, true);
 				
 			this.headerText = headerText;
+			var _this = this;
+			if (showFunction === revealPanelUp)
+			{
+				this.hide = function()
+					{
+						hidePanelDown(_this.node());
+					};
+			}
+			else
+			{
+				this.hide = function()
+					{
+						hidePanelRight(_this.node());
+					};
+			}
 		}
     }
     
@@ -1484,11 +1428,44 @@ var SitePanel = (function () {
 					function(cell) { return cell.field.descriptorType != "_by text" } );
 		}
 		
-		panel2Div.show_edit_cells = function(objectData, cell)
+		panel2Div.handleDoneButton = function() {
+			if (prepareClick())
+			{
+				showClickFeedback(this);
+		
+				var sections = panel2Div.selectAll("section");
+				var initialData = [];
+				var sourceObjects = [];
+				sections.each(function(cell) {
+						if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
+							dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell.parent, initialData, sourceObjects);
+					});
+				var updateValuesFunction = function()
+				{
+					sections.each(function(cell) {
+							if ("updateCell" in dataTypeViews[cell.field.dataType])
+								dataTypeViews[cell.field.dataType].updateCell(this);
+						});
+				}
+				var panel = $(this).parents(".site-panel")[0];
+				if (initialData.length > 0) {
+					cr.updateValues(initialData, sourceObjects, updateValuesFunction, 
+						function() { _this.hide(); }, 
+						syncFailFunction);
+				}
+				else
+				{
+					_this.hide();
+				}
+			}
+			d3.event.preventDefault();
+		}
+		
+		panel2Div.showEditCells = function(cells)
 		{
-			this.appendSections(objectData.value.cells)
+			this.appendSections(cells)
 				.each(function(cell) {
-						dataTypeViews[cell.field.dataType].showEdit(this, _this.node(), cell, objectData);
+						dataTypeViews[cell.field.dataType].showEdit(this, _this.node(), cell);
 					});
 		}
 		
@@ -1610,7 +1587,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, previousP
 	successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData, containerCell), "view");
+									objectData, getViewPanelHeader(objectData, containerCell), "view", showSuccessFunction);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1672,30 +1649,15 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 		else
 			header = "New " + objectData.cell.field.name;
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit");
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", showSuccessFunction);
 
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
 		panel2Div.appendAlertContainer();
-		panel2Div.show_edit_cells(objectData, containerCell);
+		panel2Div.showEditCells(objectData.value.cells);
 
 		var doneButton;
-		var hideSuccessFunction;
-		if (showSuccessFunction === revealPanelUp)
-		{
-			hideSuccessFunction = function()
-				{
-					hidePanelDown(sitePanel.node());
-				};
-		}
-		else
-		{
-			hideSuccessFunction = function()
-				{
-					hidePanelRight(sitePanel.node());
-				};
-		}
 		if (objectData.getValueID())
 		{
 			if (showSuccessFunction === revealPanelUp)
@@ -1703,37 +1665,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 			else
 				doneButton = navContainer.appendLeftButton();
 			doneButton.append("span").text("Done");
-			doneButton.on("click", function() {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-			
-					var sections = panel2Div.selectAll("section");
-					var initialData = [];
-					var sourceObjects = [];
-					sections.each(function(cell) {
-							if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
-								dataTypeViews[cell.field.dataType].appendUpdateCommands(this, objectData, initialData, sourceObjects);
-						});
-					var updateValuesFunction = function()
-					{
-						sections.each(function(cell) {
-								if ("updateCell" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].updateCell(this);
-							});
-					}
-					var panel = $(this).parents(".site-panel")[0];
-					if (initialData.length > 0) {
-						cr.updateValues(initialData, sourceObjects, updateValuesFunction, 
-							function() { hideSuccessFunction(); }, syncFailFunction);
-					}
-					else
-					{
-						hideSuccessFunction();
-					}
-				}
-				d3.event.preventDefault();
-			});
+			doneButton.on("click", panel2Div.handleDoneButton);
 		}
 		else
 		{
@@ -1747,12 +1679,18 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 					var sections = panel2Div.selectAll("section");
 					if (containerCell.parent == null)
 					{
-						_submitCreateInstance(objectData, containerCell, null, sections, hideSuccessFunction);
+						_submitCreateInstance(objectData, containerCell, null, sections, 
+							function() { 
+								sitePanel.hide(); 
+							});
 						/* Add this new root object. */
 					}
 					else if (containerCell.parent.getValueID())
 					{
-						_submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, hideSuccessFunction);
+						_submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, 
+							function() { 
+								sitePanel.hide(); 
+							});
 						/* Add this item to the contained object. */
 					}
 					else
@@ -1769,7 +1707,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 		
 						objectData.calculateDescription();
 						objectData.triggerEvent("dataChanged.cr");
-						hideSuccessFunction();
+						sitePanel.hide();
 					}
 				}
 				d3.event.preventDefault();
@@ -1784,7 +1722,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 							// In this case, delete the item on cancel. 
 							objectData.cell.deleteValue(objectData);
 						}
-						hideSuccessFunction();
+						sitePanel.hide();
 					}
 					d3.event.preventDefault();
 				});

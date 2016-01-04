@@ -28,6 +28,7 @@ var DateInput = (function () {
 		
 		var row = p.append('div')
 			   .classed('date-row', true);
+		row.node().dateInput = this;
 		this.yearInput = row.append('select').style('display', 'inline');
 		this.monthInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
 			.classed('month-select', true);
