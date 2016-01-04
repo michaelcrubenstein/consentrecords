@@ -192,7 +192,7 @@ function _pushTextChanged(d) {
 		});
 	if (d.cell && d.cell.field.capacity == "_unique value")
 	{
-		d.addTarget("value_deleted", this);
+		d.addTarget("valueDeleted.cr", this);
 		$(this).on("valueDeleted.cr", function(e) {
 			d3.select(this).text(d.getDescription());
 		});
@@ -2123,31 +2123,45 @@ function showPickObjectPanel(oldData, cell, containerUUID, previousPanelNode) {
 			
 			if (prepareClick())
 			{
-				if (oldData.id != null)
+				if (oldData.id)
 				{
 					if (d.getValueID() === oldData.getValueID()) {
 						successFunction();
 					}
-					else
+					else if (d.getValueID())
 					{
 						cr.updateObjectValue(oldData, d, successFunction, failFunction);
 					}
+					else
+					{
+						cr.deleteValue(oldData, successFunction, failFunction);
+					}
 				}
-				else if (containerUUID)	/* In this case, we are adding an object to an existing object. */
+				else if (d.getValueID())
 				{
-					cr.addObjectValue(cell, containerUUID, d, 
-						successFunction,
-						failFunction);
+					if (containerUUID)	/* In this case, we are adding an object to an existing object. */
+					{
+						cr.addObjectValue(cell, containerUUID, d, 
+							successFunction,
+							failFunction);
+					}
+					else 
+					{
+						_storeUnsavedPickedValue(oldData, d);
+						successFunction();
+					}
 				}
-				else 
-				{
-					_storeUnsavedPickedValue(oldData, d);
+				else
 					successFunction();
-				}
 			}
 			d3.event.preventDefault();
 		}
 		
+		if (cell.field.capacity === "_unique value")
+		{
+			var nullObjectValue = new cr.ObjectValue();
+			rootObjects = [nullObjectValue].concat(rootObjects);
+		}
 		var buttons = appendButtons(panel2Div, rootObjects, buttonClicked);
 		
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
