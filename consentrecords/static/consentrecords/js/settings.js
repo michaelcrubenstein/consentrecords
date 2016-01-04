@@ -20,37 +20,6 @@ var Settings = (function () {
 
 		var doneButton = navContainer.appendRightButton();
 			
-// 			function()
-// 			{
-// 				if (prepareClick())
-// 				{
-// 					showClickFeedback(this);
-// 					var newEmail = emailInput.property('value');
-// 					var newBirthday = birthdayInput.value();
-// 					function validateEmail(email) 
-// 					{
-// 						var re = /\S+@\S+\.\S\S+/;
-// 						return re.test(email);
-// 					}
-// 		
-// 					if (newEmail.length == 0)
-// 					{
-// 						syncFailFunction('The email address is required');
-// 						emailInput.node().focus();
-// 					}
-// 					else if (!validateEmail(newEmail))
-// 					{
-// 						syncFailFunction('The email address is not valid');
-// 						emailInput.node().focus();
-// 					}
-// 					else
-// 					{
-// 						hidePanelRight($(this).parents(".site-panel")[0]);
-// 					}
-// 				}
-// 				d3.event.preventDefault();
-// 			})
-
 		navContainer.appendTitle('Settings');
 		
 		var panel2Div = sitePanel.appendScrollArea()
@@ -69,54 +38,6 @@ var Settings = (function () {
 					 userInstance.getCell("_public access")];
 					 
 		panel2Div.showEditCells(cells);
-	
-// 		var firstNameInput = panel2Div.append('section').classed('cell edit unique string', true)
-// 			.datum(userInstance.getCell("_first name"))
-// 			.append('ol').classed('items-div', true)
-// 			.append('li').classed('string-input-container', true)
-// 			.append('input')
-// 			.attr('type', 'text')
-// 			.attr('placeholder', 'First Name')
-// 			.property('value', function(cell) {
-// 				if (cell.data.length > 0) 
-// 					return cell.data[0].value;
-// 				else
-// 					return null;
-// 			});
-// 			
-// 		var lastNameInput = panel2Div.append('section').classed('cell edit unique string', true)
-// 			.datum(userInstance.getCell("_last name"))
-// 			.append('ol').classed('items-div', true)
-// 			.append('li').classed('string-input-container', true)
-// 			.append('input')
-// 			.attr('type', 'text')
-// 			.attr('placeholder', 'Last Name')
-// 			.property('value', function(cell) {
-// 				if (cell.data.length > 0) 
-// 					return cell.data[0].value;
-// 				else
-// 					return null;
-// 			});
-// 			
-// 		var emailInput = panel2Div.append('section').classed('cell edit unique string', true)
-// 			.datum(userInstance.getCell("_email"))
-// 			.append('ol').classed('items-div', true)
-// 			.append('li').classed('string-input-container', true)
-// 			.append('input')
-// 			.attr('type', 'email')
-// 			.attr('placeholder', 'email address')
-// 			.property('value', function(cell) {return cell.data[0].value;});
-// 			
-// 		var div = panel2Div.append('section').classed('cell edit unique string', true);
-// 		div.append('label')
-// 			.text('Birthday');
-// 		var c = div.append('ol').classed('items-div', true)
-// 			.append('li').classed('string-input-container', true)
-// 		
-// 		var birthdayInput = new DateInput(c.node());
-// 		var newValue = userInstance.getCell("Birthday").data[0].value;
-// 		if (newValue && newValue.length > 0)
-// 			birthdayInput.value(newValue);
 			
 		showPanelLeft(sitePanel.node());
 	}
