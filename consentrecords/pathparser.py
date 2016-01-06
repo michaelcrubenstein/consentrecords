@@ -117,6 +117,16 @@ def refineResults(resultSet, path):
                 raise ValueError("unimplemented 'not' expression")
         else:
             raise ValueError("malformed 'not' expression")
+    elif path[0] == '(': # Path[1] is a list of type IDs.
+        if path[1][0] == ',':
+            t = map(Terms.getInstance, path[1][1])
+            f = Instance.objects.filter(typeID__in=t,
+                                        deletedinstance__isnull=True)
+        else:
+            t = Terms.getInstance(path[1][0])
+            f = Instance.objects.filter(typeID=t,
+                                        deletedinstance__isnull=True)
+        return f, path[2:]
     else:   # Path[0] is a typeID.
         i = Terms.getInstance(path[0])
         f = Instance.objects.filter(typeID=i, deletedinstance__isnull=True)
