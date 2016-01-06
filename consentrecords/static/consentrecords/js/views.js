@@ -23,6 +23,36 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
+var crv = {
+	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
+	defaultLanguageCode: "en",
+	languages: [{code: "en", name: "English"}, 
+			    {code: "sp", name: "Spanish"},
+			    {code: "zh", name: "Chinese"}],
+			    
+	appendAddButton: function(sectionObj, done)
+	{
+		var cell = sectionObj.datum();
+		
+		/* Add one more button for the add Button item. */
+		var buttonDiv = sectionObj.append("div").classed('add-value', true)
+			.append("button").classed("btn row-button site-active-text", true)
+			.on("click", function(cell) {
+				if (prepareClick())
+				{
+					var newValue = cell.addNewValue();
+					
+					if (done)
+						done(newValue);
+				}
+				d3.event.preventDefault();
+			})
+			.append("div").classed("pull-left", true);
+		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
+		buttonDiv.append("span").text(" add " + cell.field.name);
+	}
+};
+
 function syncFailFunction(error)
 {
 	bootstrap_alert.warning(error, ".alert-container");
@@ -270,19 +300,10 @@ function _showViewStringCell(obj, cell)
 {
 	var sectionObj = d3.select(obj);
 	
-	var labelDiv = sectionObj.append("label")
-		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+	var itemsDiv = sectionObj.selectAll("ol");
 
 	if (cell.field.capacity == "_unique value")
-	{
-		sectionObj.classed("unique", true);
 		itemsDiv.classed("right-label expanding-div", true);
-	}
-	else
-	{
-		sectionObj.classed("multiple", true);
-	}
 
 	var setupItems = function(divs, cell) {
 		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
@@ -304,22 +325,12 @@ function _showViewStringCell(obj, cell)
 	setupItems(divs, cell);
 }
 
-function _confirmDeleteClick(d)
-{
-	if (prepareClick())
-	{
-		cr.deleteValue(d, unblockClick, syncFailFunction);
-	}
-}
-
 function _showEditStringCell(obj, cell, inputType)
 {
-	var sectionObj = d3.select(obj).classed("cell edit string", true);
+	var sectionObj = d3.select(obj).classed("string", true);
 	
 	if (cell.field.capacity == "_unique value")
 	{
-		sectionObj.classed("unique", true);
-
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
 		var divs = itemsDiv.selectAll("li")
@@ -343,7 +354,6 @@ function _showEditStringCell(obj, cell, inputType)
 	}
 	else
 	{
-		sectionObj.classed("multiple", true);
 		sectionObj.append("label")
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
@@ -353,8 +363,7 @@ function _showEditStringCell(obj, cell, inputType)
 		
 		var appendControls = function(divs, cell)
 		{	
-			appendConfirmDeleteControls(divs)
-				.on('click', _confirmDeleteClick);
+			appendConfirmDeleteControls(divs);
 			
 			/* Inner layer needed so that padding is applied to inner content but not 
 				confirm delete control
@@ -384,29 +393,13 @@ function _showEditStringCell(obj, cell, inputType)
 				appendControls(div, cell);	
 			});
 			
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div").classed('add-value', true)
-			.append("button").classed("btn row-button multi-row-content site-active-text", true)
-			.on("click", function(cell) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-				
-					var newData = cell.addNewValue();
-				
-					unblockClick();
-				}
-				d3.event.preventDefault();
-			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add " + cell.field.name);
+		crv.appendAddButton(sectionObj, unblockClick);
 	}
 }
 
 function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 {
-	var sectionObj = d3.select(obj).classed("cell edit string", true);
+	var sectionObj = d3.select(obj).classed("string", true);
 	
 	function appendInputs(divs)
 	{
@@ -423,7 +416,6 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
-		sectionObj.classed("unique", true);
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
@@ -441,7 +433,6 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 	}
 	else
 	{
-		sectionObj.classed("multiple", true);
 		sectionObj.append("label")
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
@@ -451,8 +442,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 		
 		var appendControls = function(divs, cell)
 		{	
-			appendConfirmDeleteControls(divs)
-				.on('click', _confirmDeleteClick);
+			appendConfirmDeleteControls(divs);
 			
 			/* Inner layer needed so that padding is applied to inner content but not 
 				confirm delete control
@@ -479,23 +469,99 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 				appendControls(div, cell);	
 			});
 			
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div").classed('add-value', true)
-			.append("button").classed("btn row-button multi-row-content site-active-text", true)
-			.on("click", function(cell) {
-				if (prepareClick())
+		crv.appendAddButton(sectionObj, unblockClick);
+	}
+}
+
+function _showEditTranslationCell(obj, cell, inputType)
+{
+	var sectionObj = d3.select(obj).classed("string", true);
+	
+	function appendInputControls(divs)
+	{
+		var languageSelect = divs.append("select");
+		languageSelect.selectAll('option')
+			.data(crv.languages)
+			.enter()
+			.append('option')
+			.text(function(d) { return d.name; });
+		languageSelect.each(function(d)
+		{
+			for (var i = 0; i < crv.languages.length; ++i)
+			{
+				if (crv.languages[i].code == d.value.languageCode)
 				{
-					showClickFeedback(this);
-				
-					var newData = cell.addNewValue();
-				
-					unblockClick();
+					this.selectedIndex = i;
+					break;
 				}
-				d3.event.preventDefault();
-			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add " + cell.field.name);
+			}
+		});
+		
+		divs.append("div")
+			.classed("string-input-container", true)
+			.append("input")
+			.attr("type", "text")
+			.attr("placeholder", cell.field.name)
+			.property("value", function(d) { return d.value.text; });
+	}
+	
+	if (cell.field.capacity == "_unique value")
+	{
+		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+
+		var divs = itemsDiv.selectAll("li")
+			.data(cell.data)
+			.enter()
+			.append("li");	// So that each item appears on its own row.
+	
+		appendInputControls(divs);
+
+		if (cell.field.descriptorType != "_by text")
+		{
+			var labelDiv = sectionObj.insert("label", ":first-child")
+				.text(cell.field.name);
+			labelDiv
+				.style("line-height", divs.selectAll("input").style("line-height"));
+		}
+	}
+	else
+	{
+		sectionObj.append("label")
+			      .text(cell.field.name);
+		var itemsDiv = sectionObj.append("ol")
+			.classed("items-div", true);
+
+		var divs = appendItems(itemsDiv, cell.data);
+		
+		var appendControls = function(divs, cell)
+		{	
+			appendConfirmDeleteControls(divs);
+			
+			/* Inner layer needed so that padding is applied to inner content but not 
+				confirm delete control
+			 */
+			var innerDivs = divs.append("div")
+				.classed("multi-row-content", true);
+		
+			appendDeleteControls(innerDivs);
+
+			inputContainers = innerDivs.append("div");						
+	
+			appendInputControls(inputContainers);
+		}
+		
+		appendControls(divs, cell);
+
+		_setupEditItemsDivHandlers(itemsDiv, cell);
+		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+			{
+				var div = d3.select(this).append("li")
+					.datum(newData);
+				
+				appendControls(div, cell);	
+			});
+			
+		crv.appendAddButton(sectionObj, unblockClick);
 	}
 }
 
@@ -527,8 +593,7 @@ function _getOnValueAddedFunction(previousPanelNode, cell, containerUUID, canDel
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
-			appendConfirmDeleteControls(divs)
-				.on('click', _confirmDeleteClick);
+			appendConfirmDeleteControls(divs);
 		
 		var buttons = appendRowButtons(divs, cell);
 
@@ -557,28 +622,24 @@ function appendRowButtons(divs, cell)
 
 function appendConfirmDeleteControls(divs)
 {
-	divs.classed("delete-confirm-container", true)
-		.each(function(d)
-		{
-			$(this).on("valueDeleted.cr", function(e, newData)
-			{
-				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-			});
-			d.addTarget("valueDeleted.cr", this);
-		});						
+	divs.classed("delete-confirm-container", true);						
 	
 	return divs.append("button")
-		.classed("delete-confirm-button right-fixed-width-div", true)
 		.text("Delete")
 		.style("width", "0px")
 		.style("padding-left", "0px")
 		.style("padding-right", "0px")
 		.on('blur', function(e)
 		{
-			var deleteButton = $($(this).parents()[0]).children(".row-button").children(".glyphicon-minus-sign");
+			var deleteButton = $(this.parentNode).find(".glyphicon-minus-sign");
 			deleteButton.animateRotate(180, 90, 400);
 			$(this).animate({width: "0px", "padding-left": "0px", "padding-right": "0px"},
 				400);
+		})
+		.on('click', function(d)
+		{
+			if (prepareClick())
+				cr.deleteValue(d, unblockClick, syncFailFunction);
 		});
 }
 
@@ -591,7 +652,7 @@ function appendDeleteControls(buttons)
 			if (prepareClick())
 			{
 				$(this).animateRotate(90, 180, 600, 'swing');
-				var confirmButton = $($(this).parents(".delete-confirm-container")[0]).children(".delete-confirm-button");
+				var confirmButton = $($(this).parents("li")[0]).children("button");
 				autoWidth = confirmButton.css('width', 'auto')
 					.width();
 				confirmButton.width(0)
@@ -644,14 +705,10 @@ function appendButtonDescriptions(buttons, cell)
 function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 {
 	var sectionObj = d3.select(obj);
-	
-	var labelDiv = sectionObj.append("label")
-		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+	var itemsDiv = sectionObj.selectAll("ol");
 
 	if (cell.field.capacity === "_unique value")
 	{
-		sectionObj.classed("unique", true);
 		itemsDiv.classed("right-label expanding-div", true);
 		if (!_isPickCell(cell))
 			sectionObj.classed("btn row-button", true)
@@ -661,10 +718,6 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 					showViewObjectPanel(cell.data[0], cell, containerUUID, previousPanelNode, revealPanelLeft);
 				}
 			});
-	}
-	else
-	{
-		sectionObj.classed("multiple", true);
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -703,7 +756,7 @@ function _showViewObjectCell(obj, previousPanelNode, cell, containerUUID)
 
 function _showEditObjectCell(obj, previousPanelNode, cell)
 {
-	var sectionObj = d3.select(obj).classed("cell edit", true);
+	var sectionObj = d3.select(obj);
 	var storeDataFunction;
 
 	if (cell.parent.getValueID())
@@ -717,7 +770,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 
 	if (cell.field.capacity === "_unique value")
 	{
-		sectionObj.classed("unique btn row-button", true);
+		sectionObj.classed("btn row-button", true);
 		itemsDiv.classed("right-label expanding-div", true);
 		sectionObj.on("click", function(cell) {
 			if (prepareClick())
@@ -728,10 +781,6 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 					showEditObjectPanel(cell.data[0], cell, cell.parent.getValueID(), previousPanelNode, revealPanelLeft);
 			}
 		});
-	}
-	else
-	{
-		sectionObj.classed("multiple", true);
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -754,8 +803,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 	var divs = appendItems(itemsDiv, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs)
-				.on('click', _confirmDeleteClick);
+		appendConfirmDeleteControls(divs);
 		
 	var buttons = appendRowButtons(divs, cell);
 
@@ -772,24 +820,16 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 	
 	if (cell.field.capacity != "_unique value")
 	{
-		/* Add one more button for the add Button item. */
-		var buttonDiv = sectionObj.append("div").classed('add-value', true)
-			.append("button").classed("btn row-button multi-row-content site-active-text", true)
-			.on("click", function(cell) {
-				if (prepareClick())
-				{
-					var newValue = cell.addNewValue();
-					
-					if (_isPickCell(cell))
-						showPickObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode)
-					else
-						showEditObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode, revealPanelUp);
-				}
-				d3.event.preventDefault();
-			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add " + cell.field.name);
+		function done(newValue)
+		{
+			var cell = newValue.cell;
+			if (_isPickCell(cell))
+				showPickObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode)
+			else
+				showEditObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode, revealPanelUp);
+		}
+		
+		crv.appendAddButton(sectionObj, done);
 	}
 }
 
@@ -908,6 +948,69 @@ function _appendUpdateTimeCommands(sectionObj, objectData, initialData, sourceOb
 	);
 }
 
+function _getTranslationValue()
+{
+	var d3This = d3.select(this);
+	var textInput = d3This.selectAll("input");
+	var languageInput = d3This.selectAll("select");
+	var sel = languageInput.node();
+	var selectedOption = sel.options[sel.selectedIndex];
+	var languageCode = d3.select(selectedOption).datum().code;
+	console.log(sel.options[sel.selectedIndex].value)
+	return {text: textInput.property("value"),
+				languageCode: languageCode};
+}
+
+function _appendUpdateTranslationCommands(sectionObj, objectData, initialData, sourceObjects)
+{
+	d3.select(sectionObj).selectAll("li").each(function(d, i)
+		{
+			var newValue = _getTranslationValue.call(this);
+			_appendUpdateTranslationValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+		}
+	);
+}
+
+function _appendUpdateTranslationValueCommands(d, i, newValue, objectData, initialData, sourceObjects)
+{
+	/* If both are null, then they are equal. */
+	if (!newValue.text && !d.value.text)
+		newValue.text = d.value.text;
+		
+	if (newValue.text !== d.value.text || 
+		newValue.languageCode !== d.value.languageCode)
+	{
+		if (d.id)
+		{
+			initialData.push({id: d.id, value: newValue});
+			sourceObjects.push(d);
+		}
+		else
+		{
+			var command;
+			command = {containerUUID: objectData.getValueID(), 
+					   fieldID: d.cell.field.nameID, 
+					   value: newValue,
+					   index: i};
+			initialData.push(command);
+			sourceObjects.push(d);
+		}
+	}
+}
+
+function _updateTranslationValue(d, newValue)
+{
+	/* If both are null, then they are equal. */
+	if (!newValue.text && !d.value.text)
+		newValue.text = d.value.text;
+		
+	if (newValue.text !== d.value.text || 
+		newValue.languageCode !== d.value.languageCode)
+	{
+		d.value = newValue;
+	}
+}
+
 function _appendUpdateObjectCommands(sectionObj, objectData, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
@@ -973,6 +1076,16 @@ function _updateTimeCell(sectionObj)
 	d3.select(sectionObj).selectAll("input").each(function(d)
 		{
 			var newValue = _getTimeValue.call(this);
+			_updateTextValue(d, newValue);
+		}
+	);
+}
+
+function _updateTranslationCell(sectionObj)
+{
+	d3.select(sectionObj).selectAll("li").each(function(d)
+		{
+			var newValue = _getTranslationValue.call(this);
 			_updateTextValue(d, newValue);
 		}
 	);
@@ -1129,6 +1242,18 @@ var dataTypeViews = {
 		appendUpdateCommands: _appendUpdateObjectCommands,
 		updateCell: _updateObjectCell
 	},
+	_translation: {
+		show: function(obj, containerPanel, cell, containerUUID)
+		{
+			_showViewStringCell(obj, cell);
+		},
+		showEdit: function(obj, containerPanel, cell)
+		{
+			_showEditTranslationCell(obj, cell, "text");
+		},
+		appendUpdateCommands: _appendUpdateTranslationCommands,
+		updateCell: _updateTranslationCell,
+	},
 };
 
 function appendDescriptions(buttons)
@@ -1209,8 +1334,7 @@ function appendEditCellItems(container, cell, clickFunction)
 	var divs = appendItems(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs)
-				.on('click', _confirmDeleteClick);
+		appendConfirmDeleteControls(divs);
 	
 	var buttons = appendRowButtons(divs, cell);
 	
@@ -1269,7 +1393,7 @@ var SitePanel = (function () {
 			if (isNaN(previousZIndex))
 				throw "containerPanel's z-index is not specified";
 		
-			var rootPanel = d3.select($(containerPanel).parents()[0]);
+			var rootPanel = d3.select(containerPanel.parentNode);
 			var zindex = previousZIndex+1;
 			this.panelDiv = rootPanel
 							.append("panel")
@@ -1396,9 +1520,14 @@ var SitePanel = (function () {
 		{
 			this.appendSections(objectData.value.cells)
 				.classed("cell view", true)
+				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
+				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
 						if (cell.field.descriptorType != "_by text")
 						{
+							var section = d3.select(this);
+							section.append("label").text(cell.field.name);
+							section.append("ol").classed("items-div", true);
 							dataTypeViews[cell.field.dataType].show(this, _this.node(), cell, containerUUID);
 							if (!cell.isEmpty())
 								$(this).css("display", "block");
@@ -1464,6 +1593,9 @@ var SitePanel = (function () {
 		panel2Div.showEditCells = function(cells)
 		{
 			this.appendSections(cells)
+				.classed("cell edit", true)
+				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
+				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
 						dataTypeViews[cell.field.dataType].showEdit(this, _this.node(), cell);
 					});

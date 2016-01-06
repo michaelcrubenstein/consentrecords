@@ -1372,8 +1372,7 @@ function setupServicesPanel(dots)
 		$(item).animate({height: "0px"}, 200, 'swing', function() { $(item).remove(); });
 	}
 	
-	appendConfirmDeleteControls(divs)
-		.on('click', _confirmDeleteClick);
+	appendConfirmDeleteControls(divs);
 		
 	var buttons = appendRowButtons(divs, null);
 
@@ -1398,8 +1397,7 @@ function setupServicesPanel(dots)
 					{
 						dots.services.push(newReportedObject);
 						var divs = appendItem(itemsDiv, newReportedObject);
-						appendConfirmDeleteControls(divs)
-							.on('click', _confirmDeleteClick);
+						appendConfirmDeleteControls(divs);
 						var buttons = appendRowButtons(divs, null);
 						buttons.on("click", clickFunction);
 						appendDeleteControls(buttons);

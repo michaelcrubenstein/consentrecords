@@ -26,23 +26,15 @@ class DeletedInstanceInline(admin.TabularInline):
 class ValueInline(admin.TabularInline):
     model = Value
     extra = 0
-    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')
+    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')}),
+        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')}),
     )
-    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'position','transaction')
+    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
     show_change_link = True
     
-class InstanceValueInline(admin.TabularInline):
-    model = Value
+class InstanceValueInline(ValueInline):
     fk_name = 'instance'
-    extra = 0
-    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')}),
-    )
-    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'position','transaction')
-    show_change_link = True
     
 class DeletedValueInline(admin.TabularInline):
     model = DeletedValue
@@ -72,12 +64,12 @@ class InstanceAdmin(admin.ModelAdmin):
     
 class ValueAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')
+    list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'position', 'transaction')}),
+        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')}),
     )
-    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'position','transaction')
+    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
     search_fields = ('id', 'stringValue')
 
 class DeletedValueAdmin(admin.ModelAdmin):

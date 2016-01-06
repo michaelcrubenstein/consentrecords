@@ -469,9 +469,7 @@ class api:
 
                 with transaction.atomic():
                     transactionState = TransactionState(user, timezoneoffset)
-                    if v.isOriginalReference:
-                        i = v.referenceValue.deepDelete(transactionState)
-                    v.markAsDeleted(transactionState)
+                    v.deepDelete(transactionState)
                     
                     if v.isDescriptor:
                         nameLists = NameList()

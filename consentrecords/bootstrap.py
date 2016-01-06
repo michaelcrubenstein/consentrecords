@@ -22,12 +22,12 @@ def _addEnumeratorTranslations(container, enumerationNames, transactionState):
     nameLists = NameList()
     for name in enumerationNames:
         try:
-            item = Terms.getTranslationNamedEnumerator(container, name)
+            item = Terms.getTranslationNamedEnumerator(container, name, "en")
         except Value.DoesNotExist:
+            logger = logging.getLogger(__name__)
+            logger.error("Adding enumerator translation: %s to container %s" % (name, str(container)))
             item, value1 = instancecreator.create(enumeratorInstance, container, Terms.enumerator, -1, None, nameLists, transactionState)
-            item2, value2 = instancecreator.create(translationInstance, item, Terms.translation, 0, None, nameLists, transactionState)
-            item2.addStringValue(Terms.text, name, 0, transactionState)
-            item2.addReferenceValue(Terms.language, english, 0, transactionState)
+            item.addTranslationValue(Terms.translation, {"text": name, "languageCode": "en"}, 0, transactionState)
 
 def _addEnumerators(container, enumerationNames, transactionState):
     nameLists = NameList()
@@ -35,6 +35,8 @@ def _addEnumerators(container, enumerationNames, transactionState):
         try:
             item = Terms.getNamedEnumerator(container, name)
         except Value.DoesNotExist:
+            logger = logging.getLogger(__name__)
+            logger.error("Adding enumerator: %s to container %s" % (name, str(container)))
             item, newValue = instancecreator.create(Terms.enumerator, container, Terms.enumerator, -1, None, nameLists, transactionState)
             item.addStringValue(Terms.name, name, 0, transactionState)
 
@@ -45,7 +47,8 @@ def createFields(container, itemValues, transactionState):
     return instancecreator.createMissingInstances(container, Terms.field, Terms.field, Terms.name, itemValues, transactionState)
 
 def createDataTypes(transactionState):
-    _addEnumerators(Terms.dataType, [TermNames.object, TermNames.string, TermNames.datestamp, TermNames.number], transactionState)
+    _addEnumerators(Terms.dataType, [TermNames.object, TermNames.string, TermNames.translation, TermNames.datestamp, TermNames.number, TermNames.datestampDayOptional, TermNames.email], transactionState)
+    # TermNames.time, TermNames.url, TermNames.telephone
     
 def createAddObjectRules(transactionState):
     _addEnumerators(Terms.addObjectRule, [TermNames.pickObjectRule, TermNames.createObjectRule], transactionState)
@@ -61,29 +64,6 @@ def createLanguages(transactionState):
 
 def createBooleans(transactionState):
     _addEnumeratorTranslations(Terms.boolean, [TermNames.yes, TermNames.no], transactionState)
-
-def createTranslationConfiguration(transactionState):
-    configurationValues = [_bootstrapName];
-    configurations = createConfigurations(Terms.translation, configurationValues, transactionState)
-    configObject = configurations[_bootstrapName]
-    
-    configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
-    
-    fieldValues = [Terms.text, Terms.language]
-    
-    fields = createFields(configObject, fieldValues, transactionState)
-    p = fields[Terms.text]
-    p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
-
-    p = fields[Terms.language]
-    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.ofKind, Terms.language, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.language, TermNames.enumerator)
-    p.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
 
 def createEnumeratorConfiguration(transactionState):
     configurationValues = [_bootstrapName];
@@ -246,7 +226,6 @@ def initializeFacts(transactionState):
     createDescriptorTypes(transactionState)
     createLanguages(transactionState)
     createBooleans(transactionState)
-    createTranslationConfiguration(transactionState)
     createEnumeratorConfiguration(transactionState)
     createBooleanConfiguration(transactionState)
     createUUNameConfiguration(transactionState)

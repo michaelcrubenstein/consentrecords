@@ -90,23 +90,53 @@ class Instance(dbmodels.Model):
             if not isinstance(value, Instance):
                 value = Instance.objects.get(pk=value)
             return self.addReferenceValue(fieldID, value, position, transactionState)
+        elif self.getDataType(fieldID)==Terms.translationEnum:
+            return self.addTranslationValue(fieldID, value, position, transactionState)
         else:
             return self.addStringValue(fieldID, value, position, transactionState)
 
     def addStringValue(self, fieldID, value, position, transactionState):
+        if position < 0:
+            raise ValueError("the position %s is not valid", position)
         return Value.objects.create(instance=self, fieldID=fieldID, stringValue = value, position=position, transaction=transactionState.transaction)
 
+    def addTranslationValue(self, fieldID, value, position, transactionState):
+        if position < 0:
+            raise ValueError("the position %s is not valid", position)
+        if not isinstance(value, dict):
+            raise ValueError("the value(%s) is not a dictionary" % str(value))
+        logger = logging.getLogger(__name__)
+        logger.error(value)
+        return Value.objects.create(instance=self, fieldID=fieldID, 
+                                    stringValue = value["text"], languageCode = value["languageCode"],
+                                    position=position, transaction=transactionState.transaction)
+
     def addReferenceValue(self, fieldID, value, position, transactionState):
+        if position < 0:
+            raise ValueError("the position %s is not valid", position)
+        if not value:
+            raise ValueError("the value is null")
         return Value.objects.create(instance=self, fieldID=fieldID, referenceValue = value, position=position, transaction=transactionState.transaction)
 
     def createMissingSubValue(self, fieldID, value, position, transactionState):
         if self.getDataType(fieldID)==Terms.objectEnum:
             if Value.objects.filter(instance=self,fieldID=fieldID,referenceValue=value,
                                     deletedvalue__isnull=True).count() == 0:
+                logger = logging.getLogger(__name__)
+                logger.error("%s: adding object %s(%s)" % (str(self), str(fieldID), str(value)))
                 self.addReferenceValue(fieldID, value, position, transactionState)
+        elif self.getDataType(fieldID)==Terms.translationEnum:
+            if Value.objects.filter(instance=self,fieldID=fieldID,stringValue=value["text"],
+                                    languageCode=value["languageCode"],
+                                    deletedvalue__isnull=True).count() == 0:
+                logger = logging.getLogger(__name__)
+                logger.error("%s: adding translation %s(%s)" % (str(self), str(fieldID), str(value)))
+                self.addTranslationValue(fieldID, value, position, transactionState)
         else:
             if Value.objects.filter(instance=self,fieldID=fieldID,stringValue=value,
                                     deletedvalue__isnull=True).count() == 0:
+                logger = logging.getLogger(__name__)
+                logger.error("%s: adding string %s(%s)" % (str(self), str(fieldID), str(value)))
                 self.addStringValue(fieldID, value, position, transactionState)
         
     def _getSubValues(self, fieldID):
@@ -321,6 +351,8 @@ class Instance(dbmodels.Model):
             cell["data"] = []
         elif fieldData["dataTypeID"] == Terms.objectEnum.id:
             cell["data"] = [v.clientObject(language) for v in values[fieldID]]
+        elif fieldData["dataTypeID"] == Terms.translationEnum.id:
+            cell["data"] = [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values[fieldID]]
         else:
             # Default case is that each datum in this cell contains a unique value.
             cell["data"] = [{"id": v.id, "value": v.stringValue} for v in values[fieldID]]
@@ -482,6 +514,7 @@ class Value(dbmodels.Model):
     instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
     fieldID = dbmodels.ForeignKey('consentrecords.Instance', related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
     stringValue = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     referenceValue = dbmodels.ForeignKey('consentrecords.Instance', related_name='referenceValues', db_index=True, null=True, editable=False)
     position = dbmodels.IntegerField(editable=False)
     transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
@@ -560,6 +593,11 @@ class Value(dbmodels.Model):
     
     def markAsDeleted(self, transactionState):
         DeletedValue.objects.create(id=self, transaction=transactionState.transaction)
+    
+    def deepDelete(self, transactionState):
+        if self.isOriginalReference:
+            self.referenceValue.deepDelete(transactionState)
+        self.markAsDeleted(transactionState)
         
 class DeletedValue(dbmodels.Model):
     id = dbmodels.OneToOneField('consentrecords.Value', primary_key=True, db_column='id', db_index=True, editable=False)
@@ -585,6 +623,8 @@ class TermNames():
     string = '_string'
     number = '_number'
     datestamp = '_datestamp'
+    datestampDayOptional = '_datestamp (day optional)'
+    translation = '_translation'
     object = '_object'
     ofKind = '_of kind'
     pickObjectPath = '_pick object path'
@@ -605,7 +645,6 @@ class TermNames():
     lastName = '_last name'
     language = '_language'
     english = 'English'
-    translation = '_translation'
     text = '_text'
     textEnum = '_by text'
     countEnum = '_by count'
@@ -672,6 +711,7 @@ class Terms():
     
     objectEnum = None
     stringEnum = None
+    translationEnum = None
     
     uniqueValueEnum = None
     multipleValuesEnum = None
@@ -705,22 +745,31 @@ class Terms():
             Terms.privilege = Terms.getOrCreateNamedInstance(TermNames.privilege, transactionState)
             Terms.group = Terms.getOrCreateNamedInstance(TermNames.group, transactionState)
             Terms.accessRecord = Terms.getOrCreateNamedInstance(TermNames.accessRecord, transactionState)
-        
-            Terms.textEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.textEnum);
-            Terms.countEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.countEnum);
-        
-            Terms.objectEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.object);
-            Terms.stringEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.string);
-        
-            Terms.uniqueValueEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.uniqueValue);
-            Terms.multipleValuesEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.multipleValues);
-
-            Terms.pickObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.pickObjectRule);
-            Terms.createObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.createObjectRule);
-            
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     
+        try: Terms.textEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.textEnum)
+        except Value.DoesNotExist: pass
+        try: Terms.countEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.countEnum);
+        except Value.DoesNotExist: pass
+    
+        try: Terms.objectEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.object);
+        except Value.DoesNotExist: pass
+        try: Terms.stringEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.string);
+        except Value.DoesNotExist: pass
+        try: Terms.translationEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.translation);
+        except Value.DoesNotExist: pass
+    
+        try: Terms.uniqueValueEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.uniqueValue);
+        except Value.DoesNotExist: pass
+        try: Terms.multipleValuesEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.multipleValues);
+        except Value.DoesNotExist: pass
+        
+        try: Terms.pickObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.pickObjectRule);
+        except Value.DoesNotExist: pass
+        try: Terms.createObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.createObjectRule);
+        except Value.DoesNotExist: pass
+            
     def getUUName():
         try:
             return Instance.objects.get(value__deletedvalue__isnull=True,
@@ -757,14 +806,11 @@ class Terms():
         return v.referenceValue
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
-    def getTranslationNamedEnumerator(uuname, stringValue):
+    def getTranslationNamedEnumerator(uuname, stringValue, languageCode):
         v = Value.objects.get(instance=uuname, fieldID = Terms.enumerator,
                               deletedvalue__isnull=True,
-                              referenceValue__value__fieldID=Terms.translation,
-                              referenceValue__value__deletedvalue__isnull=True,
-                              referenceValue__value__referenceValue__value__fieldID = Terms.text,
-                              referenceValue__value__referenceValue__value__stringValue = stringValue,
-                              referenceValue__value__referenceValue__value__deletedvalue__isnull=True)
+                              stringValue = stringValue,
+                              languageCode=languageCode)
         return v.referenceValue
         
     def isUUID(s):

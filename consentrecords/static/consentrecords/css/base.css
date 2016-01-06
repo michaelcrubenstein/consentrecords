@@ -190,7 +190,7 @@ section.cell {
 .cell.multiple.edit > .items-div {
 	background: white;
 	border-top: 1px solid #eee;
-	border-bottom: 1px solid #eee;
+	/* The bottom border is provided by the add-value button, below */
 }
 .description-text {
 	color: #777;
@@ -213,13 +213,18 @@ panel.list .description-text {
 .string-input-container > input:only-child {
 	width: 100%;
 }
-.string-multi-value-container {
+.cell.edit li select:first-child {
+	float: right;
+	width: 80px;
+}
+.cell.edit li select:first-child+*:last-child {
+	margin-right: 80px;
+	display: block;
+}
+li > .row-button {
 	text-align: left;
 }
-.cell.unique.edit.string>label {
-	padding: 3px 12px;	/* For the highlight box of the input. */
-}
-.cell.unique.edit.string>.items-div {
+.cell.unique.edit>ol {
 	overflow: hidden;
 	width:auto;
 	padding: 6px 12px;
@@ -277,6 +282,7 @@ div.add-value>button {
 	overflow: hidden;
 	display: block;
 	width: 100%;
+	padding: 6px 12px;
 	text-align: left;
 }
 
@@ -332,15 +338,22 @@ div.add-value>button {
 .glyphicon-minus-sign:focus {
 	outline: none;
 }
-.delete-confirm-button {
+.delete-confirm-container>button {
 	background: red;
 	color: white;
 	border: none;
 	border-radius: 0;
 	padding: 6px 12px;
+	width: auto;
+	float: right;
 }
-.delete-confirm-button:focus {
+.delete-confirm-container>button:focus {
 	outline: none;
+}
+.delete-confirm-container>button+div {
+	overflow: hidden;	/* So that the area next to the button shrinks as the button is expanded. */
+	width: auto;
+	display: block;
 }
 .right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
 								conjunction with right-fixed-width-div. */

@@ -71,12 +71,7 @@ function showSharing(containerDiv) {
 			.enter()
 			.append("li");
 			
-		appendConfirmDeleteControls(items)
-				.on('click', function(d)
-					{
-						if (prepareClick())
-							cr.deleteValue(d, unblockClick, syncFailFunction);
-					});
+		appendConfirmDeleteControls(items);
 		
 		var buttons = items.append("div")
 			.classed("btn row-button multi-row-content expanding-div", true);
@@ -195,9 +190,9 @@ function pickAccessor(header, previousPanelNode, successFunction)
 			}
 			
 			if (val.length < 3)
-				cr.selectAll({path: '_user[?^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+				cr.selectAll({path: '(_user,_group)[?^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
 			else
-				cr.selectAll({path: '_user[?*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+				cr.selectAll({path: '(_user,_group)[?*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 		}
 	}
 	
