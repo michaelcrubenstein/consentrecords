@@ -21,6 +21,8 @@ def _addEnumeratorTranslations(container, enumerationNames, transactionState):
     for name in enumerationNames:
         try:
             item = Terms.getTranslationNamedEnumerator(container, name, "en")
+        except Value.MultipleObjectsReturned:
+            pass
         except Value.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("Adding enumerator translation: %s to container %s" % (name, str(container)))
@@ -32,6 +34,8 @@ def _addEnumerators(container, enumerationNames, transactionState):
     for name in enumerationNames:
         try:
             item = Terms.getNamedEnumerator(container, name)
+        except Value.MultipleObjectsReturned:
+            pass
         except Value.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("Adding enumerator: %s to container %s" % (name, str(container)))
