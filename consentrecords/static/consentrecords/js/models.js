@@ -5,7 +5,7 @@
 function _setupStringValue(d)
 {
 	$(d).on("dataChanged.cr", function(e) {
-		d.triggerEvent("dataChanged.cr");
+		d.triggerEvent("dataChanged.cr", d);
 	});
 }
 
@@ -787,7 +787,7 @@ var cr = {
 						if (newID)
 						{
 							d.id = newID;
-							d.triggerEvent("dataChanged.cr");
+							d.triggerEvent("dataChanged.cr", d);
 						}
 						else
 						{
@@ -965,7 +965,7 @@ cr.Cell.prototype.setParent = function (parent)
 		this.addTarget("valueDeleted.cr", parent);
 		this.addTarget("dataChanged.cr", parent);
 		$(this).on("dataChanged.cr", function(e) {
-			this.triggerEvent("dataChanged.cr");
+			this.triggerEvent("dataChanged.cr", this);
 		});
 	}
 };
@@ -1068,7 +1068,7 @@ cr.ObjectValue.prototype.completeUpdateValue = function(newData)
 	/* Replace the value completely so that its cells are eliminated and will be
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};
-	this.triggerEvent("dataChanged.cr");
+	this.triggerEvent("dataChanged.cr", this);
 }
 
 cr.ObjectValue.prototype.calculateDescription = function()
@@ -1144,7 +1144,7 @@ cr.ObjectValue.prototype.handleContentsChanged = function(e)
 	var oldDescription = this.getDescription();
 	this.calculateDescription();
 	if (this.getDescription() != oldDescription)
-		this.triggerEvent("dataChanged.cr");
+		this.triggerEvent("dataChanged.cr", this);
 }
 
 cr.ObjectValue.prototype.importCell = function(oldCell)
