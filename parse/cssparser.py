@@ -53,14 +53,14 @@ class parser:
                 if len(lastString) > 0:
                     a += [lastString]
                 lastString = c
-            elif c in ')':
+            elif c in ')]':
                 if len(lastString) > 0:
                     if len(a) >= 2 and a[-2] == ',':  # Check for the end of a comma-separated list
                         a[-1] += [lastString]
                     else:
                         a += [lastString]
                 lastString = c
-            elif c in '[(]':
+            elif c in '[(':
                 if len(lastString) > 0: a += [lastString]
                 lastString = c
             elif c == '=':
