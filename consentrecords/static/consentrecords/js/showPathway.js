@@ -1035,7 +1035,7 @@ var Pathway = (function () {
 						{
 							showClickFeedback(this);
 		
-							showAddExperiencePanel(_thisPathway, null, sitePanel);
+							showAddExperiencePanel(_thisPathway, null, sitePanel.node());
 						}
 						d3.event.preventDefault();
 					})
@@ -1503,9 +1503,9 @@ function setupPanel2(dots)
 			}
 			
 			if (val.length < 3)
-				cr.getData({path: '_translation[_text^="'+val+'"]::reference(Organization,Site)', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
 			else
-				cr.getData({path: '_translation[_text*="'+val+'"]::reference(Organization,Site)', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 		}
 	}
 	
