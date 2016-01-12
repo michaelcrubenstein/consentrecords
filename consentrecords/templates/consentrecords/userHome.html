@@ -484,10 +484,12 @@
 		var usernameLabel = $(".username-label");
 		userInstance.addTarget("signin.cr", usernameLabel[0]);
 		userInstance.addTarget("signout.cr", usernameLabel[0]);
-		usernameLabel.on("signin.cr", function(e, eventInfo)
+		userInstance.addTarget("dataChanged.cr", usernameLabel[0]);
+		
+		function setName(e, eventInfo)
 		{
-			var firstName = eventInfo.getDatum("_first name");
-			var lastName = eventInfo.getDatum("_last name");
+			var firstName = userInstance.getDatum("_first name");
+			var lastName = userInstance.getDatum("_last name");
 			var s;
 			if (firstName)
 			{
@@ -496,11 +498,21 @@
 				else
 					s = firstName;
 			}
-			else
+			else if (lastName)
 				s = lastName;
+			else
+				s = userInstance.getDescription();
 				
 			$(this).text(s);
+		}
+		
+		usernameLabel.on("signin.cr", function(e, eventInfo)
+		{
+			userInstance.getValue("_first name").addTarget("dataChanged.cr", usernameLabel[0]);
+			userInstance.getValue("_last name").addTarget("dataChanged.cr", usernameLabel[0]);
+			setName.call(this, e, eventInfo);
 		});
+		usernameLabel.on("dataChanged.cr", setName);
 		usernameLabel.on("signout.cr", function(e, eventInfo)
 		{
 			$(this).text("");
