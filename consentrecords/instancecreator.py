@@ -5,7 +5,7 @@ import datetime
 import numbers
 import uuid
 
-from consentrecords.models import Instance, Value, Terms, NameList
+from consentrecords.models import Instance, Value, Terms, TermNames, NameList, AccessRecord, UserInfo
 from consentrecords import pathparser
 
 def _addElementData(parent, data, fieldData, nameLists, transactionState):
@@ -16,6 +16,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     i = 0
     ids = []
     field = Instance.objects.get(pk=fieldData["nameID"])
+    userInfo=UserInfo(transactionState.user)
     for d in data:
         if fieldData["dataTypeID"] == Terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
@@ -24,7 +25,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     parent.addReferenceValue(field, Instance.objects.get(pk=d), i, transactionState)
                 elif d is not None:
                     a = pathparser.tokenize(d)
-                    ids = pathparser.selectAllObjects(a)
+                    ids = pathparser.selectAllObjects(a, userInfo)
                     if len(ids):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
@@ -45,22 +46,42 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
 #     logger.error("propertyList: %s" % str(propertyList))
     if not typeInstance:
         raise ValueError("typeInstance is null")
-        
+                
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
+	# If the item being created is a user, then we have to set the primary administrator
+	# of the user to itself so that the user has a primary administrator. Otherwise, we can't
+	# add values to the user.
+    if typeInstance==Terms.user:
+    	if TermNames.primaryAdministrator not in propertyList:
+    	    propertyList[TermNames.primaryAdministrator] = item.id
+    elif parent:
+    	if not parent.canWrite(transactionState.user):
+    		raise RuntimeError("write permission failed")
+    else:
+    	if not transactionState.user.is_administrator:
+    		raise RuntimeError("write permission failed")
+    	
     if parent:
         if position < 0:
             maxIndex = parent.getMaxElementIndex(parentFieldID)
-            if maxIndex == None:
-                position = 0
-            else:
-                position = maxIndex + 1
+            position = 0 if maxIndex == None else maxIndex + 1
         newIndex = parent.updateElementIndexes(parentFieldID, position, transactionState)
         newValue = parent.addReferenceValue(parentFieldID, item, newIndex, transactionState)
         item.parentValue = newValue
         item.save()
     else:
         newValue = None
+        
+    # Process the access records for this new item.
+    if typeInstance.defaultCustomAccess:
+        AccessRecord.objects.create(id=item, source=item)
+    else:
+        try:
+            parentAccessRecord = AccessRecord.objects.get(id=parent)
+            AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
+        except AccessRecord.DoesNotExist:
+            pass
 
     if propertyList:
         configuration = None
@@ -87,24 +108,21 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
     items = {}
 
     # See if there is an field of parent which has a value that points to a name which has a value in items.
-    vs = Value.objects.filter(fieldID=descriptor, deletedvalue__isnull=True)\
+    vs = Value.objects.filter(fieldID=descriptor, deleteTransaction__isnull=True)\
             .filter(instance__parent=parent)
             
     # See if there is an field of parent which has a value that points to a name which has a value in items.
-    vs = Value.objects.filter(fieldID=descriptor, deletedvalue__isnull=True)\
+    vs = Value.objects.filter(fieldID=descriptor, deleteTransaction__isnull=True)\
             .filter(instance__parent=parent,instance__referenceValues__fieldID=field)
             
     for v in vs:
         if v.stringValue in itemValues:
             items[v.stringValue] = v.instance
         elif v.referenceValue in itemValues:
-        	items[v.referenceValue] = v.instance
+            items[v.referenceValue] = v.instance
             
-    position = parent.getMaxElementIndex(field)
-    if position == None:
-        position = 0
-    else:
-        position = position + 1
+    maxIndex = parent.getMaxElementIndex(field)
+    position = 0 if maxIndex == None else (maxIndex + 1)
         
     nameLists = NameList()
     

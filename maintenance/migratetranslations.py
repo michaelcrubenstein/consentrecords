@@ -4,7 +4,7 @@ import datetime
 import django
 import tzlocal
 import getpass
-import logging
+import sys
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -15,12 +15,14 @@ if __name__ == "__main__":
     django.setup()
 
     timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
-    username = input('Email Address: ')
+    if len(sys.argv) > 1:
+        username = sys.argv[1]
+    else:
+        username = input('Email Address: ')
     password = getpass.getpass("Password: ")
 
     user = authenticate(username=username, password=password)
 
-    logger = logging.getLogger(__name__)
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
         Terms.initialize(transactionState)
@@ -34,7 +36,7 @@ if __name__ == "__main__":
                      value__referenceValue=Terms.translation,
                      value__deletedvalue__isnull=True).distinct()
                      
-        # logger.error([[str(i.parent.parent), i] for i in f])
+        # print([[str(i.parent.parent), i] for i in f])
         
         for field in f:
             dataType = field.value_set.get(fieldID=Terms.dataType,
@@ -46,11 +48,11 @@ if __name__ == "__main__":
                                             referenceValue=Terms.translation,
                                             deletedvalue__isnull=True)
             ofKind.markAsDeleted(transactionState)
-            logger.error("update parent %s, field %s to translation" % (field.parent.parent, field.description()))
+            print("update parent %s, field %s to translation" % (field.parent.parent, field.description()))
                      
         g = Instance.objects.filter(typeID=Terms.translation,
                                 deletedinstance__isnull=True)
-        # logger.error([{"parent": i.parent, "text": i.value_set.get(deletedvalue__isnull=True, fieldID=Terms.text).stringValue} for g in f])
+        # print([{"parent": i.parent, "text": i.value_set.get(deletedvalue__isnull=True, fieldID=Terms.text).stringValue} for g in f])
         for t in g:
             for v in t.value_set.filter(fieldID=Terms.text, deletedvalue__isnull=True):
                 p = t.parent
@@ -59,4 +61,4 @@ if __name__ == "__main__":
                 position = t.parentValue.position
                 t.parentValue.deepDelete(transactionState)
                 p.addTranslationValue(field, {"text": text, "languageCode": "en"}, position, transactionState)
-                logger.error("update value %s, field %s, text %s" % (p, field.description(), text))
+                print("update value %s, field %s, text %s" % (p, field.description(), text))

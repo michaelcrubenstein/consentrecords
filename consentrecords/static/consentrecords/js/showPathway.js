@@ -1388,6 +1388,7 @@ function setupServicesPanel(dots)
 	var buttonDiv = p1.append("div").classed("table-row", true)
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
+			var _thisButton = this;
 			if (prepareClick())
 			{
 				crp.getData({path: "Service", 
@@ -1404,7 +1405,8 @@ function setupServicesPanel(dots)
 						appendRightChevrons(buttons);
 						appendButtonDescriptions(buttons, null);
 					}
-					showPickServicePanel(sitePanel.node(), rootObjects, null, dots, success);
+					var siteNode = $(_thisButton).parents(".site-panel")[0];
+					showPickServicePanel(siteNode, rootObjects, null, dots, success);
 				}, 
 				fail: syncFailFunction});
 			}
@@ -1758,7 +1760,7 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		panel2Div.appendAlertContainer();
 		
 		var dots = new DotsNavigator(panel2Div, sitePanel, 8);	
-		dots.finalText = "Sign Up";	
+		dots.finalText = "Add";	
 
 		var hideSuccessFunction = function()
 			{

@@ -7,15 +7,6 @@ from consentrecords.models import TransactionState, Terms, TermNames, Instance, 
 from consentrecords import instancecreator
 
 class UserFactory:
-    def getUserInstance(userID):
-        print("userID = %s" % userID)
-        fieldID = Terms.getNamedInstance(TermNames.userID)
-        if isinstance(userID, uuid.UUID):
-            userID = userID.hex
-        qs = Value.objects.filter(fieldID=fieldID, stringValue=userID,
-            deletedvalue__isnull=True)
-        return len(qs) and qs[0].instance
-    
     def createUserInstance(user, propertyList, timezoneOffset):
         with transaction.atomic():
             transactionState = TransactionState(user, timezoneOffset)

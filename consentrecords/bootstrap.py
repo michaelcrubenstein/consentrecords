@@ -16,8 +16,6 @@ _bootstrapName = 'Bootstrap'
     
 def _addEnumeratorTranslations(container, enumerationNames, transactionState):
     enumeratorInstance = Terms.enumerator
-    translationInstance = Terms.translation
-    english = Terms.getNamedEnumerator(Terms.language, TermNames.english)
     
     nameLists = NameList()
     for name in enumerationNames:
@@ -59,12 +57,15 @@ def createMaxCapacities(transactionState):
 def createDescriptorTypes(transactionState):
     _addEnumerators(Terms.descriptorType, [TermNames.textEnum, TermNames.countEnum], transactionState)
     
-def createLanguages(transactionState):
-    _addEnumerators(Terms.language, [TermNames.english], transactionState)
-
 def createBooleans(transactionState):
     _addEnumeratorTranslations(Terms.boolean, [TermNames.yes, TermNames.no], transactionState)
 
+def createDefaultAccesses(transactionState):
+    _addEnumerators(Terms.defaultAccess, [TermNames.custom], transactionState)
+    
+def createSpecialAccesses(transactionState):
+    _addEnumerators(Terms.specialAccess, [TermNames.custom], transactionState)
+    
 def createEnumeratorConfiguration(transactionState):
     configurationValues = [_bootstrapName];
     configurations = createConfigurations(Terms.enumerator, configurationValues, transactionState)
@@ -81,9 +82,8 @@ def createEnumeratorConfiguration(transactionState):
     p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
     p = fields[Terms.translation]
-    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.dataType, Terms.translationEnum, 0, transactionState)
     p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.ofKind, Terms.translation, 0, transactionState)
     p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
 def createBooleanConfiguration(transactionState):
@@ -98,8 +98,7 @@ def createBooleanConfiguration(transactionState):
     fields = createFields(configObject, fieldValues, transactionState)
 
     p = fields[Terms.name]
-    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
-    p.createMissingSubValue(Terms.ofKind, Terms.translation, 0, transactionState)
+    p.createMissingSubValue(Terms.dataType, Terms.translationEnum, 0, transactionState)
     p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
 # Create the configuration for the uuname uuname.
@@ -110,7 +109,7 @@ def createUUNameConfiguration(transactionState):
     
     configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
 
-    fieldValues = [Terms.uuName, Terms.configuration, Terms.enumerator]
+    fieldValues = [Terms.uuName, Terms.configuration, Terms.enumerator, Terms.defaultAccess]
 
     fields = createFields(configObject, fieldValues, transactionState)
     
@@ -128,6 +127,14 @@ def createUUNameConfiguration(transactionState):
     p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     p.createMissingSubValue(Terms.ofKind, Terms.enumerator, 0, transactionState)
     p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
+        
+    p = fields[Terms.defaultAccess]
+    p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
+    p.createMissingSubValue(Terms.ofKind, Terms.enumerator, 0, transactionState)
+    p.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
+    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.defaultAccess, TermNames.enumerator)
+    p.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
         
 # Create the configuration for the configuration uuname.    
 def createConfigurationConfiguration(transactionState):
@@ -224,8 +231,9 @@ def initializeFacts(transactionState):
     createAddObjectRules(transactionState)
     createMaxCapacities(transactionState)
     createDescriptorTypes(transactionState)
-    createLanguages(transactionState)
     createBooleans(transactionState)
+    createDefaultAccesses(transactionState)
+    createSpecialAccesses(transactionState)
     createEnumeratorConfiguration(transactionState)
     createBooleanConfiguration(transactionState)
     createUUNameConfiguration(transactionState)

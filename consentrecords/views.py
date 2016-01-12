@@ -19,7 +19,7 @@ import datetime
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Terms, Instance, Value, NameList
+from consentrecords.models import TransactionState, Terms, Instance, Value, NameList, UserInfo
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
@@ -46,9 +46,8 @@ def userHome(request):
     }
     
     if request.user.is_authenticated():
-        user = UserFactory.getUserInstance(request.user.id)
+        user = Instance.getUserInstance(request.user)
         if not user:
-            print ("user is not set up: %s" % (request.user.get_full_name()))
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
         
@@ -73,7 +72,7 @@ def find(request, serviceid, offeringid):
     }
     
     if request.user.is_authenticated():
-        args['userID'] = UserFactory.getUserInstance(request.user.id).id
+        args['userID'] = Instance.getUserInstance(request.user).id
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -158,7 +157,7 @@ class api:
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
             languageID = None
-        
+            
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
                 if containerUUID:
@@ -207,9 +206,7 @@ class api:
                         if "value" in c:
                             item = oldValue.updateValue(c["value"], transactionState);
                         else:
-                            if oldValue.isOriginalReference:
-                                i = oldValue.referenceValue.deepDelete(transactionState)
-                            oldValue.markAsDeleted(transactionState)
+                            oldValue.deepDelete(transactionState)
                             item = None
                     elif "containerUUID" in c:
                         container = Instance.objects.get(pk=c["containerUUID"])
@@ -284,7 +281,7 @@ class api:
                 item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
                 if item.isDescriptor:
                     Instance.updateDescriptions([container], NameList())
-        
+                    
             results = {'success':True, 'id': item.id}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -297,10 +294,12 @@ class api:
         try:
             path = data.get("path", None)
             limit = int(data.get("limit", "0"))
+            userInfo = UserInfo(user)
+            language=None
         
             if path:
                 a = pathparser.tokenize(path)
-                p = pathparser.selectAllDescriptors(path=a, limit=limit)
+                p = pathparser.selectAllDescriptors(path=a, limit=limit, language=language, userInfo=userInfo)
             else:
                 try:
                     ofKindName = data.get("ofKindName", "_uuname")
@@ -308,14 +307,14 @@ class api:
                 except Instance.DoesNotExist:
                     return JsonResponse({'success':False, 'error': 'the term "%s" was not recognized' % ofKindName })
                 a = pathparser.tokenize(ofKindID)
-                p = Instance.rootDescriptors(a, limit)
+                p = Instance.rootDescriptors(a, limit, language, userInfo)
         
             results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             results = {'success':False, 'error': str(e)}
-            
+        
         return JsonResponse(results)
         
     def getConfiguration(user, data):
@@ -357,7 +356,7 @@ class api:
                 raise ValueError("the access token is not specified")
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
-            userID = UserFactory.getUserInstance(accessToken.user.id).id
+            userID = Instance.getUserInstance(accessToken.user).id
             results = {'success':True, 'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -399,6 +398,7 @@ class api:
         return data;
     
     def getData(user, data):
+        pathparser.currentTimestamp = datetime.datetime.now()
         try:
             path = data.get('path', None)
             limit = int(data.get("limit", "0"))
@@ -410,8 +410,7 @@ class api:
             fields = json.loads(fieldString)
 
             a = pathparser.tokenize(path)
-            
-            uuObjects = pathparser.selectAllObjects(path=a, limit=limit)
+            uuObjects = pathparser.selectAllObjects(path=a, limit=limit, userInfo=UserInfo(user))
             fieldsDataDictionary = {}
             nameLists = NameList()
             p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
@@ -442,7 +441,7 @@ class api:
                     transactionState = TransactionState(user, timezoneoffset)
                     descriptionCache = []
                     nameLists = NameList()
-                    for uuObject in pathparser.selectAllObjects(a):
+                    for uuObject in pathparser.selectAllObjects(a, userInfo=UserInfo(user)):
                         if uuObject.parent:
                             raise ValueException("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)
@@ -614,7 +613,7 @@ def submitsignin(request):
     
         results = userviews.signinResults(request)
         if results["success"]:
-            user = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
+            user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
             results["user"] = { "id": user.id, "description" : user.description(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -636,10 +635,11 @@ def submitNewUser(request):
         propertyString = request.POST.get('properties', "")
         propertyList = json.loads(propertyString)
     
-        results = userviews.newUserResults(request)
-        if results["success"]:
-            userInstance = UserFactory.getUserInstance(request.user.id) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-            results["user"] = { "id": userInstance.id, "description" : userInstance.description(None) }
+        with transaction.atomic():
+            results = userviews.newUserResults(request)
+            if results["success"]:
+                userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
+                results["user"] = { "id": userInstance.id, "description" : userInstance.description(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

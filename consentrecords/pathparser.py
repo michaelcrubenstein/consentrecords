@@ -8,14 +8,45 @@ from functools import reduce
 from parse.cssparser import parser as cssparser
 from consentrecords.models import Instance, Value, Terms
 
-def refineResults(resultSet, path):
+def _getSimpleQClause(symbol, testValue):
+    if Terms.isUUID(testValue):
+        if symbol == '=':
+            return Q(value__referenceValue_id=testValue)
+        else:
+            raise ValueError("unrecognized symbol: %s" & symbol)
+    else:
+        if symbol == '^=':
+            return Q(value__stringValue__istartswith=testValue)
+        elif symbol == '=':
+            return Q(value__stringValue__iexact=testValue)
+        elif symbol == '*=':
+            return Q(value__stringValue__icontains=testValue)
+        elif symbol == '<':
+            return Q(value__stringValue__lt=testValue)
+        elif symbol == '<=':
+            return Q(value__stringValue__lte=testValue)
+        elif symbol == '>':
+            return Q(value__stringValue__gt=testValue)
+        elif symbol == '>=':
+            return Q(value__stringValue__gte=testValue)
+        else:
+            raise ValueError("unrecognized symbol: %s" & symbol)
+
+def _getQClause(symbol, testValue):
+    if isinstance(testValue, list):
+        simples = map(lambda t: _getSimpleQClause(symbol, t), testValue)
+        return reduce(lambda q1, q2: q1 | q2, simples)
+    else:
+        return _getSimpleQClause(symbol, testValue)
+
+def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
-#     logger.error("refineResults(%s, %s)" % (str(resultSet), path))
+#     logger.error("_refineResults(%s, %s)" % (str(resultSet), path))
     
     if path[0] == '#':
         return Instance.objects.filter(pk=path[1]), path[2:]
     elif path[0] == '*':
-        return Instance.objects.filter(deletedinstance__isnull=True)
+        return Instance.objects.filter(deletedinstance__isnull=True), path[1:]
     elif path[0] == '[':
         params = path[1]
         if params[0] != '?':
@@ -23,42 +54,28 @@ def refineResults(resultSet, path):
         else:
             i = None
         if len(params) == 1:
-            f = resultSet.filter(value__fieldID=i, value__deletedvalue__isnull=True)
-        elif len(params) == 3:
-            symbol = params[1]
-            testValue = params[2]
-            if symbol == '^=':
-                stringText = Q(value__stringValue__istartswith=testValue)
-            elif symbol == '=':
-                stringText = Q(value__stringValue__iexact=testValue)
-            elif symbol == '*=':
-                stringText = Q(value__stringValue__icontains=testValue)
-            elif symbol == '<':
-                stringText = Q(value__stringValue__lt=testValue)
-            elif symbol == '<=':
-                stringText = Q(value__stringValue__lte=testValue)
-            elif symbol == '>':
-                stringText = Q(value__stringValue__gt=testValue)
-            elif symbol == '>=':
-                stringText = Q(value__stringValue__gte=testValue)
-            else:
-                raise ValueError("unrecognized symbol: %s" & symbol)
+            f = resultSet.filter(value__fieldID=i, value__deleteTransaction__isnull=True)
+        elif len(params) == 3 or (len(params) == 4 and params[2]==','):
+            # Get a Q clause that compares either a single test value or a comma-separated list of test values
+            # according to the specified symbol.
+            stringText = _getQClause(symbol=params[1], testValue=params[-1])
+            
             # Need to add distinct after the tests to prevent duplicates if there is
             # more than one value of the instance that matches.
             if i:
                 f = resultSet.filter(stringText, value__fieldID=i,
-                                     value__deletedvalue__isnull=True).distinct()
+                                     value__deleteTransaction__isnull=True).distinct()
             else:
                 f = resultSet.filter(stringText,
-                                     value__deletedvalue__isnull=True).distinct()
+                                     value__deleteTransaction__isnull=True).distinct()
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
         return f, path[2:]
     elif path[0] == '>':
         i = Terms.getInstance(path[1])
-        f = Instance.objects.filter(referenceValues__instance__in=resultSet,
+        f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
                                     referenceValues__fieldID=i,
-                                    referenceValues__deletedvalue__isnull=True)\
+                                    referenceValues__deleteTransaction__isnull=True)\
                             .order_by('parent', 'parentValue__position')
         return f, path[2:]         
     elif path[0] == '::':
@@ -68,13 +85,16 @@ def refineResults(resultSet, path):
                 if path[3][0] == ',':
                     t = map(Terms.getInstance, path[3][1])
                     f = Instance.objects.filter(typeID__in=t,
-                                                value__deletedvalue__isnull=True,
-                                                value__referenceValue__in=resultSet)
+                                                value__deleteTransaction__isnull=True,
+                                                value__referenceValue__in=userInfo.findFilter(resultSet))
                 else:
                     t = Terms.getInstance(path[3][0])
-                    f = Instance.objects.filter(typeID=t,
-                                                value__deletedvalue__isnull=True,
-                                                value__referenceValue__in=resultSet)
+                    print('reference type: %s' % t)
+                    print('resultSet: %s' % str(resultSet))
+                    f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
+                                                Q(value__referenceValue__in=userInfo.findFilter(resultSet)),
+                                                typeID=t,
+                                               )
                 return f, path[4:]
             else:
                 raise ValueError("malformed reference (missing parentheses)")
@@ -86,29 +106,14 @@ def refineResults(resultSet, path):
                 params = path[3][1]
                 i = Terms.getInstance(params[0])
                 if len(params) == 1:
-                    f = resultSet.filter(~(Q(value__fieldID=i)&Q(value__deletedvalue__isnull=True)))
+                    f = resultSet.filter(~(Q(value__fieldID=i)&Q(value__deleteTransaction__isnull=True)))
                     return f, path[4:]
                 elif len(params) == 3:
                     symbol = params[1]
                     testValue = params[2]
-                    if symbol == '^=':
-                        stringText = Q(value__stringValue__istartswith=testValue)
-                    elif symbol == '=':
-                        stringText = Q(value__stringValue__iexact=testValue)
-                    elif symbol == '*=':
-                        stringText = Q(value__stringValue__icontains=testValue)
-                    elif symbol == '<':
-                        stringText = Q(value__stringValue__lt=testValue)
-                    elif symbol == '<=':
-                        stringText = Q(value__stringValue__lte=testValue)
-                    elif symbol == '>':
-                        stringText = Q(value__stringValue__gt=testValue)
-                    elif symbol == '>=':
-                        stringText = Q(value__stringValue__gte=testValue)
-                    else:
-                        raise ValueError("unrecognized symbol: %s" % symbol)
+                    stringText=_getQClause(symbol, testValue)
                     f = resultSet.filter(~(Q(value__fieldID=i)&
-                                           Q(value__deletedvalue__isnull=True)&
+                                           Q(value__deleteTransaction__isnull=True)&
                                            stringText))
                     return f, path[4:]
                 else:
@@ -135,23 +140,25 @@ def refineResults(resultSet, path):
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
 # a duple with a value followed by the instance.
-def selectAllObjects(path, limit=0, startSet=[]):
+def selectAllObjects(path, limit=0, startSet=[], userInfo=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
     resultSet = [(startSet, path)]
     while len(resultSet[-1][1]) > 0:
         lastPair = resultSet[-1]
-        nextPair = refineResults(lastPair[0], lastPair[1])
+        nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
         resultSet.append(nextPair)
-#     logger = logging.getLogger(__name__)
-#     logger.error("selectAllObjects result: %s" % str(resultSet[-1][0]))
+    f = userInfo.findFilter(resultSet[-1][0]).distinct()
+    logger = logging.getLogger(__name__)
+    logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
+    logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
     if limit > 0:
-        return resultSet[-1][0][:limit]
+        return f[:limit]
     else:
-        return resultSet[-1][0]
+        return f
            
-def selectAllDescriptors(path, limit=0, language=None):
-    return [i.clientObject(language) for i in selectAllObjects(path, limit=limit)]
+def selectAllDescriptors(path, limit=0, language=None, userInfo=None):
+    return [i.clientObject(language) for i in selectAllObjects(path, limit=limit, userInfo=userInfo)]
     
 def tokenize(path):
     html_parser = html.parser.HTMLParser()

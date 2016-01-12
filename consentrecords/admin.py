@@ -3,7 +3,20 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
 from django import forms
 
-from consentrecords.models import Instance, DeletedInstance, Value, DeletedValue, Transaction
+from consentrecords.models import Instance, DeletedInstance, Value, DeletedValue, Transaction, Description
+from consentrecords.models import AccessRecord
+
+class AccessRecordInline(admin.TabularInline):
+    model = AccessRecord
+    fk_name = 'id'
+    list_display = ('id', 'source',)
+    readonly_fields = ('id', 'source',)
+    
+class DescriptionInline(admin.TabularInline):
+    model = Description
+    extra = 0
+    list_display = ('text', 'language',)
+    readonly_fields = ('text', 'language',)
 
 class InstanceInline(admin.TabularInline):
     model = Instance
@@ -13,6 +26,7 @@ class InstanceInline(admin.TabularInline):
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
     show_change_link = True
+    fk_name = 'transaction'
     
 class DeletedInstanceInline(admin.TabularInline):
     model = DeletedInstance
@@ -32,6 +46,7 @@ class ValueInline(admin.TabularInline):
     )
     readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
     show_change_link = True
+    fk_name = 'transaction'
     
 class InstanceValueInline(ValueInline):
     fk_name = 'instance'
@@ -58,19 +73,21 @@ class InstanceAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
-    search_fields = ('id',)
+    search_fields = ('id', 'description__text')
 
-    inlines = [DeletedInstanceInline, InstanceValueInline]
+    inlines = [DeletedInstanceInline, AccessRecordInline, DescriptionInline, InstanceValueInline]
     
 class ValueAdmin(admin.ModelAdmin):
 
     list_display = ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')}),
+        (None, {'fields': ('id', 'instance', 'instance_id', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')}),
     )
-    readonly_fields = ('id','instance', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
-    search_fields = ('id', 'stringValue')
+    readonly_fields = ('id','instance', 'instance_id', 'fieldID', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
+    search_fields = ('id', 'instance_id', 'stringValue', 'referenceValue__value__stringValue')
+    
+    inlines= [DeletedValueInline]
 
 class DeletedValueAdmin(admin.ModelAdmin):
 
@@ -91,8 +108,27 @@ class TransactionAdmin(admin.ModelAdmin):
     
     inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline]
 
+class DescriptionAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'language', 'text', 'instance')
+    fieldsets = (
+        (None, {'fields': ('id', 'language', 'text', 'instance')}),
+    )
+    readonly_fields = ('id', 'language', 'text', 'instance')
+    search_fields = ('id', 'language', 'text', 'instance__id')
+
+class AccessRecordAdmin(admin.ModelAdmin):
+    list_display=('id', 'source')
+    fieldsets = (
+        (None, {'fields': ('id', 'source')}),
+    )
+    readonly_fields = ('id', 'source')
+    search_fields=('id_description', 'source__description')
+      
 admin.site.register(Instance, InstanceAdmin)
 admin.site.register(DeletedInstance, DeletedInstanceAdmin)
 admin.site.register(Value, ValueAdmin)
 admin.site.register(DeletedValue, DeletedValueAdmin)
 admin.site.register(Transaction, TransactionAdmin)
+admin.site.register(AccessRecord, AccessRecordAdmin)
+admin.site.register(Description, DescriptionAdmin)
