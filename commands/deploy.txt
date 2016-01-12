@@ -26,7 +26,7 @@ export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 
 # Create a local tar file of all of the website.
 cd ~/GitHub/consentrecords
-tar -cf c.tar consentrecords custom_user manage.py monitor parse static developer
+tar -cf c.tar consentrecords custom_user manage.py maintenance monitor parse static developer
 
 # Start a remote connection with this command:
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
@@ -43,6 +43,11 @@ ssh -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/
 . prod/bin/activate
 cd prod/consentrecords
+export DJANGO_SETTINGS_MODULE=consentrecords.settings
+export PYTHONPATH=~/eb_django_app/prod/lib/python3.4/site-packages
+export PYTHONPATH=~/eb_django_app/prod/consentrecords:$PYTHONPATH
+export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
+
 tar -xf c.tar
 
 # Remove unused production files
@@ -60,10 +65,6 @@ rm developer/__pycache__/*
 # echo "from consentrecords.production_settings import *" >> consentrecords/settings.py
 echo "from consentrecords.development_settings import *" >> consentrecords/settings.py
 
-export DJANGO_SETTINGS_MODULE=consentrecords.settings
-export PYTHONPATH=~/eb_django_app/prod/lib/python3.4/site-packages
-export PYTHONPATH=~/eb_django_app/prod/consentrecords:$PYTHONPATH
-export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
 django-admin collectstatic --noinput
 python3 manage.py migrate
 

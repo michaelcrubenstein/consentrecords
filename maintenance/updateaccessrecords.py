@@ -30,8 +30,6 @@ if __name__ == "__main__":
         transactionState = TransactionState(user, timezoneoffset)
         Terms.initialize(transactionState)
         
-        AccessRecord.objects.all().delete()
-        
         f = Instance.objects.filter(accessrecord__isnull=True,
                                     typeID__value__fieldID=Terms.defaultAccess,
                                     typeID__value__deletedvalue__isnull=True,
