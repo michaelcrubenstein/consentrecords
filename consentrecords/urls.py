@@ -55,6 +55,8 @@ urlpatterns = [
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
+    
+    url(r'^doc/features/', views.features),
 ]
 
 Terms.initialize()

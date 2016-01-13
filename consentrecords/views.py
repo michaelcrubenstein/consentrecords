@@ -647,3 +647,10 @@ def submitNewUser(request):
         
     return JsonResponse(results)
 
+def features(request):
+    template = loader.get_template('doc/features.html')
+    context = RequestContext(request, {
+    })
+        
+    return HttpResponse(template.render(context))
+

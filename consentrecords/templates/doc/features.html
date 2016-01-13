@@ -1,0 +1,152 @@
+<html>
+	<head>
+		<title>Features - Version 1.0</title>
+	</head>
+	<body>
+		<h1>Features</h1>
+		<h2>Version 1.0</h2>
+		<p>Release date: ?</p>
+		<h3>Features</h3>
+
+		<h4>Stakeholder UIs</h4>
+		<ol>
+			<li>public: <a href="https://www.consentrecords.org" target="home">https://www.consentrecords.org</a>
+				<h5>Workflows</h5>
+				<ol>
+					<li>Sign Up</li>
+					<li>Sign In</li>
+					<li>Retrieve a forgotten password</li>
+					<li>Sign Out</li>
+					<li>Find a new experience offered by an organization
+						<ol>
+							<li>Register an inquiry for the new experience.</li>
+							<li>Remove an inquiry for the new experience.</li>
+						</ol>
+					</li>
+					<li>View your pathway of previous experiences.
+						<p>A pathway is composed of experiences participated in as well as user-entered experiences.</li>
+						<ol>
+							<li>Add an experience to your pathway</li>
+							<li>INCOMPLETE: Edit an experience in your pathway</li>
+							<li>INCOMPLETE: Delete an experience in your pathway</li>
+						</ol>
+					</li>
+					<li>View opportunities you have signed up for.</li>
+					<li>Manage your account
+						<ol>
+							<li>Specify your first name.</li>
+							<li>Change your first name.</li>
+							<li>Specify your last name.</li>
+							<li>Change your last name.</li>
+							<li>Change your email address</li>
+							<li>Add an email address</li>
+							<li>Remove an email address</li>
+							<li>Change public accessibility of your account to None, Find or Read</li>
+							<li>Give someone else Find, Read, Write Administer access to your account</li>
+							<li>Take away Find, Read, Write Administer access to your account</li>
+						</ol>
+					</li>
+				</ol>
+			</li>
+			<li>organization: <a href="/" target="home">https://www.consentrecords.org</a></li>
+			<li>administration:
+				<ol>
+					<li><a href="/list/?path=_uuname&type=_uuname&header=Terms" target="terms">Terms</a></li>
+					<li><a href="/list/?path=_user&type=_user&header=Users" target="users">Users</a></li>
+					<li><a href='/list/?path=%22Service%20Domain%22&type=Service%20Domain&header=Service%20Domains' target="service domains">Service Domains</a></li>
+					<li><a href="/list/?path=Service&type=Service&header=Services" target="services">Services</a></li>
+					<li><a href="/list/?path=Organization&type=Organization&header=Organizations" target="organizations">Organizations</a></li>
+					<li><a href="/admin/" target="admin">Database Admin</a>
+					<li>INCOMPLETE: Activity Monitor</li>
+				</ol>
+			</li>
+		</ol>
+
+		<h4>Data Organization</h4>
+		<ol>
+			<li><b>Instances</b> of specified types organized hierarchically.
+				<p>For example: Organization -> Site -> Offering -> Session -> Period</p>
+			</li>
+			<li>Instances have associated <b>values</b> of various data types</li>
+		</ol>
+
+		<h4>Configuration</h4>
+		<p>Configuration for the data.</p>
+
+		<h4>Data types</h4>
+		<ol>
+			<li>Reference</li>
+			<li>Text</li>
+			<li>Translation</li>
+			<li>Number</li>
+			<li>Datestamp</li>
+			<li>Month</li>
+			<li>Datestamp (day optional)</li>
+			<li>Time</li>
+			<li>email</li>
+			<li>url</li>
+			<li>telephone</li>
+		</ol>
+
+		<h4>Enumerations</h4>
+		<ol>
+			<li>Configurable via Terms</li>
+		</ol>
+
+		<h4>UI Langauges</h4>
+		<ol>
+			<li>English</li>
+		</ol>
+
+		<h4>Data auditing</h4>
+		<ol>
+			<li>Instances and values are write-once.</li>
+			<li>Instances and values are deleted by writing a record stating when they are deleted.</li>
+			<li>All writes of instances and values are associated with a transaction that records the user and the timestamp</li>
+		</ol>
+
+		<h4> Value Ordering</h4>
+		<ol>
+			<li>Values have a 0-based position as part of their record.</li>
+			<li>Positions are written at the time the value is written.</li>
+			<li>No UI for changing positions.</li>
+		</ol>
+
+		<h4>API</h4>
+		<ol>
+			<li>JSON apis to the middle tier.</li>
+			<li>Operations to get data without user login are available externally, subject to security constraints.</li>
+		</ol>
+
+		<h2>Version 2.0</h2>
+		<p>Release date: ?</p>
+		<h3>Features</h3>
+
+		<h4> Social Network</h4>
+		<ol>
+			<li>NEW: UI For requesting access to a user on behalf of oneself.</li>
+			<li>NEW: UI for requesting access to a user on behalf of a group.</li>
+			<li>NEW: UI to view the pathway of others</li>
+			<li>NEW: UI to share a link to a particular user's pathway</li>
+		</ol>
+		<h4> Value Ordering</h4>
+		<ol>
+			<li>NEW: UI for changing positions of values within an instance.</li>
+		</ol>
+
+		<h4>API</h4>
+		<ol>
+			<li>NEW: OAuth2 support for external applications
+				<ul>
+					<li>Authenticate users</li>
+					<li>Find, Read, Write and Administer data as a logged-in user.</li>
+				</ul>
+			</li>
+		</ol>
+
+		<h4>UI Langauges</h4>
+		<ol>
+			<li>NEW: Spanish</li>
+		</ol>
+	</body>
+</html>
