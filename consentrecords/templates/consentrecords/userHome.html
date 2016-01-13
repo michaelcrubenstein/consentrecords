@@ -200,11 +200,13 @@
 						<span class="pull-left">My Plans</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
+<!-- 
 					<button panelID = "id_consent_forms_panel"
 						class="check-signin-button btn row-button site-active-text">
 						<span class="pull-left">Consent Forms</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
+ -->
 				</section>
 				<section class="organization-section row-button-group">
 				</section>
@@ -831,7 +833,7 @@
 			});
 			
 			{% if state %}
-			var stateString = "{{state}}"
+				var stateString = "{{state}}"
 				if (stateString.startsWith("findNewExperience"))
 				{
 					stateString = stateString.substring("findNewExperience".length);
@@ -864,7 +866,7 @@
 							{
 								if (d.getValueID() == offeringString)
 								{
-									
+								
 									var sitePanel = showSessionDetails(d, 
 										d3.select("#id_find_offering_panel").datum(),
 										"#id_find_offering_panel");
