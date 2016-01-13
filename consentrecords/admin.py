@@ -73,7 +73,7 @@ class InstanceAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
-    search_fields = ('id', 'description__text')
+    search_fields = ('id', 'typeID__id', 'typeID__description__text', 'description__text')
 
     inlines = [DeletedInstanceInline, AccessRecordInline, DescriptionInline, InstanceValueInline]
     
