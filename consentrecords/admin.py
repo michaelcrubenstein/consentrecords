@@ -123,7 +123,7 @@ class AccessRecordAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'source')}),
     )
     readonly_fields = ('id', 'source')
-    search_fields=('id_description', 'source__description')
+    search_fields=('id__description__text', 'source__description__text')
       
 admin.site.register(Instance, InstanceAdmin)
 admin.site.register(DeletedInstance, DeletedInstanceAdmin)
