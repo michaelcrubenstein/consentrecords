@@ -109,7 +109,7 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				i.checkCells(undefined, undefined,
+				i.checkCells(undefined,
 					function() {
 						successFunction();
 						_this.queue.next();

@@ -7,6 +7,7 @@
 
 cr.urls = {
 		selectAll : "/local/selectall/",
+		getValues : "/local/getvalues/",
 		getUserID : "/local/getuserid/",
 		getData : "/local/getdata/",
 		getConfiguration : "/local/getconfiguration/",

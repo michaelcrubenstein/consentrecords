@@ -235,7 +235,7 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				i.checkCells(undefined, undefined,
+				i.checkCells(undefined,
 					function() {
 						successFunction();
 						_this.queue.next();
@@ -478,6 +478,7 @@ var cr = {
 	
 	urls: {
 		selectAll : "/api/selectall/",
+		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
 		getConfiguration : "/api/getconfiguration/",
@@ -542,6 +543,55 @@ var cr = {
 		);
 	},
 	
+	/* args is an object with up to four parameters: path, limit, done, fail */
+	getValues: function (args)
+	{
+		if (!args.fail)
+			throw ("failFunction is not specified");
+		if (!args.done)
+			throw ("done function is not specified");
+		var argList = {};
+		if (args.path)
+			argList.path = args.path;
+		else
+			throw "path was not specified to getValues"
+			
+		if (args.field)
+			argList.elementUUID = args.field.nameID;
+		else
+			throw "field was not specified to getValues"
+			
+		if (args.value)
+			argList.value = args.value;
+		else
+			throw "value was not specified to getValues"
+			
+		if (args.limit !== undefined)
+			argList.limit = args.limit;
+		
+		$.getJSON(cr.urls.getValues, 
+			argList,
+			function(json)
+			{
+				if (json.success) {
+					var newObjects = [];
+					json.objects.forEach(function(v)
+					{
+						newObjects.push(cr.dataTypes._object.copyValue(v));
+					});
+					
+					if (args.done)
+						args.done(newObjects);
+				}
+				else
+				{
+					if (args.fail)
+						args.fail(json.error);
+				}
+			}
+		);
+	},
+	
 	updateObjectValue: function(oldValue, d, successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -560,40 +610,6 @@ var cr = {
 						d.id = json.ids[0]
 						oldValue.completeUpdate(d);
 						successFunction();
-					}
-					else {
-						failFunction(json.error);
-					}
-				})
-			  .fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					}
-				);
-	},
-	
-	addObjectValue: function (containerCell, containerUUID, initialData, successFunction, failFunction)
-	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		$.post(cr.urls.addValue, 
-				{ containerUUID: containerUUID,
-				  elementUUID: containerCell.field.nameID,
-				  valueUUID: initialData.getValueID(),
-				  timezoneoffset: new Date().getTimezoneOffset()
-				})
-			  .done(function(json, textStatus, jqXHR)
-				{
-					if (json.success) {
-						closealert();
-						var newData = cr.dataTypes[containerCell.field.dataType].newValue();
-						newData.id = json.id;
-						newData.value.description = initialData.getDescription();
-						newData.value.id = initialData.getValueID();
-						containerCell.addValue(newData);
-						successFunction(newData);
 					}
 					else {
 						failFunction(json.error);
@@ -1049,6 +1065,44 @@ cr.Cell.prototype.deleteValue = function(oldData)
   	this.triggerEvent("valueDeleted.cr", [oldData]);
 }
 
+/* The success function takes a single argument: the new value being created. */
+cr.Cell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
+	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+		if (!this.parent.getValueID())
+			throw("cell parent does not have an ID")
+		var _this = this;
+		$.post(cr.urls.addValue, 
+				{ containerUUID: this.parent.getValueID(),
+				  elementUUID: this.field.nameID,
+				  valueUUID: initialData.getValueID(),
+				  timezoneoffset: new Date().getTimezoneOffset()
+				})
+			  .done(function(json, textStatus, jqXHR)
+				{
+					if (json.success) {
+						closealert();
+						var newData = cr.dataTypes[_this.field.dataType].newValue();
+						newData.id = json.id;
+						newData.value.description = initialData.getDescription();
+						newData.value.id = initialData.getValueID();
+						_this.addValue(newData);
+						successFunction(newData);
+					}
+					else {
+						failFunction(json.error);
+					}
+				})
+			  .fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					}
+				);
+	},
+	
 cr.CellValue.prototype = new cr.EventHandler();
 cr.CellValue.prototype.getDescription = function() { return this.value; };
 cr.CellValue.prototype.completeUpdate = function(newData)
@@ -1192,7 +1246,7 @@ cr.ObjectValue.prototype.setCells = function(oldCells)
 	}
 }
 
-cr.ObjectValue.prototype.checkCells = function(containerCell, fields, successFunction, failFunction)
+cr.ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
 {
 	if (typeof(successFunction) != "function")
 		throw "successFunction is not a function";
@@ -1224,11 +1278,11 @@ cr.ObjectValue.prototype.checkCells = function(containerCell, fields, successFun
 			}
 		);
 	}
-	else if (containerCell.field.ofKindID)
+	else if (this.cell.field.ofKindID)
 	{
 		var _this = this;
 		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-		cr.getConfiguration(this, containerCell.field.ofKindID, 
+		cr.getConfiguration(this, this.cell.field.ofKindID, 
 			function(newCells)
 			{
 				_this.value.cells = newCells;

@@ -1768,7 +1768,7 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 				
 				function successFunction3(newData)
 				{
-					newData.checkCells(newData.cell, [],
+					newData.checkCells([],
 						function() {
 							pathway.addMoreExperience.call(pathway, newData);
 							hidePanelDown($(dots.doneButton.node()).parents(".site-panel")[0]);

@@ -776,7 +776,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 			if (prepareClick())
 			{
 				if (_isPickCell(cell))
-					showPickObjectPanel(cell.data[0], cell, cell.parent.getValueID(), previousPanelNode);
+					showPickObjectPanel(cell.data[0], cell, cell.parent, previousPanelNode);
 				else
 					showEditObjectPanel(cell.data[0], cell, cell.parent.getValueID(), previousPanelNode, revealPanelLeft);
 			}
@@ -794,7 +794,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 				if (prepareClick())
 				{
 					if (_isPickCell(cell))
-						showPickObjectPanel(d, cell, cell.parent.getValueID(), previousPanelNode);
+						showPickObjectPanel(d, cell, cell.parent, previousPanelNode);
 					else
 						showEditObjectPanel(d, cell, cell.parent.getValueID(), previousPanelNode, revealPanelLeft);
 				}
@@ -824,7 +824,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 		{
 			var cell = newValue.cell;
 			if (_isPickCell(cell))
-				showPickObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode)
+				showPickObjectPanel(newValue, cell, cell.parent, previousPanelNode)
 			else
 				showEditObjectPanel(newValue, cell, cell.parent.getValueID(), previousPanelNode, revealPanelUp);
 		}
@@ -1710,7 +1710,7 @@ function showViewOnlyObjectPanel(objectData, containerCell, containerUUID, previ
 		panel2Div.show_view_cells(objectData, containerCell, containerUUID);
 	}
 	
-	objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction)
+	objectData.checkCells(undefined, successFunction, syncFailFunction)
 }
 
 /* Displays a panel in which the specified object's contents appear.
@@ -1758,7 +1758,7 @@ function showViewObjectPanel(objectData, containerCell, containerUUID, previousP
 		showSuccessFunction(sitePanel.node());
 	}
 	
-	objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction)
+	objectData.checkCells(undefined, successFunction, syncFailFunction)
 }
 
 function _b64_to_utf8( str ) {
@@ -1929,7 +1929,7 @@ function showEditObjectPanel(objectData, containerCell, containerUUID, previousP
 	}
 	
 	if (objectData.getValueID())
-		objectData.checkCells(containerCell, undefined, successFunction, syncFailFunction);
+		objectData.checkCells(undefined, successFunction, syncFailFunction);
 	else
 		objectData.checkConfiguration(successFunction, syncFailFunction);
 }
@@ -2167,7 +2167,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	for objects in the specified cell.
 	containerUUID is the id of the instance that contains the specified cell.
  */
-function showPickObjectPanel(oldData, cell, containerUUID, previousPanelNode) {
+function showPickObjectPanel(oldData, cell, container, previousPanelNode) {
 	if (!oldData)
 		throw "oldData is not defined";
 		
@@ -2271,11 +2271,9 @@ function showPickObjectPanel(oldData, cell, containerUUID, previousPanelNode) {
 				}
 				else if (d.getValueID())
 				{
-					if (containerUUID)	/* In this case, we are adding an object to an existing object. */
+					if (container && container.getValueID())	/* In this case, we are adding an object to an existing object. */
 					{
-						cr.addObjectValue(cell, containerUUID, d, 
-							successFunction,
-							failFunction);
+						cell.addObjectValue(d, successFunction, failFunction);
 					}
 					else 
 					{

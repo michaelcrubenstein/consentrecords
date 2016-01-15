@@ -89,8 +89,6 @@ def _refineResults(resultSet, path, userInfo):
                                                 value__referenceValue__in=userInfo.findFilter(resultSet))
                 else:
                     t = Terms.getInstance(path[3][0])
-                    print('reference type: %s' % t)
-                    print('resultSet: %s' % str(resultSet))
                     f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
                                                 Q(value__referenceValue__in=userInfo.findFilter(resultSet)),
                                                 typeID=t,
@@ -137,18 +135,27 @@ def _refineResults(resultSet, path, userInfo):
         f = Instance.objects.filter(typeID=i, deletedinstance__isnull=True)
         return f, path[1:]
 
+def _tokenize(path):
+    html_parser = html.parser.HTMLParser()
+    unescaped = html_parser.unescape(path)
+    tokens = cssparser.tokenize(unescaped)
+    a, remainder = cssparser.cascade(tokens)
+    return a
+
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
 # a duple with a value followed by the instance.
-def selectAllObjects(path, limit=0, startSet=[], userInfo=None):
+def selectAllObjects(path, limit=0, startSet=[], userInfo=None, securityFilter=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
-    resultSet = [(startSet, path)]
+    a = _tokenize(path)
+    resultSet = [(startSet, a)]
     while len(resultSet[-1][1]) > 0:
         lastPair = resultSet[-1]
         nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
         resultSet.append(nextPair)
-    f = userInfo.findFilter(resultSet[-1][0]).distinct()
+    f = securityFilter(resultSet[-1][0]).distinct()
+    # f = userInfo.findFilter(resultSet[-1][0]).distinct()
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
 #     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
@@ -157,12 +164,6 @@ def selectAllObjects(path, limit=0, startSet=[], userInfo=None):
     else:
         return f
            
-def selectAllDescriptors(path, limit=0, language=None, userInfo=None):
-    return [i.clientObject(language) for i in selectAllObjects(path, limit=limit, userInfo=userInfo)]
+def selectAllDescriptors(path, limit=0, language=None, userInfo=None, securityFilter=None):
+    return [i.getReferenceData(language) for i in selectAllObjects(path, limit=limit, userInfo=userInfo, securityFilter=securityFilter)]
     
-def tokenize(path):
-    html_parser = html.parser.HTMLParser()
-    unescaped = html_parser.unescape(path)
-    tokens = cssparser.tokenize(unescaped)
-    a, remainder = cssparser.cascade(tokens)
-    return a

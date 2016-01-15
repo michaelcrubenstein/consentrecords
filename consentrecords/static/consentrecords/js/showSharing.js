@@ -242,9 +242,9 @@ function addAccessor(userInstance, accessorLevel)
 
 				// Add this user to the access record associated with this accessor level.
 				var ar = accessorLevel.accessRecords[0]
-				ar.checkCells(undefined, undefined, function()
+				ar.checkCells(undefined, function()
 				{
-					cr.addObjectValue(ar.getCell("_user"), ar.getValueID(), pickedUser, _createAccessRecordSuccess, syncFailFunction);
+					ar.getCell("_user").addObjectValue(pickedUser, _createAccessRecordSuccess, syncFailFunction);
 				}, syncFailFunction);
 			}
 		}

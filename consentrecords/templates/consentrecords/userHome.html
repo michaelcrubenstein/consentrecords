@@ -91,15 +91,6 @@
 		.background-gradient-panel .row-button:hover {
 			opacity: 0.8;
 		}
-/* 
-	   	.panel-input-container {
-	   		padding: 6px 12px;
-	   		width: 100%;
-	   	}
-	   	.panel-input {
-	   		width: 100%;
-	   	}
- */
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -725,7 +716,7 @@
 			var signInSuccess = function(userData)
 			{
 				userInstance.value = userData;
-				userInstance.checkCells(undefined, undefined, function()
+				userInstance.checkCells(undefined, function()
 					{
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
@@ -1488,23 +1479,18 @@
 				var inquiriesInstance = newInstances[0];
 				var inquiryInstance = null;
 				var inquiryCell = null;
-				var emailCell = null;
 				
 				var addInquiry = function()
 				{
-					email = userInstance.getDatum("_email");
-					add_single_field_instance(inquiriesInstance, 
-									   inquiryCell, 
-									   emailCell, 
-									   email, 
-									   function(newData) { 
-									   		bootstrap_alert.success("You have signed up for " + 
-														  offering.getDescription() + "/" + session.getDescription() + "." +
-														  " Look out for a notice when you are enrolled.",
-														  ".alert-container");
-									   		checkInquiryFunction([newData]); 
-									   	},
-									   asyncFailFunction);
+					inquiryCell.addObjectValue(userInstance, 
+						   function(newData) { 
+								bootstrap_alert.success("You have signed up for " + 
+											  offering.getDescription() + "/" + session.getDescription() + "." +
+											  " Look out for a notice when you are enrolled.",
+											  ".alert-container");
+								checkInquiryFunction([newData]); 
+							},
+							asyncFailFunction);
 				}
 				
 				var tryAddInquiry = function()
@@ -1524,7 +1510,7 @@
 							
 							var userEmailCell = eventInfo.getCell("_email");
 							var newEmail = userEmailCell.data[0].value;
-							cr.selectAll({path: "#" + inquiriesInstance.getValueID() + ">Inquiry[_email=" + newEmail + "]",
+							cr.selectAll({path: "#" + inquiriesInstance.getValueID() + ">_user[_email=" + newEmail + "]",
 								done: function(newInstances)
 								{
 									if (newInstances.length > 0)
@@ -1560,23 +1546,17 @@
 					{
 						showClickFeedback(this);
 						
-						if (inquiryCell && emailCell)
+						if (inquiryCell)
 						{
 							tryAddInquiry();
 						}
 						else
 						{
-							cr.getConfiguration(null, inquiriesCell.field.ofKindID, 
+							cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID, 
 								function(cells)
 								{
-									inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-									cr.getConfiguration(null, inquiryCell.field.ofKindID,
-										function(cells)
-										{
-											emailCell = cells_get_cell_by_name(cells, "_email");
-											tryAddInquiry();
-										},
-										syncFailFunction);
+									inquiryCell = cells_get_cell_by_name(cells, "_user");
+									tryAddInquiry();
 								}, 
 								syncFailFunction);
 						}
@@ -1621,18 +1601,22 @@
 					}
 				};
 				
-				if (userInstance.getValueID())
-				{
-					userInstance.checkCells(undefined, undefined, function()
+				cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID, 
+					function(cells)
 					{
-						var newEmail = userInstance.getDatum("_email");
-						cr.selectAll({path: "#" + inquiriesInstance.value.id + ">Inquiry[_email=" + newEmail + "]",
-							done: checkInquiryFunction,
-							fail: asyncFailFunction});
-					}, asyncFailFunction);
-				}
-				else
-					checkInquiryFunction([]);
+						inquiryCell = cells_get_cell_by_name(cells, "_user");
+						if (userInstance.getValueID())
+						{
+							cr.getValues({path: "#" + inquiriesInstance.value.id,
+								field: inquiryCell.field,
+								value: userInstance.getValueID(),
+								done: checkInquiryFunction,
+								fail: asyncFailFunction});
+						}
+						else
+							checkInquiryFunction([]);
+					}, 
+					asyncFailFunction);
 			}
 			
 			return sitePanel;
@@ -1662,10 +1646,6 @@
 				else
 					return a.getDescription().localeCompare(b.getDescription());
 			}
-		}
-		
-		function showSessionDetailPanel(session, service)
-		{
 		}
 		
 		function appendSessionDescriptions(buttons)
@@ -1995,7 +1975,7 @@
 					});
 			}
 	
-			objectData.checkCells(containerCell, undefined, successFunction, asyncFailFunction)
+			objectData.checkCells(undefined, successFunction, asyncFailFunction)
 		}
 		
 		function pickChild(parent, data, previousPanelNode, header, successFunction)
@@ -2042,13 +2022,13 @@
 		 */
 		function pick_session(offering, previousPanelNode, successFunction)
 		{
-			offering.checkCells(undefined, undefined, function()
+			offering.checkCells(undefined, function()
 				{
 					var sessions = offering.getValue("Sessions");
 					if (!sessions)
 						syncFailFunction("the sessions are not set up");
 					else
-						sessions.checkCells(undefined, undefined, function()
+						sessions.checkCells(undefined, function()
 							{
 								var sessionCell = sessions.getCell("Session");
 								pickChild(offering, sessionCell.data, previousPanelNode, "Pick Session", successFunction);
@@ -2066,13 +2046,13 @@
 		 */
 		function pick_offering(site, previousPanelNode, successFunction)
 		{
-			site.checkCells(undefined, undefined, function()
+			site.checkCells(undefined, function()
 				{
 					var offerings = site.getValue("Offerings");
 					if (!offerings)
 						syncFailFunction("the offerings are not set up");
 					else
-						offerings.checkCells(undefined, undefined, function()
+						offerings.checkCells(undefined, function()
 							{
 								var offeringCell = offerings.getCell("Offering");
 								pickChild(site, offeringCell.data, previousPanelNode, "Pick Offering", successFunction);
@@ -2087,13 +2067,13 @@
 		 */
 		function pick_site(organization, previousPanelNode, successFunction)
 		{
-			organization.checkCells(undefined, undefined, function()
+			organization.checkCells(undefined, function()
 				{
 					var sites = organization.getValue("Sites");
 					if (!sites || !sites.id)
 						syncFailFunction("the sites are not set up");
 					else
-						sites.checkCells(undefined, undefined, function()
+						sites.checkCells(undefined, function()
 							{
 								var siteCell = sites.getCell("Site");
 								pickChild(organization, siteCell.data, previousPanelNode, "Pick Site", successFunction);
@@ -2115,9 +2095,9 @@
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						inquiriesInstance.checkCells(inquiriesCell, undefined, function()
+						inquiriesInstance.checkCells(undefined, function()
 							{
-								inquiryCell = inquiriesInstance.getCell("Inquiry");
+								inquiryCell = inquiriesInstance.getCell("_user");
 						
 								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list");
 
@@ -2138,17 +2118,11 @@
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
 								var buttons = appendViewButtons(sections)
-									.on("click", function(inquiry)
+									.on("click", function(user)
 									{
 										if (prepareClick())
 										{
-											inquiry.checkCells(inquiryCell, undefined, 
-												function()
-												{
-													addEnrollmentByInquiry(session, inquiry);
-												}, 
-												syncFailFunction);
-									
+											getAddEnrollmentFunction(session, user, unblockClick)();
 										}
 									});
 							
@@ -2194,17 +2168,7 @@
 					cr.selectAll({path: "_user[_email="+email+"]", limit: 50, done: selectAllSuccess, fail: syncFailFunction});
 				}
 			}
-			inquiry.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
-		}
-		
-		function addEnrollmentByInquiry(session, inquiry)
-		{
-			checkUserByInquiry(inquiry,
-				function(user)
-				{
-					getAddEnrollmentFunction(session, user, unblockClick)();
-				},
-				syncFailFunction);
+			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
 		}
 		
 		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
@@ -2286,12 +2250,7 @@
 					var pickSessionSuccess = function(session, sessionPanelDiv)
 					{
 						var checkCellsSuccess = getAddEnrollmentFunction(session, pickedUser, unblockClick);
-// 							function()
-// 							{
-// 								unblockClick();
-// 								hidePanelRight(sessionPanelDiv.node());
-// 							});
-						session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
+						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 					};
 					
 					var pickOfferingSuccess = function(offering, offeringPanelDiv)
@@ -2397,7 +2356,7 @@
 							syncFailFunction);
 					}
 				}
-				session.checkCells(undefined, ["parents"], checkCellsSuccessFunction, syncFailFunction);
+				session.checkCells(["parents"], checkCellsSuccessFunction, syncFailFunction);
 			}
 		}
 		
@@ -2535,87 +2494,94 @@
 							.on("click", handleCloseRightEvent);
 						backButton.append("span").text("Done");
 				
-						var addButton = navContainer.appendRightButton()
-							.classed("site-disabled-text", true);
-						addButton.append("span").text("Add");
-	
 						var centerButton = navContainer.appendTitle("Record Inquiry");
+
+						var searchBar = sitePanel.appendSearchBar(show_users);
 
 						var panel2Div = addInquiryPanelDiv.appendScrollArea();
 						panel2Div.appendAlertContainer();
 				
-						inquiryInput = panel2Div.append("section")
-							.classed("cell edit unique string", true)
-							.append("ol")
-							.classed("items-div", true)
-							.append("li")
-							.classed("panel-input-container string-input-container", true)
-							.append("input")
-							.attr("type", "email")
-							.classed("panel-input", true)
-							.attr("placeholder", "email address");
-					
-				
-						$(inquiryInput.node()).on("input", function(e) {
-							isValid = validateEmail(this.value);
-							addButton
-								.classed("site-disabled-text", !isValid)
-								.classed("site-active-text", isValid)
-								.style("font-weight", (isValid ? 600 : 400));
-						});
-	
-						showPanelLeft(addInquiryPanelDiv.node());
-			
-						/* Since d.getValueID() is not null, containerUUID is not needed. */
-						var createInquiry = function(d)
+						function show_users()
 						{
-							if (d3.select(this).classed("site-disabled-text"))
-								return;
-						
-							if (prepareClick())
+							var val = this.value.toLocaleLowerCase();
+							var inputBox = this;
+				
+							if (val.length == 0)
 							{
-								var checkCellsSuccess = function() 
+								panel2Div.selectAll("section").remove();
+								searchText = val;
+							}
+							else
+							{
+								var startVal = val;
+								var pickedUser = null;
+					
+								var selectAllSuccess = function(userObjects)
 								{
-									var inquiriesCell = session.getCell("Inquiries");
-									var inquiriesInstances = inquiriesCell.data;
-									if (inquiriesInstances.length == 0)
-										syncFailFunction("Session Inquiries are not set up");
-									else
+									if (inputBox.value.toLocaleLowerCase() == startVal)
 									{
-										var inquiriesInstance = inquiriesInstances[0];
-										cr.getConfiguration(null, inquiriesCell.field.ofKindID,
-											function(cells)
-											{
-												var inquiryCell = cells_get_cell_by_name(cells, "Inquiry");
-												cr.getConfiguration(null, inquiryCell.field.ofKindID,
-													function(cells)
+										panel2Div.selectAll("section").remove();
+										var sections = panel2Div.appendSections(userObjects);
+										var buttons = appendViewButtons(sections)
+											.on("click", function(user) {
+												pickedUser = user;
+												var _thisButton = this;
+												if (prepareClick())
+												{
+													var checkCellsSuccess = function() 
 													{
-														var emailCell = cells_get_cell_by_name(cells, "_email");
-														add_single_field_instance(inquiriesInstance, 
-																			   inquiryCell, 
-																			   emailCell, 
-																			   inquiryInput.node().value, 
-																			   function(newData)
-																			   {
-																					bootstrap_alert.success(inquiryInput.node().value + 
-																						  " inquiry added to " + 
-																						  session.getDescription(),
-																						  ".alert-container");
-																					inquiryInput.node().value = "";
-																					$(inquiryInput.node()).trigger("input");
-																					unblockClick();
-																			   },
-																			   syncFailFunction);
-													},
-													syncFailFunction);
-											},
-											syncFailFunction);
+														var inquiriesCell = session.getCell("Inquiries");
+														var inquiriesInstances = inquiriesCell.data;
+														if (inquiriesInstances.length == 0)
+															syncFailFunction("Session Inquiries are not set up");
+														else
+														{
+															var inquiriesInstance = inquiriesInstances[0];
+															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID,
+																function(cells)
+																{
+																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
+												
+																	inquiryCell.addObjectValue(pickedUser,
+																						   function(newData)
+																						   {
+																								bootstrap_alert.success(inquiryInput.node().value + 
+																									  " inquiry added to " + 
+																									  session.getDescription(),
+																									  ".alert-container");
+																								hidePanelRight($(_thisButton).parents(".site-panel")[0], false);
+																						   },
+																						   syncFailFunction);
+																},
+																syncFailFunction);
+														}
+													}
+													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+												}
+												d3.event.preventDefault();
+											});
+										var infoButtons =  buttons.insert("div", ":first-child")
+											.classed("info-button right-fixed-width-div", true)
+											.on("click", function(user) {
+												if (prepareClick())
+												{
+													show_user(user, sitePanel.node());
+												}
+												d3.event.preventDefault();
+											});
+										drawInfoButtons(infoButtons);
+
+										searchText = startVal;
 									}
 								}
-								session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
-							};
-						};
-						addButton.on("click", createInquiry);
+					
+								if (val.length < 3)
+									cr.selectAll({path: '_user[_email^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+								else
+									cr.selectAll({path: '_user[_email*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+							}
+						}
+						showPanelLeft(addInquiryPanelDiv.node());
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -2637,7 +2603,7 @@
 						{
 							sessionSuccess(session, previousPanel);
 						}
-						session.checkCells(undefined, undefined, checkCellsSuccess, syncFailFunction);
+						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -2693,7 +2659,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.checkCells(listCell, undefined, function()
+						instance.checkCells(undefined, function()
 							{
 								enrollmentCell = instance.getCell("Enrollment");
 						
@@ -2718,7 +2684,7 @@
 									{
 										if (prepareClick())
 										{
-											enrollment.checkCells(enrollmentCell, undefined, 
+											enrollment.checkCells(undefined, 
 												function()
 												{
 													addExperienceByEnrollment(session, enrollment, sitePanel.node());
@@ -2761,7 +2727,7 @@
 					successFunction(user);
 				}
 			}
-			enrollment.checkCells(undefined, undefined, checkSuccessFunction, syncFailFunction);
+			enrollment.checkCells(undefined, checkSuccessFunction, syncFailFunction);
 		}
 		
 		function manage_participation(organization, previousPanelNode)

@@ -22,10 +22,13 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
                 if Terms.isUUID(d):
                     # This is a reference to an object.
-                    parent.addReferenceValue(field, Instance.objects.get(pk=d), i, transactionState)
+                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d)))
+                    if len(values):
+                    	parent.addReferenceValue(field, values[0], i, transactionState)
+                    else:
+                    	raise ValueError("find permission failed")
                 elif d is not None:
-                    a = pathparser.tokenize(d)
-                    ids = pathparser.selectAllObjects(a, userInfo)
+                    ids = pathparser.selectAllObjects(d, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
@@ -59,7 +62,7 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
     	if not parent.canWrite(transactionState.user):
     		raise RuntimeError("write permission failed")
     else:
-    	if not transactionState.user.is_administrator:
+    	if not transactionState.user.is_staff:
     		raise RuntimeError("write permission failed")
     	
     if parent:

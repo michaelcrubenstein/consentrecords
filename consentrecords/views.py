@@ -16,6 +16,7 @@ import traceback
 import uuid
 import urllib.parse
 import datetime
+import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
@@ -103,8 +104,8 @@ def list(request):
     
         argList = {
             'user': request.user,
-            'canShowObjects': request.user.is_superuser,
-            'canAddObject': request.user.is_superuser,
+            'canShowObjects': request.user.is_staff,
+            'canAddObject': request.user.is_staff,
             'path': urllib.parse.unquote_plus(path),
             'header': header,
             }
@@ -200,16 +201,20 @@ class api:
                 for c in commands:
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"])
+                        container = oldValue.instance
+                        if not container.canWrite(user):
+                            raise ValueError("write permission failed")
                         if oldValue.isDescriptor:
-                            container = oldValue.instance;
                             descriptionQueue.append(container)
                         if "value" in c:
-                            item = oldValue.updateValue(c["value"], transactionState);
+                            item = oldValue.updateValue(c["value"], transactionState)
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
                     elif "containerUUID" in c:
                         container = Instance.objects.get(pk=c["containerUUID"])
+                        if not container.canWrite(user):
+                            raise ValueError("write permission failed")
                         fieldID = Instance.objects.get(pk=c["fieldID"])
                         newIndex = c["index"]
                         newValue = c["value"]
@@ -268,6 +273,8 @@ class api:
                 transactionState = TransactionState(user, timezoneoffset)
                 field = Instance.objects.get(pk=elementUUID)
                 container = Instance.objects.get(pk=containerUUID)
+                if not container.canWrite(user):
+                    raise ValueError("write permission failed")
     
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
@@ -298,18 +305,46 @@ class api:
             language=None
         
             if path:
-                a = pathparser.tokenize(path)
-                p = pathparser.selectAllDescriptors(path=a, limit=limit, language=language, userInfo=userInfo)
+                p = pathparser.selectAllDescriptors(path=path, limit=limit, language=language, userInfo=userInfo, securityFilter=userInfo.findFilter)
             else:
-                try:
-                    ofKindName = data.get("ofKindName", "_uuname")
-                    ofKindID = data.get("ofKindID", Terms.getNamedInstance(ofKindName).id)
-                except Instance.DoesNotExist:
-                    return JsonResponse({'success':False, 'error': 'the term "%s" was not recognized' % ofKindName })
-                a = pathparser.tokenize(ofKindID)
-                p = Instance.rootDescriptors(a, limit, language, userInfo)
+                raise ValueError("path was not specified")
         
             results = {'success':True, 'objects': p}
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            results = {'success':False, 'error': str(e)}
+        
+        return JsonResponse(results)
+        
+    def getValues(user, data):
+        try:
+            path = data.get("path", None)
+            if not path:
+                return JsonResponse({'success':False, 'error': 'the path was not specified'})
+                
+            limit = int(data.get("limit", "0"))
+            userInfo = UserInfo(user)
+            language=None
+        
+            # The element name for the type of element that the new value is to the container object
+            elementUUID = data.get('elementUUID', None)
+        
+            if elementUUID is None:
+                return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
+            field = Instance.objects.get(pk=elementUUID)
+            
+            # A value with the container.
+            value = data.get('value', None)
+        
+            if value is None:
+                return JsonResponse({'success':False, 'error': 'the value was not specified'})
+            
+            containers = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            m = map(lambda i: i.findValues(field, value), containers)
+            p = map(lambda v: v.getReferenceData(language=language), itertools.chain.from_iterable(m))
+                            
+            results = {'success':True, 'objects': [i for i in p]}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -365,7 +400,7 @@ class api:
             
         return JsonResponse(results)
     
-    def getCells(uuObject, fields, fieldsDataDictionary, nameLists):
+    def _getCells(uuObject, fields, fieldsDataDictionary, nameLists, language, userInfo):
         if uuObject.typeID in fieldsDataDictionary:
             fieldsData = fieldsDataDictionary[uuObject.typeID]
         else:
@@ -377,7 +412,7 @@ class api:
             fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
         
-        cells = uuObject.getData(fieldsData, nameLists)
+        cells = uuObject.getData(fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
                 "description": uuObject.description(),
@@ -408,12 +443,14 @@ class api:
             
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
+            
+            language = data.get('language', None)
 
-            a = pathparser.tokenize(path)
-            uuObjects = pathparser.selectAllObjects(path=a, limit=limit, userInfo=UserInfo(user))
+            userInfo=UserInfo(user)
+            uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
-            p = [api.getCells(uuObject, fields, fieldsDataDictionary, nameLists) for uuObject in uuObjects]        
+            p = [api._getCells(uuObject, fields, fieldsDataDictionary, nameLists, language, userInfo) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
         except Exception as e:
@@ -432,8 +469,6 @@ class api:
             path = data.get('path', None)
         
             if path:
-                a = pathparser.tokenize(path)
-            
                 # The client time zone offset, stored with the transaction.
                 timezoneoffset = data['timezoneoffset']
         
@@ -441,7 +476,7 @@ class api:
                     transactionState = TransactionState(user, timezoneoffset)
                     descriptionCache = []
                     nameLists = NameList()
-                    for uuObject in pathparser.selectAllObjects(a, userInfo=UserInfo(user)):
+                    for uuObject in pathparser.selectAllObjects(path, userInfo=UserInfo(user), securityFilter=userInfo.administerFilter):
                         if uuObject.parent:
                             raise ValueException("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)
@@ -467,6 +502,9 @@ class api:
                 timezoneoffset = data['timezoneoffset']
 
                 with transaction.atomic():
+                    if not v.instance.canWrite(user):
+                        raise ValueError("write permission failed")
+                    
                     transactionState = TransactionState(user, timezoneoffset)
                     v.deepDelete(transactionState)
                     
@@ -543,16 +581,18 @@ def deleteValue(request):
     return api.deleteValue(request.user, request.POST)
     
 def selectAll(request):
-    LogRecord.emit(request.user, 'consentrecords/selectAll', '')
-    
     if request.method != "GET":
         raise Http404("selectAll only responds to GET methods")
     
     return api.selectAll(request.user, request.GET)
     
-def getConfiguration(request):
-    LogRecord.emit(request.user, 'consentrecords/getAddConfiguration', '')
+def getValues(request):
+    if request.method != "GET":
+        raise Http404("getValues only responds to GET methods")
     
+    return api.getValues(request.user, request.GET)
+    
+def getConfiguration(request):
     if request.method != "GET":
         raise Http404("getConfiguration only responds to GET methods")
     
@@ -582,6 +622,8 @@ class ApiEndpoint(ProtectedResourceView):
             return getConfiguration(request)
         elif request.path_info == '/api/selectall/':
             return selectAll(request)
+        elif request.path_info == '/api/getvalues/':
+            return getValues(request)
         return JsonResponse({'success':False, 'error': 'unrecognized url'})
         
     def post(self, request, *args, **kwargs):

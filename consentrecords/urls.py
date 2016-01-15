@@ -38,6 +38,7 @@ urlpatterns = [
     url(r'^local/getdata/', views.getData),
     url(r'^local/getconfiguration/', views.getConfiguration),
     url(r'^local/selectall/', views.selectAll),
+    url(r'^local/getvalues/', views.getValues),
     
     url(r'^local/createinstance/', views.createInstance, name='createInstance'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
@@ -49,6 +50,7 @@ urlpatterns = [
     url(r'^api/getdata/', views.getData),
     url(r'^api/getconfiguration/', views.getConfiguration),
     url(r'^api/selectall/', views.selectAll),
+    url(r'^api/getvalues/', views.getValues),
     
     url(r'^api/createinstance/', views.ApiEndpoint.as_view()),
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),

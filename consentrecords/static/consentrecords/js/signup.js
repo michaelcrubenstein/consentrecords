@@ -73,7 +73,7 @@ var Signup = (function () {
 					function(userData)
 					{
 						userInstance.value = userData;
-						userInstance.checkCells(undefined, undefined, function()
+						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
 								hidePanelDown(sitePanel.node(), false,
