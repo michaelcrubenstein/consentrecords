@@ -476,7 +476,8 @@ class api:
                     transactionState = TransactionState(user, timezoneoffset)
                     descriptionCache = []
                     nameLists = NameList()
-                    for uuObject in pathparser.selectAllObjects(path, userInfo=UserInfo(user), securityFilter=userInfo.administerFilter):
+                    userInfo=UserInfo(user)
+                    for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
                         if uuObject.parent:
                             raise ValueException("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)

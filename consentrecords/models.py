@@ -536,7 +536,7 @@ class Instance(dbmodels.Model):
         except AccessRecord.DoesNotExist:
             return False
     
-    def securityFilter(self, f, privilegeIDs):
+    def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
         sources=Instance.objects.filter(\
@@ -556,22 +556,31 @@ class Instance(dbmodels.Model):
                         )\
                        )
         
-        return f.filter(Q(accessrecord__isnull=True)|
-                        Q(accessrecord__source__in=sources))
+        if accessRecordOptional:
+            return f.filter(Q(accessrecord__isnull=True)|
+                            Q(accessrecord__source__in=sources))
+        else:
+            return f.filter(Q(accessrecord__source__in=sources))
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def findFilter(self, f):
         privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityFilter(f, privilegeIDs)
+        return self._securityFilter(f, privilegeIDs)
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def readFilter(self, f):
         privilegeIDs = [Terms.readPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityFilter(f, privilegeIDs)
+        return self._securityFilter(f, privilegeIDs)
+    
+    ### For the specified instance filter, filter only those instances that can be found by self.    
+    def administerFilter(self, f):
+        privilegeIDs = [Terms.administerPrivilegeEnum.id]
+        
+        return self._securityFilter(f, privilegeIDs, accessRecordOptional=False)
     
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
@@ -1159,3 +1168,12 @@ class UserInfo:
             return resultSet
         else:
             return self.instance.readFilter(resultSet)
+
+    def administerFilter(self, resultSet):
+        if not self.is_authenticated:
+            return []	# If not authenticated, then return an empty iterable.
+        elif self.is_administrator:
+            return resultSet
+        else:
+            return self.instance.administerFilter(resultSet)
+
