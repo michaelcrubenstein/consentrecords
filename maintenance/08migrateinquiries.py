@@ -34,19 +34,18 @@ if __name__ == "__main__":
         
         print ("Inquiry Count: %s" % f.count())
         userInfo = UserInfo(user)
-        for field in f:
-            email = field.value_set.get(fieldID=Terms.email,
+        for inquiry in f:
+            email = inquiry.value_set.get(fieldID=Terms.email,
                                         deleteTransaction__isnull=True)
             email.markAsDeleted(transactionState)
             path = '_user[_email="%s"]' % email.stringValue
             print("email: %s" % email.stringValue)
-            a = pathparser.tokenize(path)
-            l = pathparser.selectAllObjects(a, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            l = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             if len(l):
-                inquiries = field.parent
+                inquiries = inquiry.parent
                 print("l: %s" % str(l))
                 transactionState = TransactionState(l[0].user, timezoneoffset)
                 inquiries.addReferenceValue(Terms.user, l[0], 0, transactionState)
-                print("update inquiry for session %s: user %s" % (field.parent.parent, l[0]))
-            field.markAsDeleted(transactionState)
+                print("update inquiry for session %s: user %s" % (inquiry.parent.parent, l[0]))
+            inquiry.markAsDeleted(transactionState)
                      
