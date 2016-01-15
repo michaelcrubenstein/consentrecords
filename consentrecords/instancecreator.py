@@ -43,7 +43,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
             parent.addValue(field, d, i, transactionState)
         i += 1
 
-def create(typeInstance, parent, parentFieldID, position, propertyList, nameLists, transactionState):
+def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
@@ -59,18 +59,17 @@ def create(typeInstance, parent, parentFieldID, position, propertyList, nameList
     	if TermNames.primaryAdministrator not in propertyList:
     	    propertyList[TermNames.primaryAdministrator] = item.id
     elif parent:
-    	if not parent.canWrite(transactionState.user):
-    		raise RuntimeError("write permission failed")
+        parent.checkWriteAccess(transactionState.user, parentField)
     else:
     	if not transactionState.user.is_staff:
     		raise RuntimeError("write permission failed")
     	
     if parent:
         if position < 0:
-            maxIndex = parent.getMaxElementIndex(parentFieldID)
+            maxIndex = parent.getMaxElementIndex(parentField)
             position = 0 if maxIndex == None else maxIndex + 1
-        newIndex = parent.updateElementIndexes(parentFieldID, position, transactionState)
-        newValue = parent.addReferenceValue(parentFieldID, item, newIndex, transactionState)
+        newIndex = parent.updateElementIndexes(parentField, position, transactionState)
+        newValue = parent.addReferenceValue(parentField, item, newIndex, transactionState)
         item.parentValue = newValue
         item.save()
     else:

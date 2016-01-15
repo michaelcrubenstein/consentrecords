@@ -26,9 +26,9 @@ class Transaction(dbmodels.Model):
     
     def createTransaction(user, timeZoneOffset):
         if not user.is_authenticated:
-            raise ValueError('current user is not authenticated')
+            raise RuntimeError('current user is not authenticated')
         if not user.is_active:
-            raise ValueError('current user is not active')
+            raise RuntimeError('current user is not active')
         return Transaction.objects.create(user=user, time_zone_offset=timeZoneOffset)
         
 class TransactionState:
@@ -171,9 +171,10 @@ class Instance(dbmodels.Model):
     def _getValues(self, userInfo):
         vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True)).order_by('fieldID', 'position');
         values = {}
+        vs = filter(lambda v: v.fieldID not in Terms.securityFields or self.canAdminister(userInfo.authUser, userInfo.instance), vs)
         for v in vs:
             if v.fieldID.id not in values:
-                    values[v.fieldID.id] = []
+                values[v.fieldID.id] = []
             values[v.fieldID.id].append(v)
         return values
     
@@ -637,7 +638,7 @@ class Instance(dbmodels.Model):
         if user.is_authenticated and \
            userInstance.isPrimaryAdministrator(self):
             return True
-                
+            
         try:
             return self.accessrecord.source.value_set.filter(fieldID=Terms.publicAccess, 
                                                          referenceValue=Terms.writePrivilegeEnum,
@@ -651,11 +652,11 @@ class Instance(dbmodels.Model):
     ## Instances can be administered if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has administer privilege on the instance.                        
-    def canAdminister(self, user):
+    def canAdminister(self, user, userInstance=None):
         if user.is_staff:
             return True
 
-        userInstance = Instance.getUserInstance(user)
+        userInstance = userInstance or Instance.getUserInstance(user)
         if user.is_authenticated and \
            userInstance.isPrimaryAdministrator(self):
             return True
@@ -666,7 +667,18 @@ class Instance(dbmodels.Model):
                 .exists()
         except AccessRecord.DoesNotExist:
             return False
-        
+            
+    def checkWriteAccess(self, user, field=None):
+        if self.typeID==Terms.accessRecord:
+            if not self.canAdminister(user):
+                raise RuntimeError("administer permission failed")
+        elif field in Terms.securityFields:
+            if not self.canAdminister(user):
+                raise RuntimeError("administer permission failed")
+        else:
+            if not self.canWrite(user):
+                raise RuntimeError("write permission failed")
+            
     def anonymousFindFilter(f):
         sources=Instance.objects.filter(\
                           Q(value__fieldID=Terms.publicAccess.id)&
@@ -841,6 +853,9 @@ class Value(dbmodels.Model):
             self.referenceValue.deepDelete(transactionState)
         self.markAsDeleted(transactionState)
         
+    def checkWriteAccess(self, user):
+        self.instance.checkWriteAccess(user, self.fieldID)
+        
     def anonymousFindFilter(f):
         sources=Instance.objects.filter(\
                           Q(value__fieldID=Terms.publicAccess.id)&
@@ -1004,6 +1019,8 @@ class Terms():
     
     customAccessEnum = None             # Identifies instances that have customized access as a user setting.
     
+    securityFields = None
+    
     def initialize(transactionState=None):
         try:
             Terms.uuName = Terms.getUUName()
@@ -1033,6 +1050,7 @@ class Terms():
             Terms.specialAccess = Terms.getOrCreateTerm(TermNames.specialAccess, nameList, transactionState)
             Terms.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, nameList, transactionState)
             Terms.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, nameList, transactionState)
+            Terms.securityFields = [Terms.accessRecord, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, ]
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     
@@ -1171,7 +1189,7 @@ class UserInfo:
 
     def administerFilter(self, resultSet):
         if not self.is_authenticated:
-            return []	# If not authenticated, then return an empty iterable.
+            return []   # If not authenticated, then return an empty iterable.
         elif self.is_administrator:
             return resultSet
         else:

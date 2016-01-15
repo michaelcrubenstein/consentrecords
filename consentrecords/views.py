@@ -201,9 +201,10 @@ class api:
                 for c in commands:
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"])
+                        oldValue.checkWriteAccess(user)
+
                         container = oldValue.instance
-                        if not container.canWrite(user):
-                            raise ValueError("write permission failed")
+
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
                         if "value" in c:
@@ -213,17 +214,18 @@ class api:
                             item = None
                     elif "containerUUID" in c:
                         container = Instance.objects.get(pk=c["containerUUID"])
-                        if not container.canWrite(user):
-                            raise ValueError("write permission failed")
-                        fieldID = Instance.objects.get(pk=c["fieldID"])
+
+                        field = Instance.objects.get(pk=c["fieldID"])
+                        container.checkWriteAccess(user, field)
+
                         newIndex = c["index"]
                         newValue = c["value"]
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"])
                             propertyList = newValue
-                            newInstance, item = instancecreator.create(ofKindObject, container, fieldID, propertyList, newValue, nameLists, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, field, propertyList, newValue, nameLists, transactionState)
                         else:
-                            item = container.addValue(fieldID, newValue, newIndex, transactionState)
+                            item = container.addValue(field, newValue, newIndex, transactionState)
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -273,8 +275,7 @@ class api:
                 transactionState = TransactionState(user, timezoneoffset)
                 field = Instance.objects.get(pk=elementUUID)
                 container = Instance.objects.get(pk=containerUUID)
-                if not container.canWrite(user):
-                    raise ValueError("write permission failed")
+                container.checkWriteAccess(user, field)
     
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
@@ -407,7 +408,7 @@ class api:
             configuration = uuObject.typeID.getSubInstance(Terms.configuration)
     
             if not configuration:
-                raise ValueError("the specified item is not configured")
+                raise RuntimeError("the specified item is not configured")
     
             fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
@@ -479,7 +480,7 @@ class api:
                     userInfo=UserInfo(user)
                     for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
                         if uuObject.parent:
-                            raise ValueException("can only delete root instances directly")
+                            raise RuntimeError("can only delete root instances directly")
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
@@ -503,8 +504,7 @@ class api:
                 timezoneoffset = data['timezoneoffset']
 
                 with transaction.atomic():
-                    if not v.instance.canWrite(user):
-                        raise ValueError("write permission failed")
+                    v.checkWriteAccess(user)
                     
                     transactionState = TransactionState(user, timezoneoffset)
                     v.deepDelete(transactionState)
