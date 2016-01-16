@@ -931,6 +931,7 @@ class TermNames():
     readPrivilege = '_read'
     writePrivilege = '_write'
     administerPrivilege = '_administer'
+    registerPrivilege = '_register'
     group = '_group'
     defaultAccess = '_default access'
     specialAccess = '_special access'
@@ -1013,6 +1014,7 @@ class Terms():
     readPrivilegeEnum = None            # Identifies access records that give read access to an instance.
     writePrivilegeEnum = None           # Identifies access records that give write access to an instance.
     administerPrivilegeEnum = None      # Identifies access records that give administer access to an instance.
+    registerPrivilegeEnum = None        # Identifies access records that give register access to an instance.
     
     # Enumeration values of the default secure term.
     defaultCustomEnum = None            # Identifies instance types that have customized access by default.
@@ -1083,6 +1085,8 @@ class Terms():
         try: Terms.writePrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.writePrivilege);
         except Value.DoesNotExist: pass
         try: Terms.administerPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.administerPrivilege);
+        except Value.DoesNotExist: pass
+        try: Terms.registerPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.registerPrivilege);
         except Value.DoesNotExist: pass
             
         try: Terms.defaultCustomEnum = Terms.getNamedEnumerator(Terms.defaultAccess, TermNames.custom);
