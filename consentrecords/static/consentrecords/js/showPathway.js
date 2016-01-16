@@ -9,6 +9,7 @@ var DotsNavigator = (function () {
 	DotsNavigator.prototype.finalText = "Add";
 	DotsNavigator.prototype.services = [];
 	DotsNavigator.prototype.datum = null;
+	DotsNavigator.prototype.sitePanel = null;
 	
 	/* Dots are followed by a set of panels, which can have the following functions:
 		onReveal: called each time the panel is revealed. Typically this is used
@@ -183,6 +184,7 @@ var DotsNavigator = (function () {
 		/* By default, the data is the dots object itself for backward compatibility.
 		 */
 		this.datum = this;
+		this.sitePanel = sitePanel;
 		
 		var dotIndexes = [];
 		for (var i = 0; i < numDots; i++)
@@ -1245,8 +1247,6 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		});
 	backButton.append("span").text("Cancel");
 	
-	navContainer.appendTitle(header);
-	
 	var addButton = navContainer.appendRightButton()
 		.on("click", function()
 		{
@@ -1262,6 +1262,8 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 			}
 			d3.event.preventDefault();
 		});
+	
+	navContainer.appendTitle(header);
 	
 	var textChanged = function(){
 		var val = this.value.toLocaleLowerCase();
@@ -1352,7 +1354,9 @@ function setupServicesPanel(dots)
 					var success = function(newReportedObject)
 					{
 						var divs = d3.select($(_this).parents("li")[0]);
+						/* Set the datum for the li and this object so that the correct object is used in future clicks. */
 						divs.datum(newReportedObject);
+						d3.select(_this).datum(newReportedObject);
 						var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
 						dots.services[i] = newReportedObject;
 					}
