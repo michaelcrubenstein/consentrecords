@@ -63,13 +63,10 @@ function showSharing(containerDiv) {
 			.classed("cell multiple", true);
 		cells.append("label")
 			.text(function(d) { return d.label });
-		var itemCells = cells.append("div")
+		var itemCells = cells.append("ol")
 			.classed("cell-items", true);
-			
-		var items = itemCells.selectAll("li")
-			.data(function(d) { return d.accessors })
-			.enter()
-			.append("li");
+		
+		var items = appendItems(itemCells, function(d) { return d.accessors });
 			
 		appendConfirmDeleteControls(items);
 		
@@ -96,6 +93,17 @@ function showSharing(containerDiv) {
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add user or group");
 	}
+	
+	var accessRecordCell = userInstance.getCell("_access record");
+	accessRecordCell.addTarget("valueAdded.cr", containerDiv);
+	$(containerDiv).on("remove", function()
+	{
+		accessRecordCell.removeTrigger("valueAdded.cr", containerDiv);
+	});
+	$(containerDiv).on("valueAdded.cr", function(e, newData)
+		{
+			asyncFailFunction("Value Added: " + newData.toString())
+		});
 	
 	function getPrivileges(enumerators)
 	{
@@ -126,6 +134,8 @@ function showSharing(containerDiv) {
 }
 
 /*
+	Displays a panel from which the user can choose a user or group.
+	
 	This function should be called within a prepareClick block. 
  */
 function pickAccessor(header, previousPanelNode, successFunction)
@@ -160,39 +170,59 @@ function pickAccessor(header, previousPanelNode, successFunction)
 				showViewOnlyObjectPanel(user, user.cell, undefined, previousPanelNode);
 			}
 	
-			var selectAllSuccess = function(userObjects)
+			var symbol;
+			if (val.length < 3)
+				symbol = "^=";
+			else
+				symbol = "*=";
+				
+			function sortByDescription(a, b)
 			{
+				return a.getDescription().localeCompare(b.getDescription());
+			}
+			function selectedUsers(userObjects)
+			{
+				var selectAllSuccess = function(groupObjects)
+				{
+					if (inputBox.value.toLocaleLowerCase().trim() == startVal)
+					{
+						groupObjects.sort(sortByDescription);
+						var firstGroupIndex = userObjects.length;
+						allObjects = userObjects.concat(groupObjects);
+						panel2Div.selectAll("section").remove();
+						var sections = panel2Div.appendSections(allObjects);
+						var buttons = appendViewButtons(sections)
+							.on("click", function(user, i) {
+								if (prepareClick())
+								{
+									var cellName =  i < firstGroupIndex ? "_user" : "_group";
+									successFunction(user, cellName, sitePanel.node());
+								}
+								d3.event.preventDefault();
+							});
+						var infoButtons =  buttons.insert("div", ":first-child")
+							.classed("info-button right-fixed-width-div", true)
+							.on("click", function(user) {
+								if (prepareClick())
+								{
+									show_user(user, sitePanel.node());
+								}
+								d3.event.preventDefault();
+							});
+						drawInfoButtons(infoButtons);
+
+						searchText = startVal;
+					}
+				}
+			
 				if (inputBox.value.toLocaleLowerCase().trim() == startVal)
 				{
-					panel2Div.selectAll("section").remove();
-					var sections = panel2Div.appendSections(userObjects);
-					var buttons = appendViewButtons(sections)
-						.on("click", function(user) {
-							if (prepareClick())
-							{
-								successFunction(user, sitePanel.node());
-							}
-							d3.event.preventDefault();
-						});
-					var infoButtons =  buttons.insert("div", ":first-child")
-						.classed("info-button right-fixed-width-div", true)
-						.on("click", function(user) {
-							if (prepareClick())
-							{
-								show_user(user, sitePanel.node());
-							}
-							d3.event.preventDefault();
-						});
-					drawInfoButtons(infoButtons);
-
-					searchText = startVal;
+					cr.selectAll({path: '_group[?'+symbol+'"'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+					userObjects.sort(sortByDescription);
 				}
 			}
 			
-			if (val.length < 3)
-				cr.selectAll({path: '(_user,_group)[?^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
-			else
-				cr.selectAll({path: '(_user,_group)[?*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+			cr.selectAll({path: '_user[?'+symbol+'"'+val+'"]', limit: 50, done: selectedUsers, fail: asyncFailFunction});
 		}
 	}
 	
@@ -204,6 +234,11 @@ function pickAccessor(header, previousPanelNode, successFunction)
 	showPanelLeft(sitePanel.node());
 }
 
+/*
+	Responds to a request to add a user or group to the access records of the specified userInstance.
+	
+	this is the button that was clicked.
+ */
 function addAccessor(userInstance, accessorLevel)
 {
 	if (prepareClick())
@@ -211,15 +246,17 @@ function addAccessor(userInstance, accessorLevel)
 		var _this = this;
 		var previousPanelNode = $(this).parents(".site-panel")[0];
 		var accessRecordCell = userInstance.getCell("_access record");
-		function successFunction(pickedUser, currentPanelNode)
+		function successFunction(pickedUser, cellName, currentPanelNode)
 		{
 			if (accessorLevel.accessRecords.length == 0)
 			{
 				function _createAccessRecordSuccess(newData)
 				{
-					accessorLevel.accessRecords.push(newData);
+					var userCell = newData.getCell(cellName);
+					var newValue = userCell.data[0];
+					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					_getOnValueAddedFunction(currentPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
+					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 
@@ -227,16 +264,16 @@ function addAccessor(userInstance, accessorLevel)
 				// and this user.
 				var field = accessRecordCell.field;
 				var initialData = {"_privilege": accessorLevel.id,
-								   "_user": pickedUser.getValueID() };
+								   cellName: pickedUser.getValueID() };
 				cr.createInstance(field, userInstance.getValueID(), initialData, _createAccessRecordSuccess, syncFailFunction);
 			}
 			else
 			{
-				function _createAccessRecordSuccess(newData)
+				function _createAccessRecordSuccess(newValue)
 				{
-					accessorLevel.accessRecords.push(newData);
+					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newData);
+					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 
@@ -244,7 +281,7 @@ function addAccessor(userInstance, accessorLevel)
 				var ar = accessorLevel.accessRecords[0]
 				ar.checkCells(undefined, function()
 				{
-					ar.getCell("_user").addObjectValue(pickedUser, _createAccessRecordSuccess, syncFailFunction);
+					ar.getCell(cellName).addObjectValue(pickedUser, _createAccessRecordSuccess, syncFailFunction);
 				}, syncFailFunction);
 			}
 		}

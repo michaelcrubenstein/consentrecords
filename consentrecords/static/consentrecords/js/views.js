@@ -572,23 +572,23 @@ function _showEditTranslationCell(obj, cell, inputType)
  */
 function _getOnValueAddedFunction(previousPanelNode, cell, containerUUID, canDelete, canShowDetails, viewFunction, successFunction)
 {
-	return function(e, newData)
+	return function(e, value)
 	{
 		var itemsDiv = d3.select(this);
 	
-		var divs = appendItem(itemsDiv, newData);
+		var divs = appendItem(itemsDiv, value);
 		_checkItemsDivDisplay(itemsDiv, cell);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		divs.style("display", 
-				   (cell.field.capacity === "_unique value" || newData.getValueID()) ? "block" : "none");
+				   (cell.field.capacity === "_unique value" || value.getValueID()) ? "block" : "none");
 				   
 		if (cell.field.capacity != "_unique value")
 		{
-			newData.addTarget("dataChanged.cr", divs.node());
+			value.addTarget("dataChanged.cr", divs.node());
 			$(divs.node()).on("dataChanged.cr", function(e) {
 					d3.select(this).style("display", 
-					   newData.getValueID() || newData.value.cells.length > 0 ? "block" : "none");
+					   value.getValueID() || value.value.cells.length > 0 ? "block" : "none");
 				});
 		}
 
@@ -1304,11 +1304,11 @@ function appendItems(container, data)
 		.each(_setupItemHandlers);
 }
 
-function appendItem(container, data)
+function appendItem(container, value)
 {
 	return container
 		.append("li")	// So that each button appears on its own row.
-		.datum(data)
+		.datum(value)
 		.each(_setupItemHandlers);
 }
 
