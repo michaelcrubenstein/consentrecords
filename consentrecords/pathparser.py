@@ -155,7 +155,6 @@ def selectAllObjects(path, limit=0, startSet=[], userInfo=None, securityFilter=N
         nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
         resultSet.append(nextPair)
     f = securityFilter(resultSet[-1][0]).distinct()
-    # f = userInfo.findFilter(resultSet[-1][0]).distinct()
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
 #     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
