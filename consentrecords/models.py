@@ -96,7 +96,7 @@ class Instance(dbmodels.Model):
                 if len(f) == 0:
                     raise Value.DoesNotExist()
                 value = f[0]
-            elif not value.canFind(transactionState.user):
+            elif not value._canFind(transactionState.user):
                 raise Value.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
         elif self.getDataType(field)==Terms.translationEnum:
@@ -171,7 +171,8 @@ class Instance(dbmodels.Model):
     def _getValues(self, userInfo):
         vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True)).order_by('field', 'position');
         values = {}
-        vs = filter(lambda v: v.field not in Terms.securityFields or self.canAdminister(userInfo.authUser, userInfo.instance), vs)
+        # Do not allow a user to get security field data unless they can administer this instance.
+        vs = filter(lambda v: v.field not in Terms.securityFields or self._canAdminister(userInfo.authUser, userInfo.instance), vs)
         for v in vs:
             if v.field.id not in values:
                 values[v.field.id] = []
@@ -604,7 +605,7 @@ class Instance(dbmodels.Model):
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
     ## Otherwise, the user must have a permission, public access set to read or be the primary administrator.
-    def canFind(self, user):
+    def _canFind(self, user):
         publicAccessPrivileges = [Terms.findPrivilegeEnum, Terms.registerPrivilegeEnum, 
                                   Terms.readPrivilegeEnum, 
                                   Terms.writePrivilegeEnum]
@@ -615,7 +616,7 @@ class Instance(dbmodels.Model):
                                     Terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
-    def canRead(self, user):
+    def _canRead(self, user):
         publicAccessPrivileges = [Terms.readPrivilegeEnum, 
                                   Terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [Terms.readPrivilegeEnum.id, 
@@ -626,7 +627,7 @@ class Instance(dbmodels.Model):
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
-    def canRegister(self, user):
+    def _canRegister(self, user):
         publicAccessPrivileges = [Terms.registerPrivilegeEnum, 
                                   Terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [Terms.registerPrivilegeEnum.id,
@@ -637,7 +638,7 @@ class Instance(dbmodels.Model):
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
-    def canWrite(self, user):
+    def _canWrite(self, user):
         publicAccessPrivileges = [Terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [Terms.writePrivilegeEnum.id,
                                     Terms.administerPrivilegeEnum.id]
@@ -646,20 +647,20 @@ class Instance(dbmodels.Model):
     ## Instances can be administered if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has administer privilege on the instance.                        
-    def canAdminister(self, user, userInstance=None):
+    def _canAdminister(self, user, userInstance=None):
         publicAccessPrivileges = []
         accessRecordPrivilegeIDs = [Terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
             
     def checkWriteAccess(self, user, field=None):
         if self.typeID==Terms.accessRecord:
-            if not self.canAdminister(user):
+            if not self._canAdminister(user):
                 raise RuntimeError("administer permission failed")
         elif field in Terms.securityFields:
-            if not self.canAdminister(user):
+            if not self._canAdminister(user):
                 raise RuntimeError("administer permission failed")
         else:
-            if not self.canWrite(user):
+            if not self._canWrite(user):
                 raise RuntimeError("write permission failed")
     
     # Raises an error unless the specified user can write the specified value to the specified field of self.
@@ -670,8 +671,9 @@ class Instance(dbmodels.Model):
                 value = Instance.objects.get(pk=value, deleteTransaction__isnull=True)
             if isinstance(value, Instance) and \
                 value.typeID == Terms.user and \
-                value.canAdminister(user) and \
-                self.canRegister(user):
+                value._canAdminister(user) and \
+                field not in Terms.securityFields and \
+                self._canRegister(user):
                 return
         self.checkWriteAccess(user, field)
             
