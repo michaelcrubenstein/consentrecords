@@ -36,9 +36,9 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
             else:
                 if isinstance(d, dict) and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    newItem, newValue = create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
+                    create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
                 else:
-                    raise ValueError("Unrecognized type of data to save: %s" % str(d))
+                    raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
@@ -110,12 +110,12 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
     items = {}
 
     # See if there is an field of parent which has a value that points to a name which has a value in items.
-    vs = Value.objects.filter(fieldID=descriptor, deleteTransaction__isnull=True)\
+    vs = Value.objects.filter(field=descriptor, deleteTransaction__isnull=True)\
             .filter(instance__parent=parent)
             
     # See if there is an field of parent which has a value that points to a name which has a value in items.
-    vs = Value.objects.filter(fieldID=descriptor, deleteTransaction__isnull=True)\
-            .filter(instance__parent=parent,instance__referenceValues__fieldID=field)
+    vs = Value.objects.filter(field=descriptor, deleteTransaction__isnull=True)\
+            .filter(instance__parent=parent,instance__referenceValues__field=field)
             
     for v in vs:
         if v.stringValue in itemValues:

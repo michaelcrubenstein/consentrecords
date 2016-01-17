@@ -46,7 +46,7 @@ def _refineResults(resultSet, path, userInfo):
     if path[0] == '#':
         return Instance.objects.filter(pk=path[1]), path[2:]
     elif path[0] == '*':
-        return Instance.objects.filter(deletedinstance__isnull=True), path[1:]
+        return Instance.objects.filter(deleteTransaction__isnull=True), path[1:]
     elif path[0] == '[':
         params = path[1]
         if params[0] != '?':
@@ -54,7 +54,7 @@ def _refineResults(resultSet, path, userInfo):
         else:
             i = None
         if len(params) == 1:
-            f = resultSet.filter(value__fieldID=i, value__deleteTransaction__isnull=True)
+            f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
         elif len(params) == 3 or (len(params) == 4 and params[2]==','):
             # Get a Q clause that compares either a single test value or a comma-separated list of test values
             # according to the specified symbol.
@@ -63,7 +63,7 @@ def _refineResults(resultSet, path, userInfo):
             # Need to add distinct after the tests to prevent duplicates if there is
             # more than one value of the instance that matches.
             if i:
-                f = resultSet.filter(stringText, value__fieldID=i,
+                f = resultSet.filter(stringText, value__field=i,
                                      value__deleteTransaction__isnull=True).distinct()
             else:
                 f = resultSet.filter(stringText,
@@ -74,7 +74,7 @@ def _refineResults(resultSet, path, userInfo):
     elif path[0] == '>':
         i = Terms.getInstance(path[1])
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
-                                    referenceValues__fieldID=i,
+                                    referenceValues__field=i,
                                     referenceValues__deleteTransaction__isnull=True)\
                             .order_by('parent', 'parentValue__position')
         return f, path[2:]         
@@ -104,13 +104,13 @@ def _refineResults(resultSet, path, userInfo):
                 params = path[3][1]
                 i = Terms.getInstance(params[0])
                 if len(params) == 1:
-                    f = resultSet.filter(~(Q(value__fieldID=i)&Q(value__deleteTransaction__isnull=True)))
+                    f = resultSet.filter(~(Q(value__field=i)&Q(value__deleteTransaction__isnull=True)))
                     return f, path[4:]
                 elif len(params) == 3:
                     symbol = params[1]
                     testValue = params[2]
                     stringText=_getQClause(symbol, testValue)
-                    f = resultSet.filter(~(Q(value__fieldID=i)&
+                    f = resultSet.filter(~(Q(value__field=i)&
                                            Q(value__deleteTransaction__isnull=True)&
                                            stringText))
                     return f, path[4:]
@@ -124,15 +124,15 @@ def _refineResults(resultSet, path, userInfo):
         if path[1][0] == ',':
             t = map(Terms.getInstance, path[1][1])
             f = Instance.objects.filter(typeID__in=t,
-                                        deletedinstance__isnull=True)
+                                        deleteTransaction__isnull=True)
         else:
             t = Terms.getInstance(path[1][0])
             f = Instance.objects.filter(typeID=t,
-                                        deletedinstance__isnull=True)
+                                        deleteTransaction__isnull=True)
         return f, path[2:]
     else:   # Path[0] is a typeID.
         i = Terms.getInstance(path[0])
-        f = Instance.objects.filter(typeID=i, deletedinstance__isnull=True)
+        f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
         return f, path[1:]
 
 def _tokenize(path):
