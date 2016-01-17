@@ -36,7 +36,7 @@ if __name__ == "__main__":
         
         a = pathparser.tokenize('Organization')
         uuObjects = pathparser.selectAllObjects(path=a, userInfo=UserInfo(user))
-        uuObjects = list(filter(lambda i: not i.value_set.filter(fieldID=Terms.publicAccess,deletedvalue__isnull=True).exists(), uuObjects))
+        uuObjects = list(filter(lambda i: not i.value_set.filter(field=Terms.publicAccess,deletedvalue__isnull=True).exists(), uuObjects))
         print("%s organizations with missing public access values" % len(uuObjects))
 
         for i in uuObjects:

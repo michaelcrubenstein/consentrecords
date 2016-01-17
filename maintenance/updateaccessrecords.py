@@ -31,7 +31,7 @@ if __name__ == "__main__":
         Terms.initialize(transactionState)
         
         f = Instance.objects.filter(accessrecord__isnull=True,
-                                    typeID__value__fieldID=Terms.defaultAccess,
+                                    typeID__value__field=Terms.defaultAccess,
                                     typeID__value__deletedvalue__isnull=True,
                                     deleteTransaction__isnull=True)
                                     
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         AccessRecord.objects.bulk_create([AccessRecord(id=i, source=i) for i in f])
         
         f = Instance.objects.filter(accessrecord__isnull=True,
-                                    value__fieldID=Terms.specialAccess,
+                                    value__field=Terms.specialAccess,
                                     value__deleteTransaction__isnull=True,
                                     deletedinstance__isnull=True)
                                     

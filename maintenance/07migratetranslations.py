@@ -28,23 +28,23 @@ if __name__ == "__main__":
         Terms.initialize(transactionState)
         
         f = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True,
-                                    value__fieldID=Terms.dataType,
+                                    value__field=Terms.dataType,
                                     value__referenceValue=Terms.objectEnum,
                                     value__deleteTransaction__isnull=True)
                                     
-        f = f.filter(value__fieldID=Terms.ofKind,
+        f = f.filter(value__field=Terms.ofKind,
                      value__referenceValue=Terms.translation,
                      value__deleteTransaction__isnull=True).distinct()
                      
         # print([[str(i.parent.parent), i] for i in f])
         
         for field in f:
-            dataType = field.value_set.get(fieldID=Terms.dataType,
+            dataType = field.value_set.get(field=Terms.dataType,
                                               referenceValue=Terms.objectEnum,
                                               deleteTransaction__isnull=True)
             dataType.markAsDeleted(transactionState)
             field.addReferenceValue(Terms.dataType, Terms.translationEnum, 0, transactionState)
-            ofKind = field.value_set.get(fieldID=Terms.ofKind,
+            ofKind = field.value_set.get(field=Terms.ofKind,
                                             referenceValue=Terms.translation,
                                             deleteTransaction__isnull=True)
             ofKind.markAsDeleted(transactionState)
@@ -52,12 +52,12 @@ if __name__ == "__main__":
                      
         g = Instance.objects.filter(typeID=Terms.translation,
                                 deleteTransaction__isnull=True)
-        # print([{"parent": i.parent, "text": i.value_set.get(deleteTranslation__isnull=True, fieldID=Terms.text).stringValue} for g in f])
+        # print([{"parent": i.parent, "text": i.value_set.get(deleteTranslation__isnull=True, field=Terms.text).stringValue} for g in f])
         for t in g:
-            for v in t.value_set.filter(fieldID=Terms.text, deleteTranslation__isnull=True):
+            for v in t.value_set.filter(field=Terms.text, deleteTranslation__isnull=True):
                 p = t.parent
                 text = v.stringValue
-                field = t.parentValue.fieldID
+                field = t.parentValue.field
                 position = t.parentValue.position
                 t.parentValue.deepDelete(transactionState)
                 p.addTranslationValue(field, {"text": text, "languageCode": "en"}, position, transactionState)

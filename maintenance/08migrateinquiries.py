@@ -26,13 +26,13 @@ if __name__ == "__main__":
         Terms.initialize(transactionState)
 
         f = Instance.objects.filter(typeID=Terms.getNamedInstance('Inquiry'), deleteTransaction__isnull=True,
-                                    value__fieldID=Terms.email,
+                                    value__field=Terms.email,
                                     value__deleteTransaction__isnull=True)
 
         print ("Inquiry Count: %s" % f.count())
         userInfo = UserInfo(user)
         for inquiry in f:
-            email = inquiry.value_set.get(fieldID=Terms.email,
+            email = inquiry.value_set.get(field=Terms.email,
                                         deleteTransaction__isnull=True)
             email.markAsDeleted(transactionState)
             path = '_user[_email="%s"]' % email.stringValue
