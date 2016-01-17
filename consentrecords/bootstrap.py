@@ -41,6 +41,7 @@ def _addEnumerators(container, enumerationNames, transactionState):
             logger.error("Adding enumerator: %s to container %s" % (name, str(container)))
             item, newValue = instancecreator.create(Terms.enumerator, container, Terms.enumerator, -1, None, nameLists, transactionState)
             item.addStringValue(Terms.name, name, 0, transactionState)
+            item.cacheDescription(nameLists)
 
 def createConfigurations(container, itemValues, transactionState):
     return instancecreator.createMissingInstances(container, Terms.configuration, Terms.configuration, Terms.name, itemValues, transactionState)
@@ -69,6 +70,15 @@ def createDefaultAccesses(transactionState):
     
 def createSpecialAccesses(transactionState):
     _addEnumerators(Terms.specialAccess, [TermNames.custom], transactionState)
+    
+def createPrivileges(transactionState):
+    _addEnumerators(Terms.privilege, 
+                    [TermNames.findPrivilege, 
+                     TermNames.readPrivilege, 
+                     TermNames.registerPrivilege, 
+                     TermNames.writePrivilege, 
+                     TermNames.administerPrivilege], 
+                    transactionState)
     
 def createEnumeratorConfiguration(transactionState):
     configurationValues = [_bootstrapName];
@@ -238,6 +248,7 @@ def initializeFacts(transactionState):
     createBooleans(transactionState)
     createDefaultAccesses(transactionState)
     createSpecialAccesses(transactionState)
+    createPrivileges(transactionState)
     createEnumeratorConfiguration(transactionState)
     createBooleanConfiguration(transactionState)
     createUUNameConfiguration(transactionState)
