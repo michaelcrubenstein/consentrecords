@@ -432,6 +432,9 @@ class Instance(dbmodels.Model):
 
     def deepDelete(self, transactionState):
         queue = [self]
+        
+        AccessRecord.objects.filter(pk=self).delete()
+        
         self.deleteTransaction = transactionState.transaction
         self.save()
         while len(queue) > 0:
@@ -440,6 +443,10 @@ class Instance(dbmodels.Model):
             instances = next.children.filter(deleteTransaction__isnull=True).only('id')
             values = next.value_set.filter(deleteTransaction__isnull=True).only('id')
             queue.extend(instances)
+            
+            # Delete associated access records before marking the instances as deleted.
+            AccessRecord.objects.filter(id__in=instances).delete()
+            
             instances.update(deleteTransaction=transactionState.transaction)
             values.update(deleteTransaction=transactionState.transaction)
 
