@@ -2496,7 +2496,7 @@
 				
 						var centerButton = navContainer.appendTitle("Record Inquiry");
 
-						var searchBar = sitePanel.appendSearchBar(show_users);
+						var searchBar = addInquiryPanelDiv.appendSearchBar(show_users);
 
 						var panel2Div = addInquiryPanelDiv.appendScrollArea();
 						panel2Div.appendAlertContainer();
@@ -2545,11 +2545,11 @@
 																	inquiryCell.addObjectValue(pickedUser,
 																						   function(newData)
 																						   {
-																								bootstrap_alert.success(inquiryInput.node().value + 
+																								bootstrap_alert.success(pickedUser.getDescription() + 
 																									  " inquiry added to " + 
 																									  session.getDescription(),
 																									  ".alert-container");
-																								hidePanelRight($(_thisButton).parents(".site-panel")[0], false);
+																								unblockClick();
 																						   },
 																						   syncFailFunction);
 																},
@@ -2565,7 +2565,7 @@
 											.on("click", function(user) {
 												if (prepareClick())
 												{
-													show_user(user, sitePanel.node());
+													show_user(user, addInquiryPanelDiv.node());
 												}
 												d3.event.preventDefault();
 											});
