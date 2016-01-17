@@ -1268,7 +1268,11 @@ cr.ObjectValue.prototype.checkCells = function(fields, successFunction, failFunc
 			function(json)
 			{
 				if (json.success) {
-					_this.importCells(json.data[0].cells);
+					/* If the data length is 0, then this item can not be read. */
+					if (json.data.length > 0)
+						_this.importCells(json.data[0].cells);
+					else
+						_this.importCells([]);
 					_this.isDataLoaded = true;
 					successFunction();
 				}

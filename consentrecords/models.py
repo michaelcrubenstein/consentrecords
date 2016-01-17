@@ -475,7 +475,7 @@ class Instance(dbmodels.Model):
         elif not a:
             return b
                 
-        privileges = [Terms.findPrivilegeEnum, Terms.readPrivilegeEnum,
+        privileges = [Terms.findPrivilegeEnum, Terms.readPrivilegeEnum, Terms.registerPrivilegeEnum, 
                       Terms.writePrivilegeEnum, Terms.administerPrivilegeEnum]
                       
         aIndex = privileges.index(a)
@@ -564,7 +564,7 @@ class Instance(dbmodels.Model):
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def findFilter(self, f):
-        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id,
+        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id, 
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
         return self._securityFilter(f, privilegeIDs)
@@ -582,90 +582,74 @@ class Instance(dbmodels.Model):
         
         return self._securityFilter(f, privilegeIDs, accessRecordOptional=False)
     
+    def _canUse(self, user, publicAccessPrivileges, accessRecordPrivilegeIDs):
+        if user.is_staff:
+            return True
+
+        userInstance = Instance.getUserInstance(user)
+        if user.is_authenticated and \
+           userInstance.isPrimaryAdministrator(self):
+            return True
+                            
+        try:
+            return self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
+                                                         referenceValue__in=publicAccessPrivileges,
+                                                         deleteTransaction__isnull=True).exists() or \
+                   self.accessrecord.source.children.filter(typeID=Terms.accessRecord, 
+                        value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
+                        .exists()
+        except AccessRecord.DoesNotExist:
+            return False
+
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
     ## Otherwise, the user must have a permission, public access set to read or be the primary administrator.
     def canFind(self, user):
-        if user.is_staff:
-            return True
-
-        userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated and \
-           userInstance.isPrimaryAdministrator(self):
-            return True
-                            
-        try:
-            return self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
-                                                         referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum, Terms.writePrivilegeEnum],
-                                                         deleteTransaction__isnull=True).exists() or \
-                   self.accessrecord.source.filter(children__typeID=Terms.accessRecord, 
-                        children__value__in=userInstance._getPrivilegeValues([Terms.findPrivilegeEnum.id, 
-                                                                              Terms.readPrivilegeEnum.id, 
-                                                                              Terms.writePrivilegeEnum.id, 
-                                                                              Terms.administerPrivilegeEnum.id]))\
-                        .exists()
-        except AccessRecord.DoesNotExist:
-            return False
+        publicAccessPrivileges = [Terms.findPrivilegeEnum, Terms.registerPrivilegeEnum, 
+                                  Terms.readPrivilegeEnum, 
+                                  Terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [Terms.findPrivilegeEnum.id,
+                                    Terms.registerPrivilegeEnum.id,
+                                    Terms.readPrivilegeEnum.id, 
+                                    Terms.writePrivilegeEnum.id, 
+                                    Terms.administerPrivilegeEnum.id]
+        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
     def canRead(self, user):
-        if user.is_staff:
-            return True
-
-        userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated and \
-           userInstance.isPrimaryAdministrator(self):
-            return True
-                            
-        try:
-            return self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
-                                                         referenceValue__in=[Terms.readPrivilegeEnum, Terms.writePrivilegeEnum],
-                                                         deleteTransaction__isnull=True).exists() or \
-                   self.accessrecord.source.filter(children__typeID=Terms.accessRecord, 
-                        children__value__in=userInstance._getPrivilegeValues([Terms.readPrivilegeEnum.id, Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]))\
-                        .exists()
-        except AccessRecord.DoesNotExist:
-            return False
+        publicAccessPrivileges = [Terms.readPrivilegeEnum, 
+                                  Terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [Terms.readPrivilegeEnum.id, 
+                                    Terms.writePrivilegeEnum.id, 
+                                    Terms.administerPrivilegeEnum.id]
+        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
-    def canWrite(self, user):
-        if user.is_staff:
-            return True
+    def canRegister(self, user):
+        publicAccessPrivileges = [Terms.registerPrivilegeEnum, 
+                                  Terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [Terms.registerPrivilegeEnum.id,
+                                    Terms.writePrivilegeEnum.id,
+                                    Terms.administerPrivilegeEnum.id]
+        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
-        userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated and \
-           userInstance.isPrimaryAdministrator(self):
-            return True
-            
-        try:
-            return self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
-                                                         referenceValue=Terms.writePrivilegeEnum,
-                                                         deleteTransaction__isnull=True).exists() or \
-                   self.accessrecord.source.children.filter(typeID=Terms.accessRecord, 
-                value__in=userInstance._getPrivilegeValues([Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]))\
-                .exists()
-        except AccessRecord.DoesNotExist:
-            return False
+    ## Instances can be written if the specified user is a super user or the user is authenticated, the
+    ## current instance has an access record and either the user is the primary administrator of the instance
+    ## or the user has either write or administer privilege on the instance.                        
+    def canWrite(self, user):
+        publicAccessPrivileges = [Terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [Terms.writePrivilegeEnum.id,
+                                    Terms.administerPrivilegeEnum.id]
+        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
     ## Instances can be administered if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has administer privilege on the instance.                        
     def canAdminister(self, user, userInstance=None):
-        if user.is_staff:
-            return True
-
-        userInstance = userInstance or Instance.getUserInstance(user)
-        if user.is_authenticated and \
-           userInstance.isPrimaryAdministrator(self):
-            return True
-                
-        try:
-            return self.accessrecord.source.children.filter(typeID=Terms.accessRecord, 
-                value__in=userInstance._getPrivilegeValues([Terms.administerPrivilegeEnum.id]))\
-                .exists()
-        except AccessRecord.DoesNotExist:
-            return False
+        publicAccessPrivileges = []
+        accessRecordPrivilegeIDs = [Terms.administerPrivilegeEnum.id]
+        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
             
     def checkWriteAccess(self, user, field=None):
         if self.typeID==Terms.accessRecord:
@@ -677,6 +661,19 @@ class Instance(dbmodels.Model):
         else:
             if not self.canWrite(user):
                 raise RuntimeError("write permission failed")
+    
+    # Raises an error unless the specified user can write the specified value to the specified field of self.
+    # This handles the special case of register permission if the value is a user.
+    def checkWriteValueAccess(self, user, field, value):
+        if value:
+            if isinstance(value, str) and Terms.isUUID(value):
+                value = Instance.objects.get(pk=value, deleteTransaction__isnull=True)
+            if isinstance(value, Instance) and \
+                value.typeID == Terms.user and \
+                value.canAdminister(user) and \
+                self.canRegister(user):
+                return
+        self.checkWriteAccess(user, field)
             
     def anonymousFindFilter(f):
         sources=Instance.objects.filter(\
@@ -714,7 +711,7 @@ class Instance(dbmodels.Model):
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def findValueFilter(self, f):
-        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id,
+        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
         return self.securityValueFilter(f, privilegeIDs)
@@ -841,7 +838,7 @@ class Value(dbmodels.Model):
         self.markAsDeleted(transactionState)
         
     def checkWriteAccess(self, user):
-        self.instance.checkWriteAccess(user, self.field)
+        self.instance.checkWriteValueAccess(user, self.field, self.referenceValue)
         
     def anonymousFindFilter(f):
         sources=Instance.objects.filter(\

@@ -208,6 +208,7 @@ class api:
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
                         if "value" in c:
+                            container.checkWriteValueAccess(user, oldValue.field, c["value"])
                             item = oldValue.updateValue(c["value"], transactionState)
                         else:
                             oldValue.deepDelete(transactionState)
@@ -216,10 +217,11 @@ class api:
                         container = Instance.objects.get(pk=c["containerUUID"])
 
                         field = Instance.objects.get(pk=c["fieldID"])
-                        container.checkWriteAccess(user, field)
-
                         newIndex = c["index"]
                         newValue = c["value"]
+
+                        container.checkWriteValueAccess(user, field, newValue)
+
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"])
                             propertyList = newValue
@@ -275,7 +277,7 @@ class api:
                 transactionState = TransactionState(user, timezoneoffset)
                 field = Instance.objects.get(pk=elementUUID)
                 container = Instance.objects.get(pk=containerUUID)
-                container.checkWriteAccess(user, field)
+                container.checkWriteValueAccess(user, field, valueUUID)
     
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
