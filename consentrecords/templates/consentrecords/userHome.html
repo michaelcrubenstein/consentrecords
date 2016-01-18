@@ -1286,6 +1286,101 @@
 			);
 		}
 		
+		function getNamedInstance(data, name)
+		{
+			for (i = 0; i < data.length; ++i)
+			{
+				var d = data[i];
+				if (d.getCell("_name").data[0].value === name)
+					return d;
+			}
+			return null;
+		}
+		
+		/* Returns a dictionary describing which privileges can be used to provide 
+			the capabilities of each privilege.
+		 */
+		function getValidPrivileges(enumerators, priv)
+		{
+			var administerValue = getNamedInstance(enumerators, "_administer");
+			var writeValue = getNamedInstance(enumerators, "_write");
+			var readValue = getNamedInstance(enumerators, "_read");
+			var findValue = getNamedInstance(enumerators, "_find");
+			var registerValue = getNamedInstance(enumerators, "_register");
+			
+			if (priv === findValue)
+				return [findValue, readValue, registerValue, writeValue, administerValue];
+			else if (priv === readValue)
+				return [readValue, writeValue, administerValue];
+			else if (priv === registerValue)
+				return [registerValue, writeValue, administerValue];
+			else if (priv === writeValue)
+				return [writeValue, administerValue];
+			else if (priv === administerValue)
+				return [administerValue];
+			else
+				return [];
+		}
+		
+		function addMissingAccess(source, privilege, target, cellName, done, fail)
+		{
+			var privilegePath = "_uuname[_uuname=_privilege]>enumerator";
+			crp.getData({path: privilegePath, 
+				done: function getPrivileges(enumerators)
+				{
+					var priv = getNamedInstance(enumerators, privilege);
+					var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getValueID(); });
+					cr.getData({path: "#" + source.getValueID() + '>"_access record"', 
+						done: function(accessRecords)
+						{
+							var a = accessRecords.filter(
+								function(ar) {
+									var privCell = ar.getCell("_privilege");
+									return privCell.data.some(
+										function(d) { 
+											return validPrivs.indexOf(d.getValueID()) >= 0; 
+										});
+								});
+							var b = a.filter(
+								function(ar) {
+									var groupCell = ar.getCell(cellName);
+									function hasTargetValueID(d)
+									{
+										return d.getValueID() === target.getValueID();
+									}
+									return groupCell.data.some(hasTargetValueID);
+								});
+							if (b.length > 0)
+								done();
+							else
+							{
+								var c = a.filter(
+									function(ar) {
+										var privCell = ar.getCell("_privilege");
+										return privCell.data.length === 1 &&
+											   privCell.data[0].getValueID() === priv.getValueID();
+									});
+								if (c.length > 0)
+								{
+									c[0].getCell(cellName).addObjectValue(target, done, fail);
+								}
+								else
+								{
+									// Create an instance of an access record with this accessor level
+									// and this user.
+									var field = source.getCell("_access record").field;
+									var initialData = {"_privilege": priv.getValueID() };
+									initialData[cellName] = target.getValueID();
+									cr.createInstance(field, source.getValueID(), initialData, done, fail);
+								}
+							}
+						},
+						fail: fail});
+				}, 
+				fail: fail});
+		}
+		
+		/* Create a panel to show the details of the session and allow the user to sign up. */
 		function showSessionDetails(session, service, container)
 		{
 			var organization = session.getValue("Organization");
@@ -1457,8 +1552,6 @@
 				{
 					if (newText)
 					{
-						// webSiteDiv.classed("cell unique view", true);
-	
 						var labelDiv = webSiteDiv.append("div")
 							.classed("more-info", true);
 						var link = labelDiv
@@ -1482,15 +1575,30 @@
 				
 				var addInquiry = function()
 				{
-					inquiryCell.addObjectValue(userInstance, 
-						   function(newData) { 
-								bootstrap_alert.success("You have signed up for " + 
-											  offering.getDescription() + "/" + session.getDescription() + "." +
-											  " Look out for a notice when you are enrolled.",
-											  ".alert-container");
-								checkInquiryFunction([newData]); 
+					groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
+					cr.selectAll({path: groupPath,
+						done: function(groupPaths)
+							{
+								inquiryCell.addObjectValue(userInstance, 
+									   function(newInquiry) { 
+									   		function done()
+									   		{
+												bootstrap_alert.success("You have signed up for " + 
+															  offering.getDescription() + "/" + session.getDescription() + "." +
+															  " Look out for a notice when you are enrolled.",
+															  ".alert-container");
+												checkInquiryFunction([newInquiry]); 
+											};
+											if (groupPaths.length == 0)
+												done();
+											else {
+												addMissingAccess(userInstance, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+											}
+								},
+								asyncFailFunction);
 							},
-							asyncFailFunction);
+						fail: asyncFailFunction 
+						});
 				}
 				
 				var tryAddInquiry = function()
