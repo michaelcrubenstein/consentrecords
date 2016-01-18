@@ -2275,7 +2275,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 				}
 				else if (d.getValueID())
 				{
-					if (oldData.cell.container && oldData.cell.container.getValueID())	/* In this case, we are adding an object to an existing object. */
+					if (oldData.cell.parent && oldData.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 					{
 						oldData.cell.addObjectValue(d, successFunction, syncFailFunction);
 					}

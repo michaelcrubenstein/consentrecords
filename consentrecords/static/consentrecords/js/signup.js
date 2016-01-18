@@ -410,8 +410,6 @@ var Signup = (function () {
 			crp.getData({path: '_uuname[_uuname=_privilege]', 
 						 done: function(newInstances)
 							{
-								var readEnumerator;
-								var findEnumerator;
 								var enumeratorCell = newInstances[0].getCell('enumerator');
 								for (var i = 0; i < enumeratorCell.data.length; ++i)
 								{
