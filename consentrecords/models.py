@@ -806,7 +806,20 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, language=None):
-        description = Description.objects.get(instance=self.referenceValue, language__isnull=True)
+        if not language:
+            description = Description.objects.get(instance=self.referenceValue, language__isnull=True)
+            if not description:
+                description = Description.objects.get(instance=self.referenceValue, language="en")
+        else:
+            description = Description.objects.get(instance=self.referenceValue, language=language)
+            
+        if not description:
+            f = Description.objects.filter(instance=self.referenceValue)
+            if f.count():
+                description = f[0]
+            else:
+                raise RuntimeError("no description for instance")
+            
         return { "id": self.id,
               "value": {"id" : self.referenceValue.id, "description": description.text },
               "position": self.position }
