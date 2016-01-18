@@ -110,7 +110,6 @@ function _appendTranslationData(cell, initialData)
 		initialData[cell.field.id] = newData;
 }
 var _stringFunctions = {
-		isEmpty: function(d) { return !d.value; },
 		clearValue: function(d) { d.value = null; },
 		setupValue: _setupStringValue,
 		newValue: _newStringValue,
@@ -366,7 +365,6 @@ var cr = {
 		"_datestamp (day optional)": _stringFunctions,
 		_time: _stringFunctions,
 		_translation: {
-			isEmpty: function(d) { return !d.value; },
 			clearValue: function(d) { d.value = null; d.languageCode = null; },
 			setupValue: _setupStringValue,
 			newValue: _newTranslationValue,
@@ -375,10 +373,6 @@ var cr = {
 			appendData: _appendTranslationData,
 		},
 		_object: {
-			isEmpty: function(d)
-			{
-				return !d.value.id && !d.value.cells;
-			},
 			clearValue: function(d)
 			{
 				d.value = {id: null, description: "None" };
@@ -999,11 +993,9 @@ cr.Cell.prototype.setup = function (objectData)
 
 cr.Cell.prototype.isEmpty = function()
 {
-	var isEmpty = cr.dataTypes[this.field.dataType].isEmpty;
 	for (var i = 0; i < this.data.length; ++i)
 	{
-		var d = this.data[i];
-		if (!isEmpty(d))
+		if (!this.data[i].isEmpty())
 			return false;
 	}
 	return true;
@@ -1021,11 +1013,10 @@ cr.Cell.prototype.addValue = function(newData)
 	if (this.field.dataType != "_object")
 		throw "addValue only callable for object dataType cells";
 		
-	var isEmpty = cr.dataTypes[this.field.dataType].isEmpty;
 	for (var i = 0; i < this.data.length; ++i)
 	{
 		var oldData = this.data[i];
-		if (!oldData.id && isEmpty(oldData)) {
+		if (!oldData.id && oldData.isEmpty()) {
 			oldData.completeUpdate(newData);
 			return;
 		}
@@ -1110,9 +1101,17 @@ cr.CellValue.prototype.completeUpdate = function(newData)
 	this.id = newData.id;
 	this.completeUpdateValue(newData);
 }
+cr.CellValue.prototype.isEmpty = function()
+{
+	return this.value === null || this.value === undefined || this.value === "";
+}
 
 cr.TranslationValue.prototype = new cr.CellValue();
 cr.TranslationValue.prototype.getDescription = function() { return this.value.text; };
+cr.TranslationValue.prototype.isEmpty = function()
+{
+	return this.value.text === null && this.value.text === undefined && this.value.text === "";
+}
 
 cr.ObjectValue.prototype = new cr.CellValue();
 cr.ObjectValue.prototype.getDescription = function() { return this.value.description; };
@@ -1123,6 +1122,10 @@ cr.ObjectValue.prototype.completeUpdateValue = function(newData)
 		re-accessed from the server. This handles the case where a value has been added. */
 	this.value = {id: newData.getValueID(), description: newData.getDescription()};
 	this.triggerEvent("dataChanged.cr", this);
+}
+cr.ObjectValue.prototype.isEmpty = function()
+{
+	return !this.value.id && !this.value.cells;
 }
 
 cr.ObjectValue.prototype.calculateDescription = function()
@@ -1138,10 +1141,9 @@ cr.ObjectValue.prototype.calculateDescription = function()
 			if (cell.field.descriptorType == "_by text")
 			{
 				var cellNames = [];
-				var dt = cr.dataTypes[cell.field.dataType];
 				for (var j = 0; j < cell.data.length; ++j)
 				{
-					if (!dt.isEmpty(cell.data[j]))
+					if (!cell.data[j].isEmpty())
 						cellNames.push(cell.data[j].getDescription());
 				}
 				nameArray.push(cellNames.join(separator='/'));

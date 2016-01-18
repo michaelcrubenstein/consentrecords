@@ -167,7 +167,7 @@ function pickAccessor(header, previousPanelNode, successFunction)
 						
 			function show_user(user, previousPanelNode)
 			{
-				showViewOnlyObjectPanel(user, user.cell, undefined, previousPanelNode);
+				showViewOnlyObjectPanel(user, previousPanelNode);
 			}
 	
 			var symbol;
@@ -256,7 +256,7 @@ function addAccessor(userInstance, accessorLevel)
 					var newValue = userCell.data[0];
 					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newValue);
+					getOnValueAddedFunction(true, true, showViewObjectPanel).call(itemsDiv, null, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 
@@ -273,7 +273,7 @@ function addAccessor(userInstance, accessorLevel)
 				{
 					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					_getOnValueAddedFunction(previousPanelNode, accessRecordCell, userInstance.getValueID(), true, true, showViewObjectPanel, revealPanelLeft).call(itemsDiv, null, newValue);
+					getOnValueAddedFunction(true, true, showViewObjectPanel).call(itemsDiv, null, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 

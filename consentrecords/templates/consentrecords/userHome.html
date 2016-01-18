@@ -1882,7 +1882,7 @@
 				}
 				
 				var sitePanel = new SitePanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData, containerCell), "organization background-gradient-panel");
+											objectData, getViewPanelHeader(objectData), "organization background-gradient-panel");
 
 				var navContainer = sitePanel.appendNavContainer();
 
@@ -1895,7 +1895,7 @@
 				var headerDiv = panel2Div.appendHeader();
 				objectData.addTarget("dataChanged.cr", headerDiv.node());
 				$(headerDiv.node()).on("dataChanged.cr", function(e) {
-						d3.select(this).text(getViewPanelHeader(objectData, containerCell));
+						d3.select(this).text(getViewPanelHeader(objectData));
 					});
 
 				var alertContainer = panel2Div.appendAlertContainer();
@@ -2206,7 +2206,7 @@
 		
 		function show_user(user, previousPanelNode)
 		{
-			showViewOnlyObjectPanel(user, user.cell, undefined, previousPanelNode);
+			showViewOnlyObjectPanel(user, previousPanelNode);
 		}
 		
 		/*
@@ -2390,7 +2390,7 @@
 											if (!experience.getValueID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
-											showEditObjectPanel(experience, experience.cell, experiences.getValueID(), previousPanel, revealPanelUp);
+											showEditObjectPanel(experience, previousPanel, revealPanelUp);
 										},
 										function()
 										{
@@ -2402,7 +2402,7 @@
 													var userValue = cr.dataTypes._object.copyValue(user);
 													userCell.addValue(userValue);
 													
-													showEditObjectPanel(experience, experience.cell, experiences.getValueID(), previousPanel, revealPanelUp);
+													showEditObjectPanel(experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
 										},
@@ -2624,7 +2624,7 @@
 					else
 					{
 						var inquiries = inquiriesInstances[0];
-						showEditObjectPanel(inquiries, inquiriesCell, undefined, previousPanel, revealPanelLeft);
+						showEditObjectPanel(inquiries, previousPanel, revealPanelLeft);
 					}
 				});
 		}
@@ -2641,7 +2641,7 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, enrollmentsCell, undefined, previousPanel, revealPanelLeft);
+						showEditObjectPanel(enrollmentsInstance, previousPanel, revealPanelLeft);
 					}
 				}
 				);
@@ -2742,7 +2742,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, listCell, undefined, currentPanelNode, revealPanelLeft);
+						showEditObjectPanel(instance, currentPanelNode, revealPanelLeft);
 					}
 				});
 		}
