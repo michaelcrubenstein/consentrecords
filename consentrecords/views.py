@@ -26,19 +26,7 @@ from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
 def home(request):
-    return userHome(request)
-
-def anonymousHome(request):
-    LogRecord.emit(request.user, 'consentrecords/anonymousHome', '')
-    
-    template = loader.get_template('consentrecords/anonymousHome.html')
-    context = RequestContext(request, {
-    })
-        
-    return HttpResponse(template.render(context))
-
-def userHome(request):
-    LogRecord.emit(request.user, 'consentrecords/userHome', '')
+    LogRecord.emit(request.user, 'consentrecords/home', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
