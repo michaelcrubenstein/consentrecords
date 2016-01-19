@@ -1514,7 +1514,7 @@
 						var divs = appendItems(itemsDiv, serviceCell.data);
 						var buttons = divs.append("div").classed("multi-line-item", true);
 						appendButtonDescriptions(buttons, null);
-						itemsDiv.classed("border-below", true);
+						cellDiv.append("div").classed("cell-border-below", true);
 					}
 				},
 				asyncFailFunction);
