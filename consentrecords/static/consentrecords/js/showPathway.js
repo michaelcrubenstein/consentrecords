@@ -315,9 +315,11 @@ var Pathway = (function () {
 	Pathway.prototype.otherColor = "#bbbbbb";
 	Pathway.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 	Pathway.prototype.textDetailRightMargin = 10; /* textRightMargin; */
-	Pathway.prototype.detailTextSpacing = 2;
+	Pathway.prototype.detailTextSpacing = 2;		/* The space between lines of text in the detail box. */
 	Pathway.prototype.pathBackground = "white";
+	Pathway.prototype.showDetailIconWidth = 18;
 	
+	Pathway.prototype.userInstance = null;
 	Pathway.prototype.allExperiences = [];
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
@@ -333,6 +335,7 @@ var Pathway = (function () {
 	
 	Pathway.prototype.flagDown = false;
 	Pathway.prototype.flagHeight = 0;
+	Pathway.prototype.flagWidth = 0;
 	
 	Pathway.prototype.minDate = null;
 	Pathway.prototype.maxDate = null;
@@ -378,12 +381,12 @@ var Pathway = (function () {
 		return days * this.dayHeight;
 	}
 
-	Pathway.prototype.getExperiencePath = function(g, experience, flagWidth)
+	Pathway.prototype.getExperiencePath = function(g, experience)
 	{
 		var flagX = parseFloat(g.getAttribute("flagX"));
 		var h = this.getExperienceHeight(experience);
 		var x1 = 0;
-		var x2 = x1 + flagX + flagWidth;
+		var x2 = x1 + flagX + this.flagWidth;
 		var x3 = x1 + flagX;
 		var x4 = x1 + this.trunkWidth;
 		var y1 = 0;
@@ -529,8 +532,8 @@ var Pathway = (function () {
 			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
 		 */
 		var flagColumnWidth = (containerWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
-		var flagWidth = flagColumnWidth - this.flagSpacing;
-		var textWidth = flagWidth - this.textLeftMargin - this.textRightMargin;
+		this.flagWidth = flagColumnWidth - this.flagSpacing;
+		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
 		if (textWidth < 0)
 			textWidth = 0;
 		
@@ -554,6 +557,9 @@ var Pathway = (function () {
 			this.defs.append('clipPath')
 				.attr('id', 'id_detailClipPath')
 				.append('rect');
+			this.defs.append('clipPath')
+				.attr('id', 'id_detailIconClipPath')
+				.append('rect');
 
 			/* Calculate the x offset of the flag for each group */
 			for (var j = 0; j < this.flagColumns.length; ++j)
@@ -576,7 +582,7 @@ var Pathway = (function () {
 			
 			/* Calculate the path for each containing group. */
 			g.selectAll('path').attr("d", function(experience) {
-					return _thisPathway.getExperiencePath(this.parentNode, experience, flagWidth);
+					return _thisPathway.getExperiencePath(this.parentNode, experience);
 				});
 		}
 
@@ -607,7 +613,7 @@ var Pathway = (function () {
 	
 	Pathway.prototype.setDateRange = function()
 	{
-		var birthday = userInstance.getValue("Birthday");
+		var birthday = this.userInstance.getValue("Birthday");
 		if (birthday && birthday.value)
 			this.minDate = new Date(birthday.value);
 		else
@@ -719,6 +725,11 @@ var Pathway = (function () {
 			.attr("width", "100")
 			.attr("height", "1")
 			.attr('clip-path', 'url(#id_detailClipPath)');
+		var detailChevron = this.detailGroup.append('image')
+			.attr("width", this.showDetailIconWidth)
+			.attr("height", this.showDetailIconWidth)
+			.attr("xlink:href", rightChevronPath)
+			.attr('clip-path', 'url(#id_detailIconClipPath)')
 
 		var lines = [];
 	
@@ -762,29 +773,36 @@ var Pathway = (function () {
 		
 		var textBox = detailText.node().getBBox();
 		var containerWidth = $(this.containerDiv).width();
-		var maxX = containerWidth - this.flagsRightMargin - textBox.width - (this.textDetailLeftMargin * 2);
+		var maxX = containerWidth - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
 		if (x > maxX)
 			x = maxX;
+		var rectWidth = textBox.width + this.showDetailIconWidth + (this.textDetailLeftMargin * 3);
+		if (rectWidth < this.flagWidth)
+		{
+			rectWidth = this.flagWidth;
+			textBox.width = rectWidth - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
+		}
+		var rectHeight = textBox.height + (this.detailTextSpacing * 2);
 			
 		this.detailGroup.attr("x", x)
 				 .attr("y", y)
 				 .attr("transform", "translate("+x + "," + y+")")
 				 .attr("height", 0);
-		detailBackRect.attr("width", textBox.width + (this.textDetailLeftMargin * 2))
+		detailBackRect.attr("width", rectWidth)
 					   .attr("height", 0)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y)
+					   .attr("y", textBox.y - this.detailTextSpacing)
 					   .transition()
 					   .duration(700)
-					   .attr("height", textBox.height + this.detailTextSpacing);
-		detailFrontRect.attr("width", textBox.width + (this.textDetailLeftMargin * 2))
+					   .attr("height", rectHeight);
+		detailFrontRect.attr("width", rectWidth)
 					   .attr("height", 0)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y)
+					   .attr("y", textBox.y - this.detailTextSpacing)
 					   .each(setColor)
 					   .transition()
 					   .duration(700)
-					   .attr("height", textBox.height + this.detailTextSpacing);
+					   .attr("height", rectHeight);
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
 		d3.select("#id_detailClipPath").selectAll('rect')
@@ -799,6 +817,19 @@ var Pathway = (function () {
 			.transition()
 			.duration(1000)
 			.attr("height", textBox.height);
+
+		d3.select("#id_detailIconClipPath").selectAll('rect')
+			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
+			.attr('y', textBox.y)
+			.attr('width', this.showDetailIconWidth)
+			.attr('height', 0)
+			.transition()
+			.attr('height', textBox.height)
+			.duration(700); 
+		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
+			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2)
+			.attr('height', this.showDetailIconWidth);
+			
 		this.flagDown = true;
 	}
 
@@ -812,10 +843,17 @@ var Pathway = (function () {
 				.attr("height", 0)
 				.each("end", function() {
 					_this.detailGroup.selectAll('text').remove();
+					/* Remove the image here instead of when the other clipPath ends
+						so that it is sure to be removed when the done method is called. 
+					 */
+					_this.detailGroup.selectAll('image').remove();
 					_this.flagDown = false;
 					if (done)
 						done();
 				});
+			d3.select("#id_detailIconClipPath").selectAll('rect')
+				.transition()
+				.attr("height", 0);
 			this.detailGroup.selectAll('rect')
 				.transition()
 				.attr("height", 0)
@@ -905,12 +943,13 @@ var Pathway = (function () {
 		}
 	}
 		
-	function Pathway(sitePanel, containerDiv, editable) {
+	function Pathway(userInstance, sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.flagDown = false;
 		this.sitePanel = sitePanel;
+		this.userInstance = userInstance;
 		
 		var container = d3.select(containerDiv);
 		
@@ -988,8 +1027,8 @@ var Pathway = (function () {
 									}
 								}
 
-								crp.pushCheckCells(userInstance, function() {
-										var m = userInstance.getValue("More Experiences");
+								crp.pushCheckCells(_thisPathway.userInstance, function() {
+										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
 											var path = "#" + m.getValueID() + '>"More Experience"';
@@ -1060,7 +1099,7 @@ var Pathway = (function () {
 			}
 		}
 	
-		var path = "#" + userInstance.getValueID() + '::reference(Experience)';
+		var path = "#" + this.userInstance.getValueID() + '::reference(Experience)';
 		cr.getData({path: path, 
 				   fields: ["parents"], 
 				   done: successFunction1, 
@@ -1666,43 +1705,6 @@ function setupPanel4(dots)
 	this.onReveal = next;
 }
 
-function setupPanel5(dots)
-{
-	var p = d3.select(this);
-	p.append('div')
-		.append('p').text("When did you start " + dots.offeringName + "?");
-	
-	var minYear = undefined;	
-	var birthday = userInstance.getValue("Birthday");
-	if (birthday && birthday.value)
-		minYear = parseInt(birthday.value.substr(0, 4));
-
-	dots.startDateInput = new DateInput(this, minYear);
-				
-	this.onReveal = null;
-}
-
-function setupPanel6(dots)
-{
-	var p = d3.select(this);
-	p.append('div')
-		.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
-
-	var minYear = undefined;
-	if (dots.startDateInput.year)
-		minYear = dots.startDateInput.year;
-	else
-	{
-		var birthday = userInstance.getValue("Birthday");
-		if (birthday && birthday.value)
-			minYear = parseInt(birthday.value.substr(0, 4));
-	}
-
-	dots.endDateInput = new DateInput(this, minYear)
-
-	this.onReveal = null;
-}
-
 function setupConfirmPanel(dots)
 {
 	var p = d3.select(this);
@@ -1770,7 +1772,7 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 
 		var hideSuccessFunction = function()
 			{
-				var moreExperiencesObject = userInstance.getValue("More Experiences");
+				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
 				
 				function successFunction3(newData)
 				{
@@ -1786,9 +1788,9 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 				{
 					if (newData != moreExperiencesObject)
 					{
-						var cell = userInstance.getCell("More Experiences");
+						var cell = pathway.userInstance.getCell("More Experiences");
 						cell.addValue(newData);
-						moreExperiencesObject = userInstance.getValue("More Experiences");
+						moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
 					}
 					
 					field = {ofKind: "More Experience", name: "More Experience"};
@@ -1845,7 +1847,7 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 				else
 				{
 					field = {ofKind: "More Experiences", name: "More Experiences"};
-					cr.createInstance(field, userInstance.getValueID(), [], successFunction2, syncFailFunction);
+					cr.createInstance(field, pathway.userInstance.getValueID(), [], successFunction2, syncFailFunction);
 				}
 			};
 
@@ -1854,6 +1856,43 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		
 		navContainer.appendTitle(header);
 		
+		function setupPanel5(dots)
+		{
+			var p = d3.select(this);
+			p.append('div')
+				.append('p').text("When did you start " + dots.offeringName + "?");
+	
+			var minYear = undefined;	
+			var birthday = pathway.userInstance.getValue("Birthday");
+			if (birthday && birthday.value)
+				minYear = parseInt(birthday.value.substr(0, 4));
+
+			dots.startDateInput = new DateInput(this, minYear);
+				
+			this.onReveal = null;
+		}
+
+		function setupPanel6(dots)
+		{
+			var p = d3.select(this);
+			p.append('div')
+				.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
+
+			var minYear = undefined;
+			if (dots.startDateInput.year)
+				minYear = dots.startDateInput.year;
+			else
+			{
+				var birthday = pathway.userInstance.getValue("Birthday");
+				if (birthday && birthday.value)
+					minYear = parseInt(birthday.value.substr(0, 4));
+			}
+
+			dots.endDateInput = new DateInput(this, minYear)
+
+			this.onReveal = null;
+		}
+
 		var p0 = d3.select(dots.nthPanel(0));
 		
 		setupPanel0(p0, dots);
@@ -1873,7 +1912,7 @@ var PathwayPanel = (function () {
 	PathwayPanel.prototype = new SitePanel();
 	PathwayPanel.prototype.pathway = null;
 	
-	function PathwayPanel(previousPanel) {
+	function PathwayPanel(userInstance, previousPanel) {
 		SitePanel.call(this, previousPanel, null, "My Pathway", "edit");
 		var navContainer = this.appendNavContainer();
 		
@@ -1898,7 +1937,7 @@ var PathwayPanel = (function () {
 		var panel2Div = this.appendScrollArea();
 		panel2Div.appendAlertContainer();
 		showPanelLeft(this.node());
-		this.pathway = new Pathway(this, panel2Div.node(), true);
+		this.pathway = new Pathway(userInstance, this, panel2Div.node(), true);
 	}
 	
 	return PathwayPanel;

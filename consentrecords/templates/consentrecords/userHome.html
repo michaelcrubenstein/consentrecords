@@ -654,7 +654,7 @@
 			var panel = $(this).parents(".site-panel")[0];
 			var done = function()
 			{
-				var pathway = new PathwayPanel(panel);
+				var pathway = new PathwayPanel(userInstance, panel);
 			}
 			
 			checkSignin.call(this, userInstance, panel, done);
