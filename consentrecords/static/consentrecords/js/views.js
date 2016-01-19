@@ -1369,6 +1369,57 @@ function getTextWidth(text, font) {
     return metrics.width;
 };
 
+var SiteNavContainer = (function() {
+	SiteNavContainer.prototype.div = undefined;
+	SiteNavContainer.prototype.sitePanel = undefined;
+	SiteNavContainer.prototype.objectData = undefined;
+	
+	SiteNavContainer.prototype.appendLeftButton = function()
+	{
+		return this.div.append("div").classed("left-link pull-left", true)
+				   .append("div") .classed("site-navbar-link site-active-text", true);
+	}
+	
+	SiteNavContainer.prototype.appendRightButton = function()
+	{
+		var firstChild = this.div.selectAll('div');
+		var rightChild;
+		if (firstChild.empty())
+		{
+			rightChild = this.div.append("div");
+		}
+		else
+		{
+			rightChild = this.div.insert("div", ":first-child");
+			firstChild.classed("pull-left", !this.div.selectAll('div.site-navbar-commands').empty());
+		}
+			
+		return rightChild.classed("right-link pull-right", true)
+				   .append("div") .classed("site-navbar-link site-active-text", true);
+	}
+	
+	SiteNavContainer.prototype.appendTitle = function(newTitle)
+	{
+		var h = this.div.append("div").classed("site-navbar-commands", true)
+				   .append("div").classed("site-title", true)
+				   .text(newTitle);
+		h.style("width", (getTextWidth(newTitle, h.style("font"))+1).toString() + "px")
+		this.div.selectAll('.left-link').classed('pull-left', true);
+		return h;
+	}
+	
+	function SiteNavContainer(sitePanel, objectData)
+	{
+		this.sitePanel = sitePanel;
+		this.objectData = objectData;
+		
+		this.div = sitePanel.panelDiv.append("nav").classed("always-visible", true)
+					.attr("role", "navigation");
+	}
+	
+	return SiteNavContainer;
+})();
+
 /* Creates a panel that sits atop the specified containerPanel in the same container. */
 var SitePanel = (function () {
 	SitePanel.prototype.panelDiv = undefined;
@@ -1433,44 +1484,7 @@ var SitePanel = (function () {
     
     SitePanel.prototype.appendNavContainer = function()
     {
-		var navContainer = this.panelDiv.append("nav").classed("always-visible", true)
-					.attr("role", "navigation");
-					
-		navContainer.appendLeftButton = function()
-		{
-			return this.append("div").classed("left-link pull-left", true)
-					   .append("div") .classed("site-navbar-link site-active-text", true);
-		}
-	
-		navContainer.appendRightButton = function()
-		{
-			var firstChild = this.selectAll('div');
-			var rightChild;
-			if (firstChild.empty())
-			{
-				rightChild = this.append("div");
-			}
-			else
-			{
-				rightChild = this.insert("div", ":first-child");
-				firstChild.classed("pull-left", !this.selectAll('div.site-navbar-commands').empty());
-			}
-				
-			return rightChild.classed("right-link pull-right", true)
-					   .append("div") .classed("site-navbar-link site-active-text", true);
-		}
-		
-		navContainer.appendTitle = function(newTitle)
-		{
-			var h = this.append("div").classed("site-navbar-commands", true)
-					   .append("div").classed("site-title", true)
-					   .text(newTitle);
-			h.style("width", (getTextWidth(newTitle, h.style("font"))+1).toString() + "px")
-			this.selectAll('.left-link').classed('pull-left', true);
-			return h;
-		}
-	
-		return navContainer;
+		return new SiteNavContainer(this);
     }
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
