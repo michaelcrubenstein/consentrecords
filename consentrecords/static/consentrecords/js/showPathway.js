@@ -298,6 +298,20 @@ function setColor(experience)
 	}
 }
 
+function _pickedOrCreatedValue(i, pickedName, createdName)
+{
+	var v = i.getValue(pickedName);
+	if (v && v.getValueID())
+		return v.getDescription();
+	else {
+		v = i.getValue(createdName);
+		if (v)
+			return v.value;
+		else
+			return undefined;
+	}
+}
+
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -774,30 +788,16 @@ var Pathway = (function () {
 
 		var lines = [];
 	
-		function pickedOrCreatedValue(i, pickedName, createdName)
-		{
-			var v = i.getValue(pickedName);
-			if (v && v.getValueID())
-				return v.getDescription();
-			else {
-				v = i.getValue(createdName);
-				if (v)
-					return v.value;
-				else
-					return undefined;
-			}
-		}
-	
 		var s;
-		s = pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+		s = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = pickedOrCreatedValue(experience, "Site", "User Entered Site");
+		s = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+		s = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
@@ -1174,7 +1174,7 @@ var Pathway = (function () {
 						{
 							showClickFeedback(this);
 		
-							showAddExperiencePanel(_thisPathway, null, sitePanel.node());
+							var newPanel = new AddExperiencePanel(_thisPathway, null, sitePanel.node());
 						}
 						d3.event.preventDefault();
 					})
@@ -1851,20 +1851,22 @@ function setupConfirmPanel(dots)
 /* 
 	objectData contains the MoreExperiences object.
  */
-function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
+var AddExperiencePanel = (function () {
+	AddExperiencePanel.prototype = new SitePanel();
+	
+	function AddExperiencePanel(pathway, objectData, previousPanelNode) {
 		var header = "Add Experience";
+		SitePanel.call(this, previousPanelNode, null, header, "edit new-experience-panel");
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit new-experience-panel");
+		var navContainer = this.appendNavContainer();
 
-		var navContainer = sitePanel.appendNavContainer();
-
-		var panel2Div = sitePanel.appendScrollArea()
+		var panel2Div = this.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
 		panel2Div.appendAlertContainer();
 		
-		var dots = new DotsNavigator(panel2Div, sitePanel, 8);	
+		var dots = new DotsNavigator(panel2Div, this, 8);	
 		dots.finalText = "Add";	
 
 		var hideSuccessFunction = function()
@@ -2001,9 +2003,12 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
-		showPanelUp(sitePanel.node());
+		showPanelUp(this.node());
 		dots.showDots();
-}
+	}
+	
+	return AddExperiencePanel;
+})();
 
 var PathwayPanel = (function () {
 	PathwayPanel.prototype = new SitePanel();
@@ -2025,7 +2030,7 @@ var PathwayPanel = (function () {
 				{
 					showClickFeedback(this);
 		
-					showAddExperiencePanel(_this.pathway, null, _this.node());
+					var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
 				}
 				d3.event.preventDefault();
 			});
@@ -2045,7 +2050,11 @@ var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype.experience = null;
 	
 	function ExperienceDetailPanel(experience, previousPanel) {
-		SitePanel.call(this, previousPanel, null, "Experience", "view");
+		var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+		var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+		var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+		
+		SitePanel.call(this, previousPanel, null, offering, "view session");
 		this.experience = experience;
 		
 		var navContainer = this.appendNavContainer();
@@ -2055,8 +2064,142 @@ var ExperienceDetailPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
+		var buttonDiv = navContainer.appendRightButton();
+		
 		var panel2Div = this.appendScrollArea();
+		panel2Div.appendHeader();
 		panel2Div.appendAlertContainer();
+		
+		var orgDiv = panel2Div.append("section");
+		orgDiv.classed("organization", true);
+
+		if (organization.length > 0)
+		{
+			var labelDiv = orgDiv.append("label")
+				.text(organization);
+		}
+
+		if (siteDescription.length > 0 && (siteDescription !== organization))
+		{
+			orgDiv.append('div')
+				.classed("address-line", true)
+				.text(siteDescription);
+		}
+		
+		var site = experience.getValue("Site");
+		if (site && site.getValueID())
+		{
+			crp.pushCheckCells(site, function()
+				{
+					var address = site.getValue("Address");
+					crp.pushCheckCells(address, function()
+					{
+						var streetCell = address.getCell("Street");
+						var cityCell = address.getCell("City");
+						var stateCell = address.getCell("State");
+						var zipCell = address.getCell("Zip Code");
+						if (streetCell)
+							$(streetCell.data).each(function() {
+								orgDiv.append('div')
+									.classed("address-line", true)
+									.text(this.value);
+							});
+						line = "";
+						if (cityCell && cityCell.data.length)
+							line += cityCell.data[0].value;
+						if (stateCell && stateCell.data.length)
+							line += ", " + stateCell.data[0].getDescription();
+						if (zipCell && zipCell.data.length && zipCell.data[0].value)
+							line += "  " + zipCell.data[0].value;
+						if (line.trim())
+							orgDiv.append('div')
+								.classed('address-line', true)
+								.text(line.trim());
+					},
+					function() {
+					});
+				},
+				function() { }
+			);
+		}
+		
+		function appendStringDatum(cellName)
+		{
+			var v = experience.getDatum(cellName);
+			if (v)
+			{
+				var deadlineDiv = panel2Div.append("section");
+				appendStringItem(deadlineDiv.node(), cellName, v);
+				return deadlineDiv;
+			}
+			else
+				return null;
+		}
+		
+		var firstDiv = null;
+		var nextDiv;
+		
+		firstDiv = appendStringDatum("Start Date");
+			
+		nextDiv = appendStringDatum("End Date");
+		if (!firstDiv)
+			firstDiv = nextDiv;
+
+		var cellDiv = panel2Div.append("section")
+			.classed("cell", true);
+		
+		var offering = experience.getValue("Offering");
+		var offeringServiceCell = ((offering && offering.getValueID()) ? offering.getCell("Service") : null);
+		var serviceCell = experience.getCell("Service");
+		var userEnteredServiceCell = experience.getCell("User Entered Service");
+		var numServices = 0;
+		if (serviceCell)
+			numServices += serviceCell.data.length;
+		if (userEnteredServiceCell)
+			numServices += userEnteredServiceCell.data.length;
+		if (offeringServiceCell)
+			numServices += offeringServiceCell.data.length;
+			
+		if (numServices > 0)
+		{
+			var labelDiv = cellDiv.append("label")
+				.text("Services");
+			var itemsDiv = cellDiv.append("ol").classed("items-div", true);
+			
+			var serviceData;
+			if (serviceCell)
+				serviceData = serviceCell.data;
+			else
+				serviceData = [];
+			if (userEnteredServiceCell)
+				serviceData = serviceData.concat(userEnteredServiceCell.data);
+			if (offeringServiceCell)
+				serviceData = serviceData.concat(offeringServiceCell.data);
+
+			var divs = appendItems(itemsDiv, serviceData);
+			var buttons = divs.append("div").classed("multi-line-item", true);
+			appendButtonDescriptions(buttons, null);
+			cellDiv.append("div").classed("cell-border-below", true);
+		}
+		
+		if (offering && offering.getValueID())
+		{
+			var webSiteDiv = panel2Div.append("section");	
+			showWebSite(offering, function(newText)
+				{
+					if (newText)
+					{
+						var labelDiv = webSiteDiv.append("div")
+							.classed("more-info", true);
+						var link = labelDiv
+							.append("a")
+							.classed("site-active-text", true)
+							.attr("href", newText)
+							.attr("target", "_blank")
+							.text("More Info");
+					}
+				});
+		}
 		showPanelLeft(this.node());
 	}
 	
