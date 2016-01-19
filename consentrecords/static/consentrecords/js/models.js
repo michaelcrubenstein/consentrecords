@@ -183,6 +183,13 @@ var CRP = (function() {
         this.queue = new Queue(true); //initialize the queue
     };
     
+    CRP.prototype.clear = function() {
+    	this.instances = {};
+    	this.paths = {};
+    	this.configurations = {};
+        this.queue = new Queue(true); //initialize the queue
+    };
+    
     /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
     CRP.prototype.getInstance = function(id)
     {
@@ -482,6 +489,7 @@ var cr = {
 		deleteValue : '/api/deletevalue/',
 		deleteInstances : '/api/deleteinstances/',
 		checkUnusedEmail : '/user/checkunusedemail/',
+		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
 	},
@@ -927,7 +935,24 @@ var cr = {
 						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
 					}
 				);
+	},
+	submitSignout: function(successFunction, failFunction)
+	{
+		$.post(cr.urls.submitSignout, { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
+									function(json){
+		if (json['success']) {
+			crp.clear();
+			successFunction();
+		}
+		else
+			failFunction(json.error);
+	  })
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+		});
 	}
+
 }
 		
 cr.EventHandler.prototype.addTarget = function(e, target)

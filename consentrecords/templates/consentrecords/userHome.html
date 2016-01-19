@@ -1016,18 +1016,7 @@
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
-		  								function(json){
-		  	if (json['success']) {
-		  		successFunction();
-		  	}
-		  	else
-		  		failFunction(json.error);
-		  })
-		  	.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-			});
+			cr.submitSignout(successFunction, failFunction);
 		}
 		
 		function show_consent_records(containerDiv) {
