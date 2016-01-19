@@ -228,7 +228,7 @@ var DotsNavigator = (function () {
 		}
 	
 		$(window).on("resize", layoutPanels);
-		sitePanel.panelDiv.on("hiding.cr", function()
+		$(sitePanel.node()).on("hiding.cr", function()
 		{
 			$(window).off("resize", layoutPanels);
 		});
@@ -301,10 +301,10 @@ function setColor(experience)
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
-	Pathway.prototype.dataLeftMargin = 40;
+	Pathway.prototype.dataLeftMargin = 40;			/* The space between the left margin and the beginning of the flags */
 	Pathway.prototype.trunkWidth = 5;
 	Pathway.prototype.trunkSpacing = 5;
-	Pathway.prototype.trunkColumnWidth = 10; /* trunkWidth + trunkSpacing; */
+	Pathway.prototype.trunkColumnWidth = 10;		/* trunkWidth + trunkSpacing; */
 	Pathway.prototype.textLeftMargin = 10;
 	Pathway.prototype.textRightMargin = 10;
 	Pathway.prototype.textBottomBorder = 3;
@@ -334,6 +334,8 @@ var Pathway = (function () {
 	Pathway.prototype.detailGroup = null;
 	
 	Pathway.prototype.flagDown = false;
+	Pathway.prototype.flagExperience = null;
+	Pathway.prototype.flagElement = null;
 	Pathway.prototype.flagHeight = 0;
 	Pathway.prototype.flagWidth = 0;
 	
@@ -341,6 +343,7 @@ var Pathway = (function () {
 	Pathway.prototype.maxDate = null;
 	Pathway.prototype.timespan = 0;
 	Pathway.prototype.dataHeight = 0;
+	Pathway.prototype.dataWidth = 0;
 	Pathway.prototype.dayHeight = 0;
 	Pathway.prototype.years = [];
 	
@@ -415,8 +418,16 @@ var Pathway = (function () {
 		var containerHeight = container.height();
 		var containerWidth = container.width();
 		
+		if (containerWidth === 0)
+			return;
+		
+		if (this.dataHeight === containerHeight - this.dataTopMargin - this.dataBottomMargin &&
+			this.dataWidth === containerWidth)
+			return;
+		
 		/* Calculate the height of the area where data appears and the height of a single day. */
 		this.dataHeight = containerHeight - this.dataTopMargin - this.dataBottomMargin;
+		this.dataWidth = containerWidth;
 		this.dayHeight = this.dataHeight / this.timespan;
 	
 		var columns = [];
@@ -531,7 +542,7 @@ var Pathway = (function () {
 		/* Compute the column width for each column of flags + spacing to its right. 
 			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
 		 */
-		var flagColumnWidth = (containerWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
+		var flagColumnWidth = (this.dataWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
 		this.flagWidth = flagColumnWidth - this.flagSpacing;
 		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
 		if (textWidth < 0)
@@ -541,7 +552,18 @@ var Pathway = (function () {
 			function(d)
 			{
 				return "translate(" + this.getAttribute("x") + "," + this.getAttribute("y") + ")";
-			});
+			})
+			
+		if (this.flagExperience)
+		{
+			/*( Restore the flagElement */
+			var flagExperienceID = this.flagExperience.getValueID();
+			 g.each(function(d)
+			 {
+				if (d.getValueID() === flagExperienceID)
+					_thisPathway.flagElement = this;
+			 });
+		}
 		
 		if (this.flagColumns.length > 0)
 		{
@@ -608,7 +630,14 @@ var Pathway = (function () {
 		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
-		this.hideDetail();
+		if (this.flagDown)
+		{
+			var oldExperience = this.flagExperience;
+			var oldElement = this.flagElement;
+			this.hideDetail(
+				function() { _thisPathway.showDetailGroup(oldElement, oldExperience, 0); },
+				0);
+		}
 	}
 	
 	Pathway.prototype.setDateRange = function()
@@ -712,8 +741,20 @@ var Pathway = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
-	Pathway.prototype.showDetailGroup = function(g, experience)
+	Pathway.prototype.showDetailPanel = function(experience, i)
 	{
+		if (prepareClick())
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var experienceDetailPanel = new ExperienceDetailPanel(experience, panel);
+			d3.event.stopPropagation();
+		}
+	}
+	
+	Pathway.prototype.showDetailGroup = function(g, experience, duration)
+	{
+		duration = (duration !== undefined ? duration : 700);
+		
 		var detailBackRect = this.detailGroup.append('rect')
 			.attr("fill", this.pathBackground)
 			.attr("width", "100%");
@@ -763,17 +804,16 @@ var Pathway = (function () {
 		var x = parseFloat(g.getAttribute("flagX")) + parseFloat(g.getAttribute("x"));
 		var y = parseFloat(g.getAttribute("y")) - this.textBottomBorder;
 
-		detailText.selectAll('tspan').data(lines)
+		var tspans = detailText.selectAll('tspan').data(lines)
 			.enter()
 			.append('tspan')
 			.text(function(d) { return d; })
 			.attr("x", this.textDetailLeftMargin);
-		var spanHeight = detailText.selectAll('tspan').node().getBBox().height + this.detailTextSpacing;
-		detailText.selectAll('tspan').attr("dy", spanHeight);
+		var spanHeight = tspans.node().getBBox().height + this.detailTextSpacing;
+		tspans.attr("dy", spanHeight);
 		
 		var textBox = detailText.node().getBBox();
-		var containerWidth = $(this.containerDiv).width();
-		var maxX = containerWidth - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
+		var maxX = this.dataWidth - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
 		if (x > maxX)
 			x = maxX;
 		var rectWidth = textBox.width + this.showDetailIconWidth + (this.textDetailLeftMargin * 3);
@@ -789,77 +829,121 @@ var Pathway = (function () {
 				 .attr("transform", "translate("+x + "," + y+")")
 				 .attr("height", 0);
 		detailBackRect.attr("width", rectWidth)
-					   .attr("height", 0)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y - this.detailTextSpacing)
-					   .transition()
-					   .duration(700)
-					   .attr("height", rectHeight);
+					   .attr("y", textBox.y - this.detailTextSpacing);
 		detailFrontRect.attr("width", rectWidth)
-					   .attr("height", 0)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
 					   .attr("y", textBox.y - this.detailTextSpacing)
 					   .each(setColor)
 					   .transition()
-					   .duration(700)
+					   .duration(duration)
 					   .attr("height", rectHeight);
+		if (duration > 0)
+		{
+			detailBackRect.attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", rectHeight);
+			detailFrontRect.attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", rectHeight);
+		}
+		else
+		{
+			detailBackRect.attr("height", rectHeight);
+			detailFrontRect.attr("height", rectHeight);
+		}
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		d3.select("#id_detailClipPath").selectAll('rect')
+		var textClipRect = d3.select("#id_detailClipPath").selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', textBox.width)
-			.attr('height', 0)
-			.transition()
-			.attr('height', textBox.height)
-			.duration(700); 
-		detailText				
-			.transition()
-			.duration(1000)
-			.attr("height", textBox.height);
-
-		d3.select("#id_detailIconClipPath").selectAll('rect')
+			.attr('width', textBox.width); 
+		
+		var iconClipRect = d3.select("#id_detailIconClipPath").selectAll('rect')
 			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
 			.attr('y', textBox.y)
-			.attr('width', this.showDetailIconWidth)
-			.attr('height', 0)
-			.transition()
-			.attr('height', textBox.height)
-			.duration(700); 
-		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
-			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2)
-			.attr('height', this.showDetailIconWidth);
+			.attr('width', this.showDetailIconWidth);
 			
+		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
+			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+			
+		if (duration > 0)
+		{
+			textClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', textBox.height); 
+			detailText				
+				.transition()
+				.duration(duration)
+				.attr("height", textBox.height);
+
+			iconClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', textBox.height);
+		}
+		else
+		{
+			textClipRect.attr('height', textBox.height); 
+			detailText.attr("height", textBox.height);
+			iconClipRect.attr('height', textBox.height);
+		}
+			 
 		this.flagDown = true;
+		this.flagExperience = experience;
+		this.flagElement = g;
+	}
+	
+	Pathway.prototype.clearDetail = function()
+	{
+		this.detailGroup.selectAll('text').remove();
+		/* Remove the image here instead of when the other clipPath ends
+			so that it is sure to be removed when the done method is called. 
+		 */
+		this.detailGroup.selectAll('image').remove();
+		this.detailGroup.selectAll('rect').remove();
+		d3.select("#id_detailClipPath").attr('height', 0);
+		d3.select("#id_detailIconClipPath").attr('height', 0);
+		this.flagDown = false;
+		this.flagExperience = null;
+		this.flagElement = null;
 	}
 
-	Pathway.prototype.hideDetail = function(done)
+	Pathway.prototype.hideDetail = function(done, duration)
 	{
+		duration = (duration !== undefined ? duration : 250);
+		
 		var _this = this;
 		if (this.flagDown)
 		{
-			d3.select("#id_detailClipPath").selectAll('rect')
-				.transition()
-				.attr("height", 0)
-				.each("end", function() {
-					_this.detailGroup.selectAll('text').remove();
-					/* Remove the image here instead of when the other clipPath ends
-						so that it is sure to be removed when the done method is called. 
-					 */
-					_this.detailGroup.selectAll('image').remove();
-					_this.flagDown = false;
-					if (done)
-						done();
-				});
-			d3.select("#id_detailIconClipPath").selectAll('rect')
-				.transition()
-				.attr("height", 0);
-			this.detailGroup.selectAll('rect')
-				.transition()
-				.attr("height", 0)
-				.each("end", function() {
-					d3.select(this).remove();
-				});
+			if (duration === 0)
+			{
+				this.clearDetail();
+				if (done) done();
+			}
+			else
+			{
+				d3.select("#id_detailClipPath").selectAll('rect')
+					.transition()
+					.attr("height", 0)
+					.duration(duration)
+					.each("end", function() {
+						_this.clearDetail();
+						if (done)
+							done();
+					});
+				d3.select("#id_detailIconClipPath").selectAll('rect')
+					.transition()
+					.duration(duration)
+					.attr("height", 0);
+				this.detailGroup.selectAll('rect')
+					.transition()
+					.duration(duration)
+					.attr("height", 0);
+			}
 		}
 		else if (done)
 			done();
@@ -880,7 +964,7 @@ var Pathway = (function () {
 			pathway.detailGroup.datum(experience);
 			
 			pathway.hideDetail(function() {
-					pathway.showDetailGroup.call(pathway, g, experience); 
+					pathway.showDetailGroup(g, experience); 
 				});
 		}
 		
@@ -923,6 +1007,17 @@ var Pathway = (function () {
 				return 0 - bbox.y;
 			});
 	
+		function resizeFunction()
+		{
+			_this.layoutExperiences();
+		}
+		
+		$(window).on("resize", resizeFunction);
+		$(this.sitePanel.node()).on("hiding.cr", function()
+		{
+			$(window).off("resize", resizeFunction);
+		});
+
 		this.layoutExperiences();
 	}
 	
@@ -948,6 +1043,8 @@ var Pathway = (function () {
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.flagDown = false;
+		this.flagExperience = null;
+		this.flagElement = null;
 		this.sitePanel = sitePanel;
 		this.userInstance = userInstance;
 		
@@ -983,23 +1080,24 @@ var Pathway = (function () {
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem")
 			.attr("width", "100%")
-			.attr("height", "100%");
+			.attr("height", "100%")
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", this.showDetailPanel)
+			
 	
 		var _thisPathway = this;
 
-		this.svg.on("click", function() { _thisPathway.hideDetail(); });
+		this.svg.on("click", function() 
+			{ 
+				d3.event.stopPropagation(); 
+			})
+			.on("click.cr", function() {
+				_thisPathway.hideDetail();
+			});
 		
-		function resizeFunction()
-		{
-			_thisPathway.layoutExperiences();
-		}
-		
-		$(window).on("resize", resizeFunction);
-		sitePanel.panelDiv.on("hiding.cr", function()
-		{
-			$(window).off("resize", resizeFunction);
-		});
-
 		var successFunction1 = function(experiences)
 		{
 			_thisPathway.allExperiences = experiences;
@@ -1083,9 +1181,8 @@ var Pathway = (function () {
 					.attr("cursor", "pointer");
 				
 				var newBBox = _thisPathway.promptAddText.node().getBBox();
-				var containerWidth = $(_thisPathway.containerDiv).width();
 				if (bbox.x + bbox.width + _thisPathway.textLeftMargin + newBBox.width >
-					containerWidth - _thisPathway.flagsRightMargin)
+					_thisPathway.dataWidth - _thisPathway.flagsRightMargin)
 				{
 					_thisPathway.promptAddText.attr("x", _thisPathway.loadingText.attr("x"))
 						.attr("y", parseFloat(_thisPathway.loadingText.attr("y")) + bbox.height);
@@ -1913,7 +2010,7 @@ var PathwayPanel = (function () {
 	PathwayPanel.prototype.pathway = null;
 	
 	function PathwayPanel(userInstance, previousPanel) {
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit");
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
@@ -1941,4 +2038,27 @@ var PathwayPanel = (function () {
 	}
 	
 	return PathwayPanel;
+})();
+
+var ExperienceDetailPanel = (function () {
+	ExperienceDetailPanel.prototype = new SitePanel();
+	ExperienceDetailPanel.prototype.experience = null;
+	
+	function ExperienceDetailPanel(experience, previousPanel) {
+		SitePanel.call(this, previousPanel, null, "Experience", "view");
+		this.experience = experience;
+		
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		var _this = this;
+		
+		var panel2Div = this.appendScrollArea();
+		panel2Div.appendAlertContainer();
+		showPanelLeft(this.node());
+	}
+	
+	return ExperienceDetailPanel;
 })();
