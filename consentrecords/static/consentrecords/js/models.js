@@ -265,7 +265,7 @@ var CRP = (function() {
 				oldInstance = this.instances[i.getValueID()];
 				if (!oldInstance.value.cells && i.isDataLoaded)
 				{
-					oldInstance.value.setCells(i.value.cells);
+					oldInstance.value._setCells(i.value.cells);
 					oldInstance.isDataLoaded = true;
 				}
 				return oldInstance;
@@ -1255,7 +1255,7 @@ cr.ObjectValue.prototype.importCells = function(oldCells)
 	}
 }
 
-cr.ObjectValue.prototype.setCells = function(oldCells)
+cr.ObjectValue.prototype._setCells = function(oldCells)
 {
 	if (this.value.cells)
 	{
