@@ -81,7 +81,7 @@ function showSharing(containerDiv) {
 
 		appendRightChevrons(buttons);	
 		
-		appendButtonDescriptions(buttons, null);
+		appendButtonDescriptions(buttons);
 
 		/* Add one more button for the add Button item. */
 		var buttonDiv = cells.append("div")

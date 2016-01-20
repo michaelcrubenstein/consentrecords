@@ -88,8 +88,7 @@
 				e.preventDefault();
 			});
 			
-			var cell = new cr.Cell();
-			cell.field = {
+			var field = {
 						  dataType: "_object",
 			{% if singularName %}
 						  name: "{{singularName}}",
@@ -101,6 +100,7 @@
 			{% endif %}
 						  capacity: "_multiple values",
 						  };
+			var cell = cr.createCell(field);
 			cell.setup(null);
 			
 			var containerPanel = document.getElementById("id_panel1");

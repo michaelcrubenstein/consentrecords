@@ -278,18 +278,16 @@ function _setupItemHandlers(d)
 	/* This method may be called for a set of items that were gotten directly and are not
 		part of a cell. Therefore, we have to test whether d.cell is not null.
 	 */
-	if (d.cell)
+	if ($(this).parents(".multiple").length > 0)
 	{
-		if (d.cell.field.capacity != "_unique value")
+		$(this).on("valueDeleted.cr", function(e, newData)
 		{
-			$(this).on("valueDeleted.cr", function(e, newData)
-			{
-				$(this).off("valueDeleted.cr");
-				$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
-			});
-			d.addTarget("valueDeleted.cr", this);
-		}
+			$(this).off("valueDeleted.cr");
+			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+		});
+		d.addTarget("valueDeleted.cr", this);
 	}
+
 	$(this).on("remove", function(e)
 	{
 		d.removeTarget("valueDeleted.cr");
@@ -310,7 +308,6 @@ function _showViewStringCell(obj, cell)
 		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
 		.append("div")
 		.classed("string-value-view", true)
-		.classed("string-multi-value-container", cell.field.capacity != "_unique value")
 		.text(_getDataValue)
 		.each(_pushTextChanged);
 	}
@@ -330,7 +327,7 @@ function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
 	
-	if (cell.field.capacity == "_unique value")
+	if (cell.field.capacity === "_unique value")
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -375,7 +372,7 @@ function _showEditStringCell(obj, cell, inputType)
 			appendDeleteControls(innerDivs);
 
 			inputContainers = innerDivs.append("div")
-				.classed("string-input-container string-multi-value-container", true);						
+				.classed("string-input-container", true);						
 	
 			inputContainers.append("input")
 				.attr("type", inputType)
@@ -454,7 +451,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv, cell)
 			appendDeleteControls(innerDivs);
 
 			inputContainers = innerDivs.append("div")
-				.classed("string-input-container string-multi-value-container", true);						
+				.classed("string-input-container", true);						
 	
 			appendInputs(inputContainers);
 		}
@@ -598,7 +595,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		if (canDelete && cell.field.capacity != "_unique value")
 			appendConfirmDeleteControls(divs);
 		
-		var buttons = appendRowButtons(divs, cell);
+		var buttons = appendRowButtons(divs);
 
 		buttons.on("click", function(d) {
 			if (prepareClick())
@@ -611,15 +608,18 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		if (canShowDetails)
 			appendRightChevrons(buttons);
 
-		appendButtonDescriptions(buttons, cell)
+		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
 	}
 }
 
-function appendRowButtons(divs, cell)
+function appendRowButtons(divs)
 {
-	return divs.append("div")
-			.classed("btn row-button multi-row-content expanding-div", !cell || cell.field.capacity != "_unique value");
+	if (divs.empty())
+		return divs.append("div");
+	else
+		return divs.append("div")
+				.classed("btn row-button multi-row-content expanding-div", $(divs.node()).parents(".unique").length === 0);
 }
 
 function appendConfirmDeleteControls(divs)
@@ -696,11 +696,10 @@ function appendLeftChevrons(buttons)
 }
 
 /* This function appends the descriptions of each object to the button. */
-function appendButtonDescriptions(buttons, cell)
+function appendButtonDescriptions(buttons)
 {
 	return buttons.append("div")
 		.classed("description-text string-value-view", true)
-		.classed("string-multi-value-container", !cell || cell.field.capacity != "_unique value")
 		.text(_getDataDescription);
 }
 
@@ -740,7 +739,7 @@ function _showViewObjectCell(obj, previousPanelNode, cell)
 	
 	var buttons;
 	if (!_isPickCell(cell)) {
-		buttons = appendRowButtons(divs, cell);
+		buttons = appendRowButtons(divs);
 	
 		if (clickFunction)
 			buttons.on("click", clickFunction);
@@ -752,19 +751,24 @@ function _showViewObjectCell(obj, previousPanelNode, cell)
 		buttons = divs.append("div").classed("multi-line-item", cell.field.capacity != "_unique value");
 	}
 	
-	appendButtonDescriptions(buttons, cell)
+	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
+}
+
+function _clickEditObjectValue(d, previousPanelNode)
+{
+	if (prepareClick())
+	{
+		if (_isPickCell(d.cell))
+			showPickObjectPanel(d, previousPanelNode);
+		else
+			showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
+	}
 }
 
 function _showEditObjectCell(obj, previousPanelNode, cell)
 {
 	var sectionObj = d3.select(obj);
-	var storeDataFunction;
-
-	if (cell.parent.getValueID())
-		storeDataFunction = _submitCreateInstance;
-	else
-		storeDataFunction = _storeNewInstance;
 	
 	var labelDiv = sectionObj.append("label")
 		.text(cell.field.name);
@@ -775,57 +779,38 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 		sectionObj.classed("btn row-button", true);
 		itemsDiv.classed("right-label expanding-div", true);
 		sectionObj.on("click", function(cell) {
-			if (prepareClick())
-			{
-				if (_isPickCell(cell))
-					showPickObjectPanel(cell.data[0], previousPanelNode);
-				else
-					showEditObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
-			}
+			_clickEditObjectValue(cell.data[0], previousPanelNode);
 		});
 	}
 
 	_setupItemsDivHandlers(itemsDiv, cell);
 	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
 
-	var clickFunction;
-	if (cell.field.capacity === "_unique value")	/* Unique value handles the click above */
-		clickFunction = null;
-	else
-		clickFunction = function(d) {
-				if (prepareClick())
-				{
-					if (_isPickCell(cell))
-						showPickObjectPanel(d, previousPanelNode);
-					else
-						showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
-				}
-			};
-		
 	var divs = appendItems(itemsDiv, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs);
 		
-	var buttons = appendRowButtons(divs, cell);
+	var buttons = appendRowButtons(divs);
 
-	if (clickFunction)
-		buttons.on("click", clickFunction);
-	
-	if (cell.field.capacity != "_unique value")
+	if (cell.field.capacity !== "_unique value")
+	{
+		buttons.on("click", function(d) {
+				_clickEditObjectValue(d, previousPanelNode);
+			});
 		appendDeleteControls(buttons);
+	}
 
 	appendRightChevrons(buttons);	
 		
-	appendButtonDescriptions(buttons, cell)
+	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 	
 	if (cell.field.capacity != "_unique value")
 	{
 		function done(newValue)
 		{
-			var cell = newValue.cell;
-			if (_isPickCell(cell))
+			if (_isPickCell(newValue.cell))
 				showPickObjectPanel(newValue, previousPanelNode)
 			else
 				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
@@ -1104,12 +1089,12 @@ function _updateObjectCell(sectionObj)
 function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 {
 	closealert();
-	var newData = cr.dataTypes._object.newValue();
+	var newData = containerCell.newValue();
 	newData.value.cells = [];
 	sections.each(
 		function(cell) {
-			if ("updateCell" in dataTypeViews[cell.field.dataType])
-				dataTypeViews[cell.field.dataType].updateCell(this);
+			if ("updateCell" in cell)
+				cell.updateCell(this);
 			newData.importCell(cell);
 		});
 		
@@ -1136,13 +1121,31 @@ function _submitCreateInstance(oldValue, containerCell, containerUUID, sections,
 	sections.each(
 		function(cell) {
 			dt = dataTypeViews[cell.field.dataType]
-			if ("updateCell" in dt)
-				dt.updateCell(this);
+			if ("updateCell" in cell)
+				cell.updateCell(this);
 			cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
 		});
 		
 	cr.append(oldValue, containerCell, containerUUID, initialData, onSuccessFunction, syncFailFunction)
 }
+
+cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
+cr.StringCell.prototype.updateCell = _updateStringCell;
+
+cr.DatestampCell.prototype.appendUpdateCommands = _appendUpdateDatestampCommands;
+cr.DatestampCell.prototype.updateCell = _updateDatestampCell;
+
+cr.DatestampDayOptionalCell.prototype.appendUpdateCommands = _appendUpdateDatestampDayOptionalCommands;
+cr.DatestampDayOptionalCell.prototype.updateCell = _updateDatestampDayOptionalCell;
+
+cr.TimeCell.prototype.appendUpdateCommands = _appendUpdateTimeCommands;
+cr.TimeCell.prototype.updateCell = _updateTimeCell;
+
+cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
+cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
+
+cr.ObjectCell.prototype.appendUpdateCommands = _appendUpdateObjectCommands;
+cr.ObjectCell.prototype.updateCell = _updateObjectCell;
 
 var dataTypeViews = {
 	_string: {
@@ -1154,8 +1157,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "text");
 		},
-		appendUpdateCommands: _appendUpdateStringCommands,
-		updateCell: _updateStringCell,
 	},
 	_number: {
 		show: function(obj, containerPanel, cell)
@@ -1166,8 +1167,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "number");
 		},
-		appendUpdateCommands: _appendUpdateStringCommands,
-		updateCell: _updateStringCell
 	},
 	_email: {
 		show: function(obj, containerPanel, cell)
@@ -1178,8 +1177,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "email");
 		},
-		appendUpdateCommands: _appendUpdateStringCommands,
-		updateCell: _updateStringCell
 	},
 	_url: {
 		show: function(obj, containerPanel, cell)
@@ -1190,8 +1187,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "url");
 		},
-		appendUpdateCommands: _appendUpdateStringCommands,
-		updateCell: _updateStringCell
 	},
 	_telephone: {
 		show: function(obj, containerPanel, cell)
@@ -1202,8 +1197,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "tel");
 		},
-		appendUpdateCommands: _appendUpdateStringCommands,
-		updateCell: _updateStringCell
 	},
 	_datestamp: {
 		show: function(obj, containerPanel, cell)
@@ -1214,8 +1207,6 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "date");
 		},
-		appendUpdateCommands: _appendUpdateDatestampCommands,
-		updateCell: _updateDatestampCell,
 	},
 	"_datestamp (day optional)": {
 		show: function(obj, containerPanel, cell)
@@ -1223,8 +1214,6 @@ var dataTypeViews = {
 			_showViewStringCell(obj, cell);
 		},
 		showEdit: _showEditDateStampDayOptionalCell,
-		appendUpdateCommands: _appendUpdateDatestampDayOptionalCommands,
-		updateCell: _updateDatestampDayOptionalCell,
 	},
 	_time: {
 		show: function(obj, containerPanel, cell)
@@ -1235,14 +1224,10 @@ var dataTypeViews = {
 		{
 			_showEditStringCell(obj, cell, "time");
 		},
-		appendUpdateCommands: _appendUpdateTimeCommands,
-		updateCell: _updateTimeCell,
 	},
 	_object: {
 		show: _showViewObjectCell,
 		showEdit: _showEditObjectCell,
-		appendUpdateCommands: _appendUpdateObjectCommands,
-		updateCell: _updateObjectCell
 	},
 	_translation: {
 		show: function(obj, containerPanel, cell)
@@ -1253,8 +1238,6 @@ var dataTypeViews = {
 		{
 			_showEditTranslationCell(obj, cell, "text");
 		},
-		appendUpdateCommands: _appendUpdateTranslationCommands,
-		updateCell: _updateTranslationCell,
 	},
 };
 
@@ -1319,7 +1302,7 @@ function appendViewCellItems(container, cell, clickFunction)
 {
 	var divs = appendItems(container, cell.data);
 	
-	var buttons = appendRowButtons(divs, cell);
+	var buttons = appendRowButtons(divs);
 	
 	appendRightChevrons(buttons);
 
@@ -1338,13 +1321,13 @@ function appendEditCellItems(container, cell, clickFunction)
 	if (cell.field.capacity != "_unique value")
 		appendConfirmDeleteControls(divs);
 	
-	var buttons = appendRowButtons(divs, cell);
+	var buttons = appendRowButtons(divs);
 	
 	if (cell.field.capacity != "_unique value")
 		appendDeleteControls(buttons);
 	appendRightChevrons(buttons);
 
-	appendButtonDescriptions(buttons, cell)
+	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 		
 	buttons.on("click", clickFunction);
@@ -1517,6 +1500,11 @@ var SitePanel = (function () {
 					.enter()
 					.append("section");
 		}
+		panel2Div.appendSection = function(datum)
+		{
+			return this.append("section").datum(datum);
+		}
+		
 		panel2Div.resetHeight = function()
 		{
 			var newHeight = window.innerHeight;
@@ -1582,14 +1570,14 @@ var SitePanel = (function () {
 				var initialData = [];
 				var sourceObjects = [];
 				sections.each(function(cell) {
-						if ("appendUpdateCommands" in dataTypeViews[cell.field.dataType])
-							dataTypeViews[cell.field.dataType].appendUpdateCommands(this, cell.parent, initialData, sourceObjects);
+						if ("appendUpdateCommands" in cell)
+							cell.appendUpdateCommands(this, cell.parent, initialData, sourceObjects);
 					});
 				var updateValuesFunction = function()
 				{
 					sections.each(function(cell) {
-							if ("updateCell" in dataTypeViews[cell.field.dataType])
-								dataTypeViews[cell.field.dataType].updateCell(this);
+							if ("updateCell" in cell)
+								cell.updateCell(this);
 						});
 				}
 				var panel = $(this).parents(".site-panel")[0];
@@ -1850,8 +1838,8 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 						objectData.value.cells = [];
 						sections.each(
 							function(cell) {
-								if ("updateCell" in dataTypeViews[cell.field.dataType])
-									dataTypeViews[cell.field.dataType].updateCell(this);
+								if ("updateCell" in cell)
+									cell.updateCell(this);
 								objectData.importCell(cell);
 							});
 		
