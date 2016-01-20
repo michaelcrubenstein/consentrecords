@@ -2089,13 +2089,13 @@ var ExperienceDetailPanel = (function () {
 		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
 
-		if (organization.length > 0)
+		if (organization && organization.length > 0)
 		{
 			var labelDiv = orgDiv.append("label")
 				.text(organization);
 		}
 
-		if (siteDescription.length > 0 && (siteDescription !== organization))
+		if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
 		{
 			orgDiv.append('div')
 				.classed("address-line", true)
