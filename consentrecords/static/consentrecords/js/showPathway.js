@@ -1024,6 +1024,7 @@ var Pathway = (function () {
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
+		experience.typeName = "More Experience";
 		
 		this.allExperiences.push(experience);
 		this.allExperiences.sort(this._compareExperiences);
@@ -1103,6 +1104,7 @@ var Pathway = (function () {
 			_thisPathway.allExperiences = experiences;
 			$(experiences).each(function()
 			{
+				this.typeName = "Experience";
 				this.value.description = this.getValue("Offering").getDescription();
 			});
 		
@@ -1148,6 +1150,7 @@ var Pathway = (function () {
 			
 			$(experiences).each(function()
 			{
+				this.typeName = "More Experience";
 				this.calculateDescription();
 			});
 		
@@ -1515,7 +1518,7 @@ function setupServicesPanel(dots)
 	appendConfirmDeleteControls(divs)
 		.on('click', _confirmDeleteClick);
 		
-	var buttons = appendRowButtons(divs, null);
+	var buttons = appendRowButtons(divs);
 
 	buttons.on("click", clickFunction);
 	
@@ -1523,7 +1526,7 @@ function setupServicesPanel(dots)
 
 	appendRightChevrons(buttons);
 		
-	appendButtonDescriptions(buttons, null);
+	appendButtonDescriptions(buttons);
 	
 	/* Add one more button for the add Button item. */
 	var buttonDiv = p1.append("div").classed("table-row", true)
@@ -1541,11 +1544,11 @@ function setupServicesPanel(dots)
 						var divs = appendItem(itemsDiv, newReportedObject);
 						appendConfirmDeleteControls(divs)
 							.on('click', _confirmDeleteClick);
-						var buttons = appendRowButtons(divs, null);
+						var buttons = appendRowButtons(divs);
 						buttons.on("click", clickFunction);
 						appendDeleteControls(buttons);
 						appendRightChevrons(buttons);
-						appendButtonDescriptions(buttons, null);
+						appendButtonDescriptions(buttons);
 					}
 					var siteNode = $(_thisButton).parents(".site-panel")[0];
 					showPickServicePanel(siteNode, rootObjects, null, dots, success);
@@ -2054,7 +2057,7 @@ var ExperienceDetailPanel = (function () {
 		var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 		var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
 		
-		SitePanel.call(this, previousPanel, null, offering, "view session");
+		SitePanel.call(this, previousPanel, experience, offering, "view session");
 		this.experience = experience;
 		
 		var navContainer = this.appendNavContainer();
@@ -2064,13 +2067,26 @@ var ExperienceDetailPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		var buttonDiv = navContainer.appendRightButton();
+		if (experience.typeName == "More Experience")
+		{
+			var editButton = navContainer.appendRightButton()
+				.on("click", function(d) {
+					if (prepareClick())
+					{
+						showClickFeedback(this);
+				
+						var panel = new EditExperiencePanel(experience, _this.node());
+					}
+					d3.event.preventDefault();
+				});
+			editButton.append("span").text("Edit");
+		}
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.appendHeader();
 		panel2Div.appendAlertContainer();
 		
-		var orgDiv = panel2Div.append("section");
+		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
 
 		if (organization.length > 0)
@@ -2178,7 +2194,7 @@ var ExperienceDetailPanel = (function () {
 
 			var divs = appendItems(itemsDiv, serviceData);
 			var buttons = divs.append("div").classed("multi-line-item", true);
-			appendButtonDescriptions(buttons, null);
+			appendButtonDescriptions(buttons);
 			cellDiv.append("div").classed("cell-border-below", true);
 		}
 		
@@ -2205,3 +2221,119 @@ var ExperienceDetailPanel = (function () {
 	
 	return ExperienceDetailPanel;
 })();
+
+var PickOrCreateSection = (function () {
+	PickOrCreateSection.prototype = new cr.EventHandler();
+	PickOrCreateSection.prototype.pickCell = null;
+	PickOrCreateSection.prototype.createCell = null;
+	PickOrCreateSection.prototype.sectionDiv = null;
+	
+	PickOrCreateSection.prototype.showPickOrCreatePanel = function()
+	{
+		/* showEditObjectPanel(d, previousPanelNode, revealPanelLeft); */
+	}
+	
+	PickOrCreateSection.prototype.showValueAdded = function()
+	{
+		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
+	}
+	
+	PickOrCreateSection.prototype.setupItemsDivHandlers = function(itemsDiv)
+	{
+		/* _setupItemsDivHandlers(itemsDiv, cell); */
+	}
+	
+	PickOrCreateSection.prototype.pushTextChanged = function(textDiv)
+	{
+		/* _pushTextChanged */
+	}
+	
+	PickOrCreateSection.prototype.getDescription = function()
+	{
+		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
+			return this.pickCell.data[0].getDescription();
+		else if (this.createCell.data.length > 0 && !this.createCell.data[0].isEmpty())
+			return this.createCell.data[0].getDescription();
+		else
+			return "";
+	}
+	
+	function PickOrCreateSection(pickCell, createCell, panel2Div) {
+		cr.EventHandler.call(this);
+
+		this.pickCell = pickCell;
+		this.createCell = createCell;
+		
+		this.sectionDiv = panel2Div.appendSection(this)
+			.classed("cell edit unique", true);
+		var labelDiv = this.sectionDiv.append("label")
+			.text(pickCell.field.name);
+		var itemsDiv = this.sectionDiv.append("ol")
+			.classed("items-div", true)
+			.classed("right-label expanding-div", true);
+
+		var _this = this;
+
+		this.sectionDiv.classed("btn row-button", true)
+			.on("click", function(cell) {
+				if (prepareClick())
+				{
+					_this.showPickOrCreatePanel();
+				}
+			});
+
+		this.setupItemsDivHandlers(itemsDiv);
+		$(itemsDiv.node()).on("valueAdded.cr", function()
+			{
+				_this.showValueAdded();
+			});
+
+		var divs = appendItems(itemsDiv, [this]);
+	
+		var buttons = appendRowButtons(divs);
+
+		appendRightChevrons(buttons);	
+		
+		appendButtonDescriptions(buttons)
+			.each(function(d)
+				{
+					_this.pushTextChanged(this);
+				});
+	}
+	
+	return PickOrCreateSection;
+})();
+
+var EditExperiencePanel = (function () {
+	EditExperiencePanel.prototype = new SitePanel();
+	EditExperiencePanel.prototype.experience = null;
+	
+	function EditExperiencePanel(experience, previousPanel) {
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "view session", revealPanelUp);
+		var navContainer = this.appendNavContainer();
+		
+		var panel2Div = this.appendScrollArea();
+		panel2Div.appendAlertContainer();
+
+		doneButton = navContainer.appendRightButton();
+		doneButton.append("span").text("Done");
+		doneButton.on("click", panel2Div.handleDoneButton);
+
+		navContainer.appendTitle("Edit Experience");
+		
+		new PickOrCreateSection(experience.getCell("Organization"), 
+							experience.getCell("User Entered Organization"),
+							panel2Div);
+		new PickOrCreateSection(experience.getCell("Site"), 
+							experience.getCell("User Entered Site"),
+							panel2Div);
+		new PickOrCreateSection(experience.getCell("Offering"), 
+							experience.getCell("User Entered Offering"),
+							panel2Div);
+
+		revealPanelUp(this.node());
+	}
+	
+	return EditExperiencePanel;
+})();
+
