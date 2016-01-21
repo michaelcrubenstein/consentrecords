@@ -2317,7 +2317,7 @@ var EditExperiencePanel = (function () {
 
 		doneButton = navContainer.appendRightButton();
 		doneButton.append("span").text("Done");
-		doneButton.on("click", panel2Div.handleDoneButton);
+		doneButton.on("click", panel2Div.handleDoneEditingButton);
 
 		navContainer.appendTitle("Edit Experience");
 		

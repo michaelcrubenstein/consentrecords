@@ -820,7 +820,7 @@ function _showEditObjectCell(obj, previousPanelNode, cell)
 	}
 }
 
-function _appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects)
+function _appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects)
 {
 	/* If both are null, then they are equal. */
 	if (!newValue && !d.value)
@@ -836,7 +836,7 @@ function _appendUpdateTextValueCommands(d, i, newValue, objectData, initialData,
 		else
 		{
 			var command;
-			command = {containerUUID: objectData.getValueID(), 
+			command = {containerUUID: d.cell.parent.getValueID(), 
 					   fieldID: d.cell.field.nameID, 
 					   value: newValue,
 					   index: i};
@@ -895,42 +895,42 @@ function _getTimeValue()
 	}
 }
 
-function _appendUpdateStringCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateStringCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = this.value;
-			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
 		}
 	);
 }
 
-function _appendUpdateDatestampCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getDatestampValue.call(this);			
-			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
 		}
 	);
 }
 
-function _appendUpdateDatestampDayOptionalCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
 		}
 	);
 }
 
-function _appendUpdateTimeCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateTimeCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getTimeValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -948,17 +948,17 @@ function _getTranslationValue()
 				languageCode: languageCode};
 }
 
-function _appendUpdateTranslationCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("li").each(function(d, i)
 		{
 			var newValue = _getTranslationValue.call(this);
-			_appendUpdateTranslationValueCommands(d, i, newValue, objectData, initialData, sourceObjects);
+			_appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects);
 		}
 	);
 }
 
-function _appendUpdateTranslationValueCommands(d, i, newValue, objectData, initialData, sourceObjects)
+function _appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects)
 {
 	/* If both are null, then they are equal. */
 	if (!newValue.text && !d.value.text)
@@ -975,7 +975,7 @@ function _appendUpdateTranslationValueCommands(d, i, newValue, objectData, initi
 		else
 		{
 			var command;
-			command = {containerUUID: objectData.getValueID(), 
+			command = {containerUUID: d.cell.parent.getValueID(), 
 					   fieldID: d.cell.field.nameID, 
 					   value: newValue,
 					   index: i};
@@ -998,7 +998,7 @@ function _updateTranslationValue(d, newValue)
 	}
 }
 
-function _appendUpdateObjectCommands(sectionObj, objectData, initialData, sourceObjects)
+function _appendUpdateObjectCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
 		{
@@ -1016,7 +1016,7 @@ function _appendUpdateObjectCommands(sectionObj, objectData, initialData, source
 				});
 				{
 					var command;
-					command = {containerUUID: objectData.getValueID(), 
+					command = {containerUUID: d.cell.parent.getValueID(), 
 							   fieldID: d.cell.field.nameID, 
 							   ofKindID: d.cell.field.ofKindID,
 							   value: newDatum.value,
@@ -1088,7 +1088,6 @@ function _updateObjectCell(sectionObj)
 */
 function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
 {
-	closealert();
 	var newData = containerCell.newValue();
 	newData.value.cells = [];
 	sections.each(
@@ -1563,7 +1562,7 @@ var SitePanel = (function () {
 					function(cell) { return objectData.cell.field.descriptorType != "_by text" } );
 		}
 		
-		panel2Div.handleDoneButton = function() {
+		panel2Div.handleDoneEditingButton = function() {
 			if (prepareClick())
 			{
 				showClickFeedback(this);
@@ -1573,7 +1572,7 @@ var SitePanel = (function () {
 				var sourceObjects = [];
 				sections.each(function(cell) {
 						if ("appendUpdateCommands" in cell)
-							cell.appendUpdateCommands(this, cell.parent, initialData, sourceObjects);
+							cell.appendUpdateCommands(this, initialData, sourceObjects);
 					});
 				var updateValuesFunction = function()
 				{
@@ -1805,7 +1804,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 			else
 				doneButton = navContainer.appendLeftButton();
 			doneButton.append("span").text("Done");
-			doneButton.on("click", panel2Div.handleDoneButton);
+			doneButton.on("click", panel2Div.handleDoneEditingButton);
 		}
 		else
 		{
