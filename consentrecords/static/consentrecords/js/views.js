@@ -1253,7 +1253,9 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 {
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 	
-	var itemsDiv = panel2Div.append("ol")
+	var itemsDiv = panel2Div.append("section")
+		.classed("multiple", true)
+		.append("ol")
 		.classed("items-div", true);
 
 	var sections = itemsDiv.selectAll("li")
@@ -1999,7 +2001,9 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		var panel2Div = sitePanel.appendScrollArea();
 		panel2Div.appendAlertContainer();
 		
-		var itemsDiv = panel2Div.append("ol")
+		var itemsDiv = panel2Div.append("section")
+			.classed("multiple", true)
+			.append("ol")
 			.classed("items-div border-above", true)
 			.datum(cell);
 		
@@ -2088,7 +2092,9 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendAlertContainer();
 	
-	var itemsDiv = panel2Div.append("ol")
+	var itemsDiv = panel2Div.append("section")
+		.classed("multiple", true)
+		.append("ol")
 		.classed("items-div border-above", true)
 		.datum(cell);
 

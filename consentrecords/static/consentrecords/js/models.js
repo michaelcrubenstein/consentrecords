@@ -2,21 +2,6 @@
 			trigger events on them. This allows events to be fired on model objects.
 		 */
 
-function _appendStringCell(cell, initialData)
-{
-	var newData = [];
-	$(cell.data).each(function()
-		{
-			if (this.value)
-			{
-				var newDatum = {id: null, value: this.value};
-				newData.push(newDatum);
-			}
-		});
-	if (newData.length > 0)
-		initialData.push({"field": cell.field, "data": newData});
-}
-
 function _appendStringData(cell, initialData)
 {
 	var newData = [];
@@ -32,24 +17,6 @@ function _appendStringData(cell, initialData)
 		initialData[cell.field.id] = newData;
 }
 	
-function _appendTranslationCell(cell, initialData)
-{
-	var newData = [];
-	$(cell.data).each(function()
-		{
-			if (this.value)
-			{
-				var v = {text: this.value};
-				if (this.languageCode)
-					v.languageCode = this.languageCode;
-				var newDatum = {id: null, value: v};
-				newData.push(newDatum);
-			}
-		});
-	if (newData.length > 0)
-		initialData.push({"field": cell.field, "data": newData});
-}
-
 function _appendTranslationData(cell, initialData)
 {
 	var newData = [];
@@ -65,8 +32,6 @@ function _appendTranslationData(cell, initialData)
 		initialData[cell.field.id] = newData;
 }
 var _stringFunctions = {
-		clearValue: function(d) { d.value = null; },
-		appendCell: _appendStringCell,
 		appendData: _appendStringData,
 	};
 	
@@ -423,7 +388,7 @@ cr.Cell = (function()
 			if (this.field.capacity == "_unique value")
 			{
 				oldData.id = null;
-				cr.dataTypes[this.field.dataType].clearValue(oldData);
+				oldData.clearValue();
 			}
 			else
 			{
@@ -501,6 +466,23 @@ cr.StringCell = (function() {
 		return newValue;
 	}
 	
+	/* Appends the contents of this cell to the specified initialData. 
+		If this cell contains no data, then nothing is added. */
+	StringCell.prototype.appendCell = function(initialData)
+	{
+		var newData = [];
+		$(this.data).each(function()
+			{
+				if (this.value)
+				{
+					var newDatum = {id: null, value: this.value};
+					newData.push(newDatum);
+				}
+			});
+		if (newData.length > 0)
+			initialData.push({"field": this.field, "data": newData});
+	}
+
 	function StringCell(field) {
 		cr.Cell.call(this, field);
 	}
@@ -526,6 +508,24 @@ cr.TranslationCell = (function() {
 		return newValue;
 	}
 	
+	TranslationCell.prototype.appendCell = function(initialData)
+	{
+		var newData = [];
+		$(this.data).each(function()
+			{
+				if (this.value)
+				{
+					var v = {text: this.value};
+					if (this.languageCode)
+						v.languageCode = this.languageCode;
+					var newDatum = {id: null, value: v};
+					newData.push(newDatum);
+				}
+			});
+		if (newData.length > 0)
+			initialData.push({"field": this.field, "data": newData});
+	}
+
 	function TranslationCell(field) {
 		cr.StringCell.call(this, field);
 	}
@@ -600,6 +600,37 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
+	ObjectCell.prototype.appendCell = function(initialData)
+	{
+		var newData = [];
+		if (this.data)
+		{
+			for (var i = 0; i < this.data.length; ++i)
+			{
+				var d = this.data[i];
+				if (d.getValueID())
+				{
+					/* This case is true if we are picking an object. */
+					var newDatum = {id: null, value: {id: d.getValueID()}};
+					newData.push(newDatum);
+				}
+				else if ("cells" in d.value)
+				{
+					/* This case is true if we are creating an object */
+					var newDatum = {id: null, value: {cells: []}};
+					d.value.cells.forEach(function(cell)
+					{
+						cell.appendCell(newDatum.value.cells);
+					});
+					
+					newData.push(newDatum);
+				}
+				/* Otherwise, it is blank and shouldn't be saved. */
+			}
+		}
+		initialData.push({"field": this.field, "data": newData});
+	}
+
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
 	}
@@ -607,27 +638,284 @@ cr.ObjectCell = (function() {
 	return ObjectCell;
 })();
 
-cr.CellValue = function() {
+cr.CellValue = (function() {
+	CellValue.prototype = new cr.EventHandler();
+	
+	CellValue.prototype.getDescription = function() { return this.value; };
+	
+	CellValue.prototype.completeUpdate = function(newData)
+	{
+		this.id = newData.id;
+		this.completeUpdateValue(newData);
+	}
+	CellValue.prototype.isEmpty = function()
+	{
+		return this.value === null || this.value === undefined || this.value === "";
+	}
+	
+	CellValue.prototype.clearValue = function() { this.value = null; };
+	
+	function CellValue() {
 		cr.EventHandler.call(this);
 		this.id = null; 
 		this.value = null;
 		this.cell = null;	/* Initialize the container cell to empty. */
 	};
 	
-cr.StringValue = function() {
-	cr.CellValue.call(this);
+	return CellValue;
+})();
 	
-	$(this).on("dataChanged.cr", function(e) {
-		this.triggerEvent("dataChanged.cr", this);
-	});
-}
+cr.StringValue = (function() {
+	StringValue.prototype = new cr.CellValue();
+
+	function StringValue() {
+		cr.CellValue.call(this);
 	
-cr.TranslationValue = function() {
+		$(this).on("dataChanged.cr", function(e) {
+			this.triggerEvent("dataChanged.cr", this);
+		});
+	}
+	
+	return StringValue;
+})();
+	
+cr.TranslationValue = (function() {
+	TranslationValue.prototype = new cr.StringValue();
+	TranslationValue.prototype.getDescription = function() { return this.value.text; };
+	TranslationValue.prototype.isEmpty = function()
+	{
+		return this.value.text === null && this.value.text === undefined && this.value.text === "";
+	}
+	
+	function clearValue() { this.value = null; this.languageCode = null; }
+
+	function TranslationValue() {
 		cr.StringValue.call(this);
 		this.value = {text: null, languageCode: null};
 	};
 	
-cr.ObjectValue = function() {
+	return TranslationValue;
+})();
+	
+cr.ObjectValue = (function() {
+	ObjectValue.prototype = new cr.CellValue();
+	
+	ObjectValue.prototype = new cr.CellValue();
+	ObjectValue.prototype.getDescription = function() { return this.value.description; };
+	ObjectValue.prototype.getValueID = function() { return this.value.id; };
+	ObjectValue.prototype.completeUpdateValue = function(newData)
+	{
+		/* Replace the value completely so that its cells are eliminated and will be
+			re-accessed from the server. This handles the case where a value has been added. */
+		this.value = {id: newData.getValueID(), description: newData.getDescription()};
+		this.triggerEvent("dataChanged.cr", this);
+	}
+	ObjectValue.prototype.isEmpty = function()
+	{
+		return !this.value.id && !this.value.cells;
+	}
+
+	ObjectValue.prototype.clearValue = function()
+	{
+		this.value = {id: null, description: "None" };
+	}
+	
+	ObjectValue.prototype.calculateDescription = function()
+	{
+		if (!("cells" in this.value))
+			return this.value.description;
+		else
+		{
+			var nameArray = [];
+			for (var i = 0; i < this.value.cells.length; ++i)
+			{
+				var cell = this.value.cells[i];
+				if (cell.field.descriptorType == "_by text")
+				{
+					var cellNames = [];
+					for (var j = 0; j < cell.data.length; ++j)
+					{
+						if (!cell.data[j].isEmpty())
+							cellNames.push(cell.data[j].getDescription());
+					}
+					nameArray.push(cellNames.join(separator='/'));
+				}
+				else if (cell.field.descriptorType == "_by count")
+				{
+					nameArray.push(cell.data.length.toString());
+				}
+			}
+			if (nameArray.length == 0)
+				this.value.description = "None";
+			else
+				this.value.description = nameArray.join(separator = ' ');
+		}
+	}
+
+	ObjectValue.prototype.hasTextDescription = function()
+	{
+		for (var i = 0; i < this.value.cells.length; ++i)
+		{
+			var cell = this.value.cells[i];
+			if (cell.field.descriptorType == "_by text" &&
+				cell.data.length > 0)
+				return true;
+		}
+		return false;
+	}
+
+	ObjectValue.prototype.getCell = function(name)
+	{
+		for (var i = 0; i < this.value.cells.length; ++i)
+		{
+			var cell = this.value.cells[i];
+			if (cell.field.name == name)
+				return cell;
+		}
+		return undefined;
+	}
+
+	ObjectValue.prototype.getDatum = function(name)
+	{
+		var cell = this.getCell(name);
+		return cell && cell.data.length && cell.data[0].value;
+	}
+		
+	ObjectValue.prototype.getValue = function(name)
+	{
+		var cell = this.getCell(name);
+		return cell && cell.data.length && cell.data[0];
+	}
+		
+	ObjectValue.prototype.handleContentsChanged = function(e)
+	{
+		var oldDescription = this.getDescription();
+		this.calculateDescription();
+		if (this.getDescription() != oldDescription)
+			this.triggerEvent("dataChanged.cr", this);
+	}
+
+	ObjectValue.prototype.importCell = function(oldCell)
+	{
+		var newCell = cr.createCell(oldCell.field);
+		if (oldCell.data)
+		{
+			$(oldCell.data).each(function()
+			{
+				var newValue = newCell.copyValue(this);
+				newCell.pushValue(newValue);
+			});
+		}
+		newCell.setup(this);
+		this.value.cells.push(newCell);
+		return newCell;
+	}
+
+	ObjectValue.prototype.importCells = function(oldCells)
+	{
+		this.value.cells = [];
+		for (var j = 0; j < oldCells.length; ++j)
+		{
+			this.importCell(oldCells[j]);
+		}
+	}
+
+	ObjectValue.prototype._setCells = function(oldCells)
+	{
+		if (this.value.cells)
+		{
+			for (var j = 0; j < this.value.cells.length; ++j)
+			{
+				this.value.cells[j].clearEvents();
+			}
+		}
+		
+		this.value.cells = oldCells;
+		for (var j = 0; j < oldCells.length; ++j)
+		{
+			oldCells[j].clearEvents();
+			oldCells[j].setParent(this);
+		}
+	}
+
+	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
+	{
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
+	
+		if (this.value.cells && this.isDataLoaded)
+		{
+			successFunction();
+		}
+		else if (this.getValueID())
+		{
+			var _this = this;
+			var jsonArray = { "path" : "#" + this.getValueID() };
+			if (fields)
+				jsonArray["fields"] = JSON.stringify(fields);
+			$.getJSON(cr.urls.getData,
+				jsonArray, 
+				function(json)
+				{
+					if (json.success) {
+						/* If the data length is 0, then this item can not be read. */
+						if (json.data.length > 0)
+							_this.importCells(json.data[0].cells);
+						else
+							_this.importCells([]);
+						_this.isDataLoaded = true;
+						successFunction();
+					}
+					else {
+						failFunction(json.error);
+					}
+				}
+			);
+		}
+		else if (this.cell.field.ofKindID)
+		{
+			var _this = this;
+			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
+			cr.getConfiguration(this, this.cell.field.ofKindID, 
+				function(newCells)
+				{
+					_this.value.cells = newCells;
+					successFunction();
+				},
+				failFunction);
+		}
+	}
+
+	ObjectValue.prototype.checkConfiguration = function(successFunction, failFunction)
+	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+		if (!this.cell)
+			throw "cell is not specified for this object";
+		
+		if (this.value.cells)
+		{
+			successFunction();
+		}
+		else
+		{
+			var _this = this;
+			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
+			cr.getConfiguration(this, this.cell.field.ofKindID, 
+				function(newCells)
+				{
+					_this.value.cells = newCells;
+					successFunction();
+				},
+				failFunction);
+		}
+	}
+	
+	function ObjectValue() {
 		cr.CellValue.call(this);
 		this.value = {id: null, description: "None" };
 		this.isDataLoaded = false;
@@ -636,6 +924,9 @@ cr.ObjectValue = function() {
 		$(this).on("valueAdded.cr", this.handleContentsChanged);
 		$(this).on("valueDeleted.cr", this.handleContentsChanged);
 	};
+	
+	return ObjectValue;
+})();
 	
 cr.createCell = function(field) {
 		if (field.dataType === "_translation")
@@ -662,45 +953,9 @@ cr.dataTypes = {
 		"_datestamp (day optional)": _stringFunctions,
 		_time: _stringFunctions,
 		_translation: {
-			clearValue: function(d) { d.value = null; d.languageCode = null; },
-			appendCell: _appendTranslationCell,
 			appendData: _appendTranslationData,
 		},
 		_object: {
-			clearValue: function(d)
-			{
-				d.value = {id: null, description: "None" };
-			},
-			appendCell: function(cell, initialData)
-			{
-				var newData = [];
-				if (cell.data)
-				{
-					for (var i = 0; i < cell.data.length; ++i)
-					{
-						var d = cell.data[i];
-						if (d.getValueID())
-						{
-							/* This case is true if we are picking an object. */
-							var newDatum = {id: null, value: {id: d.getValueID()}};
-							newData.push(newDatum);
-						}
-						else if ("cells" in d.value)
-						{
-							/* This case is true if we are creating an object */
-							var newDatum = {id: null, value: {cells: []}};
-							d.value.cells.forEach(function(cell)
-							{
-								cr.dataTypes[cell.field.dataType].appendCell(cell, newDatum.value.cells);
-							});
-							
-							newData.push(newDatum);
-						}
-						/* Otherwise, it is blank and shouldn't be saved. */
-					}
-				}
-				initialData.push({"field": cell.field, "data": newData});
-			},
 			appendData: function(cell, initialData)
 			{
 				var newData = [];
@@ -1208,235 +1463,3 @@ cr.submitSignout = function(successFunction, failFunction)
 			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 		});
 	}
-		
-cr.CellValue.prototype = new cr.EventHandler();
-cr.CellValue.prototype.getDescription = function() { return this.value; };
-cr.CellValue.prototype.completeUpdate = function(newData)
-{
-	this.id = newData.id;
-	this.completeUpdateValue(newData);
-}
-cr.CellValue.prototype.isEmpty = function()
-{
-	return this.value === null || this.value === undefined || this.value === "";
-}
-
-cr.StringValue.prototype = new cr.CellValue();
-
-cr.TranslationValue.prototype = new cr.StringValue();
-cr.TranslationValue.prototype.getDescription = function() { return this.value.text; };
-cr.TranslationValue.prototype.isEmpty = function()
-{
-	return this.value.text === null && this.value.text === undefined && this.value.text === "";
-}
-
-cr.ObjectValue.prototype = new cr.CellValue();
-cr.ObjectValue.prototype.getDescription = function() { return this.value.description; };
-cr.ObjectValue.prototype.getValueID = function() { return this.value.id; };
-cr.ObjectValue.prototype.completeUpdateValue = function(newData)
-{
-	/* Replace the value completely so that its cells are eliminated and will be
-		re-accessed from the server. This handles the case where a value has been added. */
-	this.value = {id: newData.getValueID(), description: newData.getDescription()};
-	this.triggerEvent("dataChanged.cr", this);
-}
-cr.ObjectValue.prototype.isEmpty = function()
-{
-	return !this.value.id && !this.value.cells;
-}
-
-cr.ObjectValue.prototype.calculateDescription = function()
-{
-	if (!("cells" in this.value))
-		return this.value.description;
-	else
-	{
-		var nameArray = [];
-		for (var i = 0; i < this.value.cells.length; ++i)
-		{
-			var cell = this.value.cells[i];
-			if (cell.field.descriptorType == "_by text")
-			{
-				var cellNames = [];
-				for (var j = 0; j < cell.data.length; ++j)
-				{
-					if (!cell.data[j].isEmpty())
-						cellNames.push(cell.data[j].getDescription());
-				}
-				nameArray.push(cellNames.join(separator='/'));
-			}
-			else if (cell.field.descriptorType == "_by count")
-			{
-				nameArray.push(cell.data.length.toString());
-			}
-		}
-		if (nameArray.length == 0)
-			this.value.description = "None";
-		else
-			this.value.description = nameArray.join(separator = ' ');
-	}
-}
-
-cr.ObjectValue.prototype.hasTextDescription = function()
-{
-	for (var i = 0; i < this.value.cells.length; ++i)
-	{
-		var cell = this.value.cells[i];
-		if (cell.field.descriptorType == "_by text" &&
-			cell.data.length > 0)
-			return true;
-	}
-	return false;
-}
-
-cr.ObjectValue.prototype.getCell = function(name)
-{
-	for (var i = 0; i < this.value.cells.length; ++i)
-	{
-		var cell = this.value.cells[i];
-		if (cell.field.name == name)
-			return cell;
-	}
-	return undefined;
-}
-
-cr.ObjectValue.prototype.getDatum = function(name)
-{
-	var cell = this.getCell(name);
-	return cell && cell.data.length && cell.data[0].value;
-}
-		
-cr.ObjectValue.prototype.getValue = function(name)
-{
-	var cell = this.getCell(name);
-	return cell && cell.data.length && cell.data[0];
-}
-		
-cr.ObjectValue.prototype.handleContentsChanged = function(e)
-{
-	var oldDescription = this.getDescription();
-	this.calculateDescription();
-	if (this.getDescription() != oldDescription)
-		this.triggerEvent("dataChanged.cr", this);
-}
-
-cr.ObjectValue.prototype.importCell = function(oldCell)
-{
-	var newCell = cr.createCell(oldCell.field);
-	if (oldCell.data)
-	{
-		var dt = cr.dataTypes[newCell.field.dataType];
-		$(oldCell.data).each(function()
-		{
-			var newValue = newCell.copyValue(this);
-			newCell.pushValue(newValue);
-		});
-	}
-	newCell.setup(this);
-	this.value.cells.push(newCell);
-	return newCell;
-}
-
-cr.ObjectValue.prototype.importCells = function(oldCells)
-{
-	this.value.cells = [];
-	for (var j = 0; j < oldCells.length; ++j)
-	{
-		this.importCell(oldCells[j]);
-	}
-}
-
-cr.ObjectValue.prototype._setCells = function(oldCells)
-{
-	if (this.value.cells)
-	{
-		for (var j = 0; j < this.value.cells.length; ++j)
-		{
-			this.value.cells[j].clearEvents();
-		}
-	}
-		
-	this.value.cells = oldCells;
-	for (var j = 0; j < oldCells.length; ++j)
-	{
-		oldCells[j].clearEvents();
-		oldCells[j].setParent(this);
-	}
-}
-
-cr.ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
-{
-	if (typeof(successFunction) != "function")
-		throw "successFunction is not a function";
-	if (typeof(failFunction) != "function")
-		throw "failFunction is not a function";
-	
-	if (this.value.cells && this.isDataLoaded)
-	{
-		successFunction();
-	}
-	else if (this.getValueID())
-	{
-		var _this = this;
-		var jsonArray = { "path" : "#" + this.getValueID() };
-		if (fields)
-			jsonArray["fields"] = JSON.stringify(fields);
-		$.getJSON(cr.urls.getData,
-			jsonArray, 
-			function(json)
-			{
-				if (json.success) {
-					/* If the data length is 0, then this item can not be read. */
-					if (json.data.length > 0)
-						_this.importCells(json.data[0].cells);
-					else
-						_this.importCells([]);
-					_this.isDataLoaded = true;
-					successFunction();
-				}
-				else {
-					failFunction(json.error);
-				}
-			}
-		);
-	}
-	else if (this.cell.field.ofKindID)
-	{
-		var _this = this;
-		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-		cr.getConfiguration(this, this.cell.field.ofKindID, 
-			function(newCells)
-			{
-				_this.value.cells = newCells;
-				successFunction();
-			},
-			failFunction);
-	}
-}
-
-cr.ObjectValue.prototype.checkConfiguration = function(successFunction, failFunction)
-{
-	if (!failFunction)
-		throw ("failFunction is not specified");
-	if (!successFunction)
-		throw ("successFunction is not specified");
-	if (!this.cell)
-		throw "cell is not specified for this object";
-		
-	if (this.value.cells)
-	{
-		successFunction();
-	}
-	else
-	{
-		var _this = this;
-		/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-		cr.getConfiguration(this, this.cell.field.ofKindID, 
-			function(newCells)
-			{
-				_this.value.cells = newCells;
-				successFunction();
-			},
-			failFunction);
-	}
-}
