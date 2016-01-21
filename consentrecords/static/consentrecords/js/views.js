@@ -1012,7 +1012,7 @@ function _appendUpdateObjectCommands(sectionObj, objectData, initialData, source
 				var newDatum = {id: null, value: {cells: []}};
 				$(d.value.cells).each(function()
 				{
-					cr.dataTypes[this.field.dataType].appendCell(this, newDatum.value.cells);
+					this.appendCell(newDatum.value.cells);
 				});
 				{
 					var command;
