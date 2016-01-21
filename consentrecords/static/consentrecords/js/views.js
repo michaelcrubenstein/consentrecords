@@ -998,37 +998,6 @@ function _updateTranslationValue(d, newValue)
 	}
 }
 
-function _appendUpdateObjectCommands(sectionObj, initialData, sourceObjects)
-{
-	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
-		{
-			if (d.id)
-			{
-				/* Do nothing. */ ;
-			}
-			else if ("cells" in d.value)
-			{
-				/* This case is true if we are creating an object */
-				var newDatum = {id: null, value: {cells: []}};
-				$(d.value.cells).each(function()
-				{
-					this.appendCell(newDatum.value.cells);
-				});
-				{
-					var command;
-					command = {containerUUID: d.cell.parent.getValueID(), 
-							   fieldID: d.cell.field.nameID, 
-							   ofKindID: d.cell.field.ofKindID,
-							   value: newDatum.value,
-							   index: i};
-					initialData.push(command);
-					sourceObjects.push(d);
-				}
-			}
-		}
-	);
-}
-
 function _updateStringCell(sectionObj)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d)
@@ -1078,11 +1047,6 @@ function _updateTranslationCell(sectionObj)
 	);
 }
 
-function _updateObjectCell(sectionObj)
-{
-	/* Do nothing at the moment. */
-}
-
 /* This is a storeDataFunction for adding an object within an unsaved object. 
 	onSuccessFunction takes one argument: the newly created value.
 */
@@ -1114,7 +1078,7 @@ function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onS
 	
 	onSuccessFunction takes one argument: the newly created value.
  */
-function _submitCreateInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
+function _createRootInstance(oldValue, containerCell, sections, onSuccessFunction)
 {
 	var initialData = {}
 	sections.each(
@@ -1125,7 +1089,7 @@ function _submitCreateInstance(oldValue, containerCell, containerUUID, sections,
 			cell.appendData(initialData);
 		});
 		
-	cr.append(oldValue, containerCell, containerUUID, initialData, onSuccessFunction, syncFailFunction)
+	cr.append(oldValue, containerCell, initialData, onSuccessFunction, syncFailFunction)
 }
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
@@ -1143,8 +1107,52 @@ cr.TimeCell.prototype.updateCell = _updateTimeCell;
 cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
 cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
 
-cr.ObjectCell.prototype.appendUpdateCommands = _appendUpdateObjectCommands;
-cr.ObjectCell.prototype.updateCell = _updateObjectCell;
+cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData, sourceObjects)
+{
+	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
+		{
+			if (d.id)
+			{
+				/* Do nothing. */ ;
+			}
+			else if ("cells" in d.value)
+			{
+				/* This case is true if we are creating an object */
+				var subData = {}
+				$(d.value.cells).each(function()
+				{
+					this.appendData(subData);
+				});
+				{
+					var command;
+					command = {containerUUID: d.cell.parent.getValueID(), 
+							   fieldID: d.cell.field.nameID, 
+							   ofKindID: d.cell.field.ofKindID,
+							   value: subData,
+							   index: i};
+					initialData.push(command);
+					sourceObjects.push(d);
+				}
+			}
+		}
+	);
+}
+
+cr.ObjectCell.prototype.updateCell = function(sectionObj)
+{
+	if (this.parent.getValueID())
+	{
+		/* If the parent has an ID, then we need to delete the cells all of the
+			data elements, because we don't have their id's. This will force them 
+			to be reloaded.
+		 */
+		this.data.forEach(function(d)
+		{
+			delete d.value.cells;
+		});
+	}
+	/* Do nothing at the moment. */
+}
 
 var dataTypeViews = {
 	_string: {
@@ -1574,17 +1582,16 @@ var SitePanel = (function () {
 						if ("appendUpdateCommands" in cell)
 							cell.appendUpdateCommands(this, initialData, sourceObjects);
 					});
-				var updateValuesFunction = function()
-				{
-					sections.each(function(cell) {
-							if ("updateCell" in cell)
-								cell.updateCell(this);
-						});
-				}
 				var panel = $(this).parents(".site-panel")[0];
 				if (initialData.length > 0) {
-					cr.updateValues(initialData, sourceObjects, updateValuesFunction, 
-						function() { _this.hide(); }, 
+					cr.updateValues(initialData, sourceObjects, 
+						function() {
+							sections.each(function(cell) {
+									if ("updateCell" in cell)
+										cell.updateCell(this);
+								});
+							_this.hide();
+						}, 
 						syncFailFunction);
 				}
 				else
@@ -1818,24 +1825,16 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 					var sections = panel2Div.selectAll("section");
 					if (containerCell.parent == null)
 					{
-						_submitCreateInstance(objectData, containerCell, null, sections, 
+						_createRootInstance(objectData, containerCell, sections, 
 							function() { 
 								sitePanel.hide(); 
 							});
-						/* Add this new root object. */
-					}
-					else if (containerCell.parent.getValueID())
-					{
-						_submitCreateInstance(objectData, containerCell, containerCell.parent.getValueID(), sections, 
-							function() { 
-								sitePanel.hide(); 
-							});
-						/* Add this item to the contained object. */
 					}
 					else
 					{
-						/* In this case, we are editing an object that is contained in an object
-							that hasn't been saved. */
+						/* In this case, we are editing an object that is contained in 
+							an object that is being edited. This object will be saved
+							as part of completing that edit operation. */
 						objectData.value.cells = [];
 						sections.each(
 							function(cell) {

@@ -180,13 +180,15 @@ class api:
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
         
-            ids = []
+            valueIDs = []
+            instanceIDs = []
             nameLists = NameList()
             descriptionQueue = []
             
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
                 for c in commands:
+                    newInstance = None
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
                         oldValue.checkWriteAccess(user)
@@ -207,7 +209,6 @@ class api:
                         field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
                         newIndex = c["index"]
                         newValue = c["value"]
-                        print(newValue)
 
                         container.checkWriteValueAccess(user, field, newValue)
 
@@ -221,14 +222,12 @@ class api:
                             descriptionQueue.append(container)
                     else:
                         raise ValueError("subject id was not specified")
-                    if item:
-                        ids.append(item.id)
-                    else:
-                        ids.append(None)
+                    valueIDs.append(item.id if item else None)
+                    instanceIDs.append(newInstance.id if newInstance else None)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
-                results = {'success':True, 'ids': ids}
+                results = {'success':True, 'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
             
         except Exception as e:
             logger = logging.getLogger(__name__)

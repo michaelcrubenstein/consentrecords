@@ -433,23 +433,6 @@ cr.StringCell = (function() {
 		return newValue;
 	}
 	
-	/* Appends the contents of this cell to the specified initialData. 
-		If this cell contains no data, then nothing is added. */
-	StringCell.prototype.appendCell = function(initialData)
-	{
-		var newData = [];
-		$(this.data).each(function()
-			{
-				if (this.value)
-				{
-					var newDatum = {id: null, value: this.value};
-					newData.push(newDatum);
-				}
-			});
-		if (newData.length > 0)
-			initialData.push({"field": this.field, "data": newData});
-	}
-
 	StringCell.prototype.appendData = function(initialData)
 	{
 		var newData = [];
@@ -490,24 +473,6 @@ cr.TranslationCell = (function() {
 		return newValue;
 	}
 	
-	TranslationCell.prototype.appendCell = function(initialData)
-	{
-		var newData = [];
-		$(this.data).each(function()
-			{
-				if (this.value)
-				{
-					var v = {text: this.value};
-					if (this.languageCode)
-						v.languageCode = this.languageCode;
-					var newDatum = {id: null, value: v};
-					newData.push(newDatum);
-				}
-			});
-		if (newData.length > 0)
-			initialData.push({"field": this.field, "data": newData});
-	}
-
 	TranslationCell.prototype.appendData = function(initialData)
 	{
 		var newData = [];
@@ -597,37 +562,6 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
-	ObjectCell.prototype.appendCell = function(initialData)
-	{
-		var newData = [];
-		if (this.data)
-		{
-			for (var i = 0; i < this.data.length; ++i)
-			{
-				var d = this.data[i];
-				if (d.getValueID())
-				{
-					/* This case is true if we are picking an object. */
-					var newDatum = {id: null, value: {id: d.getValueID()}};
-					newData.push(newDatum);
-				}
-				else if ("cells" in d.value)
-				{
-					/* This case is true if we are creating an object */
-					var newDatum = {id: null, value: {cells: []}};
-					d.value.cells.forEach(function(cell)
-					{
-						cell.appendCell(newDatum.value.cells);
-					});
-					
-					newData.push(newDatum);
-				}
-				/* Otherwise, it is blank and shouldn't be saved. */
-			}
-		}
-		initialData.push({"field": this.field, "data": newData});
-	}
-
 	ObjectCell.prototype.appendData = function(initialData)
 	{
 		var newData = [];
@@ -1253,7 +1187,7 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 				);
 	},
 	
-cr.append = function(oldValue, containerCell, containerUUID, initialData, successFunction, failFunction)
+cr.append = function(oldValue, containerCell, initialData, successFunction, failFunction)
 	{
 		if (!oldValue)
 			throw "oldValue is not specified";
@@ -1261,12 +1195,8 @@ cr.append = function(oldValue, containerCell, containerUUID, initialData, succes
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
-		if (containerCell.parent == null && containerUUID != null)
-			throw ("setup error 1 in append");
-		else if (containerCell.parent != null && containerCell.parent.getValueID() != containerUUID)
-			throw ("setup error 2 in append");
 		/* oldValue must be an ObjectValue */
-		cr.createInstance(containerCell.field, containerUUID, initialData, 
+		cr.createInstance(containerCell.field, null, initialData, 
 			function(newData)
 			{
 				oldValue.completeUpdate(newData);
@@ -1276,7 +1206,7 @@ cr.append = function(oldValue, containerCell, containerUUID, initialData, succes
 			failFunction);
 	},
 	
-cr.updateValues = function(initialData, sourceObjects, updateValuesFunction, successFunction, failFunction)
+cr.updateValues = function(initialData, sourceObjects, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
@@ -1289,15 +1219,19 @@ cr.updateValues = function(initialData, sourceObjects, updateValuesFunction, suc
 		  .done(function(json, textStatus, jqXHR)
 			{
 				if (json.success) {
-					if ( updateValuesFunction)
-						updateValuesFunction();
 					for (var i = 0; i < sourceObjects.length; ++i)
 					{
 						d = sourceObjects[i];
-						newID = json.ids[i];
-						if (newID)
+						newValueID = json.valueIDs[i];
+						newInstanceID = json.instanceIDs[i];
+						if (newValueID)
 						{
-							d.id = newID;
+							d.id = newValueID;
+							
+							/* Object Values have an instance ID as well. */
+							if (newInstanceID)
+								d.value.id = newInstanceID;
+								
 							d.triggerEvent("dataChanged.cr", d);
 						}
 						else
