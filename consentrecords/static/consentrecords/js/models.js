@@ -2,39 +2,6 @@
 			trigger events on them. This allows events to be fired on model objects.
 		 */
 
-function _appendStringData(cell, initialData)
-{
-	var newData = [];
-	$(cell.data).each(function()
-		{
-			if (this.value)
-			{
-				var newDatum = this.value;
-				newData.push(newDatum);
-			}
-		});
-	if (newData.length > 0)
-		initialData[cell.field.id] = newData;
-}
-	
-function _appendTranslationData(cell, initialData)
-{
-	var newData = [];
-	$(cell.data).each(function()
-		{
-			if (this.value)
-			{
-				var v = this.value;
-				newData.push(v);
-			}
-		});
-	if (newData.length > 0)
-		initialData[cell.field.id] = newData;
-}
-var _stringFunctions = {
-		appendData: _appendStringData,
-	};
-	
 var Queue = (function () {
 
     Queue.prototype.autorun = true;
@@ -483,6 +450,21 @@ cr.StringCell = (function() {
 			initialData.push({"field": this.field, "data": newData});
 	}
 
+	StringCell.prototype.appendData = function(initialData)
+	{
+		var newData = [];
+		$(this.data).each(function()
+			{
+				if (this.value)
+				{
+					var newDatum = this.value;
+					newData.push(newDatum);
+				}
+			});
+		if (newData.length > 0)
+			initialData[this.field.id] = newData;
+	}
+	
 	function StringCell(field) {
 		cr.Cell.call(this, field);
 	}
@@ -524,6 +506,21 @@ cr.TranslationCell = (function() {
 			});
 		if (newData.length > 0)
 			initialData.push({"field": this.field, "data": newData});
+	}
+
+	TranslationCell.prototype.appendData = function(initialData)
+	{
+		var newData = [];
+		$(this.data).each(function()
+			{
+				if (this.value)
+				{
+					var v = this.value;
+					newData.push(v);
+				}
+			});
+		if (newData.length > 0)
+			initialData[this.field.id] = newData;
 	}
 
 	function TranslationCell(field) {
@@ -629,6 +626,36 @@ cr.ObjectCell = (function() {
 			}
 		}
 		initialData.push({"field": this.field, "data": newData});
+	}
+
+	ObjectCell.prototype.appendData = function(initialData)
+	{
+		var newData = [];
+		if (this.data)
+		{
+			for (var i = 0; i < this.data.length; ++i)
+			{
+				var d = this.data[i];
+				if (d.getValueID())
+				{
+					/* This case is true if we are picking an object. */
+					newData.push(d.getValueID());
+				}
+				else if ("cells" in d.value)
+				{
+					/* This case is true if we are creating an object */
+					var newDatum = {};
+					d.value.cells.forEach(function(cell)
+					{
+						cell.appendData(newDatum);
+					});
+					
+					newData.push(newDatum);
+				}
+				/* Otherwise, it is blank and shouldn't be saved. */
+			}
+		}
+		initialData[this.field.id] = newData;
 	}
 
 	function ObjectCell(field) {
@@ -942,51 +969,6 @@ cr.createCell = function(field) {
 		else
 			return new cr.StringCell(field); 
 	};
-	
-cr.dataTypes = {
-		_string: _stringFunctions,
-		_number: _stringFunctions,
-		_email: _stringFunctions,
-		_url: _stringFunctions,
-		_telephone: _stringFunctions,
-		_datestamp: _stringFunctions,
-		"_datestamp (day optional)": _stringFunctions,
-		_time: _stringFunctions,
-		_translation: {
-			appendData: _appendTranslationData,
-		},
-		_object: {
-			appendData: function(cell, initialData)
-			{
-				var newData = [];
-				if (cell.data)
-				{
-					for (var i = 0; i < cell.data.length; ++i)
-					{
-						var d = cell.data[i];
-						if (d.getValueID())
-						{
-							/* This case is true if we are picking an object. */
-							newData.push(d.getValueID());
-						}
-						else if ("cells" in d.value)
-						{
-							/* This case is true if we are creating an object */
-							var newDatum = {};
-							d.value.cells.forEach(function(cell)
-							{
-								cr.dataTypes[cell.field.dataType].appendData(cell, newDatum);
-							});
-							
-							newData.push(newDatum);
-						}
-						/* Otherwise, it is blank and shouldn't be saved. */
-					}
-				}
-				initialData[cell.field.id] = newData;
-			},
-		},
-	}
 	
 cr.urls = {
 		selectAll : "/api/selectall/",

@@ -1123,7 +1123,7 @@ function _submitCreateInstance(oldValue, containerCell, containerUUID, sections,
 			dt = dataTypeViews[cell.field.dataType]
 			if ("updateCell" in cell)
 				cell.updateCell(this);
-			cr.dataTypes[cell.field.dataType].appendData(cell, initialData);
+			cell.appendData(initialData);
 		});
 		
 	cr.append(oldValue, containerCell, containerUUID, initialData, onSuccessFunction, syncFailFunction)
