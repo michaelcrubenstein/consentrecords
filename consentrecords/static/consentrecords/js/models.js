@@ -1196,7 +1196,14 @@ cr.append = function(oldValue, containerCell, initialData, successFunction, fail
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		/* oldValue must be an ObjectValue */
-		cr.createInstance(containerCell.field, null, initialData, 
+		var containerUUID;
+		if (!("parent" in containerCell))
+			containerUUID = null;
+		else if (containerCell.parent)
+			containerUUID = containerCell.parent.getValueID();
+		else
+			containerUUID = null;
+		cr.createInstance(containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{
 				oldValue.completeUpdate(newData);

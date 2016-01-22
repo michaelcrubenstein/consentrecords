@@ -1078,18 +1078,17 @@ function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onS
 	
 	onSuccessFunction takes one argument: the newly created value.
  */
-function _createRootInstance(oldValue, containerCell, sections, onSuccessFunction)
+function _saveNewInstance(oldValue, containerCell, sections, done)
 {
 	var initialData = {}
 	sections.each(
 		function(cell) {
-			dt = dataTypeViews[cell.field.dataType]
 			if ("updateCell" in cell)
 				cell.updateCell(this);
 			cell.appendData(initialData);
 		});
 		
-	cr.append(oldValue, containerCell, initialData, onSuccessFunction, syncFailFunction)
+	cr.append(oldValue, containerCell, initialData, done, syncFailFunction)
 }
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
@@ -1582,7 +1581,6 @@ var SitePanel = (function () {
 						if ("appendUpdateCommands" in cell)
 							cell.appendUpdateCommands(this, initialData, sourceObjects);
 					});
-				var panel = $(this).parents(".site-panel")[0];
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 
 						function() {
@@ -1823,9 +1821,10 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 					showClickFeedback(this);
 			
 					var sections = panel2Div.selectAll("section");
-					if (containerCell.parent == null)
+					if (containerCell.parent == null ||
+						containerCell.parent.getValueID() != null)
 					{
-						_createRootInstance(objectData, containerCell, sections, 
+						_saveNewInstance(objectData, containerCell, sections, 
 							function() { 
 								sitePanel.hide(); 
 							});
