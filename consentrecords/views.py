@@ -180,15 +180,17 @@ class api:
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
         
-            ids = []
+            valueIDs = []
+            instanceIDs = []
             nameLists = NameList()
             descriptionQueue = []
             
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
                 for c in commands:
+                    newInstance = None
                     if "id" in c:
-                        oldValue = Value.objects.get(pk=c["id"])
+                        oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
                         oldValue.checkWriteAccess(user)
 
                         container = oldValue.instance
@@ -202,32 +204,30 @@ class api:
                             oldValue.deepDelete(transactionState)
                             item = None
                     elif "containerUUID" in c:
-                        container = Instance.objects.get(pk=c["containerUUID"])
+                        container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
 
-                        field = Instance.objects.get(pk=c["fieldID"])
+                        field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
                         newIndex = c["index"]
                         newValue = c["value"]
 
                         container.checkWriteValueAccess(user, field, newValue)
 
                         if "ofKindID" in c:
-                            ofKindObject = Instance.objects.get(pk=c["ofKindID"])
+                            ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             propertyList = newValue
-                            newInstance, item = instancecreator.create(ofKindObject, container, field, propertyList, newValue, nameLists, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, newValue, nameLists, transactionState)
                         else:
                             item = container.addValue(field, newValue, newIndex, transactionState)
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
                         raise ValueError("subject id was not specified")
-                    if item:
-                        ids.append(item.id)
-                    else:
-                        ids.append(None)
+                    valueIDs.append(item.id if item else None)
+                    instanceIDs.append(newInstance.id if newInstance else None)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
-                results = {'success':True, 'ids': ids}
+                results = {'success':True, 'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
             
         except Exception as e:
             logger = logging.getLogger(__name__)

@@ -654,7 +654,7 @@
 			var panel = $(this).parents(".site-panel")[0];
 			var done = function()
 			{
-				var pathway = new PathwayPanel(panel);
+				var pathway = new PathwayPanel(userInstance, panel);
 			}
 			
 			checkSignin.call(this, userInstance, panel, done);
@@ -1016,18 +1016,7 @@
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-		    $.post("{% url 'submitSignout' %}", { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
-		  								function(json){
-		  	if (json['success']) {
-		  		successFunction();
-		  	}
-		  	else
-		  		failFunction(json.error);
-		  })
-		  	.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-			});
+			cr.submitSignout(successFunction, failFunction);
 		}
 		
 		function show_consent_records(containerDiv) {
@@ -1058,12 +1047,12 @@
 			
 			var successFunction = function(newInstances)
 			{
-				var cell = new cr.Cell();
-				cell.field = {
+				var field = {
 							  dataType: "_object",
 							  name: "Service",
 							  capacity: "_multiple values",
 							  };
+				var cell = cr.createCell(field);
 				cell.setup(null);
 				newInstances.sort(function(a, b)
 					{
@@ -1516,16 +1505,16 @@
 						{% endif %}
 					}
 
-					if (serviceCell.length > 0)
+					if (serviceCell.data.length > 0)
 					{
 						var labelDiv = cellDiv.append("label")
 							.text("Services");
 						var itemsDiv = cellDiv.append("ol").classed("items-div", true);
 
-						var divs = appendItems(itemsDiv, newInstances);
+						var divs = appendItems(itemsDiv, serviceCell.data);
 						var buttons = divs.append("div").classed("multi-line-item", true);
-						appendButtonDescriptions(buttons, null);
-						itemsDiv.classed("border-below", true);
+						appendButtonDescriptions(buttons);
+						cellDiv.append("div").classed("cell-border-below", true);
 					}
 				},
 				asyncFailFunction);
@@ -1936,11 +1925,11 @@
 			var orgSection = d3.select(this);
 			var successFunction = function(newInstances)
 			{
-				var cell = new cr.Cell();
-				cell.field = {name: "Organization",
+				var field = {name: "Organization",
 							  dataType: "_object",
 							  capacity: "_multiple values",
 							  };
+				var cell = cr.createCell(field);
 				cell.setup(null);
 				
 				orgSection.style("display", newInstances.length > 0 ? "block" : "none");
@@ -1967,7 +1956,7 @@
 				});
 			}
 			
-			var path = '#'+userInstance.getValueID()+'::reference(_users)::reference(_group)::reference(Organization)';
+			var path = '#'+userInstance.getValueID()+'::reference(_group)::reference(Organization)';
 			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
 		}
 		
@@ -2507,7 +2496,7 @@
 												function() {
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("_user");
-													var userValue = cr.dataTypes._object.copyValue(user);
+													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
 													showEditObjectPanel(experience, previousPanel, revealPanelUp);

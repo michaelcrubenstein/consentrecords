@@ -26,7 +26,7 @@ var Settings = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 			
-		doneButton.on("click", panel2Div.handleDoneButton)
+		doneButton.on("click", panel2Div.handleDoneEditingButton)
  			.append("span").text("Done");
 			
 		panel2Div.appendAlertContainer();

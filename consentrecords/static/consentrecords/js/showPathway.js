@@ -228,7 +228,7 @@ var DotsNavigator = (function () {
 		}
 	
 		$(window).on("resize", layoutPanels);
-		sitePanel.panelDiv.on("hiding.cr", function()
+		$(sitePanel.node()).on("hiding.cr", function()
 		{
 			$(window).off("resize", layoutPanels);
 		});
@@ -298,13 +298,27 @@ function setColor(experience)
 	}
 }
 
+function _pickedOrCreatedValue(i, pickedName, createdName)
+{
+	var v = i.getValue(pickedName);
+	if (v && v.getValueID())
+		return v.getDescription();
+	else {
+		v = i.getValue(createdName);
+		if (v)
+			return v.value;
+		else
+			return undefined;
+	}
+}
+
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
-	Pathway.prototype.dataLeftMargin = 40;
+	Pathway.prototype.dataLeftMargin = 40;			/* The space between the left margin and the beginning of the flags */
 	Pathway.prototype.trunkWidth = 5;
 	Pathway.prototype.trunkSpacing = 5;
-	Pathway.prototype.trunkColumnWidth = 10; /* trunkWidth + trunkSpacing; */
+	Pathway.prototype.trunkColumnWidth = 10;		/* trunkWidth + trunkSpacing; */
 	Pathway.prototype.textLeftMargin = 10;
 	Pathway.prototype.textRightMargin = 10;
 	Pathway.prototype.textBottomBorder = 3;
@@ -315,9 +329,11 @@ var Pathway = (function () {
 	Pathway.prototype.otherColor = "#bbbbbb";
 	Pathway.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 	Pathway.prototype.textDetailRightMargin = 10; /* textRightMargin; */
-	Pathway.prototype.detailTextSpacing = 2;
+	Pathway.prototype.detailTextSpacing = 2;		/* The space between lines of text in the detail box. */
 	Pathway.prototype.pathBackground = "white";
+	Pathway.prototype.showDetailIconWidth = 18;
 	
+	Pathway.prototype.userInstance = null;
 	Pathway.prototype.allExperiences = [];
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
@@ -332,12 +348,16 @@ var Pathway = (function () {
 	Pathway.prototype.detailGroup = null;
 	
 	Pathway.prototype.flagDown = false;
+	Pathway.prototype.flagExperience = null;
+	Pathway.prototype.flagElement = null;
 	Pathway.prototype.flagHeight = 0;
+	Pathway.prototype.flagWidth = 0;
 	
 	Pathway.prototype.minDate = null;
 	Pathway.prototype.maxDate = null;
 	Pathway.prototype.timespan = 0;
 	Pathway.prototype.dataHeight = 0;
+	Pathway.prototype.dataWidth = 0;
 	Pathway.prototype.dayHeight = 0;
 	Pathway.prototype.years = [];
 	
@@ -378,12 +398,12 @@ var Pathway = (function () {
 		return days * this.dayHeight;
 	}
 
-	Pathway.prototype.getExperiencePath = function(g, experience, flagWidth)
+	Pathway.prototype.getExperiencePath = function(g, experience)
 	{
 		var flagX = parseFloat(g.getAttribute("flagX"));
 		var h = this.getExperienceHeight(experience);
 		var x1 = 0;
-		var x2 = x1 + flagX + flagWidth;
+		var x2 = x1 + flagX + this.flagWidth;
 		var x3 = x1 + flagX;
 		var x4 = x1 + this.trunkWidth;
 		var y1 = 0;
@@ -404,6 +424,13 @@ var Pathway = (function () {
 							 {x: x1, y: y4}, 
 							 {x: x1, y: y1}]);
 	}
+	
+	Pathway.prototype.clearLayout = function()
+	{
+		/* Do whatever it takes to force layout when layoutExperiences is called. */
+		this.dataHeight = 0;
+		this.dataWidth = 0;
+	}
 
 	Pathway.prototype.layoutExperiences = function()
 	{
@@ -412,8 +439,16 @@ var Pathway = (function () {
 		var containerHeight = container.height();
 		var containerWidth = container.width();
 		
+		if (containerWidth === 0)
+			return;
+		
+		if (this.dataHeight === containerHeight - this.dataTopMargin - this.dataBottomMargin &&
+			this.dataWidth === containerWidth)
+			return;
+		
 		/* Calculate the height of the area where data appears and the height of a single day. */
 		this.dataHeight = containerHeight - this.dataTopMargin - this.dataBottomMargin;
+		this.dataWidth = containerWidth;
 		this.dayHeight = this.dataHeight / this.timespan;
 	
 		var columns = [];
@@ -528,9 +563,9 @@ var Pathway = (function () {
 		/* Compute the column width for each column of flags + spacing to its right. 
 			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
 		 */
-		var flagColumnWidth = (containerWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
-		var flagWidth = flagColumnWidth - this.flagSpacing;
-		var textWidth = flagWidth - this.textLeftMargin - this.textRightMargin;
+		var flagColumnWidth = (this.dataWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
+		this.flagWidth = flagColumnWidth - this.flagSpacing;
+		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
 		if (textWidth < 0)
 			textWidth = 0;
 		
@@ -538,7 +573,18 @@ var Pathway = (function () {
 			function(d)
 			{
 				return "translate(" + this.getAttribute("x") + "," + this.getAttribute("y") + ")";
-			});
+			})
+			
+		if (this.flagExperience)
+		{
+			/*( Restore the flagElement */
+			var flagExperienceID = this.flagExperience.getValueID();
+			 g.each(function(d)
+			 {
+				if (d.getValueID() === flagExperienceID)
+					_thisPathway.flagElement = this;
+			 });
+		}
 		
 		if (this.flagColumns.length > 0)
 		{
@@ -553,6 +599,9 @@ var Pathway = (function () {
 				.attr('width', textWidth);
 			this.defs.append('clipPath')
 				.attr('id', 'id_detailClipPath')
+				.append('rect');
+			this.defs.append('clipPath')
+				.attr('id', 'id_detailIconClipPath')
 				.append('rect');
 
 			/* Calculate the x offset of the flag for each group */
@@ -576,7 +625,7 @@ var Pathway = (function () {
 			
 			/* Calculate the path for each containing group. */
 			g.selectAll('path').attr("d", function(experience) {
-					return _thisPathway.getExperiencePath(this.parentNode, experience, flagWidth);
+					return _thisPathway.getExperiencePath(this.parentNode, experience);
 				});
 		}
 
@@ -602,12 +651,19 @@ var Pathway = (function () {
 		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
-		this.hideDetail();
+		if (this.flagDown)
+		{
+			var oldExperience = this.flagExperience;
+			var oldElement = this.flagElement;
+			this.hideDetail(
+				function() { _thisPathway.showDetailGroup(oldElement, oldExperience, 0); },
+				0);
+		}
 	}
 	
 	Pathway.prototype.setDateRange = function()
 	{
-		var birthday = userInstance.getValue("Birthday");
+		var birthday = this.userInstance.getValue("Birthday");
 		if (birthday && birthday.value)
 			this.minDate = new Date(birthday.value);
 		else
@@ -706,8 +762,20 @@ var Pathway = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
-	Pathway.prototype.showDetailGroup = function(g, experience)
+	Pathway.prototype.showDetailPanel = function(experience, i)
 	{
+		if (prepareClick())
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var experienceDetailPanel = new ExperienceDetailPanel(experience, panel);
+			d3.event.stopPropagation();
+		}
+	}
+	
+	Pathway.prototype.showDetailGroup = function(g, experience, duration)
+	{
+		duration = (duration !== undefined ? duration : 700);
+		
 		var detailBackRect = this.detailGroup.append('rect')
 			.attr("fill", this.pathBackground)
 			.attr("width", "100%");
@@ -719,109 +787,170 @@ var Pathway = (function () {
 			.attr("width", "100")
 			.attr("height", "1")
 			.attr('clip-path', 'url(#id_detailClipPath)');
+		var detailChevron = this.detailGroup.append('image')
+			.attr("width", this.showDetailIconWidth)
+			.attr("height", this.showDetailIconWidth)
+			.attr("xlink:href", rightChevronPath)
+			.attr('clip-path', 'url(#id_detailIconClipPath)')
 
 		var lines = [];
 	
-		function pickedOrCreatedValue(i, pickedName, createdName)
-		{
-			var v = i.getValue(pickedName);
-			if (v && v.getValueID())
-				return v.getDescription();
-			else {
-				v = i.getValue(createdName);
-				if (v)
-					return v.value;
-				else
-					return undefined;
-			}
-		}
-	
 		var s;
-		s = pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+		s = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = pickedOrCreatedValue(experience, "Site", "User Entered Site");
+		s = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+		s = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
 		var x = parseFloat(g.getAttribute("flagX")) + parseFloat(g.getAttribute("x"));
 		var y = parseFloat(g.getAttribute("y")) - this.textBottomBorder;
 
-		detailText.selectAll('tspan').data(lines)
+		var tspans = detailText.selectAll('tspan').data(lines)
 			.enter()
 			.append('tspan')
 			.text(function(d) { return d; })
 			.attr("x", this.textDetailLeftMargin);
-		var spanHeight = detailText.selectAll('tspan').node().getBBox().height + this.detailTextSpacing;
-		detailText.selectAll('tspan').attr("dy", spanHeight);
+		var spanHeight = tspans.node().getBBox().height + this.detailTextSpacing;
+		tspans.attr("dy", spanHeight);
 		
 		var textBox = detailText.node().getBBox();
-		var containerWidth = $(this.containerDiv).width();
-		var maxX = containerWidth - this.flagsRightMargin - textBox.width - (this.textDetailLeftMargin * 2);
+		var maxX = this.dataWidth - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
 		if (x > maxX)
 			x = maxX;
+		var rectWidth = textBox.width + this.showDetailIconWidth + (this.textDetailLeftMargin * 3);
+		if (rectWidth < this.flagWidth)
+		{
+			rectWidth = this.flagWidth;
+			textBox.width = rectWidth - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
+		}
+		var rectHeight = textBox.height + (this.detailTextSpacing * 2);
 			
 		this.detailGroup.attr("x", x)
 				 .attr("y", y)
 				 .attr("transform", "translate("+x + "," + y+")")
 				 .attr("height", 0);
-		detailBackRect.attr("width", textBox.width + (this.textDetailLeftMargin * 2))
-					   .attr("height", 0)
+		detailBackRect.attr("width", rectWidth)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y)
-					   .transition()
-					   .duration(700)
-					   .attr("height", textBox.height + this.detailTextSpacing);
-		detailFrontRect.attr("width", textBox.width + (this.textDetailLeftMargin * 2))
-					   .attr("height", 0)
+					   .attr("y", textBox.y - this.detailTextSpacing);
+		detailFrontRect.attr("width", rectWidth)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y)
+					   .attr("y", textBox.y - this.detailTextSpacing)
 					   .each(setColor)
 					   .transition()
-					   .duration(700)
-					   .attr("height", textBox.height + this.detailTextSpacing);
+					   .duration(duration)
+					   .attr("height", rectHeight);
+		if (duration > 0)
+		{
+			detailBackRect.attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", rectHeight);
+			detailFrontRect.attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", rectHeight);
+		}
+		else
+		{
+			detailBackRect.attr("height", rectHeight);
+			detailFrontRect.attr("height", rectHeight);
+		}
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		d3.select("#id_detailClipPath").selectAll('rect')
+		var textClipRect = d3.select("#id_detailClipPath").selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', textBox.width)
-			.attr('height', 0)
-			.transition()
-			.attr('height', textBox.height)
-			.duration(700); 
-		detailText				
-			.transition()
-			.duration(1000)
-			.attr("height", textBox.height);
+			.attr('width', textBox.width); 
+		
+		var iconClipRect = d3.select("#id_detailIconClipPath").selectAll('rect')
+			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
+			.attr('y', textBox.y)
+			.attr('width', this.showDetailIconWidth);
+			
+		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
+			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+			
+		if (duration > 0)
+		{
+			textClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', textBox.height); 
+			detailText				
+				.transition()
+				.duration(duration)
+				.attr("height", textBox.height);
+
+			iconClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', textBox.height);
+		}
+		else
+		{
+			textClipRect.attr('height', textBox.height); 
+			detailText.attr("height", textBox.height);
+			iconClipRect.attr('height', textBox.height);
+		}
+			 
 		this.flagDown = true;
+		this.flagExperience = experience;
+		this.flagElement = g;
+	}
+	
+	Pathway.prototype.clearDetail = function()
+	{
+		this.detailGroup.selectAll('text').remove();
+		/* Remove the image here instead of when the other clipPath ends
+			so that it is sure to be removed when the done method is called. 
+		 */
+		this.detailGroup.selectAll('image').remove();
+		this.detailGroup.selectAll('rect').remove();
+		d3.select("#id_detailClipPath").attr('height', 0);
+		d3.select("#id_detailIconClipPath").attr('height', 0);
+		this.flagDown = false;
+		this.flagExperience = null;
+		this.flagElement = null;
 	}
 
-	Pathway.prototype.hideDetail = function(done)
+	Pathway.prototype.hideDetail = function(done, duration)
 	{
+		duration = (duration !== undefined ? duration : 250);
+		
 		var _this = this;
 		if (this.flagDown)
 		{
-			d3.select("#id_detailClipPath").selectAll('rect')
-				.transition()
-				.attr("height", 0)
-				.each("end", function() {
-					_this.detailGroup.selectAll('text').remove();
-					_this.flagDown = false;
-					if (done)
-						done();
-				});
-			this.detailGroup.selectAll('rect')
-				.transition()
-				.attr("height", 0)
-				.each("end", function() {
-					d3.select(this).remove();
-				});
+			if (duration === 0)
+			{
+				this.clearDetail();
+				if (done) done();
+			}
+			else
+			{
+				d3.select("#id_detailClipPath").selectAll('rect')
+					.transition()
+					.attr("height", 0)
+					.duration(duration)
+					.each("end", function() {
+						_this.clearDetail();
+						if (done)
+							done();
+					});
+				d3.select("#id_detailIconClipPath").selectAll('rect')
+					.transition()
+					.duration(duration)
+					.attr("height", 0);
+				this.detailGroup.selectAll('rect')
+					.transition()
+					.duration(duration)
+					.attr("height", 0);
+			}
 		}
 		else if (done)
 			done();
@@ -842,7 +971,7 @@ var Pathway = (function () {
 			pathway.detailGroup.datum(experience);
 			
 			pathway.hideDetail(function() {
-					pathway.showDetailGroup.call(pathway, g, experience); 
+					pathway.showDetailGroup(g, experience); 
 				});
 		}
 		
@@ -885,12 +1014,25 @@ var Pathway = (function () {
 				return 0 - bbox.y;
 			});
 	
+		function resizeFunction()
+		{
+			_this.layoutExperiences();
+		}
+		
+		$(window).on("resize", resizeFunction);
+		$(this.sitePanel.node()).on("hiding.cr", function()
+		{
+			$(window).off("resize", resizeFunction);
+		});
+
+		this.clearLayout();
 		this.layoutExperiences();
 	}
 	
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
+		experience.typeName = "More Experience";
 		
 		this.allExperiences.push(experience);
 		this.allExperiences.sort(this._compareExperiences);
@@ -905,12 +1047,15 @@ var Pathway = (function () {
 		}
 	}
 		
-	function Pathway(sitePanel, containerDiv, editable) {
+	function Pathway(userInstance, sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.flagDown = false;
+		this.flagExperience = null;
+		this.flagElement = null;
 		this.sitePanel = sitePanel;
+		this.userInstance = userInstance;
 		
 		var container = d3.select(containerDiv);
 		
@@ -944,28 +1089,30 @@ var Pathway = (function () {
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem")
 			.attr("width", "100%")
-			.attr("height", "100%");
+			.attr("height", "100%")
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", this.showDetailPanel)
+			
 	
 		var _thisPathway = this;
 
-		this.svg.on("click", function() { _thisPathway.hideDetail(); });
+		this.svg.on("click", function() 
+			{ 
+				d3.event.stopPropagation(); 
+			})
+			.on("click.cr", function() {
+				_thisPathway.hideDetail();
+			});
 		
-		function resizeFunction()
-		{
-			_thisPathway.layoutExperiences();
-		}
-		
-		$(window).on("resize", resizeFunction);
-		sitePanel.panelDiv.on("hiding.cr", function()
-		{
-			$(window).off("resize", resizeFunction);
-		});
-
 		var successFunction1 = function(experiences)
 		{
 			_thisPathway.allExperiences = experiences;
 			$(experiences).each(function()
 			{
+				this.typeName = "Experience";
 				this.value.description = this.getValue("Offering").getDescription();
 			});
 		
@@ -988,8 +1135,8 @@ var Pathway = (function () {
 									}
 								}
 
-								crp.pushCheckCells(userInstance, function() {
-										var m = userInstance.getValue("More Experiences");
+								crp.pushCheckCells(_thisPathway.userInstance, function() {
+										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
 											var path = "#" + m.getValueID() + '>"More Experience"';
@@ -1011,6 +1158,7 @@ var Pathway = (function () {
 			
 			$(experiences).each(function()
 			{
+				this.typeName = "More Experience";
 				this.calculateDescription();
 			});
 		
@@ -1037,16 +1185,15 @@ var Pathway = (function () {
 						{
 							showClickFeedback(this);
 		
-							showAddExperiencePanel(_thisPathway, null, sitePanel.node());
+							var newPanel = new AddExperiencePanel(_thisPathway, null, sitePanel.node());
 						}
 						d3.event.preventDefault();
 					})
 					.attr("cursor", "pointer");
 				
 				var newBBox = _thisPathway.promptAddText.node().getBBox();
-				var containerWidth = $(_thisPathway.containerDiv).width();
 				if (bbox.x + bbox.width + _thisPathway.textLeftMargin + newBBox.width >
-					containerWidth - _thisPathway.flagsRightMargin)
+					_thisPathway.dataWidth - _thisPathway.flagsRightMargin)
 				{
 					_thisPathway.promptAddText.attr("x", _thisPathway.loadingText.attr("x"))
 						.attr("y", parseFloat(_thisPathway.loadingText.attr("y")) + bbox.height);
@@ -1060,7 +1207,7 @@ var Pathway = (function () {
 			}
 		}
 	
-		var path = "#" + userInstance.getValueID() + '::reference(Experience)';
+		var path = "#" + this.userInstance.getValueID() + '::reference(Experience)';
 		cr.getData({path: path, 
 				   fields: ["parents"], 
 				   done: successFunction1, 
@@ -1379,7 +1526,7 @@ function setupServicesPanel(dots)
 	appendConfirmDeleteControls(divs)
 		.on('click', _confirmDeleteClick);
 		
-	var buttons = appendRowButtons(divs, null);
+	var buttons = appendRowButtons(divs);
 
 	buttons.on("click", clickFunction);
 	
@@ -1387,7 +1534,7 @@ function setupServicesPanel(dots)
 
 	appendRightChevrons(buttons);
 		
-	appendButtonDescriptions(buttons, null);
+	appendButtonDescriptions(buttons);
 	
 	/* Add one more button for the add Button item. */
 	var buttonDiv = p1.append("div").classed("table-row", true)
@@ -1405,11 +1552,11 @@ function setupServicesPanel(dots)
 						var divs = appendItem(itemsDiv, newReportedObject);
 						appendConfirmDeleteControls(divs)
 							.on('click', _confirmDeleteClick);
-						var buttons = appendRowButtons(divs, null);
+						var buttons = appendRowButtons(divs);
 						buttons.on("click", clickFunction);
 						appendDeleteControls(buttons);
 						appendRightChevrons(buttons);
-						appendButtonDescriptions(buttons, null);
+						appendButtonDescriptions(buttons);
 					}
 					var siteNode = $(_thisButton).parents(".site-panel")[0];
 					showPickServicePanel(siteNode, rootObjects, null, dots, success);
@@ -1666,43 +1813,6 @@ function setupPanel4(dots)
 	this.onReveal = next;
 }
 
-function setupPanel5(dots)
-{
-	var p = d3.select(this);
-	p.append('div')
-		.append('p').text("When did you start " + dots.offeringName + "?");
-	
-	var minYear = undefined;	
-	var birthday = userInstance.getValue("Birthday");
-	if (birthday && birthday.value)
-		minYear = parseInt(birthday.value.substr(0, 4));
-
-	dots.startDateInput = new DateInput(this, minYear);
-				
-	this.onReveal = null;
-}
-
-function setupPanel6(dots)
-{
-	var p = d3.select(this);
-	p.append('div')
-		.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
-
-	var minYear = undefined;
-	if (dots.startDateInput.year)
-		minYear = dots.startDateInput.year;
-	else
-	{
-		var birthday = userInstance.getValue("Birthday");
-		if (birthday && birthday.value)
-			minYear = parseInt(birthday.value.substr(0, 4));
-	}
-
-	dots.endDateInput = new DateInput(this, minYear)
-
-	this.onReveal = null;
-}
-
 function setupConfirmPanel(dots)
 {
 	var p = d3.select(this);
@@ -1752,25 +1862,27 @@ function setupConfirmPanel(dots)
 /* 
 	objectData contains the MoreExperiences object.
  */
-function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
+var AddExperiencePanel = (function () {
+	AddExperiencePanel.prototype = new SitePanel();
+	
+	function AddExperiencePanel(pathway, objectData, previousPanelNode) {
 		var header = "Add Experience";
+		SitePanel.call(this, previousPanelNode, null, header, "edit new-experience-panel");
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit new-experience-panel");
+		var navContainer = this.appendNavContainer();
 
-		var navContainer = sitePanel.appendNavContainer();
-
-		var panel2Div = sitePanel.appendScrollArea()
+		var panel2Div = this.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
 		panel2Div.appendAlertContainer();
 		
-		var dots = new DotsNavigator(panel2Div, sitePanel, 8);	
+		var dots = new DotsNavigator(panel2Div, this, 8);	
 		dots.finalText = "Add";	
 
 		var hideSuccessFunction = function()
 			{
-				var moreExperiencesObject = userInstance.getValue("More Experiences");
+				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
 				
 				function successFunction3(newData)
 				{
@@ -1786,9 +1898,9 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 				{
 					if (newData != moreExperiencesObject)
 					{
-						var cell = userInstance.getCell("More Experiences");
+						var cell = pathway.userInstance.getCell("More Experiences");
 						cell.addValue(newData);
-						moreExperiencesObject = userInstance.getValue("More Experiences");
+						moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
 					}
 					
 					field = {ofKind: "More Experience", name: "More Experience"};
@@ -1845,7 +1957,7 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 				else
 				{
 					field = {ofKind: "More Experiences", name: "More Experiences"};
-					cr.createInstance(field, userInstance.getValueID(), [], successFunction2, syncFailFunction);
+					cr.createInstance(field, pathway.userInstance.getValueID(), [], successFunction2, syncFailFunction);
 				}
 			};
 
@@ -1854,6 +1966,43 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		
 		navContainer.appendTitle(header);
 		
+		function setupPanel5(dots)
+		{
+			var p = d3.select(this);
+			p.append('div')
+				.append('p').text("When did you start " + dots.offeringName + "?");
+	
+			var minYear = undefined;	
+			var birthday = pathway.userInstance.getValue("Birthday");
+			if (birthday && birthday.value)
+				minYear = parseInt(birthday.value.substr(0, 4));
+
+			dots.startDateInput = new DateInput(this, minYear);
+				
+			this.onReveal = null;
+		}
+
+		function setupPanel6(dots)
+		{
+			var p = d3.select(this);
+			p.append('div')
+				.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
+
+			var minYear = undefined;
+			if (dots.startDateInput.year)
+				minYear = dots.startDateInput.year;
+			else
+			{
+				var birthday = pathway.userInstance.getValue("Birthday");
+				if (birthday && birthday.value)
+					minYear = parseInt(birthday.value.substr(0, 4));
+			}
+
+			dots.endDateInput = new DateInput(this, minYear)
+
+			this.onReveal = null;
+		}
+
 		var p0 = d3.select(dots.nthPanel(0));
 		
 		setupPanel0(p0, dots);
@@ -1865,16 +2014,19 @@ function showAddExperiencePanel(pathway, objectData, previousPanelNode) {
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
-		showPanelUp(sitePanel.node());
+		showPanelUp(this.node());
 		dots.showDots();
-}
+	}
+	
+	return AddExperiencePanel;
+})();
 
 var PathwayPanel = (function () {
 	PathwayPanel.prototype = new SitePanel();
 	PathwayPanel.prototype.pathway = null;
 	
-	function PathwayPanel(previousPanel) {
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit");
+	function PathwayPanel(userInstance, previousPanel) {
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
@@ -1889,7 +2041,7 @@ var PathwayPanel = (function () {
 				{
 					showClickFeedback(this);
 		
-					showAddExperiencePanel(_this.pathway, null, _this.node());
+					var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
 				}
 				d3.event.preventDefault();
 			});
@@ -1898,8 +2050,298 @@ var PathwayPanel = (function () {
 		var panel2Div = this.appendScrollArea();
 		panel2Div.appendAlertContainer();
 		showPanelLeft(this.node());
-		this.pathway = new Pathway(this, panel2Div.node(), true);
+		this.pathway = new Pathway(userInstance, this, panel2Div.node(), true);
 	}
 	
 	return PathwayPanel;
 })();
+
+var ExperienceDetailPanel = (function () {
+	ExperienceDetailPanel.prototype = new SitePanel();
+	ExperienceDetailPanel.prototype.experience = null;
+	
+	function ExperienceDetailPanel(experience, previousPanel) {
+		var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+		var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+		var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+		
+		SitePanel.call(this, previousPanel, experience, offering, "view session");
+		this.experience = experience;
+		
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		var _this = this;
+		
+		if (experience.typeName == "More Experience")
+		{
+			var editButton = navContainer.appendRightButton()
+				.on("click", function(d) {
+					if (prepareClick())
+					{
+						showClickFeedback(this);
+				
+						var panel = new EditExperiencePanel(experience, _this.node());
+					}
+					d3.event.preventDefault();
+				});
+			editButton.append("span").text("Edit");
+		}
+		
+		var panel2Div = this.appendScrollArea();
+		panel2Div.appendHeader();
+		panel2Div.appendAlertContainer();
+		
+		var orgDiv = panel2Div.appendSection(experience);
+		orgDiv.classed("organization", true);
+
+		if (organization && organization.length > 0)
+		{
+			var labelDiv = orgDiv.append("label")
+				.text(organization);
+		}
+
+		if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
+		{
+			orgDiv.append('div')
+				.classed("address-line", true)
+				.text(siteDescription);
+		}
+		
+		var site = experience.getValue("Site");
+		if (site && site.getValueID())
+		{
+			crp.pushCheckCells(site, function()
+				{
+					var address = site.getValue("Address");
+					crp.pushCheckCells(address, function()
+					{
+						var streetCell = address.getCell("Street");
+						var cityCell = address.getCell("City");
+						var stateCell = address.getCell("State");
+						var zipCell = address.getCell("Zip Code");
+						if (streetCell)
+							$(streetCell.data).each(function() {
+								orgDiv.append('div')
+									.classed("address-line", true)
+									.text(this.value);
+							});
+						line = "";
+						if (cityCell && cityCell.data.length)
+							line += cityCell.data[0].value;
+						if (stateCell && stateCell.data.length)
+							line += ", " + stateCell.data[0].getDescription();
+						if (zipCell && zipCell.data.length && zipCell.data[0].value)
+							line += "  " + zipCell.data[0].value;
+						if (line.trim())
+							orgDiv.append('div')
+								.classed('address-line', true)
+								.text(line.trim());
+					},
+					function() {
+					});
+				},
+				function() { }
+			);
+		}
+		
+		function appendStringDatum(cellName)
+		{
+			var v = experience.getDatum(cellName);
+			if (v)
+			{
+				var deadlineDiv = panel2Div.append("section");
+				appendStringItem(deadlineDiv.node(), cellName, v);
+				return deadlineDiv;
+			}
+			else
+				return null;
+		}
+		
+		var firstDiv = null;
+		var nextDiv;
+		
+		firstDiv = appendStringDatum("Start Date");
+			
+		nextDiv = appendStringDatum("End Date");
+		if (!firstDiv)
+			firstDiv = nextDiv;
+
+		var cellDiv = panel2Div.append("section")
+			.classed("cell", true);
+		
+		var offering = experience.getValue("Offering");
+		var offeringServiceCell = ((offering && offering.getValueID()) ? offering.getCell("Service") : null);
+		var serviceCell = experience.getCell("Service");
+		var userEnteredServiceCell = experience.getCell("User Entered Service");
+		var numServices = 0;
+		if (serviceCell)
+			numServices += serviceCell.data.length;
+		if (userEnteredServiceCell)
+			numServices += userEnteredServiceCell.data.length;
+		if (offeringServiceCell)
+			numServices += offeringServiceCell.data.length;
+			
+		if (numServices > 0)
+		{
+			var labelDiv = cellDiv.append("label")
+				.text("Services");
+			var itemsDiv = cellDiv.append("ol").classed("items-div", true);
+			
+			var serviceData;
+			if (serviceCell)
+				serviceData = serviceCell.data;
+			else
+				serviceData = [];
+			if (userEnteredServiceCell)
+				serviceData = serviceData.concat(userEnteredServiceCell.data);
+			if (offeringServiceCell)
+				serviceData = serviceData.concat(offeringServiceCell.data);
+
+			var divs = appendItems(itemsDiv, serviceData);
+			var buttons = divs.append("div").classed("multi-line-item", true);
+			appendButtonDescriptions(buttons);
+			cellDiv.append("div").classed("cell-border-below", true);
+		}
+		
+		if (offering && offering.getValueID())
+		{
+			var webSiteDiv = panel2Div.append("section");	
+			showWebSite(offering, function(newText)
+				{
+					if (newText)
+					{
+						var labelDiv = webSiteDiv.append("div")
+							.classed("more-info", true);
+						var link = labelDiv
+							.append("a")
+							.classed("site-active-text", true)
+							.attr("href", newText)
+							.attr("target", "_blank")
+							.text("More Info");
+					}
+				});
+		}
+		showPanelLeft(this.node());
+	}
+	
+	return ExperienceDetailPanel;
+})();
+
+var PickOrCreateSection = (function () {
+	PickOrCreateSection.prototype = new cr.EventHandler();
+	PickOrCreateSection.prototype.pickCell = null;
+	PickOrCreateSection.prototype.createCell = null;
+	PickOrCreateSection.prototype.sectionDiv = null;
+	
+	PickOrCreateSection.prototype.showPickOrCreatePanel = function()
+	{
+		/* showEditObjectPanel(d, previousPanelNode, revealPanelLeft); */
+	}
+	
+	PickOrCreateSection.prototype.showValueAdded = function()
+	{
+		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
+	}
+	
+	PickOrCreateSection.prototype.setupItemsDivHandlers = function(itemsDiv)
+	{
+		/* _setupItemsDivHandlers(itemsDiv, cell); */
+	}
+	
+	PickOrCreateSection.prototype.pushTextChanged = function(textDiv)
+	{
+		/* _pushTextChanged */
+	}
+	
+	PickOrCreateSection.prototype.getDescription = function()
+	{
+		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
+			return this.pickCell.data[0].getDescription();
+		else if (this.createCell.data.length > 0 && !this.createCell.data[0].isEmpty())
+			return this.createCell.data[0].getDescription();
+		else
+			return "";
+	}
+	
+	function PickOrCreateSection(pickCell, createCell, panel2Div) {
+		cr.EventHandler.call(this);
+
+		this.pickCell = pickCell;
+		this.createCell = createCell;
+		
+		this.sectionDiv = panel2Div.appendSection(this)
+			.classed("cell edit unique", true);
+		var labelDiv = this.sectionDiv.append("label")
+			.text(pickCell.field.name);
+		var itemsDiv = this.sectionDiv.append("ol")
+			.classed("items-div", true)
+			.classed("right-label expanding-div", true);
+
+		var _this = this;
+
+		this.sectionDiv.classed("btn row-button", true)
+			.on("click", function(cell) {
+				if (prepareClick())
+				{
+					_this.showPickOrCreatePanel();
+				}
+			});
+
+		this.setupItemsDivHandlers(itemsDiv);
+		$(itemsDiv.node()).on("valueAdded.cr", function()
+			{
+				_this.showValueAdded();
+			});
+
+		var divs = appendItems(itemsDiv, [this]);
+	
+		var buttons = appendRowButtons(divs);
+
+		appendRightChevrons(buttons);	
+		
+		appendButtonDescriptions(buttons)
+			.each(function(d)
+				{
+					_this.pushTextChanged(this);
+				});
+	}
+	
+	return PickOrCreateSection;
+})();
+
+var EditExperiencePanel = (function () {
+	EditExperiencePanel.prototype = new SitePanel();
+	EditExperiencePanel.prototype.experience = null;
+	
+	function EditExperiencePanel(experience, previousPanel) {
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "view session", revealPanelUp);
+		var navContainer = this.appendNavContainer();
+		
+		var panel2Div = this.appendScrollArea();
+		panel2Div.appendAlertContainer();
+
+		doneButton = navContainer.appendRightButton();
+		doneButton.append("span").text("Done");
+		doneButton.on("click", panel2Div.handleDoneEditingButton);
+
+		navContainer.appendTitle("Edit Experience");
+		
+		new PickOrCreateSection(experience.getCell("Organization"), 
+							experience.getCell("User Entered Organization"),
+							panel2Div);
+		new PickOrCreateSection(experience.getCell("Site"), 
+							experience.getCell("User Entered Site"),
+							panel2Div);
+		new PickOrCreateSection(experience.getCell("Offering"), 
+							experience.getCell("User Entered Offering"),
+							panel2Div);
+
+		revealPanelUp(this.node());
+	}
+	
+	return EditExperiencePanel;
+})();
+
