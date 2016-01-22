@@ -1036,7 +1036,7 @@ cr.updateObjectValue = function(oldValue, d, successFunction, failFunction)
 			  .done(function(json, textStatus, jqXHR)
 				{
 					if (json.success) {
-						d.id = json.ids[0]
+						d.id = json.valueIDs[0]
 						oldValue.completeUpdate(d);
 						successFunction();
 					}
