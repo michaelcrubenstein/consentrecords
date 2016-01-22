@@ -424,6 +424,13 @@ var Pathway = (function () {
 							 {x: x1, y: y4}, 
 							 {x: x1, y: y1}]);
 	}
+	
+	Pathway.prototype.clearLayout = function()
+	{
+		/* Do whatever it takes to force layout when layoutExperiences is called. */
+		this.dataHeight = 0;
+		this.dataWidth = 0;
+	}
 
 	Pathway.prototype.layoutExperiences = function()
 	{
@@ -1018,6 +1025,7 @@ var Pathway = (function () {
 			$(window).off("resize", resizeFunction);
 		});
 
+		this.clearLayout();
 		this.layoutExperiences();
 	}
 	
