@@ -703,58 +703,6 @@ function appendButtonDescriptions(buttons)
 		.text(_getDataDescription);
 }
 
-function _showViewObjectCell(obj, previousPanelNode, cell)
-{
-	var sectionObj = d3.select(obj);
-	var itemsDiv = sectionObj.selectAll("ol");
-
-	if (cell.field.capacity === "_unique value")
-	{
-		itemsDiv.classed("right-label expanding-div", true);
-		if (!_isPickCell(cell))
-			sectionObj.classed("btn row-button", true)
-			          .on("click", function(cell) {
-				if (prepareClick())
-				{
-					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
-				}
-			});
-	}
-
-	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(cell), showViewObjectPanel));
-	
-	var clickFunction;
-	if (_isPickCell(cell) || cell.field.capacity === "_unique value")	/* Unique value handles the click above */
-		clickFunction = null;
-	else
-		clickFunction = function(d) {
-			if (prepareClick())
-			{
-				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
-			}
-		}
-
-	var divs = appendItems(itemsDiv, cell.data);
-	
-	var buttons;
-	if (!_isPickCell(cell)) {
-		buttons = appendRowButtons(divs);
-	
-		if (clickFunction)
-			buttons.on("click", clickFunction);
-		
-		appendRightChevrons(buttons);
-	}
-	else
-	{
-		buttons = divs.append("div").classed("multi-line-item", cell.field.capacity != "_unique value");
-	}
-	
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
-}
-
 function _clickEditObjectValue(d, previousPanelNode)
 {
 	if (prepareClick())
@@ -763,60 +711,6 @@ function _clickEditObjectValue(d, previousPanelNode)
 			showPickObjectPanel(d, previousPanelNode);
 		else
 			showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
-	}
-}
-
-function _showEditObjectCell(obj, previousPanelNode, cell)
-{
-	var sectionObj = d3.select(obj);
-	
-	var labelDiv = sectionObj.append("label")
-		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
-
-	if (cell.field.capacity === "_unique value")
-	{
-		sectionObj.classed("btn row-button", true);
-		itemsDiv.classed("right-label expanding-div", true);
-		sectionObj.on("click", function(cell) {
-			_clickEditObjectValue(cell.data[0], previousPanelNode);
-		});
-	}
-
-	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
-
-	var divs = appendItems(itemsDiv, cell.data);
-	
-	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs);
-		
-	var buttons = appendRowButtons(divs);
-
-	if (cell.field.capacity !== "_unique value")
-	{
-		buttons.on("click", function(d) {
-				_clickEditObjectValue(d, previousPanelNode);
-			});
-		appendDeleteControls(buttons);
-	}
-
-	appendRightChevrons(buttons);	
-		
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
-	
-	if (cell.field.capacity != "_unique value")
-	{
-		function done(newValue)
-		{
-			if (_isPickCell(newValue.cell))
-				showPickObjectPanel(newValue, previousPanelNode)
-			else
-				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
-		}
-		
-		crv.appendAddButton(sectionObj, done);
 	}
 }
 
@@ -1093,18 +987,59 @@ function _saveNewInstance(oldValue, containerCell, sections, done)
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
 cr.StringCell.prototype.updateCell = _updateStringCell;
+cr.StringCell.prototype.show = function(obj, containerPanel)
+{
+	_showViewStringCell(obj, this);
+}
+cr.StringCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "text");
+}
+
+cr.NumberCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "number");
+}
+
+cr.EmailCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "email");
+}
+
+cr.UrlCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "url");
+}
+
+cr.TelephoneCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "tel");
+}
 
 cr.DatestampCell.prototype.appendUpdateCommands = _appendUpdateDatestampCommands;
 cr.DatestampCell.prototype.updateCell = _updateDatestampCell;
+cr.DatestampCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "date");
+}
 
 cr.DatestampDayOptionalCell.prototype.appendUpdateCommands = _appendUpdateDatestampDayOptionalCommands;
 cr.DatestampDayOptionalCell.prototype.updateCell = _updateDatestampDayOptionalCell;
+cr.DatestampDayOptionalCell.prototype.showEdit = _showEditDateStampDayOptionalCell;
 
 cr.TimeCell.prototype.appendUpdateCommands = _appendUpdateTimeCommands;
 cr.TimeCell.prototype.updateCell = _updateTimeCell;
+cr.TimeCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "time");
+}
 
 cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
 cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
+cr.TranslationCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditTranslationCell(obj, this, "text");
+}
 
 cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData, sourceObjects)
 {
@@ -1139,113 +1074,114 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 
 cr.ObjectCell.prototype.updateCell = function(sectionObj)
 {
-	if (this.parent.getValueID())
-	{
-		/* If the parent has an ID, then we need to delete the cells all of the
-			data elements, because we don't have their id's. This will force them 
-			to be reloaded.
-		 */
-		this.data.forEach(function(d)
-		{
-			delete d.value.cells;
-		});
-	}
 	/* Do nothing at the moment. */
 }
 
-var dataTypeViews = {
-	_string: {
-		show: function(obj, containerPanel, cell)
+cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
+{
+	var sectionObj = d3.select(obj);
+	var itemsDiv = sectionObj.selectAll("ol");
+
+	if (this.field.capacity === "_unique value")
+	{
+		itemsDiv.classed("right-label expanding-div", true);
+		if (!_isPickCell(this))
+			sectionObj.classed("btn row-button", true)
+			          .on("click", function(cell) {
+				if (prepareClick())
+				{
+					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
+				}
+			});
+	}
+
+	_setupItemsDivHandlers(itemsDiv, this);
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel));
+	
+	var clickFunction;
+	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
+		clickFunction = null;
+	else
+		clickFunction = function(d) {
+			if (prepareClick())
+			{
+				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
+			}
+		}
+
+	var divs = appendItems(itemsDiv, this.data);
+	
+	var buttons;
+	if (!_isPickCell(this)) {
+		buttons = appendRowButtons(divs);
+	
+		if (clickFunction)
+			buttons.on("click", clickFunction);
+		
+		appendRightChevrons(buttons);
+	}
+	else
+	{
+		buttons = divs.append("div").classed("multi-line-item", this.field.capacity != "_unique value");
+	}
+	
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+}
+
+cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
+{
+	var sectionObj = d3.select(obj);
+	
+	var labelDiv = sectionObj.append("label")
+		.text(this.field.name);
+	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+
+	if (this.field.capacity === "_unique value")
+	{
+		sectionObj.classed("btn row-button", true);
+		itemsDiv.classed("right-label expanding-div", true);
+		sectionObj.on("click", function(cell) {
+			_clickEditObjectValue(cell.data[0], previousPanelNode);
+		});
+	}
+
+	_setupItemsDivHandlers(itemsDiv, this);
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
+
+	var divs = appendItems(itemsDiv, this.data);
+	
+	if (this.field.capacity != "_unique value")
+		appendConfirmDeleteControls(divs);
+		
+	var buttons = appendRowButtons(divs);
+
+	if (this.field.capacity !== "_unique value")
+	{
+		buttons.on("click", function(d) {
+				_clickEditObjectValue(d, previousPanelNode);
+			});
+		appendDeleteControls(buttons);
+	}
+
+	appendRightChevrons(buttons);	
+		
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+	
+	if (this.field.capacity != "_unique value")
+	{
+		function done(newValue)
 		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "text");
-		},
-	},
-	_number: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "number");
-		},
-	},
-	_email: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "email");
-		},
-	},
-	_url: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "url");
-		},
-	},
-	_telephone: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "tel");
-		},
-	},
-	_datestamp: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "date");
-		},
-	},
-	"_datestamp (day optional)": {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: _showEditDateStampDayOptionalCell,
-	},
-	_time: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "time");
-		},
-	},
-	_object: {
-		show: _showViewObjectCell,
-		showEdit: _showEditObjectCell,
-	},
-	_translation: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditTranslationCell(obj, cell, "text");
-		},
-	},
-};
+			if (_isPickCell(newValue.cell))
+				showPickObjectPanel(newValue, previousPanelNode)
+			else
+				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
+		}
+		
+		crv.appendAddButton(sectionObj, done);
+	}
+}
 
 function appendDescriptions(buttons)
 {
@@ -1530,43 +1466,39 @@ var SitePanel = (function () {
 		
 		panel2Div.show_view_cells = function(objectData)
 		{
-			this.appendSections(objectData.value.cells)
+			this.appendSections(objectData.value.cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
-						if (cell.field.descriptorType != "_by text")
-						{
-							var section = d3.select(this);
-							section.append("label").text(cell.field.name);
-							section.append("ol").classed("items-div", true);
-							dataTypeViews[cell.field.dataType].show(this, _this.node(), cell);
+						var section = d3.select(this);
+						section.append("label").text(cell.field.name);
+						section.append("ol").classed("items-div", true);
+						cell.show(this, _this.node());
+						if (!cell.isEmpty())
+							$(this).css("display", "block");
+						else
+							$(this).css("display", "none");
+					
+						/* Make sure the section gets shown if a value is added to it. */
+						cell.addTarget("valueAdded.cr", this);
+						$(this).on("valueAdded.cr", function(e, newData) {
+							$(this).css("display", "block");
+						});
+						
+						cell.addTarget("valueDeleted.cr", this);
+						$(this).on("valueDeleted.cr", function(e, newData) {
 							if (!cell.isEmpty())
 								$(this).css("display", "block");
 							else
 								$(this).css("display", "none");
+						});
 						
-							/* Make sure the section gets shown if a value is added to it. */
-							cell.addTarget("valueAdded.cr", this);
-							$(this).on("valueAdded.cr", function(e, newData) {
-								$(this).css("display", "block");
-							});
-							
-							cell.addTarget("valueDeleted.cr", this);
-							$(this).on("valueDeleted.cr", function(e, newData) {
-								if (!cell.isEmpty())
-									$(this).css("display", "block");
-								else
-									$(this).css("display", "none");
-							});
-							
-							$(this).on("dataChanged.cr", function(e) {
-								$(this).css("display", "block");
-							});
-						}
+						$(this).on("dataChanged.cr", function(e) {
+							$(this).css("display", "block");
+						});
 					})
-				.append("div").classed("cell-border-below", 
-					function(cell) { return objectData.cell.field.descriptorType != "_by text" } );
+				.append("div").classed("cell-border-below", true);
 		}
 		
 		panel2Div.handleDoneEditingButton = function() {
@@ -1607,7 +1539,7 @@ var SitePanel = (function () {
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
-						dataTypeViews[cell.field.dataType].showEdit(this, _this.node(), cell);
+						cell.showEdit(this, _this.node());
 					});
 		}
 		

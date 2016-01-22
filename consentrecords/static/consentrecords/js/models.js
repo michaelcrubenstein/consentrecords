@@ -495,12 +495,48 @@ cr.TranslationCell = (function() {
 	return TranslationCell;
 })();
 	
+cr.NumberCell = (function() {
+	NumberCell.prototype = new cr.StringCell();
+	
+	function NumberCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return NumberCell;
+})();
+	
+cr.EmailCell = (function() {
+	EmailCell.prototype = new cr.StringCell();
+	
+	function EmailCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return EmailCell;
+})();
+	
+cr.UrlCell = (function() {
+	UrlCell.prototype = new cr.StringCell();
+	
+	function UrlCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return UrlCell;
+})();
+	
+cr.TelephoneCell = (function() {
+	TelephoneCell.prototype = new cr.StringCell();
+	
+	function TelephoneCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return TelephoneCell;
+})();
+	
 cr.DatestampCell = (function() {
 	DatestampCell.prototype = new cr.StringCell();
-	
-	DatestampCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
 	
 	function DatestampCell(field) {
 		cr.StringCell.call(this, field);
@@ -512,10 +548,6 @@ cr.DatestampCell = (function() {
 cr.DatestampDayOptionalCell = (function() {
 	DatestampDayOptionalCell.prototype = new cr.StringCell();
 	
-	DatestampDayOptionalCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
-	
 	function DatestampDayOptionalCell(field) {
 		cr.StringCell.call(this, field);
 	}
@@ -525,10 +557,6 @@ cr.DatestampDayOptionalCell = (function() {
 	
 cr.TimeCell = (function() {
 	TimeCell.prototype = new cr.StringCell();
-	
-	TimeCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
 	
 	function TimeCell(field) {
 		cr.StringCell.call(this, field);
@@ -888,21 +916,24 @@ cr.ObjectValue = (function() {
 	
 	return ObjectValue;
 })();
+
+cr.cellFactory = {
+	_string: cr.StringCell,
+	_number: cr.NumberCell,
+	_email: cr.EmailCell,
+	_url: cr.UrlCell,
+	_telephone: cr.TelephoneCell,
+	_translation: cr.TranslationCell, 
+	_datestamp: cr.DatestampCell, 
+	"_datestamp (day optional)": cr.DatestampDayOptionalCell,
+	_time: cr.TimeCell,
+	_object: cr.ObjectCell
+}
 	
 cr.createCell = function(field) {
-		if (field.dataType === "_translation")
-			return new cr.TranslationCell(field);
-		else if (field.dataType === "_object")
-			return new cr.ObjectCell(field);
-		else if (field.dataType === "_datestamp")
-			return new cr.DatestampCell(field);
-		else if (field.dataType === "_datestamp (day optional)")
-			return new cr.DatestampDayOptionalCell(field);
-		else if (field.dataType === "_time")
-			return new cr.TimeCell(field);
-		else
-			return new cr.StringCell(field); 
-	};
+	var f = cr.cellFactory[field.dataType];
+	return new f(field)
+};
 	
 cr.urls = {
 		selectAll : "/api/selectall/",
