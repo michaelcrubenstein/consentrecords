@@ -1956,7 +1956,7 @@
 				});
 			}
 			
-			var path = '#'+userInstance.getValueID()+'::reference(_users)::reference(_group)::reference(Organization)';
+			var path = '#'+userInstance.getValueID()+'::reference(_group)::reference(Organization)';
 			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
 		}
 		
