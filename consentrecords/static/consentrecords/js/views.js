@@ -1594,9 +1594,13 @@ function setupSearchBar(searchBarNode, textChanged)
 			.style("padding-bottom", (h/2).toString()+"px");
 	}
 	
-	$(document).ready(function(e) { resizeSearchCancelHeight() });
-	$(window).resize(function(e) { resizeSearchCancelHeight() });
+	$(window).on("resize", resizeSearchCancelHeight);
 	resizeSearchCancelHeight();
+	
+	$(searchInputContainer.node()).on("remove", function(e)
+	{
+		$(window).off("resize", resizeSearchCancelHeight);
+	});
 	
 	return searchInput.node();
 }
