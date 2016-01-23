@@ -318,23 +318,6 @@ cr.Cell = (function()
 			newValue.addTarget("dataChanged.cr", this);
 		};
 		
-		Cell.prototype.addValue = function(newData)
-		{
-			if (this.field.dataType != "_object")
-				throw "addValue only callable for object dataType cells";
-		
-			for (var i = 0; i < this.data.length; ++i)
-			{
-				var oldData = this.data[i];
-				if (!oldData.id && oldData.isEmpty()) {
-					oldData.completeUpdate(newData);
-					return;
-				}
-			}
-			this.pushValue(newData);
-			this.triggerEvent("valueAdded.cr", [newData]);
-		};
-
 		Cell.prototype.addNewValue = function()
 		{
 			var newData = this.newValue();
@@ -590,6 +573,20 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
+	ObjectCell.prototype.addValue = function(newData)
+	{
+		for (var i = 0; i < this.data.length; ++i)
+		{
+			var oldData = this.data[i];
+			if (!oldData.id && oldData.isEmpty()) {
+				oldData.completeUpdate(newData);
+				return;
+			}
+		}
+		this.pushValue(newData);
+		this.triggerEvent("valueAdded.cr", [newData]);
+	}
+
 	ObjectCell.prototype.appendData = function(initialData)
 	{
 		var newData = [];
