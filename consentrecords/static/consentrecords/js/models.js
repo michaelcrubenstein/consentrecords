@@ -654,6 +654,36 @@ cr.CellValue = (function() {
 cr.StringValue = (function() {
 	StringValue.prototype = new cr.CellValue();
 
+	StringValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		/* If both are null, then they are equal. */
+		if (!newValue && !this.value)
+			newValue = this.value;
+		
+		if (newValue != this.value)
+		{
+			if (this.id)
+			{
+				initialData.push({id: this.id, value: newValue});
+			}
+			else
+			{
+				var command;
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValue,
+						   index: i};
+				initialData.push(command);
+			}
+			sourceObjects.push(this);
+		}
+	}
+	
+	StringValue.prototype.updateFromChangeData = function(changeData)
+	{
+		this.value = changeData.value;
+	}
+
 	function StringValue() {
 		cr.CellValue.call(this);
 	
@@ -689,6 +719,45 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype.getDescription = function() { return this.value.description; };
 	ObjectValue.prototype.getValueID = function() { return this.value.id; };
+
+	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		var newValueID = (newValue ? newValue.getValueID() : null);
+		var newDescription = (newValue ? newValue.getDescription() : null);
+
+		/* If both are null, then they are equal. */
+		if (!newValueID && !this.getValueID())
+			return;
+		
+		var command;
+		if (!newValueID)
+		{
+			if (!this.getValueID())
+				return;
+			else
+				command = {id: this.id, value: null};
+		}
+		else {
+			if (this.getValueID() == newValueID)
+				return;
+			if (this.id)
+				command = {id: this.id, value: newValueID, description: newDescription};
+			else
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValue,
+						   description: newDescription,
+						   index: i};
+		}
+		initialData.push(command);
+		sourceObjects.push(this);
+	}
+
+	ObjectValue.prototype.updateFromChangeData = function(changeData)
+	{
+		this.value = {id: changeData.value, description: changeData.description};
+	}
+	
 	ObjectValue.prototype.completeUpdateValue = function(newData)
 	{
 		/* Replace the value completely so that its cells are eliminated and will be
@@ -696,6 +765,7 @@ cr.ObjectValue = (function() {
 		this.value = {id: newData.getValueID(), description: newData.getDescription()};
 		this.triggerEvent("dataChanged.cr", this);
 	}
+	
 	ObjectValue.prototype.isEmpty = function()
 	{
 		return !this.value.id && !this.value.cells;
@@ -1049,14 +1119,16 @@ cr.getValues = function (args)
 		);
 	};
 	
-cr.updateObjectValue = function(oldValue, d, successFunction, failFunction)
+cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		/* oldValue must be an object value */
-		var initialData = [{id: oldValue.id, value: d.getValueID()}];
+		var initialData = [];
+		var sourceObjects = [];
+		oldValue.appendUpdateCommands(d, i, initialData, sourceObjects);
 		$.post(cr.urls.updateValues, 
 				{ commands: JSON.stringify(initialData),
 				  timezoneoffset: new Date().getTimezoneOffset()
@@ -1262,6 +1334,8 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 						if (newValueID)
 						{
 							d.id = newValueID;
+							
+							d.updateFromChangeData(initialData[i]);
 							
 							/* Object Values have an instance ID as well. */
 							if (newInstanceID)

@@ -714,32 +714,6 @@ function _clickEditObjectValue(d, previousPanelNode)
 	}
 }
 
-function _appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects)
-{
-	/* If both are null, then they are equal. */
-	if (!newValue && !d.value)
-		newValue = d.value;
-		
-	if (newValue != d.value)
-	{
-		if (d.id)
-		{
-			initialData.push({id: d.id, value: newValue});
-			sourceObjects.push(d);
-		}
-		else
-		{
-			var command;
-			command = {containerUUID: d.cell.parent.getValueID(), 
-					   fieldID: d.cell.field.nameID, 
-					   value: newValue,
-					   index: i};
-			initialData.push(command);
-			sourceObjects.push(d);
-		}
-	}
-}
-
 function _updateTextValue(d, newValue)
 {
 	/* If both are null, then they are equal. */
@@ -794,7 +768,7 @@ function _appendUpdateStringCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = this.value;
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -804,7 +778,7 @@ function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getDatestampValue.call(this);			
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -814,7 +788,7 @@ function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sour
 	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -824,7 +798,7 @@ function _appendUpdateTimeCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getTimeValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -2117,17 +2091,6 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		
 	var failFunction = syncFailFunction;
 	
-	function _storeUnsavedPickedValue(oldData, newData)
-	{
-		/* In this case, we are replacing an old value for
-		   an item that was added to the item but not saved;
-		   a placeholder or a previously picked value.
-		 */
-		if (newData.getValueID() != oldData.getValueID()) {
-			oldData.completeUpdateValue(newData);
-		}
-	}
-
 	function selectAllSuccessFunction(rootObjects) {
 		if (!("pickObjectPath" in oldData.cell.field && oldData.cell.field.pickObjectPath))
 		{
@@ -2200,14 +2163,14 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			
 			if (prepareClick())
 			{
-				if (oldData.id)
+				if (d.getValueID() === oldData.getValueID()) {
+					successFunction();
+				}
+				else if (oldData.id)
 				{
-					if (d.getValueID() === oldData.getValueID()) {
-						successFunction();
-					}
-					else if (d.getValueID())
+					if (d.getValueID())
 					{
-						cr.updateObjectValue(oldData, d, successFunction, syncFailFunction);
+						cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
 					}
 					else
 					{
@@ -2222,7 +2185,11 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					}
 					else 
 					{
-						_storeUnsavedPickedValue(oldData, d);
+						/* In this case, we are replacing an old value for
+						   an item that was added to the cell but not saved;
+						   a placeholder or a previously picked value.
+						 */
+						oldData.completeUpdateValue(d);
 						successFunction();
 					}
 				}
