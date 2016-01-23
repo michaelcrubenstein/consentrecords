@@ -2328,7 +2328,6 @@
 	
 			showPanelLeft(sitePanel.node());
 			
-			var searchText = "";
 			function show_users()
 			{
 				var val = this.value.toLocaleLowerCase();
@@ -2337,7 +2336,6 @@
 				if (val.length == 0)
 				{
 					panel2Div.selectAll("section").remove();
-					searchText = val;
 				}
 				else
 				{
@@ -2385,8 +2383,6 @@
 									d3.event.preventDefault();
 								});
 							drawInfoButtons(infoButtons);
-
-							searchText = startVal;
 						}
 					}
 					
@@ -2606,7 +2602,6 @@
 							if (val.length == 0)
 							{
 								panel2Div.selectAll("section").remove();
-								searchText = val;
 							}
 							else
 							{
@@ -2667,8 +2662,6 @@
 												d3.event.preventDefault();
 											});
 										drawInfoButtons(infoButtons);
-
-										searchText = startVal;
 									}
 								}
 					

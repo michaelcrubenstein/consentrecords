@@ -1593,7 +1593,6 @@ function setupPanel2(dots)
 		if (val.length == 0)
 		{
 			w.selectAll("ol").remove();
-			searchText = val;
 		}
 		else
 		{
@@ -1653,7 +1652,6 @@ function setupPanel2(dots)
 					}
 		
 					appendButtons(w, orgs, buttonClicked, appendDescriptions);
-					searchText = startVal;
 				}
 			}
 			
