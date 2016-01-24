@@ -1126,7 +1126,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 		/* oldValue must be an object value */
 		var initialData = [];
 		var sourceObjects = [];
-		oldValue.appendUpdateCommands(d, i, initialData, sourceObjects);
+		oldValue.appendUpdateCommands(i, d, initialData, sourceObjects);
 		$.post(cr.urls.updateValues, 
 				{ commands: JSON.stringify(initialData),
 				  timezoneoffset: new Date().getTimezoneOffset()
