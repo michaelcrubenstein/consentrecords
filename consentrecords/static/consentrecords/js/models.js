@@ -880,18 +880,16 @@ cr.ObjectValue = (function() {
 	{
 		if (this.value.cells)
 		{
-			for (var j = 0; j < this.value.cells.length; ++j)
-			{
-				this.value.cells[j].clearEvents();
-			}
+			this.value.cells.forEach(
+				function(cell) { cell.clearEvents(); }
+			);
 		}
 		
 		this.value.cells = oldCells;
-		for (var j = 0; j < oldCells.length; ++j)
-		{
-			oldCells[j].clearEvents();
-			oldCells[j].setParent(this);
-		}
+		oldCells.forEach(function(cell) {
+			cell.clearEvents();
+			cell.setParent(this);
+		});
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
