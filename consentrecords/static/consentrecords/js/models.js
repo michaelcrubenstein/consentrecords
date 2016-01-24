@@ -630,12 +630,6 @@ cr.CellValue = (function() {
 	
 	CellValue.prototype.getDescription = function() { return this.value; };
 	
-	CellValue.prototype.completeUpdate = function(newData)
-	{
-		this.id = newData.id;
-		this.completeUpdateValue(newData);
-		this.triggerEvent("dataChanged.cr", newData);
-	}
 	CellValue.prototype.isEmpty = function()
 	{
 		return this.value === null || this.value === undefined || this.value === "";
@@ -762,11 +756,13 @@ cr.ObjectValue = (function() {
 		this.value = {id: changeData.value, description: changeData.description};
 	}
 	
-	ObjectValue.prototype.completeUpdateValue = function(newData)
+	ObjectValue.prototype.completeUpdate = function(newData)
 	{
+		this.id = newData.id;
 		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
+		this.triggerEvent("dataChanged.cr", newData);
 	}
-	
+
 	ObjectValue.prototype.isEmpty = function()
 	{
 		return !this.value.id && !this.value.cells;
