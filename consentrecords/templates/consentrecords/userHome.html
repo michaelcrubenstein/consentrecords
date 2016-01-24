@@ -1103,12 +1103,6 @@
 			return undefined;
 		}
 		
-		function get_cell_by_name(d, name)
-		{
-			d = crp.pushInstance(d);
-			return cells_get_cell_by_name(d.value.cells, name);
-		}
-		
 		function getStartDate(d)
 		{
 			return d.getDatum("Start Date");
