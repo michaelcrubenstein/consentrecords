@@ -915,50 +915,6 @@ function _updateTranslationCell(sectionObj)
 	);
 }
 
-/* This is a storeDataFunction for adding an object within an unsaved object. 
-	onSuccessFunction takes one argument: the newly created value.
-*/
-function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
-{
-	var newData = containerCell.newValue();
-	newData.value.cells = [];
-	sections.each(
-		function(cell) {
-			if ("updateCell" in cell)
-				cell.updateCell(this);
-			newData.importCell(cell);
-		});
-		
-	newData.calculateDescription();
-	if (oldValue)
-	{
-		/* Replace the new data into the oldValue, which has already been added. */
-		oldValue.value = newData.value;
-		oldValue.triggerEvent("dataChanged.cr");
-	}
-	else
-		containerCell.addValue(newData);
-	if (onSuccessFunction) onSuccessFunction(newData);
-}
-
-/* This is a storeDataFunction for creating an object. 
-	If this is a root object, then containerUUID will be null.
-	
-	onSuccessFunction takes one argument: the newly created value.
- */
-function _saveNewInstance(oldValue, containerCell, sections, done)
-{
-	var initialData = {}
-	sections.each(
-		function(cell) {
-			if ("updateCell" in cell)
-				cell.updateCell(this);
-			cell.appendData(initialData);
-		});
-		
-	cr.append(oldValue, containerCell, initialData, done, syncFailFunction)
-}
-
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
 cr.StringCell.prototype.updateCell = _updateStringCell;
 cr.StringCell.prototype.show = function(obj, containerPanel)
@@ -1491,8 +1447,7 @@ var SitePanel = (function () {
 					cr.updateValues(initialData, sourceObjects, 
 						function() {
 							sections.each(function(cell) {
-									if ("updateCell" in cell)
-										cell.updateCell(this);
+									cell.updateCell(this);
 								});
 							_this.hide();
 						}, 
@@ -1500,6 +1455,51 @@ var SitePanel = (function () {
 				}
 				else
 				{
+					_this.hide();
+				}
+			}
+			d3.event.preventDefault();
+		}
+		
+		/* d represents the newly created object that is being added. */
+		panel2Div.handleDoneAddingButton = function(d) {
+			if (prepareClick())
+			{
+				showClickFeedback(this);
+				
+				var objectData = d;
+		
+				var sections = panel2Div.selectAll("section");
+				if (d.cell.parent == null ||
+					d.cell.parent.getValueID() != null)
+				{
+					var initialData = {}
+					sections.each(
+						function(cell) {
+							cell.updateCell(this);
+							cell.appendData(initialData);
+						});
+		
+					d.saveNew(initialData, 
+						function() { 
+							_this.hide(); 
+						}, 
+						syncFailFunction);
+				}
+				else
+				{
+					/* In this case, we are editing an object that is contained in 
+						an object that is being edited. This object will be saved
+						as part of completing that edit operation. */
+					d.value.cells = [];
+					sections.each(
+						function(cell) {
+							cell.updateCell(this);
+							d.importCell(cell);
+						});
+	
+					d.calculateDescription();
+					d.triggerEvent("dataChanged.cr");
 					_this.hide();
 				}
 			}
@@ -1725,40 +1725,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		{
 			doneButton = navContainer.appendRightButton();
 			doneButton.append("span").text("Add");
-			doneButton.on("click", function(d) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-			
-					var sections = panel2Div.selectAll("section");
-					if (containerCell.parent == null ||
-						containerCell.parent.getValueID() != null)
-					{
-						_saveNewInstance(objectData, containerCell, sections, 
-							function() { 
-								sitePanel.hide(); 
-							});
-					}
-					else
-					{
-						/* In this case, we are editing an object that is contained in 
-							an object that is being edited. This object will be saved
-							as part of completing that edit operation. */
-						objectData.value.cells = [];
-						sections.each(
-							function(cell) {
-								if ("updateCell" in cell)
-									cell.updateCell(this);
-								objectData.importCell(cell);
-							});
-		
-						objectData.calculateDescription();
-						objectData.triggerEvent("dataChanged.cr");
-						sitePanel.hide();
-					}
-				}
-				d3.event.preventDefault();
-			});
+			doneButton.on("click", panel2Div.handleDoneAddingButton);
 			var backButton = navContainer.appendLeftButton()
 				.on("click", function()
 				{
@@ -2189,7 +2156,8 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						   an item that was added to the cell but not saved;
 						   a placeholder or a previously picked value.
 						 */
-						oldData.completeUpdateValue(d);
+						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldData.triggerEvent("dataChanged.cr", d);
 						successFunction();
 					}
 				}

@@ -575,6 +575,7 @@ cr.ObjectCell = (function() {
 	
 	ObjectCell.prototype.addValue = function(newData)
 	{
+		/* Look for an existing item that is empty. If one is found, then change its data. */
 		for (var i = 0; i < this.data.length; ++i)
 		{
 			var oldData = this.data[i];
@@ -633,6 +634,7 @@ cr.CellValue = (function() {
 	{
 		this.id = newData.id;
 		this.completeUpdateValue(newData);
+		this.triggerEvent("dataChanged.cr", newData);
 	}
 	CellValue.prototype.isEmpty = function()
 	{
@@ -755,15 +757,14 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.updateFromChangeData = function(changeData)
 	{
+		/* Replace the value completely so that its cells are eliminated and will be
+			re-accessed from the server. This handles the case where a value has been added. */
 		this.value = {id: changeData.value, description: changeData.description};
 	}
 	
 	ObjectValue.prototype.completeUpdateValue = function(newData)
 	{
-		/* Replace the value completely so that its cells are eliminated and will be
-			re-accessed from the server. This handles the case where a value has been added. */
-		this.value = {id: newData.getValueID(), description: newData.getDescription()};
-		this.triggerEvent("dataChanged.cr", this);
+		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
 	}
 	
 	ObjectValue.prototype.isEmpty = function()
@@ -876,6 +877,27 @@ cr.ObjectValue = (function() {
 		}
 	}
 
+	ObjectValue.prototype.saveNew = function(initialData, successFunction, failFunction)
+	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+
+		var containerCell = this.cell;
+		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
+			
+		var _this = this;
+		cr.createInstance(containerCell.field, containerUUID, initialData, 
+			function(newData)
+			{
+				_this.completeUpdate(newData);
+				_this.isDataLoaded = true;
+				successFunction(newData);
+			}, 
+			failFunction);
+	}
+	
 	ObjectValue.prototype._setCells = function(oldCells)
 	{
 		if (this.value.cells)
@@ -1134,8 +1156,9 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 			  .done(function(json, textStatus, jqXHR)
 				{
 					if (json.success) {
-						d.id = json.valueIDs[0]
-						oldValue.completeUpdate(d);
+						oldValue.id = json.valueIDs[0];
+						oldValue.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldValue.triggerEvent("dataChanged.cr", d);
 						successFunction();
 					}
 					else {
@@ -1283,32 +1306,6 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 					}
 				);
-	},
-	
-cr.append = function(oldValue, containerCell, initialData, successFunction, failFunction)
-	{
-		if (!oldValue)
-			throw "oldValue is not specified";
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		/* oldValue must be an ObjectValue */
-		var containerUUID;
-		if (!("parent" in containerCell))
-			containerUUID = null;
-		else if (containerCell.parent)
-			containerUUID = containerCell.parent.getValueID();
-		else
-			containerUUID = null;
-		cr.createInstance(containerCell.field, containerUUID, initialData, 
-			function(newData)
-			{
-				oldValue.completeUpdate(newData);
-				oldValue.isDataLoaded = true;
-				if (successFunction) successFunction(newData);
-			}, 
-			failFunction);
 	},
 	
 cr.updateValues = function(initialData, sourceObjects, successFunction, failFunction)
