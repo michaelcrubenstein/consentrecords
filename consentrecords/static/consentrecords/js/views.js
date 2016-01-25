@@ -821,36 +821,9 @@ function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects
 	d3.select(sectionObj).selectAll("li").each(function(d, i)
 		{
 			var newValue = _getTranslationValue.call(this);
-			_appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
-}
-
-function _appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects)
-{
-	/* If both are null, then they are equal. */
-	if (!newValue.text && !d.value.text)
-		newValue.text = d.value.text;
-		
-	if (newValue.text !== d.value.text || 
-		newValue.languageCode !== d.value.languageCode)
-	{
-		if (d.id)
-		{
-			initialData.push({id: d.id, value: newValue});
-			sourceObjects.push(d);
-		}
-		else
-		{
-			var command;
-			command = {containerUUID: d.cell.parent.getValueID(), 
-					   fieldID: d.cell.field.nameID, 
-					   value: newValue,
-					   index: i};
-			initialData.push(command);
-			sourceObjects.push(d);
-		}
-	}
 }
 
 function _updateTranslationValue(d, newValue)

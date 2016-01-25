@@ -701,6 +701,38 @@ cr.TranslationValue = (function() {
 	
 	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
 
+	TranslationValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		if (newValue.text === "")
+			newValue.text = null;
+			
+		/* If both are null, then they are equal. */
+		if (!newValue.text && !this.value.text)
+			newValue.text = this.value.text;
+		
+		if (newValue.text !== this.value.text || 
+			newValue.languageCode !== this.value.languageCode)
+		{
+			var command;
+			if (this.id)
+			{
+				if (newValue.text)
+					command = {id: this.id, value: newValue};
+				else
+					command = {id: this.id}; /* No value, so delete the command. */
+			}
+			else
+			{
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValue,
+						   index: i};
+			}
+			initialData.push(command);
+			sourceObjects.push(this);
+		}
+	}
+
 	function TranslationValue() {
 		cr.StringValue.call(this);
 		this.value = {text: null, languageCode: null};
