@@ -1419,9 +1419,6 @@ var SitePanel = (function () {
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 
 						function() {
-							sections.each(function(cell) {
-									cell.updateCell(this);
-								});
 							_this.hide();
 						}, 
 						syncFailFunction);
