@@ -769,7 +769,7 @@ cr.ObjectValue = (function() {
 			if (!this.getValueID())
 				return;
 			else
-				command = {id: this.id, value: null};
+				command = {id: this.id};
 		}
 		else {
 			if (this.getValueID() == newValueID)
