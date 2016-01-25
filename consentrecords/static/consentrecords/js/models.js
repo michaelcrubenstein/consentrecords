@@ -652,25 +652,31 @@ cr.StringValue = (function() {
 
 	StringValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
+		if (newValue === "")
+			newValue = null;
+			
 		/* If both are null, then they are equal. */
 		if (!newValue && !this.value)
 			newValue = this.value;
 		
+		var command;
 		if (newValue != this.value)
 		{
 			if (this.id)
 			{
-				initialData.push({id: this.id, value: newValue});
+				if (newValue)
+					command = {id: this.id, value: newValue}
+				else
+					command = {id: this.id}	/* No value, so delete this item. */
 			}
 			else
 			{
-				var command;
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
 						   value: newValue,
 						   index: i};
-				initialData.push(command);
 			}
+			initialData.push(command);
 			sourceObjects.push(this);
 		}
 	}
