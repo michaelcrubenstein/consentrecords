@@ -779,7 +779,7 @@ cr.ObjectValue = (function() {
 			else
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
-						   value: newValue,
+						   value: newValueID,
 						   description: newDescription,
 						   index: i};
 		}
