@@ -1664,9 +1664,6 @@ function setupPanel2(dots)
 	
 	var lastText = "";	
 	$(searchInput.node()).on("keyup input paste", function(e) {
-// 		searchCancelButton
-// 			.classed("site-disabled-text", this.value.length == 0)
-// 			.classed("site-active-text", this.value.length > 0);
 		if (lastText != this.value)
 		{
 			lastText = this.value;
