@@ -699,7 +699,7 @@ cr.TranslationValue = (function() {
 		return this.value.text === null && this.value.text === undefined && this.value.text === "";
 	}
 	
-	function clearValue() { this.value = null; this.languageCode = null; }
+	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
 
 	function TranslationValue() {
 		cr.StringValue.call(this);
