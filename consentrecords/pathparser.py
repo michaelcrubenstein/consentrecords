@@ -16,21 +16,24 @@ def _getSimpleQClause(symbol, testValue):
             raise ValueError("unrecognized symbol: %s" & symbol)
     else:
         if symbol == '^=':
-            return Q(value__stringValue__istartswith=testValue)
+            q = Q(value__stringValue__istartswith=testValue)
         elif symbol == '=':
-            return Q(value__stringValue__iexact=testValue)
+            q = Q(value__stringValue__iexact=testValue)
         elif symbol == '*=':
-            return Q(value__stringValue__icontains=testValue)
+            q = Q(value__stringValue__icontains=testValue)
         elif symbol == '<':
-            return Q(value__stringValue__lt=testValue)
+            q = Q(value__stringValue__lt=testValue)
         elif symbol == '<=':
-            return Q(value__stringValue__lte=testValue)
+            q = Q(value__stringValue__lte=testValue)
         elif symbol == '>':
-            return Q(value__stringValue__gt=testValue)
+            q = Q(value__stringValue__gt=testValue)
         elif symbol == '>=':
-            return Q(value__stringValue__gte=testValue)
+            q = Q(value__stringValue__gte=testValue)
         else:
             raise ValueError("unrecognized symbol: %s" & symbol)
+        return q&Q(value__referenceValue__isnull=True)	
+        # Handles a degenerate case where a referenceValue was stored in the same place as
+        # the stringValue and it happens to match the query string, 
 
 def _getQClause(symbol, testValue):
     if isinstance(testValue, list):
