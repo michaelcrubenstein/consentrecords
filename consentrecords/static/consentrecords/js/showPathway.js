@@ -1598,7 +1598,7 @@ function setupPanel2(dots)
 		{
 			var startVal = val;
 						
-			var selectAllSuccess = function(orgs)
+			var done = function(orgs)
 			{
 				function appendDescriptions(buttons)
 				{
@@ -1656,9 +1656,9 @@ function setupPanel2(dots)
 			}
 			
 			if (val.length < 3)
-				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction});
 			else
-				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction} );
 		}
 	}
 	
