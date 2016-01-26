@@ -2152,7 +2152,7 @@ var ExperienceDetailPanel = (function () {
 		});
 		
 		var siteAddressDiv = orgDiv.append('div');
-		this.setupTarget(siteAddressDiv.node, experience, "Site");
+		this.setupTarget(siteAddressDiv.node(), experience, "Site");
 		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function() {
 			var site = experience.getValue("Site");
 			if (site && site.getValueID())
@@ -2276,158 +2276,6 @@ var ExperienceDetailPanel = (function () {
 	}
 	
 	return ExperienceDetailPanel;
-})();
-
-var PickOrCreateCell = (function () {
-	PickOrCreateCell.prototype = new cr.Cell();
-	PickOrCreateCell.prototype.pickCell = null;
-	PickOrCreateCell.prototype.createCell = null;
-	PickOrCreateCell.prototype.editPanel = null;
-	
-	PickOrCreateCell.prototype.getDescription = function()
-	{
-		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
-			return this.pickCell.data[0].getDescription();
-		else if (this.createCell.data.length > 0 && !this.createCell.data[0].isEmpty())
-			return this.createCell.data[0].getDescription();
-		else
-			return "";
-	}
-	
-	PickOrCreateCell.prototype.isEmpty = function()
-	{
-		return this.pickCell.isEmpty() && this.createCell.isEmpty();
-	}
-	
-	PickOrCreateCell.prototype.pickedObject = function(d)
-	{
-		if (pickedObject.getValueID() == this.pickCell.data[0].getValueID())
-			this.editPanel.hide();
-		else
-		{
-			var initialData = [];
-			var sourceObjects = [];
-			this.editPanel.appendUpdateCommands(initialData, sourceObjects);
-			if (initialData.length > 0)
-			{
-				cr.updateValues(initialData, sourceObjects, 
-					function() {
-						this.editPanel.hide();
-					}, 
-					syncFailFunction);
-			}
-			else
-				this.editPanel.hide();
-		}
-	}
-
-	PickOrCreateCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
-	{
-		var pickDatum = this.pickCell.data[0];
-		var createDatum = this.createCell.data[0];
-		
-		var done = function(d, i)
-		{
-			_this.pickedObject(d);
-		}
-		this.editPanel = new PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done);
-	}
-	
-	PickOrCreateCell.prototype.showValueAdded = function()
-	{
-		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
-	}
-	
-	PickOrCreateCell.prototype.setupItemsDivHandlers = function(itemsDiv)
-	{
-		/* _setupItemsDivHandlers(itemsDiv, cell); */
-	}
-	
-	PickOrCreateCell.prototype.pushTextChanged = function(textNode)
-	{
-		var pickValue = this.pickCell.data[0];
-		var createValue = this.createCell.data[0];
-		pickValue.addTarget("valueAdded.cr", textNode);
-		pickValue.addTarget("valueDeleted.cr", textNode);
-		pickValue.addTarget("dataChanged.cr", textNode);
-		createValue.addTarget("valueAdded.cr", textNode);
-		createValue.addTarget("valueDeleted.cr", textNode);
-		createValue.addTarget("dataChanged.cr", textNode);
-		
-		var _this = this;
-		$(textNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function(e) {
-				d3.select(textNode).text(_this.getDescription());
-			});
-
-		$(textNode).on("remove", function() {
-			pickValue.removeTarget("valueAdded.cr", textNode);
-			pickValue.removeTarget("valueDeleted.cr", textNode);
-			pickValue.removeTarget("dataChanged.cr", textNode);
-			createValue.removeTarget("valueAdded.cr", textNode);
-			createValue.removeTarget("valueDeleted.cr", textNode);
-			createValue.removeTarget("dataChanged.cr", textNode);
-		});
-	}
-	
-	PickOrCreateCell.prototype.showEdit = function(obj, containerPanel)
-	{
-		var sectionDiv = d3.select(obj);
-
-		var labelDiv = sectionDiv.append("label")
-			.text(this.field.name);
-		var itemsDiv = sectionDiv.append("ol")
-			.classed("items-div", true)
-			.classed("right-label expanding-div", true);
-
-		var _this = this;
-
-		sectionDiv.classed("btn row-button", true)
-			.on("click", function(cell) {
-				if (prepareClick())
-				{
-					var sitePanelNode = $(this).parents(".site-panel")[0];
-					_this.showPickOrCreatePanel(sitePanelNode);
-				}
-			});
-
-		this.setupItemsDivHandlers(itemsDiv);
-		$(itemsDiv.node()).on("valueAdded.cr", function()
-			{
-				_this.showValueAdded();
-			});
-
-		var divs = appendItems(itemsDiv, [this]);
-	
-		var buttons = appendRowButtons(divs);
-
-		appendRightChevrons(buttons);	
-		
-		appendButtonDescriptions(buttons)
-			.each(function(d)
-				{
-					_this.pushTextChanged(this);
-				});
-	}
-
-	function PickOrCreateCell(pickCell, createCell)
-	{
-		if (pickCell === undefined)
-		{
-			cr.Cell.call(this);
-		}
-		else
-			{
-			var field = {
-				name: pickCell.field.name,
-				capacity: "_unique value",
-			}
-			cr.Cell.call(this, field);
-			this.pickCell = pickCell;
-			this.createCell = createCell;
-		}
-	}
-
-	return PickOrCreateCell;
 })();
 
 var PickOrCreatePanel = (function () {
@@ -2604,13 +2452,14 @@ var PickOrCreatePanel = (function () {
 	
 	PickOrCreatePanel.prototype.searchPath = function(val)
 	{
-		var symbol;
-		if (val.length < 3)
-			symbol = "^=";
+		if (val.length == 0)
+			/* This case occurs when searching for sites within an organization. */
+			return this.pickDatum.cell.field.ofKindID;
 		else
-			symbol = "*=";
-			
-		return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
+		{
+			var symbol = (val.length < 3) ? "^=" : "*=";
+			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
+		}
 	}
 	
 	PickOrCreatePanel.prototype.search = function(val)
@@ -2628,8 +2477,12 @@ var PickOrCreatePanel = (function () {
 				_this.showObjects(foundObjects);
 			}
 		}
-
-		cr.selectAll({path: this.searchPath(val), limit: 50, done: done, fail: asyncFailFunction});
+		
+		var searchPath = this.searchPath(val);
+		if (searchPath && searchPath.length > 0)
+			cr.selectAll({path: searchPath, limit: 50, done: done, fail: asyncFailFunction});
+		else
+			done([]);
 	}
 	
 	PickOrCreatePanel.prototype.setupInputBox = function()
@@ -2661,6 +2514,12 @@ var PickOrCreatePanel = (function () {
 		this.searchTimeout = setTimeout(endSearchTimeout, 300);
 	}
 	
+	PickOrCreatePanel.prototype.textCleared = function()
+	{
+		this.listPanel.selectAll("section").remove();
+		this.listPanel.selectAll("p").remove();
+	}
+	
 	PickOrCreatePanel.prototype.textChanged = function()
 	{
 		if (this.searchTimeout != null)
@@ -2671,10 +2530,10 @@ var PickOrCreatePanel = (function () {
 		var val = this.inputCompareText();
 		if (val.length == 0)
 		{
-			this.listPanel.selectAll("section").remove();
-			this.listPanel.selectAll("p").remove();
+			this.textCleared();
 		}
-		else if (this.foundCompareText != null && val.indexOf(this.foundCompareText) == 0)
+		else if (this.foundCompareText != null && 
+				 (this.foundCompareText.length == 0 || val.indexOf(this.foundCompareText) == 0))
 		{
 			if (this.foundObjects && this.foundObjects.length < 50)
 				this.constrainFoundObjects(val);
@@ -2684,7 +2543,6 @@ var PickOrCreatePanel = (function () {
 		else
 			this.startSearchTimeout(val);
 	}
-
 	
 	function PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done)
 	{
@@ -2742,6 +2600,236 @@ var PickOrCreatePanel = (function () {
 	return PickOrCreatePanel;
 })();
 
+var PickOrCreateSitePanel = (function () {
+	PickOrCreateSitePanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateSitePanel.prototype.searchPath = function(val)
+	{
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID())
+		{
+			return "#"+organization.getValueID()+">Sites>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+		}
+		else
+			return "";
+	}
+	
+	PickOrCreateSitePanel.prototype.textCleared = function()
+	{
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID())
+		{
+			this.startSearchTimeout("");
+		}
+	}
+	
+	function PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID() && this.createDatum.value == null)
+		{
+			this.search("");
+		}
+	}
+	
+	return PickOrCreateSitePanel;
+})();
+
+var PickOrCreateOfferingPanel = (function () {
+	PickOrCreateOfferingPanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateOfferingPanel.prototype.searchPath = function(val)
+	{
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID())
+		{
+			return "#"+site.getValueID()+">Offerings>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+		}
+		else
+			return "";
+	}
+	
+	PickOrCreateOfferingPanel.prototype.textCleared = function()
+	{
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID())
+		{
+			this.startSearchTimeout("");
+		}
+	}
+	
+	function PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID() && this.createDatum.value == null)
+		{
+			this.search("");
+		}
+	}
+	
+	return PickOrCreateOfferingPanel;
+})();
+
+var PickOrCreateCell = (function () {
+	PickOrCreateCell.prototype = new cr.Cell();
+	PickOrCreateCell.prototype.pickCell = null;
+	PickOrCreateCell.prototype.createCell = null;
+	PickOrCreateCell.prototype.editPanel = null;
+	
+	PickOrCreateCell.prototype.getDescription = function()
+	{
+		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
+			return this.pickCell.data[0].getDescription();
+		else if (this.createCell.data.length > 0 && !this.createCell.data[0].isEmpty())
+			return this.createCell.data[0].getDescription();
+		else
+			return "";
+	}
+	
+	PickOrCreateCell.prototype.isEmpty = function()
+	{
+		return this.pickCell.isEmpty() && this.createCell.isEmpty();
+	}
+	
+	PickOrCreateCell.prototype.pickedObject = function(d)
+	{
+		if (pickedObject.getValueID() == this.pickCell.data[0].getValueID())
+			this.editPanel.hide();
+		else
+		{
+			var initialData = [];
+			var sourceObjects = [];
+			this.editPanel.appendUpdateCommands(initialData, sourceObjects);
+			if (initialData.length > 0)
+			{
+				cr.updateValues(initialData, sourceObjects, 
+					function() {
+						this.editPanel.hide();
+					}, 
+					syncFailFunction);
+			}
+			else
+				this.editPanel.hide();
+		}
+	}
+
+	PickOrCreateCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
+		
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	PickOrCreateCell.prototype.showValueAdded = function()
+	{
+		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
+	}
+	
+	PickOrCreateCell.prototype.setupItemsDivHandlers = function(itemsDiv)
+	{
+		/* _setupItemsDivHandlers(itemsDiv, cell); */
+	}
+	
+	PickOrCreateCell.prototype.pushTextChanged = function(textNode)
+	{
+		var pickValue = this.pickCell.data[0];
+		var createValue = this.createCell.data[0];
+		pickValue.addTarget("valueAdded.cr", textNode);
+		pickValue.addTarget("valueDeleted.cr", textNode);
+		pickValue.addTarget("dataChanged.cr", textNode);
+		createValue.addTarget("valueAdded.cr", textNode);
+		createValue.addTarget("valueDeleted.cr", textNode);
+		createValue.addTarget("dataChanged.cr", textNode);
+		
+		var _this = this;
+		$(textNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function(e) {
+				d3.select(textNode).text(_this.getDescription());
+			});
+
+		$(textNode).on("remove", function() {
+			pickValue.removeTarget("valueAdded.cr", textNode);
+			pickValue.removeTarget("valueDeleted.cr", textNode);
+			pickValue.removeTarget("dataChanged.cr", textNode);
+			createValue.removeTarget("valueAdded.cr", textNode);
+			createValue.removeTarget("valueDeleted.cr", textNode);
+			createValue.removeTarget("dataChanged.cr", textNode);
+		});
+	}
+	
+	PickOrCreateCell.prototype.showEdit = function(obj, containerPanel)
+	{
+		var sectionDiv = d3.select(obj);
+
+		var labelDiv = sectionDiv.append("label")
+			.text(this.field.name);
+		var itemsDiv = sectionDiv.append("ol")
+			.classed("items-div", true)
+			.classed("right-label expanding-div", true);
+
+		var _this = this;
+
+		sectionDiv.classed("btn row-button", true)
+			.on("click", function(cell) {
+				if (prepareClick())
+				{
+					var sitePanelNode = $(this).parents(".site-panel")[0];
+					_this.showPickOrCreatePanel(sitePanelNode);
+				}
+			});
+
+		this.setupItemsDivHandlers(itemsDiv);
+		$(itemsDiv.node()).on("valueAdded.cr", function()
+			{
+				_this.showValueAdded();
+			});
+
+		var divs = appendItems(itemsDiv, [this]);
+	
+		var buttons = appendRowButtons(divs);
+
+		appendRightChevrons(buttons);	
+		
+		appendButtonDescriptions(buttons)
+			.each(function(d)
+				{
+					_this.pushTextChanged(this);
+				});
+	}
+
+	function PickOrCreateCell(pickCell, createCell)
+	{
+		if (pickCell === undefined)
+		{
+			cr.Cell.call(this);
+		}
+		else
+			{
+			var field = {
+				name: pickCell.field.name,
+				capacity: "_unique value",
+			}
+			cr.Cell.call(this, field);
+			this.pickCell = pickCell;
+			this.createCell = createCell;
+		}
+	}
+
+	return PickOrCreateCell;
+})();
+
 var PickOrCreateOrganizationCell = (function () {
 	PickOrCreateOrganizationCell.prototype = new PickOrCreateCell();
 	PickOrCreateOrganizationCell.prototype.experience = null;
@@ -2755,6 +2843,60 @@ var PickOrCreateOrganizationCell = (function () {
 	}
 	
 	return PickOrCreateOrganizationCell;
+})();
+
+var PickOrCreateSiteCell = (function () {
+	PickOrCreateSiteCell.prototype = new PickOrCreateCell();
+	PickOrCreateSiteCell.prototype.experience = null;
+	
+	PickOrCreateSiteCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
+		
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	function PickOrCreateSiteCell(experience)
+	{
+		PickOrCreateCell.call(this, 
+							  experience.getCell("Site"),
+							  experience.getCell("User Entered Site"));
+		this.experience = experience;
+	}
+	
+	return PickOrCreateSiteCell;
+})();
+
+var PickOrCreateOfferingCell = (function () {
+	PickOrCreateOfferingCell.prototype = new PickOrCreateCell();
+	PickOrCreateOfferingCell.prototype.experience = null;
+	
+	PickOrCreateOfferingCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
+		
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	function PickOrCreateOfferingCell(experience)
+	{
+		PickOrCreateCell.call(this, 
+							  experience.getCell("Offering"),
+							  experience.getCell("User Entered Offering"));
+		this.experience = experience;
+	}
+	
+	return PickOrCreateOfferingCell;
 })();
 
 var EditExperiencePanel = (function () {
@@ -2775,10 +2917,8 @@ var EditExperiencePanel = (function () {
 		navContainer.appendTitle("Edit Experience");
 		
 		cells = [new PickOrCreateOrganizationCell(experience),
-				 new PickOrCreateCell(experience.getCell("Site"), 
-									  experience.getCell("User Entered Site")),
-				 new PickOrCreateCell(experience.getCell("Offering"), 
-									  experience.getCell("User Entered Offering")),
+				 new PickOrCreateSiteCell(experience),
+				 new PickOrCreateOfferingCell(experience),
 				];
 				
 		panel2Div.showEditCells(cells);
