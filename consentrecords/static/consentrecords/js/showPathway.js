@@ -2055,12 +2055,46 @@ var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype = new SitePanel();
 	ExperienceDetailPanel.prototype.experience = null;
 	
-	function ExperienceDetailPanel(experience, previousPanel) {
-		var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
-		var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
-		var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+	ExperienceDetailPanel.prototype.setupTarget = function(targetNode, d, cellName)
+	{
+		var pickDatum = d.getCell(cellName).data[0];
 		
-		SitePanel.call(this, previousPanel, experience, offering, "view session");
+		pickDatum.addTarget("dataChanged.cr", targetNode);
+		pickDatum.addTarget("valueAdded.cr", targetNode);
+		pickDatum.addTarget("valueDeleted.cr", targetNode);
+		$(targetNode).on("remove", function() {
+			pickDatum.removeTarget("dataChanged.cr", targetNode);
+			pickDatum.removeTarget("valueAdded.cr", targetNode);
+			pickDatum.removeTarget("valueDeleted.cr", targetNode);
+		});
+	}
+	
+	ExperienceDetailPanel.prototype.setupPickOrCreateTarget = function(targetNode, experience, pickedName, createName, update)
+	{
+		var pickDatum = experience.getCell(pickedName).data[0];
+		var createDatum = experience.getCell(createName).data[0];
+		
+		pickDatum.addTarget("dataChanged.cr", targetNode);
+		pickDatum.addTarget("valueAdded.cr", targetNode);
+		pickDatum.addTarget("valueDeleted.cr", targetNode);
+		createDatum.addTarget("dataChanged.cr", targetNode);
+		createDatum.addTarget("valueAdded.cr", targetNode);
+		createDatum.addTarget("valueDeleted.cr", targetNode);
+		$(targetNode).on("remove", function() {
+			pickDatum.removeTarget("dataChanged.cr", targetNode);
+			pickDatum.removeTarget("valueAdded.cr", targetNode);
+			pickDatum.removeTarget("valueDeleted.cr", targetNode);
+			createDatum.removeTarget("dataChanged.cr", targetNode);
+			createDatum.removeTarget("valueAdded.cr", targetNode);
+			createDatum.removeTarget("valueDeleted.cr", targetNode);
+		});
+		$(targetNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", update);
+		$(targetNode).trigger("dataChanged.cr");
+	}
+	
+	function ExperienceDetailPanel(experience, previousPanel) {
+		
+		SitePanel.call(this, previousPanel, experience, "Offering", "view session");
 		this.experience = experience;
 		
 		var navContainer = this.appendNavContainer();
@@ -2086,61 +2120,80 @@ var ExperienceDetailPanel = (function () {
 		}
 		
 		var panel2Div = this.appendScrollArea();
-		panel2Div.appendHeader();
+		
+		var headerDiv = panel2Div.appendHeader();
+		this.setupPickOrCreateTarget(headerDiv.node(), experience, "Offering", "User Entered Offering",
+			function() {
+			var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+			headerDiv.text(offering);
+		});
+		
 		panel2Div.appendAlertContainer();
 		
 		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
 
-		if (organization && organization.length > 0)
-		{
-			var labelDiv = orgDiv.append("label")
-				.text(organization);
-		}
+		var organizationNameDiv = orgDiv.append("label");
+		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Organization", "User Entered Organization", 
+			function() {
+				var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+				d3.select(this).text(organization);
+			});
 
-		if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
-		{
-			orgDiv.append('div')
-				.classed("address-line", true)
-				.text(siteDescription);
-		}
+		var siteNameDiv = orgDiv.append('div')
+				.classed("address-line", true);
+		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Site", "User Entered Site", function() {
+			var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+			var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+			if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
+				siteNameDiv.text(siteDescription);
+			else
+				siteNameDiv.text(null);
+		});
 		
-		var site = experience.getValue("Site");
-		if (site && site.getValueID())
-		{
-			crp.pushCheckCells(site, function()
-				{
-					var address = site.getValue("Address");
-					crp.pushCheckCells(address, function()
+		var siteAddressDiv = orgDiv.append('div');
+		this.setupTarget(siteAddressDiv.node, experience, "Site");
+		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function() {
+			var site = experience.getValue("Site");
+			if (site && site.getValueID())
+			{
+				crp.pushCheckCells(site, function()
 					{
-						var streetCell = address.getCell("Street");
-						var cityCell = address.getCell("City");
-						var stateCell = address.getCell("State");
-						var zipCell = address.getCell("Zip Code");
-						if (streetCell)
-							$(streetCell.data).each(function() {
-								orgDiv.append('div')
-									.classed("address-line", true)
-									.text(this.value);
-							});
-						line = "";
-						if (cityCell && cityCell.data.length)
-							line += cityCell.data[0].value;
-						if (stateCell && stateCell.data.length)
-							line += ", " + stateCell.data[0].getDescription();
-						if (zipCell && zipCell.data.length && zipCell.data[0].value)
-							line += "  " + zipCell.data[0].value;
-						if (line.trim())
-							orgDiv.append('div')
-								.classed('address-line', true)
-								.text(line.trim());
+						var address = site.getValue("Address");
+						crp.pushCheckCells(address, function()
+						{
+							var streetCell = address.getCell("Street");
+							var cityCell = address.getCell("City");
+							var stateCell = address.getCell("State");
+							var zipCell = address.getCell("Zip Code");
+							if (streetCell)
+								$(streetCell.data).each(function() {
+									siteAddressDiv.append('div')
+										.classed("address-line", true)
+										.text(this.value);
+								});
+							line = "";
+							if (cityCell && cityCell.data.length)
+								line += cityCell.data[0].value;
+							if (stateCell && stateCell.data.length)
+								line += ", " + stateCell.data[0].getDescription();
+							if (zipCell && zipCell.data.length && zipCell.data[0].value)
+								line += "  " + zipCell.data[0].value;
+							if (line.trim())
+								siteAddressDiv.append('div')
+									.classed('address-line', true)
+									.text(line.trim());
+						},
+						function() {
+						});
 					},
-					function() {
-					});
-				},
-				function() { }
-			);
-		}
+					function() { }
+				);
+			}
+			else
+				siteAddressDiv.select('div').remove();
+		});
+		$(siteAddressDiv.node()).trigger("dataChanged.cr");
 		
 		function appendStringDatum(cellName)
 		{
