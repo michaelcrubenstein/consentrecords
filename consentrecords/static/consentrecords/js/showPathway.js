@@ -2672,6 +2672,7 @@ var PickOrCreatePanel = (function () {
 		if (val.length == 0)
 		{
 			this.listPanel.selectAll("section").remove();
+			this.listPanel.selectAll("p").remove();
 		}
 		else if (this.foundCompareText != null && val.indexOf(this.foundCompareText) == 0)
 		{
