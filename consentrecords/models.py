@@ -90,11 +90,14 @@ class Instance(dbmodels.Model):
     # addValue ensures that the value can be found for object values. 
     # addValue does not validate that self is writable.           
     def addValue(self, field, value, position, transactionState):
+        if value == None:
+            raise ValueError("value is not specified")
+            
         if self.getDataType(field)==Terms.objectEnum:
             if not isinstance(value, Instance):
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value)))
                 if len(f) == 0:
-                    raise Value.DoesNotExist()
+                    raise Value.DoesNotExist("specified primary key for instance does not exist")
                 value = f[0]
             elif not value._canFind(transactionState.user):
                 raise Value.DoesNotExist()

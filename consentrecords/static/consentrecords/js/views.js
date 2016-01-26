@@ -703,58 +703,6 @@ function appendButtonDescriptions(buttons)
 		.text(_getDataDescription);
 }
 
-function _showViewObjectCell(obj, previousPanelNode, cell)
-{
-	var sectionObj = d3.select(obj);
-	var itemsDiv = sectionObj.selectAll("ol");
-
-	if (cell.field.capacity === "_unique value")
-	{
-		itemsDiv.classed("right-label expanding-div", true);
-		if (!_isPickCell(cell))
-			sectionObj.classed("btn row-button", true)
-			          .on("click", function(cell) {
-				if (prepareClick())
-				{
-					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
-				}
-			});
-	}
-
-	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(cell), showViewObjectPanel));
-	
-	var clickFunction;
-	if (_isPickCell(cell) || cell.field.capacity === "_unique value")	/* Unique value handles the click above */
-		clickFunction = null;
-	else
-		clickFunction = function(d) {
-			if (prepareClick())
-			{
-				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
-			}
-		}
-
-	var divs = appendItems(itemsDiv, cell.data);
-	
-	var buttons;
-	if (!_isPickCell(cell)) {
-		buttons = appendRowButtons(divs);
-	
-		if (clickFunction)
-			buttons.on("click", clickFunction);
-		
-		appendRightChevrons(buttons);
-	}
-	else
-	{
-		buttons = divs.append("div").classed("multi-line-item", cell.field.capacity != "_unique value");
-	}
-	
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
-}
-
 function _clickEditObjectValue(d, previousPanelNode)
 {
 	if (prepareClick())
@@ -763,86 +711,6 @@ function _clickEditObjectValue(d, previousPanelNode)
 			showPickObjectPanel(d, previousPanelNode);
 		else
 			showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
-	}
-}
-
-function _showEditObjectCell(obj, previousPanelNode, cell)
-{
-	var sectionObj = d3.select(obj);
-	
-	var labelDiv = sectionObj.append("label")
-		.text(cell.field.name);
-	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
-
-	if (cell.field.capacity === "_unique value")
-	{
-		sectionObj.classed("btn row-button", true);
-		itemsDiv.classed("right-label expanding-div", true);
-		sectionObj.on("click", function(cell) {
-			_clickEditObjectValue(cell.data[0], previousPanelNode);
-		});
-	}
-
-	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
-
-	var divs = appendItems(itemsDiv, cell.data);
-	
-	if (cell.field.capacity != "_unique value")
-		appendConfirmDeleteControls(divs);
-		
-	var buttons = appendRowButtons(divs);
-
-	if (cell.field.capacity !== "_unique value")
-	{
-		buttons.on("click", function(d) {
-				_clickEditObjectValue(d, previousPanelNode);
-			});
-		appendDeleteControls(buttons);
-	}
-
-	appendRightChevrons(buttons);	
-		
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
-	
-	if (cell.field.capacity != "_unique value")
-	{
-		function done(newValue)
-		{
-			if (_isPickCell(newValue.cell))
-				showPickObjectPanel(newValue, previousPanelNode)
-			else
-				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
-		}
-		
-		crv.appendAddButton(sectionObj, done);
-	}
-}
-
-function _appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects)
-{
-	/* If both are null, then they are equal. */
-	if (!newValue && !d.value)
-		newValue = d.value;
-		
-	if (newValue != d.value)
-	{
-		if (d.id)
-		{
-			initialData.push({id: d.id, value: newValue});
-			sourceObjects.push(d);
-		}
-		else
-		{
-			var command;
-			command = {containerUUID: d.cell.parent.getValueID(), 
-					   fieldID: d.cell.field.nameID, 
-					   value: newValue,
-					   index: i};
-			initialData.push(command);
-			sourceObjects.push(d);
-		}
 	}
 }
 
@@ -900,7 +768,7 @@ function _appendUpdateStringCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = this.value;
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -910,7 +778,7 @@ function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getDatestampValue.call(this);			
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -920,7 +788,7 @@ function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sour
 	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -930,7 +798,7 @@ function _appendUpdateTimeCommands(sectionObj, initialData, sourceObjects)
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
 			var newValue = _getTimeValue.call(this);
-			_appendUpdateTextValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
 }
@@ -953,36 +821,9 @@ function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects
 	d3.select(sectionObj).selectAll("li").each(function(d, i)
 		{
 			var newValue = _getTranslationValue.call(this);
-			_appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects);
+			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
-}
-
-function _appendUpdateTranslationValueCommands(d, i, newValue, initialData, sourceObjects)
-{
-	/* If both are null, then they are equal. */
-	if (!newValue.text && !d.value.text)
-		newValue.text = d.value.text;
-		
-	if (newValue.text !== d.value.text || 
-		newValue.languageCode !== d.value.languageCode)
-	{
-		if (d.id)
-		{
-			initialData.push({id: d.id, value: newValue});
-			sourceObjects.push(d);
-		}
-		else
-		{
-			var command;
-			command = {containerUUID: d.cell.parent.getValueID(), 
-					   fieldID: d.cell.field.nameID, 
-					   value: newValue,
-					   index: i};
-			initialData.push(command);
-			sourceObjects.push(d);
-		}
-	}
 }
 
 function _updateTranslationValue(d, newValue)
@@ -1047,64 +888,61 @@ function _updateTranslationCell(sectionObj)
 	);
 }
 
-/* This is a storeDataFunction for adding an object within an unsaved object. 
-	onSuccessFunction takes one argument: the newly created value.
-*/
-function _storeNewInstance(oldValue, containerCell, containerUUID, sections, onSuccessFunction)
-{
-	var newData = containerCell.newValue();
-	newData.value.cells = [];
-	sections.each(
-		function(cell) {
-			if ("updateCell" in cell)
-				cell.updateCell(this);
-			newData.importCell(cell);
-		});
-		
-	newData.calculateDescription();
-	if (oldValue)
-	{
-		/* Replace the new data into the oldValue, which has already been added. */
-		oldValue.value = newData.value;
-		oldValue.triggerEvent("dataChanged.cr");
-	}
-	else
-		containerCell.addValue(newData);
-	if (onSuccessFunction) onSuccessFunction(newData);
-}
-
-/* This is a storeDataFunction for creating an object. 
-	If this is a root object, then containerUUID will be null.
-	
-	onSuccessFunction takes one argument: the newly created value.
- */
-function _saveNewInstance(oldValue, containerCell, sections, done)
-{
-	var initialData = {}
-	sections.each(
-		function(cell) {
-			if ("updateCell" in cell)
-				cell.updateCell(this);
-			cell.appendData(initialData);
-		});
-		
-	cr.append(oldValue, containerCell, initialData, done, syncFailFunction)
-}
-
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
 cr.StringCell.prototype.updateCell = _updateStringCell;
+cr.StringCell.prototype.show = function(obj, containerPanel)
+{
+	_showViewStringCell(obj, this);
+}
+cr.StringCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "text");
+}
+
+cr.NumberCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "number");
+}
+
+cr.EmailCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "email");
+}
+
+cr.UrlCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "url");
+}
+
+cr.TelephoneCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "tel");
+}
 
 cr.DatestampCell.prototype.appendUpdateCommands = _appendUpdateDatestampCommands;
 cr.DatestampCell.prototype.updateCell = _updateDatestampCell;
+cr.DatestampCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "date");
+}
 
 cr.DatestampDayOptionalCell.prototype.appendUpdateCommands = _appendUpdateDatestampDayOptionalCommands;
 cr.DatestampDayOptionalCell.prototype.updateCell = _updateDatestampDayOptionalCell;
+cr.DatestampDayOptionalCell.prototype.showEdit = _showEditDateStampDayOptionalCell;
 
 cr.TimeCell.prototype.appendUpdateCommands = _appendUpdateTimeCommands;
 cr.TimeCell.prototype.updateCell = _updateTimeCell;
+cr.TimeCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditStringCell(obj, this, "time");
+}
 
 cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
 cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
+cr.TranslationCell.prototype.showEdit = function(obj, containerPanel)
+{
+	_showEditTranslationCell(obj, this, "text");
+}
 
 cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData, sourceObjects)
 {
@@ -1139,113 +977,114 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 
 cr.ObjectCell.prototype.updateCell = function(sectionObj)
 {
-	if (this.parent.getValueID())
-	{
-		/* If the parent has an ID, then we need to delete the cells all of the
-			data elements, because we don't have their id's. This will force them 
-			to be reloaded.
-		 */
-		this.data.forEach(function(d)
-		{
-			delete d.value.cells;
-		});
-	}
 	/* Do nothing at the moment. */
 }
 
-var dataTypeViews = {
-	_string: {
-		show: function(obj, containerPanel, cell)
+cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
+{
+	var sectionObj = d3.select(obj);
+	var itemsDiv = sectionObj.selectAll("ol");
+
+	if (this.field.capacity === "_unique value")
+	{
+		itemsDiv.classed("right-label expanding-div", true);
+		if (!_isPickCell(this))
+			sectionObj.classed("btn row-button", true)
+			          .on("click", function(cell) {
+				if (prepareClick())
+				{
+					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
+				}
+			});
+	}
+
+	_setupItemsDivHandlers(itemsDiv, this);
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel));
+	
+	var clickFunction;
+	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
+		clickFunction = null;
+	else
+		clickFunction = function(d) {
+			if (prepareClick())
+			{
+				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
+			}
+		}
+
+	var divs = appendItems(itemsDiv, this.data);
+	
+	var buttons;
+	if (!_isPickCell(this)) {
+		buttons = appendRowButtons(divs);
+	
+		if (clickFunction)
+			buttons.on("click", clickFunction);
+		
+		appendRightChevrons(buttons);
+	}
+	else
+	{
+		buttons = divs.append("div").classed("multi-line-item", this.field.capacity != "_unique value");
+	}
+	
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+}
+
+cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
+{
+	var sectionObj = d3.select(obj);
+	
+	var labelDiv = sectionObj.append("label")
+		.text(this.field.name);
+	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+
+	if (this.field.capacity === "_unique value")
+	{
+		sectionObj.classed("btn row-button", true);
+		itemsDiv.classed("right-label expanding-div", true);
+		sectionObj.on("click", function(cell) {
+			_clickEditObjectValue(cell.data[0], previousPanelNode);
+		});
+	}
+
+	_setupItemsDivHandlers(itemsDiv, this);
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
+
+	var divs = appendItems(itemsDiv, this.data);
+	
+	if (this.field.capacity != "_unique value")
+		appendConfirmDeleteControls(divs);
+		
+	var buttons = appendRowButtons(divs);
+
+	if (this.field.capacity !== "_unique value")
+	{
+		buttons.on("click", function(d) {
+				_clickEditObjectValue(d, previousPanelNode);
+			});
+		appendDeleteControls(buttons);
+	}
+
+	appendRightChevrons(buttons);	
+		
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+	
+	if (this.field.capacity != "_unique value")
+	{
+		function done(newValue)
 		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "text");
-		},
-	},
-	_number: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "number");
-		},
-	},
-	_email: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "email");
-		},
-	},
-	_url: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "url");
-		},
-	},
-	_telephone: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "tel");
-		},
-	},
-	_datestamp: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "date");
-		},
-	},
-	"_datestamp (day optional)": {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: _showEditDateStampDayOptionalCell,
-	},
-	_time: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditStringCell(obj, cell, "time");
-		},
-	},
-	_object: {
-		show: _showViewObjectCell,
-		showEdit: _showEditObjectCell,
-	},
-	_translation: {
-		show: function(obj, containerPanel, cell)
-		{
-			_showViewStringCell(obj, cell);
-		},
-		showEdit: function(obj, containerPanel, cell)
-		{
-			_showEditTranslationCell(obj, cell, "text");
-		},
-	},
-};
+			if (_isPickCell(newValue.cell))
+				showPickObjectPanel(newValue, previousPanelNode)
+			else
+				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
+		}
+		
+		crv.appendAddButton(sectionObj, done);
+	}
+}
 
 function appendDescriptions(buttons)
 {
@@ -1530,43 +1369,39 @@ var SitePanel = (function () {
 		
 		panel2Div.show_view_cells = function(objectData)
 		{
-			this.appendSections(objectData.value.cells)
+			this.appendSections(objectData.value.cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
-						if (cell.field.descriptorType != "_by text")
-						{
-							var section = d3.select(this);
-							section.append("label").text(cell.field.name);
-							section.append("ol").classed("items-div", true);
-							dataTypeViews[cell.field.dataType].show(this, _this.node(), cell);
+						var section = d3.select(this);
+						section.append("label").text(cell.field.name);
+						section.append("ol").classed("items-div", true);
+						cell.show(this, _this.node());
+						if (!cell.isEmpty())
+							$(this).css("display", "block");
+						else
+							$(this).css("display", "none");
+					
+						/* Make sure the section gets shown if a value is added to it. */
+						cell.addTarget("valueAdded.cr", this);
+						$(this).on("valueAdded.cr", function(e, newData) {
+							$(this).css("display", "block");
+						});
+						
+						cell.addTarget("valueDeleted.cr", this);
+						$(this).on("valueDeleted.cr", function(e, newData) {
 							if (!cell.isEmpty())
 								$(this).css("display", "block");
 							else
 								$(this).css("display", "none");
+						});
 						
-							/* Make sure the section gets shown if a value is added to it. */
-							cell.addTarget("valueAdded.cr", this);
-							$(this).on("valueAdded.cr", function(e, newData) {
-								$(this).css("display", "block");
-							});
-							
-							cell.addTarget("valueDeleted.cr", this);
-							$(this).on("valueDeleted.cr", function(e, newData) {
-								if (!cell.isEmpty())
-									$(this).css("display", "block");
-								else
-									$(this).css("display", "none");
-							});
-							
-							$(this).on("dataChanged.cr", function(e) {
-								$(this).css("display", "block");
-							});
-						}
+						$(this).on("dataChanged.cr", function(e) {
+							$(this).css("display", "block");
+						});
 					})
-				.append("div").classed("cell-border-below", 
-					function(cell) { return objectData.cell.field.descriptorType != "_by text" } );
+				.append("div").classed("cell-border-below", true);
 		}
 		
 		panel2Div.handleDoneEditingButton = function() {
@@ -1584,16 +1419,57 @@ var SitePanel = (function () {
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 
 						function() {
-							sections.each(function(cell) {
-									if ("updateCell" in cell)
-										cell.updateCell(this);
-								});
 							_this.hide();
 						}, 
 						syncFailFunction);
 				}
 				else
 				{
+					_this.hide();
+				}
+			}
+			d3.event.preventDefault();
+		}
+		
+		/* d represents the newly created object that is being added. */
+		panel2Div.handleDoneAddingButton = function(d) {
+			if (prepareClick())
+			{
+				showClickFeedback(this);
+				
+				var objectData = d;
+		
+				var sections = panel2Div.selectAll("section");
+				if (d.cell.parent == null ||
+					d.cell.parent.getValueID() != null)
+				{
+					var initialData = {}
+					sections.each(
+						function(cell) {
+							cell.updateCell(this);
+							cell.appendData(initialData);
+						});
+		
+					d.saveNew(initialData, 
+						function() { 
+							_this.hide(); 
+						}, 
+						syncFailFunction);
+				}
+				else
+				{
+					/* In this case, we are editing an object that is contained in 
+						an object that is being edited. This object will be saved
+						as part of completing that edit operation. */
+					d.value.cells = [];
+					sections.each(
+						function(cell) {
+							cell.updateCell(this);
+							d.importCell(cell);
+						});
+	
+					d.calculateDescription();
+					d.triggerEvent("dataChanged.cr");
 					_this.hide();
 				}
 			}
@@ -1607,7 +1483,7 @@ var SitePanel = (function () {
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
-						dataTypeViews[cell.field.dataType].showEdit(this, _this.node(), cell);
+						cell.showEdit(this, _this.node());
 					});
 		}
 		
@@ -1662,9 +1538,13 @@ function setupSearchBar(searchBarNode, textChanged)
 			.style("padding-bottom", (h/2).toString()+"px");
 	}
 	
-	$(document).ready(function(e) { resizeSearchCancelHeight() });
-	$(window).resize(function(e) { resizeSearchCancelHeight() });
+	$(window).on("resize", resizeSearchCancelHeight);
 	resizeSearchCancelHeight();
+	
+	$(searchInputContainer.node()).on("remove", function(e)
+	{
+		$(window).off("resize", resizeSearchCancelHeight);
+	});
 	
 	return searchInput.node();
 }
@@ -1815,40 +1695,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		{
 			doneButton = navContainer.appendRightButton();
 			doneButton.append("span").text("Add");
-			doneButton.on("click", function(d) {
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-			
-					var sections = panel2Div.selectAll("section");
-					if (containerCell.parent == null ||
-						containerCell.parent.getValueID() != null)
-					{
-						_saveNewInstance(objectData, containerCell, sections, 
-							function() { 
-								sitePanel.hide(); 
-							});
-					}
-					else
-					{
-						/* In this case, we are editing an object that is contained in 
-							an object that is being edited. This object will be saved
-							as part of completing that edit operation. */
-						objectData.value.cells = [];
-						sections.each(
-							function(cell) {
-								if ("updateCell" in cell)
-									cell.updateCell(this);
-								objectData.importCell(cell);
-							});
-		
-						objectData.calculateDescription();
-						objectData.triggerEvent("dataChanged.cr");
-						sitePanel.hide();
-					}
-				}
-				d3.event.preventDefault();
-			});
+			doneButton.on("click", panel2Div.handleDoneAddingButton);
 			var backButton = navContainer.appendLeftButton()
 				.on("click", function()
 				{
@@ -2181,17 +2028,6 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		
 	var failFunction = syncFailFunction;
 	
-	function _storeUnsavedPickedValue(oldData, newData)
-	{
-		/* In this case, we are replacing an old value for
-		   an item that was added to the item but not saved;
-		   a placeholder or a previously picked value.
-		 */
-		if (newData.getValueID() != oldData.getValueID()) {
-			oldData.completeUpdateValue(newData);
-		}
-	}
-
 	function selectAllSuccessFunction(rootObjects) {
 		if (!("pickObjectPath" in oldData.cell.field && oldData.cell.field.pickObjectPath))
 		{
@@ -2264,14 +2100,14 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			
 			if (prepareClick())
 			{
-				if (oldData.id)
+				if (d.getValueID() === oldData.getValueID()) {
+					successFunction();
+				}
+				else if (oldData.id)
 				{
-					if (d.getValueID() === oldData.getValueID()) {
-						successFunction();
-					}
-					else if (d.getValueID())
+					if (d.getValueID())
 					{
-						cr.updateObjectValue(oldData, d, successFunction, syncFailFunction);
+						cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
 					}
 					else
 					{
@@ -2286,7 +2122,12 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					}
 					else 
 					{
-						_storeUnsavedPickedValue(oldData, d);
+						/* In this case, we are replacing an old value for
+						   an item that was added to the cell but not saved;
+						   a placeholder or a previously picked value.
+						 */
+						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldData.triggerEvent("dataChanged.cr", d);
 						successFunction();
 					}
 				}

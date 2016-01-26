@@ -1593,13 +1593,12 @@ function setupPanel2(dots)
 		if (val.length == 0)
 		{
 			w.selectAll("ol").remove();
-			searchText = val;
 		}
 		else
 		{
 			var startVal = val;
 						
-			var selectAllSuccess = function(orgs)
+			var done = function(orgs)
 			{
 				function appendDescriptions(buttons)
 				{
@@ -1653,22 +1652,18 @@ function setupPanel2(dots)
 					}
 		
 					appendButtons(w, orgs, buttonClicked, appendDescriptions);
-					searchText = startVal;
 				}
 			}
 			
 			if (val.length < 3)
-				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction});
 			else
-				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction} );
 		}
 	}
 	
 	var lastText = "";	
 	$(searchInput.node()).on("keyup input paste", function(e) {
-// 		searchCancelButton
-// 			.classed("site-disabled-text", this.value.length == 0)
-// 			.classed("site-active-text", this.value.length > 0);
 		if (lastText != this.value)
 		{
 			lastText = this.value;
@@ -2060,12 +2055,46 @@ var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype = new SitePanel();
 	ExperienceDetailPanel.prototype.experience = null;
 	
-	function ExperienceDetailPanel(experience, previousPanel) {
-		var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
-		var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
-		var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+	ExperienceDetailPanel.prototype.setupTarget = function(targetNode, d, cellName)
+	{
+		var pickDatum = d.getCell(cellName).data[0];
 		
-		SitePanel.call(this, previousPanel, experience, offering, "view session");
+		pickDatum.addTarget("dataChanged.cr", targetNode);
+		pickDatum.addTarget("valueAdded.cr", targetNode);
+		pickDatum.addTarget("valueDeleted.cr", targetNode);
+		$(targetNode).on("remove", function() {
+			pickDatum.removeTarget("dataChanged.cr", targetNode);
+			pickDatum.removeTarget("valueAdded.cr", targetNode);
+			pickDatum.removeTarget("valueDeleted.cr", targetNode);
+		});
+	}
+	
+	ExperienceDetailPanel.prototype.setupPickOrCreateTarget = function(targetNode, experience, pickedName, createName, update)
+	{
+		var pickDatum = experience.getCell(pickedName).data[0];
+		var createDatum = experience.getCell(createName).data[0];
+		
+		pickDatum.addTarget("dataChanged.cr", targetNode);
+		pickDatum.addTarget("valueAdded.cr", targetNode);
+		pickDatum.addTarget("valueDeleted.cr", targetNode);
+		createDatum.addTarget("dataChanged.cr", targetNode);
+		createDatum.addTarget("valueAdded.cr", targetNode);
+		createDatum.addTarget("valueDeleted.cr", targetNode);
+		$(targetNode).on("remove", function() {
+			pickDatum.removeTarget("dataChanged.cr", targetNode);
+			pickDatum.removeTarget("valueAdded.cr", targetNode);
+			pickDatum.removeTarget("valueDeleted.cr", targetNode);
+			createDatum.removeTarget("dataChanged.cr", targetNode);
+			createDatum.removeTarget("valueAdded.cr", targetNode);
+			createDatum.removeTarget("valueDeleted.cr", targetNode);
+		});
+		$(targetNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", update);
+		$(targetNode).trigger("dataChanged.cr");
+	}
+	
+	function ExperienceDetailPanel(experience, previousPanel) {
+		
+		SitePanel.call(this, previousPanel, experience, "Offering", "view session");
 		this.experience = experience;
 		
 		var navContainer = this.appendNavContainer();
@@ -2091,61 +2120,80 @@ var ExperienceDetailPanel = (function () {
 		}
 		
 		var panel2Div = this.appendScrollArea();
-		panel2Div.appendHeader();
+		
+		var headerDiv = panel2Div.appendHeader();
+		this.setupPickOrCreateTarget(headerDiv.node(), experience, "Offering", "User Entered Offering",
+			function() {
+			var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+			headerDiv.text(offering);
+		});
+		
 		panel2Div.appendAlertContainer();
 		
 		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
 
-		if (organization && organization.length > 0)
-		{
-			var labelDiv = orgDiv.append("label")
-				.text(organization);
-		}
+		var organizationNameDiv = orgDiv.append("label");
+		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Organization", "User Entered Organization", 
+			function() {
+				var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+				d3.select(this).text(organization);
+			});
 
-		if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
-		{
-			orgDiv.append('div')
-				.classed("address-line", true)
-				.text(siteDescription);
-		}
+		var siteNameDiv = orgDiv.append('div')
+				.classed("address-line", true);
+		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Site", "User Entered Site", function() {
+			var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+			var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+			if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
+				siteNameDiv.text(siteDescription);
+			else
+				siteNameDiv.text(null);
+		});
 		
-		var site = experience.getValue("Site");
-		if (site && site.getValueID())
-		{
-			crp.pushCheckCells(site, function()
-				{
-					var address = site.getValue("Address");
-					crp.pushCheckCells(address, function()
+		var siteAddressDiv = orgDiv.append('div');
+		this.setupTarget(siteAddressDiv.node(), experience, "Site");
+		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function() {
+			var site = experience.getValue("Site");
+			if (site && site.getValueID())
+			{
+				crp.pushCheckCells(site, function()
 					{
-						var streetCell = address.getCell("Street");
-						var cityCell = address.getCell("City");
-						var stateCell = address.getCell("State");
-						var zipCell = address.getCell("Zip Code");
-						if (streetCell)
-							$(streetCell.data).each(function() {
-								orgDiv.append('div')
-									.classed("address-line", true)
-									.text(this.value);
-							});
-						line = "";
-						if (cityCell && cityCell.data.length)
-							line += cityCell.data[0].value;
-						if (stateCell && stateCell.data.length)
-							line += ", " + stateCell.data[0].getDescription();
-						if (zipCell && zipCell.data.length && zipCell.data[0].value)
-							line += "  " + zipCell.data[0].value;
-						if (line.trim())
-							orgDiv.append('div')
-								.classed('address-line', true)
-								.text(line.trim());
+						var address = site.getValue("Address");
+						crp.pushCheckCells(address, function()
+						{
+							var streetCell = address.getCell("Street");
+							var cityCell = address.getCell("City");
+							var stateCell = address.getCell("State");
+							var zipCell = address.getCell("Zip Code");
+							if (streetCell)
+								$(streetCell.data).each(function() {
+									siteAddressDiv.append('div')
+										.classed("address-line", true)
+										.text(this.value);
+								});
+							line = "";
+							if (cityCell && cityCell.data.length)
+								line += cityCell.data[0].value;
+							if (stateCell && stateCell.data.length)
+								line += ", " + stateCell.data[0].getDescription();
+							if (zipCell && zipCell.data.length && zipCell.data[0].value)
+								line += "  " + zipCell.data[0].value;
+							if (line.trim())
+								siteAddressDiv.append('div')
+									.classed('address-line', true)
+									.text(line.trim());
+						},
+						function() {
+						});
 					},
-					function() {
-					});
-				},
-				function() { }
-			);
-		}
+					function() { }
+				);
+			}
+			else
+				siteAddressDiv.select('div').remove();
+		});
+		$(siteAddressDiv.node()).trigger("dataChanged.cr");
 		
 		function appendStringDatum(cellName)
 		{
@@ -2230,33 +2278,413 @@ var ExperienceDetailPanel = (function () {
 	return ExperienceDetailPanel;
 })();
 
-var PickOrCreateSection = (function () {
-	PickOrCreateSection.prototype = new cr.EventHandler();
-	PickOrCreateSection.prototype.pickCell = null;
-	PickOrCreateSection.prototype.createCell = null;
-	PickOrCreateSection.prototype.sectionDiv = null;
+var PickOrCreatePanel = (function () {
+	PickOrCreatePanel.prototype = new SitePanel();
+	PickOrCreatePanel.prototype.navContainer = null;
+	PickOrCreatePanel.prototype.inputBox = null;
+	PickOrCreatePanel.prototype.done = null;
+	PickOrCreatePanel.prototype.pickDatum = null;
+	PickOrCreatePanel.prototype.createDatum = null;
+	PickOrCreatePanel.prototype.foundCompareText = null;
+	PickOrCreatePanel.prototype.foundObjects = null;
+	PickOrCreatePanel.prototype.constrainCompareText = null;
+	PickOrCreatePanel.prototype.buttons = null;
+	PickOrCreatePanel.prototype.searchTimeout = null;
 	
-	PickOrCreateSection.prototype.showPickOrCreatePanel = function()
+	PickOrCreatePanel.prototype.onClickCancel = function()
 	{
-		/* showEditObjectPanel(d, previousPanelNode, revealPanelLeft); */
+		if (prepareClick())
+		{
+			this.hide();
+		}
+		d3.event.preventDefault();
 	}
 	
-	PickOrCreateSection.prototype.showValueAdded = function()
+	PickOrCreatePanel.prototype.updateValues = function(newValue, newText)
 	{
-		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
+		if (newValue && newValue.getValueID() === this.pickDatum.getValueID())
+			this.hide();
+		else if (!newValue && newText && newText === this.createDatum.value)
+			this.hide();
+		else 
+		{
+			var initialData = [];
+			var sourceObjects = [];
+			if (newValue)
+			{
+				this.pickDatum.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+				this.createDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+			}
+			else
+			{
+				this.pickDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+				this.createDatum.appendUpdateCommands(0, newText, initialData, sourceObjects);
+			}
+			
+			if (initialData.length > 0)
+			{
+				var _this = this;
+				cr.updateValues(initialData, sourceObjects,
+					function () { _this.hide(); },
+					syncFailFunction);
+			}
+			else
+				this.hide();
+		}
 	}
 	
-	PickOrCreateSection.prototype.setupItemsDivHandlers = function(itemsDiv)
-	{
-		/* _setupItemsDivHandlers(itemsDiv, cell); */
+	PickOrCreatePanel.prototype.onClickButton = function(d, i) {
+		if (prepareClick())
+		{
+			this.updateValues(d, null);
+		}
+		d3.event.preventDefault();
 	}
 	
-	PickOrCreateSection.prototype.pushTextChanged = function(textDiv)
-	{
-		/* _pushTextChanged */
+	PickOrCreatePanel.prototype.onClickDone = function(d, i) {
+		d3.event.preventDefault();
+
+		if (prepareClick())
+		{
+			var newText = this.inputText();
+			var compareText = newText.toLocaleLowerCase()
+			if (this.foundObjects)
+			{
+				for (var i = 0; i < this.foundObjects.length; ++i)
+				{
+					var v = this.foundObjects[i];
+					if (v.getDescription().toLocaleLowerCase() === compareText)
+					{
+						this.updateValues(v, null);
+						return;
+					}
+				}
+			}
+
+			if (newText.length == 0)
+			{
+				this.updateValues(null, null);
+			}
+			else
+			{
+			var _this = this;
+				function done(newInstances)
+				{
+					if (newInstances.length == 0)
+						_this.updateValues(null, newText);
+					else
+						_this.updateValues(newInstances[0], null);
+				}
+			
+				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
+					limit: 50, done: done, fail: syncFailFunction});
+			}
+		}
 	}
 	
-	PickOrCreateSection.prototype.getDescription = function()
+	PickOrCreatePanel.prototype.getTitle = function()
+	{
+		return this.pickDatum.cell.field.name;
+	}
+	
+	PickOrCreatePanel.prototype.constrainFoundObjects = function(val)
+	{
+		if (val !== undefined)
+			this.constrainCompareText = val;
+		if (this.buttons != null)
+		{
+			if (this.constrainCompareText != this.foundCompareText)
+			{
+				var _this = this;
+				this.buttons.style("display", function(d) 
+					{ 
+						if (d.getDescription().toLocaleLowerCase().indexOf(_this.constrainCompareText) >= 0)
+							return null;
+						else
+							return "none";
+					});
+			}
+			else
+				this.buttons.style("display", null);
+		}
+	}
+	
+	PickOrCreatePanel.prototype.clearListPanel = function()
+	{
+		this.listPanel.selectAll("section").remove();
+		this.listPanel.selectAll("p").remove();
+	}
+	
+	PickOrCreatePanel.prototype.showObjects = function(foundObjects)
+	{
+		function sortByDescription(a, b)
+		{
+			return a.getDescription().localeCompare(b.getDescription());
+		}
+		foundObjects.sort(sortByDescription);
+		
+		this.clearListPanel();
+		var _this = this;
+		var sections = this.listPanel.appendSections(foundObjects);
+		this.buttons = appendViewButtons(sections)
+			.on("click", function(d, i) {
+				_this.onClickButton(d, i);
+			});
+		
+		this.constrainFoundObjects();	
+			
+		if (!this.pickDatum.isEmpty())
+		{
+			this.buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return d.getDescription() == _this.pickDatum.getDescription(); });
+		}
+	}
+	
+	PickOrCreatePanel.prototype.inputText = function()
+	{
+		return this.inputBox.value.trim()
+	}
+	
+	PickOrCreatePanel.prototype.inputCompareText = function()
+	{
+		return this.inputText().toLocaleLowerCase();
+	}
+	
+	PickOrCreatePanel.prototype.searchPath = function(val)
+	{
+		if (val.length == 0)
+			/* This case occurs when searching for sites within an organization. */
+			return this.pickDatum.cell.field.ofKindID;
+		else
+		{
+			var symbol = (val.length < 3) ? "^=" : "*=";
+			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
+		}
+	}
+	
+	PickOrCreatePanel.prototype.search = function(val)
+	{
+		this.foundCompareText = val;
+		this.constrainCompareText = val;
+		this.foundObjects = null;	/* Clear any old object sets. */
+			
+		var _this = this;	
+		function done(foundObjects)
+		{
+			if (_this.inputCompareText().indexOf(_this.foundCompareText) == 0)
+			{
+				_this.foundObjects = foundObjects;
+				_this.showObjects(foundObjects);
+			}
+		}
+		
+		var searchPath = this.searchPath(val);
+		if (searchPath && searchPath.length > 0)
+			cr.selectAll({path: searchPath, limit: 50, done: done, fail: asyncFailFunction});
+		else
+			done([]);
+	}
+	
+	PickOrCreatePanel.prototype.setupInputBox = function()
+	{
+		if (!this.createDatum.isEmpty())
+		{
+			this.inputBox.value = this.createDatum.getDescription();
+			$(this.inputBox).trigger("input")
+		}
+		else if (!this.pickDatum.isEmpty())
+		{
+			this.inputBox.value = this.pickDatum.getDescription();
+			$(this.inputBox).trigger("input");
+		}
+	}
+	
+	PickOrCreatePanel.prototype.startSearchTimeout = function(val)
+	{
+		this.clearListPanel();
+		this.listPanel.append('p')
+				.classed("help-block", true)
+				.text("Loading...");
+
+		var _this = this;
+		function endSearchTimeout() {
+			_this.searchTimeout = null;
+			_this.search(val);
+		}
+		this.searchTimeout = setTimeout(endSearchTimeout, 300);
+	}
+	
+	PickOrCreatePanel.prototype.textCleared = function()
+	{
+		this.listPanel.selectAll("section").remove();
+		this.listPanel.selectAll("p").remove();
+	}
+	
+	PickOrCreatePanel.prototype.textChanged = function()
+	{
+		if (this.searchTimeout != null)
+		{
+			clearTimeout(this.searchTimeout);
+		}
+		
+		var val = this.inputCompareText();
+		if (val.length == 0)
+		{
+			this.textCleared();
+		}
+		else if (this.foundCompareText != null && 
+				 (this.foundCompareText.length == 0 || val.indexOf(this.foundCompareText) == 0))
+		{
+			if (this.foundObjects && this.foundObjects.length < 50)
+				this.constrainFoundObjects(val);
+			else
+				this.startSearchTimeout(val);
+		}
+		else
+			this.startSearchTimeout(val);
+	}
+	
+	function PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		if (previousPanelNode === undefined)
+		{
+			SitePanel.call(this);
+		}
+		else
+		{
+			SitePanel.call(this, previousPanelNode, pickDatum, pickDatum.cell.field.name, "list");
+			this.pickDatum = pickDatum;
+			this.createDatum = createDatum;
+			this.done = done;
+			this.navContainer = this.appendNavContainer();
+
+			var _this = this;
+			var backButton = this.navContainer.appendLeftButton()
+				.on("click", function()
+				{
+					_this.onClickCancel();
+				});
+			backButton.append("span").text("Cancel");
+			
+			var doneButton = this.navContainer.appendRightButton()
+				.on("click", function()
+				{
+					_this.onClickDone();
+				});
+			doneButton.append("span").text("Done");
+
+			var title = this.getTitle();
+			if (title)
+				this.navContainer.appendTitle(title);
+
+			var searchBar = this.panelDiv.append("div").classed("searchbar always-visible", true);
+	
+			var searchInputContainer = searchBar.append("div")
+				.classed("search-input-container", true);
+		
+			var inputBox = searchInputContainer
+				.append("input")
+				.classed("search-input", true)
+				.attr("placeholder", title);
+			
+			this.inputBox = inputBox.node();
+			$(this.inputBox).on("input", function() { _this.textChanged() });
+
+			this.listPanel = this.appendScrollArea();
+			this.listPanel.appendAlertContainer();
+			this.setupInputBox();
+
+			showPanelLeft(this.node());
+		}
+	}
+	return PickOrCreatePanel;
+})();
+
+var PickOrCreateSitePanel = (function () {
+	PickOrCreateSitePanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateSitePanel.prototype.searchPath = function(val)
+	{
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID())
+		{
+			return "#"+organization.getValueID()+">Sites>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+		}
+		else
+			return "";
+	}
+	
+	PickOrCreateSitePanel.prototype.textCleared = function()
+	{
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID())
+		{
+			this.startSearchTimeout("");
+		}
+	}
+	
+	function PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
+		
+		if (organization.getValueID() && this.createDatum.value == null)
+		{
+			this.search("");
+		}
+	}
+	
+	return PickOrCreateSitePanel;
+})();
+
+var PickOrCreateOfferingPanel = (function () {
+	PickOrCreateOfferingPanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateOfferingPanel.prototype.searchPath = function(val)
+	{
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID())
+		{
+			return "#"+site.getValueID()+">Offerings>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+		}
+		else
+			return "";
+	}
+	
+	PickOrCreateOfferingPanel.prototype.textCleared = function()
+	{
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID())
+		{
+			this.startSearchTimeout("");
+		}
+	}
+	
+	function PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
+		
+		if (site.getValueID() && this.createDatum.value == null)
+		{
+			this.search("");
+		}
+	}
+	
+	return PickOrCreateOfferingPanel;
+})();
+
+var PickOrCreateCell = (function () {
+	PickOrCreateCell.prototype = new cr.Cell();
+	PickOrCreateCell.prototype.pickCell = null;
+	PickOrCreateCell.prototype.createCell = null;
+	PickOrCreateCell.prototype.editPanel = null;
+	
+	PickOrCreateCell.prototype.getDescription = function()
 	{
 		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
 			return this.pickCell.data[0].getDescription();
@@ -2266,27 +2694,99 @@ var PickOrCreateSection = (function () {
 			return "";
 	}
 	
-	function PickOrCreateSection(pickCell, createCell, panel2Div) {
-		cr.EventHandler.call(this);
+	PickOrCreateCell.prototype.isEmpty = function()
+	{
+		return this.pickCell.isEmpty() && this.createCell.isEmpty();
+	}
+	
+	PickOrCreateCell.prototype.pickedObject = function(d)
+	{
+		if (pickedObject.getValueID() == this.pickCell.data[0].getValueID())
+			this.editPanel.hide();
+		else
+		{
+			var initialData = [];
+			var sourceObjects = [];
+			this.editPanel.appendUpdateCommands(initialData, sourceObjects);
+			if (initialData.length > 0)
+			{
+				cr.updateValues(initialData, sourceObjects, 
+					function() {
+						this.editPanel.hide();
+					}, 
+					syncFailFunction);
+			}
+			else
+				this.editPanel.hide();
+		}
+	}
 
-		this.pickCell = pickCell;
-		this.createCell = createCell;
+	PickOrCreateCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
 		
-		this.sectionDiv = panel2Div.appendSection(this)
-			.classed("cell edit unique", true);
-		var labelDiv = this.sectionDiv.append("label")
-			.text(pickCell.field.name);
-		var itemsDiv = this.sectionDiv.append("ol")
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	PickOrCreateCell.prototype.showValueAdded = function()
+	{
+		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
+	}
+	
+	PickOrCreateCell.prototype.setupItemsDivHandlers = function(itemsDiv)
+	{
+		/* _setupItemsDivHandlers(itemsDiv, cell); */
+	}
+	
+	PickOrCreateCell.prototype.pushTextChanged = function(textNode)
+	{
+		var pickValue = this.pickCell.data[0];
+		var createValue = this.createCell.data[0];
+		pickValue.addTarget("valueAdded.cr", textNode);
+		pickValue.addTarget("valueDeleted.cr", textNode);
+		pickValue.addTarget("dataChanged.cr", textNode);
+		createValue.addTarget("valueAdded.cr", textNode);
+		createValue.addTarget("valueDeleted.cr", textNode);
+		createValue.addTarget("dataChanged.cr", textNode);
+		
+		var _this = this;
+		$(textNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function(e) {
+				d3.select(textNode).text(_this.getDescription());
+			});
+
+		$(textNode).on("remove", function() {
+			pickValue.removeTarget("valueAdded.cr", textNode);
+			pickValue.removeTarget("valueDeleted.cr", textNode);
+			pickValue.removeTarget("dataChanged.cr", textNode);
+			createValue.removeTarget("valueAdded.cr", textNode);
+			createValue.removeTarget("valueDeleted.cr", textNode);
+			createValue.removeTarget("dataChanged.cr", textNode);
+		});
+	}
+	
+	PickOrCreateCell.prototype.showEdit = function(obj, containerPanel)
+	{
+		var sectionDiv = d3.select(obj);
+
+		var labelDiv = sectionDiv.append("label")
+			.text(this.field.name);
+		var itemsDiv = sectionDiv.append("ol")
 			.classed("items-div", true)
 			.classed("right-label expanding-div", true);
 
 		var _this = this;
 
-		this.sectionDiv.classed("btn row-button", true)
+		sectionDiv.classed("btn row-button", true)
 			.on("click", function(cell) {
 				if (prepareClick())
 				{
-					_this.showPickOrCreatePanel();
+					var sitePanelNode = $(this).parents(".site-panel")[0];
+					_this.showPickOrCreatePanel(sitePanelNode);
 				}
 			});
 
@@ -2308,8 +2808,95 @@ var PickOrCreateSection = (function () {
 					_this.pushTextChanged(this);
 				});
 	}
+
+	function PickOrCreateCell(pickCell, createCell)
+	{
+		if (pickCell === undefined)
+		{
+			cr.Cell.call(this);
+		}
+		else
+			{
+			var field = {
+				name: pickCell.field.name,
+				capacity: "_unique value",
+			}
+			cr.Cell.call(this, field);
+			this.pickCell = pickCell;
+			this.createCell = createCell;
+		}
+	}
+
+	return PickOrCreateCell;
+})();
+
+var PickOrCreateOrganizationCell = (function () {
+	PickOrCreateOrganizationCell.prototype = new PickOrCreateCell();
+	PickOrCreateOrganizationCell.prototype.experience = null;
 	
-	return PickOrCreateSection;
+	function PickOrCreateOrganizationCell(experience)
+	{
+		PickOrCreateCell.call(this, 
+							  experience.getCell("Organization"),
+							  experience.getCell("User Entered Organization"));
+		this.experience = experience;
+	}
+	
+	return PickOrCreateOrganizationCell;
+})();
+
+var PickOrCreateSiteCell = (function () {
+	PickOrCreateSiteCell.prototype = new PickOrCreateCell();
+	PickOrCreateSiteCell.prototype.experience = null;
+	
+	PickOrCreateSiteCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
+		
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	function PickOrCreateSiteCell(experience)
+	{
+		PickOrCreateCell.call(this, 
+							  experience.getCell("Site"),
+							  experience.getCell("User Entered Site"));
+		this.experience = experience;
+	}
+	
+	return PickOrCreateSiteCell;
+})();
+
+var PickOrCreateOfferingCell = (function () {
+	PickOrCreateOfferingCell.prototype = new PickOrCreateCell();
+	PickOrCreateOfferingCell.prototype.experience = null;
+	
+	PickOrCreateOfferingCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	{
+		var pickDatum = this.pickCell.data[0];
+		var createDatum = this.createCell.data[0];
+		
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	function PickOrCreateOfferingCell(experience)
+	{
+		PickOrCreateCell.call(this, 
+							  experience.getCell("Offering"),
+							  experience.getCell("User Entered Offering"));
+		this.experience = experience;
+	}
+	
+	return PickOrCreateOfferingCell;
 })();
 
 var EditExperiencePanel = (function () {
@@ -2329,16 +2916,13 @@ var EditExperiencePanel = (function () {
 
 		navContainer.appendTitle("Edit Experience");
 		
-		new PickOrCreateSection(experience.getCell("Organization"), 
-							experience.getCell("User Entered Organization"),
-							panel2Div);
-		new PickOrCreateSection(experience.getCell("Site"), 
-							experience.getCell("User Entered Site"),
-							panel2Div);
-		new PickOrCreateSection(experience.getCell("Offering"), 
-							experience.getCell("User Entered Offering"),
-							panel2Div);
-
+		cells = [new PickOrCreateOrganizationCell(experience),
+				 new PickOrCreateSiteCell(experience),
+				 new PickOrCreateOfferingCell(experience),
+				];
+				
+		panel2Div.showEditCells(cells);
+									  
 		revealPanelUp(this.node());
 	}
 	

@@ -138,7 +138,7 @@ function showSharing(containerDiv) {
 	
 	This function should be called within a prepareClick block. 
  */
-function pickAccessor(header, previousPanelNode, successFunction)
+function pickAccessor(header, previousPanelNode, done)
 {
 	var sitePanel = new SitePanel(previousPanelNode, null, header, "list");
 
@@ -150,7 +150,6 @@ function pickAccessor(header, previousPanelNode, successFunction)
 
 	var centerButton = navContainer.appendTitle(header);
 
-	var searchText = "";
 	function show_users()
 	{
 		var val = this.value.toLocaleLowerCase().trim();
@@ -159,7 +158,6 @@ function pickAccessor(header, previousPanelNode, successFunction)
 		if (val.length == 0)
 		{
 			panel2Div.selectAll("section").remove();
-			searchText = val;
 		}
 		else
 		{
@@ -196,7 +194,7 @@ function pickAccessor(header, previousPanelNode, successFunction)
 								if (prepareClick())
 								{
 									var cellName =  i < firstGroupIndex ? "_user" : "_group";
-									successFunction(user, cellName, sitePanel.node());
+									done(user, cellName, sitePanel.node());
 								}
 								d3.event.preventDefault();
 							});
@@ -210,8 +208,6 @@ function pickAccessor(header, previousPanelNode, successFunction)
 								d3.event.preventDefault();
 							});
 						drawInfoButtons(infoButtons);
-
-						searchText = startVal;
 					}
 				}
 			

@@ -197,7 +197,7 @@ class api:
 
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
-                        if "value" in c:
+                        if "value" in c and c["value"] != None:
                             container.checkWriteValueAccess(user, oldValue.field, c["value"])
                             item = oldValue.updateValue(c["value"], transactionState)
                         else:

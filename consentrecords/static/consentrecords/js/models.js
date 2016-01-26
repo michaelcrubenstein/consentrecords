@@ -318,23 +318,6 @@ cr.Cell = (function()
 			newValue.addTarget("dataChanged.cr", this);
 		};
 		
-		Cell.prototype.addValue = function(newData)
-		{
-			if (this.field.dataType != "_object")
-				throw "addValue only callable for object dataType cells";
-		
-			for (var i = 0; i < this.data.length; ++i)
-			{
-				var oldData = this.data[i];
-				if (!oldData.id && oldData.isEmpty()) {
-					oldData.completeUpdate(newData);
-					return;
-				}
-			}
-			this.pushValue(newData);
-			this.triggerEvent("valueAdded.cr", [newData]);
-		};
-
 		Cell.prototype.addNewValue = function()
 		{
 			var newData = this.newValue();
@@ -495,12 +478,48 @@ cr.TranslationCell = (function() {
 	return TranslationCell;
 })();
 	
+cr.NumberCell = (function() {
+	NumberCell.prototype = new cr.StringCell();
+	
+	function NumberCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return NumberCell;
+})();
+	
+cr.EmailCell = (function() {
+	EmailCell.prototype = new cr.StringCell();
+	
+	function EmailCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return EmailCell;
+})();
+	
+cr.UrlCell = (function() {
+	UrlCell.prototype = new cr.StringCell();
+	
+	function UrlCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return UrlCell;
+})();
+	
+cr.TelephoneCell = (function() {
+	TelephoneCell.prototype = new cr.StringCell();
+	
+	function TelephoneCell(field) {
+		cr.StringCell.call(this, field);
+	}
+	
+	return TelephoneCell;
+})();
+	
 cr.DatestampCell = (function() {
 	DatestampCell.prototype = new cr.StringCell();
-	
-	DatestampCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
 	
 	function DatestampCell(field) {
 		cr.StringCell.call(this, field);
@@ -512,10 +531,6 @@ cr.DatestampCell = (function() {
 cr.DatestampDayOptionalCell = (function() {
 	DatestampDayOptionalCell.prototype = new cr.StringCell();
 	
-	DatestampDayOptionalCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
-	
 	function DatestampDayOptionalCell(field) {
 		cr.StringCell.call(this, field);
 	}
@@ -525,10 +540,6 @@ cr.DatestampDayOptionalCell = (function() {
 	
 cr.TimeCell = (function() {
 	TimeCell.prototype = new cr.StringCell();
-	
-	TimeCell.prototype.newValue = function() {
-		return new cr.StringValue();
-	}
 	
 	function TimeCell(field) {
 		cr.StringCell.call(this, field);
@@ -562,6 +573,21 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
+	ObjectCell.prototype.addValue = function(newData)
+	{
+		/* Look for an existing item that is empty. If one is found, then change its data. */
+		for (var i = 0; i < this.data.length; ++i)
+		{
+			var oldData = this.data[i];
+			if (!oldData.id && oldData.isEmpty()) {
+				oldData.completeUpdate(newData);
+				return;
+			}
+		}
+		this.pushValue(newData);
+		this.triggerEvent("valueAdded.cr", [newData]);
+	}
+
 	ObjectCell.prototype.appendData = function(initialData)
 	{
 		var newData = [];
@@ -604,11 +630,6 @@ cr.CellValue = (function() {
 	
 	CellValue.prototype.getDescription = function() { return this.value; };
 	
-	CellValue.prototype.completeUpdate = function(newData)
-	{
-		this.id = newData.id;
-		this.completeUpdateValue(newData);
-	}
 	CellValue.prototype.isEmpty = function()
 	{
 		return this.value === null || this.value === undefined || this.value === "";
@@ -629,6 +650,42 @@ cr.CellValue = (function() {
 cr.StringValue = (function() {
 	StringValue.prototype = new cr.CellValue();
 
+	StringValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		if (newValue === "")
+			newValue = null;
+			
+		/* If both are null, then they are equal. */
+		if (!newValue && !this.value)
+			newValue = this.value;
+		
+		var command;
+		if (newValue != this.value)
+		{
+			if (this.id)
+			{
+				if (newValue)
+					command = {id: this.id, value: newValue}
+				else
+					command = {id: this.id}	/* No value, so delete this item. */
+			}
+			else
+			{
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValue,
+						   index: i};
+			}
+			initialData.push(command);
+			sourceObjects.push(this);
+		}
+	}
+	
+	StringValue.prototype.updateFromChangeData = function(changeData)
+	{
+		this.value = changeData.value;
+	}
+
 	function StringValue() {
 		cr.CellValue.call(this);
 	
@@ -648,7 +705,39 @@ cr.TranslationValue = (function() {
 		return this.value.text === null && this.value.text === undefined && this.value.text === "";
 	}
 	
-	function clearValue() { this.value = null; this.languageCode = null; }
+	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
+
+	TranslationValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		if (newValue.text === "")
+			newValue.text = null;
+			
+		/* If both are null, then they are equal. */
+		if (!newValue.text && !this.value.text)
+			newValue.text = this.value.text;
+		
+		if (newValue.text !== this.value.text || 
+			newValue.languageCode !== this.value.languageCode)
+		{
+			var command;
+			if (this.id)
+			{
+				if (newValue.text)
+					command = {id: this.id, value: newValue};
+				else
+					command = {id: this.id}; /* No value, so delete the command. */
+			}
+			else
+			{
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValue,
+						   index: i};
+			}
+			initialData.push(command);
+			sourceObjects.push(this);
+		}
+	}
 
 	function TranslationValue() {
 		cr.StringValue.call(this);
@@ -664,13 +753,54 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype.getDescription = function() { return this.value.description; };
 	ObjectValue.prototype.getValueID = function() { return this.value.id; };
-	ObjectValue.prototype.completeUpdateValue = function(newData)
+
+	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+	{
+		var newValueID = (newValue ? newValue.getValueID() : null);
+		var newDescription = (newValue ? newValue.getDescription() : null);
+
+		/* If both are null, then they are equal. */
+		if (!newValueID && !this.getValueID())
+			return;
+		
+		var command;
+		if (!newValueID)
+		{
+			if (!this.getValueID())
+				return;
+			else
+				command = {id: this.id};
+		}
+		else {
+			if (this.getValueID() == newValueID)
+				return;
+			if (this.id)
+				command = {id: this.id, value: newValueID, description: newDescription};
+			else
+				command = {containerUUID: this.cell.parent.getValueID(), 
+						   fieldID: this.cell.field.nameID, 
+						   value: newValueID,
+						   description: newDescription,
+						   index: i};
+		}
+		initialData.push(command);
+		sourceObjects.push(this);
+	}
+
+	ObjectValue.prototype.updateFromChangeData = function(changeData)
 	{
 		/* Replace the value completely so that its cells are eliminated and will be
 			re-accessed from the server. This handles the case where a value has been added. */
-		this.value = {id: newData.getValueID(), description: newData.getDescription()};
-		this.triggerEvent("dataChanged.cr", this);
+		this.value = {id: changeData.value, description: changeData.description};
 	}
+	
+	ObjectValue.prototype.completeUpdate = function(newData)
+	{
+		this.id = newData.id;
+		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
+		this.triggerEvent("dataChanged.cr", newData);
+	}
+
 	ObjectValue.prototype.isEmpty = function()
 	{
 		return !this.value.id && !this.value.cells;
@@ -781,22 +911,41 @@ cr.ObjectValue = (function() {
 		}
 	}
 
+	ObjectValue.prototype.saveNew = function(initialData, successFunction, failFunction)
+	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+
+		var containerCell = this.cell;
+		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
+			
+		var _this = this;
+		cr.createInstance(containerCell.field, containerUUID, initialData, 
+			function(newData)
+			{
+				_this.completeUpdate(newData);
+				_this.isDataLoaded = true;
+				successFunction(newData);
+			}, 
+			failFunction);
+	}
+	
 	ObjectValue.prototype._setCells = function(oldCells)
 	{
 		if (this.value.cells)
 		{
-			for (var j = 0; j < this.value.cells.length; ++j)
-			{
-				this.value.cells[j].clearEvents();
-			}
+			this.value.cells.forEach(
+				function(cell) { cell.clearEvents(); }
+			);
 		}
 		
 		this.value.cells = oldCells;
-		for (var j = 0; j < oldCells.length; ++j)
-		{
-			oldCells[j].clearEvents();
-			oldCells[j].setParent(this);
-		}
+		oldCells.forEach(function(cell) {
+			cell.clearEvents();
+			cell.setParent(this);
+		});
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
@@ -888,21 +1037,24 @@ cr.ObjectValue = (function() {
 	
 	return ObjectValue;
 })();
+
+cr.cellFactory = {
+	_string: cr.StringCell,
+	_number: cr.NumberCell,
+	_email: cr.EmailCell,
+	_url: cr.UrlCell,
+	_telephone: cr.TelephoneCell,
+	_translation: cr.TranslationCell, 
+	_datestamp: cr.DatestampCell, 
+	"_datestamp (day optional)": cr.DatestampDayOptionalCell,
+	_time: cr.TimeCell,
+	_object: cr.ObjectCell
+}
 	
 cr.createCell = function(field) {
-		if (field.dataType === "_translation")
-			return new cr.TranslationCell(field);
-		else if (field.dataType === "_object")
-			return new cr.ObjectCell(field);
-		else if (field.dataType === "_datestamp")
-			return new cr.DatestampCell(field);
-		else if (field.dataType === "_datestamp (day optional)")
-			return new cr.DatestampDayOptionalCell(field);
-		else if (field.dataType === "_time")
-			return new cr.TimeCell(field);
-		else
-			return new cr.StringCell(field); 
-	};
+	var f = cr.cellFactory[field.dataType];
+	return new f(field)
+};
 	
 cr.urls = {
 		selectAll : "/api/selectall/",
@@ -1021,14 +1173,16 @@ cr.getValues = function (args)
 		);
 	};
 	
-cr.updateObjectValue = function(oldValue, d, successFunction, failFunction)
+cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		/* oldValue must be an object value */
-		var initialData = [{id: oldValue.id, value: d.getValueID()}];
+		var initialData = [];
+		var sourceObjects = [];
+		oldValue.appendUpdateCommands(i, d, initialData, sourceObjects);
 		$.post(cr.urls.updateValues, 
 				{ commands: JSON.stringify(initialData),
 				  timezoneoffset: new Date().getTimezoneOffset()
@@ -1036,8 +1190,9 @@ cr.updateObjectValue = function(oldValue, d, successFunction, failFunction)
 			  .done(function(json, textStatus, jqXHR)
 				{
 					if (json.success) {
-						d.id = json.ids[0]
-						oldValue.completeUpdate(d);
+						oldValue.id = json.valueIDs[0];
+						oldValue.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldValue.triggerEvent("dataChanged.cr", d);
 						successFunction();
 					}
 					else {
@@ -1187,32 +1342,6 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 				);
 	},
 	
-cr.append = function(oldValue, containerCell, initialData, successFunction, failFunction)
-	{
-		if (!oldValue)
-			throw "oldValue is not specified";
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		/* oldValue must be an ObjectValue */
-		var containerUUID;
-		if (!("parent" in containerCell))
-			containerUUID = null;
-		else if (containerCell.parent)
-			containerUUID = containerCell.parent.getValueID();
-		else
-			containerUUID = null;
-		cr.createInstance(containerCell.field, containerUUID, initialData, 
-			function(newData)
-			{
-				oldValue.completeUpdate(newData);
-				oldValue.isDataLoaded = true;
-				if (successFunction) successFunction(newData);
-			}, 
-			failFunction);
-	},
-	
 cr.updateValues = function(initialData, sourceObjects, successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -1234,6 +1363,8 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 						if (newValueID)
 						{
 							d.id = newValueID;
+							
+							d.updateFromChangeData(initialData[i]);
 							
 							/* Object Values have an instance ID as well. */
 							if (newInstanceID)
