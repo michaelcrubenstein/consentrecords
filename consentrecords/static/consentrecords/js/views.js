@@ -1049,7 +1049,13 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	}
 
 	_setupItemsDivHandlers(itemsDiv, this);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, showEditObjectPanel));
+	
+	if (_isPickCell(this))
+		viewFunction = showPickObjectPanel;
+	else
+		viewFunction = showEditObjectPanel;
+		
+	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, viewFunction));
 
 	var divs = appendItems(itemsDiv, this.data);
 	
@@ -1075,10 +1081,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	{
 		function done(newValue)
 		{
-			if (_isPickCell(newValue.cell))
-				showPickObjectPanel(newValue, previousPanelNode)
-			else
-				showEditObjectPanel(newValue, previousPanelNode, revealPanelUp);
+			viewFunction(newValue, previousPanelNode, revealPanelUp);
 		}
 		
 		crv.appendAddButton(sectionObj, done);
