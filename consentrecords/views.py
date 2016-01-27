@@ -238,14 +238,18 @@ class api:
 
     def addValue(user, data):
         try:
-            # An optional container for the new object.
-            containerUUID = data.get('containerUUID', None)
+            # The path to the container object.
+            containerPath = data.get('path', None)
         
-            # The element name for the type of element that the new value is to the container object
-            elementUUID = data.get('elementUUID', None)
+            # The field name for the new value within the container object
+            fieldName = data.get('fieldName', None)
         
-            if elementUUID is None:
-                return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
+            if fieldName is None:
+                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
+            elif Terms.isUUID(fieldName):
+                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
+            else:
+                field = Terms.getNamedInstance(fieldName)
             
             # A value added to the container.
             valueUUID = data.get('valueUUID', None)
@@ -263,8 +267,16 @@ class api:
         
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
-                field = Instance.objects.get(pk=elementUUID)
-                container = Instance.objects.get(pk=containerUUID)
+                
+                if containerPath:
+                    userInfo = UserInfo(user)
+                    containers = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(containers) > 0:
+                        container = containers[0]
+                    else:
+                        raise RuntimeError("Specified path is not recognized")
+                else:
+                    raise RuntimeError("the container path was not specified")
                 container.checkWriteValueAccess(user, field, valueUUID)
     
                 if indexString:
@@ -319,11 +331,14 @@ class api:
             language=None
         
             # The element name for the type of element that the new value is to the container object
-            elementUUID = data.get('elementUUID', None)
+            fieldName = data.get('fieldName', None)
         
-            if elementUUID is None:
+            if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
-            field = Instance.objects.get(pk=elementUUID)
+            elif Terms.isUUID(fieldName):
+                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
+            else:
+                field = Terms.getNamedInstance(fieldName)
             
             # A value with the container.
             value = data.get('value', None)
@@ -488,7 +503,7 @@ class api:
             valueID = data.get('valueID', None)
         
             if valueID:
-                v = Value.objects.get(pk=valueID)
+                v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
 
                 # The client time zone offset, stored with the transaction.
                 timezoneoffset = data['timezoneoffset']

@@ -640,7 +640,7 @@ function appendConfirmDeleteControls(divs)
 		.on('click', function(d)
 		{
 			if (prepareClick())
-				cr.deleteValue(d, unblockClick, syncFailFunction);
+				d.deleteValue(unblockClick, syncFailFunction);
 		});
 }
 
@@ -2113,7 +2113,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					}
 					else
 					{
-						cr.deleteValue(oldData, successFunction, syncFailFunction);
+						oldData.deleteValue(successFunction, syncFailFunction);
 					}
 				}
 				else if (d.getValueID())

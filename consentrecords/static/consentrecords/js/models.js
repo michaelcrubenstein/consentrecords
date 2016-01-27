@@ -357,8 +357,8 @@ cr.Cell = (function()
 					throw("cell parent does not have an ID")
 				var _this = this;
 				$.post(cr.urls.addValue, 
-						{ containerUUID: this.parent.getValueID(),
-						  elementUUID: this.field.nameID,
+						{ path: '#' + this.parent.getValueID(),
+						  fieldName: this.field.nameID,
 						  valueUUID: initialData.getValueID(),
 						  timezoneoffset: new Date().getTimezoneOffset()
 						})
@@ -642,6 +642,83 @@ cr.CellValue = (function() {
 	
 	CellValue.prototype.clearValue = function() { this.value = null; };
 	
+	CellValue.prototype.deleteValue = function(successFunction, failFunction)
+	{
+		if (!failFunction)
+			throw ("failFunction is not specified");
+		if (!successFunction)
+			throw ("successFunction is not specified");
+			
+		var _this = this;
+		if (this.id == null)	/* It was never saved */
+		{
+			if (this.cell != null && 
+				this.cell.parent == null &&
+				this.getValueID() != null)
+			{
+				/* In this case, this is a root object, so we just need to 
+					delete the instance. */
+				var jsonArray = { path: "#" + this.getValueID(),
+							timezoneoffset: new Date().getTimezoneOffset()
+						};
+				$.post(cr.urls.deleteInstances, jsonArray)
+					.done(function(json, textStatus, jqXHR)
+					{
+						if (json.success)
+						{
+							if (successFunction) 
+							{
+								if (_this.cell)
+									_this.cell.deleteValue(_this);
+								successFunction(_this);
+							}
+						}
+						else
+						{
+							failFunction(json.error);
+						}
+					})
+					.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					});
+			}
+			else
+			{
+				if (_this.cell)
+					_this.cell.deleteValue(_this);
+				successFunction(_this);
+			}
+		}
+		else
+		{
+			var jsonArray = { valueID: this.id,
+						timezoneoffset: new Date().getTimezoneOffset()
+					};
+			$.post(cr.urls.deleteValue, jsonArray)
+				.done(function(json, textStatus, jqXHR)
+				{
+					if (json.success)
+					{
+						if (successFunction) 
+						{
+							if (_this.cell)
+								_this.cell.deleteValue(_this);
+							successFunction(_this);
+						}
+					}
+					else
+					{
+						failFunction(json.error);
+					}
+				})
+				.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				});
+		}
+	};
+			
 	function CellValue() {
 		cr.EventHandler.call(this);
 		this.id = null; 
@@ -1129,7 +1206,8 @@ cr["selectAll"] = function(args)
 		);
 	};
 	
-	/* args is an object with up to four parameters: path, limit, done, fail */
+	/* args is an object with up to four parameters: path, limit, done, fail.
+		The done method takes a single argument, which is an array of value objects. */
 cr.getValues = function (args)
 	{
 		if (!args.fail)
@@ -1143,7 +1221,7 @@ cr.getValues = function (args)
 			throw "path was not specified to getValues"
 			
 		if (args.field)
-			argList.elementUUID = args.field.nameID;
+			argList.fieldName = args.field;
 		else
 			throw "field was not specified to getValues"
 			
@@ -1160,10 +1238,9 @@ cr.getValues = function (args)
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = [];
-					json.objects.forEach(function(v)
+					var newObjects = json.objects.map(function(v)
 					{
-						newObjects.push(cr.ObjectCell.prototype.copyValue(v));
+						return cr.ObjectCell.prototype.copyValue(v);
 					});
 					
 					if (args.done)
@@ -1178,6 +1255,40 @@ cr.getValues = function (args)
 		);
 	};
 	
+/* The success function takes a single argument: the id of the new value being created. */
+cr.addObjectValue = function(containerPath, fieldName, initialData, done, fail)
+	{
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
+		if (!fieldName || fieldName.length == 0)
+			throw("fieldName is not specified")
+		if (!containerPath || containerPath.length == 0)
+			throw("containerPath is not specified")
+		var _this = this;
+		$.post(cr.urls.addValue, 
+				{ path: containerPath,
+				  fieldName: fieldName,
+				  valueUUID: initialData.getValueID(),
+				  timezoneoffset: new Date().getTimezoneOffset()
+				})
+			  .done(function(json, textStatus, jqXHR)
+				{
+					if (json.success) {
+						done(json.id);
+					}
+					else {
+						fail(json.error);
+					}
+				})
+			  .fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+					}
+				);
+	};
+			
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -1211,80 +1322,28 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 				);
 	};
 	
-cr.deleteValue = function(oldValue, successFunction, failFunction)
+cr.deleteValue = function(valueID, successFunction, failFunction)
 	{
 		if (!failFunction)
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
 			
-		if (oldValue.id == null)	/* It was never saved */
-		{
-			if (oldValue.cell != null && 
-				oldValue.cell.parent == null &&
-				oldValue.getValueID() != null)
+		var jsonArray = { valueID: valueID,
+					timezoneoffset: new Date().getTimezoneOffset()
+				};
+		$.post(cr.urls.deleteValue, jsonArray)
+			.done(function(json, textStatus, jqXHR)
 			{
-				/* In this case, oldValue is a root object, so we just need to 
-					delete the instance. */
-				var jsonArray = { path: "#" + oldValue.getValueID(),
-							timezoneoffset: new Date().getTimezoneOffset()
-						};
-				$.post(cr.urls.deleteInstances, jsonArray)
-					.done(function(json, textStatus, jqXHR)
-					{
-						if (json.success)
-						{
-							if (successFunction) 
-							{
-								if (oldValue.cell)
-									oldValue.cell.deleteValue(oldValue);
-								successFunction(oldValue);
-							}
-						}
-						else
-						{
-							failFunction(json.error);
-						}
-					})
-					.fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					});
-			}
-			else
+				if (json.success)
+					successFunction(valueID);
+				else
+					failFunction(json.error);
+			})
+			.fail(function(jqXHR, textStatus, errorThrown)
 			{
-				if (oldValue.cell)
-					oldValue.cell.deleteValue(oldValue);
-				successFunction(oldValue);
-			}
-		}
-		else
-		{
-			var jsonArray = { valueID: oldValue.id,
-						timezoneoffset: new Date().getTimezoneOffset()
-					};
-			$.post(cr.urls.deleteValue, jsonArray)
-				.done(function(json, textStatus, jqXHR)
-				{
-					if (json.success)
-					{
-						if (successFunction) 
-						{
-							if (oldValue.cell)
-								oldValue.cell.deleteValue(oldValue);
-							successFunction(oldValue);
-						}
-					}
-					else
-					{
-						failFunction(json.error);
-					}
-				})
-				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
-		}
+				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+			});
 	};
 			
 cr.createInstance = function(field, containerUUID, initialData, successFunction, failFunction)

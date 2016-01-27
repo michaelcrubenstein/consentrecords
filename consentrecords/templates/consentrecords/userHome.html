@@ -1364,7 +1364,7 @@
 		}
 		
 		/* Create a panel to show the details of the session and allow the user to sign up. */
-		function showSessionDetails(session, service, container)
+		function showSessionDetails(session, service, previousPanelNode)
 		{
 			var organization = session.getValue("Organization");
 			var offering = session.getValue("Offering");
@@ -1372,7 +1372,7 @@
 			
 			session.calculateDescription();
 			
-			var sitePanel = new SitePanel(container, session, offering.getDescription(), "session");
+			var sitePanel = new SitePanel(previousPanelNode, session, offering.getDescription(), "session");
 			var panel = sitePanel.node();
 			
 			var navContainer = sitePanel.appendNavContainer();
@@ -1546,169 +1546,144 @@
 					}
 				});
 
-			var inquiriesCell = session.getCell("Inquiries")
-			var newInstances = inquiriesCell.data;
-			if (newInstances.length == 0 || !newInstances[0].getValueID())
-				asyncFailFunction("Access Failure for Inquiries");
-			else
+			var inquiryValueID = null;
+			
+			var checkInquiryFunction = function(newValueID)
 			{
-				var inquiriesInstance = newInstances[0];
-				var inquiryInstance = null;
-				var inquiryCell = null;
-				
-				var addInquiry = function()
+				inquiryValueID = newValueID;
+				if (newValueID)
 				{
-					groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
-					cr.selectAll({path: groupPath,
-						done: function(groupPaths)
-							{
-								inquiryCell.addObjectValue(userInstance, 
-									   function(newInquiry) { 
-									   		function done()
-									   		{
-												bootstrap_alert.success("You have signed up for " + 
-															  offering.getDescription() + "/" + session.getDescription() + "." +
-															  " Look out for a notice when you are enrolled.",
-															  ".alert-container");
-												checkInquiryFunction([newInquiry]); 
-											};
-											if (groupPaths.length == 0)
-												done();
-											else {
-												addMissingAccess(userInstance, "_read", groupPaths[0], "_group", done, asyncFailFunction);
-											}
-								},
-								asyncFailFunction);
-							},
-						fail: asyncFailFunction 
-						});
+					buttonDiv.text("Back Out");
+					buttonDiv.on("click", deleteInquiryFunction);
 				}
-				
-				var tryAddInquiry = function()
+				else
 				{
-					if (userInstance.getValueID())
-					{
-						addInquiry();
-						unblockClick();
-					}
-					else
-					{
-						userInstance.addTarget("signin.cr", panel);
-						userInstance.addTarget("signinCanceled.cr", panel);
-						$(panel).on("signin.cr", function(e, eventInfo)
-						{
-							removeSignin(this);
-							
-							var userEmailCell = eventInfo.getCell("_email");
-							var newEmail = userEmailCell.data[0].value;
-							cr.selectAll({path: "#" + inquiriesInstance.getValueID() + ">_user[_email=" + newEmail + "]",
-								done: function(newInstances)
-								{
-									if (newInstances.length > 0)
-									{
-										inquiryInstance = newInstances[0];
-										buttonDiv.text("Back Out");
-										buttonDiv.on("click", deleteInquiryFunction);
-										bootstrap_alert.success(userInstance.getDescription() + 
-															  " already signed up for " + 
-															  offering.getDescription() + "/" + session.getDescription(),
-															  ".alert-container");
-									}
-									else
-									{
-										addInquiry();
-									}
-								},
-								fail: asyncFailFunction});
-						});
-								
-						$(panel).on("signinCanceled.cr", function()
-						{
-							removeSignin(this);
-						});
-						
-						showFixedPanel(panel, "#id_sign_in_panel");
-					}
+					buttonDiv.text("Sign Up");
+					buttonDiv.on("click", addNameFunction);
 				}
-				
-				var addNameFunction = function(e)
-				{
-					if (prepareClick())
-					{
-						showClickFeedback(this);
-						
-						if (inquiryCell)
+			};
+			
+			var addInquiry = function()
+			{
+				groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
+				cr.selectAll({path: groupPath,
+					done: function(groupPaths)
 						{
-							tryAddInquiry();
-						}
-						else
-						{
-							cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID, 
-								function(cells)
-								{
-									inquiryCell = cells_get_cell_by_name(cells, "_user");
-									tryAddInquiry();
-								}, 
-								syncFailFunction);
-						}
-					}
-					d3.event.preventDefault();
-				};
-				
-				var deleteInquiryFunction = function(e)
-				{
-					if (prepareClick())
-					{
-						showClickFeedback(this);
-						
-						var successFunction = function(oldValue)
-						{
-							bootstrap_alert.success("You have backed out of " + 
-										  offering.getDescription() + "/" + session.getDescription() + ".",
-										  ".alert-container");
-							checkInquiryFunction([]);
-						}
-						
-						cr.deleteValue(inquiryInstance, successFunction, asyncFailFunction);
-						
-						unblockClick();
-					}
-					d3.event.preventDefault();
-				};
-				
-				var checkInquiryFunction = function(newInstances)
-				{
-					if (newInstances.length > 0)
-					{
-						inquiryInstance = newInstances[0];
-						buttonDiv.text("Back Out");
-						buttonDiv.on("click", deleteInquiryFunction);
-					}
-					else
-					{
-						inquiryInstance = null;
-						buttonDiv.text("Sign Up");
-						buttonDiv.on("click", addNameFunction);
-					}
-				};
-				
-				cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID, 
-					function(cells)
-					{
-						inquiryCell = cells_get_cell_by_name(cells, "_user");
-						if (userInstance.getValueID())
-						{
-							cr.getValues({path: "#" + inquiriesInstance.value.id,
-								field: inquiryCell.field,
-								value: userInstance.getValueID(),
-								done: checkInquiryFunction,
-								fail: asyncFailFunction});
-						}
-						else
-							checkInquiryFunction([]);
-					}, 
-					asyncFailFunction);
+							cr.addObjectValue('#'+session.getValueID()+">Inquiries",
+											  '_user',
+											  userInstance,
+											  function(newInquiryID) { 
+													function done()
+													{
+														bootstrap_alert.success("You have signed up for " + 
+																	  offering.getDescription() + "/" + session.getDescription() + "." +
+																	  " Look out for a notice when you are enrolled.",
+																	  ".alert-container");
+														checkInquiryFunction(newInquiryID); 
+													};
+													if (groupPaths.length == 0)
+														done();
+													else {
+														addMissingAccess(userInstance, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+													}
+												},
+												asyncFailFunction);
+						},
+					fail: asyncFailFunction 
+					});
 			}
+			
+			var tryAddInquiry = function()
+			{
+				if (userInstance.getValueID())
+				{
+					addInquiry();
+					unblockClick();
+				}
+				else
+				{
+					userInstance.addTarget("signin.cr", panel);
+					userInstance.addTarget("signinCanceled.cr", panel);
+					$(panel).on("signin.cr", function(e, eventInfo)
+					{
+						removeSignin(this);
+						
+						cr.getValues({path: '#'+session.getValueID()+">Inquiries",
+							field: "_user",
+							value: userInstance.getValueID(),
+							done: function(valueIDs)
+							{
+								if (valueIDs.length > 0)
+								{
+									checkInquiryFunction(valueIDs[0].id);
+									bootstrap_alert.success(userInstance.getDescription() + 
+														  " already signed up for " + 
+														  offering.getDescription() + "/" + session.getDescription(),
+														  ".alert-container");
+								}
+								else
+								{
+									addInquiry();
+								}
+							},
+							fail: asyncFailFunction});
+					});
+							
+					$(panel).on("signinCanceled.cr", function()
+					{
+						removeSignin(this);
+					});
+					
+					showFixedPanel(panel, "#id_sign_in_panel");
+				}
+			}
+			
+			var addNameFunction = function(e)
+			{
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+					
+					tryAddInquiry();
+				}
+				d3.event.preventDefault();
+			};
+			
+			var deleteInquiryFunction = function(e)
+			{
+				if (prepareClick())
+				{
+					showClickFeedback(this);
+					
+					var successFunction = function(valueID)
+					{
+						bootstrap_alert.success("You have backed out of " + 
+									  offering.getDescription() + "/" + session.getDescription() + ".",
+									  ".alert-container");
+						checkInquiryFunction(null);
+					}
+					
+					cr.deleteValue(inquiryValueID, successFunction, asyncFailFunction);
+					
+					unblockClick();
+				}
+				d3.event.preventDefault();
+			};
+			
+			if (userInstance.getValueID())
+			{
+				function done(values)
+				{
+					checkInquiryFunction(values.length ? values[0].id : null);
+				}
+				cr.getValues({path: '#'+session.getValueID()+">Inquiries",
+					field: "_user",
+					value: userInstance.getValueID(),
+					done: done,
+					fail: asyncFailFunction});
+			}
+			else
+				checkInquiryFunction(null);
 			
 			return sitePanel;
 		}
