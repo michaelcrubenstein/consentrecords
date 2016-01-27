@@ -1159,7 +1159,7 @@ class Terms():
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
-        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated else None
+        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
     
     @property    
     def is_administrator(self):
