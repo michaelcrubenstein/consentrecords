@@ -1174,8 +1174,10 @@ class UserInfo:
             return Instance.anonymousFindFilter(resultSet)
         elif self.is_administrator:
             return resultSet
-        else:
+        elif self.instance:
             return self.instance.findFilter(resultSet)
+        else:
+            return Instance.anonymousFindFilter(resultSet) # This case occurs while setting up a user.
 
     def findValueFilter(self, resultSet):
         if not self.is_authenticated:
