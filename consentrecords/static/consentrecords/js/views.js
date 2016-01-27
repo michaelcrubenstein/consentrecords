@@ -124,7 +124,6 @@ function showPanelUp(panelNode)
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
-							$(window).trigger("resize");
 							unblockClick();
 						});
 }
@@ -150,7 +149,6 @@ function showPanelLeft(panelNode)
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
-							$(window).trigger("resize");
 							unblockClick();
 						});
 }
