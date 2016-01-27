@@ -1159,7 +1159,7 @@ class Terms():
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
-        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated else None
+        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
     
     @property    
     def is_administrator(self):
@@ -1174,8 +1174,10 @@ class UserInfo:
             return Instance.anonymousFindFilter(resultSet)
         elif self.is_administrator:
             return resultSet
-        else:
+        elif self.instance:
             return self.instance.findFilter(resultSet)
+        else:
+            return Instance.anonymousFindFilter(resultSet) # This case occurs while setting up a user.
 
     def findValueFilter(self, resultSet):
         if not self.is_authenticated:

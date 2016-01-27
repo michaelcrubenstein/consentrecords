@@ -25,14 +25,18 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     values = list(userInfo.findFilter(Instance.objects.filter(pk=d)))
                     if len(values):
                     	parent.addReferenceValue(field, values[0], i, transactionState)
+                    elif d == parent.id and field == Terms.primaryAdministrator:
+                    	# This is a special case of setting up the primary administrator. This
+                    	# is necessary when creating a user so that it can be bootstrapped.
+                    	parent.addReferenceValue(field, parent, i, transactionState)
                     else:
-                    	raise ValueError("find permission failed")
+                    	raise RuntimeError("find permission failed for %s" % field)
                 elif d is not None:
                     ids = pathparser.selectAllObjects(d, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
-                        raise ValueError("Path does not parse to an object: %s" % d)
+                        raise RuntimeError("Path does not parse to an object: %s" % d)
             else:
                 if isinstance(d, dict) and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
