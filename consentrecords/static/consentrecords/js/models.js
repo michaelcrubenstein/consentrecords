@@ -284,9 +284,6 @@ cr.Cell = (function()
 				this.addTarget("valueAdded.cr", parent);
 				this.addTarget("valueDeleted.cr", parent);
 				this.addTarget("dataChanged.cr", parent);
-				$(this).on("dataChanged.cr", function(e) {
-					this.triggerEvent("dataChanged.cr", this);
-				});
 			}
 		};
 
@@ -395,6 +392,14 @@ cr.Cell = (function()
 			cr.EventHandler.call(this);
 			this.data = [];
 			this.field = field;
+			
+			if (field)
+			{
+			/* All cells propagate dataChanged.cr events from their children. */
+				$(this).on("dataChanged.cr", function(e) {
+					this.triggerEvent("dataChanged.cr", this);
+				});
+			}
 		};
 		
 		return Cell;
