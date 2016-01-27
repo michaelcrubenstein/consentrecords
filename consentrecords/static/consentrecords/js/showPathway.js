@@ -312,6 +312,53 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
+var ExperienceChangeBroadcaster = (function () {
+	ExperienceChangeBroadcaster.prototype = new cr.EventHandler();
+	ExperienceChangeBroadcaster.prototype.experience = null;
+	
+	ExperienceChangeBroadcaster.prototype.setupHandler = function(d)
+	{
+		d.addTarget("dataChanged.cr", this);
+		d.addTarget("valueDeleted.cr", this);
+		d.addTarget("valueAdded.cr", this);
+	}
+
+	ExperienceChangeBroadcaster.prototype.removeHandler = function(d)
+	{
+		d.removeTarget("dataChanged.cr", this);
+		d.removeTarget("valueDeleted.cr", this);
+		d.removeTarget("valueAdded.cr", this);
+	}
+	
+	ExperienceChangeBroadcaster.prototype.clearHandlers = function()
+	{
+		this.setupHandler(this.experience.getCell("Organization"));
+		this.setupHandler(this.experience.getCell("User Entered Organization"));
+		this.setupHandler(this.experience.getCell("Site"));
+		this.setupHandler(this.experience.getCell("User Entered Site"));
+		this.setupHandler(this.experience.getCell("Offering"));
+		this.setupHandler(this.experience.getCell("User Entered Offering"));
+	}
+
+	function ExperienceChangeBroadcaster(experience) {
+		cr.EventHandler.call(this);
+		
+		this.experience = experience;
+		this.setupHandler(experience.getCell("Organization"));
+		this.setupHandler(experience.getCell("User Entered Organization"));
+		this.setupHandler(experience.getCell("Site"));
+		this.setupHandler(experience.getCell("User Entered Site"));
+		this.setupHandler(experience.getCell("Offering"));
+		this.setupHandler(experience.getCell("User Entered Offering"));
+		
+		$(this).on("dataChanged.cr", function(e, i) { this.triggerEvent("dataChanged.cr"); })
+		       .on("valueDeleted.cr",  function(e, i) { this.triggerEvent("valueDeleted.cr"); })
+		       .on ("valueAdded.cr", function(e, i) { this.triggerEvent("valueAdded.cr"); });
+	}
+	
+	return ExperienceChangeBroadcaster;
+})();
+
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -335,6 +382,7 @@ var Pathway = (function () {
 	
 	Pathway.prototype.userInstance = null;
 	Pathway.prototype.allExperiences = [];
+	Pathway.prototype.allBroadcasters = null;
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
@@ -1019,10 +1067,41 @@ var Pathway = (function () {
 			_this.layoutExperiences();
 		}
 		
+		var node = this.sitePanel.node();
+		this.allBroadcasters = this.allExperiences.filter(function(d)
+			{
+				return d.typeName === "More Experience";
+			})
+			.map(function(d)
+			{
+				var b = new ExperienceChangeBroadcaster(d);
+				b.addTarget("dataChanged.cr", node);
+				b.addTarget("valueDeleted.cr", node);
+				return b;
+			});
+
 		$(window).on("resize", resizeFunction);
-		$(this.sitePanel.node()).on("hiding.cr", function()
+		$(node).on("hiding.cr", function()
 		{
 			$(window).off("resize", resizeFunction);
+			_this.allBroadcasters.forEach(function(b) {
+				b.clearHandlers();
+				b.removeTarget("dataChanged.cr", node);
+				b.removeTarget("valueDeleted.cr", node);
+			});
+		});
+		
+		$(node).on("dataChanged.cr", function(e, i)
+		{
+			_this.clearLayout();
+			_this.layoutExperiences();
+		});
+		$(node).on("valueDeleted.cr", function(e, i)
+		{
+			var index = this.allExperiences.indexOf(e);
+			if (index >= 0)
+				this.allExperiences.splice(index, 1);
+			_this.layoutExperiences();
 		});
 
 		this.clearLayout();
@@ -2153,47 +2232,47 @@ var ExperienceDetailPanel = (function () {
 		
 		var siteAddressDiv = orgDiv.append('div');
 		this.setupTarget(siteAddressDiv.node(), experience, "Site");
-		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function() {
-			var site = experience.getValue("Site");
-			if (site && site.getValueID())
-			{
-				crp.pushCheckCells(site, function()
-					{
-						var address = site.getValue("Address");
-						crp.pushCheckCells(address, function()
+		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr",
+			function() {
+				siteAddressDiv.selectAll('div').remove();
+				var site = experience.getValue("Site");
+				if (site && site.getValueID())
+				{
+					crp.pushCheckCells(site, function()
 						{
-							var streetCell = address.getCell("Street");
-							var cityCell = address.getCell("City");
-							var stateCell = address.getCell("State");
-							var zipCell = address.getCell("Zip Code");
-							if (streetCell)
-								$(streetCell.data).each(function() {
+							var address = site.getValue("Address");
+							crp.pushCheckCells(address, function()
+							{
+								var streetCell = address.getCell("Street");
+								var cityCell = address.getCell("City");
+								var stateCell = address.getCell("State");
+								var zipCell = address.getCell("Zip Code");
+								if (streetCell)
+									$(streetCell.data).each(function() {
+										siteAddressDiv.append('div')
+											.classed("address-line", true)
+											.text(this.value);
+									});
+								line = "";
+								if (cityCell && cityCell.data.length)
+									line += cityCell.data[0].value;
+								if (stateCell && stateCell.data.length)
+									line += ", " + stateCell.data[0].getDescription();
+								if (zipCell && zipCell.data.length && zipCell.data[0].value)
+									line += "  " + zipCell.data[0].value;
+								if (line.trim())
 									siteAddressDiv.append('div')
-										.classed("address-line", true)
-										.text(this.value);
-								});
-							line = "";
-							if (cityCell && cityCell.data.length)
-								line += cityCell.data[0].value;
-							if (stateCell && stateCell.data.length)
-								line += ", " + stateCell.data[0].getDescription();
-							if (zipCell && zipCell.data.length && zipCell.data[0].value)
-								line += "  " + zipCell.data[0].value;
-							if (line.trim())
-								siteAddressDiv.append('div')
-									.classed('address-line', true)
-									.text(line.trim());
+										.classed('address-line', true)
+										.text(line.trim());
+							},
+							function() {
+							});
 						},
-						function() {
-						});
-					},
-					function() { }
-				);
-			}
-			else
-				siteAddressDiv.select('div').remove();
-		});
-		$(siteAddressDiv.node()).trigger("dataChanged.cr");
+						function() { }
+					);
+				}
+			})
+			.trigger("dataChanged.cr");
 		
 		function appendStringDatum(cellName)
 		{
