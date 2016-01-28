@@ -2060,7 +2060,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
 					}
-					hidePanelRight($(this).parents(".site-panel")[0]);
+					hidePanelRight(sitePanel.node());
 				}
 				d3.event.preventDefault();
 			});

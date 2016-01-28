@@ -1228,7 +1228,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		{
 			if (prepareClick())
 			{
-				hidePanelRight($(this).parents(".site-panel")[0]);
+				hidePanelRight(sitePanel.node());
 			}
 			d3.event.preventDefault();
 		});
@@ -1245,7 +1245,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 					success(new ReportedObject({name: searchInputNode.value, value: newValue}));
 				}
 				
-				hidePanelRight($(this).parents(".site-panel")[0]);
+				hidePanelRight(sitePanel.node());
 			}
 			d3.event.preventDefault();
 		});
