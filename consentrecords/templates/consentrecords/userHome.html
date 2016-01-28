@@ -99,12 +99,6 @@
     		margin-top: 15px;
     		margin-left: 45px;
     	}
-    	.share-container {
-    		position: fixed;
-    		bottom: 0px;
-    		width: 100%;
-    		padding: 6px 12px;
-    	}
     	#id_offerings > p {
     		padding: 6px 12px;
     	}
@@ -1384,7 +1378,9 @@
 			
 			var buttonDiv = navContainer.appendRightButton();
 			
-			var shareDiv = sitePanel.panelDiv.append("nav");
+			var shareDiv = null;
+			if (service)
+				shareDiv = sitePanel.appendBottomNavContainer();
 			var targetHRef;
 
 			var panel2Div = sitePanel.appendScrollArea();

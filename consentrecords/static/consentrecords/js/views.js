@@ -638,14 +638,6 @@ function appendDeleteControls(buttons)
 						unblockClick(); 
 						this.focus();
 					});
-
-// 				confirmButton
-// 					.animate({left: "calc(100% - " + autoWidth + "px)"}, 600, 'swing', 
-// 					function () 
-// 					{ 
-// 						unblockClick(); 
-// 						this.focus();
-// 					});
 			};
 			d3.event.preventDefault();
 		});
@@ -1178,8 +1170,6 @@ function getTextWidth(text, font) {
 
 var SiteNavContainer = (function() {
 	SiteNavContainer.prototype.div = undefined;
-	SiteNavContainer.prototype.sitePanel = undefined;
-	SiteNavContainer.prototype.objectData = undefined;
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
@@ -1215,11 +1205,8 @@ var SiteNavContainer = (function() {
 		return h;
 	}
 	
-	function SiteNavContainer(sitePanel, objectData)
+	function SiteNavContainer(sitePanel)
 	{
-		this.sitePanel = sitePanel;
-		this.objectData = objectData;
-		
 		this.div = sitePanel.panelDiv.append("nav").classed("always-visible", true)
 					.attr("role", "navigation");
 	}
@@ -1292,6 +1279,13 @@ var SitePanel = (function () {
     SitePanel.prototype.appendNavContainer = function()
     {
 		return new SiteNavContainer(this);
+    }
+    
+    SitePanel.prototype.appendBottomNavContainer = function()
+    {
+    	var n = new SiteNavContainer(this);
+    	n.div.classed("bottom", true);
+    	return n;
     }
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
@@ -1467,6 +1461,11 @@ var SitePanel = (function () {
 		$(window).resize(function() { panel2Div.resetHeight(); });
 		
 		return panel2Div;
+	}
+	
+	SitePanel.prototype.datum = function()
+	{
+		return this.panelDiv.datum();
 	}
 	
 	SitePanel.prototype.hidePanelDown = function(doRemove, completeFunction)

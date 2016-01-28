@@ -90,3 +90,36 @@
 		text-decoration: none;
 		cursor: pointer;
 	}
+	
+	panel.confirm {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		z-index: 1000;
+	}
+	
+	panel.confirm >div {
+		margin-left: 12px;
+		margin-right: 12px;
+		padding: 12px;
+		padding-top: 0px;
+		background-color: white;
+		border-top: 1px solid #eee;
+		border-right: 1px solid #eee;
+		border-left: 1px solid #eee;
+	}
+	
+	panel.confirm >div>button {
+		position: relative;
+		width: 100%;
+		margin-top: 12px;
+		padding: 10px;
+		background: #F8F8F8;
+		border: 1px solid #e7e7e7;
+		border-radius: 4px;
+		font-size: larger;
+	}
+	panel.confirm > div>button:focus {
+		outline: none;
+	}
+	

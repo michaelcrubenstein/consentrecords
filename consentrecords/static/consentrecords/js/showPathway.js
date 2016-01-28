@@ -2409,12 +2409,12 @@ var PickOrCreatePanel = (function () {
 				});
 			backButton.append("span").text("Cancel");
 			
-			var doneButton = this.navContainer.appendRightButton()
+			this.navContainer.appendRightButton()
 				.on("click", function()
 				{
 					_this.onClickDone();
-				});
-			doneButton.append("span").text("Done");
+				})
+				.append("span").text("Done");
 
 			var title = this.getTitle();
 			if (title)
@@ -2742,23 +2742,104 @@ var PickOrCreateOfferingCell = (function () {
 	return PickOrCreateOfferingCell;
 })();
 
+var ConfirmAlert = (function () {
+
+	function ConfirmAlert(panelNode, confirmText, done, cancel)
+	{
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		var confirmButton = div.append('button')
+			.text(confirmText)
+			.classed("text-danger", true)
+			.on("click", function()
+				{
+					if (prepareClick())
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							done();
+						});
+					}
+				});
+		div.append('button')
+			.text("Cancel")
+			.on("click", function()
+				{
+					if (prepareClick())
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							cancel();
+						});
+					}
+				});
+		
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		$(confirmButton.node()).on('blur', function()
+			{
+				if (prepareClick())
+				{
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						cancel();
+					});
+				}
+			});
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ConfirmAlert;
+})();
+
 var EditExperiencePanel = (function () {
 	EditExperiencePanel.prototype = new SitePanel();
 	EditExperiencePanel.prototype.experience = null;
 	
+	EditExperiencePanel.prototype.handleDeleteButtonClick = function()
+	{
+		if (prepareClick())
+		{
+			var _this = this;
+			new ConfirmAlert(this.node(), "Delete Experience", 
+				function() { 
+					_this.datum().deleteValue(
+						function() { _this.hidePanelDown() },
+						syncFailFunction);
+				}, 
+				function() { 
+					unblockClick();
+				});
+		}
+	}
+	
 	function EditExperiencePanel(experience, previousPanel) {
 		SitePanel.call(this, previousPanel, experience, "Edit Experience", "view session", revealPanelUp);
 		var navContainer = this.appendNavContainer();
+		var bottomNavContainer = this.appendBottomNavContainer();
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.appendAlertContainer();
 
-		doneButton = navContainer.appendRightButton();
-		doneButton.append("span").text("Done");
-		doneButton.on("click", panel2Div.handleDoneEditingButton);
+		navContainer.appendRightButton()
+			.on("click", panel2Div.handleDoneEditingButton)
+			.append("span").text("Done");
 
 		navContainer.appendTitle("Edit Experience");
 		
+		var _this = this;
+		bottomNavContainer.appendRightButton()
+			.on("click", function() { _this.handleDeleteButtonClick(); } )
+			.append("span").classed("text-danger", true).text("Delete");
+			
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
 				 new PickOrCreateOfferingCell(experience),
