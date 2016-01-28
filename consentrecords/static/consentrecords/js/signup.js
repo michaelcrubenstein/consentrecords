@@ -76,7 +76,7 @@ var Signup = (function () {
 						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								hidePanelDown(sitePanel.node(), false,
+								hidePanelDown(sitePanel.node(), true,
 									function()
 									{
 										userInstance.triggerEvent("signin.cr", userInstance);
