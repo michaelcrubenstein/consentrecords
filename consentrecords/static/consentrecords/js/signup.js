@@ -60,7 +60,7 @@ var Signup = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, sitePanel, 4);
+		this.dots = new DotsNavigator(panel2Div, 4);
 		this.dots.datum = this;		
 
 		this.dots.appendForwardButton(navContainer, function()
