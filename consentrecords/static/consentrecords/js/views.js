@@ -194,15 +194,6 @@ function handleCloseRightEvent() {
 	d3.event.preventDefault();
 }
 
-function handleCloseDownEvent() {
-	if (!_isClickBlocked())
-	{
-		_blockClick();
-		hidePanelDown($(this).parents(".site-panel")[0]);
-	}
-	d3.event.preventDefault();
-}
-
 function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
@@ -1494,6 +1485,14 @@ var SitePanel = (function () {
 		return panel2Div;
 	}
 	
+	SitePanel.prototype.handleCloseDownEvent = function()
+	{
+		if (!_isClickBlocked())
+		{
+			_blockClick();
+			hidePanelDown(this.node());
+		}
+	}
 	return SitePanel;
 })();
 	
@@ -1893,7 +1892,10 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", handleCloseDownEvent);
+		.on("click", function()
+		{
+			sitePanel.handleCloseDownEvent();
+		});
 	backButton.append("span").text("Done");
 	
 	var addButton = navContainer.appendRightButton()

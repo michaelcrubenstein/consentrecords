@@ -1715,6 +1715,7 @@ var AddExperiencePanel = (function () {
 		var dots = new DotsNavigator(panel2Div, 8);	
 		dots.finalText = "Add";	
 
+		var _thisPanel = this;
 		var hideSuccessFunction = function()
 			{
 				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
@@ -1724,7 +1725,7 @@ var AddExperiencePanel = (function () {
 					newData.checkCells([],
 						function() {
 							pathway.addMoreExperience.call(pathway, newData);
-							hidePanelDown($(dots.doneButton.node()).parents(".site-panel")[0]);
+							hidePanelDown(_thisPanel.node());
 						},
 						syncFailFunction);
 				}
