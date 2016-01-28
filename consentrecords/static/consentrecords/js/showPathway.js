@@ -1725,7 +1725,7 @@ var AddExperiencePanel = (function () {
 					newData.checkCells([],
 						function() {
 							pathway.addMoreExperience.call(pathway, newData);
-							hidePanelDown(_thisPanel.node());
+							_thisPanel.hidePanelDown();
 						},
 						syncFailFunction);
 				}
@@ -1798,7 +1798,9 @@ var AddExperiencePanel = (function () {
 			};
 
 		dots.appendForwardButton(navContainer, hideSuccessFunction);
-		dots.appendBackButton(navContainer);
+		dots.appendBackButton(navContainer, function() {
+			_thisPanel.hidePanelDown();
+		});
 		
 		navContainer.appendTitle(header);
 		

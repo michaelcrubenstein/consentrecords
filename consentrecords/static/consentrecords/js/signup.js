@@ -76,7 +76,7 @@ var Signup = (function () {
 						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								hidePanelDown(sitePanel.node(), true,
+								sitePanel.node().hidePanelDown(true,
 									function()
 									{
 										userInstance.triggerEvent("signin.cr", userInstance);
@@ -87,7 +87,9 @@ var Signup = (function () {
 					syncFailFunction)
 				
 			});
-		this.dots.appendBackButton(navContainer);
+		this.dots.appendBackButton(navContainer, function() {
+			sitePanel.hidePanelDown();
+		});
 		
 		navContainer.appendTitle('Create a New Account');
 

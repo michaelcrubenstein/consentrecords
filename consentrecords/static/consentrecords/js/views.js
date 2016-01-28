@@ -153,22 +153,6 @@ function showPanelLeft(panelNode)
 						});
 }
 
-function hidePanelDown(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "down"}, 400,
-		function() {
-			if (doRemove)
-				$(this).remove();
-			unblockClick();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
 function hidePanelRight(panelNode, doRemove, completeFunction)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
@@ -1287,7 +1271,7 @@ var SitePanel = (function () {
 			{
 				this.hide = function()
 					{
-						hidePanelDown(_this.node());
+						_this.hidePanelDown();
 					};
 			}
 			else
@@ -1485,12 +1469,28 @@ var SitePanel = (function () {
 		return panel2Div;
 	}
 	
+	SitePanel.prototype.hidePanelDown = function(doRemove, completeFunction)
+	{
+		doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
+	
+		closealert();
+		$(this.node()).trigger("hiding.cr");
+		$(this.node()).hide("slide", {direction: "down"}, 400,
+			function() {
+				if (doRemove)
+					$(this).remove();
+				unblockClick();
+				if (completeFunction)
+					completeFunction();
+			});
+	}
+	
 	SitePanel.prototype.handleCloseDownEvent = function()
 	{
 		if (!_isClickBlocked())
 		{
 			_blockClick();
-			hidePanelDown(this.node());
+			this.hidePanelDown();
 		}
 	}
 	return SitePanel;

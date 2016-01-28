@@ -91,7 +91,7 @@ var DotsNavigator = (function () {
 		return null;
 	}
 	
-	DotsNavigator.prototype.appendBackButton = function(navContainer)
+	DotsNavigator.prototype.appendBackButton = function(navContainer, cancel)
 	{
 		var _this = this;
 		this.backButton = navContainer.appendLeftButton()
@@ -106,7 +106,7 @@ var DotsNavigator = (function () {
 						unblockClick();
 					}
 					else
-						hidePanelDown($(this).parents(".site-panel")[0]);
+						cancel();
 				}
 				d3.event.preventDefault();
 			});
