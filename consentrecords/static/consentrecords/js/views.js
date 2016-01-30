@@ -1314,9 +1314,15 @@ var SitePanel = (function () {
 	
 		panel2Div.appendSections = function(sectionData)
 		{
+			var i = 0;
 			return this
 					.selectAll("section")
-					.data(sectionData)
+					.data(sectionData, 
+						  function(d) {
+						  	/* Ensure that this operation appends without replacing any items. */
+						  	i += 1;
+						  	return i;
+						  })
 					.enter()
 					.append("section");
 		}
