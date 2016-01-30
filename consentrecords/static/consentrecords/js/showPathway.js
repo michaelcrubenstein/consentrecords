@@ -2083,30 +2083,14 @@ var ExperienceDetailPanel = (function () {
 			})
 			.trigger("dataChanged.cr");
 		
-		function appendStringDatum(cellName)
-		{
-			var v = experience.getDatum(cellName);
-			if (v)
-			{
-				var deadlineDiv = panel2Div.append("section");
-				appendStringItem(deadlineDiv.node(), cellName, v);
-				return deadlineDiv;
-			}
-			else
-				return null;
-		}
-		
 		var firstDiv = null;
 		var nextDiv;
 		
-		firstDiv = appendStringDatum("Start Date");
-			
-		nextDiv = appendStringDatum("End Date");
-		if (!firstDiv)
-			firstDiv = nextDiv;
+		panel2Div.showViewCells([experience.getCell("Start Date"),
+								 experience.getCell("End Date")]);
 
 		var cellDiv = panel2Div.append("section")
-			.classed("cell", true);
+			.classed("cell view multiple", true);
 		
 		var offering = experience.getValue("Offering");
 		var offeringServiceCell = ((offering && offering.getValueID()) ? offering.getCell("Service") : null);

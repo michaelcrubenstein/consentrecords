@@ -253,18 +253,20 @@ function _setupItemHandlers(d)
 	 */
 	if ($(this).parents(".multiple").length > 0)
 	{
-		$(this).on("valueDeleted.cr", function(e, newData)
+		var f = function(eventObject)
 		{
-			$(this).off("valueDeleted.cr");
-			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+			$(eventObject.data).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+		}
+		$(d).one("valueDeleted.cr", null, this, f);
+		$(this).on("remove", this, d, function(eventObject)
+		{
+			$(eventObject.data).off("valueDeleted.cr", null, f);
 		});
-		d.addTarget("valueDeleted.cr", this);
 	}
 
-	$(this).on("remove", function(e)
+	$(this).on("remove", null, d, function(eventObject)
 	{
-		d.removeTarget("valueDeleted.cr");
-		d.removeTarget("dataChanged.cr");
+		d.removeTarget("dataChanged.cr", this);
 	});
 }
 
@@ -1338,9 +1340,9 @@ var SitePanel = (function () {
 			$(this.node()).height(newHeight);
 		}
 		
-		panel2Div.show_view_cells = function(objectData)
+		panel2Div.showViewCells = function(cells)
 		{
-			this.appendSections(objectData.value.cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
+			this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
@@ -1597,7 +1599,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.show_view_cells(objectData);
+		panel2Div.showViewCells(objectData.value.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -1643,7 +1645,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		panel2Div.appendAlertContainer();
 							
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.show_view_cells(objectData);
+		panel2Div.showViewCells(objectData.value.cells);
 		
 		showSuccessFunction(sitePanel.node());
 	}
