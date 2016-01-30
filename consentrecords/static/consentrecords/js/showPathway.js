@@ -772,13 +772,14 @@ var Pathway = (function () {
 	 */
 	Pathway.prototype.setupDelete = function(d) 
 	{
-		$(d).one("valueDeleted.cr", this, this, function(eventObject)
+		var f = function(eventObject)
 		{
 			d3.select(eventObject.data).remove();
-		});
+		};
+		$(d).one("valueDeleted.cr", null, this, f);
 		$(this).on("remove", function()
 		{
-			$(d).off("valueDeleted.cr", this);
+			$(d).off("valueDeleted.cr", null, f);
 		});
 	}
 	
