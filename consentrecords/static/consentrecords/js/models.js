@@ -1231,19 +1231,15 @@ cr["selectAll"] = function(args)
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = [];
-					json.objects.forEach(function(v)
+					var newObjects = json.objects.map(function(v)
 					{
-						newObjects.push(cr.ObjectCell.prototype.copyValue(v));
-					});
-					
-					if (args.done)
-						args.done(newObjects);
+						return cr.ObjectCell.prototype.copyValue(v);
+					});					
+					args.done(newObjects);
 				}
 				else
 				{
-					if (args.fail)
-						args.fail(json.error);
+					args.fail(json.error);
 				}
 			}
 		);
@@ -1254,9 +1250,9 @@ cr["selectAll"] = function(args)
 cr.getValues = function (args)
 	{
 		if (!args.fail)
-			throw ("failFunction is not specified");
+			throw ("fail is not specified");
 		if (!args.done)
-			throw ("done function is not specified");
+			throw ("done is not specified");
 		var argList = {};
 		if (args.path)
 			argList.path = args.path;
@@ -1286,13 +1282,11 @@ cr.getValues = function (args)
 						return cr.ObjectCell.prototype.copyValue(v);
 					});
 					
-					if (args.done)
-						args.done(newObjects);
+					args.done(newObjects);
 				}
 				else
 				{
-					if (args.fail)
-						args.fail(json.error);
+					args.fail(json.error);
 				}
 			}
 		);
