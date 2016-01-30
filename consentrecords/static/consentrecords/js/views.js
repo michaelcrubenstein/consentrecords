@@ -189,15 +189,20 @@ function _isPickCell(cell)
 }
 
 function _pushTextChanged(d) {
-	d.addTarget("dataChanged.cr", this);
-	$(this).on("dataChanged.cr", function(e) {
-			d3.select(this).text(d.getDescription());
-		});
-	if (d.cell && d.cell.field.capacity == "_unique value")
+	var f = function(eventObject) {
+		d3.select(eventObject.data).text(this.getDescription());
+	}
+	
+	$(d).on("dataChanged.cr", null, this, f);
+	$(this).on("remove", null, d, function(eventObjects) {
+		$(this.eventObject).off("dataChanged.cr", null, this, f);
+	});
+	
+	if (d.cell && d.cell.field.capacity === "_unique value")
 	{
-		d.addTarget("valueDeleted.cr", this);
-		$(this).on("valueDeleted.cr", function(e) {
-			d3.select(this).text(d.getDescription());
+		$(d).on("valueDeleted.cr", null, this, f);
+		$(this).on("remove", null, d, function(eventObjects) {
+			$(this.eventObject).off("valueDeleted.cr", null, this, f);
 		});
 	}
 }
