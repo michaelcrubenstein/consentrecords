@@ -93,12 +93,14 @@ var ExperienceChangeBroadcaster = (function () {
 	
 	ExperienceChangeBroadcaster.prototype.clearHandlers = function()
 	{
-		this.setupHandler(this.experience.getCell("Organization"));
-		this.setupHandler(this.experience.getCell("User Entered Organization"));
-		this.setupHandler(this.experience.getCell("Site"));
-		this.setupHandler(this.experience.getCell("User Entered Site"));
-		this.setupHandler(this.experience.getCell("Offering"));
-		this.setupHandler(this.experience.getCell("User Entered Offering"));
+		this.removeHandler(this.experience.getCell("Organization"));
+		this.removeHandler(this.experience.getCell("User Entered Organization"));
+		this.removeHandler(this.experience.getCell("Site"));
+		this.removeHandler(this.experience.getCell("User Entered Site"));
+		this.removeHandler(this.experience.getCell("Offering"));
+		this.removeHandler(this.experience.getCell("User Entered Offering"));
+		
+		this.experience.removeTarget("valueDeleted.cr", this);
 	}
 
 	function ExperienceChangeBroadcaster(experience) {
@@ -112,9 +114,11 @@ var ExperienceChangeBroadcaster = (function () {
 		this.setupHandler(experience.getCell("Offering"));
 		this.setupHandler(experience.getCell("User Entered Offering"));
 		
-		$(this).on("dataChanged.cr", function(e, i) { this.triggerEvent("dataChanged.cr"); })
-		       .on("valueDeleted.cr",  function(e, i) { this.triggerEvent("valueDeleted.cr"); })
-		       .on ("valueAdded.cr", function(e, i) { this.triggerEvent("valueAdded.cr"); });
+		this.experience.addTarget("valueDeleted.cr", this);
+		
+		$(this).on("dataChanged.cr", function(e, i) { this.triggerEvent("dataChanged.cr", i); })
+		       .on("valueDeleted.cr",  function(e, i) { this.triggerEvent("valueDeleted.cr", i); })
+		       .on ("valueAdded.cr", function(e, i) { this.triggerEvent("valueAdded.cr", i); });
 	}
 	
 	return ExperienceChangeBroadcaster;
@@ -156,7 +160,6 @@ var Pathway = (function () {
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
 	
-	Pathway.prototype.flagDown = false;
 	Pathway.prototype.flagExperience = null;
 	Pathway.prototype.flagElement = null;
 	Pathway.prototype.flagHeight = 0;
@@ -384,7 +387,7 @@ var Pathway = (function () {
 				return "translate(" + this.getAttribute("x") + "," + this.getAttribute("y") + ")";
 			})
 			
-		if (this.flagExperience)
+		if (this.flagExperience != null)
 		{
 			/*( Restore the flagElement */
 			var flagExperienceID = this.flagExperience.getValueID();
@@ -460,7 +463,7 @@ var Pathway = (function () {
 		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
-		if (this.flagDown)
+		if (this.flagExperience != null)
 		{
 			var oldExperience = this.flagExperience;
 			var oldElement = this.flagElement;
@@ -707,8 +710,7 @@ var Pathway = (function () {
 			detailText.attr("height", textBox.height);
 			iconClipRect.attr('height', textBox.height);
 		}
-			 
-		this.flagDown = true;
+		
 		this.flagExperience = experience;
 		this.flagElement = g;
 	}
@@ -723,7 +725,7 @@ var Pathway = (function () {
 		this.detailGroup.selectAll('rect').remove();
 		d3.select("#id_detailClipPath").attr('height', 0);
 		d3.select("#id_detailIconClipPath").attr('height', 0);
-		this.flagDown = false;
+		
 		this.flagExperience = null;
 		this.flagElement = null;
 	}
@@ -733,7 +735,7 @@ var Pathway = (function () {
 		duration = (duration !== undefined ? duration : 250);
 		
 		var _this = this;
-		if (this.flagDown)
+		if (this.flagElement != null)
 		{
 			if (duration === 0)
 			{
@@ -765,13 +767,29 @@ var Pathway = (function () {
 			done();
 	}
 	
+	/* setup up each group (this) that displays an experience to delete itself if
+		the experience is deleted.
+	 */
+	Pathway.prototype.setupDelete = function(d) 
+	{
+		$(d).one("valueDeleted.cr", this, this, function(eventObject)
+		{
+			d3.select(eventObject.data).remove();
+		});
+		$(this).on("remove", function()
+		{
+			$(d).off("valueDeleted.cr", this);
+		});
+	}
+	
 	Pathway.prototype.appendExperiences = function()
 	{
 		this.experienceGroup.selectAll('g').remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences)
 			.enter()
-			.append('g');
+			.append('g')
+			.each(this.setupDelete);
 		
 		function showDetail(experience, i)
 		{
@@ -786,7 +804,8 @@ var Pathway = (function () {
 		
 		var _this = this;
 		var rect = g.append('path')
-			.each(function() { this.pathway = _this; })
+			.each(function(d)
+				{ this.pathway = _this; })
 			.attr("fill-opacity", "0.3")
 			.attr("stroke-opacity", "0.7")
 			.on("click", function(d) 
@@ -823,11 +842,45 @@ var Pathway = (function () {
 				return 0 - bbox.y;
 			});
 	
+		this.clearLayout();
+		this.layoutExperiences();
+	}
+	
+	Pathway.prototype.addMoreExperience = function(experience)
+	{
+		this.checkDateRange(experience);
+		experience.typeName = "More Experience";
+		
+		this.allExperiences.push(experience);
+		this.allExperiences.sort(this._compareExperiences);
+		
+		var node = this.sitePanel.node();
+		var b = new ExperienceChangeBroadcaster(experience);
+		b.addTarget("dataChanged.cr", node);
+		b.addTarget("valueDeleted.cr", node);
+		this.allBroadcasters.push(b);
+		
+		this.appendExperiences();
+		
+		if (this.loadingText)
+		{
+			this.loadingText.remove();
+			this.promptAddText.remove();
+			this.loadingText = null;
+			this.promptAddText = null;
+		}
+	}
+	
+	Pathway.prototype.showAllExperiences = function()
+	{
+		this.setDateRange();
+		
+		var _this = this;
 		function resizeFunction()
 		{
 			_this.layoutExperiences();
 		}
-		
+	
 		var node = this.sitePanel.node();
 		this.allBroadcasters = this.allExperiences.filter(function(d)
 			{
@@ -851,7 +904,7 @@ var Pathway = (function () {
 				b.removeTarget("valueDeleted.cr", node);
 			});
 		});
-		
+	
 		$(node).on("dataChanged.cr", function(e, i)
 		{
 			_this.clearLayout();
@@ -859,39 +912,23 @@ var Pathway = (function () {
 		});
 		$(node).on("valueDeleted.cr", function(e, i)
 		{
-			var index = this.allExperiences.indexOf(e);
+			var index = _this.allExperiences.indexOf(i);
 			if (index >= 0)
-				this.allExperiences.splice(index, 1);
+				_this.allExperiences.splice(index, 1);
+			_this.allBroadcasters = _this.allBroadcasters.filter(function(b) { return b.experience != i; });
+			if (i == _this.flagExperience)
+				_this.hideDetail(function() { }, 0);
+			_this.clearLayout();
 			_this.layoutExperiences();
 		});
 
-		this.clearLayout();
-		this.layoutExperiences();
-	}
-	
-	Pathway.prototype.addMoreExperience = function(experience)
-	{
-		this.checkDateRange(experience);
-		experience.typeName = "More Experience";
-		
-		this.allExperiences.push(experience);
-		this.allExperiences.sort(this._compareExperiences);
 		this.appendExperiences();
-		
-		if (this.loadingText)
-		{
-			this.loadingText.remove();
-			this.promptAddText.remove();
-			this.loadingText = null;
-			this.promptAddText = null;
-		}
 	}
 		
 	function Pathway(userInstance, sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
-		this.flagDown = false;
 		this.flagExperience = null;
 		this.flagElement = null;
 		this.sitePanel = sitePanel;
@@ -934,9 +971,8 @@ var Pathway = (function () {
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", this.showDetailPanel)
-			
-	
+			.on("click.cr", this.showDetailPanel);
+		
 		var _thisPathway = this;
 
 		this.svg.on("click", function() 
@@ -979,10 +1015,9 @@ var Pathway = (function () {
 										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
-											var path = "#" + m.getValueID() + '>"More Experience"';
-											cr.getData({path: path, 
-														done: successFunction2, 
-														fail: asyncFailFunction});
+											m.getCellData("More Experience",
+														  successFunction2, 
+														  asyncFailFunction);
 										}
 										else
 											successFunction2([]);	/* There are none. */
@@ -1004,9 +1039,7 @@ var Pathway = (function () {
 		
 			_thisPathway.allExperiences.sort(_thisPathway._compareExperiences);
 			
-			_thisPathway.setDateRange();
-			
-			_thisPathway.appendExperiences();
+			_thisPathway.showAllExperiences();
 			
 			if (_thisPathway.allExperiences.length > 0)
 			{
