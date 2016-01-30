@@ -649,6 +649,7 @@ cr.CellValue = (function() {
 		/* Delete from the cell first, so that other objects know the cell may be empty. */
 		if (this.cell)
 		    this.cell.deleteValue(this);
+		$(this).trigger("valueDeleted.cr", this);
 		this.triggerEvent("valueDeleted.cr", this);
 	}
 	

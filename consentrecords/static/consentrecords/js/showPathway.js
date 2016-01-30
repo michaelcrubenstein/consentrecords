@@ -1993,6 +1993,17 @@ var ExperienceDetailPanel = (function () {
 					d3.event.preventDefault();
 				});
 			editButton.append("span").text("Edit");
+			
+			var node = this.node();
+			var f = function(eventObject)
+				{
+					d3.select(eventObject.data).remove();
+				};
+			$(experience).one("valueDeleted.cr", null, node, f);
+			$(node).on("remove", null, function(eventObject)
+				{
+					$(experience).off("valueDeleted.cr", null, f);
+				});
 		}
 		
 		var panel2Div = this.appendScrollArea();
