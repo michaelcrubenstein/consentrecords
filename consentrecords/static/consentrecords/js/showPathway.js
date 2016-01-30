@@ -73,57 +73,6 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
-var ExperienceChangeBroadcaster = (function () {
-	ExperienceChangeBroadcaster.prototype = new cr.EventHandler();
-	ExperienceChangeBroadcaster.prototype.experience = null;
-	
-	ExperienceChangeBroadcaster.prototype.setupHandler = function(d)
-	{
-		d.addTarget("dataChanged.cr", this);
-		d.addTarget("valueDeleted.cr", this);
-		d.addTarget("valueAdded.cr", this);
-	}
-
-	ExperienceChangeBroadcaster.prototype.removeHandler = function(d)
-	{
-		d.removeTarget("dataChanged.cr", this);
-		d.removeTarget("valueDeleted.cr", this);
-		d.removeTarget("valueAdded.cr", this);
-	}
-	
-	ExperienceChangeBroadcaster.prototype.clearHandlers = function()
-	{
-		this.removeHandler(this.experience.getCell("Organization"));
-		this.removeHandler(this.experience.getCell("User Entered Organization"));
-		this.removeHandler(this.experience.getCell("Site"));
-		this.removeHandler(this.experience.getCell("User Entered Site"));
-		this.removeHandler(this.experience.getCell("Offering"));
-		this.removeHandler(this.experience.getCell("User Entered Offering"));
-		
-		this.experience.removeTarget("valueDeleted.cr", this);
-	}
-
-	function ExperienceChangeBroadcaster(experience) {
-		cr.EventHandler.call(this);
-		
-		this.experience = experience;
-		this.setupHandler(experience.getCell("Organization"));
-		this.setupHandler(experience.getCell("User Entered Organization"));
-		this.setupHandler(experience.getCell("Site"));
-		this.setupHandler(experience.getCell("User Entered Site"));
-		this.setupHandler(experience.getCell("Offering"));
-		this.setupHandler(experience.getCell("User Entered Offering"));
-		
-		this.experience.addTarget("valueDeleted.cr", this);
-		
-		$(this).on("dataChanged.cr", function(e, i) { this.triggerEvent("dataChanged.cr", i); })
-		       .on("valueDeleted.cr",  function(e, i) { this.triggerEvent("valueDeleted.cr", i); })
-		       .on ("valueAdded.cr", function(e, i) { this.triggerEvent("valueAdded.cr", i); });
-	}
-	
-	return ExperienceChangeBroadcaster;
-})();
-
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -147,7 +96,6 @@ var Pathway = (function () {
 	
 	Pathway.prototype.userInstance = null;
 	Pathway.prototype.allExperiences = [];
-	Pathway.prototype.allBroadcasters = null;
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
@@ -465,11 +413,7 @@ var Pathway = (function () {
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
 		if (this.flagExperience != null)
 		{
-			var oldExperience = this.flagExperience;
-			var oldElement = this.flagElement;
-			this.hideDetail(
-				function() { _thisPathway.showDetailGroup(oldElement, oldExperience, 0); },
-				0);
+			this.refreshDetail();
 		}
 	}
 	
@@ -713,6 +657,21 @@ var Pathway = (function () {
 		
 		this.flagExperience = experience;
 		this.flagElement = g;
+		
+		var _this = this;
+		[this.flagExperience.getCell("Organization"),
+		 this.flagExperience.getCell("User Entered Organization"),
+		 this.flagExperience.getCell("Site"),
+		 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
+		 {
+			$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
+			$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+		 });
+	}
+	
+	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
+	{
+		eventObject.data.refreshDetail();
 	}
 	
 	Pathway.prototype.clearDetail = function()
@@ -725,6 +684,19 @@ var Pathway = (function () {
 		this.detailGroup.selectAll('rect').remove();
 		d3.select("#id_detailClipPath").attr('height', 0);
 		d3.select("#id_detailIconClipPath").attr('height', 0);
+		
+		var _this = this;
+		if (this.flagExperience)
+		{
+			[this.flagExperience.getCell("Organization"),
+			 this.flagExperience.getCell("User Entered Organization"),
+			 this.flagExperience.getCell("Site"),
+			 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
+			 {
+			 	$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
+			 	$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
+			 });
+		}
 		
 		this.flagExperience = null;
 		this.flagElement = null;
@@ -767,19 +739,39 @@ var Pathway = (function () {
 			done();
 	}
 	
+	Pathway.prototype.refreshDetail = function()
+	{
+		var oldExperience = this.flagExperience;
+		var oldElement = this.flagElement;
+		var _this = this;
+		this.hideDetail(
+			function() { _this.showDetailGroup(oldElement, oldExperience, 0); },
+			0);
+	}
+	
 	/* setup up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
 	 */
 	Pathway.prototype.setupDelete = function(d) 
 	{
-		var f = function(eventObject)
+		var valueDeleted = function(eventObject)
 		{
 			d3.select(eventObject.data).remove();
 		};
-		$(d).one("valueDeleted.cr", null, this, f);
+		
+		var dataChanged = function(eventObject)
+		{
+			d3.select(eventObject.data).selectAll('text')
+				.text(function(d) { return d.getDescription(); })
+		}
+		
+		$(d).one("valueDeleted.cr", null, this, valueDeleted);
+		$(d).on("dataChanged.cr", null, this, dataChanged);
+		
 		$(this).on("remove", function()
 		{
-			$(d).off("valueDeleted.cr", null, f);
+			$(d).off("valueDeleted.cr", null, valueDeleted);
+			$(d).off("dataChanged.cr", null, dataChanged);
 		});
 	}
 	
@@ -847,6 +839,41 @@ var Pathway = (function () {
 		this.layoutExperiences();
 	}
 	
+	Pathway.prototype.handleDataChanged = function(eventObject)
+	{
+		var _this = eventObject.data;
+
+		_this.clearLayout();
+		_this.layoutExperiences();
+	}
+	
+	Pathway.prototype.handleValueDeleted = function(eventObject)
+	{
+		var i = this;
+		var _this = eventObject.data;
+		
+		var index = _this.allExperiences.indexOf(i);
+		if (index >= 0)
+			_this.allExperiences.splice(index, 1);
+		if (i == _this.flagExperience)
+			_this.hideDetail(function() { }, 0);
+		_this.clearLayout();
+		_this.layoutExperiences();
+	};
+
+	Pathway.prototype.setupExperienceTriggers = function(experience)
+	{
+		var _this = this;
+		
+		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
+		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
+		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
+			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
+		});
+	}
+		
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
@@ -855,11 +882,7 @@ var Pathway = (function () {
 		this.allExperiences.push(experience);
 		this.allExperiences.sort(this._compareExperiences);
 		
-		var node = this.sitePanel.node();
-		var b = new ExperienceChangeBroadcaster(experience);
-		b.addTarget("dataChanged.cr", node);
-		b.addTarget("valueDeleted.cr", node);
-		this.allBroadcasters.push(b);
+		this.setupExperienceTriggers(experience);
 		
 		this.appendExperiences();
 		
@@ -883,46 +906,21 @@ var Pathway = (function () {
 		}
 	
 		var node = this.sitePanel.node();
-		this.allBroadcasters = this.allExperiences.filter(function(d)
+		this.allExperiences.filter(function(d)
 			{
 				return d.typeName === "More Experience";
 			})
-			.map(function(d)
+			.forEach(function(d)
 			{
-				var b = new ExperienceChangeBroadcaster(d);
-				b.addTarget("dataChanged.cr", node);
-				b.addTarget("valueDeleted.cr", node);
-				return b;
+				_this.setupExperienceTriggers(d);
 			});
 
 		$(window).on("resize", resizeFunction);
 		$(node).on("hiding.cr", function()
 		{
 			$(window).off("resize", resizeFunction);
-			_this.allBroadcasters.forEach(function(b) {
-				b.clearHandlers();
-				b.removeTarget("dataChanged.cr", node);
-				b.removeTarget("valueDeleted.cr", node);
-			});
 		});
 	
-		$(node).on("dataChanged.cr", function(e, i)
-		{
-			_this.clearLayout();
-			_this.layoutExperiences();
-		});
-		$(node).on("valueDeleted.cr", function(e, i)
-		{
-			var index = _this.allExperiences.indexOf(i);
-			if (index >= 0)
-				_this.allExperiences.splice(index, 1);
-			_this.allBroadcasters = _this.allBroadcasters.filter(function(b) { return b.experience != i; });
-			if (i == _this.flagExperience)
-				_this.hideDetail(function() { }, 0);
-			_this.clearLayout();
-			_this.layoutExperiences();
-		});
-
 		this.appendExperiences();
 	}
 		
@@ -973,9 +971,13 @@ var Pathway = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", this.showDetailPanel);
-		
+			
 		var _thisPathway = this;
 
+		$(this.sitePanel.node()).on("remove", null, null, function() {
+			_thisPathway.clearDetail();
+		});
+		
 		this.svg.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 

@@ -655,6 +655,12 @@ cr.CellValue = (function() {
 		this.triggerEvent("valueDeleted.cr", this);
 	}
 	
+	CellValue.prototype.triggerDataChanged = function()
+	{
+		$(this).trigger("dataChanged.cr", this);
+		this.triggerEvent("dataChanged.cr", this);
+	}
+	
 	CellValue.prototype.deleteValue = function(successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -780,10 +786,6 @@ cr.StringValue = (function() {
 
 	function StringValue() {
 		cr.CellValue.call(this);
-	
-		$(this).on("dataChanged.cr", function(e) {
-			this.triggerEvent("dataChanged.cr", this);
-		});
 	}
 	
 	return StringValue;
@@ -890,7 +892,7 @@ cr.ObjectValue = (function() {
 	{
 		this.id = newData.id;
 		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
-		this.triggerEvent("dataChanged.cr", newData);
+		this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.isEmpty = function()
@@ -975,7 +977,7 @@ cr.ObjectValue = (function() {
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
 		if (this.getDescription() != oldDescription)
-			this.triggerEvent("dataChanged.cr", this);
+			this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.importCell = function(oldCell)
@@ -1348,7 +1350,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 					if (json.success) {
 						oldValue.id = json.valueIDs[0];
 						oldValue.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
-						oldValue.triggerEvent("dataChanged.cr", d);
+						oldValue.triggerDataChanged();
 						successFunction();
 					}
 					else {
@@ -1474,7 +1476,7 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							if (newInstanceID)
 								d.value.id = newInstanceID;
 								
-							d.triggerEvent("dataChanged.cr", d);
+							d.triggerDataChanged();
 						}
 						else
 						{

@@ -1442,7 +1442,7 @@ var SitePanel = (function () {
 						});
 	
 					d.calculateDescription();
-					d.triggerEvent("dataChanged.cr");
+					d.triggerDataChanged();
 					_this.hide();
 				}
 			}
@@ -2132,7 +2132,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						   a placeholder or a previously picked value.
 						 */
 						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
-						oldData.triggerEvent("dataChanged.cr", d);
+						oldData.triggerDataChanged();
 						successFunction();
 					}
 				}
