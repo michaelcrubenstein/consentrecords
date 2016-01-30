@@ -10,6 +10,7 @@ cr.urls = {
 		getValues : "/local/getvalues/",
 		getUserID : "/local/getuserid/",
 		getData : "/local/getdata/",
+		getCellData : "/api/getcelldata/",
 		getConfiguration : "/local/getconfiguration/",
 		createInstance : "/local/createinstance/",
 		addValue : "/local/addvalue/",

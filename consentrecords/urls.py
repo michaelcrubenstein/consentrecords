@@ -36,6 +36,7 @@ urlpatterns = [
 
     url(r'^local/getuserid/', views.getUserID),
     url(r'^local/getdata/', views.getData),
+    url(r'^local/getcelldata/', views.getCellData),
     url(r'^local/getconfiguration/', views.getConfiguration),
     url(r'^local/selectall/', views.selectAll),
     url(r'^local/getvalues/', views.getValues),
@@ -48,6 +49,7 @@ urlpatterns = [
     
     url(r'^api/getuserid/', views.getUserID),
     url(r'^api/getdata/', views.getData),
+    url(r'^api/getcelldata/', views.getCellData),
     url(r'^api/getconfiguration/', views.getConfiguration),
     url(r'^api/selectall/', views.selectAll),
     url(r'^api/getvalues/', views.getValues),

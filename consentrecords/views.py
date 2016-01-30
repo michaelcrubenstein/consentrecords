@@ -406,9 +406,9 @@ class api:
             
         return JsonResponse(results)
     
-    def _getCells(uuObject, fields, fieldsDataDictionary, nameLists, language, userInfo):
+    def _getFieldsData(uuObject, fieldsDataDictionary):
         if uuObject.typeID in fieldsDataDictionary:
-            fieldsData = fieldsDataDictionary[uuObject.typeID]
+            return fieldsDataDictionary[uuObject.typeID]
         else:
             configuration = uuObject.typeID.getSubInstance(Terms.configuration)
     
@@ -417,11 +417,15 @@ class api:
     
             fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
+            return fieldsData
+
+    def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
+        fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
         
         cells = uuObject.getData(fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
-                "description": uuObject.description(),
+                "description": uuObject.description(language),
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
@@ -437,7 +441,7 @@ class api:
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         return data;
-    
+        
     def getData(user, data):
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
@@ -456,9 +460,51 @@ class api:
             uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
-            p = [api._getCells(uuObject, fields, fieldsDataDictionary, nameLists, language, userInfo) for uuObject in uuObjects]        
+            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("getData data:%s" % str(data))
+            
+            results = {'success':False, 'error': str(e)}
+        
+        return JsonResponse(results)
+    
+    def _getValueData(v, fieldsDataDictionary, language, userInfo):
+        fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
+        data = v.getReferenceData(language)
+        data["value"]["cells"] = v.referenceValue.getData(fieldsData, language, userInfo)
+        return data;
+    
+    def getCellData(user, data):
+        pathparser.currentTimestamp = datetime.datetime.now()
+        try:
+            path = data.get('path', None)
+        
+            if not path:
+                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+            
+            # The field name for the values to find within the container object
+            fieldName = data.get('fieldName', None)
+        
+            if fieldName is None:
+                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
+            elif Terms.isUUID(fieldName):
+                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
+            else:
+                field = Terms.getNamedInstance(fieldName)
+                
+            language = data.get('language', None)
+
+            userInfo=UserInfo(user)
+            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
+            values = uuObjects[0].getReadableSubValues(field, userInfo)
+            fieldsDataDictionary = {}
+            p = [api._getValueData(v, fieldsDataDictionary, language, userInfo) for v in values]        
+        
+            results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -620,10 +666,20 @@ def getData(request):
     
     return api.getData(request.user, request.GET)
 
+def getCellData(request):
+    LogRecord.emit(request.user, 'consentrecords/getCellData', '')
+    
+    if request.method != "GET":
+        raise Http404("getCellData only responds to GET methods")
+    
+    return api.getCellData(request.user, request.GET)
+
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/getdata/':
             return getData(request)
+        if request.path_info == '/api/getcelldata/':
+            return getCellData(request)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
         elif request.path_info == '/api/selectall/':

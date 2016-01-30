@@ -1029,6 +1029,41 @@ cr.ObjectValue = (function() {
 			cell.setParent(this);
 		});
 	}
+	
+	/* Get all of the data associated with the sub-objects in the specified field */
+	ObjectValue.prototype.getCellData = function(fieldName, done, fail)
+	{
+		if (typeof(done) != "function")
+			throw "done is not a function";
+		if (typeof(fail) != "function")
+			throw "fail is not a function";
+		if (!this.getValueID())
+			throw "this item is not saved";
+		if (!fieldName)
+			throw "fieldName is not specified";
+		
+		var _this = this;
+	
+		var jsonArray = { "path" : "#" + this.getValueID(),
+						  "fieldName" : fieldName };
+		
+		$.getJSON(cr.urls.getCellData,
+			jsonArray, 
+			function(json)
+			{
+				if (json.success) {
+					var newObjects = json.objects.map(function(v)
+					{
+						return cr.ObjectCell.prototype.copyValue(v);
+					});
+					done(newObjects);
+				}
+				else {
+					fail(json.error);
+				}
+			}
+		);
+	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
 	{
@@ -1143,6 +1178,7 @@ cr.urls = {
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
+		getCellData : "/api/getcelldata/",
 		getConfiguration : "/api/getconfiguration/",
 		createInstance : "/api/createinstance/",
 		addValue : "/api/addvalue/",
