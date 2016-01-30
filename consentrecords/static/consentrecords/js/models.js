@@ -247,7 +247,9 @@ cr.EventHandler = (function()
 			if (e in this.events)
 			{
 				var a = this.events[e]
-				a.splice($.inArray(target, a), 1);
+				var index = $.inArray(target, a);
+				if (index >= 0)
+					a.splice(index, 1);
 			}
 		}
 
