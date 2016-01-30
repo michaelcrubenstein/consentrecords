@@ -1646,12 +1646,18 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		var panel2Div = sitePanel.appendScrollArea();
 
 		var headerDiv = panel2Div.appendHeader();
-		objectData.addTarget("dataChanged.cr", headerDiv.node());
-		$(headerDiv.node()).on("dataChanged.cr", function(e) {
-				var newText = getViewPanelHeader(objectData);
-				sitePanel.panelDiv.attr("headerText", newText);
-				d3.select(this).text(newText);
-			});
+		
+		var updateHeader = function(eventObject)
+		{
+			var newText = getViewPanelHeader(this);
+			sitePanel.panelDiv.attr("headerText", newText);
+			d3.select(eventObject.data).text(newText);
+		}
+		$(objectData).on("dataChanged.cr", null, headerDiv.node(), updateHeader);
+		$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, updateHeader);
+		});
 
 		panel2Div.appendAlertContainer();
 							
