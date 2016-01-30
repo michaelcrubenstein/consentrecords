@@ -283,9 +283,7 @@ cr.Cell = (function()
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
-				this.addTarget("valueAdded.cr", parent);
-				this.addTarget("valueDeleted.cr", parent);
-				this.addTarget("dataChanged.cr", parent);
+				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent.checkDescription);
 			}
 		};
 
@@ -314,8 +312,12 @@ cr.Cell = (function()
 		{
 			newValue.cell = this;		
 			this.data.push(newValue);
-			newValue.addTarget("dataChanged.cr", this);
-			newValue.addTarget("valueDeleted.cr", this);
+			$(newValue).on("dataChanged.cr", null, this, function(eventObject) {
+				$(eventObject.data).trigger("dataChanged.cr", eventObject.data);
+			});
+			$(newValue).on("valueDeleted.cr", null, this, function(eventObject) {
+				$(eventObject.data).trigger("valueDeleted.cr", newValue);
+			});
 		};
 		
 		Cell.prototype.addNewValue = function()
@@ -972,12 +974,18 @@ cr.ObjectValue = (function() {
 		return cell && cell.data.length && cell.data[0];
 	}
 		
-	ObjectValue.prototype.handleContentsChanged = function(e)
+	ObjectValue.prototype.handleContentsChanged = function()
 	{
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
 		if (this.getDescription() != oldDescription)
 			this.triggerDataChanged();
+	}
+	
+	/* this method is attached to a cell when its contents are changed. */
+	ObjectValue.prototype.checkDescription = function(eventObject)
+	{
+		eventObject.data.handleContentsChanged();
 	}
 
 	ObjectValue.prototype.importCell = function(oldCell)
@@ -1158,10 +1166,6 @@ cr.ObjectValue = (function() {
 		cr.CellValue.call(this);
 		this.value = {id: null, description: "None" };
 		this.isDataLoaded = false;
-		
-		$(this).on("dataChanged.cr", this.handleContentsChanged);
-		$(this).on("valueAdded.cr", this.handleContentsChanged);
-		$(this).on("valueDeleted.cr", this.handleContentsChanged);
 	};
 	
 	return ObjectValue;
