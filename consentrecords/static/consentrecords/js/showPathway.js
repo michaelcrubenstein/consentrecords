@@ -2888,6 +2888,9 @@ var EditExperiencePanel = (function () {
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
 				 new PickOrCreateOfferingCell(experience),
+				 experience.getCell("Start Date"),
+				 experience.getCell("End Date"),
+				 experience.getCell("Service"),
 				];
 				
 		panel2Div.showEditCells(cells);
