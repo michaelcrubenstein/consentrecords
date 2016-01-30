@@ -313,6 +313,7 @@ cr.Cell = (function()
 			newValue.cell = this;		
 			this.data.push(newValue);
 			newValue.addTarget("dataChanged.cr", this);
+			newValue.addTarget("valueDeleted.cr", this);
 		};
 		
 		Cell.prototype.addNewValue = function()
@@ -342,8 +343,6 @@ cr.Cell = (function()
 				remove(this.data, oldData);
 				oldData.cell = undefined;
 			}
-			oldData.triggerEvent("valueDeleted.cr");
-			this.triggerEvent("valueDeleted.cr", [oldData]);
 		};
 
 		/* The success function takes a single argument: the new value being created. */
@@ -395,9 +394,12 @@ cr.Cell = (function()
 			
 			if (field)
 			{
-			/* All cells propagate dataChanged.cr events from their children. */
+			/* All cells propagate dataChanged.cr events and valueDeleted events from their children. */
 				$(this).on("dataChanged.cr", function(e) {
 					this.triggerEvent("dataChanged.cr", this);
+				});
+				$(this).on("valueDeleted.cr", function(e, eventInfo) {
+					this.triggerEvent("valueDeleted.cr", eventInfo);
 				});
 			}
 		};
@@ -642,6 +644,14 @@ cr.CellValue = (function() {
 	
 	CellValue.prototype.clearValue = function() { this.value = null; };
 	
+	CellValue.prototype.triggerDeleteValue = function()
+	{
+		/* Delete from the cell first, so that other objects know the cell may be empty. */
+		if (this.cell)
+		    this.cell.deleteValue(this);
+		this.triggerEvent("valueDeleted.cr", this);
+	}
+	
 	CellValue.prototype.deleteValue = function(successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -668,8 +678,7 @@ cr.CellValue = (function() {
 						{
 							if (successFunction) 
 							{
-								if (_this.cell)
-									_this.cell.deleteValue(_this);
+								_this.triggerDeleteValue();
 								successFunction(_this);
 							}
 						}
@@ -685,8 +694,7 @@ cr.CellValue = (function() {
 			}
 			else
 			{
-				if (_this.cell)
-					_this.cell.deleteValue(_this);
+				_this.triggerDeleteValue();
 				successFunction(_this);
 			}
 		}
@@ -702,8 +710,7 @@ cr.CellValue = (function() {
 					{
 						if (successFunction) 
 						{
-							if (_this.cell)
-								_this.cell.deleteValue(_this);
+							_this.triggerDeleteValue();
 							successFunction(_this);
 						}
 					}
