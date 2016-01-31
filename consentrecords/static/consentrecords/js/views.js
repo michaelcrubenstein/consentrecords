@@ -212,42 +212,47 @@ function _getDataDescription(d) { return d.getDescription() }
 
 function _checkItemsDivDisplay(itemsDiv)
 {
-	var isVisible = itemsDiv.node().parentNode.classList.contains("unique");
+	var classList = itemsDiv.node().parentNode.classList;
+	var isVisible = classList.contains("unique");
+	var isEdit = classList.contains("edit");
 	
-	// Loop over cell.data instead of itemsDiv cells in case this test is done before
-	// the deleted cell is deleted or the added cell is added.
-	itemsDiv.selectAll("li").each(function(d) {
-		isVisible |= !d.isEmpty();
-	});
+	var items = itemsDiv.selectAll("li");
+	
+	if (isEdit)
+		isVisible |= items.size() > 0;
+	else
+		items.each(function(d) {
+			isVisible |= !d.isEmpty();
+		});
+		
 	itemsDiv.style("display", isVisible ? null : "none");
 }
 
 function _setupItemsDivHandlers(itemsDiv, cell)
 {
-	cell.addTarget("valueAdded.cr", itemsDiv.node());
-	cell.addTarget("valueDeleted.cr", itemsDiv.node());
-	cell.addTarget("dataChanged.cr", itemsDiv.node());
-	$(itemsDiv.node()).on("dataChanged.cr valueAdded.cr", function(e)
-		{
-			_checkItemsDivDisplay(itemsDiv);
-		});
-}
-
-function _setupEditItemsDivHandlers(itemsDiv, cell)
-{
 	node = itemsDiv.node();
-	cell.addTarget("valueAdded.cr", node);
-	cell.addTarget("valueDeleted.cr", node);
-	cell.addTarget("dataChanged.cr", node);
-	$(node).on("dataChanged.cr valueAdded.cr", function(e)
-		{
-			itemsDiv.style("display", cell.data.length ? "block" : "none");
-		});
-	$(node).on("remove", function(e)
+	function checkVisible(eventObject)
 	{
-		cell.removeTarget("valueAdded.cr", node);
-		cell.removeTarget("valueDeleted.cr", node);
-		cell.removeTarget("dataChanged.cr", node);
+		/* In this case, make the itemsDiv visible if the corresponding cell has any values (empty or otherwise) */
+		var classList = eventObject.data.parentNode.classList;
+		var isVisible = classList.contains("unique");
+		var isEdit = classList.contains("edit");
+		
+		if (isEdit)
+			isVisible |= this.data.length > 0;
+		else
+		{
+			this.data.forEach(function(d) {
+				isVisible |= !d.isEmpty();
+			});
+		}
+		
+		$(eventObject.data).css("display", isVisible ? "" : "none");
+	}
+	$(cell).on("dataChanged.cr", null, node, checkVisible);
+	$(node).on("remove", null, cell, function(eventObject)
+	{
+		$(eventObject.data).off("dataChanged.cr", null, checkVisible);
 	});
 }
 
@@ -262,8 +267,10 @@ function _setupItemHandlers(d)
 		{
 			$(eventObject.data).animate({height: "0px"}, 600, 'swing', function()
 			{
-				_checkItemsDivDisplay(d3.select(this.parentNode));
+				var parentNode = this.parentNode;
 				$(this).remove();
+				/* Now that the item is removed, check whether its container should be visible. */
+				_checkItemsDivDisplay(d3.select(parentNode));
 			});
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
@@ -345,6 +352,7 @@ function _showEditStringCell(obj, cell, inputType)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -371,12 +379,12 @@ function _showEditStringCell(obj, cell, inputType)
 		
 		appendControls(divs, cell);
 
-		_setupEditItemsDivHandlers(itemsDiv, cell);
 		function appendNewValue(eventObject, newValue)
 			{
 				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, this);	
+				appendControls(div, this);
+				$(eventObject.data).css("display", "");	
 			}
 		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
 		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
@@ -428,6 +436,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 			      .text(this.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, this);
 
 		var divs = appendItems(itemsDiv, this.data);
 		
@@ -451,13 +460,13 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 		
 		appendControls(divs, this);
 
-		_setupEditItemsDivHandlers(itemsDiv, this);
 		var _this = this;
 		function appendNewValue(eventObject, newValue)
 			{
 				var div = appendItem(d3.select(eventObject.data), newValue);
 				
 				appendControls(div, this);	
+				$(eventObject.data).css("display", "");	
 			}
 		$(this).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
 		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
@@ -526,6 +535,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -548,12 +558,12 @@ function _showEditTranslationCell(obj, cell, inputType)
 		
 		appendControls(divs, cell);
 
-		_setupEditItemsDivHandlers(itemsDiv, cell);
 		function appendNewValue(eventObject, newValue)
 			{
 				var div = appendItem(d3.select(eventObject.data), newValue);
 				
 				appendControls(div, this);	
+				$(eventObject.data).css("display", "");	
 			}
 		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
 		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
@@ -568,21 +578,20 @@ function _showEditTranslationCell(obj, cell, inputType)
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
 	the viewFunction is called when the item is clicked.
-	the successfunction is called when the viewFunction succeeds.
  */
 function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 {
-	return function(e, newValue)
+	return function(eventObject, newValue)
 	{
-		var itemsDiv = d3.select(this);
-		var cell = newValue.cell;
+		var cell = this;
+		var itemsDiv = d3.select(eventObject.data);
 		
-		var previousPanelNode = $(this).parents(".site-panel")[0];
-		var divs = appendItem(itemsDiv, newValue);
+		var previousPanelNode = $(itemsDiv.node()).parents(".site-panel")[0];
+		var item = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(itemsDiv);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
-		divs.style("display", 
+		item.style("display", 
 				   (cell.field.capacity === "_unique value" || newValue.getValueID()) ? null : "none");
 				   
 		if (cell.field.capacity != "_unique value")
@@ -592,17 +601,17 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 				d3.select(eventObject.data).style("display", 
 					   this.getValueID() || this.value.cells.length > 0 ? null : "none");
 			}
-			$(newValue).on("dataChanged.cr", null, divs.node(), checkVisible);
-			$(divs.node()).on("remove", null, newValue, function(eventObject)
+			$(newValue).on("dataChanged.cr", null, item.node(), checkVisible);
+			$(item.node()).on("remove", null, newValue, function(eventObject)
 			{
 				$(eventObject.data).off("dataChanged.cr", null, checkVisible);
 			});
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
-			appendConfirmDeleteControls(divs);
+			appendConfirmDeleteControls(item);
 		
-		var buttons = appendRowButtons(divs);
+		var buttons = appendRowButtons(item);
 
 		buttons.on("click", function(d) {
 			if (prepareClick())
@@ -983,6 +992,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 {
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
+	_setupItemsDivHandlers(itemsDiv, this);
 
 	if (this.field.capacity === "_unique value")
 	{
@@ -996,9 +1006,14 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 				}
 			});
 	}
+	
+	var addedFunction = getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel);
 
-	_setupItemsDivHandlers(itemsDiv, this);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel));
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunction);
+		});
 	
 	var clickFunction;
 	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
@@ -1055,8 +1070,14 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	else
 		viewFunction = showEditObjectPanel;
 		
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, viewFunction));
+	var addedFunction = getOnValueAddedFunction(true, true, viewFunction);
 
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunction);
+		});
+	
 	var divs = appendItems(itemsDiv, this.data);
 	
 	if (this.field.capacity != "_unique value")
@@ -1388,15 +1409,12 @@ var SitePanel = (function () {
 						section.append("label").text(cell.field.name);
 						section.append("ol").classed("items-div", true);
 						cell.show(this, _this.node());
-						if (!cell.isEmpty())
-							$(this).css("display", "block");
-						else
-							$(this).css("display", "none");
+						$(this).css("display", cell.isEmpty() ? "none" : "");
 					
 						/* Make sure the section gets shown if a value is added to it. */
 						var checkDisplay = function(eventObject, newValue)
 						{
-							$(this).css("display", this.isEmpty() ? "none" : null);
+							$(eventObject.data).css("display", this.isEmpty() ? "none" : "");
 						}
 						$(cell).on("valueAdded.cr dataChanged.cr", null, this, checkDisplay);
 						$(this).on("remove", null, cell, function(eventObject)
@@ -1862,7 +1880,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -1890,25 +1908,35 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			.datum(cell);
 		
 		_setupItemsDivHandlers(itemsDiv, cell);
-		itemsDiv.node().onValueAdded = getOnValueAddedFunction(false, true, showViewObjectPanel);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
-		{
-			this.onValueAdded(e, newData);
-			if (sortFunction)
-			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		});
-		$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
-		{
-			if (sortFunction)
-			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		});
 
+		var addedFunction = getOnValueAddedFunction(false, true, showViewObjectPanel);
+		var addedFunctionWithSort = function(eventObject, newValue)
+		{
+			addedFunction.call(this, eventObject, newValue);
+			if (sortFunction)
+			{
+				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
+		}
+		
+		var dataChangedFunction = function(eventObject, newData)
+		{
+			if (sortFunction)
+			{
+				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
+		}
+
+		$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+		$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
+				$(eventObject.data).off("dataChanged.cr", null, dataChangedFunction);
+			});
+	
 		appendViewCellItems(itemsDiv, cell, 
 			function(d) {
 				if (prepareClick())
@@ -1984,18 +2012,28 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		.datum(cell);
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	itemsDiv.node().onValueAdded = getOnValueAddedFunction(true, true, showEditObjectPanel);
-	$(itemsDiv.node()).on("valueAdded.cr", function(e, newValue)
+	
+	var addedFunction = getOnValueAddedFunction(true, true, showEditObjectPanel);
+	var addedFunctionWithSort = function(eventObject, newValue)
 	{
-		this.onValueAdded(e, newValue);
+		addedFunction.call(this, eventObject, newValue);
 		if (sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
-	});
-	$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
+	}
+	
+	var dataChangedFunction = function(eventObject, newData)
 	{
 		if (sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
-	});
+	}
+
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+	$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
+			$(eventObject.data).off("dataChanged.cr", null, dataChangedFunction);
+		});
 
 	appendEditCellItems(itemsDiv, cell, 
 		function(d) {
