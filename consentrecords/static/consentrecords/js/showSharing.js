@@ -18,6 +18,37 @@ var crs = {
 	}
 };
 
+/* Produces a function which adds new value view to a container view
+	when the new data is added.
+	the viewFunction is called when the item is clicked.
+ */
+function onUserAdded(itemsDivNode, newValue)
+{
+	var previousPanelNode = $(itemsDivNode).parents(".site-panel")[0];
+	var itemsDiv = d3.select(itemsDivNode);
+	var item = appendItem(itemsDiv, newValue);
+	_checkItemsDivDisplay(itemsDiv);
+	
+	item.style("display", null);
+			   
+	appendConfirmDeleteControls(item);
+	
+	var buttons = appendRowButtons(item);
+
+	buttons.on("click", function(d) {
+		if (prepareClick())
+		{
+			showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
+		}
+	});
+	
+	appendDeleteControls(buttons);
+	appendRightChevrons(buttons);
+
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+}
+
 function showSharing(containerDiv) {
 	var allExperiences = [];
 	
@@ -93,17 +124,6 @@ function showSharing(containerDiv) {
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add user or group");
 	}
-	
-	var accessRecordCell = userInstance.getCell("_access record");
-	accessRecordCell.addTarget("valueAdded.cr", containerDiv);
-	$(containerDiv).on("remove", function()
-	{
-		accessRecordCell.removeTrigger("valueAdded.cr", containerDiv);
-	});
-	$(containerDiv).on("valueAdded.cr", function(e, newData)
-		{
-			asyncFailFunction("Value Added: " + newData.toString())
-		});
 	
 	function getPrivileges(enumerators)
 	{
@@ -248,12 +268,15 @@ function addAccessor(userInstance, accessorLevel)
 			{
 				function _createAccessRecordSuccess(newData)
 				{
-					var userCell = newData.getCell(cellName);
-					var newValue = userCell.data[0];
-					accessorLevel.accessRecords.push(newValue);
-					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					getOnValueAddedFunction(true, true, showViewObjectPanel).call(accessRecordCell, {data: itemsDiv}, newValue);
-					hidePanelRight(currentPanelNode);
+					newData.checkCells(undefined, function() {
+						var userCell = newData.getCell(cellName);
+						var newValue = userCell.data[0];
+						accessorLevel.accessRecords.push(newData);
+						var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
+						onUserAdded(itemsDiv, newValue);
+						hidePanelRight(currentPanelNode);
+					},
+					syncFailFunction);
 				}
 
 				// Create an instance of an access record with this accessor level
@@ -265,11 +288,10 @@ function addAccessor(userInstance, accessorLevel)
 			}
 			else
 			{
-				function _createAccessRecordSuccess(newValue)
+				function _addUserSuccess(newValue)
 				{
-					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					getOnValueAddedFunction(true, true, showViewObjectPanel).call(accessRecordCell, {data: itemsDiv}, newValue);
+					onUserAdded(itemsDiv, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 
@@ -277,7 +299,7 @@ function addAccessor(userInstance, accessorLevel)
 				var ar = accessorLevel.accessRecords[0]
 				ar.checkCells(undefined, function()
 				{
-					ar.getCell(cellName).addObjectValue(pickedUser, _createAccessRecordSuccess, syncFailFunction);
+					ar.getCell(cellName).addObjectValue(pickedUser, _addUserSuccess, syncFailFunction);
 				}, syncFailFunction);
 			}
 		}
