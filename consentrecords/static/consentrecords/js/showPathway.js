@@ -1934,18 +1934,16 @@ var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype = new SitePanel();
 	ExperienceDetailPanel.prototype.experience = null;
 	
-	ExperienceDetailPanel.prototype.setupTarget = function(targetNode, d, cellName)
+	ExperienceDetailPanel.prototype.setupTarget = function(targetNode, d, cellName, update)
 	{
 		var pickDatum = d.getCell(cellName).data[0];
 		
-		pickDatum.addTarget("dataChanged.cr", targetNode);
-		pickDatum.addTarget("valueAdded.cr", targetNode);
-		pickDatum.addTarget("valueDeleted.cr", targetNode);
+		$(pickDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
+		
 		$(targetNode).on("remove", function() {
-			pickDatum.removeTarget("dataChanged.cr", targetNode);
-			pickDatum.removeTarget("valueAdded.cr", targetNode);
-			pickDatum.removeTarget("valueDeleted.cr", targetNode);
+			$(pickDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
 		});
+		update.call(this, {data: targetNode});
 	}
 	
 	ExperienceDetailPanel.prototype.setupPickOrCreateTarget = function(targetNode, experience, pickedName, createName, update)
@@ -1953,22 +1951,14 @@ var ExperienceDetailPanel = (function () {
 		var pickDatum = experience.getCell(pickedName).data[0];
 		var createDatum = experience.getCell(createName).data[0];
 		
-		pickDatum.addTarget("dataChanged.cr", targetNode);
-		pickDatum.addTarget("valueAdded.cr", targetNode);
-		pickDatum.addTarget("valueDeleted.cr", targetNode);
-		createDatum.addTarget("dataChanged.cr", targetNode);
-		createDatum.addTarget("valueAdded.cr", targetNode);
-		createDatum.addTarget("valueDeleted.cr", targetNode);
+		$(pickDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
+		$(createDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
+		
 		$(targetNode).on("remove", function() {
-			pickDatum.removeTarget("dataChanged.cr", targetNode);
-			pickDatum.removeTarget("valueAdded.cr", targetNode);
-			pickDatum.removeTarget("valueDeleted.cr", targetNode);
-			createDatum.removeTarget("dataChanged.cr", targetNode);
-			createDatum.removeTarget("valueAdded.cr", targetNode);
-			createDatum.removeTarget("valueDeleted.cr", targetNode);
+			$(pickDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
+			$(createDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
 		});
-		$(targetNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", update);
-		$(targetNode).trigger("dataChanged.cr");
+		update.call(this, {data: targetNode});
 	}
 	
 	function ExperienceDetailPanel(experience, previousPanel) {
@@ -2025,14 +2015,14 @@ var ExperienceDetailPanel = (function () {
 
 		var organizationNameDiv = orgDiv.append("label");
 		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Organization", "User Entered Organization", 
-			function() {
+			function(eventObject) {
 				var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
-				d3.select(this).text(organization);
+				d3.select(eventObject.data).text(organization);
 			});
 
 		var siteNameDiv = orgDiv.append('div')
 				.classed("address-line", true);
-		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Site", "User Entered Site", function() {
+		this.setupPickOrCreateTarget(siteNameDiv.node(), experience, "Site", "User Entered Site", function() {
 			var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
 			var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
 			if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
@@ -2042,8 +2032,7 @@ var ExperienceDetailPanel = (function () {
 		});
 		
 		var siteAddressDiv = orgDiv.append('div');
-		this.setupTarget(siteAddressDiv.node(), experience, "Site");
-		$(siteAddressDiv.node()).on("valueAdded.cr dataChanged.cr valueDeleted.cr",
+		this.setupTarget(siteAddressDiv.node(), experience, "Site",
 			function() {
 				siteAddressDiv.selectAll('div').remove();
 				var site = experience.getValue("Site");
@@ -2082,8 +2071,7 @@ var ExperienceDetailPanel = (function () {
 						function() { }
 					);
 				}
-			})
-			.trigger("dataChanged.cr");
+			});
 		
 		var firstDiv = null;
 		var nextDiv;
@@ -2621,25 +2609,17 @@ var PickOrCreateCell = (function () {
 	{
 		var pickValue = this.pickCell.data[0];
 		var createValue = this.createCell.data[0];
-		pickValue.addTarget("valueAdded.cr", textNode);
-		pickValue.addTarget("valueDeleted.cr", textNode);
-		pickValue.addTarget("dataChanged.cr", textNode);
-		createValue.addTarget("valueAdded.cr", textNode);
-		createValue.addTarget("valueDeleted.cr", textNode);
-		createValue.addTarget("dataChanged.cr", textNode);
 		
 		var _this = this;
-		$(textNode).on("valueAdded.cr dataChanged.cr valueDeleted.cr", function(e) {
-				d3.select(textNode).text(_this.getDescription());
-			});
-
-		$(textNode).on("remove", function() {
-			pickValue.removeTarget("valueAdded.cr", textNode);
-			pickValue.removeTarget("valueDeleted.cr", textNode);
-			pickValue.removeTarget("dataChanged.cr", textNode);
-			createValue.removeTarget("valueAdded.cr", textNode);
-			createValue.removeTarget("valueDeleted.cr", textNode);
-			createValue.removeTarget("dataChanged.cr", textNode);
+		var f = function(eventObject)
+		{
+			d3.select(eventObject.data).text(_this.getDescription());
+		}
+		$(pickValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, textNode, f);
+		$(createValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, textNode, f);
+		$(textNode).on("remove", null, null, function() {
+			$(pickValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, f);
+			$(createValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, f);
 		});
 	}
 	
