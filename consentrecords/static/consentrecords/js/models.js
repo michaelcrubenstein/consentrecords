@@ -349,44 +349,6 @@ cr.Cell = (function()
 			}
 		};
 
-		/* The success function takes a single argument: the new value being created. */
-		Cell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
-			{
-				if (!failFunction)
-					throw ("failFunction is not specified");
-				if (!successFunction)
-					throw ("successFunction is not specified");
-				if (!this.parent.getValueID())
-					throw("cell parent does not have an ID")
-				var _this = this;
-				$.post(cr.urls.addValue, 
-						{ path: '#' + this.parent.getValueID(),
-						  fieldName: this.field.nameID,
-						  valueUUID: initialData.getValueID(),
-						  timezoneoffset: new Date().getTimezoneOffset()
-						})
-					  .done(function(json, textStatus, jqXHR)
-						{
-							if (json.success) {
-								closealert();
-								var newData = _this.newValue();
-								newData.id = json.id;
-								newData.value.description = initialData.getDescription();
-								newData.value.id = initialData.getValueID();
-								_this.addValue(newData);
-								successFunction(newData);
-							}
-							else {
-								failFunction(json.error);
-							}
-						})
-					  .fail(function(jqXHR, textStatus, errorThrown)
-							{
-								cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-							}
-						);
-			};
-			
 		Cell.prototype.newValue = function() {
 			throw "newValue must be overwritten by a subclass";
 		}
@@ -632,6 +594,44 @@ cr.ObjectCell = (function() {
 		initialData[this.field.id] = newData;
 	}
 
+	/* The success function takes a single argument: the new value being created. */
+	ObjectCell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
+		{
+			if (!failFunction)
+				throw ("failFunction is not specified");
+			if (!successFunction)
+				throw ("successFunction is not specified");
+			if (!this.parent.getValueID())
+				throw("cell parent does not have an ID")
+			var _this = this;
+			$.post(cr.urls.addValue, 
+					{ path: '#' + this.parent.getValueID(),
+					  fieldName: this.field.nameID,
+					  valueUUID: initialData.getValueID(),
+					  timezoneoffset: new Date().getTimezoneOffset()
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json.success) {
+							closealert();
+							var newData = _this.newValue();
+							newData.id = json.id;
+							newData.setDescription(initialData.getDescription());
+							newData.value.id = initialData.getValueID();
+							_this.addValue(newData);
+							successFunction(newData);
+						}
+						else {
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown)
+						{
+							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						}
+					);
+		};
+		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
 	}
