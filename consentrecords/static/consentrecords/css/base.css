@@ -78,6 +78,14 @@ nav .site-left-chevron {
 	margin-left: 18px;	/* Same as the width of the .site-left-chevron-span, above. */
 } 
 
+nav.bottom {
+	position: fixed;
+	bottom: 0px;
+	width: 100%;
+	padding: 6px 12px;
+	border-top: 1px solid #eee;
+}
+
 panel.view>.panel-fill>header
 {
 	width: 100%;

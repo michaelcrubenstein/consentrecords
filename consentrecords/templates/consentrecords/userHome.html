@@ -99,12 +99,6 @@
     		margin-top: 15px;
     		margin-left: 45px;
     	}
-    	.share-container {
-    		position: fixed;
-    		bottom: 0px;
-    		width: 100%;
-    		padding: 6px 12px;
-    	}
     	#id_offerings > p {
     		padding: 6px 12px;
     	}
@@ -437,6 +431,7 @@
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
+	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
@@ -466,7 +461,7 @@
 		var userInstance = new cr.ObjectValue();
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
-		userInstance.value.description = "{{ user.get_full_name }}"
+		userInstance.setDescription("{{ user.get_full_name }}")
 		crp.pushCheckCells(userInstance, function() 
 			{
 				userInstance.triggerEvent("signin.cr", userInstance);
@@ -988,7 +983,7 @@
 				{
 					/* Show all of the items. */
 					d3.select(node).selectAll("div")
-						.style("display", "block");
+						.style("display", null);
 				}
 				else
 				{
@@ -997,7 +992,7 @@
 						.style("display", function(d)
 							{
 								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-									return "block";
+									return null;
 								else
 									return "none";
 							});
@@ -1031,7 +1026,7 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.value.cells[0].data[0].value.description;
+						return d.value.cells[0].data[0].getDescription();
 					});
 			}
 			
@@ -1383,7 +1378,9 @@
 			
 			var buttonDiv = navContainer.appendRightButton();
 			
-			var shareDiv = sitePanel.panelDiv.append("nav");
+			var shareDiv = null;
+			if (service)
+				shareDiv = sitePanel.appendBottomNavContainer();
 			var targetHRef;
 
 			var panel2Div = sitePanel.appendScrollArea();
@@ -1475,12 +1472,12 @@
 						
 					if (service)
 					{
-						shareDiv.classed("share-container always-visible border-above", true);
+						shareDiv.div.classed("share-container always-visible border-above", true);
 
 						targetHRef = window.location.origin+"/find/"+service.value.id+"/"+session.value.id;
 
 						setMetaProperties(session, targetHRef);
-						var fbDiv = shareDiv.append("div")
+						var fbDiv = shareDiv.div.append("div")
 							.classed("fb-share-button", true)
 							.attr("data-href", targetHRef)
 							.attr("data-layout", "button_count");
@@ -1901,7 +1898,7 @@
 				var cell = cr.createCell(field);
 				cell.setup(null);
 				
-				orgSection.style("display", newInstances.length > 0 ? "block" : "none");
+				orgSection.style("display", newInstances.length > 0 ? null : "none");
 				
 				var divs = orgSection.selectAll("li")
 					.data(newInstances)
@@ -2518,7 +2515,7 @@
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll(".row-button")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -2527,7 +2524,7 @@
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});

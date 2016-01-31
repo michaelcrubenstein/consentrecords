@@ -153,22 +153,6 @@ function showPanelLeft(panelNode)
 						});
 }
 
-function hidePanelDown(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "down"}, 400,
-		function() {
-			if (doRemove)
-				$(this).remove();
-			unblockClick();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
 function hidePanelRight(panelNode, doRemove, completeFunction)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
@@ -194,15 +178,6 @@ function handleCloseRightEvent() {
 	d3.event.preventDefault();
 }
 
-function handleCloseDownEvent() {
-	if (!_isClickBlocked())
-	{
-		_blockClick();
-		hidePanelDown($(this).parents(".site-panel")[0]);
-	}
-	d3.event.preventDefault();
-}
-
 function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
@@ -214,15 +189,20 @@ function _isPickCell(cell)
 }
 
 function _pushTextChanged(d) {
-	d.addTarget("dataChanged.cr", this);
-	$(this).on("dataChanged.cr", function(e) {
-			d3.select(this).text(d.getDescription());
-		});
-	if (d.cell && d.cell.field.capacity == "_unique value")
+	var f = function(eventObject) {
+		d3.select(eventObject.data).text(this.getDescription());
+	}
+	
+	$(d).on("dataChanged.cr", null, this, f);
+	$(this).on("remove", null, d, function(eventObjects) {
+		$(this.eventObject).off("dataChanged.cr", null, this, f);
+	});
+	
+	if (d.cell && d.cell.field.capacity === "_unique value")
 	{
-		d.addTarget("valueDeleted.cr", this);
-		$(this).on("valueDeleted.cr", function(e) {
-			d3.select(this).text(d.getDescription());
+		$(d).on("valueDeleted.cr", null, this, f);
+		$(this).on("remove", null, d, function(eventObjects) {
+			$(this.eventObject).off("valueDeleted.cr", null, this, f);
 		});
 	}
 }
@@ -232,42 +212,47 @@ function _getDataDescription(d) { return d.getDescription() }
 
 function _checkItemsDivDisplay(itemsDiv)
 {
-	var isVisible = itemsDiv.node().parentNode.classList.contains("unique");
+	var classList = itemsDiv.node().parentNode.classList;
+	var isVisible = classList.contains("unique");
+	var isEdit = classList.contains("edit");
 	
-	// Loop over cell.data instead of itemsDiv cells in case this test is done before
-	// the deleted cell is deleted or the added cell is added.
-	itemsDiv.selectAll("li").each(function(d) {
-		isVisible |= !d.isEmpty();
-	});
-	itemsDiv.style("display", isVisible ? "block" : "none");
+	var items = itemsDiv.selectAll("li");
+	
+	if (isEdit)
+		isVisible |= items.size() > 0;
+	else
+		items.each(function(d) {
+			isVisible |= !d.isEmpty();
+		});
+		
+	itemsDiv.style("display", isVisible ? null : "none");
 }
 
 function _setupItemsDivHandlers(itemsDiv, cell)
 {
-	cell.addTarget("valueAdded.cr", itemsDiv.node());
-	cell.addTarget("valueDeleted.cr", itemsDiv.node());
-	cell.addTarget("dataChanged.cr", itemsDiv.node());
-	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
-		{
-			_checkItemsDivDisplay(itemsDiv);
-		});
-}
-
-function _setupEditItemsDivHandlers(itemsDiv, cell)
-{
 	node = itemsDiv.node();
-	cell.addTarget("valueAdded.cr", node);
-	cell.addTarget("valueDeleted.cr", node);
-	cell.addTarget("dataChanged.cr", node);
-	$(node).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
-		{
-			itemsDiv.style("display", cell.data.length ? "block" : "none");
-		});
-	$(node).on("remove", function(e)
+	function checkVisible(eventObject)
 	{
-		cell.removeTarget("valueAdded.cr", node);
-		cell.removeTarget("valueDeleted.cr", node);
-		cell.removeTarget("dataChanged.cr", node);
+		/* In this case, make the itemsDiv visible if the corresponding cell has any values (empty or otherwise) */
+		var classList = eventObject.data.parentNode.classList;
+		var isVisible = classList.contains("unique");
+		var isEdit = classList.contains("edit");
+		
+		if (isEdit)
+			isVisible |= this.data.length > 0;
+		else
+		{
+			this.data.forEach(function(d) {
+				isVisible |= !d.isEmpty();
+			});
+		}
+		
+		$(eventObject.data).css("display", isVisible ? "" : "none");
+	}
+	$(cell).on("dataChanged.cr", null, node, checkVisible);
+	$(node).on("remove", null, cell, function(eventObject)
+	{
+		$(eventObject.data).off("dataChanged.cr", null, checkVisible);
 	});
 }
 
@@ -278,18 +263,26 @@ function _setupItemHandlers(d)
 	 */
 	if ($(this).parents(".multiple").length > 0)
 	{
-		$(this).on("valueDeleted.cr", function(e, newData)
+		var f = function(eventObject)
 		{
-			$(this).off("valueDeleted.cr");
-			$(this).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+			$(eventObject.data).animate({height: "0px"}, 600, 'swing', function()
+			{
+				var parentNode = this.parentNode;
+				$(this).remove();
+				/* Now that the item is removed, check whether its container should be visible. */
+				_checkItemsDivDisplay(d3.select(parentNode));
+			});
+		}
+		$(d).one("valueDeleted.cr", null, this, f);
+		$(this).on("remove", this, d, function(eventObject)
+		{
+			$(eventObject.data).off("valueDeleted.cr", null, f);
 		});
-		d.addTarget("valueDeleted.cr", this);
 	}
 
-	$(this).on("remove", function(e)
+	$(this).on("remove", null, d, function(eventObject)
 	{
-		d.removeTarget("valueDeleted.cr");
-		d.removeTarget("dataChanged.cr");
+		d.removeTarget("dataChanged.cr", this);
 	});
 }
 
@@ -311,10 +304,15 @@ function _showViewStringCell(obj, cell)
 	}
 	
 	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+	
+	function addedValue(eventObject, newValue)
+	{
+		setupItems(appendItem(d3.select(eventObject.data), newValue), this);
+	}
+	$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedValue);
+	$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
 		{
-			setupItems(
-				d3.select(this).append("li"), cell);
+			$(eventObject.data).off("valueAdded.cr", null, addedValue);
 		});
 	
 	var divs = appendItems(itemsDiv, cell.data);
@@ -354,6 +352,7 @@ function _showEditStringCell(obj, cell, inputType)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -380,13 +379,17 @@ function _showEditStringCell(obj, cell, inputType)
 		
 		appendControls(divs, cell);
 
-		_setupEditItemsDivHandlers(itemsDiv, cell);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, cell);	
+				appendControls(div, this);
+				$(eventObject.data).css("display", "");	
+			}
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -433,6 +436,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 			      .text(this.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, this);
 
 		var divs = appendItems(itemsDiv, this.data);
 		
@@ -456,14 +460,18 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 		
 		appendControls(divs, this);
 
-		_setupEditItemsDivHandlers(itemsDiv, this);
 		var _this = this;
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, _this);	
+				appendControls(div, this);	
+				$(eventObject.data).css("display", "");	
+			}
+		$(this).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -527,6 +535,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 			      .text(cell.field.name);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
+		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
 		
@@ -549,13 +558,17 @@ function _showEditTranslationCell(obj, cell, inputType)
 		
 		appendControls(divs, cell);
 
-		_setupEditItemsDivHandlers(itemsDiv, cell);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, cell);	
+				appendControls(div, this);	
+				$(eventObject.data).css("display", "");	
+			}
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -565,36 +578,40 @@ function _showEditTranslationCell(obj, cell, inputType)
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
 	the viewFunction is called when the item is clicked.
-	the successfunction is called when the viewFunction succeeds.
  */
 function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 {
-	return function(e, value)
+	return function(eventObject, newValue)
 	{
-		var itemsDiv = d3.select(this);
-		var cell = value.cell;
+		var cell = this;
+		var itemsDiv = d3.select(eventObject.data);
 		
-		var previousPanelNode = $(this).parents(".site-panel")[0];
-		var divs = appendItem(itemsDiv, value);
+		var previousPanelNode = $(itemsDiv.node()).parents(".site-panel")[0];
+		var item = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(itemsDiv);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
-		divs.style("display", 
-				   (cell.field.capacity === "_unique value" || value.getValueID()) ? "block" : "none");
+		item.style("display", 
+				   (cell.field.capacity === "_unique value" || newValue.getValueID()) ? null : "none");
 				   
 		if (cell.field.capacity != "_unique value")
 		{
-			value.addTarget("dataChanged.cr", divs.node());
-			$(divs.node()).on("dataChanged.cr", function(e) {
-					d3.select(this).style("display", 
-					   value.getValueID() || value.value.cells.length > 0 ? "block" : "none");
-				});
+			function checkVisible(eventObject)
+			{
+				d3.select(eventObject.data).style("display", 
+					   this.getValueID() || this.value.cells.length > 0 ? null : "none");
+			}
+			$(newValue).on("dataChanged.cr", null, item.node(), checkVisible);
+			$(item.node()).on("remove", null, newValue, function(eventObject)
+			{
+				$(eventObject.data).off("dataChanged.cr", null, checkVisible);
+			});
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
-			appendConfirmDeleteControls(divs);
+			appendConfirmDeleteControls(item);
 		
-		var buttons = appendRowButtons(divs);
+		var buttons = appendRowButtons(item);
 
 		buttons.on("click", function(d) {
 			if (prepareClick())
@@ -663,14 +680,6 @@ function appendDeleteControls(buttons)
 						unblockClick(); 
 						this.focus();
 					});
-
-// 				confirmButton
-// 					.animate({left: "calc(100% - " + autoWidth + "px)"}, 600, 'swing', 
-// 					function () 
-// 					{ 
-// 						unblockClick(); 
-// 						this.focus();
-// 					});
 			};
 			d3.event.preventDefault();
 		});
@@ -983,6 +992,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 {
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
+	_setupItemsDivHandlers(itemsDiv, this);
 
 	if (this.field.capacity === "_unique value")
 	{
@@ -996,9 +1006,14 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 				}
 			});
 	}
+	
+	var addedFunction = getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel);
 
-	_setupItemsDivHandlers(itemsDiv, this);
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(false, !_isPickCell(this), showViewObjectPanel));
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunction);
+		});
 	
 	var clickFunction;
 	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
@@ -1055,8 +1070,14 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	else
 		viewFunction = showEditObjectPanel;
 		
-	$(itemsDiv.node()).on("valueAdded.cr", getOnValueAddedFunction(true, true, viewFunction));
+	var addedFunction = getOnValueAddedFunction(true, true, viewFunction);
 
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunction);
+		});
+	
 	var divs = appendItems(itemsDiv, this.data);
 	
 	if (this.field.capacity != "_unique value")
@@ -1203,8 +1224,6 @@ function getTextWidth(text, font) {
 
 var SiteNavContainer = (function() {
 	SiteNavContainer.prototype.div = undefined;
-	SiteNavContainer.prototype.sitePanel = undefined;
-	SiteNavContainer.prototype.objectData = undefined;
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
@@ -1240,11 +1259,8 @@ var SiteNavContainer = (function() {
 		return h;
 	}
 	
-	function SiteNavContainer(sitePanel, objectData)
+	function SiteNavContainer(sitePanel)
 	{
-		this.sitePanel = sitePanel;
-		this.objectData = objectData;
-		
 		this.div = sitePanel.panelDiv.append("nav").classed("always-visible", true)
 					.attr("role", "navigation");
 	}
@@ -1296,7 +1312,7 @@ var SitePanel = (function () {
 			{
 				this.hide = function()
 					{
-						hidePanelDown(_this.node());
+						_this.hidePanelDown();
 					};
 			}
 			else
@@ -1317,6 +1333,13 @@ var SitePanel = (function () {
     SitePanel.prototype.appendNavContainer = function()
     {
 		return new SiteNavContainer(this);
+    }
+    
+    SitePanel.prototype.appendBottomNavContainer = function()
+    {
+    	var n = new SiteNavContainer(this);
+    	n.div.classed("bottom", true);
+    	return n;
     }
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
@@ -1343,9 +1366,15 @@ var SitePanel = (function () {
 	
 		panel2Div.appendSections = function(sectionData)
 		{
+			var i = 0;
 			return this
 					.selectAll("section")
-					.data(sectionData)
+					.data(sectionData, 
+						  function(d) {
+						  	/* Ensure that this operation appends without replacing any items. */
+						  	i += 1;
+						  	return i;
+						  })
 					.enter()
 					.append("section");
 		}
@@ -1369,9 +1398,9 @@ var SitePanel = (function () {
 			$(this.node()).height(newHeight);
 		}
 		
-		panel2Div.show_view_cells = function(objectData)
+		panel2Div.showViewCells = function(cells)
 		{
-			this.appendSections(objectData.value.cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
+			this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
@@ -1380,28 +1409,18 @@ var SitePanel = (function () {
 						section.append("label").text(cell.field.name);
 						section.append("ol").classed("items-div", true);
 						cell.show(this, _this.node());
-						if (!cell.isEmpty())
-							$(this).css("display", "block");
-						else
-							$(this).css("display", "none");
+						$(this).css("display", cell.isEmpty() ? "none" : "");
 					
 						/* Make sure the section gets shown if a value is added to it. */
-						cell.addTarget("valueAdded.cr", this);
-						$(this).on("valueAdded.cr", function(e, newData) {
-							$(this).css("display", "block");
-						});
-						
-						cell.addTarget("valueDeleted.cr", this);
-						$(this).on("valueDeleted.cr", function(e, newData) {
-							if (!cell.isEmpty())
-								$(this).css("display", "block");
-							else
-								$(this).css("display", "none");
-						});
-						
-						$(this).on("dataChanged.cr", function(e) {
-							$(this).css("display", "block");
-						});
+						var checkDisplay = function(eventObject, newValue)
+						{
+							$(eventObject.data).css("display", this.isEmpty() ? "none" : "");
+						}
+						$(cell).on("valueAdded.cr dataChanged.cr", null, this, checkDisplay);
+						$(this).on("remove", null, cell, function(eventObject)
+							{
+								$(eventObject.data).off("valueAdded.cr dataChanged.cr", null, checkDisplay);
+							});
 					})
 				.append("div").classed("cell-border-below", true);
 		}
@@ -1471,7 +1490,7 @@ var SitePanel = (function () {
 						});
 	
 					d.calculateDescription();
-					d.triggerEvent("dataChanged.cr");
+					d.triggerDataChanged();
 					_this.hide();
 				}
 			}
@@ -1494,6 +1513,35 @@ var SitePanel = (function () {
 		return panel2Div;
 	}
 	
+	SitePanel.prototype.datum = function()
+	{
+		return this.panelDiv.datum();
+	}
+	
+	SitePanel.prototype.hidePanelDown = function(doRemove, completeFunction)
+	{
+		doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
+	
+		closealert();
+		$(this.node()).trigger("hiding.cr");
+		$(this.node()).hide("slide", {direction: "down"}, 400,
+			function() {
+				if (doRemove)
+					$(this).remove();
+				unblockClick();
+				if (completeFunction)
+					completeFunction();
+			});
+	}
+	
+	SitePanel.prototype.handleCloseDownEvent = function()
+	{
+		if (!_isClickBlocked())
+		{
+			_blockClick();
+			this.hidePanelDown();
+		}
+	}
 	return SitePanel;
 })();
 	
@@ -1599,7 +1647,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.show_view_cells(objectData);
+		panel2Div.showViewCells(objectData.value.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -1635,17 +1683,23 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		var panel2Div = sitePanel.appendScrollArea();
 
 		var headerDiv = panel2Div.appendHeader();
-		objectData.addTarget("dataChanged.cr", headerDiv.node());
-		$(headerDiv.node()).on("dataChanged.cr", function(e) {
-				var newText = getViewPanelHeader(objectData);
-				sitePanel.panelDiv.attr("headerText", newText);
-				d3.select(this).text(newText);
-			});
+		
+		var updateHeader = function(eventObject)
+		{
+			var newText = getViewPanelHeader(this);
+			sitePanel.panelDiv.attr("headerText", newText);
+			d3.select(eventObject.data).text(newText);
+		}
+		$(objectData).on("dataChanged.cr", null, headerDiv.node(), updateHeader);
+		$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, updateHeader);
+		});
 
 		panel2Div.appendAlertContainer();
 							
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.show_view_cells(objectData);
+		panel2Div.showViewCells(objectData.value.cells);
 		
 		showSuccessFunction(sitePanel.node());
 	}
@@ -1703,10 +1757,10 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 				{
 					if (prepareClick())
 					{
-						if (objectData.cell.field.maxCapacity != "_unique value")
+						if (objectData.cell.field.capacity != "_unique value")
 						{
 							// In this case, delete the item on cancel. 
-							objectData.cell.deleteValue(objectData);
+							objectData.triggerDeleteValue();
 						}
 						sitePanel.hide();
 					}
@@ -1826,7 +1880,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -1835,7 +1889,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
@@ -1854,25 +1908,35 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			.datum(cell);
 		
 		_setupItemsDivHandlers(itemsDiv, cell);
-		itemsDiv.node().onValueAdded = getOnValueAddedFunction(false, true, showViewObjectPanel);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
-		{
-			this.onValueAdded(e, newData);
-			if (sortFunction)
-			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		});
-		$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
-		{
-			if (sortFunction)
-			{
-				itemsDiv.selectAll("li").sort(sortFunction);
-				cell.data.sort(sortFunction);
-			}
-		});
 
+		var addedFunction = getOnValueAddedFunction(false, true, showViewObjectPanel);
+		var addedFunctionWithSort = function(eventObject, newValue)
+		{
+			addedFunction.call(this, eventObject, newValue);
+			if (sortFunction)
+			{
+				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
+		}
+		
+		var dataChangedFunction = function(eventObject, newData)
+		{
+			if (sortFunction)
+			{
+				itemsDiv.selectAll("li").sort(sortFunction);
+				cell.data.sort(sortFunction);
+			}
+		}
+
+		$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+		$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
+				$(eventObject.data).off("dataChanged.cr", null, dataChangedFunction);
+			});
+	
 		appendViewCellItems(itemsDiv, cell, 
 			function(d) {
 				if (prepareClick())
@@ -1893,7 +1957,10 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", handleCloseDownEvent);
+		.on("click", function()
+		{
+			sitePanel.handleCloseDownEvent();
+		});
 	backButton.append("span").text("Done");
 	
 	var addButton = navContainer.appendRightButton()
@@ -1917,7 +1984,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
-				.style("display", "block");
+				.style("display", null);
 		}
 		else
 		{
@@ -1926,7 +1993,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				.style("display", function(d)
 					{
 						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-							return "block";
+							return null;
 						else
 							return "none";
 					});
@@ -1945,18 +2012,28 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		.datum(cell);
 
 	_setupItemsDivHandlers(itemsDiv, cell);
-	itemsDiv.node().onValueAdded = getOnValueAddedFunction(true, true, showEditObjectPanel);
-	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+	
+	var addedFunction = getOnValueAddedFunction(true, true, showEditObjectPanel);
+	var addedFunctionWithSort = function(eventObject, newValue)
 	{
-		this.onValueAdded(e, newData);
+		addedFunction.call(this, eventObject, newValue);
 		if (sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
-	});
-	$(itemsDiv.node()).on("dataChanged.cr", function(e, newData)
+	}
+	
+	var dataChangedFunction = function(eventObject, newData)
 	{
 		if (sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
-	});
+	}
+
+	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+	$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+		{
+			$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
+			$(eventObject.data).off("dataChanged.cr", null, dataChangedFunction);
+		});
 
 	appendEditCellItems(itemsDiv, cell, 
 		function(d) {
@@ -2058,7 +2135,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
 					}
-					hidePanelRight($(this).parents(".site-panel")[0]);
+					hidePanelRight(sitePanel.node());
 				}
 				d3.event.preventDefault();
 			});
@@ -2072,7 +2149,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -2081,7 +2158,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
@@ -2129,7 +2206,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						   a placeholder or a previously picked value.
 						 */
 						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
-						oldData.triggerEvent("dataChanged.cr", d);
+						oldData.triggerDataChanged();
 						successFunction();
 					}
 				}

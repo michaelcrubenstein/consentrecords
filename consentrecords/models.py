@@ -167,8 +167,7 @@ class Instance(dbmodels.Model):
                 self.addStringValue(field, value, position, transactionState)
         
     def _getSubValues(self, field):
-        vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
-        return list(vs)
+        return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
     # Returns a list of all of the values of self, aggregated by field.id
     def _getValues(self, userInfo):
@@ -242,7 +241,7 @@ class Instance(dbmodels.Model):
                         except Description.DoesNotExist:
                             r.append(v.referenceValue._description)
                 else:
-                    r.extend([v.stringValue for v in vs])
+                    r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
             elif descriptorType == Terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
@@ -370,18 +369,27 @@ class Instance(dbmodels.Model):
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
+    def getCellValues(dataTypeID, values, language=None):
+        if dataTypeID == Terms.objectEnum.id:
+            return [v.getReferenceData(language) for v in values]
+        elif dataTypeID == Terms.translationEnum.id:
+            return [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values]
+        else:
+            # Default case is that each datum in this cell contains a unique value.
+            return [{"id": v.id, "value": v.stringValue} for v in values]
+            
+    def getReadableSubValues(self, field, userInfo):
+        return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
+        	.order_by('position');
+    
+    
     def _getCellData(self, fieldData, values, language=None):
         cell = {"field": fieldData}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
             cell["data"] = []
-        elif fieldData["dataTypeID"] == Terms.objectEnum.id:
-            cell["data"] = [v.getReferenceData(language) for v in values[fieldID]]
-        elif fieldData["dataTypeID"] == Terms.translationEnum.id:
-            cell["data"] = [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values[fieldID]]
         else:
-            # Default case is that each datum in this cell contains a unique value.
-            cell["data"] = [{"id": v.id, "value": v.stringValue} for v in values[fieldID]]
+            cell["data"] = Instance.getCellValues(fieldData["dataTypeID"], values[fieldID], language)
         return cell
                 
     # Returns an array of arrays.
@@ -728,6 +736,13 @@ class Instance(dbmodels.Model):
         
         return self.securityValueFilter(f, privilegeIDs)
     
+    ### For the specified instance filter, filter only those instances that can be read by self.    
+    def readValueFilter(self, f):
+        privilegeIDs = [Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
+                      Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
+        
+        return self.securityValueFilter(f, privilegeIDs)
+    
     
     @property                
     def defaultCustomAccess(self):
@@ -869,6 +884,17 @@ class Value(dbmodels.Model):
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
+                          Q(value__deleteTransaction__isnull=True)\
+                        )
+        
+        return f.filter(Q(referenceValue__isnull=True)|
+                        Q(referenceValue__accessrecord__isnull=True)|
+                        Q(referenceValue__accessrecord__source__in=sources))
+
+    def anonymousReadFilter(f):
+        sources=Instance.objects.filter(\
+                          Q(value__field=Terms.publicAccess.id)&
+                          Q(value__referenceValue__in=[Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
@@ -1186,6 +1212,14 @@ class UserInfo:
             return resultSet
         else:
             return self.instance.findValueFilter(resultSet)
+
+    def readValueFilter(self, resultSet):
+        if not self.is_authenticated:
+            return Value.anonymousReadFilter(resultSet)
+        elif self.is_administrator:
+            return resultSet
+        else:
+            return self.instance.readValueFilter(resultSet)
 
     def readFilter(self, resultSet):
         if not self.is_authenticated:

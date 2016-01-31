@@ -1,242 +1,3 @@
-var DotsNavigator = (function () {
-	DotsNavigator.prototype.div = null;
-	DotsNavigator.prototype.panels = null;
-	DotsNavigator.prototype.doneButton = null;
-	DotsNavigator.prototype.backButton = null;
-	DotsNavigator.prototype.count = 0;
-	DotsNavigator.prototype.value = 0;
-	DotsNavigator.prototype.done = null;
-	DotsNavigator.prototype.finalText = "Add";
-	DotsNavigator.prototype.services = [];
-	DotsNavigator.prototype.datum = null;
-	DotsNavigator.prototype.sitePanel = null;
-	
-	/* Dots are followed by a set of panels, which can have the following functions:
-		onReveal: called each time the panel is revealed. Typically this is used
-				  to initialize the panel contents and then set to either null or a 
-				  different function for subsequent reveals.
-		onGoingForward: called when the panel is completed and the user clicks the 
-				  Next or Add button.
-		onCheckForwardEnabled: called to determine whether or not the go forward button
-				  is enabled for each panel.
-	 */
-	
-	DotsNavigator.prototype.setValue = function(newValue) {
-		var oldValue = this.value;
-	
-		var p = this.nthPanel(oldValue);
-		if (p.onDoneClicked)
-			p.onDoneClicked();
-		
-		this.value = newValue;
-		var li = this.div.selectAll("ol > li");
-		li.classed("active", function(d, i) { return i == newValue; });
-	
-		if (newValue > 0)
-			this.backButton.selectAll("span").text("Back");
-		else
-			this.backButton.selectAll("span").text("Cancel");
-	
-		if (newValue < this.count - 1)
-			this.doneButton.selectAll("span").text("Next");
-		else
-			this.doneButton.selectAll("span").text(this.finalText);
-		
-		p = this.nthPanel(newValue);
-		if (p.onReveal)
-			p.onReveal.call(p, this.datum);
-			
-		this.checkForwardEnabled();
-	
-		var containerWidth = $(this.div.node()).parent().width();
-	
-		if (oldValue < newValue)
-		{
-			while (oldValue < newValue)
-			{
-				var p = $(this.nthPanel(oldValue));
-				p.animate({left: -containerWidth}, 700, "swing");
-				++oldValue;
-			}
-			$(this.nthPanel(newValue))
-				.animate({left: 0}, 700, "swing");
-		}
-		else if (oldValue > newValue)
-		{
-			while (oldValue > newValue)
-			{
-				var p = $(this.nthPanel(oldValue));
-				p.animate({left: containerWidth}, 700, "swing");
-				--oldValue;
-			}
-			$(this.nthPanel(newValue))
-				.animate({left: 0}, 700, "swing");
-		}
-	}
-
-	DotsNavigator.prototype.nthPanel = function(n) {
-		return this.panels[0][n];
-	}
-	
-	DotsNavigator.prototype.showDots = function() {
-		this.checkForwardEnabled();
-// 		$(this.div.node()).animate({bottom: "30px"}, 400, "swing",
-// 						function() {
-// 						});
-
-	}
-	
-	DotsNavigator.prototype.getServiceByName = function(name)
-	{
-		for (i = 0; i < services.length; ++i)
-		{
-			if (services[i].getDescription() == name)
-				return services[i];
-		}
-		return null;
-	}
-	
-	DotsNavigator.prototype.appendBackButton = function(navContainer)
-	{
-		var _this = this;
-		this.backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick())
-				{
-					showClickFeedback(this);
-					if (_this.value > 0)
-					{
-						_this.setValue(_this.value - 1);
-						unblockClick();
-					}
-					else
-						hidePanelDown($(this).parents(".site-panel")[0]);
-				}
-				d3.event.preventDefault();
-			});
-		this.backButton.append("span").text("Cancel");
-	}
-	
-	DotsNavigator.prototype.goForward = function()
-	{
-		var _this = this;
-		var gotoNext = function()
-		{
-			if (_this.value == _this.count - 1)
-				_this.done();
-			else
-			{
-				_this.setValue(_this.value + 1);
-				unblockClick();
-			}
-		}
-		if (prepareClick())
-		{
-			if (this.isForwardEnabled())
-			{
-				showClickFeedback(this.doneButton.node());
-			
-				var p = this.nthPanel(this.value);
-				if (p.onGoingForward)
-					p.onGoingForward(gotoNext);
-				else
-					gotoNext();
-			}
-			else
-				unblockClick();
-		}
-	}
-	
-	DotsNavigator.prototype.appendForwardButton = function(navContainer, done)
-	{
-		var _this = this;
-		this.done = done;
-		
-		this.doneButton = navContainer.appendRightButton();
-		this.doneButton.append("span").text("Next");
-		this.doneButton.on("click", function(d) {
-			_this.goForward();
-			d3.event.preventDefault();
-		});
-	}
-	
-	DotsNavigator.prototype.isForwardEnabled = function()
-	{
-		var p = this.nthPanel(this.value);
-		return (p.onCheckForwardEnabled === undefined ||
-						 p.onCheckForwardEnabled());
-	}
-	
-	/* This method is called from within a panel when its content changes to determine
-		whether or not the go forward button is enabled. A panel that calls this method
-		should define a onCheckForwardEnabled function. 
-	 */
-	DotsNavigator.prototype.checkForwardEnabled = function()
-	{
-		var isEnabled = this.isForwardEnabled();
-		this.doneButton
-			.classed("site-disabled-text", !isEnabled)
-			.classed("site-active-text", isEnabled);
-	}
-	
-	function DotsNavigator(panel2Div, sitePanel, numDots) {
-		/* By default, the data is the dots object itself for backward compatibility.
-		 */
-		this.datum = this;
-		this.sitePanel = sitePanel;
-		
-		var dotIndexes = [];
-		for (var i = 0; i < numDots; i++)
-			dotIndexes.push(i);
-	
-		this.div = panel2Div.append('div')
-			.classed('dots', true);
-		var ol = this.div.append('div').append('ol');
-
-		var li = ol.selectAll('li')
-			.data(dotIndexes)
-			.enter()
-			.append('li')
-			.classed("active", function(d, i) { return i == 0; });
-			
-		this.panels = panel2Div.selectAll('panel')
-			.data(dotIndexes)
-			.enter()
-			.append('panel');
-
-		this.count = numDots;
-		this.value = 0;
-	
-		this.services = [];
-		this.doneButton = null;
-		this.backButton = null;
-	
-		var _this = this;
-		function layoutPanels()
-		{
-			var containerWidth = $(_this.div.node()).parent().width();
-			_this.panels.each(function(d, i)
-			{
-				if (i < _this.value)
-					$(this).offset({left: -containerWidth});
-				else if (i == _this.value)
-					$(this).offset({left: 0});
-				else
-					$(this).offset({left: containerWidth});
-			});
-		}
-	
-		$(window).on("resize", layoutPanels);
-		$(sitePanel.node()).on("hiding.cr", function()
-		{
-			$(window).off("resize", layoutPanels);
-		});
-	}
-	
-	return DotsNavigator;
-})();
-
 function hidePathway() {
 	var container = d3.select(this);
 	container.selectAll('svg').remove();
@@ -312,53 +73,6 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
-var ExperienceChangeBroadcaster = (function () {
-	ExperienceChangeBroadcaster.prototype = new cr.EventHandler();
-	ExperienceChangeBroadcaster.prototype.experience = null;
-	
-	ExperienceChangeBroadcaster.prototype.setupHandler = function(d)
-	{
-		d.addTarget("dataChanged.cr", this);
-		d.addTarget("valueDeleted.cr", this);
-		d.addTarget("valueAdded.cr", this);
-	}
-
-	ExperienceChangeBroadcaster.prototype.removeHandler = function(d)
-	{
-		d.removeTarget("dataChanged.cr", this);
-		d.removeTarget("valueDeleted.cr", this);
-		d.removeTarget("valueAdded.cr", this);
-	}
-	
-	ExperienceChangeBroadcaster.prototype.clearHandlers = function()
-	{
-		this.setupHandler(this.experience.getCell("Organization"));
-		this.setupHandler(this.experience.getCell("User Entered Organization"));
-		this.setupHandler(this.experience.getCell("Site"));
-		this.setupHandler(this.experience.getCell("User Entered Site"));
-		this.setupHandler(this.experience.getCell("Offering"));
-		this.setupHandler(this.experience.getCell("User Entered Offering"));
-	}
-
-	function ExperienceChangeBroadcaster(experience) {
-		cr.EventHandler.call(this);
-		
-		this.experience = experience;
-		this.setupHandler(experience.getCell("Organization"));
-		this.setupHandler(experience.getCell("User Entered Organization"));
-		this.setupHandler(experience.getCell("Site"));
-		this.setupHandler(experience.getCell("User Entered Site"));
-		this.setupHandler(experience.getCell("Offering"));
-		this.setupHandler(experience.getCell("User Entered Offering"));
-		
-		$(this).on("dataChanged.cr", function(e, i) { this.triggerEvent("dataChanged.cr"); })
-		       .on("valueDeleted.cr",  function(e, i) { this.triggerEvent("valueDeleted.cr"); })
-		       .on ("valueAdded.cr", function(e, i) { this.triggerEvent("valueAdded.cr"); });
-	}
-	
-	return ExperienceChangeBroadcaster;
-})();
-
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -382,7 +96,6 @@ var Pathway = (function () {
 	
 	Pathway.prototype.userInstance = null;
 	Pathway.prototype.allExperiences = [];
-	Pathway.prototype.allBroadcasters = null;
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
@@ -395,7 +108,6 @@ var Pathway = (function () {
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
 	
-	Pathway.prototype.flagDown = false;
 	Pathway.prototype.flagExperience = null;
 	Pathway.prototype.flagElement = null;
 	Pathway.prototype.flagHeight = 0;
@@ -623,7 +335,7 @@ var Pathway = (function () {
 				return "translate(" + this.getAttribute("x") + "," + this.getAttribute("y") + ")";
 			})
 			
-		if (this.flagExperience)
+		if (this.flagExperience != null)
 		{
 			/*( Restore the flagElement */
 			var flagExperienceID = this.flagExperience.getValueID();
@@ -699,13 +411,9 @@ var Pathway = (function () {
 		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
-		if (this.flagDown)
+		if (this.flagExperience != null)
 		{
-			var oldExperience = this.flagExperience;
-			var oldElement = this.flagElement;
-			this.hideDetail(
-				function() { _thisPathway.showDetailGroup(oldElement, oldExperience, 0); },
-				0);
+			this.refreshDetail();
 		}
 	}
 	
@@ -946,10 +654,24 @@ var Pathway = (function () {
 			detailText.attr("height", textBox.height);
 			iconClipRect.attr('height', textBox.height);
 		}
-			 
-		this.flagDown = true;
+		
 		this.flagExperience = experience;
 		this.flagElement = g;
+		
+		var _this = this;
+		[this.flagExperience.getCell("Organization"),
+		 this.flagExperience.getCell("User Entered Organization"),
+		 this.flagExperience.getCell("Site"),
+		 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
+		 {
+			$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
+			$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+		 });
+	}
+	
+	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
+	{
+		eventObject.data.refreshDetail();
 	}
 	
 	Pathway.prototype.clearDetail = function()
@@ -962,7 +684,20 @@ var Pathway = (function () {
 		this.detailGroup.selectAll('rect').remove();
 		d3.select("#id_detailClipPath").attr('height', 0);
 		d3.select("#id_detailIconClipPath").attr('height', 0);
-		this.flagDown = false;
+		
+		var _this = this;
+		if (this.flagExperience)
+		{
+			[this.flagExperience.getCell("Organization"),
+			 this.flagExperience.getCell("User Entered Organization"),
+			 this.flagExperience.getCell("Site"),
+			 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
+			 {
+			 	$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
+			 	$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
+			 });
+		}
+		
 		this.flagExperience = null;
 		this.flagElement = null;
 	}
@@ -972,7 +707,7 @@ var Pathway = (function () {
 		duration = (duration !== undefined ? duration : 250);
 		
 		var _this = this;
-		if (this.flagDown)
+		if (this.flagElement != null)
 		{
 			if (duration === 0)
 			{
@@ -1004,13 +739,50 @@ var Pathway = (function () {
 			done();
 	}
 	
+	Pathway.prototype.refreshDetail = function()
+	{
+		var oldExperience = this.flagExperience;
+		var oldElement = this.flagElement;
+		var _this = this;
+		this.hideDetail(
+			function() { _this.showDetailGroup(oldElement, oldExperience, 0); },
+			0);
+	}
+	
+	/* setup up each group (this) that displays an experience to delete itself if
+		the experience is deleted.
+	 */
+	Pathway.prototype.setupDelete = function(d) 
+	{
+		var valueDeleted = function(eventObject)
+		{
+			d3.select(eventObject.data).remove();
+		};
+		
+		var dataChanged = function(eventObject)
+		{
+			d3.select(eventObject.data).selectAll('text')
+				.text(function(d) { return d.getDescription(); })
+		}
+		
+		$(d).one("valueDeleted.cr", null, this, valueDeleted);
+		$(d).on("dataChanged.cr", null, this, dataChanged);
+		
+		$(this).on("remove", function()
+		{
+			$(d).off("valueDeleted.cr", null, valueDeleted);
+			$(d).off("dataChanged.cr", null, dataChanged);
+		});
+	}
+	
 	Pathway.prototype.appendExperiences = function()
 	{
 		this.experienceGroup.selectAll('g').remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences)
 			.enter()
-			.append('g');
+			.append('g')
+			.each(this.setupDelete);
 		
 		function showDetail(experience, i)
 		{
@@ -1025,7 +797,8 @@ var Pathway = (function () {
 		
 		var _this = this;
 		var rect = g.append('path')
-			.each(function() { this.pathway = _this; })
+			.each(function(d)
+				{ this.pathway = _this; })
 			.attr("fill-opacity", "0.3")
 			.attr("stroke-opacity", "0.7")
 			.on("click", function(d) 
@@ -1062,52 +835,45 @@ var Pathway = (function () {
 				return 0 - bbox.y;
 			});
 	
-		function resizeFunction()
-		{
-			_this.layoutExperiences();
-		}
-		
-		var node = this.sitePanel.node();
-		this.allBroadcasters = this.allExperiences.filter(function(d)
-			{
-				return d.typeName === "More Experience";
-			})
-			.map(function(d)
-			{
-				var b = new ExperienceChangeBroadcaster(d);
-				b.addTarget("dataChanged.cr", node);
-				b.addTarget("valueDeleted.cr", node);
-				return b;
-			});
-
-		$(window).on("resize", resizeFunction);
-		$(node).on("hiding.cr", function()
-		{
-			$(window).off("resize", resizeFunction);
-			_this.allBroadcasters.forEach(function(b) {
-				b.clearHandlers();
-				b.removeTarget("dataChanged.cr", node);
-				b.removeTarget("valueDeleted.cr", node);
-			});
-		});
-		
-		$(node).on("dataChanged.cr", function(e, i)
-		{
-			_this.clearLayout();
-			_this.layoutExperiences();
-		});
-		$(node).on("valueDeleted.cr", function(e, i)
-		{
-			var index = this.allExperiences.indexOf(e);
-			if (index >= 0)
-				this.allExperiences.splice(index, 1);
-			_this.layoutExperiences();
-		});
-
 		this.clearLayout();
 		this.layoutExperiences();
 	}
 	
+	Pathway.prototype.handleDataChanged = function(eventObject)
+	{
+		var _this = eventObject.data;
+
+		_this.clearLayout();
+		_this.layoutExperiences();
+	}
+	
+	Pathway.prototype.handleValueDeleted = function(eventObject)
+	{
+		var i = this;
+		var _this = eventObject.data;
+		
+		var index = _this.allExperiences.indexOf(i);
+		if (index >= 0)
+			_this.allExperiences.splice(index, 1);
+		if (i == _this.flagExperience)
+			_this.hideDetail(function() { }, 0);
+		_this.clearLayout();
+		_this.layoutExperiences();
+	};
+
+	Pathway.prototype.setupExperienceTriggers = function(experience)
+	{
+		var _this = this;
+		
+		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
+		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
+		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
+			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
+		});
+	}
+		
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
@@ -1115,6 +881,9 @@ var Pathway = (function () {
 		
 		this.allExperiences.push(experience);
 		this.allExperiences.sort(this._compareExperiences);
+		
+		this.setupExperienceTriggers(experience);
+		
 		this.appendExperiences();
 		
 		if (this.loadingText)
@@ -1125,12 +894,40 @@ var Pathway = (function () {
 			this.promptAddText = null;
 		}
 	}
+	
+	Pathway.prototype.showAllExperiences = function()
+	{
+		this.setDateRange();
+		
+		var _this = this;
+		function resizeFunction()
+		{
+			_this.layoutExperiences();
+		}
+	
+		var node = this.sitePanel.node();
+		this.allExperiences.filter(function(d)
+			{
+				return d.typeName === "More Experience";
+			})
+			.forEach(function(d)
+			{
+				_this.setupExperienceTriggers(d);
+			});
+
+		$(window).on("resize", resizeFunction);
+		$(node).on("hiding.cr", function()
+		{
+			$(window).off("resize", resizeFunction);
+		});
+	
+		this.appendExperiences();
+	}
 		
 	function Pathway(userInstance, sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
-		this.flagDown = false;
 		this.flagExperience = null;
 		this.flagElement = null;
 		this.sitePanel = sitePanel;
@@ -1173,11 +970,14 @@ var Pathway = (function () {
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", this.showDetailPanel)
+			.on("click.cr", this.showDetailPanel);
 			
-	
 		var _thisPathway = this;
 
+		$(this.sitePanel.node()).on("remove", null, null, function() {
+			_thisPathway.clearDetail();
+		});
+		
 		this.svg.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 
@@ -1192,7 +992,7 @@ var Pathway = (function () {
 			$(experiences).each(function()
 			{
 				this.typeName = "Experience";
-				this.value.description = this.getValue("Offering").getDescription();
+				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
 			crp.getData({path: "Service", 
@@ -1218,10 +1018,9 @@ var Pathway = (function () {
 										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
-											var path = "#" + m.getValueID() + '>"More Experience"';
-											cr.getData({path: path, 
-														done: successFunction2, 
-														fail: asyncFailFunction});
+											m.getCellData("More Experience",
+														  successFunction2, 
+														  asyncFailFunction);
 										}
 										else
 											successFunction2([]);	/* There are none. */
@@ -1243,9 +1042,7 @@ var Pathway = (function () {
 		
 			_thisPathway.allExperiences.sort(_thisPathway._compareExperiences);
 			
-			_thisPathway.setDateRange();
-			
-			_thisPathway.appendExperiences();
+			_thisPathway.showAllExperiences();
 			
 			if (_thisPathway.allExperiences.length > 0)
 			{
@@ -1362,7 +1159,7 @@ function setupPanel0(p0, dots)
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(lastText.toLocaleLowerCase()) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
@@ -1467,7 +1264,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		{
 			if (prepareClick())
 			{
-				hidePanelRight($(this).parents(".site-panel")[0]);
+				hidePanelRight(sitePanel.node());
 			}
 			d3.event.preventDefault();
 		});
@@ -1484,7 +1281,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 					success(new ReportedObject({name: searchInputNode.value, value: newValue}));
 				}
 				
-				hidePanelRight($(this).parents(".site-panel")[0]);
+				hidePanelRight(sitePanel.node());
 			}
 			d3.event.preventDefault();
 		});
@@ -1497,7 +1294,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
-				.style("display", "block");
+				.style("display", null);
 		}
 		else
 		{
@@ -1506,7 +1303,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 				.style("display", function(d)
 					{
 						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-							return "block";
+							return null;
 						else
 							return "none";
 					});
@@ -1951,9 +1748,10 @@ var AddExperiencePanel = (function () {
 		
 		panel2Div.appendAlertContainer();
 		
-		var dots = new DotsNavigator(panel2Div, this, 8);	
+		var dots = new DotsNavigator(panel2Div, 8);	
 		dots.finalText = "Add";	
 
+		var _thisPanel = this;
 		var hideSuccessFunction = function()
 			{
 				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
@@ -1963,7 +1761,7 @@ var AddExperiencePanel = (function () {
 					newData.checkCells([],
 						function() {
 							pathway.addMoreExperience.call(pathway, newData);
-							hidePanelDown($(dots.doneButton.node()).parents(".site-panel")[0]);
+							_thisPanel.hidePanelDown();
 						},
 						syncFailFunction);
 				}
@@ -2036,7 +1834,9 @@ var AddExperiencePanel = (function () {
 			};
 
 		dots.appendForwardButton(navContainer, hideSuccessFunction);
-		dots.appendBackButton(navContainer);
+		dots.appendBackButton(navContainer, function() {
+			_thisPanel.hidePanelDown();
+		});
 		
 		navContainer.appendTitle(header);
 		
@@ -2196,6 +1996,17 @@ var ExperienceDetailPanel = (function () {
 					d3.event.preventDefault();
 				});
 			editButton.append("span").text("Edit");
+			
+			var node = this.node();
+			var f = function(eventObject)
+				{
+					d3.select(eventObject.data).remove();
+				};
+			$(experience).one("valueDeleted.cr", null, node, f);
+			$(node).on("remove", null, function(eventObject)
+				{
+					$(experience).off("valueDeleted.cr", null, f);
+				});
 		}
 		
 		var panel2Div = this.appendScrollArea();
@@ -2274,30 +2085,14 @@ var ExperienceDetailPanel = (function () {
 			})
 			.trigger("dataChanged.cr");
 		
-		function appendStringDatum(cellName)
-		{
-			var v = experience.getDatum(cellName);
-			if (v)
-			{
-				var deadlineDiv = panel2Div.append("section");
-				appendStringItem(deadlineDiv.node(), cellName, v);
-				return deadlineDiv;
-			}
-			else
-				return null;
-		}
-		
 		var firstDiv = null;
 		var nextDiv;
 		
-		firstDiv = appendStringDatum("Start Date");
-			
-		nextDiv = appendStringDatum("End Date");
-		if (!firstDiv)
-			firstDiv = nextDiv;
+		panel2Div.showViewCells([experience.getCell("Start Date"),
+								 experience.getCell("End Date")]);
 
 		var cellDiv = panel2Div.append("section")
-			.classed("cell", true);
+			.classed("cell view multiple", true);
 		
 		var offering = experience.getValue("Offering");
 		var offeringServiceCell = ((offering && offering.getValueID()) ? offering.getCell("Service") : null);
@@ -2645,12 +2440,12 @@ var PickOrCreatePanel = (function () {
 				});
 			backButton.append("span").text("Cancel");
 			
-			var doneButton = this.navContainer.appendRightButton()
+			this.navContainer.appendRightButton()
 				.on("click", function()
 				{
 					_this.onClickDone();
-				});
-			doneButton.append("span").text("Done");
+				})
+				.append("span").text("Done");
 
 			var title = this.getTitle();
 			if (title)
@@ -2978,26 +2773,110 @@ var PickOrCreateOfferingCell = (function () {
 	return PickOrCreateOfferingCell;
 })();
 
+var ConfirmAlert = (function () {
+
+	function ConfirmAlert(panelNode, confirmText, done, cancel)
+	{
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		var confirmButton = div.append('button')
+			.text(confirmText)
+			.classed("text-danger", true)
+			.on("click", function()
+				{
+					if (prepareClick())
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							done();
+						});
+					}
+				});
+		div.append('button')
+			.text("Cancel")
+			.on("click", function()
+				{
+					if (prepareClick())
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							cancel();
+						});
+					}
+				});
+		
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		$(confirmButton.node()).on('blur', function()
+			{
+				if (prepareClick())
+				{
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						cancel();
+					});
+				}
+			});
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ConfirmAlert;
+})();
+
 var EditExperiencePanel = (function () {
 	EditExperiencePanel.prototype = new SitePanel();
 	EditExperiencePanel.prototype.experience = null;
 	
+	EditExperiencePanel.prototype.handleDeleteButtonClick = function()
+	{
+		if (prepareClick())
+		{
+			var _this = this;
+			new ConfirmAlert(this.node(), "Delete Experience", 
+				function() { 
+					_this.datum().deleteValue(
+						function() { _this.hidePanelDown() },
+						syncFailFunction);
+				}, 
+				function() { 
+					unblockClick();
+				});
+		}
+	}
+	
 	function EditExperiencePanel(experience, previousPanel) {
 		SitePanel.call(this, previousPanel, experience, "Edit Experience", "view session", revealPanelUp);
 		var navContainer = this.appendNavContainer();
+		var bottomNavContainer = this.appendBottomNavContainer();
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.appendAlertContainer();
 
-		doneButton = navContainer.appendRightButton();
-		doneButton.append("span").text("Done");
-		doneButton.on("click", panel2Div.handleDoneEditingButton);
+		navContainer.appendRightButton()
+			.on("click", panel2Div.handleDoneEditingButton)
+			.append("span").text("Done");
 
 		navContainer.appendTitle("Edit Experience");
 		
+		var _this = this;
+		bottomNavContainer.appendRightButton()
+			.on("click", function() { _this.handleDeleteButtonClick(); } )
+			.append("span").classed("text-danger", true).text("Delete");
+			
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
 				 new PickOrCreateOfferingCell(experience),
+				 experience.getCell("Start Date"),
+				 experience.getCell("End Date"),
+				 experience.getCell("Service"),
 				];
 				
 		panel2Div.showEditCells(cells);

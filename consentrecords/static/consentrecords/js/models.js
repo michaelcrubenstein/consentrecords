@@ -247,7 +247,9 @@ cr.EventHandler = (function()
 			if (e in this.events)
 			{
 				var a = this.events[e]
-				a.splice($.inArray(target, a), 1);
+				var index = $.inArray(target, a);
+				if (index >= 0)
+					a.splice(index, 1);
 			}
 		}
 
@@ -281,9 +283,7 @@ cr.Cell = (function()
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
-				this.addTarget("valueAdded.cr", parent);
-				this.addTarget("valueDeleted.cr", parent);
-				this.addTarget("dataChanged.cr", parent);
+				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent.checkDescription);
 			}
 		};
 
@@ -312,15 +312,20 @@ cr.Cell = (function()
 		{
 			newValue.cell = this;		
 			this.data.push(newValue);
-			newValue.addTarget("dataChanged.cr", this);
+			$(newValue).on("dataChanged.cr", null, this, function(eventObject) {
+				$(eventObject.data).trigger("dataChanged.cr", eventObject.data);
+			});
+			$(newValue).on("valueDeleted.cr", null, this, function(eventObject) {
+				$(eventObject.data).trigger("valueDeleted.cr", newValue);
+			});
 		};
 		
 		Cell.prototype.addNewValue = function()
 		{
-			var newData = this.newValue();
-			this.pushValue(newData);
-			this.triggerEvent("valueAdded.cr", [newData]);
-			return newData;
+			var newValue = this.newValue();
+			this.pushValue(newValue);
+			$(this).trigger("valueAdded.cr", newValue);
+			return newValue;
 		};
 
 		Cell.prototype.deleteValue = function(oldData)
@@ -342,48 +347,8 @@ cr.Cell = (function()
 				remove(this.data, oldData);
 				oldData.cell = undefined;
 			}
-			oldData.triggerEvent("valueDeleted.cr");
-			this.triggerEvent("valueDeleted.cr", [oldData]);
 		};
 
-		/* The success function takes a single argument: the new value being created. */
-		Cell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
-			{
-				if (!failFunction)
-					throw ("failFunction is not specified");
-				if (!successFunction)
-					throw ("successFunction is not specified");
-				if (!this.parent.getValueID())
-					throw("cell parent does not have an ID")
-				var _this = this;
-				$.post(cr.urls.addValue, 
-						{ path: '#' + this.parent.getValueID(),
-						  fieldName: this.field.nameID,
-						  valueUUID: initialData.getValueID(),
-						  timezoneoffset: new Date().getTimezoneOffset()
-						})
-					  .done(function(json, textStatus, jqXHR)
-						{
-							if (json.success) {
-								closealert();
-								var newData = _this.newValue();
-								newData.id = json.id;
-								newData.value.description = initialData.getDescription();
-								newData.value.id = initialData.getValueID();
-								_this.addValue(newData);
-								successFunction(newData);
-							}
-							else {
-								failFunction(json.error);
-							}
-						})
-					  .fail(function(jqXHR, textStatus, errorThrown)
-							{
-								cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-							}
-						);
-			};
-			
 		Cell.prototype.newValue = function() {
 			throw "newValue must be overwritten by a subclass";
 		}
@@ -395,9 +360,15 @@ cr.Cell = (function()
 			
 			if (field)
 			{
-			/* All cells propagate dataChanged.cr events from their children. */
+			/* All cells propagate dataChanged.cr events and valueDeleted events from their children. */
 				$(this).on("dataChanged.cr", function(e) {
 					this.triggerEvent("dataChanged.cr", this);
+				});
+				$(this).on("valueDeleted.cr", function(e, eventInfo) {
+					this.triggerEvent("valueDeleted.cr", eventInfo);
+				});
+				$(this).on("valueAdded.cr", function(e, newValue) {
+					this.triggerEvent("valueAdded.cr", newValue);
 				});
 			}
 		};
@@ -569,7 +540,7 @@ cr.ObjectCell = (function() {
 			if (oldValue.value.id)
 				newValue.value.id = oldValue.value.id;
 			if (oldValue.value.description)
-				newValue.value.description = oldValue.value.description;
+				newValue.setDescription(oldValue.value.description);
 			if (oldValue.value.cells)
 			{
 				newValue.importCells(oldValue.value.cells);
@@ -578,19 +549,19 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
-	ObjectCell.prototype.addValue = function(newData)
+	ObjectCell.prototype.addValue = function(newValue)
 	{
 		/* Look for an existing item that is empty. If one is found, then change its data. */
 		for (var i = 0; i < this.data.length; ++i)
 		{
 			var oldData = this.data[i];
 			if (!oldData.id && oldData.isEmpty()) {
-				oldData.completeUpdate(newData);
+				oldData.completeUpdate(newValue);
 				return;
 			}
 		}
-		this.pushValue(newData);
-		this.triggerEvent("valueAdded.cr", [newData]);
+		this.pushValue(newValue);
+		$(this).trigger("valueAdded.cr", newValue);
 	}
 
 	ObjectCell.prototype.appendData = function(initialData)
@@ -623,6 +594,44 @@ cr.ObjectCell = (function() {
 		initialData[this.field.id] = newData;
 	}
 
+	/* The success function takes a single argument: the new value being created. */
+	ObjectCell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
+		{
+			if (!failFunction)
+				throw ("failFunction is not specified");
+			if (!successFunction)
+				throw ("successFunction is not specified");
+			if (!this.parent.getValueID())
+				throw("cell parent does not have an ID")
+			var _this = this;
+			$.post(cr.urls.addValue, 
+					{ path: '#' + this.parent.getValueID(),
+					  fieldName: this.field.nameID,
+					  valueUUID: initialData.getValueID(),
+					  timezoneoffset: new Date().getTimezoneOffset()
+					})
+				  .done(function(json, textStatus, jqXHR)
+					{
+						if (json.success) {
+							closealert();
+							var newData = _this.newValue();
+							newData.id = json.id;
+							newData.setDescription(initialData.getDescription());
+							newData.value.id = initialData.getValueID();
+							_this.addValue(newData);
+							successFunction(newData);
+						}
+						else {
+							failFunction(json.error);
+						}
+					})
+				  .fail(function(jqXHR, textStatus, errorThrown)
+						{
+							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						}
+					);
+		};
+		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
 	}
@@ -641,6 +650,21 @@ cr.CellValue = (function() {
 	}
 	
 	CellValue.prototype.clearValue = function() { this.value = null; };
+	
+	CellValue.prototype.triggerDeleteValue = function()
+	{
+		/* Delete from the cell first, so that other objects know the cell may be empty. */
+		if (this.cell)
+		    this.cell.deleteValue(this);
+		$(this).trigger("valueDeleted.cr", this);
+		this.triggerEvent("valueDeleted.cr", this);
+	}
+	
+	CellValue.prototype.triggerDataChanged = function()
+	{
+		$(this).trigger("dataChanged.cr", this);
+		this.triggerEvent("dataChanged.cr", this);
+	}
 	
 	CellValue.prototype.deleteValue = function(successFunction, failFunction)
 	{
@@ -668,8 +692,7 @@ cr.CellValue = (function() {
 						{
 							if (successFunction) 
 							{
-								if (_this.cell)
-									_this.cell.deleteValue(_this);
+								_this.triggerDeleteValue();
 								successFunction(_this);
 							}
 						}
@@ -685,8 +708,7 @@ cr.CellValue = (function() {
 			}
 			else
 			{
-				if (_this.cell)
-					_this.cell.deleteValue(_this);
+				_this.triggerDeleteValue();
 				successFunction(_this);
 			}
 		}
@@ -702,8 +724,7 @@ cr.CellValue = (function() {
 					{
 						if (successFunction) 
 						{
-							if (_this.cell)
-								_this.cell.deleteValue(_this);
+							_this.triggerDeleteValue();
 							successFunction(_this);
 						}
 					}
@@ -770,10 +791,6 @@ cr.StringValue = (function() {
 
 	function StringValue() {
 		cr.CellValue.call(this);
-	
-		$(this).on("dataChanged.cr", function(e) {
-			this.triggerEvent("dataChanged.cr", this);
-		});
 	}
 	
 	return StringValue;
@@ -784,7 +801,7 @@ cr.TranslationValue = (function() {
 	TranslationValue.prototype.getDescription = function() { return this.value.text; };
 	TranslationValue.prototype.isEmpty = function()
 	{
-		return this.value.text === null && this.value.text === undefined && this.value.text === "";
+		return this.value.text === null || this.value.text === undefined || this.value.text === "";
 	}
 	
 	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
@@ -880,7 +897,7 @@ cr.ObjectValue = (function() {
 	{
 		this.id = newData.id;
 		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
-		this.triggerEvent("dataChanged.cr", newData);
+		this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.isEmpty = function()
@@ -893,10 +910,18 @@ cr.ObjectValue = (function() {
 		this.value = {id: null, description: "None" };
 	}
 	
+	ObjectValue.prototype.setDescription = function(newDescription)
+	{
+		this.value.description = newDescription.length > 0 ? newDescription : "None";
+	}
+	
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		if (!("cells" in this.value))
-			return this.value.description;
+		{
+			if (this.value.description.length == 0)
+				this.value.description = "None";
+		}
 		else
 		{
 			var nameArray = [];
@@ -905,13 +930,10 @@ cr.ObjectValue = (function() {
 				var cell = this.value.cells[i];
 				if (cell.field.descriptorType == "_by text")
 				{
-					var cellNames = [];
-					for (var j = 0; j < cell.data.length; ++j)
-					{
-						if (!cell.data[j].isEmpty())
-							cellNames.push(cell.data[j].getDescription());
-					}
-					nameArray.push(cellNames.join(separator='/'));
+					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
+						.map(function (d) { return d.getDescription(); });
+					if (cellNames.length > 0)
+						nameArray.push(cellNames.join(separator='/'));
 				}
 				else if (cell.field.descriptorType == "_by count")
 				{
@@ -921,7 +943,7 @@ cr.ObjectValue = (function() {
 			if (nameArray.length == 0)
 				this.value.description = "None";
 			else
-				this.value.description = nameArray.join(separator = ' ');
+				this.setDescription(nameArray.join(separator = ' '));
 		}
 	}
 
@@ -960,12 +982,18 @@ cr.ObjectValue = (function() {
 		return cell && cell.data.length && cell.data[0];
 	}
 		
-	ObjectValue.prototype.handleContentsChanged = function(e)
+	ObjectValue.prototype.handleContentsChanged = function()
 	{
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
 		if (this.getDescription() != oldDescription)
-			this.triggerEvent("dataChanged.cr", this);
+			this.triggerDataChanged();
+	}
+	
+	/* this method is attached to a cell when its contents are changed. */
+	ObjectValue.prototype.checkDescription = function(eventObject)
+	{
+		eventObject.data.handleContentsChanged();
 	}
 
 	ObjectValue.prototype.importCell = function(oldCell)
@@ -1028,6 +1056,41 @@ cr.ObjectValue = (function() {
 			cell.clearEvents();
 			cell.setParent(this);
 		});
+	}
+	
+	/* Get all of the data associated with the sub-objects in the specified field */
+	ObjectValue.prototype.getCellData = function(fieldName, done, fail)
+	{
+		if (typeof(done) != "function")
+			throw "done is not a function";
+		if (typeof(fail) != "function")
+			throw "fail is not a function";
+		if (!this.getValueID())
+			throw "this item is not saved";
+		if (!fieldName)
+			throw "fieldName is not specified";
+		
+		var _this = this;
+	
+		var jsonArray = { "path" : "#" + this.getValueID(),
+						  "fieldName" : fieldName };
+		
+		$.getJSON(cr.urls.getCellData,
+			jsonArray, 
+			function(json)
+			{
+				if (json.success) {
+					var newObjects = json.objects.map(function(v)
+					{
+						return cr.ObjectCell.prototype.copyValue(v);
+					});
+					done(newObjects);
+				}
+				else {
+					fail(json.error);
+				}
+			}
+		);
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
@@ -1111,10 +1174,6 @@ cr.ObjectValue = (function() {
 		cr.CellValue.call(this);
 		this.value = {id: null, description: "None" };
 		this.isDataLoaded = false;
-		
-		$(this).on("dataChanged.cr", this.handleContentsChanged);
-		$(this).on("valueAdded.cr", this.handleContentsChanged);
-		$(this).on("valueDeleted.cr", this.handleContentsChanged);
 	};
 	
 	return ObjectValue;
@@ -1143,6 +1202,7 @@ cr.urls = {
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
+		getCellData : "/api/getcelldata/",
 		getConfiguration : "/api/getconfiguration/",
 		createInstance : "/api/createinstance/",
 		addValue : "/api/addvalue/",
@@ -1188,19 +1248,15 @@ cr["selectAll"] = function(args)
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = [];
-					json.objects.forEach(function(v)
+					var newObjects = json.objects.map(function(v)
 					{
-						newObjects.push(cr.ObjectCell.prototype.copyValue(v));
-					});
-					
-					if (args.done)
-						args.done(newObjects);
+						return cr.ObjectCell.prototype.copyValue(v);
+					});					
+					args.done(newObjects);
 				}
 				else
 				{
-					if (args.fail)
-						args.fail(json.error);
+					args.fail(json.error);
 				}
 			}
 		);
@@ -1211,9 +1267,9 @@ cr["selectAll"] = function(args)
 cr.getValues = function (args)
 	{
 		if (!args.fail)
-			throw ("failFunction is not specified");
+			throw ("fail is not specified");
 		if (!args.done)
-			throw ("done function is not specified");
+			throw ("done is not specified");
 		var argList = {};
 		if (args.path)
 			argList.path = args.path;
@@ -1243,13 +1299,11 @@ cr.getValues = function (args)
 						return cr.ObjectCell.prototype.copyValue(v);
 					});
 					
-					if (args.done)
-						args.done(newObjects);
+					args.done(newObjects);
 				}
 				else
 				{
-					if (args.fail)
-						args.fail(json.error);
+					args.fail(json.error);
 				}
 			}
 		);
@@ -1308,7 +1362,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 					if (json.success) {
 						oldValue.id = json.valueIDs[0];
 						oldValue.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
-						oldValue.triggerEvent("dataChanged.cr", d);
+						oldValue.triggerDataChanged();
 						successFunction();
 					}
 					else {
@@ -1390,7 +1444,7 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 							if (containerUUID)
 								newData.id = json.object.id;
 							newData.value.id = json.object.value.id;
-							newData.value.description = json.object.value.description;
+							newData.setDescription(json.object.value.description);
 							successFunction(newData);
 						}
 					}
@@ -1434,12 +1488,11 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							if (newInstanceID)
 								d.value.id = newInstanceID;
 								
-							d.triggerEvent("dataChanged.cr", d);
+							d.triggerDataChanged();
 						}
 						else
 						{
-							var cell = d.cell;
-							cell.deleteValue(d);
+							d.triggerDeleteValue();
 						}
 					}
 					if (successFunction)
@@ -1546,7 +1599,7 @@ cr.getData = function(args)
 						var v = new cr.ObjectValue();
 						v.importCells(datum.cells);
 						v.value.id = datum.id;
-						v.value.description = datum.description;
+						v.setDescription(datum.description);
 						v.value.parentID = datum.parentID;
 						v.isDataLoaded = true;
 						instances.push(v);

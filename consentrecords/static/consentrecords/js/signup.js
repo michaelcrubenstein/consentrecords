@@ -52,7 +52,7 @@ var Signup = (function () {
 	function Signup(previousPanel, editable) {
 	
 		var _thisSignup = this;
-		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up");
+		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -60,7 +60,7 @@ var Signup = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, sitePanel, 4);
+		this.dots = new DotsNavigator(panel2Div, 4);
 		this.dots.datum = this;		
 
 		this.dots.appendForwardButton(navContainer, function()
@@ -76,7 +76,7 @@ var Signup = (function () {
 						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								hidePanelDown(sitePanel.node(), false,
+								sitePanel.hidePanelDown(true,
 									function()
 									{
 										userInstance.triggerEvent("signin.cr", userInstance);
@@ -87,7 +87,9 @@ var Signup = (function () {
 					syncFailFunction)
 				
 			});
-		this.dots.appendBackButton(navContainer);
+		this.dots.appendBackButton(navContainer, function() {
+			sitePanel.hidePanelDown();
+		});
 		
 		navContainer.appendTitle('Create a New Account');
 
@@ -354,7 +356,6 @@ var Signup = (function () {
 			var cell = row.append('td');
 			cell.append('input')
 				.attr('type', 'radio')
-				.attr('checked', 1)
 				.attr('name', 'publicAccess')
 				.property('value', 'none')
 				.on('change', function()
@@ -369,6 +370,7 @@ var Signup = (function () {
 			cell = row.append('td');
 			var findInput = cell.append('input')
 				.attr('type', 'radio')
+				.attr('checked', 1)
 				.attr('name', 'publicAccess')
 				.property('value', '_find')
 				.on('change', function()

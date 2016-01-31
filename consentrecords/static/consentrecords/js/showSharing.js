@@ -252,7 +252,7 @@ function addAccessor(userInstance, accessorLevel)
 					var newValue = userCell.data[0];
 					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					getOnValueAddedFunction(true, true, showViewObjectPanel).call(itemsDiv, null, newValue);
+					getOnValueAddedFunction(true, true, showViewObjectPanel).call(accessRecordCell, {data: itemsDiv}, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 
@@ -269,7 +269,7 @@ function addAccessor(userInstance, accessorLevel)
 				{
 					accessorLevel.accessRecords.push(newValue);
 					var itemsDiv = $(_this).parents(".cell").children(".cell-items")[0];
-					getOnValueAddedFunction(true, true, showViewObjectPanel).call(itemsDiv, null, newValue);
+					getOnValueAddedFunction(true, true, showViewObjectPanel).call(accessRecordCell, {data: itemsDiv}, newValue);
 					hidePanelRight(currentPanelNode);
 				}
 

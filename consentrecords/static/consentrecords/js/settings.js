@@ -12,7 +12,7 @@ var Settings = (function () {
 				if (prepareClick())
 				{
 					showClickFeedback(this);
-					hidePanelRight($(this).parents(".site-panel")[0]);
+					hidePanelRight(sitePanel.node());
 				}
 				d3.event.preventDefault();
 			})
