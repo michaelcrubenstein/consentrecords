@@ -918,7 +918,10 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		if (!("cells" in this.value))
-			return this.value.description;
+		{
+			if (this.value.description.length == 0)
+				this.value.description = "None";
+		}
 		else
 		{
 			var nameArray = [];
