@@ -922,13 +922,10 @@ cr.ObjectValue = (function() {
 				var cell = this.value.cells[i];
 				if (cell.field.descriptorType == "_by text")
 				{
-					var cellNames = [];
-					for (var j = 0; j < cell.data.length; ++j)
-					{
-						if (!cell.data[j].isEmpty())
-							cellNames.push(cell.data[j].getDescription());
-					}
-					nameArray.push(cellNames.join(separator='/'));
+					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
+						.map(function (d) { return d.getDescription(); });
+					if (cellNames.length > 0)
+						nameArray.push(cellNames.join(separator='/'));
 				}
 				else if (cell.field.descriptorType == "_by count")
 				{
