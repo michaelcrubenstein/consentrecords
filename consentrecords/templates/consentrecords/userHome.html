@@ -1472,12 +1472,12 @@
 						
 					if (service)
 					{
-						shareDiv.classed("share-container always-visible border-above", true);
+						shareDiv.div.classed("share-container always-visible border-above", true);
 
 						targetHRef = window.location.origin+"/find/"+service.value.id+"/"+session.value.id;
 
 						setMetaProperties(session, targetHRef);
-						var fbDiv = shareDiv.append("div")
+						var fbDiv = shareDiv.div.append("div")
 							.classed("fb-share-button", true)
 							.attr("data-href", targetHRef)
 							.attr("data-layout", "button_count");
