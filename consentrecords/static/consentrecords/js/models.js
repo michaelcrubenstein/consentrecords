@@ -801,7 +801,7 @@ cr.TranslationValue = (function() {
 	TranslationValue.prototype.getDescription = function() { return this.value.text; };
 	TranslationValue.prototype.isEmpty = function()
 	{
-		return this.value.text === null && this.value.text === undefined && this.value.text === "";
+		return this.value.text === null || this.value.text === undefined || this.value.text === "";
 	}
 	
 	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
