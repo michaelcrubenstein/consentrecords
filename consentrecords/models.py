@@ -241,7 +241,7 @@ class Instance(dbmodels.Model):
                         except Description.DoesNotExist:
                             r.append(v.referenceValue._description)
                 else:
-                    r.extend([v.stringValue for v in vs])
+                    r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
             elif descriptorType == Terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
