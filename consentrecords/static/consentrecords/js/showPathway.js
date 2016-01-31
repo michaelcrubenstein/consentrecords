@@ -1159,7 +1159,7 @@ function setupPanel0(p0, dots)
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(lastText.toLocaleLowerCase()) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
@@ -1294,7 +1294,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
-				.style("display", "block");
+				.style("display", null);
 		}
 		else
 		{
@@ -1303,7 +1303,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 				.style("display", function(d)
 					{
 						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-							return "block";
+							return null;
 						else
 							return "none";
 					});

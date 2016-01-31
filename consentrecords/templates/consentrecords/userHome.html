@@ -983,7 +983,7 @@
 				{
 					/* Show all of the items. */
 					d3.select(node).selectAll("div")
-						.style("display", "block");
+						.style("display", null);
 				}
 				else
 				{
@@ -992,7 +992,7 @@
 						.style("display", function(d)
 							{
 								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-									return "block";
+									return null;
 								else
 									return "none";
 							});
@@ -1898,7 +1898,7 @@
 				var cell = cr.createCell(field);
 				cell.setup(null);
 				
-				orgSection.style("display", newInstances.length > 0 ? "block" : "none");
+				orgSection.style("display", newInstances.length > 0 ? null : "none");
 				
 				var divs = orgSection.selectAll("li")
 					.data(newInstances)
@@ -2515,7 +2515,7 @@
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll(".row-button")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -2524,7 +2524,7 @@
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});

@@ -1871,7 +1871,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
@@ -1956,7 +1956,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		{
 			/* Show all of the items. */
 			panel2Div.selectAll("li")
-				.style("display", "block");
+				.style("display", null);
 		}
 		else
 		{
@@ -1965,7 +1965,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				.style("display", function(d)
 					{
 						if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-							return "block";
+							return null;
 						else
 							return "none";
 					});
@@ -2111,7 +2111,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", "block");
+					.style("display", null);
 			}
 			else
 			{
@@ -2120,7 +2120,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return "block";
+								return null;
 							else
 								return "none";
 						});
