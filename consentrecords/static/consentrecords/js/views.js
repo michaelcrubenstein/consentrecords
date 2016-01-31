@@ -572,26 +572,31 @@ function _showEditTranslationCell(obj, cell, inputType)
  */
 function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 {
-	return function(e, value)
+	return function(e, newValue)
 	{
 		var itemsDiv = d3.select(this);
-		var cell = value.cell;
+		var cell = newValue.cell;
 		
 		var previousPanelNode = $(this).parents(".site-panel")[0];
-		var divs = appendItem(itemsDiv, value);
+		var divs = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(itemsDiv);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		divs.style("display", 
-				   (cell.field.capacity === "_unique value" || value.getValueID()) ? "block" : "none");
+				   (cell.field.capacity === "_unique value" || newValue.getValueID()) ? null : "none");
 				   
 		if (cell.field.capacity != "_unique value")
 		{
-			value.addTarget("dataChanged.cr", divs.node());
-			$(divs.node()).on("dataChanged.cr", function(e) {
-					d3.select(this).style("display", 
-					   value.getValueID() || value.value.cells.length > 0 ? "block" : "none");
-				});
+			function checkVisible(eventObject)
+			{
+				d3.select(eventObject.data).style("display", 
+					   this.getValueID() || this.value.cells.length > 0 ? null : "none");
+			}
+			$(newValue).on("dataChanged.cr", null, divs.node(), checkVisible);
+			$(divs.node()).on("remove", null, newValue, function(eventObject)
+			{
+				$(eventObject.data).off("dataChanged.cr", null, checkVisible);
+			});
 		}
 
 		if (canDelete && cell.field.capacity != "_unique value")
@@ -1734,10 +1739,10 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 				{
 					if (prepareClick())
 					{
-						if (objectData.cell.field.maxCapacity != "_unique value")
+						if (objectData.cell.field.capacity != "_unique value")
 						{
 							// In this case, delete the item on cancel. 
-							objectData.cell.deleteValue(objectData);
+							objectData.triggerDeleteValue();
 						}
 						sitePanel.hide();
 					}
