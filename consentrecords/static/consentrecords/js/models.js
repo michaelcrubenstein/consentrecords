@@ -910,7 +910,11 @@ cr.ObjectValue = (function() {
 		this.value = {id: null, description: "None" };
 	}
 	
+	ObjectValue.prototype.setDescription = function(newDescription)
+	{
 		this.value.description = newDescription.length > 0 ? newDescription : "None";
+	}
+	
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		if (!("cells" in this.value))
