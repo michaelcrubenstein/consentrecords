@@ -461,7 +461,7 @@
 		var userInstance = new cr.ObjectValue();
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
-		userInstance.value.description = "{{ user.get_full_name }}"
+		userInstance.setDescription("{{ user.get_full_name }}")
 		crp.pushCheckCells(userInstance, function() 
 			{
 				userInstance.triggerEvent("signin.cr", userInstance);
@@ -1026,7 +1026,7 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.value.cells[0].data[0].value.description;
+						return d.value.cells[0].data[0].getDescription();
 					});
 			}
 			

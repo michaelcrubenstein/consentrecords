@@ -992,7 +992,7 @@ var Pathway = (function () {
 			$(experiences).each(function()
 			{
 				this.typeName = "Experience";
-				this.value.description = this.getValue("Offering").getDescription();
+				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
 			crp.getData({path: "Service", 

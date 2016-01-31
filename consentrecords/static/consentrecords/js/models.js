@@ -540,7 +540,7 @@ cr.ObjectCell = (function() {
 			if (oldValue.value.id)
 				newValue.value.id = oldValue.value.id;
 			if (oldValue.value.description)
-				newValue.value.description = oldValue.value.description;
+				newValue.setDescription(oldValue.value.description);
 			if (oldValue.value.cells)
 			{
 				newValue.importCells(oldValue.value.cells);
@@ -910,6 +910,7 @@ cr.ObjectValue = (function() {
 		this.value = {id: null, description: "None" };
 	}
 	
+		this.value.description = newDescription.length > 0 ? newDescription : "None";
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		if (!("cells" in this.value))
@@ -935,7 +936,7 @@ cr.ObjectValue = (function() {
 			if (nameArray.length == 0)
 				this.value.description = "None";
 			else
-				this.value.description = nameArray.join(separator = ' ');
+				this.setDescription(nameArray.join(separator = ' '));
 		}
 	}
 
@@ -1436,7 +1437,7 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 							if (containerUUID)
 								newData.id = json.object.id;
 							newData.value.id = json.object.value.id;
-							newData.value.description = json.object.value.description;
+							newData.setDescription(json.object.value.description);
 							successFunction(newData);
 						}
 					}
@@ -1591,7 +1592,7 @@ cr.getData = function(args)
 						var v = new cr.ObjectValue();
 						v.importCells(datum.cells);
 						v.value.id = datum.id;
-						v.value.description = datum.description;
+						v.setDescription(datum.description);
 						v.value.parentID = datum.parentID;
 						v.isDataLoaded = true;
 						instances.push(v);
