@@ -356,7 +356,6 @@ var Signup = (function () {
 			var cell = row.append('td');
 			cell.append('input')
 				.attr('type', 'radio')
-				.attr('checked', 1)
 				.attr('name', 'publicAccess')
 				.property('value', 'none')
 				.on('change', function()
@@ -371,6 +370,7 @@ var Signup = (function () {
 			cell = row.append('td');
 			var findInput = cell.append('input')
 				.attr('type', 'radio')
+				.attr('checked', 1)
 				.attr('name', 'publicAccess')
 				.property('value', '_find')
 				.on('change', function()
