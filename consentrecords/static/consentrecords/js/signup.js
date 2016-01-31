@@ -52,7 +52,7 @@ var Signup = (function () {
 	function Signup(previousPanel, editable) {
 	
 		var _thisSignup = this;
-		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up");
+		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -76,7 +76,7 @@ var Signup = (function () {
 						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								sitePanel.node().hidePanelDown(true,
+								sitePanel.hidePanelDown(true,
 									function()
 									{
 										userInstance.triggerEvent("signin.cr", userInstance);
