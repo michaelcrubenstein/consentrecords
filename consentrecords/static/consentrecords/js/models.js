@@ -322,10 +322,10 @@ cr.Cell = (function()
 		
 		Cell.prototype.addNewValue = function()
 		{
-			var newData = this.newValue();
-			this.pushValue(newData);
-			this.triggerEvent("valueAdded.cr", [newData]);
-			return newData;
+			var newValue = this.newValue();
+			this.pushValue(newValue);
+			$(this).trigger("valueAdded.cr", newValue);
+			return newValue;
 		};
 
 		Cell.prototype.deleteValue = function(oldData)
@@ -404,6 +404,9 @@ cr.Cell = (function()
 				});
 				$(this).on("valueDeleted.cr", function(e, eventInfo) {
 					this.triggerEvent("valueDeleted.cr", eventInfo);
+				});
+				$(this).on("valueAdded.cr", function(e, newValue) {
+					this.triggerEvent("valueAdded.cr", newValue);
 				});
 			}
 		};
@@ -584,19 +587,19 @@ cr.ObjectCell = (function() {
 		return newValue;
 	}
 	
-	ObjectCell.prototype.addValue = function(newData)
+	ObjectCell.prototype.addValue = function(newValue)
 	{
 		/* Look for an existing item that is empty. If one is found, then change its data. */
 		for (var i = 0; i < this.data.length; ++i)
 		{
 			var oldData = this.data[i];
 			if (!oldData.id && oldData.isEmpty()) {
-				oldData.completeUpdate(newData);
+				oldData.completeUpdate(newValue);
 				return;
 			}
 		}
-		this.pushValue(newData);
-		this.triggerEvent("valueAdded.cr", [newData]);
+		this.pushValue(newValue);
+		$(this).trigger("valueAdded.cr", newValue);
 	}
 
 	ObjectCell.prototype.appendData = function(initialData)
@@ -1484,8 +1487,7 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 						}
 						else
 						{
-							var cell = d.cell;
-							cell.deleteValue(d);
+							d.triggerDeleteValue();
 						}
 					}
 					if (successFunction)

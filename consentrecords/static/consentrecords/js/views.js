@@ -219,7 +219,7 @@ function _checkItemsDivDisplay(itemsDiv)
 	itemsDiv.selectAll("li").each(function(d) {
 		isVisible |= !d.isEmpty();
 	});
-	itemsDiv.style("display", isVisible ? "block" : "none");
+	itemsDiv.style("display", isVisible ? null : "none");
 }
 
 function _setupItemsDivHandlers(itemsDiv, cell)
@@ -227,7 +227,7 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 	cell.addTarget("valueAdded.cr", itemsDiv.node());
 	cell.addTarget("valueDeleted.cr", itemsDiv.node());
 	cell.addTarget("dataChanged.cr", itemsDiv.node());
-	$(itemsDiv.node()).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
+	$(itemsDiv.node()).on("dataChanged.cr valueAdded.cr", function(e)
 		{
 			_checkItemsDivDisplay(itemsDiv);
 		});
@@ -239,7 +239,7 @@ function _setupEditItemsDivHandlers(itemsDiv, cell)
 	cell.addTarget("valueAdded.cr", node);
 	cell.addTarget("valueDeleted.cr", node);
 	cell.addTarget("dataChanged.cr", node);
-	$(node).on("dataChanged.cr valueDeleted.cr valueAdded.cr", function(e)
+	$(node).on("dataChanged.cr valueAdded.cr", function(e)
 		{
 			itemsDiv.style("display", cell.data.length ? "block" : "none");
 		});
@@ -260,7 +260,11 @@ function _setupItemHandlers(d)
 	{
 		var f = function(eventObject)
 		{
-			$(eventObject.data).animate({height: "0px"}, 200, 'swing', function() { $(this).remove(); });
+			$(eventObject.data).animate({height: "0px"}, 600, 'swing', function()
+			{
+				_checkItemsDivDisplay(d3.select(this.parentNode));
+				$(this).remove();
+			});
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
 		$(this).on("remove", this, d, function(eventObject)
@@ -293,10 +297,15 @@ function _showViewStringCell(obj, cell)
 	}
 	
 	_setupItemsDivHandlers(itemsDiv, cell);
-	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+	
+	function addedValue(eventObject, newValue)
+	{
+		setupItems(appendItem(d3.select(eventObject.data), newValue), this);
+	}
+	$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedValue);
+	$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
 		{
-			setupItems(
-				d3.select(this).append("li"), cell);
+			$(eventObject.data).off("valueAdded.cr", null, addedValue);
 		});
 	
 	var divs = appendItems(itemsDiv, cell.data);
@@ -363,12 +372,16 @@ function _showEditStringCell(obj, cell, inputType)
 		appendControls(divs, cell);
 
 		_setupEditItemsDivHandlers(itemsDiv, cell);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, cell);	
+				appendControls(div, this);	
+			}
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -440,12 +453,16 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 
 		_setupEditItemsDivHandlers(itemsDiv, this);
 		var _this = this;
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, _this);	
+				appendControls(div, this);	
+			}
+		$(this).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -532,12 +549,16 @@ function _showEditTranslationCell(obj, cell, inputType)
 		appendControls(divs, cell);
 
 		_setupEditItemsDivHandlers(itemsDiv, cell);
-		$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+		function appendNewValue(eventObject, newValue)
 			{
-				var div = d3.select(this).append("li")
-					.datum(newData);
+				var div = appendItem(d3.select(eventObject.data), newValue);
 				
-				appendControls(div, cell);	
+				appendControls(div, this);	
+			}
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), appendNewValue);
+		$(itemsDiv.node()).on("remove", null, cell, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, appendNewValue);
 			});
 			
 		crv.appendAddButton(sectionObj, unblockClick);
@@ -1368,22 +1389,15 @@ var SitePanel = (function () {
 							$(this).css("display", "none");
 					
 						/* Make sure the section gets shown if a value is added to it. */
-						cell.addTarget("valueAdded.cr", this);
-						$(this).on("valueAdded.cr", function(e, newData) {
-							$(this).css("display", "block");
-						});
-						
-						cell.addTarget("valueDeleted.cr", this);
-						$(this).on("valueDeleted.cr", function(e, newData) {
-							if (!cell.isEmpty())
-								$(this).css("display", "block");
-							else
-								$(this).css("display", "none");
-						});
-						
-						$(this).on("dataChanged.cr", function(e) {
-							$(this).css("display", "block");
-						});
+						var checkDisplay = function(eventObject, newValue)
+						{
+							$(this).css("display", this.isEmpty() ? "none" : null);
+						}
+						$(cell).on("valueAdded.cr dataChanged.cr", null, this, checkDisplay);
+						$(this).on("remove", null, cell, function(eventObject)
+							{
+								$(eventObject.data).off("valueAdded.cr dataChanged.cr", null, checkDisplay);
+							});
 					})
 				.append("div").classed("cell-border-below", true);
 		}
@@ -1966,9 +1980,9 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 
 	_setupItemsDivHandlers(itemsDiv, cell);
 	itemsDiv.node().onValueAdded = getOnValueAddedFunction(true, true, showEditObjectPanel);
-	$(itemsDiv.node()).on("valueAdded.cr", function(e, newData)
+	$(itemsDiv.node()).on("valueAdded.cr", function(e, newValue)
 	{
-		this.onValueAdded(e, newData);
+		this.onValueAdded(e, newValue);
 		if (sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
 	});
