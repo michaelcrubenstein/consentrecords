@@ -459,22 +459,22 @@
 
 		/* The global object used to identify the current user. */
 		var userInstance = new cr.ObjectValue();
+		var userFirstName = null;
+		var userLastName = null;
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
 		userInstance.setDescription("{{ user.get_full_name }}")
 		crp.pushCheckCells(userInstance, function() 
 			{
+				$(userInstance).trigger("signin.cr");
 				userInstance.triggerEvent("signin.cr", userInstance);
 			}, asyncFailFunction);
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
 		var usernameLabel = $(".username-label");
-		userInstance.addTarget("signin.cr", usernameLabel[0]);
-		userInstance.addTarget("signout.cr", usernameLabel[0]);
-		userInstance.addTarget("dataChanged.cr", usernameLabel[0]);
 		
-		function setName(e, eventInfo)
+		function setName(eventObject)
 		{
 			var firstName = userInstance.getDatum("_first name");
 			var lastName = userInstance.getDatum("_last name");
@@ -491,36 +491,53 @@
 			else
 				s = userInstance.getDescription();
 				
-			$(this).text(s);
+			$(eventObject.data).text(s);
 		}
 		
-		usernameLabel.on("signin.cr", function(e, eventInfo)
+		$(userInstance).on("dataChanged.cr", null, usernameLabel[0], setName);
+		$(userInstance).on("signin.cr", null, usernameLabel[0], function(eventObject)
 		{
-			userInstance.getValue("_first name").addTarget("dataChanged.cr", usernameLabel[0]);
-			userInstance.getValue("_last name").addTarget("dataChanged.cr", usernameLabel[0]);
-			setName.call(this, e, eventInfo);
+			userFirstName = userInstance.getValue("_first name");
+			userLastName = userInstance.getValue("_last name");
+			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
+			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
+			setName.call(this, eventObject);
 		});
-		usernameLabel.on("dataChanged.cr", setName);
-		usernameLabel.on("signout.cr", function(e, eventInfo)
+		
+		$(userInstance).on("signout.cr", null, usernameLabel[0], function(eventObject)
 		{
-			$(this).text("");
+			if (userFirstName)
+			{
+				$(userFirstName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				$(userLastName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				userFirstName = null;
+				userLastName = null;
+			}
+			$(eventObject.data).text("");
 		});
 		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
-		userInstance.addTarget("signin.cr", signinSpan[0]);
-		userInstance.addTarget("signout.cr", signinSpan[0]);
-		signinSpan.on("signin.cr", function(e, eventInfo)
+		$(userInstance).on("signin.cr", null, signinSpan[0], function(eventObject)
 		{
-			$(this).text("Sign Out");
+			$(eventObject.data).text("Sign Out");
 		});
-		signinSpan.on("signout.cr", function(e, eventInfo)
+		$(userInstance).on("signout.cr", null, signinSpan[0], function(eventObject)
 		{
-			$(this).text("Sign In");
+			$(eventObject.data).text("Sign In");
 		});
 		
 		/* Update the list of organizations associated with the user when a user signs in or out. */
 		var orgSection = $(".organization-section");
+		
+		$(userInstance).on("signin.cr", 0, orgSection[0], function(eventObject)
+		{
+			load_organizations.call(eventObject.data);
+		});
+		$(userInstance).on("signout.cr", 0, orgSection[0], function(eventObject)
+		{
+			hide_organizations.call(eventObject.data);
+		});
 		userInstance.addTarget("signin.cr", orgSection[0]);
 		userInstance.addTarget("signout.cr", orgSection[0]);
 		orgSection.on("signin.cr", function(e, eventInfo)
@@ -536,7 +553,10 @@
 			signed in.
 		 */
 		if (!userInstance.getValueID())
+		{
+			$(userInstance).trigger("signout.cr");
 			userInstance.triggerEvent("signout.cr", userInstance);
+		}
 		/* Otherwise, the signin.cr event will be triggered after the userInstance data loads. */
 
 		/* Handle a click event on the sign-in button to either sign in or sign out
@@ -549,7 +569,8 @@
 				{
 					var successFunction = function()
 					{
-						userInstance.value = {id: "", description: ""};
+						userInstance.clearValue();
+						$(userInstance).trigger("signout.cr");
 						userInstance.triggerEvent("signout.cr", userInstance);
 						unblockClick();
 					};
@@ -716,6 +737,7 @@
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
 							{
+								$(userInstance).trigger("signin.cr");
 								userInstance.triggerEvent("signin.cr", userInstance);
 							});
 						
@@ -741,6 +763,7 @@
 					hidePanelRight($("#id_sign_in_panel")[0], false,
 						function()
 						{
+							$(userInstance).trigger("signinCanceled.cr");
 							userInstance.triggerEvent("signinCanceled.cr", userInstance);
 						});
 				}
@@ -1898,7 +1921,8 @@
 				var cell = cr.createCell(field);
 				cell.setup(null);
 				
-				orgSection.style("display", newInstances.length > 0 ? null : "none");
+				/* Default orgSection style is "none", so override it if there are organizations to show. */
+				orgSection.style("display", newInstances.length > 0 ? "block" : null);
 				
 				var divs = orgSection.selectAll("li")
 					.data(newInstances)
@@ -1956,10 +1980,15 @@
 				var panel2Div = sitePanel.appendScrollArea();
 
 				var headerDiv = panel2Div.appendHeader();
-				objectData.addTarget("dataChanged.cr", headerDiv.node());
-				$(headerDiv.node()).on("dataChanged.cr", function(e) {
-						d3.select(this).text(getViewPanelHeader(objectData));
-					});
+				function updatePanelHeader(eventObject)
+				{
+					d3.select(eventObject.data).text(getViewPanelheader(this));
+				}
+				$(objectData).on("dataChanged.cr", null, headerDiv.node(), updatePanelHeader);
+				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+				{
+					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
+				});
 
 				var alertContainer = panel2Div.appendAlertContainer();
 							
