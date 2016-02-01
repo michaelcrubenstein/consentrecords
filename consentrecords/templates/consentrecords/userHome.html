@@ -538,16 +538,6 @@
 		{
 			hide_organizations.call(eventObject.data);
 		});
-		userInstance.addTarget("signin.cr", orgSection[0]);
-		userInstance.addTarget("signout.cr", orgSection[0]);
-		orgSection.on("signin.cr", function(e, eventInfo)
-		{
-			load_organizations.call(this, eventInfo)
-		});
-		orgSection.on("signout.cr", function(e, eventInfo)
-		{
-			hide_organizations.call(this, eventInfo)
-		});
 		
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
@@ -606,16 +596,6 @@
 			}
 		}
 		
-		/* Remove all of the functions associated with a target that handles a signin
-			message */
-		function removeSignin(target)
-		{
-			$(target).off("signin.cr");
-			$(target).off("signinCanceled.cr");
-			userInstance.removeTarget("signin.cr", target);
-			userInstance.removeTarget("signinCanceled.cr", target);
-		}
-		
 		/* Initialize the buttons that show a pre-defined panel. */
 		$(".show-panel-button").click(showPanel);
 		
@@ -631,21 +611,21 @@
 					done();
 				else
 				{
-					userInstance.addTarget("signin.cr", panel);
-					userInstance.addTarget("signinCanceled.cr", panel);
-				
-					$(panel).on("signin.cr", function()
+					var onSignin = function(eventObject)
 					{
-						removeSignin(this);
+						$(this).off("signinCanceled.cr", null, onSigninCanceled);
 						if (prepareClick())
 							done();
-					});
-				
-					$(panel).on("signinCanceled.cr", function()
+					};
+					
+					var onSigninCanceled = function(eventObject)
 					{
-						removeSignin(this);
-					});
-				
+						$(this).off("signin.cr", null, onSignin);
+					}
+					
+					$(userInstance).one("signin.cr", null, panel, onSignin);
+					$(userInstance).one("signinCanceled.cr", null, panel, onSigninCanceled);
+					
 					showFixedPanel(panel, "#id_sign_in_panel");
 				}
 			}
@@ -1622,21 +1602,19 @@
 				}
 				else
 				{
-					userInstance.addTarget("signin.cr", panel);
-					userInstance.addTarget("signinCanceled.cr", panel);
-					$(panel).on("signin.cr", function(e, eventInfo)
+					var onSignin = function(eventObject)
 					{
-						removeSignin(this);
+						var _this = this;
 						
 						cr.getValues({path: '#'+session.getValueID()+">Inquiries",
 							field: "_user",
-							value: userInstance.getValueID(),
+							value: this.getValueID(),
 							done: function(valueIDs)
 							{
 								if (valueIDs.length > 0)
 								{
 									checkInquiryFunction(valueIDs[0].id);
-									bootstrap_alert.success(userInstance.getDescription() + 
+									bootstrap_alert.success(_this.getDescription() + 
 														  " already signed up for " + 
 														  offering.getDescription() + "/" + session.getDescription(),
 														  ".alert-container");
@@ -1647,11 +1625,18 @@
 								}
 							},
 							fail: asyncFailFunction});
-					});
-							
-					$(panel).on("signinCanceled.cr", function()
+					};
+					var onSigninCanceled = function(eventObject)
 					{
-						removeSignin(this);
+					};
+					
+					$(userInstance).on("signin.cr", null, panel, onSignin);
+					$(userInstance).on("signinCanceled.cr", null, panel, onSigninCanceled);
+					
+					$(panel).on("hiding.cr", null, userInstance, function(eventObject)
+					{
+						$(eventObject.data).off("signin.cr", null, onSignin);
+						$(eventObject.data).off("signinCanceled.cr", null, onSigninCanceled);
 					});
 					
 					showFixedPanel(panel, "#id_sign_in_panel");
