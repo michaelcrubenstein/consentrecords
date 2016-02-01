@@ -3,62 +3,6 @@ function hidePathway() {
 	container.selectAll('svg').remove();
 }
 	
-function setColorByService(service)
-{
-	var _this = this;
-	crp.pushID(service.getValueID(),
-		function(serviceInstance)
-		{
-			var serviceDomain = serviceInstance.getValue("Service Domain");
-			if (serviceDomain && serviceDomain.getValueID())
-			{
-				crp.pushID(serviceDomain.getValueID(),
-					function(sdInstance) 
-					{
-						color = sdInstance.getValue("Color");
-						if (color && color.value)
-							_this.attr("fill", color.value)
-								 .attr("stroke", color.value);
-					},
-					asyncFailFunction);
-			}
-			else
-				_this.attr("fill", otherColor)
-					.attr("stroke", otherColor);
-		},
-		asyncFailFunction);
-}
-
-function setColor(experience)
-{
-	var _this = d3.select(this);
-
-	var offering = experience.getValue("Offering");
-	if (offering && offering.getValueID())
-	{
-		var experienceColor = otherColor;
-		crp.pushCheckCells(offering, function()
-		{
-			var service = offering.getValue("Service");
-			if (service)
-				setColorByService.call(_this, service);
-			else
-				_this.attr("fill", otherColor)
-					 .attr("stroke", otherColor);
-		},
-		asyncFailFunction);
-	}
-	else
-	{
-		var service = experience.getValue("Service");
-		if (service)
-			setColorByService.call(_this, service);
-		else
-			_this.attr("fill", otherColor)
-				 .attr("stroke", otherColor);
-	}
-}
-
 function _pickedOrCreatedValue(i, pickedName, createdName)
 {
 	var v = i.getValue(pickedName);
@@ -463,6 +407,7 @@ var Pathway = (function () {
 			this.years.push(y);
 
 		/* create the set of text objects for each year. */
+		this.yearGroup.selectAll('text').remove();
 		this.yearGroup
 			.selectAll('text')
 			.data(this.years)
@@ -518,6 +463,62 @@ var Pathway = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
+	Pathway.prototype.setColorByService = function(service)
+	{
+		var _this = this;
+		crp.pushID(service.getValueID(),
+			function(serviceInstance)
+			{
+				var serviceDomain = serviceInstance.getValue("Service Domain");
+				if (serviceDomain && serviceDomain.getValueID())
+				{
+					crp.pushID(serviceDomain.getValueID(),
+						function(sdInstance) 
+						{
+							color = sdInstance.getValue("Color");
+							if (color && color.value)
+								_this.attr("fill", color.value)
+									 .attr("stroke", color.value);
+						},
+						asyncFailFunction);
+				}
+				else
+					_this.attr("fill", otherColor)
+						.attr("stroke", otherColor);
+			},
+			asyncFailFunction);
+	}
+
+	Pathway.prototype.setColor = function(experience)
+	{
+		var _this = d3.select(this);
+
+		var offering = experience.getValue("Offering");
+		if (offering && offering.getValueID())
+		{
+			var experienceColor = otherColor;
+			crp.pushCheckCells(offering, function()
+			{
+				var service = offering.getValue("Service");
+				if (service)
+					Pathway.prototype.setColorByService.call(_this, service);
+				else
+					_this.attr("fill", otherColor)
+						 .attr("stroke", otherColor);
+			},
+			asyncFailFunction);
+		}
+		else
+		{
+			var service = experience.getValue("Service");
+			if (service && service.getValueID())
+				Pathway.prototype.setColorByService.call(_this, service);
+			else
+				_this.attr("fill", otherColor)
+					 .attr("stroke", otherColor);
+		}
+	}
+
 	Pathway.prototype.showDetailPanel = function(experience, i)
 	{
 		if (prepareClick())
@@ -532,6 +533,7 @@ var Pathway = (function () {
 	{
 		duration = (duration !== undefined ? duration : 700);
 		
+		this.detailGroup.datum(experience);
 		var detailBackRect = this.detailGroup.append('rect')
 			.attr("fill", this.pathBackground)
 			.attr("width", "100%");
@@ -597,7 +599,8 @@ var Pathway = (function () {
 		detailFrontRect.attr("width", rectWidth)
 					   .attr("x", textBox.x - this.textDetailLeftMargin)
 					   .attr("y", textBox.y - this.detailTextSpacing)
-					   .each(setColor)
+					   .each(this.setColor)
+					   .each(this.setupServicesTriggers)
 					   .transition()
 					   .duration(duration)
 					   .attr("height", rectHeight);
@@ -698,6 +701,7 @@ var Pathway = (function () {
 			 });
 		}
 		
+		this.detailGroup.datum(null);
 		this.flagExperience = null;
 		this.flagElement = null;
 	}
@@ -775,6 +779,29 @@ var Pathway = (function () {
 		});
 	}
 	
+	Pathway.prototype.handleChangeServices = function(eventObject)
+	{
+		var rect = d3.select(eventObject.data);
+		var experience = rect.datum();
+		
+		Pathway.prototype.setColor.call(eventObject.data, experience);
+	}
+	
+	Pathway.prototype.setupServicesTriggers = function(d)
+		{
+			var serviceCell = d.getCell("Service");
+			var userServiceCell = d.getCell("User Entered Service");
+			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
+			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
+			$(this).on("remove", null, d, function(eventObject)
+			{
+				var serviceCell = d.getCell("Service");
+				var userServiceCell = d.getCell("User Entered Service");
+				$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
+				$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
+			});
+		}
+	
 	Pathway.prototype.appendExperiences = function()
 	{
 		this.experienceGroup.selectAll('g').remove();
@@ -806,7 +833,8 @@ var Pathway = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", showDetail)
-			.each(setColor);
+			.each(this.setColor)
+			.each(this.setupServicesTriggers);
 
 		/* t is the set of all text nodes. */
 		var t = g.append('text')
@@ -861,19 +889,32 @@ var Pathway = (function () {
 		_this.layoutExperiences();
 	};
 
+	Pathway.prototype.handleExperienceDateChanged = function(eventObject)
+	{
+		var _this = eventObject.data;
+		_this.setDateRange();
+		_this.allExperiences.sort(_this._compareExperiences);
+		_this.appendExperiences();
+	}
+		
 	Pathway.prototype.setupExperienceTriggers = function(experience)
 	{
 		var _this = this;
 		
 		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
 		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
+		$(experience.getCell("Start Date")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		$(experience.getCell("End Date")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
 			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
+			$(eventObject.data.getCell("Start Date")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			$(eventObject.data.getCell("End Date")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
 	}
-		
+	
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
