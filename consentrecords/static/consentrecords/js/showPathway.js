@@ -903,15 +903,15 @@ var Pathway = (function () {
 		
 		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
 		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
-		$(experience.getCell("Start Date")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
-		$(experience.getCell("End Date")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
 			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
-			$(eventObject.data.getCell("Start Date")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
-			$(eventObject.data.getCell("End Date")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
 	}
 	
@@ -1819,9 +1819,9 @@ var AddExperiencePanel = (function () {
 					var endDate = dots.endDateInput.value();
 					
 					if (startDate.length > 0)
-						initialData["Start Date"] = [startDate];
+						initialData["Start"] = [startDate];
 					if (endDate.length > 0)
-						initialData["End Date"] = [endDate];
+						initialData["End"] = [endDate];
 						
 					if (dots.organization)
 						initialData["Organization"] = dots.organization.getValueID();
@@ -2114,8 +2114,8 @@ var ExperienceDetailPanel = (function () {
 		var firstDiv = null;
 		var nextDiv;
 		
-		panel2Div.showViewCells([experience.getCell("Start Date"),
-								 experience.getCell("End Date")]);
+		panel2Div.showViewCells([experience.getCell("Start"),
+								 experience.getCell("End")]);
 
 		var cellDiv = panel2Div.append("section")
 			.classed("cell view multiple", true);
@@ -2892,8 +2892,8 @@ var EditExperiencePanel = (function () {
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
 				 new PickOrCreateOfferingCell(experience),
-				 experience.getCell("Start Date"),
-				 experience.getCell("End Date"),
+				 experience.getCell("Start"),
+				 experience.getCell("End"),
 				 experience.getCell("Service"),
 				];
 				

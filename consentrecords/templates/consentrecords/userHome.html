@@ -1098,11 +1098,11 @@
 		
 		function getStartDate(d)
 		{
-			return d.getDatum("Start Date");
+			return d.getDatum("Start");
 		}
 		
 		function getEndDate(d) {
-			return d.getDatum("End Date") || new Date().toISOString().substr(0, 10);
+			return d.getDatum("End") || new Date().toISOString().substr(0, 10);
 		}	
 
 		function getDateRange(d)
@@ -1451,11 +1451,11 @@
 			var nextDiv;
 			firstDiv = appendStringDatum("Registration Deadline");
 			
-			nextDiv = appendStringDatum("Start Date");
+			nextDiv = appendStringDatum("Start");
 			if (!firstDiv)
 				firstDiv = nextDiv;
 				
-			nextDiv = appendStringDatum("End Date");
+			nextDiv = appendStringDatum("End");
 			if (!firstDiv)
 				firstDiv = nextDiv;
 
@@ -1690,8 +1690,8 @@
 		
 		function compareSessions(a, b)
 		{
-			var aDate = a.getDatum("Start Date");
-			var bDate = b.getDatum("Start Date");
+			var aDate = a.getDatum("Start");
+			var bDate = b.getDatum("Start");
 			if (aDate)
 			{
 				if (bDate)
