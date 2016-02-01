@@ -1241,7 +1241,7 @@ function setupPanel0(p0, dots)
 		appendButtons(w, rootObjects, buttonClicked);
 	}
 	
-	p0.onDoneClicked = function()
+	p0.node().onDoneClicked = function()
 	{
 		var newName = searchInput.node().value;
 		
