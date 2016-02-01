@@ -459,22 +459,21 @@
 
 		/* The global object used to identify the current user. */
 		var userInstance = new cr.ObjectValue();
+		var userFirstName = null;
+		var userLastName = null;
 		{% if userID %}
 		userInstance.value.id = "{{userID}}"
 		userInstance.setDescription("{{ user.get_full_name }}")
 		crp.pushCheckCells(userInstance, function() 
 			{
-				userInstance.triggerEvent("signin.cr", userInstance);
+				$(userInstance).trigger("signin.cr");
 			}, asyncFailFunction);
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
 		var usernameLabel = $(".username-label");
-		userInstance.addTarget("signin.cr", usernameLabel[0]);
-		userInstance.addTarget("signout.cr", usernameLabel[0]);
-		userInstance.addTarget("dataChanged.cr", usernameLabel[0]);
 		
-		function setName(e, eventInfo)
+		function setName(eventObject)
 		{
 			var firstName = userInstance.getDatum("_first name");
 			var lastName = userInstance.getDatum("_last name");
@@ -491,52 +490,61 @@
 			else
 				s = userInstance.getDescription();
 				
-			$(this).text(s);
+			$(eventObject.data).text(s);
 		}
 		
-		usernameLabel.on("signin.cr", function(e, eventInfo)
+		$(userInstance).on("dataChanged.cr", null, usernameLabel[0], setName);
+		$(userInstance).on("signin.cr", null, usernameLabel[0], function(eventObject)
 		{
-			userInstance.getValue("_first name").addTarget("dataChanged.cr", usernameLabel[0]);
-			userInstance.getValue("_last name").addTarget("dataChanged.cr", usernameLabel[0]);
-			setName.call(this, e, eventInfo);
+			userFirstName = userInstance.getValue("_first name");
+			userLastName = userInstance.getValue("_last name");
+			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
+			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
+			setName.call(this, eventObject);
 		});
-		usernameLabel.on("dataChanged.cr", setName);
-		usernameLabel.on("signout.cr", function(e, eventInfo)
+		
+		$(userInstance).on("signout.cr", null, usernameLabel[0], function(eventObject)
 		{
-			$(this).text("");
+			if (userFirstName)
+			{
+				$(userFirstName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				$(userLastName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				userFirstName = null;
+				userLastName = null;
+			}
+			$(eventObject.data).text("");
 		});
 		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
-		userInstance.addTarget("signin.cr", signinSpan[0]);
-		userInstance.addTarget("signout.cr", signinSpan[0]);
-		signinSpan.on("signin.cr", function(e, eventInfo)
+		$(userInstance).on("signin.cr", null, signinSpan[0], function(eventObject)
 		{
-			$(this).text("Sign Out");
+			$(eventObject.data).text("Sign Out");
 		});
-		signinSpan.on("signout.cr", function(e, eventInfo)
+		$(userInstance).on("signout.cr", null, signinSpan[0], function(eventObject)
 		{
-			$(this).text("Sign In");
+			$(eventObject.data).text("Sign In");
 		});
 		
 		/* Update the list of organizations associated with the user when a user signs in or out. */
 		var orgSection = $(".organization-section");
-		userInstance.addTarget("signin.cr", orgSection[0]);
-		userInstance.addTarget("signout.cr", orgSection[0]);
-		orgSection.on("signin.cr", function(e, eventInfo)
+		
+		$(userInstance).on("signin.cr", 0, orgSection[0], function(eventObject)
 		{
-			load_organizations.call(this, eventInfo)
+			load_organizations.call(eventObject.data);
 		});
-		orgSection.on("signout.cr", function(e, eventInfo)
+		$(userInstance).on("signout.cr", 0, orgSection[0], function(eventObject)
 		{
-			hide_organizations.call(this, eventInfo)
+			hide_organizations.call(eventObject.data);
 		});
 		
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
 		if (!userInstance.getValueID())
-			userInstance.triggerEvent("signout.cr", userInstance);
+		{
+			$(userInstance).trigger("signout.cr");
+		}
 		/* Otherwise, the signin.cr event will be triggered after the userInstance data loads. */
 
 		/* Handle a click event on the sign-in button to either sign in or sign out
@@ -549,8 +557,8 @@
 				{
 					var successFunction = function()
 					{
-						userInstance.value = {id: "", description: ""};
-						userInstance.triggerEvent("signout.cr", userInstance);
+						userInstance.clearValue();
+						$(userInstance).trigger("signout.cr");
 						unblockClick();
 					};
 					
@@ -585,16 +593,6 @@
 			}
 		}
 		
-		/* Remove all of the functions associated with a target that handles a signin
-			message */
-		function removeSignin(target)
-		{
-			$(target).off("signin.cr");
-			$(target).off("signinCanceled.cr");
-			userInstance.removeTarget("signin.cr", target);
-			userInstance.removeTarget("signinCanceled.cr", target);
-		}
-		
 		/* Initialize the buttons that show a pre-defined panel. */
 		$(".show-panel-button").click(showPanel);
 		
@@ -610,21 +608,21 @@
 					done();
 				else
 				{
-					userInstance.addTarget("signin.cr", panel);
-					userInstance.addTarget("signinCanceled.cr", panel);
-				
-					$(panel).on("signin.cr", function()
+					var onSignin = function(eventObject)
 					{
-						removeSignin(this);
+						$(this).off("signinCanceled.cr", null, onSigninCanceled);
 						if (prepareClick())
 							done();
-					});
-				
-					$(panel).on("signinCanceled.cr", function()
+					};
+					
+					var onSigninCanceled = function(eventObject)
 					{
-						removeSignin(this);
-					});
-				
+						$(this).off("signin.cr", null, onSignin);
+					}
+					
+					$(userInstance).one("signin.cr", null, panel, onSignin);
+					$(userInstance).one("signinCanceled.cr", null, panel, onSigninCanceled);
+					
 					showFixedPanel(panel, "#id_sign_in_panel");
 				}
 			}
@@ -716,7 +714,7 @@
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
 							{
-								userInstance.triggerEvent("signin.cr", userInstance);
+								$(userInstance).trigger("signin.cr");
 							});
 						
 					},
@@ -741,7 +739,7 @@
 					hidePanelRight($("#id_sign_in_panel")[0], false,
 						function()
 						{
-							userInstance.triggerEvent("signinCanceled.cr", userInstance);
+							$(userInstance).trigger("signinCanceled.cr");
 						});
 				}
 				
@@ -1100,11 +1098,11 @@
 		
 		function getStartDate(d)
 		{
-			return d.getDatum("Start Date");
+			return d.getDatum("Start");
 		}
 		
 		function getEndDate(d) {
-			return d.getDatum("End Date") || new Date().toISOString().substr(0, 10);
+			return d.getDatum("End") || new Date().toISOString().substr(0, 10);
 		}	
 
 		function getDateRange(d)
@@ -1453,11 +1451,11 @@
 			var nextDiv;
 			firstDiv = appendStringDatum("Registration Deadline");
 			
-			nextDiv = appendStringDatum("Start Date");
+			nextDiv = appendStringDatum("Start");
 			if (!firstDiv)
 				firstDiv = nextDiv;
 				
-			nextDiv = appendStringDatum("End Date");
+			nextDiv = appendStringDatum("End");
 			if (!firstDiv)
 				firstDiv = nextDiv;
 
@@ -1599,21 +1597,19 @@
 				}
 				else
 				{
-					userInstance.addTarget("signin.cr", panel);
-					userInstance.addTarget("signinCanceled.cr", panel);
-					$(panel).on("signin.cr", function(e, eventInfo)
+					var onSignin = function(eventObject)
 					{
-						removeSignin(this);
+						var _this = this;
 						
 						cr.getValues({path: '#'+session.getValueID()+">Inquiries",
 							field: "_user",
-							value: userInstance.getValueID(),
+							value: this.getValueID(),
 							done: function(valueIDs)
 							{
 								if (valueIDs.length > 0)
 								{
 									checkInquiryFunction(valueIDs[0].id);
-									bootstrap_alert.success(userInstance.getDescription() + 
+									bootstrap_alert.success(_this.getDescription() + 
 														  " already signed up for " + 
 														  offering.getDescription() + "/" + session.getDescription(),
 														  ".alert-container");
@@ -1624,11 +1620,18 @@
 								}
 							},
 							fail: asyncFailFunction});
-					});
-							
-					$(panel).on("signinCanceled.cr", function()
+					};
+					var onSigninCanceled = function(eventObject)
 					{
-						removeSignin(this);
+					};
+					
+					$(userInstance).on("signin.cr", null, panel, onSignin);
+					$(userInstance).on("signinCanceled.cr", null, panel, onSigninCanceled);
+					
+					$(panel).on("hiding.cr", null, userInstance, function(eventObject)
+					{
+						$(eventObject.data).off("signin.cr", null, onSignin);
+						$(eventObject.data).off("signinCanceled.cr", null, onSigninCanceled);
 					});
 					
 					showFixedPanel(panel, "#id_sign_in_panel");
@@ -1687,8 +1690,8 @@
 		
 		function compareSessions(a, b)
 		{
-			var aDate = a.getDatum("Start Date");
-			var bDate = b.getDatum("Start Date");
+			var aDate = a.getDatum("Start");
+			var bDate = b.getDatum("Start");
 			if (aDate)
 			{
 				if (bDate)
@@ -1898,7 +1901,8 @@
 				var cell = cr.createCell(field);
 				cell.setup(null);
 				
-				orgSection.style("display", newInstances.length > 0 ? null : "none");
+				/* Default orgSection style is "none", so override it if there are organizations to show. */
+				orgSection.style("display", newInstances.length > 0 ? "block" : null);
 				
 				var divs = orgSection.selectAll("li")
 					.data(newInstances)
@@ -1956,10 +1960,15 @@
 				var panel2Div = sitePanel.appendScrollArea();
 
 				var headerDiv = panel2Div.appendHeader();
-				objectData.addTarget("dataChanged.cr", headerDiv.node());
-				$(headerDiv.node()).on("dataChanged.cr", function(e) {
-						d3.select(this).text(getViewPanelHeader(objectData));
-					});
+				function updatePanelHeader(eventObject)
+				{
+					d3.select(eventObject.data).text(getViewPanelheader(this));
+				}
+				$(objectData).on("dataChanged.cr", null, headerDiv.node(), updatePanelHeader);
+				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+				{
+					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
+				});
 
 				var alertContainer = panel2Div.appendAlertContainer();
 							

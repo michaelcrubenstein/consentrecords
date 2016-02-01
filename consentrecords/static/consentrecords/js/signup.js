@@ -79,7 +79,7 @@ var Signup = (function () {
 								sitePanel.hidePanelDown(true,
 									function()
 									{
-										userInstance.triggerEvent("signin.cr", userInstance);
+										$(userInstance).trigger("signin.cr");
 									});
 							},
 						syncFailFunction);

@@ -225,56 +225,8 @@ var crp = new CRP();
 
 var cr = {}
 
-cr.EventHandler = (function()
-	{
-		EventHandler.prototype.events = null;
-		
-		EventHandler.prototype.addTarget = function(e, target)
-		{
-			if (!target)
-				throw "target is not specified";
-		
-			if (!(e in this.events))
-				this.events[e] = [];
-			this.events[e].push(target);
-		}
-
-		EventHandler.prototype.removeTarget = function(e, target)
-		{
-			if (!target)
-				throw "target is not specified";
-		
-			if (e in this.events)
-			{
-				var a = this.events[e]
-				var index = $.inArray(target, a);
-				if (index >= 0)
-					a.splice(index, 1);
-			}
-		}
-
-		EventHandler.prototype.triggerEvent = function(e, eventInfo)
-		{
-			if (e in this.events)
-				$(this.events[e]).trigger(e, eventInfo);
-		}
-
-		EventHandler.prototype.clearEvents = function()
-		{
-			this.events = {};
-			$(this).off("dataChanged.cr");
-		}
-		
-		function EventHandler () { 
-			this.events = {};
-		}
-		
-		return EventHandler;
-	})();
-	
 cr.Cell = (function() 
 	{
-		Cell.prototype = new cr.EventHandler();
 		Cell.prototype.data = [];
 		Cell.prototype.field = null;
 		
@@ -354,23 +306,8 @@ cr.Cell = (function()
 		}
 	
 		function Cell(field) {
-			cr.EventHandler.call(this);
 			this.data = [];
 			this.field = field;
-			
-			if (field)
-			{
-			/* All cells propagate dataChanged.cr events and valueDeleted events from their children. */
-				$(this).on("dataChanged.cr", function(e) {
-					this.triggerEvent("dataChanged.cr", this);
-				});
-				$(this).on("valueDeleted.cr", function(e, eventInfo) {
-					this.triggerEvent("valueDeleted.cr", eventInfo);
-				});
-				$(this).on("valueAdded.cr", function(e, newValue) {
-					this.triggerEvent("valueAdded.cr", newValue);
-				});
-			}
 		};
 		
 		return Cell;
@@ -640,8 +577,6 @@ cr.ObjectCell = (function() {
 })();
 
 cr.CellValue = (function() {
-	CellValue.prototype = new cr.EventHandler();
-	
 	CellValue.prototype.getDescription = function() { return this.value; };
 	
 	CellValue.prototype.isEmpty = function()
@@ -657,13 +592,11 @@ cr.CellValue = (function() {
 		if (this.cell)
 		    this.cell.deleteValue(this);
 		$(this).trigger("valueDeleted.cr", this);
-		this.triggerEvent("valueDeleted.cr", this);
 	}
 	
 	CellValue.prototype.triggerDataChanged = function()
 	{
 		$(this).trigger("dataChanged.cr", this);
-		this.triggerEvent("dataChanged.cr", this);
 	}
 	
 	CellValue.prototype.deleteValue = function(successFunction, failFunction)
@@ -741,7 +674,6 @@ cr.CellValue = (function() {
 	};
 			
 	function CellValue() {
-		cr.EventHandler.call(this);
 		this.id = null; 
 		this.value = null;
 		this.cell = null;	/* Initialize the container cell to empty. */
@@ -1044,16 +976,8 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype._setCells = function(oldCells)
 	{
-		if (this.value.cells)
-		{
-			this.value.cells.forEach(
-				function(cell) { cell.clearEvents(); }
-			);
-		}
-		
 		this.value.cells = oldCells;
 		oldCells.forEach(function(cell) {
-			cell.clearEvents();
 			cell.setParent(this);
 		});
 	}
