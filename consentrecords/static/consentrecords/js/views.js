@@ -279,11 +279,6 @@ function _setupItemHandlers(d)
 			$(eventObject.data).off("valueDeleted.cr", null, f);
 		});
 	}
-
-	$(this).on("remove", null, d, function(eventObject)
-	{
-		d.removeTarget("dataChanged.cr", this);
-	});
 }
 
 function _showViewStringCell(obj, cell)

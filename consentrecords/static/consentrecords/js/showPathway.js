@@ -1107,13 +1107,10 @@ function addInput(p, placeholder)
 }
 
 var ReportedObject = function () {
-	ReportedObject.prototype = new cr.EventHandler();
 	ReportedObject.prototype.name = null;
 	ReportedObject.prototype.value = null;
 	
 	function ReportedObject(args) {
-		cr.EventHandler.call(this);
-		
 		if (!("name" in args)) args.name = null;
 		if (!("value" in args)) args.value = null;
 		

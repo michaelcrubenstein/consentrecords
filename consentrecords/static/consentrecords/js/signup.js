@@ -80,7 +80,6 @@ var Signup = (function () {
 									function()
 									{
 										$(userInstance).trigger("signin.cr");
-										userInstance.triggerEvent("signin.cr", userInstance);
 									});
 							},
 						syncFailFunction);

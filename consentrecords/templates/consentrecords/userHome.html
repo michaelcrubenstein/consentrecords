@@ -467,7 +467,6 @@
 		crp.pushCheckCells(userInstance, function() 
 			{
 				$(userInstance).trigger("signin.cr");
-				userInstance.triggerEvent("signin.cr", userInstance);
 			}, asyncFailFunction);
 		{% endif %}
 		
@@ -545,7 +544,6 @@
 		if (!userInstance.getValueID())
 		{
 			$(userInstance).trigger("signout.cr");
-			userInstance.triggerEvent("signout.cr", userInstance);
 		}
 		/* Otherwise, the signin.cr event will be triggered after the userInstance data loads. */
 
@@ -561,7 +559,6 @@
 					{
 						userInstance.clearValue();
 						$(userInstance).trigger("signout.cr");
-						userInstance.triggerEvent("signout.cr", userInstance);
 						unblockClick();
 					};
 					
@@ -718,7 +715,6 @@
 							function()
 							{
 								$(userInstance).trigger("signin.cr");
-								userInstance.triggerEvent("signin.cr", userInstance);
 							});
 						
 					},
@@ -744,7 +740,6 @@
 						function()
 						{
 							$(userInstance).trigger("signinCanceled.cr");
-							userInstance.triggerEvent("signinCanceled.cr", userInstance);
 						});
 				}
 				
