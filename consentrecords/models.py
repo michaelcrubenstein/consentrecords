@@ -45,6 +45,19 @@ class TransactionState:
             self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
 
         return self.currentTransaction
+
+class _deferred():
+    def __init__(self, f):
+        self._value = None
+        self._isCached = False
+        self._f = f
+        
+    @property
+    def value(self):
+        if not self._isCached:
+            self._value = self._f()
+            self._isCached = True
+        return self._value
         
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -171,14 +184,21 @@ class Instance(dbmodels.Model):
     
     # Returns a list of all of the values of self, aggregated by field.id
     def _getValues(self, userInfo):
-        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True)).order_by('field', 'position');
+        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field__id');
+            
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
-        vs = filter(lambda v: v.field not in Terms.securityFields or self._canAdminister(userInfo.authUser, userInfo.instance), vs)
+        cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
+        # vs = filter(lambda v: v.field not in Terms.securityFields or cache.value, vs)
         for v in vs:
-            if v.field.id not in values:
-                values[v.field.id] = []
-            values[v.field.id].append(v)
+            if v.field not in Terms.securityFields or cache.value:
+                fieldID = v.field.id
+                if fieldID not in values:
+                    values[fieldID] = [v]
+                else:
+                    values[fieldID].append(v)
         return values
     
     def _getSubInstances(self, field): # Previously _getSubValueObjects
@@ -286,9 +306,9 @@ class Instance(dbmodels.Model):
     # Get the cached description of this Instance.        
     def description(self, language=None):
         if language:
-            return Description.objects.get(instance=self, language=language).text
+            return self.description_set.get(language=language).text
         else:
-            return Description.objects.get(instance=self, language__isnull=True).text
+            return self.description_set.get(language__isnull=True).text
     
     @property    
     def _allInstances(self):    # was _getAllInstances()
@@ -380,7 +400,7 @@ class Instance(dbmodels.Model):
             
     def getReadableSubValues(self, field, userInfo):
         return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
-        	.order_by('position');
+            .order_by('position');
     
     
     def _getCellData(self, fieldData, values, language=None):
@@ -695,17 +715,17 @@ class Instance(dbmodels.Model):
                 return
         self.checkWriteAccess(user, field)
             
-    def anonymousFindFilter(f):
+    def anonymousFindFilter():
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return f.filter(Q(accessrecord__isnull=True)|
+        return (Q(accessrecord__isnull=True)|
                         Q(accessrecord__source__in=sources))
         
-    def securityValueFilter(self, f, privilegeIDs):
+    def securityValueFilter(self, privilegeIDs):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
         sources=Instance.objects.filter(\
@@ -725,23 +745,25 @@ class Instance(dbmodels.Model):
                         )\
                        )
         
-        return f.filter(Q(referenceValue__isnull=True)|
+        return (Q(referenceValue__isnull=True)|
                         Q(referenceValue__accessrecord__isnull=True)|
-                        Q(referenceValue__accessrecord__source__in=sources))
+                        (Q(referenceValue__accessrecord__source__in=sources)))
     
-    ### For the specified instance filter, filter only those instances that can be found by self.    
-    def findValueFilter(self, f):
+    ### For the specified instance filter, filter only those instances that can be found by self. 
+    @property   
+    def findValueFilter(self):
         privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityValueFilter(f, privilegeIDs)
+        return self.securityValueFilter(privilegeIDs)
     
-    ### For the specified instance filter, filter only those instances that can be read by self.    
-    def readValueFilter(self, f):
+    ### For the specified instance filter, filter only those instances that can be read by self. 
+    @property   
+    def readValueFilter(self):
         privilegeIDs = [Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityValueFilter(f, privilegeIDs)
+        return self.securityValueFilter(privilegeIDs)
     
     
     @property                
@@ -880,14 +902,14 @@ class Value(dbmodels.Model):
     def checkWriteAccess(self, user):
         self.instance.checkWriteValueAccess(user, self.field, self.referenceValue)
         
-    def anonymousFindFilter(f):
+    def anonymousFindFilter():
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return f.filter(Q(referenceValue__isnull=True)|
+        return (Q(referenceValue__isnull=True)|
                         Q(referenceValue__accessrecord__isnull=True)|
                         Q(referenceValue__accessrecord__source__in=sources))
 
@@ -1186,6 +1208,8 @@ class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
         self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
+        self._findValueFilter = None
+        self._readValueFilter = None
     
     @property    
     def is_administrator(self):
@@ -1197,33 +1221,41 @@ class UserInfo:
 
     def findFilter(self, resultSet):
         if not self.is_authenticated:
-            return Instance.anonymousFindFilter(resultSet)
+            return resultSet.filter(Instance.anonymousFindFilter())
         elif self.is_administrator:
             return resultSet
         elif self.instance:
             return self.instance.findFilter(resultSet)
         else:
-            return Instance.anonymousFindFilter(resultSet) # This case occurs while setting up a user.
+            return resultSet.filter(Instance.anonymousFindFilter()) # This case occurs while setting up a user.
 
     def findValueFilter(self, resultSet):
-        if not self.is_authenticated:
-            return Value.anonymousFindFilter(resultSet)
+        if self._findValueFilter:
+            return resultSet.filter(self._findValueFilter)
         elif self.is_administrator:
             return resultSet
         else:
-            return self.instance.findValueFilter(resultSet)
+            if not self.is_authenticated:
+                self._findValueFilter = Value.anonymousFindFilter()
+            else:
+                self._findValueFilter = self.instance.findValueFilter
+            return resultSet.filter(self._findValueFilter)
 
     def readValueFilter(self, resultSet):
-        if not self.is_authenticated:
-            return Value.anonymousReadFilter(resultSet)
+        if self._readValueFilter:
+            return resultSet.filter(self._readValueFilter)
         elif self.is_administrator:
             return resultSet
         else:
-            return self.instance.readValueFilter(resultSet)
+            if not self.is_authenticated:
+                self._readValueFilter = Value.anonymousReadFilter()
+            else:
+                self._readValueFilter = self.instance.readValueFilter
+            return resultSet.filter(self._readValueFilter)
 
     def readFilter(self, resultSet):
         if not self.is_authenticated:
-            return Instance.anonymousFindFilter(resultSet)
+            return resultSet.filter(Instance.anonymousFindFilter())
         elif self.is_administrator:
             return resultSet
         else:
