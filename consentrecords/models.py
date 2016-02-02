@@ -131,7 +131,7 @@ class Instance(dbmodels.Model):
 
     def addReferenceValue(self, field, value, position, transactionState):
         if position < 0:
-            raise ValueError("the position %s is not valid", position)
+            raise ValueError("the position %s is not valid" % position)
         if not value:
             raise ValueError("the value is null")
             
