@@ -50,14 +50,23 @@ class DeletedValueInline(ValueInline):
     
 class InstanceAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')
+    list_display = ('id', 'typeID', 'parent', '_description', 't_creationTime', 'deleteTransaction')
 
     fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
+    readonly_fields = ('id', 'typeID', 'parent', '_description', 't_creationTime')
     search_fields = ('id', 'typeID__id', 'typeID__description__text', 'description__text')
 
+    def queryset(self, request):
+        qs = super(InstanceAdmin, self).queryset(request)
+        qs = qs.annotate('transaction__creation_time')
+        return qs
+
+    def t_creationTime(self, obj):
+        return obj.transaction.creation_time
+    t_creationTime.admin_order_field = 'transaction__creation_time'
+    
     inlines = [AccessRecordInline, InstanceValueInline]
     
 class ValueAdmin(admin.ModelAdmin):
