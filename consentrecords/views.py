@@ -410,12 +410,11 @@ class api:
         if uuObject.typeID in fieldsDataDictionary:
             return fieldsDataDictionary[uuObject.typeID]
         else:
-            configuration = uuObject.typeID.getSubInstance(Terms.configuration)
-    
-            if not configuration:
+            fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
+                                     .filter(parent__parent=uuObject.typeID)
+            fieldsData = [field.getFieldData() for field in fields]
+            if not len(fieldsData):
                 raise RuntimeError("the specified item is not configured")
-    
-            fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
             return fieldsData
 
@@ -460,6 +459,7 @@ class api:
             uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
+            uuObjects = uuObjects.select_related('typeID')
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}

@@ -326,15 +326,19 @@ class Instance(dbmodels.Model):
         vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
                                    deleteTransaction__isnull=True)
         vs1 = self.value_set.filter(deleteTransaction__isnull=True)\
+        					.select_related('referenceValue')\
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,
-                                                       to_attr='name_values'));
+                                                       to_attr='name_values'))
+                                                       
         d = {}
         for v1 in vs1:
             # Ensure there is a referenceValue, because some properties of a field may
             # not be an object (such as pickValuePath).
             if v1.referenceValue:
-                d[v1.field] = (v1.referenceValue.name_values[0], v1.referenceValue)
+                d[v1.field] = (v1.referenceValue.names[0].string_value, v1.referenceValue.id)
+            else:
+            	d[v1.field] = v1.stringValue
         return d
     
     # For a parent field when getting data, construct this special field record
@@ -358,29 +362,28 @@ class Instance(dbmodels.Model):
             nameReference = d[Terms.name]
             dataTypeReference = d[Terms.dataType]
             fieldData = {"id" : self.id, 
-                         "name" : nameReference[0].stringValue,
-                         "nameID" : nameReference[1].id,
-                         "dataType" : dataTypeReference[0].stringValue,
-                         "dataTypeID" : dataTypeReference[1].id}
+                         "name" : nameReference[0],
+                         "nameID" : nameReference[1],
+                         "dataType" : dataTypeReference[0],
+                         "dataTypeID" : dataTypeReference[1]}
             if Terms.maxCapacity in d:
-                fieldData["capacity"] = d[Terms.maxCapacity][0].stringValue
+                fieldData["capacity"] = d[Terms.maxCapacity][0]
             else:
                 fieldData["capacity"] = TermNames.multipleValues
                 
             if Terms.descriptorType in d:
-                fieldData["descriptorType"] = d[Terms.descriptorType][0].stringValue
+                fieldData["descriptorType"] = d[Terms.descriptorType][0]
             
             if Terms.addObjectRule in d:
-                fieldData["objectAddRule"] = d[Terms.addObjectRule][0].stringValue
+                fieldData["objectAddRule"] = d[Terms.addObjectRule][0]
             
             if fieldData["dataTypeID"] == Terms.objectEnum.id:
                 if Terms.ofKind in d:
                     ofKindReference = d[Terms.ofKind]
-                    fieldData["ofKind"] = ofKindReference[0].stringValue
-                    fieldData["ofKindID"] = ofKindReference[1].id
-                v = self.getSubValue(Terms.pickObjectPath)
-                if v:
-                    fieldData["pickObjectPath"] = v.stringValue;
+                    fieldData["ofKind"] = ofKindReference[0]
+                    fieldData["ofKindID"] = ofKindReference[1]
+                if Terms.pickObjectPath in d:
+                	fieldData["pickObjectPath"] = d[Terms.pickObjectPath]
         
         return fieldData
     
