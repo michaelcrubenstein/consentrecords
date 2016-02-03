@@ -179,18 +179,10 @@ class Instance(dbmodels.Model):
     def _getSubValues(self, field):
         return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
-    # Returns a list of all of the values of self, aggregated by field.id
-    def _getValues(self, userInfo):
-        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')
-            
+    def _groupValuesByField(vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
-        # vs = filter(lambda v: v.field not in Terms.securityFields or cache.value, vs)
         for v in vs:
             if v.field not in Terms.securityFields or cache.value:
                 fieldID = v.field.id
@@ -320,7 +312,7 @@ class Instance(dbmodels.Model):
         return {'id': None, 'value': {'id': self.id, 'description': self.description(language)}}
     
     # This code presumes that all fields have unique values.
-    def _sortValuesByField(values):
+    def _sortValueDataByField(values):
         d = {}
         for v in values:
             # If there is a reference value, put in a duple with the referenceValue name and id.
@@ -342,7 +334,7 @@ class Instance(dbmodels.Model):
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,
                                                        to_attr='name_values'))
-        return Instance._sortValuesByField(vs1)                                               
+        return Instance._sortValueDataByField(vs1)                                               
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
@@ -407,7 +399,7 @@ class Instance(dbmodels.Model):
                                  .filter(parent__parent=self.typeID)\
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
-        return [field._getFieldDataFromValues(Instance._sortValuesByField(field.values), language) for field in fields]
+        return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
 
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
@@ -456,8 +448,8 @@ class Instance(dbmodels.Model):
         return cell
                 
     # Returns an array of arrays.
-    def getData(self, fieldsData, language=None, userInfo=None):
-        values = self._getValues(userInfo)
+    def getData(self, vs, fieldsData, language=None, userInfo=None):
+        values = Instance._groupValuesByField(vs, userInfo)
         return [self._getCellData(fieldData, values, language) for fieldData in fieldsData]
 
     # self should be a configuration object with fields.

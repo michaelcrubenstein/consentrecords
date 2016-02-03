@@ -420,7 +420,9 @@ class api:
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
         
-        cells = uuObject.getData(fieldsData, language, userInfo)
+        vs = uuObject.values
+            
+        cells = uuObject.getData(vs, fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
                 "description": uuObject.descriptions[0].text,
@@ -481,9 +483,18 @@ class api:
                 queryset=Description.objects.filter(language=language)
             else:
                 queryset=Description.objects.filter(language__isnull=True)
+            valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+				.order_by('position')\
+				.select_related('field')\
+				.select_related('field__id')\
+				.select_related('referenceValue')
+
             uuObjects = uuObjects.prefetch_related(Prefetch('description_set',
                                                             queryset=queryset,
-                                                            to_attr='descriptions'))
+                                                            to_attr='descriptions'))\
+                                 .prefetch_related(Prefetch('value_set',
+                                 							queryset=valueQueryset,
+                                 							to_attr='values'))
                                                             
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
@@ -500,7 +511,12 @@ class api:
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
         fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
         data = v.getReferenceData(language)
-        data["value"]["cells"] = v.referenceValue.getData(fieldsData, language, userInfo)
+        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')
+        data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
         return data;
     
     def getCellData(user, data):
