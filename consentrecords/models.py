@@ -403,7 +403,8 @@ class Instance(dbmodels.Model):
 
         fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
                                  .filter(parent__parent=self.typeID)\
-                                 .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))
+                                 .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
+                                 .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValuesByField(field.values), language) for field in fields]
 
     # Return an array where each element contains the id and description for an object that
