@@ -81,9 +81,6 @@ class Instance(dbmodels.Model):
     def _parentDescription(self):
         return self.parent and str(self.parent)
         
-    def _fieldName(field):            #Previously verbString
-        return field.getSubValue(Terms.uuName).stringValue or str(field)
-    
     # Returns a new instance of an object of this kind.
     def createEmptyInstance(self, parent, transactionState):
         id = uuid.uuid4().hex
