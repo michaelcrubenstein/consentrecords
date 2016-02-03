@@ -1,4 +1,4 @@
-# python3 data/01dumping.py 'data/OrganizationNames.txt' michaelcrubenstein@gmail.com
+# python3 data/01loadorganizations.py 'data/OrganizationNames.txt' michaelcrubenstein@gmail.com
 
 import datetime
 import django

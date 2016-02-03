@@ -1,4 +1,4 @@
-# python3 data/03loadbps.py 'data/BPSdump.csv' michaelcrubenstein@gmail.com
+# python3 data/04dumpconfiguration.py 'data/termsdump.txt' michaelcrubenstein@gmail.com
 
 import datetime
 import django
@@ -28,3 +28,16 @@ if __name__ == "__main__":
         Terms.initialize(transactionState)
         userInfo = UserInfo(user)
         
+        path = statePath='_uuname'
+        terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)
+        terms = sorted(terms, key=lambda t: t.value_set.filter(deleteTransaction__isnull=True,
+                                           field=Terms.uuName)[0].stringValue)
+        with open(sys.argv[1], 'w') as fOut:
+            for term in terms:
+                fOut.write('Term\n')
+                termNames = term.value_set.filter(deleteTransaction__isnull=True,
+                                           field=Terms.uuName)
+                label = Terms.name.value_set.filter(deleteTransaction__isnull=True, field=Terms.uuName)[0].stringValue
+                for n in termNames:
+                    fOut.write('    %s: %s\n' % (label, n.stringValue))
+            

@@ -1,0 +1,156 @@
+Term
+    _name: Address
+Term
+    _name: Birthday
+Term
+    _name: City
+Term
+    _name: Color
+Term
+    _name: Consent Form
+Term
+    _name: Consent Record
+Term
+    _name: Employee
+Term
+    _name: Employees
+Term
+    _name: End
+Term
+    _name: End Time
+Term
+    _name: Enrollment
+Term
+    _name: Enrollments
+Term
+    _name: Experience
+Term
+    _name: Experiences
+Term
+    _name: Inquiries
+Term
+    _name: Inquiry
+Term
+    _name: Inquiry Access Group
+Term
+    _name: Maximum Age
+Term
+    _name: Maximum Grade
+Term
+    _name: Minimum Age
+Term
+    _name: Minimum Grade
+Term
+    _name: More Experience
+Term
+    _name: More Experiences
+Term
+    _name: Offering
+Term
+    _name: Offerings
+Term
+    _name: Organization
+Term
+    _name: Period
+Term
+    _name: Registration Deadline
+Term
+    _name: Service
+Term
+    _name: Service Domain
+Term
+    _name: Session
+Term
+    _name: Sessions
+Term
+    _name: Site
+Term
+    _name: Sites
+Term
+    _name: Start
+Term
+    _name: Start Time
+Term
+    _name: State
+Term
+    _name: Street
+Term
+    _name: User Entered Offering
+Term
+    _name: User Entered Organization
+Term
+    _name: User Entered Service
+Term
+    _name: User Entered Site
+Term
+    _name: Web Site
+Term
+    _name: Weekday
+Term
+    _name: Zip Code
+Term
+    _name: _access record
+Term
+    _name: _boolean
+Term
+    _name: _configuration
+Term
+    _name: _data type
+Term
+    _name: _default access
+Term
+    _name: _descriptor type
+Term
+    _name: _email
+Term
+    _name: _field
+Term
+    _name: _first name
+Term
+    _name: _group
+Term
+    _name: _inherits security
+Term
+    _name: _language
+Term
+    _name: _last name
+Term
+    _name: _max capacity
+Term
+    _name: _name
+Term
+    _name: _object add rule
+Term
+    _name: _of kind
+Term
+    _name: _pick object path
+Term
+    _name: _primary administrator
+Term
+    _name: _privilege
+Term
+    _name: _public access
+Term
+    _name: _special access
+Term
+    _name: _telephone
+Term
+    _name: _text
+Term
+    _name: _time
+Term
+    _name: _to user path
+Term
+    _name: _translation
+Term
+    _name: _url
+Term
+    _name: _user
+Term
+    _name: _userID
+Term
+    _name: _users
+Term
+    _name: _uuname
+Term
+    _name: enumerator
