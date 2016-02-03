@@ -45,6 +45,19 @@ class TransactionState:
             self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
 
         return self.currentTransaction
+
+class _deferred():
+    def __init__(self, f):
+        self._value = None
+        self._isCached = False
+        self._f = f
+        
+    @property
+    def value(self):
+        if not self._isCached:
+            self._value = self._f()
+            self._isCached = True
+        return self._value
         
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -68,9 +81,6 @@ class Instance(dbmodels.Model):
     def _parentDescription(self):
         return self.parent and str(self.parent)
         
-    def _fieldName(field):            #Previously verbString
-        return field.getSubValue(Terms.uuName).stringValue or str(field)
-    
     # Returns a new instance of an object of this kind.
     def createEmptyInstance(self, parent, transactionState):
         id = uuid.uuid4().hex
@@ -171,14 +181,22 @@ class Instance(dbmodels.Model):
     
     # Returns a list of all of the values of self, aggregated by field.id
     def _getValues(self, userInfo):
-        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True)).order_by('field', 'position');
+        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field__id')\
+            .select_related('referenceValue')
+            
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
-        vs = filter(lambda v: v.field not in Terms.securityFields or self._canAdminister(userInfo.authUser, userInfo.instance), vs)
+        cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
+        # vs = filter(lambda v: v.field not in Terms.securityFields or cache.value, vs)
         for v in vs:
-            if v.field.id not in values:
-                values[v.field.id] = []
-            values[v.field.id].append(v)
+            if v.field not in Terms.securityFields or cache.value:
+                fieldID = v.field.id
+                if fieldID not in values:
+                    values[fieldID] = [v]
+                else:
+                    values[fieldID].append(v)
         return values
     
     def _getSubInstances(self, field): # Previously _getSubValueObjects
@@ -190,7 +208,8 @@ class Instance(dbmodels.Model):
             raise ValueError("field is not specified")
         
         try:
-            return self.value_set.get(deleteTransaction__isnull=True, field=field)
+            f = self.value_set.filter(deleteTransaction__isnull=True, field=field).select_related('referenceValue')
+            return f[0] if f.count() else None
         except Value.DoesNotExist:
             return None
             
@@ -246,7 +265,7 @@ class Instance(dbmodels.Model):
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
             else:
-                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)));
+                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)))
                     
         return " ".join(r)
         
@@ -286,18 +305,30 @@ class Instance(dbmodels.Model):
     # Get the cached description of this Instance.        
     def description(self, language=None):
         if language:
-            return Description.objects.get(instance=self, language=language).text
+            return self.description_set.get(language=language).text
         else:
-            return Description.objects.get(instance=self, language__isnull=True).text
+            return self.description_set.get(language__isnull=True).text
     
     @property    
     def _allInstances(self):    # was _getAllInstances()
-        return self.typeInstances.filter(deleteTransaction__isnull=True);
+        return self.typeInstances.filter(deleteTransaction__isnull=True)
             
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, language=None):
         return {'id': None, 'value': {'id': self.id, 'description': self.description(language)}}
+    
+    # This code presumes that all fields have unique values.
+    def _sortValuesByField(values):
+        d = {}
+        for v in values:
+            # If there is a reference value, put in a duple with the referenceValue name and id.
+            # Otherwise, put in the string value.
+            if v.referenceValue:
+                d[v.field] = (v.referenceValue.name_values[0].stringValue, v.referenceValue.id)
+            else:
+                d[v.field] = v.stringValue
+        return d
         
     # Returns a dictionary by field where each value is
     # a duple containing the value containing the name and 
@@ -306,21 +337,16 @@ class Instance(dbmodels.Model):
         vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
                                    deleteTransaction__isnull=True)
         vs1 = self.value_set.filter(deleteTransaction__isnull=True)\
+                            .select_related('referenceValue')\
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,
-                                                       to_attr='name_values'));
-        d = {}
-        for v1 in vs1:
-            # Ensure there is a referenceValue, because some properties of a field may
-            # not be an object (such as pickValuePath).
-            if v1.referenceValue:
-                d[v1.field] = (v1.referenceValue.name_values[0], v1.referenceValue)
-        return d
+                                                       to_attr='name_values'))
+        return Instance._sortValuesByField(vs1)                                               
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
     def getParentReferenceFieldData(self):
-        name = self.getSubValue(Terms.uuName).stringValue
+        name = self.description()
         fieldData = {"name" : name,
                      "nameID" : self.id,
                      "dataType" : TermNames.object,
@@ -332,44 +358,77 @@ class Instance(dbmodels.Model):
     
     # Returns a dictionary of information about a field instance.                 
     def getFieldData(self, language=None):
-        d = self._getSubValueReferences()
+        return self._getFieldDataFromValues(self._getSubValueReferences(), language)
+    
+    def _getFieldDataFromValues(self, values, language):
         fieldData = None
-        if Terms.name in d and Terms.dataType in d:
-            nameReference = d[Terms.name]
-            dataTypeReference = d[Terms.dataType]
+        if Terms.name in values and Terms.dataType in values:
+            nameReference = values[Terms.name]
+            dataTypeReference = values[Terms.dataType]
             fieldData = {"id" : self.id, 
-                         "name" : nameReference[0].stringValue,
-                         "nameID" : nameReference[1].id,
-                         "dataType" : dataTypeReference[0].stringValue,
-                         "dataTypeID" : dataTypeReference[1].id}
-            if Terms.maxCapacity in d:
-                fieldData["capacity"] = d[Terms.maxCapacity][0].stringValue
+                         "name" : nameReference[0],
+                         "nameID" : nameReference[1],
+                         "dataType" : dataTypeReference[0],
+                         "dataTypeID" : dataTypeReference[1]}
+            if Terms.maxCapacity in values:
+                fieldData["capacity"] = values[Terms.maxCapacity][0]
             else:
                 fieldData["capacity"] = TermNames.multipleValues
                 
-            if Terms.descriptorType in d:
-                fieldData["descriptorType"] = d[Terms.descriptorType][0].stringValue
+            if Terms.descriptorType in values:
+                fieldData["descriptorType"] = values[Terms.descriptorType][0]
             
-            if Terms.addObjectRule in d:
-                fieldData["objectAddRule"] = d[Terms.addObjectRule][0].stringValue
+            if Terms.addObjectRule in values:
+                fieldData["objectAddRule"] = values[Terms.addObjectRule][0]
             
             if fieldData["dataTypeID"] == Terms.objectEnum.id:
-                if Terms.ofKind in d:
-                    ofKindReference = d[Terms.ofKind]
-                    fieldData["ofKind"] = ofKindReference[0].stringValue
-                    fieldData["ofKindID"] = ofKindReference[1].id
-                v = self.getSubValue(Terms.pickObjectPath)
-                if v:
-                    fieldData["pickObjectPath"] = v.stringValue;
+                if Terms.ofKind in values:
+                    ofKindReference = values[Terms.ofKind]
+                    fieldData["ofKind"] = ofKindReference[0]
+                    fieldData["ofKindID"] = ofKindReference[1]
+                if Terms.pickObjectPath in values:
+                    fieldData["pickObjectPath"] = values[Terms.pickObjectPath]
         
         return fieldData
     
+    def getFieldsData(self, language=None):
+        vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
+                            deleteTransaction__isnull=True)
+
+        vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
+                            .select_related('referenceValue')\
+                            .prefetch_related(Prefetch('referenceValue__value_set',
+                                                       queryset=vs2,
+                                                       to_attr='name_values'))
+
+        fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
+                                 .filter(parent__parent=self.typeID)\
+                                 .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))
+        return [field._getFieldDataFromValues(Instance._sortValuesByField(field.values), language) for field in fields]
+
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
-    def getCellValues(dataTypeID, values, language=None):
+    def getDescriptionFromSet(descriptionSet, language):
+        if not language:
+            return descriptionSet.find(lambda d: d.language == None) or descriptionSet.find(lambda d: d.language == "en")
+        else:
+            return descriptionSet.find(lambda d: d.language == language)
+            
+        if len(descriptionSet):
+            return descriptionSet[0]
+        else:
+            raise RuntimeError("no description for instance")
+            
+    def getValueReferenceData(v, language):
+        return { "id": v.id,
+              "value": {"id" : v.referenceValue.id, "description": getDescriptionFromSet(v.descriptions.all()).text },
+              "position": v.position }
+
+            
+    def _getCellValues(dataTypeID, values, language=None):
         if dataTypeID == Terms.objectEnum.id:
             return [v.getReferenceData(language) for v in values]
         elif dataTypeID == Terms.translationEnum.id:
@@ -380,7 +439,8 @@ class Instance(dbmodels.Model):
             
     def getReadableSubValues(self, field, userInfo):
         return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
-        	.order_by('position');
+            .order_by('position')\
+            .select_related('referenceValue')
     
     
     def _getCellData(self, fieldData, values, language=None):
@@ -389,7 +449,7 @@ class Instance(dbmodels.Model):
         if fieldID not in values:
             cell["data"] = []
         else:
-            cell["data"] = Instance.getCellValues(fieldData["dataTypeID"], values[fieldID], language)
+            cell["data"] = Instance._getCellValues(fieldData["dataTypeID"], values[fieldID], language)
         return cell
                 
     # Returns an array of arrays.
@@ -695,17 +755,17 @@ class Instance(dbmodels.Model):
                 return
         self.checkWriteAccess(user, field)
             
-    def anonymousFindFilter(f):
+    def anonymousFindFilter():
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return f.filter(Q(accessrecord__isnull=True)|
+        return (Q(accessrecord__isnull=True)|
                         Q(accessrecord__source__in=sources))
         
-    def securityValueFilter(self, f, privilegeIDs):
+    def securityValueFilter(self, privilegeIDs):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
         sources=Instance.objects.filter(\
@@ -725,23 +785,25 @@ class Instance(dbmodels.Model):
                         )\
                        )
         
-        return f.filter(Q(referenceValue__isnull=True)|
+        return (Q(referenceValue__isnull=True)|
                         Q(referenceValue__accessrecord__isnull=True)|
-                        Q(referenceValue__accessrecord__source__in=sources))
+                        (Q(referenceValue__accessrecord__source__in=sources)))
     
-    ### For the specified instance filter, filter only those instances that can be found by self.    
-    def findValueFilter(self, f):
+    ### For the specified instance filter, filter only those instances that can be found by self. 
+    @property   
+    def findValueFilter(self):
         privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityValueFilter(f, privilegeIDs)
+        return self.securityValueFilter(privilegeIDs)
     
-    ### For the specified instance filter, filter only those instances that can be read by self.    
-    def readValueFilter(self, f):
+    ### For the specified instance filter, filter only those instances that can be read by self. 
+    @property   
+    def readValueFilter(self):
         privilegeIDs = [Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
                       Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
         
-        return self.securityValueFilter(f, privilegeIDs)
+        return self.securityValueFilter(privilegeIDs)
     
     
     @property                
@@ -825,14 +887,14 @@ class Value(dbmodels.Model):
         
     def getReferenceData(self, language=None):
         if not language:
-            description = Description.objects.get(instance=self.referenceValue, language__isnull=True)
+            description = self.referenceValue.description_set.get(language__isnull=True)
             if not description:
-                description = Description.objects.get(instance=self.referenceValue, language="en")
+                description = self.referenceValue.description_set.get(language="en")
         else:
-            description = Description.objects.get(instance=self.referenceValue, language=language)
+            description = self.referenceValue.description_set.get(instance=self.referenceValue, language=language)
             
         if not description:
-            f = Description.objects.filter(instance=self.referenceValue)
+            f = self.referenceValue.description_set.all()
             if f.count():
                 description = f[0]
             else:
@@ -880,14 +942,14 @@ class Value(dbmodels.Model):
     def checkWriteAccess(self, user):
         self.instance.checkWriteValueAccess(user, self.field, self.referenceValue)
         
-    def anonymousFindFilter(f):
+    def anonymousFindFilter():
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return f.filter(Q(referenceValue__isnull=True)|
+        return (Q(referenceValue__isnull=True)|
                         Q(referenceValue__accessrecord__isnull=True)|
                         Q(referenceValue__accessrecord__source__in=sources))
 
@@ -1186,6 +1248,8 @@ class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
         self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
+        self._findValueFilter = None
+        self._readValueFilter = None
     
     @property    
     def is_administrator(self):
@@ -1197,33 +1261,41 @@ class UserInfo:
 
     def findFilter(self, resultSet):
         if not self.is_authenticated:
-            return Instance.anonymousFindFilter(resultSet)
+            return resultSet.filter(Instance.anonymousFindFilter())
         elif self.is_administrator:
             return resultSet
         elif self.instance:
             return self.instance.findFilter(resultSet)
         else:
-            return Instance.anonymousFindFilter(resultSet) # This case occurs while setting up a user.
+            return resultSet.filter(Instance.anonymousFindFilter()) # This case occurs while setting up a user.
 
     def findValueFilter(self, resultSet):
-        if not self.is_authenticated:
-            return Value.anonymousFindFilter(resultSet)
+        if self._findValueFilter:
+            return resultSet.filter(self._findValueFilter)
         elif self.is_administrator:
             return resultSet
         else:
-            return self.instance.findValueFilter(resultSet)
+            if not self.is_authenticated:
+                self._findValueFilter = Value.anonymousFindFilter()
+            else:
+                self._findValueFilter = self.instance.findValueFilter
+            return resultSet.filter(self._findValueFilter)
 
     def readValueFilter(self, resultSet):
-        if not self.is_authenticated:
-            return Value.anonymousReadFilter(resultSet)
+        if self._readValueFilter:
+            return resultSet.filter(self._readValueFilter)
         elif self.is_administrator:
             return resultSet
         else:
-            return self.instance.readValueFilter(resultSet)
+            if not self.is_authenticated:
+                self._readValueFilter = Value.anonymousReadFilter()
+            else:
+                self._readValueFilter = self.instance.readValueFilter
+            return resultSet.filter(self._readValueFilter)
 
     def readFilter(self, resultSet):
         if not self.is_authenticated:
-            return Instance.anonymousFindFilter(resultSet)
+            return resultSet.filter(Instance.anonymousFindFilter())
         elif self.is_administrator:
             return resultSet
         else:

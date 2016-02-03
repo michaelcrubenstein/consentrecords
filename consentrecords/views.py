@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import transaction, connection
+from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import render, redirect
 from django.template import RequestContext, loader
@@ -20,7 +21,7 @@ import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Terms, Instance, Value, NameList, UserInfo
+from consentrecords.models import TransactionState, Terms, Instance, Value, NameList, UserInfo, Description
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
@@ -410,12 +411,9 @@ class api:
         if uuObject.typeID in fieldsDataDictionary:
             return fieldsDataDictionary[uuObject.typeID]
         else:
-            configuration = uuObject.typeID.getSubInstance(Terms.configuration)
-    
-            if not configuration:
+            fieldsData = uuObject.getFieldsData()
+            if not len(fieldsData):
                 raise RuntimeError("the specified item is not configured")
-    
-            fieldsData = [fieldObject.getFieldData() for fieldObject in configuration._getSubInstances(Terms.field)]
             fieldsDataDictionary[uuObject.typeID] = fieldsData
             return fieldsData
 
@@ -425,7 +423,7 @@ class api:
         cells = uuObject.getData(fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
-                "description": uuObject.description(language),
+                "description": uuObject.descriptions[0].text,
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
@@ -460,6 +458,17 @@ class api:
             uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
+            
+            # preload the typeID, parent and description to improve performance.
+            uuObjects = uuObjects.select_related('typeID').select_related('parent')
+            if language:
+                queryset=Description.objects.filter(language=language)
+            else:
+                queryset=Description.objects.filter(language__isnull=True)
+            uuObjects = uuObjects.prefetch_related(Prefetch('description_set',
+                                                            queryset=queryset,
+                                                            to_attr='descriptions'))
+                                                            
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
