@@ -346,7 +346,7 @@ class Instance(dbmodels.Model):
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
     def getParentReferenceFieldData(self):
-        name = self.description()
+        name = self.typeDescriptions[0]
         fieldData = {"name" : name,
                      "nameID" : self.id,
                      "dataType" : TermNames.object,
@@ -396,6 +396,7 @@ class Instance(dbmodels.Model):
                             deleteTransaction__isnull=True)
 
         vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
+                            .select_related('field')\
                             .select_related('referenceValue')\
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,

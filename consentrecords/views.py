@@ -429,12 +429,27 @@ class api:
     
         if 'parents' in fields:
             while uuObject.parent:
-                uuObject = uuObject.parent
+                if language:
+                    qs1=Description.objects.filter(language=language)
+                    qs2=Description.objects.filter(language=language)
+                else:
+                    qs1=Description.objects.filter(language__isnull=True)
+                    qs2=Description.objects.filter(language__isnull=True)
+                uuObject = Instance.objects.filter(pk=uuObject.parent)\
+                                .select_related('typeID')\
+                                .select_related('parent')\
+                                .prefetch_related(Prefetch('description_set',
+                                                            queryset=qs1,
+                                                            to_attr='descriptions'))\
+                                .prefetch_related(Prefetch('typeID__description_set',
+                                                            queryset=qs2,
+                                                            to_attr='typeDescriptions'))
+                                
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.description()},
+                        'value': {'id': uuObject.id, 'description': uuObject.descriptions[0]},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
