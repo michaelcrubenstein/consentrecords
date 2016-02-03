@@ -435,7 +435,7 @@ class api:
                 else:
                     qs1=Description.objects.filter(language__isnull=True)
                     qs2=Description.objects.filter(language__isnull=True)
-                uuObject = Instance.objects.filter(pk=uuObject.parent)\
+                uuObject = Instance.objects\
                                 .select_related('typeID')\
                                 .select_related('parent')\
                                 .prefetch_related(Prefetch('description_set',
@@ -443,13 +443,14 @@ class api:
                                                             to_attr='descriptions'))\
                                 .prefetch_related(Prefetch('typeID__description_set',
                                                             queryset=qs2,
-                                                            to_attr='typeDescriptions'))
+                                                            to_attr='typeDescriptions'))\
+                                .get(pk=uuObject.parent.id)
                                 
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.descriptions[0]},
+                        'value': {'id': uuObject.id, 'description': uuObject.descriptions[0].text},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         

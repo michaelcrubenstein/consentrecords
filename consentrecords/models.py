@@ -346,7 +346,7 @@ class Instance(dbmodels.Model):
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
     def getParentReferenceFieldData(self):
-        name = self.typeDescriptions[0]
+        name = self.typeDescriptions[0].text
         fieldData = {"name" : name,
                      "nameID" : self.id,
                      "dataType" : TermNames.object,
