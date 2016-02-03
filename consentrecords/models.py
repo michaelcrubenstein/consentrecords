@@ -263,7 +263,7 @@ class Instance(dbmodels.Model):
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
             else:
-                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)));
+                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)))
                     
         return " ".join(r)
         
@@ -309,7 +309,7 @@ class Instance(dbmodels.Model):
     
     @property    
     def _allInstances(self):    # was _getAllInstances()
-        return self.typeInstances.filter(deleteTransaction__isnull=True);
+        return self.typeInstances.filter(deleteTransaction__isnull=True)
             
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
@@ -400,7 +400,7 @@ class Instance(dbmodels.Model):
             
     def getReadableSubValues(self, field, userInfo):
         return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
-            .order_by('position');
+            .order_by('position')
     
     
     def _getCellData(self, fieldData, values, language=None):
