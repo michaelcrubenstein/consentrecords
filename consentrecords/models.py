@@ -336,7 +336,7 @@ class Instance(dbmodels.Model):
             # Ensure there is a referenceValue, because some properties of a field may
             # not be an object (such as pickValuePath).
             if v1.referenceValue:
-                d[v1.field] = (v1.referenceValue.names[0].string_value, v1.referenceValue.id)
+                d[v1.field] = (v1.referenceValue.name_values[0].stringValue, v1.referenceValue.id)
             else:
             	d[v1.field] = v1.stringValue
         return d
