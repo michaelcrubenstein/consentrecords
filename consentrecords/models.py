@@ -183,6 +183,7 @@ class Instance(dbmodels.Model):
     def _getValues(self, userInfo):
         vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
+            .select_related('field')\
             .select_related('field__id')\
             .select_related('referenceValue')
             
