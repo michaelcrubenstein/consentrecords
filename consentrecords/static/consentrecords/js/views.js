@@ -1358,6 +1358,13 @@ var SitePanel = (function () {
 		{
 			return this.append("div").classed("alert-container", true);
 		}
+		
+		panel2Div.appendLoadingMessage = function()
+		{
+			this.append('p')
+				.classed("help-block", true)
+				.text("Loading...");
+		}
 	
 		panel2Div.appendSections = function(sectionData)
 		{

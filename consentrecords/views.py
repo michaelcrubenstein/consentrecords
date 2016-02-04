@@ -420,7 +420,9 @@ class api:
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
         
-        cells = uuObject.getData(fieldsData, language, userInfo)
+        vs = uuObject.values
+            
+        cells = uuObject.getData(vs, fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
                 "description": uuObject.descriptions[0].text,
@@ -429,12 +431,28 @@ class api:
     
         if 'parents' in fields:
             while uuObject.parent:
-                uuObject = uuObject.parent
+                if language:
+                    qs1=Description.objects.filter(language=language)
+                    qs2=Description.objects.filter(language=language)
+                else:
+                    qs1=Description.objects.filter(language__isnull=True)
+                    qs2=Description.objects.filter(language__isnull=True)
+                uuObject = Instance.objects\
+                                .select_related('typeID')\
+                                .select_related('parent')\
+                                .prefetch_related(Prefetch('description_set',
+                                                            queryset=qs1,
+                                                            to_attr='descriptions'))\
+                                .prefetch_related(Prefetch('typeID__description_set',
+                                                            queryset=qs2,
+                                                            to_attr='typeDescriptions'))\
+                                .get(pk=uuObject.parent.id)
+                                
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.description()},
+                        'value': {'id': uuObject.id, 'description': uuObject.descriptions[0].text},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
@@ -459,15 +477,27 @@ class api:
             fieldsDataDictionary = {}
             nameLists = NameList()
             
-            # preload the typeID, parent and description to improve performance.
-            uuObjects = uuObjects.select_related('typeID').select_related('parent')
+            # preload the typeID, parent, value_set and description to improve performance.
             if language:
                 queryset=Description.objects.filter(language=language)
             else:
                 queryset=Description.objects.filter(language__isnull=True)
-            uuObjects = uuObjects.prefetch_related(Prefetch('description_set',
+            valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+                .order_by('position')\
+                .select_related('field')\
+                .select_related('field__id')\
+                .select_related('referenceValue')\
+                .prefetch_related(Prefetch('referenceValue__description_set',
+                                           queryset=queryset,
+                                           to_attr='valueDescriptions'))
+
+            uuObjects = uuObjects.select_related('typeID').select_related('parent')\
+                                 .prefetch_related(Prefetch('description_set',
                                                             queryset=queryset,
-                                                            to_attr='descriptions'))
+                                                            to_attr='descriptions'))\
+                                 .prefetch_related(Prefetch('value_set',
+                                                            queryset=valueQueryset,
+                                                            to_attr='values'))
                                                             
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
@@ -484,7 +514,19 @@ class api:
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
         fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
         data = v.getReferenceData(language)
-        data["value"]["cells"] = v.referenceValue.getData(fieldsData, language, userInfo)
+        if language:
+            queryset=Description.objects.filter(language=language)
+        else:
+            queryset=Description.objects.filter(language__isnull=True)
+        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .prefetch_related(Prefetch('referenceValue__description_set',
+                                       queryset=queryset,
+                                       to_attr='valueDescriptions'))
+        data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
         return data;
     
     def getCellData(user, data):
