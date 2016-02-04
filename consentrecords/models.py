@@ -179,7 +179,7 @@ class Instance(dbmodels.Model):
     def _getSubValues(self, field):
         return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
-    def _groupValuesByField(vs, userInfo):
+    def _groupValuesByField(self, vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
@@ -449,7 +449,7 @@ class Instance(dbmodels.Model):
                 
     # Returns an array of arrays.
     def getData(self, vs, fieldsData, language=None, userInfo=None):
-        values = Instance._groupValuesByField(vs, userInfo)
+        values = self._groupValuesByField(vs, userInfo)
         return [self._getCellData(fieldData, values, language) for fieldData in fieldsData]
 
     # self should be a configuration object with fields.
