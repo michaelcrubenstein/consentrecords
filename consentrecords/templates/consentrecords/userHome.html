@@ -1292,6 +1292,13 @@
 				.text(function(d) {
 					return d.getValue("Organization").getDescription();
 				});
+			leftText.append('div').classed("sub-text", true)
+				.text(function(d) {
+					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+						return d.getValue("Site").getDescription();
+					else
+						return null;
+				});
 		}
 						
 		function show_plans(container) {
