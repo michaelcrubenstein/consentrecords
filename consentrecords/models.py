@@ -425,7 +425,7 @@ class Instance(dbmodels.Model):
             
     def _getCellValues(dataTypeID, values, language=None):
         if dataTypeID == Terms.objectEnum.id:
-            return [v.getReferenceData(language) for v in values]
+            return [v.getCachedReferenceData() for v in values]
         elif dataTypeID == Terms.translationEnum.id:
             return [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values]
         else:
@@ -897,6 +897,11 @@ class Value(dbmodels.Model):
             
         return { "id": self.id,
               "value": {"id" : self.referenceValue.id, "description": description.text },
+              "position": self.position }
+            
+    def getCachedReferenceData(self):
+        return { "id": self.id,
+              "value": {"id" : self.referenceValue.id, "description": self.referenceValue.valueDescriptions[0].text },
               "position": self.position }
             
     # Updates the value of the specified object
