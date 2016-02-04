@@ -170,8 +170,8 @@
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
-					<button panelID = "id_find_experience_panel"
-						class="btn row-button site-active-text find_experience_button show-panel-button">
+					<button id="id-find-experience-button"
+						class="btn row-button site-active-text">
 						<span class="pull-left">Find a New Experience</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
@@ -274,31 +274,6 @@
 			</form>
 		</panel>
 
-	    <panel id="id_find_experience_panel" class="level-2-panel site-panel reveal list">
-			<nav role="navigation">
-				<!-- Collect the nav links, forms, and other content for toggling -->
-				<div class="pull-left">
-					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-				</div>
-				<div class="pull-right">
-					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-						<span>+</span>
-					</div>
-				</div>
-				<div class="site-navbar-commands">
-					<div class="site-title"><span>Find a New Experience</span></div>
-				</div>
-			</nav>
-			<div id="id_scrollableArea" class="vertical-scrolling">
-				<div>
-					<div class="alert-container"></div>
-				</div>
-				<div id="id_searchArea" class="searchbar">
-				</div>
-				<div id="id_services">
-				</div>
-			</div> <!-- /container-fluid -->
-	    </panel>
 	    <panel id="id_find_offering_panel" class="level-3-panel site-panel reveal list">
 			<nav role="navigation">
 				<!-- Collect the nav links, forms, and other content for toggling -->
@@ -432,6 +407,7 @@
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
@@ -642,6 +618,17 @@
 			e.preventDefault();
 		});
 		
+		$("#id-find-experience-button").click(function(e)
+		{
+			if (prepareClick())
+			{
+				var panel = $(this).parents(".site-panel")[0];
+				var newPanel = new FindExperiencePanel(userInstance, null, null, panel);
+			}
+			
+			e.preventDefault();
+		});
+		
 		$("#id_pathway_button").click(function(e)
 		{
 			var panel = $(this).parents(".site-panel")[0];
@@ -667,14 +654,6 @@
 		});
 		
 		$(document).ready (function(e) {
-			$("#id_find_experience_panel").on("revealing.cr", function(e, eventInfo)
-				{
-					show_services("#id_services");
-				});
-				
-			setupSearchBar("#id_find_experience_panel .searchbar",
-				getFilter("#id_services"));
-				
 			$("#id_find_offering_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					var datum = d3.select(this).datum();
@@ -821,27 +800,13 @@
 				if (stateString.startsWith("findNewExperience"))
 				{
 					stateString = stateString.substring("findNewExperience".length);
+					var serviceValueID = null;
+					var offeringString = null;
 					if (stateString.length > 0)
 					{
-						var serviceValueID = stateString.substring(0, 32);
+						serviceValueID = stateString.substring(0, 32);
 						stateString = stateString.substring(32);
-						$("#id_find_experience_panel").on("servicesShown.cr", function()
-						{
-							var cell = d3.select("#id_services").datum();
-							for (var i = 0; i < cell.data.length; ++i)
-							{
-								var d = cell.data[i];
-								if (d.getValueID() == serviceValueID)
-								{
-									d3.select("#id_find_offering_panel").datum(d);
-									showPanelNow("#id_find_offering_panel");
-									break;
-								}
-							}
-							/* Only do this once, so turn it off. */
-							$("#id_find_experience_panel").off("servicesShown.cr");
-						});
-						var offeringString = stateString.substring(0, 32);
+						offeringString = stateString.substring(0, 32);
 						stateString = stateString.substring(32);
 						$("#id_find_offering_panel").on("offeringsShown.cr", function()
 						{
@@ -861,7 +826,8 @@
 							$("#id_find_offering_panel").off("offeringsShown.cr");
 						});
 					}
-					showPanelNow("#id_find_experience_panel");
+					var previousPanel = $("panel.initial")[0];
+					var panel = new FindExperiencePanel(userInstance, serviceValueID, offeringString, previousPanel);
 					stateString = "";	/* So it only happens once. */
 				}
 			{% endif %}
@@ -1033,56 +999,6 @@
 						fields: ["parents"], 
 						done: successFunction, 
 						fail: asyncFailFunction});
-		}
-		
-		function show_services(containerDiv) {
-			var container = d3.select(containerDiv);
-			
-			var successFunction = function(newInstances)
-			{
-				var field = {
-							  dataType: "_object",
-							  name: "Service",
-							  capacity: "_multiple values",
-							  };
-				var cell = cr.createCell(field);
-				cell.setup(null);
-				newInstances.sort(function(a, b)
-					{
-						return a.getDescription().localeCompare(b.getDescription());
-					});
-					
-				for (var i = 0; i < newInstances.length; i++)
-				{
-					var newI = crp.pushInstance(newInstances[i]);
-					cell.pushValue(newI);
-				}
-				
-				container.datum(cell);
-				appendViewCellItems(container, cell, 
-					function(d) {
-						if (prepareClick())
-						{
-							var panelDiv = d3.select("#id_find_offering_panel");
-							panelDiv.datum(d);
-							showClickFeedback(this);
-				
-							showPanelLeft(panelDiv.node());
-						}
-					});
-					
-				container.selectAll('p').remove();
-				$(containerDiv).trigger("servicesShown.cr");
-			}
-			
-			container.append('p')
-				.classed("help-block", true)
-				.text("Loading...");
-				
-			var path = "Service";
-			crp.getData({path: path, 
-						 done: successFunction, 
-						 fail: asyncFailFunction});
 		}
 		
 		function cells_get_cell_by_name(cells, name)
