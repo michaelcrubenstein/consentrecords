@@ -178,6 +178,8 @@ var CRP = (function() {
 				else
 				{
 					cr.getData({path: args.path, 
+								start: args.start,
+								end: args.end,
 								fields: args.fields,
 								done: function(newInstances) {
 											_this.paths[args.path] = newInstances;
@@ -1502,7 +1504,7 @@ cr.getData = function(args)
 			throw ("successFunction is not specified");
 		if (!args.path)
 			throw ("path is not specified");
-		
+			
 		var data = {path : args.path}
 		if (args.fields)
 			data['fields'] = JSON.stringify(args.fields); 
@@ -1511,6 +1513,11 @@ cr.getData = function(args)
 				  
 		if (args.limit !== undefined)
 			data.limit = args.limit;
+		
+		if (args.start !== undefined)
+			data.start = args.start;
+		if (args.end !== undefined)
+			data.end = args.end;
 		
 		$.getJSON(cr.urls.getData, data,
 			function(json)

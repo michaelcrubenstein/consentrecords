@@ -1144,11 +1144,13 @@ function appendViewButtons(sections, fill)
 
 function appendItems(container, data)
 {
-	// Remove any lingering contents from the set of full issues.
-	container.selectAll("li").remove();
-
+	var i = 0;
 	return container.selectAll("li")
-		.data(data)
+		.data(data, function(d) {
+			/* Ensure that this operation appends without replacing any items. */
+			i += 1;
+			return i;
+		  })
 		.enter()
 		.append("li")	// So that each button appears on its own row.
 		.each(_setupItemHandlers);
@@ -1165,6 +1167,9 @@ function appendItem(container, value)
 /* Returns the set of objects that contain the description of each data element */
 function appendViewCellItems(container, cell, clickFunction)
 {
+	// Remove any lingering contents.
+	container.selectAll("li").remove();
+
 	var divs = appendItems(container, cell.data);
 	
 	var buttons = appendRowButtons(divs);
@@ -1181,6 +1186,9 @@ function appendViewCellItems(container, cell, clickFunction)
 /* Returns the set of objects that contain the description of each data element */
 function appendEditCellItems(container, cell, clickFunction)
 {
+	// Remove any lingering contents.
+	container.selectAll("li").remove();
+
 	var divs = appendItems(container, cell.data);
 	
 	if (cell.field.capacity != "_unique value")
@@ -1361,7 +1369,7 @@ var SitePanel = (function () {
 		
 		panel2Div.appendLoadingMessage = function()
 		{
-			this.append('p')
+			return this.append('p')
 				.classed("help-block", true)
 				.text("Loading...");
 		}
