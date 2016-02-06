@@ -125,10 +125,10 @@ var Signup = (function () {
 				.style('color', '#777');
 				
 			p.append('p')
-				.text('Your birthday will be shared only with the people you want. We collect your birth month and year to help match you to the right opportunities.');
+				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
 				
 			p.append('p')
-				.text('We may also collect the day of your birthday later, depending on the requirements of our partners who provide specific opportunities to you.');
+				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
 				
 			var minYear, maxYear;
 			maxYear = (new Date()).getFullYear();
