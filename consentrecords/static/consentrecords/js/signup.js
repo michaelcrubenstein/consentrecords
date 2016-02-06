@@ -101,16 +101,18 @@ var Signup = (function () {
 			var row = p.append('table').classed('labeled', true)
 				.append('tr');
 			row.append('td').text('Birth Month and Year');
-			var monthInput = row.append('td')
-				.append('select')
-				.classed('month', true)
+			var yearCell = row.append('td').classed('full-width', true);
+			var monthDiv = yearCell.append('div').classed('select-container', true);
+			monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+			var monthInput = monthDiv.append('select')
 				.on('change', function(d)
 					{
 						signup.dots.checkForwardEnabled();
 					});
-			var yearInput = row.append('td')
-				.classed('year full-width', true)
-				.append('select')
+					
+			var yearDiv = yearCell.append('div').classed('select-container', true);
+			yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+			var yearInput = yearDiv.append('select')
 				.on('change', function(d)
 					{
 						signup.dots.checkForwardEnabled();
