@@ -475,7 +475,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 
 function _showEditTranslationCell(obj, cell, inputType)
 {
-	var sectionObj = d3.select(obj).classed("string", true);
+	var sectionObj = d3.select(obj).classed("string translation", true);
 	
 	function appendInputControls(divs)
 	{

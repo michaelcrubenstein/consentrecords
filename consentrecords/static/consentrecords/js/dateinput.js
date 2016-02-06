@@ -29,11 +29,20 @@ var DateInput = (function () {
 		var row = p.append('div')
 			   .classed('date-row', true);
 		row.node().dateInput = this;
-		this.yearInput = row.append('select').style('display', 'inline')
+		
+		var yearDiv = row.append('div');
+		yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		this.yearInput = yearDiv.append('select')
 			.classed('year', true);
-		this.monthInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
+		
+		var monthDiv = row.append('div');
+		monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		this.monthInput = monthDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
 			.classed('month', true);
-		this.dateInput = row.append('select').style('display', 'inline').style('visibility', 'hidden')
+
+		var dateDiv = row.append('div');
+		dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		this.dateInput = dateDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
 			.classed('day', true);
 	
 		var yearNode = this.yearInput.node();
