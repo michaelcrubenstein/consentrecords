@@ -34,14 +34,6 @@
 		height: 100%;
     }
     
-    .date-row {
-		overflow: hidden;
-    }
-    
-    .date-row > select {
-    	display: inline-block;
-    }
-    
     .dots ~ panel {
     	display: table;
     	height: calc(100% - 50px);

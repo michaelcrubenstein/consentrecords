@@ -29,9 +29,17 @@
 		width: 100%;
 	}
 	
-	panel.sign-up select {
+	panel.sign-up div.select-container {
 		margin-top: 6px;
 		margin-bottom: 6px;
+	}
+	
+	panel.sign-up div.select-container:first-child {
+		margin-left:20px;
+	}
+	
+	panel.sign-up div.select-container:last-child {
+		margin-left:12px;
 	}
 	
 	panel.sign-up table {
@@ -52,6 +60,35 @@
 	
 	table.labeled td:first-child {
 		text-align: right;
+		margin-right: 12px;
+	}
+	
+	div.select-container {
+		display: inline-block;
+		position: relative;
+		background-color: white;
+	}
+
+	div.select-container span {
+		position: absolute;
+		right: 0px;
+		top: 4px;
+		font-size: 14px;
+		color: #AAA;
+	}
+
+	div.select-container select {
+		margin-left: 3px;
+		padding-left: 3px;
+		padding-right: 17px;
+		position: relative;
+		background-color: transparent;
+		border: none;
+		outline: none;
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		appearance:none;
+		padding-left: 0px;
 	}
 
 	table.option td:first-child {
@@ -120,3 +157,4 @@
     panel.sign-up .dots ~ panel > div > select {
     	display: inline-block;
     }
+    

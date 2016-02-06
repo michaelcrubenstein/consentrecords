@@ -221,12 +221,13 @@ panel.list .description-text {
 .string-input-container > input:only-child {
 	width: 100%;
 }
-.cell.edit li select:first-child {
+.cell.edit.translation li select:first-child {
 	float: right;
 	width: 80px;
+	outline: none;
 }
-.cell.edit li select:first-child+*:last-child {
-	margin-right: 80px;
+.cell.edit.translation li select:first-child+*:last-child {
+	margin-right: 83px;
 	display: block;
 }
 li > .row-button {
@@ -391,15 +392,38 @@ input[type="date"]:focus {
 	color: #2C55CC;
 }
 
+.date-row {
+	overflow: hidden;
+}
+
+.date-row > div {
+	display: inline-block;
+	position: relative;
+}
+
+.date-row > div > span {
+	position: absolute;
+	right: 0px;
+	top: 4px;
+	font-size: 14px;
+	color: #AAA;
+}
+
 /* select.year, select.month and select.day are used for dateInput */
-select.year {
-	margin-left: 12px;
+.date-row select {
+	margin-left: 3px;
+	padding-left: 3px;
+	padding-right: 17px;
+	position: relative;
+	background-color: transparent;
+	border: none;
+	outline: none;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	padding-left: 0px;
 }
 
-select.month {
-	margin-left: 12px;
-}
-
-select.day {
-	margin-left: 12px;
+select::-ms-expand {
+    display: none;
 }

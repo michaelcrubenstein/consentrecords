@@ -463,6 +463,8 @@ class api:
         try:
             path = data.get('path', None)
             limit = int(data.get("limit", "0"))
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
         
             if not path:
                 return JsonResponse({'success':False, 'error': "path was not specified in getData"})
@@ -498,6 +500,10 @@ class api:
                                  .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
                                                             to_attr='values'))
+            if end > 0:
+                uuObjects = uuObjects.order_by('id')[start:end]
+            elif start > 0:
+                uuObjects = uuObjects.order_by('id')[start:]
                                                             
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         

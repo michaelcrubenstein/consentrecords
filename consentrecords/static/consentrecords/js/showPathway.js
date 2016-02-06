@@ -2871,7 +2871,7 @@ var EditExperiencePanel = (function () {
 	}
 	
 	function EditExperiencePanel(experience, previousPanel) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "view session", revealPanelUp);
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		var bottomNavContainer = this.appendBottomNavContainer();
 		
