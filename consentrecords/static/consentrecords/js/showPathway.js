@@ -1384,7 +1384,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 
 function setupServicesPanel(dots)
 {
-	var sitePanel = dots.sitePanel;
+	var sitePanelNode = $(this).parents("panel.site-panel")[0];
 	var p1 = d3.select(this);
 	p1.append('div')
 		.classed('table-row', true)
@@ -1421,7 +1421,7 @@ function setupServicesPanel(dots)
 						var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
 						dots.services[i] = newReportedObject;
 					}
-					showPickServicePanel(sitePanel.node(), rootObjects, d, dots, success);
+					showPickServicePanel(sitePanelNode, rootObjects, d, dots, success);
 				}, 
 				fail: syncFailFunction});
 			}
