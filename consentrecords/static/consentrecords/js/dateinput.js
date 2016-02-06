@@ -37,12 +37,12 @@ var DateInput = (function () {
 		
 		var monthDiv = row.append('div');
 		monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-		this.monthInput = monthDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
+		this.monthInput = monthDiv.append('select').style('display', 'inline')
 			.classed('month', true);
 
 		var dateDiv = row.append('div');
 		dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-		this.dateInput = dateDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
+		this.dateInput = dateDiv.append('select').style('display', 'inline')
 			.classed('day', true);
 	
 		var yearNode = this.yearInput.node();
