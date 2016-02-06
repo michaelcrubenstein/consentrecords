@@ -100,23 +100,29 @@ var Signup = (function () {
 				
 			var row = p.append('table').classed('labeled', true)
 				.append('tr');
-			row.append('td').text('Birth Month and Year');
+			row.append('td').text('Birth Month');
 			var yearCell = row.append('td').classed('full-width', true);
 			var monthDiv = yearCell.append('div').classed('select-container', true);
 			monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 			var monthInput = monthDiv.append('select')
 				.on('change', function(d)
 					{
+						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
+						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					});
+					})
+				.style('color', '#777');
 					
 			var yearDiv = yearCell.append('div').classed('select-container', true);
 			yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 			var yearInput = yearDiv.append('select')
 				.on('change', function(d)
 					{
+						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
+						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					});
+					})
+				.style('color', '#777');
 				
 			p.append('p')
 				.text('Your birthday will be shared only with the people you want. We collect your birth month and year to help match you to the right opportunities.');
@@ -136,14 +142,16 @@ var Signup = (function () {
 				.data(years)
 				.enter()
 				.append('option')
-				.text(function(d) { return d; });
+				.text(function(d) { return d; })
+				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
 					
 			var months = ['month'].concat(Date.CultureInfo.monthNames);
 			monthInput.selectAll('option')
 				.data(months)
 				.enter()
 				.append('option')
-				.text(function(d) { return d; });
+				.text(function(d) { return d; })
+				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
 				
 			signup.getBirthday = function()
 			{
