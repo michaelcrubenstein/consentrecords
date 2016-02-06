@@ -1405,7 +1405,7 @@ function setupServicesPanel(dots)
 	itemsDiv.classed("border-above", true);
 
 	var clickFunction;
-	clickFunction = function(d, i) {
+	clickFunction = function(d) {
 			var _this = this;
 			if (prepareClick())
 			{
@@ -1419,7 +1419,7 @@ function setupServicesPanel(dots)
 						divs.datum(newReportedObject);
 						d3.select(_this).datum(newReportedObject);
 						var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
-						dots.services[i] = newReportedObject;
+						dots.services[dots.services.indexOf(d)] = newReportedObject;
 					}
 					showPickServicePanel(sitePanelNode, rootObjects, d, dots, success);
 				}, 
