@@ -100,7 +100,7 @@ var Signup = (function () {
 				
 			var row = p.append('table').classed('labeled', true)
 				.append('tr');
-			row.append('td').text('Birth Month and Year');
+			row.append('td').text('Birth Month');
 			var yearCell = row.append('td').classed('full-width', true);
 			var monthDiv = yearCell.append('div').classed('select-container', true);
 			monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
