@@ -389,7 +389,7 @@ var Signup = (function () {
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
 			cell.append('span').text('Email Only');
-			row.append('td').append('p').text('Others can search for your email address, which lets them give you private access to their profiles.');
+			row.append('td').append('p').text('Others can search for your email address, which lets them give you access to their profiles.');
 
 			row = t.append('tr');
 			cell = row.append('td');
@@ -402,8 +402,8 @@ var Signup = (function () {
 						var _this = this;
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
-			cell.append('span').text('All*');
-			row.append('td').append('p').text('Others can find you and look at your information *except for the information you explicitly restrict from view.');
+			cell.append('span').text('All');
+			row.append('td').append('p').text('Others can look at your information (except for information you restrict from view).');
 
 			signup.getPublicAccess = function()
 			{
