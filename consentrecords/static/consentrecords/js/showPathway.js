@@ -1173,10 +1173,10 @@ function setupFirstMarkerPanel(dots)
 	var p0 = d3.select(this);
 	p0.append('div')
 		.classed('table-row', true)
-		.append('p').text("What type of experience do you want to add to your pathway?");
+		.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
 	p0.append('div')
 		.classed('table-row', true)
-		.append('p').text("Choose one of the types, below, or type the name you can for the experience. If there is more than one, pick one, and then you can add others.");
+		.append('p').text("Choose one of the markers below, or type the name of your own marker. If more than one marker applies, pick one and then you can add others.");
 		
 	var searchInput = addInput(p0, "Experience");
 	
@@ -1390,11 +1390,7 @@ function setupServicesPanel(dots)
 	var p1 = d3.select(this);
 	p1.append('div')
 		.classed('table-row', true)
-		.append('p').text("Some experiences provide more than one kind of value, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one kind of value, add other values here for this experience.");
-
-	var labelDiv = p1.append("div").classed("table-row", true)
-		.append('label')
-		.text("Values");
+		.append('p').text("Some experiences provide more than one marker, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one marker, add other markers here for this experience.");
 
 	var obj = p1.append('div')
 		.classed('body', true)
@@ -1483,7 +1479,7 @@ function setupServicesPanel(dots)
 		})
 		.append("div").classed("pull-left", true);
 	buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-	buttonDiv.append("span").text(" add value");
+	buttonDiv.append("span").text(" add marker");
 	
 	this.onReveal = null;
 }
