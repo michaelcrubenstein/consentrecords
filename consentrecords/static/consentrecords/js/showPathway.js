@@ -667,8 +667,14 @@ var Pathway = (function () {
 		 this.flagExperience.getCell("Site"),
 		 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
 		 {
-			$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
-			$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+		 	/* d will be null if the experience came from the organization for the 
+		 		User Entered Organization and User Entered Site.
+		 	 */
+		 	if (d)
+		 	{
+				$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+			}
 		 });
 	}
 	
@@ -696,8 +702,14 @@ var Pathway = (function () {
 			 this.flagExperience.getCell("Site"),
 			 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
 			 {
-			 	$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
-			 	$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+			 	if (d)
+			 	{
+					$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
+					$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
+				}
 			 });
 		}
 		
@@ -2023,14 +2035,17 @@ var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype.setupPickOrCreateTarget = function(targetNode, experience, pickedName, createName, update)
 	{
 		var pickDatum = experience.getCell(pickedName).data[0];
-		var createDatum = experience.getCell(createName).data[0];
+		var createCell = experience.getCell(createName);
+		var createDatum = createCell ? createCell.data[0] : null;
 		
 		$(pickDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
-		$(createDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
+		if (createDatum)
+			$(createDatum).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, targetNode, update);
 		
 		$(targetNode).on("remove", function() {
 			$(pickDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
-			$(createDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
+			if (createDatum)
+				$(createDatum).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, update);
 		});
 		update.call(this, {data: targetNode});
 	}
