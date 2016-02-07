@@ -2678,7 +2678,7 @@ var PickOrCreateCell = (function () {
 			.text(this.field.name);
 		var itemsDiv = sectionDiv.append("ol")
 			.classed("items-div", true)
-			.classed("right-label expanding-div", true);
+			.classed("right-label", true);
 
 		var _this = this;
 

@@ -172,18 +172,21 @@ section.cell {
 	overflow: hidden;
 	width: auto;
 }
-.cell.unique.view>label {
+.cell.unique>label {
 	width: auto;
 	float: left;
+}
+.cell.unique.view>label {
 	margin-left: 0px;
 	margin-right: auto;
 	padding-left: 12px;
 	line-height: 1.5em; 
 	vertical-align: middle;
 }
-.cell.unique.edit>label {
-	width: auto;
-	float: left;
+.cell.unique>ol {
+	overflow: hidden;
+	width:auto;
+	padding: 6px 12px;
 }
 
 .right-label {
@@ -232,11 +235,6 @@ panel.list .description-text {
 }
 li > .row-button {
 	text-align: left;
-}
-.cell.unique.edit>ol {
-	overflow: hidden;
-	width:auto;
-	padding: 6px 12px;
 }
 /* If there is a label for a unique string item, right-align the input and its container. */
 .cell.unique.edit.string label+.items-div .string-input-container {
