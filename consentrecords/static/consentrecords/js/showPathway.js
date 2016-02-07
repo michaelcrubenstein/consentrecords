@@ -1168,7 +1168,7 @@ var ReportedObject = function () {
     return ReportedObject;
 }();
 
-function setupPanel0(p0, dots)
+function setupFirstMarkerPanel(dots)
 {
 	p0.append('div')
 		.classed('table-row', true)
@@ -1273,6 +1273,7 @@ function setupPanel0(p0, dots)
 			dots.services.push(new ReportedObject({name: newName, value: newValue}));
 	}
 	crp.getData({path: "Service", done: done, fail: asyncFailFunction});
+	this.onReveal = null;
 }
 
 function getObjectByDescription(a, description)
@@ -1917,12 +1918,12 @@ var AddExperiencePanel = (function () {
 
 		var p0 = d3.select(dots.nthPanel(0));
 		
-		setupPanel0(p0, dots);
-		dots.nthPanel(1).onReveal = setupPanel2;
-		dots.nthPanel(2).onReveal = setupPanel3;
-		dots.nthPanel(3).onReveal = setupPanel4;
-		dots.nthPanel(4).onReveal = setupPanel5;
-		dots.nthPanel(5).onReveal = setupPanel6;
+		dots.nthPanel(0).onReveal = setupPanel2;
+		dots.nthPanel(1).onReveal = setupPanel3;
+		dots.nthPanel(2).onReveal = setupPanel4;
+		dots.nthPanel(3).onReveal = setupPanel5;
+		dots.nthPanel(4).onReveal = setupPanel6;
+		dots.nthPanel(5).onReveal = setupFirstMarkerPanel;
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				

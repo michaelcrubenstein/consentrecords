@@ -93,8 +93,10 @@ var Signup = (function () {
 		
 		navContainer.appendTitle('Create a New Account');
 
-		function setupPanel0(p, signup)
+		function setupPanel0(signup)
 		{
+			var p = d3.select(this);
+			var signup = 
 			p.append('h1')
 				.text('Birthday');
 				
@@ -439,8 +441,7 @@ var Signup = (function () {
 			this.onReveal = null;
 		}
 	
-		var p0 = d3.select(this.dots.nthPanel(0));
-		setupPanel0(p0, this);
+		this.dots.nthPanel(0).onReveal = setupPanel0;
 		this.dots.nthPanel(1).onReveal = setupPanel2;
 		this.dots.nthPanel(2).onReveal = setupPanel3;
 		this.dots.nthPanel(3).onReveal = setupPanel4;
