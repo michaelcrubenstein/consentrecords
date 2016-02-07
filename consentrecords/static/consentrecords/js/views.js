@@ -1939,8 +1939,8 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			}
 		}
 
-		$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
-		$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+		$(cell).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
 		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
 			{
 				$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
@@ -2037,8 +2037,8 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
 	}
 
-	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
-	$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+	$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+	$(cell).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
 	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
 		{
 			$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
