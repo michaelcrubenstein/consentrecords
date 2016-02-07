@@ -1170,6 +1170,7 @@ var ReportedObject = function () {
 
 function setupFirstMarkerPanel(dots)
 {
+	var p0 = d3.select(this);
 	p0.append('div')
 		.classed('table-row', true)
 		.append('p').text("What type of experience do you want to add to your pathway?");
