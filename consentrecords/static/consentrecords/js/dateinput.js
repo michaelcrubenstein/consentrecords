@@ -1,3 +1,9 @@
+/* 
+	DateInput
+	
+	This class triggers a change event on itself whenever its year, month or day change.
+ */
+
 var DateInput = (function () {
 	DateInput.prototype.year = undefined;
 	DateInput.prototype.month = undefined;
@@ -37,12 +43,12 @@ var DateInput = (function () {
 		
 		var monthDiv = row.append('div');
 		monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-		this.monthInput = monthDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
+		this.monthInput = monthDiv.append('select').style('display', 'inline')
 			.classed('month', true);
 
 		var dateDiv = row.append('div');
 		dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-		this.dateInput = dateDiv.append('select').style('display', 'inline').style('visibility', 'hidden')
+		this.dateInput = dateDiv.append('select').style('display', 'inline')
 			.classed('day', true);
 	
 		var yearNode = this.yearInput.node();
@@ -86,11 +92,13 @@ var DateInput = (function () {
 					_this.year = undefined;
 				else
 					_this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
+				$(_this).trigger("change");
 			});
 		
 		$(dateNode).change(function()
 			{
 				_this.day = dateNode.selectedIndex;
+				$(_this).trigger("change");
 			});
 	
 		$(monthNode).change(function()
@@ -117,6 +125,7 @@ var DateInput = (function () {
 					_this.month = undefined;
 				else
 					_this.month = monthNode.selectedIndex;
+				$(_this).trigger("change");
 			});
 	}
 	

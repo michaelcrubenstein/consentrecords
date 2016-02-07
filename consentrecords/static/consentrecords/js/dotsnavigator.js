@@ -78,6 +78,8 @@ var DotsNavigator = (function () {
 	}
 	
 	DotsNavigator.prototype.showDots = function() {
+		p = this.nthPanel(0);
+		p.onReveal.call(p, this.datum);
 		this.checkForwardEnabled();
 	}
 	

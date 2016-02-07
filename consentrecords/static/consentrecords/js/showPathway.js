@@ -1168,14 +1168,15 @@ var ReportedObject = function () {
     return ReportedObject;
 }();
 
-function setupPanel0(p0, dots)
+function setupFirstMarkerPanel(dots)
 {
+	var p0 = d3.select(this);
 	p0.append('div')
 		.classed('table-row', true)
-		.append('p').text("What type of experience do you want to add to your pathway?");
+		.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
 	p0.append('div')
 		.classed('table-row', true)
-		.append('p').text("Choose one of the types, below, or type the name you can for the experience. If there is more than one, pick one, and then you can add others.");
+		.append('p').text("Choose one of the markers below, or type the name of your own marker. If more than one marker applies, pick one and then you can add others.");
 		
 	var searchInput = addInput(p0, "Experience");
 	
@@ -1273,6 +1274,7 @@ function setupPanel0(p0, dots)
 			dots.services.push(new ReportedObject({name: newName, value: newValue}));
 	}
 	crp.getData({path: "Service", done: done, fail: asyncFailFunction});
+	this.onReveal = null;
 }
 
 function getObjectByDescription(a, description)
@@ -1384,28 +1386,27 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 
 function setupServicesPanel(dots)
 {
-	var sitePanel = dots.sitePanel;
+	var sitePanelNode = $(this).parents("panel.site-panel")[0];
 	var p1 = d3.select(this);
 	p1.append('div')
 		.classed('table-row', true)
-		.append('p').text("Some experiences provide more than one kind of value, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one kind of value, add other values here for this experience.");
-
-	var labelDiv = p1.append("div").classed("table-row", true)
-		.append('label')
-		.text("Values");
+		.append('p').text("Some experiences provide more than one marker, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one marker, add other markers here for this experience.");
 
 	var obj = p1.append('div')
 		.classed('body', true)
 		.append('div')
-		.append('section');
+		.append('section')
+		.classed("cell multiple", true);
+		
+	var labelDiv = obj.append('label')
+		.text("Markers");
 	
 	var itemsDiv = obj.append("ol").classed("items-div panel-fill", true);
 
-	obj.classed("cell multiple", true);
 	itemsDiv.classed("border-above", true);
 
 	var clickFunction;
-	clickFunction = function(d, i) {
+	clickFunction = function(d) {
 			var _this = this;
 			if (prepareClick())
 			{
@@ -1419,9 +1420,9 @@ function setupServicesPanel(dots)
 						divs.datum(newReportedObject);
 						d3.select(_this).datum(newReportedObject);
 						var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
-						dots.services[i] = newReportedObject;
+						dots.services[dots.services.indexOf(d)] = newReportedObject;
 					}
-					showPickServicePanel(sitePanel.node(), rootObjects, d, dots, success);
+					showPickServicePanel(sitePanelNode, rootObjects, d, dots, success);
 				}, 
 				fail: syncFailFunction});
 			}
@@ -1481,7 +1482,7 @@ function setupServicesPanel(dots)
 		})
 		.append("div").classed("pull-left", true);
 	buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-	buttonDiv.append("span").text(" add value");
+	buttonDiv.append("span").text(" add marker");
 	
 	this.onReveal = null;
 }
@@ -1728,28 +1729,28 @@ function setupConfirmPanel(dots)
 	
 	p.selectAll("*").remove();
 	
+	var p = d3.select(this)
+		.classed('confirm-experience', true);
+	
+	p.append('div')
+		.classed('table-row', true)
+		.append('p').text("Add this experience to your pathway?");
+
+	var summary = p.append('div')
+		.classed('summary body', true)
+		.append('div')
+		.append('div');
 	if (dots.offeringName)
-		p.append('div')
-			.append('p').text("Offering: " + dots.offeringName);
-			
+		summary.append('header').text(dots.offeringName);
+	
+	orgDiv = summary.append('div').classed("organization", true);		
 	if (dots.organizationName)
-		p.append('div')
-			.append('p').text("Organization: " + dots.organizationName);
+		orgDiv.append('div').text(dots.organizationName);
 			
 	if (dots.siteName)
-		p.append('div')
-			.append('p').text("Site: " + dots.siteName);
-	
-	if (dots.services.length > 0)
-	{
-		var servicesDiv = p.append('div');
-		
-		servicesDiv.append('p').text("Services");
-		for (var i = 0; i < dots.services.length; ++i)
-		{
-			servicesDiv.append('p').text(dots.services[i].getDescription());
-		}
-	}
+		orgDiv.append('div')
+			.classed('address-line', true)
+			.text(dots.siteName);
 	
 	{
 		var startDate = dots.startDateInput.value();
@@ -1763,8 +1764,35 @@ function setupConfirmPanel(dots)
 		else
 			t = "";
 		if (t.length)
-			p.append('div')
-				.append('p').text(t);
+		{
+			var section = summary.append('section')
+				.classed('cell view unique', true);
+			section.append('ol').classed('items-div', true)
+				.append('li')
+				.append('div').classed('string-value-view', true)
+				.text(t);
+			section.append('div').classed('cell-border-below', true);
+		}
+	}
+
+	if (dots.services.length > 0)
+	{
+		var servicesDiv = summary.append('section')
+			.classed('cell view multiple', true);
+		
+		servicesDiv.append('label').text("Markers");
+		servicesDiv.append('ol')
+			.classed('items-div', true)
+			.selectAll('li')
+			.data(dots.services)
+			.enter()
+			.append('li')
+			.append('div')
+			.classed('multi-line-item', true)
+			.append('div')
+			.classed('description-text string-value-view', true)
+			.text(function(d) { return d.getDescription(); });
+		servicesDiv.append('div').classed("cell-border-below", true);
 	}
 }
 
@@ -1890,7 +1918,15 @@ var AddExperiencePanel = (function () {
 				minYear = parseInt(birthday.value.substr(0, 4));
 
 			dots.startDateInput = new DateInput(this, minYear);
-				
+			
+			$(dots.startDateInput).on('change', function(eventObject) {
+				dots.checkForwardEnabled();
+			});
+			
+			this.onCheckForwardEnabled = function()
+			{
+				return dots.startDateInput.year && dots.startDateInput.month;
+			}	
 			this.onReveal = null;
 		}
 
@@ -1917,12 +1953,12 @@ var AddExperiencePanel = (function () {
 
 		var p0 = d3.select(dots.nthPanel(0));
 		
-		setupPanel0(p0, dots);
-		dots.nthPanel(1).onReveal = setupPanel2;
-		dots.nthPanel(2).onReveal = setupPanel3;
-		dots.nthPanel(3).onReveal = setupPanel4;
-		dots.nthPanel(4).onReveal = setupPanel5;
-		dots.nthPanel(5).onReveal = setupPanel6;
+		dots.nthPanel(0).onReveal = setupPanel2;
+		dots.nthPanel(1).onReveal = setupPanel3;
+		dots.nthPanel(2).onReveal = setupPanel4;
+		dots.nthPanel(3).onReveal = setupPanel5;
+		dots.nthPanel(4).onReveal = setupPanel6;
+		dots.nthPanel(5).onReveal = setupFirstMarkerPanel;
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
@@ -2669,7 +2705,7 @@ var PickOrCreateCell = (function () {
 			.text(this.field.name);
 		var itemsDiv = sectionDiv.append("ol")
 			.classed("items-div", true)
-			.classed("right-label expanding-div", true);
+			.classed("right-label", true);
 
 		var _this = this;
 

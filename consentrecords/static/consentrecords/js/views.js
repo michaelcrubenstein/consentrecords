@@ -288,7 +288,7 @@ function _showViewStringCell(obj, cell)
 	var itemsDiv = sectionObj.selectAll("ol");
 
 	if (cell.field.capacity == "_unique value")
-		itemsDiv.classed("right-label expanding-div", true);
+		itemsDiv.classed("right-label", true);
 
 	var setupItems = function(divs, cell) {
 		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
@@ -630,7 +630,7 @@ function appendRowButtons(divs)
 		return divs.append("div");
 	else
 		return divs.append("div")
-				.classed("btn row-button multi-row-content expanding-div", $(divs.node()).parents(".unique").length === 0);
+				.classed("btn row-button multi-row-content", $(divs.node()).parents(".unique").length === 0);
 }
 
 function appendConfirmDeleteControls(divs)
@@ -991,7 +991,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 
 	if (this.field.capacity === "_unique value")
 	{
-		itemsDiv.classed("right-label expanding-div", true);
+		itemsDiv.classed("right-label", true);
 		if (!_isPickCell(this))
 			sectionObj.classed("btn row-button", true)
 			          .on("click", function(cell) {
@@ -1052,7 +1052,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	if (this.field.capacity === "_unique value")
 	{
 		sectionObj.classed("btn row-button", true);
-		itemsDiv.classed("right-label expanding-div", true);
+		itemsDiv.classed("right-label", true);
 		sectionObj.on("click", function(cell) {
 			_clickEditObjectValue(cell.data[0], previousPanelNode);
 		});
@@ -1939,8 +1939,8 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			}
 		}
 
-		$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
-		$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+		$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+		$(cell).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
 		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
 			{
 				$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
@@ -2037,8 +2037,8 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 			itemsDiv.selectAll("li").sort(sortFunction);
 	}
 
-	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
-	$(this).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
+	$(cell).on("valueAdded.cr", null, itemsDiv.node(), addedFunctionWithSort);
+	$(cell).on("dataChanged.cr", null, itemsDiv.node(), dataChangedFunction);
 	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
 		{
 			$(eventObject.data).off("valueAdded.cr", null, addedFunctionWithSort);
