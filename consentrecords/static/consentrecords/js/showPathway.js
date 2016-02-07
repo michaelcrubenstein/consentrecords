@@ -1395,11 +1395,14 @@ function setupServicesPanel(dots)
 	var obj = p1.append('div')
 		.classed('body', true)
 		.append('div')
-		.append('section');
+		.append('section')
+		.classed("cell multiple", true);
+		
+	var labelDiv = obj.append('label')
+		.text("Markers");
 	
 	var itemsDiv = obj.append("ol").classed("items-div panel-fill", true);
 
-	obj.classed("cell multiple", true);
 	itemsDiv.classed("border-above", true);
 
 	var clickFunction;
@@ -1726,28 +1729,28 @@ function setupConfirmPanel(dots)
 	
 	p.selectAll("*").remove();
 	
+	var p = d3.select(this)
+		.classed('confirm-experience', true);
+	
+	p.append('div')
+		.classed('table-row', true)
+		.append('p').text("Add this experience to your pathway?");
+
+	var summary = p.append('div')
+		.classed('summary body', true)
+		.append('div')
+		.append('div');
 	if (dots.offeringName)
-		p.append('div')
-			.append('p').text("Offering: " + dots.offeringName);
-			
+		summary.append('header').text(dots.offeringName);
+	
+	orgDiv = summary.append('div').classed("organization", true);		
 	if (dots.organizationName)
-		p.append('div')
-			.append('p').text("Organization: " + dots.organizationName);
+		orgDiv.append('div').text(dots.organizationName);
 			
 	if (dots.siteName)
-		p.append('div')
-			.append('p').text("Site: " + dots.siteName);
-	
-	if (dots.services.length > 0)
-	{
-		var servicesDiv = p.append('div');
-		
-		servicesDiv.append('p').text("Services");
-		for (var i = 0; i < dots.services.length; ++i)
-		{
-			servicesDiv.append('p').text(dots.services[i].getDescription());
-		}
-	}
+		orgDiv.append('div')
+			.classed('address-line', true)
+			.text(dots.siteName);
 	
 	{
 		var startDate = dots.startDateInput.value();
@@ -1761,8 +1764,35 @@ function setupConfirmPanel(dots)
 		else
 			t = "";
 		if (t.length)
-			p.append('div')
-				.append('p').text(t);
+		{
+			var section = summary.append('section')
+				.classed('cell view unique', true);
+			section.append('ol').classed('items-div', true)
+				.append('li')
+				.append('div').classed('string-value-view', true)
+				.text(t);
+			section.append('div').classed('cell-border-below', true);
+		}
+	}
+
+	if (dots.services.length > 0)
+	{
+		var servicesDiv = summary.append('section')
+			.classed('cell view multiple', true);
+		
+		servicesDiv.append('label').text("Markers");
+		servicesDiv.append('ol')
+			.classed('items-div', true)
+			.selectAll('li')
+			.data(dots.services)
+			.enter()
+			.append('li')
+			.append('div')
+			.classed('multi-line-item', true)
+			.append('div')
+			.classed('description-text string-value-view', true)
+			.text(function(d) { return d.getDescription(); });
+		servicesDiv.append('div').classed("cell-border-below", true);
 	}
 }
 
