@@ -1891,7 +1891,15 @@ var AddExperiencePanel = (function () {
 				minYear = parseInt(birthday.value.substr(0, 4));
 
 			dots.startDateInput = new DateInput(this, minYear);
-				
+			
+			$(dots.startDateInput).on('change', function(eventObject) {
+				dots.checkForwardEnabled();
+			});
+			
+			this.onCheckForwardEnabled = function()
+			{
+				return dots.startDateInput.year && dots.startDateInput.month;
+			}	
 			this.onReveal = null;
 		}
 

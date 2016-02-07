@@ -1,3 +1,9 @@
+/* 
+	DateInput
+	
+	This class triggers a change event on itself whenever its year, month or day change.
+ */
+
 var DateInput = (function () {
 	DateInput.prototype.year = undefined;
 	DateInput.prototype.month = undefined;
@@ -86,11 +92,13 @@ var DateInput = (function () {
 					_this.year = undefined;
 				else
 					_this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
+				$(_this).trigger("change");
 			});
 		
 		$(dateNode).change(function()
 			{
 				_this.day = dateNode.selectedIndex;
+				$(_this).trigger("change");
 			});
 	
 		$(monthNode).change(function()
@@ -117,6 +125,7 @@ var DateInput = (function () {
 					_this.month = undefined;
 				else
 					_this.month = monthNode.selectedIndex;
+				$(_this).trigger("change");
 			});
 	}
 	
