@@ -26,7 +26,7 @@ var Signup = (function () {
 			
 	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
