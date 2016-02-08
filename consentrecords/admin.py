@@ -92,12 +92,12 @@ class TransactionAdmin(admin.ModelAdmin):
 
 class DescriptionAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'language', 'text', 'instance')
+    list_display = ('id', 'text', 'instance')
     fieldsets = (
-        (None, {'fields': ('id', 'language', 'text', 'instance')}),
+        (None, {'fields': ('id', 'text', 'instance')}),
     )
-    readonly_fields = ('id', 'language', 'text', 'instance')
-    search_fields = ('id', 'language', 'text', 'instance__id')
+    readonly_fields = ('id', 'text', 'instance')
+    search_fields = ('id', 'text', 'instance__id')
 
 class AccessRecordAdmin(admin.ModelAdmin):
     list_display=('id', 'source')

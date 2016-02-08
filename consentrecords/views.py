@@ -425,34 +425,24 @@ class api:
         cells = uuObject.getData(vs, fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
-                "description": uuObject.descriptions[0].text,
+                "description": uuObject.getDescription(language),
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
         if 'parents' in fields:
             while uuObject.parent:
-                if language:
-                    qs1=Description.objects.filter(language=language)
-                    qs2=Description.objects.filter(language=language)
-                else:
-                    qs1=Description.objects.filter(language__isnull=True)
-                    qs2=Description.objects.filter(language__isnull=True)
                 uuObject = Instance.objects\
                                 .select_related('typeID')\
                                 .select_related('parent')\
-                                .prefetch_related(Prefetch('description_set',
-                                                            queryset=qs1,
-                                                            to_attr='descriptions'))\
-                                .prefetch_related(Prefetch('typeID__description_set',
-                                                            queryset=qs2,
-                                                            to_attr='typeDescriptions'))\
+                                .select_related('description')\
+                                .select_related('typeID__description')\
                                 .get(pk=uuObject.parent.id)
                                 
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.descriptions[0].text},
+                        'value': {'id': uuObject.id, 'description': uuObject.getDescription(language)},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
@@ -475,35 +465,30 @@ class api:
             language = data.get('language', None)
 
             userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
+            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
             
             # preload the typeID, parent, value_set and description to improve performance.
-            if language:
-                queryset=Description.objects.filter(language=language)
-            else:
-                queryset=Description.objects.filter(language__isnull=True)
             valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
                 .order_by('position')\
                 .select_related('field')\
                 .select_related('field__id')\
                 .select_related('referenceValue')\
-                .prefetch_related(Prefetch('referenceValue__description_set',
-                                           queryset=queryset,
-                                           to_attr='valueDescriptions'))
+                .select_related('referenceValue__description')
 
             uuObjects = uuObjects.select_related('typeID').select_related('parent')\
-                                 .prefetch_related(Prefetch('description_set',
-                                                            queryset=queryset,
-                                                            to_attr='descriptions'))\
+                                 .select_related('description')\
                                  .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
                                                             to_attr='values'))
+            
+            uuObjects = uuObjects.order_by('description__text', 'id');
+            print (uuObjects);
             if end > 0:
-                uuObjects = uuObjects.order_by('id')[start:end]
+                uuObjects = uuObjects[start:end]
             elif start > 0:
-                uuObjects = uuObjects.order_by('id')[start:]
+                uuObjects = uuObjects[start:]
                                                             
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
@@ -520,18 +505,12 @@ class api:
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
         fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
         data = v.getReferenceData(language)
-        if language:
-            queryset=Description.objects.filter(language=language)
-        else:
-            queryset=Description.objects.filter(language__isnull=True)
         vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
             .select_related('field')\
             .select_related('field__id')\
             .select_related('referenceValue')\
-            .prefetch_related(Prefetch('referenceValue__description_set',
-                                       queryset=queryset,
-                                       to_attr='valueDescriptions'))
+            .select_related('referenceValue__description')
         data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
         return data;
     
@@ -775,7 +754,7 @@ def submitsignin(request):
         results = userviews.signinResults(request)
         if results["success"]:
             user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
-            results["user"] = { "id": user.id, "description" : user.description(None) }        
+            results["user"] = { "id": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -800,7 +779,7 @@ def submitNewUser(request):
             results = userviews.newUserResults(request)
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-                results["user"] = { "id": userInstance.id, "description" : userInstance.description(None) }
+                results["user"] = { "id": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

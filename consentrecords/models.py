@@ -69,7 +69,7 @@ class Instance(dbmodels.Model):
         
     def __str__(self):
         try:
-            d = self.description_set.get(language__isnull=True)
+            d = self.description
             if d:
                 return d.text
             else:
@@ -239,7 +239,8 @@ class Instance(dbmodels.Model):
     # verbs is an array of pairs where the first of the pair is the field name and 
     # the second is the field dataType.
     # The string is directly attached to the verb (v1).       
-    def _getDescription(self, verbs):
+    def cacheDescription(self, nameLists):
+        verbs = nameLists.getNameUUIDs(self.typeID)
         r = []
         for field, dataType, descriptorType in verbs:
             if descriptorType == Terms.textEnum:
@@ -249,7 +250,7 @@ class Instance(dbmodels.Model):
                         try:
                             if not v.referenceValue:
                                 raise ValueError("no reference value for %s in %s: %s(%s)" % (str(v.instance), str(self), str(v.field), v.stringValue))
-                            r.append(v.referenceValue.description_set.get(language__isnull=True).text)
+                            r.append(v.referenceValue.description.text)
                         except Description.DoesNotExist:
                             r.append(v.referenceValue._description)
                 else:
@@ -260,12 +261,8 @@ class Instance(dbmodels.Model):
             else:
                 raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)))
                     
-        return " ".join(r)
-        
-    def cacheDescription(self, nameLists):
-        s = self._getDescription(nameLists.getNameUUIDs(self.typeID))
+        s = " ".join(r)
         Description.objects.update_or_create(instance = self, 
-                                             language = None, 
                                              defaults={'text': s})
         return s
     
@@ -276,6 +273,9 @@ class Instance(dbmodels.Model):
         values = self.referenceValues.filter(deleteTransaction__isnull=True)
         return [v.instance for v in filter(lambda v: v.isDescriptor, values)]
 
+    def getDescription(self, language=None):
+        return self._description
+        
     def updateDescriptions(queue, nameLists):
         queue = list(queue) # Make a local copy of the list.
         calculated = set()
@@ -289,19 +289,9 @@ class Instance(dbmodels.Model):
     
     @property
     def _description(self):
-        d = Description.objects.filter(instance=self, language__isnull=True)
-        if d.exists(): 
-            return d[0].text
-        else:
-            return "Deleted"
+        d = self.description
+        return d.text if d else "Deleted"
 
-    # Get the cached description of this Instance.        
-    def description(self, language=None):
-        if language:
-            return self.description_set.get(language=language).text
-        else:
-            return self.description_set.get(language__isnull=True).text
-    
     @property    
     def _allInstances(self):    # was _getAllInstances()
         return self.typeInstances.filter(deleteTransaction__isnull=True)
@@ -309,7 +299,7 @@ class Instance(dbmodels.Model):
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, language=None):
-        return {'id': None, 'value': {'id': self.id, 'description': self.description(language)}}
+        return {'id': None, 'value': {'id': self.id, 'description': self.getDescription(language)}}
     
     # This code presumes that all fields have unique values.
     def _sortValueDataByField(values):
@@ -339,7 +329,7 @@ class Instance(dbmodels.Model):
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
     def getParentReferenceFieldData(self):
-        name = self.typeDescriptions[0].text
+        name = self.description.text
         fieldData = {"name" : name,
                      "nameID" : self.id,
                      "dataType" : TermNames.object,
@@ -406,23 +396,11 @@ class Instance(dbmodels.Model):
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
-    def getDescriptionFromSet(descriptionSet, language):
-        if not language:
-            return descriptionSet.find(lambda d: d.language == None) or descriptionSet.find(lambda d: d.language == "en")
-        else:
-            return descriptionSet.find(lambda d: d.language == language)
-            
-        if len(descriptionSet):
-            return descriptionSet[0]
-        else:
-            raise RuntimeError("no description for instance")
-            
     def getValueReferenceData(v, language):
         return { "id": v.id,
-              "value": {"id" : v.referenceValue.id, "description": getDescriptionFromSet(v.descriptions.all()).text },
+              "value": {"id" : v.referenceValue.id, "description": v.referenceValue.getDescription(language) },
               "position": v.position }
 
-            
     def _getCellValues(dataTypeID, values, language=None):
         if dataTypeID == Terms.objectEnum.id:
             return [v.getCachedReferenceData() for v in values]
@@ -881,27 +859,13 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, language=None):
-        if not language:
-            description = self.referenceValue.description_set.get(language__isnull=True)
-            if not description:
-                description = self.referenceValue.description_set.get(language="en")
-        else:
-            description = self.referenceValue.description_set.get(instance=self.referenceValue, language=language)
-            
-        if not description:
-            f = self.referenceValue.description_set.all()
-            if f.count():
-                description = f[0]
-            else:
-                raise RuntimeError("no description for instance")
-            
         return { "id": self.id,
-              "value": {"id" : self.referenceValue.id, "description": description.text },
+              "value": {"id" : self.referenceValue.id, "description": self.referenceValue.getDescription(language) },
               "position": self.position }
             
     def getCachedReferenceData(self):
         return { "id": self.id,
-              "value": {"id" : self.referenceValue.id, "description": self.referenceValue.valueDescriptions[0].text },
+              "value": {"id" : self.referenceValue.id, "description": self.referenceValue._description },
               "position": self.position }
             
     # Updates the value of the specified object
@@ -966,12 +930,11 @@ class Value(dbmodels.Model):
 
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
-    language = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=True)
+    instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
     text = dbmodels.CharField(max_length=255, db_index=True, editable=True)
 
     def __str__(self):
-        return "%s - %s" % (self.language, self.text)
+        return "%s" % (self.text)
         
 # Security Sources are used on targets to determine which record contains the security rules for the target.    
 class AccessRecord(dbmodels.Model):
