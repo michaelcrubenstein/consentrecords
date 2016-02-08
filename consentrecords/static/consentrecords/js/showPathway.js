@@ -2186,7 +2186,7 @@ var ExperienceDetailPanel = (function () {
 		if (numServices > 0)
 		{
 			var labelDiv = cellDiv.append("label")
-				.text("Services");
+				.text("Markers");
 			var itemsDiv = cellDiv.append("ol").classed("items-div", true);
 			
 			var serviceData;
@@ -2328,7 +2328,7 @@ var PickOrCreatePanel = (function () {
 				}
 			
 				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					end: 50, done: done, fail: syncFailFunction});
+					limit: 50, done: done, fail: syncFailFunction});
 			}
 		}
 	}
