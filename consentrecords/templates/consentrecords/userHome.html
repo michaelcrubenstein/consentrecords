@@ -1700,7 +1700,7 @@
 						}
 					};
 		
-					cr.selectAll({path: "_user[_email="+email+"]", limit: 50, done: selectAllSuccess, fail: syncFailFunction});
+					cr.selectAll({path: "_user[_email="+email+"]", end: 50, done: selectAllSuccess, fail: syncFailFunction});
 				}
 			}
 			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
@@ -1825,9 +1825,9 @@
 					}
 					
 					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
 					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 				}
 			}
 		}
@@ -2104,9 +2104,9 @@
 								}
 					
 								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
 								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 							}
 						}
 						showPanelLeft(addInquiryPanelDiv.node());
