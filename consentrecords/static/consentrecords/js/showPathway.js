@@ -1824,14 +1824,16 @@ var AddExperiencePanel = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		panel2Div.appendAlertContainer();
-		
 		var dots = new DotsNavigator(panel2Div, 8);	
 		dots.finalText = "Add";	
 
+		panel2Div.appendAlertContainer();
+		
 		var _thisPanel = this;
 		var hideSuccessFunction = function()
 			{
+				bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
+
 				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
 				
 				function successFunction3(newData)

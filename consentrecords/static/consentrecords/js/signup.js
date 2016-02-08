@@ -26,7 +26,7 @@ var Signup = (function () {
 			
 	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
@@ -96,7 +96,7 @@ var Signup = (function () {
 		function setupPanel0(signup)
 		{
 			var p = d3.select(this);
-			var signup = 
+
 			p.append('h1')
 				.text('Birthday');
 				
@@ -188,7 +188,7 @@ var Signup = (function () {
 				}
 			}
 			
-			p0.append('div')
+			p.append('div')
 				.append('a').attr('id', "id_termsOfUseLink")
 				.classed("btn btn-link btn-xs", true)
 				.text("Terms Of Use")
@@ -200,7 +200,7 @@ var Signup = (function () {
 
 				});
 			
-			var termsAlert = p0.append('div')
+			var termsAlert = p.append('div')
 				.append('div').attr('id', "id_termsAlert");
 		}
 	

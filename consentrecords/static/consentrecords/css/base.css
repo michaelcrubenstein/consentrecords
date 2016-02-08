@@ -39,6 +39,13 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 	overflow-y: hidden;
 	overflow-x: hidden;
 }
+
+/* This makes alert fall on top and over other items. */
+.panel-fill div.alert-container {
+	position: absolute;
+	width: 100%;
+}
+
 panel.list {
 	background: #eee;
 }
