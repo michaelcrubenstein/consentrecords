@@ -2328,7 +2328,7 @@ var PickOrCreatePanel = (function () {
 				}
 			
 				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					limit: 50, done: done, fail: syncFailFunction});
+					end: 50, done: done, fail: syncFailFunction});
 			}
 		}
 	}
@@ -2431,7 +2431,7 @@ var PickOrCreatePanel = (function () {
 		
 		var searchPath = this.searchPath(val);
 		if (searchPath && searchPath.length > 0)
-			cr.selectAll({path: searchPath, limit: 50, done: done, fail: asyncFailFunction});
+			cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
 		else
 			done([]);
 	}
