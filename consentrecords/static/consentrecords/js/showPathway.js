@@ -2186,7 +2186,7 @@ var ExperienceDetailPanel = (function () {
 		if (numServices > 0)
 		{
 			var labelDiv = cellDiv.append("label")
-				.text("Services");
+				.text("Markers");
 			var itemsDiv = cellDiv.append("ol").classed("items-div", true);
 			
 			var serviceData;
