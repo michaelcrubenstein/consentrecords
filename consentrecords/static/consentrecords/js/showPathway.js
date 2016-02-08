@@ -1583,9 +1583,9 @@ function setupPanel2(dots)
 			}
 			
 			if (val.length < 3)
-				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction});
+				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], end: 50, done: done, fail: asyncFailFunction});
 			else
-				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], limit: 50, done: done, fail: asyncFailFunction} );
+				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], end: 50, done: done, fail: asyncFailFunction} );
 		}
 	}
 	
@@ -2328,7 +2328,7 @@ var PickOrCreatePanel = (function () {
 				}
 			
 				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					limit: 50, done: done, fail: syncFailFunction});
+					end: 50, done: done, fail: syncFailFunction});
 			}
 		}
 	}
