@@ -31,7 +31,7 @@ def _getSimpleQClause(symbol, testValue):
             q = Q(value__stringValue__gte=testValue)
         else:
             raise ValueError("unrecognized symbol: %s" & symbol)
-        return q&Q(value__referenceValue__isnull=True)	
+        return q&Q(value__referenceValue__isnull=True)  
         # Handles a degenerate case where a referenceValue was stored in the same place as
         # the stringValue and it happens to match the query string, 
 
@@ -148,7 +148,7 @@ def _tokenize(path):
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
 # a duple with a value followed by the instance.
-def selectAllObjects(path, limit=0, startSet=[], userInfo=None, securityFilter=None):
+def selectAllObjects(path, startSet=[], userInfo=None, securityFilter=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
     a = _tokenize(path)
@@ -157,15 +157,8 @@ def selectAllObjects(path, limit=0, startSet=[], userInfo=None, securityFilter=N
         lastPair = resultSet[-1]
         nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
         resultSet.append(nextPair)
-    f = securityFilter(resultSet[-1][0]).distinct()
+    return securityFilter(resultSet[-1][0]).distinct()
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
 #     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
-    if limit > 0:
-        return f[:limit]
-    else:
-        return f
            
-def selectAllDescriptors(path, limit=0, language=None, userInfo=None, securityFilter=None):
-    return [i.getReferenceData(language) for i in selectAllObjects(path, limit=limit, userInfo=userInfo, securityFilter=securityFilter)]
-    

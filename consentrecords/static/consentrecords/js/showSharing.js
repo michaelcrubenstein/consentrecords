@@ -233,12 +233,12 @@ function pickAccessor(header, previousPanelNode, done)
 			
 				if (inputBox.value.toLocaleLowerCase().trim() == startVal)
 				{
-					cr.selectAll({path: '_group[?'+symbol+'"'+val+'"]', limit: 50, done: selectAllSuccess, fail: asyncFailFunction});
+					cr.selectAll({path: '_group[?'+symbol+'"'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
 					userObjects.sort(sortByDescription);
 				}
 			}
 			
-			cr.selectAll({path: '_user[?'+symbol+'"'+val+'"]', limit: 50, done: selectedUsers, fail: asyncFailFunction});
+			cr.selectAll({path: '_user[?'+symbol+'"'+val+'"]', end: 50, done: selectedUsers, fail: asyncFailFunction});
 		}
 	}
 	

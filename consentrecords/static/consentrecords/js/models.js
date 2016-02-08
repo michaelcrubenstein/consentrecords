@@ -1153,8 +1153,8 @@ cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
 	};
 	
-	/* args is an object with up to four parameters: path, limit, done, fail */
-cr["selectAll"] = function(args)
+	/* args is an object with up to five parameters: path, start, end, done, fail */
+cr.selectAll = function(args)
 	{
 		if (!args.fail)
 			throw ("failFunction is not specified");
@@ -1166,8 +1166,10 @@ cr["selectAll"] = function(args)
 		else
 			throw "path was not specified to selectAll"
 			
-		if (args.limit !== undefined)
-			argList.limit = args.limit;
+		if (args.start !== undefined)
+			argList.start = args.start;
+		if (args.end !== undefined)
+			argList.end = args.end;
 		
 		$.getJSON(cr.urls.selectAll, 
 			argList,
@@ -1188,7 +1190,7 @@ cr["selectAll"] = function(args)
 		);
 	};
 	
-	/* args is an object with up to four parameters: path, limit, done, fail.
+	/* args is an object with up to five parameters: path, start, end, done, fail.
 		The done method takes a single argument, which is an array of value objects. */
 cr.getValues = function (args)
 	{
@@ -1212,8 +1214,10 @@ cr.getValues = function (args)
 		else
 			throw "value was not specified to getValues"
 			
-		if (args.limit !== undefined)
-			argList.limit = args.limit;
+		if (args.start !== undefined)
+			argList.start = args.start;
+		if (args.end !== undefined)
+			argList.end = args.end;
 		
 		$.getJSON(cr.urls.getValues, 
 			argList,
@@ -1511,9 +1515,6 @@ cr.getData = function(args)
 		if (cr.accessToken)
 			data["access_token"] = cr.accessToken;
 				  
-		if (args.limit !== undefined)
-			data.limit = args.limit;
-		
 		if (args.start !== undefined)
 			data.start = args.start;
 		if (args.end !== undefined)

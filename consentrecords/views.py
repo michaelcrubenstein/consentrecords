@@ -304,15 +304,24 @@ class api:
     def selectAll(user, data):
         try:
             path = data.get("path", None)
-            limit = int(data.get("limit", "0"))
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
             userInfo = UserInfo(user)
             language=None
         
-            if path:
-                p = pathparser.selectAllDescriptors(path=path, limit=limit, language=language, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            else:
+            if not path:
                 raise ValueError("path was not specified")
         
+            uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
+                            .select_related('description')\
+                            .order_by('description__text', 'id')
+            
+            if end > 0:
+                uuObjects = uuObjects[start:end]
+            elif start > 0:
+                uuObjects = uuObjects[start:]
+            
+            p = [i.getReferenceData(language) for i in uuObjects]                                                
             results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -320,14 +329,15 @@ class api:
             results = {'success':False, 'error': str(e)}
         
         return JsonResponse(results)
-        
+    
+    # getValues is used to test whether or not a particular value exists in a field of any
+    # instance with the specified path.    
     def getValues(user, data):
         try:
             path = data.get("path", None)
             if not path:
                 return JsonResponse({'success':False, 'error': 'the path was not specified'})
                 
-            limit = int(data.get("limit", "0"))
             userInfo = UserInfo(user)
             language=None
         
@@ -335,7 +345,7 @@ class api:
             fieldName = data.get('fieldName', None)
         
             if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
+                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
             elif Terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
@@ -347,7 +357,7 @@ class api:
             if value is None:
                 return JsonResponse({'success':False, 'error': 'the value was not specified'})
             
-            containers = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
             p = map(lambda v: v.getReferenceData(language=language), itertools.chain.from_iterable(m))
                             
@@ -452,7 +462,6 @@ class api:
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
             path = data.get('path', None)
-            limit = int(data.get("limit", "0"))
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
         
@@ -484,7 +493,6 @@ class api:
                                                             to_attr='values'))
             
             uuObjects = uuObjects.order_by('description__text', 'id');
-            print (uuObjects);
             if end > 0:
                 uuObjects = uuObjects[start:end]
             elif start > 0:
