@@ -2328,7 +2328,7 @@ var PickOrCreatePanel = (function () {
 				}
 			
 				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					end: 50, done: done, fail: syncFailFunction});
+					limit: 50, done: done, fail: syncFailFunction});
 			}
 		}
 	}
