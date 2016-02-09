@@ -241,9 +241,9 @@ cr.Cell = (function()
 			}
 		};
 
-		Cell.prototype.setup = function (objectData)
+		Cell.prototype.setup = function (parent)
 		{
-			this.setParent(objectData);
+			this.setParent(parent);
 	
 			/* If this is a unique value and there is no value, set up an unspecified one. */
 			if (this.data.length == 0 &&
