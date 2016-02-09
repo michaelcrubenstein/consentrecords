@@ -736,7 +736,7 @@ function _getDatestampValue()
 		if (!this.value)
 			return undefined;
 		else
-			return (new Date(this.value)).toISOString().substring(0, 10);
+			return (new Date(this.value.trim())).toISOString().substring(0, 10);
 	}
 	catch(err)
 	{
@@ -770,7 +770,7 @@ function _appendUpdateStringCommands(sectionObj, initialData, sourceObjects)
 {
 	d3.select(sectionObj).selectAll("input").each(function(d, i)
 		{
-			var newValue = this.value;
+			var newValue = this.value.trim();
 			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
 		}
 	);
@@ -815,7 +815,7 @@ function _getTranslationValue()
 	var selectedOption = sel.options[sel.selectedIndex];
 	var languageCode = d3.select(selectedOption).datum().code;
 	console.log(sel.options[sel.selectedIndex].value)
-	return {text: textInput.property("value"),
+	return {text: textInput.property("value").trim(),
 				languageCode: languageCode};
 }
 
