@@ -1435,7 +1435,7 @@
 					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
 				});
 
-				var alertContainer = panel2Div.appendAlertContainer();
+				panel2Div.appendAlertContainer();
 							
 				showPanelLeft(sitePanel.node());
 
@@ -1536,11 +1536,16 @@
 			sitePanel.appendSearchBar(show_matching_descriptions);
 
 			var panel2Div = sitePanel.appendScrollArea();
+			var itemsDiv = panel2Div.append('section')
+				.classed('cell multiple', true)
+				.append('ol')
+				.classed('items-div', true);
+				
 			panel2Div.appendAlertContainer();
 	
-			var sections = panel2Div.appendSections(data);
+			var items = appendItems(itemsDiv, data);
 
-			var buttons = appendViewButtons(sections)
+			var buttons = appendViewButtons(items)
 				.on("click", function(d) {
 					if (prepareClick())
 					{
@@ -1848,45 +1853,53 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						cr.getConfiguration(null, enrollmentsCell.field.ofKindID,
-							function(cells)
-							{
-								var enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
-								cr.getConfiguration(null, enrollmentCell.field.ofKindID,
-									function(cells)
-									{
-										var userCell = cells_get_cell_by_name(cells, "_user");
-										check_single_field_instance(enrollmentsInstance, 
-											["Enrollment"],
-											"_user",
-											user.getValueID(), 
-											function(newData)
-											{
-												syncFailFunction(user.getDescription() + 
-													  " already enrolled in " + 
-													  offering.getDescription() + "/" + session.getDescription());
-											},
-											function()
-											{
-												add_single_field_instance(enrollmentsInstance, 
-												   enrollmentCell, 
-												   userCell, 
-												   user.getValueID(), 
-												   function(newData)
-												   {
-														bootstrap_alert.success(user.getDescription() + 
-															  " enrolled in " + 
-															  offering.getDescription() + "/" + session.getDescription(),
-															  ".alert-container");
-														successFunction();
-												   },
-												   syncFailFunction);
-											},
-											syncFailFunction);
-									},
-									syncFailFunction);
-							},
-							syncFailFunction);
+						var enrollmentCell = enrollmentsInstance.getCell("Enrollment");
+						
+						function addUserToEnrollmentCell()
+						{
+							check_single_field_instance(enrollmentsInstance, 
+								["Enrollment"],
+								"_user",
+								user.getValueID(), 
+								function(newData)
+								{
+									syncFailFunction(user.getDescription() + 
+										  " already enrolled in " + 
+										  offering.getDescription() + "/" + session.getDescription());
+								},
+								function()
+								{
+									var initialData = {"_user": user.getValueID() };
+									cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+													  initialData,
+													  function(newData)
+													   {
+															enrollmentCell.addValue(newData);
+															bootstrap_alert.success(user.getDescription() + 
+																  " enrolled in " + 
+																  offering.getDescription() + "/" + session.getDescription(),
+																  ".alert-container");
+															successFunction();
+													   },
+													   syncFailFunction);
+								},
+								syncFailFunction);
+						}
+						
+						if (enrollmentCell)
+						{
+							addUserToEnrollmentCell();
+						}
+						else
+						{
+							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID,
+								function(cells)
+								{
+									enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
+									addUserToEnrollmentCell();
+								},
+								syncFailFunction);
+						}
 					}
 				}
 				session.checkCells(["parents"], checkCellsSuccessFunction, syncFailFunction);
@@ -1969,17 +1982,6 @@
 				}
 			}
 			cr.selectAll({path: path, done: successFunction, fail: failFunction} );
-		}
-		
-		function add_single_field_instance(container, instanceCell, dataCell, dataValue, successFunction, failFunction)
-		{
-			initialData = {}
-			initialData[dataCell.field.id] = dataValue;
-			cr.createInstance(instanceCell.field, 
-				container.value.id,
-				initialData,
-				successFunction,
-				failFunction);
 		}
 		
 		function show_matching_descriptions(){
