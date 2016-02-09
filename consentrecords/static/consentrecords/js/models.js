@@ -1139,6 +1139,7 @@ cr.urls = {
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
+		updatePassword: '/user/updatepassword/',
 	};
 	
 cr.accessToken = null;
@@ -1550,19 +1551,37 @@ cr.getData = function(args)
 					}
 				);
 	},
-cr.submitSignout = function(successFunction, failFunction)
+cr.submitSignout = function(done, fail)
 	{
 		$.post(cr.urls.submitSignout, { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
 									function(json){
-		if (json['success']) {
-			crp.clear();
-			successFunction();
-		}
-		else
-			failFunction(json.error);
-	  })
+			if (json['success']) {
+				crp.clear();
+				done();
+			}
+			else
+				fail(json.error);
+		})
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+	
+cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
+	{
+		$.post(cr.urls.updatePassword, {username: username,
+										oldPassword: oldPassword,
+										newPassword: newPassword }, 
+									function(json){
+			if (json['success']) {
+				done();
+			}
+			else
+				fail(json.error);
+		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
 	}

@@ -2691,11 +2691,6 @@ var PickOrCreateCell = (function () {
 		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
 	}
 	
-	PickOrCreateCell.prototype.setupItemsDivHandlers = function(itemsDiv)
-	{
-		/* _setupItemsDivHandlers(itemsDiv, cell); */
-	}
-	
 	PickOrCreateCell.prototype.pushTextChanged = function(textNode)
 	{
 		var pickValue = this.pickCell.data[0];
@@ -2735,7 +2730,6 @@ var PickOrCreateCell = (function () {
 				}
 			});
 
-		this.setupItemsDivHandlers(itemsDiv);
 		$(itemsDiv.node()).on("valueAdded.cr", function()
 			{
 				_this.showValueAdded();
