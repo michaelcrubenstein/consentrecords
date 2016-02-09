@@ -1511,81 +1511,99 @@ function setupPanel2(dots)
 	var w = p.append('div').classed('body', true)
 			  .append('div')
 			  .append('div');
+	var itemsDiv = w.append("section")
+		.classed("multiple", true)
+		.append("ol")
+		.classed("items-div", true);
+			  
+	var startVal;
+	
+	var _this = this;
 
+	var done = function(orgs)
+	{
+		function appendDescriptions(buttons)
+		{
+			var leftText = buttons.append('div').classed("left-expanding-div", true);
+	
+			leftText.append('div')
+				.classed("sub-text", function(d) { return d.getValue("Organization"); })
+				.text(function(d) {
+					if (d.getValue("Organization"))
+						return d.getValue("Organization").getDescription();
+					else
+						return d.getDescription();
+				});
+			leftText.append('div')
+				.classed("sub-text", true)
+				.text(function(d) { 
+					if (d.getValue("Organization"))
+						return d.getDescription();
+					else
+						return "";
+				});
+		}
+				
+		if (searchInput.node().value.toLocaleLowerCase().trim() == startVal)
+		{
+			function buttonClicked(d)
+			{
+				if (d.getValue("Organization"))
+				{
+					dots.organization = d.getValue("Organization");
+					dots.site = d;
+					dots.organizationName = d.getValue("Organization").getDescription();
+					dots.siteName = d.getDescription();
+				}
+				else
+				{
+					dots.organization = d;
+					dots.site = null;
+					dots.organizationName = d.getDescription();
+					dots.siteName = null;
+				}
+	
+				searchInput.node().value = d.getDescription();
+				$(searchInput.node()).trigger("input");
+				if (dots.site)
+					dots.setValue(dots.value + 2);
+				else
+					dots.setValue(dots.value + 1);
+				d3.event.preventDefault();
+			}
+
+			var i = 0;
+			var items = itemsDiv.selectAll("li")
+				.data(orgs, function(d) {
+					/* Ensure that this operation appends without replacing any items. */
+					i += 1;
+					return i;
+				  })
+				.enter()
+				.append("li");	// So that each button appears on its own row.
+
+			appendViewButtons(items, appendDescriptions)
+				.on("click", buttonClicked);
+		}
+	}
+	
 	function textChanged()
 	{
 		var val = this.value.toLocaleLowerCase().trim();
-		var inputBox = this;
 		
-		if (val.length == 0)
+		itemsDiv.selectAll("li").remove();
+		if (val.length > 0)
 		{
-			w.selectAll("ol").remove();
-		}
-		else
-		{
-			var startVal = val;
-						
-			var done = function(orgs)
-			{
-				function appendDescriptions(buttons)
-				{
-					var leftText = buttons.append('div').classed("left-expanding-div", true);
-			
-					leftText.append('div')
-						.classed("sub-text", function(d) { return d.getValue("Organization"); })
-						.text(function(d) {
-							if (d.getValue("Organization"))
-								return d.getValue("Organization").getDescription();
-							else
-								return d.getDescription();
-						});
-					leftText.append('div')
-						.classed("sub-text", true)
-						.text(function(d) { 
-							if (d.getValue("Organization"))
-								return d.getDescription();
-							else
-								return "";
-						});
-				}
-						
-				if (inputBox.value.toLocaleLowerCase().trim() == startVal)
-				{
-					w.selectAll("ol").remove();
-					function buttonClicked(d)
-					{
-						if (d.getValue("Organization"))
-						{
-							dots.organization = d.getValue("Organization");
-							dots.site = d;
-							dots.organizationName = d.getValue("Organization").getDescription();
-							dots.siteName = d.getDescription();
-						}
-						else
-						{
-							dots.organization = d;
-							dots.site = null;
-							dots.organizationName = d.getDescription();
-							dots.siteName = null;
-						}
-			
-						searchInput.node().value = d.getDescription();
-						$(searchInput.node()).trigger("input");
-						if (dots.site)
-							dots.setValue(dots.value + 2);
-						else
-							dots.setValue(dots.value + 1);
-						d3.event.preventDefault();
-					}
-		
-					appendButtons(w, orgs, buttonClicked, appendDescriptions);
-				}
-			}
+			startVal = val;
 			
 			if (val.length < 3)
-				cr.getData({path: '(Organization,Site)[_name^="'+val+'"]', fields: ["parents"], end: 50, done: done, fail: asyncFailFunction});
+				_this.getDataChunker.path = '(Organization,Site)[_name^="'+val+'"]';
 			else
-				cr.getData({path: '(Organization,Site)[_name*="'+val+'"]', fields: ["parents"], end: 50, done: done, fail: asyncFailFunction} );
+				_this.getDataChunker.path = '(Organization,Site)[_name*="'+val+'"]';
+			
+			_this.getDataChunker.fields = ["parents"];
+			_this.getDataChunker.clearLoadingMessage();
+			_this.getDataChunker.start();			
 		}
 	}
 	
@@ -1611,6 +1629,7 @@ function setupPanel2(dots)
 			dots.siteName = null;
 		}
 	}
+	this.getDataChunker = new GetDataChunker(w.node(), done);
 	this.onReveal = null;
 }
 

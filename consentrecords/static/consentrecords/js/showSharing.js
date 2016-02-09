@@ -242,7 +242,7 @@ function pickAccessor(header, previousPanelNode, done)
 		}
 	}
 	
-	var searchBar = sitePanel.appendSearchBar(show_users);
+	sitePanel.appendSearchBar(show_users);
 
 	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendAlertContainer();

@@ -30,6 +30,13 @@ var crv = {
 			    {code: "sp", name: "Spanish"},
 			    {code: "zh", name: "Chinese"}],
 			    
+	appendLoadingMessage: function(node)
+	{
+		return d3.select(node).append('p')
+			.classed("help-block", true)
+			.text("Loading...");
+	},
+
 	appendAddButton: function(sectionObj, done)
 	{
 		var cell = sectionObj.datum();
@@ -50,7 +57,7 @@ var crv = {
 			.append("div").classed("pull-left", true);
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add " + cell.field.name);
-	}
+	},
 };
 
 function syncFailFunction(error)
@@ -1369,9 +1376,7 @@ var SitePanel = (function () {
 		
 		panel2Div.appendLoadingMessage = function()
 		{
-			return this.append('p')
-				.classed("help-block", true)
-				.text("Loading...");
+			return crv.appendLoadingMessage(this.node());
 		}
 	
 		panel2Div.appendSections = function(sectionData)
@@ -1906,7 +1911,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			}
 		}
 	
-		var searchBar = sitePanel.appendSearchBar(textChanged);
+		sitePanel.appendSearchBar(textChanged);
 
 		var panel2Div = sitePanel.appendScrollArea();
 		panel2Div.appendAlertContainer();
@@ -2010,7 +2015,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		}
 	}
 
-	var searchBar = sitePanel.appendSearchBar(textChanged);
+	sitePanel.appendSearchBar(textChanged);
 
 	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendAlertContainer();
@@ -2175,7 +2180,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			}
 		}
 	
-		var searchBar = sitePanel.appendSearchBar(textChanged);
+		sitePanel.appendSearchBar(textChanged);
 
 		var panel2Div = sitePanel.appendScrollArea();
 		panel2Div.appendAlertContainer();
