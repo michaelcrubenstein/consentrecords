@@ -38,6 +38,27 @@ var Settings = (function () {
 					 userInstance.getCell("_public access")];
 					 
 		panel2Div.showEditCells(cells);
+		
+		var itemsDiv = panel2Div.append('section')
+			.classed('cell edit unique', true)
+			.classed('btn row-button', true)
+			.on('click', function() {
+				if (prepareClick())
+				{
+					var panel = new UpdatePasswordPanel(sitePanel.node());
+					showPanelLeft(panel.node());
+				}
+			})
+			.append('ol').classed('items-div', true);
+		
+		var button = itemsDiv.append('li')
+			.append('div')
+			.classed('left-expanding-div', true);
+		appendRightChevrons(button);
+			
+		button.append('div')
+			.classed("description-text string-value-view", true)
+			.text("Change Password");	
 			
 		showPanelLeft(sitePanel.node());
 	}

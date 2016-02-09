@@ -10,7 +10,7 @@ cr.urls = {
 		getValues : "/local/getvalues/",
 		getUserID : "/local/getuserid/",
 		getData : "/local/getdata/",
-		getCellData : "/api/getcelldata/",
+		getCellData : "/local/getcelldata/",
 		getConfiguration : "/local/getconfiguration/",
 		createInstance : "/local/createinstance/",
 		addValue : "/local/addvalue/",
@@ -21,5 +21,6 @@ cr.urls = {
 		submitSignout : '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
+		updatePassword: '/user/updatepassword/',
 	};
 	
