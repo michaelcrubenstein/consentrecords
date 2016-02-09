@@ -895,12 +895,13 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		for (var i = 0; i < this.value.cells.length; ++i)
-		{
-			var cell = this.value.cells[i];
-			if (cell.field.name == name)
-				return cell;
-		}
+		if (this.value.cells)
+			for (var i = 0; i < this.value.cells.length; ++i)
+			{
+				var cell = this.value.cells[i];
+				if (cell.field.name == name)
+					return cell;
+			}
 		return undefined;
 	}
 
