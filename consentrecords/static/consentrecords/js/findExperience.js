@@ -313,40 +313,10 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.panel2Div = null;
-	PickOfferingPanel.prototype.loadingMessage = null;
 	PickOfferingPanel.prototype.section = null;
 	PickOfferingPanel.prototype.unloadedItems = null;
-	PickOfferingPanel.prototype.path = null;
-	PickOfferingPanel.prototype.start = null;
-	PickOfferingPanel.prototype.inGetData = false;
 	PickOfferingPanel.prototype.marker = null;
 	PickOfferingPanel.prototype.offeringID = null;
-	
-	PickOfferingPanel.prototype.clearLoadingMessage = function()
-	{
-		if (this.loadingMessage != null)
-		{
-			this.loadingMessage.remove();
-			this.loadingMessage = null;
-		}
-	}
-	
-	PickOfferingPanel.prototype.startGetData = function()
-	{
-		var _this = this;
-		function doneGetData(sessions)
-		{
-			_this.onGetDataDone(sessions);
-		}
-
-		cr.getData({path: this.path, 
-					 start: this.start,
-					 end: this.start + 50,
-					fields: ["parents"], 
-					done: doneGetData, 
-					fail: asyncFailFunction});
-		this.inGetData = true;
-	}
 	
 	PickOfferingPanel.prototype.onGetDataDone = function(sessions)
 	{
@@ -354,8 +324,7 @@ var PickOfferingPanel = (function() {
 		
 		if (sessions.length == 0)
 		{
-			this.clearLoadingMessage();
-			if (this.start == 0)
+			if (this.section.selectAll('li').size() == 0)
 			{
 				this.panel2Div.append("p")
 					.append("p")
@@ -373,6 +342,8 @@ var PickOfferingPanel = (function() {
 				
 			var _this = this;
 			divs.each(function() { _this.unloadedItems.push(this);});
+			
+			this.checkSearchText(divs);
 			
 			var buttons = divs.append("button").classed("btn row-button", true)
 				.on("click", function(session)
@@ -408,6 +379,7 @@ var PickOfferingPanel = (function() {
 			
 			$(this.panel2Div.node()).scrollTop($(this.panel2Div.node()).scrollTop() + oldTop - newTop);
 			
+			/* Check the setup offeringID to see if we should automatically go to a div. */
 			if (this.offeringID != null)
 			{
 				divs.each(function(d)
@@ -423,23 +395,6 @@ var PickOfferingPanel = (function() {
 			else
 			{
 				this.onScroll();
-			}
-			
-			if (sessions.length < 50)
-			{
-				this.clearLoadingMessage();
-				this.start = 0;
-				this.inGetData = false;
-			}
-			else
-			{
-				this.start += 50;
-				var panelHeight = $(this.panel2Div.node()).height();
-				var position = $(this.loadingMessage.node()).position();
-				if (position.top < panelHeight)
-					this.startGetData();
-				else
-					this.inGetData = false;
 			}
 		}
 	}
@@ -490,16 +445,32 @@ var PickOfferingPanel = (function() {
 					}
 				}
 			});
-		if (this.loadingMessage != null && !this.inGetData)
-		{
-			var panelHeight = $(this.panel2Div.node()).height();
-			var position = $(this.loadingMessage.node()).position();
-			if (position.top < panelHeight)
-				this.startGetData();
-		}
 	};
 
-	
+	PickOfferingPanel.prototype.checkSearchText = function(divs)
+		{
+			var val = this.searchInputNode.value.toLocaleLowerCase();
+			if (val.length == 0)
+			{
+				/* Show all of the items. */
+				divs.style("display", null);
+			}
+			else
+			{
+				/* Show the items whose description is this.value */
+				divs.style("display", function(d)
+						{
+							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+								d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+								d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+								d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+								return null;
+							else
+								return "none";
+						});
+			}
+		}
+
 	function PickOfferingPanel(userInstance, marker, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
@@ -511,61 +482,40 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		textChanged = function()
-		{
-			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
-			{
-				/* Show all of the items. */
-				this.panel2Div.selectAll("li")
-					.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				this.panel2Div.selectAll("li")
-					.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
+		var _this = this;
+		
+		function textChanged() { _this.checkSearchText(_this.panel2Div.selectAll("li"));}
 
-		this.appendSearchBar(textChanged);
+		this.searchInputNode = this.appendSearchBar(textChanged);
 
 		this.panel2Div = this.appendScrollArea();
 		this.panel2Div.appendAlertContainer();
 
-		var _this = this;
 		this.marker = marker;
 		this.offeringID = offeringID;
-		this.start = 0;
 		this.unloadedItems = [];
-		
-		function checkFunction()
-		{
-			_this.onScroll();
-		}
-		
-		$(this.panel2Div.node()).scroll(checkFunction);
-		$(window).resize(checkFunction);
+
+		/* Set up the code that will ensure that all of the visible items have their
+			ancillary data filled in as the scrolling area scrolls.
+		 */
+		function checkScroll() { _this.onScroll(); }
+		$(this.panel2Div.node()).scroll(checkScroll);
+		$(window).resize(checkScroll);
 		$(this.panel2Div.node()).on("remove", function()
 			{
-				$(window).off("resize", checkFunction);
+				$(window).off("resize", checkScroll);
 			});
-			
-		
 		this.section = this.panel2Div.append("section")
 			.classed("cell", true);
-		this.loadingMessage = this.panel2Div.appendLoadingMessage();
 		
+		function checkOnGetDataDone(instances) { _this.onGetDataDone(instances); }
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		this.path = "#" + marker.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
-		this.startGetData();
+		this.getDataChunker = new GetDataChunker(this.panel2Div.node(), checkOnGetDataDone);
+
+		this.getDataChunker.path = "#" + marker.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
+		this.getDataChunker.fields = ["parents"];
+		this.getDataChunker.start();
 
 		showPanelLeft(this.node());
 	}
@@ -644,11 +594,6 @@ var FindExperiencePanel = (function () {
 		var _this = this;
 		var successFunction = function(newInstances)
 		{
-			newInstances.sort(function(a, b)
-				{
-					return a.getDescription().localeCompare(b.getDescription());
-				});
-				
 			for (var i = 0; i < newInstances.length; i++)
 			{
 				var newI = crp.pushInstance(newInstances[i]);
@@ -678,7 +623,7 @@ var FindExperiencePanel = (function () {
 			}
 		}
 		
-		panel2Div.appendLoadingMessage();
+		crv.appendLoadingMessage(panel2Div.node());
 			
 		var path = "Service";
 		crp.getData({path: path, 
