@@ -72,9 +72,6 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		);
 	}
 	
-	if (service)
-		shareDiv = sitePanel.appendBottomNavContainer();
-
 	function appendStringDatum(cellName)
 	{
 		var v = session.getDatum(cellName);
@@ -111,6 +108,8 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				
 			if (service)
 			{
+				shareDiv = sitePanel.appendBottomNavContainer();
+
 				shareDiv.div.classed("share-container border-above", true);
 
 				appendFacebookButton(shareDiv, service, session);
