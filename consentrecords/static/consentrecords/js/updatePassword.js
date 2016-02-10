@@ -69,9 +69,7 @@ var UpdatePasswordPanel = (function () {
 	
 		navContainer.appendTitle('Password');
 	
-		var panel2Div = this.appendScrollArea()
-			.classed("vertical-scrolling", false)
-			.classed("no-scrolling", true);
+		var panel2Div = this.appendFillArea();
 			
 		var form = panel2Div.append('form')
 						.classed('form-simple form-signin', true);
@@ -102,8 +100,6 @@ var UpdatePasswordPanel = (function () {
 			.attr('required', '1')
 			.classed('form-control', true);
 			
-		panel2Div.appendAlertContainer();
-		
 	}
 	
 	return UpdatePasswordPanel;

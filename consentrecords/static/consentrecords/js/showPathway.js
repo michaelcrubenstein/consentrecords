@@ -339,7 +339,7 @@ var Pathway = (function () {
 			
 		if (y.size() >= 2)
 		{
-			oldD0 = y[0][0];
+			var oldD0 = y[0][0];
 			var thisHeight = oldD0.getBBox().height;
 			var spacing = 365 * this.dayHeight;
 			
@@ -988,7 +988,9 @@ var Pathway = (function () {
 		
 		var container = d3.select(containerDiv);
 		
-		this.svg = container.append('svg')
+		this.svg = container.append('div')
+			.style("height", "100%")
+			.append('svg')
 			.style("width", "100%")
 			.style("height", "100%");
 
@@ -997,8 +999,8 @@ var Pathway = (function () {
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
 			.attr("x", 0).attr("y", 0)
-			.attr("width", "100%")
-			.attr("height", "100%")
+			.style("width", "100%")
+			.style("height", "100%")
 			.attr("fill", this.pathBackground);
 		
 		this.loadingText = this.svg.append('text')
@@ -1017,8 +1019,8 @@ var Pathway = (function () {
 		this.detailGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem")
-			.attr("width", "100%")
-			.attr("height", "100%")
+			.style("width", "100%")
+			.style("height", "100%")
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
@@ -1148,7 +1150,7 @@ var Pathway = (function () {
 
 function addInput(p, placeholder)
 {
-	var searchBar = p.append("div").classed("searchbar always-visible table-row", true);
+	var searchBar = p.append("div").classed("searchbar table-row", true);
 	
 	var searchInputContainer = searchBar.append("div")
 		.classed("search-input-container", true);
@@ -1365,8 +1367,6 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var searchInputNode = sitePanel.appendSearchBar(textChanged);
 
 	var panel2Div = sitePanel.appendScrollArea();
-	
-	panel2Div.appendAlertContainer();
 	
 	function buttonClicked(d) {
 		if (prepareClick())
@@ -1846,8 +1846,6 @@ var AddExperiencePanel = (function () {
 		var dots = new DotsNavigator(panel2Div, 8);	
 		dots.finalText = "Add";	
 
-		panel2Div.appendAlertContainer();
-		
 		var _thisPanel = this;
 		var hideSuccessFunction = function()
 			{
@@ -2028,8 +2026,7 @@ var PathwayPanel = (function () {
 			});
 		addExperienceButton.append("span").text("+");
 		
-		var panel2Div = this.appendScrollArea();
-		panel2Div.appendAlertContainer();
+		var panel2Div = this.appendFillArea();
 		showPanelLeft(this.node());
 		this.pathway = new Pathway(userInstance, this, panel2Div.node(), true);
 	}
@@ -2117,8 +2114,6 @@ var ExperienceDetailPanel = (function () {
 			var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 			headerDiv.text(offering);
 		});
-		
-		panel2Div.appendAlertContainer();
 		
 		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
@@ -2549,21 +2544,12 @@ var PickOrCreatePanel = (function () {
 			if (title)
 				this.navContainer.appendTitle(title);
 
-			var searchBar = this.panelDiv.append("div").classed("searchbar always-visible", true);
-	
-			var searchInputContainer = searchBar.append("div")
-				.classed("search-input-container", true);
-		
-			var inputBox = searchInputContainer
-				.append("input")
-				.classed("search-input", true)
-				.attr("placeholder", title);
+			var inputBox = addInput(this.panelDiv, title);
 			
 			this.inputBox = inputBox.node();
 			$(this.inputBox).on("input", function() { _this.textChanged() });
 
 			this.listPanel = this.appendScrollArea();
-			this.listPanel.appendAlertContainer();
 			this.setupInputBox();
 
 			showPanelLeft(this.node());
@@ -2939,10 +2925,8 @@ var EditExperiencePanel = (function () {
 	function EditExperiencePanel(experience, previousPanel) {
 		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", revealPanelUp);
 		var navContainer = this.appendNavContainer();
-		var bottomNavContainer = this.appendBottomNavContainer();
-		
 		var panel2Div = this.appendScrollArea();
-		panel2Div.appendAlertContainer();
+		var bottomNavContainer = this.appendBottomNavContainer();
 
 		navContainer.appendRightButton()
 			.on("click", panel2Div.handleDoneEditingButton)
@@ -2952,7 +2936,10 @@ var EditExperiencePanel = (function () {
 		
 		var _this = this;
 		bottomNavContainer.appendRightButton()
-			.on("click", function() { _this.handleDeleteButtonClick(); } )
+			.on("click", 
+				function() {
+					_this.handleDeleteButtonClick();
+				})
 			.append("span").classed("text-danger", true).text("Delete");
 			
 		cells = [new PickOrCreateOrganizationCell(experience),

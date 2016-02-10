@@ -245,7 +245,6 @@ function pickAccessor(header, previousPanelNode, done)
 	sitePanel.appendSearchBar(show_users);
 
 	var panel2Div = sitePanel.appendScrollArea();
-	panel2Div.appendAlertContainer();
 
 	showPanelLeft(sitePanel.node());
 }

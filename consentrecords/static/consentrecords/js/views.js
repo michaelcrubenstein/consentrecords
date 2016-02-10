@@ -127,7 +127,7 @@ function showPanelUp(panelNode)
 	$(panelNode).hide("slide", {direction: "down"}, 0);
 	$(panelNode).height("100%")
 				.width("100%")
-				.css("display", "block")
+				.css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
@@ -141,7 +141,7 @@ function showPanelNow(panelNode)
 	$(panelNode).offset({top: 0, left: 0})
 				.height("100%")
 				.width("100%")
-				.css("display", "block")
+				.css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 }
@@ -152,7 +152,7 @@ function showPanelLeft(panelNode)
 	$(panelNode).hide("slide", {direction: "right"}, 0);
 	$(panelNode).height("100%")
 				.width("100%")
-				.css("display", "block")
+				.css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
@@ -1233,6 +1233,7 @@ function getTextWidth(text, font) {
 };
 
 var SiteNavContainer = (function() {
+	SiteNavContainer.prototype.nav = undefined;
 	SiteNavContainer.prototype.div = undefined;
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
@@ -1271,8 +1272,9 @@ var SiteNavContainer = (function() {
 	
 	function SiteNavContainer(sitePanel)
 	{
-		this.div = sitePanel.panelDiv.append("nav").classed("always-visible", true)
-					.attr("role", "navigation");
+		this.nav = sitePanel.panelDiv.append("nav").classed("table-row", true)
+					.attr("role", "navigation")
+		this.div = this.nav.append('div');
 	}
 	
 	return SiteNavContainer;
@@ -1348,20 +1350,37 @@ var SitePanel = (function () {
     SitePanel.prototype.appendBottomNavContainer = function()
     {
     	var n = new SiteNavContainer(this);
-    	n.div.classed("bottom", true);
+    	n.nav.classed("bottom", true);
     	return n;
     }
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBarDiv = this.panelDiv.append("div").classed("searchbar always-visible", true);
+		var searchBarDiv = this.panelDiv.append("div").classed("searchbar table-row", true);
 		return setupSearchBar(searchBarDiv.node(), textChanged);
+	}
+	
+	SitePanel.prototype.appendFillArea = function()
+	{
+		var _this = this;
+		this.panelDiv.append('div').classed('alert-container table-row', true);
+		var panel2Div = this.panelDiv
+			.append("div").classed("body", true)
+			.append("div")
+			.append("div").classed("panel-fill", true)
+			.style("overflow-y", "hidden");
+			
+		return panel2Div;
 	}
 	
 	SitePanel.prototype.appendScrollArea = function()
 	{
 		var _this = this;
-		var panel2Div = this.panelDiv.append("div").classed("panel-fill vertical-scrolling", true);
+		this.panelDiv.append('div').classed('alert-container table-row', true);
+		var panel2Div = this.panelDiv
+			.append("div").classed("body", true)
+			.append("div")
+			.append("div").classed("panel-fill vertical-scrolling", true);
 		
 		panel2Div.appendHeader = function()
 		{
@@ -1369,16 +1388,6 @@ var SitePanel = (function () {
 				.text(_this.headerText);
 		}
 		
-		panel2Div.appendAlertContainer = function()
-		{
-			return this.append("div").classed("alert-container", true);
-		}
-		
-		panel2Div.appendLoadingMessage = function()
-		{
-			return crv.appendLoadingMessage(this.node());
-		}
-	
 		panel2Div.appendSections = function(sectionData)
 		{
 			var i = 0;
@@ -1397,22 +1406,7 @@ var SitePanel = (function () {
 		{
 			return this.append("section").datum(datum);
 		}
-		
-		panel2Div.resetHeight = function()
-		{
-			var newHeight = window.innerHeight;
-			_this.panelDiv.selectAll(".always-visible")
-				.filter(function() { 
-					return this.parentNode === _this.panelDiv.node(); 
-				})	/* Only direct children. */
-				.each(
-				function() { 
-					newHeight -= $(this).outerHeight(); 
-				}
-			);
-			$(this.node()).height(newHeight);
-		}
-		
+				
 		panel2Div.showViewCells = function(cells)
 		{
 			this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
@@ -1522,8 +1516,6 @@ var SitePanel = (function () {
 						cell.showEdit(this, _this.node());
 					});
 		}
-		
-		$(window).resize(function() { panel2Div.resetHeight(); });
 		
 		return panel2Div;
 	}
@@ -1657,8 +1649,6 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 		var headerDiv = panel2Div.appendHeader();
 
-		panel2Div.appendAlertContainer();
-							
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
@@ -1711,8 +1701,6 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 			$(eventObject.data).off("dataChanged.cr", null, updateHeader);
 		});
 
-		panel2Div.appendAlertContainer();
-							
 		panel2Div.append("div").classed("cell-border-below", true);
 		panel2Div.showViewCells(objectData.value.cells);
 		
@@ -1749,7 +1737,6 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.appendAlertContainer();
 		panel2Div.showEditCells(objectData.value.cells);
 
 		var doneButton;
@@ -1914,7 +1901,6 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		sitePanel.appendSearchBar(textChanged);
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.appendAlertContainer();
 		
 		var itemsDiv = panel2Div.append("section")
 			.classed("multiple", true)
@@ -2018,7 +2004,6 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	sitePanel.appendSearchBar(textChanged);
 
 	var panel2Div = sitePanel.appendScrollArea();
-	panel2Div.appendAlertContainer();
 	
 	var itemsDiv = panel2Div.append("section")
 		.classed("multiple", true)
@@ -2183,7 +2168,6 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		sitePanel.appendSearchBar(textChanged);
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.appendAlertContainer();
 		
 		function buttonClicked(d) {
 			/* d is the ObjectValue that the user clicked. */

@@ -59,7 +59,7 @@
     		top: 0;
     		z-index: 4;
     	}
-    	nav {
+    	.background-gradient-panel > nav {
     		opacity: 0.8;
     	}
     	.username-label {
@@ -160,9 +160,11 @@
 		
   		<panel id="id_user_home_panel" class="site-panel initial background-gradient-panel" >
 			<nav role="navigation">
-				<div class="pull-right">
-					<div class="sign-in-button site-navbar-link site-active-text">
-						<span id="sign-in-span">Sign&nbsp;In</span>
+				<div>
+					<div class="pull-right">
+						<div class="sign-in-button site-navbar-link site-active-text">
+							<span id="sign-in-span">Sign&nbsp;In</span>
+						</div>
 					</div>
 				</div>
 			</nav>
@@ -1435,8 +1437,6 @@
 					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
 				});
 
-				panel2Div.appendAlertContainer();
-							
 				showPanelLeft(sitePanel.node());
 
 				var sectionObj = panel2Div.append("section")
@@ -1541,8 +1541,6 @@
 				.append('ol')
 				.classed('items-div', true);
 				
-			panel2Div.appendAlertContainer();
-	
 			var items = appendItems(itemsDiv, data);
 
 			var buttons = appendViewButtons(items)
@@ -1653,7 +1651,6 @@
 								sitePanel.appendSearchBar(show_matching_descriptions);
 
 								var panel2Div = sitePanel.appendScrollArea();
-								panel2Div.appendAlertContainer();
 
 								showPanelLeft(sitePanel.node());
 						
@@ -1769,7 +1766,6 @@
 			sitePanel.appendSearchBar(show_users);
 
 			var panel2Div = sitePanel.appendScrollArea();
-			panel2Div.appendAlertContainer();
 	
 			showPanelLeft(sitePanel.node());
 			
@@ -2034,7 +2030,6 @@
 						addInquiryPanelDiv.appendSearchBar(show_users);
 
 						var panel2Div = addInquiryPanelDiv.appendScrollArea();
-						panel2Div.appendAlertContainer();
 				
 						function show_users()
 						{
@@ -2207,7 +2202,6 @@
 								sitePanel.appendSearchBar(show_matching_descriptions);
 
 								var panel2Div = sitePanel.appendScrollArea();
-								panel2Div.appendAlertContainer();
 
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(enrollmentCell.data);

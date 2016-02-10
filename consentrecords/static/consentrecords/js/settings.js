@@ -29,8 +29,6 @@ var Settings = (function () {
 		doneButton.on("click", panel2Div.handleDoneEditingButton)
  			.append("span").text("Done");
 			
-		panel2Div.appendAlertContainer();
-		
 		var cells = [userInstance.getCell("_first name"),
 					 userInstance.getCell("_last name"),
 					 userInstance.getCell("_email"),
