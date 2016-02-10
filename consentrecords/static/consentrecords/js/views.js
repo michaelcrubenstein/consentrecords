@@ -102,12 +102,14 @@ function unblockClick()
 	clickBlockCount -= 1;
 }
 
-function prepareClick()
+function prepareClick(name, message)
 {
 	if (_isClickBlocked())
 		return false;
 	closealert();
 	_blockClick();
+	if (name)
+		cr.logRecord(name, message);
 	return true;
 }
  
@@ -1314,6 +1316,7 @@ var SitePanel = (function () {
 							.style("z-index", zindex)
 							.datum(datum)
 							.attr("headerText", headerText);
+			this.node().sitePanel = this;
 							
 			if (panelClass && panelClass.length > 0)
 				this.panelDiv.classed(panelClass, true);

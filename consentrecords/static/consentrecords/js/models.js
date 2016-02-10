@@ -1141,6 +1141,7 @@ cr.urls = {
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
 		updatePassword: '/user/updatepassword/',
+		log: '/monitor/log/',
 	};
 	
 cr.accessToken = null;
@@ -1585,4 +1586,12 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
+	}
+
+cr.logRecord = function(name, message)
+	{
+		/* This message is silent and does not record errors. */
+		message = message !== undefined ? message : 'None';
+		$.post(cr.urls.log,
+		       {name: name, message: message });
 	}

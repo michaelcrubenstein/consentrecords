@@ -22,5 +22,6 @@ cr.urls = {
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
 		updatePassword: '/user/updatepassword/',
+		log: '/monitor/log/',
 	};
 	
