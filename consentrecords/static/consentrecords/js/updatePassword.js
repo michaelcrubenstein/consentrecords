@@ -49,7 +49,9 @@ var UpdatePasswordPanel = (function () {
 				if (prepareClick())
 				{
 					username = userInstance.getDatum("_email");
-					if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
+					if (newPasswordInput.property('value').length == 0)
+						syncFailFunction("The new password can not be blank.");
+					else if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
 						syncFailFunction("The confirm password does not match the new password.");
 					else
 					{
