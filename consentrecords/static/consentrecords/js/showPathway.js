@@ -1231,23 +1231,26 @@ function setupFirstMarkerPanel(dots)
 
 		function buttonClicked(d)
 		{
-			if (dots.services.length > 0)
+			if (prepareClick('click', 'experience first marker: ' + d.getDescription()))
 			{
-				/* Remove this item if it is farther down in the list. */
-				for (var i = 1; i < dots.services.length; ++i)
-					if (dots.services[i].value == d)
-					{
-						dots.services.splice(i, 1);
-						break;
-					}
-				dots.services[0] = new ReportedObject({value: d});
-			}
-			else
-				dots.services.push(new ReportedObject({value: d}));
+				if (dots.services.length > 0)
+				{
+					/* Remove this item if it is farther down in the list. */
+					for (var i = 1; i < dots.services.length; ++i)
+						if (dots.services[i].value == d)
+						{
+							dots.services.splice(i, 1);
+							break;
+						}
+					dots.services[0] = new ReportedObject({value: d});
+				}
+				else
+					dots.services.push(new ReportedObject({value: d}));
 			
-			searchInput.node().value = d.getDescription();
-			$(searchInput.node()).trigger("input");
-			dots.setValue(dots.value + 1);
+				searchInput.node().value = d.getDescription();
+				$(searchInput.node()).trigger("input");
+				dots.setValue(dots.value + 1);
+			}
 		}
 		
 		rootObjects.sort(sortByDescription);
@@ -1550,27 +1553,30 @@ function setupPanel2(dots)
 		{
 			function buttonClicked(d)
 			{
-				if (d.getValue("Organization"))
+				if (prepareClick('click', 'experience organization: ' + d.getDescription()))
 				{
-					dots.organization = d.getValue("Organization");
-					dots.site = d;
-					dots.organizationName = d.getValue("Organization").getDescription();
-					dots.siteName = d.getDescription();
-				}
-				else
-				{
-					dots.organization = d;
-					dots.site = null;
-					dots.organizationName = d.getDescription();
-					dots.siteName = null;
-				}
+					if (d.getValue("Organization"))
+					{
+						dots.organization = d.getValue("Organization");
+						dots.site = d;
+						dots.organizationName = d.getValue("Organization").getDescription();
+						dots.siteName = d.getDescription();
+					}
+					else
+					{
+						dots.organization = d;
+						dots.site = null;
+						dots.organizationName = d.getDescription();
+						dots.siteName = null;
+					}
 	
-				searchInput.node().value = d.getDescription();
-				$(searchInput.node()).trigger("input");
-				if (dots.site)
-					dots.setValue(dots.value + 2);
-				else
-					dots.setValue(dots.value + 1);
+					searchInput.node().value = d.getDescription();
+					$(searchInput.node()).trigger("input");
+					if (dots.site)
+						dots.setValue(dots.value + 2);
+					else
+						dots.setValue(dots.value + 1);
+				}
 				d3.event.preventDefault();
 			}
 
@@ -1663,12 +1669,15 @@ function setupPanel3(dots)
 
 				function buttonClicked(d)
 				{
-					dots.site = d;
-					dots.siteName = d.getDescription();
+					if (prepareClick('click', 'experience site: ' + d.getDescription()))
+					{
+						dots.site = d;
+						dots.siteName = d.getDescription();
 			
-					searchInput.node().value = d.getDescription();
-					$(searchInput.node()).trigger("input");
-					dots.setValue(dots.value + 1);
+						searchInput.node().value = d.getDescription();
+						$(searchInput.node()).trigger("input");
+						dots.setValue(dots.value + 1);
+					}
 				}
 		
 				rootObjects.sort(sortByDescription);
@@ -1721,12 +1730,15 @@ function setupPanel4(dots)
 
 				function buttonClicked(d)
 				{
-					dots.offering = d;
-					dots.offeringName = d.getDescription();
+					if (prepareClick('click', 'experience offering: ' + d.getDescription()))
+					{
+						dots.offering = d;
+						dots.offeringName = d.getDescription();
 			
-					searchInput.node().value = d.getDescription();
-					$(searchInput.node()).trigger("input");
-					dots.setValue(dots.value + 1);
+						searchInput.node().value = d.getDescription();
+						$(searchInput.node()).trigger("input");
+						dots.setValue(dots.value + 1);
+					}
 				}
 		
 				rootObjects.sort(sortByDescription);

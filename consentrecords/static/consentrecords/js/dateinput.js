@@ -27,6 +27,32 @@ var DateInput = (function () {
     	}
     };
     
+    DateInput.prototype.checkOnYearChanged = function()
+    {
+    	this.yearInput.selectAll(":first-child").attr('disabled', true);
+	}
+    
+    DateInput.prototype.checkOnMonthChanged = function()
+    {
+		this.monthInput.selectAll(":first-child").attr('disabled', true);
+		var oldDate = this.dateInput.node().selectedIndex;
+		this.dateInput.selectAll('option').remove();
+		var selectedYear = parseInt(this.yearInput.node().options[this.yearInput.node().selectedIndex].text);
+		var selectedMonth = this.monthInput.node().selectedIndex;
+		var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
+		dates = ['(no day)'];
+		for (var i = 1; i <= daysInMonth; ++i)
+			dates.push(i);
+		this.dateInput.selectAll('option').remove();
+		this.dateInput.selectAll('option')
+			.data(dates)
+			.enter()
+			.append('option')
+			.text(function(d) { return d; });
+		if (oldDate > 0 && oldDate <= daysInMonth)
+			this.dateInput.node().selectedIndex = oldDate;
+    }
+    
 	DateInput.prototype.append = function(node, minYear)
 	{
 		var _this = this;
@@ -86,45 +112,30 @@ var DateInput = (function () {
 	
 		$(yearNode).change(function()
 			{
-				_this.yearInput.selectAll(":first-child").attr('disabled', true);
-				_this.monthInput.style('visibility', 'visible');
 				if (yearNode.selectedIndex == 0)
 					_this.year = undefined;
 				else
 					_this.year = parseInt(yearNode.options[yearNode.selectedIndex].text);
+				_this.checkOnYearChanged();
+				cr.logRecord('select', 'year: ' + _this.year);
 				$(_this).trigger("change");
 			});
 		
 		$(dateNode).change(function()
 			{
 				_this.day = dateNode.selectedIndex;
+				cr.logRecord('select', 'day: ' + _this.day);
 				$(_this).trigger("change");
 			});
 	
 		$(monthNode).change(function()
 			{
-				_this.monthInput.selectAll(":first-child").attr('disabled', true);
-				var oldDate = dateNode.selectedIndex;
-				_this.dateInput.selectAll('option').remove();
-				var selectedYear = parseInt(yearNode.options[yearNode.selectedIndex].text);
-				var selectedMonth = monthNode.selectedIndex;
-				var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
-				dates = ['(no day)'];
-				for (var i = 1; i <= daysInMonth; ++i)
-					dates.push(i);
-				_this.dateInput.selectAll('option').remove();
-				_this.dateInput.selectAll('option')
-					.data(dates)
-					.enter()
-					.append('option')
-					.text(function(d) { return d; });
-				if (oldDate > 0 && oldDate <= daysInMonth)
-					dateNode.selectedIndex = oldDate;
-				_this.dateInput.style('visibility', 'visible');
 				if (monthNode.selectedIndex == 0)
 					_this.month = undefined;
 				else
 					_this.month = monthNode.selectedIndex;
+				_this.checkOnMonthChanged();
+				cr.logRecord('select', 'month: ' + _this.month);
 				$(_this).trigger("change");
 			});
 	}
@@ -157,11 +168,11 @@ var DateInput = (function () {
 		{
 			this.year = parseInt(newValue.substring(0, 4));
 			this.yearInput.node().selectedIndex = parseInt(this.yearInput.node().options[1].value) - this.year + 1;
-			$(this.yearInput.node()).trigger('change');
+			this.checkOnYearChanged();
 			
 			this.month = parseInt(newValue.substring(5, 7));
 			this.monthInput.node().selectedIndex = this.month;
-			$(this.monthInput.node()).trigger('change');
+			this.checkOnMonthChanged();
 			
 			if (newValue.length > 8)
 			{
@@ -173,7 +184,6 @@ var DateInput = (function () {
 				this.day = undefined;
 				this.dateInput.node().selectedIndex = 0;
 			}
-			$(this.dateInput.node()).trigger('change');
 			
 			return this;
 		}
