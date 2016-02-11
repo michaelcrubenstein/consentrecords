@@ -495,7 +495,7 @@
 			the current user.
 		 */
 		$(".sign-in-button").click(function(e) {
-			if (prepareClick('click Sign In/Out button'))
+			if (prepareClick('click',  'Sign In/Out button'))
 			{
 				if (userInstance.getValueID())
 				{
@@ -532,7 +532,7 @@
 		function hidePanel()
 		{
 			var sitePanelNode = $(this).parents(".site-panel")[0];
-			if (prepareClick('click hide panel button'))
+			if (prepareClick('click', 'hide panel button'))
 			{
 				showClickFeedback(this);
 				hidePanelRight(sitePanelNode, false);
@@ -545,9 +545,9 @@
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
 		$(".done-button").click(hidePanel);
 		
-		function checkSignin(userInstance, panel, done)
+		function checkSignin(userInstance, panel, done, message)
 		{
-			if (prepareClick())
+			if (prepareClick('click', message))
 			{
 				showClickFeedback(this);
 				if (userInstance.getValueID())
@@ -557,7 +557,7 @@
 					var onSignin = function(eventObject)
 					{
 						$(this).off("signinCanceled.cr", null, onSigninCanceled);
-						if (prepareClick())
+						if (prepareClick('onSignin'))
 							done();
 					};
 					
@@ -583,14 +583,14 @@
 				showPanelLeft("#" + panelID);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done);
+			checkSignin.call(this, userInstance, panel, done, panelID);
 
 			e.preventDefault();
 		});
 		
 		$("#id-find-experience-button").click(function(e)
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'find experience'))
 			{
 				var panel = $(this).parents(".site-panel")[0];
 				var newPanel = new FindExperiencePanel(userInstance, null, null, panel);
@@ -607,7 +607,7 @@
 				var pathway = new PathwayPanel(userInstance, panel);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done);
+			checkSignin.call(this, userInstance, panel, done, 'show pathway');
 			e.preventDefault();
 		});
 		
@@ -619,7 +619,7 @@
 				var settings = new Settings(panel);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done);
+			checkSignin.call(this, userInstance, panel, done, "show settings");
 			e.preventDefault();
 		});
 		
@@ -662,7 +662,7 @@
 				
 			/* Items for the sign-in panel. */
 			$("#id_sign_in_panel .submit-button").click(function(e) {
-				if (prepareClick())
+				if (prepareClick('click', 'Signin Sign in'))
 				{
 					signIn.submit(signInSuccess, syncFailFunction);
 				}
@@ -672,7 +672,7 @@
 			});
 			
 			$("#id_sign_in_panel .signin-cancel-button").click(function(e) {
-				if (prepareClick())
+				if (prepareClick('click', 'Signin Cancel'))
 				{
 					showClickFeedback(this);
 					hidePanelRight($("#id_sign_in_panel")[0], false,
@@ -688,7 +688,7 @@
 			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
 				if (e.which == 13)
 				{
-					if (prepareClick())
+					if (prepareClick('return key', 'Signin sign in'))
 					{
 						signIn.submit(signInSuccess, syncFailFunction);
 					}
@@ -715,7 +715,7 @@
 			});	
 			
 			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepareClick())
+				if (prepareClick('click', 'Signin sign up'))
 				{
 					var signUp = new Signup($(this).parents(".site-panel")[0]);
 				}
@@ -723,7 +723,7 @@
 			});
 
 			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
-				if (prepareClick())
+				if (prepareClick('click', 'Signin forgot password'))
 				{
 					showFixedPanel($(this).parents(".site-panel")[0], "#id_forgot_password_panel");
 				}
@@ -733,7 +733,7 @@
 			$("#id_forgot_password_panel .submit-button").click(function(e) {
 				if (forgotPassword.canSubmit())
 				{
-					if (prepareClick())
+					if (prepareClick('click', 'forgot password submit'))
 					{
 						var successFunction = function()
 						{
@@ -1307,7 +1307,7 @@
 				var buttons = divs.append("button").classed("btn row-button", true)
 					.on("click", function(session)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'session ' + session.getDescription()))
 						{
 							showClickFeedback(this);
 
@@ -1371,7 +1371,7 @@
 				appendRightChevrons(buttons);
 					
 				buttons.on("click", function(d) {
-					if (prepareClick())
+					if (prepareClick('click', 'show organization ' + d.getDescription()))
 					{
 						show_organization_panel(d, cell, null, d3.select("body>panel").node());
 					}
@@ -1430,7 +1430,7 @@
 				addButton(sectionObj, "Record an Inquiry",
 					function(organization)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'Record an Inquiry'))
 						{
 							pick_inquiry_site(organization, sitePanel.node());
 						}
@@ -1439,7 +1439,7 @@
 				addButton(sectionObj, "Manage Inquiries",
 					function(organization)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'Manage Inquiries'))
 						{
 							manage_inquiry(organization, sitePanel.node());
 						}
@@ -1451,7 +1451,7 @@
 				addButton(sectionObj, "Enroll an Inquiry",
 					function(d)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'Enroll an Inquiry'))
 						{
 							enroll_inquiry(d, sitePanel.node());
 						}
@@ -1460,7 +1460,7 @@
 				addButton(sectionObj, "Add an Enrollment",
 					function(d)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'Add an Enrollment'))
 						{
 							add_enrollment(d, sitePanel.node());
 						}
@@ -1469,7 +1469,7 @@
 				addButton(sectionObj, "Manage Enrollment",
 					function(d)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'Manage Enrollment'))
 						{
 							manage_enrollment(d, sitePanel.node());
 						}
@@ -1481,7 +1481,7 @@
 				addButton(sectionObj, "Record Participation",
 					function(d)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'record participation'))
 						{
 							record_participation(d, sitePanel.node());
 						}
@@ -1490,7 +1490,7 @@
 				addButton(sectionObj, "Manage Participation",
 					function(d)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'manage participation'))
 						{
 							manage_participation(d, sitePanel.node());
 						}
@@ -1530,7 +1530,7 @@
 
 			var buttons = appendViewButtons(items)
 				.on("click", function(d) {
-					if (prepareClick())
+					if (prepareClick('click', 'header: ' + d.getDescription()))
 					{
 						successFunction(d, sitePanel.node());
 					}
@@ -1644,7 +1644,7 @@
 								var buttons = appendViewButtons(sections)
 									.on("click", function(user)
 									{
-										if (prepareClick())
+										if (prepareClick('click', 'add enrollment'))
 										{
 											getAddEnrollmentFunction(session, user, unblockClick)();
 										}
@@ -1653,7 +1653,7 @@
 								var infoButtons =  buttons.insert("div", ":first-child")
 									.classed("info-button right-fixed-width-div", true)
 									.on("click", function(inquiry) {
-										if (prepareClick())
+										if (prepareClick('click', 'show user info'))
 										{
 											checkUserByInquiry(inquiry,
 												function(user) {
@@ -1793,7 +1793,7 @@
 							var buttons = appendViewButtons(sections)
 								.on("click", function(user) {
 									pickedUser = user;
-									if (prepareClick())
+									if (prepareClick('click', 'organization: ' + organization.description()))
 									{
 										pick_site(organization, sitePanel.node(), pickSiteSuccess);
 									}
@@ -1802,7 +1802,7 @@
 							var infoButtons =  buttons.insert("div", ":first-child")
 								.classed("info-button right-fixed-width-div", true)
 								.on("click", function(user) {
-									if (prepareClick())
+									if (prepareClick('click', 'user: ' + user.description()))
 									{
 										show_user(user, sitePanel.node());
 									}
@@ -2040,7 +2040,7 @@
 											.on("click", function(user) {
 												pickedUser = user;
 												var _thisButton = this;
-												if (prepareClick())
+												if (prepareClick('click', 'user: ' + user.getDescription()))
 												{
 													var checkCellsSuccess = function() 
 													{
@@ -2077,7 +2077,7 @@
 										var infoButtons =  buttons.insert("div", ":first-child")
 											.classed("info-button right-fixed-width-div", true)
 											.on("click", function(user) {
-												if (prepareClick())
+												if (prepareClick('click', 'show user info: ' + user.getDescription()))
 												{
 													show_user(user, addInquiryPanelDiv.node());
 												}
@@ -2193,7 +2193,7 @@
 								var buttons = appendViewButtons(sections)
 									.on("click", function(enrollment)
 									{
-										if (prepareClick())
+										if (prepareClick('click', 'add Experience by enrollment'))
 										{
 											enrollment.checkCells(undefined, 
 												function()
@@ -2207,7 +2207,7 @@
 								var infoButtons =  buttons.insert("div", ":first-child")
 									.classed("info-button right-fixed-width-div", true)
 									.on("click", function(enrollment) {
-										if (prepareClick())
+										if (prepareClick('click', 'show enrollment info: ' + enrollment.getDescription()))
 										{
 											checkUserByEnrollment(enrollment,
 												function(user) {

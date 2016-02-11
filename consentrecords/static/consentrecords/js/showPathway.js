@@ -521,7 +521,7 @@ var Pathway = (function () {
 
 	Pathway.prototype.showDetailPanel = function(experience, i)
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'show experience detail: ' + experience.getDescription()))
 		{
 			var panel = $(this).parents(".site-panel")[0];
 			var experienceDetailPanel = new ExperienceDetailPanel(experience, panel);
@@ -1112,7 +1112,7 @@ var Pathway = (function () {
 					.attr("fill", "#2C55CC")
 					.text(" Record one now.")
 					.on("click", function(d) {
-						if (prepareClick())
+						if (prepareClick('click', 'Record one now prompt'))
 						{
 							showClickFeedback(this);
 		
@@ -1316,7 +1316,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var backButton = navContainer.appendLeftButton()
 		.on("click", function()
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'cancel'))
 			{
 				hidePanelRight(sitePanel.node());
 			}
@@ -1327,7 +1327,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var addButton = navContainer.appendRightButton()
 		.on("click", function()
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'add service'))
 			{
 				if (!dots.getServiceByName(searchInputNode.value))
 				{
