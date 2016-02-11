@@ -63,6 +63,10 @@
 		margin-right: 12px;
 	}
 	
+	table.labeled td:only-child {
+		text-align: left;
+	}
+	
 	div.select-container {
 		display: inline-block;
 		position: relative;

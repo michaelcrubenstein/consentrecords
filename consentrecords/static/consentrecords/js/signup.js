@@ -303,9 +303,7 @@ var Signup = (function () {
 			
 			var verifyAlertRow = t.append('tr')
 				.style("display", "none");
-			verifyAlertRow.append('td');
-			var alertContainerDiv = verifyAlertRow.append('td').classed('full-width', true);
-			verifyAlertRow.append('td');
+			var alertContainerDiv = verifyAlertRow.append('td').attr('colspan', '3').classed('full-width', true);
 			
 			function showVerifyAlert(message)
 			{
