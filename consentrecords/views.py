@@ -620,8 +620,6 @@ class api:
         return JsonResponse(results)
 
 def createInstance(request):
-    LogRecord.emit(request.user, 'consentrecords/createInstance', '')
-
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
     
@@ -631,8 +629,6 @@ def createInstance(request):
     return api.createInstance(request.user, request.POST)
     
 def updateValues(request):
-    LogRecord.emit(request.user, 'consentrecords/updateValues', '')
-    
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
@@ -643,9 +639,6 @@ def updateValues(request):
     
 # Handle a POST event to add a value to an object that references another other or data.
 def addValue(request):
-    
-    LogRecord.emit(request.user, 'consentrecords/addValue', '')
-
     if request.method != "POST":
         raise Http404("addValue only responds to POST methods")
     
@@ -655,8 +648,6 @@ def addValue(request):
     return api.addValue(request.user, request.POST)
         
 def deleteInstances(request):
-    LogRecord.emit(request.user, 'consentrecords/deleteInstances', '')
-    
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
@@ -666,8 +657,6 @@ def deleteInstances(request):
     return api.deleteInstances(request.user, request.POST)
     
 def deleteValue(request):
-    LogRecord.emit(request.user, 'consentrecords/deleteValue', '')
-    
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
@@ -695,24 +684,18 @@ def getConfiguration(request):
     return api.getConfiguration(request.user, request.GET)
     
 def getUserID(request):
-    LogRecord.emit(request.user, 'consentrecords/getUserID', '')
-    
     if request.method != "GET":
         raise Http404("getUserID only responds to GET methods")
     
     return api.getUserID(request.user, request.GET)
 
 def getData(request):
-    LogRecord.emit(request.user, 'consentrecords/getData', '')
-    
     if request.method != "GET":
         raise Http404("getData only responds to GET methods")
     
     return api.getData(request.user, request.GET)
 
 def getCellData(request):
-    LogRecord.emit(request.user, 'consentrecords/getCellData', '')
-    
     if request.method != "GET":
         raise Http404("getCellData only responds to GET methods")
     
@@ -751,8 +734,6 @@ class ApiGetUserIDEndpoint(ProtectedResourceView):
         
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
-    LogRecord.emit(request.user, 'consentrecords/submitsignin', '')
-    
     if request.method != "POST":
         raise Http404("submitsignin only responds to POST methods")
     
@@ -771,8 +752,6 @@ def submitsignin(request):
     return JsonResponse(results)
 
 def submitNewUser(request):
-    LogRecord.emit(request.user, 'consentrecords/submitNewUser', '')
-        
     if request.method != "POST":
         raise Http404("submitNewUser only responds to POST methods")
     

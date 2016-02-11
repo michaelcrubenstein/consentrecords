@@ -445,8 +445,6 @@ var Signup = (function () {
 		this.dots.nthPanel(1).onReveal = setupPanel2;
 		this.dots.nthPanel(2).onReveal = setupPanel3;
 		this.dots.nthPanel(3).onReveal = setupPanel4;
-
-		panel2Div.appendAlertContainer();
 		
 		showPanelUp(sitePanel.node());
 		this.dots.showDots();

@@ -241,9 +241,9 @@ cr.Cell = (function()
 			}
 		};
 
-		Cell.prototype.setup = function (objectData)
+		Cell.prototype.setup = function (parent)
 		{
-			this.setParent(objectData);
+			this.setParent(parent);
 	
 			/* If this is a unique value and there is no value, set up an unspecified one. */
 			if (this.data.length == 0 &&
@@ -895,12 +895,13 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		for (var i = 0; i < this.value.cells.length; ++i)
-		{
-			var cell = this.value.cells[i];
-			if (cell.field.name == name)
-				return cell;
-		}
+		if (this.value.cells)
+			for (var i = 0; i < this.value.cells.length; ++i)
+			{
+				var cell = this.value.cells[i];
+				if (cell.field.name == name)
+					return cell;
+			}
 		return undefined;
 	}
 
@@ -1140,6 +1141,7 @@ cr.urls = {
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
 		updatePassword: '/user/updatepassword/',
+		log: '/monitor/log/',
 	};
 	
 cr.accessToken = null;
@@ -1584,4 +1586,12 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
+	}
+
+cr.logRecord = function(name, message)
+	{
+		/* This message is silent and does not record errors. */
+		message = message !== undefined ? message : 'None';
+		$.post(cr.urls.log,
+		       {name: name, message: message });
 	}

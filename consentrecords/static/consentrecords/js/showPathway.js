@@ -339,7 +339,7 @@ var Pathway = (function () {
 			
 		if (y.size() >= 2)
 		{
-			oldD0 = y[0][0];
+			var oldD0 = y[0][0];
 			var thisHeight = oldD0.getBBox().height;
 			var spacing = 365 * this.dayHeight;
 			
@@ -521,7 +521,7 @@ var Pathway = (function () {
 
 	Pathway.prototype.showDetailPanel = function(experience, i)
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'show experience detail: ' + experience.getDescription()))
 		{
 			var panel = $(this).parents(".site-panel")[0];
 			var experienceDetailPanel = new ExperienceDetailPanel(experience, panel);
@@ -825,6 +825,7 @@ var Pathway = (function () {
 		
 		function showDetail(experience, i)
 		{
+			cr.logRecord('click', 'show detail: ' + experience.getDescription());
 			var g = this.parentNode;
 			var pathway = this.pathway;
 			pathway.detailGroup.datum(experience);
@@ -988,7 +989,9 @@ var Pathway = (function () {
 		
 		var container = d3.select(containerDiv);
 		
-		this.svg = container.append('svg')
+		this.svg = container.append('div')
+			.style("height", "100%")
+			.append('svg')
 			.style("width", "100%")
 			.style("height", "100%");
 
@@ -997,8 +1000,8 @@ var Pathway = (function () {
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
 			.attr("x", 0).attr("y", 0)
-			.attr("width", "100%")
-			.attr("height", "100%")
+			.style("width", "100%")
+			.style("height", "100%")
 			.attr("fill", this.pathBackground);
 		
 		this.loadingText = this.svg.append('text')
@@ -1017,8 +1020,8 @@ var Pathway = (function () {
 		this.detailGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
 				.attr("font-size", "1.3rem")
-			.attr("width", "100%")
-			.attr("height", "100%")
+			.style("width", "100%")
+			.style("height", "100%")
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
@@ -1036,6 +1039,7 @@ var Pathway = (function () {
 				d3.event.stopPropagation(); 
 			})
 			.on("click.cr", function() {
+				cr.logRecord('click', 'hide details');
 				_thisPathway.hideDetail();
 			});
 		
@@ -1110,7 +1114,7 @@ var Pathway = (function () {
 					.attr("fill", "#2C55CC")
 					.text(" Record one now.")
 					.on("click", function(d) {
-						if (prepareClick())
+						if (prepareClick('click', 'Record one now prompt'))
 						{
 							showClickFeedback(this);
 		
@@ -1148,7 +1152,7 @@ var Pathway = (function () {
 
 function addInput(p, placeholder)
 {
-	var searchBar = p.append("div").classed("searchbar always-visible table-row", true);
+	var searchBar = p.append("div").classed("searchbar table-row", true);
 	
 	var searchInputContainer = searchBar.append("div")
 		.classed("search-input-container", true);
@@ -1314,7 +1318,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var backButton = navContainer.appendLeftButton()
 		.on("click", function()
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'cancel'))
 			{
 				hidePanelRight(sitePanel.node());
 			}
@@ -1325,7 +1329,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var addButton = navContainer.appendRightButton()
 		.on("click", function()
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'add service'))
 			{
 				if (!dots.getServiceByName(searchInputNode.value))
 				{
@@ -1366,10 +1370,8 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 
 	var panel2Div = sitePanel.appendScrollArea();
 	
-	panel2Div.appendAlertContainer();
-	
 	function buttonClicked(d) {
-		if (prepareClick())
+		if (prepareClick('click', 'pick service: ' + d.getDescription()))
 		{
 			success(new ReportedObject({value: d}));
 			hidePanelRight(sitePanel.node());
@@ -1420,7 +1422,7 @@ function setupServicesPanel(dots)
 	var clickFunction;
 	clickFunction = function(d) {
 			var _this = this;
-			if (prepareClick())
+			if (prepareClick('click', 'marker: ' + d.getDescription()))
 			{
 				crp.getData({path: "Service", 
 				done: function(rootObjects)
@@ -1468,7 +1470,7 @@ function setupServicesPanel(dots)
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
-			if (prepareClick())
+			if (prepareClick('click', 'add marker'))
 			{
 				crp.getData({path: "Service", 
 				done: function(rootObjects)
@@ -1846,8 +1848,6 @@ var AddExperiencePanel = (function () {
 		var dots = new DotsNavigator(panel2Div, 8);	
 		dots.finalText = "Add";	
 
-		panel2Div.appendAlertContainer();
-		
 		var _thisPanel = this;
 		var hideSuccessFunction = function()
 			{
@@ -2018,7 +2018,7 @@ var PathwayPanel = (function () {
 		var addExperienceButton = navContainer.appendRightButton()
 			.classed('add-button', true)
 			.on("click", function(d) {
-				if (prepareClick())
+				if (prepareClick('click', 'add experience'))
 				{
 					showClickFeedback(this);
 		
@@ -2028,8 +2028,7 @@ var PathwayPanel = (function () {
 			});
 		addExperienceButton.append("span").text("+");
 		
-		var panel2Div = this.appendScrollArea();
-		panel2Div.appendAlertContainer();
+		var panel2Div = this.appendFillArea();
 		showPanelLeft(this.node());
 		this.pathway = new Pathway(userInstance, this, panel2Div.node(), true);
 	}
@@ -2087,7 +2086,7 @@ var ExperienceDetailPanel = (function () {
 		{
 			var editButton = navContainer.appendRightButton()
 				.on("click", function(d) {
-					if (prepareClick())
+					if (prepareClick('click', 'edit experience: ' + experience.getDescription()))
 					{
 						showClickFeedback(this);
 				
@@ -2117,8 +2116,6 @@ var ExperienceDetailPanel = (function () {
 			var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 			headerDiv.text(offering);
 		});
-		
-		panel2Div.appendAlertContainer();
 		
 		var orgDiv = panel2Div.appendSection(experience);
 		orgDiv.classed("organization", true);
@@ -2265,7 +2262,7 @@ var PickOrCreatePanel = (function () {
 	
 	PickOrCreatePanel.prototype.onClickCancel = function()
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'Cancel'))
 		{
 			this.hide();
 		}
@@ -2306,7 +2303,7 @@ var PickOrCreatePanel = (function () {
 	}
 	
 	PickOrCreatePanel.prototype.onClickButton = function(d, i) {
-		if (prepareClick())
+		if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
 		{
 			this.updateValues(d, null);
 		}
@@ -2316,7 +2313,7 @@ var PickOrCreatePanel = (function () {
 	PickOrCreatePanel.prototype.onClickDone = function(d, i) {
 		d3.event.preventDefault();
 
-		if (prepareClick())
+		if (prepareClick('click', 'Done'))
 		{
 			var newText = this.inputText();
 			var compareText = newText.toLocaleLowerCase()
@@ -2549,21 +2546,12 @@ var PickOrCreatePanel = (function () {
 			if (title)
 				this.navContainer.appendTitle(title);
 
-			var searchBar = this.panelDiv.append("div").classed("searchbar always-visible", true);
-	
-			var searchInputContainer = searchBar.append("div")
-				.classed("search-input-container", true);
-		
-			var inputBox = searchInputContainer
-				.append("input")
-				.classed("search-input", true)
-				.attr("placeholder", title);
+			var inputBox = addInput(this.panelDiv, title);
 			
 			this.inputBox = inputBox.node();
 			$(this.inputBox).on("input", function() { _this.textChanged() });
 
 			this.listPanel = this.appendScrollArea();
-			this.listPanel.appendAlertContainer();
 			this.setupInputBox();
 
 			showPanelLeft(this.node());
@@ -2742,7 +2730,7 @@ var PickOrCreateCell = (function () {
 
 		sectionDiv.classed("btn row-button", true)
 			.on("click", function(cell) {
-				if (prepareClick())
+				if (prepareClick('click', 'pick or create cell: ' + _this.getDescription()))
 				{
 					var sitePanelNode = $(this).parents(".site-panel")[0];
 					_this.showPickOrCreatePanel(sitePanelNode);
@@ -2869,7 +2857,7 @@ var ConfirmAlert = (function () {
 			.classed("text-danger", true)
 			.on("click", function()
 				{
-					if (prepareClick())
+					if (prepareClick('click', confirmText))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2881,7 +2869,7 @@ var ConfirmAlert = (function () {
 			.text("Cancel")
 			.on("click", function()
 				{
-					if (prepareClick())
+					if (prepareClick('click', 'Cancel'))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2898,7 +2886,7 @@ var ConfirmAlert = (function () {
 			}});
 		$(confirmButton.node()).on('blur', function()
 			{
-				if (prepareClick())
+				if (prepareClick('blur', confirmText))
 				{
 					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 						panel.remove();
@@ -2921,7 +2909,7 @@ var EditExperiencePanel = (function () {
 	
 	EditExperiencePanel.prototype.handleDeleteButtonClick = function()
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'delete experience'))
 		{
 			var _this = this;
 			new ConfirmAlert(this.node(), "Delete Experience", 
@@ -2939,10 +2927,8 @@ var EditExperiencePanel = (function () {
 	function EditExperiencePanel(experience, previousPanel) {
 		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", revealPanelUp);
 		var navContainer = this.appendNavContainer();
-		var bottomNavContainer = this.appendBottomNavContainer();
-		
 		var panel2Div = this.appendScrollArea();
-		panel2Div.appendAlertContainer();
+		var bottomNavContainer = this.appendBottomNavContainer();
 
 		navContainer.appendRightButton()
 			.on("click", panel2Div.handleDoneEditingButton)
@@ -2952,7 +2938,10 @@ var EditExperiencePanel = (function () {
 		
 		var _this = this;
 		bottomNavContainer.appendRightButton()
-			.on("click", function() { _this.handleDeleteButtonClick(); } )
+			.on("click", 
+				function() {
+					_this.handleDeleteButtonClick();
+				})
 			.append("span").classed("text-danger", true).text("Delete");
 			
 		cells = [new PickOrCreateOrganizationCell(experience),

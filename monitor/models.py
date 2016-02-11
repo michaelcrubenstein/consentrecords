@@ -13,18 +13,3 @@ class LogRecord(models.Model):
         else:
             LogRecord.objects.create(user=None, name=name, message=message)
 
-    def getRecords():
-        with connection.cursor() as c:
-            sql = "SELECT r.creation_time, r.name, u.email, r.message" + \
-                  " FROM monitor_logrecord r LEFT OUTER JOIN custom_user_authuser u ON u.id = r.user_id" + \
-                  " ORDER BY r.creation_time"
-            c.execute(sql, [])
-            results = []
-            for i in c.fetchall():
-                r = {'time': i[0], 'name': i[1]}
-                if i[2] is not None:
-                    r['email'] = i[2]
-                if i[3] is not None:
-                    r['message'] = i[3]
-                results.append(r)
-            return results

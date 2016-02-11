@@ -2,16 +2,6 @@
 	padding-top: 55px;
 	padding-bottom: 55px;
 }
-panel.site-panel>nav {
-	background: #F8F8F8; /* #D1E1FF; */
-	border: 1px solid #eeeeee;
-	border-color: #e7e7e7
-	border-radius:0px;
-	margin-bottom: 0px;
-	min-height: 40px;
-	padding-left: 15px;
-	padding-right: 15px;
-}
 .site-top-navbar {
 	position: absolute;
 	left: 0px;
@@ -30,13 +20,6 @@ panel.site-panel>nav {
 	right: 0px;
 	top: 0px;
 	opacity: 0.8;
-}
-.site-fill-panel {	/* A content panel that fills the entire container. */
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
 }
 .site-content-panel-under {	/* A content panel that has a navbar above. */
 	position: absolute;

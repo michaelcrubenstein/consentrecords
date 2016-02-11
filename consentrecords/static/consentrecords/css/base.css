@@ -8,9 +8,24 @@ body {
   overflow-x: hidden;
 }
 .site-panel {
+	display: table;
 	position: absolute;
 	overflow-y: hidden;
 }
+panel.site-panel>nav {
+	background: #F8F8F8; /* #D1E1FF; */
+	border: 1px solid #eeeeee;
+	border-color: #e7e7e7
+	border-radius:0px;
+	margin-bottom: 0px;
+}
+panel.site-panel>nav>div {
+	padding-left: 15px;
+	padding-right: 15px;
+	width: 100%;
+	min-height: 40px;
+}
+
 panel.initial {
 	width: 100%;
 	height: 100%;
@@ -23,14 +38,45 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 	width: 0px;
 	display: none;
 }
+
+/* The following are used to have a set of fixed-height divs within a container and
+   one variable height div that takes up the remaining space and whose contents scroll
+   vertically if necessary. This is used in the marker picker of the addExperience panel.
+ */
+.table {
+	display: table;
+}
+
+.table-row {
+	display: table-row;
+}
+
+/* This is associated with the variable height div. */
+.body {
+	display: table-row;
+	height: 100%;
+}
+
+.body > div {
+	display: table-cell;
+	height: 100%;
+}
+
+.body > div > div {
+	height: 100%;	/* Must set height to 100% so that this element doesn't expand to more than 
+						the height of its container. */
+	position: relative;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
 .panel-fill {
 	height: 100%;
 	max-height: 100%;
 	position: relative;
 }
 .vertical-scrolling {
-	height: 100%;	/* Must set height to 100% so that this element doesn't expand to more than 
-						the height of its container. */
+	height: 100%;
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
@@ -41,8 +87,7 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 }
 
 /* This makes alert fall on top and over other items. */
-.panel-fill div.alert-container {
-	position: absolute;
+div.alert-container {
 	width: 100%;
 }
 
@@ -55,14 +100,14 @@ panel.view {
 panel.edit {
 	background: #eee;
 }
-panel>nav>.left-link {
+panel>nav .left-link {
 	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-align: left;
 	white-space: nowrap;
 }
-panel>nav>.right-link {
+panel>nav .right-link {
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -86,14 +131,12 @@ nav .site-left-chevron {
 } 
 
 nav.bottom {
-	position: fixed;
-	bottom: 0px;
 	width: 100%;
 	padding: 6px 12px;
 	border-top: 1px solid #eee;
 }
 
-panel.view>.panel-fill>header
+panel.view .panel-fill>header
 {
 	width: 100%;
 	padding: 6px 12px;

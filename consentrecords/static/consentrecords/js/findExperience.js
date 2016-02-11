@@ -19,12 +19,9 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	var buttonDiv = navContainer.appendRightButton();
 	
 	var shareDiv = null;
-	if (service)
-		shareDiv = sitePanel.appendBottomNavContainer();
 
 	var panel2Div = sitePanel.appendScrollArea();
 	panel2Div.appendHeader();
-	panel2Div.appendAlertContainer();
 	
 	if (organization)
 	{
@@ -111,7 +108,9 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				
 			if (service)
 			{
-				shareDiv.div.classed("share-container always-visible border-above", true);
+				shareDiv = sitePanel.appendBottomNavContainer();
+
+				shareDiv.div.classed("share-container border-above", true);
 
 				appendFacebookButton(shareDiv, service, session);
 			}
@@ -489,7 +488,6 @@ var PickOfferingPanel = (function() {
 		this.searchInputNode = this.appendSearchBar(textChanged);
 
 		this.panel2Div = this.appendScrollArea();
-		this.panel2Div.appendAlertContainer();
 
 		this.marker = marker;
 		this.offeringID = offeringID;
@@ -575,7 +573,6 @@ var FindExperiencePanel = (function () {
 		this.appendSearchBar(textChanged);
 		
 		var panel2Div = this.appendScrollArea();
-		panel2Div.appendAlertContainer();
 
 		var field = {
 					  dataType: "_object",

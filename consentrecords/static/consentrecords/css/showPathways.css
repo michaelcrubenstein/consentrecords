@@ -50,36 +50,6 @@
 		margin: 10px;
 	}
 	
-	/* The following are used to have a set of fixed-height divs within a container and
-	   one variable height div that takes up the remaining space and whose contents scroll
-	   vertically if necessary. This is used in panel one.
-	 */
-	.table {
-		display: table;
-	}
-
-	.table-row {
-		display: table-row;
-	}
-
-	/* This is associated with the variable height div. */
-	.body {
-		display: table-row;
-		height: 100%;
-	}
-
-	.body > div {
-		display: table-cell;
-		height: 100%;
-	}
-
-	.body > div > div {
-		height: 100%;
-		position: relative;
-		overflow-y: scroll;
-		overflow-x: hidden;
-	}
-
 	panel.pathway text {
 		text-decoration: none;
 		cursor: pointer;

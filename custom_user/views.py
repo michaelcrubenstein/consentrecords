@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db import transaction
 from django.db.utils import IntegrityError
@@ -20,8 +19,6 @@ __author__ = 'mrubenstein'
 
 # Displays the html page for signing in.
 def signin(request):
-    LogRecord.emit(request.user, 'custom_user/signin', '')
-
     template = loader.get_template('custom_user/signin.html')
     
     backURL = request.GET.get(u'backURL', "/")
@@ -34,7 +31,6 @@ def signin(request):
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
 def forgotPassword(request):
-    LogRecord.emit(request.user, 'custom_user/forgotPassword', '')
     if not request.user.is_authenticated:
         return signin(request)
     
@@ -50,8 +46,6 @@ def forgotPassword(request):
 
 # Displays a web page in which a user can specify a new password based on a key.
 def password(request):
-    LogRecord.emit(request.user, 'custom_user/password', '')
-
     if not request.user.is_authenticated:
         return signin(request)
     
@@ -65,8 +59,6 @@ def password(request):
     return HttpResponse(template.render(context))
 
 def passwordReset(request):
-    LogRecord.emit(request.user, 'custom_user/passwordReset', '')
-
     if not request.user.is_authenticated:
         return signin(request)
     
@@ -80,8 +72,6 @@ def passwordReset(request):
 
 # Creates a record so that a user can reset their password via email.
 def resetPassword(request):
-    LogRecord.emit(request.user, 'custom_user/resetPassword', '')
-
     results = {'success':False, 'error': u'request format invalid'}
     try:
         if request.method != "POST":
@@ -112,8 +102,6 @@ def resetPassword(request):
 
 # Resets the password for the specified email address based on the key.
 def setResetPassword(request):
-    LogRecord.emit(request.user, 'custom_user/setResetPassword', '')
-
     results = {'success':False, 'error': u'request format invalid'}
     try:
         logger = logging.getLogger(__name__)
@@ -157,8 +145,6 @@ def setResetPassword(request):
 
 # Displays a URL so that the user can sign up for the system.
 def signup(request):
-    LogRecord.emit(request.user, 'custom_user/signup', '')
-
     template = loader.get_template('custom_user/signup.html')
 
     backURL = request.GET.get('backURL', '/')
@@ -206,12 +192,9 @@ def signinResults(request):
 
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
-    LogRecord.emit(request.user, 'custom_user/submitsignin', '')
-            
     return JsonResponse(signinResults(request))
     
 def submitSignout(request):
-    LogRecord.emit(request.user, 'custom_user/submitsignout', '')
     try:
         logout(request)
         results = {'success':True}
@@ -223,8 +206,6 @@ def submitSignout(request):
     return JsonResponse(results)
     
 def checkUnusedEmail(request):
-    LogRecord.emit(request.user, 'custom_user/checkUnusedEmail', '')
-
     results = {'success':False, 'error': 'checkUnusedEmail failed'}
     try:
         if request.method != "POST":
@@ -283,13 +264,9 @@ def newUserResults(request):
         return {'success':False, 'error': str(e)}
 
 def newUser(request):
-    LogRecord.emit(request.user, 'custom_user/newUser', '')
-    
     return JsonResponse(newUserResults(results))
 
 def updatePassword(request):
-    LogRecord.emit(request.user, 'custom_user/updatePassword', '')
-
     results = {'success':False, 'error': 'updatePassword failed'}
     try:
         if request.method != "POST":
