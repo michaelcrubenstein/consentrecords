@@ -319,7 +319,7 @@ var Signup = (function () {
 				$(closeBox.node()).html('&times;');
 				$(closeBox.node()).one('click', function() { verifyAlertRow.style("display", "none"); });
 				alertDiv.append('span')
-					.text('The password and the password verification do not match.');
+					.text('The password and verification do not match.');
 					
 				unblockClick();
 			}
