@@ -300,7 +300,30 @@ var Signup = (function () {
 			var okPasswordSpan = row.append('td')
 				.append('span')
 				.classed('glyphicon', true);
-				
+			
+			var verifyAlertRow = t.append('tr')
+				.style("display", "none");
+			verifyAlertRow.append('td');
+			var alertContainerDiv = verifyAlertRow.append('td').classed('full-width', true);
+			verifyAlertRow.append('td');
+			
+			function showVerifyAlert(message)
+			{
+				verifyAlertRow.style("display", null);
+				var alertDiv = alertContainerDiv
+					.append('div').classed('alert alert-danger alert-dismissable', true);
+				var closeBox = alertDiv.append('button').attr('type', 'button')
+						.classed('close', true)
+						.attr('data-dismiss', 'alert')
+						.attr('aria-hidden', 'true');
+				$(closeBox.node()).html('&times;');
+				$(closeBox.node()).one('click', function() { verifyAlertRow.style("display", "none"); });
+				alertDiv.append('span')
+					.text('The password and the password verification do not match.');
+					
+				unblockClick();
+			}
+		
 			var row = t.append('tr');
 			row.append('td').text('Verify');
 			var verifyInput = row.append('td')
@@ -334,7 +357,7 @@ var Signup = (function () {
 				}
 				else if (verifyInput.property("value") != password)
 				{
-					syncFailFunction('The password and the password verification do not match.');
+					showVerifyAlert('The password and the password verification do not match.');
 					verifyInput.node().focus();
 				}
 				else
