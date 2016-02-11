@@ -645,14 +645,6 @@
 					show_consent_records("#id_openConsentForms");
 				});	
 			
-			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepareClick())
-				{
-					var signUp = new Signup($(this).parents(".site-panel")[0]);
-				}
-				e.preventDefault();
-			});
-
 			var signInSuccess = function(userData)
 			{
 				userInstance.value = userData;
