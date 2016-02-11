@@ -1741,7 +1741,7 @@ function _b64_to_utf8( str ) {
 /* 
 	Displays a panel for editing the specified object. 
  */
-function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction) {
+function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 	if (!objectData)
 		throw "objectData is not initialized";
 		
@@ -1755,7 +1755,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		else
 			header = "New " + objectData.cell.field.name;
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", showSuccessFunction);
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", onShow);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1765,7 +1765,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		var doneButton;
 		if (objectData.getValueID())
 		{
-			if (showSuccessFunction === revealPanelUp)
+			if (onShow === revealPanelUp)
 				doneButton = navContainer.appendRightButton();
 			else
 				doneButton = navContainer.appendLeftButton();
@@ -1858,7 +1858,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 			}  
 		});
 		
-		showSuccessFunction(sitePanel.node());
+		onShow(sitePanel.node());
 	}
 	
 	if (objectData.getValueID())
