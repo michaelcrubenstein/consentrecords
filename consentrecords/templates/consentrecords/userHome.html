@@ -1793,7 +1793,7 @@
 							var buttons = appendViewButtons(sections)
 								.on("click", function(user) {
 									pickedUser = user;
-									if (prepareClick('click', 'organization: ' + organization.description()))
+									if (prepareClick('click', 'organization: ' + organization.getDescription()))
 									{
 										pick_site(organization, sitePanel.node(), pickSiteSuccess);
 									}
@@ -1802,7 +1802,7 @@
 							var infoButtons =  buttons.insert("div", ":first-child")
 								.classed("info-button right-fixed-width-div", true)
 								.on("click", function(user) {
-									if (prepareClick('click', 'user: ' + user.description()))
+									if (prepareClick('click', 'user: ' + user.getDescription()))
 									{
 										show_user(user, sitePanel.node());
 									}
