@@ -21,13 +21,6 @@
 	top: 0px;
 	opacity: 0.8;
 }
-.site-fill-panel {	/* A content panel that fills the entire container. */
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
-}
 .site-content-panel-under {	/* A content panel that has a navbar above. */
 	position: absolute;
 	left: 0px;
