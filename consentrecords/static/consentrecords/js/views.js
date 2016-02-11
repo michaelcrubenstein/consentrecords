@@ -62,6 +62,7 @@ var crv = {
 
 function syncFailFunction(error)
 {
+	cr.logRecord('fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
 	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	unblockClick();
@@ -71,6 +72,7 @@ function syncFailFunction(error)
 	without unblocking a user event. */
 function asyncFailFunction(error)
 {
+	cr.logRecord('async fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
 	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	/* Don't unblock here, because there was no block. */
@@ -1456,8 +1458,14 @@ var SitePanel = (function () {
 				var initialData = [];
 				var sourceObjects = [];
 				sections.each(function(cell) {
-						if ("appendUpdateCommands" in cell)
-							cell.appendUpdateCommands(this, initialData, sourceObjects);
+						/* cell may be null if this is a pseudo-section, such as for the Change Password
+							section in the Settings panel.
+						 */
+						if (cell)
+						{
+							if ("appendUpdateCommands" in cell)
+								cell.appendUpdateCommands(this, initialData, sourceObjects);
+						}
 					});
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 

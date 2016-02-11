@@ -202,6 +202,8 @@ var Signup = (function () {
 			
 			var termsAlert = p.append('div')
 				.append('div').attr('id', "id_termsAlert");
+				
+			this.onReveal = null;
 		}
 	
 		function setupPanel2(signup)

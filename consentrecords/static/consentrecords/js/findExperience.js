@@ -261,7 +261,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	
 	var addNameFunction = function(e)
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'Sign Up'))
 		{
 			showClickFeedback(this);
 			
@@ -272,7 +272,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	
 	var deleteInquiryFunction = function(e)
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'Back Out'))
 		{
 			showClickFeedback(this);
 			
@@ -347,7 +347,7 @@ var PickOfferingPanel = (function() {
 			var buttons = divs.append("button").classed("btn row-button", true)
 				.on("click", function(session)
 					{
-						if (prepareClick())
+						if (prepareClick('click', 'show details: ' + session.getDescription()))
 						{
 							showClickFeedback(this);
 
@@ -537,7 +537,7 @@ var FindExperiencePanel = (function () {
 			.classed('add-button', true)
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', '+'))
 				{
 					hidePanelRight(sitePanel.node());
 				}
@@ -600,7 +600,7 @@ var FindExperiencePanel = (function () {
 			panel2Div.datum(cell);
 			appendViewCellItems(itemsDiv, cell, 
 				function(d) {
-					if (prepareClick())
+					if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
 					{
 						showClickFeedback(this);
 						
