@@ -1588,10 +1588,16 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 		});
 	}
 
+cr._logQueue = new Queue(true)
 cr.logRecord = function(name, message)
 	{
-		/* This message is silent and does not record errors. */
-		message = message !== undefined ? message : 'None';
-		$.post(cr.urls.log,
-		       {name: name, message: message });
+		cr._logQueue.add(function()
+		{
+			/* This message is silent and does not record errors. */
+			message = message !== undefined ? message : 'None';
+			$.post(cr.urls.log,
+				   {name: name, message: message })
+			.done(function() {cr._logQueue.dequeue()});
+			return false;
+		});
 	}
