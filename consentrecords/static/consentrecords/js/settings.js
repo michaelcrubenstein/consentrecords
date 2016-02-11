@@ -9,7 +9,7 @@ var Settings = (function () {
 		navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', 'Cancel'))
 				{
 					showClickFeedback(this);
 					hidePanelRight(sitePanel.node());
@@ -41,7 +41,7 @@ var Settings = (function () {
 			.classed('cell edit unique', true)
 			.classed('btn row-button', true)
 			.on('click', function() {
-				if (prepareClick())
+				if (prepareClick('click', 'Change Password'))
 				{
 					var panel = new UpdatePasswordPanel(sitePanel.node());
 					showPanelLeft(panel.node());

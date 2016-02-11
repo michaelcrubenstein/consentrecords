@@ -35,7 +35,7 @@ var UpdatePasswordPanel = (function () {
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', 'Cancel'))
 				{
 					hidePanelRight(_this.node());
 				}
@@ -46,7 +46,7 @@ var UpdatePasswordPanel = (function () {
 		var addButton = navContainer.appendRightButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', 'Change'))
 				{
 					username = userInstance.getDatum("_email");
 					if (newPasswordInput.property('value').length == 0)
