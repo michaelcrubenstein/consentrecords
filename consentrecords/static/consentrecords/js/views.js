@@ -64,7 +64,6 @@ function syncFailFunction(error)
 {
 	cr.logRecord('fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	unblockClick();
 }
 
@@ -74,7 +73,6 @@ function asyncFailFunction(error)
 {
 	cr.logRecord('async fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	/* Don't unblock here, because there was no block. */
 }
 		
@@ -1743,7 +1741,7 @@ function _b64_to_utf8( str ) {
 /* 
 	Displays a panel for editing the specified object. 
  */
-function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction) {
+function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 	if (!objectData)
 		throw "objectData is not initialized";
 		
@@ -1757,7 +1755,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		else
 			header = "New " + objectData.cell.field.name;
 			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", showSuccessFunction);
+		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", onShow);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -1767,7 +1765,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		var doneButton;
 		if (objectData.getValueID())
 		{
-			if (showSuccessFunction === revealPanelUp)
+			if (onShow === revealPanelUp)
 				doneButton = navContainer.appendRightButton();
 			else
 				doneButton = navContainer.appendLeftButton();
@@ -1860,7 +1858,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 			}  
 		});
 		
-		showSuccessFunction(sitePanel.node());
+		onShow(sitePanel.node());
 	}
 	
 	if (objectData.getValueID())

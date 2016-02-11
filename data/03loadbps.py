@@ -24,6 +24,24 @@ def addUniqueChild(parent, typeID, propertyList, nameList, transactionState):
         item, newValue = instancecreator.create(typeID, parent, typeID, -1, propertyList, nameList, transactionState)
         return item
         
+def addUniqueValue(parent, field, stringValue, transactionState):
+    children = parent.value_set.filter(field=field,
+                                       stringValue=stringValue,
+                                       deleteTransaction__isnull=True)
+    if len(children):
+        return children[0]
+    else:
+        return parent.addValue(field, stringValue, 0, transactionState)
+        
+def addUniqueReferenceValue(parent, field, referenceValue, transactionState):
+    children = parent.value_set.filter(field=field,
+                                       referenceValue=referenceValue,
+                                       deleteTransaction__isnull=True)
+    if len(children):
+        return children[0]
+    else:
+        return parent.addReferenceValue(field, referenceValue, 0, transactionState)
+        
 def getChildrenByName(parent, field, name):
     return parent.value_set.filter(deleteTransaction__isnull=True,
                                     field=field,
@@ -117,6 +135,12 @@ if __name__ == "__main__":
                 addressInstance = addUniqueChild(siteInstance, addressTerm,
                         {'Street': [streetName], 'City': [cityName], 'State': [stateInstance.id], 'Zip Code': [zipName]},
                         nameList, transactionState)
+                if addressInstance.transaction != transactionState.transaction:
+                    addUniqueValue(addressInstance, streetTerm, streetName, transactionState)
+                    addUniqueValue(addressInstance, cityTerm, cityName, transactionState)
+                    addUniqueReferenceValue(addressInstance, stateTerm, stateInstance, transactionState)
+                    addUniqueValue(addressInstance, zipTerm, zipName, transactionState)
+                addressInstance.cacheDescription(nameList)
 
                 offeringsInstance = addUniqueChild(siteInstance, offeringsTerm, {}, nameList, transactionState)
 

@@ -329,31 +329,6 @@
 				</div>
 			</div>
 	    </panel>
-	    <panel id="id_settings_panel" class="level-2-panel site-panel reveal list">
-			<nav role="navigation">
-				<!-- Collect the nav links, forms, and other content for toggling -->
-				<div class="pull-left">
-					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-				</div>
-				<div class="pull-right">
-					<div id="id_addUniversalObjectButton" class="site-navbar-link site-active-text add-button">
-						<span>+</span>
-					</div>
-				</div>
-				<div class="site-navbar-commands">
-					<div class="site-title"><span>Settings</span></div>
-				</div>
-			</nav>
-			<div id="id_scrollableArea" class="vertical-scrolling">
-				<div>
-					<div class="alert-container"></div>
-				</div>
-				<div id="id_searchArea" class="searchbar">
-				</div>
-				<div id="id_settings">
-				</div>
-			</div> <!-- /container-fluid -->
-	    </panel>
 
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
@@ -1966,18 +1941,17 @@
 		}
 		
 		function show_matching_descriptions(){
-			var panel2Div = d3.select($(this).parents(".site-panel").children(".vertical-scrolling")[0]);
+			var rows = $(this).parents(".site-panel").find(".row-button");
 			var val = this.value.toLocaleLowerCase();
 			if (val.length == 0)
 			{
 				/* Show all of the items. */
-				panel2Div.selectAll(".row-button")
-					.style("display", null);
+				d3.selectAll(rows).style("display", null);
 			}
 			else
 			{
 				/* Show the items whose description is this.value */
-				panel2Div.selectAll(".row-button")
+				d3.selectAll(rows)
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)

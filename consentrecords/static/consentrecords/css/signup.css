@@ -68,6 +68,10 @@
 		position: relative;
 		background-color: white;
 	}
+	
+	td .alert {
+		margin-bottom: 0px;
+	}
 
 	div.select-container span {
 		position: absolute;
