@@ -64,7 +64,6 @@ function syncFailFunction(error)
 {
 	cr.logRecord('fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	unblockClick();
 }
 
@@ -74,7 +73,6 @@ function asyncFailFunction(error)
 {
 	cr.logRecord('async fail', error);
 	bootstrap_alert.warning(error, ".alert-container");
-	$(".alert-container").parents(".vertical-scrolling").scrollTop(0);
 	/* Don't unblock here, because there was no block. */
 }
 		
