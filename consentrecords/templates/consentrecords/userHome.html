@@ -198,8 +198,8 @@
 				<section class="organization-section row-button-group">
 				</section>
 				<section class="row-button-group">
-					<button panelID = "id_sharing_panel"
-						class="check-signin-button btn row-button site-active-text">
+					<button id="id_sharing_button"
+						class="btn row-button site-active-text">
 						<span class="pull-left">Sharing</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
@@ -322,28 +322,14 @@
 			</div> <!-- /container-fluid -->
 			<div class="vertical-scrolling">
 				<div>
-					<div class="alert-container"></div>
+					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
+						<div id="id_searchArea" class="searchbar">
+						</div>
+						<div id="id_openConsentForms">
+						</div>
+					</div>
 				</div>
-				<div class="searchbar">
-				</div>
-				<div id="id_openConsentForms">
-				</div>
-			</div> <!-- /container-fluid -->
-	    </panel>
-	    <panel id="id_sharing_panel" class="level-2-panel site-panel reveal list">
-			<nav role="navigation">
-				<!-- Collect the nav links, forms, and other content for toggling -->
-				<div class="pull-left">
-					<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-				</div>
-				<div class="site-navbar-commands">
-					<div class="site-title"><span>Sharing</span></div>
-				</div>
-			</nav>
-			<div id="id_scrollableArea" class="vertical-scrolling site-content-panel-under">
-				<div id="id_sharing" class="site-fill-panel"></div>
-				<div class="alert-container site-alert-under"></div>
-			</div> <!-- /container-fluid -->
+			</div>
 	    </panel>
 	    <panel id="id_settings_panel" class="level-2-panel site-panel reveal list">
 			<nav role="navigation">
@@ -639,6 +625,18 @@
 			e.preventDefault();
 		});
 		
+		$("#id_sharing_button").click(function(e)
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var done = function()
+			{
+				var settings = new SharingPanel(panel, userInstance);
+			}
+			
+			checkSignin.call(this, userInstance, panel, done, "show settings");
+			e.preventDefault();
+		});
+		
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
@@ -647,11 +645,6 @@
 			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_consent_records("#id_openConsentForms");
-				});	
-			
-			$("#id_sharing_panel").on("revealing.cr", function(e, eventInfo)
-				{
-					showSharing("#id_sharing");
 				});	
 			
 			$("#id_sign_in_panel #id_signup_link").click(function(e) {
