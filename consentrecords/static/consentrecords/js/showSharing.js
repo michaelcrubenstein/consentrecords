@@ -16,9 +16,9 @@ function onUserAdded(itemsDivNode, newValue)
 	var buttons = appendRowButtons(item);
 
 	buttons.on("click", function(d) {
-		if (prepareClick())
+		if (prepareClick('click', 'view added object: ' + d.getDescription()))
 		{
-			showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
+			showViewOnlyObjectPanel(d, previousPanelNode, revealPanelLeft);
 		}
 	});
 	
@@ -133,7 +133,7 @@ var SharingPanel = (function() {
 	 */
 	SharingPanel.prototype.addAccessor = function(userInstance, accessorLevel, itemsDiv)
 	{
-		if (prepareClick('click', 'add accessor: ' + accessorLevel))
+		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
 			var accessRecordCell = userInstance.getCell("_access record");
 			function successFunction(pickedUser, cellName, currentPanelNode)
@@ -279,9 +279,9 @@ var PickSharingUserPanel = (function() {
 							var sections = panel2Div.appendSections(allObjects);
 							var buttons = appendViewButtons(sections)
 								.on("click", function(user, i) {
-									if (prepareClick())
+									var cellName =  i < firstGroupIndex ? "_user" : "_group";
+									if (prepareClick('click', 'add ' + cellName + ': ' + user.getDescription()))
 									{
-										var cellName =  i < firstGroupIndex ? "_user" : "_group";
 										done(user, cellName, _this.node());
 									}
 									d3.event.preventDefault();
@@ -289,7 +289,7 @@ var PickSharingUserPanel = (function() {
 							var infoButtons =  buttons.insert("div", ":first-child")
 								.classed("info-button right-fixed-width-div", true)
 								.on("click", function(user) {
-									if (prepareClick())
+									if (prepareClick('click', 'show info: ' + user.getDescription()))
 									{
 										show_user(user, _this.node());
 									}

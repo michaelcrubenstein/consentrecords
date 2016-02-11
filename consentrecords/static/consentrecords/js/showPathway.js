@@ -825,6 +825,7 @@ var Pathway = (function () {
 		
 		function showDetail(experience, i)
 		{
+			cr.logRecord('click', 'show detail: ' + experience.getDescription());
 			var g = this.parentNode;
 			var pathway = this.pathway;
 			pathway.detailGroup.datum(experience);
@@ -1038,6 +1039,7 @@ var Pathway = (function () {
 				d3.event.stopPropagation(); 
 			})
 			.on("click.cr", function() {
+				cr.logRecord('click', 'hide details');
 				_thisPathway.hideDetail();
 			});
 		
@@ -1369,7 +1371,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	var panel2Div = sitePanel.appendScrollArea();
 	
 	function buttonClicked(d) {
-		if (prepareClick())
+		if (prepareClick('click', 'pick service: ' + d.getDescription()))
 		{
 			success(new ReportedObject({value: d}));
 			hidePanelRight(sitePanel.node());
@@ -1420,7 +1422,7 @@ function setupServicesPanel(dots)
 	var clickFunction;
 	clickFunction = function(d) {
 			var _this = this;
-			if (prepareClick())
+			if (prepareClick('click', 'marker: ' + d.getDescription()))
 			{
 				crp.getData({path: "Service", 
 				done: function(rootObjects)
@@ -1468,7 +1470,7 @@ function setupServicesPanel(dots)
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
-			if (prepareClick())
+			if (prepareClick('click', 'add marker'))
 			{
 				crp.getData({path: "Service", 
 				done: function(rootObjects)
@@ -2016,7 +2018,7 @@ var PathwayPanel = (function () {
 		var addExperienceButton = navContainer.appendRightButton()
 			.classed('add-button', true)
 			.on("click", function(d) {
-				if (prepareClick())
+				if (prepareClick('click', 'add experience'))
 				{
 					showClickFeedback(this);
 		
@@ -2084,7 +2086,7 @@ var ExperienceDetailPanel = (function () {
 		{
 			var editButton = navContainer.appendRightButton()
 				.on("click", function(d) {
-					if (prepareClick())
+					if (prepareClick('click', 'edit experience: ' + experience.getDescription()))
 					{
 						showClickFeedback(this);
 				
@@ -2260,7 +2262,7 @@ var PickOrCreatePanel = (function () {
 	
 	PickOrCreatePanel.prototype.onClickCancel = function()
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'Cancel'))
 		{
 			this.hide();
 		}
@@ -2301,7 +2303,7 @@ var PickOrCreatePanel = (function () {
 	}
 	
 	PickOrCreatePanel.prototype.onClickButton = function(d, i) {
-		if (prepareClick())
+		if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
 		{
 			this.updateValues(d, null);
 		}
@@ -2311,7 +2313,7 @@ var PickOrCreatePanel = (function () {
 	PickOrCreatePanel.prototype.onClickDone = function(d, i) {
 		d3.event.preventDefault();
 
-		if (prepareClick())
+		if (prepareClick('click', 'Done'))
 		{
 			var newText = this.inputText();
 			var compareText = newText.toLocaleLowerCase()
@@ -2728,7 +2730,7 @@ var PickOrCreateCell = (function () {
 
 		sectionDiv.classed("btn row-button", true)
 			.on("click", function(cell) {
-				if (prepareClick())
+				if (prepareClick('click', 'pick or create cell: ' + _this.getDescription()))
 				{
 					var sitePanelNode = $(this).parents(".site-panel")[0];
 					_this.showPickOrCreatePanel(sitePanelNode);
@@ -2855,7 +2857,7 @@ var ConfirmAlert = (function () {
 			.classed("text-danger", true)
 			.on("click", function()
 				{
-					if (prepareClick())
+					if (prepareClick('click', confirmText))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2867,7 +2869,7 @@ var ConfirmAlert = (function () {
 			.text("Cancel")
 			.on("click", function()
 				{
-					if (prepareClick())
+					if (prepareClick('click', 'Cancel'))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2884,7 +2886,7 @@ var ConfirmAlert = (function () {
 			}});
 		$(confirmButton.node()).on('blur', function()
 			{
-				if (prepareClick())
+				if (prepareClick('blur', confirmText))
 				{
 					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 						panel.remove();
@@ -2907,7 +2909,7 @@ var EditExperiencePanel = (function () {
 	
 	EditExperiencePanel.prototype.handleDeleteButtonClick = function()
 	{
-		if (prepareClick())
+		if (prepareClick('click', 'delete experience'))
 		{
 			var _this = this;
 			new ConfirmAlert(this.node(), "Delete Experience", 

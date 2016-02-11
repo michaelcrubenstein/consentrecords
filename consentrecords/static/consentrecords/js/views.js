@@ -45,7 +45,7 @@ var crv = {
 		var buttonDiv = sectionObj.append("div").classed('add-value', true)
 			.append("button").classed("btn row-button site-active-text", true)
 			.on("click", function(cell) {
-				if (prepareClick())
+				if (prepareClick('click', 'add ' + cell.field.name))
 				{
 					var newValue = cell.addNewValue();
 					
@@ -105,7 +105,11 @@ function unblockClick()
 function prepareClick(name, message)
 {
 	if (_isClickBlocked())
+	{
+		if (name)
+			cr.logRecord(name + ' blocked', message);
 		return false;
+	}
 	closealert();
 	_blockClick();
 	if (name)
@@ -181,9 +185,12 @@ function hidePanelRight(panelNode, doRemove, completeFunction)
 function handleCloseRightEvent() {
 	if (!_isClickBlocked())
 	{
+		cr.logRecord('click', 'Close Right');
 		_blockClick();
 		hidePanelRight($(this).parents(".site-panel")[0]);
 	}
+	else
+		cr.logRecord('click', 'Close Right blocked');
 	d3.event.preventDefault();
 }
 
@@ -618,7 +625,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		var buttons = appendRowButtons(item);
 
 		buttons.on("click", function(d) {
-			if (prepareClick())
+			if (prepareClick('click', 'view added item: ' + d.getDescription()))
 			{
 				viewFunction(d, previousPanelNode, revealPanelLeft);
 			}
@@ -660,7 +667,7 @@ function appendConfirmDeleteControls(divs)
 		})
 		.on('click', function(d)
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
 				d.deleteValue(unblockClick, syncFailFunction);
 		});
 }
@@ -671,7 +678,7 @@ function appendDeleteControls(buttons)
 		.classed("glyphicon glyphicon-minus-sign pull-left", true)
 		.on("click", function(e)
 		{
-			if (prepareClick())
+			if (prepareClick('click', 'delete button'))
 			{
 				$(this).animateRotate(90, 180, 600, 'swing');
 				var confirmButton = $($(this).parents("li")[0]).children("button");
@@ -717,11 +724,14 @@ function appendButtonDescriptions(buttons)
 
 function _clickEditObjectValue(d, previousPanelNode)
 {
-	if (prepareClick())
+	if (_isPickCell(d.cell))
 	{
-		if (_isPickCell(d.cell))
+		if (prepareClick('click', 'pick object: ' + d.getDescription()))
 			showPickObjectPanel(d, previousPanelNode);
-		else
+	}
+	else
+	{
+		if (prepareClick('click', 'edit object: ' + d.getDescription()))
 			showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
 	}
 }
@@ -1004,7 +1014,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		if (!_isPickCell(this))
 			sectionObj.classed("btn row-button", true)
 			          .on("click", function(cell) {
-				if (prepareClick())
+				if (prepareClick('click', 'view unique ' + cell.field.name + ': ' + cell.data[0].getDescription()))
 				{
 					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
 				}
@@ -1024,7 +1034,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
-			if (prepareClick())
+			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
 			{
 				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
 			}
@@ -1438,7 +1448,7 @@ var SitePanel = (function () {
 		}
 		
 		panel2Div.handleDoneEditingButton = function() {
-			if (prepareClick())
+			if (prepareClick('click', 'done editing'))
 			{
 				showClickFeedback(this);
 		
@@ -1466,7 +1476,7 @@ var SitePanel = (function () {
 		
 		/* d represents the newly created object that is being added. */
 		panel2Div.handleDoneAddingButton = function(d) {
-			if (prepareClick())
+			if (prepareClick('click', 'done adding'))
 			{
 				showClickFeedback(this);
 				
@@ -1548,9 +1558,13 @@ var SitePanel = (function () {
 	{
 		if (!_isClickBlocked())
 		{
+			cr.logRecord('click', 'Close Down');
 			_blockClick();
 			this.hidePanelDown();
 		}
+		else
+			cr.logRecord('click', 'Close Down blocked');
+			
 	}
 	return SitePanel;
 })();
@@ -1678,7 +1692,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 	
 		var editButton = navContainer.appendRightButton()
 			.on("click", function(d) {
-				if (prepareClick())
+				if (prepareClick('click', 'view object panel: Edit'))
 				{
 					showClickFeedback(this);
 				
@@ -1760,7 +1774,7 @@ function showEditObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 			var backButton = navContainer.appendLeftButton()
 				.on("click", function()
 				{
-					if (prepareClick())
+					if (prepareClick('click', 'edit object panel: Cancel'))
 					{
 						if (objectData.cell.field.capacity != "_unique value")
 						{
@@ -1867,7 +1881,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		
 		var editButton = navContainer.appendRightButton()
 			.on("click", function(d) {
-				if (prepareClick())
+				if (prepareClick('click', 'view roots object panel: Edit'))
 				{
 					showClickFeedback(this);
 				
@@ -1943,7 +1957,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 	
 		appendViewCellItems(itemsDiv, cell, 
 			function(d) {
-				if (prepareClick())
+				if (prepareClick('click', 'view root object: ' + d.getDescription()))
 				{
 					showViewObjectPanel(d, sitePanel.node(), revealPanelLeft);
 				}
@@ -1970,7 +1984,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var addButton = navContainer.appendRightButton()
 		.classed("add-button", true)
 		.on("click", function(d) {
-			if (prepareClick())
+			if (prepareClick('click', 'edit root objects: add'))
 			{
 				showClickFeedback(this);
 			
@@ -2040,7 +2054,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 
 	appendEditCellItems(itemsDiv, cell, 
 		function(d) {
-			if (prepareClick())
+			if (prepareClick('click', 'edit cell item: ' + d.getDescription()))
 			{
 				showEditObjectPanel(d, sitePanel.node(), revealPanelLeft);
 			}
@@ -2131,7 +2145,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
 					if (!oldData.getValueID() && oldData.cell.field.maxCapacity != "_unique value")
 					{
@@ -2179,7 +2193,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 				hidePanelRight(sitePanel.node());
 			}
 			
-			if (prepareClick())
+			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
 			{
 				if (d.getValueID() === oldData.getValueID()) {
 					successFunction();
