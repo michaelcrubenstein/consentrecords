@@ -1966,18 +1966,17 @@
 		}
 		
 		function show_matching_descriptions(){
-			var panel2Div = d3.select($(this).parents(".site-panel").children(".vertical-scrolling")[0]);
+			var rows = $(this).parents(".site-panel").find(".row-button");
 			var val = this.value.toLocaleLowerCase();
 			if (val.length == 0)
 			{
 				/* Show all of the items. */
-				panel2Div.selectAll(".row-button")
-					.style("display", null);
+				d3.selectAll(rows).style("display", null);
 			}
 			else
 			{
 				/* Show the items whose description is this.value */
-				panel2Div.selectAll(".row-button")
+				d3.selectAll(rows)
 					.style("display", function(d)
 						{
 							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
