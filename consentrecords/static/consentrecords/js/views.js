@@ -1456,8 +1456,14 @@ var SitePanel = (function () {
 				var initialData = [];
 				var sourceObjects = [];
 				sections.each(function(cell) {
-						if ("appendUpdateCommands" in cell)
-							cell.appendUpdateCommands(this, initialData, sourceObjects);
+						/* cell may be null if this is a pseudo-section, such as for the Change Password
+							section in the Settings panel.
+						 */
+						if (cell)
+						{
+							if ("appendUpdateCommands" in cell)
+								cell.appendUpdateCommands(this, initialData, sourceObjects);
+						}
 					});
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 
