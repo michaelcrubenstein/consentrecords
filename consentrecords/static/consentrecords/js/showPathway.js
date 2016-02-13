@@ -17,6 +17,34 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
+var FlagData = (function() {
+	FlagData.prototype.experience = null;
+	FlagData.prototype.x = null;
+	FlagData.prototype.y = null;
+	FlagData.prototype.height = null;
+	FlagData.prototype.flagX = null;
+	
+	FlagData.prototype.getDescription = function()
+	{
+		return this.experience.getDescription();
+	}
+	
+	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+	{
+		return _pickedOrCreatedValue(this.experience, pickedName, createdName);
+	}
+
+	function FlagData(experience)
+	{
+		this.experience = experience;
+		this.y = null;
+		this.x = null;
+		this.height = null;
+		this.flagX = null;
+	}
+	return FlagData;
+})();
+
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -52,7 +80,7 @@ var Pathway = (function () {
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
 	
-	Pathway.prototype.flagExperience = null;
+	Pathway.prototype.detailFlagData = null;
 	Pathway.prototype.flagElement = null;
 	Pathway.prototype.flagHeight = 0;
 	Pathway.prototype.flagWidth = 0;
@@ -73,6 +101,29 @@ var Pathway = (function () {
 
 	Pathway.prototype._compareExperiences = function(a, b)
 	{
+		var aService = a.getValue("Service");
+		var bService = b.getValue("Service");
+		var aServiceDomain = aService && crp.getInstance(aService.getValueID()).getValue("Service Domain");
+		var bServiceDomain = bService && crp.getInstance(bService.getValueID()).getValue("Service Domain");
+		if (!bServiceDomain)
+		{
+			if (aServiceDomain) return -1;
+		}
+		else if (!aServiceDomain)
+			return 1;
+		else
+		{
+			var aDescription = aServiceDomain.getDescription();
+			var bDescription = bServiceDomain.getDescription();
+			var ordered = ["Housing", "Education", "Extra-Curricular", "Wellness", "Career & Finance"];
+			var aOrder = ordered.indexOf(aDescription);
+			var bOrder = ordered.indexOf(bDescription);
+			if (aOrder < 0) aOrder = ordered.length;
+			if (bOrder < 0) bOrder = ordered.length;
+			if (aOrder != bOrder)
+				return aOrder - bOrder;
+		}
+		
 		var aStartDate = getStartDate(a);
 		var bStartDate = getStartDate(b);
 		if (aStartDate > bStartDate) return 1;
@@ -102,10 +153,10 @@ var Pathway = (function () {
 		return days * this.dayHeight;
 	}
 
-	Pathway.prototype.getExperiencePath = function(g, experience)
+	Pathway.prototype.getExperiencePath = function(g, fd)
 	{
-		var flagX = parseFloat(g.getAttribute("flagX"));
-		var h = this.getExperienceHeight(experience);
+		var flagX = fd.flagX;
+		var h = this.getExperienceHeight(fd.experience);
 		var x1 = 0;
 		var x2 = x1 + flagX + this.flagWidth;
 		var x3 = x1 + flagX;
@@ -161,65 +212,101 @@ var Pathway = (function () {
 		var y = this.yearGroup.selectAll('text');
 		
 		var _thisPathway = this;
-	
-		function getExperienceY (experience, i)
+		
+		/* Restore the sort order to startDate/endDate */
+		g.sort(function(a, b)
 		{
-			return _thisPathway.DateToY(Date.parse(getEndDate(experience)));
+			return _thisPathway._compareExperiences(a.experience, b.experience);
+		});
+	
+		function getExperienceY (fd, i)
+		{
+			return _thisPathway.DateToY(Date.parse(getEndDate(fd.experience)));
 		}
 
-		function addToBestColumn(g, maxHeight, columns)
+		/* MaxHeight is the maximum height of the top of a column before skipping to the
+			next column */
+		function addToBestColumn(fd, columns)
 		{
+			var thisTop = fd.y;
+			var thisBottom = fd.y + fd.height;
 			var j;
 			for (j = 0; j < columns.length; ++j)
 			{
 				// If this item's height + y is greater than the last item,
 				// then add this to the column.
 				var column = columns[j];
-				var lastTop = parseFloat(column[column.length - 1].getAttribute("y"));
-				if (lastTop > maxHeight)
-				{
-					column.push(g);
-					break;
-				}
-			}
-			if (j == columns.length)
-			{
-				columns.push([g]);
-			}
-		}
-		
-		function addToFlagColumns(d, flagColumns, flagHeight)
-		{
-			var thisTop = parseFloat(this.getAttribute("y"));
-			var maxHeight = thisTop + flagHeight;
-			var j;
-			for (j = 0; j < flagColumns.length; ++j)
-			{
-				// If this item's height + y is greater than the last item,
-				// then add this to the column.
-				var column = flagColumns[j];
-				var lastTop = parseFloat(column[column.length - 1].getAttribute("y"));
-				if (lastTop > maxHeight)
+				var lastTop = d3.select(column[column.length - 1]).datum().y;
+				if (lastTop > thisBottom)
 				{
 					column.push(this);
 					break;
 				}
 				else
 				{
-					var i;
 					var isInserted = false;
-					for (i = column.length - 1; i > 0; ++i)
+					for (var i = column.length - 1; i > 0; --i)
 					{
-						var aboveFlag = column[i];
-						var belowFlag = column[i-1];
-						var aboveTop = parseFloat(aboveFlag.getAttribute("y"));
-						var belowTop = parseFloat(belowFlag.getAttribute("y"));
-						if (thisTop > aboveTop + flagHeight &&
-							thisTop < belowTop)
+						var aboveFlag = d3.select(column[i]);
+						var belowFlag = d3.select(column[i-1]);
+						var aboveBottom = aboveFlag.datum().y + aboveFlag.datum().height;
+						var belowTop = belowFlag.datum().y;
+						if (thisTop > aboveBottom &&
+							thisBottom < belowTop)
 						{
-							for (var k = column.length; k > i; --k)
-								column[k] = column[k-1];
-							column[i] = this;
+							column.splice(i, 0, this);
+							isInserted = true;
+							break;
+						}
+						else if (thisTop < aboveBottom)
+							break;
+					}
+					if (isInserted)
+						break;
+					var aboveFlag = d3.select(column[0]);
+					var aboveBottom = aboveFlag.datum().y + aboveFlag.datum().height;
+					if (thisTop > aboveBottom)
+					{
+						column.splice(0, 0, this);
+						break;
+					}
+				}
+			}
+			if (j == columns.length)
+			{
+				columns.push([this]);
+			}
+		}
+		
+		function addToFlagColumns(fd, flagColumns, flagHeight)
+		{
+			var thisTop = fd.y;
+			var thisBottom = thisTop + flagHeight;
+			var j;
+			for (j = 0; j < flagColumns.length; ++j)
+			{
+				// If this item's height + y is greater than the last item,
+				// then add this to the column.
+				var column = flagColumns[j];
+				var lastTop = d3.select(column[column.length - 1]).datum().y;
+				if (lastTop > thisBottom)
+				{
+					column.push(this);
+					break;
+				}
+				else
+				{
+					var isInserted = false;
+					for (var i = column.length - 1; i > 0; --i)
+					{
+						var aboveFlag = d3.select(column[i]);
+						var belowFlag = d3.select(column[i-1]);
+						var aboveTop = aboveFlag.datum().y;
+						var belowTop = belowFlag.datum().y;
+						if (thisTop > aboveTop + flagHeight &&
+							thisBottom < belowTop)
+						{
+							column.splice(i, 0, this);
 							isInserted = true;
 							break;
 						}
@@ -228,6 +315,13 @@ var Pathway = (function () {
 					}
 					if (isInserted)
 						break;
+					var aboveFlag = d3.select(column[0]);
+					var aboveTop = aboveFlag.datum().y;
+					if (thisTop > aboveTop + flagHeight)
+					{
+						column.splice(0, 0, this);
+						break;
+					}
 				}
 			}
 			if (j == flagColumns.length)
@@ -237,36 +331,36 @@ var Pathway = (function () {
 		};
 	
 		/* Compute the y attribute for every item */
-		g.attr("y", getExperienceY);
 		
 		/* Fit each item to a column, according to the best layout. */	
-		g.each(function(e, i)
+		g.each(function(fd, i)
 			{
-				var thisTop = parseFloat(this.getAttribute("y"));
-				var maxHeight = thisTop + _thisPathway.getExperienceHeight(e);
-				addToBestColumn(this, maxHeight, columns);
+				fd.y = getExperienceY(fd);
+				fd.height = _thisPathway.getExperienceHeight(fd.experience);
+				addToBestColumn.call(this, fd, columns);
 			});
 		
 		/* Compute the x attribute for every item */
+		/* Then, Add the items to the flag columns in the column order for better results than
+			the current sort order.
+		 */
 		for (var j = 0; j < columns.length; ++j)
 		{
 			var x = this.dataLeftMargin + (this.trunkColumnWidth * j);
 			var column = columns[j];
 			for (var i = 0; i < column.length; ++i)
 			{
-				column[i].setAttribute("x", x);
+				var fd = d3.select(column[i]).datum();
+				fd.x = x;
+				addToFlagColumns.call(column[i], fd, this.flagColumns, this.flagHeight);
 			}
 		}
 	
-		var flagsLeft = this.dataLeftMargin + (this.trunkColumnWidth * columns.length) + this.flagsLeftMargin;
-	
-		g.each(function(d) {
-			addToFlagColumns.call(this, d, _thisPathway.flagColumns, _thisPathway.flagHeight);
-		});
-
 		/* Compute the column width for each column of flags + spacing to its right. 
 			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
 		 */
+		var flagsLeft = this.dataLeftMargin + (this.trunkColumnWidth * columns.length) + this.flagsLeftMargin;
+	
 		var flagColumnWidth = (this.dataWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
 		this.flagWidth = flagColumnWidth - this.flagSpacing;
 		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
@@ -274,18 +368,17 @@ var Pathway = (function () {
 			textWidth = 0;
 		
 		g.attr("transform", 
-			function(d)
+			function(fd)
 			{
-				return "translate(" + this.getAttribute("x") + "," + this.getAttribute("y") + ")";
+				return "translate(" + fd.x + "," + fd.y + ")";
 			})
 			
-		if (this.flagExperience != null)
+		if (this.detailFlagData != null)
 		{
 			/*( Restore the flagElement */
-			var flagExperienceID = this.flagExperience.getValueID();
-			 g.each(function(d)
+			 g.each(function(fd)
 			 {
-				if (d.getValueID() === flagExperienceID)
+				if (fd === _thisPathway.detailFlagData)
 					_thisPathway.flagElement = this;
 			 });
 		}
@@ -313,24 +406,30 @@ var Pathway = (function () {
 			{
 				var flagLeft = flagsLeft + (flagColumnWidth * j);
 				var column = this.flagColumns[j];
-				d3.selectAll(column).attr("flagX", function(d) {
-						return flagLeft - parseFloat(this.getAttribute("x"));
+				d3.selectAll(column).each(function(fd) {
+						fd.flagX = flagLeft - fd.x;
 					});
 			}
 		
 			/* Transform each text node relative to its containing group. */
 			g.selectAll('text').attr("transform",
-				function(d)
+				function(fd)
 				{
-					var g = this.parentNode;
-					var flagX = parseFloat(g.getAttribute("flagX"));
-					return "translate(" + (flagX + _thisPathway.textLeftMargin).toString() + ", 0)";
+					return "translate(" + (fd.flagX + _thisPathway.textLeftMargin).toString() + ", 0)";
 				});
 			
 			/* Calculate the path for each containing group. */
-			g.selectAll('path').attr("d", function(experience) {
-					return _thisPathway.getExperiencePath(this.parentNode, experience);
+			g.selectAll('path').attr("d", function(fd) {
+					return _thisPathway.getExperiencePath(this.parentNode, fd);
 				});
+			
+			g.sort(function (a, b)
+			{
+				if (a.flagX != b.flagX)
+					return b.flagX - a.flagX;
+				else
+					return b.y - a.y;
+			});
 		}
 
 		y.attr("y", function(d) { 
@@ -355,7 +454,7 @@ var Pathway = (function () {
 		}
 	
 		/* Hide the detail so that if detail is visible before a resize, it isn't left behind. */	
-		if (this.flagExperience != null)
+		if (this.detailFlagData != null)
 		{
 			this.refreshDetail();
 		}
@@ -463,37 +562,33 @@ var Pathway = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
+	Pathway.prototype.getServiceDomain = function(service)
+	{
+		return service.getValue("Service Domain");
+	}
+	
 	Pathway.prototype.setColorByService = function(service)
 	{
-		var _this = this;
-		crp.pushID(service.getValueID(),
-			function(serviceInstance)
-			{
-				var serviceDomain = serviceInstance.getValue("Service Domain");
-				if (serviceDomain && serviceDomain.getValueID())
-				{
-					crp.pushID(serviceDomain.getValueID(),
-						function(sdInstance) 
-						{
-							color = sdInstance.getValue("Color");
-							if (color && color.value)
-								_this.attr("fill", color.value)
-									 .attr("stroke", color.value);
-						},
-						asyncFailFunction);
-				}
-				else
-					_this.attr("fill", otherColor)
-						.attr("stroke", otherColor);
-			},
-			asyncFailFunction);
+		var serviceInstance = crp.getInstance(service.getValueID());
+		var serviceDomain = serviceInstance && serviceInstance.getValue("Service Domain");
+		if (serviceDomain && serviceDomain.getValueID())
+		{
+			var sdInstance = crp.getInstance(serviceDomain.getValueID());
+			color = sdInstance.getValue("Color");
+			if (color && color.value)
+				this.attr("fill", color.value)
+					 .attr("stroke", color.value);
+		}
+		else
+			this.attr("fill", otherColor)
+				.attr("stroke", otherColor);
 	}
 
-	Pathway.prototype.setColor = function(experience)
+	Pathway.prototype.setColor = function(fd)
 	{
 		var _this = d3.select(this);
 
-		var offering = experience.getValue("Offering");
+		var offering = fd.experience.getValue("Offering");
 		if (offering && offering.getValueID())
 		{
 			var experienceColor = otherColor;
@@ -510,7 +605,7 @@ var Pathway = (function () {
 		}
 		else
 		{
-			var service = experience.getValue("Service");
+			var service = fd.experience.getValue("Service");
 			if (service && service.getValueID())
 				Pathway.prototype.setColorByService.call(_this, service);
 			else
@@ -519,21 +614,21 @@ var Pathway = (function () {
 		}
 	}
 
-	Pathway.prototype.showDetailPanel = function(experience, i)
+	Pathway.prototype.showDetailPanel = function(fd, i)
 	{
-		if (prepareClick('click', 'show experience detail: ' + experience.getDescription()))
+		if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 		{
 			var panel = $(this).parents(".site-panel")[0];
-			var experienceDetailPanel = new ExperienceDetailPanel(experience, panel);
+			var experienceDetailPanel = new ExperienceDetailPanel(fd.experience, panel);
 			d3.event.stopPropagation();
 		}
 	}
 	
-	Pathway.prototype.showDetailGroup = function(g, experience, duration)
+	Pathway.prototype.showDetailGroup = function(g, fd, duration)
 	{
 		duration = (duration !== undefined ? duration : 700);
 		
-		this.detailGroup.datum(experience);
+		this.detailGroup.datum(fd);
 		var detailBackRect = this.detailGroup.append('rect')
 			.attr("fill", this.pathBackground)
 			.attr("width", "100%");
@@ -554,20 +649,20 @@ var Pathway = (function () {
 		var lines = [];
 	
 		var s;
-		s = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+		s = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
+		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		s = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
 		if (s && lines.indexOf(s) < 0)
 			lines.push(s);
 
-		var x = parseFloat(g.getAttribute("flagX")) + parseFloat(g.getAttribute("x"));
-		var y = parseFloat(g.getAttribute("y")) - this.textBottomBorder;
+		var x = fd.flagX + fd.x;
+		var y = fd.y - this.textBottomBorder;
 
 		var tspans = detailText.selectAll('tspan').data(lines)
 			.enter()
@@ -658,24 +753,27 @@ var Pathway = (function () {
 			iconClipRect.attr('height', textBox.height);
 		}
 		
-		this.flagExperience = experience;
+		this.detailFlagData = fd;
 		this.flagElement = g;
 		
-		var _this = this;
-		[this.flagExperience.getCell("Organization"),
-		 this.flagExperience.getCell("User Entered Organization"),
-		 this.flagExperience.getCell("Site"),
-		 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
-		 {
-		 	/* d will be null if the experience came from the organization for the 
-		 		User Entered Organization and User Entered Site.
-		 	 */
-		 	if (d)
-		 	{
-				$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
-			}
-		 });
+		{
+			var _this = this;
+			var experience = this.detailFlagData.experience;
+			[experience.getCell("Organization"),
+			 experience.getCell("User Entered Organization"),
+			 experience.getCell("Site"),
+			 experience.getCell("User Entered Site")].forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
+					$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+				}
+			 });
+		 }
 	}
 	
 	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
@@ -695,12 +793,13 @@ var Pathway = (function () {
 		d3.select("#id_detailIconClipPath").attr('height', 0);
 		
 		var _this = this;
-		if (this.flagExperience)
+		if (this.detailFlagData)
 		{
-			[this.flagExperience.getCell("Organization"),
-			 this.flagExperience.getCell("User Entered Organization"),
-			 this.flagExperience.getCell("Site"),
-			 this.flagExperience.getCell("User Entered Site")].forEach(function(d)
+			var experience = this.detailFlagData.experience;
+			[experience.getCell("Organization"),
+			 experience.getCell("User Entered Organization"),
+			 experience.getCell("Site"),
+			 experience.getCell("User Entered Site")].forEach(function(d)
 			 {
 				/* d will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
@@ -714,7 +813,7 @@ var Pathway = (function () {
 		}
 		
 		this.detailGroup.datum(null);
-		this.flagExperience = null;
+		this.detailFlagData = null;
 		this.flagElement = null;
 	}
 
@@ -757,18 +856,18 @@ var Pathway = (function () {
 	
 	Pathway.prototype.refreshDetail = function()
 	{
-		var oldExperience = this.flagExperience;
+		var oldFlagData = this.detailFlagData;
 		var oldElement = this.flagElement;
 		var _this = this;
 		this.hideDetail(
-			function() { _this.showDetailGroup(oldElement, oldExperience, 0); },
+			function() { _this.showDetailGroup(oldElement, oldFlagData, 0); },
 			0);
 	}
 	
 	/* setup up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
 	 */
-	Pathway.prototype.setupDelete = function(d) 
+	Pathway.prototype.setupDelete = function(fd) 
 	{
 		var valueDeleted = function(eventObject)
 		{
@@ -781,13 +880,13 @@ var Pathway = (function () {
 				.text(function(d) { return d.getDescription(); })
 		}
 		
-		$(d).one("valueDeleted.cr", null, this, valueDeleted);
-		$(d).on("dataChanged.cr", null, this, dataChanged);
+		$(fd.experience).one("valueDeleted.cr", null, this, valueDeleted);
+		$(fd.experience).on("dataChanged.cr", null, this, dataChanged);
 		
 		$(this).on("remove", function()
 		{
-			$(d).off("valueDeleted.cr", null, valueDeleted);
-			$(d).off("dataChanged.cr", null, dataChanged);
+			$(fd.experience).off("valueDeleted.cr", null, valueDeleted);
+			$(fd.experience).off("dataChanged.cr", null, dataChanged);
 		});
 	}
 	
@@ -799,16 +898,17 @@ var Pathway = (function () {
 		Pathway.prototype.setColor.call(eventObject.data, experience);
 	}
 	
-	Pathway.prototype.setupServicesTriggers = function(d)
+	Pathway.prototype.setupServicesTriggers = function(fd)
 		{
-			var serviceCell = d.getCell("Service");
-			var userServiceCell = d.getCell("User Entered Service");
+			var e = fd.experience;
+			var serviceCell = e.getCell("Service");
+			var userServiceCell = e.getCell("User Entered Service");
 			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
 			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
-			$(this).on("remove", null, d, function(eventObject)
+			$(this).on("remove", null, e, function(eventObject)
 			{
-				var serviceCell = d.getCell("Service");
-				var userServiceCell = d.getCell("User Entered Service");
+				var serviceCell = e.getCell("Service");
+				var userServiceCell = e.getCell("User Entered Service");
 				$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 				$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 			});
@@ -818,30 +918,30 @@ var Pathway = (function () {
 	{
 		this.experienceGroup.selectAll('g').remove();
 		var g = this.experienceGroup.selectAll('g')
-			.data(this.allExperiences)
+			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
 			.each(this.setupDelete);
 		
-		function showDetail(experience, i)
+		function showDetail(fd, i)
 		{
-			cr.logRecord('click', 'show detail: ' + experience.getDescription());
+			cr.logRecord('click', 'show detail: ' + fd.getDescription());
 			var g = this.parentNode;
 			var pathway = this.pathway;
-			pathway.detailGroup.datum(experience);
+			pathway.detailGroup.datum(fd);
 			
 			pathway.hideDetail(function() {
-					pathway.showDetailGroup(g, experience); 
+					pathway.showDetailGroup(g, fd); 
 				});
 		}
 		
 		var _this = this;
 		var rect = g.append('path')
-			.each(function(d)
+			.each(function()
 				{ this.pathway = _this; })
 			.attr("fill-opacity", "0.3")
 			.attr("stroke-opacity", "0.7")
-			.on("click", function(d) 
+			.on("click", function() 
 				{ 
 					d3.event.stopPropagation(); 
 				})
@@ -855,8 +955,8 @@ var Pathway = (function () {
 			.attr("x", 0)
 			.attr("dy", "1.1")
 			.attr('clip-path', 'url(#id_clipPath)')
-			.text(function(d) { return d.getDescription(); })
-			.on("click", function(d) 
+			.text(function(fd) { return fd.getDescription(); })
+			.on("click", function() 
 				{ 
 					d3.event.stopPropagation(); 
 				})
@@ -871,7 +971,7 @@ var Pathway = (function () {
 			
 		this.flagHeight = bbox.height + this.textBottomBorder;
 
-		t.attr("y", function(experience)
+		t.attr("y", function()
 			{
 				return 0 - bbox.y;
 			});
@@ -896,7 +996,7 @@ var Pathway = (function () {
 		var index = _this.allExperiences.indexOf(i);
 		if (index >= 0)
 			_this.allExperiences.splice(index, 1);
-		if (i == _this.flagExperience)
+		if (i == _this.detailFlagData.experience)
 			_this.hideDetail(function() { }, 0);
 		_this.clearLayout();
 		_this.layoutExperiences();
@@ -906,7 +1006,6 @@ var Pathway = (function () {
 	{
 		var _this = eventObject.data;
 		_this.setDateRange();
-		_this.allExperiences.sort(_this._compareExperiences);
 		_this.appendExperiences();
 	}
 		
@@ -934,7 +1033,6 @@ var Pathway = (function () {
 		experience.typeName = "More Experience";
 		
 		this.allExperiences.push(experience);
-		this.allExperiences.sort(this._compareExperiences);
 		
 		this.setupExperienceTriggers(experience);
 		
@@ -982,7 +1080,7 @@ var Pathway = (function () {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
-		this.flagExperience = null;
+		this.detailFlagData = null;
 		this.flagElement = null;
 		this.sitePanel = sitePanel;
 		this.userInstance = userInstance;
@@ -1052,6 +1150,17 @@ var Pathway = (function () {
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
+			crp.getData({path: "#" + _thisPathway.userInstance.getValueID() + '::reference(Experience)::reference(Experiences)' + 
+								'::reference(Session)::reference(Sessions)::reference(Offering)',
+						 done: function(newInstances)
+							{
+							},
+							fail: asyncFailFunction});
+			crp.getData({path: "#" + _thisPathway.userInstance.getValueID() + '>"More Experiences">"More Experience">Offering',
+						 done: function(newInstances)
+							{
+							},
+							fail: asyncFailFunction});			
 			crp.getData({path: "Service", 
 						 done: function(newInstances)
 							{
@@ -1070,7 +1179,7 @@ var Pathway = (function () {
 										break;
 									}
 								}
-
+								
 								crp.pushCheckCells(_thisPathway.userInstance, function() {
 										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
@@ -1097,8 +1206,6 @@ var Pathway = (function () {
 				this.calculateDescription();
 			});
 		
-			_thisPathway.allExperiences.sort(_thisPathway._compareExperiences);
-			
 			_thisPathway.showAllExperiences();
 			
 			if (_thisPathway.allExperiences.length > 0)
@@ -1139,8 +1246,8 @@ var Pathway = (function () {
 
 			}
 		}
-	
-		var path = "#" + this.userInstance.getValueID() + '::reference(Experience)';
+		
+		var path = "#" + _thisPathway.userInstance.getValueID() + '::reference(Experience)';
 		cr.getData({path: path, 
 				   fields: ["parents"], 
 				   done: successFunction1, 
