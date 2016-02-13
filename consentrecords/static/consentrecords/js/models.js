@@ -125,13 +125,23 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				i.checkCells(undefined,
-					function() {
-						successFunction();
-						_this.queue.next();
-					},
-					failFunction);
-				return false;
+				storedI = crp.getInstance(i.getValueID());
+				if (storedI && storedI.isDataLoaded)
+				{
+					i.importCells(storedI.value.cells);
+					successFunction();
+					return true;
+				}
+				else
+				{
+					i.checkCells(undefined,
+						function() {
+							successFunction();
+							_this.queue.next();
+						},
+						failFunction);
+					return false;
+				}
 			});
 	};
 	
