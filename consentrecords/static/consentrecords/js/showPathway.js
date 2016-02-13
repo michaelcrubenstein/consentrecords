@@ -425,10 +425,10 @@ var Pathway = (function () {
 			
 			g.sort(function (a, b)
 			{
-				if (a.flagX != b.flagX)
-					return b.flagX - a.flagX;
+				if (a.flagX+a.x != b.flagX+b.x)
+					return (b.flagX+b.x) - (a.flagX+a.x);
 				else
-					return b.y - a.y;
+					return a.y - b.y;
 			});
 		}
 
@@ -936,7 +936,13 @@ var Pathway = (function () {
 		}
 		
 		var _this = this;
-		var rect = g.append('path')
+		g.append('path')
+			.each(function()
+				{ this.pathway = _this; })
+			.attr("fill", '#FFFFFF')
+			.attr("stroke", '#FFFFFF');
+
+		g.append('path')
 			.each(function()
 				{ this.pathway = _this; })
 			.attr("fill-opacity", "0.3")
