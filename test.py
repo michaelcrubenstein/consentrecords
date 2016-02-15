@@ -41,7 +41,6 @@ c = us._getSubInstances(Terms.configuration)[0]
 fs = c._getSubInstances(Terms.field)
 
 print (c.getConfiguration())
-print (str(c.getMaxElementIndex(Terms.field)))
 
 print ('##################################')
 print ('# Test 6 ')

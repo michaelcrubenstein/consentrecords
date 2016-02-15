@@ -158,8 +158,7 @@ if __name__ == "__main__":
                     for service in [schoolInstance, educationInstance]:
                         services = getValueByReference(offeringInstance, serviceTerm, service)
                         if len(services) == 0:
-                            maxIndex = offeringInstance.getMaxElementIndex(serviceTerm)
-                            position = 0 if maxIndex == None else maxIndex + 1
+                            position = offeringInstance.getNextElementIndex(serviceTerm)
                             offeringInstance.addReferenceValue(serviceTerm, service, position, transactionState)
                     
                     sessionsInstance = addUniqueChild(offeringInstance, sessionsTerm, {}, nameList, transactionState)

@@ -70,8 +70,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     	
     if parent:
         if position < 0:
-            maxIndex = parent.getMaxElementIndex(parentField)
-            position = 0 if maxIndex == None else maxIndex + 1
+            position = parent.getNextElementIndex(parentField)
         newIndex = parent.updateElementIndexes(parentField, position, transactionState)
         newValue = parent.addReferenceValue(parentField, item, newIndex, transactionState)
         item.parentValue = newValue
@@ -127,8 +126,7 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
         elif v.referenceValue in itemValues:
             items[v.referenceValue] = v.instance
             
-    maxIndex = parent.getMaxElementIndex(field)
-    position = 0 if maxIndex == None else (maxIndex + 1)
+    position = parent.getNextElementIndex(field)
         
     nameLists = NameList()
     

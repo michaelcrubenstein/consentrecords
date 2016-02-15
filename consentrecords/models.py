@@ -434,14 +434,14 @@ class Instance(dbmodels.Model):
     def getConfiguration(self):
         return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Terms.field)]
 
-    def getMaxElementIndex(self, field):
+    def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
                                  [e.position for e in self._getSubValues(field)],
                                  -1)
         if maxElementIndex < 0:
-            return None
+            return 0
         else:
-            return maxElementIndex
+            return maxElementIndex + 1
 
     def updateElementIndexes(self, field, newIndex, transactionState):
         ids = {}

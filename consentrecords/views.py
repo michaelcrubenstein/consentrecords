@@ -283,11 +283,7 @@ class api:
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
                 else:
-                    maxIndex = container.getMaxElementIndex(field)
-                    if maxIndex == None: # Note that it could be 0.
-                        newIndex = 0
-                    else:
-                        newIndex = maxIndex + 1
+                    newIndex = container.getNextElementIndex(field)
     
                 item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
                 if item.isDescriptor:
