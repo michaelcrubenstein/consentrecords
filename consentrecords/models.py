@@ -374,7 +374,7 @@ class Instance(dbmodels.Model):
         
         return fieldData
     
-    def getFieldsData(self, language=None):
+    def _getFieldsData(self, language=None):
         vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
                             deleteTransaction__isnull=True)
 
@@ -390,6 +390,16 @@ class Instance(dbmodels.Model):
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
+
+    def getFieldsData(uuObject, fieldsDataDictionary, language=None):
+        if uuObject.typeID in fieldsDataDictionary:
+            return fieldsDataDictionary[uuObject.typeID]
+        else:
+            fieldsData = uuObject._getFieldsData(language)
+            if not len(fieldsData):
+                raise RuntimeError("the specified item is not configured")
+            fieldsDataDictionary[uuObject.typeID] = fieldsData
+            return fieldsData
 
     # Return an array where each element contains the id and description for an object that
     # is contained by self.

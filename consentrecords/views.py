@@ -413,18 +413,8 @@ class api:
             
         return JsonResponse(results)
     
-    def _getFieldsData(uuObject, fieldsDataDictionary):
-        if uuObject.typeID in fieldsDataDictionary:
-            return fieldsDataDictionary[uuObject.typeID]
-        else:
-            fieldsData = uuObject.getFieldsData()
-            if not len(fieldsData):
-                raise RuntimeError("the specified item is not configured")
-            fieldsDataDictionary[uuObject.typeID] = fieldsData
-            return fieldsData
-
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
+        fieldsData = uuObject.getFieldsData(fieldsDataDictionary, language)
         
         vs = uuObject.values
             
