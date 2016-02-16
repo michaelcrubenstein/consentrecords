@@ -414,7 +414,7 @@ class api:
         return JsonResponse(results)
     
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = uuObject.getFieldsData(fieldsDataDictionary, language)
+        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
         
         vs = uuObject.values
             
@@ -497,7 +497,7 @@ class api:
         return JsonResponse(results)
     
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
+        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
         data = v.getReferenceData(language)
         vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
