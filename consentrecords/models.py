@@ -395,6 +395,7 @@ class Instance(dbmodels.Model):
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
 
+	# Returns the fieldsData from the cache or database for self, which is a term.
     def getFieldsData(self, fieldsDataDictionary, language=None):
         if self in fieldsDataDictionary:
             return fieldsDataDictionary[self]
