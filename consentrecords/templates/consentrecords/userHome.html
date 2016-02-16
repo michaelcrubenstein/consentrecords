@@ -1268,38 +1268,50 @@
 		function show_plans(container) {
 			var successFunction = function(sessions)
 			{
-				$(sessions).each(function() { this.calculateDescription(); });
-				sessions.sort(compareSessions);
-				
 				var containerPanel = d3.select(container);
-				var section = containerPanel.append("section")
-					.classed("cell", true);
-				var divs = section.selectAll("li")
-					.data(sessions)
-					.enter()
-					.append("li").classed("consent-record", true);	// So that each button appears on its own row.
+				containerPanel.selectAll('section').remove();
+				containerPanel.selectAll('p').remove();
+				
+				if (sessions.length > 0)
+				{
+					$(sessions).each(function() { this.calculateDescription(); });
+					sessions.sort(compareSessions);
+				
+					var section = containerPanel.append("section")
+						.classed("cell", true);
+					var divs = section.selectAll("li")
+						.data(sessions)
+						.enter()
+						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
 	
-				var buttons = divs.append("button").classed("btn row-button", true)
-					.on("click", function(session)
-					{
-						if (prepareClick('click', 'session ' + session.getDescription()))
+					var buttons = divs.append("button").classed("btn row-button", true)
+						.on("click", function(session)
 						{
-							showClickFeedback(this);
+							if (prepareClick('click', 'session ' + session.getDescription()))
+							{
+								showClickFeedback(this);
 
-							var sitePanel = showSessionDetails(userInstance, session, null, $(container).parents(".site-panel")[0]);
+								var sitePanel = showSessionDetails(userInstance, session, null, $(container).parents(".site-panel")[0]);
 			
-							showPanelLeft(sitePanel.node());
-						}
-					});
+								showPanelLeft(sitePanel.node());
+							}
+						});
 	
-				appendRightChevrons(buttons);
-				var rightText = buttons.append('span').classed("centered-right-2", true);
+					appendRightChevrons(buttons);
+					var rightText = buttons.append('span').classed("centered-right-2", true);
 				
-				rightText.append('div')
-					.classed("sub-text", true)
-					.text(getDateRange);
+					rightText.append('div')
+						.classed("sub-text", true)
+						.text(getDateRange);
 				
-				appendSessionDescriptions(buttons);
+					appendSessionDescriptions(buttons);
+				}
+				else
+				{
+					containerPanel.append("p")
+						.append("p")
+						.text('Sorry, there are no experiences for which you are enrolled.');
+				}
 			}
 			
 			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
