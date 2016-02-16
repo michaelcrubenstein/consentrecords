@@ -24,13 +24,13 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     # This is a reference to an object.
                     values = list(userInfo.findFilter(Instance.objects.filter(pk=d)))
                     if len(values):
-                    	parent.addReferenceValue(field, values[0], i, transactionState)
+                        parent.addReferenceValue(field, values[0], i, transactionState)
                     elif d == parent.id and field == Terms.primaryAdministrator:
-                    	# This is a special case of setting up the primary administrator. This
-                    	# is necessary when creating a user so that it can be bootstrapped.
-                    	parent.addReferenceValue(field, parent, i, transactionState)
+                        # This is a special case of setting up the primary administrator. This
+                        # is necessary when creating a user so that it can be bootstrapped.
+                        parent.addReferenceValue(field, parent, i, transactionState)
                     else:
-                    	raise RuntimeError("find permission failed for %s" % field)
+                        raise RuntimeError("find permission failed for %s" % field)
                 elif d is not None:
                     ids = pathparser.selectAllObjects(d, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
@@ -56,18 +56,18 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
-	# If the item being created is a user, then we have to set the primary administrator
-	# of the user to itself so that the user has a primary administrator. Otherwise, we can't
-	# add values to the user.
+    # If the item being created is a user, then we have to set the primary administrator
+    # of the user to itself so that the user has a primary administrator. Otherwise, we can't
+    # add values to the user.
     if typeInstance==Terms.user:
-    	if TermNames.primaryAdministrator not in propertyList:
-    	    propertyList[TermNames.primaryAdministrator] = item.id
+        if TermNames.primaryAdministrator not in propertyList:
+            propertyList[TermNames.primaryAdministrator] = item.id
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
-    	if not transactionState.user.is_staff:
-    		raise RuntimeError("write permission failed")
-    	
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+        
     if parent:
         if position < 0:
             position = parent.getNextElementIndex(parentField)
@@ -93,11 +93,11 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         if isinstance(propertyList, dict):
             for key in propertyList:
                 data = propertyList[key]
+                if not configuration:
+                    configuration = typeInstance.getSubInstance(Terms.configuration)
                 if Terms.isUUID(key):
-                    fieldObject = Instance.objects.get(pk=key)
+                    fieldObject = configuration.getFieldByReferenceValue(key)
                 else:
-                    if not configuration:
-                        configuration = typeInstance.getSubInstance(Terms.configuration)
                     fieldObject = configuration.getFieldByName(key)
                 fieldData = fieldObject.getFieldData()
                 if fieldData:
@@ -138,3 +138,26 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
     
     return items
         
+def addUniqueChild(parent, field, typeID, propertyList, nameList, transactionState):
+    children = parent.value_set.filter(field=field,
+                                    deleteTransaction__isnull=True)
+    if len(children):
+        return children[0].referenceValue
+    else:
+        item, newValue = create(typeID, parent, field, -1, propertyList, nameList, transactionState)
+        return item
+
+def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, transactionState):
+    children = parent.getChildrenByName(field, nameField, name)
+    if len(children):
+        return children[0].referenceValue
+    else:
+        if fieldData['nameID'] != nameField.id:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
+        if fieldData['dataType'] == '_translation':
+            propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
+        else:
+            propertyList = {nameField.id: name}
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        return child
+

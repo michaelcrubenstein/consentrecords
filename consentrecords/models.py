@@ -513,23 +513,29 @@ class Instance(dbmodels.Model):
             for v in self.referenceValues.filter(instance=self.parent):
                 v.markAsDeleted(transactionState) 
                 
-    # Return the Value for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
     def getFieldByName(self, name):
-        vs = self.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.field)\
-                              .select_related('referenceValue')
-        for v in vs:
-            vs2 = v.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.name)\
-                              .select_related('referenceValue')
-            for v2 in vs2:
-                vs3 = v2.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.uuName,
-                              stringValue=name)
-                for v3 in vs3:
-                    return v.referenceValue
-        raise Value.DoesNotExist('field "%s" does not exist' % name)
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__referenceValue__value__field=Terms.uuName,
+                                  referenceValue__value__referenceValue__value__stringValue=name)\
+                             .referenceValue
+
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Self is of type configuration.
+    def getFieldByReferenceValue(self, key):
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__id=key)\
+                             .referenceValue
 
     @property
     def inheritsSecurity(self):
@@ -811,6 +817,48 @@ class Instance(dbmodels.Model):
         field = Terms.getNamedInstance(TermNames.userID)
         id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
         return AuthUser.objects.get(pk=id)
+
+    # The following functions are used for loading scraped data into the system.
+    def getOrCreateTextValue(self, field, stringValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=stringValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, stringValue, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=text,
+                                           languageCode=languageCode,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           referenceValue=referenceValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
+        
+    def getChildrenByName(self, field, nameField, name):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue__value__deleteTransaction__isnull=True,
+                                        referenceValue__value__field=nameField,
+                                        referenceValue__value__stringValue__iexact=name)
+    def getValueByReference(self, field, r):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue=r)
+    # The previous functions are used for loading scraped data into the system.
+
     
 class NameList():
     def __init__(self):
@@ -823,11 +871,6 @@ class NameList():
             nameFieldUUIDs = typeID._descriptors
             self.items[typeID] = nameFieldUUIDs
             return nameFieldUUIDs
-    
-    def descriptorField(self, v):
-        container = v.instance
-        fields = [None] + self.getNameUUIDs(container.typeID)
-        return reduce(lambda a, b: a if a else b if v.field == b[0] else None, fields) 
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
