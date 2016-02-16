@@ -102,8 +102,9 @@ class Instance(dbmodels.Model):
     def addValue(self, field, value, position, transactionState):
         if value == None:
             raise ValueError("value is not specified")
-            
-        if self.getDataType(field)==Terms.objectEnum:
+        
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not isinstance(value, Instance):
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value)))
                 if len(f) == 0:
@@ -112,7 +113,7 @@ class Instance(dbmodels.Model):
             elif not value._canFind(transactionState.user):
                 raise Value.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
             return self.addStringValue(field, value, position, transactionState)
@@ -156,13 +157,15 @@ class Instance(dbmodels.Model):
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid", position)
-        if self.getDataType(field)==Terms.objectEnum:
+            
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not Value.objects.filter(instance=self,field=field,referenceValue=value,
                                     deleteTransaction__isnull=True).exists():
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding object %s(%s)" % (str(self), str(field), str(value)))
                 self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             if not Value.objects.filter(instance=self,field=field,stringValue=value["text"],
                                     languageCode=value["languageCode"],
                                     deleteTransaction__isnull=True).exists():
