@@ -283,11 +283,7 @@ class api:
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
                 else:
-                    maxIndex = container.getMaxElementIndex(field)
-                    if maxIndex == None: # Note that it could be 0.
-                        newIndex = 0
-                    else:
-                        newIndex = maxIndex + 1
+                    newIndex = container.getNextElementIndex(field)
     
                 item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
                 if item.isDescriptor:
@@ -417,18 +413,8 @@ class api:
             
         return JsonResponse(results)
     
-    def _getFieldsData(uuObject, fieldsDataDictionary):
-        if uuObject.typeID in fieldsDataDictionary:
-            return fieldsDataDictionary[uuObject.typeID]
-        else:
-            fieldsData = uuObject.getFieldsData()
-            if not len(fieldsData):
-                raise RuntimeError("the specified item is not configured")
-            fieldsDataDictionary[uuObject.typeID] = fieldsData
-            return fieldsData
-
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
+        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
         
         vs = uuObject.values
             
@@ -511,7 +497,7 @@ class api:
         return JsonResponse(results)
     
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
+        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
         data = v.getReferenceData(language)
         vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\

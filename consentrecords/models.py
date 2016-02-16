@@ -102,8 +102,9 @@ class Instance(dbmodels.Model):
     def addValue(self, field, value, position, transactionState):
         if value == None:
             raise ValueError("value is not specified")
-            
-        if self.getDataType(field)==Terms.objectEnum:
+        
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not isinstance(value, Instance):
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value)))
                 if len(f) == 0:
@@ -112,7 +113,7 @@ class Instance(dbmodels.Model):
             elif not value._canFind(transactionState.user):
                 raise Value.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
             return self.addStringValue(field, value, position, transactionState)
@@ -156,13 +157,15 @@ class Instance(dbmodels.Model):
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid", position)
-        if self.getDataType(field)==Terms.objectEnum:
+            
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not Value.objects.filter(instance=self,field=field,referenceValue=value,
                                     deleteTransaction__isnull=True).exists():
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding object %s(%s)" % (str(self), str(field), str(value)))
                 self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             if not Value.objects.filter(instance=self,field=field,stringValue=value["text"],
                                     languageCode=value["languageCode"],
                                     deleteTransaction__isnull=True).exists():
@@ -374,7 +377,8 @@ class Instance(dbmodels.Model):
         
         return fieldData
     
-    def getFieldsData(self, language=None):
+    # Returns the fieldsData from the database for self, which is a term.
+    def _getFieldsData(self, language=None):
         vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
                             deleteTransaction__isnull=True)
 
@@ -386,10 +390,20 @@ class Instance(dbmodels.Model):
                                                        to_attr='name_values'))
 
         fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
-                                 .filter(parent__parent=self.typeID)\
+                                 .filter(parent__parent=self)\
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
+
+    def getFieldsData(self, fieldsDataDictionary, language=None):
+        if self in fieldsDataDictionary:
+            return fieldsDataDictionary[self]
+        else:
+            fieldsData = self._getFieldsData(language)
+            if not len(fieldsData):
+                raise RuntimeError("the specified item is not configured")
+            fieldsDataDictionary[self] = fieldsData
+            return fieldsData
 
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
@@ -434,14 +448,14 @@ class Instance(dbmodels.Model):
     def getConfiguration(self):
         return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Terms.field)]
 
-    def getMaxElementIndex(self, field):
+    def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
                                  [e.position for e in self._getSubValues(field)],
                                  -1)
         if maxElementIndex < 0:
-            return None
+            return 0
         else:
-            return maxElementIndex
+            return maxElementIndex + 1
 
     def updateElementIndexes(self, field, newIndex, transactionState):
         ids = {}
@@ -499,23 +513,29 @@ class Instance(dbmodels.Model):
             for v in self.referenceValues.filter(instance=self.parent):
                 v.markAsDeleted(transactionState) 
                 
-    # Return the Value for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
     def getFieldByName(self, name):
-        vs = self.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.field)\
-                              .select_related('referenceValue')
-        for v in vs:
-            vs2 = v.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.name)\
-                              .select_related('referenceValue')
-            for v2 in vs2:
-                vs3 = v2.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.uuName,
-                              stringValue=name)
-                for v3 in vs3:
-                    return v.referenceValue
-        raise Value.DoesNotExist('field "%s" does not exist' % name)
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__referenceValue__value__field=Terms.uuName,
+                                  referenceValue__value__referenceValue__value__stringValue=name)\
+                             .referenceValue
+
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Self is of type configuration.
+    def getFieldByReferenceValue(self, key):
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__id=key)\
+                             .referenceValue
 
     @property
     def inheritsSecurity(self):
@@ -797,6 +817,48 @@ class Instance(dbmodels.Model):
         field = Terms.getNamedInstance(TermNames.userID)
         id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
         return AuthUser.objects.get(pk=id)
+
+    # The following functions are used for loading scraped data into the system.
+    def getOrCreateTextValue(self, field, stringValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=stringValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, stringValue, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=text,
+                                           languageCode=languageCode,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           referenceValue=referenceValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
+        
+    def getChildrenByName(self, field, nameField, name):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue__value__deleteTransaction__isnull=True,
+                                        referenceValue__value__field=nameField,
+                                        referenceValue__value__stringValue__iexact=name)
+    def getValueByReference(self, field, r):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue=r)
+    # The previous functions are used for loading scraped data into the system.
+
     
 class NameList():
     def __init__(self):
@@ -809,11 +871,6 @@ class NameList():
             nameFieldUUIDs = typeID._descriptors
             self.items[typeID] = nameFieldUUIDs
             return nameFieldUUIDs
-    
-    def descriptorField(self, v):
-        container = v.instance
-        fields = [None] + self.getNameUUIDs(container.typeID)
-        return reduce(lambda a, b: a if a else b if v.field == b[0] else None, fields) 
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -839,17 +896,14 @@ class Value(dbmodels.Model):
     
     @property
     def isDescriptor(self):
-        container = self.instance
-        configurationInstance = Instance.objects.filter(parent=container.typeID, typeID=Terms.configuration) \
-            .get(deleteTransaction__isnull=True)
-        fields = Instance.objects.filter(parent=configurationInstance, typeID=Terms.field) \
+        return Instance.objects.filter(parent__parent=self.instance.typeID, typeID=Terms.field) \
             .filter(deleteTransaction__isnull=True)\
             .filter(value__field=Terms.name,\
                     value__referenceValue=self.field,
                     value__deleteTransaction__isnull=True)\
             .filter(value__field=Terms.descriptorType,
-                    value__deleteTransaction__isnull=True)
-        return fields.count() > 0
+                    value__deleteTransaction__isnull=True)\
+            .exists()
 
     @property
     def isOriginalReference(self):

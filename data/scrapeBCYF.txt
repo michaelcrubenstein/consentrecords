@@ -1,0 +1,1593 @@
+Organization
+    _name: BCYF
+    Sites
+        Site
+            _name: Blackstone Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Blackstone.asp
+            Address
+                Street: 50 West Brookline Street
+                City:  South End
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Education including ESOL
+                Offering
+                    _name: Ballet
+                Offering
+                    _name: Basketball
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Karate
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Youth Connection Teen Program
+        Site
+            _name: Charlestown Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Charlestown.asp
+            Address
+                Street: 255 Medford Street
+                City:  Charlestown
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Zumba
+                Offering
+                    _name: Baseball
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Flag Football
+                Offering
+                    _name: Football
+                Offering
+                    _name: Girls Leadership Club
+                Offering
+                    _name: Open Swim/Family Swim Times
+                Offering
+                    _name: Roller Hockey
+                Offering
+                    _name: Rugby and Reading Program
+                Offering
+                    _name: Smart from the Start Family Night
+                Offering
+                    _name: Smart from the Start Playgroup
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Vacation Week Sports Program
+                Offering
+                    _name: Youth Basketball
+        Site
+            _name: Cleveland Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Cleveland.asp
+            Address
+                Street: 11 Charles Street
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Education including ESOL
+                Offering
+                    _name: Afterschool Homework Help Program
+                Offering
+                    _name: Basketball
+                Offering
+                    _name: Cheerleading
+                Offering
+                    _name: Community Bike Program
+                Offering
+                    _name: Community Recreation, Education and Civic Engagement
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Disc Jockey Workshops
+                Offering
+                    _name: English Language Arts Tutoring
+                Offering
+                    _name: Girls Youth Leadership
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Karate
+                Offering
+                    _name: Mom and Baby Ceramics Class
+                Offering
+                    _name: Smart from the Start
+                Offering
+                    _name: Teen Club
+                Offering
+                    _name: Youth Flag Football
+                Offering
+                    _name: Youth Leadership Club
+                Offering
+                    _name: Youth Soccer
+        Site
+            _name: Clougherty Pool
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Clougherty.asp
+            Address
+                Street: Bunker Hill Street
+                City:  Charlestown
+                State: MA
+            Offerings
+                Offering
+                    _name: This pool will reopen in June for the season.
+        Site
+            _name: Condon Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Condon.asp
+            Address
+                Street: 200 “D” Street
+                City:  South Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Lap Swim
+                Offering
+                    _name: Adult Water Aerobics
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Books, Cooks and Hooks Tutoring Program
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Double Dutch
+                Offering
+                    _name: Family Hockey League
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Lap Swim
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Open Swim/Family Swim Times
+                Offering
+                    _name: Senior Swim
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Swimming Lessons
+                Offering
+                    _name: Weight Training
+                Offering
+                    _name: Youth Basketball
+        Site
+            _name: Curley Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Curley.asp
+            Address
+                Street: 1663 Columbia Road
+                City:  South Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Aerobics-Cardio Blast/Cardio Mix/Combo/Step
+                Offering
+                    _name: Body Sculpt
+                Offering
+                    _name: Afterschool Program
+                Offering
+                    _name: L Street Running Club
+                Offering
+                    _name: Latin Dance
+                Offering
+                    _name: Senior Lunch
+                Offering
+                    _name: Special Events
+                Offering
+                    _name: Spin Class
+                Offering
+                    _name: Super Sculpt
+                Offering
+                    _name: Yoga
+                Offering
+                    _name: Youth Boxing
+                Offering
+                    _name: Youth Dance
+                Offering
+                    _name: Youth Fitness
+        Site
+            _name: Curtis Hall Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/CurtisHall.asp
+            Address
+                Street: 20 South Street
+                City:  Jamaica Plain
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Education including Basic Education and ESOL
+                Offering
+                    _name: Aqua Aerobics
+                Offering
+                    _name: Asthma Swim Program
+                Offering
+                    _name: Boys Leadership Program
+                Offering
+                    _name: Caribbean Cultural Club
+                Offering
+                    _name: Computer Classes for all ages
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Family Movie Night
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Healthy Relationships
+                Offering
+                    _name: Indoor Track Open Access Times
+                Offering
+                    _name: Lap Swim
+                Offering
+                    _name: Master Swim Program
+                Offering
+                    _name: Playgroup for ages 6 months to 4 years
+                Offering
+                    _name: Senior Activities Club
+                Offering
+                    _name: Senior Bridge Club
+                Offering
+                    _name: Senior Fitness Club
+                Offering
+                    _name: Swim Lessons for All Ages
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Technology and Computer Classes
+                Offering
+                    _name: Teen Cooking Classes
+                Offering
+                    _name: Teen Photo Class
+                Offering
+                    _name: Women’s Open Gym
+                Offering
+                    _name: Yoga
+                Offering
+                    _name: Young Leading Ladies Club
+                Offering
+                    _name: Youth Basketball League
+                Offering
+                    _name: Youth Scratch Computer Class
+                Offering
+                    _name: Zumba
+        Site
+            _name: Draper Pool
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Draper.asp
+            Address
+                Street: 5279 Washington Street
+                City:  West Roxbury*
+                State: MA
+            Offerings
+                Offering
+                    _name: Early Intervention Swim Program
+                Offering
+                    _name: Lap Swim
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+        Site
+            _name: Flaherty Pool
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Flaherty.asp
+            Address
+                Street: 160 Florence Street
+                City:  Roslindale
+                State: MA
+            Offerings
+                Offering
+                    _name: Lap Swim
+                Offering
+                    _name: Lifeguard Training
+                Offering
+                    _name: Open/Family Swim
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+        Site
+            _name: Gallivan Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Gallivan.asp
+            Address
+                Street: 61 Woodruff Way
+                City:  Mattapan
+                State: MA
+            Offerings
+                Offering
+                    _name: Amnesty Club
+                Offering
+                    _name: Basketball
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Cricket Club
+                Offering
+                    _name: eScience Tutoring
+                Offering
+                    _name: Flag/Tag Football
+                Offering
+                    _name: Youth Enrichment Program
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Girls Leadership Program
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Homework Assistance Program
+                Offering
+                    _name: Roller/Inline Skating
+                Offering
+                    _name: Senior Fitness and Wellness
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Soccer Clinics
+                Offering
+                    _name: Special Events
+                Offering
+                    _name: Take Back the Kitchen
+                Offering
+                    _name: Youth Development Workshops
+                Offering
+                    _name: Youth Leadership Clubs
+        Site
+            _name: Golden Age Senior Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/GoldenAge.asp
+            Address
+                Street: 382 Main Street
+                City:  Charlestown
+                State: MA
+            Offerings
+                Offering
+                    _name: Bingo
+                Offering
+                    _name: Book Club
+                Offering
+                    _name: Crochet
+                Offering
+                    _name: Discounted Taxi Coupon Sales
+                Offering
+                    _name: Health Screenings
+                Offering
+                    _name: Home Repair Program
+                Offering
+                    _name: Housing Referral and Placement
+                Offering
+                    _name: Liquid Embroidery
+                Offering
+                    _name: Lunch Program
+                Offering
+                    _name: Pokeno
+                Offering
+                    _name: Social Services
+                Offering
+                    _name: Walking Club
+        Site
+            _name: Grove Hall Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/GroveHall.asp
+            Address
+                Street: 51 Geneva Avenue
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Education including HiSET Preparation Classes
+                Offering
+                    _name: Basketball League
+                Offering
+                    _name: Computer Open Access Times
+                Offering
+                    _name: Dodge Ball
+                Offering
+                    _name: Girls Youth Leadership Program
+                Offering
+                    _name: Grove Hall Gay Lesbian Straight Alliance
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Homework Assistance
+                Offering
+                    _name: Karate
+                Offering
+                    _name: Line Dancing
+                Offering
+                    _name: Young Men’s Workout Health Initiative
+                Offering
+                    _name: Youth Basketball
+        Site
+            _name: Hennigan Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Hennigan.asp
+            Address
+                Street: 200 Heath Street
+                City:  Jamaica Plain
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Aqua Aerobics
+                Offering
+                    _name: Before School Program
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Friday Night Soccer
+                Offering
+                    _name: Afterschool Tutoring Program
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Lap Swim
+                Offering
+                    _name: Men's Indoor Soccer
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Teen Program
+                Offering
+                    _name: Youth Basketball
+        Site
+            _name: Holland Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Holland.asp
+            Address
+                Street: 85 Olney Street
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Soccer
+                Offering
+                    _name: Afterschool Enrichment Program
+                Offering
+                    _name: Boys to Men Youth Leadership Program
+                Offering
+                    _name: Computer Lab Classes
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Healthy Heroes
+                Offering
+                    _name: Kaimoku Karate
+                Offering
+                    _name: Kids Club Gym Time
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Line Dancing
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Rock Climbing
+                Offering
+                    _name: Special Olympics
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Tech Goes Home
+        Site
+            _name: Hyde Park Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/HydePark.asp
+            Address
+                Street: 1179 River Street
+                City:  Hyde Park
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Boxing
+                Offering
+                    _name: Adult Computer Classes
+                Offering
+                    _name: Adult Education including ESOL Classes
+                Offering
+                    _name: Afterschool Tutoring Program
+                Offering
+                    _name: Break Dancing
+                Offering
+                    _name: College Tours
+                Offering
+                    _name: Community Service Program
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Criminal Justice Practice
+                Offering
+                    _name: Double Dutch
+                Offering
+                    _name: Dry Land Training
+                Offering
+                    _name: Family Fun Night
+                Offering
+                    _name: Fashion /Talent Show
+                Offering
+                    _name: Girls Volleyball
+                Offering
+                    _name: Go-Go Seniors
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Hi Parkers
+                Offering
+                    _name: Homework/Study time
+                Offering
+                    _name: Insanity Cardio Classes
+                Offering
+                    _name: Irish Step Dance Classes
+                Offering
+                    _name: Jolly Aces
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Men's Basketball League
+                Offering
+                    _name: Parent Child Computer Classes
+                Offering
+                    _name: Pasta Night
+                Offering
+                    _name: Performing Arts
+                Offering
+                    _name: Personal Care Program
+                Offering
+                    _name: School Vacation Youth Programs
+                Offering
+                    _name: Seniors Computer Classes
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Teen Art
+                Offering
+                    _name: Volleyball
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Boxing
+                Offering
+                    _name: Youth Sports Conditioning
+                Offering
+                    _name: Zumba
+        Site
+            _name: Jackson/Mann Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/JacksonMann.asp
+            Address
+                Street: 500 Cambridge Street
+                City:  Allston
+                State: MA
+            Offerings
+                Offering
+                    _name: Acoustic Guitar
+                Offering
+                    _name: Adult Education Programs including ESOL, Citizenship, HiSET Preparation
+                Offering
+                    _name: Adult Enrichment Classes
+                Offering
+                    _name: Adult Soccer, Basketball, and Volleyball Leagues
+                Offering
+                    _name: Bollywood Dance
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Cooking Class
+                Offering
+                    _name: Cycle in the City
+                Offering
+                    _name: Edison Before and Afterschool Program
+                Offering
+                    _name: Faneuil Gardens Teen Center
+                Offering
+                    _name: Field Trips and Special Events
+                Offering
+                    _name: Full Day School Vacation Program
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Intro to Wine
+                Offering
+                    _name: Licensed Before and Afterschool Program
+                Offering
+                    _name: Licensed Preschool Program
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Percussion for the Soul
+                Offering
+                    _name: Sewing
+                Offering
+                    _name: Soap Making
+                Offering
+                    _name: Technology Goes Home
+                Offering
+                    _name: Viking Crafts
+                Offering
+                    _name: Viking Studies
+                Offering
+                    _name: Watercolor Painting
+                Offering
+                    _name: Yoga
+                Offering
+                    _name: Youth Baseball Clinic
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Floor Hockey
+                Offering
+                    _name: Youth Soccer
+                Offering
+                    _name: Youth Volleyball
+                Offering
+                    _name: Zumba
+        Site
+            _name: Leahy/Holloran Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/LeahyHolloran.asp
+            Address
+                Street: 1 Worrell Street
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Cooking Classes
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Boot Camp Workout Program
+                Offering
+                    _name: Adult Italian Cooking Class
+                Offering
+                    _name: Adult Resume Workshop
+                Offering
+                    _name: Adult Water Aerobics
+                Offering
+                    _name: Adult Water Rugby
+                Offering
+                    _name: Adult Yoga
+                Offering
+                    _name: Boxing Fitness
+                Offering
+                    _name: Boy Scouts
+                Offering
+                    _name: Boys Club
+                Offering
+                    _name: Cheerleading
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Family Book Club
+                Offering
+                    _name: Flag Football
+                Offering
+                    _name: Fun Friday Teen Nights
+                Offering
+                    _name: Generations United
+                Offering
+                    _name: Girl Scouts Program
+                Offering
+                    _name: Girls Club
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Computer Lab Classes
+                Offering
+                    _name: Latin Language Club
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Licensed Summer Camp
+                Offering
+                    _name: Before and Afterschool Program
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Project Deep Tutoring
+                Offering
+                    _name: Safe Sitter Babysitting Class
+                Offering
+                    _name: School Vacation Programs
+                Offering
+                    _name: Seekers of Knowledge
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Teen Resume Workshop
+                Offering
+                    _name: Water Aerobics
+                Offering
+                    _name: Water Tots Program
+                Offering
+                    _name: Workshop Wednesdays
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Cooking Classes
+                Offering
+                    _name: Youth Karate/ Tae Kwan Do
+                Offering
+                    _name: Youth Organized for Leadership Opportunities (Y.O.L.O.)
+        Site
+            _name: Madison Park Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/MadisonPark.asp
+            Address
+                Street: 55 Malcolm X Boulevard
+                City:  Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Various Indoor Sports
+        Site
+            _name: Mason Pool
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Mason.asp
+            Address
+                Street: 159 Norfolk Avenue
+                City:  Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: Baby Splash
+                Offering
+                    _name: First Strokes
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Water Aerobics
+        Site
+            _name: Menino Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Menino.asp
+            Address
+                Street: 125 Brookway Road
+                City:  Roslindale
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Art Program
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Afterschool Arts
+                Offering
+                    _name: Afterschool Fitness
+                Offering
+                    _name: Afterschool Homework Club
+                Offering
+                    _name: Cinema Stixxs Digital Media Program
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Family Time
+                Offering
+                    _name: Flash Mob Dance
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Job Search Computer Sessions
+                Offering
+                    _name: Karate-Do
+                Offering
+                    _name: Learn2TeachTeach2Learn
+                Offering
+                    _name: Rock Wall Climbing Clubs
+                Offering
+                    _name: STEAM Club
+                Offering
+                    _name: STEAMing it in the Park
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Technology Workshops
+                Offering
+                    _name: Teen Computer Time
+                Offering
+                    _name: Teen Darts
+                Offering
+                    _name: Teen Table Tennis
+                Offering
+                    _name: Youth Art Program
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Coneball Instruction and Competition
+                Offering
+                    _name: Youth Connection Program
+                Offering
+                    _name: Youth Council and Leadership Club
+                Offering
+                    _name: Youth Dance Program
+                Offering
+                    _name: Youth Fitness Programs
+                Offering
+                    _name: Youth Karate
+                Offering
+                    _name: Youth Mentoring Program
+                Offering
+                    _name: Youth Volleyball
+        Site
+            _name: Mildred Avenue Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/MildredAvenue.asp
+            Address
+                Street: 5 Mildred Avenue
+                City:  Mattapan
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Boston Rhythm Line
+                Offering
+                    _name: Adult Cardio Kickboxing
+                Offering
+                    _name: Adult Drama
+                Offering
+                    _name: Adult Kickboxing
+                Offering
+                    _name: Adult Soccer
+                Offering
+                    _name: Adult Tae Kwon Do
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Adult Water Aerobics
+                Offering
+                    _name: Adult Zumba
+                Offering
+                    _name: Basketball
+                Offering
+                    _name: Big Sisters Association of Greater Boston
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Creative Arts
+                Offering
+                    _name: Dance
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Karate for All Ages
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Measure Up Health and Nutrition Program
+                Offering
+                    _name: Modeling Classes
+                Offering
+                    _name: Movie Nights
+                Offering
+                    _name: Music and Video Recording
+                Offering
+                    _name: Next Level
+                Offering
+                    _name: Pool Open/Family Swim Times
+                Offering
+                    _name: Roller Blading
+                Offering
+                    _name: Softball
+                Offering
+                    _name: Step Class
+                Offering
+                    _name: Swim Lessons for All Ages
+                Offering
+                    _name: Teen Academy Learning Leadership Program
+                Offering
+                    _name: Tennis
+                Offering
+                    _name: Video Production Classes
+                Offering
+                    _name: Water Fitness and Games
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Drama
+                Offering
+                    _name: Youth Soccer
+                Offering
+                    _name: Youth Tae Kwon Do
+        Site
+            _name: Mirabella Pool
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Mirabella.asp
+            Address
+                Street: 475R Commercial Street
+                City:  North End
+                State: MA
+            Offerings
+                Offering
+                    _name: This pool will reopen in June for the season.
+        Site
+            _name: Nazzaro Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Nazzaro.asp
+            Address
+                Street: 30 North Bennet Street
+                City:  North End
+                State: MA
+            Offerings
+                Offering
+                    _name: 55+ Club
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Afterschool Program
+                Offering
+                    _name: Arts and Crafts
+                Offering
+                    _name: Band
+                Offering
+                    _name: Basketball
+                Offering
+                    _name: Big Sister Little Sister
+                Offering
+                    _name: Bowling
+                Offering
+                    _name: Dance
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Knitting
+                Offering
+                    _name: New Mom Group
+                Offering
+                    _name: Skiing/Snowboarding
+                Offering
+                    _name: Strong Women Strong Girls Afterschool Program
+                Offering
+                    _name: Teen Center
+                Offering
+                    _name: Teen Homework Assistance
+                Offering
+                    _name: Teen Peer Leader Program
+                Offering
+                    _name: Toddlers Program
+                Offering
+                    _name: Witness the Fitness
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Dance
+                Offering
+                    _name: Youth Theatre / Drama Classes
+        Site
+            _name: Ohrenberger Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Ohrenberger.asp
+            Address
+                Street: 175 West Boundary Road
+                City:  West Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Ballroom Dancing
+                Offering
+                    _name: Adult Book Club
+                Offering
+                    _name: Adult Ceramics
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Senior Computer Classes
+                Offering
+                    _name: Senior Enrichment Classes
+                Offering
+                    _name: Senior Line Dancing
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Teen Dance
+                Offering
+                    _name: Web Design Class
+                Offering
+                    _name: Youth Arts and Crafts Class
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Book/Video Club
+                Offering
+                    _name: Youth Fitness Class
+                Offering
+                    _name: Youth French Class
+                Offering
+                    _name: Youth Gymnastics Program
+                Offering
+                    _name: Youth Leadership Program
+                Offering
+                    _name: Youth Sports and More Program
+                Offering
+                    _name: Zumba
+        Site
+            _name: Paris Street Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/ParisStreet.asp
+            Address
+                Street: 112 Paris Street
+                City:  East Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Education including HiSET, ESOL
+                Offering
+                    _name: Adult Lap Swim
+                Offering
+                    _name: Adult Zumba
+                Offering
+                    _name: Aqua-cize
+                Offering
+                    _name: Afterschool Program
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Count Down To Kindergarten
+                Offering
+                    _name: Family Book of the Month Club
+                Offering
+                    _name: Family Swim
+                Offering
+                    _name: Football Fundamentals
+                Offering
+                    _name: Girl Talk
+                Offering
+                    _name: Girls Teen Center
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Healthy Heart Initiative
+                Offering
+                    _name: Kindergarten Readiness Playgroup
+                Offering
+                    _name: Lifeguard Certification Classes
+                Offering
+                    _name: Parent Child Playgroup
+                Offering
+                    _name: Pool Open/Family Swim
+                Offering
+                    _name: Reading Rugby
+                Offering
+                    _name: Resumé Classes
+                Offering
+                    _name: Rugby
+                Offering
+                    _name: Senior Fitness Class
+                Offering
+                    _name: Senior Weekly BINGO
+                Offering
+                    _name: Senior Weekly Luncheon Social
+                Offering
+                    _name: Senior-cize Water Fitness
+                Offering
+                    _name: Soccer Fundamentals
+                Offering
+                    _name: Substance Abuse Prevention Courses for Youth
+                Offering
+                    _name: Swim Lessons for All Levels and Ages
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Teen Friday Nights
+                Offering
+                    _name: Track & Field/Cross Country
+                Offering
+                    _name: Turn Up! Teen Program
+                Offering
+                    _name: Vacation Week Programming
+                Offering
+                    _name: Water Fitness & Games
+                Offering
+                    _name: Women Only Swim
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Fitness Program
+                Offering
+                    _name: Youth Martial Arts
+                Offering
+                    _name: Youth Supper Club
+                Offering
+                    _name: Youth Zumba
+        Site
+            _name: Perkins Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Perkins.asp
+            Address
+                Street: 155 Talbot Avenue
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult and Baby/Toddler Swim
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Education including ESOL and HiSET Preparation Classes
+                Offering
+                    _name: Boys Self-Empowerment Program
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Family Variety Fridays
+                Offering
+                    _name: Girls Self-Empowerment Program
+                Offering
+                    _name: Girls’ LEAP Program
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Line Dancing
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Open Swim/Family Swim Times
+                Offering
+                    _name: Swim Lessons
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Youth Basketball
+        Site
+            _name: Pino Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Pino.asp
+            Address
+                Street: 86 Boardman Street
+                City:  East Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Soccer
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Adult Wiffleball League
+                Offering
+                    _name: KIDZ ROCK Program for teens
+                Offering
+                    _name: Open Gym Access Times
+                Offering
+                    _name: Senior Lunch Program
+                Offering
+                    _name: Teen Wiffleball League
+                Offering
+                    _name: Youth Basketball Fundamentals
+                Offering
+                    _name: Youth Basketball League
+                Offering
+                    _name: Youth Soccer Fundamentals
+                Offering
+                    _name: Youth Soccer League
+                Offering
+                    _name: Zumba
+        Site
+            _name: Quincy Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Quincy.asp
+            Address
+                Street: 885 Washington Street
+                City:  Chinatown
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Afterschool Enrichment Program
+                Offering
+                    _name: Badminton
+                Offering
+                    _name: Capoeira Gerais Boston
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Karate
+                Offering
+                    _name: Oak Street Youth Center
+                Offering
+                    _name: Open and Lap Swim
+                Offering
+                    _name: Recreation and Fitness Program
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Swim Team
+                Offering
+                    _name: Table Tennis
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Swim Lessons
+        Site
+            _name: Roche Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Roche.asp
+            Address
+                Street: 1716 Centre Street
+                City:  West Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: 6th Grade Nights
+                Offering
+                    _name: Act it Out!
+                Offering
+                    _name: Adult Beginner Yoga
+                Offering
+                    _name: Adult Bridge Group
+                Offering
+                    _name: Adult Yoga
+                Offering
+                    _name: Adult Zumba
+                Offering
+                    _name: Art Workshops
+                Offering
+                    _name: Creative Movement and Dance
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Knitting
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Morning Yoga
+                Offering
+                    _name: Pee Wee Drama
+                Offering
+                    _name: Senior Book Club
+                Offering
+                    _name: Senior Bridge Group
+                Offering
+                    _name: Senior Café on Centre
+                Offering
+                    _name: Senior Foxwoods Trips
+                Offering
+                    _name: Senior Line Dancing
+                Offering
+                    _name: Senior Nutrition Class
+                Offering
+                    _name: Senior Special Lunches
+                Offering
+                    _name: Senior Trips
+                Offering
+                    _name: Senior Yoga
+                Offering
+                    _name: Sports, Games and More
+                Offering
+                    _name: Sticky Fingers
+                Offering
+                    _name: Teen Center Program
+                Offering
+                    _name: Teen Friday Night Trips
+                Offering
+                    _name: Teen Trips
+                Offering
+                    _name: Teen Vacation Week Programs
+                Offering
+                    _name: Toddler Time
+                Offering
+                    _name: Wheelhouse Baseball Clinic
+                Offering
+                    _name: Wide World of Sports
+                Offering
+                    _name: WRCC Players
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Karate
+        Site
+            _name: Roslindale Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Roslindale.asp
+            Address
+                Street: 6 Cummins Highway
+                City:  Roslindale
+                State: MA
+            Offerings
+                Offering
+                    _name: 55+ Basketball
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Art Classes
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Fiber Arts
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Group Drum Lessons
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Hispanic Ballet
+                Offering
+                    _name: Homework Help
+                Offering
+                    _name: Kindergarten Afterschool Program
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Licensed Preschool
+                Offering
+                    _name: Roslindale Afterschool Program
+                Offering
+                    _name: Smart from the Start
+                Offering
+                    _name: Taxi Coupons
+                Offering
+                    _name: Vocal Jams Program
+                Offering
+                    _name: Woodworking
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Leadership Club
+                Offering
+                    _name: Youth Outreach Program
+        Site
+            _name: Shelburne Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Shelburne.asp
+            Address
+                Street: 2730 Washington Street
+                City:  Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Social Media Classes
+                Offering
+                    _name: Aerobics
+                Offering
+                    _name: Afterschool Program
+                Offering
+                    _name: Body by Brandy
+                Offering
+                    _name: Boot Camp
+                Offering
+                    _name: Boston Career Links Program
+                Offering
+                    _name: Cardio and Strength Training
+                Offering
+                    _name: Chess Club
+                Offering
+                    _name: College Goal Sunday
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Digital Multi-Media Classes
+                Offering
+                    _name: Engineering Everywhere
+                Offering
+                    _name: HiSET
+                Offering
+                    _name: Girls Fitness Program
+                Offering
+                    _name: Girls Volleyball
+                Offering
+                    _name: Goldenaires Seniors Program
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Nurturing Father / Family Program
+                Offering
+                    _name: Rock Climbing Program
+                Offering
+                    _name: Saturday Tutoring Program
+                Offering
+                    _name: Youth Vacation Week Programs
+                Offering
+                    _name: Strength & Conditioning Program
+                Offering
+                    _name: Teen Center Program
+                Offering
+                    _name: Teen Elderly Mentoring Program
+                Offering
+                    _name: Teen Skiing
+                Offering
+                    _name: Teen Theatre Arts
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Development Workshops
+                Offering
+                    _name: Zumba
+        Site
+            _name: Tobin Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Tobin.asp
+            Address
+                Street: 1481 Tremont Street
+                City:  Mission Hill
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Boot Camp
+                Offering
+                    _name: Adult Yoga
+                Offering
+                    _name: Afterschool Program
+                Offering
+                    _name: Baseball/ Softball
+                Offering
+                    _name: Basketball Clinics
+                Offering
+                    _name: Boxing
+                Offering
+                    _name: Boy Scouts
+                Offering
+                    _name: Computer Lab Open Access Times
+                Offering
+                    _name: Flag Football
+                Offering
+                    _name: Floor Hockey
+                Offering
+                    _name: Girls’ Sports
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Holiday Events and Celebrations
+                Offering
+                    _name: Karate
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: One Step Ahead
+                Offering
+                    _name: Our Space Our Place
+                Offering
+                    _name: Piloxing
+                Offering
+                    _name: Power Soccer
+                Offering
+                    _name: School Vacation Week Programs
+                Offering
+                    _name: Senior Dance Classes
+                Offering
+                    _name: Softball
+                Offering
+                    _name: Tap Dance
+                Offering
+                    _name: Tech Goes Home
+                Offering
+                    _name: Fun Fridays
+                Offering
+                    _name: Yoga
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Connection
+                Offering
+                    _name: Youth Dance
+                Offering
+                    _name: Youth Leadership Clubs
+                Offering
+                    _name: Zumba
+        Site
+            _name: Tynan Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/Tynan.asp
+            Address
+                Street: 650 East Fourth Street
+                City:  South Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Volleyball
+                Offering
+                    _name: Afterschool Tutoring Program
+                Offering
+                    _name: Crocheting/Knitting
+                Offering
+                    _name: Flag Football League
+                Offering
+                    _name: Gym Open Access Times
+                Offering
+                    _name: Junior Gym
+                Offering
+                    _name: Tots Gym
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Floor Hockey League
+                Offering
+                    _name: Youth Volleyball
+        Site
+            _name: Vine Street Community Center
+            Web Site: http://www.cityofboston.gov/BCYF/centers/VineStreet.asp
+            Address
+                Street: 339 Dudley Street
+                City:  Roxbury
+                State: MA
+            Offerings
+                Offering
+                    _name: Adult Basketball
+                Offering
+                    _name: Adult Education including Basic Education,
+                Offering
+                    _name: Literacy and HiSET Preparation Classes
+                Offering
+                    _name: Boston Show Stoppers
+                Offering
+                    _name: Boys Fitness Training
+                Offering
+                    _name: Boy Scouts
+                Offering
+                    _name: Cheerleading
+                Offering
+                    _name: Computer Classes
+                Offering
+                    _name: Dance Classes
+                Offering
+                    _name: Doll Club
+                Offering
+                    _name: Double-Dutch
+                Offering
+                    _name: Fishing Program
+                Offering
+                    _name: Girl Scouts
+                Offering
+                    _name: Girls Fitness Training
+                Offering
+                    _name: Girls Group
+                Offering
+                    _name: Licensed Afterschool Program
+                Offering
+                    _name: Martial Arts
+                Offering
+                    _name: Stepping Program
+                Offering
+                    _name: Strong Women, Strong Girls
+                Offering
+                    _name: Sunday Basketball League
+                Offering
+                    _name: Urban Dance Connection
+                Offering
+                    _name: Urban Improv
+                Offering
+                    _name: Youth Basketball
+                Offering
+                    _name: Youth Connection
