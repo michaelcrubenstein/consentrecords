@@ -852,17 +852,14 @@ class Value(dbmodels.Model):
     
     @property
     def isDescriptor(self):
-        container = self.instance
-        configurationInstance = Instance.objects.filter(parent=container.typeID, typeID=Terms.configuration) \
-            .get(deleteTransaction__isnull=True)
-        fields = Instance.objects.filter(parent=configurationInstance, typeID=Terms.field) \
+        return Instance.objects.filter(parent__parent=self.instance.typeID, typeID=Terms.field) \
             .filter(deleteTransaction__isnull=True)\
             .filter(value__field=Terms.name,\
                     value__referenceValue=self.field,
                     value__deleteTransaction__isnull=True)\
             .filter(value__field=Terms.descriptorType,
-                    value__deleteTransaction__isnull=True)
-        return fields.count() > 0
+                    value__deleteTransaction__isnull=True)\
+            .exists()
 
     @property
     def isOriginalReference(self):
