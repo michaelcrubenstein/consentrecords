@@ -56,7 +56,7 @@ class InstanceAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'typeID', 'parent', '_description', 't_creationTime', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 't_creationTime')
-    search_fields = ('id', 'typeID__id', 'typeID__description__text', 'description__text')
+    search_fields = ('id', 'typeID__id', 'parent__id', 'typeID__description__text', 'description__text', 'parent__description__text')
 
     def queryset(self, request):
         qs = super(InstanceAdmin, self).queryset(request)
@@ -78,6 +78,8 @@ class ValueAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('id','instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction', 'deleteTransaction')
     search_fields = (['id', 'stringValue', 'referenceValue__value__stringValue'])
+    readonly_fields = ('id','instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'transaction', 'deleteTransaction')
+    search_fields = (['id', 'instance__id', 'stringValue', 'referenceValue__value__stringValue'])
     
 class TransactionAdmin(admin.ModelAdmin):
 
