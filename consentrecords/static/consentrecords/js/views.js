@@ -1079,10 +1079,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 
 	_setupItemsDivHandlers(itemsDiv, this);
 	
-	if (_isPickCell(this))
-		viewFunction = showPickObjectPanel;
-	else
-		viewFunction = showEditObjectPanel;
+	var viewFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
 		
 	var addedFunction = getOnValueAddedFunction(true, true, viewFunction);
 
