@@ -96,7 +96,13 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
                 if not configuration:
                     configuration = typeInstance.getSubInstance(Terms.configuration)
                 if Terms.isUUID(key):
-                    fieldObject = configuration.getFieldByReferenceValue(key)
+                    # The key may be the key of a field object or the key of a term that is 
+                    # the name of a field object in the configuration.
+                    fieldObject = Instance.objects.get(pk=key)
+                    if fieldObject.typeID != Terms.field:
+                        fieldObject = configuration.getFieldByReferenceValue(key)
+                    elif fieldObject.parent != configuration:
+                        raise RuntimeError("the specified field is not contained within the configuration of this type")
                 else:
                     fieldObject = configuration.getFieldByName(key)
                 fieldData = fieldObject.getFieldData()
