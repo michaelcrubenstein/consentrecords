@@ -16,7 +16,7 @@ from consentrecords import instancecreator
 
 def writeinstance(i, indent, fieldDataDictionary, fOut):
 	fOut.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
-	print('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
+	print('%s%s' % (' ' * indent, i.typeID.getDescription()))
 	fieldsData = i.typeID.getFieldsData(fieldDataDictionary)
 
 	for fd in fieldsData:

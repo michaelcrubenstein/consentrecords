@@ -708,8 +708,6 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: _inherits security
-_uuname
     _uuname: _language
     enumerator
         _name: English
@@ -754,13 +752,7 @@ _uuname
     enumerator
         _name: _custom
 _uuname
-    _uuname: _telephone
-_uuname
     _uuname: _text
-_uuname
-    _uuname: _time
-_uuname
-    _uuname: _to user path
 _uuname
     _uuname: _translation
     _configuration
@@ -777,8 +769,6 @@ _uuname
             _object add rule: _pick one
             _of kind: _language
             _pick object path: _uuname[_uuname="_language"]>"enumerator"
-_uuname
-    _uuname: _url
 _uuname
     _uuname: _user
     _configuration
