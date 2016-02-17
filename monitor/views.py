@@ -5,11 +5,19 @@ import traceback
 
 from monitor.models import LogRecord
 
-def getRecords(request):
-    results = {'success':False, 'error': 'getRecords failed'}
-    
+def log(request):
     try:
-        results = {'success':True, 'records': LogRecord.getRecords()}
+        if request.method != "POST":
+            raise Exception("emit only responds to POST requests")
+    
+        user = request.user
+        data = request.POST
+    
+        name = data.get('name', '')
+        message = data.get('message', '')
+        LogRecord.emit(user, name, message)
+        
+        results = {'success':True}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

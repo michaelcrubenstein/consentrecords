@@ -9,7 +9,7 @@ var Settings = (function () {
 		navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', 'Cancel'))
 				{
 					showClickFeedback(this);
 					hidePanelRight(sitePanel.node());
@@ -29,8 +29,6 @@ var Settings = (function () {
 		doneButton.on("click", panel2Div.handleDoneEditingButton)
  			.append("span").text("Done");
 			
-		panel2Div.appendAlertContainer();
-		
 		var cells = [userInstance.getCell("_first name"),
 					 userInstance.getCell("_last name"),
 					 userInstance.getCell("_email"),
@@ -38,6 +36,27 @@ var Settings = (function () {
 					 userInstance.getCell("_public access")];
 					 
 		panel2Div.showEditCells(cells);
+		
+		var itemsDiv = panel2Div.append('section')
+			.classed('cell edit unique', true)
+			.classed('btn row-button', true)
+			.on('click', function() {
+				if (prepareClick('click', 'Change Password'))
+				{
+					var panel = new UpdatePasswordPanel(sitePanel.node());
+					showPanelLeft(panel.node());
+				}
+			})
+			.append('ol').classed('items-div', true);
+		
+		var button = itemsDiv.append('li')
+			.append('div')
+			.classed('left-expanding-div', true);
+		appendRightChevrons(button);
+			
+		button.append('div')
+			.classed("description-text string-value-view", true)
+			.text("Change Password");	
 			
 		showPanelLeft(sitePanel.node());
 	}

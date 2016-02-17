@@ -4,5 +4,5 @@ from monitor import views
 
 urlpatterns = patterns(
     '',
-    url(r'^getrecords/', views.getRecords, name='getRecords'),
+    url(r'^log/', views.log, name='log'),
 )

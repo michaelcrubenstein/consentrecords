@@ -69,7 +69,7 @@ class Instance(dbmodels.Model):
         
     def __str__(self):
         try:
-            d = self.description_set.get(language__isnull=True)
+            d = self.description
             if d:
                 return d.text
             else:
@@ -102,8 +102,9 @@ class Instance(dbmodels.Model):
     def addValue(self, field, value, position, transactionState):
         if value == None:
             raise ValueError("value is not specified")
-            
-        if self.getDataType(field)==Terms.objectEnum:
+        
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not isinstance(value, Instance):
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value)))
                 if len(f) == 0:
@@ -112,7 +113,7 @@ class Instance(dbmodels.Model):
             elif not value._canFind(transactionState.user):
                 raise Value.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
             return self.addStringValue(field, value, position, transactionState)
@@ -156,13 +157,15 @@ class Instance(dbmodels.Model):
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid", position)
-        if self.getDataType(field)==Terms.objectEnum:
+            
+        dt = self.getDataType(field)
+        if dt==Terms.objectEnum:
             if not Value.objects.filter(instance=self,field=field,referenceValue=value,
                                     deleteTransaction__isnull=True).exists():
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding object %s(%s)" % (str(self), str(field), str(value)))
                 self.addReferenceValue(field, value, position, transactionState)
-        elif self.getDataType(field)==Terms.translationEnum:
+        elif dt==Terms.translationEnum:
             if not Value.objects.filter(instance=self,field=field,stringValue=value["text"],
                                     languageCode=value["languageCode"],
                                     deleteTransaction__isnull=True).exists():
@@ -179,17 +182,10 @@ class Instance(dbmodels.Model):
     def _getSubValues(self, field):
         return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
-    # Returns a list of all of the values of self, aggregated by field.id
-    def _getValues(self, userInfo):
-        vs = userInfo.findValueFilter(self.value_set.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field__id')\
-            .select_related('referenceValue')
-            
+    def _groupValuesByField(self, vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
-        # vs = filter(lambda v: v.field not in Terms.securityFields or cache.value, vs)
         for v in vs:
             if v.field not in Terms.securityFields or cache.value:
                 fieldID = v.field.id
@@ -246,7 +242,8 @@ class Instance(dbmodels.Model):
     # verbs is an array of pairs where the first of the pair is the field name and 
     # the second is the field dataType.
     # The string is directly attached to the verb (v1).       
-    def _getDescription(self, verbs):
+    def cacheDescription(self, nameLists):
+        verbs = nameLists.getNameUUIDs(self.typeID)
         r = []
         for field, dataType, descriptorType in verbs:
             if descriptorType == Terms.textEnum:
@@ -256,7 +253,7 @@ class Instance(dbmodels.Model):
                         try:
                             if not v.referenceValue:
                                 raise ValueError("no reference value for %s in %s: %s(%s)" % (str(v.instance), str(self), str(v.field), v.stringValue))
-                            r.append(v.referenceValue.description_set.get(language__isnull=True).text)
+                            r.append(v.referenceValue.description.text)
                         except Description.DoesNotExist:
                             r.append(v.referenceValue._description)
                 else:
@@ -267,12 +264,8 @@ class Instance(dbmodels.Model):
             else:
                 raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)))
                     
-        return " ".join(r)
-        
-    def cacheDescription(self, nameLists):
-        s = self._getDescription(nameLists.getNameUUIDs(self.typeID))
+        s = " ".join(r)
         Description.objects.update_or_create(instance = self, 
-                                             language = None, 
                                              defaults={'text': s})
         return s
     
@@ -283,6 +276,9 @@ class Instance(dbmodels.Model):
         values = self.referenceValues.filter(deleteTransaction__isnull=True)
         return [v.instance for v in filter(lambda v: v.isDescriptor, values)]
 
+    def getDescription(self, language=None):
+        return self._description
+        
     def updateDescriptions(queue, nameLists):
         queue = list(queue) # Make a local copy of the list.
         calculated = set()
@@ -296,19 +292,9 @@ class Instance(dbmodels.Model):
     
     @property
     def _description(self):
-        d = Description.objects.filter(instance=self, language__isnull=True)
-        if d.exists(): 
-            return d[0].text
-        else:
-            return "Deleted"
+        d = self.description
+        return d.text if d else "Deleted"
 
-    # Get the cached description of this Instance.        
-    def description(self, language=None):
-        if language:
-            return self.description_set.get(language=language).text
-        else:
-            return self.description_set.get(language__isnull=True).text
-    
     @property    
     def _allInstances(self):    # was _getAllInstances()
         return self.typeInstances.filter(deleteTransaction__isnull=True)
@@ -316,10 +302,10 @@ class Instance(dbmodels.Model):
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, language=None):
-        return {'id': None, 'value': {'id': self.id, 'description': self.description(language)}}
+        return {'id': None, 'value': {'id': self.id, 'description': self.getDescription(language)}}
     
     # This code presumes that all fields have unique values.
-    def _sortValuesByField(values):
+    def _sortValueDataByField(values):
         d = {}
         for v in values:
             # If there is a reference value, put in a duple with the referenceValue name and id.
@@ -341,12 +327,12 @@ class Instance(dbmodels.Model):
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,
                                                        to_attr='name_values'))
-        return Instance._sortValuesByField(vs1)                                               
+        return Instance._sortValueDataByField(vs1)                                               
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
     def getParentReferenceFieldData(self):
-        name = self.description()
+        name = self.description.text
         fieldData = {"name" : name,
                      "nameID" : self.id,
                      "dataType" : TermNames.object,
@@ -391,47 +377,47 @@ class Instance(dbmodels.Model):
         
         return fieldData
     
-    def getFieldsData(self, language=None):
+    # Returns the fieldsData from the database for self, which is a term.
+    def _getFieldsData(self, language=None):
         vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
                             deleteTransaction__isnull=True)
 
         vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
+                            .select_related('field')\
                             .select_related('referenceValue')\
                             .prefetch_related(Prefetch('referenceValue__value_set',
                                                        queryset=vs2,
                                                        to_attr='name_values'))
 
         fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
-                                 .filter(parent__parent=self.typeID)\
+                                 .filter(parent__parent=self)\
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
-        return [field._getFieldDataFromValues(Instance._sortValuesByField(field.values), language) for field in fields]
+        return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
+
+    def getFieldsData(self, fieldsDataDictionary, language=None):
+        if self in fieldsDataDictionary:
+            return fieldsDataDictionary[self]
+        else:
+            fieldsData = self._getFieldsData(language)
+            if not len(fieldsData):
+                raise RuntimeError("the specified item is not configured")
+            fieldsDataDictionary[self] = fieldsData
+            return fieldsData
 
     # Return an array where each element contains the id and description for an object that
     # is contained by self.
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
-    def getDescriptionFromSet(descriptionSet, language):
-        if not language:
-            return descriptionSet.find(lambda d: d.language == None) or descriptionSet.find(lambda d: d.language == "en")
-        else:
-            return descriptionSet.find(lambda d: d.language == language)
-            
-        if len(descriptionSet):
-            return descriptionSet[0]
-        else:
-            raise RuntimeError("no description for instance")
-            
     def getValueReferenceData(v, language):
         return { "id": v.id,
-              "value": {"id" : v.referenceValue.id, "description": getDescriptionFromSet(v.descriptions.all()).text },
+              "value": {"id" : v.referenceValue.id, "description": v.referenceValue.getDescription(language) },
               "position": v.position }
 
-            
     def _getCellValues(dataTypeID, values, language=None):
         if dataTypeID == Terms.objectEnum.id:
-            return [v.getReferenceData(language) for v in values]
+            return [v.getCachedReferenceData() for v in values]
         elif dataTypeID == Terms.translationEnum.id:
             return [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values]
         else:
@@ -454,22 +440,22 @@ class Instance(dbmodels.Model):
         return cell
                 
     # Returns an array of arrays.
-    def getData(self, fieldsData, language=None, userInfo=None):
-        values = self._getValues(userInfo)
+    def getData(self, vs, fieldsData, language=None, userInfo=None):
+        values = self._groupValuesByField(vs, userInfo)
         return [self._getCellData(fieldData, values, language) for fieldData in fieldsData]
 
     # self should be a configuration object with fields.
     def getConfiguration(self):
         return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Terms.field)]
 
-    def getMaxElementIndex(self, field):
+    def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
                                  [e.position for e in self._getSubValues(field)],
                                  -1)
         if maxElementIndex < 0:
-            return None
+            return 0
         else:
-            return maxElementIndex
+            return maxElementIndex + 1
 
     def updateElementIndexes(self, field, newIndex, transactionState):
         ids = {}
@@ -527,23 +513,29 @@ class Instance(dbmodels.Model):
             for v in self.referenceValues.filter(instance=self.parent):
                 v.markAsDeleted(transactionState) 
                 
-    # Return the Value for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
     def getFieldByName(self, name):
-        vs = self.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.field)\
-                              .select_related('referenceValue')
-        for v in vs:
-            vs2 = v.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.name)\
-                              .select_related('referenceValue')
-            for v2 in vs2:
-                vs3 = v2.referenceValue.value_set.filter(deleteTransaction__isnull=True,
-                              field=Terms.uuName,
-                              stringValue=name)
-                for v3 in vs3:
-                    return v.referenceValue
-        raise Value.DoesNotExist('field "%s" does not exist' % name)
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__referenceValue__value__field=Terms.uuName,
+                                  referenceValue__value__referenceValue__value__stringValue=name)\
+                             .referenceValue
+
+    # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Self is of type configuration.
+    def getFieldByReferenceValue(self, key):
+        return self.value_set.select_related('referenceValue')\
+        				     .get(deleteTransaction__isnull=True,
+                                  field=Terms.field,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__id=key)\
+                             .referenceValue
 
     @property
     def inheritsSecurity(self):
@@ -825,6 +817,48 @@ class Instance(dbmodels.Model):
         field = Terms.getNamedInstance(TermNames.userID)
         id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
         return AuthUser.objects.get(pk=id)
+
+    # The following functions are used for loading scraped data into the system.
+    def getOrCreateTextValue(self, field, stringValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=stringValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, stringValue, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
+        children = self.value_set.filter(field=field,
+                                           stringValue=text,
+                                           languageCode=languageCode,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
+        
+    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+        children = self.value_set.filter(field=field,
+                                           referenceValue=referenceValue,
+                                           deleteTransaction__isnull=True)
+        if len(children):
+            return children[0]
+        else:
+            return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
+        
+    def getChildrenByName(self, field, nameField, name):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue__value__deleteTransaction__isnull=True,
+                                        referenceValue__value__field=nameField,
+                                        referenceValue__value__stringValue__iexact=name)
+    def getValueByReference(self, field, r):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue=r)
+    # The previous functions are used for loading scraped data into the system.
+
     
 class NameList():
     def __init__(self):
@@ -837,11 +871,6 @@ class NameList():
             nameFieldUUIDs = typeID._descriptors
             self.items[typeID] = nameFieldUUIDs
             return nameFieldUUIDs
-    
-    def descriptorField(self, v):
-        container = v.instance
-        fields = [None] + self.getNameUUIDs(container.typeID)
-        return reduce(lambda a, b: a if a else b if v.field == b[0] else None, fields) 
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -867,17 +896,14 @@ class Value(dbmodels.Model):
     
     @property
     def isDescriptor(self):
-        container = self.instance
-        configurationInstance = Instance.objects.filter(parent=container.typeID, typeID=Terms.configuration) \
-            .get(deleteTransaction__isnull=True)
-        fields = Instance.objects.filter(parent=configurationInstance, typeID=Terms.field) \
+        return Instance.objects.filter(parent__parent=self.instance.typeID, typeID=Terms.field) \
             .filter(deleteTransaction__isnull=True)\
             .filter(value__field=Terms.name,\
                     value__referenceValue=self.field,
                     value__deleteTransaction__isnull=True)\
             .filter(value__field=Terms.descriptorType,
-                    value__deleteTransaction__isnull=True)
-        return fields.count() > 0
+                    value__deleteTransaction__isnull=True)\
+            .exists()
 
     @property
     def isOriginalReference(self):
@@ -887,22 +913,13 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, language=None):
-        if not language:
-            description = self.referenceValue.description_set.get(language__isnull=True)
-            if not description:
-                description = self.referenceValue.description_set.get(language="en")
-        else:
-            description = self.referenceValue.description_set.get(instance=self.referenceValue, language=language)
-            
-        if not description:
-            f = self.referenceValue.description_set.all()
-            if f.count():
-                description = f[0]
-            else:
-                raise RuntimeError("no description for instance")
-            
         return { "id": self.id,
-              "value": {"id" : self.referenceValue.id, "description": description.text },
+              "value": {"id" : self.referenceValue.id, "description": self.referenceValue.getDescription(language) },
+              "position": self.position }
+            
+    def getCachedReferenceData(self):
+        return { "id": self.id,
+              "value": {"id" : self.referenceValue.id, "description": self.referenceValue._description },
               "position": self.position }
             
     # Updates the value of the specified object
@@ -967,12 +984,11 @@ class Value(dbmodels.Model):
 
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
-    language = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=True)
+    instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
     text = dbmodels.CharField(max_length=255, db_index=True, editable=True)
 
     def __str__(self):
-        return "%s - %s" % (self.language, self.text)
+        return "%s" % (self.text)
         
 # Security Sources are used on targets to determine which record contains the security rules for the target.    
 class AccessRecord(dbmodels.Model):

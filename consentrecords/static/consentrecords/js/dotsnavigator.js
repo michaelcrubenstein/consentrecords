@@ -71,6 +71,7 @@ var DotsNavigator = (function () {
 			$(this.nthPanel(newValue))
 				.animate({left: 0}, 700, "swing");
 		}
+		unblockClick();
 	}
 
 	DotsNavigator.prototype.nthPanel = function(n) {
@@ -78,6 +79,8 @@ var DotsNavigator = (function () {
 	}
 	
 	DotsNavigator.prototype.showDots = function() {
+		p = this.nthPanel(0);
+		p.onReveal.call(p, this.datum);
 		this.checkForwardEnabled();
 	}
 	
@@ -97,13 +100,12 @@ var DotsNavigator = (function () {
 		this.backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick())
+				if (prepareClick('click', _this.backButton.selectAll('span').text()))
 				{
 					showClickFeedback(this);
 					if (_this.value > 0)
 					{
 						_this.setValue(_this.value - 1);
-						unblockClick();
 					}
 					else
 						cancel();
@@ -123,10 +125,9 @@ var DotsNavigator = (function () {
 			else
 			{
 				_this.setValue(_this.value + 1);
-				unblockClick();
 			}
 		}
-		if (prepareClick())
+		if (prepareClick('click', this.doneButton.selectAll('span').text()))
 		{
 			if (this.isForwardEnabled())
 			{

@@ -31,19 +31,14 @@
     panel.new-experience-panel div.date-row {
 		text-align: center;
 		width: 100%;
-		height: 100%;
-    }
-    
-    .date-row {
-		overflow: hidden;
-    }
-    
-    .date-row > select {
-    	display: inline-block;
+		height: auto;
+		padding: 6px 12px;
+		background: white;
     }
     
     .dots ~ panel {
     	display: table;
+    	table-layout: fixed;
     	height: calc(100% - 50px);
     	width: 100%;
     	background: transparent;
@@ -56,36 +51,6 @@
 		margin: 10px;
 	}
 	
-	/* The following are used to have a set of fixed-height divs within a container and
-	   one variable height div that takes up the remaining space and whose contents scroll
-	   vertically if necessary. This is used in panel one.
-	 */
-	.table {
-		display: table;
-	}
-
-	.table-row {
-		display: table-row;
-	}
-
-	/* This is associated with the variable height div. */
-	.body {
-		display: table-row;
-		height: 100%;
-	}
-
-	.body > div {
-		display: table-cell;
-		height: 100%;
-	}
-
-	.body > div > div {
-		height: 100%;
-		position: relative;
-		overflow-y: scroll;
-		overflow-x: hidden;
-	}
-
 	panel.pathway text {
 		text-decoration: none;
 		cursor: pointer;
@@ -123,3 +88,37 @@
 		outline: none;
 	}
 	
+	panel.confirm-experience div.summary {
+		background-color: white;
+	}
+	
+	panel.confirm-experience header
+	{
+		width: 100%;
+		padding: 6px 12px;
+		text-align: left;
+		font-weight: bold;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	panel.confirm-experience .organization {
+		margin-left: 12px;
+		padding-bottom: 5px;
+		border-bottom: 1px solid #eee;
+	}
+	panel.confirm-experience .organization>label {
+		font-weight: normal;
+	}
+	panel.confirm-experience .address-line {
+		margin-left: 0px;
+		font-size: smaller;
+	}
+	panel.confirm-experience label {
+		color: #222;
+		font-weight: normal;
+		margin: 0;
+		padding: 6px 12px;
+	}
+
+

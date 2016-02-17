@@ -283,11 +283,7 @@ class api:
                 if indexString:
                     newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
                 else:
-                    maxIndex = container.getMaxElementIndex(field)
-                    if maxIndex == None: # Note that it could be 0.
-                        newIndex = 0
-                    else:
-                        newIndex = maxIndex + 1
+                    newIndex = container.getNextElementIndex(field)
     
                 item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
                 if item.isDescriptor:
@@ -304,15 +300,24 @@ class api:
     def selectAll(user, data):
         try:
             path = data.get("path", None)
-            limit = int(data.get("limit", "0"))
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
             userInfo = UserInfo(user)
             language=None
         
-            if path:
-                p = pathparser.selectAllDescriptors(path=path, limit=limit, language=language, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            else:
+            if not path:
                 raise ValueError("path was not specified")
         
+            uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
+                            .select_related('description')\
+                            .order_by('description__text', 'id')
+            
+            if end > 0:
+                uuObjects = uuObjects[start:end]
+            elif start > 0:
+                uuObjects = uuObjects[start:]
+            
+            p = [i.getReferenceData(language) for i in uuObjects]                                                
             results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -320,14 +325,15 @@ class api:
             results = {'success':False, 'error': str(e)}
         
         return JsonResponse(results)
-        
+    
+    # getValues is used to test whether or not a particular value exists in a field of any
+    # instance with the specified path.    
     def getValues(user, data):
         try:
             path = data.get("path", None)
             if not path:
                 return JsonResponse({'success':False, 'error': 'the path was not specified'})
                 
-            limit = int(data.get("limit", "0"))
             userInfo = UserInfo(user)
             language=None
         
@@ -335,7 +341,7 @@ class api:
             fieldName = data.get('fieldName', None)
         
             if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the elementUUID was not specified'})
+                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
             elif Terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
@@ -347,7 +353,7 @@ class api:
             if value is None:
                 return JsonResponse({'success':False, 'error': 'the value was not specified'})
             
-            containers = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
             p = map(lambda v: v.getReferenceData(language=language), itertools.chain.from_iterable(m))
                             
@@ -407,34 +413,32 @@ class api:
             
         return JsonResponse(results)
     
-    def _getFieldsData(uuObject, fieldsDataDictionary):
-        if uuObject.typeID in fieldsDataDictionary:
-            return fieldsDataDictionary[uuObject.typeID]
-        else:
-            fieldsData = uuObject.getFieldsData()
-            if not len(fieldsData):
-                raise RuntimeError("the specified item is not configured")
-            fieldsDataDictionary[uuObject.typeID] = fieldsData
-            return fieldsData
-
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(uuObject, fieldsDataDictionary)
+        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
         
-        cells = uuObject.getData(fieldsData, language, userInfo)
+        vs = uuObject.values
+            
+        cells = uuObject.getData(vs, fieldsData, language, userInfo)
     
         data = {"id": uuObject.id, 
-                "description": uuObject.descriptions[0].text,
+                "description": uuObject.getDescription(language),
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
         if 'parents' in fields:
             while uuObject.parent:
-                uuObject = uuObject.parent
+                uuObject = Instance.objects\
+                                .select_related('typeID')\
+                                .select_related('parent')\
+                                .select_related('description')\
+                                .select_related('typeID__description')\
+                                .get(pk=uuObject.parent.id)
+                                
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.description()},
+                        'value': {'id': uuObject.id, 'description': uuObject.getDescription(language)},
                         'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
@@ -444,7 +448,8 @@ class api:
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
             path = data.get('path', None)
-            limit = int(data.get("limit", "0"))
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
         
             if not path:
                 return JsonResponse({'success':False, 'error': "path was not specified in getData"})
@@ -455,19 +460,29 @@ class api:
             language = data.get('language', None)
 
             userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, limit=limit, userInfo=userInfo, securityFilter=userInfo.readFilter)
+            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             fieldsDataDictionary = {}
             nameLists = NameList()
             
-            # preload the typeID, parent and description to improve performance.
-            uuObjects = uuObjects.select_related('typeID').select_related('parent')
-            if language:
-                queryset=Description.objects.filter(language=language)
-            else:
-                queryset=Description.objects.filter(language__isnull=True)
-            uuObjects = uuObjects.prefetch_related(Prefetch('description_set',
-                                                            queryset=queryset,
-                                                            to_attr='descriptions'))
+            # preload the typeID, parent, value_set and description to improve performance.
+            valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+                .order_by('position')\
+                .select_related('field')\
+                .select_related('field__id')\
+                .select_related('referenceValue')\
+                .select_related('referenceValue__description')
+
+            uuObjects = uuObjects.select_related('typeID').select_related('parent')\
+                                 .select_related('description')\
+                                 .prefetch_related(Prefetch('value_set',
+                                                            queryset=valueQueryset,
+                                                            to_attr='values'))
+            
+            uuObjects = uuObjects.order_by('description__text', 'id');
+            if end > 0:
+                uuObjects = uuObjects[start:end]
+            elif start > 0:
+                uuObjects = uuObjects[start:]
                                                             
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
@@ -482,9 +497,15 @@ class api:
         return JsonResponse(results)
     
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = api._getFieldsData(v.referenceValue, fieldsDataDictionary)
+        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
         data = v.getReferenceData(language)
-        data["value"]["cells"] = v.referenceValue.getData(fieldsData, language, userInfo)
+        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .select_related('referenceValue__description')
+        data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
         return data;
     
     def getCellData(user, data):
@@ -585,8 +606,6 @@ class api:
         return JsonResponse(results)
 
 def createInstance(request):
-    LogRecord.emit(request.user, 'consentrecords/createInstance', '')
-
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
     
@@ -596,8 +615,6 @@ def createInstance(request):
     return api.createInstance(request.user, request.POST)
     
 def updateValues(request):
-    LogRecord.emit(request.user, 'consentrecords/updateValues', '')
-    
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
@@ -608,9 +625,6 @@ def updateValues(request):
     
 # Handle a POST event to add a value to an object that references another other or data.
 def addValue(request):
-    
-    LogRecord.emit(request.user, 'consentrecords/addValue', '')
-
     if request.method != "POST":
         raise Http404("addValue only responds to POST methods")
     
@@ -620,8 +634,6 @@ def addValue(request):
     return api.addValue(request.user, request.POST)
         
 def deleteInstances(request):
-    LogRecord.emit(request.user, 'consentrecords/deleteInstances', '')
-    
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
@@ -631,8 +643,6 @@ def deleteInstances(request):
     return api.deleteInstances(request.user, request.POST)
     
 def deleteValue(request):
-    LogRecord.emit(request.user, 'consentrecords/deleteValue', '')
-    
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
@@ -660,24 +670,18 @@ def getConfiguration(request):
     return api.getConfiguration(request.user, request.GET)
     
 def getUserID(request):
-    LogRecord.emit(request.user, 'consentrecords/getUserID', '')
-    
     if request.method != "GET":
         raise Http404("getUserID only responds to GET methods")
     
     return api.getUserID(request.user, request.GET)
 
 def getData(request):
-    LogRecord.emit(request.user, 'consentrecords/getData', '')
-    
     if request.method != "GET":
         raise Http404("getData only responds to GET methods")
     
     return api.getData(request.user, request.GET)
 
 def getCellData(request):
-    LogRecord.emit(request.user, 'consentrecords/getCellData', '')
-    
     if request.method != "GET":
         raise Http404("getCellData only responds to GET methods")
     
@@ -716,8 +720,6 @@ class ApiGetUserIDEndpoint(ProtectedResourceView):
         
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
-    LogRecord.emit(request.user, 'consentrecords/submitsignin', '')
-    
     if request.method != "POST":
         raise Http404("submitsignin only responds to POST methods")
     
@@ -727,7 +729,7 @@ def submitsignin(request):
         results = userviews.signinResults(request)
         if results["success"]:
             user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
-            results["user"] = { "id": user.id, "description" : user.description(None) }        
+            results["user"] = { "id": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -736,8 +738,6 @@ def submitsignin(request):
     return JsonResponse(results)
 
 def submitNewUser(request):
-    LogRecord.emit(request.user, 'consentrecords/submitNewUser', '')
-        
     if request.method != "POST":
         raise Http404("submitNewUser only responds to POST methods")
     
@@ -752,7 +752,7 @@ def submitNewUser(request):
             results = userviews.newUserResults(request)
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-                results["user"] = { "id": userInstance.id, "description" : userInstance.description(None) }
+                results["user"] = { "id": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

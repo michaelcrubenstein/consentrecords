@@ -125,13 +125,23 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				i.checkCells(undefined,
-					function() {
-						successFunction();
-						_this.queue.next();
-					},
-					failFunction);
-				return false;
+				storedI = crp.getInstance(i.getValueID());
+				if (storedI && storedI.isDataLoaded)
+				{
+					i.importCells(storedI.value.cells);
+					successFunction();
+					return true;
+				}
+				else
+				{
+					i.checkCells(undefined,
+						function() {
+							successFunction();
+							_this.queue.next();
+						},
+						failFunction);
+					return false;
+				}
 			});
 	};
 	
@@ -178,6 +188,8 @@ var CRP = (function() {
 				else
 				{
 					cr.getData({path: args.path, 
+								start: args.start,
+								end: args.end,
 								fields: args.fields,
 								done: function(newInstances) {
 											_this.paths[args.path] = newInstances;
@@ -239,9 +251,9 @@ cr.Cell = (function()
 			}
 		};
 
-		Cell.prototype.setup = function (objectData)
+		Cell.prototype.setup = function (parent)
 		{
-			this.setParent(objectData);
+			this.setParent(parent);
 	
 			/* If this is a unique value and there is no value, set up an unspecified one. */
 			if (this.data.length == 0 &&
@@ -893,12 +905,13 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		for (var i = 0; i < this.value.cells.length; ++i)
-		{
-			var cell = this.value.cells[i];
-			if (cell.field.name == name)
-				return cell;
-		}
+		if (this.value.cells)
+			for (var i = 0; i < this.value.cells.length; ++i)
+			{
+				var cell = this.value.cells[i];
+				if (cell.field.name == name)
+					return cell;
+			}
 		return undefined;
 	}
 
@@ -1137,6 +1150,8 @@ cr.urls = {
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
+		updatePassword: '/user/updatepassword/',
+		log: '/monitor/log/',
 	};
 	
 cr.accessToken = null;
@@ -1151,8 +1166,8 @@ cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
 	};
 	
-	/* args is an object with up to four parameters: path, limit, done, fail */
-cr["selectAll"] = function(args)
+	/* args is an object with up to five parameters: path, start, end, done, fail */
+cr.selectAll = function(args)
 	{
 		if (!args.fail)
 			throw ("failFunction is not specified");
@@ -1164,8 +1179,10 @@ cr["selectAll"] = function(args)
 		else
 			throw "path was not specified to selectAll"
 			
-		if (args.limit !== undefined)
-			argList.limit = args.limit;
+		if (args.start !== undefined)
+			argList.start = args.start;
+		if (args.end !== undefined)
+			argList.end = args.end;
 		
 		$.getJSON(cr.urls.selectAll, 
 			argList,
@@ -1186,7 +1203,7 @@ cr["selectAll"] = function(args)
 		);
 	};
 	
-	/* args is an object with up to four parameters: path, limit, done, fail.
+	/* args is an object with up to five parameters: path, start, end, done, fail.
 		The done method takes a single argument, which is an array of value objects. */
 cr.getValues = function (args)
 	{
@@ -1210,8 +1227,10 @@ cr.getValues = function (args)
 		else
 			throw "value was not specified to getValues"
 			
-		if (args.limit !== undefined)
-			argList.limit = args.limit;
+		if (args.start !== undefined)
+			argList.start = args.start;
+		if (args.end !== undefined)
+			argList.end = args.end;
 		
 		$.getJSON(cr.urls.getValues, 
 			argList,
@@ -1502,15 +1521,17 @@ cr.getData = function(args)
 			throw ("successFunction is not specified");
 		if (!args.path)
 			throw ("path is not specified");
-		
+			
 		var data = {path : args.path}
 		if (args.fields)
 			data['fields'] = JSON.stringify(args.fields); 
 		if (cr.accessToken)
 			data["access_token"] = cr.accessToken;
 				  
-		if (args.limit !== undefined)
-			data.limit = args.limit;
+		if (args.start !== undefined)
+			data.start = args.start;
+		if (args.end !== undefined)
+			data.end = args.end;
 		
 		$.getJSON(cr.urls.getData, data,
 			function(json)
@@ -1542,19 +1563,51 @@ cr.getData = function(args)
 					}
 				);
 	},
-cr.submitSignout = function(successFunction, failFunction)
+cr.submitSignout = function(done, fail)
 	{
 		$.post(cr.urls.submitSignout, { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
 									function(json){
-		if (json['success']) {
-			crp.clear();
-			successFunction();
-		}
-		else
-			failFunction(json.error);
-	  })
+			if (json['success']) {
+				crp.clear();
+				done();
+			}
+			else
+				fail(json.error);
+		})
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+	
+cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
+	{
+		$.post(cr.urls.updatePassword, {username: username,
+										oldPassword: oldPassword,
+										newPassword: newPassword }, 
+									function(json){
+			if (json['success']) {
+				done();
+			}
+			else
+				fail(json.error);
+		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+
+cr._logQueue = new Queue(true)
+cr.logRecord = function(name, message)
+	{
+		cr._logQueue.add(function()
+		{
+			/* This message is silent and does not record errors. */
+			message = message !== undefined ? message : 'None';
+			$.post(cr.urls.log,
+				   {name: name, message: message })
+			.done(function() {cr._logQueue.dequeue()});
+			return false;
 		});
 	}

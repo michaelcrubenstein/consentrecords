@@ -25,7 +25,7 @@ u = us.typeInstances.all()[0]
 me = Terms.getNamedInstance('More Experiences')
 v = u.getSubValue(me)
 print(v.referenceValue)
-print(v.referenceValue.description())
+print(v.referenceValue.getDescription())
 
 print ('##################################')
 print ('# Test 3 ')
@@ -41,7 +41,6 @@ c = us._getSubInstances(Terms.configuration)[0]
 fs = c._getSubInstances(Terms.field)
 
 print (c.getConfiguration())
-print (str(c.getMaxElementIndex(Terms.field)))
 
 print ('##################################')
 print ('# Test 6 ')

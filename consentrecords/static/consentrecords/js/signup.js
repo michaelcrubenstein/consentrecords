@@ -26,7 +26,7 @@ var Signup = (function () {
 			
 	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
@@ -93,34 +93,44 @@ var Signup = (function () {
 		
 		navContainer.appendTitle('Create a New Account');
 
-		function setupPanel0(p, signup)
+		function setupPanel0(signup)
 		{
+			var p = d3.select(this);
+
 			p.append('h1')
 				.text('Birthday');
 				
 			var row = p.append('table').classed('labeled', true)
 				.append('tr');
-			row.append('td').text('Birth Month and Year');
-			var monthInput = row.append('td')
-				.append('select')
-				.classed('month', true)
+			row.append('td').text('Birth Month');
+			var yearCell = row.append('td').classed('full-width', true);
+			var monthDiv = yearCell.append('div').classed('select-container', true);
+			monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+			var monthInput = monthDiv.append('select')
 				.on('change', function(d)
 					{
+						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
+						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					});
-			var yearInput = row.append('td')
-				.classed('year full-width', true)
-				.append('select')
+					})
+				.style('color', '#777');
+					
+			var yearDiv = yearCell.append('div').classed('select-container', true);
+			yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+			var yearInput = yearDiv.append('select')
 				.on('change', function(d)
 					{
+						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
+						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					});
+					})
+				.style('color', '#777');
 				
 			p.append('p')
-				.text('Your birthday will be shared only with the people you want. We collect your birth month and year to help match you to the right opportunities.');
+				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
 				
 			p.append('p')
-				.text('We may also collect the day of your birthday later, depending on the requirements of our partners who provide specific opportunities to you.');
+				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
 				
 			var minYear, maxYear;
 			maxYear = (new Date()).getFullYear();
@@ -134,14 +144,16 @@ var Signup = (function () {
 				.data(years)
 				.enter()
 				.append('option')
-				.text(function(d) { return d; });
+				.text(function(d) { return d; })
+				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
 					
 			var months = ['month'].concat(Date.CultureInfo.monthNames);
 			monthInput.selectAll('option')
 				.data(months)
 				.enter()
 				.append('option')
-				.text(function(d) { return d; });
+				.text(function(d) { return d; })
+				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
 				
 			signup.getBirthday = function()
 			{
@@ -176,7 +188,7 @@ var Signup = (function () {
 				}
 			}
 			
-			p0.append('div')
+			p.append('div')
 				.append('a').attr('id', "id_termsOfUseLink")
 				.classed("btn btn-link btn-xs", true)
 				.text("Terms Of Use")
@@ -188,8 +200,10 @@ var Signup = (function () {
 
 				});
 			
-			var termsAlert = p0.append('div')
+			var termsAlert = p.append('div')
 				.append('div').attr('id', "id_termsAlert");
+				
+			this.onReveal = null;
 		}
 	
 		function setupPanel2(signup)
@@ -286,7 +300,30 @@ var Signup = (function () {
 			var okPasswordSpan = row.append('td')
 				.append('span')
 				.classed('glyphicon', true);
-				
+			
+			var verifyAlertRow = t.append('tr')
+				.style("display", "none");
+			verifyAlertRow.append('td');
+			var alertContainerDiv = verifyAlertRow.append('td').classed('full-width', true);
+			verifyAlertRow.append('td');
+			
+			function showVerifyAlert(message)
+			{
+				verifyAlertRow.style("display", null);
+				var alertDiv = alertContainerDiv
+					.append('div').classed('alert alert-danger alert-dismissable', true);
+				var closeBox = alertDiv.append('button').attr('type', 'button')
+						.classed('close', true)
+						.attr('data-dismiss', 'alert')
+						.attr('aria-hidden', 'true');
+				$(closeBox.node()).html('&times;');
+				$(closeBox.node()).one('click', function() { verifyAlertRow.style("display", "none"); });
+				alertDiv.append('span')
+					.text('The password and verification do not match.');
+					
+				unblockClick();
+			}
+		
 			var row = t.append('tr');
 			row.append('td').text('Verify');
 			var verifyInput = row.append('td')
@@ -320,7 +357,7 @@ var Signup = (function () {
 				}
 				else if (verifyInput.property("value") != password)
 				{
-					syncFailFunction('The password and the password verification do not match.');
+					showVerifyAlert('The password and the password verification do not match.');
 					verifyInput.node().focus();
 				}
 				else
@@ -379,7 +416,7 @@ var Signup = (function () {
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
 			cell.append('span').text('Email Only');
-			row.append('td').append('p').text('Others can search for your email address, which lets them give you private access to their profiles.');
+			row.append('td').append('p').text('Others can search for your email address, which lets them give you access to their profiles.');
 
 			row = t.append('tr');
 			cell = row.append('td');
@@ -392,8 +429,8 @@ var Signup = (function () {
 						var _this = this;
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
-			cell.append('span').text('All*');
-			row.append('td').append('p').text('Others can find you and look at your information *except for the information you explicitly restrict from view.');
+			cell.append('span').text('All');
+			row.append('td').append('p').text('Others can look at your information (except for information you restrict from view).');
 
 			signup.getPublicAccess = function()
 			{
@@ -429,13 +466,10 @@ var Signup = (function () {
 			this.onReveal = null;
 		}
 	
-		var p0 = d3.select(this.dots.nthPanel(0));
-		setupPanel0(p0, this);
+		this.dots.nthPanel(0).onReveal = setupPanel0;
 		this.dots.nthPanel(1).onReveal = setupPanel2;
 		this.dots.nthPanel(2).onReveal = setupPanel3;
 		this.dots.nthPanel(3).onReveal = setupPanel4;
-
-		panel2Div.appendAlertContainer();
 		
 		showPanelUp(sitePanel.node());
 		this.dots.showDots();
