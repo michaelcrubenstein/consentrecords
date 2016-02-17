@@ -77,8 +77,6 @@ class ValueAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction', 'deleteTransaction')}),
     )
     readonly_fields = ('id','instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction', 'deleteTransaction')
-    search_fields = (['id', 'stringValue', 'referenceValue__value__stringValue'])
-    readonly_fields = ('id','instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'transaction', 'deleteTransaction')
     search_fields = (['id', 'instance__id', 'stringValue', 'referenceValue__value__stringValue'])
     
 class TransactionAdmin(admin.ModelAdmin):
