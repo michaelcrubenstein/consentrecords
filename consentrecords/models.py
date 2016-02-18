@@ -1244,10 +1244,8 @@ class Terms():
     def getTranslationNamedEnumerator(uuname, stringValue, languageCode):
         v = Value.objects.get(instance=uuname, field = Terms.enumerator,
                               deleteTransaction__isnull=True,
-                              referenceValue__value__field=Terms.translation,
-                              referenceValue__value__deleteTransaction__isnull=True,
-                              referenceValue__value__stringValue=stringValue,
-                              referenceValue__value__languageCode=languageCode)
+                              stringValue=stringValue,
+                              languageCode=languageCode)
         return v.referenceValue
         
     def isUUID(s):
