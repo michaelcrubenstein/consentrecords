@@ -1,5 +1,5 @@
 _uuname
-    _uuname: Address
+    _name: Address
     _configuration
         _name: Boston
         _field
@@ -19,20 +19,20 @@ _uuname
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=State]>enumerator
+            _pick object path: _uuname[_name=State]>enumerator
         _field
             _name: Zip Code
             _data type: _string
             _max capacity: _unique value
             _descriptor type: _by text
 _uuname
-    _uuname: Birthday
+    _name: Birthday
 _uuname
-    _uuname: City
+    _name: City
 _uuname
-    _uuname: Color
+    _name: Color
 _uuname
-    _uuname: Consent Form
+    _name: Consent Form
     _configuration
         _name: Boston
         _field
@@ -47,11 +47,11 @@ _uuname
             _max capacity: _multiple values
             _object add rule: _create one
 _uuname
-    _uuname: Consent Record
+    _name: Consent Record
     _configuration
         _name: Boston
 _uuname
-    _uuname: Employee
+    _name: Employee
     _configuration
         _name: Boston
         _field
@@ -62,7 +62,7 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: Employees
+    _name: Employees
     _configuration
         _name: Boston
         _field
@@ -73,11 +73,11 @@ _uuname
             _object add rule: _create one
             _of kind: Employee
 _uuname
-    _uuname: End
+    _name: End
 _uuname
-    _uuname: End Time
+    _name: End Time
 _uuname
-    _uuname: Enrollment
+    _name: Enrollment
     _configuration
         _name: Boston
         _field
@@ -88,7 +88,7 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: Enrollments
+    _name: Enrollments
     _configuration
         _name: Boston
         _field
@@ -99,7 +99,7 @@ _uuname
             _object add rule: _create one
             _of kind: Enrollment
 _uuname
-    _uuname: enumerator
+    _name: enumerator
     _configuration
         _name: Bootstrap
         _field
@@ -113,7 +113,7 @@ _uuname
             _descriptor type: _by text
             _object add rule: _create one
 _uuname
-    _uuname: Experience
+    _name: Experience
     _configuration
         _name: Boston
         _field
@@ -132,7 +132,7 @@ _uuname
             _data type: _datestamp
             _max capacity: _unique value
 _uuname
-    _uuname: Experiences
+    _name: Experiences
     _configuration
         _name: Boston
         _field
@@ -143,7 +143,7 @@ _uuname
             _object add rule: _create one
             _of kind: Experience
 _uuname
-    _uuname: Inquiries
+    _name: Inquiries
     _configuration
         _name: Boston
         _field
@@ -152,14 +152,14 @@ _uuname
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname="_special access"]>enumerator
+            _pick object path: _uuname[_name="_special access"]>enumerator
         _field
             _name: _public access
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=_privilege]>enumerator[_name=_register]
+            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_register]
         _field
             _name: _primary administrator
             _data type: _object
@@ -180,7 +180,7 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: Inquiry
+    _name: Inquiry
     _configuration
         _name: Boston
         _field
@@ -189,17 +189,17 @@ _uuname
             _max capacity: _unique value
             _descriptor type: _by text
 _uuname
-    _uuname: Inquiry Access Group
+    _name: Inquiry Access Group
 _uuname
-    _uuname: Maximum Age
+    _name: Maximum Age
 _uuname
-    _uuname: Maximum Grade
+    _name: Maximum Grade
 _uuname
-    _uuname: Minimum Age
+    _name: Minimum Age
 _uuname
-    _uuname: Minimum Grade
+    _name: Minimum Grade
 _uuname
-    _uuname: More Experience
+    _name: More Experience
     _configuration
         _name: Boston
         _field
@@ -253,7 +253,7 @@ _uuname
             _data type: _datestamp (day optional)
             _max capacity: _unique value
 _uuname
-    _uuname: More Experiences
+    _name: More Experiences
     _configuration
         _name: Boston
         _field
@@ -264,7 +264,7 @@ _uuname
             _object add rule: _create one
             _of kind: More Experience
 _uuname
-    _uuname: Offering
+    _name: Offering
     _configuration
         _name: Boston
         _field
@@ -306,7 +306,7 @@ _uuname
             _data type: _number
             _max capacity: _unique value
 _uuname
-    _uuname: Offerings
+    _name: Offerings
     _configuration
         _name: Boston
         _field
@@ -317,7 +317,7 @@ _uuname
             _object add rule: _create one
             _of kind: Offering
 _uuname
-    _uuname: Organization
+    _name: Organization
     _configuration
         _name: Boston
         _field
@@ -354,7 +354,7 @@ _uuname
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_find,_read]
         _field
             _name: Inquiry Access Group
             _data type: _object
@@ -364,7 +364,7 @@ _uuname
             _pick object path: parent>_group
     _default access: _custom
 _uuname
-    _uuname: Period
+    _name: Period
     _configuration
         _name: Boston
         _field
@@ -374,7 +374,7 @@ _uuname
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=Weekday]>enumerator
+            _pick object path: _uuname[_name=Weekday]>enumerator
         _field
             _name: Start Time
             _data type: _time
@@ -386,9 +386,9 @@ _uuname
             _max capacity: _unique value
             _descriptor type: _by text
 _uuname
-    _uuname: Registration Deadline
+    _name: Registration Deadline
 _uuname
-    _uuname: Service
+    _name: Service
     _configuration
         _name: Boston
         _field
@@ -404,7 +404,7 @@ _uuname
             _object add rule: _pick one
             _of kind: Service Domain
 _uuname
-    _uuname: Service Domain
+    _name: Service Domain
     _configuration
         _name: Boston
         _field
@@ -418,7 +418,7 @@ _uuname
             _data type: _string
             _max capacity: _unique value
 _uuname
-    _uuname: Session
+    _name: Session
     _configuration
         _name: Boston
         _field
@@ -463,7 +463,7 @@ _uuname
             _object add rule: _create one
             _of kind: Period
 _uuname
-    _uuname: Sessions
+    _name: Sessions
     _configuration
         _name: Boston
         _field
@@ -474,7 +474,7 @@ _uuname
             _object add rule: _create one
             _of kind: Session
 _uuname
-    _uuname: Site
+    _name: Site
     _configuration
         _name: Boston
         _field
@@ -500,7 +500,7 @@ _uuname
             _data type: _url
             _max capacity: _unique value
 _uuname
-    _uuname: Sites
+    _name: Sites
     _configuration
         _name: Boston
         _field
@@ -511,29 +511,29 @@ _uuname
             _object add rule: _create one
             _of kind: Site
 _uuname
-    _uuname: Start
+    _name: Start
 _uuname
-    _uuname: Start Time
+    _name: Start Time
 _uuname
-    _uuname: State
+    _name: State
     enumerator
         _name: MA
     enumerator
         _name: NH
 _uuname
-    _uuname: Street
+    _name: Street
 _uuname
-    _uuname: User Entered Offering
+    _name: User Entered Offering
 _uuname
-    _uuname: User Entered Organization
+    _name: User Entered Organization
 _uuname
-    _uuname: User Entered Service
+    _name: User Entered Service
 _uuname
-    _uuname: User Entered Site
+    _name: User Entered Site
 _uuname
-    _uuname: Web Site
+    _name: Web Site
 _uuname
-    _uuname: Weekday
+    _name: Weekday
     enumerator
         _name: M
     enumerator
@@ -549,9 +549,9 @@ _uuname
     enumerator
         _name: Su
 _uuname
-    _uuname: Zip Code
+    _name: Zip Code
 _uuname
-    _uuname: _access record
+    _name: _access record
     _configuration
         _name: Bootstrap
         _field
@@ -573,9 +573,9 @@ _uuname
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=_privilege]>enumerator
+            _pick object path: _uuname[_name=_privilege]>enumerator
 _uuname
-    _uuname: _boolean
+    _name: _boolean
     _configuration
         _name: Bootstrap
         _field
@@ -587,7 +587,7 @@ _uuname
     enumerator
         _translation: en - _no
 _uuname
-    _uuname: _configuration
+    _name: _configuration
     _configuration
         _name: Bootstrap
         _field
@@ -602,7 +602,7 @@ _uuname
             _object add rule: _create one
             _of kind: _field
 _uuname
-    _uuname: _data type
+    _name: _data type
     enumerator
         _name: _object
     enumerator
@@ -624,19 +624,19 @@ _uuname
     enumerator
         _name: _translation
 _uuname
-    _uuname: _default access
+    _name: _default access
     enumerator
         _name: _custom
 _uuname
-    _uuname: _descriptor type
+    _name: _descriptor type
     enumerator
         _name: _by text
     enumerator
         _name: _by count
 _uuname
-    _uuname: _email
+    _name: _email
 _uuname
-    _uuname: _field
+    _name: _field
     _configuration
         _name: Bootstrap
         _field
@@ -651,25 +651,25 @@ _uuname
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_uuname="_data type"]>"enumerator"
+            _pick object path: _uuname[_name="_data type"]>"enumerator"
         _field
             _name: _max capacity
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_uuname="_max capacity"]>"enumerator"
+            _pick object path: _uuname[_name="_max capacity"]>"enumerator"
         _field
             _name: _descriptor type
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_uuname="_descriptor type"]>"enumerator"
+            _pick object path: _uuname[_name="_descriptor type"]>"enumerator"
         _field
             _name: _object add rule
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_uuname="_object add rule"]>"enumerator"
+            _pick object path: _uuname[_name="_object add rule"]>"enumerator"
         _field
             _name: _of kind
             _data type: _object
@@ -681,9 +681,9 @@ _uuname
             _data type: _string
             _max capacity: _unique value
 _uuname
-    _uuname: _first name
+    _name: _first name
 _uuname
-    _uuname: _group
+    _name: _group
     _configuration
         _name: Bootstrap
         _field
@@ -705,33 +705,33 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: _language
+    _name: _language
     enumerator
         _name: English
 _uuname
-    _uuname: _last name
+    _name: _last name
 _uuname
-    _uuname: _max capacity
+    _name: _max capacity
     enumerator
         _name: _unique value
     enumerator
         _name: _multiple values
 _uuname
-    _uuname: _name
+    _name: _name
 _uuname
-    _uuname: _object add rule
+    _name: _object add rule
     enumerator
         _name: _pick one
     enumerator
         _name: _create one
 _uuname
-    _uuname: _of kind
+    _name: _of kind
 _uuname
-    _uuname: _pick object path
+    _name: _pick object path
 _uuname
-    _uuname: _primary administrator
+    _name: _primary administrator
 _uuname
-    _uuname: _privilege
+    _name: _privilege
     enumerator
         _name: _find
     enumerator
@@ -743,15 +743,15 @@ _uuname
     enumerator
         _name: _register
 _uuname
-    _uuname: _public access
+    _name: _public access
 _uuname
-    _uuname: _special access
+    _name: _special access
     enumerator
         _name: _custom
 _uuname
-    _uuname: _text
+    _name: _text
 _uuname
-    _uuname: _translation
+    _name: _translation
     _configuration
         _name: Bootstrap
         _field
@@ -767,7 +767,7 @@ _uuname
             _of kind: _language
             _pick object path: _uuname[_uuname="_language"]>"enumerator"
 _uuname
-    _uuname: _user
+    _name: _user
     _configuration
         _name: Boston
         _field
@@ -805,7 +805,7 @@ _uuname
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_find,_read]
         _field
             _name: _primary administrator
             _data type: _object
@@ -814,9 +814,9 @@ _uuname
             _of kind: _user
     _default access: _custom
 _uuname
-    _uuname: _userID
+    _name: _userID
 _uuname
-    _uuname: _users
+    _name: _users
     _configuration
         _name: Bootstrap
         _field
@@ -827,11 +827,11 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: _uuname
+    _name: _uuname
     _configuration
         _name: Bootstrap
         _field
-            _name: _uuname
+            _name: _name
             _data type: _string
             _max capacity: _unique value
             _descriptor type: _by text
@@ -851,4 +851,4 @@ _uuname
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_uuname="_default access"]>"enumerator"
+            _pick object path: _uuname[_name="_default access"]>enumerator
