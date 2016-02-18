@@ -208,7 +208,7 @@ var SharingPanel = (function() {
 			{name: "_write", id: "", accessRecords: [], accessors: [], label: "Who Can Add Information About You"},
 			{name: "_administer", id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
-		var privilegePath = "_uuname[_uuname=_privilege]>enumerator";
+		var privilegePath = "_uuname[_name=_privilege]>enumerator";
 		crp.getData({path: privilegePath, 
 					 done: function(enumerators) { _this.getPrivileges(panel2Div, enumerators); }, 
 					 fail: asyncFailFunction});
