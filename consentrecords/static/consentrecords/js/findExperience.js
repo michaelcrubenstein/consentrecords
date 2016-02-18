@@ -608,7 +608,8 @@ var FindExperiencePanel = (function () {
 					}
 				});
 				
-			panel2Div.selectAll('p').remove();
+			crv.stopLoadingMessage(loadingMessage);
+			loadingMessage.remove();
 			for (var i = 0; i < cell.data.length; ++i)
 			{
 				var d = cell.data[i];
@@ -620,7 +621,7 @@ var FindExperiencePanel = (function () {
 			}
 		}
 		
-		crv.appendLoadingMessage(panel2Div.node());
+		var loadingMessage = crv.appendLoadingMessage(panel2Div.node());
 			
 		var path = "Service";
 		crp.getData({path: path, 

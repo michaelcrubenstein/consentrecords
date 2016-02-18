@@ -32,9 +32,49 @@ var crv = {
 			    
 	appendLoadingMessage: function(node)
 	{
-		return d3.select(node).append('p')
+		var div = d3.select(node).append('div').classed('loading', true);
+		var parent = div.append('span');
+		var child = parent.append('span');
+		div.append('span')
 			.classed("help-block", true)
 			.text("Loading...");
+		var opts = {
+		  lines: 13 // The number of lines to draw
+		, length: 4 // The length of each line
+		, width: 2 // The line thickness
+		, radius: 5 // The radius of the inner circle
+		, scale: 1 // Scales overall size of the spinner
+		, corners: 1 // Corner roundness (0..1)
+		, color: '#000' // #rgb or #rrggbb or array of colors
+		, opacity: 0.25 // Opacity of the lines
+		, rotate: 0 // The rotation offset
+		, direction: 1 // 1: clockwise, -1: counterclockwise
+		, speed: 1 // Rounds per second
+		, trail: 60 // Afterglow percentage
+		, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+		, zIndex: 2e9 // The z-index (defaults to 2000000000)
+		, className: 'spinner' // The CSS class to assign to the spinner
+		, top: '15px' // Top position relative to parent
+		, left: '16px' // Left position relative to parent
+		, shadow: false // Whether to render a shadow
+		, hwaccel: false // Whether to use hardware acceleration
+		, position: 'relative' // Element positioning
+		}
+		var spinner = new Spinner(opts).spin(child.node());
+		div.datum(spinner);
+		return div;
+	},
+	
+	startLoadingMessage: function(div)
+	{
+		var spinner = div.datum();
+		spinner.spin(div.selectAll('span:first-child').node());
+	},
+
+	stopLoadingMessage: function(div)
+	{
+		var spinner = div.datum();
+		spinner.stop();
 	},
 
 	appendAddButton: function(sectionObj, done)
