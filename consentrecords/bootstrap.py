@@ -123,11 +123,11 @@ def createUUNameConfiguration(transactionState):
     
     configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
 
-    fieldValues = [Terms.uuName, Terms.configuration, Terms.enumerator, Terms.defaultAccess]
+    fieldValues = [Terms.name, Terms.configuration, Terms.enumerator, Terms.defaultAccess]
 
     fields = createFields(configObject, fieldValues, transactionState)
     
-    p = fields[Terms.uuName]
+    p = fields[Terms.name]
     p.createMissingSubValue(Terms.dataType, Terms.stringEnum, 0, transactionState)
     p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)

@@ -319,8 +319,9 @@ class Instance(dbmodels.Model):
     # Returns a dictionary by field where each value is
     # a duple containing the value containing the name and 
     # the instance referenced by self from the key field.
+    # Self is an instance of type field.
     def _getSubValueReferences(self):
-        vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
+        vs2 = Value.objects.filter(field=Terms.name,
                                    deleteTransaction__isnull=True)
         vs1 = self.value_set.filter(deleteTransaction__isnull=True)\
                             .select_related('referenceValue')\
@@ -379,7 +380,7 @@ class Instance(dbmodels.Model):
     
     # Returns the fieldsData from the database for self, which is a term.
     def _getFieldsData(self, language=None):
-        vs2 = Value.objects.filter(field__in=[Terms.name, Terms.uuName],
+        vs2 = Value.objects.filter(field=Terms.name,
                             deleteTransaction__isnull=True)
 
         vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
@@ -395,7 +396,7 @@ class Instance(dbmodels.Model):
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
 
-	# Returns the fieldsData from the cache or database for self, which is a term.
+    # Returns the fieldsData from the cache or database for self, which is a term.
     def getFieldsData(self, fieldsDataDictionary, language=None):
         if self in fieldsDataDictionary:
             return fieldsDataDictionary[self]
@@ -518,12 +519,13 @@ class Instance(dbmodels.Model):
     # Self is of type configuration.
     def getFieldByName(self, name):
         return self.value_set.select_related('referenceValue')\
-        				     .get(deleteTransaction__isnull=True,
+                             .get(deleteTransaction__isnull=True,
                                   field=Terms.field,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__typeID=Terms.uuName,
                                   referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue__value__field=Terms.uuName,
+                                  referenceValue__value__referenceValue__value__field=Terms.name,
                                   referenceValue__value__referenceValue__value__stringValue=name)\
                              .referenceValue
 
@@ -531,7 +533,7 @@ class Instance(dbmodels.Model):
     # Self is of type configuration.
     def getFieldByReferenceValue(self, key):
         return self.value_set.select_related('referenceValue')\
-        				     .get(deleteTransaction__isnull=True,
+                             .get(deleteTransaction__isnull=True,
                                   field=Terms.field,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__field=Terms.name,
@@ -1134,11 +1136,11 @@ class Terms():
     def initialize(transactionState=None):
         try:
             Terms.uuName = Terms.getUUName()
+            Terms.name = Terms.getName()
             nameList = NameList()
             Terms.configuration = Terms.getOrCreateTerm(TermNames.configuration, nameList, transactionState)
             Terms.field = Terms.getOrCreateTerm(TermNames.field, nameList, transactionState)
             Terms.boolean = Terms.getOrCreateTerm(TermNames.boolean, nameList, transactionState)
-            Terms.name = Terms.getOrCreateTerm(TermNames.name, nameList, transactionState)
             Terms.ofKind = Terms.getOrCreateTerm(TermNames.ofKind, nameList, transactionState)
             Terms.pickObjectPath = Terms.getOrCreateTerm(TermNames.pickObjectPath, nameList, transactionState)
             Terms.enumerator = Terms.getOrCreateTerm(TermNames.enumerator, nameList, transactionState)
@@ -1204,28 +1206,31 @@ class Terms():
         except Value.DoesNotExist: pass
             
     def getUUName():
-        try:
-            return Instance.objects.get(value__deleteTransaction__isnull=True,
-                value__stringValue=TermNames.uuName,\
-                value__field=F("id"))
-        except Instance.DoesNotExist:
-            return Terms.createUUName()
+        return Instance.objects.get(typeID=F('id'),
+            value__deleteTransaction__isnull=True,
+            value__stringValue=TermNames.uuName)
 
-    def getNamedInstance(uuname):
+    def getName():
+        return Instance.objects.get(typeID=Terms.uuName,
+            value__deleteTransaction__isnull=True,
+            value__field=F('id'),
+            value__stringValue=TermNames.name)
+
+    def getNamedInstance(name):
         try:
-            return Instance.objects.get(deleteTransaction__isnull=True,
+            return Instance.objects.get(typeID=Terms.uuName,
                 value__deleteTransaction__isnull=True,
-                value__field = Terms.uuName,
-                value__stringValue=uuname)
+                value__field = Terms.name,
+                value__stringValue=name)
         except Instance.DoesNotExist:
             raise Instance.DoesNotExist('the term "%s" is not recognized' % uuname)
     
-    def getOrCreateTerm(uuname, nameLists, transactionState):
+    def getOrCreateTerm(name, nameLists, transactionState):
         try:
-            return Terms.getNamedInstance(uuname)
+            return Terms.getNamedInstance(name)
         except Instance.DoesNotExist:
             i = Instance.objects.create(typeID=Terms.uuName, parent=None, transaction=transactionState.transaction)
-            i.addStringValue(Terms.uuName, uuname, 0, transactionState)
+            i.addStringValue(Terms.name, name, 0, transactionState)
             return i
             
     
