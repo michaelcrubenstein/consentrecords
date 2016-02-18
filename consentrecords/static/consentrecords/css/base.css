@@ -145,6 +145,28 @@ panel.view .panel-fill>header
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+.loading
+{
+	position: relative;
+	padding: 6px 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.loading>span
+{
+	position: relative;
+	display: inline-block;
+}
+.loading>span:first-child
+{
+	height: 20px;
+}
+.loading>span:last-child
+{
+	padding-left: 32px;
+}
+
 .cell.unique {
 	background: white;
 }

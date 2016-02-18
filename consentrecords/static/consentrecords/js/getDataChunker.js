@@ -14,6 +14,7 @@ var GetDataChunker = (function() {
 	{
 		if (this._loadingMessage != null)
 		{
+			crv.stopLoadingMessage(this._loadingMessage);
 			this._loadingMessage.remove();
 			this._loadingMessage = null;
 		}
@@ -28,7 +29,6 @@ var GetDataChunker = (function() {
 			{
 				this.clearLoadingMessage();
 				this._start = 0;
-			
 			}
 			else
 			{
@@ -43,24 +43,28 @@ var GetDataChunker = (function() {
 		}
 	}
 	
+	GetDataChunker.prototype.doneGetData = function(instances)
+	{
+		if (this._loadingMessage != null)
+			crv.stopLoadingMessage(this._loadingMessage);
+		this._onGetDataDone(instances);
+		this.restart(instances);
+	}
+	
 	GetDataChunker.prototype.start = function()
 	{
 		var _this = this;
 		
 		if (this._loadingMessage == null)
 			this._loadingMessage = crv.appendLoadingMessage(this._containerNode);
-
-		function doneGetData(instances)
-		{
-			_this._onGetDataDone(instances);
-			_this.restart(instances);
-		}
+		else
+			crv.startLoadingMessage(this._loadingMessage);
 
 		cr.getData({path: this.path, 
 					start: this._start,
 					end: this._start + this.increment,
 					fields: this.fields, 
-					done: doneGetData, 
+					done: function(instances) { _this.doneGetData(instances); }, 
 					fail: asyncFailFunction});
 		this._inGetData = true;
 	}

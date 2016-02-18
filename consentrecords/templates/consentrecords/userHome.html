@@ -335,6 +335,7 @@
   	</body>
 
 	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
+	<script src="{% static "jquery/js/spin.min.js" %}"></script>
 	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
 	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
 	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
@@ -1134,7 +1135,7 @@
 		
 		function addMissingAccess(source, privilege, target, cellName, done, fail)
 		{
-			var privilegePath = "_uuname[_uuname=_privilege]>enumerator";
+			var privilegePath = "_uuname[_name=_privilege]>enumerator";
 			crp.getData({path: privilegePath, 
 				done: function getPrivileges(enumerators)
 				{
