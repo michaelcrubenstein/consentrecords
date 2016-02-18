@@ -7,7 +7,6 @@ _uuname
             _data type: _string
             _max capacity: _multiple values
             _descriptor type: _by text
-            _pick object path: 
         _field
             _name: City
             _data type: _string
@@ -51,13 +50,6 @@ _uuname
     _uuname: Consent Record
     _configuration
         _name: Boston
-        _field
-            _name: Consent Form
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: Consent Form
 _uuname
     _uuname: Employee
     _configuration
@@ -333,12 +325,17 @@ _uuname
             _data type: _translation
             _max capacity: _multiple values
             _descriptor type: _by text
+            _object add rule: _create one
         _field
             _name: Sites
             _data type: _object
             _max capacity: _unique value
             _object add rule: _create one
             _of kind: Sites
+        _field
+            _name: Web Site
+            _data type: _url
+            _max capacity: _unique value
         _field
             _name: _group
             _data type: _object
@@ -429,7 +426,6 @@ _uuname
             _data type: _string
             _max capacity: _unique value
             _descriptor type: _by text
-            _pick object path: 
         _field
             _name: Registration Deadline
             _data type: _datestamp
@@ -493,7 +489,6 @@ _uuname
             _max capacity: _unique value
             _object add rule: _create one
             _of kind: Address
-            _pick object path: 
         _field
             _name: Offerings
             _data type: _object
@@ -523,6 +518,8 @@ _uuname
     _uuname: State
     enumerator
         _name: MA
+    enumerator
+        _name: NH
 _uuname
     _uuname: Street
 _uuname
@@ -708,8 +705,6 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
 _uuname
-    _uuname: _inherits security
-_uuname
     _uuname: _language
     enumerator
         _name: English
@@ -754,13 +749,7 @@ _uuname
     enumerator
         _name: _custom
 _uuname
-    _uuname: _telephone
-_uuname
     _uuname: _text
-_uuname
-    _uuname: _time
-_uuname
-    _uuname: _to user path
 _uuname
     _uuname: _translation
     _configuration
@@ -777,8 +766,6 @@ _uuname
             _object add rule: _pick one
             _of kind: _language
             _pick object path: _uuname[_uuname="_language"]>"enumerator"
-_uuname
-    _uuname: _url
 _uuname
     _uuname: _user
     _configuration
