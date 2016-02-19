@@ -82,14 +82,8 @@ var SharingPanel = (function() {
 		var buttons = items.append("div")
 			.classed("btn row-button multi-row-content expanding-div", true);
 	
-		var clickFunction = null;	
-		if (clickFunction)
-			buttons.on("click", clickFunction);
-
 		appendDeleteControls(buttons);
 
-		appendRightChevrons(buttons);	
-	
 		appendButtonDescriptions(buttons);
 
 		/* Add one more button for the add Button item. */
