@@ -64,14 +64,10 @@
 	}
 	
 	panel.confirm >div {
-		margin-left: 12px;
-		margin-right: 12px;
 		padding: 12px;
 		padding-top: 0px;
-		background-color: white;
-		border-top: 1px solid #eee;
-		border-right: 1px solid #eee;
-		border-left: 1px solid #eee;
+		background-color: transparent;
+		border: none;
 	}
 	
 	panel.confirm >div>button {
