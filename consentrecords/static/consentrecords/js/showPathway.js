@@ -1107,13 +1107,11 @@ var Pathway = (function () {
 			.style("width", "100%")
 			.style("height", "100%")
 			.attr("fill", this.pathBackground);
-		
-		this.loadingText = this.svg.append('text')
-			.attr("x", this.dataLeftMargin).attr("y", 0)
-			.attr("fill", "#777")
-			.text("Loading...");
 			
-		this.loadingText.attr("y", this.loadingText.node().getBBox().height);
+		this.loadingMessage = crv.appendLoadingMessage(containerDiv)
+			.style("position", "absolute")
+			.style("left", "0")
+			.style("top", "0");
 		
 		this.experienceGroup = this.svg.append('g')
 				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
@@ -1214,14 +1212,17 @@ var Pathway = (function () {
 		
 			_thisPathway.showAllExperiences();
 			
-			if (_thisPathway.allExperiences.length > 0)
+			crv.stopLoadingMessage(_thisPathway.loadingMessage);
+			_thisPathway.loadingMessage.remove();
+			
+			if (_thisPathway.allExperiences.length == 0 && editable)
 			{
-				_thisPathway.loadingText.remove();
-				_thisPathway.loadingText = null;
-			}
-			else if (editable)
-			{
-				_thisPathway.loadingText.text('Ready to record an experience?');
+				_thisPathway.loadingText = _thisPathway.svg.append('text')
+					.attr("x", _thisPathway.dataLeftMargin).attr("y", 0)
+					.attr("fill", "#777")
+					.text('Ready to record an experience?')
+					.attr("y", this.loadingText.node().getBBox().height);
+			
 				var bbox = _thisPathway.loadingText.node().getBBox();
 				_thisPathway.promptAddText = _thisPathway.svg.append('text')
 					.attr("fill", "#2C55CC")
@@ -1249,7 +1250,6 @@ var Pathway = (function () {
 					_thisPathway.promptAddText.attr("x", bbox.x + bbox.width + _thisPathway.textLeftMargin)
 						.attr("y", _thisPathway.loadingText.attr("y"));
 				}
-
 			}
 		}
 		
