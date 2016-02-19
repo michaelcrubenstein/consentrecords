@@ -533,18 +533,6 @@ var FindExperiencePanel = (function () {
 			.on("click", handleCloseRightEvent)
 		    .append("span").text("Done");
 			
-		navContainer.appendRightButton()
-			.classed('add-button', true)
-			.on("click", function()
-			{
-				if (prepareClick('click', '+'))
-				{
-					hidePanelRight(sitePanel.node());
-				}
-				d3.event.preventDefault();
-			})
-			.append("span").text("+");
-		
 		navContainer.appendTitle(header);
 		
 		textChanged = function()
