@@ -1424,9 +1424,9 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 {
 	var header;
 	if (oldReportedObject)
-		header = "Change Value";
+		header = "Change Marker";
 	else
-		header = "Add Value";
+		header = "Add Marker";
 		
 	var sitePanel = new SitePanel(previousPanelNode, rootObjects, header, "list");
 
@@ -1531,7 +1531,7 @@ function setupServicesPanel(dots)
 		
 	var labelDiv = obj.append('label')
 		.text("Markers");
-	
+		
 	var itemsDiv = obj.append("ol").classed("items-div panel-fill", true);
 
 	itemsDiv.classed("border-above", true);
@@ -1559,6 +1559,13 @@ function setupServicesPanel(dots)
 			}
 		};
 		
+	if (dots.offering != null)
+	{
+		var fixedDivs = appendItems(itemsDiv, dots.offering.getCell("Service").data);
+		var buttons = appendRowButtons(fixedDivs);
+		appendButtonDescriptions(buttons);
+	}
+	
 	var divs = appendItems(itemsDiv, dots.services);
 	
 	function _confirmDeleteClick(d)
@@ -1616,6 +1623,13 @@ function setupServicesPanel(dots)
 	buttonDiv.append("span").text(" add marker");
 	
 	this.onReveal = null;
+	this.onGoingBack = function()
+	{
+		if (dots.offering && dots.offering.getCell("Service").data.length > 0)
+			dots.setValue(dots.value - 2);
+		else
+			dots.setValue(dots.value - 1);
+	}		
 }
 
 function setupPanel2(dots)
@@ -1934,18 +1948,26 @@ function setupConfirmPanel(dots)
 		}
 	}
 
-	if (dots.services.length > 0)
+	if (dots.services.length > 0 || (dots.offering && dots.offering.getCell("Service").data.length > 0))
 	{
 		var servicesDiv = summary.append('section')
 			.classed('cell view multiple', true);
 		
 		servicesDiv.append('label').text("Markers");
-		servicesDiv.append('ol')
-			.classed('items-div', true)
-			.selectAll('li')
-			.data(dots.services)
-			.enter()
-			.append('li')
+		var itemsDiv = servicesDiv.append('ol')
+			.classed('items-div', true);
+		
+		if (dots.offering)
+		{
+			appendItems(itemsDiv, dots.offering.getCell("Service").data)	
+				.append('div')
+				.classed('multi-line-item', true)
+				.append('div')
+				.classed('description-text string-value-view', true)
+				.text(function(d) { return d.getDescription(); });
+		}
+		
+		appendItems(itemsDiv, dots.services)	
 			.append('div')
 			.classed('multi-line-item', true)
 			.append('div')
@@ -2107,6 +2129,14 @@ var AddExperiencePanel = (function () {
 
 			dots.endDateInput = new DateInput(this, minYear)
 
+			this.onGoingForward = function(goToNext)
+			{
+				if (dots.offering && dots.offering.getCell("Service").data.length > 0)
+					dots.setValue(dots.value + 2);
+				else
+					dots.setValue(dots.value + 1);
+			}
+			
 			this.onReveal = null;
 		}
 
