@@ -264,7 +264,8 @@ var Pathway = (function () {
 					if (isInserted)
 						break;
 					var aboveFlag = d3.select(column[0]);
-					var aboveBottom = aboveFlag.datum().y + aboveFlag.datum().height;
+					var aboveDatum = aboveFlag.datum();
+					var aboveBottom = aboveDatum.y + aboveDatum.height;
 					if (thisTop > aboveBottom)
 					{
 						column.splice(0, 0, this);
