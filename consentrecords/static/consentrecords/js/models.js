@@ -792,8 +792,6 @@ cr.TranslationValue = (function() {
 	
 cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
-	
-	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype.getDescription = function() { return this.value.description; };
 	ObjectValue.prototype.getValueID = function() { return this.value.id; };
 
