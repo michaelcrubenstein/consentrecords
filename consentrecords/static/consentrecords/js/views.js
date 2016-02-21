@@ -638,14 +638,14 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 
-				   (cell.field.capacity === "_unique value" || newValue.getValueID()) ? null : "none");
+				   (cell.field.capacity === "_unique value" || !newValue.isEmpty()) ? null : "none");
 				   
 		if (cell.field.capacity != "_unique value")
 		{
 			function checkVisible(eventObject)
 			{
 				d3.select(eventObject.data).style("display", 
-					   this.getValueID() || this.value.cells.length > 0 ? null : "none");
+					   !this.isEmpty() ? null : "none");
 			}
 			$(newValue).on("dataChanged.cr", null, item.node(), checkVisible);
 			$(item.node()).on("remove", null, newValue, function(eventObject)
