@@ -1475,10 +1475,10 @@ var SitePanel = (function () {
 						{
 							$(eventObject.data).css("display", this.isEmpty() ? "none" : "");
 						}
-						$(cell).on("valueAdded.cr dataChanged.cr", null, this, checkDisplay);
+						$(cell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, checkDisplay);
 						$(this).on("remove", null, cell, function(eventObject)
 							{
-								$(eventObject.data).off("valueAdded.cr dataChanged.cr", null, checkDisplay);
+								$(eventObject.data).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, checkDisplay);
 							});
 					});
 			sections.append("div").classed("cell-border-below", true);
