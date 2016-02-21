@@ -399,8 +399,7 @@ function _showEditStringCell(obj, cell, inputType)
 	}
 	else
 	{
-		sectionObj.append("label")
-			      .text(cell.field.name);
+		cell.appendLabel(obj);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
 		_setupItemsDivHandlers(itemsDiv, cell);
@@ -483,8 +482,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	}
 	else
 	{
-		sectionObj.append("label")
-			      .text(this.field.name);
+		this.appendLabel(obj);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
 		_setupItemsDivHandlers(itemsDiv, this);
@@ -582,8 +580,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 	}
 	else
 	{
-		sectionObj.append("label")
-			      .text(cell.field.name);
+		cell.appendLabel(obj);
 		var itemsDiv = sectionObj.append("ol")
 			.classed("items-div", true);
 		_setupItemsDivHandlers(itemsDiv, cell);
@@ -950,6 +947,12 @@ function _updateTranslationCell(sectionObj)
 	);
 }
 
+cr.Cell.prototype.appendLabel = function(obj)
+{
+	return d3.select(obj).append("label")
+		.text(this.field.label ? this.field.label : this.field.name);
+}
+
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
 cr.StringCell.prototype.updateCell = _updateStringCell;
 cr.StringCell.prototype.show = function(obj, containerPanel)
@@ -1104,8 +1107,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 {
 	var sectionObj = d3.select(obj);
 	
-	var labelDiv = sectionObj.append("label")
-		.text(this.field.name);
+	var labelDiv = this.appendLabel(obj);
 	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
 	if (this.field.capacity === "_unique value")
@@ -1465,8 +1467,8 @@ var SitePanel = (function () {
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
 						var section = d3.select(this);
-						section.append("label").text(cell.field.name);
 						section.append("ol").classed("items-div", true);
+						cell.appendLabel(this);
 						cell.show(this, _this.node());
 						$(this).css("display", cell.isEmpty() ? "none" : "");
 					
