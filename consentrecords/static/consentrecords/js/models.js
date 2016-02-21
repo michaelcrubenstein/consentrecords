@@ -611,12 +611,12 @@ cr.CellValue = (function() {
 		$(this).trigger("dataChanged.cr", this);
 	}
 	
-	CellValue.prototype.deleteValue = function(successFunction, failFunction)
+	CellValue.prototype.deleteValue = function(done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 			
 		var _this = this;
 		if (this.id == null)	/* It was never saved */
@@ -635,26 +635,26 @@ cr.CellValue = (function() {
 					{
 						if (json.success)
 						{
-							if (successFunction) 
+							if (done) 
 							{
 								_this.triggerDeleteValue();
-								successFunction(_this);
+								done(_this);
 							}
 						}
 						else
 						{
-							failFunction(json.error);
+							fail(json.error);
 						}
 					})
 					.fail(function(jqXHR, textStatus, errorThrown)
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 					});
 			}
 			else
 			{
 				_this.triggerDeleteValue();
-				successFunction(_this);
+				done(_this);
 			}
 		}
 		else
@@ -667,20 +667,20 @@ cr.CellValue = (function() {
 				{
 					if (json.success)
 					{
-						if (successFunction) 
+						if (done) 
 						{
 							_this.triggerDeleteValue();
-							successFunction(_this);
+							done(_this);
 						}
 					}
 					else
 					{
-						failFunction(json.error);
+						fail(json.error);
 					}
 				})
 				.fail(function(jqXHR, textStatus, errorThrown)
 				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 				});
 		}
 	};
@@ -964,12 +964,12 @@ cr.ObjectValue = (function() {
 		}
 	}
 
-	ObjectValue.prototype.saveNew = function(initialData, successFunction, failFunction)
+	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 
 		var containerCell = this.cell;
 		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
@@ -980,9 +980,9 @@ cr.ObjectValue = (function() {
 			{
 				_this.completeUpdate(newData);
 				_this.isDataLoaded = true;
-				successFunction(newData);
+				done(newData);
 			}, 
-			failFunction);
+			fail);
 	}
 	
 	ObjectValue.prototype._setCells = function(oldCells)
