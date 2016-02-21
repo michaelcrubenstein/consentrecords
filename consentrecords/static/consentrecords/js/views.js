@@ -1458,7 +1458,7 @@ var SitePanel = (function () {
 				
 		panel2Div.showViewCells = function(cells)
 		{
-			this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
+			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
@@ -1480,8 +1480,10 @@ var SitePanel = (function () {
 							{
 								$(eventObject.data).off("valueAdded.cr dataChanged.cr", null, checkDisplay);
 							});
-					})
-				.append("div").classed("cell-border-below", true);
+					});
+			sections.append("div").classed("cell-border-below", true);
+			
+			return sections;
 		}
 		
 		panel2Div.handleDoneEditingButton = function() {
@@ -1564,7 +1566,7 @@ var SitePanel = (function () {
 		
 		panel2Div.showEditCells = function(cells)
 		{
-			this.appendSections(cells)
+			return this.appendSections(cells)
 				.classed("cell edit", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
