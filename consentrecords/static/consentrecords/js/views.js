@@ -1623,10 +1623,10 @@ function setupSearchBar(searchBarNode, textChanged)
 		.classed("search-cancel-button site-active-text", true);
 	searchCancelButton.append("span").text("Cancel");
 	
-	var searchCancelButtonWidth;
+	var searchCancelButtonWidth = 0;
 	var oldPaddingLeft = searchCancelButton.style("padding-left");
 	var oldPaddingRight = searchCancelButton.style("padding-right");
-	$(searchCancelButton.node()).outerWidth(0)
+	$(searchCancelButton.node())
 		.css("padding-left", "0")
 		.css("padding-right", "0");
 	
@@ -1648,6 +1648,7 @@ function setupSearchBar(searchBarNode, textChanged)
 		})
 		.on("focusin", function(e)
 		{
+			searchCancelButton.selectAll('span').text("Cancel");
 			$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
 												  "padding-left": oldPaddingLeft,
 												  "padding-right": oldPaddingRight}, 400, "swing");
@@ -1657,7 +1658,10 @@ function setupSearchBar(searchBarNode, textChanged)
 			if (searchInput.node().value.length == 0)
 				$(searchCancelButton.node()).animate({width: 0,
 													  "padding-left": 0,
-													  "padding-right": 0}, 400, "swing");
+													  "padding-right": 0}, 400, "swing",
+													  function() {
+													  	searchCancelButton.selectAll('span').text(null);
+													  });
 		});
 	
 	$(searchCancelButton.node()).on("click", function(e) {
@@ -1670,21 +1674,26 @@ function setupSearchBar(searchBarNode, textChanged)
 	
 	function resizeSearchCancelHeight()
 	{
-		var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
-		var h = searchInputContainer.node().getBoundingClientRect().height
-			- cancelBoundingRect.height
-			+ parseInt(searchCancelButton.style("padding-top"))
-			+ parseInt(searchCancelButton.style("padding-bottom"));
-		searchCancelButton.style("padding-top",(h/2).toString()+"px")
-			.style("padding-bottom", (h/2).toString()+"px");
-		
 		/* Calculate the width of the cancel button. */	
-		var oldWidth = searchCancelButton.style("width");
-		searchCancelButton.style("width", null);
-		searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
-								  parseInt(oldPaddingRight) +
-								  parseInt(oldPaddingLeft);
-		searchCancelButton.style("width", oldWidth);
+		if (searchCancelButtonWidth == 0 &&
+			$(searchCancelButton.node()).width() > 0)
+		{
+			var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
+			var h = searchInputContainer.node().getBoundingClientRect().height
+				- cancelBoundingRect.height
+				+ parseInt(searchCancelButton.style("padding-top"))
+				+ parseInt(searchCancelButton.style("padding-bottom"));
+			searchCancelButton.style("padding-top",(h/2).toString()+"px")
+				.style("padding-bottom", (h/2).toString()+"px");
+		
+			var oldWidth = searchCancelButton.style("width");
+			searchCancelButton.style("width", null);
+			searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
+									  parseInt(oldPaddingRight) +
+									  parseInt(oldPaddingLeft);
+			$(searchCancelButton.node()).outerWidth(0);
+			searchCancelButton.select('span').text(null);
+		}
 	}
 	
 	$(window).on("resize", resizeSearchCancelHeight);
