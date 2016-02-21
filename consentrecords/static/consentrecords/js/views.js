@@ -353,9 +353,7 @@ function _showViewStringCell(obj, cell)
 		.text(_getDataValue)
 		.each(_pushTextChanged);
 	}
-	
-	_setupItemsDivHandlers(itemsDiv, cell);
-	
+		
 	function addedValue(eventObject, newValue)
 	{
 		setupItems(appendItem(d3.select(eventObject.data), newValue), this);
@@ -1049,7 +1047,6 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 {
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
-	_setupItemsDivHandlers(itemsDiv, this);
 
 	if (this.field.capacity === "_unique value")
 	{
@@ -1467,8 +1464,9 @@ var SitePanel = (function () {
 				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
 				.each(function(cell) {
 						var section = d3.select(this);
-						section.append("ol").classed("items-div", true);
 						cell.appendLabel(this);
+						var itemsDiv = section.append("ol").classed("items-div", true);
+						_setupItemsDivHandlers(itemsDiv, cell);
 						cell.show(this, _this.node());
 						$(this).css("display", cell.isEmpty() ? "none" : "");
 					
