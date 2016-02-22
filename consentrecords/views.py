@@ -760,6 +760,29 @@ def submitNewUser(request):
         
     return JsonResponse(results)
 
+def updateUsername(request):
+    if request.method != "POST":
+        raise Http404("updateUsername only responds to POST methods")
+    
+    try:
+        timezoneOffset = request.POST["timezoneoffset"]
+    
+        with transaction.atomic():
+            results = userviews.updateUsernameResults(request)
+            if results["success"]:
+                userInstance = Instance.getUserInstance(request.user)
+                transactionState = TransactionState(request.user, timezoneOffset)
+                v = userInstance.getSubValue(Terms.email)
+                v.updateValue(request.user.email, transactionState)
+                nameLists = NameList()
+                userInstance.cacheDescription(nameLists);
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
+    return JsonResponse(results)
+
 def features(request):
     template = loader.get_template('doc/features.html')
     context = RequestContext(request, {

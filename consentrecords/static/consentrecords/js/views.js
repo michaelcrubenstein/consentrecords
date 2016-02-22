@@ -167,7 +167,7 @@ function showClickFeedback(obj)
 		   	});
 }
 
-function showPanelUp(panelNode)
+function showPanelUp(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "down"}, 0);
@@ -177,6 +177,8 @@ function showPanelUp(panelNode)
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
+							if (done)
+								done();
 							unblockClick();
 						});
 }
@@ -192,7 +194,7 @@ function showPanelNow(panelNode)
 	$(window).trigger("resize");
 }
 
-function showPanelLeft(panelNode)
+function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "right"}, 0);
@@ -202,6 +204,8 @@ function showPanelLeft(panelNode)
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
+							if (done)
+								done();
 							unblockClick();
 						});
 }

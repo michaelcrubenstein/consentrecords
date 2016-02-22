@@ -1146,6 +1146,7 @@ cr.urls = {
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
+		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
 		log: '/monitor/log/',
 	};
@@ -1570,6 +1571,27 @@ cr.submitSignout = function(done, fail)
 			else
 				fail(json.error);
 		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+
+cr.updateUsername = function(userInstance, newUsername, password, done, fail)
+	{
+		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
+										password: password,
+										timezoneoffset: new Date().getTimezoneOffset()},
+			   function(json) {
+					if (json['success']) {
+						var v = userInstance.getValue('_email');
+						v.updateFromChangeData({value: newUsername});
+						v.triggerDataChanged();
+						done();
+					}
+					else
+						fail(json.error);
+			   })
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);

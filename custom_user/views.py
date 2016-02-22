@@ -266,6 +266,38 @@ def newUserResults(request):
 def newUser(request):
     return JsonResponse(newUserResults(results))
 
+def updateUsernameResults(request):
+    results = {'success':False, 'error': 'updateUsername failed'}
+    try:
+        if request.method != "POST":
+            raise Exception("UpdateUsername only responds to POST requests")
+        if not request.user.is_authenticated:
+            raise Exception("The current login is invalid")
+            
+        POST = request.POST;
+        password = POST.get('password', '')
+        newUsername = POST.get('newUsername', '')
+        
+        testUser = authenticate(username=request.user.email, password=password)
+        if testUser is not None:
+            if testUser.is_active:
+                testUser.email = newUsername
+                testUser.save(using=get_user_model().objects._db)
+                login(request, testUser)
+            else:
+                raise AccountDisabledError()
+                # Return a 'disabled account' error message
+        else:
+            raise AuthFailedError()
+
+        results = {'success':True}
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+    
+    return results
+
 def updatePassword(request):
     results = {'success':False, 'error': 'updatePassword failed'}
     try:
