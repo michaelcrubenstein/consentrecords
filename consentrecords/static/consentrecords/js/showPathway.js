@@ -908,8 +908,6 @@ var Pathway = (function () {
 			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
 			$(this).on("remove", null, e, function(eventObject)
 			{
-				var serviceCell = e.getCell("Service");
-				var userServiceCell = e.getCell("User Entered Service");
 				$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 				$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 			});
@@ -2342,43 +2340,31 @@ var ExperienceDetailPanel = (function () {
 		panel2Div.showViewCells([experience.getCell("Start"),
 								 experience.getCell("End")]);
 
-		var cellDiv = panel2Div.append("section")
-			.classed("cell view multiple", true);
+		var offeringCell = experience.getCell("Offering");
+		var offeringServiceCell = new OfferingServiceCell(offeringCell);
+		var sections = panel2Div.showViewCells([offeringServiceCell]);
+		sections.each(function(cell)
+		{
+			var _thisSection = this;
+			var checkView = function(e)
+			{
+				offeringServiceCell.show(_thisSection, _this.node());
+				$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+			}
+			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+			$(this).on("remove", function(e)
+			{
+				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+			});
+		});
+		
+		var serviceCell = experience.getCell("Service");
+		var userServiceCell = experience.getCell("User Entered Service");
+		serviceCell.field.label = "My Markers";
+		var sections = panel2Div.showViewCells([serviceCell]);
+		panel2Div.appendCellData(sections.node(), userServiceCell);
 		
 		var offering = experience.getValue("Offering");
-		var offeringServiceCell = ((offering && offering.getValueID()) ? offering.getCell("Service") : null);
-		var serviceCell = experience.getCell("Service");
-		var userEnteredServiceCell = experience.getCell("User Entered Service");
-		var numServices = 0;
-		if (serviceCell)
-			numServices += serviceCell.data.length;
-		if (userEnteredServiceCell)
-			numServices += userEnteredServiceCell.data.length;
-		if (offeringServiceCell)
-			numServices += offeringServiceCell.data.length;
-			
-		if (numServices > 0)
-		{
-			var labelDiv = cellDiv.append("label")
-				.text("Markers");
-			var itemsDiv = cellDiv.append("ol").classed("items-div", true);
-			
-			var serviceData;
-			if (serviceCell)
-				serviceData = serviceCell.data;
-			else
-				serviceData = [];
-			if (userEnteredServiceCell)
-				serviceData = serviceData.concat(userEnteredServiceCell.data);
-			if (offeringServiceCell)
-				serviceData = serviceData.concat(offeringServiceCell.data);
-
-			var divs = appendItems(itemsDiv, serviceData);
-			var buttons = divs.append("div").classed("multi-line-item", true);
-			appendButtonDescriptions(buttons);
-			cellDiv.append("div").classed("cell-border-below", true);
-		}
-		
 		if (offering && offering.getValueID())
 		{
 			var webSiteDiv = panel2Div.append("section");	
@@ -2459,7 +2445,7 @@ var PickOrCreatePanel = (function () {
 	}
 	
 	PickOrCreatePanel.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
+		if (prepareClick('click', 'pick ' + d.getDescription()))
 		{
 			this.updateValues(d, null);
 		}
@@ -2615,7 +2601,7 @@ var PickOrCreatePanel = (function () {
 		if (!this.createDatum.isEmpty())
 		{
 			this.inputBox.value = this.createDatum.getDescription();
-			$(this.inputBox).trigger("input")
+			$(this.inputBox).trigger("input");
 		}
 		else if (!this.pickDatum.isEmpty())
 		{
@@ -2794,21 +2780,121 @@ var PickOrCreateOfferingPanel = (function () {
 	return PickOrCreateOfferingPanel;
 })();
 
+var PickOrCreateMarkerPanel = (function () {
+	PickOrCreateMarkerPanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateMarkerPanel.prototype.textCleared = function()
+	{
+		this.startSearchTimeout("");
+	}
+	
+	function PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done)
+	{
+		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		
+		if (this.createDatum.value == null)
+		{
+			this.search("");
+		}
+	}
+	
+	return PickOrCreateMarkerPanel;
+})();
+
+var PickOrCreateValue = (function() {
+	PickOrCreateValue.prototype = new cr.CellValue();
+	PickOrCreateValue.prototype.pickValue = null;
+	PickOrCreateValue.prototype.createValue = null;
+	
+	PickOrCreateValue.prototype.getDescription = function()
+	{
+		if (!this.pickValue.isEmpty())
+			return this.pickValue.getDescription();
+		else
+			return this.createValue.getDescription();
+	}
+	
+	PickOrCreateValue.prototype.isEmpty = function()
+	{
+		return this.pickValue.isEmpty() && this.createValue.isEmpty();
+	}
+	
+	/* In this subclass, delete the pickValue, the createValue and then
+		trigger a delete event for this.
+	 */
+	PickOrCreateValue.prototype.deleteValue = function(done, fail)
+	{
+		var _this = this;
+		this.pickValue.deleteValue(
+			function(oldValue)
+			{
+				_this.createValue.deleteValue(
+					function(oldCreateValue) {
+						_this.triggerDeleteValue();
+						done(_this);
+					}, 
+					fail);
+			},
+			fail);
+	}
+	
+	PickOrCreateValue.prototype.removeUnusedValue = function()
+	{
+		var pickValue = this.pickValue;
+		var createValue = this.createValue;
+
+		if (pickValue.cell.field.capacity !== "_unique value")
+		{
+			if (!pickValue.id)
+			{
+				pickValue.triggerDeleteValue();
+			}
+			if (!createValue.id)
+			{
+				createValue.triggerDeleteValue();
+			}
+		}
+	}
+	
+	PickOrCreateValue.prototype.pushTextChanged = function(textNode)
+	{
+		var pickValue = this.pickValue;
+		var createValue = this.createValue;
+		
+		var _this = this;
+		var onValueChanged = function(eventObject)
+		{
+			$(eventObject.data).trigger("dataChanged.cr", eventObject.data);
+		}
+		var f = function(eventObject)
+		{
+			d3.select(eventObject.data).text(_this.getDescription());
+		}
+		$(this.pickValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, this, onValueChanged);
+		$(this.createValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, this, onValueChanged);
+		$(this).on("dataChanged.cr", null, textNode, f);
+		$(textNode).on("remove", null, null, function() {
+			$(_this.pickValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, onValueChanged);
+			$(_this.createValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, onValueChanged);
+			$(_this).off("dataChanged.cr", null, f);
+		});
+	}
+	
+	function PickOrCreateValue(pickValue, createValue)
+	{
+		cr.CellValue.call(this);
+		this.pickValue = pickValue;
+		this.createValue = createValue;
+	}
+	
+	return PickOrCreateValue;
+})();
+
 var PickOrCreateCell = (function () {
 	PickOrCreateCell.prototype = new cr.Cell();
 	PickOrCreateCell.prototype.pickCell = null;
 	PickOrCreateCell.prototype.createCell = null;
 	PickOrCreateCell.prototype.editPanel = null;
-	
-	PickOrCreateCell.prototype.getDescription = function()
-	{
-		if (this.pickCell.data.length > 0 && !this.pickCell.data[0].isEmpty())
-			return this.pickCell.data[0].getDescription();
-		else if (this.createCell.data.length > 0 && !this.createCell.data[0].isEmpty())
-			return this.createCell.data[0].getDescription();
-		else
-			return "";
-	}
 	
 	PickOrCreateCell.prototype.isEmpty = function()
 	{
@@ -2837,11 +2923,9 @@ var PickOrCreateCell = (function () {
 		}
 	}
 
-	PickOrCreateCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	PickOrCreateCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
 	{
-		var pickDatum = this.pickCell.data[0];
-		var createDatum = this.createCell.data[0];
-		
+		var _this = this;
 		var done = function(d, i)
 		{
 			_this.pickedObject(d);
@@ -2854,78 +2938,139 @@ var PickOrCreateCell = (function () {
 		/* getOnValueAddedFunction(true, true, showEditObjectPanel)); */
 	}
 	
-	PickOrCreateCell.prototype.pushTextChanged = function(textNode)
+	PickOrCreateCell.prototype.newValue = function()
 	{
-		var pickValue = this.pickCell.data[0];
-		var createValue = this.createCell.data[0];
-		
-		var _this = this;
-		var f = function(eventObject)
-		{
-			d3.select(eventObject.data).text(_this.getDescription());
-		}
-		$(pickValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, textNode, f);
-		$(createValue).on("valueAdded.cr dataChanged.cr valueDeleted.cr", null, textNode, f);
-		$(textNode).on("remove", null, null, function() {
-			$(pickValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, f);
-			$(createValue).off("valueAdded.cr dataChanged.cr valueDeleted.cr", null, f);
-		});
+		return new PickOrCreateValue(this.pickCell.newValue(), this.createCell.newValue());
 	}
 	
+	PickOrCreateCell.prototype.addNewValue = function()
+	{
+		var pickValue = this.pickCell.addNewValue();
+		var createValue = this.createCell.addNewValue();
+		var newValue = new PickOrCreateValue(pickValue, createValue);
+		this.data.push(newValue);
+		$(this).trigger("valueAdded.cr", newValue);
+		return newValue;
+	};
+
+
 	PickOrCreateCell.prototype.showEdit = function(obj, containerPanel)
 	{
-		var sectionDiv = d3.select(obj);
+		var sectionObj = d3.select(obj);
 
-		var labelDiv = sectionDiv.append("label")
-			.text(this.field.name);
-		var itemsDiv = sectionDiv.append("ol")
-			.classed("items-div", true)
-			.classed("right-label", true);
-
+		this.appendLabel(obj);
+		var itemsDiv = sectionObj.append("ol")
+			.classed("items-div", true);
+			
 		var _this = this;
+		
+		if (this.field.capacity == "_unique value")
+		{
+			itemsDiv.classed("right-label", true);
 
-		sectionDiv.classed("btn row-button", true)
-			.on("click", function(cell) {
-				if (prepareClick('click', 'pick or create cell: ' + _this.getDescription()))
-				{
-					var sitePanelNode = $(this).parents(".site-panel")[0];
-					_this.showPickOrCreatePanel(sitePanelNode);
-				}
-			});
+			sectionObj.classed("btn row-button", true)
+				.on("click", function(cell) {
+						if (prepareClick('click', 'pick or create cell: ' + _this.field.name))
+						{
+							var sitePanelNode = $(this).parents(".site-panel")[0];
+							var pickDatum = _this.pickCell.data[0];
+							var createDatum = _this.createCell.data[0];
+							_this.showPickOrCreatePanel(pickDatum, createDatum, sitePanelNode);
+						}
+					});
+		}
 
-		$(itemsDiv.node()).on("valueAdded.cr", function()
-			{
-				_this.showValueAdded();
-			});
-
-		var divs = appendItems(itemsDiv, [this]);
+		_setupItemsDivHandlers(itemsDiv, this);
+		
+		function showAdded(oldData, previousPanelNode)
+		{
+			var pickDatum = oldData.pickValue;
+			var createDatum = oldData.createValue;
+			_this.showPickOrCreatePanel(pickDatum, createDatum, previousPanelNode);
+		}
 	
+		var addedFunction = getOnValueAddedFunction(true, true, showAdded);
+		var onValueAdded = function(eventObject, newValue)
+		{
+			var item = addedFunction.call(this, eventObject, newValue);
+			newValue.pushTextChanged(item.selectAll(".description-text").node());
+		}
+
+		$(this).on("valueAdded.cr", null, itemsDiv.node(), onValueAdded);
+		$(itemsDiv.node()).on("remove", null, this, function(eventObject)
+			{
+				$(eventObject.data).off("valueAdded.cr", null, onValueAdded);
+			});
+	
+		var divs = appendItems(itemsDiv, this.data);
+	
+		if (this.field.capacity != "_unique value")
+			appendConfirmDeleteControls(divs);
+		
 		var buttons = appendRowButtons(divs);
+
+		if (this.field.capacity !== "_unique value")
+		{
+			buttons.on("click", function(d) {
+					if (prepareClick('click', 'edit ' + _this.field.name))
+					{
+						var sitePanelNode = $(this).parents(".site-panel")[0];
+						var pickDatum = d.pickValue;
+						var createDatum = d.createValue;
+						_this.showPickOrCreatePanel(d.pickValue, d.createValue, sitePanelNode);
+					}
+				});
+			appendDeleteControls(buttons);
+		}
 
 		appendRightChevrons(buttons);	
 		
 		appendButtonDescriptions(buttons)
 			.each(function(d)
-				{
-					_this.pushTextChanged(this);
-				});
+					{
+						d.pushTextChanged(this);
+					});
+	
+		if (this.field.capacity != "_unique value")
+		{
+			/* newValue is generated by the newValue() function, above. */
+			function done(newValue)
+			{
+				var sitePanelNode = $(obj).parents(".site-panel")[0];
+				_this.showPickOrCreatePanel(newValue.pickValue, newValue.createValue, sitePanelNode);
+			}
+		
+			crv.appendAddButton(sectionObj, done);
+		}
 	}
 
-	function PickOrCreateCell(pickCell, createCell)
+	function PickOrCreateCell(pickCell, createCell, field)
 	{
 		if (pickCell === undefined)
 		{
 			cr.Cell.call(this);
 		}
-		else
-			{
-			var field = {
-				name: pickCell.field.name,
-				capacity: "_unique value",
-			}
+		else {
+			if (field === undefined)
+				field = {
+					name: pickCell.field.name,
+					capacity: "_unique value",
+				};
 			cr.Cell.call(this, field);
 			this.pickCell = pickCell;
 			this.createCell = createCell;
+			if (this.field.capacity == "_unique value")
+				this.pushValue(new PickOrCreateValue(this.pickCell.data[0], this.createCell.data[0]));
+			else
+			{
+				/* Make a copy of the create cell data before creating the PickOrCreateValue objects for the pickPairs */
+				var _this = this;
+				var createData = this.createCell.data.concat([]);
+				var pickPairs = this.pickCell.data.map(function(d) { return new PickOrCreateValue(d, _this.createCell.addNewValue()); });
+				var createPairs = createData.map(function(d) { return new PickOrCreateValue(_this.pickCell.addNewValue(), d); });
+				pickPairs.forEach(function(d) { _this.pushValue(d); });
+				createPairs.forEach(function(d) { _this.pushValue(d); });
+			}
 		}
 	}
 
@@ -2951,11 +3096,9 @@ var PickOrCreateSiteCell = (function () {
 	PickOrCreateSiteCell.prototype = new PickOrCreateCell();
 	PickOrCreateSiteCell.prototype.experience = null;
 	
-	PickOrCreateSiteCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	PickOrCreateSiteCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
 	{
-		var pickDatum = this.pickCell.data[0];
-		var createDatum = this.createCell.data[0];
-		
+		var _this = this;
 		var done = function(d, i)
 		{
 			_this.pickedObject(d);
@@ -2978,11 +3121,9 @@ var PickOrCreateOfferingCell = (function () {
 	PickOrCreateOfferingCell.prototype = new PickOrCreateCell();
 	PickOrCreateOfferingCell.prototype.experience = null;
 	
-	PickOrCreateOfferingCell.prototype.showPickOrCreatePanel = function(previousPanelNode)
+	PickOrCreateOfferingCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
 	{
-		var pickDatum = this.pickCell.data[0];
-		var createDatum = this.createCell.data[0];
-		
+		var _this = this;
 		var done = function(d, i)
 		{
 			_this.pickedObject(d);
@@ -3059,6 +3200,55 @@ var ConfirmAlert = (function () {
 	return ConfirmAlert;
 })();
 
+/* A special implementation of a cell that can be viewed and displays the
+	services of the offering in the specified offering cell. */
+var OfferingServiceCell = (function () {
+	OfferingServiceCell.prototype = new cr.Cell();
+	OfferingServiceCell.prototype.offeringCell = null;
+	
+	OfferingServiceCell.prototype.isEmpty = function()
+	{
+		if (this.offeringCell.isEmpty())
+			return true;
+		return this.offeringCell.data[0].getCell("Service").isEmpty();
+	}
+	
+	OfferingServiceCell.prototype.show = function(obj, containerPanel)
+	{
+		d3.select(obj).selectAll('ol>li').remove();
+		if (!this.offeringCell.isEmpty())
+			this.offeringCell.data[0].getCell("Service").show(obj, containerPanel);
+	}
+	
+	function OfferingServiceCell(offeringCell) {
+		var field = {capacity: "_multiple values", name: "Marker", label: "Markers"};
+		cr.Cell.call(this, field);
+		this.offeringCell = offeringCell;
+	}
+	
+	return OfferingServiceCell;
+})();
+
+var MyMarkersCell = (function () {
+	MyMarkersCell.prototype = new PickOrCreateCell();
+	
+	MyMarkersCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
+	{
+		var _this = this;
+		var done = function(d, i)
+		{
+			_this.pickedObject(d);
+		}
+		this.editPanel = new PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done);
+	}
+	
+	function MyMarkersCell(pickCell, createCell) {
+		var field = {capacity: "_multiple values", name: "marker", label: "My Markers"};
+		PickOrCreateCell.call(this, pickCell, createCell, field);
+	}
+	return MyMarkersCell;
+})();
+
 var EditExperiencePanel = (function () {
 	EditExperiencePanel.prototype = new SitePanel();
 	EditExperiencePanel.prototype.experience = null;
@@ -3087,7 +3277,15 @@ var EditExperiencePanel = (function () {
 		var bottomNavContainer = this.appendBottomNavContainer();
 
 		navContainer.appendRightButton()
-			.on("click", panel2Div.handleDoneEditingButton)
+			.on("click", function()
+				{
+					panel2Div.handleDoneEditingButton.call(this,
+						function()
+						{
+							myMarkersCell.data.forEach(function(d)
+								{ d.removeUnusedValue(); });
+						});
+				})
 			.append("span").text("Done");
 
 		navContainer.appendTitle("Edit Experience");
@@ -3105,10 +3303,32 @@ var EditExperiencePanel = (function () {
 				 new PickOrCreateOfferingCell(experience),
 				 experience.getCell("Start"),
 				 experience.getCell("End"),
-				 experience.getCell("Service"),
 				];
 				
 		panel2Div.showEditCells(cells);
+		
+		var offeringCell = experience.getCell("Offering");
+		var offeringServiceCell = new OfferingServiceCell(offeringCell);
+		var sections = panel2Div.showViewCells([offeringServiceCell]);
+		sections.each(function(cell)
+		{
+			var _thisSection = this;
+			var checkView = function(e)
+			{
+				offeringServiceCell.show(_thisSection, _this.node());
+				$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+			}
+			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+			$(this).on("remove", function(e)
+			{
+				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+			});
+		});
+		
+		var serviceCell = experience.getCell("Service");
+		var userServiceCell = experience.getCell("User Entered Service");
+		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
+		var sections = panel2Div.showEditCells([myMarkersCell]);
 									  
 		revealPanelUp(this.node());
 	}

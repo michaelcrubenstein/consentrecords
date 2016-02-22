@@ -282,6 +282,9 @@ function _checkItemsDivDisplay(itemsDiv)
 		});
 		
 	itemsDiv.style("display", isVisible ? null : "none");
+	/* In addition to the itemsDiv, hide the section if we are in view mode. */
+	if (!isEdit)
+		d3.select(itemsDiv.node().parentNode).style("display", isVisible ? null : "none");
 }
 
 function _setupItemsDivHandlers(itemsDiv, cell)
@@ -674,6 +677,9 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
+			
+		/* Return the item in case a calling function needs to do more. */
+		return item;
 	}
 }
 
@@ -1457,9 +1463,39 @@ var SitePanel = (function () {
 		{
 			return this.append("section").datum(datum);
 		}
-				
+		
+		panel2Div.isEmptyItems = function(itemsDiv)
+		{
+			var isEmpty = true;
+			itemsDiv.selectAll("li")
+				.each(function(d) { if (isEmpty && !d.isEmpty()) isEmpty = false; });
+			return isEmpty;
+		}
+		
+		panel2Div.appendCellData = function(sectionNode, cell)
+		{
+			var _thisPanel2Div = this;
+			var section = d3.select(sectionNode);
+			var itemsDiv = section.select("ol");
+			_setupItemsDivHandlers(itemsDiv, cell);
+			cell.show(sectionNode, _this.node());
+			$(sectionNode).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
+			
+			/* Make sure the section gets shown if a value is added to it. */
+			var checkDisplay = function(eventObject, newValue)
+			{
+				$(eventObject.data).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
+			}
+			$(cell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, sectionNode, checkDisplay);
+			$(sectionNode).on("remove", null, cell, function(eventObject)
+				{
+					$(eventObject.data).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, checkDisplay);
+				});
+		}
+		
 		panel2Div.showViewCells = function(cells)
 		{
+			var _thisPanel2Div = this;
 			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
@@ -1468,27 +1504,14 @@ var SitePanel = (function () {
 						var section = d3.select(this);
 						cell.appendLabel(this);
 						var itemsDiv = section.append("ol").classed("items-div", true);
-						_setupItemsDivHandlers(itemsDiv, cell);
-						cell.show(this, _this.node());
-						$(this).css("display", cell.isEmpty() ? "none" : "");
-					
-						/* Make sure the section gets shown if a value is added to it. */
-						var checkDisplay = function(eventObject, newValue)
-						{
-							$(eventObject.data).css("display", this.isEmpty() ? "none" : "");
-						}
-						$(cell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, checkDisplay);
-						$(this).on("remove", null, cell, function(eventObject)
-							{
-								$(eventObject.data).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, checkDisplay);
-							});
+						_thisPanel2Div.appendCellData(this, cell);
 					});
 			sections.append("div").classed("cell-border-below", true);
 			
 			return sections;
 		}
 		
-		panel2Div.handleDoneEditingButton = function() {
+		panel2Div.handleDoneEditingButton = function(done) {
 			if (prepareClick('click', 'done editing'))
 			{
 				showClickFeedback(this);
@@ -1509,12 +1532,16 @@ var SitePanel = (function () {
 				if (initialData.length > 0) {
 					cr.updateValues(initialData, sourceObjects, 
 						function() {
+							if (done)
+								done();
 							_this.hide();
 						}, 
 						syncFailFunction);
 				}
 				else
 				{
+					if (done)
+						done();
 					_this.hide();
 				}
 			}
@@ -1764,7 +1791,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 /* Displays a panel in which the specified object's contents appear.
  */
 function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction) {
-	successFunction = function ()
+	var successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
 									objectData, getViewPanelHeader(objectData), "view", showSuccessFunction);
