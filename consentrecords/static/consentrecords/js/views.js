@@ -289,7 +289,9 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 	node = itemsDiv.node();
 	function checkVisible(eventObject)
 	{
-		/* In this case, make the itemsDiv visible if the corresponding cell has any values (empty or otherwise) */
+		/* In this case, make the itemsDiv visible if it displays any values.
+			In edit mode, empty values are displayed; in view mode, they are not.
+		 */
 		var classList = eventObject.data.parentNode.classList;
 		var isVisible = classList.contains("unique");
 		var isEdit = classList.contains("edit");
