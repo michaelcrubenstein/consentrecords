@@ -1877,7 +1877,10 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 			else
 				doneButton = navContainer.appendLeftButton();
 			doneButton.append("span").text("Done");
-			doneButton.on("click", panel2Div.handleDoneEditingButton);
+			doneButton.on("click", function()
+				{
+					panel2Div.handleDoneEditingButton.call(this);
+				});
 		}
 		else
 		{
