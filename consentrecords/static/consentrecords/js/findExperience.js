@@ -103,6 +103,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	crp.pushCheckCells(offering, function()
 		{
 			var serviceCell = offering.getCell("Service");
+			serviceCell.field.label = "Markers";
 			if (!service && serviceCell.data.length > 0)
 				service = serviceCell.data[0];
 				
@@ -117,8 +118,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 
 			if (serviceCell.data.length > 0)
 			{
-				var labelDiv = cellDiv.append("label")
-					.text("Markers");
+				serviceCell.appendLabel(cellDiv.node());
 				var itemsDiv = cellDiv.append("ol").classed("items-div", true);
 
 				var divs = appendItems(itemsDiv, serviceCell.data);
