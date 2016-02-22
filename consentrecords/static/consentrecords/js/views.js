@@ -351,7 +351,7 @@ function _showViewStringCell(obj, cell)
 	var setupItems = function(divs, cell) {
 		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
 		.append("div")
-		.classed("string-value-view", true)
+		.classed("description-text string-value-view", true)
 		.text(_getDataValue)
 		.each(_pushTextChanged);
 	}
