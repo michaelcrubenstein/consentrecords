@@ -136,6 +136,11 @@ nav.bottom {
 	border-top: 1px solid #eee;
 }
 
+.panel-fill > p
+{
+	padding: 6px 12px;
+	color: #777;
+}
 panel.view .panel-fill>header
 {
 	width: 100%;
