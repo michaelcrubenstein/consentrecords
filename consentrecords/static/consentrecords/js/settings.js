@@ -26,7 +26,10 @@ var Settings = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 			
-		doneButton.on("click", panel2Div.handleDoneEditingButton)
+		doneButton.on("click", function()
+				{
+					panel2Div.handleDoneEditingButton.call(this);
+				})
  			.append("span").text("Done");
 			
 		var cells = [userInstance.getCell("_first name"),
