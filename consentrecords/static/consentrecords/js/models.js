@@ -295,11 +295,9 @@ cr.Cell = (function()
 		Cell.prototype.deleteValue = function(oldData)
 		{
 			function remove(arr, item) {
-				  for(var i = arr.length; i--;) {
-					  if(arr[i] === item) {
-						  arr.splice(i, 1);
-					  }
-				  }
+				var i = arr.indexOf(item);
+				if (i >= 0)
+					arr.splice(i, 1);
 			  }
 			if (this.field.capacity == "_unique value")
 			{
