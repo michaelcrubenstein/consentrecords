@@ -1480,6 +1480,37 @@
 			objectData.checkCells(undefined, successFunction, asyncFailFunction)
 		}
 		
+		function compareUsers(a, b)
+		{
+			var aDatum = a.getDatum("_email");
+			var bDatum = b.getDatum("_email");
+			if (aDatum)
+			{
+				if (bDatum)
+				{
+					result = aDate.localeCompare(bDatum);
+					if (result == 0)
+						return a.getDescription().localeCompare(b.getDescription());
+					else
+						return result;
+				}
+				else
+					return -1;
+			}
+			else
+			{
+				if (bDatum)
+					return 1;
+				else
+					return a.getDescription().localeCompare(b.getDescription());
+			}
+		}
+		
+		function compareEnrollments(a, b)
+		{
+			return a.getDescription().localeCompare(b.getDescription());
+		}
+		
 		function pickChild(parent, data, previousPanelNode, header, successFunction)
 		{
 			data.sort(function(a, b)
@@ -1621,6 +1652,7 @@
 						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
+								sections.sort(compareUsers);
 								var buttons = appendViewButtons(sections)
 									.on("click", function(user)
 									{
@@ -2150,10 +2182,8 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.checkCells(undefined, function()
+						instance.getCellData("Enrollment", function(enrollments)
 							{
-								enrollmentCell = instance.getCell("Enrollment");
-						
 								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
@@ -2168,7 +2198,8 @@
 								var panel2Div = sitePanel.appendScrollArea();
 
 								panel2Div.selectAll("section").remove();
-								var sections = panel2Div.appendSections(enrollmentCell.data);
+								var sections = panel2Div.appendSections(enrollments);
+								sections.sort(compareEnrollments);
 								var buttons = appendViewButtons(sections)
 									.on("click", function(enrollment)
 									{
