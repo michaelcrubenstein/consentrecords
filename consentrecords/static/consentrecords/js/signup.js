@@ -133,7 +133,7 @@ var Signup = (function () {
 				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
 				
 			var minYear, maxYear;
-			maxYear = (new Date()).getFullYear();
+			maxYear = (new Date()).getUTCFullYear();
 	
 			minYear = maxYear-100;
 		

@@ -8,28 +8,50 @@ var DateInput = (function () {
 	DateInput.prototype.year = undefined;
 	DateInput.prototype.month = undefined;
 	DateInput.prototype.day = undefined;
+	DateInput.prototype.minDate = undefined;
 	DateInput.prototype.yearInput = null;
 	DateInput.prototype.monthInput = null;
 	DateInput.prototype.dateInput = null;
 	
-    function DateInput(node, minYear) {
+    function DateInput(node, minDate) {
+    	if (!node)
+    		throw ("node is not specified");
+    		
     	this.year = undefined;
     	this.month = undefined;
     	this.day = undefined;
+    	this.minDate = minDate;
     	
     	this.yearInput = null;
     	this.monthInput = null;
     	this.dateInput = null;
     	
-    	if (node !== undefined)
-    	{
-    		this.append(node, minYear);
-    	}
+    	this._append(node, minDate);
     };
     
     DateInput.prototype.checkOnYearChanged = function()
     {
     	this.yearInput.selectAll(":first-child").attr('disabled', true);
+    	if (this.minDate && this.year == this.minDate.getUTCFullYear())
+    	{
+    		minMonth = this.minDate.getUTCMonth();
+    		this.monthInput.selectAll('option').each(function(d, i)
+    			{
+    				d3.select(this).attr('disabled', i <= minMonth ? true : null);
+    			});
+    		if (this.month < minMonth + 1)
+    		{
+    			this.monthInput.node().selectedIndex = minMonth + 1;
+    			this.checkOnMonthChanged();
+    		}
+    	}
+    	else
+    	{
+    		this.monthInput.selectAll('option').each(function(d, i)
+    			{
+    				d3.select(this).attr('disabled', i == 0 ? true : null);
+    			});
+    	}
 	}
     
     DateInput.prototype.checkOnMonthChanged = function()
@@ -49,11 +71,84 @@ var DateInput = (function () {
 			.enter()
 			.append('option')
 			.text(function(d) { return d; });
+
+		var _this = this;
+    	if (this.minDate && 
+    		this.year == this.minDate.getUTCFullYear() &&
+    		this.month == this.minDate.getUTCMonth()+1)
+    	{
+    		minDay = this.minDate.getUTCDate();
+    		this.dateInput.selectAll('option').each(function(d, i)
+    			{
+    				d3.select(this).attr('disabled', (i == 0 && _this.day > 0) || (i > 0 && i < minDay) ? true : null);
+    			});
+    		if (this.day < minDay)
+    		{
+    			this.dateInput.node().selectedIndex = minDay;
+    			this.day = minDay;
+    		}
+    	}
+    	else if (this.day > 0)
+    	{
+    		this.dateInput.selectAll('option').each(function(d, i)
+    			{
+    				d3.select(this).attr('disabled', i == 0 ? true : null);
+    			});
+    	}
+    	else
+    	{
+    		this.dateInput.selectAll('option').attr('disabled', null);
+    	}
+
 		if (oldDate > 0 && oldDate <= daysInMonth)
 			this.dateInput.node().selectedIndex = oldDate;
     }
     
-	DateInput.prototype.append = function(node, minYear)
+    DateInput.prototype.checkMinDate = function(minDate)
+    {
+		var yearNode = this.yearInput.node();
+		var monthNode = this.monthInput.node();
+		var dateNode = this.dateInput.node();
+
+		var maxYear, minYear;
+		maxYear = (new Date()).getUTCFullYear();
+	
+		this.minDate = minDate;
+		if (minDate === undefined)
+			minYear = maxYear - 100;
+		else
+			minYear = minDate.getUTCFullYear();
+
+		var maxYear, minYear;
+		maxYear = (new Date()).getUTCFullYear();
+	
+		if (minDate === undefined)
+			minYear = maxYear - 100;
+		else
+			minYear = minDate.getUTCFullYear();
+		
+		var newNumOptions = maxYear - minYear + 2;
+		if (this.yearInput.node().selectedIndex >= newNumOptions)
+		{
+			this.year = minYear;
+			this.yearInput.node().selectedIndex = newNumOptions - 1;
+		}
+		
+		while (this.yearInput.selectAll('option:last-child').datum() < minYear)
+		{
+			this.yearInput.selectAll('option:last-child').remove();
+		}
+		for (i = this.yearInput.selectAll('option:last-child').datum() - 1; i >= minYear; --i)
+		{
+			this.yearInput.append('option')
+				.datum(i)
+				.text(i);
+		}
+		
+		this.checkOnYearChanged();
+    }
+    
+	DateInput.prototype._append = function(node, minDate)
 	{
 		var _this = this;
 		var p = d3.select(node);
@@ -81,11 +176,13 @@ var DateInput = (function () {
 		var monthNode = this.monthInput.node();
 		var dateNode = this.dateInput.node();
 
-		var maxYear;
-		maxYear = (new Date()).getFullYear();
+		var maxYear, minYear;
+		maxYear = (new Date()).getUTCFullYear();
 	
-		if (minYear === undefined)
+		if (minDate === undefined)
 			minYear = maxYear - 100;
+		else
+			minYear = minDate.getUTCFullYear();
 		
 		var years = ['year'];
 		for (var i = maxYear; i >= minYear; --i)
