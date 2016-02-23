@@ -33,6 +33,7 @@ urlpatterns = [
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
+    url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
 
     url(r'^local/getuserid/', views.getUserID),
     url(r'^local/getdata/', views.getData),

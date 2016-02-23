@@ -1,4 +1,23 @@
 var Settings = (function () {
+
+	Settings.prototype.appendActionButton = function(panel2Div, text, onClick)
+	{
+		var itemsDiv = panel2Div.append('section')
+			.classed('cell edit unique', true)
+			.classed('btn row-button', true)
+			.on('click', onClick)
+			.append('ol').classed('items-div', true);
+		
+		var button = itemsDiv.append('li')
+			.append('div')
+			.classed('left-expanding-div', true);
+		appendRightChevrons(button);
+			
+		button.append('div')
+			.classed("description-text string-value-view", true)
+			.text(text);	
+			
+	}
 	
 	function Settings(previousPanel) {
 	
@@ -34,33 +53,26 @@ var Settings = (function () {
 			
 		var cells = [userInstance.getCell("_first name"),
 					 userInstance.getCell("_last name"),
-					 userInstance.getCell("_email"),
 					 userInstance.getCell("Birthday"),
 					 userInstance.getCell("_public access")];
 					 
 		panel2Div.showEditCells(cells);
 		
-		var itemsDiv = panel2Div.append('section')
-			.classed('cell edit unique', true)
-			.classed('btn row-button', true)
-			.on('click', function() {
+		this.appendActionButton(panel2Div, 'Change Email', function() {
+				if (prepareClick('click', 'Change Email'))
+				{
+					var panel = new UpdateUsernamePanel(userInstance, sitePanel.node());
+				}
+			});
+		
+		this.appendActionButton(panel2Div, 'Change Password', function() {
 				if (prepareClick('click', 'Change Password'))
 				{
 					var panel = new UpdatePasswordPanel(sitePanel.node());
 					showPanelLeft(panel.node());
 				}
-			})
-			.append('ol').classed('items-div', true);
+			});
 		
-		var button = itemsDiv.append('li')
-			.append('div')
-			.classed('left-expanding-div', true);
-		appendRightChevrons(button);
-			
-		button.append('div')
-			.classed("description-text string-value-view", true)
-			.text("Change Password");	
-			
 		showPanelLeft(sitePanel.node());
 	}
 	

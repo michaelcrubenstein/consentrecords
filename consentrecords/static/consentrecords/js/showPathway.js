@@ -2096,7 +2096,7 @@ var AddExperiencePanel = (function () {
 			if (birthday && birthday.value)
 				minYear = parseInt(birthday.value.substr(0, 4));
 
-			dots.startDateInput = new DateInput(this, minYear);
+			dots.startDateInput = new DateInput(this, new Date(birthday.value));
 			
 			$(dots.startDateInput).on('change', function(eventObject) {
 				dots.checkForwardEnabled();
@@ -2108,6 +2108,19 @@ var AddExperiencePanel = (function () {
 			}	
 			this.onReveal = null;
 		}
+		
+		function _getMinEndDate(dots)
+		{
+			if (dots.startDateInput.year)
+				return new Date(dots.startDateInput.value());
+			else
+			{
+				var birthday = pathway.userInstance.getValue("Birthday");
+				if (birthday && birthday.value)
+					return new Date(birthday.value);
+			}
+			return undefined;
+		}
 
 		function setupPanel6(dots)
 		{
@@ -2115,17 +2128,7 @@ var AddExperiencePanel = (function () {
 			p.append('div')
 				.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
 
-			var minYear = undefined;
-			if (dots.startDateInput.year)
-				minYear = dots.startDateInput.year;
-			else
-			{
-				var birthday = pathway.userInstance.getValue("Birthday");
-				if (birthday && birthday.value)
-					minYear = parseInt(birthday.value.substr(0, 4));
-			}
-
-			dots.endDateInput = new DateInput(this, minYear)
+			dots.endDateInput = new DateInput(this, _getMinEndDate(dots))
 
 			this.onGoingForward = function(goToNext)
 			{
@@ -2135,7 +2138,10 @@ var AddExperiencePanel = (function () {
 					dots.setValue(dots.value + 1);
 			}
 			
-			this.onReveal = null;
+			this.onReveal = function(dots)
+			{
+				dots.endDateInput.checkMinDate(_getMinEndDate(dots))
+			}
 		}
 
 		var p0 = d3.select(dots.nthPanel(0));
