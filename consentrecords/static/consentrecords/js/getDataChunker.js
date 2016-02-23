@@ -9,6 +9,17 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._start = 0;
 	GetDataChunker.prototype._inGetData = false;
 	GetDataChunker.prototype._onGetDataDone = null;
+	GetDataChunker.prototype._check = null;
+	
+	GetDataChunker.prototype._clearScrollCheck = function()
+	{
+		if (this._check != null)
+		{
+			$(this._containerNode).off("scroll", this._check);
+			$(window).off("resize", this._check);
+			this._check = null;
+		}
+	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()
 	{
@@ -18,10 +29,11 @@ var GetDataChunker = (function() {
 			this._loadingMessage.remove();
 			this._loadingMessage = null;
 		}
+		this._clearScrollCheck();
 		this._inGetData = false;
 	}
 	
-	GetDataChunker.prototype.restart = function(instances)
+	GetDataChunker.prototype._restart = function(instances, startVal)
 	{
 		if (this._loadingMessage != null)
 		{
@@ -36,22 +48,22 @@ var GetDataChunker = (function() {
 				var panelHeight = $(this._containerNode).height();
 				var position = $(this._loadingMessage.node()).position();
 				if (position.top < panelHeight)
-					this.start();
+					this._continue(startVal);
 				else
 					this._inGetData = false;
 			}
 		}
 	}
 	
-	GetDataChunker.prototype.doneGetData = function(instances)
+	GetDataChunker.prototype._doneGetData = function(instances, startVal)
 	{
 		if (this._loadingMessage != null)
 			crv.stopLoadingMessage(this._loadingMessage);
-		this._onGetDataDone(instances);
-		this.restart(instances);
+		this._onGetDataDone(instances, startVal);
+		this._restart(instances, startVal);
 	}
 	
-	GetDataChunker.prototype.start = function()
+	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
 		
@@ -64,19 +76,39 @@ var GetDataChunker = (function() {
 					start: this._start,
 					end: this._start + this.increment,
 					fields: this.fields, 
-					done: function(instances) { _this.doneGetData(instances); }, 
+					done: function(instances) { _this._doneGetData(instances, startVal); }, 
 					fail: asyncFailFunction});
 		this._inGetData = true;
 	}
 	
-	GetDataChunker.prototype.onScroll = function()
+	GetDataChunker.prototype.start = function(startVal)
+	{
+		var _this = this;
+		
+		this._clearScrollCheck();
+
+		this._check = function()
+		{
+			_this.onScroll(startVal);
+		}
+		
+		$(this._containerNode).scroll(this._check);
+		$(window).resize(this._check);
+		$(this._containerNode).on("remove", function()
+			{
+				$(window).off("resize", _this.check);
+			});
+		this._continue(startVal);
+	}
+	
+	GetDataChunker.prototype.onScroll = function(startVal)
 	{
 		if (this._loadingMessage != null && !this._inGetData)
 		{
 			var panelHeight = $(this._containerNode).height();
 			var position = $(this._loadingMessage.node()).position();
 			if (position.top < panelHeight)
-				this.start();
+				this._continue(startVal);
 		}
 	}
 
@@ -88,19 +120,7 @@ var GetDataChunker = (function() {
 		this._start = 0;
 		this._inGetData = false;
 		this._onGetDataDone = onGetDataDone;
-		
-		var _this = this;
-		function checkFunction()
-		{
-			_this.onScroll();
-		}
-		
-		$(containerNode).scroll(checkFunction);
-		$(window).resize(checkFunction);
-		$(containerNode).on("remove", function()
-			{
-				$(window).off("resize", checkFunction);
-			});
+		this._check = null;
 	}
 	
 	return GetDataChunker;

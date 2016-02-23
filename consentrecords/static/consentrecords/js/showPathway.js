@@ -1647,11 +1647,9 @@ function setupPanel2(dots)
 		.append("ol")
 		.classed("items-div", true);
 			  
-	var startVal;
-	
 	var _this = this;
 
-	var done = function(orgs)
+	var done = function(orgs, startVal)
 	{
 		function appendDescriptions(buttons)
 		{
@@ -1728,8 +1726,6 @@ function setupPanel2(dots)
 		itemsDiv.selectAll("li").remove();
 		if (val.length > 0)
 		{
-			startVal = val;
-			
 			if (val.length < 3)
 				_this.getDataChunker.path = '(Organization,Site)[_name^="'+val+'"]';
 			else
@@ -1737,7 +1733,7 @@ function setupPanel2(dots)
 			
 			_this.getDataChunker.fields = ["parents"];
 			_this.getDataChunker.clearLoadingMessage();
-			_this.getDataChunker.start();			
+			_this.getDataChunker.start(val);			
 		}
 	}
 	
