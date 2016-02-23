@@ -146,6 +146,7 @@ var DateInput = (function () {
 		}
 		
 		this.checkOnYearChanged();
+		this.checkOnMonthChanged();
     }
     
 	DateInput.prototype._append = function(node, minDate)
