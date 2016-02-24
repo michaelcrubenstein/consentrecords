@@ -1630,6 +1630,117 @@ function setupServicesPanel(dots)
 	}		
 }
 
+var OrganizationSearchView = (function() {
+	OrganizationSearchView.prototype = new SearchView();
+	OrganizationSearchView.prototype.dots = null;
+	OrganizationSearchView.prototype.container = null;
+	
+	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var leftText = buttons.append('div').classed("left-expanding-div", true);
+
+		leftText.append('div')
+			.classed("sub-text", function(d) { return d.getValue("Organization"); })
+			.text(function(d) {
+				if (d.getValue("Organization"))
+					return d.getValue("Organization").getDescription();
+				else
+					return d.getDescription();
+			});
+		leftText.append('div')
+			.classed("sub-text", true)
+			.text(function(d) { 
+				if (d.getValue("Organization"))
+					return d.getDescription();
+				else
+					return "";
+			});
+	}
+			
+	OrganizationSearchView.prototype.onClickButton = function(d, i) {
+		if (prepareClick('click', 'experience organization: ' + d.getDescription()))
+		{
+			if (d.getValue("Organization"))
+			{
+				this.dots.organization = d.getValue("Organization");
+				this.dots.site = d;
+				this.dots.organizationName = d.getValue("Organization").getDescription();
+				this.dots.siteName = d.getDescription();
+			}
+			else
+			{
+				this.dots.organization = d;
+				this.dots.site = null;
+				this.dots.organizationName = d.getDescription();
+				this.dots.siteName = null;
+			}
+
+			this.inputBox.value = d.getDescription();
+			$(this.inputBox).trigger("input");
+			if (this.dots.site)
+				this.dots.setValue(this.dots.value + 2);
+			else
+				this.dots.setValue(this.dots.value + 1);
+		}
+		d3.event.preventDefault();
+	}
+	
+	OrganizationSearchView.prototype.isButtonVisible = function(button, d)
+	{
+		if (d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0)
+			return true;
+		return false;
+	}
+	
+	OrganizationSearchView.prototype.searchPath = function(val)
+	{
+		if (val.length == 0)
+			return "";
+		else if (val.length < 3)
+			return '(Organization,Site)[_name^="'+val+'"]';
+		else
+			return '(Organization,Site)[_name*="'+val+'"]';
+	}
+	
+	OrganizationSearchView.prototype.appendSearchArea = function()
+	{
+		var w = this.container.append('div').classed('body', true)
+				  .append('div')
+				  .append('div');
+		return w.append("section")
+			.classed("multiple", true)
+			.append("ol")
+			.classed("items-div", true);
+	}
+	
+	OrganizationSearchView.prototype.appendButtonContainers = function(foundObjects)
+	{
+		var i = 0;
+		return this.listPanel.selectAll("li")
+			.data(foundObjects, function(d) {
+				/* Ensure that this operation appends without replacing any items. */
+				i += 1;
+				return i;
+			  })
+			.enter()
+			.append("li");	// So that each button appears on its own row.
+	}
+	
+	OrganizationSearchView.prototype.clearListPanel = function()
+	{
+		this.listPanel.selectAll("li").remove();
+	}
+	
+	function OrganizationSearchView(dots, container, placeholder)
+	{
+		this.dots = dots;
+		this.container = container;
+		SearchView.call(this, container.node(), placeholder, this.appendDescriptions)
+	}
+	
+	return OrganizationSearchView;
+})();
+
 function setupPanel2(dots)
 {
 	var p = d3.select(this);
@@ -1637,129 +1748,21 @@ function setupPanel2(dots)
 		.classed('table-row', true)
 		.append('p').text("What organization that provided this experience?");
 
-	var searchInput = addInput(p, "Organization");
-
-	var w = p.append('div').classed('body', true)
-			  .append('div')
-			  .append('div');
-	var itemsDiv = w.append("section")
-		.classed("multiple", true)
-		.append("ol")
-		.classed("items-div", true);
-			  
-	var _this = this;
-
-	var done = function(orgs, startVal)
-	{
-		function appendDescriptions(buttons)
-		{
-			var leftText = buttons.append('div').classed("left-expanding-div", true);
-	
-			leftText.append('div')
-				.classed("sub-text", function(d) { return d.getValue("Organization"); })
-				.text(function(d) {
-					if (d.getValue("Organization"))
-						return d.getValue("Organization").getDescription();
-					else
-						return d.getDescription();
-				});
-			leftText.append('div')
-				.classed("sub-text", true)
-				.text(function(d) { 
-					if (d.getValue("Organization"))
-						return d.getDescription();
-					else
-						return "";
-				});
-		}
-				
-		if (searchInput.node().value.toLocaleLowerCase().trim() == startVal)
-		{
-			function buttonClicked(d)
-			{
-				if (prepareClick('click', 'experience organization: ' + d.getDescription()))
-				{
-					if (d.getValue("Organization"))
-					{
-						dots.organization = d.getValue("Organization");
-						dots.site = d;
-						dots.organizationName = d.getValue("Organization").getDescription();
-						dots.siteName = d.getDescription();
-					}
-					else
-					{
-						dots.organization = d;
-						dots.site = null;
-						dots.organizationName = d.getDescription();
-						dots.siteName = null;
-					}
-	
-					searchInput.node().value = d.getDescription();
-					$(searchInput.node()).trigger("input");
-					if (dots.site)
-						dots.setValue(dots.value + 2);
-					else
-						dots.setValue(dots.value + 1);
-				}
-				d3.event.preventDefault();
-			}
-
-			var i = 0;
-			var items = itemsDiv.selectAll("li")
-				.data(orgs, function(d) {
-					/* Ensure that this operation appends without replacing any items. */
-					i += 1;
-					return i;
-				  })
-				.enter()
-				.append("li");	// So that each button appears on its own row.
-
-			appendViewButtons(items, appendDescriptions)
-				.on("click", buttonClicked);
-		}
-	}
-	
-	function textChanged()
-	{
-		var val = this.value.toLocaleLowerCase().trim();
-		
-		itemsDiv.selectAll("li").remove();
-		if (val.length > 0)
-		{
-			if (val.length < 3)
-				_this.getDataChunker.path = '(Organization,Site)[_name^="'+val+'"]';
-			else
-				_this.getDataChunker.path = '(Organization,Site)[_name*="'+val+'"]';
-			
-			_this.getDataChunker.fields = ["parents"];
-			_this.getDataChunker.clearLoadingMessage();
-			_this.getDataChunker.start(val);			
-		}
-	}
-	
-	var lastText = "";	
-	$(searchInput.node()).on("keyup input paste", function(e) {
-		if (lastText != this.value)
-		{
-			lastText = this.value;
-			textChanged.call(this);
-		}
-	});
+	var searchView = new OrganizationSearchView(dots, p, "Organization", appendDescriptions);
 
 	this.onDoneClicked = function()
 	{
-		var textValue = searchInput.node().value;
+		var textValue = searchView.inputBox.value;
 		if ((dots.site && textValue != dots.site.getDescription() && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && dots.organization && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && !dots.organization))
 		{
 			dots.organization = null;
 			dots.site = null;
-			dots.organizationName = searchInput.node().value;
+			dots.organizationName = textValue;
 			dots.siteName = null;
 		}
 	}
-	this.getDataChunker = new GetDataChunker(w.node(), done);
 	this.onReveal = null;
 }
 
@@ -2395,18 +2398,84 @@ var ExperienceDetailPanel = (function () {
 	return ExperienceDetailPanel;
 })();
 
+var PickOrCreateSearchView = (function () {
+	PickOrCreateSearchView.prototype = new PanelSearchView();
+	PickOrCreateSearchView.prototype.pickDatum = null;
+	PickOrCreateSearchView.prototype.createDatum = null;
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	PickOrCreateSearchView.prototype.onClickButton = function(d, i) {
+		if (prepareClick('click', 'pick ' + d.getDescription()))
+		{
+			this.sitePanel.updateValues(d, null);
+		}
+		d3.event.preventDefault();
+	}
+	
+	/* Overrides SearchView.setupInputBox */
+	PickOrCreateSearchView.prototype.setupInputBox = function()
+	{
+		if (!this.createDatum.isEmpty())
+		{
+			this.inputBox.value = this.createDatum.getDescription();
+			$(this.inputBox).trigger("input");
+		}
+		else if (!this.pickDatum.isEmpty())
+		{
+			this.inputBox.value = this.pickDatum.getDescription();
+			$(this.inputBox).trigger("input");
+		}
+	}
+	
+	/* Overrides SearchView.prototype.isButtonVisible */
+	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d)
+	{
+		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
+	}
+	
+	/* Overrides SearchView.searchPath */
+	PickOrCreateSearchView.prototype.searchPath = function(val)
+	{
+		if (val.length == 0)
+			/* This case occurs when searching for sites within an organization. */
+			return this.pickDatum.cell.field.ofKindID;
+		else
+		{
+			var symbol = (val.length < 3) ? "^=" : "*=";
+			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
+		}
+	}
+	
+	PickOrCreateSearchView.prototype.showObjects = function(foundObjects)
+	{
+		var buttons = SearchView.prototype.showObjects.call(this, foundObjects);
+			
+		if (!this.pickDatum.isEmpty())
+		{
+			var _this = this;
+			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return d.getDescription() == _this.pickDatum.getDescription(); });
+		}
+		return buttons;
+	}
+	
+	function PickOrCreateSearchView(sitePanel, pickDatum, createDatum)
+	{
+		this.pickDatum = pickDatum;
+		this.createDatum = createDatum;
+		PanelSearchView.call(this, sitePanel);
+	}
+	
+	return PickOrCreateSearchView;
+})();
+
 var PickOrCreatePanel = (function () {
 	PickOrCreatePanel.prototype = new SitePanel();
 	PickOrCreatePanel.prototype.navContainer = null;
-	PickOrCreatePanel.prototype.inputBox = null;
+	PickOrCreatePanel.prototype.searchView = null;
 	PickOrCreatePanel.prototype.done = null;
 	PickOrCreatePanel.prototype.pickDatum = null;
 	PickOrCreatePanel.prototype.createDatum = null;
-	PickOrCreatePanel.prototype._foundCompareText = null;
-	PickOrCreatePanel.prototype._foundObjects = null;
-	PickOrCreatePanel.prototype._constrainCompareText = null;
-	PickOrCreatePanel.prototype.buttons = null;
-	PickOrCreatePanel.prototype._searchTimeout = null;
 	
 	PickOrCreatePanel.prototype.onClickCancel = function()
 	{
@@ -2450,20 +2519,12 @@ var PickOrCreatePanel = (function () {
 		}
 	}
 	
-	PickOrCreatePanel.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'pick ' + d.getDescription()))
-		{
-			this.updateValues(d, null);
-		}
-		d3.event.preventDefault();
-	}
-	
 	PickOrCreatePanel.prototype.onClickDone = function(d, i) {
 		d3.event.preventDefault();
 
 		if (prepareClick('click', 'Done'))
 		{
-			var newText = this.inputText();
+			var newText = this.searchView.inputText();
 			var compareText = newText.toLocaleLowerCase()
 			if (this._foundObjects)
 			{
@@ -2504,164 +2565,6 @@ var PickOrCreatePanel = (function () {
 		return this.pickDatum.cell.field.name;
 	}
 	
-	PickOrCreatePanel.prototype.constrainFoundObjects = function(val)
-	{
-		if (val !== undefined)
-			this._constrainCompareText = val;
-		if (this.buttons != null)
-		{
-			if (this._constrainCompareText != this._foundCompareText)
-			{
-				var _this = this;
-				this.buttons.style("display", function(d) 
-					{ 
-						if (d.getDescription().toLocaleLowerCase().indexOf(_this._constrainCompareText) >= 0)
-							return null;
-						else
-							return "none";
-					});
-			}
-			else
-				this.buttons.style("display", null);
-		}
-	}
-	
-	PickOrCreatePanel.prototype.clearListPanel = function()
-	{
-		this.listPanel.selectAll("section").remove();
-		this.listPanel.selectAll("p").remove();
-	}
-	
-	PickOrCreatePanel.prototype.showObjects = function(foundObjects)
-	{
-		function sortByDescription(a, b)
-		{
-			return a.getDescription().localeCompare(b.getDescription());
-		}
-		foundObjects.sort(sortByDescription);
-		
-		this.clearListPanel();
-		var _this = this;
-		var sections = this.listPanel.appendSections(foundObjects);
-		this.buttons = appendViewButtons(sections)
-			.on("click", function(d, i) {
-				_this.onClickButton(d, i);
-			});
-		
-		this.constrainFoundObjects();	
-			
-		if (!this.pickDatum.isEmpty())
-		{
-			this.buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-				function(d) { return d.getDescription() == _this.pickDatum.getDescription(); });
-		}
-	}
-	
-	PickOrCreatePanel.prototype.inputText = function()
-	{
-		return this.inputBox.value.trim()
-	}
-	
-	PickOrCreatePanel.prototype.inputCompareText = function()
-	{
-		return this.inputText().toLocaleLowerCase();
-	}
-	
-	PickOrCreatePanel.prototype.searchPath = function(val)
-	{
-		if (val.length == 0)
-			/* This case occurs when searching for sites within an organization. */
-			return this.pickDatum.cell.field.ofKindID;
-		else
-		{
-			var symbol = (val.length < 3) ? "^=" : "*=";
-			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
-		}
-	}
-	
-	PickOrCreatePanel.prototype.search = function(val)
-	{
-		this._foundCompareText = val;
-		this._constrainCompareText = val;
-		this._foundObjects = null;	/* Clear any old object sets. */
-			
-		var _this = this;	
-		function done(foundObjects)
-		{
-			if (_this.inputCompareText().indexOf(_this._foundCompareText) == 0)
-			{
-				_this._foundObjects = foundObjects;
-				_this.showObjects(foundObjects);
-			}
-		}
-		
-		var searchPath = this.searchPath(val);
-		if (searchPath && searchPath.length > 0)
-			cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
-		else
-			done([]);
-	}
-	
-	PickOrCreatePanel.prototype.setupInputBox = function()
-	{
-		if (!this.createDatum.isEmpty())
-		{
-			this.inputBox.value = this.createDatum.getDescription();
-			$(this.inputBox).trigger("input");
-		}
-		else if (!this.pickDatum.isEmpty())
-		{
-			this.inputBox.value = this.pickDatum.getDescription();
-			$(this.inputBox).trigger("input");
-		}
-	}
-	
-	PickOrCreatePanel.prototype.startSearchTimeout = function(val)
-	{
-		this.clearListPanel();
-		this.listPanel.append('p')
-				.classed("help-block", true)
-				.text("Loading...");
-
-		var _this = this;
-		function endSearchTimeout() {
-			_this._searchTimeout = null;
-			_this.search(val);
-		}
-		this._searchTimeout = setTimeout(endSearchTimeout, 300);
-	}
-	
-	PickOrCreatePanel.prototype.textCleared = function()
-	{
-		this.listPanel.selectAll("section").remove();
-		this.listPanel.selectAll("p").remove();
-	}
-	
-	PickOrCreatePanel.prototype.textChanged = function()
-	{
-		if (this._searchTimeout != null)
-		{
-			clearTimeout(this._searchTimeout);
-			this._searchTimeout = null;
-		}
-		
-		var val = this.inputCompareText();
-		if (val.length == 0)
-		{
-			this.textCleared();
-		}
-		else if (this._foundCompareText != null && 
-				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0))
-		{
-			if (this._foundObjects && this._foundObjects.length < 50)
-				this.constrainFoundObjects(val);
-			else
-				this.startSearchTimeout(val);
-		}
-		else
-			this.startSearchTimeout(val);
-	}
-	
 	function PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done)
 	{
 		if (previousPanelNode === undefined)
@@ -2694,14 +2597,8 @@ var PickOrCreatePanel = (function () {
 			var title = this.getTitle();
 			if (title)
 				this.navContainer.appendTitle(title);
-
-			var inputBox = addInput(this.panelDiv, title);
 			
-			this.inputBox = inputBox.node();
-			$(this.inputBox).on("input", function() { _this.textChanged() });
-
-			this.listPanel = this.appendScrollArea();
-			this.setupInputBox();
+			this.searchView = new PickOrCreateSearchView(this, pickDatum, createDatum);
 
 			showPanelLeft(this.node());
 		}
