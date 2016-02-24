@@ -6,6 +6,7 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype.increment = 50;
 	GetDataChunker.prototype._containerNode = null;
 	GetDataChunker.prototype._loadingMessage = null;
+	GetDataChunker.prototype._isSpinning = null;
 	GetDataChunker.prototype._start = 0;
 	GetDataChunker.prototype._inGetData = false;
 	GetDataChunker.prototype._onGetDataDone = null;
@@ -19,6 +20,7 @@ var GetDataChunker = (function() {
 			$(window).off("resize", this._check);
 			this._check = null;
 		}
+		this._inGetData = false;
 	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()
@@ -28,9 +30,9 @@ var GetDataChunker = (function() {
 			crv.stopLoadingMessage(this._loadingMessage);
 			this._loadingMessage.remove();
 			this._loadingMessage = null;
+			this._isSpinning = false;
 		}
 		this._clearScrollCheck();
-		this._inGetData = false;
 	}
 	
 	GetDataChunker.prototype._restart = function(instances, startVal)
@@ -58,19 +60,33 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._doneGetData = function(instances, startVal)
 	{
 		if (this._loadingMessage != null)
+		{
 			crv.stopLoadingMessage(this._loadingMessage);
+			this._isSpinning = false;
+		}
 		this._onGetDataDone(instances, startVal);
 		this._restart(instances, startVal);
+	}
+	
+	GetDataChunker.prototype.showLoadingMessage = function()
+	{
+		if (this._loadingMessage == null)
+		{
+			this._loadingMessage = crv.appendLoadingMessage(this._containerNode);
+			this._isSpinning = true;
+		}
+		else if (!this._isSpinning)
+		{
+			crv.startLoadingMessage(this._loadingMessage);
+			this._isSpinning = true;
+		}
 	}
 	
 	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
 		
-		if (this._loadingMessage == null)
-			this._loadingMessage = crv.appendLoadingMessage(this._containerNode);
-		else
-			crv.startLoadingMessage(this._loadingMessage);
+		this.showLoadingMessage();
 
 		cr.getData({path: this.path, 
 					start: this._start,
@@ -116,6 +132,7 @@ var GetDataChunker = (function() {
 	{
 		this._containerNode = containerNode;
 		this._loadingMessage = null;
+		this._isSpinning = false;
 		this.path = null;
 		this._start = 0;
 		this._inGetData = false;

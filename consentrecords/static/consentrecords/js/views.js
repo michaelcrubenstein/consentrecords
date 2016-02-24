@@ -1646,6 +1646,243 @@ var SitePanel = (function () {
 	}
 	return SitePanel;
 })();
+
+var SearchView = (function () {
+	SearchView.prototype.listPanel = null;
+	SearchView.prototype.inputBox = null;
+	SearchView.prototype.getDataChunker = null;
+	SearchView.prototype._fill = null;
+	SearchView.prototype._foundCompareText = null;
+	SearchView.prototype._foundObjects = null;
+	SearchView.prototype._constrainCompareText = null;
+	SearchView.prototype._searchTimeout = null;
+	
+	function SearchView(containerNode, placeHolder, fill) {
+		if (containerNode)
+		{
+			var _this = this;
+			this._fill = fill;
+			var inputBox = this.appendInput(containerNode, placeHolder);
+		
+			this.inputBox = inputBox.node();
+			$(this.inputBox).on("input", function() { _this.textChanged() });
+
+			this.listPanel = this.appendSearchArea(containerNode);
+
+			var done = function(foundObjects, startVal)
+			{
+				if (_this.inputBox.value.toLocaleLowerCase().trim() == startVal)
+				{
+					if (_this._foundObjects === null)
+						_this._foundObjects = foundObjects;
+					else
+						_this._foundObjects = _this._foundObjects.concat(foundObjects);
+					_this.showObjects(foundObjects);
+				}
+			}
+			this.getDataChunker = new GetDataChunker(this.listPanel.node(), done);
+			
+			/* Call setupInputBox at the end because it may trigger an input event. */
+			this.setupInputBox();
+		}
+	}
+	
+	SearchView.prototype.onClickButton = function(d, i) {
+		throw ("need to override SearchView.onClick");
+	}
+	
+	SearchView.prototype.isButtonVisible = function(button, d)
+	{
+		throw ("need to override SearchView.isButtonVisible");
+	}
+	
+	SearchView.prototype.searchPath = function(val)
+	{
+		throw ("need to override SearchView.searchPath");
+	}
+	
+	SearchView.prototype.setupInputBox = function()
+	{
+		/* Do nothing by default */
+	}
+	
+	SearchView.prototype.appendButtonContainers = function(foundObjects)
+	{
+		throw ("need to override SearchView.appendButtonContainers");
+	}
+	
+	SearchView.prototype.clearListPanel = function()
+	{
+		this.listPanel.selectAll("section").remove();
+	}
+	
+	SearchView.prototype.sortFoundObjects = function(foundObjects)
+	{
+		function sortByDescription(a, b)
+		{
+			return a.getDescription().localeCompare(b.getDescription());
+		}
+		foundObjects.sort(sortByDescription);
+	}
+	
+	SearchView.prototype.constrainFoundObjects = function(val)
+	{
+		if (val !== undefined)
+			this._constrainCompareText = val;
+			
+		var buttons = this.listPanel.selectAll("div.btn");
+		if (this._constrainCompareText != this._foundCompareText)
+		{
+			var _this = this;
+			buttons.style("display", function(d) 
+				{ 
+					if (_this.isButtonVisible(this, d))
+						return null;
+					else
+						return "none";
+				});
+		}
+		else
+			buttons.style("display", null);
+	}
+	
+	SearchView.prototype.showObjects = function(foundObjects)
+	{
+		var _this = this;
+		var sections = this.appendButtonContainers(foundObjects);
+		var buttons = appendViewButtons(sections, this._fill)
+			.on("click", function(d, i) {
+				_this.onClickButton(d, i);
+			});
+		
+		this.constrainFoundObjects();
+		return buttons;
+	}
+	
+	SearchView.prototype.search = function(val)
+	{
+		this._foundCompareText = val;
+		this._constrainCompareText = val;
+		this._foundObjects = null;	/* Clear any old object sets. */
+			
+		var searchPath = this.searchPath(val);
+		if (searchPath && searchPath.length > 0)
+		{
+			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
+			this.getDataChunker.path = searchPath;
+			this.getDataChunker.fields = ["parents"];
+			this.getDataChunker.start(val);			
+		}
+		else
+		{
+			this.clearListPanel();
+		}
+	}
+	
+	SearchView.prototype.inputText = function()
+	{
+		return this.inputBox.value.trim()
+	}
+	
+	SearchView.prototype.inputCompareText = function()
+	{
+		return this.inputText().toLocaleLowerCase();
+	}
+	
+	SearchView.prototype.startSearchTimeout = function(val)
+	{
+		this.clearListPanel();
+		this.getDataChunker.showLoadingMessage();
+				
+		/* Once we have hit this point, old data is not valid. */
+		this._foundCompareText = null;
+
+		var _this = this;
+		function endSearchTimeout() {
+			_this._searchTimeout = null;
+			_this.search(val);
+		}
+		this._searchTimeout = setTimeout(endSearchTimeout, 300);
+	}
+	
+	SearchView.prototype.textChanged = function()
+	{
+		if (this._searchTimeout != null)
+		{
+			clearTimeout(this._searchTimeout);
+			this._searchTimeout = null;
+		}
+		
+		var val = this.inputCompareText();
+		if (val.length == 0)
+		{
+			this.clearListPanel();
+			this.getDataChunker.clearLoadingMessage();
+			this._foundObjects = null;
+			this._foundCompareText = null;
+		}
+		else if (this._foundCompareText != null && 
+				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&
+				 (this._foundCompareText.length >= 3 || val.length < 3))
+		{
+			if (this._foundObjects && this._foundObjects.length < 50)
+				this.constrainFoundObjects(val);
+			else
+				this.startSearchTimeout(val);
+		}
+		else
+			this.startSearchTimeout(val);
+	}
+	
+	SearchView.prototype.appendInput = function(containerNode, placeholder)
+	{
+		var searchBar = d3.select(containerNode).append("div").classed("searchbar table-row", true);
+	
+		var searchInputContainer = searchBar.append("div")
+			.classed("search-input-container", true);
+		
+		return searchInputContainer
+			.append("input")
+			.classed("search-input", true)
+			.attr("placeholder", placeholder);
+	}
+	
+	SearchView.prototype.appendSearchArea = function()
+	{
+		throw ("appendSearchArea must be overridden");
+	}
+
+	return SearchView;
+})();
+
+var PanelSearchView = (function() {
+	PanelSearchView.prototype = new SearchView();
+	PanelSearchView.prototype.sitePanel = undefined
+	
+	function PanelSearchView(sitePanel, placeholder) {
+		if (sitePanel)
+		{
+			/* Set sitePanel first for call to appendSearchArea */
+			this.sitePanel = sitePanel;
+			SearchView.call(this, sitePanel.node(), placeholder);
+		}
+		else
+			SearchView.call(this);
+	}
+	
+	PanelSearchView.prototype.appendSearchArea = function()
+	{
+		return this.sitePanel.appendScrollArea();
+	}
+	
+	PanelSearchView.prototype.appendButtonContainers = function(foundObjects)
+	{
+		return this.listPanel.appendSections(foundObjects);
+	}
+	
+	return PanelSearchView;
+})();
+
 	
 /* Returns the input DOM element that contains the text being searched. */
 function setupSearchBar(searchBarNode, textChanged)
