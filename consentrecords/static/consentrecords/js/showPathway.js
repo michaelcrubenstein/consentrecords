@@ -1304,7 +1304,7 @@ function setupFirstMarkerPanel(dots)
 		.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
 	p0.append('div')
 		.classed('table-row', true)
-		.append('p').text("Choose one of the markers below, or type the name of your own marker. If more than one marker applies, pick one and then you can add others.");
+		.append('p').text("Choose one of the markers below, or create your own marker. If more than one marker applies, pick one and then you can add others.");
 		
 	var searchInput = addInput(p0, "Experience");
 	
@@ -1517,9 +1517,14 @@ function setupServicesPanel(dots)
 {
 	var sitePanelNode = $(this).parents("panel.site-panel")[0];
 	var p1 = d3.select(this);
-	p1.append('div')
+	var header = p1.append('div')
 		.classed('table-row', true)
-		.append('p').text("Some experiences provide more than one marker, such as being the captain of a soccer team or getting a summer job working with computers. If this opportunity has more than one marker, add other markers here for this experience.");
+		.append('p');
+		
+	if (dots.offering && dots.offering.getCell("Service").data.length > 0)
+		header.text("Markers indicate the type or the benefit of this experience.");
+	else
+		header.text("Some experiences need more than one marker, such as being the captain of a soccer team or getting a summer job working with computers.");
 
 	var obj = p1.append('div')
 		.classed('body', true)
