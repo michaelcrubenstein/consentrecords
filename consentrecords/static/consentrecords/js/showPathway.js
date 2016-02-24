@@ -2362,9 +2362,13 @@ var ExperienceDetailPanel = (function () {
 		
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
-		serviceCell.field.label = "My Markers";
-		var sections = panel2Div.showViewCells([serviceCell]);
-		panel2Div.appendCellData(sections.node(), userServiceCell);
+		/* If this experience is of a type that has custom markers, show them. */
+		if (serviceCell && userServiceCell)
+		{
+			serviceCell.field.label = "My Markers";
+			var sections = panel2Div.showViewCells([serviceCell]);
+			panel2Div.appendCellData(sections.node(), userServiceCell);
+		}
 		
 		var offering = experience.getValue("Offering");
 		if (offering && offering.getValueID())
@@ -2398,11 +2402,11 @@ var PickOrCreatePanel = (function () {
 	PickOrCreatePanel.prototype.done = null;
 	PickOrCreatePanel.prototype.pickDatum = null;
 	PickOrCreatePanel.prototype.createDatum = null;
-	PickOrCreatePanel.prototype.foundCompareText = null;
-	PickOrCreatePanel.prototype.foundObjects = null;
-	PickOrCreatePanel.prototype.constrainCompareText = null;
+	PickOrCreatePanel.prototype._foundCompareText = null;
+	PickOrCreatePanel.prototype._foundObjects = null;
+	PickOrCreatePanel.prototype._constrainCompareText = null;
 	PickOrCreatePanel.prototype.buttons = null;
-	PickOrCreatePanel.prototype.searchTimeout = null;
+	PickOrCreatePanel.prototype._searchTimeout = null;
 	
 	PickOrCreatePanel.prototype.onClickCancel = function()
 	{
@@ -2461,11 +2465,11 @@ var PickOrCreatePanel = (function () {
 		{
 			var newText = this.inputText();
 			var compareText = newText.toLocaleLowerCase()
-			if (this.foundObjects)
+			if (this._foundObjects)
 			{
-				for (var i = 0; i < this.foundObjects.length; ++i)
+				for (var i = 0; i < this._foundObjects.length; ++i)
 				{
-					var v = this.foundObjects[i];
+					var v = this._foundObjects[i];
 					if (v.getDescription().toLocaleLowerCase() === compareText)
 					{
 						this.updateValues(v, null);
@@ -2503,15 +2507,15 @@ var PickOrCreatePanel = (function () {
 	PickOrCreatePanel.prototype.constrainFoundObjects = function(val)
 	{
 		if (val !== undefined)
-			this.constrainCompareText = val;
+			this._constrainCompareText = val;
 		if (this.buttons != null)
 		{
-			if (this.constrainCompareText != this.foundCompareText)
+			if (this._constrainCompareText != this._foundCompareText)
 			{
 				var _this = this;
 				this.buttons.style("display", function(d) 
 					{ 
-						if (d.getDescription().toLocaleLowerCase().indexOf(_this.constrainCompareText) >= 0)
+						if (d.getDescription().toLocaleLowerCase().indexOf(_this._constrainCompareText) >= 0)
 							return null;
 						else
 							return "none";
@@ -2577,16 +2581,16 @@ var PickOrCreatePanel = (function () {
 	
 	PickOrCreatePanel.prototype.search = function(val)
 	{
-		this.foundCompareText = val;
-		this.constrainCompareText = val;
-		this.foundObjects = null;	/* Clear any old object sets. */
+		this._foundCompareText = val;
+		this._constrainCompareText = val;
+		this._foundObjects = null;	/* Clear any old object sets. */
 			
 		var _this = this;	
 		function done(foundObjects)
 		{
-			if (_this.inputCompareText().indexOf(_this.foundCompareText) == 0)
+			if (_this.inputCompareText().indexOf(_this._foundCompareText) == 0)
 			{
-				_this.foundObjects = foundObjects;
+				_this._foundObjects = foundObjects;
 				_this.showObjects(foundObjects);
 			}
 		}
@@ -2621,10 +2625,10 @@ var PickOrCreatePanel = (function () {
 
 		var _this = this;
 		function endSearchTimeout() {
-			_this.searchTimeout = null;
+			_this._searchTimeout = null;
 			_this.search(val);
 		}
-		this.searchTimeout = setTimeout(endSearchTimeout, 300);
+		this._searchTimeout = setTimeout(endSearchTimeout, 300);
 	}
 	
 	PickOrCreatePanel.prototype.textCleared = function()
@@ -2635,9 +2639,10 @@ var PickOrCreatePanel = (function () {
 	
 	PickOrCreatePanel.prototype.textChanged = function()
 	{
-		if (this.searchTimeout != null)
+		if (this._searchTimeout != null)
 		{
-			clearTimeout(this.searchTimeout);
+			clearTimeout(this._searchTimeout);
+			this._searchTimeout = null;
 		}
 		
 		var val = this.inputCompareText();
@@ -2645,10 +2650,10 @@ var PickOrCreatePanel = (function () {
 		{
 			this.textCleared();
 		}
-		else if (this.foundCompareText != null && 
-				 (this.foundCompareText.length == 0 || val.indexOf(this.foundCompareText) == 0))
+		else if (this._foundCompareText != null && 
+				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0))
 		{
-			if (this.foundObjects && this.foundObjects.length < 50)
+			if (this._foundObjects && this._foundObjects.length < 50)
 				this.constrainFoundObjects(val);
 			else
 				this.startSearchTimeout(val);
