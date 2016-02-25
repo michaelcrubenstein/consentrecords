@@ -752,20 +752,6 @@ _uuname
     _name: _text
 _uuname
     _name: _translation
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _text
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: _language
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _language
-            _pick object path: _uuname[_uuname="_language"]>"enumerator"
 _uuname
     _name: _user
     _configuration
