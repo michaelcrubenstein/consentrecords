@@ -3220,6 +3220,17 @@ var EditExperiencePanel = (function () {
 				
 		panel2Div.showEditCells(cells);
 		
+		var startSection = panel2Div.selectAll(":nth-child(4)");
+		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
+		var endSection = panel2Div.selectAll(":nth-child(5)");
+		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
+		endDateInput.checkMinDate(new Date(startDateInput.value));
+		
+		$(startDateInput).on('change', function()
+		{
+			endDateInput.checkMinDate(new Date(startDateInput.value()));
+		});
+		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
 		var sections = panel2Div.showViewCells([offeringServiceCell]);
