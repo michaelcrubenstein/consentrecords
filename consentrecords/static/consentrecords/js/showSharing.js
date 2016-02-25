@@ -1,3 +1,37 @@
+function show_user(user, previousPanelNode)
+{
+	showViewOnlyObjectPanel(user, previousPanelNode);
+}
+
+function appendInfoButtons(buttons, panelNode)
+{
+	var infoButtons =  buttons.insert("div", ":first-child")
+		.classed("info-button right-fixed-width-div", true)
+		.on("click", function(user) {
+			if (prepareClick('click', 'show info: ' + user.getDescription()))
+			{
+				show_user(user, panelNode);
+			}
+			d3.event.preventDefault();
+		});
+	drawInfoButtons(infoButtons);
+}
+
+function appendUserControls(items, panelNode)
+{
+	appendConfirmDeleteControls(items);
+	
+	var buttons = appendRowButtons(items);
+
+	appendDeleteControls(buttons);
+	appendInfoButtons(buttons, panelNode);
+
+	appendButtonDescriptions(buttons)
+		.each(_pushTextChanged);
+		
+	return buttons;
+}
+
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
 	the viewFunction is called when the item is clicked.
@@ -10,23 +44,8 @@ function onUserAdded(itemsDivNode, newValue)
 	_checkItemsDivDisplay(itemsDiv);
 	
 	item.style("display", null);
-			   
-	appendConfirmDeleteControls(item);
 	
-	var buttons = appendRowButtons(item);
-
-	buttons.on("click", function(d) {
-		if (prepareClick('click', 'view added object: ' + d.getDescription()))
-		{
-			showViewOnlyObjectPanel(d, previousPanelNode, revealPanelLeft);
-		}
-	});
-	
-	appendDeleteControls(buttons);
-	appendRightChevrons(buttons);
-
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
+	appendUserControls(item, previousPanelNode);
 }
 
 var SharingPanel = (function() {
@@ -77,15 +96,8 @@ var SharingPanel = (function() {
 	
 		var items = appendItems(itemCells, function(d) { return d.accessors });
 		
-		appendConfirmDeleteControls(items);
-	
-		var buttons = items.append("div")
-			.classed("btn row-button multi-row-content expanding-div", true);
-	
-		appendDeleteControls(buttons);
-
-		appendButtonDescriptions(buttons);
-
+		appendUserControls(items, this.node());
+		
 		/* Add one more button for the add Button item. */
 		var buttonDiv = cells.append("div")
 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
@@ -130,7 +142,7 @@ var SharingPanel = (function() {
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
 			var accessRecordCell = userInstance.getCell("_access record");
-			function successFunction(pickedUser, cellName, currentPanelNode)
+			function done(pickedUser, cellName, currentPanelNode)
 			{
 				if (accessorLevel.accessRecords.length == 0)
 				{
@@ -169,7 +181,7 @@ var SharingPanel = (function() {
 					}, syncFailFunction);
 				}
 			}
-			new PickSharingUserPanel("Add User Or Group", this.node(), successFunction);
+			new PickSharingUserPanel("Add User Or Group", this.node(), done);
 		}
 	}
 
@@ -245,11 +257,6 @@ var PickSharingUserPanel = (function() {
 			{
 				var startVal = val;
 						
-				function show_user(user, previousPanelNode)
-				{
-					showViewOnlyObjectPanel(user, previousPanelNode);
-				}
-	
 				var symbol;
 				if (val.length < 3)
 					symbol = "^=";
@@ -280,16 +287,7 @@ var PickSharingUserPanel = (function() {
 									}
 									d3.event.preventDefault();
 								});
-							var infoButtons =  buttons.insert("div", ":first-child")
-								.classed("info-button right-fixed-width-div", true)
-								.on("click", function(user) {
-									if (prepareClick('click', 'show info: ' + user.getDescription()))
-									{
-										show_user(user, _this.node());
-									}
-									d3.event.preventDefault();
-								});
-							drawInfoButtons(infoButtons);
+							appendInfoButtons(buttons, _this.node());
 						}
 					}
 			
