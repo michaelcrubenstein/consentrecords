@@ -42,7 +42,6 @@ var DateInput = (function () {
     		if (this.month < minMonth + 1)
     		{
     			this.monthInput.node().selectedIndex = minMonth + 1;
-    			this.checkOnMonthChanged();
     		}
     	}
     	else
@@ -52,6 +51,8 @@ var DateInput = (function () {
     				d3.select(this).attr('disabled', i == 0 ? true : null);
     			});
     	}
+    	
+    	this.checkOnMonthChanged();
 	}
     
     DateInput.prototype.checkOnMonthChanged = function()
@@ -86,6 +87,9 @@ var DateInput = (function () {
     		{
     			this.dateInput.node().selectedIndex = minDay;
     			this.day = minDay;
+    			/* Don't reset the date to oldDate. */
+    			if (oldDate < minDay)
+    				oldDate = 0;
     		}
     	}
     	else if (this.day > 0)
@@ -119,14 +123,6 @@ var DateInput = (function () {
 		else
 			minYear = minDate.getUTCFullYear();
 
-		var maxYear, minYear;
-		maxYear = (new Date()).getUTCFullYear();
-	
-		if (minDate === undefined)
-			minYear = maxYear - 100;
-		else
-			minYear = minDate.getUTCFullYear();
-		
 		var newNumOptions = maxYear - minYear + 2;
 		if (this.yearInput.node().selectedIndex >= newNumOptions)
 		{
@@ -146,7 +142,6 @@ var DateInput = (function () {
 		}
 		
 		this.checkOnYearChanged();
-		this.checkOnMonthChanged();
     }
     
 	DateInput.prototype._append = function(node, minDate)
