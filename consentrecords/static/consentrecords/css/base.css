@@ -9,6 +9,7 @@ body {
 }
 .site-panel {
 	display: table;
+	table-layout: fixed;
 	position: absolute;
 	overflow-y: hidden;
 }
@@ -45,6 +46,7 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
  */
 .table {
 	display: table;
+	table-layout: fixed;
 }
 
 .table-row {
@@ -288,6 +290,7 @@ section.cell {
 }
 panel.list .description-text {
 	text-align: left;
+	width: calc(100% - 25px);
 }
 .site-chevron-right {
 	color: #777;
