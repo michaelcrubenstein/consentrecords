@@ -1561,15 +1561,15 @@ function setupServicesPanel(dots)
 				fail: syncFailFunction});
 			}
 		};
-		
-	if (dots.offering != null)
-	{
-		var fixedDivs = appendItems(itemsDiv, dots.offering.getCell("Service").data);
-		var buttons = appendRowButtons(fixedDivs);
-		appendButtonDescriptions(buttons);
-	}
 	
-	var divs = appendItems(itemsDiv, dots.services);
+	function appendOfferingServices()
+	{
+		if (dots.offering != null)
+		{
+			var fixedDivs = appendItems(itemsDiv, dots.offering.getCell("Service").data);
+			appendButtonDescriptions(appendRowButtons(fixedDivs));
+		}
+	}
 	
 	function _confirmDeleteClick(d)
 	{
@@ -1578,19 +1578,22 @@ function setupServicesPanel(dots)
 		var item = $(this).parents("li")[0];
 		$(item).animate({height: "0px"}, 200, 'swing', function() { $(item).remove(); });
 	}
-	
-	appendConfirmDeleteControls(divs)
-		.on('click', _confirmDeleteClick);
-		
-	var buttons = appendRowButtons(divs);
 
-	buttons.on("click", clickFunction);
-	
-	appendDeleteControls(buttons);
-
-	appendRightChevrons(buttons);
+	function appendServices(services)
+	{
+		var divs = appendItems(itemsDiv, services);
+		appendConfirmDeleteControls(divs)
+			.on('click', _confirmDeleteClick);
 		
-	appendButtonDescriptions(buttons);
+		var buttons = appendRowButtons(divs);
+		buttons.on("click", clickFunction);
+		appendDeleteControls(buttons);
+		appendRightChevrons(buttons);
+		appendButtonDescriptions(buttons);
+	}
+	
+	appendOfferingServices();
+	appendServices(dots.services);
 	
 	/* Add one more button for the add Button item. */
 	var buttonDiv = p1.append("div").classed("table-row", true)
@@ -1605,14 +1608,7 @@ function setupServicesPanel(dots)
 					var success = function(newReportedObject)
 					{
 						dots.services.push(newReportedObject);
-						var divs = appendItem(itemsDiv, newReportedObject);
-						appendConfirmDeleteControls(divs)
-							.on('click', _confirmDeleteClick);
-						var buttons = appendRowButtons(divs);
-						buttons.on("click", clickFunction);
-						appendDeleteControls(buttons);
-						appendRightChevrons(buttons);
-						appendButtonDescriptions(buttons);
+						appendServices([newReportedObject]);
 					}
 					var siteNode = $(_thisButton).parents(".site-panel")[0];
 					showPickServicePanel(siteNode, rootObjects, null, dots, success);
@@ -1625,10 +1621,17 @@ function setupServicesPanel(dots)
 	buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 	buttonDiv.append("span").text(" add marker");
 	
-	this.onReveal = null;
+	this.onReveal = function()
+	{
+		itemsDiv.selectAll('li').remove();
+		appendOfferingServices();
+		appendServices(dots.services);
+	}
+	
 	this.onGoingBack = function()
 	{
-		if (dots.offering && dots.offering.getCell("Service").data.length > 0)
+		if (dots.offering && dots.offering.getCell("Service").data.length > 0 ||
+			dots.services.length > 0)
 			dots.setValue(dots.value - 2);
 		else
 			dots.setValue(dots.value - 1);
@@ -2136,7 +2139,8 @@ var AddExperiencePanel = (function () {
 
 			this.onGoingForward = function(goToNext)
 			{
-				if (dots.offering && dots.offering.getCell("Service").data.length > 0)
+				if ((dots.offering && dots.offering.getCell("Service").data.length > 0) ||
+					(dots.services.length > 0))
 					dots.setValue(dots.value + 2);
 				else
 					dots.setValue(dots.value + 1);
