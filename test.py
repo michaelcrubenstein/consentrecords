@@ -8,7 +8,7 @@ from consentrecords.views import api
 # Initialize terms before using them.
 Terms.initialize()
 
-s = Terms.uuName
+s = Terms.term
 print ('##################################')
 print ('# Test 1 ')
 print ('##################################')
