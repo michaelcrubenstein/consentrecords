@@ -52,7 +52,7 @@ if __name__ == "__main__":
         userInfo = UserInfo(user)
         fieldDataDictionary = {}
         
-        path = statePath='_uuname'
+        path = statePath='_term'
         terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
                           .select_related('typeID')\
                           .select_related('description')\
