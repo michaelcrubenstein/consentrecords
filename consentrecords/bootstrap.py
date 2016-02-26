@@ -118,7 +118,7 @@ def createBooleanConfiguration(transactionState):
 # Create the configuration for the uuname uuname.
 def createUUNameConfiguration(transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(Terms.uuName, configurationValues, transactionState)
+    configurations = createConfigurations(Terms.term, configurationValues, transactionState)
     configObject = configurations[_bootstrapName]
     
     configObject.createMissingSubValue(Terms.name, _bootstrapName, 0, transactionState)
@@ -196,7 +196,7 @@ def createFieldConfiguration(transactionState):
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    f.createMissingSubValue(Terms.ofKind, Terms.uuName, 0, transactionState)
+    f.createMissingSubValue(Terms.ofKind, Terms.term, 0, transactionState)
     f.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
     
     f = fields[Terms.dataType]
@@ -229,7 +229,7 @@ def createFieldConfiguration(transactionState):
     
     f = fields[Terms.ofKind]
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
-    f.createMissingSubValue(Terms.ofKind, Terms.uuName, 0, transactionState)
+    f.createMissingSubValue(Terms.ofKind, Terms.term, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)        
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
 

@@ -523,7 +523,7 @@ class Instance(dbmodels.Model):
                                   field=Terms.field,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__field=Terms.name,
-                                  referenceValue__value__referenceValue__typeID=Terms.uuName,
+                                  referenceValue__value__referenceValue__typeID=Terms.term,
                                   referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__referenceValue__value__field=Terms.name,
                                   referenceValue__value__referenceValue__value__stringValue=name)\
@@ -1003,7 +1003,7 @@ class AccessRecord(dbmodels.Model):
         
 class TermNames():
     # These verbs are associated with field IDs of values.
-    uuName = '_uuname'
+    term = '_term'
     configuration = '_configuration'
     field = '_field'
     boolean = '_boolean'
@@ -1135,7 +1135,7 @@ class Terms():
     
     def initialize(transactionState=None):
         try:
-            Terms.uuName = Terms.getUUName()
+            Terms.term = Terms.getUUName()
             Terms.name = Terms.getName()
             nameList = NameList()
             Terms.configuration = Terms.getOrCreateTerm(TermNames.configuration, nameList, transactionState)
@@ -1208,37 +1208,37 @@ class Terms():
     def getUUName():
         return Instance.objects.get(typeID=F('id'),
             value__deleteTransaction__isnull=True,
-            value__stringValue=TermNames.uuName)
+            value__stringValue=TermNames.term)
 
     def getName():
-        return Instance.objects.get(typeID=Terms.uuName,
+        return Instance.objects.get(typeID=Terms.term,
             value__deleteTransaction__isnull=True,
             value__field=F('id'),
             value__stringValue=TermNames.name)
 
     def getNamedInstance(name):
         try:
-            return Instance.objects.get(typeID=Terms.uuName,
+            return Instance.objects.get(typeID=Terms.term,
                 value__deleteTransaction__isnull=True,
                 value__field = Terms.name,
                 value__stringValue=name)
         except Instance.DoesNotExist:
-            raise Instance.DoesNotExist('the term "%s" is not recognized' % uuname)
+            raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
     
     def getOrCreateTerm(name, nameLists, transactionState):
         try:
             return Terms.getNamedInstance(name)
         except Instance.DoesNotExist:
-            i = Instance.objects.create(typeID=Terms.uuName, parent=None, transaction=transactionState.transaction)
+            i = Instance.objects.create(typeID=Terms.term, parent=None, transaction=transactionState.transaction)
             i.addStringValue(Terms.name, name, 0, transactionState)
             return i
             
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
-    def getNamedEnumerator(uuname, stringValue):
-        if not uuname:
-            raise ValueError("uuname is null")
-        v = Value.objects.get(instance=uuname, field=Terms.enumerator,
+    def getNamedEnumerator(term, stringValue):
+        if not term:
+            raise ValueError("term is null")
+        v = Value.objects.get(instance=term, field=Terms.enumerator,
                           deleteTransaction__isnull=True,
                           referenceValue__value__field=Terms.name,
                           referenceValue__value__deleteTransaction__isnull=True,
@@ -1246,8 +1246,8 @@ class Terms():
         return v.referenceValue
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
-    def getTranslationNamedEnumerator(uuname, stringValue, languageCode):
-        v = Value.objects.get(instance=uuname, field = Terms.enumerator,
+    def getTranslationNamedEnumerator(term, stringValue, languageCode):
+        v = Value.objects.get(instance=term, field = Terms.enumerator,
                               deleteTransaction__isnull=True,
                               stringValue=stringValue,
                               languageCode=languageCode)
@@ -1259,11 +1259,11 @@ class Terms():
     # Return a 32 character hex string which represents the ID of the specified universal name.
     # If the argument is a 32 character hex string, then it is considered that ID. Otherwise,
     # it is looked up by name.
-    def getInstance(uuname):
-        if Terms.isUUID(uuname):
-            return Instance.objects.get(pk=uuname);
+    def getInstance(name):
+        if Terms.isUUID(name):
+            return Instance.objects.get(pk=name);
         else:
-            return Terms.getNamedInstance(uuname)
+            return Terms.getNamedInstance(name)
             
 class UserInfo:
     def __init__(self, authUser):
