@@ -1,4 +1,4 @@
-_uuname
+_term
     _name: Address
     _configuration
         _name: Boston
@@ -25,13 +25,13 @@ _uuname
             _data type: _string
             _max capacity: _unique value
             _descriptor type: _by text
-_uuname
+_term
     _name: Birthday
-_uuname
+_term
     _name: City
-_uuname
+_term
     _name: Color
-_uuname
+_term
     _name: Consent Form
     _configuration
         _name: Boston
@@ -46,11 +46,11 @@ _uuname
             _data type: _translation
             _max capacity: _multiple values
             _object add rule: _create one
-_uuname
+_term
     _name: Consent Record
     _configuration
         _name: Boston
-_uuname
+_term
     _name: Employee
     _configuration
         _name: Boston
@@ -61,7 +61,7 @@ _uuname
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: _user
-_uuname
+_term
     _name: Employees
     _configuration
         _name: Boston
@@ -72,11 +72,11 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Employee
-_uuname
+_term
     _name: End
-_uuname
+_term
     _name: End Time
-_uuname
+_term
     _name: Enrollment
     _configuration
         _name: Boston
@@ -87,7 +87,7 @@ _uuname
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: _user
-_uuname
+_term
     _name: Enrollments
     _configuration
         _name: Boston
@@ -98,7 +98,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Enrollment
-_uuname
+_term
     _name: enumerator
     _configuration
         _name: Bootstrap
@@ -112,7 +112,7 @@ _uuname
             _data type: _translation
             _descriptor type: _by text
             _object add rule: _create one
-_uuname
+_term
     _name: Experience
     _configuration
         _name: Boston
@@ -131,7 +131,7 @@ _uuname
             _name: End
             _data type: _datestamp
             _max capacity: _unique value
-_uuname
+_term
     _name: Experiences
     _configuration
         _name: Boston
@@ -142,7 +142,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Experience
-_uuname
+_term
     _name: Inquiries
     _configuration
         _name: Boston
@@ -179,7 +179,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _pick one
             _of kind: _user
-_uuname
+_term
     _name: Inquiry
     _configuration
         _name: Boston
@@ -188,17 +188,17 @@ _uuname
             _data type: _string
             _max capacity: _unique value
             _descriptor type: _by text
-_uuname
+_term
     _name: Inquiry Access Group
-_uuname
+_term
     _name: Maximum Age
-_uuname
+_term
     _name: Maximum Grade
-_uuname
+_term
     _name: Minimum Age
-_uuname
+_term
     _name: Minimum Grade
-_uuname
+_term
     _name: More Experience
     _configuration
         _name: Boston
@@ -252,7 +252,7 @@ _uuname
             _name: End
             _data type: _datestamp (day optional)
             _max capacity: _unique value
-_uuname
+_term
     _name: More Experiences
     _configuration
         _name: Boston
@@ -263,7 +263,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: More Experience
-_uuname
+_term
     _name: Offering
     _configuration
         _name: Boston
@@ -305,7 +305,7 @@ _uuname
             _name: Maximum Grade
             _data type: _number
             _max capacity: _unique value
-_uuname
+_term
     _name: Offerings
     _configuration
         _name: Boston
@@ -316,7 +316,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Offering
-_uuname
+_term
     _name: Organization
     _configuration
         _name: Boston
@@ -363,7 +363,7 @@ _uuname
             _of kind: _group
             _pick object path: parent>_group
     _default access: _custom
-_uuname
+_term
     _name: Period
     _configuration
         _name: Boston
@@ -385,9 +385,9 @@ _uuname
             _data type: _time
             _max capacity: _unique value
             _descriptor type: _by text
-_uuname
+_term
     _name: Registration Deadline
-_uuname
+_term
     _name: Service
     _configuration
         _name: Boston
@@ -403,7 +403,7 @@ _uuname
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: Service Domain
-_uuname
+_term
     _name: Service Domain
     _configuration
         _name: Boston
@@ -417,7 +417,7 @@ _uuname
             _name: Color
             _data type: _string
             _max capacity: _unique value
-_uuname
+_term
     _name: Session
     _configuration
         _name: Boston
@@ -462,7 +462,7 @@ _uuname
             _max capacity: _multiple values
             _object add rule: _create one
             _of kind: Period
-_uuname
+_term
     _name: Sessions
     _configuration
         _name: Boston
@@ -473,7 +473,7 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Session
-_uuname
+_term
     _name: Site
     _configuration
         _name: Boston
@@ -499,7 +499,7 @@ _uuname
             _name: Web Site
             _data type: _url
             _max capacity: _unique value
-_uuname
+_term
     _name: Sites
     _configuration
         _name: Boston
@@ -510,29 +510,29 @@ _uuname
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Site
-_uuname
+_term
     _name: Start
-_uuname
+_term
     _name: Start Time
-_uuname
+_term
     _name: State
     enumerator
         _name: MA
     enumerator
         _name: NH
-_uuname
+_term
     _name: Street
-_uuname
+_term
     _name: User Entered Offering
-_uuname
+_term
     _name: User Entered Organization
-_uuname
+_term
     _name: User Entered Service
-_uuname
+_term
     _name: User Entered Site
-_uuname
+_term
     _name: Web Site
-_uuname
+_term
     _name: Weekday
     enumerator
         _name: M
@@ -548,9 +548,9 @@ _uuname
         _name: Sa
     enumerator
         _name: Su
-_uuname
+_term
     _name: Zip Code
-_uuname
+_term
     _name: _access record
     _configuration
         _name: Bootstrap
@@ -574,7 +574,7 @@ _uuname
             _object add rule: _pick one
             _of kind: enumerator
             _pick object path: _uuname[_name=_privilege]>enumerator
-_uuname
+_term
     _name: _boolean
     _configuration
         _name: Bootstrap
@@ -586,7 +586,7 @@ _uuname
         _translation: en - _yes
     enumerator
         _translation: en - _no
-_uuname
+_term
     _name: _configuration
     _configuration
         _name: Bootstrap
@@ -601,7 +601,7 @@ _uuname
             _data type: _object
             _object add rule: _create one
             _of kind: _field
-_uuname
+_term
     _name: _data type
     enumerator
         _name: _object
@@ -623,19 +623,19 @@ _uuname
         _name: _datestamp (day optional)
     enumerator
         _name: _translation
-_uuname
+_term
     _name: _default access
     enumerator
         _name: _custom
-_uuname
+_term
     _name: _descriptor type
     enumerator
         _name: _by text
     enumerator
         _name: _by count
-_uuname
+_term
     _name: _email
-_uuname
+_term
     _name: _field
     _configuration
         _name: Bootstrap
@@ -645,7 +645,7 @@ _uuname
             _max capacity: _unique value
             _descriptor type: _by text
             _object add rule: _pick one
-            _of kind: _uuname
+            _of kind: _term
         _field
             _name: _data type
             _data type: _object
@@ -675,14 +675,14 @@ _uuname
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _of kind: _uuname
+            _of kind: _term
         _field
             _name: _pick object path
             _data type: _string
             _max capacity: _unique value
-_uuname
+_term
     _name: _first name
-_uuname
+_term
     _name: _group
     _configuration
         _name: Bootstrap
@@ -704,33 +704,33 @@ _uuname
             _max capacity: _multiple values
             _object add rule: _pick one
             _of kind: _user
-_uuname
+_term
     _name: _language
     enumerator
         _name: English
-_uuname
+_term
     _name: _last name
-_uuname
+_term
     _name: _max capacity
     enumerator
         _name: _unique value
     enumerator
         _name: _multiple values
-_uuname
+_term
     _name: _name
-_uuname
+_term
     _name: _object add rule
     enumerator
         _name: _pick one
     enumerator
         _name: _create one
-_uuname
+_term
     _name: _of kind
-_uuname
+_term
     _name: _pick object path
-_uuname
+_term
     _name: _primary administrator
-_uuname
+_term
     _name: _privilege
     enumerator
         _name: _find
@@ -742,17 +742,43 @@ _uuname
         _name: _administer
     enumerator
         _name: _register
-_uuname
+_term
     _name: _public access
-_uuname
+_term
     _name: _special access
     enumerator
         _name: _custom
-_uuname
+_term
+    _name: _term
+    _configuration
+        _name: Bootstrap
+        _field
+            _name: _name
+            _data type: _string
+            _max capacity: _unique value
+            _descriptor type: _by text
+        _field
+            _name: _configuration
+            _data type: _object
+            _object add rule: _create one
+            _of kind: _configuration
+        _field
+            _name: enumerator
+            _data type: _object
+            _object add rule: _create one
+            _of kind: enumerator
+        _field
+            _name: _default access
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _uuname[_name="_default access"]>enumerator
+_term
     _name: _text
-_uuname
+_term
     _name: _translation
-_uuname
+_term
     _name: _user
     _configuration
         _name: Boston
@@ -799,9 +825,9 @@ _uuname
             _object add rule: _pick one
             _of kind: _user
     _default access: _custom
-_uuname
+_term
     _name: _userID
-_uuname
+_term
     _name: _users
     _configuration
         _name: Bootstrap
@@ -812,29 +838,3 @@ _uuname
             _descriptor type: _by count
             _object add rule: _pick one
             _of kind: _user
-_uuname
-    _name: _uuname
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: _configuration
-            _data type: _object
-            _object add rule: _create one
-            _of kind: _configuration
-        _field
-            _name: enumerator
-            _data type: _object
-            _object add rule: _create one
-            _of kind: enumerator
-        _field
-            _name: _default access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _uuname[_name="_default access"]>enumerator
