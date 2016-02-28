@@ -422,6 +422,7 @@ class api:
     
         data = {"id": uuObject.id, 
                 "description": uuObject.getDescription(language),
+                'privilege': uuObject.getPrivilege(userInfo).getDescription(),
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     

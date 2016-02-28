@@ -488,6 +488,7 @@ cr.ObjectCell = (function() {
 			newValue.id = oldValue.id;
 		newValue.instanceID = oldValue.instanceID;
 		newValue.description = oldValue.description;
+		newValue.privilege = oldValue.privilege;
 		if (oldValue.cells)
 			newValue.importCells(oldValue.cells);
 
@@ -866,6 +867,7 @@ cr.ObjectValue = (function() {
 	{
 		this.instanceID = null; 
 		this.description="None"; 
+		this.privilege = null;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
@@ -1065,9 +1067,15 @@ cr.ObjectValue = (function() {
 					if (json.success) {
 						/* If the data length is 0, then this item can not be read. */
 						if (json.data.length > 0)
+						{
 							_this.importCells(json.data[0].cells);
+							_this.privilege = json.data[0].privilege;
+						}
 						else
+						{
 							_this.importCells([]);
+							_this.privilege = null;
+						}
 						_this.isDataLoaded = true;
 						successFunction();
 					}
@@ -1116,6 +1124,14 @@ cr.ObjectValue = (function() {
 				},
 				failFunction);
 		}
+	}
+	
+	ObjectValue.prototype.canWrite = function()
+	{
+		if (this.privilege === undefined)
+			throw(this.getDescription() + " privilege is not specified");
+			
+		return ["_write", "_administer"].indexOf(this.privilege) >= 0;
 	}
 	
 	function ObjectValue() {
@@ -1558,6 +1574,7 @@ cr.getData = function(args)
 						v.importCells(datum.cells);
 						v.instanceID = datum.id;
 						v.setDescription(datum.description);
+						v.privilege = datum.privilege;
 						v.parentID = datum.parentID;
 						v.isDataLoaded = true;
 						instances.push(v);
