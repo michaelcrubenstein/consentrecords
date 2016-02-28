@@ -2507,7 +2507,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					if (!oldData.getValueID() && oldData.cell.field.maxCapacity != "_unique value")
+					if (!oldData.getValueID() && !oldData.cell.isUnique())
 					{
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
