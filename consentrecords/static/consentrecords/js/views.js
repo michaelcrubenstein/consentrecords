@@ -795,6 +795,7 @@ function _updateTextValue(d, newValue)
 	}
 }
 
+/* "this" is the control containing the string. */
 function _getDatestampValue()
 {
 	try
@@ -810,6 +811,7 @@ function _getDatestampValue()
 	}
 }
 
+/* "this" is the control containing the string. */
 function _getDatestampDayOptionalValue()
 {
 	var obj = d3.select(this);
@@ -817,6 +819,7 @@ function _getDatestampDayOptionalValue()
 	return dateObj.node().dateInput.value();
 }
 
+/* "this" is the control containing the string. */
 function _getTimeValue()
 {
 	try
