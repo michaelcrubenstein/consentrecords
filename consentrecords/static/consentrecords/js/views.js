@@ -955,7 +955,7 @@ function _updateTranslationCell(sectionObj)
 	d3.select(sectionObj).selectAll("li").each(function(d)
 		{
 			var newValue = _getTranslationValue.call(this);
-			_updateTextValue(d, newValue);
+			_updateTranslationValue(d, newValue);
 		}
 	);
 }
