@@ -2737,6 +2737,9 @@ var PickOrCreateValue = (function() {
 	 */
 	PickOrCreateValue.prototype.deleteValue = function(done, fail)
 	{
+		if (!this.cell)
+			throw ("PickOrCreateValue cell is not set up");
+			
 		var _this = this;
 		this.pickValue.deleteValue(
 			function(oldValue)
@@ -2861,6 +2864,7 @@ var PickOrCreateCell = (function () {
 		var pickValue = this.pickCell.addNewValue();
 		var createValue = this.createCell.addNewValue();
 		var newValue = new PickOrCreateValue(pickValue, createValue);
+		newValue.cell = this;
 		this.data.push(newValue);
 		$(this).trigger("valueAdded.cr", newValue);
 		return newValue;
