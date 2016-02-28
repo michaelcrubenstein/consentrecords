@@ -558,8 +558,6 @@ class Instance(dbmodels.Model):
         
     # returns the privilege level that the specified user instance has for this instance. 
     def getPrivilege(self, userInfo):
-        instances = [self]
-        
         if userInfo.is_administrator:
             return Terms.administerPrivilegeEnum
             
