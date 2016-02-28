@@ -2099,11 +2099,11 @@ var AddExperiencePanel = (function () {
 				.append('p').text("When did you start " + dots.offeringName + "?");
 	
 			var minYear = undefined;	
-			var birthday = pathway.userInstance.getValue("Birthday");
-			if (birthday && birthday.value)
-				minYear = parseInt(birthday.value.substr(0, 4));
+			var birthday = pathway.userInstance.getDatum("Birthday");
+			if (birthday)
+				minYear = parseInt(birthday.substr(0, 4));
 
-			dots.startDateInput = new DateInput(this, new Date(birthday.value));
+			dots.startDateInput = new DateInput(this, new Date(birthday));
 			
 			$(dots.startDateInput).on('change', function(eventObject) {
 				dots.checkForwardEnabled();
@@ -2122,9 +2122,9 @@ var AddExperiencePanel = (function () {
 				return new Date(dots.startDateInput.value());
 			else
 			{
-				var birthday = pathway.userInstance.getValue("Birthday");
-				if (birthday && birthday.value)
-					return new Date(birthday.value);
+				var birthday = pathway.userInstance.getDatum("Birthday");
+				if (birthday)
+					return new Date(birthday);
 			}
 			return undefined;
 		}
