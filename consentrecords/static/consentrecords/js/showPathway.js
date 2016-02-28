@@ -2611,7 +2611,7 @@ var PickOrCreateSitePanel = (function () {
 		
 		if (organization.getValueID())
 		{
-			this.startSearchTimeout("");
+			this.searchView.startSearchTimeout("");
 		}
 	}
 	
@@ -2622,7 +2622,7 @@ var PickOrCreateSitePanel = (function () {
 		
 		if (organization.getValueID() && this.createDatum.value == null)
 		{
-			this.search("");
+			this.searchView.search("");
 		}
 	}
 	
@@ -2650,7 +2650,7 @@ var PickOrCreateOfferingPanel = (function () {
 		
 		if (site.getValueID())
 		{
-			this.startSearchTimeout("");
+			this.searchView.startSearchTimeout("");
 		}
 	}
 	
@@ -2661,7 +2661,7 @@ var PickOrCreateOfferingPanel = (function () {
 		
 		if (site.getValueID() && this.createDatum.value == null)
 		{
-			this.search("");
+			this.searchView.search("");
 		}
 	}
 	
@@ -2673,7 +2673,7 @@ var PickOrCreateMarkerPanel = (function () {
 	
 	PickOrCreateMarkerPanel.prototype.textCleared = function()
 	{
-		this.startSearchTimeout("");
+		this.searchView.startSearchTimeout("");
 	}
 	
 	function PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done)
@@ -2682,7 +2682,7 @@ var PickOrCreateMarkerPanel = (function () {
 		
 		if (this.createDatum.value == null)
 		{
-			this.search("");
+			this.searchView.search("");
 		}
 	}
 	
