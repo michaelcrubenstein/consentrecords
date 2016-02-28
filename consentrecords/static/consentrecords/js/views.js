@@ -258,7 +258,7 @@ function _pushTextChanged(d) {
 		$(this.eventObject).off("dataChanged.cr", null, this, f);
 	});
 	
-	if (d.cell && d.cell.field.capacity === "_unique value")
+	if (d.cell && d.cell.isUnique())
 	{
 		$(d).on("valueDeleted.cr", null, this, f);
 		$(this).on("remove", null, d, function(eventObjects) {
@@ -352,11 +352,11 @@ function _showViewStringCell(obj, cell)
 	
 	var itemsDiv = sectionObj.selectAll("ol");
 
-	if (cell.field.capacity == "_unique value")
+	if (cell.isUnique())
 		itemsDiv.classed("right-label", true);
 
 	var setupItems = function(divs, cell) {
-		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
+		divs.classed("multi-line-item", !cell.isUnique())
 		.append("div")
 		.classed("description-text string-value-view", true)
 		.text(_getDataValue)
@@ -381,7 +381,7 @@ function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
 	
-	if (cell.field.capacity === "_unique value")
+	if (cell.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -468,7 +468,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	    });
 	}
 	
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -566,7 +566,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 			.property("value", function(d) { return d.value.text; });
 	}
 	
-	if (cell.field.capacity == "_unique value")
+	if (cell.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -647,9 +647,9 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 
-				   (cell.field.capacity === "_unique value" || !newValue.isEmpty()) ? null : "none");
+				   (cell.isUnique() || !newValue.isEmpty()) ? null : "none");
 				   
-		if (cell.field.capacity != "_unique value")
+		if (!cell.isUnique())
 		{
 			function checkVisible(eventObject)
 			{
@@ -663,7 +663,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 			});
 		}
 
-		if (canDelete && cell.field.capacity != "_unique value")
+		if (canDelete && !cell.isUnique())
 			appendConfirmDeleteControls(item);
 		
 		var buttons = appendRowButtons(item);
@@ -674,7 +674,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 				viewFunction(d, previousPanelNode, revealPanelLeft);
 			}
 		});
-		if (canDelete && cell.field.capacity != "_unique value")
+		if (canDelete && !cell.isUnique())
 			appendDeleteControls(buttons);
 		if (canShowDetails)
 			appendRightChevrons(buttons);
@@ -1063,7 +1063,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
 
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		itemsDiv.classed("right-label", true);
 		if (!_isPickCell(this))
@@ -1085,7 +1085,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		});
 	
 	var clickFunction;
-	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
+	if (_isPickCell(this) || this.isUnique())	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
@@ -1108,7 +1108,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 	}
 	else
 	{
-		buttons = divs.append("div").classed("multi-line-item", this.field.capacity != "_unique value");
+		buttons = divs.append("div").classed("multi-line-item", !this.isUnique());
 	}
 	
 	appendButtonDescriptions(buttons)
@@ -1122,7 +1122,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	var labelDiv = this.appendLabel(obj);
 	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		sectionObj.classed("btn row-button", true);
 		itemsDiv.classed("right-label", true);
@@ -1145,12 +1145,12 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	
 	var divs = appendItems(itemsDiv, this.data);
 	
-	if (this.field.capacity != "_unique value")
+	if (!this.isUnique())
 		appendConfirmDeleteControls(divs);
 		
 	var buttons = appendRowButtons(divs);
 
-	if (this.field.capacity !== "_unique value")
+	if (!this.isUnique())
 	{
 		buttons.on("click", function(d) {
 				_clickEditObjectValue(d, previousPanelNode);
@@ -1163,7 +1163,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 	
-	if (this.field.capacity != "_unique value")
+	if (!this.isUnique())
 	{
 		function done(newValue)
 		{
@@ -1261,12 +1261,12 @@ function appendEditCellItems(container, cell, clickFunction)
 
 	var divs = appendItems(container, cell.data);
 	
-	if (cell.field.capacity != "_unique value")
+	if (!cell.isUnique())
 		appendConfirmDeleteControls(divs);
 	
 	var buttons = appendRowButtons(divs);
 	
-	if (cell.field.capacity != "_unique value")
+	if (!cell.isUnique())
 		appendDeleteControls(buttons);
 	appendRightChevrons(buttons);
 
@@ -1505,8 +1505,8 @@ var SitePanel = (function () {
 			var _thisPanel2Div = this;
 			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
-				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
-				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
+				.classed("unique", function(cell) { return cell.isUnique(); })
+				.classed("multiple", function(cell) { return !cell.isUnique(); })
 				.each(function(cell) {
 						var section = d3.select(this);
 						cell.appendLabel(this);
@@ -1604,8 +1604,8 @@ var SitePanel = (function () {
 		{
 			return this.appendSections(cells)
 				.classed("cell edit", true)
-				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
-				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
+				.classed("unique", function(cell) { return cell.isUnique(); })
+				.classed("multiple", function(cell) { return !cell.isUnique(); })
 				.each(function(cell) {
 						cell.showEdit(this, _this.node());
 					});
@@ -2136,7 +2136,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 				{
 					if (prepareClick('click', 'edit object panel: Cancel'))
 					{
-						if (objectData.cell.field.capacity != "_unique value")
+						if (!objectData.cell.isUnique())
 						{
 							// In this case, delete the item on cancel. 
 							objectData.triggerDeleteValue();
@@ -2592,7 +2592,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			d3.event.preventDefault();
 		}
 		
-		if (oldData.cell.field.capacity === "_unique value")
+		if (oldData.cell.isUnique())
 		{
 			var nullObjectValue = new cr.ObjectValue();
 			rootObjects = [nullObjectValue].concat(rootObjects);

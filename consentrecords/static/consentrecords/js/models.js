@@ -257,7 +257,7 @@ cr.Cell = (function()
 	
 			/* If this is a unique value and there is no value, set up an unspecified one. */
 			if (this.data.length == 0 &&
-				this.field.capacity == "_unique value") {
+				this.isUnique()) {
 				this.pushValue(this.newValue());
 			}
 		};
@@ -271,6 +271,11 @@ cr.Cell = (function()
 			}
 			return true;
 		};
+		
+		Cell.prototype.isUnique = function()
+		{
+			return this.field && this.field.capacity === "_unique value";
+		}
 
 		Cell.prototype.pushValue = function(newValue)
 		{
@@ -299,7 +304,7 @@ cr.Cell = (function()
 				if (i >= 0)
 					arr.splice(i, 1);
 			  }
-			if (this.field.capacity == "_unique value")
+			if (this.isUnique())
 			{
 				oldData.id = null;
 				oldData.clearValue();
