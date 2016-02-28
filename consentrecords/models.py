@@ -111,7 +111,7 @@ class Instance(dbmodels.Model):
                     raise Value.DoesNotExist("specified primary key for instance does not exist")
                 value = f[0]
             elif not isinstance(value, Instance):
-            	raise RuntimeError("specified value is not an Instance or an instanceID")
+                raise RuntimeError("specified value is not an Instance or an instanceID")
             elif not value._canFind(transactionState.user):
                 raise Instance.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
@@ -414,11 +414,12 @@ class Instance(dbmodels.Model):
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
-    def _getCellValues(dataTypeID, values, language=None):
+    def _getCellValues(dataTypeID, values, userInfo, language=None):
         if dataTypeID == Terms.objectEnum.id:
             return [{ "id": v.id,
                       "instanceID" : v.referenceValue.id, 
                       "description": v.referenceValue._description,
+                      "privilege": v.referenceValue.getPrivilege(userInfo).getDescription(),
                       "position": v.position } for v in values]
         elif dataTypeID == Terms.translationEnum.id:
             return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
@@ -432,19 +433,19 @@ class Instance(dbmodels.Model):
             .select_related('referenceValue')
     
     
-    def _getCellData(self, fieldData, values, language=None):
+    def _getCellData(self, fieldData, values, userInfo, language=None):
         cell = {"field": fieldData}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
             cell["data"] = []
         else:
-            cell["data"] = Instance._getCellValues(fieldData["dataTypeID"], values[fieldID], language)
+            cell["data"] = Instance._getCellValues(fieldData["dataTypeID"], values[fieldID], userInfo, language)
         return cell
                 
     # Returns an array of arrays.
-    def getData(self, vs, fieldsData, language=None, userInfo=None):
+    def getData(self, vs, fieldsData, userInfo, language=None):
         values = self._groupValuesByField(vs, userInfo)
-        return [self._getCellData(fieldData, values, language) for fieldData in fieldsData]
+        return [self._getCellData(fieldData, values, userInfo, language) for fieldData in fieldsData]
 
     # self should be a configuration object with fields.
     def getConfiguration(self):
@@ -574,15 +575,18 @@ class Instance(dbmodels.Model):
                 return Terms.administerPrivilegeEnum
                 
         minPrivilege = None
-        if source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True).count():
-            minPrivilege=source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True)[0].referenceValue
+        minPrivilegeFilter = source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True)\
+                                   .select_related('referenceValue__description__text')
+        if minPrivilegeFilter.exists():
+            minPrivilege=minPrivilegeFilter[0].referenceValue
         
         f = source.children.filter(typeID=Terms.accessRecord, deleteTransaction__isnull=True)\
             .filter(Q(value__referenceValue=userInfo.instance)|
                     (Q(value__referenceValue__value__referenceValue=userInfo.instance)&
                      Q(value__referenceValue__value__deleteTransaction__isnull=True)))
                       
-        p = map(lambda i: i.value_set.filter(typeID=Terms.privilege, deleteTransaction__isnull=True).referenceValue, f)
+        p = map(lambda i: i.value_set.filter(typeID=Terms.privilege, deleteTransaction__isnull=True)\
+                           .select_related('referenceValue__description__text').referenceValue, f)
         
         return reduce(Instance.comparePrivileges, p, minPrivilege)
     

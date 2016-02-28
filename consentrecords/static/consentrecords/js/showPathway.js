@@ -2184,18 +2184,21 @@ var PathwayPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		var addExperienceButton = navContainer.appendRightButton()
-			.classed('add-button', true)
-			.on("click", function(d) {
-				if (prepareClick('click', 'add experience'))
-				{
-					showClickFeedback(this);
+		if (userInstance.getValue("More Experiences").canWrite())
+		{ 
+			var addExperienceButton = navContainer.appendRightButton()
+				.classed('add-button', true)
+				.on("click", function(d) {
+					if (prepareClick('click', 'add experience'))
+					{
+						showClickFeedback(this);
 		
-					var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
-				}
-				d3.event.preventDefault();
-			});
-		addExperienceButton.append("span").text("+");
+						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
+					}
+					d3.event.preventDefault();
+				});
+			addExperienceButton.append("span").text("+");
+		}
 		
 		var panel2Div = this.appendFillArea();
 		showPanelLeft(this.node());

@@ -418,7 +418,7 @@ class api:
         
         vs = uuObject.values
             
-        cells = uuObject.getData(vs, fieldsData, language, userInfo)
+        cells = uuObject.getData(vs, fieldsData, userInfo, language)
     
         data = {"id": uuObject.id, 
                 "description": uuObject.getDescription(language),
@@ -439,9 +439,9 @@ class api:
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                			  'instanceID' : uuObject.id,
-                			  'description': uuObject.getDescription(language),
-                			  'position': 0}
+                              'instanceID' : uuObject.id,
+                              'description': uuObject.getDescription(language),
+                              'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         return data;
@@ -507,7 +507,7 @@ class api:
             .select_related('field__id')\
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
-        data["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
+        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
         return data;
     
     def getCellData(user, data):
