@@ -2316,32 +2316,7 @@ var ExperienceDetailPanel = (function () {
 					crp.pushCheckCells(site, function()
 						{
 							var address = site.getValue("Address");
-							crp.pushCheckCells(address, function()
-							{
-								var streetCell = address.getCell("Street");
-								var cityCell = address.getCell("City");
-								var stateCell = address.getCell("State");
-								var zipCell = address.getCell("Zip Code");
-								if (streetCell)
-									$(streetCell.data).each(function() {
-										siteAddressDiv.append('div')
-											.classed("address-line", true)
-											.text(this.value);
-									});
-								line = "";
-								if (cityCell && cityCell.data.length)
-									line += cityCell.data[0].value;
-								if (stateCell && stateCell.data.length)
-									line += ", " + stateCell.data[0].getDescription();
-								if (zipCell && zipCell.data.length && zipCell.data[0].value)
-									line += "  " + zipCell.data[0].value;
-								if (line.trim())
-									siteAddressDiv.append('div')
-										.classed('address-line', true)
-										.text(line.trim());
-							},
-							function() {
-							});
+							appendAddress(address, siteAddressDiv);
 						},
 						function() { }
 					);
