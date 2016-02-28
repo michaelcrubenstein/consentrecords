@@ -41,32 +41,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		crp.pushCheckCells(site, function()
 		{
 			var address = site.getValue("Address");
-			crp.pushCheckCells(address, function()
-			{
-				var streetCell = address.getCell("Street");
-				var cityCell = address.getCell("City");
-				var stateCell = address.getCell("State");
-				var zipCell = address.getCell("Zip Code");
-				if (streetCell)
-					$(streetCell.data).each(function() {
-						orgDiv.append('div')
-							.classed("address-line", true)
-							.text(this.value);
-					});
-				line = "";
-				if (cityCell && cityCell.data.length)
-					line += cityCell.data[0].value;
-				if (stateCell && stateCell.data.length)
-					line += ", " + stateCell.data[0].getDescription();
-				if (zipCell && zipCell.data.length && zipCell.data[0].value)
-					line += "  " + zipCell.data[0].value;
-				if (line.trim())
-					orgDiv.append('div')
-						.classed('address-line', true)
-						.text(line.trim());
-			},
-			function() {
-			});
+			appendAddress(address, orgDiv);
 		},
 		function() { }
 		);
@@ -511,7 +486,7 @@ var PickOfferingPanel = (function() {
 		var todayString = currentDate.toISOString().substring(0, 10);
 		this.getDataChunker = new GetDataChunker(this.panel2Div.node(), checkOnGetDataDone);
 
-		this.getDataChunker.path = "#" + marker.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
+		this.getDataChunker.path = "#" + marker.instanceID + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
 		this.getDataChunker.fields = ["parents"];
 		this.getDataChunker.start();
 

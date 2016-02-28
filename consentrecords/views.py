@@ -86,7 +86,7 @@ def list(request):
         # The type of the root object.
         rootType = request.GET.get('type', None)
         root = rootType and Terms.getNamedInstance(rootType);
-        path=request.GET.get('path', "_uuname")
+        path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
         template = loader.get_template('consentrecords/configuration.html')
@@ -198,9 +198,9 @@ class api:
 
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
-                        if "value" in c and c["value"] != None:
-                            container.checkWriteValueAccess(user, oldValue.field, c["value"])
-                            item = oldValue.updateValue(c["value"], transactionState)
+                        if oldValue.hasNewValue(c):
+                            container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
+                            item = oldValue.updateValue(c, transactionState)
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -209,16 +209,16 @@ class api:
 
                         field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
                         newIndex = c["index"]
-                        newValue = c["value"]
+                        instanceID = c["instanceID"] if "instanceID" in c else None
 
-                        container.checkWriteValueAccess(user, field, newValue)
+                        container.checkWriteValueAccess(user, field, instanceID)
 
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             propertyList = newValue
-                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, newValue, nameLists, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
                         else:
-                            item = container.addValue(field, newValue, newIndex, transactionState)
+                            item = container.addValue(field, c, newIndex, transactionState)
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -418,10 +418,11 @@ class api:
         
         vs = uuObject.values
             
-        cells = uuObject.getData(vs, fieldsData, language, userInfo)
+        cells = uuObject.getData(vs, fieldsData, userInfo, language)
     
         data = {"id": uuObject.id, 
                 "description": uuObject.getDescription(language),
+                'privilege': uuObject.getPrivilege(userInfo).getDescription(),
                 "parentID": uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
     
@@ -438,8 +439,9 @@ class api:
                 fieldData = kindObject.getParentReferenceFieldData()
             
                 parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.getDescription(language)},
-                        'position': 0}
+                              'instanceID' : uuObject.id,
+                              'description': uuObject.getDescription(language),
+                              'position': 0}
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         return data;
@@ -505,7 +507,7 @@ class api:
             .select_related('field__id')\
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
-        data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
+        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
         return data;
     
     def getCellData(user, data):
@@ -752,7 +754,7 @@ def submitNewUser(request):
             results = userviews.newUserResults(request)
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-                results["user"] = { "id": userInstance.id, "description" : userInstance.getDescription(None) }
+                results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

@@ -161,8 +161,8 @@ var SharingPanel = (function() {
 					// Create an instance of an access record with this accessor level
 					// and this user.
 					var field = accessRecordCell.field;
-					var initialData = {"_privilege": accessorLevel.id };
-					initialData[cellName] = pickedUser.getValueID();
+					var initialData = {"_privilege": [{instanceID: accessorLevel.id}] };
+					initialData[cellName] = [{instanceID: pickedUser.getValueID() }];
 					cr.createInstance(field, userInstance.getValueID(), initialData, _createAccessRecordSuccess, syncFailFunction);
 				}
 				else
@@ -214,7 +214,7 @@ var SharingPanel = (function() {
 			{name: "_write", id: "", accessRecords: [], accessors: [], label: "Who Can Add Information About You"},
 			{name: "_administer", id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
-		var privilegePath = "_uuname[_name=_privilege]>enumerator";
+		var privilegePath = "_term[_name=_privilege]>enumerator";
 		crp.getData({path: privilegePath, 
 					 done: function(enumerators) { _this.getPrivileges(panel2Div, enumerators); }, 
 					 fail: asyncFailFunction});

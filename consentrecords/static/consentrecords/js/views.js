@@ -171,9 +171,7 @@ function showPanelUp(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "down"}, 0);
-	$(panelNode).height("100%")
-				.width("100%")
-				.css("display", "table")
+	$(panelNode).css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
@@ -187,8 +185,6 @@ function showPanelUp(panelNode, done)
 function showPanelNow(panelNode)
 {
 	$(panelNode).offset({top: 0, left: 0})
-				.height("100%")
-				.width("100%")
 				.css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
@@ -198,9 +194,7 @@ function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "right"}, 0);
-	$(panelNode).height("100%")
-				.width("100%")
-				.css("display", "table")
+	$(panelNode).css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
@@ -258,7 +252,7 @@ function _pushTextChanged(d) {
 		$(this.eventObject).off("dataChanged.cr", null, this, f);
 	});
 	
-	if (d.cell && d.cell.field.capacity === "_unique value")
+	if (d.cell && d.cell.isUnique())
 	{
 		$(d).on("valueDeleted.cr", null, this, f);
 		$(this).on("remove", null, d, function(eventObjects) {
@@ -267,7 +261,7 @@ function _pushTextChanged(d) {
 	}
 }
 
-function _getDataValue(d) { return d.value; }
+function _getDataValue(d) { return d.text; }
 function _getDataDescription(d) { return d.getDescription() }
 
 function _checkItemsDivDisplay(itemsDiv)
@@ -352,11 +346,11 @@ function _showViewStringCell(obj, cell)
 	
 	var itemsDiv = sectionObj.selectAll("ol");
 
-	if (cell.field.capacity == "_unique value")
+	if (cell.isUnique())
 		itemsDiv.classed("right-label", true);
 
 	var setupItems = function(divs, cell) {
-		divs.classed("multi-line-item", cell.field.capacity != "_unique value")
+		divs.classed("multi-line-item", !cell.isUnique())
 		.append("div")
 		.classed("description-text string-value-view", true)
 		.text(_getDataValue)
@@ -381,7 +375,7 @@ function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
 	
-	if (cell.field.capacity === "_unique value")
+	if (cell.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -462,13 +456,13 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	    divs.each(function(d)
 	    {
 	    	var input = new DateInput(this);
-	    	var newValue = d.value;
+	    	var newValue = d.text;
 	    	if (newValue && newValue.length > 0)
  				input.value(newValue);
 	    });
 	}
 	
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -550,7 +544,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 		{
 			for (var i = 0; i < crv.languages.length; ++i)
 			{
-				if (crv.languages[i].code == d.value.languageCode)
+				if (crv.languages[i].code == d.languageCode)
 				{
 					this.selectedIndex = i;
 					break;
@@ -563,10 +557,10 @@ function _showEditTranslationCell(obj, cell, inputType)
 			.append("input")
 			.attr("type", "text")
 			.attr("placeholder", cell.field.name)
-			.property("value", function(d) { return d.value.text; });
+			.property("value", _getDataValue);
 	}
 	
-	if (cell.field.capacity == "_unique value")
+	if (cell.isUnique())
 	{
 		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
@@ -647,9 +641,9 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 
-				   (cell.field.capacity === "_unique value" || !newValue.isEmpty()) ? null : "none");
+				   (cell.isUnique() || !newValue.isEmpty()) ? null : "none");
 				   
-		if (cell.field.capacity != "_unique value")
+		if (!cell.isUnique())
 		{
 			function checkVisible(eventObject)
 			{
@@ -663,7 +657,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 			});
 		}
 
-		if (canDelete && cell.field.capacity != "_unique value")
+		if (canDelete && !cell.isUnique())
 			appendConfirmDeleteControls(item);
 		
 		var buttons = appendRowButtons(item);
@@ -674,7 +668,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 				viewFunction(d, previousPanelNode, revealPanelLeft);
 			}
 		});
-		if (canDelete && cell.field.capacity != "_unique value")
+		if (canDelete && !cell.isUnique())
 			appendDeleteControls(buttons);
 		if (canShowDetails)
 			appendRightChevrons(buttons);
@@ -783,18 +777,20 @@ function _clickEditObjectValue(d, previousPanelNode)
 	}
 }
 
+/* newValue is a string */
 function _updateTextValue(d, newValue)
 {
 	/* If both are null, then they are equal. */
-	if (!newValue && !d.value)
-		newValue = d.value;
+	if (!newValue && !d.text)
+		newValue = d.text;
 
-	if (newValue != d.value)
+	if (newValue !== d.text)
 	{
-		d.value = newValue;
+		d.text = newValue;
 	}
 }
 
+/* "this" is the control containing the string. */
 function _getDatestampValue()
 {
 	try
@@ -810,6 +806,7 @@ function _getDatestampValue()
 	}
 }
 
+/* "this" is the control containing the string. */
 function _getDatestampDayOptionalValue()
 {
 	var obj = d3.select(this);
@@ -817,6 +814,7 @@ function _getDatestampDayOptionalValue()
 	return dateObj.node().dateInput.value();
 }
 
+/* "this" is the control containing the string. */
 function _getTimeValue()
 {
 	try
@@ -897,15 +895,12 @@ function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects
 
 function _updateTranslationValue(d, newValue)
 {
-	/* If both are null, then they are equal. */
-	if (!newValue.text && !d.value.text)
-		newValue.text = d.value.text;
+	/* If both are null or undefined, then they are equal. */
+	if (!newValue.text && !d.text)
+		newValue.text = d.text;
 		
-	if (newValue.text !== d.value.text || 
-		newValue.languageCode !== d.value.languageCode)
-	{
-		d.value = newValue;
-	}
+	d.text = newValue.text;
+	d.languageCode = newValue.languageCode;
 }
 
 function _updateStringCell(sectionObj)
@@ -952,7 +947,7 @@ function _updateTranslationCell(sectionObj)
 	d3.select(sectionObj).selectAll("li").each(function(d)
 		{
 			var newValue = _getTranslationValue.call(this);
-			_updateTextValue(d, newValue);
+			_updateTranslationValue(d, newValue);
 		}
 	);
 }
@@ -1027,11 +1022,11 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 			{
 				/* Do nothing. */ ;
 			}
-			else if ("cells" in d.value)
+			else if ("cells" in d)
 			{
 				/* This case is true if we are creating an object */
 				var subData = {}
-				$(d.value.cells).each(function()
+				$(d.cells).each(function()
 				{
 					this.appendData(subData);
 				});
@@ -1060,7 +1055,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
 
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		itemsDiv.classed("right-label", true);
 		if (!_isPickCell(this))
@@ -1082,7 +1077,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		});
 	
 	var clickFunction;
-	if (_isPickCell(this) || this.field.capacity === "_unique value")	/* Unique value handles the click above */
+	if (_isPickCell(this) || this.isUnique())	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
@@ -1105,7 +1100,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 	}
 	else
 	{
-		buttons = divs.append("div").classed("multi-line-item", this.field.capacity != "_unique value");
+		buttons = divs.append("div").classed("multi-line-item", !this.isUnique());
 	}
 	
 	appendButtonDescriptions(buttons)
@@ -1119,7 +1114,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	var labelDiv = this.appendLabel(obj);
 	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
 
-	if (this.field.capacity === "_unique value")
+	if (this.isUnique())
 	{
 		sectionObj.classed("btn row-button", true);
 		itemsDiv.classed("right-label", true);
@@ -1142,12 +1137,12 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	
 	var divs = appendItems(itemsDiv, this.data);
 	
-	if (this.field.capacity != "_unique value")
+	if (!this.isUnique())
 		appendConfirmDeleteControls(divs);
 		
 	var buttons = appendRowButtons(divs);
 
-	if (this.field.capacity !== "_unique value")
+	if (!this.isUnique())
 	{
 		buttons.on("click", function(d) {
 				_clickEditObjectValue(d, previousPanelNode);
@@ -1160,7 +1155,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 	
-	if (this.field.capacity != "_unique value")
+	if (!this.isUnique())
 	{
 		function done(newValue)
 		{
@@ -1223,11 +1218,11 @@ function appendItems(container, data)
 		.each(_setupItemHandlers);
 }
 
-function appendItem(container, value)
+function appendItem(container, d)
 {
 	return container
 		.append("li")	// So that each button appears on its own row.
-		.datum(value)
+		.datum(d)
 		.each(_setupItemHandlers);
 }
 
@@ -1258,12 +1253,12 @@ function appendEditCellItems(container, cell, clickFunction)
 
 	var divs = appendItems(container, cell.data);
 	
-	if (cell.field.capacity != "_unique value")
+	if (!cell.isUnique())
 		appendConfirmDeleteControls(divs);
 	
 	var buttons = appendRowButtons(divs);
 	
-	if (cell.field.capacity != "_unique value")
+	if (!cell.isUnique())
 		appendDeleteControls(buttons);
 	appendRightChevrons(buttons);
 
@@ -1502,8 +1497,8 @@ var SitePanel = (function () {
 			var _thisPanel2Div = this;
 			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
 				.classed("cell view", true)
-				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
-				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
+				.classed("unique", function(cell) { return cell.isUnique(); })
+				.classed("multiple", function(cell) { return !cell.isUnique(); })
 				.each(function(cell) {
 						var section = d3.select(this);
 						cell.appendLabel(this);
@@ -1582,7 +1577,7 @@ var SitePanel = (function () {
 					/* In this case, we are editing an object that is contained in 
 						an object that is being edited. This object will be saved
 						as part of completing that edit operation. */
-					d.value.cells = [];
+					d.cells = [];
 					sections.each(
 						function(cell) {
 							cell.updateCell(this);
@@ -1601,8 +1596,8 @@ var SitePanel = (function () {
 		{
 			return this.appendSections(cells)
 				.classed("cell edit", true)
-				.classed("unique", function(cell) { return cell.field.capacity === "_unique value"; })
-				.classed("multiple", function(cell) { return cell.field.capacity !== "_unique value"; })
+				.classed("unique", function(cell) { return cell.isUnique(); })
+				.classed("multiple", function(cell) { return !cell.isUnique(); })
 				.each(function(cell) {
 						cell.showEdit(this, _this.node());
 					});
@@ -2023,7 +2018,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.value.cells);
+		panel2Div.showViewCells(objectData.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -2073,7 +2068,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		});
 
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.value.cells);
+		panel2Div.showViewCells(objectData.cells);
 		
 		showSuccessFunction(sitePanel.node());
 	}
@@ -2108,7 +2103,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.showEditCells(objectData.value.cells);
+		panel2Div.showEditCells(objectData.cells);
 
 		var doneButton;
 		if (objectData.getValueID())
@@ -2133,7 +2128,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 				{
 					if (prepareClick('click', 'edit object panel: Cancel'))
 					{
-						if (objectData.cell.field.capacity != "_unique value")
+						if (!objectData.cell.isUnique())
 						{
 							// In this case, delete the item on cancel. 
 							objectData.triggerDeleteValue();
@@ -2180,9 +2175,9 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 									 			var d = data[j];
 									 			for (var name in d)
 									 			{
-													for (var i = 0; i < objectData.value.cells.length; ++i)
+													for (var i = 0; i < objectData.cells.length; ++i)
 													{
-														var cell = objectData.value.cells[i];
+														var cell = objectData.cells[i];
 														if (cell.field.name === name)
 														{
 															cr.createInstance(cell.field, objectData.getValueID(), d[name], 
@@ -2504,7 +2499,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					if (!oldData.getValueID() && oldData.cell.field.maxCapacity != "_unique value")
+					if (!oldData.getValueID() && !oldData.cell.isUnique())
 					{
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
@@ -2578,7 +2573,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						   an item that was added to the cell but not saved;
 						   a placeholder or a previously picked value.
 						 */
-						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
 						oldData.triggerDataChanged();
 						successFunction();
 					}
@@ -2589,7 +2584,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			d3.event.preventDefault();
 		}
 		
-		if (oldData.cell.field.capacity === "_unique value")
+		if (oldData.cell.isUnique())
 		{
 			var nullObjectValue = new cr.ObjectValue();
 			rootObjects = [nullObjectValue].concat(rootObjects);

@@ -18,29 +18,32 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     field = Instance.objects.get(pk=fieldData["nameID"])
     userInfo=UserInfo(transactionState.user)
     for d in data:
+        if not isinstance(d, dict):
+            raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+            
         if fieldData["dataTypeID"] == Terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-                if Terms.isUUID(d):
+                if "instanceID" in d:
                     # This is a reference to an object.
-                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d)))
+                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
-                    elif d == parent.id and field == Terms.primaryAdministrator:
+                    elif d["instanceID"] == parent.id and field == Terms.primaryAdministrator:
                         # This is a special case of setting up the primary administrator. This
                         # is necessary when creating a user so that it can be bootstrapped.
                         parent.addReferenceValue(field, parent, i, transactionState)
                     else:
                         raise RuntimeError("find permission failed for %s" % field)
-                elif d is not None:
-                    ids = pathparser.selectAllObjects(d, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                elif "path" in d:
+                    ids = pathparser.selectAllObjects(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
-                        raise RuntimeError("Path does not parse to an object: %s" % d)
+                        raise RuntimeError("Path does not parse to an object: %s" % d["path"])
             else:
-                if isinstance(d, dict) and "ofKindID" in fieldData:
+                if "cells" in d and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
+                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
                 else:
                     raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
         else:
@@ -140,7 +143,7 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
         if not s in items:
             items[s] = create(type, parent, field, position, [], nameLists, transactionState)[0]
             position += 1
-            items[s].addValue(descriptor, s, 0, transactionState)
+            items[s].addValue(descriptor, {"text": s}, 0, transactionState)
     
     return items
         

@@ -92,7 +92,7 @@ if __name__ == "__main__":
                 stateName = s[4].strip()
                 zipName = s[5].strip()
                 grades = s[6:]
-                statePath='_uuname[_name=State]>enumerator[_name='+stateName+']'
+                statePath='_term[_name=State]>enumerator[_name='+stateName+']'
                 stateInstance = pathparser.selectAllObjects(statePath, userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
                 
                 schoolInstance = pathparser.selectAllObjects('Service[_name=School]',
