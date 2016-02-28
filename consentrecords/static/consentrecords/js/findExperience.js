@@ -486,7 +486,7 @@ var PickOfferingPanel = (function() {
 		var todayString = currentDate.toISOString().substring(0, 10);
 		this.getDataChunker = new GetDataChunker(this.panel2Div.node(), checkOnGetDataDone);
 
-		this.getDataChunker.path = "#" + marker.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
+		this.getDataChunker.path = "#" + marker.instanceID + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
 		this.getDataChunker.fields = ["parents"];
 		this.getDataChunker.start();
 

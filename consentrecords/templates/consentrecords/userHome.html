@@ -375,7 +375,7 @@
 		var userFirstName = null;
 		var userLastName = null;
 		{% if userID %}
-		userInstance.value.id = "{{userID}}"
+		userInstance.instanceID = "{{userID}}"
 		userInstance.setDescription("{{ user.get_full_name }}")
 		crp.pushCheckCells(userInstance, function() 
 			{
@@ -616,7 +616,7 @@
 			
 			var signInSuccess = function(userData)
 			{
-				userInstance.value = userData;
+				userInstance.updateFromChangeData(userData);
 				userInstance.checkCells(undefined, function()
 					{
 						hidePanelRight($("#id_sign_in_panel")[0], false,
@@ -902,7 +902,7 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.value.cells[0].data[0].getDescription();
+						return d.cells[0].data[0].getDescription();
 					});
 			}
 			
@@ -1095,7 +1095,7 @@
 			for (i = 0; i < data.length; ++i)
 			{
 				var d = data[i];
-				if (d.getCell("_name").data[0].value === name)
+				if (d.getDatum("_name") === name)
 					return d;
 			}
 			return null;
@@ -1173,8 +1173,8 @@
 									// Create an instance of an access record with this accessor level
 									// and this user.
 									var field = source.getCell("_access record").field;
-									var initialData = {"_privilege": priv.getValueID() };
-									initialData[cellName] = target.getValueID();
+									var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
+									initialData[cellName] = [{instanceID: target.getValueID()}];
 									cr.createInstance(field, source.getValueID(), initialData, done, fail);
 								}
 							}
@@ -1186,7 +1186,7 @@
 		
 		function appendFacebookButton(shareDiv, service, session)
 		{
-			var targetHRef = window.location.origin+"/find/"+service.value.id+"/"+session.value.id;
+			var targetHRef = window.location.origin+"/find/"+service.instanceID+"/"+session.instanceID;
 
 			setMetaProperties(session, targetHRef);
 			var fbDiv = shareDiv.div.append("div")
@@ -1863,7 +1863,7 @@
 								},
 								function()
 								{
-									var initialData = {"_user": user.getValueID() };
+									var initialData = {"_user": [{instanceID: user.getValueID()}] };
 									cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
 													  initialData,
 													  function(newData)

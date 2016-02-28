@@ -72,7 +72,7 @@ var Signup = (function () {
 					initialData, 
 					function(userData)
 					{
-						userInstance.value = userData;
+						userInstance.updateFromChangeData(userData);
 						userInstance.checkCells(undefined, function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);

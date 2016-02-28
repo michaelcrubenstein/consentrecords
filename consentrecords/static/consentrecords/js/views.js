@@ -267,7 +267,7 @@ function _pushTextChanged(d) {
 	}
 }
 
-function _getDataValue(d) { return d.value; }
+function _getDataValue(d) { return d.text; }
 function _getDataDescription(d) { return d.getDescription() }
 
 function _checkItemsDivDisplay(itemsDiv)
@@ -462,7 +462,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	    divs.each(function(d)
 	    {
 	    	var input = new DateInput(this);
-	    	var newValue = d.value;
+	    	var newValue = d.text;
 	    	if (newValue && newValue.length > 0)
  				input.value(newValue);
 	    });
@@ -550,7 +550,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 		{
 			for (var i = 0; i < crv.languages.length; ++i)
 			{
-				if (crv.languages[i].code == d.value.languageCode)
+				if (crv.languages[i].code == d.languageCode)
 				{
 					this.selectedIndex = i;
 					break;
@@ -563,7 +563,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 			.append("input")
 			.attr("type", "text")
 			.attr("placeholder", cell.field.name)
-			.property("value", function(d) { return d.value.text; });
+			.property("value", _getDataValue);
 	}
 	
 	if (cell.isUnique())
@@ -783,15 +783,16 @@ function _clickEditObjectValue(d, previousPanelNode)
 	}
 }
 
+/* newValue is a string */
 function _updateTextValue(d, newValue)
 {
 	/* If both are null, then they are equal. */
-	if (!newValue && !d.value)
-		newValue = d.value;
+	if (!newValue && !d.text)
+		newValue = d.text;
 
-	if (newValue != d.value)
+	if (newValue !== d.text)
 	{
-		d.value = newValue;
+		d.text = newValue;
 	}
 }
 
@@ -900,15 +901,12 @@ function _appendUpdateTranslationCommands(sectionObj, initialData, sourceObjects
 
 function _updateTranslationValue(d, newValue)
 {
-	/* If both are null, then they are equal. */
-	if (!newValue.text && !d.value.text)
-		newValue.text = d.value.text;
+	/* If both are null or undefined, then they are equal. */
+	if (!newValue.text && !d.text)
+		newValue.text = d.text;
 		
-	if (newValue.text !== d.value.text || 
-		newValue.languageCode !== d.value.languageCode)
-	{
-		d.value = newValue;
-	}
+	d.text = newValue.text;
+	d.languageCode = newValue.languageCode;
 }
 
 function _updateStringCell(sectionObj)
@@ -1030,11 +1028,11 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 			{
 				/* Do nothing. */ ;
 			}
-			else if ("cells" in d.value)
+			else if ("cells" in d)
 			{
 				/* This case is true if we are creating an object */
 				var subData = {}
-				$(d.value.cells).each(function()
+				$(d.cells).each(function()
 				{
 					this.appendData(subData);
 				});
@@ -1226,11 +1224,11 @@ function appendItems(container, data)
 		.each(_setupItemHandlers);
 }
 
-function appendItem(container, value)
+function appendItem(container, d)
 {
 	return container
 		.append("li")	// So that each button appears on its own row.
-		.datum(value)
+		.datum(d)
 		.each(_setupItemHandlers);
 }
 
@@ -1585,7 +1583,7 @@ var SitePanel = (function () {
 					/* In this case, we are editing an object that is contained in 
 						an object that is being edited. This object will be saved
 						as part of completing that edit operation. */
-					d.value.cells = [];
+					d.cells = [];
 					sections.each(
 						function(cell) {
 							cell.updateCell(this);
@@ -2026,7 +2024,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.value.cells);
+		panel2Div.showViewCells(objectData.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -2076,7 +2074,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		});
 
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.value.cells);
+		panel2Div.showViewCells(objectData.cells);
 		
 		showSuccessFunction(sitePanel.node());
 	}
@@ -2111,7 +2109,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.showEditCells(objectData.value.cells);
+		panel2Div.showEditCells(objectData.cells);
 
 		var doneButton;
 		if (objectData.getValueID())
@@ -2183,9 +2181,9 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 									 			var d = data[j];
 									 			for (var name in d)
 									 			{
-													for (var i = 0; i < objectData.value.cells.length; ++i)
+													for (var i = 0; i < objectData.cells.length; ++i)
 													{
-														var cell = objectData.value.cells[i];
+														var cell = objectData.cells[i];
 														if (cell.field.name === name)
 														{
 															cr.createInstance(cell.field, objectData.getValueID(), d[name], 
@@ -2581,7 +2579,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						   an item that was added to the cell but not saved;
 						   a placeholder or a previously picked value.
 						 */
-						oldData.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
 						oldData.triggerDataChanged();
 						successFunction();
 					}

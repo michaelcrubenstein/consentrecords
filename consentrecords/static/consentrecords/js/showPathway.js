@@ -11,7 +11,7 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	else {
 		v = i.getValue(createdName);
 		if (v)
-			return v.value;
+			return v.text;
 		else
 			return undefined;
 	}
@@ -464,8 +464,8 @@ var Pathway = (function () {
 	Pathway.prototype.setDateRange = function()
 	{
 		var birthday = this.userInstance.getValue("Birthday");
-		if (birthday && birthday.value)
-			this.minDate = new Date(birthday.value);
+		if (birthday && birthday.text)
+			this.minDate = new Date(birthday.text);
 		else
 			this.minDate = new Date();
 		
@@ -576,9 +576,9 @@ var Pathway = (function () {
 		{
 			var sdInstance = crp.getInstance(serviceDomain.getValueID());
 			color = sdInstance.getValue("Color");
-			if (color && color.value)
-				this.attr("fill", color.value)
-					 .attr("stroke", color.value);
+			if (color && color.text)
+				this.attr("fill", color.text)
+					 .attr("stroke", color.text);
 		}
 		else
 			this.attr("fill", otherColor)
@@ -1177,8 +1177,8 @@ var Pathway = (function () {
 									if (newInstances[i].getDescription() == "Other")
 									{
 										color = newInstances[i].getValue("Color");
-										if (color && color.value)
-											otherColor = color.value;
+										if (color && color.text)
+											otherColor = color.text;
 										break;
 									}
 								}
@@ -1275,21 +1275,22 @@ function addInput(p, placeholder)
 		.attr("placeholder", placeholder);
 }
 
+/* A reported object combines a name and an object value that might be picked. */
 var ReportedObject = function () {
 	ReportedObject.prototype.name = null;
-	ReportedObject.prototype.value = null;
+	ReportedObject.prototype.pickedObject = null;
 	
 	function ReportedObject(args) {
 		if (!("name" in args)) args.name = null;
-		if (!("value" in args)) args.value = null;
+		if (!("pickedObject" in args)) args.pickedObject = null;
 		
 		this.name = args.name;
-		this.value = args.value;
+		this.pickedObject = args.pickedObject;
     };
     
     ReportedObject.prototype.getDescription = function()
     {
-    	if (this.value) return this.value.getDescription();
+    	if (this.pickedObject) return this.pickedObject.getDescription();
     	return this.name;
     }
     
@@ -1349,15 +1350,15 @@ function setupFirstMarkerPanel(dots)
 				{
 					/* Remove this item if it is farther down in the list. */
 					for (var i = 1; i < dots.services.length; ++i)
-						if (dots.services[i].value == d)
+						if (dots.services[i].pickedObject == d)
 						{
 							dots.services.splice(i, 1);
 							break;
 						}
-					dots.services[0] = new ReportedObject({value: d});
+					dots.services[0] = new ReportedObject({pickedObject: d});
 				}
 				else
-					dots.services.push(new ReportedObject({value: d}));
+					dots.services.push(new ReportedObject({pickedObject: d}));
 			
 				searchInput.node().value = d.getDescription();
 				$(searchInput.node()).trigger("input");
@@ -1399,10 +1400,10 @@ function setupFirstMarkerPanel(dots)
 					break;
 				}
 			}
-			dots.services[0] = new ReportedObject({name: newName, value: newValue});
+			dots.services[0] = new ReportedObject({name: newName, pickedObject: newValue});
 		}
 		else
-			dots.services.push(new ReportedObject({name: newName, value: newValue}));
+			dots.services.push(new ReportedObject({name: newName, pickedObject: newValue}));
 	}
 	crp.getData({path: "Service", done: done, fail: asyncFailFunction});
 	this.onReveal = null;
@@ -1449,7 +1450,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 				if (!dots.getServiceByName(searchInputNode.value))
 				{
 					var newValue = getObjectByDescription(rootObjects, searchInputNode.value);
-					success(new ReportedObject({name: searchInputNode.value, value: newValue}));
+					success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
 				}
 				
 				hidePanelRight(sitePanel.node());
@@ -1488,7 +1489,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	function buttonClicked(d) {
 		if (prepareClick('click', 'pick service: ' + d.getDescription()))
 		{
-			success(new ReportedObject({value: d}));
+			success(new ReportedObject({pickedObject: d}));
 			hidePanelRight(sitePanel.node());
 		}
 		d3.event.preventDefault();
@@ -1498,10 +1499,10 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 	
 	if (oldReportedObject)
 	{
-		if (oldReportedObject.value)
+		if (oldReportedObject.pickedObject)
 		{
 			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-				function(d) { return d == oldReportedObject.value; });
+				function(d) { return d == oldReportedObject.pickedObject; });
 		}
 		else
 		{
@@ -2033,41 +2034,41 @@ var AddExperiencePanel = (function () {
 					var endDate = dots.endDateInput.value();
 					
 					if (startDate.length > 0)
-						initialData["Start"] = [startDate];
+						initialData["Start"] = [{text: startDate}];
 					if (endDate.length > 0)
-						initialData["End"] = [endDate];
+						initialData["End"] = [{text: endDate}];
 						
 					if (dots.organization)
-						initialData["Organization"] = dots.organization.getValueID();
+						initialData["Organization"] = [{instanceID: dots.organization.getValueID()}];
 					else if (dots.organizationName)
-						initialData["User Entered Organization"] = dots.organizationName;
+						initialData["User Entered Organization"] = [{text: dots.organizationName}];
 						
 					if (dots.site)
-						initialData["Site"] = dots.site.getValueID();
+						initialData["Site"] = [{instanceID: dots.site.getValueID()}];
 					else if (dots.siteName)
-						initialData["User Entered Site"] = dots.siteName;
+						initialData["User Entered Site"] = [{text: dots.siteName}];
 						
 					if (dots.offering)
-						initialData["Offering"] = dots.offering.getValueID();
+						initialData["Offering"] = [{instanceID: dots.offering.getValueID()}];
 					else if (dots.offeringName)
-						initialData["User Entered Offering"] = dots.offeringName;
+						initialData["User Entered Offering"] = [{text: dots.offeringName}];
 						
 					for (i = 0; i < dots.services.length; ++i)
 					{
 						var s = dots.services[i];
-						if (s.value)
+						if (s.pickedObject)
 						{
 							if (!initialData["Service"])
-								initialData["Service"] = [s.value.getValueID()];
+								initialData["Service"] = [{instanceID: s.pickedObject.getValueID()}];
 							else
-								initialData["Service"].push(s.value.getValueID());
+								initialData["Service"].push({instanceID: s.pickedObject.getValueID()});
 						}
 						else if (s.name)
 						{
 							if (!initialData["User Entered Service"])
-								initialData["User Entered Service"] = [s.name];
+								initialData["User Entered Service"] = [{text: s.name}];
 							else
-								initialData["User Entered Service"].push(s.name);
+								initialData["User Entered Service"].push({text: s.name});
 						}
 					}
 					
@@ -2474,7 +2475,7 @@ var PickOrCreatePanel = (function () {
 	{
 		if (newValue && newValue.getValueID() === this.pickDatum.getValueID())
 			this.hide();
-		else if (!newValue && newText && newText === this.createDatum.value)
+		else if (!newValue && newText && newText === this.createDatum.text)
 			this.hide();
 		else 
 		{
@@ -2620,7 +2621,7 @@ var PickOrCreateSitePanel = (function () {
 		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
 		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
 		
-		if (organization.getValueID() && this.createDatum.value == null)
+		if (organization.getValueID() && this.createDatum.text == null)
 		{
 			this.searchView.search("");
 		}
@@ -2659,7 +2660,7 @@ var PickOrCreateOfferingPanel = (function () {
 		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
 		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
 		
-		if (site.getValueID() && this.createDatum.value == null)
+		if (site.getValueID() && this.createDatum.text == null)
 		{
 			this.searchView.search("");
 		}
@@ -2680,7 +2681,7 @@ var PickOrCreateMarkerPanel = (function () {
 	{
 		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
 		
-		if (this.createDatum.value == null)
+		if (this.createDatum.text == null)
 		{
 			this.searchView.search("");
 		}

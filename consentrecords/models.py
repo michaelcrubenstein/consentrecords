@@ -105,18 +105,20 @@ class Instance(dbmodels.Model):
         
         dt = self.getDataType(field)
         if dt==Terms.objectEnum:
-            if not isinstance(value, Instance):
-                f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value)))
+            if "instanceID" in value:
+                f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
                 if len(f) == 0:
                     raise Value.DoesNotExist("specified primary key for instance does not exist")
                 value = f[0]
+            elif not isinstance(value, Instance):
+            	raise RuntimeError("specified value is not an Instance or an instanceID")
             elif not value._canFind(transactionState.user):
-                raise Value.DoesNotExist()
+                raise Instance.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
         elif dt==Terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
-            return self.addStringValue(field, value, position, transactionState)
+            return self.addStringValue(field, value["text"], position, transactionState)
 
     def addStringValue(self, field, value, position, transactionState):
         if position < 0:
@@ -302,7 +304,7 @@ class Instance(dbmodels.Model):
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, language=None):
-        return {'id': None, 'value': {'id': self.id, 'description': self.getDescription(language)}}
+        return {'id': None, 'instanceID': self.id, 'description': self.getDescription(language)}
     
     # This code presumes that all fields have unique values.
     def _sortValueDataByField(values):
@@ -412,19 +414,17 @@ class Instance(dbmodels.Model):
     def _getSubReferences(self, field, language=None):
         return [v.getReferenceData(language) for v in self._getSubValues(field)]
     
-    def getValueReferenceData(v, language):
-        return { "id": v.id,
-              "value": {"id" : v.referenceValue.id, "description": v.referenceValue.getDescription(language) },
-              "position": v.position }
-
     def _getCellValues(dataTypeID, values, language=None):
         if dataTypeID == Terms.objectEnum.id:
-            return [v.getCachedReferenceData() for v in values]
+            return [{ "id": v.id,
+                      "instanceID" : v.referenceValue.id, 
+                      "description": v.referenceValue._description,
+                      "position": v.position } for v in values]
         elif dataTypeID == Terms.translationEnum.id:
-            return [{"id": v.id, "value": {"text": v.stringValue, "languageCode": v.languageCode}} for v in values]
+            return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
         else:
             # Default case is that each datum in this cell contains a unique value.
-            return [{"id": v.id, "value": v.stringValue} for v in values]
+            return [{"id": v.id, "text": v.stringValue} for v in values]
             
     def getReadableSubValues(self, field, userInfo):
         return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
@@ -827,7 +827,7 @@ class Instance(dbmodels.Model):
         if len(children):
             return children[0]
         else:
-            return self.addValue(field, stringValue, self.getNextElementIndex(field), transactionState)
+            return self.addValue(field, {'text': stringValue}, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
         children = self.value_set.filter(field=field,
@@ -915,12 +915,8 @@ class Value(dbmodels.Model):
         
     def getReferenceData(self, language=None):
         return { "id": self.id,
-              "value": {"id" : self.referenceValue.id, "description": self.referenceValue.getDescription(language) },
-              "position": self.position }
-            
-    def getCachedReferenceData(self):
-        return { "id": self.id,
-              "value": {"id" : self.referenceValue.id, "description": self.referenceValue._description },
+              "instanceID" : self.referenceValue.id, 
+              "description": self.referenceValue.getDescription(language),
               "position": self.position }
             
     # Updates the value of the specified object
@@ -957,7 +953,31 @@ class Value(dbmodels.Model):
         if self.isOriginalReference:
             self.referenceValue.deepDelete(transactionState)
         self.markAsDeleted(transactionState)
+    
+    @property    
+    def dataType(self):
+        f = Instance.objects.get(typeID=Terms.field,
+                                 value__field=Terms.name,
+                                 value__referenceValue=self.field,
+                                 value__deleteTransaction__isnull=True,
+                                 parent__parent=self.instance.typeID)
+        v = f.value_set.filter(field=Terms.dataType,deleteTransaction__isnull=True)[0]
+        return v.referenceValue
+    
+    # returns whether or not c has data to update self.
+    # The analysis of c varies based on the data type of self's field.           
+    def hasNewValue(self, c):
+        if c == None:
+            raise ValueError("c is not specified")
         
+        dt = self.dataType
+        if dt==Terms.objectEnum:
+            return "instanceID" in c
+        elif dt==Terms.translationEnum:
+            return 'text' in c and 'languageCode' in c
+        else:
+            return 'text' in c
+
     def checkWriteAccess(self, user):
         self.instance.checkWriteValueAccess(user, self.field, self.referenceValue)
         

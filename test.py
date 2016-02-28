@@ -79,7 +79,7 @@ print ('##################################')
 a = ("Organization>_name[_text=BYCF]")
 dd = pathparser.selectAllDescriptors(a)
 print(dd)
-print (str(api.getData(None, {'path': '#'+dd[0]['value']['id']} ).content))
+print (str(api.getData(None, {'path': '#'+dd[0]['instanceID']} ).content))
 
 print ('##################################')
 print ('# Test 11 ')

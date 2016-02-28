@@ -161,8 +161,8 @@ var SharingPanel = (function() {
 					// Create an instance of an access record with this accessor level
 					// and this user.
 					var field = accessRecordCell.field;
-					var initialData = {"_privilege": accessorLevel.id };
-					initialData[cellName] = pickedUser.getValueID();
+					var initialData = {"_privilege": [{instanceID: accessorLevel.id}] };
+					initialData[cellName] = [{instanceID: pickedUser.getValueID() }];
 					cr.createInstance(field, userInstance.getValueID(), initialData, _createAccessRecordSuccess, syncFailFunction);
 				}
 				else
