@@ -446,7 +446,7 @@ var Signup = (function () {
 				return false;	/* Block moving forward until the following script completes. */
 			}
 			
-			crp.getData({path: '_uuname[_name=_privilege]', 
+			crp.getData({path: '_term[_name=_privilege]', 
 						 done: function(newInstances)
 							{
 								var enumeratorCell = newInstances[0].getCell('enumerator');

@@ -86,7 +86,7 @@ def list(request):
         # The type of the root object.
         rootType = request.GET.get('type', None)
         root = rootType and Terms.getNamedInstance(rootType);
-        path=request.GET.get('path', "_uuname")
+        path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
         template = loader.get_template('consentrecords/configuration.html')

@@ -1128,7 +1128,7 @@
 		
 		function addMissingAccess(source, privilege, target, cellName, done, fail)
 		{
-			var privilegePath = "_uuname[_name=_privilege]>enumerator";
+			var privilegePath = "_term[_name=_privilege]>enumerator";
 			crp.getData({path: privilegePath, 
 				done: function getPrivileges(enumerators)
 				{
