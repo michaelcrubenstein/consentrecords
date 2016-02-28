@@ -171,9 +171,7 @@ function showPanelUp(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "down"}, 0);
-	$(panelNode).height("100%")
-				.width("100%")
-				.css("display", "table")
+	$(panelNode).css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
@@ -187,8 +185,6 @@ function showPanelUp(panelNode, done)
 function showPanelNow(panelNode)
 {
 	$(panelNode).offset({top: 0, left: 0})
-				.height("100%")
-				.width("100%")
 				.css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
@@ -198,9 +194,7 @@ function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "right"}, 0);
-	$(panelNode).height("100%")
-				.width("100%")
-				.css("display", "table")
+	$(panelNode).css("display", "table")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
