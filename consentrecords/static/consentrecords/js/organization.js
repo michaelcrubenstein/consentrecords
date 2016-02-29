@@ -37,3 +37,29 @@ function appendAddress(address, div)
 	function() {
 	});
 }
+
+function appendSessionDescriptions(buttons)
+{
+	var leftText = buttons.append('div').classed("left-expanding-div", true);
+	
+	leftText.append('div')
+		.text(function(d) { 
+			return d.getValue("Offering").getDescription();
+		});
+	leftText.append('div').classed("sub-text", true)
+		.text(function(d) {
+			return d.getDescription();
+		});
+	leftText.append('div').classed("sub-text", true)
+		.text(function(d) {
+			return d.getValue("Organization").getDescription();
+		});
+	leftText.append('div').classed("sub-text", true)
+		.text(function(d) {
+			if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+				return d.getValue("Site").getDescription();
+			else
+				return null;
+		});
+}
+				
