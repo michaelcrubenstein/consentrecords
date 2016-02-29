@@ -550,7 +550,7 @@ class Instance(dbmodels.Model):
         
     def comparePrivileges(a, b):
         if a == b:
-            return 0
+            return a
         elif not a:
             return b
                 
@@ -558,7 +558,7 @@ class Instance(dbmodels.Model):
                       Terms.writePrivilegeEnum, Terms.administerPrivilegeEnum]
                       
         aIndex = privileges.index(a)
-        return -1 if b in privileges[(aIndex+1):] else 1
+        return b if b in privileges[(aIndex+1):] else a
         
     # returns the privilege level that the specified user instance has for this instance. 
     def getPrivilege(self, userInfo):
@@ -588,8 +588,8 @@ class Instance(dbmodels.Model):
                     (Q(value__referenceValue__value__referenceValue=userInfo.instance)&
                      Q(value__referenceValue__value__deleteTransaction__isnull=True)))
                       
-        p = map(lambda i: i.value_set.filter(typeID=Terms.privilege, deleteTransaction__isnull=True)\
-                           .select_related('referenceValue__description__text').referenceValue, f)
+        p = map(lambda i: i.value_set.filter(field=Terms.privilege, deleteTransaction__isnull=True)\
+                           .select_related('referenceValue__description__text')[0].referenceValue, f)
         
         return reduce(Instance.comparePrivileges, p, minPrivilege)
     
