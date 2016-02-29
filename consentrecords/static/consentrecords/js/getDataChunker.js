@@ -102,6 +102,7 @@ var GetDataChunker = (function() {
 		var _this = this;
 		
 		this._clearScrollCheck();
+		this._start = 0;
 
 		this._check = function()
 		{
@@ -126,6 +127,16 @@ var GetDataChunker = (function() {
 			if (position.top < panelHeight)
 				this._continue(startVal);
 		}
+	}
+	
+	GetDataChunker.prototype.appendNode = function(elementType)
+	{
+		var t = document.createElement(elementType);
+		if (this._loadingMessage)
+    		this._containerNode.insertBefore(t, this._loadingMessage.node());
+    	else
+    		this._containerNode.appendChild(t);
+    	return t;
 	}
 
 	function GetDataChunker(containerNode, onGetDataDone)

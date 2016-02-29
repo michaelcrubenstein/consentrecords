@@ -42,6 +42,34 @@ def _getQClause(symbol, testValue):
     else:
         return _getSimpleQClause(symbol, testValue)
 
+def _getSimpleAncestorClause(symbol, testValue):
+    if symbol == '^=':
+        q = Q(ancestors__ancestor__value__stringValue__istartswith=testValue)
+    elif symbol == '=':
+        q = Q(ancestors__ancestor__value__stringValue__iexact=testValue)
+    elif symbol == '*=':
+        q = Q(ancestors__ancestor__value__stringValue__icontains=testValue)
+    elif symbol == '<':
+        q = Q(ancestors__ancestor__value__stringValue__lt=testValue)
+    elif symbol == '<=':
+        q = Q(ancestors__ancestor__value__stringValue__lte=testValue)
+    elif symbol == '>':
+        q = Q(ancestors__ancestor__value__stringValue__gt=testValue)
+    elif symbol == '>=':
+        q = Q(ancestors__ancestor__value__stringValue__gte=testValue)
+    else:
+        raise ValueError("unrecognized symbol: %s" & symbol)
+    return q
+    # Handles a degenerate case where a referenceValue was stored in the same place as
+    # the stringValue and it happens to match the query string, 
+
+def _getAncestorClause(symbol, testValue):
+    if isinstance(testValue, list):
+        simples = map(lambda t: _getSimpleAncestorClause(symbol, t), testValue)
+        return reduce(lambda q1, q2: q1 | q2, simples)
+    else:
+        return _getSimpleAncestorClause(symbol, testValue)
+
 def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
 #     logger.error("_refineResults(%s, %s)" % (str(resultSet), path))
@@ -52,28 +80,52 @@ def _refineResults(resultSet, path, userInfo):
         return Instance.objects.filter(deleteTransaction__isnull=True), path[1:]
     elif path[0] == '[':
         params = path[1]
-        if params[0] != '?':
-            i = Terms.getInstance(params[0])
-        else:
-            i = None
-        if len(params) == 1:
-            f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
-        elif len(params) == 3 or (len(params) == 4 and params[2]==','):
-            # Get a Q clause that compares either a single test value or a comma-separated list of test values
-            # according to the specified symbol.
-            stringText = _getQClause(symbol=params[1], testValue=params[-1])
-            
-            # Need to add distinct after the tests to prevent duplicates if there is
-            # more than one value of the instance that matches.
-            if i:
-                f = resultSet.filter(stringText, value__field=i,
-                                     value__deleteTransaction__isnull=True).distinct()
+        if params[0] == 'ancestor' and params[1] == ':':
+            if params[2] != '?':
+                i = Terms.getInstance(params[2])
             else:
-                f = resultSet.filter(stringText,
-                                     value__deleteTransaction__isnull=True).distinct()
+                i = None
+            if len(params) == 3:
+                f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
+            elif len(params) == 5 or (len(params) == 6 and params[4]==','):
+                # Get a Q clause that compares either a single test value or a comma-separated list of test values
+                # according to the specified symbol.
+                stringText = _getAncestorClause(symbol=params[3], testValue=params[-1])
+            
+                # Need to add distinct after the tests to prevent duplicates if there is
+                # more than one value of the instance that matches.
+                if i:
+                    f = resultSet.filter(stringText, ancestors__ancestor__value__field=i,
+                                         ancestors__ancestor__value__deleteTransaction__isnull=True).distinct()
+                else:
+                    f = resultSet.filter(stringText,
+                                         ancestors__ancestor__value__deleteTransaction__isnull=True).distinct()
+            else:
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
+            return f, path[2:]
         else:
-            raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
-        return f, path[2:]
+            if params[0] != '?':
+                i = Terms.getInstance(params[0])
+            else:
+                i = None
+            if len(params) == 1:
+                f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
+            elif len(params) == 3 or (len(params) == 4 and params[2]==','):
+                # Get a Q clause that compares either a single test value or a comma-separated list of test values
+                # according to the specified symbol.
+                stringText = _getQClause(symbol=params[1], testValue=params[-1])
+            
+                # Need to add distinct after the tests to prevent duplicates if there is
+                # more than one value of the instance that matches.
+                if i:
+                    f = resultSet.filter(stringText, value__field=i,
+                                         value__deleteTransaction__isnull=True).distinct()
+                else:
+                    f = resultSet.filter(stringText,
+                                         value__deleteTransaction__isnull=True).distinct()
+            else:
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
+            return f, path[2:]
     elif path[0] == '>':
         i = Terms.getInstance(path[1])
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),

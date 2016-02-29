@@ -284,167 +284,92 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	return sitePanel;
 }
 		
-var PickOfferingPanel = (function() {
-	PickOfferingPanel.prototype = new SitePanel();
-	PickOfferingPanel.prototype.panel2Div = null;
-	PickOfferingPanel.prototype.section = null;
-	PickOfferingPanel.prototype.unloadedItems = null;
-	PickOfferingPanel.prototype.marker = null;
-	PickOfferingPanel.prototype.offeringID = null;
+var PickOfferingSearchView = (function () {
+	PickOfferingSearchView.prototype = new PanelSearchView();
 	
-	PickOfferingPanel.prototype.onGetDataDone = function(sessions)
-	{
-		$(sessions).each(function() { this.calculateDescription(); });
-		
-		if (sessions.length == 0)
+	/* Overrides SearchView.prototype.onClickButton */
+	PickOfferingSearchView.prototype.onClickButton = function(d, i) {
+		if (prepareClick('click', 'pick ' + d.getDescription()))
 		{
-			if (this.section.selectAll('li').size() == 0)
-			{
-				this.panel2Div.append("p")
-					.append("p")
-					.text('Sorry, there are no upcoming offerings for "' + this.marker.getDescription() + '".');
-			}
+			this.sitePanel.updateValues(d, null);
 		}
-		else
-		{
-			sessions.sort(compareSessions);
-			
-			var oldTop = $(this.section.node()).position().top;
-		
-			var divs = appendItems(this.section, sessions)
-				.classed("consent-record", true);	// So that each button appears on its own row.
-				
-			var _this = this;
-			divs.each(function() { _this.unloadedItems.push(this);});
-			
-			this.checkSearchText(divs);
-			
-			var buttons = divs.append("button").classed("btn row-button", true)
-				.on("click", function(session)
-					{
-						if (prepareClick('click', 'show details: ' + session.getDescription()))
-						{
-							showClickFeedback(this);
-
-							var sitePanel = showSessionDetails(userInstance, session, _this.marker, _this.node());
-		
-							showPanelLeft(sitePanel.node());
-						}
-					});
-
-			appendRightChevrons(buttons);
-			var rightText = buttons.append('span').classed("centered-right-2", true);
-		
-			rightText.append('div')
-				.classed("sub-text", true)
-				.text(getDateRange);
-			rightText.append('div').classed("sub-text", true)
-				.text(function(d) {
-					var registrationDeadline = d.getDatum("Registration Deadline");
-					if (registrationDeadline)
-						return "register by " + registrationDeadline;
-					else
-						return "";
-				});
-		
-			appendSessionDescriptions(buttons);
-			
-			var newTop = $(this.section.node()).position().top;
-			
-			$(this.panel2Div.node()).scrollTop($(this.panel2Div.node()).scrollTop() + oldTop - newTop);
-			
-			/* Check the setup offeringID to see if we should automatically go to a div. */
-			if (this.offeringID != null)
-			{
-				divs.each(function(d)
-				{
-					if (d.getValueID() == _this.offeringID)
-					{
-				
-						var sitePanel = showSessionDetails(userInstance, d, _this.marker, _this.node());
-						showPanelNow(sitePanel.node());
-					}
-				});
-			}
-			else
-			{
-				this.onScroll();
-			}
-		}
+		d3.event.preventDefault();
 	}
 	
-	PickOfferingPanel.prototype.onScroll = function()
+	/* Overrides SearchView.prototype.isButtonVisible */
+	PickOfferingSearchView.prototype.isButtonVisible = function(button, d)
 	{
-		var _thisPanel = this;
-		$(this.unloadedItems).each(function()
-			{
-				var panelHeight = $(_thisPanel.panel2Div.node()).height();
-				var position = $(this).position();
-				var height = $(this).height();
-				var _this = this;
-				if (height > 0 && $(this).css("display") != "none")
+		return d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
+			   d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(val) >= 0;
+	}
+	
+	/* Overrides SearchView.searchPath */
+	PickOfferingSearchView.prototype.searchPath = function(val)
+	{
+		var currentDate = new Date();
+		var todayString = currentDate.toISOString().substring(0, 10);
+		var s = "#" + this.marker.instanceID + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
+		if (val.length == 0)
+			return s;
+		else if (val.length < 3)
+			return s + '[ancestor:_name^="' + val + '"]';
+		else
+			return s + '[ancestor:_name*="' + val + '"]';
+	}
+	
+	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
+	{
+		var _this = this;
+		var sections = this.appendButtonContainers(foundObjects);
+		var buttons = sections.append("button").classed("btn row-button", true)
+			.on("click", function(session)
 				{
-					var isVisible = position.top + height >= 0 && position.top < panelHeight;
-					if (isVisible)
+					if (prepareClick('click', 'show details: ' + session.getDescription()))
 					{
-						var d = d3.select(this).datum();
-						var path = "#" + d.getValueID() + "::reference(Sessions)::reference(Offering)";
-						
-						var done = function(offerings)
-						{
-							var thisBlock = d3.select(_this).selectAll(".centered-right-2");
-							var oldOffering = d.getValue("Offering");
-							var offering = offerings[0];
-							oldOffering.cells = offering.cells;
-							
-							var ageText = getOfferingAgeRange(offering);
-							var gradeText = getOfferingGradeRange(offering);
-							if (ageText.length > 0)
-							{
-								thisBlock.append('div').classed("sub-text", true)
-									.text("Ages: " + ageText);
-							}
-							if (gradeText.length > 0)
-							{
-								thisBlock.append('div').classed("sub-text", true)
-									.text("Grades: " + gradeText);
-							}
-						}
-						cr.getData({path: path, 
-									fields: ["parents"], 
-									done: done, 
-									fail: asyncFailFunction});
-						
-						_thisPanel.unloadedItems.splice(_thisPanel.unloadedItems.indexOf(this), 1);
+						showClickFeedback(this);
+
+						var sitePanel = showSessionDetails(userInstance, session, _this.marker, _this.sitePanel.node());
+	
+						showPanelLeft(sitePanel.node());
 					}
-				}
+				});
+
+		appendRightChevrons(buttons);
+		var rightText = buttons.append('span').classed("centered-right-2", true);
+	
+		rightText.append('div')
+			.classed("sub-text", true)
+			.text(getDateRange);
+		rightText.append('div').classed("sub-text", true)
+			.text(function(d) {
+				var registrationDeadline = d.getDatum("Registration Deadline");
+				if (registrationDeadline)
+					return "register by " + registrationDeadline;
+				else
+					return "";
 			});
-	};
+	
+		appendSessionDescriptions(buttons);
+		
+		this.constrainFoundObjects();
+		return buttons;
+	}
+	
+	function PickOfferingSearchView(sitePanel, marker)
+	{
+		this.marker = marker;
+		PanelSearchView.call(this, sitePanel);
+	}
+	
+	return PickOfferingSearchView;
+})();
 
-	PickOfferingPanel.prototype.checkSearchText = function(divs)
-		{
-			var val = this.searchInputNode.value.toLocaleLowerCase();
-			if (val.length == 0)
-			{
-				/* Show all of the items. */
-				divs.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				divs.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
-
+var PickOfferingPanel = (function() {
+	PickOfferingPanel.prototype = new SitePanel();
+	PickOfferingPanel.prototype.offeringID = null;
+	
 	function PickOfferingPanel(userInstance, marker, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
@@ -456,39 +381,8 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		var _this = this;
-		
-		function textChanged() { _this.checkSearchText(_this.panel2Div.selectAll("li"));}
-
-		this.searchInputNode = this.appendSearchBar(textChanged);
-
-		this.panel2Div = this.appendScrollArea();
-
-		this.marker = marker;
-		this.offeringID = offeringID;
-		this.unloadedItems = [];
-
-		/* Set up the code that will ensure that all of the visible items have their
-			ancillary data filled in as the scrolling area scrolls.
-		 */
-		function checkScroll() { _this.onScroll(); }
-		$(this.panel2Div.node()).scroll(checkScroll);
-		$(window).resize(checkScroll);
-		$(this.panel2Div.node()).on("remove", function()
-			{
-				$(window).off("resize", checkScroll);
-			});
-		this.section = this.panel2Div.append("section")
-			.classed("cell", true);
-		
-		function checkOnGetDataDone(instances) { _this.onGetDataDone(instances); }
-		var currentDate = new Date();
-		var todayString = currentDate.toISOString().substring(0, 10);
-		this.getDataChunker = new GetDataChunker(this.panel2Div.node(), checkOnGetDataDone);
-
-		this.getDataChunker.path = "#" + marker.instanceID + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
-		this.getDataChunker.fields = ["parents"];
-		this.getDataChunker.start();
+		this.searchView = new PickOfferingSearchView(this, marker);
+		this.searchView.search("");
 
 		showPanelLeft(this.node());
 	}

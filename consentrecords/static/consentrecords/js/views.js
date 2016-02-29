@@ -1872,7 +1872,14 @@ var PanelSearchView = (function() {
 	
 	PanelSearchView.prototype.appendButtonContainers = function(foundObjects)
 	{
-		return this.listPanel.appendSections(foundObjects);
+		var items = [];
+		var _this = this;
+		foundObjects.forEach(function(d) {
+			var i = _this.getDataChunker.appendNode('section');
+			d3.select(i).datum(d);
+			items.push(i);
+		});
+		return d3.selectAll(items);
 	}
 	
 	return PanelSearchView;
