@@ -166,7 +166,7 @@ def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, tra
         if fieldData['dataType'] == '_translation':
             propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
         else:
-            propertyList = {nameField.id: name}
+            propertyList = {nameField.id: [{'text': name}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 
