@@ -87,7 +87,7 @@ class Instance(dbmodels.Model):
         i = Instance.objects.create(id=id, typeID=self, parent=parent,
                                     transaction=transactionState.transaction)
         if parent:
-            Containment.object.bulk_create([Containment(ancestor=j.ancestor, descendent=i) for j in parent.ancestors.all()])
+            Containment.objects.bulk_create([Containment(ancestor=j.ancestor, descendent=i) for j in parent.ancestors.all()])
         Containment.objects.create(ancestor=i, descendent=i)
         return i
     
