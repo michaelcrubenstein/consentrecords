@@ -127,6 +127,16 @@ var GetDataChunker = (function() {
 				this._continue(startVal);
 		}
 	}
+	
+	GetDataChunker.prototype.appendNode = function(elementType)
+	{
+		var t = document.createElement(elementType);
+		if (this._loadingMessage)
+    		this._containerNode.insertBefore(t, this._loadingMessage.node());
+    	else
+    		this._containerNode.appendChild(t);
+    	return t;
+	}
 
 	function GetDataChunker(containerNode, onGetDataDone)
 	{
