@@ -102,6 +102,7 @@ var GetDataChunker = (function() {
 		var _this = this;
 		
 		this._clearScrollCheck();
+		this._start = 0;
 
 		this._check = function()
 		{
