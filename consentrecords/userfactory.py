@@ -17,11 +17,11 @@ class UserFactory:
 
             ofKindObject = Terms.getNamedInstance(TermNames.user)
             if not propertyList: propertyList = {}
-            propertyList[TermNames.email] = user.email
+            propertyList[TermNames.email] = {"text": user.email}
             if user.first_name:
-                propertyList[TermNames.firstName] = user.first_name
+                propertyList[TermNames.firstName] = {"text": user.first_name}
             if user.last_name:
-                propertyList[TermNames.lastName] = user.last_name
+                propertyList[TermNames.lastName] = {"text": user.last_name}
             item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
             
             # Add userID explicitly in case it isn't part of the configuration.

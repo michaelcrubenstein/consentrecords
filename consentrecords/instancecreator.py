@@ -64,7 +64,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # add values to the user.
     if typeInstance==Terms.user:
         if TermNames.primaryAdministrator not in propertyList:
-            propertyList[TermNames.primaryAdministrator] = item.id
+            propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
@@ -166,7 +166,7 @@ def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, tra
         if fieldData['dataType'] == '_translation':
             propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
         else:
-            propertyList = {nameField.id: name}
+            propertyList = {nameField.id: [{'text': name}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 

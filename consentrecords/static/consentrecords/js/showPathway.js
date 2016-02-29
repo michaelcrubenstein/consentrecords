@@ -3115,7 +3115,14 @@ var OfferingServiceCell = (function () {
 	{
 		d3.select(obj).selectAll('ol>li').remove();
 		if (!this.offeringCell.isEmpty())
-			this.offeringCell.data[0].getCell("Service").show(obj, containerPanel);
+		{
+			var offering = this.offeringCell.data[0];
+			offering.checkCells([],
+						function() {
+							offering.getCell("Service").show(obj, containerPanel);
+						},
+						asyncFailFunction);
+		}
 	}
 	
 	function OfferingServiceCell(offeringCell) {

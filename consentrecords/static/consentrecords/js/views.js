@@ -221,12 +221,8 @@ function hidePanelRight(panelNode, doRemove, completeFunction)
 }
 		
 function handleCloseRightEvent() {
-	if (!_isClickBlocked())
-	{
-		cr.logRecord('click', 'Close Right');
-		_blockClick();
+	if (prepareClick('click', 'Close Right'))
 		hidePanelRight($(this).parents(".site-panel")[0]);
-	}
 	else
 		cr.logRecord('click', 'Close Right blocked');
 	d3.event.preventDefault();

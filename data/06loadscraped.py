@@ -1,3 +1,5 @@
+# python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
+
 import datetime
 import django
 import tzlocal

@@ -731,7 +731,7 @@ def submitsignin(request):
         results = userviews.signinResults(request)
         if results["success"]:
             user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
-            results["user"] = { "id": user.id, "description" : user.getDescription(None) }        
+            results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
