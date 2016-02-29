@@ -86,6 +86,9 @@ class Instance(dbmodels.Model):
         id = uuid.uuid4().hex
         i = Instance.objects.create(id=id, typeID=self, parent=parent,
                                     transaction=transactionState.transaction)
+        if parent:
+            Containment.object.bulk_create([Containment(ancestor=j.ancestor, descendent=i) for j in parent.ancestors.all()])
+        Containment.objects.create(ancestor=i, descendent=i)
         return i
     
     def getDataType(self, field):
@@ -1022,6 +1025,14 @@ class AccessRecord(dbmodels.Model):
     
     def __str__(self):
         return str(self.id)
+        
+class Containment(dbmodels.Model):
+    id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False)
+    descendent = dbmodels.ForeignKey('consentrecords.Instance', related_name='ancestors', db_index=True, editable=False)
+    
+    def __str__(self):
+        return "%s -> %s" % (self.ancestor, self.descendent)
         
 class TermNames():
     # These verbs are associated with field IDs of values.
