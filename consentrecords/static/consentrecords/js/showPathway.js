@@ -2184,7 +2184,9 @@ var PathwayPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		if (userInstance.getValue("More Experiences").canWrite())
+		var moreExperiences = userInstance.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? userInstance.canWrite() : moreExperiences.canWrite());
+		if (canAddExperience)
 		{ 
 			var addExperienceButton = navContainer.appendRightButton()
 				.classed('add-button', true)
