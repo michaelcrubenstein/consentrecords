@@ -1128,6 +1128,8 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.canWrite = function()
 	{
+		if (this.getValueID() === null)
+			throw(this.getDescription() + " has not been saved");
 		if (this.privilege === undefined)
 			throw(this.getDescription() + " privilege is not specified");
 			
