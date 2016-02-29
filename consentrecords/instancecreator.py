@@ -64,7 +64,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # add values to the user.
     if typeInstance==Terms.user:
         if TermNames.primaryAdministrator not in propertyList:
-            propertyList[TermNames.primaryAdministrator] = item.id
+            propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
