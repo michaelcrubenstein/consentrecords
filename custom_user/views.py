@@ -31,7 +31,7 @@ def signin(request):
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
 def forgotPassword(request):
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return signin(request)
     
     template = loader.get_template('custom_user/forgotpassword.html')
@@ -46,7 +46,7 @@ def forgotPassword(request):
 
 # Displays a web page in which a user can specify a new password based on a key.
 def password(request):
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return signin(request)
     
     template = loader.get_template('custom_user/password.html')
@@ -59,7 +59,7 @@ def password(request):
     return HttpResponse(template.render(context))
 
 def passwordReset(request):
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return signin(request)
     
     template = loader.get_template('custom_user/passwordreset.html')
@@ -271,7 +271,7 @@ def updateUsernameResults(request):
     try:
         if request.method != "POST":
             raise Exception("UpdateUsername only responds to POST requests")
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated():
             raise Exception("The current login is invalid")
             
         POST = request.POST;
@@ -303,7 +303,7 @@ def updatePassword(request):
     try:
         if request.method != "POST":
             raise Exception("UpdatePassword only responds to POST requests")
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated():
             raise Exception("The current login is invalid")
             
         POST = request.POST;

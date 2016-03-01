@@ -25,7 +25,7 @@ class Transaction(dbmodels.Model):
         return str(self.creation_time)
     
     def createTransaction(user, timeZoneOffset):
-        if not user.is_authenticated:
+        if not user.is_authenticated():
             raise RuntimeError('current user is not authenticated')
         if not user.is_active:
             raise RuntimeError('current user is not active')
@@ -666,8 +666,7 @@ class Instance(dbmodels.Model):
             return True
 
         userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated:
-            print(user)
+        if user.is_authenticated():
             if userInstance and userInstance.isPrimaryAdministrator(self):
                 return True
                             

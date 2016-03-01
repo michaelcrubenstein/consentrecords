@@ -620,7 +620,7 @@ def createInstance(request):
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.createInstance(request.user, request.POST)
@@ -629,7 +629,7 @@ def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.updateValues(request.user, request.POST)
@@ -639,7 +639,7 @@ def addValue(request):
     if request.method != "POST":
         raise Http404("addValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.addValue(request.user, request.POST)
@@ -648,7 +648,7 @@ def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
         
     return api.deleteInstances(request.user, request.POST)
@@ -657,7 +657,7 @@ def deleteValue(request):
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.deleteValue(request.user, request.POST)
