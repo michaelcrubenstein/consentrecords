@@ -1581,7 +1581,7 @@ cr.getData = function(args)
 						var datum = json.data[i];
 						var v = new cr.ObjectValue();
 						v.importCells(datum.cells);
-						v.instanceID = datum.id;
+						v.instanceID = datum.instanceID;
 						v.setDescription(datum.description);
 						v.privilege = datum.privilege;
 						v.parentID = datum.parentID;
