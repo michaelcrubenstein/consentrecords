@@ -2047,17 +2047,20 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
-		var editButton = navContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick('click', 'view object panel: Edit'))
-				{
-					showClickFeedback(this);
+		if (objectData.canWrite())
+		{
+			var editButton = navContainer.appendRightButton()
+				.on("click", function(d) {
+					if (prepareClick('click', 'view object panel: Edit'))
+					{
+						showClickFeedback(this);
 				
-					showEditObjectPanel(objectData, sitePanel.node(), revealPanelUp);
-				}
-				d3.event.preventDefault();
-			});
-		editButton.append("span").text("Edit");
+						showEditObjectPanel(objectData, sitePanel.node(), revealPanelUp);
+					}
+					d3.event.preventDefault();
+				});
+			editButton.append("span").text("Edit");
+		}
 	
 		var panel2Div = sitePanel.appendScrollArea();
 
