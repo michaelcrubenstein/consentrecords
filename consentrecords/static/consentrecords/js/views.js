@@ -1796,6 +1796,14 @@ var SearchView = (function () {
 		this._searchTimeout = setTimeout(endSearchTimeout, 300);
 	}
 	
+	SearchView.prototype.textCleared = function()
+	{
+		this.clearListPanel();
+		this.getDataChunker.clearLoadingMessage();
+		this._foundObjects = null;
+		this._foundCompareText = null;
+	}
+	
 	SearchView.prototype.textChanged = function()
 	{
 		if (this._searchTimeout != null)
@@ -1807,10 +1815,7 @@ var SearchView = (function () {
 		var val = this.inputCompareText();
 		if (val.length == 0)
 		{
-			this.clearListPanel();
-			this.getDataChunker.clearLoadingMessage();
-			this._foundObjects = null;
-			this._foundCompareText = null;
+			this.textCleared();
 		}
 		else if (this._foundCompareText != null && 
 				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&

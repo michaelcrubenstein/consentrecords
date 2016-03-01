@@ -866,7 +866,8 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.clearValue = function()
 	{
 		this.instanceID = null; 
-		this.description="None"; 
+		this.description="None";
+		this.cells = null;
 		this.privilege = null;
 	}
 	

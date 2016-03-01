@@ -2555,6 +2555,11 @@ var PickOrCreatePanel = (function () {
 		return this.pickDatum.cell.field.name;
 	}
 	
+	PickOrCreatePanel.prototype.createSearchView = function()
+	{
+		return new PickOrCreateSearchView(this, this.pickDatum, this.createDatum);
+	}
+	
 	function PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done)
 	{
 		if (previousPanelNode === undefined)
@@ -2588,7 +2593,7 @@ var PickOrCreatePanel = (function () {
 			if (title)
 				this.navContainer.appendTitle(title);
 			
-			this.searchView = new PickOrCreateSearchView(this, pickDatum, createDatum);
+			this.searchView = this.createSearchView();
 
 			showPanelLeft(this.node());
 		}
@@ -2596,29 +2601,48 @@ var PickOrCreatePanel = (function () {
 	return PickOrCreatePanel;
 })();
 
-var PickOrCreateSitePanel = (function () {
-	PickOrCreateSitePanel.prototype = new PickOrCreatePanel();
+var PickOrCreateSiteSearchView = (function () {
+	PickOrCreateSiteSearchView.prototype = new PickOrCreateSearchView();
 	
-	PickOrCreateSitePanel.prototype.searchPath = function(val)
+	PickOrCreateSiteSearchView.prototype.searchPath = function(val)
 	{
 		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
 		
 		if (organization.getValueID())
 		{
-			return "#"+organization.getValueID()+">Sites>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+			return "#"+organization.getValueID()+">Sites>"+PickOrCreateSearchView.prototype.searchPath.call(this, val);
 		}
 		else
 			return "";
 	}
 	
-	PickOrCreateSitePanel.prototype.textCleared = function()
+	PickOrCreateSiteSearchView.prototype.textCleared = function()
 	{
+		PickOrCreateSearchView.prototype.textCleared.call(this);
+		
 		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
 		
 		if (organization.getValueID())
 		{
-			this.searchView.startSearchTimeout("");
+			this.startSearchTimeout("");
 		}
+	}
+	
+	function PickOrCreateSiteSearchView(sitePanel, pickDatum, createDatum)
+	{
+		PickOrCreateSearchView.call(this, sitePanel, pickDatum, createDatum);
+	}
+	
+	return PickOrCreateSiteSearchView;
+	
+})();
+
+var PickOrCreateSitePanel = (function () {
+	PickOrCreateSitePanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateSitePanel.prototype.createSearchView = function()
+	{
+		return new PickOrCreateSiteSearchView(this, this.pickDatum, this.createDatum);
 	}
 	
 	function PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done)
@@ -2635,29 +2659,48 @@ var PickOrCreateSitePanel = (function () {
 	return PickOrCreateSitePanel;
 })();
 
-var PickOrCreateOfferingPanel = (function () {
-	PickOrCreateOfferingPanel.prototype = new PickOrCreatePanel();
+var PickOrCreateOfferingSearchView = (function () {
+	PickOrCreateOfferingSearchView.prototype = new PickOrCreateSearchView();
 	
-	PickOrCreateOfferingPanel.prototype.searchPath = function(val)
+	PickOrCreateOfferingSearchView.prototype.searchPath = function(val)
 	{
 		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
 		
 		if (site.getValueID())
 		{
-			return "#"+site.getValueID()+">Offerings>"+PickOrCreatePanel.prototype.searchPath.call(this, val);
+			return "#"+site.getValueID()+">Offerings>"+PickOrCreateSearchView.prototype.searchPath.call(this, val);
 		}
 		else
 			return "";
 	}
 	
-	PickOrCreateOfferingPanel.prototype.textCleared = function()
+	PickOrCreateOfferingSearchView.prototype.textCleared = function()
 	{
+		PickOrCreateSearchView.prototype.textCleared.call(this);
+		
 		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
 		
 		if (site.getValueID())
 		{
-			this.searchView.startSearchTimeout("");
+			this.startSearchTimeout("");
 		}
+	}
+	
+	function PickOrCreateOfferingSearchView(sitePanel, pickDatum, createDatum)
+	{
+		PickOrCreateSearchView.call(this, sitePanel, pickDatum, createDatum);
+	}
+	
+	return PickOrCreateOfferingSearchView;
+	
+})();
+
+var PickOrCreateOfferingPanel = (function () {
+	PickOrCreateOfferingPanel.prototype = new PickOrCreatePanel();
+	
+	PickOrCreateOfferingPanel.prototype.createSearchView = function()
+	{
+		return new PickOrCreateOfferingSearchView(this, this.pickDatum, this.createDatum);
 	}
 	
 	function PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done)

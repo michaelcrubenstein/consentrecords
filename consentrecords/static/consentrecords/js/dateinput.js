@@ -44,12 +44,16 @@ var DateInput = (function () {
     			this.monthInput.node().selectedIndex = minMonth + 1;
     		}
     	}
-    	else
+    	else if (this.year && this.month)
     	{
     		this.monthInput.selectAll('option').each(function(d, i)
     			{
     				d3.select(this).attr('disabled', i == 0 ? true : null);
     			});
+    	}
+    	else
+    	{
+    		this.monthInput.selectAll('option').attr('disabled', null);
     	}
     	
     	this.checkOnMonthChanged();
