@@ -569,19 +569,19 @@ class Instance(dbmodels.Model):
         except AccessRecord.DoesNotExist:
             return Terms.readPrivilegeEnum
             
-        if not userInfo.instance:
-            return None
-        
-        if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True).count():
-            if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
-                return Terms.administerPrivilegeEnum
-                
         minPrivilege = None
         minPrivilegeFilter = source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True)\
                                    .select_related('referenceValue__description__text')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
         
+        if not userInfo.instance:
+            return minPrivilege
+        
+        if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True).count():
+            if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
+                return Terms.administerPrivilegeEnum
+                
         f = source.children.filter(typeID=Terms.accessRecord, deleteTransaction__isnull=True)\
             .filter(Q(value__referenceValue=userInfo.instance)|
                     (Q(value__referenceValue__value__referenceValue=userInfo.instance)&
