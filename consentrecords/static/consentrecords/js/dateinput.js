@@ -61,15 +61,19 @@ var DateInput = (function () {
     
     DateInput.prototype.checkOnMonthChanged = function()
     {
-		this.monthInput.selectAll(":first-child").attr('disabled', true);
-		var oldDate = this.dateInput.node().selectedIndex;
-		this.dateInput.selectAll('option').remove();
-		var selectedYear = parseInt(this.yearInput.node().options[this.yearInput.node().selectedIndex].text);
-		var selectedMonth = this.monthInput.node().selectedIndex;
-		var daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
 		dates = ['(no day)'];
-		for (var i = 1; i <= daysInMonth; ++i)
-			dates.push(i);
+		var oldDate = this.dateInput.node().selectedIndex;
+		var daysInMonth = 31;	/* A dummy value for the moment. */
+    	if (this.year && this.month)
+    	{
+			this.monthInput.selectAll(":first-child").attr('disabled', true);
+			this.dateInput.selectAll('option').remove();
+			var selectedYear = parseInt(this.yearInput.node().options[this.yearInput.node().selectedIndex].text);
+			var selectedMonth = this.monthInput.node().selectedIndex;
+			daysInMonth = (new Date(selectedYear, selectedMonth, 0)).getDate();
+			for (var i = 1; i <= daysInMonth; ++i)
+				dates.push(i);
+		}
 		this.dateInput.selectAll('option').remove();
 		this.dateInput.selectAll('option')
 			.data(dates)

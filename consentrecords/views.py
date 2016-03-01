@@ -147,6 +147,9 @@ class api:
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
             languageID = None
+            language = None
+            
+            userInfo = UserInfo(user)
             
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
@@ -162,9 +165,9 @@ class api:
                     Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData()}
+                    results = {'success':True, 'object': newValue.getReferenceData(userInfo, language)}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData()}
+                    results = {'success':True, 'object': item.getReferenceData(userInfo, language)}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -317,7 +320,7 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
             
-            p = [i.getReferenceData(language) for i in uuObjects]                                                
+            p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
             results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -355,7 +358,7 @@ class api:
             
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
-            p = map(lambda v: v.getReferenceData(language=language), itertools.chain.from_iterable(m))
+            p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
                             
             results = {'success':True, 'objects': [i for i in p]}
         except Exception as e:
@@ -420,11 +423,14 @@ class api:
             
         cells = uuObject.getData(vs, fieldsData, userInfo, language)
     
-        data = {"id": uuObject.id, 
-                "description": uuObject.getDescription(language),
-                'privilege': uuObject.getPrivilege(userInfo).getDescription(),
-                "parentID": uuObject.parent and uuObject.parent.id, 
+        data = {"id": None,
+                'instanceID': uuObject.id, 
+                'description': uuObject.getDescription(language),
+                'parentID': uuObject.parent and uuObject.parent.id, 
                 "cells" : cells }
+        privilege = uuObject.getPrivilege(userInfo)
+        if privilege:
+            data['privilege'] = privilege.getDescription()
     
         if 'parents' in fields:
             while uuObject.parent:
@@ -442,6 +448,9 @@ class api:
                               'instanceID' : uuObject.id,
                               'description': uuObject.getDescription(language),
                               'position': 0}
+                privilege = uuObject.getPrivilege(userInfo)
+                if privilege:
+                    parentData['privilege'] = privilege.getDescription()
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         return data;
@@ -500,7 +509,7 @@ class api:
     
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
         fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
-        data = v.getReferenceData(language)
+        data = v.getReferenceData(userInfo, language)
         vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
             .select_related('field')\
@@ -611,7 +620,7 @@ def createInstance(request):
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.createInstance(request.user, request.POST)
@@ -620,7 +629,7 @@ def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.updateValues(request.user, request.POST)
@@ -630,7 +639,7 @@ def addValue(request):
     if request.method != "POST":
         raise Http404("addValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.addValue(request.user, request.POST)
@@ -639,7 +648,7 @@ def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
         
     return api.deleteInstances(request.user, request.POST)
@@ -648,7 +657,7 @@ def deleteValue(request):
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.deleteValue(request.user, request.POST)

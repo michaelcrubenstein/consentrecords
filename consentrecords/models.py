@@ -25,7 +25,7 @@ class Transaction(dbmodels.Model):
         return str(self.creation_time)
     
     def createTransaction(user, timeZoneOffset):
-        if not user.is_authenticated:
+        if not user.is_authenticated():
             raise RuntimeError('current user is not authenticated')
         if not user.is_active:
             raise RuntimeError('current user is not active')
@@ -306,8 +306,12 @@ class Instance(dbmodels.Model):
             
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
-    def getReferenceData(self, language=None):
-        return {'id': None, 'instanceID': self.id, 'description': self.getDescription(language)}
+    def getReferenceData(self, userInfo, language=None):
+        d = {'id': None, 'instanceID': self.id, 'description': self.getDescription(language)}
+        privilege = self.getPrivilege(userInfo)
+        if privilege:
+            d["privilege"] = privilege.getDescription()
+        return d
     
     # This code presumes that all fields have unique values.
     def _sortValueDataByField(values):
@@ -412,11 +416,6 @@ class Instance(dbmodels.Model):
             fieldsDataDictionary[self] = fieldsData
             return fieldsData
 
-    # Return an array where each element contains the id and description for an object that
-    # is contained by self.
-    def _getSubReferences(self, field, language=None):
-        return [v.getReferenceData(language) for v in self._getSubValues(field)]
-    
     def _getCellValues(dataTypeID, values, userInfo, language=None):
         if dataTypeID == Terms.objectEnum.id:
             return [{ "id": v.id,
@@ -570,19 +569,19 @@ class Instance(dbmodels.Model):
         except AccessRecord.DoesNotExist:
             return Terms.readPrivilegeEnum
             
-        if not userInfo.instance:
-            return None
-        
-        if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True).count():
-            if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
-                return Terms.administerPrivilegeEnum
-                
         minPrivilege = None
         minPrivilegeFilter = source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True)\
                                    .select_related('referenceValue__description__text')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
         
+        if not userInfo.instance:
+            return minPrivilege
+        
+        if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True).count():
+            if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
+                return Terms.administerPrivilegeEnum
+                
         f = source.children.filter(typeID=Terms.accessRecord, deleteTransaction__isnull=True)\
             .filter(Q(value__referenceValue=userInfo.instance)|
                     (Q(value__referenceValue__value__referenceValue=userInfo.instance)&
@@ -667,14 +666,16 @@ class Instance(dbmodels.Model):
             return True
 
         userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated and \
-           userInstance.isPrimaryAdministrator(self):
-            return True
+        if user.is_authenticated():
+            if userInstance and userInstance.isPrimaryAdministrator(self):
+                return True
                             
         try:
-            return self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
+            if self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
                                                          referenceValue__in=publicAccessPrivileges,
-                                                         deleteTransaction__isnull=True).exists() or \
+                                                         deleteTransaction__isnull=True).exists():
+                return True
+            return userInstance and \
                    self.accessrecord.source.children.filter(typeID=Terms.accessRecord, 
                         value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
                         .exists()
@@ -920,11 +921,15 @@ class Value(dbmodels.Model):
             return False
         return self.referenceValue.parent == self.instance
         
-    def getReferenceData(self, language=None):
-        return { "id": self.id,
+    def getReferenceData(self, userInfo, language=None):
+        d = { "id": self.id,
               "instanceID" : self.referenceValue.id, 
               "description": self.referenceValue.getDescription(language),
               "position": self.position }
+        privilege = self.referenceValue.getPrivilege(userInfo)
+        if privilege:
+            d["privilege"] = privilege.getDescription()
+        return d
             
     # Updates the value of the specified object
     # All existing facts that identify the value are marked as deleted.            
