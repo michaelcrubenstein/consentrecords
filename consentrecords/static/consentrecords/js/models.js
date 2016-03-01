@@ -1065,23 +1065,29 @@ cr.ObjectValue = (function() {
 				jsonArray, 
 				function(json)
 				{
-					if (json.success) {
-						/* If the data length is 0, then this item can not be read. */
-						if (json.data.length > 0)
-						{
-							_this.importCells(json.data[0].cells);
-							_this.privilege = json.data[0].privilege;
+					try {
+						if (json.success) {
+							/* If the data length is 0, then this item can not be read. */
+							if (json.data.length > 0)
+							{
+								_this.importCells(json.data[0].cells);
+								_this.privilege = json.data[0].privilege;
+							}
+							else
+							{
+								_this.importCells([]);
+								_this.privilege = null;
+							}
+							_this.isDataLoaded = true;
+							successFunction();
 						}
-						else
-						{
-							_this.importCells([]);
-							_this.privilege = null;
+						else {
+							failFunction(json.error);
 						}
-						_this.isDataLoaded = true;
-						successFunction();
 					}
-					else {
-						failFunction(json.error);
+					catch (err)
+					{
+						failFunction(err);
 					}
 				}
 			);
