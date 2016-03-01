@@ -12,10 +12,8 @@ Organization
             Offerings
                 Offering
                     _name: Jump Year
-                    Service
-                        _name: Education
-                    Service
-                        _name: Independent School Prep
+                    Service: Education
+                    Service: Independent School Prep
                     Sessions
                         Session
                             _name: 2005-2006
@@ -71,10 +69,8 @@ Organization
                             End: 2018-06-01
                 Offering
                     _name: Math Tutor
-                    Service
-                        _name: Be A Tutor
-                    Service
-                        _name: Teach Math
+                    Service: Be A Tutor
+                    Service: Teach Math
                     Sessions
                         Session
                             _name: 2006-2007
@@ -126,10 +122,8 @@ Organization
                             End: 2018-06-01
                 Offering
                     _name: English Tutor
-                    Service
-                        _name: Be A Tutor
-                    Service
-                        _name: Teach English
+                    Service: Be A Tutor
+                    Service: Teach English
                     Sessions
                         Session
                             _name: 2006-2007
@@ -181,8 +175,7 @@ Organization
                             End: 2018-06-01
                 Offering
                     _name: Coach
-                    Service
-                        _name: Be A Coach
+                    Service: Be A Coach
                     Sessions
                         Session
                             _name: 2006-2007
