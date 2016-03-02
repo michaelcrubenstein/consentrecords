@@ -299,6 +299,7 @@ var PickOfferingSearchView = (function () {
 	/* Overrides SearchView.prototype.isButtonVisible */
 	PickOfferingSearchView.prototype.isButtonVisible = function(button, d)
 	{
+		var val = this._constrainCompareText;
 		return d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
 			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
 			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||

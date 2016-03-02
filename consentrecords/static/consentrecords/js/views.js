@@ -1721,7 +1721,7 @@ var SearchView = (function () {
 		if (val !== undefined)
 			this._constrainCompareText = val;
 			
-		var buttons = this.listPanel.selectAll("div.btn");
+		var buttons = this.listPanel.selectAll(".btn");
 		if (this._constrainCompareText != this._foundCompareText)
 		{
 			var _this = this;
