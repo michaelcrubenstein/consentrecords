@@ -56,6 +56,14 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
 #     logger.error("propertyList: %s" % str(propertyList))
     if not typeInstance:
         raise ValueError("typeInstance is null")
+    if parent and not parentField:
+        raise ValueError("parent is specified but parentField is not")
+    if parent and parentField:
+        configuration = parent.typeID.getSubInstance(Terms.configuration)
+        fieldObject = configuration.getFieldByReferenceValue(parentField.id)
+        fieldData = fieldObject.getFieldData()
+        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
+            raise ValueError("instances can not be created in parents with a _pick one field")
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 

@@ -89,7 +89,7 @@ def getReferenceValue(parent, field, text, fd, nameLists, userInfo):
     verbs = list(filter(lambda verb: verb[2] == Terms.textEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
-    pickObjectPath += '[' + field.getDescription() + '=' + text + ']'
+    pickObjectPath += '[' + field.getDescription() + '="' + text + '"]'
     
     l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(l):

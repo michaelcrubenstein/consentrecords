@@ -2343,8 +2343,18 @@ var ExperienceDetailPanel = (function () {
 			var _thisSection = this;
 			var checkView = function(e)
 			{
-				offeringServiceCell.show(_thisSection, _this.node());
-				$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+				if (offeringCell.isEmpty())
+				{
+					offeringServiceCell.clear(_thisSection);
+					$(_thisSection).css("display", "none");
+				}
+				else
+					offeringServiceCell.checkCells(function()
+					{
+						offeringServiceCell.show(_thisSection, _this.node());
+						$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+					},
+					asyncFailFunction);
 			}
 			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
 			$(this).on("remove", function(e)
@@ -3154,18 +3164,31 @@ var OfferingServiceCell = (function () {
 		return this.offeringCell.data[0].getCell("Service").isEmpty();
 	}
 	
-	OfferingServiceCell.prototype.show = function(obj, containerPanel)
+	OfferingServiceCell.prototype.checkCells = function(done, fail)
 	{
-		d3.select(obj).selectAll('ol>li').remove();
 		if (!this.offeringCell.isEmpty())
 		{
 			var offering = this.offeringCell.data[0];
 			offering.checkCells([],
-						function() {
+				done,
+				fail);
+		}
+	}
+	
+	OfferingServiceCell.prototype.clear = function(obj)
+	{
+		d3.select(obj).selectAll('ol>li').remove();
+	}
+	
+	OfferingServiceCell.prototype.show = function(obj, containerPanel)
+	{
+		this.clear(obj);
+		var _this = this;
+		this.checkCells(function() {
+							var offering = _this.offeringCell.data[0];
 							offering.getCell("Service").show(obj, containerPanel);
 						},
 						asyncFailFunction);
-		}
 	}
 	
 	function OfferingServiceCell(offeringCell) {
@@ -3274,8 +3297,18 @@ var EditExperiencePanel = (function () {
 			var _thisSection = this;
 			var checkView = function(e)
 			{
-				offeringServiceCell.show(_thisSection, _this.node());
-				$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+				if (offeringCell.isEmpty())
+				{
+					offeringServiceCell.clear(_thisSection);
+					$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+				}
+				else
+					offeringServiceCell.checkCells(function()
+						{
+							offeringServiceCell.show(_thisSection, _this.node());
+							$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
+						}, 
+						asyncFailFunction);
 			}
 			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
 			$(this).on("remove", function(e)
