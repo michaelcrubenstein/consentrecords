@@ -2337,31 +2337,11 @@ var ExperienceDetailPanel = (function () {
 
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		var sections = panel2Div.showViewCells([offeringServiceCell]);
-		sections.each(function(cell)
-		{
-			var _thisSection = this;
-			var checkView = function(e)
-			{
-				if (offeringCell.isEmpty())
-				{
-					offeringServiceCell.clear(_thisSection);
-					$(_thisSection).css("display", "none");
-				}
-				else
-					offeringServiceCell.checkCells(function()
+		panel2Div.showViewCells([offeringServiceCell])
+		         .each(function(cell)
 					{
-						offeringServiceCell.show(_thisSection, _this.node());
-						$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
-					},
-					asyncFailFunction);
-			}
-			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
-			$(this).on("remove", function(e)
-			{
-				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
-			});
-		});
+						offeringServiceCell.setupHandlers(this, _this.node());
+					});
 		
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
@@ -3191,6 +3171,32 @@ var OfferingServiceCell = (function () {
 						asyncFailFunction);
 	}
 	
+	OfferingServiceCell.prototype.setupHandlers = function(obj, containerPanel)
+	{
+		var offeringCell = this.offeringCell;
+		var _this = this;
+		var checkView = function(e)
+		{
+			if (offeringCell.isEmpty())
+			{
+				_this.clear(obj);
+				$(obj).css("display", "none");
+			}
+			else
+				_this.checkCells(function()
+					{
+						_this.show(obj, containerPanel);
+						$(obj).css("display", !_this.isEmpty() ? "" : "none");
+					}, 
+					asyncFailFunction);
+		}
+		$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+		$(obj).on("remove", function(e)
+		{
+			$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
+		});
+	}
+	
 	function OfferingServiceCell(offeringCell) {
 		var field = {capacity: "_multiple values", name: "Marker", label: "Markers"};
 		cr.Cell.call(this, field);
@@ -3291,31 +3297,11 @@ var EditExperiencePanel = (function () {
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		var sections = panel2Div.showViewCells([offeringServiceCell]);
-		sections.each(function(cell)
-		{
-			var _thisSection = this;
-			var checkView = function(e)
-			{
-				if (offeringCell.isEmpty())
-				{
-					offeringServiceCell.clear(_thisSection);
-					$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
-				}
-				else
-					offeringServiceCell.checkCells(function()
-						{
-							offeringServiceCell.show(_thisSection, _this.node());
-							$(_thisSection).css("display", !offeringServiceCell.isEmpty() ? "" : "none");
-						}, 
-						asyncFailFunction);
-			}
-			$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
-			$(this).on("remove", function(e)
-			{
-				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", checkView);
-			});
-		});
+		panel2Div.showViewCells([offeringServiceCell])
+				 .each(function(cell)
+					{
+						offeringServiceCell.setupHandlers(this, _this.node());
+					});
 		
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
