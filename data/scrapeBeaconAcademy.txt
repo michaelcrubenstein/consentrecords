@@ -17,54 +17,67 @@ Organization
                     Sessions
                         Session
                             _name: 2005-2006
+                            Registration Deadline: 2005-07-01
                             Start: 2005-07-01
                             End: 2006-06-01
                         Session
                             _name: 2006-2007
+                            Registration Deadline: 2006-07-01
                             Start: 2006-07-01
                             End: 2007-06-01
                         Session
                             _name: 2007-2008
+                            Registration Deadline: 2007-07-01
                             Start: 2007-07-01
                             End: 2008-06-01
                         Session
                             _name: 2008-2009
+                            Registration Deadline: 2008-07-01
                             Start: 2008-07-01
                             End: 2009-06-01
                         Session
                             _name: 2009-2010
+                            Registration Deadline: 2009-07-01
                             Start: 2009-07-01
                             End: 2010-06-01
                         Session
                             _name: 2010-2011
+                            Registration Deadline: 2010-07-01
                             Start: 2010-07-01
                             End: 2011-06-01
                         Session
                             _name: 2011-2012
+                            Registration Deadline: 2011-07-01
                             Start: 2011-07-01
                             End: 2012-06-01
                         Session
                             _name: 2012-2013
+                            Registration Deadline: 2012-07-01
                             Start: 2012-07-01
                             End: 2013-06-01
                         Session
                             _name: 2013-2014
+                            Registration Deadline: 2013-07-01
                             Start: 2013-07-01
                             End: 2014-06-01
                         Session
                             _name: 2014-2015
+                            Registration Deadline: 2014-07-01
                             Start: 2014-07-01
                             End: 2015-06-01
                         Session
                             _name: 2015-2016
+                            Registration Deadline: 2015-07-01
                             Start: 2015-07-01
                             End: 2016-06-01
                         Session
                             _name: 2016-2017
+                            Registration Deadline: 2016-07-01
                             Start: 2016-07-01
                             End: 2017-06-01
                         Session
                             _name: 2017-2018
+                            Registration Deadline: 2017-07-01
                             Start: 2017-07-01
                             End: 2018-06-01
                 Offering
@@ -74,50 +87,62 @@ Organization
                     Sessions
                         Session
                             _name: 2006-2007
+                            Registration Deadline: 2006-07-01
                             Start: 2006-07-01
                             End: 2007-06-01
                         Session
                             _name: 2007-2008
+                            Registration Deadline: 2007-07-01
                             Start: 2007-07-01
                             End: 2008-06-01
                         Session
                             _name: 2008-2009
+                            Registration Deadline: 2008-07-01
                             Start: 2008-07-01
                             End: 2009-06-01
                         Session
                             _name: 2009-2010
+                            Registration Deadline: 2009-07-01
                             Start: 2009-07-01
                             End: 2010-06-01
                         Session
                             _name: 2010-2011
+                            Registration Deadline: 2010-07-01
                             Start: 2010-07-01
                             End: 2011-06-01
                         Session
                             _name: 2011-2012
+                            Registration Deadline: 2011-07-01
                             Start: 2011-07-01
                             End: 2012-06-01
                         Session
                             _name: 2012-2013
+                            Registration Deadline: 2012-07-01
                             Start: 2012-07-01
                             End: 2013-06-01
                         Session
                             _name: 2013-2014
+                            Registration Deadline: 2013-07-01
                             Start: 2013-07-01
                             End: 2014-06-01
                         Session
                             _name: 2014-2015
+                            Registration Deadline: 2014-07-01
                             Start: 2014-07-01
                             End: 2015-06-01
                         Session
                             _name: 2015-2016
+                            Registration Deadline: 2015-07-01
                             Start: 2015-07-01
                             End: 2016-06-01
                         Session
                             _name: 2016-2017
+                            Registration Deadline: 2016-07-01
                             Start: 2016-07-01
                             End: 2017-06-01
                         Session
                             _name: 2017-2018
+                            Registration Deadline: 2017-07-01
                             Start: 2017-07-01
                             End: 2018-06-01
                 Offering
@@ -127,50 +152,62 @@ Organization
                     Sessions
                         Session
                             _name: 2006-2007
+                            Registration Deadline: 2006-07-01
                             Start: 2006-07-01
                             End: 2007-06-01
                         Session
                             _name: 2007-2008
+                            Registration Deadline: 2007-07-01
                             Start: 2007-07-01
                             End: 2008-06-01
                         Session
                             _name: 2008-2009
+                            Registration Deadline: 2008-07-01
                             Start: 2008-07-01
                             End: 2009-06-01
                         Session
                             _name: 2009-2010
+                            Registration Deadline: 2009-07-01
                             Start: 2009-07-01
                             End: 2010-06-01
                         Session
                             _name: 2010-2011
+                            Registration Deadline: 2010-07-01
                             Start: 2010-07-01
                             End: 2011-06-01
                         Session
                             _name: 2011-2012
+                            Registration Deadline: 2011-07-01
                             Start: 2011-07-01
                             End: 2012-06-01
                         Session
                             _name: 2012-2013
+                            Registration Deadline: 2012-07-01
                             Start: 2012-07-01
                             End: 2013-06-01
                         Session
                             _name: 2013-2014
+                            Registration Deadline: 2013-07-01
                             Start: 2013-07-01
                             End: 2014-06-01
                         Session
                             _name: 2014-2015
+                            Registration Deadline: 2014-07-01
                             Start: 2014-07-01
                             End: 2015-06-01
                         Session
                             _name: 2015-2016
+                            Registration Deadline: 2015-07-01
                             Start: 2015-07-01
                             End: 2016-06-01
                         Session
                             _name: 2016-2017
+                            Registration Deadline: 2016-07-01
                             Start: 2016-07-01
                             End: 2017-06-01
                         Session
                             _name: 2017-2018
+                            Registration Deadline: 2017-07-01
                             Start: 2017-07-01
                             End: 2018-06-01
                 Offering
@@ -179,49 +216,61 @@ Organization
                     Sessions
                         Session
                             _name: 2006-2007
+                            Registration Deadline: 2006-07-01
                             Start: 2006-07-01
                             End: 2007-06-01
                         Session
                             _name: 2007-2008
+                            Registration Deadline: 2007-07-01
                             Start: 2007-07-01
                             End: 2008-06-01
                         Session
                             _name: 2008-2009
+                            Registration Deadline: 2008-07-01
                             Start: 2008-07-01
                             End: 2009-06-01
                         Session
                             _name: 2009-2010
+                            Registration Deadline: 2009-07-01
                             Start: 2009-07-01
                             End: 2010-06-01
                         Session
                             _name: 2010-2011
+                            Registration Deadline: 2010-07-01
                             Start: 2010-07-01
                             End: 2011-06-01
                         Session
                             _name: 2011-2012
+                            Registration Deadline: 2011-07-01
                             Start: 2011-07-01
                             End: 2012-06-01
                         Session
                             _name: 2012-2013
+                            Registration Deadline: 2012-07-01
                             Start: 2012-07-01
                             End: 2013-06-01
                         Session
                             _name: 2013-2014
+                            Registration Deadline: 2013-07-01
                             Start: 2013-07-01
                             End: 2014-06-01
                         Session
                             _name: 2014-2015
+                            Registration Deadline: 2014-07-01
                             Start: 2014-07-01
                             End: 2015-06-01
                         Session
                             _name: 2015-2016
+                            Registration Deadline: 2015-07-01
                             Start: 2015-07-01
                             End: 2016-06-01
                         Session
                             _name: 2016-2017
+                            Registration Deadline: 2016-07-01
                             Start: 2016-07-01
                             End: 2017-06-01
                         Session
                             _name: 2017-2018
+                            Registration Deadline: 2017-07-01
                             Start: 2017-07-01
                             End: 2018-06-01
