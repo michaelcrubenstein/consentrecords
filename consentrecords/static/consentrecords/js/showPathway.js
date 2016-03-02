@@ -1735,11 +1735,6 @@ var OrganizationSearchView = (function() {
 			.append("li");	// So that each button appears on its own row.
 	}
 	
-	OrganizationSearchView.prototype.clearListPanel = function()
-	{
-		this.listPanel.selectAll("li").remove();
-	}
-	
 	function OrganizationSearchView(dots, container, placeholder)
 	{
 		this.dots = dots;

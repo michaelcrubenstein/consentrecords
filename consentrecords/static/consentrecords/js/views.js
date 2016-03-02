@@ -1704,7 +1704,7 @@ var SearchView = (function () {
 	
 	SearchView.prototype.clearListPanel = function()
 	{
-		this.listPanel.selectAll("section").remove();
+		this.listPanel.selectAll("li").remove();
 	}
 	
 	SearchView.prototype.sortFoundObjects = function(foundObjects)
@@ -1868,7 +1868,8 @@ var PanelSearchView = (function() {
 	
 	PanelSearchView.prototype.appendSearchArea = function()
 	{
-		return this.sitePanel.appendScrollArea();
+		return this.sitePanel.appendScrollArea()
+			.append('ol');
 	}
 	
 	PanelSearchView.prototype.appendButtonContainers = function(foundObjects)
@@ -1876,7 +1877,7 @@ var PanelSearchView = (function() {
 		var items = [];
 		var _this = this;
 		foundObjects.forEach(function(d) {
-			var i = _this.getDataChunker.appendNode('section');
+			var i = _this.getDataChunker.appendNode('li');
 			d3.select(i).datum(d);
 			items.push(i);
 		});
