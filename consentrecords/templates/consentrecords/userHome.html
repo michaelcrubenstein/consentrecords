@@ -65,9 +65,6 @@
     	.username-label {
     		padding-left: 15px;
     	}
-    	.sub-text {
-    		font-size: smaller;
-    	}
     	.centered-right-glyph {
 			position: absolute;
 			top: 50%;
@@ -933,22 +930,6 @@
 			return d.getDatum("End") || new Date().toISOString().substr(0, 10);
 		}	
 
-		function getDateRange(d)
-		{
-			var startDate = getStartDate(d);
-			if (startDate === undefined || startDate === null)
-				startDate = "";
-			var endDate = getEndDate(d);
-			if (endDate === undefined || endDate === null)
-				endDate = "";
-			var connector;
-			if (startDate || endDate)
-				connector = " - ";
-			else
-				connector = "";
-			return startDate + connector + endDate;
-		}
-		
 		function appendStringItem(obj, label, text, addBorder)
 		{
 			addBorder = (addBorder === undefined) ? true : addBorder;
@@ -1266,13 +1247,6 @@
 							}
 						});
 	
-					appendRightChevrons(buttons);
-					var rightText = buttons.append('span').classed("centered-right-2", true);
-				
-					rightText.append('div')
-						.classed("sub-text", true)
-						.text(getDateRange);
-				
 					appendSessionDescriptions(buttons);
 				}
 				else
