@@ -336,21 +336,6 @@ var PickOfferingSearchView = (function () {
 					}
 				});
 
-		appendRightChevrons(buttons);
-		var rightText = buttons.append('span').classed("centered-right-2", true);
-	
-		rightText.append('div')
-			.classed("sub-text", true)
-			.text(getDateRange);
-		rightText.append('div').classed("sub-text", true)
-			.text(function(d) {
-				var registrationDeadline = d.getDatum("Registration Deadline");
-				if (registrationDeadline)
-					return "register by " + registrationDeadline;
-				else
-					return "";
-			});
-	
 		appendSessionDescriptions(buttons);
 		
 		this.constrainFoundObjects();

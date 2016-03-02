@@ -475,6 +475,12 @@ input[type="date"]:focus {
 	color: #2C55CC;
 }
 
+.sub-text {
+	font-size: smaller;
+}
+.sub-paragraph {
+	margin-top: 4px;
+}
 .date-row {
 	overflow: hidden;
 }

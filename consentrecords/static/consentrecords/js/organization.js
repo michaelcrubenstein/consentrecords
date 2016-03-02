@@ -38,19 +38,51 @@ function appendAddress(address, div)
 	});
 }
 
+function getDateRange(d)
+{
+	var startDate = getStartDate(d);
+	if (startDate === undefined || startDate === null)
+		startDate = "";
+	var endDate = getEndDate(d);
+	if (endDate === undefined || endDate === null)
+		endDate = "";
+	var connector;
+	if (startDate || endDate)
+		connector = " - ";
+	else
+		connector = "";
+	return startDate + connector + endDate;
+}
+
 function appendSessionDescriptions(buttons)
 {
-	var leftText = buttons.append('div').classed("left-expanding-div", true);
+	appendRightChevrons(buttons);
 	
-	leftText.append('div')
+	buttons.append('div')
 		.text(function(d) { 
 			return d.getValue("Offering").getDescription();
 		});
+
+	var rightText = buttons.append('span').classed("centered-right-2", true);
+
+	var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+	
 	leftText.append('div').classed("sub-text", true)
 		.text(function(d) {
 			return d.getDescription();
 		});
 	leftText.append('div').classed("sub-text", true)
+		.text(getDateRange);
+	leftText.append('div').classed("sub-text", true)
+		.text(function(d) {
+			var registrationDeadline = d.getDatum("Registration Deadline");
+			if (registrationDeadline)
+				return "register by " + registrationDeadline;
+			else
+				return "";
+		});
+
+	leftText.append('div').classed("sub-text sub-paragraph", true)
 		.text(function(d) {
 			return d.getValue("Organization").getDescription();
 		});
