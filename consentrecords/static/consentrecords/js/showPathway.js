@@ -2251,7 +2251,7 @@ var ExperienceDetailPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		if (experience.typeName == "More Experience")
+		if (experience.typeName == "More Experience" && experience.canWrite())
 		{
 			var editButton = navContainer.appendRightButton()
 				.on("click", function(d) {
