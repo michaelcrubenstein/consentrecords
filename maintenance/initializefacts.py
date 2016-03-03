@@ -1,3 +1,5 @@
+# python3 maintenance/initializefacts.py michaelcrubenstein@gmail.com
+
 import datetime
 import django
 import tzlocal
