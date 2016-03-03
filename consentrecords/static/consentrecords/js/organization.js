@@ -95,6 +95,12 @@ function appendSessionDescriptions(buttons)
 		});
 }
 				
+function showUser(user, previousPanelNode)
+{
+	var panel = new UserPanel(user, previousPanelNode);
+	showPanelLeft(panel.node());
+}
+
 function drawInfoButtons(infoButtons)
 {
 	var svg = infoButtons.append("svg")
