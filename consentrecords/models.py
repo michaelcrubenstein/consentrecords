@@ -1287,9 +1287,10 @@ class Terms():
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
     def getTranslationNamedEnumerator(term, stringValue, languageCode):
         v = Value.objects.get(instance=term, field = Terms.enumerator,
-                              deleteTransaction__isnull=True,
-                              stringValue=stringValue,
-                              languageCode=languageCode)
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__field=Terms.translation,
+                              referenceValue__value__stringValue=stringValue,
+                              referenceValue__value__languageCode=languageCode)
         return v.referenceValue
         
     def isUUID(s):
