@@ -343,6 +343,7 @@
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "consentrecords/js/showUser.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
@@ -1619,7 +1620,7 @@
 										{
 											checkUserByInquiry(inquiry,
 												function(user) {
-													show_user(user, sitePanel.node());
+													showUser(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}
@@ -1665,11 +1666,6 @@
 					getAddExperienceFunction(session, user, previousPanelNode)();
 				},
 				syncFailFunction);
-		}
-		
-		function show_user(user, previousPanelNode)
-		{
-			showViewOnlyObjectPanel(user, previousPanelNode);
 		}
 		
 		/*
@@ -1743,7 +1739,7 @@
 								.on("click", function(user) {
 									if (prepareClick('click', 'user: ' + user.getDescription()))
 									{
-										show_user(user, sitePanel.node());
+										showUser(user, sitePanel.node());
 									}
 									d3.event.preventDefault();
 								});
@@ -2017,7 +2013,7 @@
 											.on("click", function(user) {
 												if (prepareClick('click', 'show user info: ' + user.getDescription()))
 												{
-													show_user(user, addInquiryPanelDiv.node());
+													showUser(user, addInquiryPanelDiv.node());
 												}
 												d3.event.preventDefault();
 											});
@@ -2148,7 +2144,7 @@
 										{
 											checkUserByEnrollment(enrollment,
 												function(user) {
-													show_user(user, sitePanel.node());
+													showUser(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}
