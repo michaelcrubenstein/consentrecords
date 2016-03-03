@@ -1,8 +1,3 @@
-function show_user(user, previousPanelNode)
-{
-	showViewOnlyObjectPanel(user, previousPanelNode);
-}
-
 function appendUserControls(items, panelNode)
 {
 	appendConfirmDeleteControls(items);
@@ -173,7 +168,7 @@ var SharingPanel = (function() {
 
 	function SharingPanel(previousPanelNode, userInstance)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Sharing", "list", revealPanelLeft);
+		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit", revealPanelLeft);
 		this.userInstance = userInstance;
 		var _this = this;
 		
