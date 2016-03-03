@@ -115,7 +115,7 @@ def createBooleanConfiguration(transactionState):
     p.createMissingSubValue(Terms.dataType, Terms.translationEnum, 0, transactionState)
     p.createMissingSubValue(Terms.descriptorType, Terms.textEnum, 0, transactionState)
 
-# Create the configuration for the uuname uuname.
+# Create the configuration for the term term.
 def createUUNameConfiguration(transactionState):
     configurationValues = [_bootstrapName];
     configurations = createConfigurations(Terms.term, configurationValues, transactionState)
@@ -147,10 +147,10 @@ def createUUNameConfiguration(transactionState):
     p.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     p.createMissingSubValue(Terms.ofKind, Terms.enumerator, 0, transactionState)
     p.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.defaultAccess, TermNames.enumerator)
+    pickObjectPath = enumeratorPath(TermNames.defaultAccess)
     p.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
         
-# Create the configuration for the configuration uuname.    
+# Create the configuration for the configuration term.    
 def createConfigurationConfiguration(transactionState):
     configurationValues = [_bootstrapName];
     configurations = createConfigurations(Terms.configuration, configurationValues, transactionState)
@@ -172,8 +172,14 @@ def createConfigurationConfiguration(transactionState):
     p.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     p.createMissingSubValue(Terms.ofKind, Terms.field, 0, transactionState)
     p.createMissingSubValue(Terms.addObjectRule, Terms.createObjectRuleEnum, 0, transactionState)
-    
-# Create the configuration for the configuration uuname.    
+
+def quoteAsNeeded(s):
+	return '"%s"' % s if s.find(' ') >= 0 else s
+	
+def enumeratorPath(term):
+    return '%s[%s=%s]>%s' % (TermNames.term, TermNames.name, quoteAsNeeded(term), quoteAsNeeded(TermNames.enumerator))
+
+# Create the configuration for the configuration term.    
 def createFieldConfiguration(transactionState):
     configurationValues = [_bootstrapName];
     configurations = createConfigurations(Terms.field, configurationValues, transactionState)
@@ -203,28 +209,28 @@ def createFieldConfiguration(transactionState):
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.dataType, TermNames.enumerator)
+    pickObjectPath = enumeratorPath(TermNames.dataType)
     f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
     f = fields[Terms.maxCapacity]
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.maxCapacity, TermNames.enumerator)
+    pickObjectPath = enumeratorPath(TermNames.maxCapacity)
     f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
     f = fields[Terms.descriptorType]
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.descriptorType, TermNames.enumerator)
+    pickObjectPath = enumeratorPath(TermNames.descriptorType)
     f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
     f = fields[Terms.addObjectRule]
     f.createMissingSubValue(Terms.dataType, Terms.objectEnum, 0, transactionState)
     f.createMissingSubValue(Terms.maxCapacity, Terms.uniqueValueEnum, 0, transactionState)
     f.createMissingSubValue(Terms.addObjectRule, Terms.pickObjectRuleEnum, 0, transactionState)
-    pickObjectPath = '%s[%s="%s"]>"%s"' % (TermNames.uuName, TermNames.uuName, TermNames.addObjectRule, TermNames.enumerator)
+    pickObjectPath = enumeratorPath(TermNames.addObjectRule)
     f.createMissingSubValue(Terms.pickObjectPath, pickObjectPath, 0, transactionState)
     
     f = fields[Terms.ofKind]
