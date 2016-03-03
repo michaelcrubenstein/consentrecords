@@ -343,6 +343,7 @@
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "consentrecords/js/showUser.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
@@ -374,7 +375,7 @@
 		{% if userID %}
 		userInstance.instanceID = "{{userID}}"
 		userInstance.setDescription("{{ user.get_full_name }}")
-		crp.pushCheckCells(userInstance, function() 
+		crp.pushCheckCells(userInstance, ["_system access"], function() 
 			{
 				$(userInstance).trigger("signin.cr");
 			}, asyncFailFunction);
@@ -614,7 +615,7 @@
 			var signInSuccess = function(userData)
 			{
 				userInstance.updateFromChangeData(userData);
-				userInstance.checkCells(undefined, function()
+				userInstance.checkCells(["_system access"], function()
 					{
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
@@ -1030,7 +1031,7 @@
 		
 		function showAgeRange(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					successFunction(getOfferingAgeRange(offering));
@@ -1044,7 +1045,7 @@
 		
 		function showGradeRange(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					successFunction(getOfferingGradeRange(offering));
@@ -1058,7 +1059,7 @@
 		
 		function showWebSite(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					var newText = offering.getDatum("Web Site");
@@ -1619,7 +1620,7 @@
 										{
 											checkUserByInquiry(inquiry,
 												function(user) {
-													show_user(user, sitePanel.node());
+													showUser(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}
@@ -1665,34 +1666,6 @@
 					getAddExperienceFunction(session, user, previousPanelNode)();
 				},
 				syncFailFunction);
-		}
-		
-		function drawInfoButtons(infoButtons)
-		{
-			var svg = infoButtons.append("svg")
-				.attr("width", "24px")
-				.attr("height", "24px");
-			var circles = svg.append("circle")
-				.attr("cx", "12px")
-				.attr("cy", "12px")
-				.attr("r", "11px")
-				.attr("fill", "transparent")
-				.attr("stroke", activeColor)
-				.attr("stroke-width", "1");
-			var text = svg.append("text")
-				.attr("x", "12px")
-				.attr("y", "17px")
-				.attr("text-anchor", "middle")
-				.attr("font-family", "serif")
-				.attr("font-weight", "bold")
-				.attr("font-size", "16px")
-				.attr("fill", activeColor)
-				.text("i");
-		}
-		
-		function show_user(user, previousPanelNode)
-		{
-			showViewOnlyObjectPanel(user, previousPanelNode);
 		}
 		
 		/*
@@ -1766,7 +1739,7 @@
 								.on("click", function(user) {
 									if (prepareClick('click', 'user: ' + user.getDescription()))
 									{
-										show_user(user, sitePanel.node());
+										showUser(user, sitePanel.node());
 									}
 									d3.event.preventDefault();
 								});
@@ -2040,7 +2013,7 @@
 											.on("click", function(user) {
 												if (prepareClick('click', 'show user info: ' + user.getDescription()))
 												{
-													show_user(user, addInquiryPanelDiv.node());
+													showUser(user, addInquiryPanelDiv.node());
 												}
 												d3.event.preventDefault();
 											});
@@ -2171,7 +2144,7 @@
 										{
 											checkUserByEnrollment(enrollment,
 												function(user) {
-													show_user(user, sitePanel.node());
+													showUser(user, sitePanel.node());
 												},
 												syncFailFunction);
 										}

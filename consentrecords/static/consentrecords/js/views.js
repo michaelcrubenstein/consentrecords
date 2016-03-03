@@ -1188,6 +1188,25 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 		.on("click", buttonClicked);
 }
 
+function appendActionButton(text, onClick)
+{
+	var itemsDiv = this.append('section')
+		.classed('cell edit unique', true)
+		.classed('btn row-button', true)
+		.on('click', onClick)
+		.append('ol').classed('items-div', true);
+	
+	var button = itemsDiv.append('li')
+		.append('div')
+		.classed('left-expanding-div', true);
+	appendRightChevrons(button);
+		
+	button.append('div')
+		.classed("description-text string-value-view", true)
+		.text(text);	
+		
+}
+
 /* Append a set of buttons to each section for displaying the text for each item. */
 function appendViewButtons(sections, fill)
 {
@@ -1491,7 +1510,10 @@ var SitePanel = (function () {
 		panel2Div.showViewCells = function(cells)
 		{
 			var _thisPanel2Div = this;
-			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
+			var sections = this.appendSections(cells.filter(function(cell) 
+					{ 
+						return cell.field.descriptorType != "_by text" 
+					}))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.isUnique(); })
 				.classed("multiple", function(cell) { return !cell.isUnique(); })
@@ -2035,11 +2057,11 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 /* Displays a panel in which the specified object's contents appear.
  */
-function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction) {
+function showViewObjectPanel(objectData, previousPanelNode, showFunction) {
 	var successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData), "view", showSuccessFunction);
+									objectData, getViewPanelHeader(objectData), "view", showFunction);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -2082,7 +2104,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showSuccessFunction)
 		panel2Div.append("div").classed("cell-border-below", true);
 		panel2Div.showViewCells(objectData.cells);
 		
-		showSuccessFunction(sitePanel.node());
+		showFunction(sitePanel.node());
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)

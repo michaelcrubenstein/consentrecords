@@ -1,22 +1,3 @@
-function show_user(user, previousPanelNode)
-{
-	showViewOnlyObjectPanel(user, previousPanelNode);
-}
-
-function appendInfoButtons(buttons, panelNode)
-{
-	var infoButtons =  buttons.insert("div", ":first-child")
-		.classed("info-button right-fixed-width-div", true)
-		.on("click", function(user) {
-			if (prepareClick('click', 'show info: ' + user.getDescription()))
-			{
-				show_user(user, panelNode);
-			}
-			d3.event.preventDefault();
-		});
-	drawInfoButtons(infoButtons);
-}
-
 function appendUserControls(items, panelNode)
 {
 	appendConfirmDeleteControls(items);
@@ -187,7 +168,7 @@ var SharingPanel = (function() {
 
 	function SharingPanel(previousPanelNode, userInstance)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Sharing", "list", revealPanelLeft);
+		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit", revealPanelLeft);
 		this.userInstance = userInstance;
 		var _this = this;
 		

@@ -1074,6 +1074,7 @@ class TermNames():
     textEnum = '_by text'
     countEnum = '_by count'
     accessRecord = '_access record'
+    systemAccess = '_system access'
     privilege = '_privilege'
     findPrivilege = '_find'
     readPrivilege = '_read'
@@ -1134,6 +1135,7 @@ class Terms():
     translation = None
     text = None
     accessRecord = None
+    systemAccess = None
     privilege = None
     group = None
     defaultAccess = None
@@ -1193,14 +1195,14 @@ class Terms():
             Terms.lastName = Terms.getOrCreateTerm(TermNames.lastName, nameList, transactionState)
             Terms.translation = Terms.getOrCreateTerm(TermNames.translation, nameList, transactionState)
             Terms.accessRecord = Terms.getOrCreateTerm(TermNames.accessRecord, nameList, transactionState)
+            Terms.systemAccess = Terms.getOrCreateTerm(TermNames.systemAccess, nameList, transactionState)
             Terms.privilege = Terms.getOrCreateTerm(TermNames.privilege, nameList, transactionState)
             Terms.group = Terms.getOrCreateTerm(TermNames.group, nameList, transactionState)
-            Terms.accessRecord = Terms.getOrCreateTerm(TermNames.accessRecord, nameList, transactionState)
             Terms.defaultAccess = Terms.getOrCreateTerm(TermNames.defaultAccess, nameList, transactionState)
             Terms.specialAccess = Terms.getOrCreateTerm(TermNames.specialAccess, nameList, transactionState)
             Terms.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, nameList, transactionState)
             Terms.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, nameList, transactionState)
-            Terms.securityFields = [Terms.accessRecord, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, ]
+            Terms.securityFields = [Terms.accessRecord, Terms.systemAccess, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, ]
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     
@@ -1267,7 +1269,8 @@ class Terms():
         try:
             return Terms.getNamedInstance(name)
         except Instance.DoesNotExist:
-            i = Instance.objects.create(typeID=Terms.term, parent=None, transaction=transactionState.transaction)
+            print('new term: %s' % name)
+            i = Terms.term.createEmptyInstance(None, transactionState)
             i.addStringValue(Terms.name, name, 0, transactionState)
             return i
             
@@ -1286,9 +1289,10 @@ class Terms():
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
     def getTranslationNamedEnumerator(term, stringValue, languageCode):
         v = Value.objects.get(instance=term, field = Terms.enumerator,
-                              deleteTransaction__isnull=True,
-                              stringValue=stringValue,
-                              languageCode=languageCode)
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__field=Terms.translation,
+                              referenceValue__value__stringValue=stringValue,
+                              referenceValue__value__languageCode=languageCode)
         return v.referenceValue
         
     def isUUID(s):

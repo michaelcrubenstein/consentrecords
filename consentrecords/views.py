@@ -21,7 +21,7 @@ import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Terms, Instance, Value, NameList, UserInfo, Description
+from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
@@ -453,6 +453,22 @@ class api:
                     parentData['privilege'] = privilege.getDescription()
                 data["cells"].append({"field": fieldData, "data": parentData})
         
+        if TermNames.systemAccess in fields:
+            if userInfo.authUser.is_superuser:
+                uuObject = Terms.administerPrivilegeEnum
+            elif userINfo.authUser.is_staff:
+                uuObject = Terms.writePrivilegeEnum
+            else:
+                uuObject = None
+            if uuObject:
+                fieldData = Terms.systemAccess.getParentReferenceFieldData()
+                parentData = {'id': None, 
+                              'instanceID' : uuObject.id,
+                              'description': uuObject.getDescription(language),
+                              'position': 0,
+                              'privilege': uuObject.description.text}
+                data["cells"].append({"field": fieldData, "data": parentData})
+            
         return data;
         
     def getData(user, data):

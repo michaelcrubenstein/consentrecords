@@ -114,7 +114,7 @@ var CRP = (function() {
 			});
 	};
 	
-	CRP.prototype.pushCheckCells = function(i, successFunction, failFunction)
+	CRP.prototype.pushCheckCells = function(i, fields, successFunction, failFunction)
 	{
 		if (typeof(successFunction) != "function")
 			throw "successFunction is not a function";
@@ -127,7 +127,7 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				storedI = crp.getInstance(i.getValueID());
+				storedI = _this.getInstance(i.getValueID());
 				if (storedI && storedI.isDataLoaded)
 				{
 					i.importCells(storedI.cells);
@@ -136,7 +136,7 @@ var CRP = (function() {
 				}
 				else
 				{
-					i.checkCells(undefined,
+					i.checkCells(fields,
 						function() {
 							successFunction();
 							_this.queue.next();

@@ -1,3 +1,4 @@
+# python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
 
 import datetime
@@ -116,62 +117,71 @@ if __name__ == "__main__":
             fieldsDataDictionary = {}
             language = None
             
+            c = 1
             with open(sys.argv[1], 'r') as f:
                 typeName = f.readline().strip()
                 type = Terms.getNamedInstance(typeName)
-                s, indent = readIndentedLine(f)
+                s, indent = readIndentedLine(f); c += 1
                 field, text = parseProperty(s)
                 print(type.getDescription(), field.getDescription(), text)
                 items = [(0, loadRoot(type, field, text, nameList, transactionState))]
-                s, indent = readIndentedLine(f)
+                s, indent = readIndentedLine(f); c += 1
                 while len(s) > 0:
-                    print('%s%s' % (' ' * indent, s))
-                    while indent <= items[-1][0]:
+                    while len(items) and indent <= items[-1][0]:
                         items = items[:-1]
                         
-                    lastIndent, item = items[-1]
-                    fieldsData = item.typeID.getFieldsData(fieldsDataDictionary, language)
-                    field, text = parseProperty(s)
-                    
-                    fieldData = findFieldData(fieldsData, field)
-                    if not text:
-                        # This is the start of a nested item.
-                        type = getSubFieldType(fieldData, field)
-
-                        currentIndent = indent
-
-                        if hasUniqueValue(fieldData):
-                            child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
-                            s, indent = readIndentedLine(f)
-                        else:
-                            s, indent = readIndentedLine(f)
-                            nameField, text = parseProperty(s)
-                            if text:
-                                fieldsData = type.getFieldsData(fieldsDataDictionary, language)
-                                fieldData = findFieldData(fieldsData, nameField)
-                                child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, text, nameList, transactionState)
-                                s, indent = readIndentedLine(f)
-                            else:
-                                child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
-                        Instance.updateDescriptions([child], nameList)
-                        
-                        if child.parent != item:
-                            raise RuntimeError("child.parent != item")
-                        items.append((currentIndent, child))
+                    print('%s  %s%s' % (c, ' ' * indent, s))
+                    if len(items) == 0:
+                        type = Terms.getNamedInstance(s)
+                        s, indent = readIndentedLine(f); c += 1
+                        field, text = parseProperty(s)
+                        print(type.getDescription(), field.getDescription(), text)
+                        items = [(0, loadRoot(type, field, text, nameList, transactionState))]
+                        s, indent = readIndentedLine(f); c += 1
                     else:
-                        # This is an additional property.
-                        if isTextField(fieldData):
-                            item.getOrCreateTextValue(field, text, transactionState)
-                        elif isTranslationField(fieldData):
-                            item.getOrCreateTranslationValue(field, text, 'en', transactionState)
-                        else:
-                            referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
-                            item.getOrCreateReferenceValue(field, referenceValue, transactionState)
-                            
-                        if 'descriptorType' in fieldData:
-                            Instance.updateDescriptions([item], nameList)
+                        lastIndent, item = items[-1]
+                        fieldsData = item.typeID.getFieldsData(fieldsDataDictionary, language)
+                        field, text = parseProperty(s)
+                    
+                        fieldData = findFieldData(fieldsData, field)
+                        if not text:
+                            # This is the start of a nested item.
+                            type = getSubFieldType(fieldData, field)
+
+                            currentIndent = indent
+
+                            if hasUniqueValue(fieldData):
+                                child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
+                                s, indent = readIndentedLine(f); c += 1
+                            else:
+                                s, indent = readIndentedLine(f); c += 1
+                                nameField, text = parseProperty(s)
+                                if text:
+                                    fieldsData = type.getFieldsData(fieldsDataDictionary, language)
+                                    fieldData = findFieldData(fieldsData, nameField)
+                                    child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, text, nameList, transactionState)
+                                    s, indent = readIndentedLine(f); c += 1
+                                else:
+                                    child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
+                            Instance.updateDescriptions([child], nameList)
                         
-                        s, indent = readIndentedLine(f)
+                            if child.parent != item:
+                                raise RuntimeError("child.parent != item")
+                            items.append((currentIndent, child))
+                        else:
+                            # This is an additional property.
+                            if isTextField(fieldData):
+                                item.getOrCreateTextValue(field, text, transactionState)
+                            elif isTranslationField(fieldData):
+                                item.getOrCreateTranslationValue(field, text, 'en', transactionState)
+                            else:
+                                referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
+                                item.getOrCreateReferenceValue(field, referenceValue, transactionState)
+                            
+                            if 'descriptorType' in fieldData:
+                                Instance.updateDescriptions([item], nameList)
+                        
+                            s, indent = readIndentedLine(f); c += 1
                         
             # raise RuntimeError("Done")
                                 

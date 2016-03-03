@@ -38,7 +38,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				.text(site.getDescription());
 		}
 		
-		crp.pushCheckCells(site, function()
+		crp.pushCheckCells(site, undefined, function()
 		{
 			var address = site.getValue("Address");
 			appendAddress(address, orgDiv);
@@ -75,7 +75,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	var cellDiv = panel2Div.append("section")
 		.classed("cell", true);
 	
-	crp.pushCheckCells(offering, function()
+	crp.pushCheckCells(offering, undefined, function()
 		{
 			var serviceCell = offering.getCell("Service");
 			serviceCell.field.label = "Markers";

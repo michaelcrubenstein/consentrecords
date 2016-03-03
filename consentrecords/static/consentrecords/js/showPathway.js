@@ -593,7 +593,7 @@ var Pathway = (function () {
 		if (offering && offering.getValueID())
 		{
 			var experienceColor = otherColor;
-			crp.pushCheckCells(offering, function()
+			crp.pushCheckCells(offering, undefined, function()
 			{
 				var service = offering.getValue("Service");
 				if (service)
@@ -1183,7 +1183,7 @@ var Pathway = (function () {
 									}
 								}
 								
-								crp.pushCheckCells(_thisPathway.userInstance, function() {
+								crp.pushCheckCells(_thisPathway.userInstance, undefined, function() {
 										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
@@ -2251,7 +2251,7 @@ var ExperienceDetailPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		if (experience.typeName == "More Experience")
+		if (experience.typeName == "More Experience" && experience.canWrite())
 		{
 			var editButton = navContainer.appendRightButton()
 				.on("click", function(d) {
@@ -2314,7 +2314,7 @@ var ExperienceDetailPanel = (function () {
 				var site = experience.getValue("Site");
 				if (site && site.getValueID())
 				{
-					crp.pushCheckCells(site, function()
+					crp.pushCheckCells(site, undefined, function()
 						{
 							var address = site.getValue("Address");
 							appendAddress(address, siteAddressDiv);

@@ -73,7 +73,7 @@ var Signup = (function () {
 					function(userData)
 					{
 						userInstance.updateFromChangeData(userData);
-						userInstance.checkCells(undefined, function()
+						userInstance.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
 								sitePanel.hidePanelDown(true,
