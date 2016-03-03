@@ -95,3 +95,40 @@ function appendSessionDescriptions(buttons)
 		});
 }
 				
+function drawInfoButtons(infoButtons)
+{
+	var svg = infoButtons.append("svg")
+		.attr("width", "24px")
+		.attr("height", "24px");
+	var circles = svg.append("circle")
+		.attr("cx", "12px")
+		.attr("cy", "12px")
+		.attr("r", "11px")
+		.attr("fill", "transparent")
+		.attr("stroke", activeColor)
+		.attr("stroke-width", "1");
+	var text = svg.append("text")
+		.attr("x", "12px")
+		.attr("y", "17px")
+		.attr("text-anchor", "middle")
+		.attr("font-family", "serif")
+		.attr("font-weight", "bold")
+		.attr("font-size", "16px")
+		.attr("fill", activeColor)
+		.text("i");
+}
+
+function appendInfoButtons(buttons, panelNode)
+{
+	var infoButtons =  buttons.insert("div", ":first-child")
+		.classed("info-button right-fixed-width-div", true)
+		.on("click", function(user) {
+			if (prepareClick('click', 'show info: ' + user.getDescription()))
+			{
+				showUser(user, panelNode);
+			}
+			d3.event.preventDefault();
+		});
+	drawInfoButtons(infoButtons);
+}
+
