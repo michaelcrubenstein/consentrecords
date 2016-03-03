@@ -1267,7 +1267,8 @@ class Terms():
         try:
             return Terms.getNamedInstance(name)
         except Instance.DoesNotExist:
-            i = Instance.objects.create(typeID=Terms.term, parent=None, transaction=transactionState.transaction)
+            print('new term: %s' % name)
+            i = Terms.term.createEmptyInstance(None, transactionState)
             i.addStringValue(Terms.name, name, 0, transactionState)
             return i
             
