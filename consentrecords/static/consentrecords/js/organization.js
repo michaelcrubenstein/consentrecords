@@ -7,7 +7,7 @@
 /* Append the specified address to the specified div, which is a d3.js object */
 function appendAddress(address, div)
 {
-	crp.pushCheckCells(address, function()
+	crp.pushCheckCells(address, undefined, function()
 	{
 		var streetCell = address.getCell("Street");
 		var city = address.getDatum("City");

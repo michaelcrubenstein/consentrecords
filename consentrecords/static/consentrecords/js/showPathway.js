@@ -593,7 +593,7 @@ var Pathway = (function () {
 		if (offering && offering.getValueID())
 		{
 			var experienceColor = otherColor;
-			crp.pushCheckCells(offering, function()
+			crp.pushCheckCells(offering, undefined, function()
 			{
 				var service = offering.getValue("Service");
 				if (service)
@@ -1183,7 +1183,7 @@ var Pathway = (function () {
 									}
 								}
 								
-								crp.pushCheckCells(_thisPathway.userInstance, function() {
+								crp.pushCheckCells(_thisPathway.userInstance, undefined, function() {
 										var m = _thisPathway.userInstance.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
