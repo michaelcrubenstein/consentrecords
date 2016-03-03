@@ -375,7 +375,7 @@
 		{% if userID %}
 		userInstance.instanceID = "{{userID}}"
 		userInstance.setDescription("{{ user.get_full_name }}")
-		crp.pushCheckCells(userInstance, function() 
+		crp.pushCheckCells(userInstance, ["_system access"], function() 
 			{
 				$(userInstance).trigger("signin.cr");
 			}, asyncFailFunction);
@@ -615,7 +615,7 @@
 			var signInSuccess = function(userData)
 			{
 				userInstance.updateFromChangeData(userData);
-				userInstance.checkCells(undefined, function()
+				userInstance.checkCells(["_system access"], function()
 					{
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
@@ -1031,7 +1031,7 @@
 		
 		function showAgeRange(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					successFunction(getOfferingAgeRange(offering));
@@ -1045,7 +1045,7 @@
 		
 		function showGradeRange(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					successFunction(getOfferingGradeRange(offering));
@@ -1059,7 +1059,7 @@
 		
 		function showWebSite(offering, successFunction)
 		{
-			crp.pushCheckCells(offering, 
+			crp.pushCheckCells(offering, undefined, 
 				function()
 				{
 					var newText = offering.getDatum("Web Site");
