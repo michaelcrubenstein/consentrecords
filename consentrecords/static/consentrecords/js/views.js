@@ -1491,7 +1491,10 @@ var SitePanel = (function () {
 		panel2Div.showViewCells = function(cells)
 		{
 			var _thisPanel2Div = this;
-			var sections = this.appendSections(cells.filter(function(cell) { return cell.field.descriptorType != "_by text" }))
+			var sections = this.appendSections(cells.filter(function(cell) 
+					{ 
+						return cell.field.descriptorType != "_by text" 
+					}))
 				.classed("cell view", true)
 				.classed("unique", function(cell) { return cell.isUnique(); })
 				.classed("multiple", function(cell) { return !cell.isUnique(); })
