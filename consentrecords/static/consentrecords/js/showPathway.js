@@ -1219,8 +1219,10 @@ var Pathway = (function () {
 				_thisPathway.loadingText = _thisPathway.svg.append('text')
 					.attr("x", _thisPathway.dataLeftMargin).attr("y", 0)
 					.attr("fill", "#777")
-					.text('Ready to record an experience?')
-					.attr("y", this.loadingText.node().getBBox().height);
+					.text('Ready to record an experience?');
+				
+				_thisPathway.loadingText
+					.attr("y", _thisPathway.loadingText.node().getBBox().height);
 			
 				var bbox = _thisPathway.loadingText.node().getBBox();
 				_thisPathway.promptAddText = _thisPathway.svg.append('text')
