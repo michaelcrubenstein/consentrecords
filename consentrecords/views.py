@@ -456,7 +456,7 @@ class api:
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
                 uuObject = Terms.administerPrivilegeEnum
-            elif userINfo.authUser.is_staff:
+            elif userInfo.authUser.is_staff:
                 uuObject = Terms.writePrivilegeEnum
             else:
                 uuObject = None
