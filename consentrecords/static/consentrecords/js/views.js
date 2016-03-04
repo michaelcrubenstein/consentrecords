@@ -1965,7 +1965,10 @@ function setupSearchBar(searchBarNode, textChanged)
 		$(searchInput.node()).trigger("input");
 		$(this).animate({width: 0,
 						  "padding-left": 0,
-						  "padding-right": 0}, 400, "swing");
+						  "padding-right": 0}, 400, "swing",
+						  function() {
+							searchCancelButton.selectAll('span').text(null);
+						  });
 	});
 	
 	function resizeSearchCancelHeight()
