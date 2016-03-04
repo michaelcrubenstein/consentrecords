@@ -82,6 +82,13 @@
 			}
 		});
 
+		/* The global object used to identify the current user. */
+		var userFirstName = null;
+		var userLastName = null;
+		{% if userID %}
+		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+		{% endif %}
+		
 		$(document).ready (function(e) {
 			$("#id_cancelButton").click(function(e) {
 				window.location = "{{ backURL }}";

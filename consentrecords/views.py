@@ -102,6 +102,12 @@ def list(request):
             argList["rootID"] = root.id
             argList["singularName"] = root._description
         
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            argList['userID'] = user.id
+        
         context = RequestContext(request, argList)
         
         return HttpResponse(template.render(context))
