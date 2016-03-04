@@ -66,7 +66,7 @@ var Pathway = (function () {
 	Pathway.prototype.pathBackground = "white";
 	Pathway.prototype.showDetailIconWidth = 18;
 	
-	Pathway.prototype.userInstance = null;
+	Pathway.prototype.user = null;
 	Pathway.prototype.allExperiences = [];
 	Pathway.prototype.flagColumns = [];
 	Pathway.prototype.sitePanel = null;
@@ -463,7 +463,7 @@ var Pathway = (function () {
 	
 	Pathway.prototype.setDateRange = function()
 	{
-		var birthday = this.userInstance.getValue("Birthday");
+		var birthday = this.user.getValue("Birthday");
 		if (birthday && birthday.text)
 			this.minDate = new Date(birthday.text);
 		else
@@ -1081,14 +1081,14 @@ var Pathway = (function () {
 		this.appendExperiences();
 	}
 		
-	function Pathway(userInstance, sitePanel, containerDiv, editable) {
+	function Pathway(user, sitePanel, containerDiv, editable) {
 		editable = (editable !== undefined ? editable : true);
 		this.allExperiences = [];
 		this.containerDiv = containerDiv;
 		this.detailFlagData = null;
 		this.flagElement = null;
 		this.sitePanel = sitePanel;
-		this.userInstance = userInstance;
+		this.user = user;
 		
 		var container = d3.select(containerDiv);
 		
@@ -1153,13 +1153,13 @@ var Pathway = (function () {
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
-			crp.getData({path: "#" + _thisPathway.userInstance.getValueID() + '::reference(Experience)::reference(Experiences)' + 
+			crp.getData({path: "#" + _thisPathway.user.getValueID() + '::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)',
 						 done: function(newInstances)
 							{
 							},
 							fail: asyncFailFunction});
-			crp.getData({path: "#" + _thisPathway.userInstance.getValueID() + '>"More Experiences">"More Experience">Offering',
+			crp.getData({path: "#" + _thisPathway.user.getValueID() + '>"More Experiences">"More Experience">Offering',
 						 done: function(newInstances)
 							{
 							},
@@ -1183,8 +1183,8 @@ var Pathway = (function () {
 									}
 								}
 								
-								crp.pushCheckCells(_thisPathway.userInstance, undefined, function() {
-										var m = _thisPathway.userInstance.getValue("More Experiences");
+								crp.pushCheckCells(_thisPathway.user, undefined, function() {
+										var m = _thisPathway.user.getValue("More Experiences");
 										if (m && m.getValueID())
 										{
 											m.getCellData("More Experience",
@@ -1254,7 +1254,7 @@ var Pathway = (function () {
 			}
 		}
 		
-		var path = "#" + _thisPathway.userInstance.getValueID() + '::reference(Experience)';
+		var path = "#" + _thisPathway.user.getValueID() + '::reference(Experience)';
 		cr.getData({path: path, 
 				   fields: ["parents"], 
 				   done: successFunction1, 
@@ -2004,7 +2004,7 @@ var AddExperiencePanel = (function () {
 			{
 				bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
 
-				var moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
+				var moreExperiencesObject = pathway.user.getValue("More Experiences");
 				
 				function successFunction3(newData)
 				{
@@ -2020,9 +2020,9 @@ var AddExperiencePanel = (function () {
 				{
 					if (newData != moreExperiencesObject)
 					{
-						var cell = pathway.userInstance.getCell("More Experiences");
+						var cell = pathway.user.getCell("More Experiences");
 						cell.addValue(newData);
-						moreExperiencesObject = pathway.userInstance.getValue("More Experiences");
+						moreExperiencesObject = pathway.user.getValue("More Experiences");
 					}
 					
 					field = {ofKind: "More Experience", name: "More Experience"};
@@ -2079,7 +2079,7 @@ var AddExperiencePanel = (function () {
 				else
 				{
 					field = {ofKind: "More Experiences", name: "More Experiences"};
-					cr.createInstance(field, pathway.userInstance.getValueID(), [], successFunction2, syncFailFunction);
+					cr.createInstance(field, pathway.user.getValueID(), [], successFunction2, syncFailFunction);
 				}
 			};
 
@@ -2097,7 +2097,7 @@ var AddExperiencePanel = (function () {
 				.append('p').text("When did you start " + dots.offeringName + "?");
 	
 			var minYear = undefined;	
-			var birthday = pathway.userInstance.getDatum("Birthday");
+			var birthday = pathway.user.getDatum("Birthday");
 			if (birthday)
 				minYear = parseInt(birthday.substr(0, 4));
 
@@ -2120,7 +2120,7 @@ var AddExperiencePanel = (function () {
 				return new Date(dots.startDateInput.value());
 			else
 			{
-				var birthday = pathway.userInstance.getDatum("Birthday");
+				var birthday = pathway.user.getDatum("Birthday");
 				if (birthday)
 					return new Date(birthday);
 			}
@@ -2172,7 +2172,7 @@ var PathwayPanel = (function () {
 	PathwayPanel.prototype = new SitePanel();
 	PathwayPanel.prototype.pathway = null;
 	
-	function PathwayPanel(userInstance, previousPanel) {
+	function PathwayPanel(user, previousPanel) {
 		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
 		var navContainer = this.appendNavContainer();
 		
@@ -2181,8 +2181,8 @@ var PathwayPanel = (function () {
 		backButton.append("span").text("Done");
 		var _this = this;
 		
-		var moreExperiences = userInstance.getValue("More Experiences");
-		var canAddExperience = (moreExperiences.getValueID() === null ? userInstance.canWrite() : moreExperiences.canWrite());
+		var moreExperiences = user.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 		if (canAddExperience)
 		{ 
 			var addExperienceButton = navContainer.appendRightButton()
@@ -2201,7 +2201,7 @@ var PathwayPanel = (function () {
 		
 		var panel2Div = this.appendFillArea();
 		showPanelLeft(this.node());
-		this.pathway = new Pathway(userInstance, this, panel2Div.node(), true);
+		this.pathway = new Pathway(user, this, panel2Div.node(), true);
 	}
 	
 	return PathwayPanel;

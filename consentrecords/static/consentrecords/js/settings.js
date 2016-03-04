@@ -51,17 +51,17 @@ var Settings = (function () {
 				})
  			.append("span").text("Done");
 			
-		var cells = [userInstance.getCell("_first name"),
-					 userInstance.getCell("_last name"),
-					 userInstance.getCell("Birthday"),
-					 userInstance.getCell("_public access")];
+		var cells = [cr.signedinUser.getCell("_first name"),
+					 cr.signedinUser.getCell("_last name"),
+					 cr.signedinUser.getCell("Birthday"),
+					 cr.signedinUser.getCell("_public access")];
 					 
 		panel2Div.showEditCells(cells);
 		
 		this.appendActionButton(panel2Div, 'Change Email', function() {
 				if (prepareClick('click', 'Change Email'))
 				{
-					var panel = new UpdateUsernamePanel(userInstance, sitePanel.node());
+					var panel = new UpdateUsernamePanel(cr.signedinUser, sitePanel.node());
 				}
 			});
 		
