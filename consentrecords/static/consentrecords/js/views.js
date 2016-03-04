@@ -2265,17 +2265,20 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			.on("click", handleCloseRightEvent);
 		backButton.append("span").text("Done");
 		
-		var editButton = navContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick('click', 'view roots object panel: Edit'))
-				{
-					showClickFeedback(this);
+		if (cr.signedinUser.getValue("_system access"))
+		{
+			var editButton = navContainer.appendRightButton()
+				.on("click", function(d) {
+					if (prepareClick('click', 'view roots object panel: Edit'))
+					{
+						showClickFeedback(this);
 				
-					showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
-				}
-				d3.event.preventDefault();
-			});
-		editButton.append("span").text("Edit");
+						showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
+					}
+					d3.event.preventDefault();
+				});
+			editButton.append("span").text("Edit");
+		}
 		
 		navContainer.appendTitle(header);
 		

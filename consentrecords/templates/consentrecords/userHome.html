@@ -352,9 +352,6 @@
 	<script type="text/JavaScript">
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
-
-		var storedcsrftoken = "{{ csrf_token }}";
-		var activeColor = "#2C55CC"
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
@@ -369,16 +366,10 @@
 		});
 
 		/* The global object used to identify the current user. */
-		var userInstance = new cr.ObjectValue();
 		var userFirstName = null;
 		var userLastName = null;
 		{% if userID %}
-		userInstance.instanceID = "{{userID}}"
-		userInstance.setDescription("{{ user.get_full_name }}")
-		crp.pushCheckCells(userInstance, ["_system access"], function() 
-			{
-				$(userInstance).trigger("signin.cr");
-			}, asyncFailFunction);
+		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
 		{% endif %}
 		
 		/* Update the username label when a user signs in or out. */	
@@ -386,8 +377,8 @@
 		
 		function setName(eventObject)
 		{
-			var firstName = userInstance.getDatum("_first name");
-			var lastName = userInstance.getDatum("_last name");
+			var firstName = cr.signedinUser.getDatum("_first name");
+			var lastName = cr.signedinUser.getDatum("_last name");
 			var s;
 			if (firstName)
 			{
@@ -399,22 +390,22 @@
 			else if (lastName)
 				s = lastName;
 			else
-				s = userInstance.getDescription();
+				s = cr.signedinUser.getDescription();
 				
 			$(eventObject.data).text(s);
 		}
 		
-		$(userInstance).on("dataChanged.cr", null, usernameLabel[0], setName);
-		$(userInstance).on("signin.cr", null, usernameLabel[0], function(eventObject)
+		$(cr.signedinUser).on("dataChanged.cr", null, usernameLabel[0], setName);
+		$(cr.signedinUser).on("signin.cr", null, usernameLabel[0], function(eventObject)
 		{
-			userFirstName = userInstance.getValue("_first name");
-			userLastName = userInstance.getValue("_last name");
-			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
-			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, usernameLabel[0], setName);
+			userFirstName = this.getValue("_first name");
+			userLastName = this.getValue("_last name");
+			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
 			setName.call(this, eventObject);
 		});
 		
-		$(userInstance).on("signout.cr", null, usernameLabel[0], function(eventObject)
+		$(cr.signedinUser).on("signout.cr", null, usernameLabel[0], function(eventObject)
 		{
 			if (userFirstName)
 			{
@@ -428,11 +419,11 @@
 		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
-		$(userInstance).on("signin.cr", null, signinSpan[0], function(eventObject)
+		$(cr.signedinUser).on("signin.cr", null, signinSpan[0], function(eventObject)
 		{
 			$(eventObject.data).text("Sign Out");
 		});
-		$(userInstance).on("signout.cr", null, signinSpan[0], function(eventObject)
+		$(cr.signedinUser).on("signout.cr", null, signinSpan[0], function(eventObject)
 		{
 			$(eventObject.data).text("Sign In");
 		});
@@ -440,11 +431,11 @@
 		/* Update the list of organizations associated with the user when a user signs in or out. */
 		var orgSection = $(".organization-section");
 		
-		$(userInstance).on("signin.cr", 0, orgSection[0], function(eventObject)
+		$(cr.signedinUser).on("signin.cr", 0, orgSection[0], function(eventObject)
 		{
 			load_organizations.call(eventObject.data);
 		});
-		$(userInstance).on("signout.cr", 0, orgSection[0], function(eventObject)
+		$(cr.signedinUser).on("signout.cr", 0, orgSection[0], function(eventObject)
 		{
 			hide_organizations.call(eventObject.data);
 		});
@@ -452,11 +443,11 @@
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
-		if (!userInstance.getValueID())
+		if (!cr.signedinUser.getValueID())
 		{
-			$(userInstance).trigger("signout.cr");
+			$(cr.signedinUser).trigger("signout.cr");
 		}
-		/* Otherwise, the signin.cr event will be triggered after the userInstance data loads. */
+		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 
 		/* Handle a click event on the sign-in button to either sign in or sign out
 			the current user.
@@ -464,12 +455,12 @@
 		$(".sign-in-button").click(function(e) {
 			if (prepareClick('click',  'Sign In/Out button'))
 			{
-				if (userInstance.getValueID())
+				if (cr.signedinUser.getValueID())
 				{
 					var successFunction = function()
 					{
-						userInstance.clearValue();
-						$(userInstance).trigger("signout.cr");
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
 						unblockClick();
 					};
 					
@@ -512,12 +503,12 @@
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
 		$(".done-button").click(hidePanel);
 		
-		function checkSignin(userInstance, panel, done, message)
+		function checkSignin(panel, done, message)
 		{
 			if (prepareClick('click', message))
 			{
 				showClickFeedback(this);
-				if (userInstance.getValueID())
+				if (cr.signedinUser.getValueID())
 					done();
 				else
 				{
@@ -533,8 +524,8 @@
 						$(this).off("signin.cr", null, onSignin);
 					}
 					
-					$(userInstance).one("signin.cr", null, panel, onSignin);
-					$(userInstance).one("signinCanceled.cr", null, panel, onSigninCanceled);
+					$(cr.signedinUser).one("signin.cr", null, panel, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, panel, onSigninCanceled);
 					
 					showFixedPanel(panel, "#id_sign_in_panel");
 				}
@@ -550,7 +541,7 @@
 				showPanelLeft("#" + panelID);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done, panelID);
+			checkSignin.call(this, panel, done, panelID);
 
 			e.preventDefault();
 		});
@@ -560,7 +551,7 @@
 			if (prepareClick('click', 'find experience'))
 			{
 				var panel = $(this).parents(".site-panel")[0];
-				var newPanel = new FindExperiencePanel(userInstance, null, null, panel);
+				var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, panel);
 			}
 			
 			e.preventDefault();
@@ -571,10 +562,10 @@
 			var panel = $(this).parents(".site-panel")[0];
 			var done = function()
 			{
-				var pathway = new PathwayPanel(userInstance, panel);
+				var pathway = new PathwayPanel(cr.signedinUser, panel);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done, 'show pathway');
+			checkSignin.call(this, panel, done, 'show pathway');
 			e.preventDefault();
 		});
 		
@@ -586,7 +577,7 @@
 				var settings = new Settings(panel);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done, "Settings");
+			checkSignin.call(this, panel, done, "Settings");
 			e.preventDefault();
 		});
 		
@@ -595,10 +586,10 @@
 			var panel = $(this).parents(".site-panel")[0];
 			var done = function()
 			{
-				var settings = new SharingPanel(panel, userInstance);
+				var settings = new SharingPanel(cr.signedinUser, panel);
 			}
 			
-			checkSignin.call(this, userInstance, panel, done, "Sharing");
+			checkSignin.call(this, panel, done, "Sharing");
 			e.preventDefault();
 		});
 		
@@ -614,13 +605,13 @@
 			
 			var signInSuccess = function(userData)
 			{
-				userInstance.updateFromChangeData(userData);
-				userInstance.checkCells(["_system access"], function()
+				cr.signedinUser.updateFromChangeData(userData);
+				cr.signedinUser.checkCells(["_system access"], function()
 					{
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
 							{
-								$(userInstance).trigger("signin.cr");
+								$(cr.signedinUser).trigger("signin.cr");
 							});
 						
 					},
@@ -645,7 +636,7 @@
 					hidePanelRight($("#id_sign_in_panel")[0], false,
 						function()
 						{
-							$(userInstance).trigger("signinCanceled.cr");
+							$(cr.signedinUser).trigger("signinCanceled.cr");
 						});
 				}
 				
@@ -737,7 +728,7 @@
 						stateString = stateString.substring(32);
 					}
 					var previousPanel = $("panel.initial")[0];
-					var panel = new FindExperiencePanel(userInstance, serviceValueID, offeringString, previousPanel);
+					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, previousPanel);
 					stateString = "";	/* So it only happens once. */
 				}
 			{% endif %}
@@ -904,7 +895,7 @@
 					});
 			}
 			
-			var path = "#" + userInstance.getValueID() + '>"Consent Record"';
+			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -1242,7 +1233,7 @@
 							{
 								showClickFeedback(this);
 
-								var sitePanel = showSessionDetails(userInstance, session, null, $(container).parents(".site-panel")[0]);
+								var sitePanel = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
 			
 								showPanelLeft(sitePanel.node());
 							}
@@ -1258,7 +1249,7 @@
 				}
 			}
 			
-			var path = "#"+userInstance.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -1309,7 +1300,7 @@
 				});
 			}
 			
-			var path = '#'+userInstance.getValueID()+'::reference(_group)::reference(Organization)';
+			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
 			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
 		}
 		

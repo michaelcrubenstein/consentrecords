@@ -103,6 +103,8 @@ function showUser(user, previousPanelNode)
 
 function drawInfoButtons(infoButtons)
 {
+	var activeColor = "#2C55CC"
+
 	var svg = infoButtons.append("svg")
 		.attr("width", "24px")
 		.attr("height", "24px");

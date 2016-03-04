@@ -33,7 +33,7 @@ var SharingPanel = (function() {
 	SharingPanel.prototype = new SitePanel();
 	SharingPanel.prototype.privilegesByID = null;
 	SharingPanel.prototype.privileges = null;
-	SharingPanel.prototype.userInstance = null;
+	SharingPanel.prototype.user = null;
 	
 	SharingPanel.prototype.loadAccessRecords = function(panel2Div, accessRecords)
 	{
@@ -83,7 +83,7 @@ var SharingPanel = (function() {
 		var buttonDiv = cells.append("div")
 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 			.on("click", function(d) {
-				_this.addAccessor(_this.userInstance, d, $(this).parents(".cell").children(".cell-items")[0]);
+				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);
 			})
 			.append("div").classed("pull-left", true);
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
@@ -109,20 +109,20 @@ var SharingPanel = (function() {
 				}
 			}
 		}
-		cr.getData({path: "#" + this.userInstance.getValueID() + '>"_access record"', 
+		cr.getData({path: "#" + this.user.getValueID() + '>"_access record"', 
 					fields: ["parents"], 
 					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
 					fail: asyncFailFunction});
 	}
 
 	/*
-		Responds to a request to add a user or group to the access records of the specified userInstance.
+		Responds to a request to add a user or group to the access records of the specified user.
 	 */
-	SharingPanel.prototype.addAccessor = function(userInstance, accessorLevel, itemsDiv)
+	SharingPanel.prototype.addAccessor = function(user, accessorLevel, itemsDiv)
 	{
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
-			var accessRecordCell = userInstance.getCell("_access record");
+			var accessRecordCell = user.getCell("_access record");
 			function done(pickedUser, cellName, currentPanelNode)
 			{
 				if (accessorLevel.accessRecords.length == 0)
@@ -144,7 +144,7 @@ var SharingPanel = (function() {
 					var field = accessRecordCell.field;
 					var initialData = {"_privilege": [{instanceID: accessorLevel.id}] };
 					initialData[cellName] = [{instanceID: pickedUser.getValueID() }];
-					cr.createInstance(field, userInstance.getValueID(), initialData, _createAccessRecordSuccess, syncFailFunction);
+					cr.createInstance(field, user.getValueID(), initialData, _createAccessRecordSuccess, syncFailFunction);
 				}
 				else
 				{
@@ -166,10 +166,10 @@ var SharingPanel = (function() {
 		}
 	}
 
-	function SharingPanel(previousPanelNode, userInstance)
+	function SharingPanel(user, previousPanelNode)
 	{
 		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit", revealPanelLeft);
-		this.userInstance = userInstance;
+		this.user = user;
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();

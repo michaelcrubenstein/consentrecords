@@ -48,7 +48,7 @@ var UpdatePasswordPanel = (function () {
 			{
 				if (prepareClick('click', 'Change'))
 				{
-					username = userInstance.getDatum("_email");
+					username = cr.signedinUser.getDatum("_email");
 					if (newPasswordInput.property('value').length == 0)
 						syncFailFunction("The new password can not be blank.");
 					else if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
@@ -134,7 +134,7 @@ var UpdateUsernamePanel = (function () {
 		  });
 	}
 
-	function UpdateUsernamePanel(userInstance, previousPanelNode) {
+	function UpdateUsernamePanel(user, previousPanelNode) {
 		SitePanel.call(this, previousPanelNode, null, "Username", "background-gradient-panel", revealPanelLeft);
 		var _this = this;
 		
@@ -161,7 +161,7 @@ var UpdateUsernamePanel = (function () {
 						syncFailFunction("The password is required.");
 					else
 					{
-						cr.updateUsername(userInstance, newUsernameInput.property('value'),
+						cr.updateUsername(newUsernameInput.property('value'),
 										  currentPasswordInput.property('value'),
 										  function() {
 										  	hidePanelRight(_this.node());
@@ -188,7 +188,7 @@ var UpdateUsernamePanel = (function () {
 						.classed('form-simple form-signin', true);
 		form.append('div')
 			.classed('help-block', true)
-			.text("Current Email: " + userInstance.getDatum("_email"));
+			.text("Current Email: " + cr.signedinUser.getDatum("_email"));
 		
 		form.append('label').attr('for', 'id_newusername').attr('class', 'sr-only').text('New Email');
 		var newUsernameInput = form.append('input')

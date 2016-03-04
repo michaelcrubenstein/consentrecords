@@ -1,5 +1,5 @@
 /* Create a panel to show the details of the session and allow the user to sign up. */
-function showSessionDetails(userInstance, session, service, previousPanelNode)
+function showSessionDetails(session, service, previousPanelNode)
 {
 	var organization = session.getValue("Organization");
 	var offering = session.getValue("Offering");
@@ -154,7 +154,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		}
 	};
 	
-	var addInquiry = function()
+	var addInquiry = function(user)
 	{
 		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
 		cr.selectAll({path: groupPath,
@@ -162,7 +162,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				{
 					cr.addObjectValue('#'+session.getValueID()+">Inquiries",
 									  '_user',
-									  userInstance,
+									  user,
 									  function(newInquiryID) { 
 											function done()
 											{
@@ -175,7 +175,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 											if (groupPaths.length == 0)
 												done();
 											else {
-												addMissingAccess(userInstance, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+												addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
 											}
 										},
 										asyncFailFunction);
@@ -186,9 +186,9 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	
 	var tryAddInquiry = function()
 	{
-		if (userInstance.getValueID())
+		if (cr.signedinUser.getValueID())
 		{
-			addInquiry();
+			addInquiry(cr.signedinUser);
 			unblockClick();
 		}
 		else
@@ -212,7 +212,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 						}
 						else
 						{
-							addInquiry();
+							addInquiry(_this);
 						}
 					},
 					fail: asyncFailFunction});
@@ -221,10 +221,10 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 			{
 			};
 			
-			$(userInstance).on("signin.cr", null, panel, onSignin);
-			$(userInstance).on("signinCanceled.cr", null, panel, onSigninCanceled);
+			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
+			$(cr.signedinUser).on("signinCanceled.cr", null, panel, onSigninCanceled);
 			
-			$(panel).on("hiding.cr", null, userInstance, function(eventObject)
+			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
 				$(eventObject.data).off("signin.cr", null, onSignin);
 				$(eventObject.data).off("signinCanceled.cr", null, onSigninCanceled);
@@ -266,7 +266,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		d3.event.preventDefault();
 	};
 	
-	if (userInstance.getValueID())
+	if (cr.signedinUser.getValueID())
 	{
 		function done(values)
 		{
@@ -274,7 +274,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		}
 		cr.getValues({path: '#'+session.getValueID()+">Inquiries",
 			field: "_user",
-			value: userInstance.getValueID(),
+			value: cr.signedinUser.getValueID(),
 			done: done,
 			fail: asyncFailFunction});
 	}
@@ -331,7 +331,7 @@ var PickOfferingSearchView = (function () {
 					{
 						showClickFeedback(this);
 
-						var sitePanel = showSessionDetails(userInstance, session, _this.marker, _this.sitePanel.node());
+						var sitePanel = showSessionDetails(session, _this.marker, _this.sitePanel.node());
 	
 						showPanelLeft(sitePanel.node());
 					}
@@ -356,7 +356,7 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.offeringID = null;
 	
-	function PickOfferingPanel(userInstance, marker, offeringID, previousPanel) {
+	function PickOfferingPanel(user, marker, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -379,7 +379,7 @@ var PickOfferingPanel = (function() {
 var FindExperiencePanel = (function () {
 	FindExperiencePanel.prototype = new SitePanel();
 	
-	function FindExperiencePanel(userInstance, serviceValueID, offeringID, previousPanel) {
+	function FindExperiencePanel(user, serviceValueID, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -447,7 +447,7 @@ var FindExperiencePanel = (function () {
 					{
 						showClickFeedback(this);
 						
-						var panel = new PickOfferingPanel(userInstance, d, offeringID, _this.node());
+						var panel = new PickOfferingPanel(user, d, offeringID, _this.node());
 					}
 				});
 				
@@ -458,7 +458,7 @@ var FindExperiencePanel = (function () {
 				var d = cell.data[i];
 				if (d.getValueID() == serviceValueID)
 				{
-					var panel = new PickOfferingPanel(userInstance, d, offeringID, _this.node);
+					var panel = new PickOfferingPanel(user, d, offeringID, _this.node);
 					break;
 				}
 			}

@@ -238,7 +238,7 @@ var CRP = (function() {
 var crp = new CRP();
 
 var cr = {}
-
+	
 cr.Cell = (function() 
 	{
 		Cell.prototype.data = [];
@@ -1153,6 +1153,18 @@ cr.ObjectValue = (function() {
 	return ObjectValue;
 })();
 
+cr.signedinUser = new cr.ObjectValue();
+
+cr.createSignedinUser = function(instanceID, description)
+{
+	cr.signedinUser.instanceID = instanceID;
+	cr.signedinUser.setDescription(description);
+	crp.pushCheckCells(cr.signedinUser, ["_system access"], function()
+		{
+			$(cr.signedinUser).trigger("signin.cr");
+		}, asyncFailFunction);
+}
+
 cr.cellFactory = {
 	_string: cr.StringCell,
 	_number: cr.NumberCell,
@@ -1619,14 +1631,14 @@ cr.submitSignout = function(done, fail)
 		});
 	}
 
-cr.updateUsername = function(userInstance, newUsername, password, done, fail)
+cr.updateUsername = function(newUsername, password, done, fail)
 	{
 		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
 										password: password,
 										timezoneoffset: new Date().getTimezoneOffset()},
 			   function(json) {
 					if (json['success']) {
-						var v = userInstance.getValue('_email');
+						var v = cr.signedinUser.getValue('_email');
 						v.updateFromChangeData({text: newUsername});
 						v.triggerDataChanged();
 						done();

@@ -102,6 +102,12 @@ def list(request):
             argList["rootID"] = root.id
             argList["singularName"] = root._description
         
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            argList['userID'] = user.id
+        
         context = RequestContext(request, argList)
         
         return HttpResponse(template.render(context))
@@ -456,7 +462,7 @@ class api:
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
                 uuObject = Terms.administerPrivilegeEnum
-            elif userINfo.authUser.is_staff:
+            elif userInfo.authUser.is_staff:
                 uuObject = Terms.writePrivilegeEnum
             else:
                 uuObject = None

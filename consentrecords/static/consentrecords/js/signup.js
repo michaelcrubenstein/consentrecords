@@ -72,14 +72,14 @@ var Signup = (function () {
 					initialData, 
 					function(userData)
 					{
-						userInstance.updateFromChangeData(userData);
-						userInstance.checkCells(["_system access"], function()
+						cr.signedinUser.updateFromChangeData(userData);
+						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
 								sitePanel.hidePanelDown(true,
 									function()
 									{
-										$(userInstance).trigger("signin.cr");
+										$(cr.signedinUser).trigger("signin.cr");
 									});
 							},
 						syncFailFunction);
