@@ -197,6 +197,11 @@
 						<span class="pull-left">Sharing</span>
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
+					<button id="id_following_button"
+						class="btn row-button site-active-text">
+						<span class="pull-left">Following</span>
+						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
+					</button>
 					<button id="id_settings_button"
 						class="btn row-button site-active-text">
 						<span class="pull-left">Settings</span>
@@ -341,6 +346,7 @@
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
+	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/showUser.js" %}"></script>
@@ -590,6 +596,18 @@
 			}
 			
 			checkSignin.call(this, panel, done, "Sharing");
+			e.preventDefault();
+		});
+		
+		$("#id_following_button").click(function(e)
+		{
+			var panel = $(this).parents(".site-panel")[0];
+			var done = function()
+			{
+				var settings = new FollowingPanel(cr.signedinUser, panel);
+			}
+			
+			checkSignin.call(this, panel, done, "Following");
 			e.preventDefault();
 		});
 		
