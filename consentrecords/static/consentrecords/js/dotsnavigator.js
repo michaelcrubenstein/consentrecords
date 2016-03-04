@@ -87,10 +87,10 @@ var DotsNavigator = (function () {
 	
 	DotsNavigator.prototype.getServiceByName = function(name)
 	{
-		for (i = 0; i < services.length; ++i)
+		for (i = 0; i < this.services.length; ++i)
 		{
-			if (services[i].getDescription() == name)
-				return services[i];
+			if (this.services[i].getDescription() == name)
+				return this.services[i];
 		}
 		return null;
 	}

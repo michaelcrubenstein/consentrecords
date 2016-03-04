@@ -1425,9 +1425,9 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 {
 	var header;
 	if (oldReportedObject)
-		header = "Change Marker";
+		header = "Marker";
 	else
-		header = "Add Marker";
+		header = "New Marker";
 		
 	var sitePanel = new SitePanel(previousPanelNode, rootObjects, header, "list");
 
@@ -1459,6 +1459,9 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 			}
 			d3.event.preventDefault();
 		});
+	addButton.append('span').text(oldReportedObject ? 'Change' : 'Add');
+	addButton.classed("site-disabled-text", true);
+	addButton.classed("site-active-text", false);
 	
 	navContainer.appendTitle(header);
 	
@@ -1482,6 +1485,9 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 							return "none";
 					});
 		}
+		
+		addButton.classed("site-disabled-text", val.length == 0);
+		addButton.classed("site-active-text", val.length > 0);
 	}
 
 	var searchInputNode = sitePanel.appendSearchBar(textChanged);
