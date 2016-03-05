@@ -450,13 +450,13 @@ class api:
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
-                parentData = {'id': None, 
+                parentData = [{'id': None, 
                               'instanceID' : uuObject.id,
                               'description': uuObject.getDescription(language),
-                              'position': 0}
+                              'position': 0}]
                 privilege = uuObject.getPrivilege(userInfo)
                 if privilege:
-                    parentData['privilege'] = privilege.getDescription()
+                    parentData[0]['privilege'] = privilege.getDescription()
                 data["cells"].append({"field": fieldData, "data": parentData})
         
         if TermNames.systemAccess in fields:
@@ -468,12 +468,33 @@ class api:
                 uuObject = None
             if uuObject:
                 fieldData = Terms.systemAccess.getParentReferenceFieldData()
-                parentData = {'id': None, 
+                parentData = [{'id': None, 
                               'instanceID' : uuObject.id,
                               'description': uuObject.getDescription(language),
                               'position': 0,
-                              'privilege': uuObject.description.text}
+                              'privilege': uuObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
+                
+        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .select_related('referenceValue__description')
+
+        for cell in data["cells"]:
+            if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
+                and "ofKindID" in cell["field"]:
+                typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
+                fieldsData = typeID.getFieldsData(fieldsDataDictionary, language)
+                for d in cell["data"]:
+                    i = Instance.objects.select_related('typeID').select_related('parent')\
+                                        .select_related('description')\
+                                        .prefetch_related(Prefetch('value_set',
+                                                            queryset=valueQueryset,
+                                                            to_attr='values'))\
+                                        .get(pk=d["instanceID"])
+                    d["cells"] = i.getData(i.values, fieldsData, userInfo, language)
             
         return data;
         
