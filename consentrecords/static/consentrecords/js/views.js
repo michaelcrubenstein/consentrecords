@@ -1794,7 +1794,7 @@ var SearchView = (function () {
 			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
 			this.getDataChunker.path = searchPath;
 			this.getDataChunker.fields = ["parents"];
-			this.getDataChunker.start(val);			
+			this.getDataChunker.start(this._constrainCompareText);			
 		}
 		else
 		{
