@@ -36,6 +36,12 @@
 		background: white;
     }
     
+	panel.new-experience-panel .address-line {
+		margin-left: 0px;
+		font-size: smaller;
+		color: #999;
+	}
+
     .dots ~ panel {
     	display: table;
     	table-layout: fixed;

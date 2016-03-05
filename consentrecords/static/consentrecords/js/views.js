@@ -1779,6 +1779,11 @@ var SearchView = (function () {
 		return buttons;
 	}
 	
+	SearchView.prototype.fields = function()
+	{
+		return ["parents"];
+	}
+	
 	SearchView.prototype.search = function(val)
 	{
 		if (val !== undefined)
@@ -1793,7 +1798,7 @@ var SearchView = (function () {
 		{
 			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
 			this.getDataChunker.path = searchPath;
-			this.getDataChunker.fields = ["parents"];
+			this.getDataChunker.fields = this.fields();
 			this.getDataChunker.start(this._constrainCompareText);			
 		}
 		else

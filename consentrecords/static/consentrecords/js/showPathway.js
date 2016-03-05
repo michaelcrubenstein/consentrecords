@@ -1765,6 +1765,88 @@ function setupPanel2(dots)
 	this.onReveal = null;
 }
 
+var SiteSearchView = (function() {
+	SiteSearchView.prototype = new SearchView();
+	SiteSearchView.prototype.dots = null;
+	SiteSearchView.prototype.container = null;
+	
+	SiteSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		buttons.append("div")
+			.classed("description-text", true)
+			.text(_getDataDescription)
+			.each(_pushTextChanged);
+		buttons.each(function(site)
+		{
+			var _button = this;
+			var address = site.getValue("Address");
+			appendAddress.call(this, address);
+		});
+	}
+			
+	SiteSearchView.prototype.onClickButton = function(d, i) {
+		if (prepareClick('click', 'experience site: ' + d.getDescription()))
+		{
+			this.dots.site = d;
+			this.dots.siteName = d.getDescription();
+
+			this.inputBox.value = d.getDescription();
+			$(this.inputBox).trigger("input");
+			this.dots.setValue(this.dots.value + 1);
+		}
+		d3.event.preventDefault();
+	}
+	
+	SiteSearchView.prototype.isButtonVisible = function(button, d)
+	{
+		var retVal = false;
+		d3.select(button).selectAll('div').each(function()
+			{
+				retVal |= d3.select(this).text().toLocaleLowerCase().indexof(constrainText) >= 0;
+			});
+		return retVal;
+	}
+	
+	SiteSearchView.prototype.searchPath = function(val)
+	{
+		if (!this.dots.organization)
+			return "";
+			
+		var s = "#"+this.dots.organization.getValueID() + ">Sites>Site";
+		if (val.length == 0)
+			return s;
+		else if (val.length < 3)
+			return s + '[_name^="'+val+'"]';
+		else
+			return s + '[_name*="'+val+'"]';
+	}
+	
+	SiteSearchView.prototype.fields = function()
+	{
+		return ["Address"];
+	}
+	
+	SiteSearchView.prototype.appendSearchArea = function()
+	{
+		var w = this.container.append('div').classed('body', true)
+				  .append('div')
+				  .append('div');
+		return w.append("section")
+			.classed("multiple", true)
+			.append("ol")
+			.classed("items-div", true);
+	}
+	
+	function SiteSearchView(dots, container, placeholder)
+	{
+		this.dots = dots;
+		this.container = container;
+		SearchView.call(this, container.node(), placeholder, this.appendDescriptions)
+	}
+	
+	return SiteSearchView;
+})();
+
 function setupPanel3(dots)
 {
 	var p = d3.select(this);
@@ -1772,57 +1854,29 @@ function setupPanel3(dots)
 		.classed('table-row', true)
 		.append('p');
 	
-	var searchInput = addInput(p, "Site");
-
-	var w = p.append('div').classed('body', true)
-			  .append('div')
-			  .append('div');
-			  
-	next = function(dots)
+	var searchView = new SiteSearchView(dots, p, "Site");
+	
+	var nextSearch = "";
+	var next = function(dots)
 	{
 		header.text("Where did " + dots.organizationName + " provide this experience?")
-		w.selectAll('ol').remove();
-		if (dots.organization)
-		{
-			function done(rootObjects)
-			{
-				function sortByDescription(a, b)
-				{
-					return a.getDescription().localeCompare(b.getDescription());
-				}
-
-				function buttonClicked(d)
-				{
-					if (prepareClick('click', 'experience site: ' + d.getDescription()))
-					{
-						dots.site = d;
-						dots.siteName = d.getDescription();
-			
-						searchInput.node().value = d.getDescription();
-						$(searchInput.node()).trigger("input");
-						dots.setValue(dots.value + 1);
-					}
-				}
-		
-				rootObjects.sort(sortByDescription);
-				appendButtons(w, rootObjects, buttonClicked);
-			}
-	
-			cr.getData({path: "#"+dots.organization.getValueID() + ">Sites>Site", done: done, fail: asyncFailFunction});
-		}
+		searchView.clearListPanel();
+		searchView.search(nextSearch);				
 	};
 
 	this.onDoneClicked = function()
 	{
-		if ((dots.site && searchInput.node().value != dots.site.getDescription()) ||
+		var textValue = searchView.inputBox.value;
+		if ((dots.site && textValue != dots.site.getDescription()) ||
 		    !dots.site)
 		{
 			dots.site = null;
-			dots.siteName = searchInput.node().value;
+			dots.siteName = textValue;
 		}
 	}
 	
 	next.call(this, dots);
+	nextSearch = undefined;
 	this.onReveal = next;
 }
 
