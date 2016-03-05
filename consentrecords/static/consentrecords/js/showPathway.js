@@ -1730,19 +1730,6 @@ var OrganizationSearchView = (function() {
 			.classed("items-div", true);
 	}
 	
-	OrganizationSearchView.prototype.appendButtonContainers = function(foundObjects)
-	{
-		var i = 0;
-		return this.listPanel.selectAll("li")
-			.data(foundObjects, function(d) {
-				/* Ensure that this operation appends without replacing any items. */
-				i += 1;
-				return i;
-			  })
-			.enter()
-			.append("li");	// So that each button appears on its own row.
-	}
-	
 	function OrganizationSearchView(dots, container, placeholder)
 	{
 		this.dots = dots;
