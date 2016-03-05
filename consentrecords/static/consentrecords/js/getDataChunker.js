@@ -47,9 +47,7 @@ var GetDataChunker = (function() {
 			else
 			{
 				this._start += this.increment;
-				var panelHeight = $(this._containerNode).height();
-				var position = $(this._loadingMessage.node()).position();
-				if (position.top < panelHeight)
+				if (!this.isOverflowingY(this._loadingMessage.node()))
 					this._continue(startVal);
 				else
 					this._inGetData = false;
@@ -109,22 +107,27 @@ var GetDataChunker = (function() {
 			_this.onScroll(startVal);
 		}
 		
-		$(this._containerNode).scroll(this._check);
+		var scrollingNode = this._containerNode.offsetParent;
+		$(scrollingNode).scroll(this._check);
 		$(window).resize(this._check);
-		$(this._containerNode).on("remove", function()
+		$(scrollingNode).on("remove", function()
 			{
 				$(window).off("resize", _this.check);
 			});
 		this._continue(startVal);
 	}
 	
+	GetDataChunker.prototype.isOverflowingY = function(node)
+	{
+		var p = node.offsetParent;
+		return node.offsetTop > $(p).scrollTop() + $(p).height();
+	}
+	
 	GetDataChunker.prototype.onScroll = function(startVal)
 	{
 		if (this._loadingMessage != null && !this._inGetData)
 		{
-			var panelHeight = $(this._containerNode).height();
-			var position = $(this._loadingMessage.node()).position();
-			if (position.top < panelHeight)
+			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
 		}
 	}
