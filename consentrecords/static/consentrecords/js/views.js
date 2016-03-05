@@ -1781,11 +1781,14 @@ var SearchView = (function () {
 	
 	SearchView.prototype.search = function(val)
 	{
-		this._foundCompareText = val;
-		this._constrainCompareText = val;
+		if (val !== undefined)
+		{
+			this._foundCompareText = val;
+			this._constrainCompareText = val;
+		}
 		this._foundObjects = null;	/* Clear any old object sets. */
 			
-		var searchPath = this.searchPath(val);
+		var searchPath = this.searchPath(this._constrainCompareText);
 		if (searchPath && searchPath.length > 0)
 		{
 			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
