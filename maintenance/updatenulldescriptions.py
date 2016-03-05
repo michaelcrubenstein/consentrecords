@@ -41,8 +41,7 @@ if __name__ == "__main__":
         vs = Value.objects.filter(referenceValue__in=f, deleteTransaction__isnull=True)
         print("%s values referencing instances with no description" % vs.count())        
         
-        nameList = NameList()
-        descriptors = filter(lambda v: nameList.descriptorField(v), vs) 
+        descriptors = filter(lambda v: v.isDescriptor, vs) 
         descriptors = list(descriptors)
         print("%s descriptor values referencing instances with no description" % len(descriptors))        
 
