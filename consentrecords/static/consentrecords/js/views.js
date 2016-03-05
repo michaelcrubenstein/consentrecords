@@ -1721,7 +1721,14 @@ var SearchView = (function () {
 	
 	SearchView.prototype.appendButtonContainers = function(foundObjects)
 	{
-		throw ("need to override SearchView.appendButtonContainers");
+		var items = [];
+		var _this = this;
+		foundObjects.forEach(function(d) {
+			var i = _this.getDataChunker.appendNode('li');
+			d3.select(i).datum(d);
+			items.push(i);
+		});
+		return d3.selectAll(items);
 	}
 	
 	SearchView.prototype.clearListPanel = function()
@@ -1772,19 +1779,27 @@ var SearchView = (function () {
 		return buttons;
 	}
 	
+	SearchView.prototype.fields = function()
+	{
+		return ["parents"];
+	}
+	
 	SearchView.prototype.search = function(val)
 	{
-		this._foundCompareText = val;
-		this._constrainCompareText = val;
+		if (val !== undefined)
+		{
+			this._foundCompareText = val;
+			this._constrainCompareText = val;
+		}
 		this._foundObjects = null;	/* Clear any old object sets. */
 			
-		var searchPath = this.searchPath(val);
+		var searchPath = this.searchPath(this._constrainCompareText);
 		if (searchPath && searchPath.length > 0)
 		{
 			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
 			this.getDataChunker.path = searchPath;
-			this.getDataChunker.fields = ["parents"];
-			this.getDataChunker.start(val);			
+			this.getDataChunker.fields = this.fields();
+			this.getDataChunker.start(this._constrainCompareText);			
 		}
 		else
 		{
@@ -1892,18 +1907,6 @@ var PanelSearchView = (function() {
 	{
 		return this.sitePanel.appendScrollArea()
 			.append('ol');
-	}
-	
-	PanelSearchView.prototype.appendButtonContainers = function(foundObjects)
-	{
-		var items = [];
-		var _this = this;
-		foundObjects.forEach(function(d) {
-			var i = _this.getDataChunker.appendNode('li');
-			d3.select(i).datum(d);
-			items.push(i);
-		});
-		return d3.selectAll(items);
 	}
 	
 	return PanelSearchView;

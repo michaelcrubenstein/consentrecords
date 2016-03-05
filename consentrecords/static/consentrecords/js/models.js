@@ -490,7 +490,10 @@ cr.ObjectCell = (function() {
 		newValue.description = oldValue.description;
 		newValue.privilege = oldValue.privilege;
 		if (oldValue.cells)
+		{
 			newValue.importCells(oldValue.cells);
+			newValue.isDataLoaded = true;
+		}
 
 		return newValue;
 	}

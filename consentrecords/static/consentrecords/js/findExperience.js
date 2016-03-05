@@ -41,7 +41,7 @@ function showSessionDetails(session, service, previousPanelNode)
 		crp.pushCheckCells(site, undefined, function()
 		{
 			var address = site.getValue("Address");
-			appendAddress(address, orgDiv);
+			appendAddress.call(orgDiv.node(), address);
 		},
 		function() { }
 		);
