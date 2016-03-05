@@ -1800,9 +1800,10 @@ var SiteSearchView = (function() {
 	SiteSearchView.prototype.isButtonVisible = function(button, d)
 	{
 		var retVal = false;
+		var constrainText = this._constrainCompareText;
 		d3.select(button).selectAll('div').each(function()
 			{
-				retVal |= d3.select(this).text().toLocaleLowerCase().indexof(constrainText) >= 0;
+				retVal |= d3.select(this).text().toLocaleLowerCase().indexOf(constrainText) >= 0;
 			});
 		return retVal;
 	}
@@ -1819,6 +1820,16 @@ var SiteSearchView = (function() {
 			return s + '[_name^="'+val+'"]';
 		else
 			return s + '[_name*="'+val+'"]';
+	}
+	
+	SiteSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		if (this.dots.organization)
+		{
+			this.startSearchTimeout("");
+		}
 	}
 	
 	SiteSearchView.prototype.fields = function()
