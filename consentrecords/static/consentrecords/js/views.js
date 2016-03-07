@@ -2271,23 +2271,36 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			.on("click", handleCloseRightEvent);
 		backButton.append("span").text("Done");
 		
-		if (cr.signedinUser.getValue("_system access"))
+		var checkEdit = function()
 		{
-			var editButton = navContainer.appendRightButton()
-				.on("click", function(d) {
-					if (prepareClick('click', 'view roots object panel: Edit'))
-					{
-						showClickFeedback(this);
+			if (cr.signedinUser.getValue("_system access"))
+			{
+				var editButton = navContainer.appendRightButton()
+					.on("click", function(d) {
+						if (prepareClick('click', 'view roots object panel: Edit'))
+						{
+							showClickFeedback(this);
 				
-						showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
-					}
-					d3.event.preventDefault();
-				});
-			editButton.append("span").text("Edit");
+							showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
+						}
+						d3.event.preventDefault();
+					});
+				editButton.append("span").text("Edit");
+			}
+			navContainer.appendTitle(header);
 		}
 		
-		navContainer.appendTitle(header);
-		
+		if (cr.signedinUser.cells)
+			checkEdit();
+		else
+		{
+			$(cr.signedinUser).on("signin.cr", null, navContainer.nav.node(), checkEdit);
+			$(navContainer.nav.node()).on("remove", null, cr.signedinUser, function()
+				{
+					$(eventObject.data).off("signin.cr", navContainer.nav.node(), checkEdit);
+				});
+		}
+				
 		function textChanged(){
 			var val = this.value.toLocaleLowerCase();
 			if (val.length === 0)
