@@ -1576,7 +1576,9 @@ function setupServicesPanel(dots)
 		if (dots.offering != null)
 		{
 			var fixedDivs = appendItems(itemsDiv, dots.offering.getCell("Service").data);
-			appendButtonDescriptions(appendRowButtons(fixedDivs));
+			var itemDivs = fixedDivs.append("div")
+				.classed("multi-row-content", true)
+			appendButtonDescriptions(itemDivs);
 		}
 	}
 	
