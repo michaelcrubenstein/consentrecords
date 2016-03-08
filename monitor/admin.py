@@ -11,6 +11,6 @@ class LogRecordAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'creation_time', 'user', 'name', 'message')}),
     )
     readonly_fields = ('id', 'creation_time', 'user', 'name', 'message')
-    search_fields=('id', 'creation_time', 'user__email', 'name', 'message')
+    search_fields=('id', 'user__email', 'name', 'message')
       
 admin.site.register(LogRecord, LogRecordAdmin)
