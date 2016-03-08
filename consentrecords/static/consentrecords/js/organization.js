@@ -134,7 +134,14 @@ function appendInfoButtons(buttons, panelNode)
 		.on("click", function(user) {
 			if (prepareClick('click', 'show info: ' + user.getDescription()))
 			{
-				showUser(user, panelNode);
+				try
+				{
+					showUser(user, panelNode);
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 			}
 			d3.event.preventDefault();
 		});

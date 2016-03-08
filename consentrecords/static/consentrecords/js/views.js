@@ -23,6 +23,16 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
+/* A utility function for formatting strings like printf */
+String.prototype.format = function () {
+  var args = arguments;
+  return this.replace(/\{\{|\}\}|\{(\d+)\}/g, function (m, n) {
+    if (m == "{{") { return "{"; }
+    if (m == "}}") { return "}"; }
+    return args[n];
+  });
+};
+
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
 	defaultLanguageCode: "en",
@@ -142,15 +152,18 @@ function unblockClick()
 	clickBlockCount -= 1;
 }
 
-function prepareClick(name, message)
+function prepareClick(name, message, forceCloseAlert)
 {
+	forceCloseAlert = (forceCloseAlert !== undefined ? forceCloseAlert : true);
 	if (_isClickBlocked())
 	{
 		if (name)
 			cr.logRecord(name + ' blocked', message);
 		return false;
 	}
-	closealert();
+	if (forceCloseAlert)
+		closealert();
+		
 	_blockClick();
 	if (name)
 		cr.logRecord(name, message);
