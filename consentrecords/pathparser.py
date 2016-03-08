@@ -16,24 +16,28 @@ def _getSimpleQClause(symbol, testValue):
             raise ValueError("unrecognized symbol: %s" & symbol)
     else:
         if symbol == '^=':
-            q = Q(value__stringValue__istartswith=testValue)
+            return (Q(value__stringValue__istartswith=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__istartswith=testValue)
         elif symbol == '=':
-            q = Q(value__stringValue__iexact=testValue)
+            return (Q(value__stringValue__iexact=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__iexact=testValue)
         elif symbol == '*=':
-            q = Q(value__stringValue__icontains=testValue)
+            return (Q(value__stringValue__icontains=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__icontains=testValue)
         elif symbol == '<':
-            q = Q(value__stringValue__lt=testValue)
+            return (Q(value__stringValue__lt=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__lt=testValue)
         elif symbol == '<=':
-            q = Q(value__stringValue__lte=testValue)
+            return (Q(value__stringValue__lte=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__lte=testValue)
         elif symbol == '>':
-            q = Q(value__stringValue__gt=testValue)
+            return (Q(value__stringValue__gt=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__gt=testValue)
         elif symbol == '>=':
-            q = Q(value__stringValue__gte=testValue)
+            return (Q(value__stringValue__gte=testValue)&Q(value__referenceValue__isnull=True))\
+            		|Q(value__referenceValue__description__text__gte=testValue)
         else:
             raise ValueError("unrecognized symbol: %s" & symbol)
-        return q&Q(value__referenceValue__isnull=True)  
-        # Handles a degenerate case where a referenceValue was stored in the same place as
-        # the stringValue and it happens to match the query string, 
 
 def _getQClause(symbol, testValue):
     if isinstance(testValue, list):
