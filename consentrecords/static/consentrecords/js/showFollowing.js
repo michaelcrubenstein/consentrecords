@@ -36,7 +36,8 @@ var RequestFollowSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	RequestFollowSearchView.prototype.searchPath = function(val)
 	{
-		var s = "_user";
+		var s = '_user::not(#{0})::not(#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user))'.format(this.user.getValueID());
+		s += '::not(_user["_access request"={0}])'.format(this.user.getValueID());
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
@@ -105,7 +106,7 @@ var FollowingSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	FollowingSearchView.prototype.searchPath = function(val)
 	{
-		var s = "#" + this.user.instanceID + '::reference("_access record")::reference(_user)';
+		var s = "#" + this.user.instanceID + '::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)';
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
@@ -118,9 +119,18 @@ var FollowingSearchView = (function () {
 	FollowingSearchView.prototype.isButtonVisible = function(button, d)
 	{
 		var val = this._constrainCompareText;
-		return d.getValue("_email").toLocaleLowerCase().indexOf(val) >= 0 ||
-			   d.getValue("_first name").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-			   d.getValue("_last name").getDescription().toLocaleLowerCase().indexOf(val) >= 0;
+		var firstName = d.getDatum("_first name");
+		var lastName = d.getDatum("_last name");
+		return d.getDatum("_email").toLocaleLowerCase().indexOf(val) >= 0 ||
+			   (firstName && firstName.toLocaleLowerCase().indexOf(val) >= 0) ||
+			   (lastName && lastName.toLocaleLowerCase().indexOf(val) >= 0);
+	}
+	
+	FollowingSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
 	}
 	
 	function FollowingSearchView(sitePanel, user)
