@@ -1817,6 +1817,7 @@ var SearchView = (function () {
 		else
 		{
 			this.clearListPanel();
+			this.getDataChunker.clearLoadingMessage();
 		}
 	}
 	
@@ -1833,7 +1834,8 @@ var SearchView = (function () {
 	SearchView.prototype.startSearchTimeout = function(val)
 	{
 		this.clearListPanel();
-		this.getDataChunker.showLoadingMessage();
+		if (this.searchPath(val) != "")
+			this.getDataChunker.showLoadingMessage();
 				
 		/* Once we have hit this point, old data is not valid. */
 		this._foundCompareText = null;
