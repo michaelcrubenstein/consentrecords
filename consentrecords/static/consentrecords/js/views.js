@@ -23,6 +23,16 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
+/* A utility function for formatting strings like printf */
+String.prototype.format = function () {
+  var args = arguments;
+  return this.replace(/\{\{|\}\}|\{(\d+)\}/g, function (m, n) {
+    if (m == "{{") { return "{"; }
+    if (m == "}}") { return "}"; }
+    return args[n];
+  });
+};
+
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
 	defaultLanguageCode: "en",
@@ -142,15 +152,18 @@ function unblockClick()
 	clickBlockCount -= 1;
 }
 
-function prepareClick(name, message)
+function prepareClick(name, message, forceCloseAlert)
 {
+	forceCloseAlert = (forceCloseAlert !== undefined ? forceCloseAlert : true);
 	if (_isClickBlocked())
 	{
 		if (name)
 			cr.logRecord(name + ' blocked', message);
 		return false;
 	}
-	closealert();
+	if (forceCloseAlert)
+		closealert();
+		
 	_blockClick();
 	if (name)
 		cr.logRecord(name, message);
@@ -2271,23 +2284,36 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			.on("click", handleCloseRightEvent);
 		backButton.append("span").text("Done");
 		
-		if (cr.signedinUser.getValue("_system access"))
+		var checkEdit = function()
 		{
-			var editButton = navContainer.appendRightButton()
-				.on("click", function(d) {
-					if (prepareClick('click', 'view roots object panel: Edit'))
-					{
-						showClickFeedback(this);
+			if (cr.signedinUser.getValue("_system access"))
+			{
+				var editButton = navContainer.appendRightButton()
+					.on("click", function(d) {
+						if (prepareClick('click', 'view roots object panel: Edit'))
+						{
+							showClickFeedback(this);
 				
-						showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
-					}
-					d3.event.preventDefault();
-				});
-			editButton.append("span").text("Edit");
+							showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
+						}
+						d3.event.preventDefault();
+					});
+				editButton.append("span").text("Edit");
+			}
+			navContainer.appendTitle(header);
 		}
 		
-		navContainer.appendTitle(header);
-		
+		if (cr.signedinUser.cells)
+			checkEdit();
+		else
+		{
+			$(cr.signedinUser).on("signin.cr", null, navContainer.nav.node(), checkEdit);
+			$(navContainer.nav.node()).on("remove", null, cr.signedinUser, function()
+				{
+					$(eventObject.data).off("signin.cr", navContainer.nav.node(), checkEdit);
+				});
+		}
+				
 		function textChanged(){
 			var val = this.value.toLocaleLowerCase();
 			if (val.length === 0)

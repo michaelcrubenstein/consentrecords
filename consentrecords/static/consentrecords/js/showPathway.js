@@ -1576,7 +1576,9 @@ function setupServicesPanel(dots)
 		if (dots.offering != null)
 		{
 			var fixedDivs = appendItems(itemsDiv, dots.offering.getCell("Service").data);
-			appendButtonDescriptions(appendRowButtons(fixedDivs));
+			var itemDivs = fixedDivs.append("div")
+				.classed("multi-row-content", true)
+			appendButtonDescriptions(itemDivs);
 		}
 	}
 	
@@ -2764,11 +2766,6 @@ var PickOrCreateOfferingPanel = (function () {
 
 var PickOrCreateMarkerPanel = (function () {
 	PickOrCreateMarkerPanel.prototype = new PickOrCreatePanel();
-	
-	PickOrCreateMarkerPanel.prototype.textCleared = function()
-	{
-		this.searchView.startSearchTimeout("");
-	}
 	
 	function PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done)
 	{

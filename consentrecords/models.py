@@ -421,7 +421,7 @@ class Instance(dbmodels.Model):
             return [{ "id": v.id,
                       "instanceID" : v.referenceValue.id, 
                       "description": v.referenceValue._description,
-                      "privilege": v.referenceValue.getPrivilege(userInfo).getDescription(),
+                      'privilege': v.referenceValue.getPrivilege(userInfo).getDescription(),
                       "position": v.position } for v in values]
         elif dataTypeID == Terms.translationEnum.id:
             return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
@@ -745,6 +745,7 @@ class Instance(dbmodels.Model):
     
     # Raises an error unless the specified user can write the specified value to the specified field of self.
     # This handles the special case of register permission if the value is a user.
+    # This also handles the special case of submitting an access request to another user.
     def checkWriteValueAccess(self, user, field, value):
         if value:
             if isinstance(value, str) and Terms.isUUID(value):
@@ -754,6 +755,11 @@ class Instance(dbmodels.Model):
                 value._canAdminister(user) and \
                 field not in Terms.securityFields and \
                 self._canRegister(user):
+                return
+            if isinstance(value, Instance) and \
+                value.typeID == Terms.user and \
+                field == Terms.accessRequest and \
+                self.typeID == Terms.user:
                 return
         self.checkWriteAccess(user, field)
             
@@ -1074,6 +1080,7 @@ class TermNames():
     textEnum = '_by text'
     countEnum = '_by count'
     accessRecord = '_access record'
+    accessRequest = '_access request'
     systemAccess = '_system access'
     privilege = '_privilege'
     findPrivilege = '_find'
@@ -1106,6 +1113,7 @@ class TermNames():
         firstName,          # identifies the first name.
         lastName,           # identifies the last name.
         accessRecord,       # identifies an access record for an instance
+        accessRequest,      # identifies an access request for an instance
         privilege,          # identifies a privilege associated with an access record
         group,              # identifies a group associated with an access record
         defaultAccess,
@@ -1135,6 +1143,7 @@ class Terms():
     translation = None
     text = None
     accessRecord = None
+    accessRequest = None
     systemAccess = None
     privilege = None
     group = None
@@ -1195,6 +1204,7 @@ class Terms():
             Terms.lastName = Terms.getOrCreateTerm(TermNames.lastName, nameList, transactionState)
             Terms.translation = Terms.getOrCreateTerm(TermNames.translation, nameList, transactionState)
             Terms.accessRecord = Terms.getOrCreateTerm(TermNames.accessRecord, nameList, transactionState)
+            Terms.accessRequest = Terms.getOrCreateTerm(TermNames.accessRequest, nameList, transactionState)
             Terms.systemAccess = Terms.getOrCreateTerm(TermNames.systemAccess, nameList, transactionState)
             Terms.privilege = Terms.getOrCreateTerm(TermNames.privilege, nameList, transactionState)
             Terms.group = Terms.getOrCreateTerm(TermNames.group, nameList, transactionState)
@@ -1202,7 +1212,7 @@ class Terms():
             Terms.specialAccess = Terms.getOrCreateTerm(TermNames.specialAccess, nameList, transactionState)
             Terms.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, nameList, transactionState)
             Terms.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, nameList, transactionState)
-            Terms.securityFields = [Terms.accessRecord, Terms.systemAccess, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, ]
+            Terms.securityFields = [Terms.accessRecord, Terms.systemAccess, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, Terms.accessRequest]
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     

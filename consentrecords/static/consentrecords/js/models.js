@@ -1053,6 +1053,8 @@ cr.ObjectValue = (function() {
 			throw "successFunction is not a function";
 		if (typeof(failFunction) != "function")
 			throw "failFunction is not a function";
+		if (this.privilege == "_find")
+			throw "You do not have permission to see information about {0}".format(this.getDescription());
 	
 		if (this.cells && this.isDataLoaded)
 		{
