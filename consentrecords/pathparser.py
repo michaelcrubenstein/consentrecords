@@ -151,6 +151,12 @@ def _refineResults(resultSet, path, userInfo):
                 return f, path[4:]
             else:
                 raise ValueError("malformed reference (missing parentheses)")
+        elif function == 'not':
+            if path[2] == '(':
+                f = resultSet.exclude(pk__in=_parse([], path[3], userInfo))
+                return f, path[4:]
+            else:
+                raise ValueError("malformed not (missing parentheses)")
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
@@ -197,19 +203,23 @@ def _tokenize(path):
     a, remainder = cssparser.cascade(tokens)
     return a
 
+def _parse(startSet, a, userInfo):
+    resultSet = [(startSet, a)]
+    while len(resultSet[-1][1]) > 0:
+        lastPair = resultSet[-1]
+        nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
+        resultSet.append(nextPair)
+    return resultSet[-1][0]
+    
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
 # a duple with a value followed by the instance.
 def selectAllObjects(path, startSet=[], userInfo=None, securityFilter=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
-    a = _tokenize(path)
-    resultSet = [(startSet, a)]
-    while len(resultSet[-1][1]) > 0:
-        lastPair = resultSet[-1]
-        nextPair = _refineResults(lastPair[0], lastPair[1], userInfo)
-        resultSet.append(nextPair)
-    return securityFilter(resultSet[-1][0]).distinct()
+
+    parsed = _parse(startSet, _tokenize(path), userInfo)
+    return securityFilter(parsed).distinct()
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
 #     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
