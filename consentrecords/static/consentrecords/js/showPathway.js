@@ -2767,11 +2767,6 @@ var PickOrCreateOfferingPanel = (function () {
 var PickOrCreateMarkerPanel = (function () {
 	PickOrCreateMarkerPanel.prototype = new PickOrCreatePanel();
 	
-	PickOrCreateMarkerPanel.prototype.textCleared = function()
-	{
-		this.searchView.startSearchTimeout("");
-	}
-	
 	function PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done)
 	{
 		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
