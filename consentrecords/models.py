@@ -583,9 +583,11 @@ class Instance(dbmodels.Model):
                 return Terms.administerPrivilegeEnum
                 
         f = source.children.filter(typeID=Terms.accessRecord, deleteTransaction__isnull=True)\
-            .filter(Q(value__referenceValue=userInfo.instance)|
-                    (Q(value__referenceValue__value__referenceValue=userInfo.instance)&
-                     Q(value__referenceValue__value__deleteTransaction__isnull=True)))
+            .filter(Q(value__referenceValue=userInfo.instance,
+                      value__deleteTransaction__isnull=True)|
+                    (Q(value__deleteTransaction__isnull=True,
+                       value__referenceValue__value__referenceValue=userInfo.instance,
+                       value__referenceValue__value__deleteTransaction__isnull=True)))
                       
         p = map(lambda i: i.value_set.filter(field=Terms.privilege, deleteTransaction__isnull=True)\
                            .select_related('referenceValue__description__text')[0].referenceValue, f)
