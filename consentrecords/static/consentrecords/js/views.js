@@ -1785,7 +1785,7 @@ var SearchView = (function () {
 		var sections = this.appendButtonContainers(foundObjects);
 		var buttons = appendViewButtons(sections, this._fill)
 			.on("click", function(d, i) {
-				_this.onClickButton(d, i);
+				_this.onClickButton(d, i, this);
 			});
 		
 		this.constrainFoundObjects();
