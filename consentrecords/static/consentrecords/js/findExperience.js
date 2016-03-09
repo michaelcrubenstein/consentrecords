@@ -311,7 +311,9 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = "#" + this.marker.instanceID + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
+		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.marker.instanceID);
+		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
+		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
@@ -343,6 +345,18 @@ var PickOfferingSearchView = (function () {
 		return buttons;
 	}
 	
+	PickOfferingSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	PickOfferingSearchView.prototype.noResultString = function()
+	{
+		return "There are no upcoming opportunities for {0}.".format(this.marker.getDescription());
+	}
+	
 	function PickOfferingSearchView(sitePanel, marker)
 	{
 		this.marker = marker;
@@ -356,7 +370,7 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.offeringID = null;
 	
-	function PickOfferingPanel(user, marker, offeringID, previousPanel) {
+	function PickOfferingPanel(marker, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -376,6 +390,65 @@ var PickOfferingPanel = (function() {
 	return PickOfferingPanel;
 })();
 
+var FindExperienceSearchView = (function () {
+	FindExperienceSearchView.prototype = new PanelSearchView();
+	FindExperienceSearchView.prototype.offeringID = null;
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
+		if (prepareClick('click', 'pick ' + d.typeName + ': ' + d.getDescription()))
+		{
+			showClickFeedback(button);
+			
+			var panel = new PickOfferingPanel(d, this.offeringID, this.sitePanel.node());
+		}
+		d3.event.preventDefault();
+	}
+	
+	FindExperienceSearchView.prototype.fields = function()
+	{
+		return ["parents", "type"];
+	}
+	
+	/* Overrides SearchView.searchPath */
+	FindExperienceSearchView.prototype.searchPath = function(val)
+	{
+		var s = "Service";
+		if (val.length == 0)
+			return s;
+		else
+		{
+			if (val.length < 3)
+				return s + '[_name^="' + val + '"]';
+			else
+				return s + '[_name*="' + val + '"]';
+		}
+	}
+	
+	FindExperienceSearchView.prototype.isButtonVisible = function(button, d)
+	{
+		var i = d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText);
+		if (this._constrainCompareText.length < 3)
+			return i == 0;
+		else
+			return i >= 0;
+	}
+	
+	FindExperienceSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	function FindExperienceSearchView(sitePanel, offeringID) {
+		this.offeringID = offeringID;
+		PanelSearchView.call(this, sitePanel, "Search");
+	}
+	
+	return FindExperienceSearchView;
+})();
+
 var FindExperiencePanel = (function () {
 	FindExperiencePanel.prototype = new SitePanel();
 	
@@ -390,86 +463,8 @@ var FindExperiencePanel = (function () {
 			
 		navContainer.appendTitle(header);
 		
-		textChanged = function()
-		{
-			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
-
-		this.appendSearchBar(textChanged);
-		
-		var panel2Div = this.appendScrollArea();
-
-		var field = {
-					  dataType: "_object",
-					  name: "Service",
-					  capacity: "_multiple values",
-					  };
-		var cell = cr.createCell(field);
-		cell.setup(null);
-
-		var itemsDiv = panel2Div.append("section")
-			.classed("multiple", true)
-			.append("ol")
-			.classed("items-div border-above", true)
-			.datum(cell);
-
-		var _this = this;
-		var successFunction = function(newInstances)
-		{
-			for (var i = 0; i < newInstances.length; i++)
-			{
-				var newI = crp.pushInstance(newInstances[i]);
-				cell.pushValue(newI);
-			}
-			
-			panel2Div.datum(cell);
-			appendViewCellItems(itemsDiv, cell, 
-				function(d) {
-					if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
-					{
-						showClickFeedback(this);
-						
-						var panel = new PickOfferingPanel(user, d, offeringID, _this.node());
-					}
-				});
-				
-			crv.stopLoadingMessage(loadingMessage);
-			loadingMessage.remove();
-			for (var i = 0; i < cell.data.length; ++i)
-			{
-				var d = cell.data[i];
-				if (d.getValueID() == serviceValueID)
-				{
-					var panel = new PickOfferingPanel(user, d, offeringID, _this.node);
-					break;
-				}
-			}
-		}
-		
-		var loadingMessage = crv.appendLoadingMessage(panel2Div.node());
-			
-		var path = "Service";
-		crp.getData({path: path, 
-					 done: successFunction, 
-					 fail: asyncFailFunction});
+		this.searchView = new FindExperienceSearchView(this, offeringID);
+		this.searchView.search("");
 
 		showPanelLeft(this.node());
 	}

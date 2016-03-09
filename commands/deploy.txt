@@ -67,6 +67,8 @@ echo "from consentrecords.development_settings import *" >> consentrecords/setti
 
 django-admin collectstatic --noinput
 python3 manage.py migrate
+# python3 maintenance/initializefacts.py michaelcrubenstein@gmail.com
+# python3 maintenance/updatenulldescriptions.py michaelcrubenstein@gmail.com
 
 cd ../..
 eb deploy

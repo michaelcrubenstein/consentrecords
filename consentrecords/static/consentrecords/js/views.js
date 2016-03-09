@@ -1692,6 +1692,10 @@ var SearchView = (function () {
 		
 			this.inputBox = inputBox.node();
 			$(this.inputBox).on("input", function() { _this.textChanged() });
+			
+			this.noResultsDiv = d3.select(containerNode).append('div')
+				.classed('help-block noResults', true)
+				.style('display', 'none');
 
 			this.listPanel = this.appendSearchArea(containerNode);
 
@@ -1705,11 +1709,13 @@ var SearchView = (function () {
 						_this._foundObjects = _this._foundObjects.concat(foundObjects);
 					_this.showObjects(foundObjects);
 				}
+				_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
 			}
 			this.getDataChunker = new GetDataChunker(this.listPanel.node(), done);
 			
 			/* Call setupInputBox at the end because it may trigger an input event. */
 			this.setupInputBox();
+			this.noResultsDiv.text(this.noResultString());
 		}
 	}
 	
@@ -1785,7 +1791,7 @@ var SearchView = (function () {
 		var sections = this.appendButtonContainers(foundObjects);
 		var buttons = appendViewButtons(sections, this._fill)
 			.on("click", function(d, i) {
-				_this.onClickButton(d, i);
+				_this.onClickButton(d, i, this);
 			});
 		
 		this.constrainFoundObjects();
@@ -1795,6 +1801,11 @@ var SearchView = (function () {
 	SearchView.prototype.fields = function()
 	{
 		return ["parents"];
+	}
+	
+	SearchView.prototype.noResultString = function()
+	{
+		return "No Results";
 	}
 	
 	SearchView.prototype.search = function(val)
@@ -1817,6 +1828,7 @@ var SearchView = (function () {
 		else
 		{
 			this.clearListPanel();
+			this.getDataChunker.clearLoadingMessage();
 		}
 	}
 	
@@ -1833,7 +1845,8 @@ var SearchView = (function () {
 	SearchView.prototype.startSearchTimeout = function(val)
 	{
 		this.clearListPanel();
-		this.getDataChunker.showLoadingMessage();
+		if (this.searchPath(val) != "")
+			this.getDataChunker.showLoadingMessage();
 				
 		/* Once we have hit this point, old data is not valid. */
 		this._foundCompareText = null;

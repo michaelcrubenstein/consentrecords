@@ -175,6 +175,10 @@ panel.view .panel-fill>header
 {
 	padding-left: 32px;
 }
+.noResults
+{
+	padding: 6px 12px;
+}
 
 .cell.unique {
 	background: white;

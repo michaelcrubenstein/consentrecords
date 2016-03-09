@@ -8,43 +8,60 @@ from functools import reduce
 from parse.cssparser import parser as cssparser
 from consentrecords.models import Instance, Value, Terms
 
-def _getSimpleQClause(symbol, testValue):
+def _getValueFilter(field, symbol, testValue):
     if Terms.isUUID(testValue):
         if symbol == '=':
-            return Q(value__referenceValue_id=testValue)
+            vFilter = Value.objects.filter(referenceValue_id=testValue)
         else:
             raise ValueError("unrecognized symbol: %s" & symbol)
     else:
         if symbol == '^=':
-            return (Q(value__stringValue__istartswith=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__istartswith=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__istartswith=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__istartswith=testValue))
         elif symbol == '=':
-            return (Q(value__stringValue__iexact=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__iexact=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__iexact=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__iexact=testValue))
         elif symbol == '*=':
-            return (Q(value__stringValue__icontains=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__icontains=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__icontains=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__icontains=testValue))
         elif symbol == '<':
-            return (Q(value__stringValue__lt=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__lt=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__lt=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__lt=testValue))
         elif symbol == '<=':
-            return (Q(value__stringValue__lte=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__lte=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__lte=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__lte=testValue))
         elif symbol == '>':
-            return (Q(value__stringValue__gt=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__gt=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__gt=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__gt=testValue))
         elif symbol == '>=':
-            return (Q(value__stringValue__gte=testValue)&Q(value__referenceValue__isnull=True))\
-            		|Q(value__referenceValue__description__text__gte=testValue)
+            vFilter = Value.objects.filter(Q(stringValue__gte=testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__gte=testValue))
         else:
             raise ValueError("unrecognized symbol: %s" & symbol)
+    vFilter = vFilter.filter(deleteTransaction__isnull=True)
+    return vFilter.filter(field=field) if field else vFilter
 
-def _getQClause(symbol, testValue):
+def _getSimpleQClause(field, symbol, testValue):
+    vFilter = _getValueFilter(field, symbol, testValue)
+    return Q(value__in=vFilter)
+
+def _getQClause(field, symbol, testValue):
     if isinstance(testValue, list):
-        simples = map(lambda t: _getSimpleQClause(symbol, t), testValue)
+        simples = map(lambda t: _getSimpleQClause(field, symbol, t), testValue)
         return reduce(lambda q1, q2: q1 | q2, simples)
     else:
-        return _getSimpleQClause(symbol, testValue)
+        return _getSimpleQClause(field, symbol, testValue)
+
+def _excludeByField(resultSet, field, symbol, testValue):
+    if isinstance(testValue, list):
+        f = resultSet
+        for test in testValue:
+            vFilter = _getValueFilter(field, symbol, test)
+            f = f.exclude(value__in=vFilter)
+        return f
+    else:
+        vFilter = _getValueFilter(field, symbol, testValue)
+        return resultSet.exclude(value__in=vFilter)           
 
 def _getSimpleAncestorClause(symbol, testValue):
     if symbol == '^=':
@@ -117,16 +134,11 @@ def _refineResults(resultSet, path, userInfo):
             elif len(params) == 3 or (len(params) == 4 and params[2]==','):
                 # Get a Q clause that compares either a single test value or a comma-separated list of test values
                 # according to the specified symbol.
-                stringText = _getQClause(symbol=params[1], testValue=params[-1])
+                stringText = _getQClause(i, symbol=params[1], testValue=params[-1])
             
                 # Need to add distinct after the tests to prevent duplicates if there is
                 # more than one value of the instance that matches.
-                if i:
-                    f = resultSet.filter(stringText, value__field=i,
-                                         value__deleteTransaction__isnull=True).distinct()
-                else:
-                    f = resultSet.filter(stringText,
-                                         value__deleteTransaction__isnull=True).distinct()
+                f = resultSet.filter(stringText).distinct()
             else:
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
@@ -169,15 +181,13 @@ def _refineResults(resultSet, path, userInfo):
                 params = path[3][1]
                 i = Terms.getInstance(params[0])
                 if len(params) == 1:
-                    f = resultSet.filter(~(Q(value__field=i)&Q(value__deleteTransaction__isnull=True)))
+                    f = resultSet.exclude(value__in=Value.objects.filter(field=i,deleteTransaction__isnull=True))
                     return f, path[4:]
                 elif len(params) == 3:
                     symbol = params[1]
                     testValue = params[2]
-                    stringText=_getQClause(symbol, testValue)
-                    f = resultSet.filter(~(Q(value__field=i)&
-                                           Q(value__deleteTransaction__isnull=True)&
-                                           stringText))
+                    f = _excludeByField(resultSet, i, symbol, testValue)
+                    print (f.query)
                     return f, path[4:]
                 else:
                     raise ValueError("unrecognized contents within ':not([...])'")
