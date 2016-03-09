@@ -2259,6 +2259,8 @@ var PathwayPanel = (function () {
 			addExperienceButton.append("span").text("+");
 		}
 		
+		navContainer.appendTitle(getUserDescription(user));
+		
 		var panel2Div = this.appendFillArea();
 		showPanelLeft(this.node());
 		this.pathway = new Pathway(user, this, panel2Div.node(), true);

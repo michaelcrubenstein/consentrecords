@@ -384,21 +384,7 @@
 		
 		function setName(eventObject)
 		{
-			var firstName = cr.signedinUser.getDatum("_first name");
-			var lastName = cr.signedinUser.getDatum("_last name");
-			var s;
-			if (firstName)
-			{
-				if (lastName)
-					s = firstName + " " + lastName;
-				else
-					s = firstName;
-			}
-			else if (lastName)
-				s = lastName;
-			else
-				s = cr.signedinUser.getDescription();
-				
+			s = getUserDescription(cr.signedinUser);
 			$(eventObject.data).text(s);
 		}
 		
@@ -749,6 +735,26 @@
 					var previousPanel = $("panel.initial")[0];
 					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, previousPanel);
 					stateString = "";	/* So it only happens once. */
+				}
+				else if (stateString.startsWith("pathway"))
+				{
+					stateString = stateString.substring("pathway".length);
+					if (stateString.length > 0)
+					{
+						if (prepareClick())
+						{
+							cr.getData({path: "#"+stateString, done: function(newInstances)
+								{
+									if (newInstances.length > 0)
+									{
+										var panel = $("#id_user_home_panel")[0];
+										var pathway = new PathwayPanel(newInstances[0], panel);
+									}
+								},
+								fail: syncFailFunction});
+						}
+					}
+					stateString = "";
 				}
 			{% endif %}
 		});
