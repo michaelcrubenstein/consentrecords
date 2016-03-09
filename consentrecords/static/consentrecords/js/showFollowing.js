@@ -126,6 +126,14 @@ var FollowingSearchView = (function () {
 			   (lastName && lastName.toLocaleLowerCase().indexOf(val) >= 0);
 	}
 	
+	FollowingSearchView.prototype.noResultString = function()
+	{
+		if (this._constrainCompareText && this._constrainCompareText.length > 0)
+			return "No Results";
+		else
+			return "You are not following anyone. Click '+' to ask to follow someone."
+	}
+	
 	FollowingSearchView.prototype.textCleared = function()
 	{
 		SearchView.prototype.textCleared.call(this);
