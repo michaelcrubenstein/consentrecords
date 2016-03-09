@@ -1708,14 +1708,15 @@ var SearchView = (function () {
 					else
 						_this._foundObjects = _this._foundObjects.concat(foundObjects);
 					_this.showObjects(foundObjects);
+					_this.noResultsDiv.text(_this.noResultString());
+					_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
 				}
-				_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
 			}
 			this.getDataChunker = new GetDataChunker(this.listPanel.node(), done);
 			
 			/* Call setupInputBox at the end because it may trigger an input event. */
 			this.setupInputBox();
-			this.noResultsDiv.text(this.noResultString());
+			
 		}
 	}
 	
