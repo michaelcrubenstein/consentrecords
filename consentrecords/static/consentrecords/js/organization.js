@@ -95,6 +95,23 @@ function appendSessionDescriptions(buttons)
 				return null;
 		});
 }
+
+function getUserDescription(user)
+{
+	var firstName = user.getDatum("_first name");
+	var lastName = user.getDatum("_last name");
+	if (firstName)
+	{
+		if (lastName)
+			return firstName + " " + lastName;
+		else
+			return firstName;
+	}
+	else if (lastName)
+		return lastName;
+	else
+		return user.getDescription();
+}
 				
 function showUser(user, previousPanelNode)
 {

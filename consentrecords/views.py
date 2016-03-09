@@ -114,6 +114,34 @@ def list(request):
     except Exception as e:
         return HttpResponse(str(e))
 
+def showPathway(request, email):
+    LogRecord.emit(request.user, 'consentrecords/showPathway', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = '_user[_email=%s]' % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'pathway%s' % objs[0].id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
     def createInstance(user, data):
