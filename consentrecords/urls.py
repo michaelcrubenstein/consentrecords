@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^list', views.list, name='list'),
+    url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
