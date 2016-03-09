@@ -345,6 +345,13 @@ var PickOfferingSearchView = (function () {
 		return buttons;
 	}
 	
+	PickOfferingSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
 	function PickOfferingSearchView(sitePanel, marker)
 	{
 		this.marker = marker;
