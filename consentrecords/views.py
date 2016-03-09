@@ -475,6 +475,9 @@ class api:
                               'privilege': uuObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
+        if 'type' in fields:
+            data['typeName'] = uuObject.typeID.getDescription();
+                
         valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
             .select_related('field')\

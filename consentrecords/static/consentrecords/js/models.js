@@ -1600,8 +1600,11 @@ cr.getData = function(args)
 						v.importCells(datum.cells);
 						v.instanceID = datum.instanceID;
 						v.setDescription(datum.description);
-						v.privilege = datum.privilege;
 						v.parentID = datum.parentID;
+						if ("privilege" in datum)
+							v.privilege = datum.privilege;
+						if ("typeName" in datum)
+							v.typeName = datum.typeName;
 						v.isDataLoaded = true;
 						instances.push(v);
 					}
