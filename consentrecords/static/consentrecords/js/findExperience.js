@@ -352,6 +352,11 @@ var PickOfferingSearchView = (function () {
 		this.startSearchTimeout("");
 	}
 	
+	PickOfferingSearchView.prototype.noResultString = function()
+	{
+		return "There are no upcoming opportunities for {0}.".format(this.marker.getDescription());
+	}
+	
 	function PickOfferingSearchView(sitePanel, marker)
 	{
 		this.marker = marker;
