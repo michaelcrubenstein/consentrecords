@@ -9,22 +9,23 @@ var RequestFollowSearchView = (function () {
 	{
 		var buttons = SearchView.prototype.showObjects.call(this, foundObjects);
 		
+		var _this = this;
 		buttons.on("click", function(d, i)
 			{
 				if (prepareClick('click', 'request to follow user', false))
 				{
-					var _this = this;
+					var _thisButton = this;
 					var done = function()
 					{
 						bootstrap_alert.success("Access to {0} has been requested.".format(d.getDescription()),
 																		  ".alert-container");
-						$(_this.parentNode).animate({height: "0px"}, 400, 'swing', function()
+						$(_thisButton.parentNode).animate({height: "0px"}, 400, 'swing', function()
 						{
 							$(this).remove();
 							unblockClick();
 						});
 					}
-					d.getCell("_access request").addObjectValue(cr.signedinUser, done, syncFailFunction);
+					cr.addObjectValue("#"+d.getValueID(), "_access request", _this.user, done, syncFailFunction);
 				}
 				d3.event.preventDefault();
 			});
@@ -41,26 +42,21 @@ var RequestFollowSearchView = (function () {
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
-			return s + '[?^="' + val + '"]';
+			return s + '[_email^="' + val + '"]';
 		else
-			return s + '[?*="' + val + '"]';
+			return s + '[_email*="' + val + '"]';
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
 	RequestFollowSearchView.prototype.isButtonVisible = function(button, d)
 	{
-		var val = this._constrainCompareText;
-		var firstName = d.getDatum("_first name");
-		var lastName = d.getDatum("_last name");
-		return d.getDatum("_email").toLocaleLowerCase().indexOf(val) >= 0 ||
-			   (firstName && firstName.toLocaleLowerCase().indexOf(val) >= 0) ||
-			   (lastName && d.getDatum("_last name").toLocaleLowerCase().indexOf(val)) >= 0;
+		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
 	}
 	
 	function RequestFollowSearchView(sitePanel, user)
 	{
 		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Email, First Name or Last Name");
+		PanelSearchView.call(this, sitePanel, "Email", undefined, SelectAllChunker);
 	}
 	
 	return RequestFollowSearchView;
@@ -106,24 +102,20 @@ var FollowingSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	FollowingSearchView.prototype.searchPath = function(val)
 	{
-		var s = "#" + this.user.instanceID + '::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)';
+		var s1 = "#" + this.user.instanceID + '::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)';
+		var s2 = '_user["_access request"={0}]'.format(this.user.getValueID());
 		if (val.length == 0)
-			return s;
+			return '{0}|{1}'.format(s1, s2);
 		else if (val.length < 3)
-			return s + '[?^="' + val + '"]';
+			return '{0}[_email^="{2}"]|{1}[_email^="{2}"]'.format(s1, s2, val);
 		else
-			return s + '[?*="' + val + '"]';
+			return '{0}[_email*="{2}"]|{1}[_email*="{2}"]'.format(s1, s2, val);
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
 	FollowingSearchView.prototype.isButtonVisible = function(button, d)
 	{
-		var val = this._constrainCompareText;
-		var firstName = d.getDatum("_first name");
-		var lastName = d.getDatum("_last name");
-		return d.getDatum("_email").toLocaleLowerCase().indexOf(val) >= 0 ||
-			   (firstName && firstName.toLocaleLowerCase().indexOf(val) >= 0) ||
-			   (lastName && lastName.toLocaleLowerCase().indexOf(val) >= 0);
+		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
 	}
 	
 	FollowingSearchView.prototype.noResultString = function()
@@ -144,7 +136,7 @@ var FollowingSearchView = (function () {
 	function FollowingSearchView(sitePanel, user)
 	{
 		this.user = user;
-		PanelSearchView.call(this, sitePanel);
+		PanelSearchView.call(this, sitePanel, "Email", undefined, SelectAllChunker);
 	}
 	
 	return FollowingSearchView;
