@@ -1012,16 +1012,16 @@ class Value(dbmodels.Model):
                         Q(referenceValue__accessrecord__isnull=True)|
                         Q(referenceValue__accessrecord__source__in=sources))
 
-    def anonymousReadFilter(f):
+    def anonymousReadFilter():
         sources=Instance.objects.filter(\
                           Q(value__field=Terms.publicAccess.id)&
                           Q(value__referenceValue__in=[Terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return f.filter(Q(referenceValue__isnull=True)|
-                        Q(referenceValue__accessrecord__isnull=True)|
-                        Q(referenceValue__accessrecord__source__in=sources))
+        return Q(referenceValue__isnull=True)|\
+               Q(referenceValue__accessrecord__isnull=True)|\
+               Q(referenceValue__accessrecord__source__in=sources)
 
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
