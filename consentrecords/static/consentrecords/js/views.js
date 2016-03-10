@@ -1698,7 +1698,7 @@ var SearchView = (function () {
 	SearchView.prototype._constrainCompareText = null;
 	SearchView.prototype._searchTimeout = null;
 	
-	function SearchView(containerNode, placeHolder, fill) {
+	function SearchView(containerNode, placeHolder, fill, chunkerType) {
 		if (containerNode)
 		{
 			var _this = this;
@@ -1727,7 +1727,8 @@ var SearchView = (function () {
 					_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
 				}
 			}
-			this.getDataChunker = new GetDataChunker(this.listPanel.node(), done);
+			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
+			this.getDataChunker = new chunkerType(this.listPanel.node(), done);
 			
 			/* Call setupInputBox at the end because it may trigger an input event. */
 			this.setupInputBox();
@@ -1934,12 +1935,12 @@ var PanelSearchView = (function() {
 	PanelSearchView.prototype = new SearchView();
 	PanelSearchView.prototype.sitePanel = undefined
 	
-	function PanelSearchView(sitePanel, placeholder) {
+	function PanelSearchView(sitePanel, placeholder, fill, chunkerType) {
 		if (sitePanel)
 		{
 			/* Set sitePanel first for call to appendSearchArea */
 			this.sitePanel = sitePanel;
-			SearchView.call(this, sitePanel.node(), placeholder);
+			SearchView.call(this, sitePanel.node(), placeholder, fill, chunkerType);
 		}
 		else
 			SearchView.call(this);

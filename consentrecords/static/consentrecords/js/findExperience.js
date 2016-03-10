@@ -360,7 +360,7 @@ var PickOfferingSearchView = (function () {
 	function PickOfferingSearchView(sitePanel, marker)
 	{
 		this.marker = marker;
-		PanelSearchView.call(this, sitePanel);
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
 	return PickOfferingSearchView;
@@ -443,7 +443,7 @@ var FindExperienceSearchView = (function () {
 	
 	function FindExperienceSearchView(sitePanel, offeringID) {
 		this.offeringID = offeringID;
-		PanelSearchView.call(this, sitePanel, "Search");
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
 	return FindExperienceSearchView;

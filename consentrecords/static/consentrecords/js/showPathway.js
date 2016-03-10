@@ -1740,7 +1740,7 @@ var OrganizationSearchView = (function() {
 	{
 		this.dots = dots;
 		this.container = container;
-		SearchView.call(this, container.node(), placeholder, this.appendDescriptions)
+		SearchView.call(this, container.node(), placeholder, this.appendDescriptions, GetDataChunker)
 	}
 	
 	return OrganizationSearchView;
@@ -1858,7 +1858,7 @@ var SiteSearchView = (function() {
 	{
 		this.dots = dots;
 		this.container = container;
-		SearchView.call(this, container.node(), placeholder, this.appendDescriptions)
+		SearchView.call(this, container.node(), placeholder, this.appendDescriptions, GetDataChunker)
 	}
 	
 	return SiteSearchView;
@@ -2504,9 +2504,15 @@ var PickOrCreateSearchView = (function () {
 	
 	function PickOrCreateSearchView(sitePanel, pickDatum, createDatum)
 	{
-		this.pickDatum = pickDatum;
-		this.createDatum = createDatum;
-		PanelSearchView.call(this, sitePanel);
+		if (sitePanel)
+		{
+			this.pickDatum = pickDatum;
+			this.createDatum = createDatum;
+			var placeHolder = undefined;
+			PanelSearchView.call(this, sitePanel, placeHolder, pickDatum.cell.field.name, GetDataChunker /* Could be SelectAllChunker */);
+		}
+		else
+			PanelSearchView.call(this);
 	}
 	
 	return PickOrCreateSearchView;

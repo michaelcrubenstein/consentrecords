@@ -3,7 +3,7 @@
 var GetDataChunker = (function() {
 	GetDataChunker.prototype.path = null;
 	GetDataChunker.prototype.fields = [];
-	GetDataChunker.prototype.increment = 50;
+	GetDataChunker.prototype._increment = 50;
 	GetDataChunker.prototype._containerNode = null;
 	GetDataChunker.prototype._loadingMessage = null;
 	GetDataChunker.prototype._isSpinning = null;
@@ -39,14 +39,14 @@ var GetDataChunker = (function() {
 	{
 		if (this._loadingMessage != null)
 		{
-			if (instances.length < this.increment)
+			if (instances.length < this._increment)
 			{
 				this.clearLoadingMessage();
 				this._start = 0;
 			}
 			else
 			{
-				this._start += this.increment;
+				this._start += this._increment;
 				if (!this.isOverflowingY(this._loadingMessage.node()))
 					this._continue(startVal);
 				else
@@ -80,15 +80,20 @@ var GetDataChunker = (function() {
 		}
 	}
 	
+	GetDataChunker.prototype._dataGetter = function()
+	{
+		return cr.getData;
+	}
+	
 	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
 		
 		this.showLoadingMessage();
 
-		cr.getData({path: this.path, 
+		this._dataGetter()({path: this.path, 
 					start: this._start,
-					end: this._start + this.increment,
+					end: this._start + this._increment,
 					fields: this.fields, 
 					done: function(instances) { _this._doneGetData(instances, startVal); }, 
 					fail: asyncFailFunction});
@@ -155,4 +160,18 @@ var GetDataChunker = (function() {
 	}
 	
 	return GetDataChunker;
+})();
+
+var SelectAllChunker = (function() {
+	SelectAllChunker.prototype = new GetDataChunker();
+
+	SelectAllChunker.prototype._dataGetter = function()
+	{
+		return cr.selectAll;
+	}
+	function SelectAllChunker(containerNode, onGetDataDone)
+	{
+		GetDataChunker.call(this, containerNode, onGetDataDone);
+	}
+	return SelectAllChunker;
 })();
