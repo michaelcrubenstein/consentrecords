@@ -453,18 +453,8 @@ class api:
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
         
-        vs = uuObject.values
-            
-        cells = uuObject.getData(vs, fieldsData, userInfo, language)
-    
-        data = {"id": None,
-                'instanceID': uuObject.id, 
-                'description': uuObject.getDescription(language),
-                'parentID': uuObject.parent and uuObject.parent.id, 
-                "cells" : cells }
-        privilege = uuObject.getPrivilege(userInfo)
-        if privilege:
-            data['privilege'] = privilege.getDescription()
+        data = uuObject.getReferenceData(userInfo, language)
+        data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
     
         if 'parents' in fields:
             while uuObject.parent:
@@ -478,14 +468,9 @@ class api:
                 kindObject = uuObject.typeID
                 fieldData = kindObject.getParentReferenceFieldData()
             
-                parentData = [{'id': None, 
-                              'instanceID' : uuObject.id,
-                              'description': uuObject.getDescription(language),
-                              'position': 0}]
-                privilege = uuObject.getPrivilege(userInfo)
-                if privilege:
-                    parentData[0]['privilege'] = privilege.getDescription()
-                data["cells"].append({"field": fieldData, "data": parentData})
+                parentData = uuObject.getReferenceData(userInfo, language)
+                parentData['position'] = 0
+                data["cells"].append({"field": fieldData, "data": [parentData]})
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:

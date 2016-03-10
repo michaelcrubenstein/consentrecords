@@ -307,7 +307,10 @@ class Instance(dbmodels.Model):
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, userInfo, language=None):
-        d = {'id': None, 'instanceID': self.id, 'description': self.getDescription(language)}
+        d = {'id': None, 
+             'instanceID': self.id, 
+             'description': self.getDescription(language),
+             'parentID': self.parent and self.parent.id}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             d["privilege"] = privilege.getDescription()
