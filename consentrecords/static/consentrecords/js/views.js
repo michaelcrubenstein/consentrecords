@@ -217,6 +217,21 @@ function showPanelLeft(panelNode, done)
 						});
 }
 
+function asyncHidePanelRight(panelNode, doRemove, completeFunction)
+{
+	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
+	
+	closealert();
+	$(panelNode).trigger("hiding.cr");
+	$(panelNode).hide("slide", {direction: "right"}, 400, 
+		function() {
+			if (doRemove)
+				$(this).remove();
+			if (completeFunction)
+				completeFunction();
+		});
+}
+
 function hidePanelRight(panelNode, doRemove, completeFunction)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
