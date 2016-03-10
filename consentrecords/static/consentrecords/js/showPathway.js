@@ -1182,21 +1182,25 @@ var Pathway = (function () {
 										break;
 									}
 								}
-								
-								crp.pushCheckCells(_thisPathway.user, undefined, function() {
-										var m = _thisPathway.user.getValue("More Experiences");
-										if (m && m.getValueID())
-										{
-											m.getCellData("More Experience",
-														  successFunction2, 
-														  asyncFailFunction);
-										}
-										else
-											successFunction2([]);	/* There are none. */
-									},
-									asyncFailFunction);
 							},
 						fail: asyncFailFunction});
+								
+			crp.pushCheckCells(_thisPathway.user, undefined, function() {
+					var m = _thisPathway.user.getValue("More Experiences");
+					if (m && m.getValueID())
+					{
+						m.getCellData("More Experience",
+									  successFunction2, 
+									  asyncFailFunction);
+					}
+					else
+						successFunction2([]);	/* There are none. */
+				},
+				function(err)
+				{
+					asyncHidePanelRight(_thisPathway.sitePanel.node());
+					asyncFailFunction(err);
+				});
 		}
 
 		var successFunction2 = function(experiences)
