@@ -1,6 +1,7 @@
 # python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeSWSG.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/scrapeTufts.txt michaelcrubenstein@gmail.com
 
 import datetime
 import django
