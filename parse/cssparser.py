@@ -98,6 +98,10 @@ class parser:
             elif s == '(':
                 item, i = parser.cascade(source, i+1, ')')
                 a += [s, item]
+            elif s == ')':
+            	raise ValueError('Unmatched ")"')
+            elif s == ']':
+            	raise ValueError('Unmatched "]"')
             elif len(s) > 1 and s[0] == '"':
                 a += [s[1:-1].replace('""', '"')]
                 i += 1
