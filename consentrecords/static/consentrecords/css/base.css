@@ -283,7 +283,7 @@ section.cell {
 .cell.multiple.edit>label {
 	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
 }
-.cell.multiple.edit > .items-div {
+.cell.multiple.edit > ol {
 	background: white;
 	border-top: 1px solid #eee;
 	/* The bottom border is provided by the add-value button, below */
@@ -322,10 +322,10 @@ li > .row-button {
 	text-align: left;
 }
 /* If there is a label for a unique string item, right-align the input and its container. */
-.cell.unique.edit.string label+.items-div .string-input-container {
+.cell.unique.edit.string label+ol .string-input-container {
 	text-align: right;
 }
-.cell.unique.edit.string label+.items-div input {
+.cell.unique.edit.string label+ol input {
 	text-align: right;
 }
 .cell.edit input[type=text],

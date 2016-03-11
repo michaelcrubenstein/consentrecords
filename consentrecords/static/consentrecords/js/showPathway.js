@@ -1548,7 +1548,7 @@ function setupServicesPanel(dots)
 	var labelDiv = obj.append('label')
 		.text("Markers");
 		
-	var itemsDiv = obj.append("ol").classed("items-div panel-fill", true);
+	var itemsDiv = obj.append("ol").classed("panel-fill", true);
 
 	itemsDiv.classed("border-above", true);
 
@@ -1732,8 +1732,7 @@ var OrganizationSearchView = (function() {
 				  .append('div');
 		return w.append("section")
 			.classed("multiple", true)
-			.append("ol")
-			.classed("items-div", true);
+			.append("ol");
 	}
 	
 	function OrganizationSearchView(dots, container, placeholder)
@@ -1850,8 +1849,7 @@ var SiteSearchView = (function() {
 				  .append('div');
 		return w.append("section")
 			.classed("multiple", true)
-			.append("ol")
-			.classed("items-div", true);
+			.append("ol");
 	}
 	
 	function SiteSearchView(dots, container, placeholder)
@@ -2007,7 +2005,7 @@ function setupConfirmPanel(dots)
 		{
 			var section = summary.append('section')
 				.classed('cell view unique', true);
-			section.append('ol').classed('items-div', true)
+			section.append('ol')
 				.append('li')
 				.append('div').classed('string-value-view', true)
 				.text(t);
@@ -2021,8 +2019,7 @@ function setupConfirmPanel(dots)
 			.classed('cell view multiple', true);
 		
 		servicesDiv.append('label').text("Markers");
-		var itemsDiv = servicesDiv.append('ol')
-			.classed('items-div', true);
+		var itemsDiv = servicesDiv.append('ol');
 		
 		if (dots.offering)
 		{
@@ -2954,8 +2951,7 @@ var PickOrCreateCell = (function () {
 		var sectionObj = d3.select(obj);
 
 		this.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol")
-			.classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 			
 		var _this = this;
 		

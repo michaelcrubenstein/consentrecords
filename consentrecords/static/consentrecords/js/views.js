@@ -401,7 +401,7 @@ function _showEditStringCell(obj, cell, inputType)
 	
 	if (cell.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
@@ -425,8 +425,7 @@ function _showEditStringCell(obj, cell, inputType)
 	else
 	{
 		cell.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol")
-			.classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
@@ -488,7 +487,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	
 	if (this.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 
 		var divs = itemsDiv.selectAll("li")
 			.data(this.data)
@@ -508,8 +507,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 	else
 	{
 		this.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol")
-			.classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 		_setupItemsDivHandlers(itemsDiv, this);
 
 		var divs = appendItems(itemsDiv, this.data);
@@ -586,7 +584,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 	
 	if (cell.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
@@ -606,8 +604,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 	else
 	{
 		cell.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol")
-			.classed("items-div", true);
+		var itemsDiv = sectionObj.append("ol");
 		_setupItemsDivHandlers(itemsDiv, cell);
 
 		var divs = appendItems(itemsDiv, cell.data);
@@ -1040,7 +1037,7 @@ cr.TranslationCell.prototype.showEdit = function(obj, containerPanel)
 
 cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData, sourceObjects)
 {
-	d3.select(sectionObj).selectAll(".items-div>li").each(function(d, i)
+	d3.select(sectionObj).selectAll("ol>li").each(function(d, i)
 		{
 			if (d.id)
 			{
@@ -1136,7 +1133,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	var sectionObj = d3.select(obj);
 	
 	var labelDiv = this.appendLabel(obj);
-	var itemsDiv = sectionObj.append("ol").classed("items-div", true);
+	var itemsDiv = sectionObj.append("ol");
 
 	if (this.isUnique())
 	{
@@ -1204,8 +1201,7 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 	
 	var itemsDiv = panel2Div.append("section")
 		.classed("multiple", true)
-		.append("ol")
-		.classed("items-div", true);
+		.append("ol");
 
 	var sections = itemsDiv.selectAll("li")
 				.data(rootObjects)
@@ -1222,7 +1218,7 @@ function appendActionButton(text, onClick)
 		.classed('cell edit unique', true)
 		.classed('btn row-button', true)
 		.on('click', onClick)
-		.append('ol').classed('items-div', true);
+		.append('ol');
 	
 	var button = itemsDiv.append('li')
 		.append('div')
@@ -1548,7 +1544,7 @@ var SitePanel = (function () {
 				.each(function(cell) {
 						var section = d3.select(this);
 						cell.appendLabel(this);
-						var itemsDiv = section.append("ol").classed("items-div", true);
+						var itemsDiv = section.append("ol");
 						_thisPanel2Div.appendCellData(this, cell);
 					});
 			sections.append("div").classed("cell-border-below", true);
@@ -2373,7 +2369,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		var itemsDiv = panel2Div.append("section")
 			.classed("multiple", true)
 			.append("ol")
-			.classed("items-div border-above", true)
+			.classed("border-above", true)
 			.datum(cell);
 		
 		_setupItemsDivHandlers(itemsDiv, cell);
@@ -2476,7 +2472,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 	var itemsDiv = panel2Div.append("section")
 		.classed("multiple", true)
 		.append("ol")
-		.classed("items-div border-above", true)
+		.classed("border-above", true)
 		.datum(cell);
 
 	_setupItemsDivHandlers(itemsDiv, cell);

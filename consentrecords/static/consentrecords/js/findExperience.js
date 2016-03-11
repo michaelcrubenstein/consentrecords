@@ -94,7 +94,7 @@ function showSessionDetails(session, service, previousPanelNode)
 			if (serviceCell.data.length > 0)
 			{
 				serviceCell.appendLabel(cellDiv.node());
-				var itemsDiv = cellDiv.append("ol").classed("items-div", true);
+				var itemsDiv = cellDiv.append("ol");
 
 				var divs = appendItems(itemsDiv, serviceCell.data);
 				var buttons = divs.append("div").classed("multi-line-item", true);

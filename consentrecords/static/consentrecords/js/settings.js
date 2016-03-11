@@ -6,7 +6,7 @@ var Settings = (function () {
 			.classed('cell edit unique', true)
 			.classed('btn row-button', true)
 			.on('click', onClick)
-			.append('ol').classed('items-div', true);
+			.append('ol');
 		
 		var button = itemsDiv.append('li')
 			.append('div')
