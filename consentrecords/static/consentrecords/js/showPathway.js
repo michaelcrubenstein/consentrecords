@@ -2970,8 +2970,6 @@ var PickOrCreateCell = (function () {
 					});
 		}
 
-		_setupItemsDivHandlers(itemsDiv, this);
-		
 		function showAdded(oldData, previousPanelNode)
 		{
 			var pickDatum = oldData.pickValue;
@@ -2991,7 +2989,7 @@ var PickOrCreateCell = (function () {
 			{
 				$(eventObject.data).off("valueAdded.cr", null, onValueAdded);
 			});
-	
+			
 		var divs = appendItems(itemsDiv, this.data);
 	
 		if (!this.isUnique())
@@ -3031,6 +3029,7 @@ var PickOrCreateCell = (function () {
 			}
 		
 			crv.appendAddButton(sectionObj, done);
+			_setupItemsDivHandlers(itemsDiv, this);
 		}
 	}
 
