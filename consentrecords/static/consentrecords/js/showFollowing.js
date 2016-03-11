@@ -19,6 +19,13 @@ var RequestFollowSearchView = (function () {
 					{
 						bootstrap_alert.success("Access to {0} has been requested.".format(d.getDescription()),
 																		  ".alert-container");
+						_this.sitePanel.followingPanel.showPendingObjects([d]);
+						_this.sitePanel.followingPanel._pendingSection.selectAll('li').sort(
+							function(a, b)
+							{
+								return a.getDescription().localeCompare(b.getDescription());
+							}
+						);
 						$(_thisButton.parentNode).animate({height: "0px"}, 400, 'swing', function()
 						{
 							$(this).remove();
@@ -64,11 +71,12 @@ var RequestFollowSearchView = (function () {
 	
 var RequestFollowPanel = (function() {
 	RequestFollowPanel.prototype = new SitePanel();
-	RequestFollowPanel.prototype.offeringID = null;
+	RequestFollowPanel.prototype.followingPanel = null;
 	
-	function RequestFollowPanel(user, previousPanel) {
+	function RequestFollowPanel(user, followingPanel) {
 		var header = "Ask to Follow";
-		SitePanel.call(this, previousPanel, null, header, "list", revealPanelUp);
+		this.followingPanel = followingPanel;
+		SitePanel.call(this, followingPanel.node(), null, header, "list", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
@@ -87,68 +95,78 @@ var RequestFollowPanel = (function() {
 	return RequestFollowPanel;
 })();
 
-var FollowingSearchView = (function () {
-	FollowingSearchView.prototype = new PanelSearchView();
-	
-	/* Overrides SearchView.prototype.onClickButton */
-	FollowingSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'show user'))
-		{
-			showUser(d, this.sitePanel.node());
-		}
-		d3.event.preventDefault();
-	}
-	
-	/* Overrides SearchView.searchPath */
-	FollowingSearchView.prototype.searchPath = function(val)
-	{
-		var s1 = "#" + this.user.instanceID + '::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)';
-		var s2 = '_user["_access request"={0}]'.format(this.user.getValueID());
-		if (val.length == 0)
-			return '{0}|{1}'.format(s1, s2);
-		else if (val.length < 3)
-			return '{0}[_email^="{2}"]|{1}[_email^="{2}"]'.format(s1, s2, val);
-		else
-			return '{0}[_email*="{2}"]|{1}[_email*="{2}"]'.format(s1, s2, val);
-	}
-	
-	/* Overrides SearchView.prototype.isButtonVisible */
-	FollowingSearchView.prototype.isButtonVisible = function(button, d)
-	{
-		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
-	}
-	
-	FollowingSearchView.prototype.noResultString = function()
-	{
-		if (this._constrainCompareText && this._constrainCompareText.length > 0)
-			return "No Results";
-		else
-			return "You are not following anyone. Click '+' to ask to follow someone."
-	}
-	
-	FollowingSearchView.prototype.textCleared = function()
-	{
-		SearchView.prototype.textCleared.call(this);
-		
-		this.startSearchTimeout("");
-	}
-	
-	function FollowingSearchView(sitePanel, user)
-	{
-		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Email", undefined, SelectAllChunker);
-	}
-	
-	return FollowingSearchView;
-})();
-	
 var FollowingPanel = (function() {
 	FollowingPanel.prototype = new SitePanel();
-	FollowingPanel.prototype.offeringID = null;
+	FollowingPanel.prototype._pendingSection = null;
+	FollowingPanel.prototype._noPendingResultsDiv = null;
+	FollowingPanel.prototype._foundPendingRequests = null;
+	FollowingPanel.prototype._followingSection = null;
+	FollowingPanel.prototype._noFollowingResultsDiv = null;
+	FollowingPanel.prototype._foundFollowingRequests = null;
+	
+	FollowingPanel.prototype.showPendingObjects = function(foundObjects)
+	{
+		var _this = this;
+		var sections = this._pendingChunker.appendButtonContainers(foundObjects);
+		var buttons = appendViewButtons(sections, function(buttons)
+			{
+				appendRightChevrons(buttons);
+		
+				buttons.append('div').classed("left-expanding-div description-text", true)
+					.text(_getDataDescription);
+			});
+		
+		return buttons;
+	}
+
+	FollowingPanel.prototype.getPendingRequestsDone = function(foundObjects, startVal)
+	{
+		if (this._foundPendingRequests === null)
+			this._foundPendingRequests = foundObjects;
+		else
+			this._foundPendingRequests = this._foundPendingRequests.concat(foundObjects);
+		this.showPendingObjects(foundObjects);
+		this._noPendingResultsDiv.text("None");
+		this._noPendingResultsDiv.style('display', this._foundPendingRequests.length === 0 ? null : 'none');
+	}
+	
+	FollowingPanel.prototype.showFollowingObjects = function(foundObjects)
+	{
+		var _this = this;
+		var sections = this._followingChunker.appendButtonContainers(foundObjects);
+		var buttons = appendViewButtons(sections, function(buttons)
+			{
+				appendRightChevrons(buttons);
+		
+				buttons.append('div').classed("left-expanding-div description-text", true)
+					.text(_getDataDescription);
+			})
+			.on("click", function(user)
+			{
+				if (prepareClick('click', 'show user'))
+				{
+					showUser(user, _this.node());
+				}
+			});
+		
+		return buttons;
+	}
+
+	FollowingPanel.prototype.getFollowingRequestsDone = function(foundObjects, startVal)
+	{
+		if (this._foundFollowingRequests === null)
+			this._foundFollowingRequests = foundObjects;
+		else
+			this._foundFollowingRequests = this._foundFollowingRequests.concat(foundObjects);
+		this.showFollowingObjects(foundObjects);
+		this._noFollowingResultsDiv.text("None");
+		this._noFollowingResultsDiv.style('display', this._foundFollowingRequests.length === 0 ? null : 'none');
+	}
 	
 	function FollowingPanel(user, previousPanel) {
 		var header = "Following";
-		SitePanel.call(this, previousPanel, null, header, "list");
+		this.user = user;
+		SitePanel.call(this, previousPanel, null, header, "edit");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
@@ -163,17 +181,46 @@ var FollowingPanel = (function() {
 				{
 					showClickFeedback(this);
 	
-					var newPanel = new RequestFollowPanel(user, _this.node());
+					var newPanel = new RequestFollowPanel(user, _this);
 				}
 				d3.event.preventDefault();
 			});
 		addExperienceButton.append("span").text("+");
 
 		navContainer.appendTitle(header);
+		
+		var panel2Div = this.appendScrollArea();
+		
+		this._pendingSection = panel2Div.appendSections([user])
+				.classed("cell edit multiple", true);
 
-		this.searchView = new FollowingSearchView(this, user);
-		this.searchView.search("");
+		this._pendingSection.append("label")
+			.text("Pending Requests");
+		var itemsDiv = this._pendingSection.append("ol");
+		this._noPendingResultsDiv = this._pendingSection.append("div")
+			.text("None")
+			.style("display", "none")
+		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
+			function(foundObjects, startVal) { _this.getPendingRequestsDone(foundObjects, startVal); });
+		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
+		this._pendingChunker.fields = [];
+		this._pendingChunker.start("");			
+			
+		this._followingSection = panel2Div.appendSections([user])
+				.classed("cell edit multiple", true);
 
+		this._followingSection.append("label")
+			.text("Following");
+		itemsDiv = this._followingSection.append("ol");
+		this._noFollowingResultsDiv = this._followingSection.append("div")
+			.text("None")
+			.style("display", "none")
+		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
+			function(foundObjects, startVal) { _this.getFollowingRequestsDone(foundObjects, startVal); });
+		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)'.format(this.user.getValueID());
+		this._followingChunker.fields = [];
+		this._followingChunker.start("");			
+			
 		showPanelLeft(this.node());
 	}
 	
