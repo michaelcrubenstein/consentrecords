@@ -87,6 +87,24 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 		
+		cells = panel2Div.append("section")
+			.datum(this.user.getCell("_access request"))
+			.classed("cell multiple", true);
+		cells.append("label")
+			.text("Access Requests");
+		itemCells = cells.append("ol")
+			.classed("cell-items", true);
+			
+		items = appendItems(itemCells, cells.datum().data);
+		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
+		var infoButtons = appendInfoButtons(buttons, this.node());
+		
+		appendButtonDescriptions(buttons)
+			.each(_pushTextChanged);
+		var itemButtonDivs = buttons.append('div');
+		var applyButtons = this.appendApplyButtons(itemButtonDivs);
+		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
+			
 		// Sort the access records by type.
 		for (var i = 0; i < accessRecords.length; ++i)
 		{
@@ -141,24 +159,6 @@ var SharingPanel = (function() {
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add user or group");
 		
-		cells = panel2Div.append("section")
-			.datum(this.user.getCell("_access request"))
-			.classed("cell multiple", true);
-		cells.append("label")
-			.text("Access Requests");
-		itemCells = cells.append("ol")
-			.classed("cell-items", true);
-			
-		items = appendItems(itemCells, cells.datum().data);
-		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
-		var infoButtons = appendInfoButtons(buttons, this.node());
-		
-		appendButtonDescriptions(buttons)
-			.each(_pushTextChanged);
-		var itemButtonDivs = buttons.append('div');
-		var applyButtons = this.appendApplyButtons(itemButtonDivs);
-		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
-			
 		showPanelLeft(this.node());
 	}
 
