@@ -348,7 +348,7 @@ function _setupItemHandlers(d)
 	{
 		var f = function(eventObject)
 		{
-			$(eventObject.data).animate({height: "0px"}, 600, 'swing', function()
+			$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
 			{
 				var parentNode = this.parentNode;
 				$(this).remove();
