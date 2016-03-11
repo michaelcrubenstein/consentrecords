@@ -1753,14 +1753,7 @@ var SearchView = (function () {
 	
 	SearchView.prototype.appendButtonContainers = function(foundObjects)
 	{
-		var items = [];
-		var _this = this;
-		foundObjects.forEach(function(d) {
-			var i = _this.getDataChunker.appendNode('li');
-			d3.select(i).datum(d);
-			items.push(i);
-		});
-		return d3.selectAll(items);
+		return this.getDataChunker.appendButtonContainers(foundObjects);
 	}
 	
 	SearchView.prototype.clearListPanel = function()

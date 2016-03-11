@@ -137,7 +137,7 @@ var GetDataChunker = (function() {
 		}
 	}
 	
-	GetDataChunker.prototype.appendNode = function(elementType)
+	GetDataChunker.prototype._appendNode = function(elementType)
 	{
 		var t = document.createElement(elementType);
 		if (this._loadingMessage)
@@ -147,6 +147,17 @@ var GetDataChunker = (function() {
     	return t;
 	}
 
+	GetDataChunker.prototype.appendButtonContainers = function(data)
+	{
+		var _this = this;
+		var items = data.map(function(d) {
+			var i = _this._appendNode('li');
+			d3.select(i).datum(d);
+			return i;
+		});
+		return d3.selectAll(items);
+	}
+	
 	function GetDataChunker(containerNode, onGetDataDone)
 	{
 		this._containerNode = containerNode;
