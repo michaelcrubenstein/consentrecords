@@ -469,7 +469,7 @@ var Pathway = (function () {
 		else
 			this.minDate = new Date();
 		
-		this.maxDate = new Date(1900, 1, 1);
+		this.maxDate = new Date();
 		var _this = this;
 		$(this.allExperiences).each(function()
 			{
