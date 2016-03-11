@@ -488,7 +488,10 @@ cr.ObjectCell = (function() {
 			newValue.id = oldValue.id;
 		newValue.instanceID = oldValue.instanceID;
 		newValue.description = oldValue.description;
-		newValue.privilege = oldValue.privilege;
+		if ("privilege" in oldValue)
+			newValue.privilege = oldValue.privilege;
+		if ("typeName" in oldValue)
+			newValue.typeName = oldValue.typeName;
 		if (oldValue.cells)
 		{
 			newValue.importCells(oldValue.cells);
@@ -1231,34 +1234,35 @@ cr.selectAll = function(args)
 			throw ("failFunction is not specified");
 		if (!args.done)
 			throw ("done function is not specified");
-		var argList = {};
-		if (args.path)
-			argList.path = args.path;
-		else
+		if (!args.path)
 			throw "path was not specified to selectAll"
-			
-		if (args.start !== undefined)
-			argList.start = args.start;
-		if (args.end !== undefined)
-			argList.end = args.end;
+
+		var data = {path : args.path};
+		if (cr.accessToken)
+			data["access_token"] = cr.accessToken;
 		
-		$.getJSON(cr.urls.selectAll, 
-			argList,
+		if (args.start !== undefined)
+			data.start = args.start;
+		if (args.end !== undefined)
+			data.end = args.end;
+		
+		$.getJSON(cr.urls.selectAll, data,
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = json.objects.map(function(v)
-					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});					
-					args.done(newObjects);
+					var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
+					args.done(instances);
 				}
-				else
-				{
+				else {
 					args.fail(json.error);
 				}
 			}
-		);
+		)
+		.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
+					}
+				);
 	};
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail.
@@ -1578,7 +1582,7 @@ cr.getData = function(args)
 		if (!args.done)
 			throw ("successFunction is not specified");
 		if (!args.path)
-			throw ("path is not specified");
+			throw ("path is not specified to getData");
 			
 		var data = {path : args.path}
 		if (args.fields)
@@ -1595,23 +1599,7 @@ cr.getData = function(args)
 			function(json)
 			{
 				if (json.success) {
-					var instances = [];
-					for (var i = 0; i < json.data.length; ++i)
-					{
-						var datum = json.data[i];
-						var v = new cr.ObjectValue();
-						v.importCells(datum.cells);
-						v.instanceID = datum.instanceID;
-						v.setDescription(datum.description);
-						v.parentID = datum.parentID;
-						if ("privilege" in datum)
-							v.privilege = datum.privilege;
-						if ("typeName" in datum)
-							v.typeName = datum.typeName;
-						v.isDataLoaded = true;
-						instances.push(v);
-					}
-				
+					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
 					args.done(instances);
 				}
 				else {

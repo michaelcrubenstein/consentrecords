@@ -94,7 +94,7 @@ function showSessionDetails(session, service, previousPanelNode)
 			if (serviceCell.data.length > 0)
 			{
 				serviceCell.appendLabel(cellDiv.node());
-				var itemsDiv = cellDiv.append("ol").classed("items-div", true);
+				var itemsDiv = cellDiv.append("ol");
 
 				var divs = appendItems(itemsDiv, serviceCell.data);
 				var buttons = divs.append("div").classed("multi-line-item", true);
@@ -360,7 +360,7 @@ var PickOfferingSearchView = (function () {
 	function PickOfferingSearchView(sitePanel, marker)
 	{
 		this.marker = marker;
-		PanelSearchView.call(this, sitePanel);
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
 	return PickOfferingSearchView;
@@ -443,7 +443,7 @@ var FindExperienceSearchView = (function () {
 	
 	function FindExperienceSearchView(sitePanel, offeringID) {
 		this.offeringID = offeringID;
-		PanelSearchView.call(this, sitePanel, "Search");
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
 	return FindExperienceSearchView;
