@@ -2505,8 +2505,7 @@ var PickOrCreateSearchView = (function () {
 		{
 			this.pickDatum = pickDatum;
 			this.createDatum = createDatum;
-			var placeHolder = undefined;
-			PanelSearchView.call(this, sitePanel, placeHolder, pickDatum.cell.field.name, GetDataChunker /* Could be SelectAllChunker */);
+			PanelSearchView.call(this, sitePanel, pickDatum.cell.field.name, undefined, GetDataChunker /* Could be SelectAllChunker */);
 		}
 		else
 			PanelSearchView.call(this);
