@@ -1268,6 +1268,47 @@ var Pathway = (function () {
 	return Pathway;
 })();
 
+var PathwayPanel = (function () {
+	PathwayPanel.prototype = new SitePanel();
+	PathwayPanel.prototype.pathway = null;
+	
+	function PathwayPanel(user, previousPanel) {
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		var _this = this;
+		
+		var moreExperiences = user.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+		if (canAddExperience)
+		{ 
+			var addExperienceButton = navContainer.appendRightButton()
+				.classed('add-button', true)
+				.on("click", function(d) {
+					if (prepareClick('click', 'add experience'))
+					{
+						showClickFeedback(this);
+		
+						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
+					}
+					d3.event.preventDefault();
+				});
+			addExperienceButton.append("span").text("+");
+		}
+		
+		navContainer.appendTitle(getUserDescription(user));
+		
+		var panel2Div = this.appendScrollArea();
+		showPanelLeft(this.node());
+		this.pathway = new Pathway(user, this, panel2Div.node(), true);
+	}
+	
+	return PathwayPanel;
+})();
+
 function addInput(p, placeholder)
 {
 	var searchBar = p.append("div").classed("searchbar table-row", true);
@@ -2227,47 +2268,6 @@ var AddExperiencePanel = (function () {
 	}
 	
 	return AddExperiencePanel;
-})();
-
-var PathwayPanel = (function () {
-	PathwayPanel.prototype = new SitePanel();
-	PathwayPanel.prototype.pathway = null;
-	
-	function PathwayPanel(user, previousPanel) {
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
-		var navContainer = this.appendNavContainer();
-		
-		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
-		backButton.append("span").text("Done");
-		var _this = this;
-		
-		var moreExperiences = user.getValue("More Experiences");
-		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
-		if (canAddExperience)
-		{ 
-			var addExperienceButton = navContainer.appendRightButton()
-				.classed('add-button', true)
-				.on("click", function(d) {
-					if (prepareClick('click', 'add experience'))
-					{
-						showClickFeedback(this);
-		
-						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
-					}
-					d3.event.preventDefault();
-				});
-			addExperienceButton.append("span").text("+");
-		}
-		
-		navContainer.appendTitle(getUserDescription(user));
-		
-		var panel2Div = this.appendFillArea();
-		showPanelLeft(this.node());
-		this.pathway = new Pathway(user, this, panel2Div.node(), true);
-	}
-	
-	return PathwayPanel;
 })();
 
 var ExperienceDetailPanel = (function () {
