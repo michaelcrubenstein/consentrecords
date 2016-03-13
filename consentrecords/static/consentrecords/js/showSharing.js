@@ -22,7 +22,7 @@ function onUserAdded(itemsDivNode, newValue)
 	var previousPanelNode = $(itemsDivNode).parents(".site-panel")[0];
 	var itemsDiv = d3.select(itemsDivNode);
 	var item = appendItem(itemsDiv, newValue);
-	_checkItemsDivDisplay(itemsDiv);
+	_checkItemsDivDisplay(itemsDivNode);
 		
 	appendUserControls(item, previousPanelNode);
 

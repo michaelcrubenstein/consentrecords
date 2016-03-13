@@ -469,7 +469,7 @@ var Pathway = (function () {
 		else
 			this.minDate = new Date();
 		
-		this.maxDate = new Date(1900, 1, 1);
+		this.maxDate = new Date();
 		var _this = this;
 		$(this.allExperiences).each(function()
 			{
@@ -868,11 +868,13 @@ var Pathway = (function () {
 	/* setup up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
 	 */
-	Pathway.prototype.setupDelete = function(fd) 
+	Pathway.prototype.setupDelete = function(fd, node) 
 	{
+		var _this = this;
 		var valueDeleted = function(eventObject)
 		{
 			d3.select(eventObject.data).remove();
+			_this.handleValueDeleted(this);
 		};
 		
 		var dataChanged = function(eventObject)
@@ -881,13 +883,13 @@ var Pathway = (function () {
 				.text(function(d) { return d.getDescription(); })
 		}
 		
-		$(fd.experience).one("valueDeleted.cr", null, this, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, this, dataChanged);
+		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
+		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
 		
-		$(this).on("remove", function()
+		$(node).on("remove", null, fd.experience, function()
 		{
-			$(fd.experience).off("valueDeleted.cr", null, valueDeleted);
-			$(fd.experience).off("dataChanged.cr", null, dataChanged);
+			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
+			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
 		});
 	}
 	
@@ -915,12 +917,17 @@ var Pathway = (function () {
 	
 	Pathway.prototype.appendExperiences = function()
 	{
+		var _this = this;
+
 		this.experienceGroup.selectAll('g').remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
-			.each(this.setupDelete);
+			.each(function(d)
+				{
+					_this.setupDelete(d, this);
+				});
 		
 		function showDetail(fd, i)
 		{
@@ -934,7 +941,6 @@ var Pathway = (function () {
 				});
 		}
 		
-		var _this = this;
 		g.append('path')
 			.each(function()
 				{ this.pathway = _this; })
@@ -993,18 +999,15 @@ var Pathway = (function () {
 		_this.layoutExperiences();
 	}
 	
-	Pathway.prototype.handleValueDeleted = function(eventObject)
+	Pathway.prototype.handleValueDeleted = function(experience)
 	{
-		var i = this;
-		var _this = eventObject.data;
-		
-		var index = _this.allExperiences.indexOf(i);
+		var index = this.allExperiences.indexOf(experience);
 		if (index >= 0)
-			_this.allExperiences.splice(index, 1);
-		if (i == _this.detailFlagData.experience)
-			_this.hideDetail(function() { }, 0);
-		_this.clearLayout();
-		_this.layoutExperiences();
+			this.allExperiences.splice(index, 1);
+		if (experience == this.detailFlagData.experience)
+			this.hideDetail(function() { }, 0);
+		this.clearLayout();
+		this.layoutExperiences();
 	};
 
 	Pathway.prototype.handleExperienceDateChanged = function(eventObject)
@@ -1019,14 +1022,12 @@ var Pathway = (function () {
 		var _this = this;
 		
 		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
-		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
 		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
-			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
 			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
@@ -1059,6 +1060,7 @@ var Pathway = (function () {
 		var _this = this;
 		function resizeFunction()
 		{
+			_this.sitePanel.calculateHeight();
 			_this.layoutExperiences();
 		}
 	
@@ -1268,9 +1270,50 @@ var Pathway = (function () {
 	return Pathway;
 })();
 
+var PathwayPanel = (function () {
+	PathwayPanel.prototype = new SitePanel();
+	PathwayPanel.prototype.pathway = null;
+	
+	function PathwayPanel(user, previousPanel) {
+		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
+		var navContainer = this.appendNavContainer();
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", handleCloseRightEvent);
+		backButton.append("span").text("Done");
+		var _this = this;
+		
+		var moreExperiences = user.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+		if (canAddExperience)
+		{ 
+			var addExperienceButton = navContainer.appendRightButton()
+				.classed('add-button', true)
+				.on("click", function(d) {
+					if (prepareClick('click', 'add experience'))
+					{
+						showClickFeedback(this);
+		
+						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
+					}
+					d3.event.preventDefault();
+				});
+			addExperienceButton.append("span").text("+");
+		}
+		
+		navContainer.appendTitle(getUserDescription(user));
+		
+		var panel2Div = this.appendScrollArea();
+		showPanelLeft(this.node());
+		this.pathway = new Pathway(user, this, panel2Div.node(), true);
+	}
+	
+	return PathwayPanel;
+})();
+
 function addInput(p, placeholder)
 {
-	var searchBar = p.append("div").classed("searchbar table-row", true);
+	var searchBar = p.append("div").classed("searchbar", true);
 	
 	var searchInputContainer = searchBar.append("div")
 		.classed("search-input-container", true);
@@ -1307,10 +1350,8 @@ function setupFirstMarkerPanel(dots)
 {
 	var p0 = d3.select(this);
 	p0.append('div')
-		.classed('table-row', true)
 		.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
 	p0.append('div')
-		.classed('table-row', true)
 		.append('p').text("Choose one of the markers below, or create your own marker. If more than one marker applies, pick one and then you can add others.");
 		
 	var searchInput = addInput(p0, "Experience");
@@ -1531,7 +1572,6 @@ function setupServicesPanel(dots)
 	var sitePanelNode = $(this).parents("panel.site-panel")[0];
 	var p1 = d3.select(this);
 	var header = p1.append('div')
-		.classed('table-row', true)
 		.append('p');
 		
 	if (dots.offering && dots.offering.getCell("Service").data.length > 0)
@@ -1611,7 +1651,7 @@ function setupServicesPanel(dots)
 	appendServices(dots.services);
 	
 	/* Add one more button for the add Button item. */
-	var buttonDiv = p1.append("div").classed("table-row", true)
+	var buttonDiv = p1.append("div")
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
@@ -1749,7 +1789,6 @@ function setupPanel2(dots)
 {
 	var p = d3.select(this);
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("What organization that provided this experience?");
 
 	var searchView = new OrganizationSearchView(dots, p, "Organization", appendDescriptions);
@@ -1866,7 +1905,6 @@ function setupPanel3(dots)
 {
 	var p = d3.select(this);
 	var header = p.append('div')
-		.classed('table-row', true)
 		.append('p');
 	
 	var searchView = new SiteSearchView(dots, p, "Site");
@@ -1899,7 +1937,6 @@ function setupPanel4(dots)
 {
 	var p = d3.select(this);
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("What was the name of this experience?");
 
 	var searchInput = addInput(p, "Name");
@@ -1971,7 +2008,6 @@ function setupConfirmPanel(dots)
 		.classed('confirm-experience', true);
 	
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("Add this experience to your pathway?");
 
 	var summary = p.append('div')
@@ -2229,47 +2265,6 @@ var AddExperiencePanel = (function () {
 	return AddExperiencePanel;
 })();
 
-var PathwayPanel = (function () {
-	PathwayPanel.prototype = new SitePanel();
-	PathwayPanel.prototype.pathway = null;
-	
-	function PathwayPanel(user, previousPanel) {
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
-		var navContainer = this.appendNavContainer();
-		
-		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
-		backButton.append("span").text("Done");
-		var _this = this;
-		
-		var moreExperiences = user.getValue("More Experiences");
-		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
-		if (canAddExperience)
-		{ 
-			var addExperienceButton = navContainer.appendRightButton()
-				.classed('add-button', true)
-				.on("click", function(d) {
-					if (prepareClick('click', 'add experience'))
-					{
-						showClickFeedback(this);
-		
-						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
-					}
-					d3.event.preventDefault();
-				});
-			addExperienceButton.append("span").text("+");
-		}
-		
-		navContainer.appendTitle(getUserDescription(user));
-		
-		var panel2Div = this.appendFillArea();
-		showPanelLeft(this.node());
-		this.pathway = new Pathway(user, this, panel2Div.node(), true);
-	}
-	
-	return PathwayPanel;
-})();
-
 var ExperienceDetailPanel = (function () {
 	ExperienceDetailPanel.prototype = new SitePanel();
 	ExperienceDetailPanel.prototype.experience = null;
@@ -2392,12 +2387,12 @@ var ExperienceDetailPanel = (function () {
 		var firstDiv = null;
 		var nextDiv;
 		
-		panel2Div.showViewCells([experience.getCell("Start"),
+		this.showViewCells([experience.getCell("Start"),
 								 experience.getCell("End")]);
 
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		panel2Div.showViewCells([offeringServiceCell])
+		this.showViewCells([offeringServiceCell])
 		         .each(function(cell)
 					{
 						offeringServiceCell.setupHandlers(this, _this.node());
@@ -2409,7 +2404,7 @@ var ExperienceDetailPanel = (function () {
 		if (serviceCell && userServiceCell)
 		{
 			serviceCell.field.label = "My Markers";
-			var sections = panel2Div.showViewCells([serviceCell]);
+			var sections = this.showViewCells([serviceCell]);
 			panel2Div.appendCellData(sections.node(), userServiceCell);
 		}
 		
@@ -3340,7 +3335,7 @@ var EditExperiencePanel = (function () {
 				 experience.getCell("End"),
 				];
 				
-		panel2Div.showEditCells(cells);
+		this.showEditCells(cells);
 		
 		var startSection = panel2Div.selectAll(":nth-child(4)");
 		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
@@ -3355,7 +3350,7 @@ var EditExperiencePanel = (function () {
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		panel2Div.showViewCells([offeringServiceCell])
+		this.showViewCells([offeringServiceCell])
 				 .each(function(cell)
 					{
 						offeringServiceCell.setupHandlers(this, _this.node());
@@ -3364,7 +3359,7 @@ var EditExperiencePanel = (function () {
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
 		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
-		var sections = panel2Div.showEditCells([myMarkersCell]);
+		var sections = this.showEditCells([myMarkersCell]);
 									  
 		revealPanelUp(this.node());
 	}

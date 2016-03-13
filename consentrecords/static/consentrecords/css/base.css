@@ -12,8 +12,7 @@ body>panel {
 	width: 100%;
 }
 .site-panel {
-	display: table;
-	table-layout: fixed;
+	display: block;
 	position: absolute;
 	overflow-y: hidden;
 }
@@ -42,27 +41,12 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 	display: none;
 }
 
-/* The following are used to have a set of fixed-height divs within a container and
-   one variable height div that takes up the remaining space and whose contents scroll
-   vertically if necessary. This is used in the marker picker of the addExperience panel.
- */
-.table {
-	display: table;
-	table-layout: fixed;
-}
-
-.table-row {
-	display: table-row;
-}
-
 /* This is associated with the variable height div. */
 .body {
-	display: table-row;
 	height: 100%;
 }
 
 .body > div {
-	display: table-cell;
 	height: 100%;
 }
 
@@ -75,12 +59,9 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 }
 
 .panel-fill {
-	height: 100%;
-	max-height: 100%;
 	position: relative;
 }
 .vertical-scrolling {
-	height: 100%;
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
@@ -136,7 +117,6 @@ nav .site-left-chevron {
 
 nav.bottom {
 	width: 100%;
-	padding: 6px 12px;
 	border-top: 1px solid #eee;
 }
 
@@ -251,6 +231,7 @@ section.cell {
 	font-weight: normal;
 	margin: 0;
 	padding: 6px 12px;
+	padding-right: 0px;	/* Since the ol to the right has 12 px of left padding */
 }
 .string-value-view {
 	position: relative;
@@ -495,10 +476,10 @@ input[type="date"]:focus {
 }
 
 .date-row > div:first-child {
-	margin-right: 12px;
+	margin-right: 4px;
 }
 .date-row > div:last-child {
-	margin-left: 12px;
+	margin-left: 4px;
 }
 
 .date-row > div > span {

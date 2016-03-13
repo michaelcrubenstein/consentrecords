@@ -42,7 +42,7 @@ var UserPanel = (function() {
 					if (cell) cells.push(cell);
 					cell = user.getCell("Birthday");
 					if (cell) cells.push(cell);
-					panel2Div.showViewCells(cells);
+					_this.showViewCells(cells);
 
 					appendActionButton.call(panel2Div, 'Pathway', function() {
 							if (prepareClick('click', 'Pathway'))

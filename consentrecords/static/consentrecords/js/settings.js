@@ -56,7 +56,7 @@ var Settings = (function () {
 					 cr.signedinUser.getCell("Birthday"),
 					 cr.signedinUser.getCell("_public access")];
 					 
-		panel2Div.showEditCells(cells);
+		sitePanel.showEditCells(cells);
 		
 		this.appendActionButton(panel2Div, 'Change Email', function() {
 				if (prepareClick('click', 'Change Email'))

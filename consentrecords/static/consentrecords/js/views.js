@@ -184,7 +184,7 @@ function showPanelUp(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "down"}, 0);
-	$(panelNode).css("display", "table")
+	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
@@ -198,7 +198,7 @@ function showPanelUp(panelNode, done)
 function showPanelNow(panelNode)
 {
 	$(panelNode).offset({top: 0, left: 0})
-				.css("display", "table")
+				.css("display", "block")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 }
@@ -207,7 +207,7 @@ function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "right"}, 0);
-	$(panelNode).css("display", "table")
+	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
@@ -288,46 +288,29 @@ function _pushTextChanged(d) {
 function _getDataValue(d) { return d.text; }
 function _getDataDescription(d) { return d.getDescription() }
 
-function _checkItemsDivDisplay(itemsDiv)
+function _checkItemsDivDisplay(node)
 {
-	var classList = itemsDiv.node().parentNode.classList;
-	var isVisible = classList.contains("unique");
+	var classList = node.parentNode.classList;
+	var isUnique = classList.contains("unique");
 	var isEdit = classList.contains("edit");
 	
+	var itemsDiv = d3.select(node);
 	var items = itemsDiv.selectAll("li");
 	
 	if (isEdit)
-		isVisible |= items.size() > 0;
-	else
-		items.each(function(d) {
-			isVisible |= !d.isEmpty();
-		});
-		
-	itemsDiv.style("display", isVisible ? null : "none");
-	/* In addition to the itemsDiv, hide the section if we are in view mode. */
-	if (!isEdit)
-		d3.select(itemsDiv.node().parentNode).style("display", isVisible ? null : "none");
-}
-
-function _checkItemsVisible(node, cell)
-{
-	/* In this case, make the itemsDiv visible if it displays any values.
-		In edit mode, empty values are displayed; in view mode, they are not.
-	 */
-	var classList = node.parentNode.classList;
-	var isVisible = classList.contains("unique");
-	var isEdit = classList.contains("edit");
-	
-	if (isEdit)
-		isVisible |= cell.data.length > 0;
+		isVisible = items.size() > 0;
 	else
 	{
-		cell.data.forEach(function(d) {
+		isVisible = false;
+		items.each(function(d)
+		{
 			isVisible |= !d.isEmpty();
 		});
 	}
-	
-	$(node).css("display", isVisible ? "" : "none");
+		
+	itemsDiv.style("display", (isUnique || isVisible) ? null : "none");
+	/* In addition to the itemsDiv, hide the section if we are in view mode. */
+	d3.select(itemsDiv.node().parentNode).style("display", (isEdit || isVisible) ? null : "none");
 }
 
 function _setupItemsDivHandlers(itemsDiv, cell)
@@ -335,14 +318,14 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 	node = itemsDiv.node();
 	function checkVisible(eventObject)
 	{
-		_checkItemsVisible(eventObject.data, this);
+		_checkItemsDivDisplay(eventObject.data, this);
 	}
 	$(cell).on("dataChanged.cr", null, node, checkVisible);
 	$(node).on("remove", null, cell, function(eventObject)
 	{
 		$(eventObject.data).off("dataChanged.cr", null, checkVisible);
 	});
-	_checkItemsVisible(node, cell);
+	_checkItemsDivDisplay(node, cell);
 }
 
 function _setupItemHandlers(d)
@@ -359,7 +342,7 @@ function _setupItemHandlers(d)
 				var parentNode = this.parentNode;
 				$(this).remove();
 				/* Now that the item is removed, check whether its container should be visible. */
-				_checkItemsDivDisplay(d3.select(parentNode));
+				_checkItemsDivDisplay(parentNode);
 			});
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
@@ -662,9 +645,9 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		var cell = this;
 		var itemsDiv = d3.select(eventObject.data);
 		
-		var previousPanelNode = $(itemsDiv.node()).parents(".site-panel")[0];
+		var previousPanelNode = $(eventObject.data).parents(".site-panel")[0];
 		var item = appendItem(itemsDiv, newValue);
-		_checkItemsDivDisplay(itemsDiv);
+		_checkItemsDivDisplay(eventObject.data);
 		
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 
@@ -1372,7 +1355,7 @@ var SiteNavContainer = (function() {
 	
 	function SiteNavContainer(sitePanel)
 	{
-		this.nav = sitePanel.panelDiv.append("nav").classed("table-row", true)
+		this.nav = sitePanel.panelDiv.append("nav")
 					.attr("role", "navigation")
 		this.div = this.nav.append('div');
 	}
@@ -1457,14 +1440,14 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBarDiv = this.panelDiv.append("div").classed("searchbar table-row", true);
+		var searchBarDiv = this.panelDiv.append("div").classed("searchbar", true);
 		return setupSearchBar(searchBarDiv.node(), textChanged);
 	}
 	
 	SitePanel.prototype.appendFillArea = function()
 	{
 		var _this = this;
-		this.panelDiv.append('div').classed('alert-container table-row', true);
+		this.panelDiv.append('div').classed('alert-container', true);
 		var panel2Div = this.panelDiv
 			.append("div").classed("body", true)
 			.append("div")
@@ -1474,22 +1457,47 @@ var SitePanel = (function () {
 		return panel2Div;
 	}
 	
+	SitePanel.prototype.calculateHeight = function()
+	{
+		var _this = this;
+		newHeight = $(this.node()).children().toArray().reduce(function(h, child) {
+				if (child != _this.mainDiv.node())
+					return h - $(child).height();
+				else
+					return h;
+			},
+			parseInt(this.panelDiv.style("height")));
+		this.mainDiv.style("height", "{0}px".format(newHeight));
+	}
+	
 	SitePanel.prototype.appendScrollArea = function()
 	{
 		var _this = this;
-		this.panelDiv.append('div').classed('alert-container table-row', true);
-		var panel2Div = this.panelDiv
-			.append("div").classed("body", true)
-			.append("div")
+		var alertContainer = this.panelDiv.append('div').classed('alert-container', true);
+		this.mainDiv = this.panelDiv
 			.append("div").classed("panel-fill vertical-scrolling", true);
 		
-		panel2Div.appendHeader = function()
+		$(this.node()).on("revealing.cr", function()
+			{
+				_this.calculateHeight();
+			});
+		
+		resizeFunction = function()
+			{
+				_this.calculateHeight();
+			}
+		$(window).on("resize", resizeFunction);
+		$(this.node()).on("remove", function(){
+			$(window).off("resize", resizeFunction);
+		});
+			
+		this.mainDiv.appendHeader = function()
 		{
 			return this.append("header")
 				.text(_this.headerText);
 		}
 		
-		panel2Div.appendSections = function(sectionData)
+		this.mainDiv.appendSections = function(sectionData)
 		{
 			var i = 0;
 			return this
@@ -1503,12 +1511,12 @@ var SitePanel = (function () {
 					.enter()
 					.append("section");
 		}
-		panel2Div.appendSection = function(datum)
+		this.mainDiv.appendSection = function(datum)
 		{
 			return this.append("section").datum(datum);
 		}
 		
-		panel2Div.isEmptyItems = function(itemsDiv)
+		this.mainDiv.isEmptyItems = function(itemsDiv)
 		{
 			var isEmpty = true;
 			itemsDiv.selectAll("li")
@@ -1516,7 +1524,7 @@ var SitePanel = (function () {
 			return isEmpty;
 		}
 		
-		panel2Div.appendCellData = function(sectionNode, cell)
+		this.mainDiv.appendCellData = function(sectionNode, cell)
 		{
 			var _thisPanel2Div = this;
 			var section = d3.select(sectionNode);
@@ -1537,33 +1545,12 @@ var SitePanel = (function () {
 			_setupItemsDivHandlers(itemsDiv, cell);
 		}
 		
-		panel2Div.showViewCells = function(cells)
-		{
-			var _thisPanel2Div = this;
-			var sections = this.appendSections(cells.filter(function(cell) 
-					{ 
-						return cell.field.descriptorType != "_by text" 
-					}))
-				.classed("cell view", true)
-				.classed("unique", function(cell) { return cell.isUnique(); })
-				.classed("multiple", function(cell) { return !cell.isUnique(); })
-				.each(function(cell) {
-						var section = d3.select(this);
-						cell.appendLabel(this);
-						var itemsDiv = section.append("ol");
-						_thisPanel2Div.appendCellData(this, cell);
-					});
-			sections.append("div").classed("cell-border-below", true);
-			
-			return sections;
-		}
-		
-		panel2Div.handleDoneEditingButton = function(done) {
+		this.mainDiv.handleDoneEditingButton = function(done) {
 			if (prepareClick('click', 'done editing'))
 			{
 				showClickFeedback(this);
 		
-				var sections = panel2Div.selectAll("section");
+				var sections = _this.mainDiv.selectAll("section");
 				var initialData = [];
 				var sourceObjects = [];
 				sections.each(function(cell) {
@@ -1596,14 +1583,14 @@ var SitePanel = (function () {
 		}
 		
 		/* d represents the newly created object that is being added. */
-		panel2Div.handleDoneAddingButton = function(d) {
+		this.mainDiv.handleDoneAddingButton = function(d) {
 			if (prepareClick('click', 'done adding'))
 			{
 				showClickFeedback(this);
 				
 				var objectData = d;
 		
-				var sections = panel2Div.selectAll("section");
+				var sections = _this.mainDiv.selectAll("section");
 				if (d.cell.parent == null ||
 					d.cell.parent.getValueID() != null)
 				{
@@ -1640,18 +1627,40 @@ var SitePanel = (function () {
 			d3.event.preventDefault();
 		}
 		
-		panel2Div.showEditCells = function(cells)
-		{
-			return this.appendSections(cells)
-				.classed("cell edit", true)
-				.classed("unique", function(cell) { return cell.isUnique(); })
-				.classed("multiple", function(cell) { return !cell.isUnique(); })
-				.each(function(cell) {
-						cell.showEdit(this, _this.node());
-					});
-		}
+		return this.mainDiv;
+	}
+	
+	SitePanel.prototype.showViewCells = function(cells)
+	{
+		var _this = this;
+		var sections = this.mainDiv.appendSections(cells.filter(function(cell) 
+				{ 
+					return cell.field.descriptorType != "_by text" 
+				}))
+			.classed("cell view", true)
+			.classed("unique", function(cell) { return cell.isUnique(); })
+			.classed("multiple", function(cell) { return !cell.isUnique(); })
+			.each(function(cell) {
+					var section = d3.select(this);
+					cell.appendLabel(this);
+					var itemsDiv = section.append("ol");
+					_this.mainDiv.appendCellData(this, cell);
+				});
+		sections.append("div").classed("cell-border-below", true);
 		
-		return panel2Div;
+		return sections;
+	}
+	
+	SitePanel.prototype.showEditCells = function(cells)
+	{
+		var _this = this;
+		return this.mainDiv.appendSections(cells)
+			.classed("cell edit", true)
+			.classed("unique", function(cell) { return cell.isUnique(); })
+			.classed("multiple", function(cell) { return !cell.isUnique(); })
+			.each(function(cell) {
+					cell.showEdit(this, _this.node());
+				});
 	}
 	
 	SitePanel.prototype.datum = function()
@@ -1907,7 +1916,7 @@ var SearchView = (function () {
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)
 	{
-		var searchBar = d3.select(containerNode).append("div").classed("searchbar table-row", true);
+		var searchBar = d3.select(containerNode).append("div").classed("searchbar", true);
 	
 		var searchInputContainer = searchBar.append("div")
 			.classed("search-input-container", true);
@@ -2093,7 +2102,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.cells);
+		sitepanel.showViewCells(objectData.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -2146,7 +2155,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showFunction) {
 		});
 
 		panel2Div.append("div").classed("cell-border-below", true);
-		panel2Div.showViewCells(objectData.cells);
+		sitepanel.showViewCells(objectData.cells);
 		
 		showFunction(sitePanel.node());
 	}
@@ -2181,7 +2190,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		panel2Div.showEditCells(objectData.cells);
+		this.showEditCells(objectData.cells);
 
 		var doneButton;
 		if (objectData.getValueID())
