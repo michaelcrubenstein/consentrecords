@@ -20,8 +20,11 @@ $(document).ready(function(){
 
 		bootstrap_alert.show($(divID), message, "alert-success");
 	}
-	closealert = function() { 
-		$('.alert').parent().html('');
-		$(window).trigger("resize");
+	closealert = function() {
+		if ($('.alert').parent().children().length)
+		{
+			$('.alert').parent().html('');
+			$(window).trigger("resize");
+		}
 	}
 });
