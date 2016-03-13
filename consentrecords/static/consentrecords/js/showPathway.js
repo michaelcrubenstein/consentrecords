@@ -870,9 +870,11 @@ var Pathway = (function () {
 	 */
 	Pathway.prototype.setupDelete = function(fd) 
 	{
+		var _this = this;
 		var valueDeleted = function(eventObject)
 		{
 			d3.select(eventObject.data).remove();
+			_this.handleValueDeleted();
 		};
 		
 		var dataChanged = function(eventObject)
@@ -996,15 +998,14 @@ var Pathway = (function () {
 	Pathway.prototype.handleValueDeleted = function(eventObject)
 	{
 		var i = this;
-		var _this = eventObject.data;
 		
-		var index = _this.allExperiences.indexOf(i);
+		var index = this.allExperiences.indexOf(i);
 		if (index >= 0)
-			_this.allExperiences.splice(index, 1);
-		if (i == _this.detailFlagData.experience)
-			_this.hideDetail(function() { }, 0);
-		_this.clearLayout();
-		_this.layoutExperiences();
+			this.allExperiences.splice(index, 1);
+		if (i == this.detailFlagData.experience)
+			this.hideDetail(function() { }, 0);
+		this.clearLayout();
+		this.layoutExperiences();
 	};
 
 	Pathway.prototype.handleExperienceDateChanged = function(eventObject)
@@ -1019,14 +1020,12 @@ var Pathway = (function () {
 		var _this = this;
 		
 		$(experience).on("dataChanged.cr", null, this, this.handleDataChanged);
-		$(experience).on("valueDeleted.cr", null, this, this.handleValueDeleted);
 		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, _this.handleDataChanged);
-			$(eventObject.data).off("valueDeleted.cr", null, _this.handleValueChanged);
 			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
