@@ -1059,6 +1059,7 @@ var Pathway = (function () {
 		var _this = this;
 		function resizeFunction()
 		{
+			_this.sitePanel.calculateHeight();
 			_this.layoutExperiences();
 		}
 	
@@ -1311,7 +1312,7 @@ var PathwayPanel = (function () {
 
 function addInput(p, placeholder)
 {
-	var searchBar = p.append("div").classed("searchbar table-row", true);
+	var searchBar = p.append("div").classed("searchbar", true);
 	
 	var searchInputContainer = searchBar.append("div")
 		.classed("search-input-container", true);
@@ -1348,10 +1349,8 @@ function setupFirstMarkerPanel(dots)
 {
 	var p0 = d3.select(this);
 	p0.append('div')
-		.classed('table-row', true)
 		.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
 	p0.append('div')
-		.classed('table-row', true)
 		.append('p').text("Choose one of the markers below, or create your own marker. If more than one marker applies, pick one and then you can add others.");
 		
 	var searchInput = addInput(p0, "Experience");
@@ -1572,7 +1571,6 @@ function setupServicesPanel(dots)
 	var sitePanelNode = $(this).parents("panel.site-panel")[0];
 	var p1 = d3.select(this);
 	var header = p1.append('div')
-		.classed('table-row', true)
 		.append('p');
 		
 	if (dots.offering && dots.offering.getCell("Service").data.length > 0)
@@ -1652,7 +1650,7 @@ function setupServicesPanel(dots)
 	appendServices(dots.services);
 	
 	/* Add one more button for the add Button item. */
-	var buttonDiv = p1.append("div").classed("table-row", true)
+	var buttonDiv = p1.append("div")
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
@@ -1790,7 +1788,6 @@ function setupPanel2(dots)
 {
 	var p = d3.select(this);
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("What organization that provided this experience?");
 
 	var searchView = new OrganizationSearchView(dots, p, "Organization", appendDescriptions);
@@ -1907,7 +1904,6 @@ function setupPanel3(dots)
 {
 	var p = d3.select(this);
 	var header = p.append('div')
-		.classed('table-row', true)
 		.append('p');
 	
 	var searchView = new SiteSearchView(dots, p, "Site");
@@ -1940,7 +1936,6 @@ function setupPanel4(dots)
 {
 	var p = d3.select(this);
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("What was the name of this experience?");
 
 	var searchInput = addInput(p, "Name");
@@ -2012,7 +2007,6 @@ function setupConfirmPanel(dots)
 		.classed('confirm-experience', true);
 	
 	p.append('div')
-		.classed('table-row', true)
 		.append('p').text("Add this experience to your pathway?");
 
 	var summary = p.append('div')
@@ -2392,12 +2386,12 @@ var ExperienceDetailPanel = (function () {
 		var firstDiv = null;
 		var nextDiv;
 		
-		panel2Div.showViewCells([experience.getCell("Start"),
+		this.showViewCells([experience.getCell("Start"),
 								 experience.getCell("End")]);
 
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		panel2Div.showViewCells([offeringServiceCell])
+		this.showViewCells([offeringServiceCell])
 		         .each(function(cell)
 					{
 						offeringServiceCell.setupHandlers(this, _this.node());
@@ -2409,7 +2403,7 @@ var ExperienceDetailPanel = (function () {
 		if (serviceCell && userServiceCell)
 		{
 			serviceCell.field.label = "My Markers";
-			var sections = panel2Div.showViewCells([serviceCell]);
+			var sections = this.showViewCells([serviceCell]);
 			panel2Div.appendCellData(sections.node(), userServiceCell);
 		}
 		
@@ -3340,7 +3334,7 @@ var EditExperiencePanel = (function () {
 				 experience.getCell("End"),
 				];
 				
-		panel2Div.showEditCells(cells);
+		this.showEditCells(cells);
 		
 		var startSection = panel2Div.selectAll(":nth-child(4)");
 		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
@@ -3355,7 +3349,7 @@ var EditExperiencePanel = (function () {
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		panel2Div.showViewCells([offeringServiceCell])
+		this.showViewCells([offeringServiceCell])
 				 .each(function(cell)
 					{
 						offeringServiceCell.setupHandlers(this, _this.node());
@@ -3364,7 +3358,7 @@ var EditExperiencePanel = (function () {
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
 		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
-		var sections = panel2Div.showEditCells([myMarkersCell]);
+		var sections = this.showEditCells([myMarkersCell]);
 									  
 		revealPanelUp(this.node());
 	}

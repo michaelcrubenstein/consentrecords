@@ -43,8 +43,6 @@
 	}
 
     .dots ~ panel {
-    	display: table;
-    	table-layout: fixed;
     	height: calc(100% - 50px);
     	width: 100%;
     	background: transparent;
