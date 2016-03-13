@@ -91,6 +91,8 @@ panel>nav .left-link {
 	text-overflow: ellipsis;
 	text-align: left;
 	white-space: nowrap;
+	display: inline-block;
+	margin-right: 12px;
 }
 panel>nav .right-link {
 	max-width: 100%;
