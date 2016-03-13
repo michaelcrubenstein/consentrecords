@@ -868,13 +868,13 @@ var Pathway = (function () {
 	/* setup up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
 	 */
-	Pathway.prototype.setupDelete = function(fd) 
+	Pathway.prototype.setupDelete = function(fd, node) 
 	{
 		var _this = this;
 		var valueDeleted = function(eventObject)
 		{
 			d3.select(eventObject.data).remove();
-			_this.handleValueDeleted();
+			_this.handleValueDeleted(this);
 		};
 		
 		var dataChanged = function(eventObject)
@@ -883,13 +883,13 @@ var Pathway = (function () {
 				.text(function(d) { return d.getDescription(); })
 		}
 		
-		$(fd.experience).one("valueDeleted.cr", null, this, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, this, dataChanged);
+		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
+		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
 		
-		$(this).on("remove", function()
+		$(node).on("remove", null, fd.experience, function()
 		{
-			$(fd.experience).off("valueDeleted.cr", null, valueDeleted);
-			$(fd.experience).off("dataChanged.cr", null, dataChanged);
+			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
+			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
 		});
 	}
 	
@@ -917,12 +917,17 @@ var Pathway = (function () {
 	
 	Pathway.prototype.appendExperiences = function()
 	{
+		var _this = this;
+
 		this.experienceGroup.selectAll('g').remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
-			.each(this.setupDelete);
+			.each(function(d)
+				{
+					_this.setupDelete(d, this);
+				});
 		
 		function showDetail(fd, i)
 		{
@@ -936,7 +941,6 @@ var Pathway = (function () {
 				});
 		}
 		
-		var _this = this;
 		g.append('path')
 			.each(function()
 				{ this.pathway = _this; })
@@ -995,14 +999,12 @@ var Pathway = (function () {
 		_this.layoutExperiences();
 	}
 	
-	Pathway.prototype.handleValueDeleted = function(eventObject)
+	Pathway.prototype.handleValueDeleted = function(experience)
 	{
-		var i = this;
-		
-		var index = this.allExperiences.indexOf(i);
+		var index = this.allExperiences.indexOf(experience);
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		if (i == this.detailFlagData.experience)
+		if (experience == this.detailFlagData.experience)
 			this.hideDetail(function() { }, 0);
 		this.clearLayout();
 		this.layoutExperiences();
