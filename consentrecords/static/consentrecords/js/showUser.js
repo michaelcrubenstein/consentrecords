@@ -13,15 +13,6 @@ var UserPanel = (function() {
 			var navContainer = this.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", function()
-				{
-					if (prepareClick('click', 'User Done'))
-					{
-						hidePanelRight(_this.node());
-					}
-					d3.event.preventDefault();
-				});
-			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
 			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
