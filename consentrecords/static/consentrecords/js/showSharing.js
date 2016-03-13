@@ -159,6 +159,14 @@ var SharingPanel = (function() {
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add user or group");
 		
+		this.appendActionButton('Following', function() {
+				if (prepareClick('click', 'Following'))
+				{
+					showClickFeedback(this);
+					var settings = new FollowingPanel(_this.user, _this.node());
+				}
+			});
+				
 		showPanelLeft(this.node());
 	}
 

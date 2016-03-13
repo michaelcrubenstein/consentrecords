@@ -1,24 +1,5 @@
 var Settings = (function () {
 
-	Settings.prototype.appendActionButton = function(panel2Div, text, onClick)
-	{
-		var itemsDiv = panel2Div.append('section')
-			.classed('cell edit unique', true)
-			.classed('btn row-button', true)
-			.on('click', onClick)
-			.append('ol');
-		
-		var button = itemsDiv.append('li')
-			.append('div')
-			.classed('left-expanding-div', true);
-		appendRightChevrons(button);
-			
-		button.append('div')
-			.classed("description-text string-value-view", true)
-			.text(text);	
-			
-	}
-	
 	function Settings(previousPanel) {
 	
 		var sitePanel = new SitePanel(previousPanel, null, "Settings", "edit settings-panel");
@@ -58,14 +39,14 @@ var Settings = (function () {
 					 
 		sitePanel.showEditCells(cells);
 		
-		this.appendActionButton(panel2Div, 'Change Email', function() {
+		this.appendActionButton('Change Email', function() {
 				if (prepareClick('click', 'Change Email'))
 				{
 					var panel = new UpdateUsernamePanel(cr.signedinUser, sitePanel.node());
 				}
 			});
 		
-		this.appendActionButton(panel2Div, 'Change Password', function() {
+		this.appendActionButton('Change Password', function() {
 				if (prepareClick('click', 'Change Password'))
 				{
 					var panel = new UpdatePasswordPanel(sitePanel.node());

@@ -35,7 +35,7 @@ var UserPanel = (function() {
 					if (cell) cells.push(cell);
 					_this.showViewCells(cells);
 
-					appendActionButton.call(panel2Div, 'Pathway', function() {
+					_this.appendActionButton('Pathway', function() {
 							if (prepareClick('click', 'Pathway'))
 							{
 								var panel = new PathwayPanel(user, _this.node());
