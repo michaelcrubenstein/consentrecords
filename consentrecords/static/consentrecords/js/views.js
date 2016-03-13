@@ -645,7 +645,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		var cell = this;
 		var itemsDiv = d3.select(eventObject.data);
 		
-		var previousPanelNode = $(itemsDiv.node()).parents(".site-panel")[0];
+		var previousPanelNode = $(eventObject.data).parents(".site-panel")[0];
 		var item = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(eventObject.data);
 		
