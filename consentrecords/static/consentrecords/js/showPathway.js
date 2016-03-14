@@ -2389,8 +2389,20 @@ var AddExperiencePanel = (function () {
 		function setupPanel6(dots)
 		{
 			var p = d3.select(this);
+			var _this = this;
 			p.append('div')
-				.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
+				.append('p').text("When did you finish " + dots.offeringName + "?");
+			p.append('div')
+				.append('p').classed('site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', "It isn't finished."))
+						{
+							dots.endDateInput.clear();
+							_this.onGoingForward();
+						}
+					})
+				.text("It isn't finished.");
 
 			dots.endDateInput = new DateInput(this, _getMinEndDate(dots))
 
