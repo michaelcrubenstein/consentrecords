@@ -575,6 +575,8 @@ _term
             _of kind: enumerator
             _pick object path: _uuname[_name=_privilege]>enumerator
 _term
+    _name: _access request
+_term
     _name: _boolean
     _configuration
         _name: Bootstrap
@@ -822,6 +824,12 @@ _term
             _name: _primary administrator
             _data type: _object
             _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: _user
+        _field
+            _name: _access request
+            _data type: _object
+            _max capacity: _multiple values
             _object add rule: _pick one
             _of kind: _user
     _default access: _custom
