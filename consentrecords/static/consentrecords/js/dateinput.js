@@ -290,6 +290,16 @@ var DateInput = (function () {
 		}
 	}
 	
+	DateInput.prototype.clear = function()
+	{
+		this.year = undefined;
+		this.month = undefined;
+		this.day = undefined;
+		this.yearInput.node().selectedIndex = 0;
+		this.monthInput.node().selectedIndex = 0;
+		this.dateInput.node().selectedIndex = 0;
+	}
+	
 	return DateInput;
 })();
 

@@ -1585,7 +1585,7 @@ function setupFirstMarkerPanel(dots)
 	
 	p0.node().onDoneClicked = function()
 	{
-		var newName = searchInput.node().value;
+		var newName = searchInput.node().value.trim();
 		
 		/* Identify if the new name matches the name of an existing service. */
 		var newValue = null;
@@ -1611,7 +1611,7 @@ function setupFirstMarkerPanel(dots)
 			}
 			dots.services[0] = new ReportedObject({name: newName, pickedObject: newValue});
 		}
-		else
+		else if (newName.length > 0)
 			dots.services.push(new ReportedObject({name: newName, pickedObject: newValue}));
 	}
 	crp.getData({path: "Service", done: done, fail: asyncFailFunction});
@@ -1813,7 +1813,7 @@ function setupServicesPanel(dots)
 	appendServices(dots.services);
 	
 	/* Add one more button for the add Button item. */
-	var buttonDiv = p1.append("div")
+	var buttonDiv = obj.append("div")
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
@@ -1957,7 +1957,7 @@ function setupPanel2(dots)
 
 	this.onDoneClicked = function()
 	{
-		var textValue = searchView.inputBox.value;
+		var textValue = searchView.inputBox.value.trim();
 		if ((dots.site && textValue != dots.site.getDescription() && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && dots.organization && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && !dots.organization))
@@ -2081,7 +2081,7 @@ function setupPanel3(dots)
 
 	this.onDoneClicked = function()
 	{
-		var textValue = searchView.inputBox.value;
+		var textValue = searchView.inputBox.value.trim();
 		if ((dots.site && textValue != dots.site.getDescription()) ||
 		    !dots.site)
 		{
@@ -2148,11 +2148,12 @@ function setupPanel4(dots)
 
 	this.onDoneClicked = function()
 	{
-		if ((dots.offering && searchInput.node().value != dots.offering.getDescription()) ||
+		var textValue = searchInput.node().value.trim();
+		if ((dots.offering && textValue != dots.offering.getDescription()) ||
 		    !dots.offering)
 		{
 			dots.offering = null;
-			dots.offeringName = searchInput.node().value;
+			dots.offeringName = textValue;
 		}
 	}
 	
@@ -2389,8 +2390,20 @@ var AddExperiencePanel = (function () {
 		function setupPanel6(dots)
 		{
 			var p = d3.select(this);
+			var _this = this;
 			p.append('div')
-				.append('p').text("If it is over, when did you finish " + dots.offeringName + "?");
+				.append('p').text("When did you finish " + dots.offeringName + "?");
+			p.append('div')
+				.append('p').classed('site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', "It isn't finished."))
+						{
+							dots.endDateInput.clear();
+							_this.onGoingForward();
+						}
+					})
+				.text("It isn't finished.");
 
 			dots.endDateInput = new DateInput(this, _getMinEndDate(dots))
 
