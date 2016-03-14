@@ -1413,7 +1413,7 @@ var PathwayPanel = (function () {
 					checkSignin.call(this, _this.node(), done, "Settings");
 					d3.event.preventDefault();
 				});
-		settingsButton.append("i").classed("site-active-text fa fa-cog", true);
+		settingsButton.append("i").classed("site-active-text fa fa-lg fa-cog", true);
 		settingsButton.style("display", "none");
 
 		var sharingButton = bottomNavContainer.appendLeftButton()
@@ -1427,7 +1427,7 @@ var PathwayPanel = (function () {
 					checkSignin.call(this, _this.node(), done, "Sharing");
 					d3.event.preventDefault();
 				});
-		sharingButton.append("i").classed("site-active-text fa fa-users", true);
+		sharingButton.append("i").classed("site-active-text fa fa-lg fa-users", true);
 		sharingButton.style("display", "none");
 		
 		var findButton = bottomNavContainer.appendRightButton()
@@ -1440,11 +1440,10 @@ var PathwayPanel = (function () {
 						}
 						d3.event.preventDefault();
 					});
-		findButton.append("i").classed("site-active-text fa fa-search", true);
+		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
 		
 		var addExperienceButton = bottomNavContainer.appendRightButton()
-			.classed('add-button', true)
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))
 				{
@@ -1454,7 +1453,7 @@ var PathwayPanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		addExperienceButton.append("span").text("+");
+		addExperienceButton.append("i").classed("site-active-text fa fa-lg fa-plus", true);
 		addExperienceButton.style("display", "none");
 		
 		this.pathway = new Pathway(this, panel2Div.node());
