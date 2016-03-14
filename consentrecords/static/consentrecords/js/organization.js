@@ -42,6 +42,15 @@ function appendAddress(address)
 	}
 }
 
+function getStartDate(d)
+{
+	return d.getDatum("Start");
+}
+
+function getEndDate(d) {
+	return d.getDatum("End") || new Date().toISOString().substr(0, 10);
+}	
+
 function getDateRange(d)
 {
 	var startDate = getStartDate(d);
@@ -166,5 +175,215 @@ function appendInfoButtons(buttons, panelNode)
 			d3.event.preventDefault();
 		});
 	drawInfoButtons(infoButtons);
+}
+
+function appendStringItem(obj, label, text, addBorder)
+{
+	addBorder = (addBorder === undefined) ? true : addBorder;
+	var sectionObj = d3.select(obj);
+
+	sectionObj.classed("cell unique view", true);
+
+	var labelDiv = sectionObj.append("label")
+		.text(label);
+	var itemsDiv = sectionObj.append("ol");
+
+	itemsDiv.classed("right-label expanding-div", true);
+
+	var setupItems = function(divs) {
+		divs.append("div")
+		.classed("string-value-view", true)
+		.text(function(d) { return d; });
+	}
+	if (addBorder)
+		sectionObj.append("div").classed("cell-border-below", true);	
+
+	var divs = appendItems(itemsDiv, [text]);
+	setupItems(divs);
+}
+
+function getOfferingAgeRange(offering)
+{
+	var min = offering.getDatum("Minimum Age");
+	var max = offering.getDatum("Maximum Age");
+	if (min)
+	{
+		if (max)
+		{
+			if (min == max)
+				return min;
+			else
+				return min + " - " + max;
+		}
+		else
+			return min + " or older";
+	}
+	else if (max)
+	{
+		return "up to " + max;
+	}
+	else
+		return "";
+}
+
+function getOfferingGradeRange(offering)
+{
+	var min = offering.getDatum("Minimum Grade");
+	var max = offering.getDatum("Maximum Grade");
+	if (min)
+	{
+		if (max)
+		{
+			if (min == max)
+				return min;
+			else
+				return min + " - " + max;
+		}
+		else
+			return min + " or beyond";
+	}
+	else if (max)
+	{
+		return "up to " + max;
+	}
+	else
+		return "";
+}
+
+function showAgeRange(offering, successFunction)
+{
+	crp.pushCheckCells(offering, undefined, 
+		function()
+		{
+			successFunction(getOfferingAgeRange(offering));
+		},
+		function()
+		{
+			successFunction("!");
+		}
+	);
+}
+
+function showGradeRange(offering, successFunction)
+{
+	crp.pushCheckCells(offering, undefined, 
+		function()
+		{
+			successFunction(getOfferingGradeRange(offering));
+		},
+		function()
+		{
+			successFunction("!");
+		}
+	);
+}
+
+function showWebSite(offering, successFunction)
+{
+	crp.pushCheckCells(offering, undefined, 
+		function()
+		{
+			var newText = offering.getDatum("Web Site");
+			successFunction(newText);
+		},
+		function()
+		{
+			successFunction("!");
+		}
+	);
+}
+
+function getNamedInstance(data, name)
+{
+	for (i = 0; i < data.length; ++i)
+	{
+		var d = data[i];
+		if (d.getDatum("_name") === name)
+			return d;
+	}
+	return null;
+}
+
+/* Returns a dictionary describing which privileges can be used to provide 
+	the capabilities of each privilege.
+ */
+function getValidPrivileges(enumerators, priv)
+{
+	var administerValue = getNamedInstance(enumerators, "_administer");
+	var writeValue = getNamedInstance(enumerators, "_write");
+	var readValue = getNamedInstance(enumerators, "_read");
+	var findValue = getNamedInstance(enumerators, "_find");
+	var registerValue = getNamedInstance(enumerators, "_register");
+	
+	if (priv === findValue)
+		return [findValue, readValue, registerValue, writeValue, administerValue];
+	else if (priv === readValue)
+		return [readValue, writeValue, administerValue];
+	else if (priv === registerValue)
+		return [registerValue, writeValue, administerValue];
+	else if (priv === writeValue)
+		return [writeValue, administerValue];
+	else if (priv === administerValue)
+		return [administerValue];
+	else
+		return [];
+}
+
+function addMissingAccess(source, privilege, target, cellName, done, fail)
+{
+	var privilegePath = "_term[_name=_privilege]>enumerator";
+	crp.getData({path: privilegePath, 
+		done: function getPrivileges(enumerators)
+		{
+			var priv = getNamedInstance(enumerators, privilege);
+			var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getValueID(); });
+			cr.getData({path: "#" + source.getValueID() + '>"_access record"', 
+				done: function(accessRecords)
+				{
+					var a = accessRecords.filter(
+						function(ar) {
+							var privCell = ar.getCell("_privilege");
+							return privCell.data.some(
+								function(d) { 
+									return validPrivs.indexOf(d.getValueID()) >= 0; 
+								});
+						});
+					var b = a.filter(
+						function(ar) {
+							var groupCell = ar.getCell(cellName);
+							function hasTargetValueID(d)
+							{
+								return d.getValueID() === target.getValueID();
+							}
+							return groupCell.data.some(hasTargetValueID);
+						});
+					if (b.length > 0)
+						done();
+					else
+					{
+						var c = a.filter(
+							function(ar) {
+								var privCell = ar.getCell("_privilege");
+								return privCell.data.length === 1 &&
+									   privCell.data[0].getValueID() === priv.getValueID();
+							});
+						if (c.length > 0)
+						{
+							c[0].getCell(cellName).addObjectValue(target, done, fail);
+						}
+						else
+						{
+							// Create an instance of an access record with this accessor level
+							// and this user.
+							var field = source.getCell("_access record").field;
+							var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
+							initialData[cellName] = [{instanceID: target.getValueID()}];
+							cr.createInstance(field, source.getValueID(), initialData, done, fail);
+						}
+					}
+				},
+				fail: fail});
+		}, 
+		fail: fail});
 }
 

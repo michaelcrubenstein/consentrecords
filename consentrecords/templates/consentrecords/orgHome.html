@@ -47,6 +47,9 @@
 			text-align: left;
 			font-weight: bold;
     	}
+    	.organization-section {
+    		display: none;
+    	}
     	.level-2-panel {
     		top: 0;
     		z-index: 2;
@@ -61,6 +64,9 @@
     	}
     	.background-gradient-panel > nav {
     		opacity: 0.8;
+    	}
+    	.username-label {
+    		padding-left: 15px;
     	}
     	.centered-right-glyph {
 			position: absolute;
@@ -150,6 +156,16 @@
 		{% endif %}
 		
   		<panel id="id_user_home_panel" class="site-panel initial background-gradient-panel" >
+			<nav role="navigation">
+				<div>
+					<div class="pull-right">
+						<div class="sign-in-button site-navbar-link site-active-text">
+							<span id="sign-in-span">Sign&nbsp;In</span>
+						</div>
+					</div>
+				</div>
+			</nav>
+			<h3 class="username-label"> </h3>
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
@@ -165,6 +181,8 @@
 						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
 					</button>
  -->
+				</section>
+				<section class="organization-section row-button-group">
 				</section>
 			</section>
 		</panel>
@@ -257,6 +275,30 @@
 				</div>
 			</div>
 	    </panel>
+	    <panel id="id_consent_forms_panel" class="level-2-panel site-panel reveal list">
+			<nav role="navigation">
+				<div>
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="pull-left">
+						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
+					</div>
+					<div class="site-navbar-commands">
+						<div class="site-title"><span>Consent Forms</span></div>
+					</div>
+				</div>
+			</nav>
+			<div class="alert-container"></div>
+			<div class="body">
+				<div>
+					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
+						<div id="id_searchArea" class="searchbar">
+						</div>
+						<div id="id_openConsentForms">
+						</div>
+					</div>
+				</div>
+			</div>
+	    </panel>
 
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
@@ -312,6 +354,60 @@
 		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
 		{% endif %}
 		
+		/* Update the username label when a user signs in or out. */	
+		var usernameLabel = $(".username-label");
+		
+		function setName(eventObject)
+		{
+			s = getUserDescription(cr.signedinUser);
+			$(eventObject.data).text(s);
+		}
+		
+		$(cr.signedinUser).on("dataChanged.cr", null, usernameLabel[0], setName);
+		$(cr.signedinUser).on("signin.cr", null, usernameLabel[0], function(eventObject)
+		{
+			userFirstName = this.getValue("_first name");
+			userLastName = this.getValue("_last name");
+			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			setName.call(this, eventObject);
+		});
+		
+		$(cr.signedinUser).on("signout.cr", null, usernameLabel[0], function(eventObject)
+		{
+			if (userFirstName)
+			{
+				$(userFirstName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				$(userLastName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				userFirstName = null;
+				userLastName = null;
+			}
+			$(eventObject.data).text("");
+		});
+		
+		/* Update the text of the signin button when a user signs in or out. */
+		var signinSpan = $("#sign-in-span")
+		$(cr.signedinUser).on("signin.cr", null, signinSpan[0], function(eventObject)
+		{
+			$(eventObject.data).text("Sign Out");
+		});
+		$(cr.signedinUser).on("signout.cr", null, signinSpan[0], function(eventObject)
+		{
+			$(eventObject.data).text("Sign In");
+		});
+		
+		/* Update the list of organizations associated with the user when a user signs in or out. */
+		var orgSection = $(".organization-section");
+		
+		$(cr.signedinUser).on("signin.cr", 0, orgSection[0], function(eventObject)
+		{
+			load_organizations.call(eventObject.data);
+		});
+		$(cr.signedinUser).on("signout.cr", 0, orgSection[0], function(eventObject)
+		{
+			hide_organizations.call(eventObject.data);
+		});
+		
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
@@ -320,6 +416,31 @@
 			$(cr.signedinUser).trigger("signout.cr");
 		}
 		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
+		/* Handle a click event on the sign-in button to either sign in or sign out
+			the current user.
+		 */
+		$(".sign-in-button").click(function(e) {
+			if (prepareClick('click',  'Sign In/Out button'))
+			{
+				if (cr.signedinUser.getValueID())
+				{
+					var successFunction = function()
+					{
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
+						unblockClick();
+					};
+					
+					sign_out(successFunction, syncFailFunction);
+				}
+				else
+				{
+					showFixedPanel($(this).parents(".site-panel")[0], "#id_sign_in_panel");
+				}
+			}
+			e.preventDefault();
+		});
 
 		/* Show a pre-defined panel associated with this button. */
 		function showPanel()
@@ -512,50 +633,6 @@
 				$("#id_forgot_password_panel #id_email").focus();
 				forgotPassword.checkenabled();
 			});
-			
-			var previousPanel = $("body>panel")[0];
-			var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-			showPanelNow(pathwayPanel.node());
-
-			{% if state %}
-				var stateString = "{{state}}"
-				if (stateString.startsWith("findNewExperience"))
-				{
-					stateString = stateString.substring("findNewExperience".length);
-					var serviceValueID = null;
-					var offeringString = null;
-					if (stateString.length > 0)
-					{
-						serviceValueID = stateString.substring(0, 32);
-						stateString = stateString.substring(32);
-						offeringString = stateString.substring(0, 32);
-						stateString = stateString.substring(32);
-					}
-					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, pathwayPanel.node());
-					stateString = "";	/* So it only happens once. */
-				}
-				else if (stateString.startsWith("pathway"))
-				{
-					stateString = stateString.substring("pathway".length);
-					if (stateString.length > 0)
-					{
-						if (prepareClick())
-						{
-							cr.getData({path: "#"+stateString, done: function(users)
-								{
-									if (users.length > 0)
-									{
-										var panel = new PathwayPanel(users[0], pathwayPanel.node(), true);
-										panel.pathway.setUser(users[0], true);
-										showPanelLeft(panel.node());
-									}
-								},
-								fail: syncFailFunction});
-						}
-					}
-					stateString = "";
-				}
-			{% endif %}
 		});
 		
 		signIn = {

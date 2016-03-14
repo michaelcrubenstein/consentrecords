@@ -13,15 +13,6 @@ var UserPanel = (function() {
 			var navContainer = this.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", function()
-				{
-					if (prepareClick('click', 'User Done'))
-					{
-						hidePanelRight(_this.node());
-					}
-					d3.event.preventDefault();
-				});
-			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
 			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
@@ -44,10 +35,12 @@ var UserPanel = (function() {
 					if (cell) cells.push(cell);
 					_this.showViewCells(cells);
 
-					appendActionButton.call(panel2Div, 'Pathway', function() {
+					_this.appendActionButton('Pathway', function() {
 							if (prepareClick('click', 'Pathway'))
 							{
 								var panel = new PathwayPanel(user, _this.node());
+								panel.pathway.setUser(user, true);
+								showPanelLeft(panel.node());
 							}
 						});		
 				},
