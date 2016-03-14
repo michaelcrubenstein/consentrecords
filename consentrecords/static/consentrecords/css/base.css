@@ -92,7 +92,7 @@ panel>nav .left-link {
 	text-align: left;
 	white-space: nowrap;
 	display: inline-block;
-	margin-right: 12px;
+	margin-right: 24px;
 }
 panel>nav .right-link {
 	max-width: 100%;
@@ -101,7 +101,7 @@ panel>nav .right-link {
 	text-align: right;
 	white-space: nowrap;
 	display: inline-block;
-	margin-left: 12px;
+	margin-left: 24px;
 }
 nav .site-left-chevron {
 	height: 18px;
