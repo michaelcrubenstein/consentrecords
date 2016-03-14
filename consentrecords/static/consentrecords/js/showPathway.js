@@ -1611,7 +1611,7 @@ function setupFirstMarkerPanel(dots)
 			}
 			dots.services[0] = new ReportedObject({name: newName, pickedObject: newValue});
 		}
-		else
+		else if (newName.length > 0)
 			dots.services.push(new ReportedObject({name: newName, pickedObject: newValue}));
 	}
 	crp.getData({path: "Service", done: done, fail: asyncFailFunction});
