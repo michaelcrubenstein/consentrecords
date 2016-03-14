@@ -695,12 +695,6 @@ _term
             _descriptor type: _by text
             _object add rule: _create one
         _field
-            _name: _users
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: _users
-        _field
             _name: _user
             _data type: _object
             _max capacity: _multiple values
