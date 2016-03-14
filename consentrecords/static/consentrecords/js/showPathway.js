@@ -1585,7 +1585,7 @@ function setupFirstMarkerPanel(dots)
 	
 	p0.node().onDoneClicked = function()
 	{
-		var newName = searchInput.node().value;
+		var newName = searchInput.node().value.trim();
 		
 		/* Identify if the new name matches the name of an existing service. */
 		var newValue = null;
@@ -1957,7 +1957,7 @@ function setupPanel2(dots)
 
 	this.onDoneClicked = function()
 	{
-		var textValue = searchView.inputBox.value;
+		var textValue = searchView.inputBox.value.trim();
 		if ((dots.site && textValue != dots.site.getDescription() && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && dots.organization && textValue != dots.organization.getDescription()) ||
 		    (!dots.site && !dots.organization))
@@ -2081,7 +2081,7 @@ function setupPanel3(dots)
 
 	this.onDoneClicked = function()
 	{
-		var textValue = searchView.inputBox.value;
+		var textValue = searchView.inputBox.value.trim();
 		if ((dots.site && textValue != dots.site.getDescription()) ||
 		    !dots.site)
 		{
@@ -2148,11 +2148,12 @@ function setupPanel4(dots)
 
 	this.onDoneClicked = function()
 	{
-		if ((dots.offering && searchInput.node().value != dots.offering.getDescription()) ||
+		var textValue = searchInput.node().value.trim();
+		if ((dots.offering && textValue != dots.offering.getDescription()) ||
 		    !dots.offering)
 		{
 			dots.offering = null;
-			dots.offeringName = searchInput.node().value;
+			dots.offeringName = textValue;
 		}
 	}
 	
