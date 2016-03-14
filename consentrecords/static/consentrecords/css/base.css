@@ -100,6 +100,8 @@ panel>nav .right-link {
 	text-overflow: ellipsis;
 	text-align: right;
 	white-space: nowrap;
+	display: inline-block;
+	margin-left: 12px;
 }
 nav .site-left-chevron {
 	height: 18px;

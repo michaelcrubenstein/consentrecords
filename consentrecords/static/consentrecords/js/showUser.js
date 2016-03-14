@@ -39,6 +39,8 @@ var UserPanel = (function() {
 							if (prepareClick('click', 'Pathway'))
 							{
 								var panel = new PathwayPanel(user, _this.node());
+								panel.pathway.setUser(user, true);
+								showPanelLeft(panel.node());
 							}
 						});		
 				},

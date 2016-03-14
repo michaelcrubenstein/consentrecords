@@ -1,10 +1,11 @@
 var Settings = (function () {
+	Settings.prototype = new SitePanel();
 
-	function Settings(previousPanel) {
-	
-		var sitePanel = new SitePanel(previousPanel, null, "Settings", "edit settings-panel");
+	function Settings(user, previousPanel) {
+		var _this = this;
+		SitePanel.call(this, previousPanel, null, "Settings", "edit settings-panel");
 
-		var navContainer = sitePanel.appendNavContainer();
+		var navContainer = this.appendNavContainer();
 
 		navContainer.appendLeftButton()
 			.on("click", function()
@@ -12,7 +13,7 @@ var Settings = (function () {
 				if (prepareClick('click', 'Cancel'))
 				{
 					showClickFeedback(this);
-					hidePanelRight(sitePanel.node());
+					hidePanelRight(_this.node());
 				}
 				d3.event.preventDefault();
 			})
@@ -22,7 +23,7 @@ var Settings = (function () {
 			
 		navContainer.appendTitle('Settings');
 		
-		var panel2Div = sitePanel.appendScrollArea()
+		var panel2Div = this.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 			
@@ -32,29 +33,32 @@ var Settings = (function () {
 				})
  			.append("span").text("Done");
 			
-		var cells = [cr.signedinUser.getCell("_first name"),
-					 cr.signedinUser.getCell("_last name"),
-					 cr.signedinUser.getCell("Birthday"),
-					 cr.signedinUser.getCell("_public access")];
+		var cells = [user.getCell("_first name"),
+					 user.getCell("_last name"),
+					 user.getCell("Birthday"),
+					 user.getCell("_public access")];
 					 
-		sitePanel.showEditCells(cells);
+		this.showEditCells(cells);
 		
-		this.appendActionButton('Change Email', function() {
-				if (prepareClick('click', 'Change Email'))
-				{
-					var panel = new UpdateUsernamePanel(cr.signedinUser, sitePanel.node());
-				}
-			});
+		if (user == cr.signedinUser)
+		{
+			this.appendActionButton('Change Email', function() {
+					if (prepareClick('click', 'Change Email'))
+					{
+						var panel = new UpdateUsernamePanel(user, _this.node());
+					}
+				});
 		
-		this.appendActionButton('Change Password', function() {
-				if (prepareClick('click', 'Change Password'))
-				{
-					var panel = new UpdatePasswordPanel(sitePanel.node());
-					showPanelLeft(panel.node());
-				}
-			});
+			this.appendActionButton('Change Password', function() {
+					if (prepareClick('click', 'Change Password'))
+					{
+						var panel = new UpdatePasswordPanel(_this.node());
+						showPanelLeft(panel.node());
+					}
+				});
+		}
 		
-		showPanelLeft(sitePanel.node());
+		showPanelLeft(this.node());
 	}
 	
 	return Settings;

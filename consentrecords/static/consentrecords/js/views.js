@@ -1343,12 +1343,18 @@ var SiteNavContainer = (function() {
 				   .append("div") .classed("site-navbar-link site-active-text", true);
 	}
 	
+	SiteNavContainer.prototype.setTitle = function(title)
+	{
+		var h = this.div.selectAll('.site-navbar-commands > .site-title');
+		h.text(title)
+			.style("width", (getTextWidth(title, h.style("font"))+1).toString() + "px");
+	}
+	
 	SiteNavContainer.prototype.appendTitle = function(newTitle)
 	{
 		var h = this.div.append("div").classed("site-navbar-commands", true)
-				   .append("div").classed("site-title", true)
-				   .text(newTitle);
-		h.style("width", (getTextWidth(newTitle, h.style("font"))+1).toString() + "px")
+				   .append("div").classed("site-title", true);
+		this.setTitle(newTitle);
 		this.div.selectAll('.left-link').classed('pull-left', true);
 		return h;
 	}
@@ -2121,7 +2127,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		showPanelLeft(sitePanel.node());
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		sitepanel.showViewCells(objectData.cells);
+		sitePanel.showViewCells(objectData.cells);
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -2174,7 +2180,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showFunction) {
 		});
 
 		panel2Div.append("div").classed("cell-border-below", true);
-		sitepanel.showViewCells(objectData.cells);
+		sitePanel.showViewCells(objectData.cells);
 		
 		showFunction(sitePanel.node());
 	}
@@ -2209,7 +2215,7 @@ function showEditObjectPanel(objectData, previousPanelNode, onShow) {
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		this.showEditCells(objectData.cells);
+		sitePanel.showEditCells(objectData.cells);
 
 		var doneButton;
 		if (objectData.getValueID())

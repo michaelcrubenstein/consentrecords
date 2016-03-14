@@ -72,6 +72,7 @@ var Pathway = (function () {
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
 	Pathway.prototype.svg = null;
+	Pathway.prototype.loadingMessage = null;
 	Pathway.prototype.defs = null;
 	Pathway.prototype.bg = null;
 	Pathway.prototype.loadingText = null;
@@ -92,6 +93,9 @@ var Pathway = (function () {
 	Pathway.prototype.dataWidth = 0;
 	Pathway.prototype.dayHeight = 0;
 	Pathway.prototype.years = [];
+	
+	Pathway.prototype.nextClipID = 1;
+	Pathway.prototype.clipID = null;
 	
 	//This is the accessor function we talked about above
 	Pathway.prototype._lineFunction = d3.svg.line()
@@ -387,19 +391,20 @@ var Pathway = (function () {
 		if (this.flagColumns.length > 0)
 		{
 			this.defs.selectAll('clipPath').remove();
+			
 			/* Add a clipPath for the text box size. */
 			this.defs.append('clipPath')
-				.attr('id', 'id_clipPath')
+				.attr('id', 'id_clipPath{0}'.format(this.clipID))
 				.append('rect')
 				.attr('x', 0)
 				.attr('y', 0)
 				.attr('height', this.flagHeight)
 				.attr('width', textWidth);
 			this.defs.append('clipPath')
-				.attr('id', 'id_detailClipPath')
+				.attr('id', 'id_detailClipPath{0}'.format(this.clipID))
 				.append('rect');
 			this.defs.append('clipPath')
-				.attr('id', 'id_detailIconClipPath')
+				.attr('id', 'id_detailIconClipPath{0}'.format(this.clipID))
 				.append('rect');
 
 			/* Calculate the x offset of the flag for each group */
@@ -640,12 +645,12 @@ var Pathway = (function () {
 		var detailText = this.detailGroup.append('text')
 			.attr("width", "100")
 			.attr("height", "1")
-			.attr('clip-path', 'url(#id_detailClipPath)');
+			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
 		var detailChevron = this.detailGroup.append('image')
 			.attr("width", this.showDetailIconWidth)
 			.attr("height", this.showDetailIconWidth)
 			.attr("xlink:href", rightChevronPath)
-			.attr('clip-path', 'url(#id_detailIconClipPath)')
+			.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
 
 		var lines = [];
 	
@@ -718,12 +723,12 @@ var Pathway = (function () {
 		}
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		var textClipRect = d3.select("#id_detailClipPath").selectAll('rect')
+		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
 			.attr('width', textBox.width); 
 		
-		var iconClipRect = d3.select("#id_detailIconClipPath").selectAll('rect')
+		var iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
 			.attr('y', textBox.y)
 			.attr('width', this.showDetailIconWidth);
@@ -790,8 +795,8 @@ var Pathway = (function () {
 		 */
 		this.detailGroup.selectAll('image').remove();
 		this.detailGroup.selectAll('rect').remove();
-		d3.select("#id_detailClipPath").attr('height', 0);
-		d3.select("#id_detailIconClipPath").attr('height', 0);
+		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
+		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
 		if (this.detailFlagData)
@@ -832,7 +837,7 @@ var Pathway = (function () {
 			}
 			else
 			{
-				d3.select("#id_detailClipPath").selectAll('rect')
+				d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 					.transition()
 					.attr("height", 0)
 					.duration(duration)
@@ -841,7 +846,7 @@ var Pathway = (function () {
 						if (done)
 							done();
 					});
-				d3.select("#id_detailIconClipPath").selectAll('rect')
+				d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
 					.transition()
 					.duration(duration)
 					.attr("height", 0);
@@ -941,6 +946,10 @@ var Pathway = (function () {
 				});
 		}
 		
+		/* Set up a clipID that uniquely identifies the clip paths for this Pathway. */
+		this.clipID = Pathway.prototype.nextClipID;
+		Pathway.prototype.nextClipID += 1;
+
 		g.append('path')
 			.each(function()
 				{ this.pathway = _this; })
@@ -965,7 +974,7 @@ var Pathway = (function () {
 			.each(function() { this.pathway = _this; })
 			.attr("x", 0)
 			.attr("dy", "1.1")
-			.attr('clip-path', 'url(#id_clipPath)')
+			.attr('clip-path', 'url(#id_clipPath{0})'.format(_this.clipID))
 			.text(function(fd) { return fd.getDescription(); })
 			.on("click", function() 
 				{ 
@@ -1075,7 +1084,7 @@ var Pathway = (function () {
 			});
 
 		$(window).on("resize", resizeFunction);
-		$(node).on("hiding.cr", function()
+		$(this).on("clearing.cr", function()
 		{
 			$(window).off("resize", resizeFunction);
 		});
@@ -1083,16 +1092,44 @@ var Pathway = (function () {
 		this.appendExperiences();
 	}
 		
-	function Pathway(user, sitePanel, containerDiv, editable) {
-		editable = (editable !== undefined ? editable : true);
+	Pathway.prototype.clear = function()
+	{
+		$(this).trigger("clearing.cr");
+		
+		d3.selectAll(this.containerDiv.childNodes).remove();
+		
+		this.user = null;
 		this.allExperiences = [];
-		this.containerDiv = containerDiv;
+		this.flagColumns = [];
+		this.svg = null;
+		this.defs = null;
+		this.bg = null;
+		this.loadingText = null;
+		this.promptAddText = null;
+		this.experienceGroup = null;
+		this.yearGroup = null;
+		this.detailGroup = null;
+	
 		this.detailFlagData = null;
 		this.flagElement = null;
-		this.sitePanel = sitePanel;
+		this.flagHeight = 0;
+		this.flagWidth = 0;
+	
+		this.minDate = null;
+		this.maxDate = null;
+		this.timespan = 0;
+		this.dataHeight = 0;
+		this.dataWidth = 0;
+		this.dayHeight = 0;
+		this.years = [];
+	}
+	
+	Pathway.prototype.setUser = function(user, editable)
+	{
 		this.user = user;
+		editable = (editable !== undefined ? editable : true);
 		
-		var container = d3.select(containerDiv);
+		var container = d3.select(this.containerDiv);
 		
 		this.svg = container.append('div')
 			.style("height", "100%")
@@ -1109,7 +1146,7 @@ var Pathway = (function () {
 			.style("height", "100%")
 			.attr("fill", this.pathBackground);
 			
-		this.loadingMessage = crv.appendLoadingMessage(containerDiv)
+		this.loadingMessage = crv.appendLoadingMessage(this.containerDiv)
 			.style("position", "absolute")
 			.style("left", "0")
 			.style("top", "0");
@@ -1132,10 +1169,6 @@ var Pathway = (function () {
 			.on("click.cr", this.showDetailPanel);
 			
 		var _thisPathway = this;
-
-		$(this.sitePanel.node()).on("remove", null, null, function() {
-			_thisPathway.clearDetail();
-		});
 		
 		this.svg.on("click", function() 
 			{ 
@@ -1258,13 +1291,28 @@ var Pathway = (function () {
 						.attr("y", _thisPathway.loadingText.attr("y"));
 				}
 			}
+			
+			$(_thisPathway).trigger("userSet.cr");
 		}
 		
-		var path = "#" + _thisPathway.user.getValueID() + '::reference(Experience)';
+		var path = "#" + this.user.getValueID() + '::reference(Experience)';
 		cr.getData({path: path, 
 				   fields: ["parents"], 
 				   done: successFunction1, 
 				   fail: asyncFailFunction});
+	}
+
+	function Pathway(sitePanel, containerDiv) {
+		this.containerDiv = containerDiv;
+		this.sitePanel = sitePanel;
+		this.detailFlagData = null;
+		this.flagElement = null;
+		this.allExperiences = [];
+		
+		$(this).on("clearing.cr", null, null, function() {
+			this.clearDetail();
+		});
+		
 	}
 	
 	return Pathway;
@@ -1274,38 +1322,144 @@ var PathwayPanel = (function () {
 	PathwayPanel.prototype = new SitePanel();
 	PathwayPanel.prototype.pathway = null;
 	
-	function PathwayPanel(user, previousPanel) {
+	function PathwayPanel(user, previousPanel, canDone) {
+		canDone = canDone !== undefined ? canDone : true;
+		var _this = this;
+
 		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
 		var navContainer = this.appendNavContainer();
-		
-		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
-		backButton.append("span").text("Done");
-		var _this = this;
-		
-		var moreExperiences = user.getValue("More Experiences");
-		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
-		if (canAddExperience)
-		{ 
-			var addExperienceButton = navContainer.appendRightButton()
-				.classed('add-button', true)
-				.on("click", function(d) {
-					if (prepareClick('click', 'add experience'))
-					{
-						showClickFeedback(this);
-		
-						var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
-					}
-					d3.event.preventDefault();
-				});
-			addExperienceButton.append("span").text("+");
+		if (canDone)
+		{
+			var backButton = navContainer.appendLeftButton()
+				.on("click", handleCloseRightEvent);
+			backButton.append("span").text("Done");
 		}
 		
-		navContainer.appendTitle(getUserDescription(user));
+		if (user == cr.signedinUser)
+		{
+			var signinSpan = navContainer.appendRightButton()
+				.on("click", function()
+					{
+						showClickFeedback(this);
+						if (prepareClick('click',  'Sign In/Out button'))
+						{
+							if (cr.signedinUser.getValueID())
+							{
+								var successFunction = function()
+								{
+									cr.signedinUser.clearValue();
+									$(cr.signedinUser).trigger("signout.cr");
+									unblockClick();
+								};
+					
+								sign_out(successFunction, syncFailFunction);
+							}
+							else
+							{
+								showFixedPanel(_this.node(), "#id_sign_in_panel");
+							}
+						}
+						d3.event.preventDefault();
+					})
+				.append('span').text(cr.signedinUser.getValueID() ? 'Sign Out' : 'Sign In');
+			
+			updateSigninText = function(eventObject) {
+				$(eventObject.data).text("Sign Out");
+				navContainer.setTitle(getUserDescription(user));
+				_this.pathway.setUser(user, true);
+			};
+			
+			updateSignoutText = function(eventObject) {
+				$(eventObject.data).text("Sign In");
+				navContainer.setTitle("Welcome");
+				_this.pathway.clear();
+				addExperienceButton.style("display", "none");
+				settingsButton.style("display", "none");
+				sharingButton.style("display", "none");
+				findButton.style("display", "none");
+			};
+			
+			$(cr.signedinUser).on("signin.cr", null, signinSpan.node(), updateSigninText);
+			$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
+			$(signinSpan.node()).on("remove", null, cr.signedinUser, function(eventObject)
+				{
+					$(cr.signedinUser).on("signin.cr", null, signinSpan.node(), updateSigninText);
+					$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
+				});
+		}
+
+		navContainer.appendTitle(user.getValueID() ? getUserDescription(user) : "Welcome");
 		
 		var panel2Div = this.appendScrollArea();
-		showPanelLeft(this.node());
-		this.pathway = new Pathway(user, this, panel2Div.node(), true);
+
+		var bottomNavContainer = this.appendBottomNavContainer();
+
+		var settingsButton = bottomNavContainer.appendLeftButton()
+			.on("click", 
+				function() {
+					var done = function()
+					{
+						var settings = new Settings(user, _this.node());
+					}
+		
+					checkSignin.call(this, _this.node(), done, "Settings");
+					d3.event.preventDefault();
+				});
+		settingsButton.append("i").classed("site-active-text fa fa-cog", true);
+		settingsButton.style("display", "none");
+
+		var sharingButton = bottomNavContainer.appendLeftButton()
+			.on("click", 
+				function() {
+					var done = function()
+					{
+						var settings = new SharingPanel(user, _this.node());
+					}
+		
+					checkSignin.call(this, _this.node(), done, "Sharing");
+					d3.event.preventDefault();
+				});
+		sharingButton.append("i").classed("site-active-text fa fa-users", true);
+		sharingButton.style("display", "none");
+		
+		var findButton = bottomNavContainer.appendRightButton()
+				.on("click",
+					function() {
+						if (prepareClick('click', 'find experience'))
+						{
+							showClickFeedback(this);
+							var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+						}
+						d3.event.preventDefault();
+					});
+		findButton.append("i").classed("site-active-text fa fa-search", true);
+		findButton.style("display", "none");
+		
+		var addExperienceButton = bottomNavContainer.appendRightButton()
+			.classed('add-button', true)
+			.on("click", function(d) {
+				if (prepareClick('click', 'add experience'))
+				{
+					showClickFeedback(this);
+	
+					var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
+				}
+				d3.event.preventDefault();
+			});
+		addExperienceButton.append("span").text("+");
+		addExperienceButton.style("display", "none");
+		
+		this.pathway = new Pathway(this, panel2Div.node());
+		
+		$(this.pathway).on("userSet.cr", function()
+			{
+				var moreExperiences = user.getValue("More Experiences");
+				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+				addExperienceButton.style("display", canAddExperience ? null : "none");
+				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
+				sharingButton.style("display", user.privilege === "_administer" ? null : "none");
+				findButton.style("display", user.privilege === "_administer" ? null : "none");
+			});
 	}
 	
 	return PathwayPanel;

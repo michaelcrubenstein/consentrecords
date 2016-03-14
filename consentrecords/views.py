@@ -52,6 +52,32 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+def orgHome(request):
+    LogRecord.emit(request.user, 'consentrecords/orgHome', '')
+    
+    template = loader.get_template('consentrecords/orgHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    state = request.GET.get('state', None)
+    if state:
+        args['state'] = state
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 def find(request, serviceid, offeringid):
     LogRecord.emit(request.user, 'consentrecords/find', '')
     
