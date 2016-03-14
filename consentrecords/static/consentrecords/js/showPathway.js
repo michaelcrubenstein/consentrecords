@@ -1813,7 +1813,7 @@ function setupServicesPanel(dots)
 	appendServices(dots.services);
 	
 	/* Add one more button for the add Button item. */
-	var buttonDiv = p1.append("div")
+	var buttonDiv = obj.append("div")
 		.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 		.on("click", function(cell) {
 			var _thisButton = this;
