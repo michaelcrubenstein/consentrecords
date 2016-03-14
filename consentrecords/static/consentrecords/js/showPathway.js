@@ -103,7 +103,7 @@ var Pathway = (function () {
 		.y(function(d) { return d.y; })
 		.interpolate("linear");
 
-	Pathway.prototype._compareExperiences = function(a, b)
+	Pathway.prototype._compareExperiences = function(a, b, ordered)
 	{
 		var aService = a.getValue("Service");
 		var bService = b.getValue("Service");
@@ -119,11 +119,18 @@ var Pathway = (function () {
 		{
 			var aDescription = aServiceDomain.getDescription();
 			var bDescription = bServiceDomain.getDescription();
-			var ordered = ["Housing", "Education", "Extra-Curricular", "Wellness", "Career & Finance"];
 			var aOrder = ordered.indexOf(aDescription);
 			var bOrder = ordered.indexOf(bDescription);
-			if (aOrder < 0) aOrder = ordered.length;
-			if (bOrder < 0) bOrder = ordered.length;
+			if (aOrder < 0) 
+			{
+				ordered.push(aDescription);
+				aOrder = ordered.length;
+			}
+			if (bOrder < 0)
+			{
+				ordered.push(bDescription);
+				bOrder = ordered.length;
+			}
 			if (aOrder != bOrder)
 				return aOrder - bOrder;
 		}
@@ -217,10 +224,11 @@ var Pathway = (function () {
 		
 		var _thisPathway = this;
 		
+		var ordered = ["Housing", "Education", "Extra-Curricular", "Wellness", "Career & Finance", "Helping Out"];
 		/* Restore the sort order to startDate/endDate */
 		g.sort(function(a, b)
 		{
-			return _thisPathway._compareExperiences(a.experience, b.experience);
+			return _thisPathway._compareExperiences(a.experience, b.experience, ordered);
 		});
 	
 		function getExperienceY (fd, i)
