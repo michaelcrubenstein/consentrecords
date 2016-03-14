@@ -19,7 +19,7 @@ _term
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=State]>enumerator
+            _pick object path: _term[_name=State]>enumerator
         _field
             _name: Zip Code
             _data type: _string
@@ -152,14 +152,14 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name="_special access"]>enumerator
+            _pick object path: _term[_name="_special access"]>enumerator
         _field
             _name: _public access
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_register]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_register]
         _field
             _name: _primary administrator
             _data type: _object
@@ -354,7 +354,7 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_find,_read]
         _field
             _name: Inquiry Access Group
             _data type: _object
@@ -374,7 +374,7 @@ _term
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=Weekday]>enumerator
+            _pick object path: _term[_name=Weekday]>enumerator
         _field
             _name: Start Time
             _data type: _time
@@ -573,7 +573,9 @@ _term
             _descriptor type: _by text
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=_privilege]>enumerator
+            _pick object path: _term[_name=_privilege]>enumerator
+_term
+    _name: _access request
 _term
     _name: _boolean
     _configuration
@@ -651,25 +653,25 @@ _term
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_name="_data type"]>"enumerator"
+            _pick object path: _term[_name="_data type"]>enumerator
         _field
             _name: _max capacity
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_name="_max capacity"]>"enumerator"
+            _pick object path: _term[_name="_max capacity"]>enumerator
         _field
             _name: _descriptor type
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_name="_descriptor type"]>"enumerator"
+            _pick object path: _term[_name="_descriptor type"]>enumerator
         _field
             _name: _object add rule
             _data type: _object
             _max capacity: _unique value
             _object add rule: _pick one
-            _pick object path: _uuname[_name="_object add rule"]>"enumerator"
+            _pick object path: _term[_name="_object add rule"]>enumerator
         _field
             _name: _of kind
             _data type: _object
@@ -692,12 +694,6 @@ _term
             _max capacity: _multiple values
             _descriptor type: _by text
             _object add rule: _create one
-        _field
-            _name: _users
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: _users
         _field
             _name: _user
             _data type: _object
@@ -749,6 +745,8 @@ _term
     enumerator
         _name: _custom
 _term
+    _name: _system access
+_term
     _name: _term
     _configuration
         _name: Bootstrap
@@ -773,7 +771,7 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name="_default access"]>enumerator
+            _pick object path: _term[_name="_default access"]>enumerator
 _term
     _name: _text
 _term
@@ -817,11 +815,17 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _uuname[_name=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_find,_read]
         _field
             _name: _primary administrator
             _data type: _object
             _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: _user
+        _field
+            _name: _access request
+            _data type: _object
+            _max capacity: _multiple values
             _object add rule: _pick one
             _of kind: _user
     _default access: _custom
