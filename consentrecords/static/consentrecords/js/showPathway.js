@@ -1475,6 +1475,11 @@ var PathwayPanel = (function () {
 		
 		this.pathway = new Pathway(this, panel2Div.node());
 		
+		$(this.node()).on("remove", function()
+		{
+			_this.pathway.clear();
+		});
+		
 		$(this.pathway).on("userSet.cr", function()
 			{
 				var moreExperiences = user.getValue("More Experiences");
