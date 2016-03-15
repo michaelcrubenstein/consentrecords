@@ -549,6 +549,10 @@
 										panel.pathway.setUser(users[0], true);
 										showPanelLeft(panel.node());
 									}
+									else
+									{
+										syncFailFunction("The specified user does not exist or you do not have permission to view them.");
+									}
 								},
 								fail: syncFailFunction});
 						}

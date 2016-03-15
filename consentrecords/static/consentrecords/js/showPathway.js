@@ -1134,6 +1134,9 @@ var Pathway = (function () {
 	
 	Pathway.prototype.setUser = function(user, editable)
 	{
+		if (user.privilege === '_find')
+			throw "You do not have permission to see information about {0}".format(user.getDescription());
+			
 		this.user = user;
 		editable = (editable !== undefined ? editable : true);
 		
@@ -1278,9 +1281,15 @@ var Pathway = (function () {
 					.on("click", function(d) {
 						if (prepareClick('click', 'Record one now prompt'))
 						{
-							showClickFeedback(this);
-		
-							var newPanel = new AddExperiencePanel(_thisPathway, null, sitePanel.node());
+							try
+							{
+								showClickFeedback(this);
+								var newPanel = new AddExperiencePanel(_thisPathway, null, _thisPathway.sitePanel.node());
+							}
+							catch (err)
+							{
+								syncFailFunction(err);
+							}
 						}
 						d3.event.preventDefault();
 					})
@@ -1374,7 +1383,15 @@ var PathwayPanel = (function () {
 			updateSigninText = function(eventObject) {
 				$(eventObject.data).text("Sign Out");
 				navContainer.setTitle(getUserDescription(user));
-				_this.pathway.setUser(user, true);
+				try
+				{
+					_this.pathway.setUser(user, true);
+				}
+				catch(err)
+				{
+					_this.pathway.clear();
+					throw (err);
+				}
 			};
 			
 			updateSignoutText = function(eventObject) {

@@ -1,0 +1,2162 @@
+Organization
+    _name: University of Massachusetts
+    Web Site: http://www.massachusetts.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Amherst Campus
+            Web Site: http://www.umass.edu/
+        Site
+            _name: Boston Campus
+            Web Site: http://www.umb.edu/
+        Site
+            _name: Dartmouth Campus
+            Web Site: http://www.umassd.edu/
+        Site
+            _name: Lowell Campus
+            Web Site: http://www.uml.edu/
+Organization
+    _name: University of Massachusetts Medical Center
+    Web Site: http://www.umassmed.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: University of Massachusetts Medical Center
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: University of Massachusetts School Of Law
+    Web Site: http://www.umassd.edu/law/
+    _public access: _read
+    Sites
+        Site
+            _name: University of Massachusetts School Of Law
+            Address
+                City: North Dartmouth
+                State: MA
+Organization
+    _name: Massachusetts College of Art and Design
+    Web Site: http://www.massart.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Art and Design
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Bridgewater State
+    Web Site: http://www.bridgew.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Fitchburg State
+    Web Site: http://www.fitchburgstate.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Framingham State
+    Web Site: http://www.framingham.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Salem State
+    Web Site: http://www.salemstate.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Westfield State
+    Web Site: http://www.westfield.ma.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Worcester State
+    Web Site: http://www.worcester.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massachusetts College of Liberal Arts
+    Web Site: http://www.mcla.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Liberal Arts
+            Address
+                City: North Adams
+                State: MA
+Organization
+    _name: Massachusetts Maritime Academy
+    Web Site: http://www.maritime.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Maritime Academy
+            Address
+                City: Buzzards Bay
+                State: MA
+Organization
+    _name: Massachusetts College of Art and Design
+    Web Site: http://www.massart.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Art and Design
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Bridgewater State
+    Web Site: http://www.bridgew.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Fitchburg State
+    Web Site: http://www.fitchburgstate.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Framingham State
+    Web Site: http://www.framingham.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Salem State
+    Web Site: http://www.salemstate.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Westfield State
+    Web Site: http://www.westfield.ma.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Worcester State
+    Web Site: http://www.worcester.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massachusetts College of Liberal Arts
+    Web Site: http://www.mcla.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Liberal Arts
+            Address
+                City: North Adams
+                State: MA
+Organization
+    _name: Massachusetts Maritime Academy
+    Web Site: http://www.maritime.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Maritime Academy
+            Address
+                City: Buzzards Bay
+                State: MA
+Organization
+    _name: Massachusetts Community Colleges
+    Web Site: http://www.masscc.org/
+    _public access: _read
+    Sites
+Organization
+    _name: Berkshire Community College
+    Web Site: http://www.berkshirecc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bristol Community College
+    Web Site: http://bristolcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bunker Hill Community College
+    Web Site: http://www.bhcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Cape Cod Community College
+    Web Site: http://www.capecod.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Greenfield Community College
+    Web Site: http://www.gcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Holyoke Community College
+    Web Site: http://www.hcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massachusetts Bay Community College
+    Web Site: http://www.massbay.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massasoit Community College
+    Web Site: http://www.massasoit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Middlesex Community College
+    Web Site: http://www.middlesex.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Mount Wachusett Community College
+    Web Site: http://mwcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: North Shore Community College
+    Web Site: http://www.northshore.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Northern Essex Community College
+    Web Site: http://www.necc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Quinsigamond Community College
+    Web Site: http://www.qcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Roxbury Community College
+    Web Site: http://www.rcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Springfield Technical Community College
+    Web Site: http://www.stcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Berkshire Community College
+    Web Site: http://www.berkshirecc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bristol Community College
+    Web Site: http://bristolcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bunker Hill Community College
+    Web Site: http://www.bhcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Cape Cod Community College
+    Web Site: http://www.capecod.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Greenfield Community College
+    Web Site: http://www.gcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Holyoke Community College
+    Web Site: http://www.hcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massachusetts Bay Community College
+    Web Site: http://www.massbay.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Massasoit Community College
+    Web Site: http://www.massasoit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Middlesex Community College
+    Web Site: http://www.middlesex.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Mount Wachusett Community College
+    Web Site: http://mwcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: North Shore Community College
+    Web Site: http://www.northshore.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Northern Essex Community College
+    Web Site: http://www.necc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Quinsigamond Community College
+    Web Site: http://www.qcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Roxbury Community College
+    Web Site: http://www.rcc.mass.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Springfield Technical Community College
+    Web Site: http://www.stcc.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: American International College
+    Web Site: http://www.aic.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: American International College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Amherst College
+    Web Site: http://www.amherst.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Amherst College
+            Address
+                City: Amherst
+                State: MA
+Organization
+    _name: Andover Newton Theological School
+    Web Site: http://www.ants.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Andover Newton Theological School
+            Address
+                City: Newton Centre
+                State: MA
+Organization
+    _name: Anna Maria College
+    Web Site: http://www.annamaria.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Anna Maria College
+            Address
+                City: Paxton
+                State: MA
+Organization
+    _name: Anna Maria College Online
+    Web Site: http://online.annamaria.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Anna Maria College Online
+            Address
+                City: Bedford
+                State: MA
+Organization
+    _name: Art Institute of Boston
+    Web Site: http://www.lesley.edu/college-art-and-design/
+    _public access: _read
+    Sites
+Organization
+    _name: Assumption College
+    Web Site: http://www.assumption.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Assumption College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: American International College
+    Web Site: http://www.aic.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: American International College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Amherst College
+    Web Site: http://www.amherst.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Amherst College
+            Address
+                City: Amherst
+                State: MA
+Organization
+    _name: Andover Newton Theological School
+    Web Site: http://www.ants.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Andover Newton Theological School
+            Address
+                City: Newton Centre
+                State: MA
+Organization
+    _name: Anna Maria College
+    Web Site: http://www.annamaria.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Anna Maria College
+            Address
+                City: Paxton
+                State: MA
+Organization
+    _name: Anna Maria College Online
+    Web Site: http://online.annamaria.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Anna Maria College Online
+            Address
+                City: Bedford
+                State: MA
+Organization
+    _name: Art Institute of Boston
+    Web Site: http://www.lesley.edu/college-art-and-design/
+    _public access: _read
+    Sites
+Organization
+    _name: Assumption College
+    Web Site: http://www.assumption.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Assumption College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Babson College
+    Web Site: http://www.babson.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Babson College
+            Address
+                City: Babson Park
+                State: MA
+Organization
+    _name: Bard College at Simon's Rock
+    Web Site: http://www.simons-rock.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bard College at Simon's Rock
+            Address
+                City: Great Barrington
+                State: MA
+Organization
+    _name: Bay Path College
+    Web Site: http://www.baypath.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bay Path College
+            Address
+                City: Longmeadow
+                State: MA
+Organization
+    _name: Becker College
+    Web Site: http://www.becker.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Becker College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Benjamin Franklin Institute of Boston
+    Web Site: http://www.bfit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bentley University
+    Web Site: http://www.bentley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bentley University
+            Address
+                City: Waltham
+                State: MA
+Organization
+    _name: Berklee College of Music
+    Web Site: http://www.berklee.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Berklee College of Music
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston Architectural College
+    Web Site: http://www.the-bac.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston Architectural College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston College
+    Web Site: http://www.bc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston College
+            Address
+                City: Chestnut Hill
+                State: MA
+Organization
+    _name: The Boston Conservatory
+    Web Site: http://www.bostonconservatory.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: The Boston Conservatory
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston Graduate School of Psychoanalysis
+    Web Site: http://www.bgsp.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston Graduate School of Psychoanalysis
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Boston University
+    Web Site: http://www.bu.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Brandeis University
+    Web Site: http://www.brandeis.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Brandeis University
+            Address
+                City: Waltham
+                State: MA
+Organization
+    _name: Babson College
+    Web Site: http://www.babson.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Babson College
+            Address
+                City: Babson Park
+                State: MA
+Organization
+    _name: Bard College at Simon's Rock
+    Web Site: http://www.simons-rock.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bard College at Simon's Rock
+            Address
+                City: Great Barrington
+                State: MA
+Organization
+    _name: Bay Path College
+    Web Site: http://www.baypath.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bay Path College
+            Address
+                City: Longmeadow
+                State: MA
+Organization
+    _name: Becker College
+    Web Site: http://www.becker.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Becker College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Benjamin Franklin Institute of Boston
+    Web Site: http://www.bfit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Bentley University
+    Web Site: http://www.bentley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Bentley University
+            Address
+                City: Waltham
+                State: MA
+Organization
+    _name: Berklee College of Music
+    Web Site: http://www.berklee.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Berklee College of Music
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston Architectural College
+    Web Site: http://www.the-bac.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston Architectural College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston College
+    Web Site: http://www.bc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston College
+            Address
+                City: Chestnut Hill
+                State: MA
+Organization
+    _name: The Boston Conservatory
+    Web Site: http://www.bostonconservatory.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: The Boston Conservatory
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Boston Graduate School of Psychoanalysis
+    Web Site: http://www.bgsp.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston Graduate School of Psychoanalysis
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Boston University
+    Web Site: http://www.bu.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Boston University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Brandeis University
+    Web Site: http://www.brandeis.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Brandeis University
+            Address
+                City: Waltham
+                State: MA
+Organization
+    _name: Cambridge College
+    Web Site: http://cambridge.cambridgecollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Cambridge College
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Cambridge College
+    Web Site: http://springfield.cambridgecollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Cambridge College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Clark University
+    Web Site: http://www.clarku.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Clark University
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Conway School of Landscape Design
+    Web Site: http://www.csld.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Conway School of Landscape Design
+            Address
+                City: Conway
+                State: MA
+Organization
+    _name: Curry College
+    Web Site: http://www.curry.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Curry College
+            Address
+                City: Milton
+                State: MA
+Organization
+    _name: Cambridge College
+    Web Site: http://cambridge.cambridgecollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Cambridge College
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Cambridge College
+    Web Site: http://springfield.cambridgecollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Cambridge College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Clark University
+    Web Site: http://www.clarku.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Clark University
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Conway School of Landscape Design
+    Web Site: http://www.csld.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Conway School of Landscape Design
+            Address
+                City: Conway
+                State: MA
+Organization
+    _name: Curry College
+    Web Site: http://www.curry.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Curry College
+            Address
+                City: Milton
+                State: MA
+Organization
+    _name: Dean College
+    Web Site: http://www.dean.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Dean College
+            Address
+                City: Franklin
+                State: MA
+Organization
+    _name: Dean College
+    Web Site: http://www.dean.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Dean College
+            Address
+                City: Franklin
+                State: MA
+Organization
+    _name: Eastern Nazarene College
+    Web Site: http://www.enc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Eastern Nazarene College
+            Address
+                City: Quincy
+                State: MA
+Organization
+    _name: Elms College
+    Web Site: http://www.elms.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Elms College
+            Address
+                City: Chicopee
+                State: MA
+Organization
+    _name: Emerson College
+    Web Site: http://www.emerson.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Emerson College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Emmanuel College
+    Web Site: http://www.emmanuel.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Emmanuel College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Endicott College
+    Web Site: http://www.endicott.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Endicott College
+            Address
+                City: Beverly
+                State: MA
+Organization
+    _name: Eastern Nazarene College
+    Web Site: http://www.enc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Eastern Nazarene College
+            Address
+                City: Quincy
+                State: MA
+Organization
+    _name: Elms College
+    Web Site: http://www.elms.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Elms College
+            Address
+                City: Chicopee
+                State: MA
+Organization
+    _name: Emerson College
+    Web Site: http://www.emerson.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Emerson College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Emmanuel College
+    Web Site: http://www.emmanuel.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Emmanuel College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Endicott College
+    Web Site: http://www.endicott.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Endicott College
+            Address
+                City: Beverly
+                State: MA
+Organization
+    _name: Fisher College
+    Web Site: http://www.fisher.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Fisher College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Franklin Institute of Boston
+    Web Site: http://www.bfit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Fisher College
+    Web Site: http://www.fisher.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Fisher College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Franklin Institute of Boston
+    Web Site: http://www.bfit.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: Gordon College
+    Web Site: http://www.gordon.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Gordon College
+            Address
+                City: Wenham
+                State: MA
+Organization
+    _name: Gordon-Conwell Theological Seminary
+    Web Site: http://www.gordonconwell.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Gordon-Conwell Theological Seminary
+            Address
+                City: South Hamilton/Boston
+                State: MA
+Organization
+    _name: Gordon College
+    Web Site: http://www.gordon.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Gordon College
+            Address
+                City: Wenham
+                State: MA
+Organization
+    _name: Gordon-Conwell Theological Seminary
+    Web Site: http://www.gordonconwell.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Gordon-Conwell Theological Seminary
+            Address
+                City: South Hamilton/Boston
+                State: MA
+Organization
+    _name: Hampshire College
+    Web Site: http://www.hampshire.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hampshire College
+            Address
+                City: Amherst
+                State: MA
+Organization
+    _name: Harvard University
+    Web Site: http://www.harvard.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Harvard University
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Hebrew College
+    Web Site: http://www.hebrewcollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hebrew College
+            Address
+                City: Newton Centre
+                State: MA
+Organization
+    _name: Hellenic College
+    Web Site: http://www.hchc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hellenic College
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Holy Cross College
+    Web Site: http://www.holycross.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Holy Cross College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Hult International Business School
+    Web Site: http://www.hult.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hult International Business School
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Hampshire College
+    Web Site: http://www.hampshire.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hampshire College
+            Address
+                City: Amherst
+                State: MA
+Organization
+    _name: Harvard University
+    Web Site: http://www.harvard.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Harvard University
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Hebrew College
+    Web Site: http://www.hebrewcollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hebrew College
+            Address
+                City: Newton Centre
+                State: MA
+Organization
+    _name: Hellenic College
+    Web Site: http://www.hchc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hellenic College
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Holy Cross College
+    Web Site: http://www.holycross.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Holy Cross College
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Hult International Business School
+    Web Site: http://www.hult.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Hult International Business School
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: ITT Technical Institute
+    Web Site: http://www.itt-tech.edu/campus/school.cfm?lloc_num=52
+    _public access: _read
+    Sites
+        Site
+            _name: ITT Technical Institute
+            Address
+                City: Norwood
+                State: MA
+Organization
+    _name: ITT Technical Institute
+    Web Site: http://www.itt-tech.edu/campus/school.cfm?lloc_num=18
+    _public access: _read
+    Sites
+        Site
+            _name: ITT Technical Institute
+            Address
+                City: Wilmington
+                State: MA
+Organization
+    _name: ITT Technical Institute
+    Web Site: http://www.itt-tech.edu/campus/school.cfm?lloc_num=52
+    _public access: _read
+    Sites
+        Site
+            _name: ITT Technical Institute
+            Address
+                City: Norwood
+                State: MA
+Organization
+    _name: ITT Technical Institute
+    Web Site: http://www.itt-tech.edu/campus/school.cfm?lloc_num=18
+    _public access: _read
+    Sites
+        Site
+            _name: ITT Technical Institute
+            Address
+                City: Wilmington
+                State: MA
+Organization
+    _name: Labouré College
+    Web Site: http://www.laboure.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Labouré College
+            Address
+                City: Milton
+                State: MA
+Organization
+    _name: Lasell College
+    Web Site: http://www.lasell.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Lasell College
+            Address
+                City: Newton
+                State: MA
+Organization
+    _name: Lesley University
+    Web Site: http://www.lesley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Lesley University
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Lesley University College of Art and Design
+    Web Site: http://www.lesley.edu/college-art-and-design/
+    _public access: _read
+    Sites
+        Site
+            _name: Lesley University College of Art and Design
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Longy School of Music
+    Web Site: http://www.longy.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Longy School of Music
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Labouré College
+    Web Site: http://www.laboure.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Labouré College
+            Address
+                City: Milton
+                State: MA
+Organization
+    _name: Lasell College
+    Web Site: http://www.lasell.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Lasell College
+            Address
+                City: Newton
+                State: MA
+Organization
+    _name: Lesley University
+    Web Site: http://www.lesley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Lesley University
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Lesley University College of Art and Design
+    Web Site: http://www.lesley.edu/college-art-and-design/
+    _public access: _read
+    Sites
+        Site
+            _name: Lesley University College of Art and Design
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Longy School of Music
+    Web Site: http://www.longy.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Longy School of Music
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Massachusetts College of Pharmacy & Health Sciences
+    Web Site: http://www.mcphs.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Pharmacy & Health Sciences
+            Address
+                City: Boston/Worcester
+                State: MA
+Organization
+    _name: Massachusetts Institute of Technology
+    Web Site: http://web.mit.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Institute of Technology
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Massachusetts School of Law
+    Web Site: http://www.mslaw.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts School of Law
+            Address
+                City: Andover
+                State: MA
+Organization
+    _name: Merrimack College
+    Web Site: http://www.merrimack.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Merrimack College
+            Address
+                City: North Andover
+                State: MA
+Organization
+    _name: MGH Institute of Health Professions
+    Web Site: http://www.mghihp.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: MGH Institute of Health Professions
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Montserrat College of Art
+    Web Site: http://www.montserrat.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Montserrat College of Art
+            Address
+                City: Beverly
+                State: MA
+Organization
+    _name: Mount Holyoke College
+    Web Site: http://www.mtholyoke.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Mount Holyoke College
+            Address
+                City: South Hadley
+                State: MA
+Organization
+    _name: Mount Ida College
+    Web Site: http://www.mountida.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Mount Ida College
+            Address
+                City: Newton
+                State: MA
+Organization
+    _name: Massachusetts College of Pharmacy & Health Sciences
+    Web Site: http://www.mcphs.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts College of Pharmacy & Health Sciences
+            Address
+                City: Boston/Worcester
+                State: MA
+Organization
+    _name: Massachusetts Institute of Technology
+    Web Site: http://web.mit.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Institute of Technology
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Massachusetts School of Law
+    Web Site: http://www.mslaw.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts School of Law
+            Address
+                City: Andover
+                State: MA
+Organization
+    _name: Merrimack College
+    Web Site: http://www.merrimack.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Merrimack College
+            Address
+                City: North Andover
+                State: MA
+Organization
+    _name: MGH Institute of Health Professions
+    Web Site: http://www.mghihp.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: MGH Institute of Health Professions
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Montserrat College of Art
+    Web Site: http://www.montserrat.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Montserrat College of Art
+            Address
+                City: Beverly
+                State: MA
+Organization
+    _name: Mount Holyoke College
+    Web Site: http://www.mtholyoke.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Mount Holyoke College
+            Address
+                City: South Hadley
+                State: MA
+Organization
+    _name: Mount Ida College
+    Web Site: http://www.mountida.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Mount Ida College
+            Address
+                City: Newton
+                State: MA
+Organization
+    _name: National Graduate School of Quality Management
+    Web Site: http://www.ngs.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: National Graduate School of Quality Management
+            Address
+                City: Falmouth
+                State: MA
+Organization
+    _name: New England College of Finance, LLC
+    Web Site: http://www.necb.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England College of Finance, LLC
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England College of Optometry
+    Web Site: http://www.neco.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England College of Optometry
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England Conservatory of Music
+    Web Site: http://necmusic.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England Conservatory of Music
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England School of Law
+    Web Site: http://www.nesl.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England School of Law
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Newbury College
+    Web Site: http://www.newbury.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Newbury College
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Nichols College
+    Web Site: http://www.nichols.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Nichols College
+            Address
+                City: Dudley
+                State: MA
+Organization
+    _name: Northeastern University
+    Web Site: http://www.northeastern.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Northeastern University College of Professional Studies
+    Web Site: http://www.northeastern.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University College of Professional Studies
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Northeastern University Online
+    Web Site: http://www.northeastern.edu/online/index.asp
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University Online
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: National Graduate School of Quality Management
+    Web Site: http://www.ngs.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: National Graduate School of Quality Management
+            Address
+                City: Falmouth
+                State: MA
+Organization
+    _name: New England College of Finance, LLC
+    Web Site: http://www.necb.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England College of Finance, LLC
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England College of Optometry
+    Web Site: http://www.neco.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England College of Optometry
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England Conservatory of Music
+    Web Site: http://necmusic.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England Conservatory of Music
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: New England School of Law
+    Web Site: http://www.nesl.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: New England School of Law
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Newbury College
+    Web Site: http://www.newbury.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Newbury College
+            Address
+                City: Brookline
+                State: MA
+Organization
+    _name: Nichols College
+    Web Site: http://www.nichols.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Nichols College
+            Address
+                City: Dudley
+                State: MA
+Organization
+    _name: Northeastern University
+    Web Site: http://www.northeastern.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Northeastern University College of Professional Studies
+    Web Site: http://www.northeastern.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University College of Professional Studies
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Northeastern University Online
+    Web Site: http://www.northeastern.edu/online/index.asp
+    _public access: _read
+    Sites
+        Site
+            _name: Northeastern University Online
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Olin College
+    Web Site: http://www.olin.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Olin College
+            Address
+                City: Needham
+                State: MA
+Organization
+    _name: Olin College
+    Web Site: http://www.olin.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Olin College
+            Address
+                City: Needham
+                State: MA
+Organization
+    _name: Pine Manor College
+    Web Site: http://www.pmc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Pine Manor College
+            Address
+                City: Chestnut Hill
+                State: MA
+Organization
+    _name: Pine Manor College
+    Web Site: http://www.pmc.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Pine Manor College
+            Address
+                City: Chestnut Hill
+                State: MA
+Organization
+    _name: Quincy College
+    Web Site: http://www.quincycollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Quincy College
+            Address
+                City: Quincy/Plymouth
+                State: MA
+Organization
+    _name: Quincy College
+    Web Site: http://www.quincycollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Quincy College
+            Address
+                City: Quincy/Plymouth
+                State: MA
+Organization
+    _name: Radcliffe Institute For Advanced Study (Harvard University)
+    Web Site: http://www.radcliffe.harvard.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Radcliffe Institute For Advanced Study (Harvard University)
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Regis College
+    Web Site: http://www.regiscollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Regis College
+            Address
+                City: Weston
+                State: MA
+Organization
+    _name: Radcliffe Institute For Advanced Study (Harvard University)
+    Web Site: http://www.radcliffe.harvard.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Radcliffe Institute For Advanced Study (Harvard University)
+            Address
+                City: Cambridge
+                State: MA
+Organization
+    _name: Regis College
+    Web Site: http://www.regiscollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Regis College
+            Address
+                City: Weston
+                State: MA
+Organization
+    _name: Salter College
+    Web Site: http://www.saltercollege.com/
+    _public access: _read
+    Sites
+        Site
+            _name: Salter College
+            Address
+                City: West Boylston
+                State: MA
+Organization
+    _name: Simmons College
+    Web Site: http://www.simmons.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Simmons College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Smith College
+    Web Site: http://www.smith.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Smith College
+            Address
+                City: Northampton
+                State: MA
+Organization
+    _name: Southern New England School of Law
+    Web Site: http://www.umassd.edu/law/
+    _public access: _read
+    Sites
+        Site
+            _name: Southern New England School of Law
+            Address
+                City: North Dartmouth
+                State: MA
+Organization
+    _name: University of Massachusetts School Of Law
+    Web Site: http://www.umassd.edu/law/
+    _public access: _read
+    Sites
+Organization
+    _name: Springfield College
+    Web Site: http://www.springfieldcollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Springfield College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Stonehill College
+    Web Site: http://www.stonehill.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Stonehill College
+            Address
+                City: Easton
+                State: MA
+Organization
+    _name: Suffolk University
+    Web Site: http://www.suffolk.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Suffolk University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Salter College
+    Web Site: http://www.saltercollege.com/
+    _public access: _read
+    Sites
+        Site
+            _name: Salter College
+            Address
+                City: West Boylston
+                State: MA
+Organization
+    _name: Simmons College
+    Web Site: http://www.simmons.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Simmons College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Smith College
+    Web Site: http://www.smith.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Smith College
+            Address
+                City: Northampton
+                State: MA
+Organization
+    _name: Southern New England School of Law
+    Web Site: http://www.umassd.edu/law/
+    _public access: _read
+    Sites
+        Site
+            _name: Southern New England School of Law
+            Address
+                City: North Dartmouth
+                State: MA
+Organization
+    _name: University of Massachusetts School Of Law
+    Web Site: http://www.umassd.edu/law/
+    _public access: _read
+    Sites
+Organization
+    _name: Springfield College
+    Web Site: http://www.springfieldcollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Springfield College
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Stonehill College
+    Web Site: http://www.stonehill.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Stonehill College
+            Address
+                City: Easton
+                State: MA
+Organization
+    _name: Suffolk University
+    Web Site: http://www.suffolk.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Suffolk University
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Tabor Academy
+    Web Site: http://www.taboracademy.org
+    _public access: _read
+    Sites
+        Site
+            _name: Tabor Academy
+            Address
+                City: Marion
+                State: MA
+Organization
+    _name: Tufts University
+    Web Site: http://www.tufts.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Tufts University
+            Address
+                City: Medford
+                State: MA
+Organization
+    _name: Tabor Academy
+    Web Site: http://www.taboracademy.org
+    _public access: _read
+    Sites
+        Site
+            _name: Tabor Academy
+            Address
+                City: Marion
+                State: MA
+Organization
+    _name: Tufts University
+    Web Site: http://www.tufts.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Tufts University
+            Address
+                City: Medford
+                State: MA
+Organization
+    _name: Wellesley College
+    Web Site: http://web.wellesley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wellesley College
+            Address
+                City: Wellesley
+                State: MA
+Organization
+    _name: Wentworth Institute of Technology
+    Web Site: http://www.wit.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wentworth Institute of Technology
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Western New England University
+    Web Site: http://www.wne.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Western New England University
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Wheaton College
+    Web Site: http://www.wheatoncollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wheaton College
+            Address
+                City: Norton
+                State: MA
+Organization
+    _name: Wheelock College
+    Web Site: http://www.wheelock.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wheelock College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Williams College
+    Web Site: http://www.williams.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Williams College
+            Address
+                City: Williamstown
+                State: MA
+Organization
+    _name: Woods Hole Oceanographic Institution
+    Web Site: http://www.whoi.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Woods Hole Oceanographic Institution
+            Address
+                City: Falmouth
+                State: MA
+Organization
+    _name: Worcester Polytechnic Institute
+    Web Site: http://www.wpi.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Worcester Polytechnic Institute
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Wellesley College
+    Web Site: http://web.wellesley.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wellesley College
+            Address
+                City: Wellesley
+                State: MA
+Organization
+    _name: Wentworth Institute of Technology
+    Web Site: http://www.wit.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wentworth Institute of Technology
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Western New England University
+    Web Site: http://www.wne.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Western New England University
+            Address
+                City: Springfield
+                State: MA
+Organization
+    _name: Wheaton College
+    Web Site: http://www.wheatoncollege.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wheaton College
+            Address
+                City: Norton
+                State: MA
+Organization
+    _name: Wheelock College
+    Web Site: http://www.wheelock.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Wheelock College
+            Address
+                City: Boston
+                State: MA
+Organization
+    _name: Williams College
+    Web Site: http://www.williams.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Williams College
+            Address
+                City: Williamstown
+                State: MA
+Organization
+    _name: Woods Hole Oceanographic Institution
+    Web Site: http://www.whoi.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Woods Hole Oceanographic Institution
+            Address
+                City: Falmouth
+                State: MA
+Organization
+    _name: Worcester Polytechnic Institute
+    Web Site: http://www.wpi.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Worcester Polytechnic Institute
+            Address
+                City: Worcester
+                State: MA
+Organization
+    _name: Massachusetts Maritime Academy
+    Web Site: http://www.maritime.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Maritime Academy
+            Address
+                City: Buzzards Bay
+                State: MA
+Organization
+    _name: United States Merchant Marine Academy
+    Web Site: http://www.usmma.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Merchant Marine Academy
+            Address
+                City: King's Point, NY
+                State: MA
+Organization
+    _name: United States Military Academy
+    Web Site: http://www.westpoint.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Military Academy
+            Address
+                City: West Point,NY
+                State: MA
+Organization
+    _name: United States Naval Academy, Annapolis, MD
+    Web Site: http://www.usna.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: United States Air Force Academy
+    Web Site: http://www.usafa.af.mil/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Air Force Academy
+            Address
+                City: Colorado Springs, CO
+                State: MA
+Organization
+    _name: United States Coast Guard Academy
+    Web Site: http://www.cga.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Coast Guard Academy
+            Address
+                City: New London, CT
+                State: MA
+Organization
+    _name: Massachusetts Maritime Academy
+    Web Site: http://www.maritime.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: Massachusetts Maritime Academy
+            Address
+                City: Buzzards Bay
+                State: MA
+Organization
+    _name: United States Merchant Marine Academy
+    Web Site: http://www.usmma.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Merchant Marine Academy
+            Address
+                City: King's Point, NY
+                State: MA
+Organization
+    _name: United States Military Academy
+    Web Site: http://www.westpoint.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Military Academy
+            Address
+                City: West Point,NY
+                State: MA
+Organization
+    _name: United States Naval Academy, Annapolis, MD
+    Web Site: http://www.usna.edu/
+    _public access: _read
+    Sites
+Organization
+    _name: United States Air Force Academy
+    Web Site: http://www.usafa.af.mil/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Air Force Academy
+            Address
+                City: Colorado Springs, CO
+                State: MA
+Organization
+    _name: United States Coast Guard Academy
+    Web Site: http://www.cga.edu/
+    _public access: _read
+    Sites
+        Site
+            _name: United States Coast Guard Academy
+            Address
+                City: New London, CT
+                State: MA

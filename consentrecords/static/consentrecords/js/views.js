@@ -1467,8 +1467,8 @@ var SitePanel = (function () {
 	{
 		var _this = this;
 		newHeight = $(this.node()).children().toArray().reduce(function(h, child) {
-				if (child != _this.mainDiv.node())
-					return h - $(child).height();
+				if ($(child).css("display") != "none" && child != _this.mainDiv.node())
+					return h - $(child).outerHeight(true);
 				else
 					return h;
 			},
