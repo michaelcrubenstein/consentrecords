@@ -124,6 +124,9 @@ var CRP = (function() {
 			throw "i is not defined";
 		if (!i.getValueID())
 			throw "i does not have an instanceID";
+		if (i.privilege === "_find")
+			throw "You do not have permission to see information about {0}".format(i.getDescription());
+
 		var _this = this;
 		this.queue.add(
 			function() {
@@ -1600,7 +1603,14 @@ cr.getData = function(args)
 			{
 				if (json.success) {
 					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
-					args.done(instances);
+					try
+					{
+						args.done(instances);
+					}
+					catch(err)
+					{
+						args.fail(err);
+					}
 				}
 				else {
 					args.fail(json.error);

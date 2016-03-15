@@ -76,6 +76,13 @@ div.alert-container {
 	width: 100%;
 }
 
+/* This corrects a problem caused by bootstrap that introduces a gap below alerts when they are visible.
+	The problem is that it leads to an invalid outerHeight for the .alert container.
+ */
+.alert {
+	margin-bottom: 0px;
+}
+
 panel.list {
 	background: #eee;
 }
