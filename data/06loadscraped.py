@@ -2,6 +2,7 @@
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeSWSG.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeTufts.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/scrapeCollegesMA.txt michaelcrubenstein@gmail.com
 
 import datetime
 import django
@@ -45,7 +46,7 @@ def loadRoot(type, field, text, nameList, transactionState):
                                 value__stringValue__istartswith=text);
         if len(objs):
             root = objs[0]
-            value = item.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
+            value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
         else:
             propertyList = {'_name': [{'text': text, 'languageCode': 'en'}]}
