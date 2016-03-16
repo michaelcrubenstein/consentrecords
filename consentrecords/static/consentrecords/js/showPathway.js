@@ -156,6 +156,11 @@ var Pathway = (function () {
 		return this.dataTopMargin + (this.timespan - daySpan) * this.dayHeight;
 	}
 
+	Pathway.prototype.getExperienceY = function(fd)
+	{
+		return this.DateToY(Date.parse(getEndDate(fd.experience)));
+	}
+
 	Pathway.prototype.getExperienceHeight = function(experience)
 	{
 		var startDate = getStartDate(experience);
@@ -251,17 +256,13 @@ var Pathway = (function () {
 			return _thisPathway._compareExperiences(a.experience, b.experience, ordered);
 		});
 	
-		function getExperienceY (fd, i)
-		{
-			return _thisPathway.DateToY(Date.parse(getEndDate(fd.experience)));
-		}
-
 		/* MaxHeight is the maximum height of the top of a column before skipping to the
-			next column */
+			next column.
+			this represents the SVG group being added. */
 		function addToBestColumn(fd, columns)
 		{
 			var thisTop = fd.y;
-			var thisBottom = fd.y + fd.height;
+			var thisBottom = fd.y + Math.max(fd.height, _thisPathway.flagHeight);
 			var j;
 			for (j = 0; j < columns.length; ++j)
 			{
@@ -281,7 +282,7 @@ var Pathway = (function () {
 					{
 						var aboveFlag = d3.select(column[i]);
 						var belowFlag = d3.select(column[i-1]);
-						var aboveBottom = aboveFlag.datum().y + aboveFlag.datum().height;
+						var aboveBottom = aboveFlag.datum().y + Math.max(aboveFlag.datum().height, _thisPathway.flagHeight);
 						var belowTop = belowFlag.datum().y;
 						if (thisTop > aboveBottom &&
 							thisBottom < belowTop)
@@ -297,7 +298,7 @@ var Pathway = (function () {
 						break;
 					var aboveFlag = d3.select(column[0]);
 					var aboveDatum = aboveFlag.datum();
-					var aboveBottom = aboveDatum.y + aboveDatum.height;
+					var aboveBottom = aboveDatum.y + Math.max(aboveDatum.height, _thisPathway.flagHeight);
 					if (thisTop > aboveBottom)
 					{
 						column.splice(0, 0, this);
@@ -368,10 +369,21 @@ var Pathway = (function () {
 		/* Fit each item to a column, according to the best layout. */	
 		g.each(function(fd, i)
 			{
-				fd.y = getExperienceY(fd);
+				fd.y = _thisPathway.getExperienceY(fd);
 				fd.height = _thisPathway.getExperienceHeight(fd.experience);
 				addToBestColumn.call(this, fd, columns);
 			});
+		
+		/* Compute the column width for each column of flags + spacing to its right. 
+			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
+		 */
+		// var flagsLeft = this.dataLeftMargin + (this.trunkColumnWidth * columns.length) + this.flagsLeftMargin;
+	
+		var flagColumnWidth = (this.dataWidth - this.dataLeftMargin - this.flagsRightMargin + this.flagSpacing) / columns.length;
+		this.flagWidth = flagColumnWidth - this.flagSpacing - (2 * this.trunkWidth);
+		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
+		if (textWidth < 0)
+			textWidth = 0;
 		
 		/* Compute the x attribute for every item */
 		/* Then, Add the items to the flag columns in the column order for better results than
@@ -379,27 +391,15 @@ var Pathway = (function () {
 		 */
 		for (var j = 0; j < columns.length; ++j)
 		{
-			var x = this.dataLeftMargin + (this.trunkColumnWidth * j);
+			var x = this.dataLeftMargin + (flagColumnWidth * j);
 			var column = columns[j];
 			for (var i = 0; i < column.length; ++i)
 			{
 				var fd = d3.select(column[i]).datum();
 				fd.x = x;
-				addToFlagColumns.call(column[i], fd, this.flagColumns, this.flagHeight);
 			}
 		}
 	
-		/* Compute the column width for each column of flags + spacing to its right. 
-			Add flagSpacing before dividing so that the rightmost column doesn't need spacing to its right.
-		 */
-		var flagsLeft = this.dataLeftMargin + (this.trunkColumnWidth * columns.length) + this.flagsLeftMargin;
-	
-		var flagColumnWidth = (this.dataWidth - flagsLeft - this.flagsRightMargin + this.flagSpacing) / this.flagColumns.length;
-		this.flagWidth = flagColumnWidth - this.flagSpacing;
-		var textWidth = this.flagWidth - this.textLeftMargin - this.textRightMargin;
-		if (textWidth < 0)
-			textWidth = 0;
-		
 		g.attr("transform", 
 			function(fd)
 			{
@@ -416,7 +416,7 @@ var Pathway = (function () {
 			 });
 		}
 		
-		if (this.flagColumns.length > 0)
+		if (columns.length > 0)
 		{
 			this.defs.selectAll('clipPath').remove();
 			
@@ -436,10 +436,10 @@ var Pathway = (function () {
 				.append('rect');
 
 			/* Calculate the x offset of the flag for each group */
-			for (var j = 0; j < this.flagColumns.length; ++j)
+			for (var j = 0; j < columns.length; ++j)
 			{
-				var flagLeft = flagsLeft + (flagColumnWidth * j);
-				var column = this.flagColumns[j];
+				var flagLeft = this.dataLeftMargin + (flagColumnWidth * j) + (2 * this.trunkWidth);
+				var column = columns[j];
 				d3.selectAll(column).each(function(fd) {
 						fd.flagX = flagLeft - fd.x;
 					});
@@ -457,14 +457,6 @@ var Pathway = (function () {
 			g.selectAll('path').attr("d", function(fd) {
 					return _thisPathway.getExperiencePath(this.parentNode, fd);
 				});
-			
-			g.sort(function (a, b)
-			{
-				if (a.flagX+a.x != b.flagX+b.x)
-					return (b.flagX+b.x) - (a.flagX+a.x);
-				else
-					return a.y - b.y;
-			});
 		}
 
 		y.attr("y", function(d) { 
