@@ -197,6 +197,26 @@ var Pathway = (function () {
 		this.dataHeight = 0;
 		this.dataWidth = 0;
 	}
+	
+	Pathway.prototype.truncatedText = function(text, textNode, maxWidth)
+	{
+		var t = d3.select(textNode);
+		t.text(text);
+		if (text.length <= 1)
+			return;
+		else if (textNode.getBBox().width < maxWidth)
+			return;
+		
+		var testText = text.slice(0, -1);
+		while (testText.length > 0)
+		{
+			t.text(testText + "...");
+			if (textNode.getBBox().width <= maxWidth)
+				return;
+			testText = testText.slice(0, -1);
+		}
+		t.text("...");
+	}
 
 	Pathway.prototype.layoutExperiences = function()
 	{
@@ -430,7 +450,8 @@ var Pathway = (function () {
 				function(fd)
 				{
 					return "translate(" + (fd.flagX + _thisPathway.textLeftMargin).toString() + ", 0)";
-				});
+				})
+				.each(function(fd) { _thisPathway.truncatedText(fd.getDescription(), this, textWidth); });
 			
 			/* Calculate the path for each containing group. */
 			g.selectAll('path').attr("d", function(fd) {
