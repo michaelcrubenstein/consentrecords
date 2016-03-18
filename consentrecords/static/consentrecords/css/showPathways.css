@@ -60,6 +60,49 @@
 		cursor: pointer;
 	}
 	
+	panel.pathway button.expand {
+		position: absolute;
+		top: calc(100% - 76px);
+		left: calc(100% - 56px);
+		padding: 0px 12px;
+		width: 44px;
+		height: 22px;
+		text-align: center;
+		color: #777;
+	}
+	
+	panel.pathway button.expand>span {
+		position: relative;
+		top: -3px;
+		font-size: 24px;
+		line-height: 22px;
+	}
+	
+	panel.pathway button.contract {
+		position: absolute;
+		top: calc(100% - 76px);
+		left: calc(100% - 99px);
+		padding: 0px 12px;
+		width: 44px;
+		height: 22px;
+		text-align: center;
+		color: #AAA;
+	}
+	
+	panel.pathway button.contract>span {
+		position: relative;
+		top: -3px;
+		font-size: 18px;
+	}
+	
+	panel.pathway button.contract.enabled {
+		color: #777;
+	}
+	
+	panel.pathway button.contract.disabled {
+		color: #AAA;
+	}
+	
 	panel.confirm {
 		position: absolute;
 		bottom: 0;
@@ -121,4 +164,4 @@
 		padding: 6px 12px;
 	}
 
-
+	
