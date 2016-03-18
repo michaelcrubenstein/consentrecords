@@ -1206,6 +1206,11 @@ var Pathway = (function () {
 			
 		var _thisPathway = this;
 		
+		$(_thisPathway.sitePanel.node()).one("revealing.cr", function()
+			{
+				$(_thisPathway.svg.node()).width(_thisPathway.sitePanel.scrollAreaWidth() - _thisPathway.dataLeftMargin);
+			});
+
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 
 			{ 
