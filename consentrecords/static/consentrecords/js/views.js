@@ -1463,11 +1463,23 @@ var SitePanel = (function () {
 		return panel2Div;
 	}
 	
+	SitePanel.prototype.scrollAreaHeight = function()
+	{
+		return parseInt(this.mainDiv.style("height"));
+	}
+	
+	SitePanel.prototype.scrollAreaWidth = function()
+	{
+		return parseInt(this.mainDiv.style("width"));
+	}
+	
 	SitePanel.prototype.calculateHeight = function()
 	{
 		var _this = this;
 		newHeight = $(this.node()).children().toArray().reduce(function(h, child) {
-				if ($(child).css("display") != "none" && child != _this.mainDiv.node())
+				if ($(child).css("display") != "none" && 
+					$(child).css("position") != "absolute" &&
+					child != _this.mainDiv.node())
 					return h - $(child).outerHeight(true);
 				else
 					return h;
