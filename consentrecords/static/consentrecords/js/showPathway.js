@@ -68,6 +68,7 @@ var Pathway = (function () {
 	Pathway.prototype.allExperiences = [];
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
+	Pathway.prototype.pathwayContainer = null;
 	Pathway.prototype.svg = null;
 	Pathway.prototype.svgTime = null;
 	Pathway.prototype.loadingMessage = null;
@@ -433,9 +434,15 @@ var Pathway = (function () {
 		
 		/* Calculate the height of the area where data appears and the height of a single day. */
 		var dataHeight = this.dayHeight * this.timespan;
-		var containerHeight = dataHeight + this.dataTopMargin + this.dataBottomMargin;
-		$(this.svg.node()).height(containerHeight);
-		$(this.svgTime.node()).height(containerHeight);
+		var svgHeight = dataHeight + this.dataTopMargin + this.dataBottomMargin;
+		var containerHeight = $(this.containerDiv).height();
+		var containerWidth = $(this.containerDiv).width();
+
+		$(this.pathwayContainer.node()).width(containerWidth - this.dataLeftMargin);
+		$(this.pathwayContainer.node()).height(svgHeight);
+		$(this.svg.node()).height(svgHeight);
+		$(this.svgTime.node()).height(svgHeight);
+		
 		this.layout();
 		this.isLayoutDirty = false;
 	}
@@ -445,24 +452,31 @@ var Pathway = (function () {
 		var newDataHeight = this.dayHeight * multiple * this.timespan;
 		var newContainerHeight = Math.max(newDataHeight + this.dataTopMargin + this.dataBottomMargin, 
 										  $(this.containerDiv).height());
+										  
 		var _this = this;
-		$(this.svg.node()).animate({height: newContainerHeight},
-								   {duration: 400, easing: "swing",
-									progress: function(animation, progress, remainingMs)
-										{
-											var oldCenter = _this.containerDiv.scrollTop + $(_this.containerDiv).height() / 2;
-											var oldDayHeight = _this.dayHeight;
-											if (_this.scaleDayHeightToSize())
-											{
-												_this.layout();
-												var newCenter = (oldCenter - _this.dataTopMargin) * (_this.dayHeight / oldDayHeight) + _this.dataTopMargin;
-												_this.containerDiv.scrollTop += newCenter - oldCenter;
-											}
-										},
-									 complete: unblockClick
-									});
-		$(this.svgTime.node()).animate({height: newContainerHeight},
-									   {duration: 400, easing: "swing"});
+		$(this.pathwayContainer.node()).animate({height: newContainerHeight},
+		   {duration: 400, easing: "swing",
+			progress: function(animation, progress, remainingMs)
+				{
+					var newContainerHeight = $(_this.pathwayContainer.node()).height();
+					var newContainerWidth = Math.max($(_this.containerDiv).width()- _this.dataLeftMargin,
+													 newContainerHeight * $(_this.containerDiv).width() / $(_this.containerDiv).height()
+														- _this.dataLeftMargin);
+					var oldCenter = _this.containerDiv.scrollTop + $(_this.containerDiv).height() / 2;
+					var oldDayHeight = _this.dayHeight;
+					$(_this.svg.node()).height(newContainerHeight);
+					$(_this.svg.node()).width(newContainerWidth);
+					$(_this.svgTime.node()).height(newContainerHeight);
+					if (_this.scaleDayHeightToSize())
+					{
+						_this.layout();
+						var newCenter = (oldCenter - _this.dataTopMargin) * (_this.dayHeight / oldDayHeight) + _this.dataTopMargin;
+						if (_this.containerDiv.scrollTop > 0)
+							_this.containerDiv.scrollTop += newCenter - oldCenter;
+					}
+				},
+			 complete: unblockClick
+			});
 	}
 	
 	Pathway.prototype.setDateRange = function()
@@ -1067,19 +1081,25 @@ var Pathway = (function () {
 		this.sitePanel.calculateHeight();
 		
 		var newHeight = this.sitePanel.scrollAreaHeight();
+		var pathwayContainer = $(this.pathwayContainer.node());
 		var svg = $(this.svg.node());
-		if (svg.height() < newHeight ||
+		if (pathwayContainer.height() < newHeight ||
 			this.isMinHeight ||
-			svg.width() != this.sitePanel.scrollAreaWidth() - this.dataLeftMargin)
+			pathwayContainer.width() != this.sitePanel.scrollAreaWidth() - this.dataLeftMargin)
 		{
-			if (svg.height() < newHeight ||
+			if (pathwayContainer.height() < newHeight ||
 				this.isMinHeight)
 			{
+				pathwayContainer.height(newHeight);
 				svg.height(newHeight);
 				this.scaleDayHeightToSize();
 			}
 				
-			svg.width(this.sitePanel.scrollAreaWidth() - this.dataLeftMargin);
+			pathwayContainer.width(this.sitePanel.scrollAreaWidth() - this.dataLeftMargin);
+			if (svg.width() < pathwayContainer.width() ||
+				this.isMinHeight)
+				svg.width(pathwayContainer.width());
+				
 			this.clearLayout();
 			this.checkLayout();
 		}
@@ -1123,6 +1143,7 @@ var Pathway = (function () {
 		
 		this.user = null;
 		this.allExperiences = [];
+		this.pathwayContainer = null;
 		this.svg = null;
 		this.svgTime = null;
 		this.defs = null;
@@ -1162,7 +1183,13 @@ var Pathway = (function () {
 			.style("width", this.dataLeftMargin)
 			.style("height", "100%");
 
-		this.svg = container.append('svg')
+		this.pathwayContainer = container.append('div')
+			.classed("pathway", true)
+			.style("width", $(this.containerDiv).width() - this.dataLeftMargin)
+			.style("height", "100%");
+			
+		this.svg = this.pathwayContainer.append('svg')
+			.classed("pathway", true)
 			.style("width", $(this.containerDiv).width() - this.dataLeftMargin)
 			.style("height", "100%");
 
