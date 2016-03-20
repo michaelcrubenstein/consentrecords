@@ -1,8 +1,3 @@
-function hidePathway() {
-	var container = d3.select(this);
-	container.selectAll('svg').remove();
-}
-	
 function _pickedOrCreatedValue(i, pickedName, createdName)
 {
 	var v = i.getValue(pickedName);
