@@ -287,6 +287,7 @@
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
+	<script src="{% static "consentrecords/js/welcomePanel.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
@@ -500,8 +501,17 @@
 			});
 			
 			var previousPanel = $("body>panel")[0];
-			var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-			showPanelNow(pathwayPanel.node());
+			if (cr.signedinUser.getValueID())
+			{
+				var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
+				pathwayPanel.pathway.setUser(cr.signedinUser, false);
+				showPanelNow(pathwayPanel.node());
+			}
+			else
+			{
+				var welcomePanel = new WelcomePanel(previousPanel);
+				showPanelNow(welcomePanel.node());
+			}
 
 			{% if state %}
 				var stateString = "{{state}}"
