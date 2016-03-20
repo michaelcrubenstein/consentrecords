@@ -55,10 +55,25 @@
 		margin: 10px;
 	}
 	
+	panel.pathway {
+		background: white;
+	}
+	
 	panel.pathway> .panel-fill div.pathway {
 		position: absolute;
 		overflow-x: scroll;
-		left: 40px;	/* dataLeftMargin */
+		overflow-y: scroll;
+		display: inline;
+		width: calc(100% - 40px);
+		left: 40px;
+	}
+	
+	panel.pathway> .panel-fill div.years {
+		position: absolute;
+		overflow-x: none;
+		overflow-y: scroll;
+		display: inline;
+		width: 40px;
 	}
 	
 	panel.pathway text {
@@ -87,6 +102,7 @@
 		border-top-right-radius: 3px;
 		border-bottom-right-radius: 3px;
 		box-sizing: border-box;
+		outline: none;
 	}
 	
 	panel.pathway button.expand>span {
@@ -117,6 +133,7 @@
 		border-top-right-radius: 0px;
 		border-bottom-right-radius: 0px;
 		box-sizing: border-box;
+		outline: none;
 	}
 	
 	panel.pathway button.contract>span {
@@ -131,11 +148,6 @@
 	
 	panel.pathway button.contract.disabled {
 		color: #AAA;
-	}
-	
-	panel.pathway svg {
-		position: absolute;
-		top: 0px;
 	}
 	
 	panel.confirm {
@@ -199,4 +211,6 @@
 		padding: 6px 12px;
 	}
 
-	
+	::-webkit-scrollbar { 
+		display: none; 
+	}
