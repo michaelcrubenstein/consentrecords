@@ -379,20 +379,6 @@
 			}
 		}
 		
-		$(".check-signin-button").click(function(e)
-		{
-			var panel = $(this).parents(".site-panel")[0];
-			var panelID = this.getAttribute("panelID");
-			var done = function()
-			{
-				showPanelLeft("#" + panelID);
-			}
-			
-			checkSignin.call(this, panel, done, panelID);
-
-			e.preventDefault();
-		});
-		
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
