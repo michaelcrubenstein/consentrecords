@@ -1143,11 +1143,12 @@ var Pathway = (function () {
 	{
 		$(this).trigger("clearing.cr");
 		
-		d3.selectAll(this.containerDiv.childNodes).remove();
+		d3.select(this.containerDiv).selectAll('div').remove();
 		
 		this.user = null;
 		this.allExperiences = [];
 		this.pathwayContainer = null;
+		this.timeContainer = null;
 		this.svg = null;
 		this.svgTime = null;
 		this.defs = null;
