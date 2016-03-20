@@ -128,7 +128,7 @@ function getUserDescription(user)
 function showUser(user, previousPanelNode)
 {
 	var panel = new UserPanel(user, previousPanelNode);
-	showPanelLeft(panel.node());
+	showPanelLeft(panel.node(), unblockClick);
 }
 
 function drawInfoButtons(infoButtons)

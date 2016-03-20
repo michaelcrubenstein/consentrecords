@@ -89,7 +89,7 @@ var RequestFollowPanel = (function() {
 
 		this.searchView = new RequestFollowSearchView(this, user);
 
-		showPanelUp(this.node());
+		showPanelUp(this.node(), unblockClick);
 	}
 	
 	return RequestFollowPanel;
@@ -221,7 +221,7 @@ var FollowingPanel = (function() {
 		this._followingChunker.fields = [];
 		this._followingChunker.start("");			
 			
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return FollowingPanel;

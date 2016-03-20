@@ -335,7 +335,7 @@ var PickOfferingSearchView = (function () {
 
 						var sitePanel = showSessionDetails(session, _this.marker, _this.sitePanel.node());
 	
-						showPanelLeft(sitePanel.node());
+						showPanelLeft(sitePanel.node(), unblockClick);
 					}
 				});
 
@@ -384,7 +384,7 @@ var PickOfferingPanel = (function() {
 		this.searchView = new PickOfferingSearchView(this, marker);
 		this.searchView.search("");
 
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return PickOfferingPanel;
@@ -466,7 +466,7 @@ var FindExperiencePanel = (function () {
 		this.searchView = new FindExperienceSearchView(this, offeringID);
 		this.searchView.search("");
 
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return FindExperiencePanel;

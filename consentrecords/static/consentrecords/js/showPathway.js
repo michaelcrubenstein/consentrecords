@@ -1878,7 +1878,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		}
 	}
 	
-	showPanelLeft(sitePanel.node());
+	showPanelLeft(sitePanel.node(), unblockClick);
 }
 
 function setupServicesPanel(dots)
@@ -2585,7 +2585,7 @@ var AddExperiencePanel = (function () {
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
-		showPanelUp(this.node());
+		showPanelUp(this.node(), unblockClick);
 		dots.showDots();
 	}
 	
@@ -2754,7 +2754,7 @@ var ExperienceDetailPanel = (function () {
 					}
 				});
 		}
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return ExperienceDetailPanel;
@@ -2972,7 +2972,7 @@ var PickOrCreatePanel = (function () {
 			
 			this.searchView = this.createSearchView();
 
-			showPanelLeft(this.node());
+			showPanelLeft(this.node(), unblockClick);
 		}
 	}
 	return PickOrCreatePanel;

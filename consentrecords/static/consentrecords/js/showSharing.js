@@ -167,7 +167,7 @@ var SharingPanel = (function() {
 				}
 			});
 				
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 
 	SharingPanel.prototype.getPrivileges = function(panel2Div, enumerators)
@@ -388,7 +388,7 @@ var PickSharingUserPanel = (function() {
 
 		var panel2Div = this.appendScrollArea();
 
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return PickSharingUserPanel;

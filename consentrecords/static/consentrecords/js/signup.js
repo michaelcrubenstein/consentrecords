@@ -471,7 +471,7 @@ var Signup = (function () {
 		this.dots.nthPanel(2).onReveal = setupPanel3;
 		this.dots.nthPanel(3).onReveal = setupPanel4;
 		
-		showPanelUp(sitePanel.node());
+		showPanelUp(sitePanel.node(), unblockClick);
 		this.dots.showDots();
 	}
 	

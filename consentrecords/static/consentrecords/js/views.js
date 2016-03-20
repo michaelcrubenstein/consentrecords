@@ -190,11 +190,9 @@ function showPanelUp(panelNode, done)
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
 							if (done)
 								done();
-							unblockClick();
 						});
 }
 
-/* Note that this function doesn't unblockClick */
 function showPanelNow(panelNode)
 {
 	$(panelNode).offset({top: 0, left: 0})
@@ -213,7 +211,6 @@ function showPanelLeft(panelNode, done)
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
 							if (done)
 								done();
-							unblockClick();
 						});
 }
 
@@ -2109,12 +2106,12 @@ function getViewPanelHeader(objectData)
 
 function revealPanelLeft(panelDiv)
 {
-	showPanelLeft(panelDiv);
+	showPanelLeft(panelDiv, unblockClick);
 }
 
 function revealPanelUp(panelDiv)
 {
-	showPanelUp(panelDiv);
+	showPanelUp(panelDiv, unblockClick);
 }
 
 /* Displays a panel in which the specified object's contents appear without being able to edit.
@@ -2136,7 +2133,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 		var headerDiv = panel2Div.appendHeader();
 
-		showPanelLeft(sitePanel.node());
+		showPanelLeft(sitePanel.node(), unblockClick);
 	
 		panel2Div.append("div").classed("cell-border-below", true);
 		sitePanel.showViewCells(objectData.cells);
@@ -2603,7 +2600,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		}  
 	});
 	
-	showPanelUp(sitePanel.node());
+	showPanelUp(sitePanel.node(), unblockClick);
 }
 
 /* Displays a panel from which a user can select an object of the kind required 
@@ -2733,7 +2730,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
 			function(d) { return d.getDescription() == oldData.getDescription(); });
 	
-		showPanelLeft(sitePanel.node());
+		showPanelLeft(sitePanel.node(), unblockClick);
 	}
 	
 	if (oldData.cell.field.pickObjectPath)
