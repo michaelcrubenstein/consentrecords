@@ -69,6 +69,7 @@ var Pathway = (function () {
 	Pathway.prototype.sitePanel = null;
 	Pathway.prototype.containerDiv = null;
 	Pathway.prototype.pathwayContainer = null;
+	Pathway.prototype.timeContainer = null;
 	Pathway.prototype.svg = null;
 	Pathway.prototype.svgTime = null;
 	Pathway.prototype.loadingMessage = null;
@@ -438,8 +439,6 @@ var Pathway = (function () {
 		var containerHeight = $(this.containerDiv).height();
 		var containerWidth = $(this.containerDiv).width();
 
-		$(this.pathwayContainer.node()).width(containerWidth - this.dataLeftMargin);
-		$(this.pathwayContainer.node()).height(svgHeight);
 		$(this.svg.node()).height(svgHeight);
 		$(this.svgTime.node()).height(svgHeight);
 		
@@ -454,25 +453,28 @@ var Pathway = (function () {
 										  $(this.containerDiv).height());
 										  
 		var _this = this;
-		$(this.pathwayContainer.node()).animate({height: newContainerHeight},
+		$(this.svg.node()).animate({height: newContainerHeight},
 		   {duration: 400, easing: "swing",
 			progress: function(animation, progress, remainingMs)
 				{
-					var newContainerHeight = $(_this.pathwayContainer.node()).height();
-					var newContainerWidth = Math.max($(_this.containerDiv).width()- _this.dataLeftMargin,
+					var containerNode = _this.pathwayContainer.node();
+					var newContainerHeight = $(_this.svg.node()).height();
+					var newContainerWidth = Math.max($(containerNode).width(),
 													 newContainerHeight * $(_this.containerDiv).width() / $(_this.containerDiv).height()
 														- _this.dataLeftMargin);
-					var oldCenter = _this.containerDiv.scrollTop + $(_this.containerDiv).height() / 2;
+					var oldCenter = containerNode.scrollTop + $(containerNode).height() / 2;
 					var oldDayHeight = _this.dayHeight;
-					$(_this.svg.node()).height(newContainerHeight);
 					$(_this.svg.node()).width(newContainerWidth);
 					$(_this.svgTime.node()).height(newContainerHeight);
 					if (_this.scaleDayHeightToSize())
 					{
 						_this.layout();
 						var newCenter = (oldCenter - _this.dataTopMargin) * (_this.dayHeight / oldDayHeight) + _this.dataTopMargin;
-						if (_this.containerDiv.scrollTop > 0)
-							_this.containerDiv.scrollTop += newCenter - oldCenter;
+						if (containerNode.scrollTop > 0)
+						{
+							containerNode.scrollTop += newCenter - oldCenter;
+							_this.timeContainer.node().scrollTop = containerNode.scrollTop;
+						}
 					}
 				},
 			 complete: unblockClick
@@ -1082,20 +1084,22 @@ var Pathway = (function () {
 		
 		var newHeight = this.sitePanel.scrollAreaHeight();
 		var pathwayContainer = $(this.pathwayContainer.node());
+		$(this.timeContainer.node()).height(newHeight);
+		pathwayContainer.height(newHeight);
+		pathwayContainer.width(this.sitePanel.scrollAreaWidth() - this.dataLeftMargin);
+		
 		var svg = $(this.svg.node());
-		if (pathwayContainer.height() < newHeight ||
+		if (svg.height() < newHeight ||
 			this.isMinHeight ||
-			pathwayContainer.width() != this.sitePanel.scrollAreaWidth() - this.dataLeftMargin)
+			svg.width() != pathwayContainer.width())
 		{
-			if (pathwayContainer.height() < newHeight ||
+			if (svg.height() < newHeight ||
 				this.isMinHeight)
 			{
-				pathwayContainer.height(newHeight);
 				svg.height(newHeight);
 				this.scaleDayHeightToSize();
 			}
 				
-			pathwayContainer.width(this.sitePanel.scrollAreaWidth() - this.dataLeftMargin);
 			if (svg.width() < pathwayContainer.width() ||
 				this.isMinHeight)
 				svg.width(pathwayContainer.width());
@@ -1174,12 +1178,19 @@ var Pathway = (function () {
 		if (user.privilege === '_find')
 			throw "You do not have permission to see information about {0}".format(user.getDescription());
 			
+		var _this = this;
+		
 		this.user = user;
 		editable = (editable !== undefined ? editable : true);
 		
 		var container = d3.select(this.containerDiv);
 		
-		this.svgTime = container.append('svg')
+		this.timeContainer = container.append('div')
+			.classed("years", true)
+			.style("width", this.dataLeftMargin)
+			.style("height", "100%");
+		
+		this.svgTime = this.timeContainer.append('svg')
 			.style("width", this.dataLeftMargin)
 			.style("height", "100%");
 
@@ -1192,6 +1203,41 @@ var Pathway = (function () {
 			.classed("pathway", true)
 			.style("width", $(this.containerDiv).width() - this.dataLeftMargin)
 			.style("height", "100%");
+		
+		/* Keep the scrolling of the timeContainer and the pathwayContainer synchronized */
+		var timeScroller = function()
+			{
+				var n = _this.pathwayContainer.node();
+				if (this.scrollTop != n.scrollTop)
+				{
+					$(n).off("scroll", pathwayScroller);
+					$(n).one("scroll", pathwayScrollReset);
+					n.scrollTop = this.scrollTop;
+				}
+			}
+		var timeScrollReset = function()
+			{
+				$(this).scroll(timeScroller);
+			}
+			
+		var pathwayScroller = function()
+			{
+				var n = _this.timeContainer.node();
+				if (this.scrollTop != n.scrollTop)
+				{
+					$(n).off("scroll", timeScroller);
+					$(n).one("scroll", timeScrollReset);
+					n.scrollTop = this.scrollTop;
+				}
+			}
+		var pathwayScrollReset = function()
+			{
+				$(this).scroll(pathwayScroller);
+			}
+			
+			
+		$(this.timeContainer.node()).scroll(timeScroller);
+		$(this.pathwayContainer.node()).scroll(pathwayScroller);
 
 		this.defs = this.svg.append('defs');
 	
@@ -1231,11 +1277,9 @@ var Pathway = (function () {
 				})
 			.on("click.cr", this.showDetailPanel);
 			
-		var _thisPathway = this;
-		
-		$(_thisPathway.sitePanel.node()).one("revealing.cr", function()
+		$(_this.sitePanel.node()).one("revealing.cr", function()
 			{
-				$(_thisPathway.svg.node()).width(_thisPathway.sitePanel.scrollAreaWidth() - _thisPathway.dataLeftMargin);
+				$(_this.svg.node()).width(_this.sitePanel.scrollAreaWidth() - _this.dataLeftMargin);
 			});
 
 		d3.select(this.containerDiv).selectAll('svg')
@@ -1245,25 +1289,25 @@ var Pathway = (function () {
 			})
 			.on("click.cr", function() {
 				cr.logRecord('click', 'hide details');
-				_thisPathway.hideDetail();
+				_this.hideDetail();
 			});
 		
 		var successFunction1 = function(experiences)
 		{
-			_thisPathway.allExperiences = experiences;
+			_this.allExperiences = experiences;
 			$(experiences).each(function()
 			{
 				this.typeName = "Experience";
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
-			crp.getData({path: "#" + _thisPathway.user.getValueID() + '::reference(Experience)::reference(Experiences)' + 
+			crp.getData({path: "#" + _this.user.getValueID() + '::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)',
 						 done: function(newInstances)
 							{
 							},
 							fail: asyncFailFunction});
-			crp.getData({path: "#" + _thisPathway.user.getValueID() + '>"More Experiences">"More Experience">Offering',
+			crp.getData({path: "#" + _this.user.getValueID() + '>"More Experiences">"More Experience">Offering',
 						 done: function(newInstances)
 							{
 							},
@@ -1289,8 +1333,8 @@ var Pathway = (function () {
 							},
 						fail: asyncFailFunction});
 								
-			crp.pushCheckCells(_thisPathway.user, undefined, function() {
-					var m = _thisPathway.user.getValue("More Experiences");
+			crp.pushCheckCells(_this.user, undefined, function() {
+					var m = _this.user.getValue("More Experiences");
 					if (m && m.getValueID())
 					{
 						m.getCellData("More Experience",
@@ -1302,14 +1346,14 @@ var Pathway = (function () {
 				},
 				function(err)
 				{
-					asyncHidePanelRight(_thisPathway.sitePanel.node());
+					asyncHidePanelRight(_this.sitePanel.node());
 					asyncFailFunction(err);
 				});
 		}
 
 		var successFunction2 = function(experiences)
 		{
-			_thisPathway.allExperiences = _thisPathway.allExperiences.concat(experiences);
+			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
 			$(experiences).each(function()
 			{
@@ -1317,23 +1361,23 @@ var Pathway = (function () {
 				this.calculateDescription();
 			});
 		
-			_thisPathway.showAllExperiences();
+			_this.showAllExperiences();
 			
-			crv.stopLoadingMessage(_thisPathway.loadingMessage);
-			_thisPathway.loadingMessage.remove();
+			crv.stopLoadingMessage(_this.loadingMessage);
+			_this.loadingMessage.remove();
 			
-			if (_thisPathway.allExperiences.length == 0 && editable)
+			if (_this.allExperiences.length == 0 && editable)
 			{
-				_thisPathway.loadingText = _thisPathway.svg.append('text')
+				_this.loadingText = _this.svg.append('text')
 					.attr("x", 0).attr("y", 0)
 					.attr("fill", "#777")
 					.text('Ready to record an experience?');
 				
-				_thisPathway.loadingText
-					.attr("y", _thisPathway.loadingText.node().getBBox().height);
+				_this.loadingText
+					.attr("y", _this.loadingText.node().getBBox().height);
 			
-				var bbox = _thisPathway.loadingText.node().getBBox();
-				_thisPathway.promptAddText = _thisPathway.svg.append('text')
+				var bbox = _this.loadingText.node().getBBox();
+				_this.promptAddText = _this.svg.append('text')
 					.attr("fill", "#2C55CC")
 					.text(" Record one now.")
 					.on("click", function(d) {
@@ -1342,7 +1386,7 @@ var Pathway = (function () {
 							try
 							{
 								showClickFeedback(this);
-								var newPanel = new AddExperiencePanel(_thisPathway, null, _thisPathway.sitePanel.node());
+								var newPanel = new AddExperiencePanel(_this, null, _this.sitePanel.node());
 							}
 							catch (err)
 							{
@@ -1353,21 +1397,21 @@ var Pathway = (function () {
 					})
 					.attr("cursor", "pointer");
 				
-				var newBBox = _thisPathway.promptAddText.node().getBBox();
-				if (bbox.x + bbox.width + _thisPathway.textLeftMargin + newBBox.width >
-					$(_thisPathway.bg.node()).width - _thisPathway.flagsRightMargin)
+				var newBBox = _this.promptAddText.node().getBBox();
+				if (bbox.x + bbox.width + _this.textLeftMargin + newBBox.width >
+					$(_this.bg.node()).width - _this.flagsRightMargin)
 				{
-					_thisPathway.promptAddText.attr("x", _thisPathway.loadingText.attr("x"))
-						.attr("y", parseFloat(_thisPathway.loadingText.attr("y")) + bbox.height);
+					_this.promptAddText.attr("x", _this.loadingText.attr("x"))
+						.attr("y", parseFloat(_this.loadingText.attr("y")) + bbox.height);
 				}
 				else
 				{
-					_thisPathway.promptAddText.attr("x", bbox.x + bbox.width + _thisPathway.textLeftMargin)
-						.attr("y", _thisPathway.loadingText.attr("y"));
+					_this.promptAddText.attr("x", bbox.x + bbox.width + _this.textLeftMargin)
+						.attr("y", _this.loadingText.attr("y"));
 				}
 			}
 			
-			$(_thisPathway).trigger("userSet.cr");
+			$(_this).trigger("userSet.cr");
 		}
 		
 		var path = "#" + this.user.getValueID() + '::reference(Experience)';
@@ -1401,7 +1445,7 @@ var PathwayPanel = (function () {
 		canDone = canDone !== undefined ? canDone : true;
 		var _this = this;
 
-		SitePanel.call(this, previousPanel, null, "My Pathway", "edit pathway");
+		SitePanel.call(this, previousPanel, null, "My Pathway", "pathway");
 		var navContainer = this.appendNavContainer();
 		if (canDone)
 		{
@@ -1474,6 +1518,8 @@ var PathwayPanel = (function () {
 		navContainer.appendTitle(user.getValueID() ? getUserDescription(user) : "Welcome");
 		
 		var panel2Div = this.appendScrollArea();
+		panel2Div.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
 
 		var bottomNavContainer = this.appendBottomNavContainer();
 
