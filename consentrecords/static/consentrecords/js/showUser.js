@@ -40,7 +40,7 @@ var UserPanel = (function() {
 							{
 								var panel = new PathwayPanel(user, _this.node());
 								panel.pathway.setUser(user, true);
-								showPanelLeft(panel.node());
+								showPanelLeft(panel.node(), unblockClick);
 							}
 						});		
 				},

@@ -53,12 +53,12 @@ var Settings = (function () {
 					if (prepareClick('click', 'Change Password'))
 					{
 						var panel = new UpdatePasswordPanel(_this.node());
-						showPanelLeft(panel.node());
+						showPanelLeft(panel.node(), unblockClick);
 					}
 				});
 		}
 		
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return Settings;

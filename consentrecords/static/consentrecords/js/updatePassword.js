@@ -218,6 +218,7 @@ var UpdateUsernamePanel = (function () {
 	
 		showPanelLeft(this.node(), function() {
 				newUsernameInput.node().focus();
+				unblockClick();
 			});
 	}
 	

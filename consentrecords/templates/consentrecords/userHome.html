@@ -171,7 +171,7 @@
 		
 		<panel id="id_sign_in_panel" class="level-2-panel site-panel reveal background-gradient-panel">
 		  <form class="form-simple form-signin">
-			<div class="site-title">Sign In to Consent Records</div>
+			<div class="site-title">Sign In to PathAdvisor</div>
 			<div class="alert-container"></div>
 			<label for="id_username" class="sr-only">Email address</label>
 			<input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
@@ -287,6 +287,7 @@
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
+	<script src="{% static "consentrecords/js/welcomePanel.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
@@ -329,7 +330,7 @@
 			if (prepareClick('click show panel button', panelID))
 			{
 				showClickFeedback(this);
-				showPanelLeft(panelDiv.node());
+				showPanelLeft(panelDiv.node(), unblockClick);
 			}
 		}
 		
@@ -378,20 +379,6 @@
 				}
 			}
 		}
-		
-		$(".check-signin-button").click(function(e)
-		{
-			var panel = $(this).parents(".site-panel")[0];
-			var panelID = this.getAttribute("panelID");
-			var done = function()
-			{
-				showPanelLeft("#" + panelID);
-			}
-			
-			checkSignin.call(this, panel, done, panelID);
-
-			e.preventDefault();
-		});
 		
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
@@ -514,8 +501,17 @@
 			});
 			
 			var previousPanel = $("body>panel")[0];
-			var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-			showPanelNow(pathwayPanel.node());
+			if (cr.signedinUser.getValueID())
+			{
+				var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
+				pathwayPanel.pathway.setUser(cr.signedinUser, false);
+				showPanelNow(pathwayPanel.node());
+			}
+			else
+			{
+				var welcomePanel = new WelcomePanel(previousPanel);
+				showPanelNow(welcomePanel.node());
+			}
 
 			{% if state %}
 				var stateString = "{{state}}"
@@ -547,7 +543,7 @@
 									{
 										var panel = new PathwayPanel(users[0], pathwayPanel.node(), true);
 										panel.pathway.setUser(users[0], true);
-										showPanelLeft(panel.node());
+										showPanelLeft(panel.node(), unblockClick);
 									}
 									else
 									{
@@ -699,7 +695,7 @@
 			var panel = d3.select(newNode);
 			panel.style("z-index", zIndex);
 			
-			showPanelLeft(panel.node());
+			showPanelLeft(panel.node(), unblockClick);
 		}
 			
 		function sign_out(successFunction, failFunction) {
@@ -844,7 +840,7 @@
 
 								var sitePanel = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
 			
-								showPanelLeft(sitePanel.node());
+								showPanelLeft(sitePanel.node(), unblockClick);
 							}
 						});
 	
@@ -953,7 +949,7 @@
 					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
 				});
 
-				showPanelLeft(sitePanel.node());
+				showPanelLeft(sitePanel.node(), unblockClick);
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
@@ -1098,7 +1094,7 @@
 					d3.event.preventDefault();
 				});
 
-			showPanelLeft(sitePanel.node());
+			showPanelLeft(sitePanel.node(), unblockClick);
 		}
 		/*
 			Displays a panel from which the user can pick a session from
@@ -1198,7 +1194,7 @@
 
 								var panel2Div = sitePanel.appendScrollArea();
 
-								showPanelLeft(sitePanel.node());
+								showPanelLeft(sitePanel.node(), unblockClick);
 						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
@@ -1286,7 +1282,7 @@
 
 			var panel2Div = sitePanel.appendScrollArea();
 	
-			showPanelLeft(sitePanel.node());
+			showPanelLeft(sitePanel.node(), unblockClick);
 			
 			function show_users()
 			{
@@ -1626,7 +1622,7 @@
 									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
 							}
 						}
-						showPanelLeft(addInquiryPanelDiv.node());
+						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -1751,7 +1747,7 @@
 									});
 								drawInfoButtons(infoButtons);
 								
-								showPanelLeft(sitePanel.node());
+								showPanelLeft(sitePanel.node(), unblockClick);
 							},
 							syncFailFunction);
 					}

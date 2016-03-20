@@ -1,8 +1,3 @@
-function hidePathway() {
-	var container = d3.select(this);
-	container.selectAll('svg').remove();
-}
-	
 function _pickedOrCreatedValue(i, pickedName, createdName)
 {
 	var v = i.getValue(pickedName);
@@ -1115,7 +1110,8 @@ var Pathway = (function () {
 		this.scaleDayHeightToSize();
 		
 		var _this = this;
-		function resizeFunction()
+		
+		var resizeFunction = function()
 		{
 			_this.handleResize();
 		}
@@ -1130,10 +1126,14 @@ var Pathway = (function () {
 				_this.setupExperienceTriggers(d);
 			});
 
-		$(window).on("resize", resizeFunction);
+		$(window).on("resize", null, this, resizeFunction);
 		$(this).on("clearing.cr", function()
 		{
-			$(window).off("resize", resizeFunction);
+			$(window).off("resize", null, resizeFunction);
+		});
+		$(this).on("clear.cr", function()
+		{
+			$(window).off("resize", null, resizeFunction);
 		});
 	
 		this.appendExperiences();
@@ -1141,13 +1141,14 @@ var Pathway = (function () {
 		
 	Pathway.prototype.clear = function()
 	{
-		$(this).trigger("clearing.cr");
+		$(this).trigger("clear.cr");
 		
-		d3.selectAll(this.containerDiv.childNodes).remove();
+		d3.select(this.containerDiv).selectAll('div').remove();
 		
 		this.user = null;
 		this.allExperiences = [];
 		this.pathwayContainer = null;
+		this.timeContainer = null;
 		this.svg = null;
 		this.svgTime = null;
 		this.defs = null;
@@ -1177,6 +1178,8 @@ var Pathway = (function () {
 	{
 		if (user.privilege === '_find')
 			throw "You do not have permission to see information about {0}".format(user.getDescription());
+		if (this.user)
+			throw "user has already been set for this pathway";
 			
 		var _this = this;
 		
@@ -1333,7 +1336,8 @@ var Pathway = (function () {
 							},
 						fail: asyncFailFunction});
 								
-			crp.pushCheckCells(_this.user, undefined, function() {
+			crp.pushCheckCells(_this.user, undefined, 
+				function() {
 					var m = _this.user.getValue("More Experiences");
 					if (m && m.getValueID())
 					{
@@ -1428,7 +1432,7 @@ var Pathway = (function () {
 		this.flagElement = null;
 		this.allExperiences = [];
 		
-		$(this).on("clearing.cr", null, null, function() {
+		$(this).on("clear.cr", null, null, function() {
 			this.clearDetail();
 		});
 		
@@ -1460,7 +1464,7 @@ var PathwayPanel = (function () {
 				.on("click", function()
 					{
 						showClickFeedback(this);
-						if (prepareClick('click',  'Sign In/Out button'))
+						if (prepareClick('click',  'Sign Out button'))
 						{
 							if (cr.signedinUser.getValueID())
 							{
@@ -1480,42 +1484,27 @@ var PathwayPanel = (function () {
 						}
 						d3.event.preventDefault();
 					})
-				.append('span').text(cr.signedinUser.getValueID() ? 'Sign Out' : 'Sign In');
-			
-			updateSigninText = function(eventObject) {
-				$(eventObject.data).text("Sign Out");
-				navContainer.setTitle(getUserDescription(user));
-				try
-				{
-					_this.pathway.setUser(user, true);
-				}
-				catch(err)
-				{
-					_this.pathway.clear();
-					throw (err);
-				}
-			};
+				.append('span').text('Sign Out');
 			
 			updateSignoutText = function(eventObject) {
-				$(eventObject.data).text("Sign In");
-				navContainer.setTitle("Welcome");
-				_this.pathway.clear();
-				addExperienceButton.style("display", "none");
-				settingsButton.style("display", "none");
-				sharingButton.style("display", "none");
-				findButton.style("display", "none");
+				var panel = new WelcomePanel(previousPanel);
+				if (_this.pathway)
+					$(_this.pathway).trigger("clearing.cr");
+				showPanelLeft(panel.node(),
+					function()
+					{
+						$(_this.node()).remove();
+					});
 			};
 			
-			$(cr.signedinUser).on("signin.cr", null, signinSpan.node(), updateSigninText);
 			$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
-			$(signinSpan.node()).on("remove", null, cr.signedinUser, function(eventObject)
+			$(this.node()).on("remove", null, cr.signedinUser, function(eventObject)
 				{
-					$(cr.signedinUser).on("signin.cr", null, signinSpan.node(), updateSigninText);
-					$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
+					$(cr.signedinUser).off("signout.cr", null, updateSignoutText);
 				});
 		}
 
-		navContainer.appendTitle(user.getValueID() ? getUserDescription(user) : "Welcome");
+		navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.classed('vertical-scrolling', false)
@@ -1603,6 +1592,9 @@ var PathwayPanel = (function () {
 		this.contractButton
 			.append('span').text("—");
 		
+		if (this.pathway)
+			throw "pathway already assigned to pathway panel";
+			
 		this.pathway = new Pathway(this, panel2Div.node());
 		
 		$(this.node()).on("remove", function()
@@ -1877,7 +1869,7 @@ function showPickServicePanel(previousPanelNode, rootObjects, oldReportedObject,
 		}
 	}
 	
-	showPanelLeft(sitePanel.node());
+	showPanelLeft(sitePanel.node(), unblockClick);
 }
 
 function setupServicesPanel(dots)
@@ -2584,7 +2576,7 @@ var AddExperiencePanel = (function () {
 		dots.nthPanel(6).onReveal = setupServicesPanel;
 		dots.nthPanel(7).onReveal = setupConfirmPanel;
 				
-		showPanelUp(this.node());
+		showPanelUp(this.node(), unblockClick);
 		dots.showDots();
 	}
 	
@@ -2753,7 +2745,7 @@ var ExperienceDetailPanel = (function () {
 					}
 				});
 		}
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return ExperienceDetailPanel;
@@ -2971,7 +2963,7 @@ var PickOrCreatePanel = (function () {
 			
 			this.searchView = this.createSearchView();
 
-			showPanelLeft(this.node());
+			showPanelLeft(this.node(), unblockClick);
 		}
 	}
 	return PickOrCreatePanel;
