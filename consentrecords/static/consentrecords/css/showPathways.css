@@ -81,6 +81,16 @@
 		cursor: pointer;
 	}
 	
+	panel.pathway tspan.address-line {
+		font-size: smaller;
+		fill: #555;
+	}
+	
+	panel.pathway tspan.markers {
+		font-size: smaller;
+		fill: #555;
+	}
+
 	panel.pathway button.expand {
 		position: absolute;
 		top: calc(100% - 76px);

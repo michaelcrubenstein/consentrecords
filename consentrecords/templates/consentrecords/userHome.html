@@ -501,16 +501,17 @@
 			});
 			
 			var previousPanel = $("body>panel")[0];
+			var firstPanel;
 			if (cr.signedinUser.getValueID())
 			{
-				var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-				pathwayPanel.pathway.setUser(cr.signedinUser, false);
-				showPanelNow(pathwayPanel.node());
+				firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
+				firstPanel.pathway.setUser(cr.signedinUser, false);
+				showPanelNow(firstPanel.node());
 			}
 			else
 			{
-				var welcomePanel = new WelcomePanel(previousPanel);
-				showPanelNow(welcomePanel.node());
+				firstPanel = new WelcomePanel(previousPanel);
+				showPanelNow(firstPanel.node());
 			}
 
 			{% if state %}
@@ -527,7 +528,7 @@
 						offeringString = stateString.substring(0, 32);
 						stateString = stateString.substring(32);
 					}
-					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, pathwayPanel.node());
+					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, firstPanel.node());
 					stateString = "";	/* So it only happens once. */
 				}
 				else if (stateString.startsWith("pathway"))
@@ -541,7 +542,7 @@
 								{
 									if (users.length > 0)
 									{
-										var panel = new PathwayPanel(users[0], pathwayPanel.node(), true);
+										var panel = new PathwayPanel(users[0], firstPanel.node(), true);
 										panel.pathway.setUser(users[0], true);
 										showPanelLeft(panel.node(), unblockClick);
 									}
