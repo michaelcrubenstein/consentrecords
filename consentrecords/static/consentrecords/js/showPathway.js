@@ -38,6 +38,30 @@ var FlagData = (function() {
 	return FlagData;
 })();
 
+function getMarkerList(experience)
+{
+	var offeringCell = experience.getCell("Offering");
+	var offeringServiceCell = new OfferingServiceCell(offeringCell);
+	var names = offeringServiceCell.data
+			.map(function(v) { return v.getDescription(); })
+			.filter(function(s) { return s.length; });
+	
+	var serviceCell = experience.getCell("Service");
+	var userServiceCell = experience.getCell("User Entered Service");
+
+	if (serviceCell)
+		names = names.concat(serviceCell.data
+			.map(function(v) { return v.getDescription(); })
+			.filter(function(s) { return s && s.length; }));
+	
+	if (userServiceCell)
+		names = names.concat(userServiceCell.data
+			.map(function(v) { return v.getDescription(); })
+			.filter(function(s) { return s && s.length; }));
+	
+	return names.join(", ");
+}
+
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
 	Pathway.prototype.dataBottomMargin = 5;
@@ -644,6 +668,7 @@ var Pathway = (function () {
 	Pathway.prototype.showDetailGroup = function(g, fd, duration)
 	{
 		duration = (duration !== undefined ? duration : 700);
+		var _this = this;
 		
 		this.detailGroup.datum(fd);
 		var detailBackRect = this.detailGroup.append('rect')
@@ -666,30 +691,94 @@ var Pathway = (function () {
 		var lines = [];
 	
 		var s;
+		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			var tspan = detailText.append('tspan')
+				.style("font-weight", "bold")
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", 
+					function(d) {
+						return $(this).height() + _this.detailTextSpacing;
+					});
+		}
+			
 		s = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (s && lines.indexOf(s) < 0)
-			lines.push(s);
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			var tspan = detailText.append('tspan')
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", 
+					function(d) {
+						return $(this).height() + _this.detailTextSpacing;
+					});
+		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && lines.indexOf(s) < 0)
-			lines.push(s);
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			var tspan = detailText.append('tspan')
+				.classed('address-line', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin);
+				
+			tspan.attr("dy", 
+					function(d) {
+						return $(this).height() + _this.detailTextSpacing;
+					});
+		}
 
-		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (s && lines.indexOf(s) < 0)
-			lines.push(s);
-
+		s = getDateRange(fd.experience);
+		if (s && s.length > 0)
+		{
+			var tspan = detailText.append('tspan')
+				.text(s)
+				.attr("x", this.textDetailLeftMargin);
+				
+			tspan.attr("dy", 
+					function(d) {
+						return $(this).height() + _this.detailTextSpacing;
+					});
+		}
+		
 		var x = fd.x + 2 * this.trunkWidth;
 		var y = fd.y - this.textBottomBorder;
 
-		var tspans = detailText.selectAll('tspan').data(lines)
-			.enter()
-			.append('tspan')
-			.text(function(d) { return d; })
-			.attr("x", this.textDetailLeftMargin);
-		var spanHeight = tspans.node().getBBox().height + this.detailTextSpacing;
-		tspans.attr("dy", spanHeight);
-		
 		var textBox = detailText.node().getBBox();
+		
+		s = getMarkerList(fd.experience);
+		if (s && s.length > 0)
+		{
+			var text = d3.select(this),
+				words = s.split(/\s+/).reverse(),
+				word,
+				line = [],
+				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true);
+			while (word = words.pop()) {
+			  line.push(word);
+			  tspan.text(line.join(" "));
+			  if (tspan.node().getComputedTextLength() > textBox.width) {
+				line.pop();
+				tspan.text(line.join(" "));
+				tspan.attr("dy", 
+					function(d) {
+						return $(this).height() + _this.detailTextSpacing;
+					});
+				line = [word];
+				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true).text(word);
+			  }
+			}
+			tspan.attr("dy", 
+				function(d) {
+					return $(this).height() + _this.detailTextSpacing;
+				});
+
+			textBox = detailText.node().getBBox();
+		}
+
+
 		var maxX = $(this.svg.node()).width() - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
 		if (x > maxX)
 			x = maxX;
@@ -773,24 +862,25 @@ var Pathway = (function () {
 		this.detailFlagData = fd;
 		this.flagElement = g;
 		
-		{
-			var _this = this;
-			var experience = this.detailFlagData.experience;
-			[experience.getCell("Organization"),
-			 experience.getCell("User Entered Organization"),
-			 experience.getCell("Site"),
-			 experience.getCell("User Entered Site")].forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-				if (d)
-				{
-					$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
-					$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
-				}
-			 });
-		 }
+		var experience = this.detailFlagData.experience;
+		[experience.getCell("Organization"),
+		 experience.getCell("User Entered Organization"),
+		 experience.getCell("Site"),
+		 experience.getCell("User Entered Site"),
+		 experience.getCell("Start"),
+		 experience.getCell("End"),
+		 experience.getCell("Service"),
+		 experience.getCell("User Entered Service")].forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+			}
+		 });
 	}
 	
 	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
