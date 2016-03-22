@@ -1208,6 +1208,7 @@ var Pathway = (function () {
 		
 		var svg = $(this.svg.node());
 		var isPinnedHeight = (this.isMinHeight && svg.height() > newHeight);
+		var isPinnedWidth = (this.isMinHeight && svg.width() > pathwayContainer.width());
 		
 		if (svg.height() < newHeight ||
 			isPinnedHeight ||
@@ -1221,7 +1222,8 @@ var Pathway = (function () {
 			}
 				
 			if (svg.width() < pathwayContainer.width() ||
-				isPinnedHeight)
+				isPinnedHeight ||
+				isPinnedWidth)
 				svg.width(pathwayContainer.width());
 				
 			this.clearLayout();
