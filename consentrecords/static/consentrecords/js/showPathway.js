@@ -883,9 +883,9 @@ var Pathway = (function () {
 		 });
 	}
 	
-	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
+	Pathway.prototype.handleChangeDetailGroup = function(eventObject, newValue)
 	{
-		if (!(eventObject.type == "valueAdded" && this.isEmpty()))
+		if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
 			eventObject.data.refreshDetail();
 	}
 	
