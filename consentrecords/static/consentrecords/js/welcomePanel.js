@@ -19,6 +19,8 @@ var WelcomePanel = (function () {
 			.append('span').text('Sign In');
 			
 		navContainer.appendTitle("PathAdvisor");
+		
+		var panel2Div = this.appendScrollArea();
 
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);

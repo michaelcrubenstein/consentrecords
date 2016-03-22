@@ -270,14 +270,14 @@ function _pushTextChanged(d) {
 	
 	$(d).on("dataChanged.cr", null, this, f);
 	$(this).on("remove", null, d, function(eventObjects) {
-		$(this.eventObject).off("dataChanged.cr", null, this, f);
+		$(this.eventObject).off("dataChanged.cr", null, f);
 	});
 	
 	if (d.cell && d.cell.isUnique())
 	{
 		$(d).on("valueDeleted.cr", null, this, f);
 		$(this).on("remove", null, d, function(eventObjects) {
-			$(this.eventObject).off("valueDeleted.cr", null, this, f);
+			$(this.eventObject).off("valueDeleted.cr", null, f);
 		});
 	}
 }

@@ -43,21 +43,21 @@ function getMarkerList(experience)
 	var offeringCell = experience.getCell("Offering");
 	var offeringServiceCell = new OfferingServiceCell(offeringCell);
 	var names = offeringServiceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s.length; });
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); });
 	
 	var serviceCell = experience.getCell("Service");
 	var userServiceCell = experience.getCell("User Entered Service");
 
 	if (serviceCell)
 		names = names.concat(serviceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s && s.length; }));
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
 	
 	if (userServiceCell)
 		names = names.concat(userServiceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s && s.length; }));
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
 	
 	return names.join(", ");
 }
@@ -100,6 +100,8 @@ var Pathway = (function () {
 	Pathway.prototype.experienceGroup = null;
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
+	Pathway.prototype.detailBackRect = null;
+	Pathway.prototype.detailFrontRect = null;
 	
 	Pathway.prototype.detailFlagData = null;
 	Pathway.prototype.flagElement = null;
@@ -660,7 +662,9 @@ var Pathway = (function () {
 		if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 		{
 			var panel = $(this).parents(".site-panel")[0];
-			var experienceDetailPanel = new ExperienceDetailPanel(fd.experience, panel);
+			var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
+												  
+			revealPanelLeft(editPanel.node());
 			d3.event.stopPropagation();
 		}
 	}
@@ -671,22 +675,13 @@ var Pathway = (function () {
 		var _this = this;
 		
 		this.detailGroup.datum(fd);
-		var detailBackRect = this.detailGroup.append('rect')
-			.attr("fill", this.pathBackground)
-			.attr("width", "100%");
-		var detailFrontRect = this.detailGroup.append('rect')
-			.attr("fill-opacity", "0.3")
-			.attr("stroke-opacity", "0.8")
-			.attr("width", "100%");
+		this.detailGroup.selectAll('rect').datum(fd);
 		var detailText = this.detailGroup.append('text')
 			.attr("width", "100")
 			.attr("height", "1")
 			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
-		var detailChevron = this.detailGroup.append('image')
-			.attr("width", this.showDetailIconWidth)
-			.attr("height", this.showDetailIconWidth)
-			.attr("xlink:href", rightChevronPath)
-			.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+			
+		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
 		var lines = [];
 	
@@ -748,6 +743,17 @@ var Pathway = (function () {
 
 		var textBox = detailText.node().getBBox();
 		
+		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
+		var maxX = $(this.svg.node()).width() - this.flagsRightMargin - textBox.width - iconAreaWidth - (this.textDetailLeftMargin * 2);
+		if (x > maxX)
+			x = maxX;
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
+		if (rectWidth < this.flagWidth)
+		{
+			rectWidth = this.flagWidth;
+			textBox.width = rectWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
+		}
+
 		s = getMarkerList(fd.experience);
 		if (s && s.length > 0)
 		{
@@ -778,48 +784,28 @@ var Pathway = (function () {
 			textBox = detailText.node().getBBox();
 		}
 
-
-		var maxX = $(this.svg.node()).width() - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
-		if (x > maxX)
-			x = maxX;
-		var rectWidth = textBox.width + this.showDetailIconWidth + (this.textDetailLeftMargin * 3);
-		if (rectWidth < this.flagWidth)
-		{
-			rectWidth = this.flagWidth;
-			textBox.width = rectWidth - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
-		}
 		var rectHeight = textBox.height + (this.detailTextSpacing * 2);
 			
 		this.detailGroup.attr("x", x)
 				 .attr("y", y)
 				 .attr("transform", "translate("+x + "," + y+")")
 				 .attr("height", 0);
-		detailBackRect.attr("width", rectWidth)
-					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y - this.detailTextSpacing);
-		detailFrontRect.attr("width", rectWidth)
-					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y - this.detailTextSpacing)
-					   .each(this.setColor)
-					   .each(this.setupServicesTriggers)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", rectHeight);
+		this.detailGroup.selectAll('rect')
+			.attr("width", rectWidth)
+		   .attr("x", textBox.x - this.textDetailLeftMargin)
+		   .attr("y", textBox.y - this.detailTextSpacing);
+		this.detailFrontRect.each(this.setColor)
+					   .each(this.setupServicesTriggers);
 		if (duration > 0)
 		{
-			detailBackRect.attr("height", 0)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", rectHeight);
-			detailFrontRect.attr("height", 0)
+			this.detailGroup.selectAll('rect').attr("height", 0)
 					   .transition()
 					   .duration(duration)
 					   .attr("height", rectHeight);
 		}
 		else
 		{
-			detailBackRect.attr("height", rectHeight);
-			detailFrontRect.attr("height", rectHeight);
+			this.detailGroup.selectAll('rect').attr("height", rectHeight);
 		}
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
@@ -828,13 +814,24 @@ var Pathway = (function () {
 			.attr('y', textBox.y)
 			.attr('width', textBox.width); 
 		
-		var iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
-			.attr('y', textBox.y)
-			.attr('width', this.showDetailIconWidth);
-			
-		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
-			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		var iconClipRect;
+		
+		if (hasEditChevron)
+		{	
+			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
+				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y)
+				.attr('width', this.showDetailIconWidth);
+				
+			var detailChevron = this.detailGroup.append('image')
+				.attr("width", this.showDetailIconWidth)
+				.attr("height", this.showDetailIconWidth)
+				.attr("xlink:href", rightChevronPath)
+				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+
+			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		}
 			
 		if (duration > 0)
 		{
@@ -847,16 +844,18 @@ var Pathway = (function () {
 				.duration(duration)
 				.attr("height", textBox.height);
 
-			iconClipRect.attr('height', 0)
-				.transition()
-				.duration(duration)
-				.attr('height', textBox.height);
+			if (hasEditChevron)
+				iconClipRect.attr('height', 0)
+					.transition()
+					.duration(duration)
+					.attr('height', textBox.height);
 		}
 		else
 		{
 			textClipRect.attr('height', textBox.height); 
 			detailText.attr("height", textBox.height);
-			iconClipRect.attr('height', textBox.height);
+			if (hasEditChevron)
+				iconClipRect.attr('height', textBox.height);
 		}
 		
 		this.detailFlagData = fd;
@@ -881,11 +880,23 @@ var Pathway = (function () {
 				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
 			}
 		 });
+		[experience.getCell("Service"),
+		 experience.getCell("User Entered Service")].forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("valueDeleted.cr", null, _this, _this.handleChangeDetailGroup);
+			}
+		 });
+		 
 	}
 	
-	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
+	Pathway.prototype.handleChangeDetailGroup = function(eventObject, newValue)
 	{
-		if (!(eventObject.type == "valueAdded" && this.isEmpty()))
+		if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
 			eventObject.data.refreshDetail();
 	}
 	
@@ -896,7 +907,6 @@ var Pathway = (function () {
 			so that it is sure to be removed when the done method is called. 
 		 */
 		this.detailGroup.selectAll('image').remove();
-		this.detailGroup.selectAll('rect').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
 		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
@@ -907,7 +917,11 @@ var Pathway = (function () {
 			[experience.getCell("Organization"),
 			 experience.getCell("User Entered Organization"),
 			 experience.getCell("Site"),
-			 experience.getCell("User Entered Site")].forEach(function(d)
+			 experience.getCell("User Entered Site"),
+			 experience.getCell("Start"),
+			 experience.getCell("End"),
+			 experience.getCell("Service"),
+			 experience.getCell("User Entered Service")].forEach(function(d)
 			 {
 				/* d will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
@@ -918,9 +932,24 @@ var Pathway = (function () {
 					$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
 				}
 			 });
+			[experience.getCell("Service"),
+			 experience.getCell("User Entered Service")].forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).off("valueDeleted.cr", null, _this.handleChangeDetailGroup);
+				}
+			 });
+			 
+			 this.detailFrontRect.each(this.clearServicesTriggers);
+			 
 		}
 		
 		this.detailGroup.datum(null);
+		this.detailGroup.selectAll('rect').datum(null);
 		this.detailFlagData = null;
 		this.flagElement = null;
 	}
@@ -1015,11 +1044,15 @@ var Pathway = (function () {
 			var userServiceCell = e.getCell("User Entered Service");
 			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
 			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
-			$(this).on("remove", null, e, function(eventObject)
-			{
-				$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
-				$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
-			});
+		}
+	
+	Pathway.prototype.clearServicesTriggers = function(fd)
+		{
+			var e = fd.experience;
+			var serviceCell = e.getCell("Service");
+			var userServiceCell = e.getCell("User Entered Service");
+			$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
+			$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 		}
 	
 	Pathway.prototype.appendExperiences = function()
@@ -1041,7 +1074,6 @@ var Pathway = (function () {
 			cr.logRecord('click', 'show detail: ' + fd.getDescription());
 			var g = this.parentNode;
 			var pathway = this.pathway;
-			pathway.detailGroup.datum(fd);
 			
 			pathway.hideDetail(function() {
 					pathway.showDetailGroup(g, fd); 
@@ -1176,6 +1208,7 @@ var Pathway = (function () {
 		
 		var svg = $(this.svg.node());
 		var isPinnedHeight = (this.isMinHeight && svg.height() > newHeight);
+		var isPinnedWidth = (this.isMinHeight && svg.width() > pathwayContainer.width());
 		
 		if (svg.height() < newHeight ||
 			isPinnedHeight ||
@@ -1189,7 +1222,8 @@ var Pathway = (function () {
 			}
 				
 			if (svg.width() < pathwayContainer.width() ||
-				isPinnedHeight)
+				isPinnedHeight ||
+				isPinnedWidth)
 				svg.width(pathwayContainer.width());
 				
 			this.clearLayout();
@@ -1252,6 +1286,8 @@ var Pathway = (function () {
 		this.experienceGroup = null;
 		this.yearGroup = null;
 		this.detailGroup = null;
+		this.detailFrontRect = null;
+		this.detailBackRect = null;
 	
 		this.detailFlagData = null;
 		this.flagElement = null;
@@ -1372,6 +1408,13 @@ var Pathway = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", this.showDetailPanel);
+		this.detailBackRect = this.detailGroup.append('rect')
+			.attr("fill", this.pathBackground)
+			.attr("width", "100%");
+		this.detailFrontRect = this.detailGroup.append('rect')
+			.attr("fill-opacity", "0.3")
+			.attr("stroke-opacity", "0.8")
+			.attr("width", "100%");
 			
 		$(_this.sitePanel.node()).one("revealing.cr", function()
 			{
@@ -2730,7 +2773,7 @@ var ExperienceDetailPanel = (function () {
 					{
 						showClickFeedback(this);
 				
-						var panel = new EditExperiencePanel(experience, _this.node());
+						var panel = new EditExperiencePanel(experience, _this.node(), revealPanelUp);
 					}
 					d3.event.preventDefault();
 				});
@@ -2996,7 +3039,7 @@ var PickOrCreatePanel = (function () {
 			}
 			else
 			{
-			var _this = this;
+				var _this = this;
 				function done(newInstances)
 				{
 					if (newInstances.length == 0)
@@ -3004,9 +3047,17 @@ var PickOrCreatePanel = (function () {
 					else
 						_this.updateValues(newInstances[0], null);
 				}
-			
-				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					end: 50, done: done, fail: syncFailFunction});
+				
+				var searchPath = this.searchView.searchPath("");
+				if (searchPath.length > 0)
+				{
+					cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
+						end: 50, done: done, fail: syncFailFunction});
+				}
+				else
+				{
+					this.updateValues(null, newText);
+				}
 			}
 		}
 	}
@@ -3711,8 +3762,8 @@ var EditExperiencePanel = (function () {
 		}
 	}
 	
-	function EditExperiencePanel(experience, previousPanel) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", revealPanelUp);
+	function EditExperiencePanel(experience, previousPanel, showFunction) {
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();
@@ -3771,8 +3822,6 @@ var EditExperiencePanel = (function () {
 		var userServiceCell = experience.getCell("User Entered Service");
 		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
 		var sections = this.showEditCells([myMarkersCell]);
-									  
-		revealPanelUp(this.node());
 	}
 	
 	return EditExperiencePanel;

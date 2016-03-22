@@ -22,9 +22,9 @@ class InstanceInline(admin.TabularInline):
     model = Instance
     extra = 0
     fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction')}),
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction')
+    readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')
     show_change_link = True
     fk_name = 'transaction'
 
@@ -34,11 +34,21 @@ class DeletedInstanceInline(InstanceInline):
 class ValueInline(admin.TabularInline):
     model = Value
     extra = 0
-    list_display = ('id', 'instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')
+    list_display = ('id', 'instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 'transaction')}),
+        (None, {'fields': ('id', 'instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id','instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction')
+    readonly_fields = ('id','instance', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position', 't_creationTime', 'deleteTransaction')
+
+    def queryset(self, request):
+        qs = super(InstanceAdmin, self).queryset(request)
+        qs = qs.annotate('transaction__creation_time')
+        return qs
+
+    def t_creationTime(self, obj):
+        return obj.transaction.creation_time
+    t_creationTime.admin_order_field = 'transaction__creation_time'
+    
     show_change_link = True
     fk_name = 'transaction'
     
