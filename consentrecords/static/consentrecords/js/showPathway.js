@@ -920,7 +920,11 @@ var Pathway = (function () {
 			[experience.getCell("Organization"),
 			 experience.getCell("User Entered Organization"),
 			 experience.getCell("Site"),
-			 experience.getCell("User Entered Site")].forEach(function(d)
+			 experience.getCell("User Entered Site"),
+			 experience.getCell("Start"),
+			 experience.getCell("End"),
+			 experience.getCell("Service"),
+			 experience.getCell("User Entered Service")].forEach(function(d)
 			 {
 				/* d will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
