@@ -100,6 +100,8 @@ var Pathway = (function () {
 	Pathway.prototype.experienceGroup = null;
 	Pathway.prototype.yearGroup = null;
 	Pathway.prototype.detailGroup = null;
+	Pathway.prototype.detailBackRect = null;
+	Pathway.prototype.detailFrontRect = null;
 	
 	Pathway.prototype.detailFlagData = null;
 	Pathway.prototype.flagElement = null;
@@ -673,13 +675,7 @@ var Pathway = (function () {
 		var _this = this;
 		
 		this.detailGroup.datum(fd);
-		var detailBackRect = this.detailGroup.append('rect')
-			.attr("fill", this.pathBackground)
-			.attr("width", "100%");
-		var detailFrontRect = this.detailGroup.append('rect')
-			.attr("fill-opacity", "0.3")
-			.attr("stroke-opacity", "0.8")
-			.attr("width", "100%");
+		this.detailGroup.selectAll('rect').datum(fd);
 		var detailText = this.detailGroup.append('text')
 			.attr("width", "100")
 			.attr("height", "1")
@@ -794,32 +790,22 @@ var Pathway = (function () {
 				 .attr("y", y)
 				 .attr("transform", "translate("+x + "," + y+")")
 				 .attr("height", 0);
-		detailBackRect.attr("width", rectWidth)
-					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y - this.detailTextSpacing);
-		detailFrontRect.attr("width", rectWidth)
-					   .attr("x", textBox.x - this.textDetailLeftMargin)
-					   .attr("y", textBox.y - this.detailTextSpacing)
-					   .each(this.setColor)
-					   .each(this.setupServicesTriggers)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", rectHeight);
+		this.detailGroup.selectAll('rect')
+			.attr("width", rectWidth)
+		   .attr("x", textBox.x - this.textDetailLeftMargin)
+		   .attr("y", textBox.y - this.detailTextSpacing);
+		this.detailFrontRect.each(this.setColor)
+					   .each(this.setupServicesTriggers);
 		if (duration > 0)
 		{
-			detailBackRect.attr("height", 0)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", rectHeight);
-			detailFrontRect.attr("height", 0)
+			this.detailGroup.selectAll('rect').attr("height", 0)
 					   .transition()
 					   .duration(duration)
 					   .attr("height", rectHeight);
 		}
 		else
 		{
-			detailBackRect.attr("height", rectHeight);
-			detailFrontRect.attr("height", rectHeight);
+			this.detailGroup.selectAll('rect').attr("height", rectHeight);
 		}
 	   
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
@@ -921,7 +907,6 @@ var Pathway = (function () {
 			so that it is sure to be removed when the done method is called. 
 		 */
 		this.detailGroup.selectAll('image').remove();
-		this.detailGroup.selectAll('rect').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
 		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
@@ -964,6 +949,7 @@ var Pathway = (function () {
 		}
 		
 		this.detailGroup.datum(null);
+		this.detailGroup.selectAll('rect').datum(null);
 		this.detailFlagData = null;
 		this.flagElement = null;
 	}
@@ -1088,7 +1074,6 @@ var Pathway = (function () {
 			cr.logRecord('click', 'show detail: ' + fd.getDescription());
 			var g = this.parentNode;
 			var pathway = this.pathway;
-			pathway.detailGroup.datum(fd);
 			
 			pathway.hideDetail(function() {
 					pathway.showDetailGroup(g, fd); 
@@ -1299,6 +1284,8 @@ var Pathway = (function () {
 		this.experienceGroup = null;
 		this.yearGroup = null;
 		this.detailGroup = null;
+		this.detailFrontRect = null;
+		this.detailBackRect = null;
 	
 		this.detailFlagData = null;
 		this.flagElement = null;
@@ -1419,6 +1406,13 @@ var Pathway = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", this.showDetailPanel);
+		this.detailBackRect = this.detailGroup.append('rect')
+			.attr("fill", this.pathBackground)
+			.attr("width", "100%");
+		this.detailFrontRect = this.detailGroup.append('rect')
+			.attr("fill-opacity", "0.3")
+			.attr("stroke-opacity", "0.8")
+			.attr("width", "100%");
 			
 		$(_this.sitePanel.node()).one("revealing.cr", function()
 			{
