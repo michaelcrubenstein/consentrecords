@@ -3017,9 +3017,17 @@ var PickOrCreatePanel = (function () {
 					else
 						_this.updateValues(newInstances[0], null);
 				}
-			
-				cr.selectAll({path: this.pickDatum.cell.field.ofKindID+'[_name='+'"'+newText+'"]', 
-					end: 50, done: done, fail: syncFailFunction});
+				
+				var searchPath = this.searchView.searchPath("");
+				if (searchPath.length > 0)
+				{
+					cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
+						end: 50, done: done, fail: syncFailFunction});
+				}
+				else
+				{
+					this.updateValues(null, newText);
+				}
 			}
 		}
 	}
