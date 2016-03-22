@@ -894,6 +894,18 @@ var Pathway = (function () {
 				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
 			}
 		 });
+		[experience.getCell("Service"),
+		 experience.getCell("User Entered Service")].forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("valueDeleted.cr", null, _this, _this.handleChangeDetailGroup);
+			}
+		 });
+		 
 	}
 	
 	Pathway.prototype.handleChangeDetailGroup = function(eventObject, newValue)
@@ -935,6 +947,20 @@ var Pathway = (function () {
 					$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
 				}
 			 });
+			[experience.getCell("Service"),
+			 experience.getCell("User Entered Service")].forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).off("valueDeleted.cr", null, _this.handleChangeDetailGroup);
+				}
+			 });
+			 
+			 this.detailFrontRect.each(this.clearServicesTriggers);
+			 
 		}
 		
 		this.detailGroup.datum(null);
@@ -1032,11 +1058,15 @@ var Pathway = (function () {
 			var userServiceCell = e.getCell("User Entered Service");
 			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
 			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathway.prototype.handleChangeServices);
-			$(this).on("remove", null, e, function(eventObject)
-			{
-				$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
-				$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
-			});
+		}
+	
+	Pathway.prototype.clearServicesTriggers = function(fd)
+		{
+			var e = fd.experience;
+			var serviceCell = e.getCell("Service");
+			var userServiceCell = e.getCell("User Entered Service");
+			$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
+			$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathway.prototype.handleChangeServices);
 		}
 	
 	Pathway.prototype.appendExperiences = function()
