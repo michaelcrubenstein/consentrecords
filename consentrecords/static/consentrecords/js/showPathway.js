@@ -885,7 +885,8 @@ var Pathway = (function () {
 	
 	Pathway.prototype.handleChangeDetailGroup = function(eventObject)
 	{
-		eventObject.data.refreshDetail();
+		if (!(eventObject.type == "valueAdded" && this.isEmpty()))
+			eventObject.data.refreshDetail();
 	}
 	
 	Pathway.prototype.clearDetail = function()
@@ -1174,19 +1175,21 @@ var Pathway = (function () {
 		pathwayContainer.width(this.sitePanel.scrollAreaWidth() - this.dataLeftMargin);
 		
 		var svg = $(this.svg.node());
+		var isPinnedHeight = (this.isMinHeight && svg.height() > newHeight);
+		
 		if (svg.height() < newHeight ||
-			this.isMinHeight ||
+			isPinnedHeight ||
 			svg.width() != pathwayContainer.width())
 		{
 			if (svg.height() < newHeight ||
-				this.isMinHeight)
+				isPinnedHeight)
 			{
 				svg.height(newHeight);
 				this.scaleDayHeightToSize();
 			}
 				
 			if (svg.width() < pathwayContainer.width() ||
-				this.isMinHeight)
+				isPinnedHeight)
 				svg.width(pathwayContainer.width());
 				
 			this.clearLayout();
