@@ -43,21 +43,21 @@ function getMarkerList(experience)
 	var offeringCell = experience.getCell("Offering");
 	var offeringServiceCell = new OfferingServiceCell(offeringCell);
 	var names = offeringServiceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s.length; });
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); });
 	
 	var serviceCell = experience.getCell("Service");
 	var userServiceCell = experience.getCell("User Entered Service");
 
 	if (serviceCell)
 		names = names.concat(serviceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s && s.length; }));
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
 	
 	if (userServiceCell)
 		names = names.concat(userServiceCell.data
-			.map(function(v) { return v.getDescription(); })
-			.filter(function(s) { return s && s.length; }));
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
 	
 	return names.join(", ");
 }
