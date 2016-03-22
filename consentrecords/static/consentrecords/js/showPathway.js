@@ -660,7 +660,9 @@ var Pathway = (function () {
 		if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 		{
 			var panel = $(this).parents(".site-panel")[0];
-			var experienceDetailPanel = new ExperienceDetailPanel(fd.experience, panel);
+			var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
+												  
+			revealPanelLeft(editPanel.node());
 			d3.event.stopPropagation();
 		}
 	}
@@ -682,11 +684,8 @@ var Pathway = (function () {
 			.attr("width", "100")
 			.attr("height", "1")
 			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
-		var detailChevron = this.detailGroup.append('image')
-			.attr("width", this.showDetailIconWidth)
-			.attr("height", this.showDetailIconWidth)
-			.attr("xlink:href", rightChevronPath)
-			.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+			
+		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
 		var lines = [];
 	
@@ -748,6 +747,17 @@ var Pathway = (function () {
 
 		var textBox = detailText.node().getBBox();
 		
+		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
+		var maxX = $(this.svg.node()).width() - this.flagsRightMargin - textBox.width - iconAreaWidth - (this.textDetailLeftMargin * 2);
+		if (x > maxX)
+			x = maxX;
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
+		if (rectWidth < this.flagWidth)
+		{
+			rectWidth = this.flagWidth;
+			textBox.width = rectWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
+		}
+
 		s = getMarkerList(fd.experience);
 		if (s && s.length > 0)
 		{
@@ -778,16 +788,6 @@ var Pathway = (function () {
 			textBox = detailText.node().getBBox();
 		}
 
-
-		var maxX = $(this.svg.node()).width() - this.flagsRightMargin - textBox.width - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
-		if (x > maxX)
-			x = maxX;
-		var rectWidth = textBox.width + this.showDetailIconWidth + (this.textDetailLeftMargin * 3);
-		if (rectWidth < this.flagWidth)
-		{
-			rectWidth = this.flagWidth;
-			textBox.width = rectWidth - this.showDetailIconWidth - (this.textDetailLeftMargin * 3);
-		}
 		var rectHeight = textBox.height + (this.detailTextSpacing * 2);
 			
 		this.detailGroup.attr("x", x)
@@ -828,13 +828,24 @@ var Pathway = (function () {
 			.attr('y', textBox.y)
 			.attr('width', textBox.width); 
 		
-		var iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
-			.attr('y', textBox.y)
-			.attr('width', this.showDetailIconWidth);
-			
-		detailChevron.attr('x', textBox.x + textBox.width + this.textDetailLeftMargin)
-			.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		var iconClipRect;
+		
+		if (hasEditChevron)
+		{	
+			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
+				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y)
+				.attr('width', this.showDetailIconWidth);
+				
+			var detailChevron = this.detailGroup.append('image')
+				.attr("width", this.showDetailIconWidth)
+				.attr("height", this.showDetailIconWidth)
+				.attr("xlink:href", rightChevronPath)
+				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+
+			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		}
 			
 		if (duration > 0)
 		{
@@ -847,16 +858,18 @@ var Pathway = (function () {
 				.duration(duration)
 				.attr("height", textBox.height);
 
-			iconClipRect.attr('height', 0)
-				.transition()
-				.duration(duration)
-				.attr('height', textBox.height);
+			if (hasEditChevron)
+				iconClipRect.attr('height', 0)
+					.transition()
+					.duration(duration)
+					.attr('height', textBox.height);
 		}
 		else
 		{
 			textClipRect.attr('height', textBox.height); 
 			detailText.attr("height", textBox.height);
-			iconClipRect.attr('height', textBox.height);
+			if (hasEditChevron)
+				iconClipRect.attr('height', textBox.height);
 		}
 		
 		this.detailFlagData = fd;
@@ -2730,7 +2743,7 @@ var ExperienceDetailPanel = (function () {
 					{
 						showClickFeedback(this);
 				
-						var panel = new EditExperiencePanel(experience, _this.node());
+						var panel = new EditExperiencePanel(experience, _this.node(), revealPanelUp);
 					}
 					d3.event.preventDefault();
 				});
@@ -2996,7 +3009,7 @@ var PickOrCreatePanel = (function () {
 			}
 			else
 			{
-			var _this = this;
+				var _this = this;
 				function done(newInstances)
 				{
 					if (newInstances.length == 0)
@@ -3711,8 +3724,8 @@ var EditExperiencePanel = (function () {
 		}
 	}
 	
-	function EditExperiencePanel(experience, previousPanel) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", revealPanelUp);
+	function EditExperiencePanel(experience, previousPanel, showFunction) {
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();
@@ -3771,8 +3784,6 @@ var EditExperiencePanel = (function () {
 		var userServiceCell = experience.getCell("User Entered Service");
 		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
 		var sections = this.showEditCells([myMarkersCell]);
-									  
-		revealPanelUp(this.node());
 	}
 	
 	return EditExperiencePanel;
