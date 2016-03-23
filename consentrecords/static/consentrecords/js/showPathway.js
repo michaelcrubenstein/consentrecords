@@ -739,7 +739,7 @@ var Pathway = (function () {
 		}
 		
 		var x = fd.x + 2 * this.trunkWidth;
-		var y = fd.y - this.textBottomBorder;
+		var y = fd.y;
 
 		var textBox = detailText.node().getBBox();
 		
@@ -784,7 +784,11 @@ var Pathway = (function () {
 			textBox = detailText.node().getBBox();
 		}
 
-		var rectHeight = textBox.height + (this.detailTextSpacing * 2);
+		var rectHeight = textBox.height + (textBox.y * 2);
+		var strokeWidth = parseInt($(this.detailFrontRect.node()).css("stroke-width"));
+		var maxY = $(this.svg.node()).height() - rectHeight - strokeWidth;
+		if (y > maxY)
+			y = maxY;
 			
 		this.detailGroup.attr("x", x)
 				 .attr("y", y)
@@ -793,7 +797,7 @@ var Pathway = (function () {
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 		   .attr("x", textBox.x - this.textDetailLeftMargin)
-		   .attr("y", textBox.y - this.detailTextSpacing);
+		   .attr("y", 0);
 		this.detailFrontRect.each(this.setColor)
 					   .each(this.setupServicesTriggers);
 		if (duration > 0)
