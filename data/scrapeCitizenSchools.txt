@@ -1,0 +1,66 @@
+Organization
+    _name: Citizen Schools
+    Web Site: http://www.citizenschools.org/massachusetts/
+    Sites
+        Site
+            _name: Massachusetts State Office
+            Address
+                Street: 308 Congress St., 5th Floor
+                City: 617.695.2300
+                State: MA
+        Site
+            _name: Collins Middle School
+            Address
+                Street: 29 Highland Avenue
+                City: Salem
+                State: MA
+                Zip Code: 01970
+        Site
+            _name: Dever-McCormack School
+            Address
+                Street: 315 Mt. Vernon Street
+                City: Dorchester
+                State: MA
+                Zip Code: 02125
+        Site
+            _name: Edwards Middle School
+            Address
+                Street: 28 Walker Street
+                City: Charlestown
+                State: MA
+                Zip Code: 02129
+        Site
+            _name: Eugene Wright Science and Technology Academy
+            Address
+                Street: 299 Everett Ave
+                City: Chelsea
+                State: MA
+                Zip Code: 02150
+        Site
+            _name: Joseph Browne School
+            Address
+                Street: 180 Walnut Street
+                City: Chelsea
+                State: MA
+                Zip Code: 02150
+        Site
+            _name: Lee School
+            Address
+                Street: 155 Talbot Ave
+                City: Boston
+                State: MA
+                Zip Code: 02124
+        Site
+            _name: Orchard Gardens K-8 School
+            Address
+                Street: 906 Albany Street
+                City: Roxbury
+                State: MA
+                Zip Code: 02119
+        Site
+            _name: Trotter Innovation School
+            Address
+                Street: 135 Humboldt Avenue
+                City: Dorchester
+                State: MA
+                Zip Code: 02121
