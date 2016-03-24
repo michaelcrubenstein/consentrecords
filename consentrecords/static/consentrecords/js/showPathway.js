@@ -2702,8 +2702,6 @@ var AddExperiencePanel = (function () {
 			}
 		}
 
-		var p0 = d3.select(dots.nthPanel(0));
-		
 		dots.nthPanel(0).onReveal = setupPanel2;
 		dots.nthPanel(1).onReveal = setupPanel3;
 		dots.nthPanel(2).onReveal = setupPanel4;
