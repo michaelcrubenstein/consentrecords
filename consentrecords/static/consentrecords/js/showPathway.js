@@ -1530,7 +1530,7 @@ var Pathway = (function () {
 							try
 							{
 								showClickFeedback(this);
-								var newPanel = new AddExperiencePanel(_this, null, _this.sitePanel.node());
+								var newPanel = new AddExperiencePanel(_this, _this.sitePanel.node());
 							}
 							catch (err)
 							{
@@ -1699,7 +1699,7 @@ var PathwayPanel = (function () {
 				{
 					showClickFeedback(this);
 	
-					var newPanel = new AddExperiencePanel(_this.pathway, null, _this.node());
+					var newPanel = new AddExperiencePanel(_this.pathway, _this.node());
 				}
 				d3.event.preventDefault();
 			});
@@ -2523,13 +2523,10 @@ function setupConfirmPanel(dots)
 	}
 }
 
-/* 
-	objectData contains the MoreExperiences object.
- */
 var AddExperiencePanel = (function () {
 	AddExperiencePanel.prototype = new SitePanel();
 	
-	function AddExperiencePanel(pathway, objectData, previousPanelNode) {
+	function AddExperiencePanel(pathway, previousPanelNode) {
 		var header = "Add Experience";
 		SitePanel.call(this, previousPanelNode, null, header, "edit new-experience-panel");
 			
