@@ -856,7 +856,7 @@ var NewExperiencePanel = (function () {
 		dots.user = pathway.user;
 
 		var _this = this;
-		var hideSuccessFunction = function()
+		var onAddClick = function()
 			{
 				bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
 
@@ -939,7 +939,7 @@ var NewExperiencePanel = (function () {
 				}
 			};
 
-		dots.appendForwardButton(navContainer, hideSuccessFunction);
+		dots.appendForwardButton(navContainer, onAddClick);
 		dots.appendBackButton(navContainer, function() {
 			_this.hidePanelDown();
 		});
