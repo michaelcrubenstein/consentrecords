@@ -1603,8 +1603,6 @@ var SitePanel = (function () {
 			{
 				showClickFeedback(this);
 				
-				var objectData = d;
-		
 				var sections = _this.mainDiv.selectAll("section");
 				if (d.cell.parent == null ||
 					d.cell.parent.getValueID() != null)
