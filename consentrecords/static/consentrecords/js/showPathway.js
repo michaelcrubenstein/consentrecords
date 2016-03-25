@@ -652,16 +652,12 @@ var Pathway = (function () {
 		if (offering && offering.getValueID())
 		{
 			var experienceColor = otherColor;
-			crp.pushCheckCells(offering, undefined, function()
-			{
-				var service = offering.getValue("Service");
-				if (service)
-					Pathway.prototype.setColorByService.call(_this, service);
-				else
-					_this.attr("fill", otherColor)
-						 .attr("stroke", otherColor);
-			},
-			asyncFailFunction);
+			var service = offering.getValue("Service");
+			if (service)
+				Pathway.prototype.setColorByService.call(_this, service);
+			else
+				_this.attr("fill", otherColor)
+					 .attr("stroke", otherColor);
 		}
 		else
 		{
