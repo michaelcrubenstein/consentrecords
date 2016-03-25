@@ -907,6 +907,7 @@ var Pathway = (function () {
 	Pathway.prototype.clearDetail = function()
 	{
 		this.detailGroup.selectAll('text').remove();
+		this.detailGroup.selectAll('rect').attr('height', 0);
 		/* Remove the image here instead of when the other clipPath ends
 			so that it is sure to be removed when the done method is called. 
 		 */
