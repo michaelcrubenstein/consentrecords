@@ -26,6 +26,8 @@ var RequestFollowSearchView = (function () {
 								return a.getDescription().localeCompare(b.getDescription());
 							}
 						);
+						_this.sitePanel.followingPanel._noPendingResultsDiv.style('display', 'none');
+
 						$(_thisButton.parentNode).animate({height: "0px"}, 400, 'swing', function()
 						{
 							$(this).remove();
