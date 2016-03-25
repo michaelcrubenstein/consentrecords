@@ -371,6 +371,8 @@
 					var onSigninCanceled = function(eventObject)
 					{
 						$(this).off("signin.cr", null, onSignin);
+						var firstPanel = new WelcomePanel(previousPanel);
+						showPanelLeft(firstPanel.node());
 					}
 					
 					$(cr.signedinUser).one("signin.cr", null, panel, onSignin);
