@@ -465,8 +465,6 @@ var FindExperiencePanel = (function () {
 		
 		this.searchView = new FindExperienceSearchView(this, offeringID);
 		this.searchView.search("");
-
-		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return FindExperiencePanel;

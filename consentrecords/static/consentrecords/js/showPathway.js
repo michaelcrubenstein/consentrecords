@@ -1713,6 +1713,7 @@ var PathwayPanel = (function () {
 						{
 							showClickFeedback(this);
 							var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+							showPanelLeft(newPanel.node(), unblockClick);
 						}
 						d3.event.preventDefault();
 					});
@@ -2043,6 +2044,19 @@ var PickOrCreatePanel = (function () {
 		d3.event.preventDefault();
 	}
 	
+	PickOrCreatePanel.prototype.save = function(initialData, sourceObjects)
+	{
+		if (initialData.length > 0)
+		{
+			var _this = this;
+			cr.updateValues(initialData, sourceObjects,
+				function () { _this.hide(); },
+				syncFailFunction);
+		}
+		else
+			this.hide();
+	}
+	
 	PickOrCreatePanel.prototype.updateValues = function(newValue, newText)
 	{
 		if (newValue && newValue.getValueID() === this.pickDatum.getValueID())
@@ -2055,24 +2069,45 @@ var PickOrCreatePanel = (function () {
 			var sourceObjects = [];
 			if (newValue)
 			{
-				this.pickDatum.appendUpdateCommands(0, newValue, initialData, sourceObjects);
-				this.createDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+				{
+					this.pickDatum.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+					this.save(initialData, sourceObjects);
+				}
+				else 
+				{
+					/* In this case, we are replacing an old value for
+					   an item that was added to the cell but not saved;
+					   a placeholder or a previously picked value.
+					 */
+					this.pickDatum.updateFromChangeData({instanceID: newValue.getValueID(), description: newValue.getDescription()});
+					this.createDatum.updateFromChangeData({text: null});
+					this.pickDatum.triggerDataChanged();
+					this.hide();
+				}
 			}
 			else
 			{
-				this.pickDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
-				this.createDatum.appendUpdateCommands(0, newText, initialData, sourceObjects);
+				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+				{
+					this.pickDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(0, newText, initialData, sourceObjects);
+					this.save(initialData, sourceObjects);
+				}
+				else 
+				{
+					/* In this case, we are replacing an old value for
+					   an item that was added to the cell but not saved;
+					   a placeholder or a previously picked value.
+					 */
+					this.pickDatum.updateFromChangeData({instanceID: null, description: "None"});
+					this.createDatum.updateFromChangeData({text: newText});
+					this.createDatum.triggerDataChanged();
+					this.hide();
+				}
 			}
 			
-			if (initialData.length > 0)
-			{
-				var _this = this;
-				cr.updateValues(initialData, sourceObjects,
-					function () { _this.hide(); },
-					syncFailFunction);
-			}
-			else
-				this.hide();
 		}
 	}
 	
@@ -2463,7 +2498,17 @@ var PickOrCreateCell = (function () {
 		$(this).trigger("valueAdded.cr", newValue);
 		return newValue;
 	};
-
+	
+	PickOrCreateCell.prototype.updateCell = function(sectionObj)
+	{
+		/* Do nothing */
+	};
+	
+	PickOrCreateCell.prototype.appendData = function(initialData)
+	{
+		this.pickCell.appendData(initialData);
+		this.createCell.appendData(initialData);
+	}
 
 	PickOrCreateCell.prototype.showEdit = function(obj, containerPanel)
 	{
@@ -2888,5 +2933,114 @@ var EditExperiencePanel = (function () {
 	}
 	
 	return EditExperiencePanel;
+})();
+
+var AddExperiencePanel = (function () {
+	AddExperiencePanel.prototype = new SitePanel();
+	AddExperiencePanel.prototype.experience = null;
+	
+	function AddExperiencePanel(container, experience, previousPanel, showFunction, done) {
+		var newExperience = new cr.ObjectValue();
+		newExperience.importCells(experience.cells);
+		newExperience.privilege = container.privilege;
+		newExperience.isDataLoaded = true;
+		
+		SitePanel.call(this, previousPanel, newExperience, "Add Experience", "edit", showFunction);
+		var navContainer = this.appendNavContainer();
+		var panel2Div = this.appendScrollArea();
+
+		var _this = this;
+
+		doneButton = navContainer.appendRightButton();
+		doneButton.append("span").text("Add");
+		doneButton.on("click", 	function(d) {
+			if (prepareClick('click', 'done adding'))
+			{
+				showClickFeedback(this);
+				
+				var initialData = {}
+				var sections = panel2Div.selectAll("section");
+				sections.each(
+					function(cell) {
+						if ("updateCell" in cell)
+						{
+							cell.updateCell(this);
+							cell.appendData(initialData);
+						}
+					});
+	
+				field = {ofKind: "More Experience", name: "More Experience"};
+				cr.createInstance(field, container.getValueID(), initialData, 
+					function(newData)
+					{
+						newData.checkCells([],
+							function() {
+								if (done)
+									done(newData);
+							},
+						syncFailFunction);
+					}, 
+					syncFailFunction);
+			}
+			d3.event.preventDefault();
+		});
+		
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'AddExperiencePanel: Cancel'))
+				{
+					_this.hide();
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append("span").text("Cancel");
+
+		navContainer.appendTitle("Add Experience");
+			
+		cells = [new PickOrCreateOrganizationCell(newExperience),
+				 new PickOrCreateSiteCell(newExperience),
+				 new PickOrCreateOfferingCell(newExperience),
+				 newExperience.getCell("Start"),
+				 newExperience.getCell("End"),
+				];
+				
+		this.showEditCells(cells);
+		
+		var startSection = panel2Div.selectAll(":nth-child(4)");
+		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
+		var endSection = panel2Div.selectAll(":nth-child(5)");
+		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
+		endDateInput.checkMinDate(new Date(startDateInput.value));
+		
+		$(startDateInput).on('change', function()
+		{
+			endDateInput.checkMinDate(new Date(startDateInput.value()));
+		});
+		
+		var offeringCell = newExperience.getCell("Offering");
+		function showMarkers()
+		{
+			var offeringServiceCell = new OfferingServiceCell(offeringCell);
+			_this.showViewCells([offeringServiceCell])
+					 .each(function(cell)
+						{
+							offeringServiceCell.setupHandlers(this, _this.node());
+						});
+		
+			var serviceCell = newExperience.getCell("Service");
+			var userServiceCell = newExperience.getCell("User Entered Service");
+			var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
+			var sections = _this.showEditCells([myMarkersCell]);
+		}
+		
+		var offering = newExperience.getValue("Offering");
+		if (offering && offering.getValueID())
+			crp.pushCheckCells(offering, undefined, showMarkers, asyncFailFunction);
+		else
+			showMarkers();
+	}
+	
+	return AddExperiencePanel;
 })();
 
