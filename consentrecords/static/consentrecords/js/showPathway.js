@@ -129,10 +129,23 @@ var Pathway = (function () {
 		.y(function(d) { return d.y; })
 		.interpolate("linear");
 
+	Pathway.prototype.getService = function(experience)
+	{
+		var offering = experience.getValue("Offering");
+		if (offering && offering.getValueID())
+		{
+			var service = offering.getValue("Service");
+			if (service)
+				return service;
+		}
+		return experience.getValue("Service");
+	}
+
 	Pathway.prototype._compareExperiences = function(a, b, ordered)
 	{
-		var aService = a.getValue("Service");
-		var bService = b.getValue("Service");
+		var aService = this.getService(a);
+		var bService = this.getService(b);
+		
 		var aServiceDomain = aService && crp.getInstance(aService.getValueID()).getValue("Service Domain");
 		var bServiceDomain = bService && crp.getInstance(bService.getValueID()).getValue("Service Domain");
 		if (!bServiceDomain)
