@@ -278,6 +278,7 @@
 	<script src="{% static "consentrecords/js/getDataChunker.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
@@ -351,31 +352,31 @@
 		/* Initialize the buttons that hide the currently displaying panel with no further action. */
 		$(".done-button").click(hidePanel);
 		
-		function checkSignin(panel, done, message)
+		function checkSignin(previousPanel, done)
 		{
-			if (prepareClick('click', message))
+			if (cr.signedinUser.getValueID())
+				done();
+			else
 			{
-				showClickFeedback(this);
-				if (cr.signedinUser.getValueID())
-					done();
-				else
+				if (prepareClick('checkSignin'))
 				{
 					var onSignin = function(eventObject)
 					{
 						$(this).off("signinCanceled.cr", null, onSigninCanceled);
-						if (prepareClick('onSignin'))
-							done();
+						done();
 					};
-					
+				
 					var onSigninCanceled = function(eventObject)
 					{
 						$(this).off("signin.cr", null, onSignin);
+						var firstPanel = new WelcomePanel(previousPanel);
+						showPanelLeft(firstPanel.node());
 					}
-					
-					$(cr.signedinUser).one("signin.cr", null, panel, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, panel, onSigninCanceled);
-					
-					showFixedPanel(panel, "#id_sign_in_panel");
+				
+					$(cr.signedinUser).one("signin.cr", null, previousPanel, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, previousPanel, onSigninCanceled);
+				
+					showFixedPanel(previousPanel, "#id_sign_in_panel");
 				}
 			}
 		}
@@ -502,18 +503,11 @@
 			
 			var previousPanel = $("body>panel")[0];
 			var firstPanel;
-			if (cr.signedinUser.getValueID())
-			{
-				firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-				firstPanel.pathway.setUser(cr.signedinUser, false);
-				showPanelNow(firstPanel.node());
-			}
-			else
-			{
-				firstPanel = new WelcomePanel(previousPanel);
-				showPanelNow(firstPanel.node());
-			}
-
+			
+			/* handleState is an asynchronous function called when the setup is ready to process it. */
+			/* needsSignin is a flag that determines if handling the state requires signin. */
+			var handleState = null;
+			var needsSignin = false;
 			{% if state %}
 				var stateString = "{{state}}"
 				if (stateString.startsWith("findNewExperience"))
@@ -528,7 +522,11 @@
 						offeringString = stateString.substring(0, 32);
 						stateString = stateString.substring(32);
 					}
-					var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, firstPanel.node());
+					handleState = function()
+					{
+						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, firstPanel.node());
+						showPanelLeft(panel.node());
+					}
 					stateString = "";	/* So it only happens once. */
 				}
 				else if (stateString.startsWith("pathway"))
@@ -536,27 +534,108 @@
 					stateString = stateString.substring("pathway".length);
 					if (stateString.length > 0)
 					{
-						if (prepareClick())
+						var pathwayID = stateString;
+						handleState = function()
 						{
-							cr.getData({path: "#"+stateString, done: function(users)
+							cr.getData({path: "#"+pathwayID, done: function(users)
 								{
 									if (users.length > 0)
 									{
 										var panel = new PathwayPanel(users[0], firstPanel.node(), true);
 										panel.pathway.setUser(users[0], true);
-										showPanelLeft(panel.node(), unblockClick);
+										showPanelLeft(panel.node());
 									}
 									else
 									{
-										syncFailFunction("The specified user does not exist or you do not have permission to view them.");
+										asyncFailFunction("The specified user does not exist or you do not have permission to view them.");
 									}
 								},
-								fail: syncFailFunction});
+								fail: asyncFailFunction});
 						}
 					}
 					stateString = "";
 				}
+				else if (stateString.startsWith("addExperience"))
+				{
+					stateString = stateString.substring("addExperience".length);
+					if (stateString.length > 0)
+					{
+						var experienceID = stateString;
+						var handleState = function(pathwayPanel)
+						{
+							if (!pathwayPanel)
+							{
+								if (!firstPanel)
+								{
+									firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
+									firstPanel.pathway.setUser(cr.signedinUser, false);
+									showPanelUp(firstPanel.node());
+								}
+								pathwayPanel = firstPanel;
+							}
+							var pathway = pathwayPanel.pathway;
+							cr.getData({path: "#"+experienceID, done: function(experiences)
+								{
+									if (experiences.length > 0)
+									{
+										crp.pushCheckCells(cr.signedinUser, undefined, 
+											function() {
+												var m = cr.signedinUser.getValue("More Experiences");
+												var addExperiencePanel = new AddExperiencePanel(m, experiences[0], pathwayPanel.node(), revealPanelUp,
+													function(newExperience)
+													{
+														var offering = newExperience.getValue("Offering");
+														function addExperience()
+														{
+															pathway.addMoreExperience.call(pathway, newExperience);
+															addExperiencePanel.hide();
+														}
+														
+														if (offering)
+															crp.pushCheckCells(offering, undefined, addExperience, asyncFailFunction);
+														else
+															addExperience();
+													});
+												showPanelUp(addExperiencePanel.node());
+											},
+											function(err)
+											{
+												asyncFailFunction(err);
+											});
+									}
+									else
+									{
+										asyncFailFunction("The specified experience does not exist or you do not have permission to view it.");
+									}
+								},
+								fail: asyncFailFunction});
+						}
+						needsSignin = true;
+					}
+					stateString = "";
+				}
 			{% endif %}
+
+			if (cr.signedinUser.getValueID())
+			{
+				firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
+				firstPanel.pathway.setUser(cr.signedinUser, false);
+				showPanelNow(firstPanel.node());
+				if (handleState)
+					handleState();
+			}
+			else if (!needsSignin)
+			{
+				firstPanel = new WelcomePanel(previousPanel);
+				showPanelNow(firstPanel.node());
+				if (handleState)
+					handleState();
+			}
+			else
+			{
+				firstPanel = null;
+				checkSignin(previousPanel, handleState);
+			}
 		});
 		
 		signIn = {

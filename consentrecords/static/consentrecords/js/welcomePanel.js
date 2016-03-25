@@ -1,7 +1,7 @@
 var WelcomePanel = (function () {
 	WelcomePanel.prototype = new SitePanel();
 	
-	function WelcomePanel(previousPanel) {
+	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
 		SitePanel.call(this, previousPanel, null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
@@ -28,6 +28,8 @@ var WelcomePanel = (function () {
 			showPanelLeft(pathwayPanel.node(),
 				function()
 				{
+					if (onPathwayCreated)
+						onPathwayCreated(pathwayPanel);
 					$(_this.node()).remove();
 				});
 			

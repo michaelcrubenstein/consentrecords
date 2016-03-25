@@ -168,6 +168,30 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+def addExperience(request, experienceID):
+    LogRecord.emit(request.user, 'consentrecords/addExperience', experienceID)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'addExperience%s' % experienceID
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
     def createInstance(user, data):
