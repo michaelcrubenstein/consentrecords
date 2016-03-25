@@ -130,7 +130,7 @@ var CRP = (function() {
 		var _this = this;
 		this.queue.add(
 			function() {
-				storedI = _this.getInstance(i.getValueID());
+				var storedI = _this.getInstance(i.getValueID());
 				if (storedI && storedI.isDataLoaded)
 				{
 					i.importCells(storedI.cells);
@@ -161,7 +161,7 @@ var CRP = (function() {
 			}
 			else
 			{
-				oldInstance = this.instances[i.getValueID()];
+				var oldInstance = this.instances[i.getValueID()];
 				if (!oldInstance.cells && i.isDataLoaded)
 				{
 					oldInstance._setCells(i.cells);
