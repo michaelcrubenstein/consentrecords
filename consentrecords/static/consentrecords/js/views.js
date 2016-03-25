@@ -325,6 +325,18 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 	_checkItemsDivDisplay(node, cell);
 }
 
+function removeItem(itemNode, done)
+{
+	$(itemNode).animate({height: "0px"}, 400, 'swing', function()
+	{
+		var parentNode = this.parentNode;
+		$(this).remove();
+		/* Now that the item is removed, check whether its container should be visible. */
+		_checkItemsDivDisplay(parentNode);
+		if (done) done();
+	});
+}
+
 function _setupItemHandlers(d)
 {
 	/* This method may be called for a set of items that were gotten directly and are not
@@ -334,13 +346,7 @@ function _setupItemHandlers(d)
 	{
 		var f = function(eventObject)
 		{
-			$(eventObject.data).animate({height: "0px"}, 400, 'swing', function()
-			{
-				var parentNode = this.parentNode;
-				$(this).remove();
-				/* Now that the item is removed, check whether its container should be visible. */
-				_checkItemsDivDisplay(parentNode);
-			});
+			removeItem(eventObject.data);
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
 		$(this).on("remove", this, d, function(eventObject)
@@ -697,8 +703,15 @@ function appendRowButtons(divs)
 				.classed("btn row-button multi-row-content", $(divs.node()).parents(".unique").length === 0);
 }
 
-function appendConfirmDeleteControls(divs)
+function appendConfirmDeleteControls(divs, onClick)
 {
+	onClick = (onClick !== undefined ? onClick :
+		function(d)
+		{
+			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
+				d.deleteValue(unblockClick, syncFailFunction);
+		});
+		
 	divs.classed("delete-confirm-container", true);						
 	
 	return divs.append("button")
@@ -713,11 +726,7 @@ function appendConfirmDeleteControls(divs)
 			$(this).animate({width: "0px", "padding-left": "0px", "padding-right": "0px"},
 				400);
 		})
-		.on('click', function(d)
-		{
-			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
-				d.deleteValue(unblockClick, syncFailFunction);
-		});
+		.on('click', onClick);
 }
 
 function appendDeleteControls(buttons)

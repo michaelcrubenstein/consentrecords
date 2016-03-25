@@ -26,6 +26,8 @@ var RequestFollowSearchView = (function () {
 								return a.getDescription().localeCompare(b.getDescription());
 							}
 						);
+						_this.sitePanel.followingPanel._noPendingResultsDiv.style('display', 'none');
+
 						$(_thisButton.parentNode).animate({height: "0px"}, 400, 'swing', function()
 						{
 							$(this).remove();
@@ -97,6 +99,7 @@ var RequestFollowPanel = (function() {
 
 var FollowingPanel = (function() {
 	FollowingPanel.prototype = new SitePanel();
+	FollowingPanel.prototype.user = null;
 	FollowingPanel.prototype._pendingSection = null;
 	FollowingPanel.prototype._noPendingResultsDiv = null;
 	FollowingPanel.prototype._foundPendingRequests = null;
@@ -107,14 +110,40 @@ var FollowingPanel = (function() {
 	FollowingPanel.prototype.showPendingObjects = function(foundObjects)
 	{
 		var _this = this;
-		var sections = this._pendingChunker.appendButtonContainers(foundObjects);
-		var buttons = appendViewButtons(sections, function(buttons)
+		var divs = this._pendingChunker.appendButtonContainers(foundObjects);
+		appendConfirmDeleteControls(divs, function(d)
 			{
-				appendRightChevrons(buttons);
-		
-				buttons.append('div').classed("left-expanding-div description-text", true)
-					.text(_getDataDescription);
+				var _thisItem = $(this).parents('li')[0];
+				if (prepareClick('click', 'delete access request'))
+				{
+					cr.getValues({path: '#{0}'.format(d.getValueID()),
+						field: "_access request",
+						value: _this.user.getValueID(),
+						done: function(values)
+						{
+							if (values.length > 0)
+							{
+								values[0].deleteValue(
+									function(v)
+									{
+										removeItem(_thisItem,
+											function()
+											{
+												_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
+												_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
+												unblockClick();
+											});
+									},
+									syncFailFunction);
+							}
+						},
+						fail: syncFailFunction});
+				}
 			});
+		var buttons = appendRowButtons(divs);
+		appendDeleteControls(buttons);
+		buttons.append('div').classed("left-expanding-div description-text", true)
+			.text(_getDataDescription);
 		
 		return buttons;
 	}
@@ -126,7 +155,6 @@ var FollowingPanel = (function() {
 		else
 			this._foundPendingRequests = this._foundPendingRequests.concat(foundObjects);
 		this.showPendingObjects(foundObjects);
-		this._noPendingResultsDiv.text("None");
 		this._noPendingResultsDiv.style('display', this._foundPendingRequests.length === 0 ? null : 'none');
 	}
 	
@@ -159,14 +187,13 @@ var FollowingPanel = (function() {
 		else
 			this._foundFollowingRequests = this._foundFollowingRequests.concat(foundObjects);
 		this.showFollowingObjects(foundObjects);
-		this._noFollowingResultsDiv.text("None");
 		this._noFollowingResultsDiv.style('display', this._foundFollowingRequests.length === 0 ? null : 'none');
 	}
 	
 	function FollowingPanel(user, previousPanel) {
 		var header = "Following";
 		this.user = user;
-		SitePanel.call(this, previousPanel, null, header, "edit");
+		SitePanel.call(this, previousPanel, null, header, "edit following");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
