@@ -126,7 +126,6 @@ var FollowingPanel = (function() {
 		else
 			this._foundPendingRequests = this._foundPendingRequests.concat(foundObjects);
 		this.showPendingObjects(foundObjects);
-		this._noPendingResultsDiv.text("None");
 		this._noPendingResultsDiv.style('display', this._foundPendingRequests.length === 0 ? null : 'none');
 	}
 	
@@ -159,14 +158,13 @@ var FollowingPanel = (function() {
 		else
 			this._foundFollowingRequests = this._foundFollowingRequests.concat(foundObjects);
 		this.showFollowingObjects(foundObjects);
-		this._noFollowingResultsDiv.text("None");
 		this._noFollowingResultsDiv.style('display', this._foundFollowingRequests.length === 0 ? null : 'none');
 	}
 	
 	function FollowingPanel(user, previousPanel) {
 		var header = "Following";
 		this.user = user;
-		SitePanel.call(this, previousPanel, null, header, "edit");
+		SitePanel.call(this, previousPanel, null, header, "edit following");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
