@@ -871,7 +871,7 @@ var NewExperiencePanel = (function () {
 								_this.hidePanelDown();
 							}
 							var offering = newData.getValue("Offering");
-							if (offering && !offering.isDataLoaded)
+							if (offering && offering.getValueID() && !offering.isDataLoaded)
 								crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
 							else
 								addExperience();
