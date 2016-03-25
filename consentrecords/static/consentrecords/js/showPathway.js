@@ -40,11 +40,15 @@ var FlagData = (function() {
 
 function getMarkerList(experience)
 {
-	var offeringCell = experience.getCell("Offering");
-	var offeringServiceCell = new OfferingServiceCell(offeringCell);
-	var names = offeringServiceCell.data
+	var names = [];
+	
+	var offering = experience.getValue("Offering");
+	if (offering && offering.getValueID())
+	{
+		names = offering.getCell("Service").data
 			.filter(function(v) { return !v.isEmpty(); })
 			.map(function(v) { return v.getDescription(); });
+	}
 	
 	var serviceCell = experience.getCell("Service");
 	var userServiceCell = experience.getCell("User Entered Service");
