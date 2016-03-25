@@ -150,6 +150,10 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype.appendButtonContainers = function(data)
 	{
 		var _this = this;
+		
+		/* Ensure that the container is visible, so that the new items will also appear. */
+		$(this._containerNode).css("display", "");
+		
 		var items = data.map(function(d) {
 			var i = _this._appendNode('li');
 			d3.select(i).datum(d);

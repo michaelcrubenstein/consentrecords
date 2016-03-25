@@ -99,6 +99,7 @@ var RequestFollowPanel = (function() {
 
 var FollowingPanel = (function() {
 	FollowingPanel.prototype = new SitePanel();
+	FollowingPanel.prototype.user = null;
 	FollowingPanel.prototype._pendingSection = null;
 	FollowingPanel.prototype._noPendingResultsDiv = null;
 	FollowingPanel.prototype._foundPendingRequests = null;
@@ -109,14 +110,40 @@ var FollowingPanel = (function() {
 	FollowingPanel.prototype.showPendingObjects = function(foundObjects)
 	{
 		var _this = this;
-		var sections = this._pendingChunker.appendButtonContainers(foundObjects);
-		var buttons = appendViewButtons(sections, function(buttons)
+		var divs = this._pendingChunker.appendButtonContainers(foundObjects);
+		appendConfirmDeleteControls(divs, function(d)
 			{
-				appendRightChevrons(buttons);
-		
-				buttons.append('div').classed("left-expanding-div description-text", true)
-					.text(_getDataDescription);
+				var _thisItem = $(this).parents('li')[0];
+				if (prepareClick('click', 'delete access request'))
+				{
+					cr.getValues({path: '#{0}'.format(d.getValueID()),
+						field: "_access request",
+						value: _this.user.getValueID(),
+						done: function(values)
+						{
+							if (values.length > 0)
+							{
+								values[0].deleteValue(
+									function(v)
+									{
+										removeItem(_thisItem,
+											function()
+											{
+												_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
+												_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
+												unblockClick();
+											});
+									},
+									syncFailFunction);
+							}
+						},
+						fail: syncFailFunction});
+				}
 			});
+		var buttons = appendRowButtons(divs);
+		appendDeleteControls(buttons);
+		buttons.append('div').classed("left-expanding-div description-text", true)
+			.text(_getDataDescription);
 		
 		return buttons;
 	}
