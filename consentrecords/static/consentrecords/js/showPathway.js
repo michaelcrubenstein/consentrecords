@@ -1181,10 +1181,22 @@ var Pathway = (function () {
 		});
 	}
 	
+	Pathway.prototype.checkOfferingCells = function(experience)
+	{
+		offering = experience.getValue("Offering");
+		if (offering && offering.getValueID() && !offering.isDataLoaded)
+		{
+			var storedI = crp.getInstance(offering.getValueID());
+			offering.importCells(storedI.cells);
+		}
+	}
+	
 	Pathway.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
 		experience.typeName = "More Experience";
+		
+		this.checkOfferingCells(experience);
 		
 		this.allExperiences.push(experience);
 		
@@ -1505,6 +1517,9 @@ var Pathway = (function () {
 				this.typeName = "More Experience";
 				this.calculateDescription();
 			});
+			
+			/* Ensure that all of the offerings have their associated cells. */
+			_this.allExperiences.forEach(_this.checkOfferingCells);
 		
 			_this.showAllExperiences();
 			

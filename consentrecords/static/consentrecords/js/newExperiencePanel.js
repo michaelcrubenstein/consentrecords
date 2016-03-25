@@ -864,10 +864,17 @@ var NewExperiencePanel = (function () {
 				
 				function successFunction3(newData)
 				{
-					newData.checkCells([],
+					crp.pushCheckCells(newData, undefined, 
 						function() {
-							pathway.addMoreExperience.call(pathway, newData);
-							_this.hidePanelDown();
+							function addExperience() {
+								pathway.addMoreExperience.call(pathway, newData);
+								_this.hidePanelDown();
+							}
+							var offering = newData.getValue("Offering");
+							if (offering && !offering.isDataLoaded)
+								crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+							else
+								addExperience();
 						},
 						syncFailFunction);
 				}
