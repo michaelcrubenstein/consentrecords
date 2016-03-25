@@ -1671,12 +1671,10 @@ var PathwayPanel = (function () {
 		var settingsButton = bottomNavContainer.appendLeftButton()
 			.on("click", 
 				function() {
-					var done = function()
+					if (prepareClick('click', "Settings"))
 					{
 						var settings = new Settings(user, _this.node());
 					}
-		
-					checkSignin.call(this, _this.node(), done, "Settings");
 					d3.event.preventDefault();
 				});
 		settingsButton.append("i").classed("site-active-text fa fa-lg fa-cog", true);
@@ -1685,12 +1683,11 @@ var PathwayPanel = (function () {
 		var sharingButton = bottomNavContainer.appendLeftButton()
 			.on("click", 
 				function() {
-					var done = function()
+					if (prepareClick('click', "Sharing"))
 					{
 						var settings = new SharingPanel(user, _this.node());
 					}
 		
-					checkSignin.call(this, _this.node(), done, "Sharing");
 					d3.event.preventDefault();
 				});
 		sharingButton.append("i").classed("site-active-text fa fa-lg fa-users", true);
