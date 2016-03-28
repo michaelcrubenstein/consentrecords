@@ -858,6 +858,7 @@ cr.ObjectValue = (function() {
 		this.instanceID = changeData.instanceID;
 		this.description = changeData.description;
 		this.cells = null;
+		this.isDataLoaded = false;
 	}
 	
 	ObjectValue.prototype.completeUpdate = function(newData)
