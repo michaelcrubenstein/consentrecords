@@ -293,6 +293,48 @@ function showWebSite(offering, successFunction)
 	);
 }
 
+function getPickedOrCreatedValue(i, pickedName, createdName)
+{
+	var v = i.getValue(pickedName);
+	if (v && v.getValueID())
+		return v.getDescription();
+	else {
+		v = i.getValue(createdName);
+		if (v)
+			return v.text;
+		else
+			return undefined;
+	}
+}
+
+function getMarkerList(experience)
+{
+	var names = [];
+	
+	var offering = experience.getValue("Offering");
+	if (offering && offering.getValueID())
+	{
+		names = offering.getCell("Service").data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); });
+	}
+	
+	var serviceCell = experience.getCell("Service");
+	var userServiceCell = experience.getCell("User Entered Service");
+
+	if (serviceCell)
+		names = names.concat(serviceCell.data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
+	
+	if (userServiceCell)
+		names = names.concat(userServiceCell.data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
+	
+	return names.join(", ");
+}
+
 function getNamedInstance(data, name)
 {
 	for (i = 0; i < data.length; ++i)
