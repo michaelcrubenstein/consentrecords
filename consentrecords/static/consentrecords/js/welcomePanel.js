@@ -23,8 +23,8 @@ var WelcomePanel = (function () {
 		var panel2Div = this.appendScrollArea();
 
 		var signedIn = function(eventObject) {
-			var pathwayPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-			pathwayPanel.pathway.setUser(cr.signedinUser, true);
+			var pathwayPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+			pathwayPanel.pathtree.setUser(cr.signedinUser, true);
 			showPanelLeft(pathwayPanel.node(),
 				function()
 				{

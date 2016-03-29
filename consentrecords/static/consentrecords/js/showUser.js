@@ -38,8 +38,8 @@ var UserPanel = (function() {
 					_this.appendActionButton('Pathway', function() {
 							if (prepareClick('click', 'Pathway'))
 							{
-								var panel = new PathwayPanel(user, _this.node());
-								panel.pathway.setUser(user, true);
+								var panel = new PathtreePanel(user, _this.node());
+								panel.pathtree.setUser(user, true);
 								showPanelLeft(panel.node(), unblockClick);
 							}
 						});		
