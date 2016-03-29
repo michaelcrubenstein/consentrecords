@@ -90,6 +90,14 @@
 		outline: none;
 	}
 	
+	panel.pathway button.pressed {
+		background: #CCC; /* For browsers that do not support gradients */
+		background: -webkit-linear-gradient(#C2C2C2, #CCC, #d8d8d8); /* For Safari 5.1 to 6.0 */
+		background: -o-linear-gradient(#C2C2C2, #CCC, #d8d8d8); /* For Opera 11.1 to 12.0 */
+		background: -moz-linear-gradient(#C2C2C2, #CCC, #d8d8d8); /* For Firefox 3.6 to 15 */
+		background: linear-gradient(#C2C2C2, #CCC, #d8d8d8); /* Standard syntax */
+	}
+	
 	panel.pathway button.contract>span {
 		position: relative;
 		top: -4px;
