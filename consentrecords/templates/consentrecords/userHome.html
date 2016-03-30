@@ -23,6 +23,7 @@
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showFollowing.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showPathways.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showSharing.css" %}" rel="stylesheet">
@@ -279,9 +280,10 @@
 	<script src="{% static "consentrecords/js/getDataChunker.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
-	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
+	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
@@ -542,8 +544,8 @@
 								{
 									if (users.length > 0)
 									{
-										var panel = new PathwayPanel(users[0], firstPanel.node(), true);
-										panel.pathway.setUser(users[0], true);
+										var panel = new PathtreePanel(users[0], firstPanel.node(), true);
+										panel.pathtree.setUser(users[0], true);
 										showPanelLeft(panel.node());
 									}
 									else
@@ -568,13 +570,13 @@
 							{
 								if (!firstPanel)
 								{
-									firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathway.setUser(cr.signedinUser, false);
+									firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+									firstPanel.pathtree.setUser(cr.signedinUser, false);
 									showPanelUp(firstPanel.node());
 								}
 								pathwayPanel = firstPanel;
 							}
-							var pathway = pathwayPanel.pathway;
+							var pathway = pathwayPanel.pathtree;
 							cr.getData({path: "#"+experienceID, done: function(experiences)
 								{
 									if (experiences.length > 0)
@@ -619,8 +621,8 @@
 
 			if (cr.signedinUser.getValueID())
 			{
-				firstPanel = new PathwayPanel(cr.signedinUser, previousPanel, false);
-				firstPanel.pathway.setUser(cr.signedinUser, false);
+				firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+				firstPanel.pathtree.setUser(cr.signedinUser, false);
 				showPanelNow(firstPanel.node());
 				if (handleState)
 					handleState();

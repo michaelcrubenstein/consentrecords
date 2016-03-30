@@ -1,0 +1,90 @@
+/* showPathways.css */
+	.dots {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+		position: fixed;
+		bottom: 0px;
+	}
+    .dots ol {
+		display: inline-block
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .dots ol li {
+        display: inline-block;
+        background: #888;
+        border-radius: 50%;
+        width:20px;
+        height:20px;
+        cursor: pointer;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .dots ol .active {
+    	background: white;
+    }
+    
+    panel.new-experience-panel div.date-row {
+		text-align: center;
+		width: 100%;
+		height: auto;
+		padding: 6px 12px;
+		background: white;
+    }
+    
+	panel.new-experience-panel .address-line {
+		margin-left: 0px;
+		font-size: smaller;
+		color: #999;
+	}
+
+    .dots ~ panel {
+    	height: calc(100% - 50px);
+    	width: 100%;
+    	background: transparent;
+    	position: absolute;
+    	top: 0;
+    	left: 0;
+    }
+    
+	.dots ~ panel p {
+		margin: 10px;
+	}
+	
+	panel.confirm-experience div.summary {
+		background-color: white;
+	}
+	
+	panel.confirm-experience header
+	{
+		width: 100%;
+		padding: 6px 12px;
+		text-align: left;
+		font-weight: bold;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	panel.confirm-experience .organization {
+		margin-left: 12px;
+		padding-bottom: 5px;
+		border-bottom: 1px solid #eee;
+	}
+	panel.confirm-experience .organization>label {
+		font-weight: normal;
+	}
+	panel.confirm-experience .address-line {
+		margin-left: 0px;
+		font-size: smaller;
+	}
+	panel.confirm-experience label {
+		color: #222;
+		font-weight: normal;
+		margin: 0;
+		padding: 6px 12px;
+	}
+

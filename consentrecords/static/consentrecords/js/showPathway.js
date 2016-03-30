@@ -12,32 +12,32 @@ function _pickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
-var FlagData = (function() {
-	FlagData.prototype.experience = null;
-	FlagData.prototype.x = null;
-	FlagData.prototype.y = null;
-	FlagData.prototype.height = null;
-	
-	FlagData.prototype.getDescription = function()
-	{
-		return this.experience.getDescription();
-	}
-	
-	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
-	{
-		return _pickedOrCreatedValue(this.experience, pickedName, createdName);
-	}
-
-	function FlagData(experience)
-	{
-		this.experience = experience;
-		this.y = null;
-		this.x = null;
-		this.height = null;
-	}
-	return FlagData;
-})();
-
+// var FlagData = (function() {
+// 	FlagData.prototype.experience = null;
+// 	FlagData.prototype.x = null;
+// 	FlagData.prototype.y = null;
+// 	FlagData.prototype.height = null;
+// 	
+// 	FlagData.prototype.getDescription = function()
+// 	{
+// 		return this.experience.getDescription();
+// 	}
+// 	
+// 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+// 	{
+// 		return _pickedOrCreatedValue(this.experience, pickedName, createdName);
+// 	}
+// 
+// 	function FlagData(experience)
+// 	{
+// 		this.experience = experience;
+// 		this.y = null;
+// 		this.x = null;
+// 		this.height = null;
+// 	}
+// 	return FlagData;
+// })();
+// 
 function getMarkerList(experience)
 {
 	var names = [];
