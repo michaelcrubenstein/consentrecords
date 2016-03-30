@@ -1,28 +1,70 @@
-var FlagData = (function() {
-	FlagData.prototype.experience = null;
-	FlagData.prototype.x = null;
-	FlagData.prototype.y = null;
-	FlagData.prototype.height = null;
-	
-	FlagData.prototype.getDescription = function()
-	{
-		return this.experience.getDescription();
+function _pickedOrCreatedValue(i, pickedName, createdName)
+{
+	var v = i.getValue(pickedName);
+	if (v && v.getValueID())
+		return v.getDescription();
+	else {
+		v = i.getValue(createdName);
+		if (v)
+			return v.text;
+		else
+			return undefined;
 	}
-	
-	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
-	{
-		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
-	}
+}
 
-	function FlagData(experience)
+// var FlagData = (function() {
+// 	FlagData.prototype.experience = null;
+// 	FlagData.prototype.x = null;
+// 	FlagData.prototype.y = null;
+// 	FlagData.prototype.height = null;
+// 	
+// 	FlagData.prototype.getDescription = function()
+// 	{
+// 		return this.experience.getDescription();
+// 	}
+// 	
+// 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+// 	{
+// 		return _pickedOrCreatedValue(this.experience, pickedName, createdName);
+// 	}
+// 
+// 	function FlagData(experience)
+// 	{
+// 		this.experience = experience;
+// 		this.y = null;
+// 		this.x = null;
+// 		this.height = null;
+// 	}
+// 	return FlagData;
+// })();
+// 
+function getMarkerList(experience)
+{
+	var names = [];
+	
+	var offering = experience.getValue("Offering");
+	if (offering && offering.getValueID())
 	{
-		this.experience = experience;
-		this.y = null;
-		this.x = null;
-		this.height = null;
+		names = offering.getCell("Service").data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); });
 	}
-	return FlagData;
-})();
+	
+	var serviceCell = experience.getCell("Service");
+	var userServiceCell = experience.getCell("User Entered Service");
+
+	if (serviceCell)
+		names = names.concat(serviceCell.data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
+	
+	if (userServiceCell)
+		names = names.concat(userServiceCell.data
+			.filter(function(v) { return !v.isEmpty(); })
+			.map(function(v) { return v.getDescription(); }));
+	
+	return names.join(", ");
+}
 
 var Pathway = (function () {
 	Pathway.prototype.dataTopMargin = 5;
@@ -578,6 +620,11 @@ var Pathway = (function () {
 		}
 			
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
+	}
+	
+	Pathway.prototype.getServiceDomain = function(service)
+	{
+		return service.getValue("Service Domain");
 	}
 	
 	Pathway.prototype.setColorByService = function(service)
@@ -1813,7 +1860,7 @@ var ExperienceDetailPanel = (function () {
 		var headerDiv = panel2Div.appendHeader();
 		this.setupPickOrCreateTarget(headerDiv.node(), experience, "Offering", "User Entered Offering",
 			function() {
-			var offering = getPickedOrCreatedValue(experience, "Offering", "User Entered Offering");
+			var offering = _pickedOrCreatedValue(experience, "Offering", "User Entered Offering");
 			headerDiv.text(offering);
 		});
 		
@@ -1823,15 +1870,15 @@ var ExperienceDetailPanel = (function () {
 		var organizationNameDiv = orgDiv.append("label");
 		this.setupPickOrCreateTarget(organizationNameDiv.node(), experience, "Organization", "User Entered Organization", 
 			function(eventObject) {
-				var organization = getPickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+				var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
 				d3.select(eventObject.data).text(organization);
 			});
 
 		var siteNameDiv = orgDiv.append('div')
 				.classed("address-line", true);
 		this.setupPickOrCreateTarget(siteNameDiv.node(), experience, "Site", "User Entered Site", function() {
-			var organization = getPickedOrCreatedValue(experience, "Organization", "User Entered Organization");
-			var siteDescription = getPickedOrCreatedValue(experience, "Site", "User Entered Site");
+			var organization = _pickedOrCreatedValue(experience, "Organization", "User Entered Organization");
+			var siteDescription = _pickedOrCreatedValue(experience, "Site", "User Entered Site");
 			if (siteDescription && siteDescription.length > 0 && (siteDescription !== organization))
 				siteNameDiv.text(siteDescription);
 			else
