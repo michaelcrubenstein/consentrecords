@@ -352,30 +352,27 @@ var Pathtree = (function () {
 	}
 	
 	/* Get the change in energy of fi when its x value changes by dx. */
-	Pathtree.prototype.getDeltaX = function(fi, e0, dx)
+	Pathtree.prototype.getDeltaX = function(fi, dx)
 	{
 		 fi.x += dx;
 		 var e2 = this.getEnergyX(fi);
 		 fi.x -= dx;
-		 return e2 - e0;
+		 return e2 - fi.e;
 	}
 	
 	/* Get the change in energy of fi when its width value changes by dx. */
-	Pathtree.prototype.getDeltaWidth = function(fi, e0, dx)
+	Pathtree.prototype.getDeltaWidth = function(fi, dx)
 	{
 		 fi.width += dx;
 		 var e2 = this.getEnergyX(fi);
 		 fi.width -= dx;
-		 return e2 - e0;
+		 return e2 - fi.e;
 	}
 	
 	Pathtree.prototype.iterate = function(fds, delta)
 	{
 		var _this = this;
-		var e0s = fds.map(function(fi) { return _this.getEnergyX(fi); });
-		
-		fds.forEach(function(fi) { fi.setLeftWall(); fi.setRightWall(); });
-		
+				
 		var best = {e: 0.0, delta: 0.0, index: -1};
 		
 		/* The weight is used to reduce the likelihood of shrinking a width the accomodate. 
@@ -392,18 +389,27 @@ var Pathtree = (function () {
 			}
 		}
 			
-		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, e0s[i], delta); })
+		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, delta); })
 			.reduce(r("x", delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, e0s[i], -delta); })
+		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, -delta); })
 			.reduce(r("x", -delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, e0s[i], delta); })
+		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, delta); })
 			.reduce(r("width", delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, e0s[i], -delta); })
+		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, -delta); })
 			.reduce(r("width", -delta, 2), best);
 			
 		if (best.e < -0.01)
 		{
-			fds[best.index][best.v] += best.delta;
+			var fi = fds[best.index];
+			fi[best.v] += best.delta;
+			fi.setLeftWall(); fi.setRightWall();
+			fi.e = _this.getEnergyX(fi);
+			
+			fi.springs.forEach(function(fj) { 
+				fj.setLeftWall(); fj.setRightWall();
+				fj.e = _this.getEnergyX(fj); 
+			});
+			
 			return best;
 		}
 		else
@@ -472,6 +478,13 @@ var Pathtree = (function () {
 		var fds = g.data();
 		
 		this.getSprings(fds);
+		
+		var _this = this;
+		fds.forEach(function(fi) { 
+			fi.setLeftWall(); fi.setRightWall();
+			fi.e = _this.getEnergyX(fi);
+		});
+		
 		var delta = 32;
 		while (delta >= 1)
 		{
