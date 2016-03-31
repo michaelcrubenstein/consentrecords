@@ -85,9 +85,9 @@ var FlagData = (function() {
 	{
 		var currentWidth = this.x;
 		if (currentWidth <= this.maxAttractionDistance)
-			return Math.sin(currentWidth / this.maxAttractionDistance * Math.PI / 2) * 32;
+			return Math.sin(currentWidth / this.maxAttractionDistance * Math.PI / 2) * 8;
 		else
-			return 32;
+			return 8;
 	}
 	
 	/* Returns the energy that attracts this object to its walls or screen edges. */
