@@ -1,15 +1,84 @@
 /* showPathtree.js */
 
+var PathOverlap = (function() {
+	PathOverlap.prototype.r1 = null;
+	PathOverlap.prototype.r2 = null;
+	PathOverlap.prototype.y = 0.0;
+	
+	PathOverlap.prototype.intersects = function(other)
+	{
+		return (Math.min(this.bottom,other.bottom) - Math.max(this.top,other.top)) > 0;
+	}
+	
+	function PathOverlap(i, j)
+	{
+		this.r1 = i;
+		this.r2 = j;
+		this.top = Math.max(i.y,j.y);
+		this.bottom = Math.max(0, Math.min(i.y + i.height,j.y + j.height));
+	}
+	
+	return PathOverlap;
+})();
+
+var PathSpring = (function() {
+	PathSpring.prototype.left = null;
+	PathSpring.prototype.right = null;
+	PathSpring.prototype.e = 0.0;
+	
+	PathSpring.prototype.flagSpacing = 5;
+	PathSpring.prototype.overlapTerm = 16;
+	PathSpring.prototype.marginTerm = 4;
+	PathSpring.prototype.expandedTerm = 1;	/* For springs that are larger than maxSpacing */
+	PathSpring.prototype.maxEnergy = 99999999;
+	
+	PathSpring.prototype.getEnergy = function()
+	{
+		var d = this.right.x - (this.left.x + this.left.width);
+		if (d < 0)	/* Overlap */
+		{
+			return (d * d * this.overlapTerm) + (this.flagSpacing * this.flagSpacing * this.marginTerm);
+		}
+		else if (d < this.flagSpacing)
+		{
+			d -= this.flagSpacing;
+			return d * d * this.marginTerm + this.expandedTerm;	
+				/* Add this.expandedTerm so that any amount less than flagSpacing has a greater energy
+					than the energy in the first unit greater than flagSpacing */
+		}
+		else
+		{
+			d -= this.flagSpacing;
+			return d * d * this.expandedTerm;
+		}
+	}
+	
+	PathSpring.prototype.setEnergy = function()
+	{
+		this.e = this.getEnergy();
+	}
+	
+	function PathSpring(left, right)
+	{
+		this.left = left;
+		this.right = right;
+	}
+	
+	return PathSpring;
+})();
+
 var FlagData = (function() {
 	FlagData.prototype.experience = null;
 	FlagData.prototype.x = null;
 	FlagData.prototype.y = null;
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
+	FlagData.prototype.springs = null;
 	
 	FlagData.prototype.flagSpacing = 5;
-	FlagData.prototype.maxAttractionDistance = 360;
 	FlagData.prototype.maxEnergy = 99999999;
+	FlagData.prototype.widthStretchedTerm = 100;
+	FlagData.prototype.widthCompressedTerm = 37; /* (5 * 5 - 4 * 4) * PathSpring.marginTerm + 1 */
 
 	FlagData.prototype.getDescription = function()
 	{
@@ -21,122 +90,28 @@ var FlagData = (function() {
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
-	FlagData.prototype.centerX = function()
+	/* Returns the energy that attracts this object to its adjacent objects. */
+	FlagData.prototype.getCachedSpringEnergy = function()
 	{
-		return this.x + (this.width / 2);
-	}
-	
-	/* Gets the item that forms the leftmost edge against which this object pushes. */
-	FlagData.prototype._leftWall = function()
-	{
-		var _this = this;
-		return this.springs.reduce(function(a, b)
-			{
-				if (b.column > _this.column)
-					return a;
-					
-				if (b.column === _this.column)
-				{
-					var bCenter = b.centerX();
-					var thisCenter = _this.centerX();
-					if (bCenter > thisCenter)
-						return a;
-					if (bCenter === thisCenter && b.index > _this.index)
-						return a;
-				}
-				if (!a)
-					return b;
-				if (a.x + a.width > b.x + b.width)
-					return a;
-				else
-					return b;
-			}, null);
-	}
-	
-	/* Gets the item that forms the rightmost edge against which this object pushes. */
-	FlagData.prototype._rightWall = function()
-	{
-		var _this = this;
-		return this.springs.reduce(function(a, b)
-			{
-				if (b.column < _this.column)
-					return a;
-
-				if (b.column === _this.column)
-				{
-					var bCenter = b.centerX();
-					var thisCenter = _this.centerX();
-					if (bCenter < thisCenter)
-						return a;
-					if (bCenter === thisCenter && b.index < _this.index)
-						return a;
-				}
-				if (!a)
-					return b;
-				if (a.x + a.width < b.x + b.width)
-					return a;
-				else
-					return b;
-			}, null);
-	}
-
-	/* Returns the energy that attracts this object to the left edge of the display area. */	
-	FlagData.prototype.leftEdgeEnergy = function()
-	{
-		var currentWidth = this.x;
-		if (currentWidth <= this.maxAttractionDistance)
-			return Math.sin(currentWidth / this.maxAttractionDistance * Math.PI / 2) * 8;
-		else
-			return 8;
+		return this.springs.map(function(s) { return s.e; })
+			.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
 	/* Returns the energy that attracts this object to its walls or screen edges. */
-	FlagData.prototype.getSpringEnergy = function()
+	FlagData.prototype.getCurrentSpringEnergy = function()
 	{
-		var halfPi = Math.PI / 2;
-		function springEnergy(left, right)
-		{
-			var bestWidth = right.width / 2 + left.width / 2 + left.flagSpacing;
-			var currentWidth = right.centerX() - left.centerX();
-			var currentSpacing = right.x - (left.x + left.width);
-			
-			if (currentWidth < bestWidth)
-				return Math.pow(1 - (currentWidth / bestWidth), 1.1) * 48;
-				// return Math.cos((currentWidth / bestWidth) * halfPi) * 48;
-			else if (currentSpacing - left.flagSpacing <= left.maxAttractionDistance)
-			{
-				var n = currentSpacing - left.flagSpacing;
-				var d = left.maxAttractionDistance;
-				return Math.sin((n / d) * halfPi) * 32;
-			}
-			else
-				return 32;
-		}
-		
-		var _this = this;
-		var leftWall = this._leftWall();
-		var rightWall = this._rightWall()
-		var leftEnergy = leftWall ? springEnergy(leftWall, this) : this.leftEdgeEnergy();
-		var rightEnergy = rightWall ? springEnergy(this, rightWall) : 0;
-		return leftEnergy + rightEnergy * 0.9;
+		return this.springs.map(function(s) { return s.getEnergy(); })
+			.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
-	/* Returns the delta from the stored energy to the energy based on the current positioning. */
-	FlagData.prototype.getSpringDelta = function()
-	{
-		return this.getSpringEnergy() - this.springEnergy;
-	}
-
 	/* Returns the energy that is generated by compressing the width of this item such that its text doesn't all appear. */
 	FlagData.prototype.getWidthEnergy = function()
 	{
-		if (this.width <= 2)
-			return this.maxEnergy;
-		var bestWidth = this.bestWidth;
-		var currentWidth = this.width;
-		if (currentWidth > bestWidth)
-			return this.maxEnergy;
-		return Math.pow(1 - (currentWidth / bestWidth), 1.1) * 48;
+		var d = this.width - this.bestWidth;
+		if (d > 0)
+			return (d * d * this.widthStretchedTerm);
+		else
+			return d * d * this.widthCompressedTerm;
 	}
 	
 	/* Returns massive amounts of energy if this item falls outside the display area. */
@@ -146,19 +121,72 @@ var FlagData = (function() {
 			return this.maxEnergy;
 		else if (this.x + this.width > maxX)
 			return this.maxEnergy;
+		else if (this.x + this.width > maxX - this.flagSpacing)
+		{
+			var d = maxX - this.flagSpacing - (this.x + this.width);
+			return d * d * PathSpring.prototype.marginTerm;
+		}
 		else
 			return 0;
 	}
 	
-	FlagData.prototype.getProfile = function()
+	FlagData.prototype.cacheFlagEnergy = function(rightEdge)
 	{
-		return {e : this.e, springEnergy: this.springEnergy};
+		this.flagEnergy = this.getWidthEnergy() + this.getXBoundEnergy(rightEdge);
 	}
 	
-	FlagData.prototype.setProfile = function(p)
+	FlagData.prototype.setEnergy = function(rightEdge)
 	{
-		this.e = p.e;
-		this.springEnergy = p.springEnergy;
+		this.springs.forEach(function(s) { s.setEnergy(); });
+		this.cacheFlagEnergy(rightEdge);
+	}
+	
+	FlagData.prototype.getCachedEnergy = function()
+	{
+		return this.getCachedSpringEnergy() + this.flagEnergy;
+	}
+	
+	FlagData.prototype.getCurrentEnergy = function(rightEdge)
+	{
+		return this.getWidthEnergy() + this.getXBoundEnergy(rightEdge) +
+			this.getCurrentSpringEnergy();
+	}
+	
+	/* Get the change in energy of fi when the value of the specified field changes by dx. */
+	FlagData.prototype.getDelta = function(field, dx, rightEdge)
+	{
+		this[field] += dx;
+		
+		var delta = this.getCurrentEnergy(rightEdge) - this.getCachedEnergy();
+		
+		this[field] -= dx;
+		
+		return delta;
+	}
+	
+	FlagData.prototype.rightSprings = function()
+	{
+		var _this = this;
+		return this.springs.filter(function(s) { return s.left == _this; });
+	}
+	
+	FlagData.prototype.leftSprings = function()
+	{
+		var _this = this;
+		return this.springs.filter(function(s) { return s.right == _this; });
+	}
+	
+	FlagData.prototype.setSpanWidth = function(rightEdge)
+	{
+		var maxRightSpan = this.rightSprings()
+			.map(function(s) {
+				if (s.right.isFixed)
+					return rightEdge - s.right.x;
+				else
+					return s.right.spanWidth;
+				})
+			.reduce(function(a, b) { return Math.max(a, b); }, 0.0);
+		this.spanWidth = this.width + (maxRightSpan === 0.0 ? 0.0 : maxRightSpan + this.flagSpacing);
 	}
 	
 	function FlagData(experience)
@@ -363,85 +391,35 @@ var Pathtree = (function () {
 		return oldDayHeight != this.dayHeight;
 	}
 	
-	Pathtree.prototype.setEnergy = function(fi)
+	Pathtree.prototype.bestDeltaF = function(field, delta)
 	{
-		fi.springEnergy = fi.getSpringEnergy();
-		fi.e = fi.springEnergy + 
-			fi.getWidthEnergy() + 
-		 	fi.getXBoundEnergy($(this.svg.node()).width());
+		return function(previous, current, index)
+		{
+			if (current < previous.e)
+				return {e: current, delta: delta, index: index, v: field};
+			else
+				return previous;
+		}
 	}
 	
-	/* Get the change in energy of fi when its x value changes by dx. */
-	Pathtree.prototype.getDeltaX = function(fi, dx)
+	Pathtree.prototype.iterate = function(fds, delta, rightEdge)
 	{
-		var p = fi.getProfile();
-		fi.x += dx;
-		this.setEnergy(fi);
-		
-		var delta = fi.springs.map(function(fj, index) { return fj.getSpringDelta(); })
-							  .reduce(function(a, b) { return a + b; }, fi.e - p.e);
-		
-		fi.x -= dx;
-		fi.setProfile(p);
-		
-		return delta;
-	}
-	
-	/* Get the change in energy of fi when its width value changes by dx. */
-	Pathtree.prototype.getDeltaWidth = function(fi, dx)
-	{
-		var p = fi.getProfile();
-		
-		fi.width += dx;
-		this.setEnergy(fi);
-		
-		var delta = fi.springs.map(function(fj, index) { return fj.getSpringDelta(); })
-							  .reduce(function(a, b) { return a + b; }, fi.e - p.e);
-		
-		fi.width -= dx;
-		fi.setProfile(p);
-		
-		return delta;
-	}
-	
-	Pathtree.prototype.iterate = function(fds, delta)
-	{
-		var _this = this;
-				
 		var best = {e: 0.0, delta: 0.0, index: -1};
 		
-		/* The weight is used to reduce the likelihood of shrinking a width the accomodate. 
-			That should be a last resort.
-		 */
-		var r = function(param, delta, weight)
-		{
-			return function(previous, current, index)
+		var _this = this;
+		["x", "width"].forEach(function(field)
 			{
-				if (current / weight < previous.e)
-					return {e: current / weight, delta: delta, index: index, v: param};
-				else
-					return previous;
-			}
-		}
-			
-		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, delta); })
-			.reduce(r("x", delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaX(fi, -delta); })
-			.reduce(r("x", -delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, delta); })
-			.reduce(r("width", delta, 1), best);
-		best = fds.map(function(fi, i) { return _this.getDeltaWidth(fi, -delta); })
-			.reduce(r("width", -delta, 2), best);
+				best = fds.map(function(fi) { return fi.getDelta(field, delta, rightEdge); })
+					.reduce(_this.bestDeltaF(field, delta), best);
+				best = fds.map(function(fi) { return fi.getDelta(field, -delta, rightEdge); })
+					.reduce(_this.bestDeltaF(field, -delta), best);
+			});
 			
 		if (best.e < -0.01)
 		{
 			var fi = fds[best.index];
 			fi[best.v] += best.delta;
-			_this.setEnergy(fi);
-			
-			fi.springs.forEach(function(fj) {
-				_this.setEnergy(fj);
-			});
+			fi.setEnergy(rightEdge);
 			
 			return best;
 		}
@@ -480,21 +458,86 @@ var Pathtree = (function () {
 		}
 	}
 	
+	Pathtree.prototype.drawSprings = function(lines)
+	{
+		var _this = this;
+		lines.attr('x1', function(d) { return d.left.x + d.left.width; })
+			.attr('y1', function(d) { return d.left.y + d.left.height / 2; })
+			.attr('x2', function(d) { return d.right.x; })
+			.attr('y2', function(d) { return d.right.y + d.right.height / 2; })
+			.attr('stroke-width', 2)
+			.attr('stroke', '#222222');
+	}
+	
 	Pathtree.prototype.getSprings = function(fds)
 	{
-		fds.sort(function(a, b) { return a.y - b.y; });
-		fds.forEach(function(fd, index) { fd.springs = []; fd.index = index;});
+		fds.forEach(function(fd, index) { fd.springs = []; fd.overlaps = []; fd.index = index;});
+
+		fds.sort(function(a, b) {
+			if (a.y != b.y)
+				return a.y - b.y;
+			if (a.height != b.height)
+				return b.height - a.height;
+			if (a.column != b.column)
+				return b.column - a.column;
+			return b.index - a.index;
+			});
+			
+		/* Create a spring between each pair of items whose x values overlap, but there isn't an item
+			that overlaps both of them with an x value between them.
+		 */
 		
-		for (var i = 0; i < fds.length - 1; ++i)
-		{
-			var fi = fds[i];
-			var maxY = fi.y + fi.height;
-			for (var j = i + 1; j < fds.length && fds[j].y < maxY; ++j)
+		/* First, create the overlaps for each experience. */
+		fds.forEach(function(fi, index)
 			{
-				fi.springs.push(fds[j]);
-				fds[j].springs.push(fi);
-			}
-		}
+				var maxY = fi.y + fi.height;
+				for (var j = index + 1; j < fds.length && fds[j].y < maxY; ++j)
+				{
+					var fj = fds[j];
+					if (fj.x > fi.x)
+					{
+						fi.overlaps.push(new PathOverlap(fi, fj));
+					}
+					else
+					{
+						fj.overlaps.push(new PathOverlap(fj, fi));
+					}
+				}
+			});
+		
+		return fds.map(function(fi)
+			{
+				var s = fi.overlaps
+					.sort(function(a, b) { return a.r2.x - b.r2.x; })
+					.filter(function(overlapJ, jIndex)
+						{
+							for (var k = 0; k < jIndex; ++k)
+							{
+								if (overlapJ.intersects(fi.overlaps[k]))
+									return false;
+							}
+							return true;
+						})
+					.map(function(overlapJ) { return new PathSpring(fi, overlapJ.r2); });
+				s.forEach(function (spring) {
+					spring.left.springs.push(spring);
+					spring.right.springs.push(spring);
+				});
+				return s;
+			})
+			.reduce(function(a, b) { return a.concat(b); }, []);
+	}
+	
+	Pathtree.prototype.setSprings = function(g)
+	{
+		var springs = this.getSprings(g.data());
+		springs.forEach(function(s) { s.setEnergy(); });
+		return springs;
+	}
+	
+	Pathtree.prototype.draw = function(g)
+	{
+		this.drawExperiences(g);
 	}
 	
 	/* Optimize the positions of the flags so that they overlap as little as possible
@@ -510,23 +553,181 @@ var Pathtree = (function () {
 	{
 		var fds = g.data();
 		
-		this.getSprings(fds);
-		
 		var _this = this;
+		var rightEdge = $(this.svg.node()).width();
 		fds.forEach(function(fi) { 
-			_this.setEnergy(fi);
+			fi.cacheFlagEnergy(rightEdge);
 		});
 		
 		var delta = 32;
 		while (delta >= 1)
 		{
-			while (this.iterate(fds, delta))
+			while (this.iterate(fds, delta, rightEdge))
 			{
 				continue;
 			}
 			delta /= 2;
 		}
-		this.drawExperiences(g);
+		
+		/* Assign the width of each item. */
+		/* Make a list of every item */
+		/* Flag all of the items whose widths are < bestWidth as immovable. */
+		/* MORE TO DO HERE */
+		
+		/* Set the spanWidth of every item leftover to the width of the span from it to the right */
+		fds.forEach(function(fi) { fi.isFixed = (fi.width < fi.bestWidth); });
+		var items = fds.filter(function(fi) { return !fi.isFixed; });
+		fds.forEach(function(fi) { fi.spanWidth = 0.0; });
+		
+		/* For any item to the right of a compressed item, don't shift those items. */
+		var cQueue = items.filter(function(fi)
+			{
+				return fi.leftSprings().filter(function(s) { return s.left.isFixed; }).length > 0;
+			});
+		while (cQueue.length > 0)
+		{
+			var fi = cQueue.shift();
+			fi.isFixed = true;
+			var index = items.indexOf(fi);
+			if (index >= 0)
+			{
+				items.splice(index, 1);
+				fi.rightSprings().forEach(function(s)
+					{
+						cQueue.push(s.right);
+					});
+			}
+		}
+		
+		while (items.length > 0)
+		{
+			/* For every item in the list that has no lines to the right that are in the list, 
+				add its width + flagSpacing to all of its items on the left 
+				and remove it from the list. */
+			var rightItems = items.filter(function(fi) {
+				return fi.springs.filter(function(s) { return s.left == fi && 
+															  s.right.spanWidth == 0.0 &&
+															  !s.right.isFixed; }) == 0; });
+			
+			/* Pick a rightItem at random and set its spanWidth */												  
+			var fi = rightItems[0];
+			fi.setSpanWidth(rightEdge);
+			items.splice(items.indexOf(fi), 1);
+			
+			/* using a queue, build up a list of items that have common lefts. */
+			var lQueue = [fi];
+			var lItems = [fi];
+			while (lQueue.length > 0)
+			{
+				var qi = lQueue.shift();
+				qi.leftSprings()
+					.forEach(function(s) { 
+						var qj = s.left;
+						qj.rightSprings().forEach(function(s) {
+							var qk = s.right;
+							if (lItems.indexOf(qk) < 0 && qk.spanWidth > 0)
+							{
+								lItems.push(qk);
+								lQueue.push(qk);
+							}
+						})
+					});
+			}
+			
+			if (lItems.length > 1)	/* Do nothing for the degenerate case of 1 item */
+			{
+				/* Otherwise, get the maximum span width of all of the items with common lefts,
+					and, for each one, increment its spanWidth so that it is also the maximum.
+					For each item that is incremented, re-calculcate any items to the left of it that 
+					has already been set.
+				 */
+				var maxSpanWidth = lItems.reduce(function(a, b) { return Math.max(a, b.spanWidth); }, 0.0);
+				lItems.forEach(function(fj)
+					{
+						if (fj.spanWidth < maxSpanWidth)
+						{
+							fj.spanWidth = maxSpanWidth;
+							var mQueue = [fj];
+							while (mQueue.length > 0)
+							{
+								var qi = mQueue.shift();
+								qi.leftSprings().forEach(function(s) 
+									{
+										var qj = s.left;
+										if (qj.spanWidth > 0)
+										{
+											var oldSpanWidth = qj.spanWidth;
+											qj.setSpanWidth(rightEdge);
+											if (oldSpanWidth < qj.spanWidth)
+												mQueue.push(qj);
+										}
+									});
+							}
+						}
+					});
+			}
+		}
+		
+		/* Make a list of every item */
+		items = fds.filter(function(fi) { return !fi.isFixed; });
+		items.sort(function(a, b) { return b.spanWidth - a.spanWidth; });
+		
+		/* If all of the items are variable length, then limit the right edge to the
+			maximum width (forcing all items left).
+		 */
+		if (items.length == fds.length)
+			rightEdge = items[0].spanWidth;
+		
+		/* Now place all of the items */
+		while (items.length > 0)
+		{
+			/* Find the item with the largest width. */
+			var fi = items.shift();
+			
+			/* If it is to the right of a fixed item, then place it there, otherwise
+				place it so that its maxSpan is centered from 0 to rightEdge. */
+			var maxLeft = fi.leftSprings()
+				.map(function(s) {
+					if (s.left.isFixed)
+						return s.left.x + s.left.width;
+					else
+						return 0.0;
+					})
+				.reduce(function(a, b) { return Math.max(a, b); }, 0.0);
+			var leftEdge = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
+			fi.x = leftEdge + (rightEdge - leftEdge - fi.spanWidth) / 2;
+			
+			/* Place items that aren't already placed relative to this item. */
+			var queue = [fi];
+			while (queue.length > 0)
+			{
+				fi = queue.shift();
+				fi.springs.filter(function(s) { 
+						return !s.right.isFixed &&
+							   s.left == fi &&
+							   items.indexOf(s.right) >= 0;
+					})
+					.forEach(function(s) {
+						var fj = s.right;
+						fj.x = fi.x + fi.width + fi.flagSpacing;
+						queue.push(fj);
+						items.splice(items.indexOf(fj), 1);
+					});
+				fi.springs.filter(function(s) { 
+						return !s.left.isFixed &&
+							   s.right == fi &&
+							   items.indexOf(s.left) >= 0;
+					})
+					.forEach(function(s) {
+						var fj = s.left;
+						fj.x = fi.x - fi.flagSpacing - fj.width;
+						queue.push(fj);
+						items.splice(items.indexOf(fj), 1);
+					});
+			}
+		}
+		
+		this.draw(g);
 	}
 	
 	/* Lay out all of the contents within the svg object. */
@@ -578,6 +779,9 @@ var Pathtree = (function () {
 		
 		/* Compute the y attribute for every item */
 		
+		/* Reset the text for each object, in case it was previously squashed. */
+		g.selectAll('text').text(function(d) { return d.getDescription(); });
+		
 		/* Fit each item to a column, according to the best layout. */	
 		g.each(function(fd, i)
 			{
@@ -619,13 +823,25 @@ var Pathtree = (function () {
 		{
 			var x = (flagColumnWidth * j);
 			var column = columns[j];
+			var tops = new Array(column.length);
 			for (var i = 0; i < column.length; ++i)
 			{
 				var fd = d3.select(column[i]).datum();
-				fd.x = x;
+				for (var k = 0; k <= i; ++k)
+				{
+					if (!tops[k] || tops[k].y >= fd.y + fd.height)
+					{
+						tops[k] = fd;
+						fd.x = x + (k * 2);
+						break;
+					}
+				}
+				
 				fd.column = j;
 			}
 		}
+		
+		var springs = this.setSprings(g);
 		
 		if (this.detailFlagData != null)
 		{
@@ -1261,7 +1477,9 @@ var Pathtree = (function () {
 			_this.checkOfferingCells(this,
 				function()
 				{
-					_this.optimize(_this.experienceGroup.selectAll('g'))
+					var allG = _this.experienceGroup.selectAll('g');
+					var springs = _this.setSprings(allG);
+					_this.optimize(allG)
 				});
 		}
 		
