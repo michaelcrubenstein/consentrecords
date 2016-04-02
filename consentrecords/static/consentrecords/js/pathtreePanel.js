@@ -675,7 +675,7 @@ var Pathtree = (function () {
 		/* If all of the items are variable length, then limit the right edge to the
 			maximum width (forcing all items left).
 		 */
-		if (items.length == fds.length)
+		if (items.length == fds.length && items.length > 0)
 			rightEdge = items[0].spanWidth;
 		
 		/* Now place all of the items */
