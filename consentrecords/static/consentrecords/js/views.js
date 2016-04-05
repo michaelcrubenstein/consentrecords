@@ -23,6 +23,28 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
+$.fn.calculateFillHeight = function()
+{
+	var parent = this.parent();
+	var n = this.get(0);
+	newHeight = parent.children().toArray().reduce(function(h, childNode) {
+			var child = $(childNode);
+			if (child.css("display") != "none" && 
+				child.css("position") != "absolute" &&
+				childNode != n)
+				return h - child.outerHeight(true);
+			else
+				return h;
+		},
+		parseInt(parent.height()));
+	this.css("height", "{0}px".format(newHeight));
+	this.one("resize.cr", function(eventObject)
+		{
+			eventObject.stopPropagation();
+		});
+	this.trigger("resize.cr");
+};
+
 /* A utility function for formatting strings like printf */
 String.prototype.format = function () {
   var args = arguments;
@@ -1481,17 +1503,8 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.calculateHeight = function()
 	{
-		var _this = this;
-		newHeight = $(this.node()).children().toArray().reduce(function(h, child) {
-				if ($(child).css("display") != "none" && 
-					$(child).css("position") != "absolute" &&
-					child != _this.mainDiv.node())
-					return h - $(child).outerHeight(true);
-				else
-					return h;
-			},
-			parseInt(this.panelDiv.style("height")));
-		this.mainDiv.style("height", "{0}px".format(newHeight));
+		var varNode = this.mainDiv.node();
+		$(varNode).calculateFillHeight();
 	}
 	
 	SitePanel.prototype.appendScrollArea = function()
