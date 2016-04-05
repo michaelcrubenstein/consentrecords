@@ -1759,7 +1759,6 @@ var SearchView = (function () {
 	SearchView.prototype.getDataChunker = null;
 	SearchView.prototype._fill = null;
 	SearchView.prototype._foundCompareText = null;
-	SearchView.prototype._foundObjects = null;
 	SearchView.prototype._constrainCompareText = null;
 	SearchView.prototype._searchTimeout = null;
 	
@@ -1783,13 +1782,9 @@ var SearchView = (function () {
 			{
 				if (_this.inputBox.value.toLocaleLowerCase().trim() == startVal)
 				{
-					if (_this._foundObjects === null)
-						_this._foundObjects = foundObjects;
-					else
-						_this._foundObjects = _this._foundObjects.concat(foundObjects);
 					_this.showObjects(foundObjects);
 					_this.noResultsDiv.text(_this.noResultString());
-					_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
+					_this.noResultsDiv.style('display', _this.getDataChunker.hasButtons() ? 'none' : null);
 				}
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
@@ -1890,7 +1885,6 @@ var SearchView = (function () {
 			this._foundCompareText = val;
 			this._constrainCompareText = val;
 		}
-		this._foundObjects = null;	/* Clear any old object sets. */
 			
 		var searchPath = this.searchPath(this._constrainCompareText);
 		if (searchPath && searchPath.length > 0)
@@ -1938,7 +1932,6 @@ var SearchView = (function () {
 	{
 		this.clearListPanel();
 		this.getDataChunker.clearLoadingMessage();
-		this._foundObjects = null;
 		this._foundCompareText = null;
 	}
 	
@@ -1959,7 +1952,7 @@ var SearchView = (function () {
 				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&
 				 (this._foundCompareText.length >= 3 || val.length < 3))
 		{
-			if (this._foundObjects && this._foundObjects.length < 50)
+			if (this.getDataChunker.foundCount() < 50)
 				this.constrainFoundObjects(val);
 			else
 				this.startSearchTimeout(val);

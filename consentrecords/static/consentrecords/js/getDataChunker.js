@@ -162,6 +162,21 @@ var GetDataChunker = (function() {
 		return d3.selectAll(items);
 	}
 	
+	GetDataChunker.prototype.foundCount = function()
+	{
+		return d3.select(this._containerNode).selectAll('li').size();
+	}
+	
+	GetDataChunker.prototype.hasButtons = function()
+	{
+		return d3.select(this._containerNode).selectAll('li').size() > 0;
+	}
+	
+	GetDataChunker.prototype.buttons = function()
+	{
+		return d3.select(this._containerNode).selectAll('li');
+	}
+	
 	function GetDataChunker(containerNode, onGetDataDone)
 	{
 		this._containerNode = containerNode;
