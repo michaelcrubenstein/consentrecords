@@ -43,6 +43,7 @@ var GetDataChunker = (function() {
 			{
 				this.clearLoadingMessage();
 				this._start = 0;
+				$(this).trigger("dataLoaded.cr");
 			}
 			else
 			{
