@@ -173,10 +173,16 @@ def _refineResults(resultSet, path, userInfo):
                 return f, path[4:]
             else:
                 raise ValueError("malformed not (missing parentheses)")
+        elif function == 'and':
+            if path[2] == '(':
+                f = resultSet.filter(pk__in=_parse([], path[3], userInfo))
+                return f, path[4:]
+            else:
+                raise ValueError("malformed not (missing parentheses)")
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif path[0] == '|':
-    	return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
+        return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
     elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
         if path[2] == '(':
             if path[3][0] == '[':
