@@ -1900,9 +1900,12 @@ var SearchView = (function () {
 		}
 	}
 	
-	SearchView.prototype.inputText = function()
+	SearchView.prototype.inputText = function(val)
 	{
-		return this.inputBox.value.trim()
+		if (val === undefined)
+			return this.inputBox.value.trim();
+		else
+			this.inputBox.value = val;
 	}
 	
 	SearchView.prototype.inputCompareText = function()
