@@ -1868,6 +1868,9 @@ var SearchView = (function () {
 		return buttons;
 	}
 	
+	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
+		sent to the middle tier.
+	 */
 	SearchView.prototype.fields = function()
 	{
 		return ["parents"];
