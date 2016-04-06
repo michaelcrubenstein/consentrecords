@@ -88,3 +88,26 @@
 		padding: 6px 12px;
 	}
 
+	panel.new-experience-panel section.list-container {
+		position: relative;
+		overflow-y: scroll;
+		overflow-x: hidden;
+	}
+	
+	panel.new-experience-panel section.list-container header
+	{
+		width: 100%;
+		text-align: left;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	panel.new-experience-panel section.list-container .organization {
+		font-size: smaller;
+	}
+	panel.new-experience-panel section.list-container .organization>label {
+		font-weight: normal;
+	}
+	panel.new-experience-panel section.list-container .address-line {
+		margin-left: 0px;
+	}
