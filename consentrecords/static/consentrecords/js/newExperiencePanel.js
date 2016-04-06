@@ -671,7 +671,7 @@ var NewExperiencePanel = (function () {
 	{
 		var p = d3.select(this);
 		p.append('div')
-			.append('p').text("When did you start " + dots.offeringName + "?");
+			.append('p').text("When did you start " + dots.experience.offeringName + "?");
 
 		var minYear = undefined;
 		var startDateInput;
@@ -719,7 +719,7 @@ var NewExperiencePanel = (function () {
 		var endDateInput;
 		
 		p.append('div')
-			.append('p').text("When did you finish " + dots.offeringName + "?");
+			.append('p').text("When did you finish " + dots.experience.offeringName + "?");
 		p.append('div')
 			.append('p').classed('site-active-text', true)
 			.on('click', function()
