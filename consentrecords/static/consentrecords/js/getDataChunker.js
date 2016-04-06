@@ -16,7 +16,7 @@ var GetDataChunker = (function() {
 	{
 		if (this._check != null)
 		{
-			$(this._containerNode).off("scroll", this._check);
+			$(this._containerNode.offsetParent).off("scroll", this._check);
 			$(window).off("resize", this._check);
 			this._check = null;
 		}
@@ -108,14 +108,14 @@ var GetDataChunker = (function() {
 		this._clearScrollCheck();
 		this._start = 0;
 
-		this._check = function()
+		this._check = function(eventObject)
 		{
-			_this.onScroll(startVal);
+			_this.onScroll(eventObject.data);
 		}
 		
 		var scrollingNode = this._containerNode.offsetParent;
-		$(scrollingNode).scroll(this._check);
-		$(window).resize(this._check);
+		$(scrollingNode).scroll(startVal, this._check);
+		$(window).resize(startVal, this._check);
 		$(scrollingNode).on("remove", function()
 			{
 				$(window).off("resize", _this.check);
