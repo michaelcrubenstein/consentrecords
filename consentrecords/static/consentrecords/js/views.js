@@ -1801,7 +1801,7 @@ var SearchView = (function () {
 		throw ("need to override SearchView.onClick");
 	}
 	
-	SearchView.prototype.isButtonVisible = function(button, d)
+	SearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		throw ("need to override SearchView.isButtonVisible");
 	}
@@ -1841,19 +1841,14 @@ var SearchView = (function () {
 			this._constrainCompareText = val;
 			
 		var buttons = this.listPanel.selectAll(".btn");
-		if (this._constrainCompareText != this._foundCompareText)
-		{
-			var _this = this;
-			buttons.style("display", function(d) 
-				{ 
-					if (_this.isButtonVisible(this, d))
-						return null;
-					else
-						return "none";
-				});
-		}
-		else
-			buttons.style("display", null);
+		var _this = this;
+		buttons.style("display", function(d) 
+			{ 
+				if (_this.isButtonVisible(this, d, _this._constrainCompareText))
+					return null;
+				else
+					return "none";
+			});
 	}
 	
 	SearchView.prototype.showObjects = function(foundObjects)

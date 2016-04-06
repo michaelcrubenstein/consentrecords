@@ -1981,9 +1981,12 @@ var PickOrCreateSearchView = (function () {
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
-	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d)
+	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
+		if (compareText.length === 0)
+			return true;
+			
+		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
 	}
 	
 	/* Overrides SearchView.searchPath */

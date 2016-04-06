@@ -57,9 +57,12 @@ var RequestFollowSearchView = (function () {
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
-	RequestFollowSearchView.prototype.isButtonVisible = function(button, d)
+	RequestFollowSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
+		if (compareText.length === 0)
+			return true;
+			
+		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
 	}
 	
 	function RequestFollowSearchView(sitePanel, user)

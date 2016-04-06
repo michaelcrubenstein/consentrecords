@@ -297,13 +297,15 @@ var PickOfferingSearchView = (function () {
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
-	PickOfferingSearchView.prototype.isButtonVisible = function(button, d)
+	PickOfferingSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		var val = this._constrainCompareText;
-		return d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-			   d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(val) >= 0;
+		if (compareText.length === 0)
+			return true;
+			
+		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
 	}
 	
 	/* Overrides SearchView.searchPath */
@@ -425,10 +427,13 @@ var FindExperienceSearchView = (function () {
 		}
 	}
 	
-	FindExperienceSearchView.prototype.isButtonVisible = function(button, d)
+	FindExperienceSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		var i = d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText);
-		if (this._constrainCompareText.length < 3)
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.getDescription().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
 			return i == 0;
 		else
 			return i >= 0;
