@@ -280,9 +280,12 @@ var OrganizationSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
-	OrganizationSearchView.prototype.isButtonVisible = function(button, d)
+	OrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		if (d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0)
+		if (compareText.length === 0)
+			return true;
+			
+		if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 			return true;
 		return false;
 	}
@@ -348,13 +351,15 @@ var SiteSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
-	SiteSearchView.prototype.isButtonVisible = function(button, d)
+	SiteSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		var retVal = false;
-		var constrainText = this._constrainCompareText;
+		if (compareText.length === 0)
+			return true;
+			
 		d3.select(button).selectAll('div').each(function()
 			{
-				retVal |= d3.select(this).text().toLocaleLowerCase().indexOf(constrainText) >= 0;
+				retVal |= d3.select(this).text().toLocaleLowerCase().indexOf(compareText) >= 0;
 			});
 		return retVal;
 	}
