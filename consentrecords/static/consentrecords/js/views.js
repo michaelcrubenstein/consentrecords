@@ -1783,8 +1783,9 @@ var SearchView = (function () {
 				if (_this.inputBox.value.toLocaleLowerCase().trim() == startVal)
 				{
 					_this.showObjects(foundObjects);
-					_this.noResultsDiv.text(_this.noResultString());
-					_this.noResultsDiv.style('display', _this.getDataChunker.hasButtons() ? 'none' : null);
+					var text = _this.noResultString();
+					_this.noResultsDiv.text(text);
+					_this.noResultsDiv.style('display', (_this.getDataChunker.hasButtons() || text.length === 0) ? 'none' : null);
 				}
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
