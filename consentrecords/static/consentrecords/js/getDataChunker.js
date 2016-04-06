@@ -163,9 +163,9 @@ var GetDataChunker = (function() {
 		return d3.selectAll(items);
 	}
 	
-	GetDataChunker.prototype.foundCount = function()
+	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return d3.select(this._containerNode).selectAll('li').size();
+		return d3.select(this._containerNode).selectAll('li').size() < 50 && !this._inGetData;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()

@@ -1956,7 +1956,7 @@ var SearchView = (function () {
 				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&
 				 (this._foundCompareText.length >= 3 || val.length < 3))
 		{
-			if (this.getDataChunker.foundCount() < 50)
+			if (this.getDataChunker.hasShortResults())
 				this.constrainFoundObjects(val);
 			else
 				this.startSearchTimeout(val);
