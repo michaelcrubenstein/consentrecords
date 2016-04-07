@@ -180,6 +180,28 @@ var Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.getMarkerList = function()
+	{
+		var names = [];
+	
+		var offering = this.offering;
+		if (offering && offering.getValueID())
+		{
+			names = offering.getCell("Service").data
+				.filter(function(v) { return !v.isEmpty(); })
+				.map(function(v) { return v.getDescription(); });
+		}
+	
+		this.services.forEach(function(d)
+			{
+				var name = d.getDescription();
+				if (!names.find(function(d) { return d === name; }))
+					names.push(name);
+			});
+	
+		return names.join(", ");
+	}
+
 	Experience.prototype.appendView = function(summary)
 	{
 		if (this.offeringName)
@@ -217,31 +239,13 @@ var Experience = (function() {
 			}
 		}
 
-		if (this.services.length > 0 || (this.offering && this.offering.getCell("Service").data.length > 0))
+		var s = this.getMarkerList();
+		if (s.length > 0)
 		{
-			var servicesDiv = summary.append('section')
-				.classed('cell view multiple', true);
+			var servicesDiv = summary.append('div')
+				.classed('description-text', true);
 		
-			servicesDiv.append('label').text("Markers");
-			var itemsDiv = servicesDiv.append('ol');
-		
-			if (this.offering)
-			{
-				appendItems(itemsDiv, this.offering.getCell("Service").data)	
-					.append('div')
-					.classed('multi-line-item', true)
-					.append('div')
-					.classed('description-text string-value-view', true)
-					.text(function(d) { return d.getDescription(); });
-			}
-		
-			appendItems(itemsDiv, this.services)	
-				.append('div')
-				.classed('multi-line-item', true)
-				.append('div')
-				.classed('description-text string-value-view', true)
-				.text(function(d) { return d.getDescription(); });
-			servicesDiv.append('div').classed("cell-border-below", true);
+			servicesDiv.text(s);
 		}
 	}
 	
@@ -256,6 +260,7 @@ var Experience = (function() {
 var ExperienceOrganizationSearchView = (function () {
 	ExperienceOrganizationSearchView.prototype = new PanelSearchView();
 	ExperienceOrganizationSearchView.prototype.experience = null;
+	ExperienceOrganizationSearchView.prototype.typeName = null;
 	
 	ExperienceOrganizationSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -326,12 +331,25 @@ var ExperienceOrganizationSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	ExperienceOrganizationSearchView.prototype.searchPath = function(val)
 	{
-		if (val.length == 0)
-			return '(Organization,Site)';
-		else if (val.length < 3)
-			return '(Organization,Site)[_name^="'+val+'"]';
+		var path;
+		
+		if (this.experience.services.length > 0)
+		{
+			if (this.typeName === "Site")
+				path = '#{0}::reference(Offering)::reference(Offerings)::reference(Site)';
+			else
+				path = '#{0}::reference(Offering)::reference(Offerings)::reference(Site)::reference(Sites)::reference(Organization)';
+			path = path.format(this.experience.services[0].pickedObject.getValueID());
+		}
 		else
-			return '(Organization,Site)[_name*="'+val+'"]';
+			path = this.typeName;
+		
+		if (val.length == 0)
+			return path;
+		else if (val.length < 3)
+			return path + '[_name^="'+val+'"]';
+		else
+			return path + '[_name*="'+val+'"]';
 	}
 	
 	ExperienceOrganizationSearchView.prototype.showObjects = function(foundObjects)
@@ -357,10 +375,17 @@ var ExperienceOrganizationSearchView = (function () {
 		return fields;
 	}
 	
+	ExperienceOrganizationSearchView.prototype.search = function(val)
+	{
+		this.typeName = "Site";
+		DotsSearchView.prototype.search.call(this, val);
+	}
+	
 	ExperienceOrganizationSearchView.prototype.textCleared = function()
 	{
 		SearchView.prototype.textCleared.call(this);
 		
+		this.typeName = "Site";
 		this.startSearchTimeout("");
 	}
 	
@@ -402,6 +427,7 @@ var ExperienceOrganizationSearchView = (function () {
 		if (sitePanel)
 		{
 			this.experience = experience;
+			this.typeName = "Site";
 			var _this = this;
 			PanelSearchView.call(this, sitePanel, "Organization", this.appendDescriptions, GetDataChunker);
 			
@@ -424,6 +450,20 @@ var ExperienceOrganizationSearchView = (function () {
 					}
 				});
 			this.organizationButtons.style("display", "none");
+			this.getDataChunker._onDoneSearch = function()
+				{
+					var searchText = _this._foundCompareText;
+					if (_this.typeName === "Site")
+					{
+						_this.typeName = "Organization";
+					}
+					else
+						return;
+				
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.start(searchText);
+				};
 		}
 		else
 			PanelSearchView.call(this);
@@ -567,7 +607,7 @@ var ServiceDomainSearchView = (function() {
 	{
 		DotsSearchView.call(this, dots, container, placeholder)
 		
-		$(this.getDataChunker).on("dataLoaded.cr", function()
+		this.getDataChunker._onDoneSearch = function()
 			{
 				if (!dots.experience.hasOrganization())
 				{
@@ -608,7 +648,7 @@ var ServiceDomainSearchView = (function() {
 							}
 						});
 				}
-			});
+			};
 	}
 	
 	return ServiceDomainSearchView;
@@ -689,8 +729,9 @@ var FromServiceSearchView = (function() {
 			 */
 			this.dots.experience.setOrganization({instance: d.getValue("Organization")});
 			this.dots.experience.setSite({instance: d.getValue("Site")});
-			this.dots.experience.services = [];
 			this.dots.setValue(NewExperiencePanelIndexes.startDate);
+			
+			/* Do not clear the services in case we come back to this item. */
 		}
 		d3.event.preventDefault();
 	}
@@ -729,25 +770,34 @@ var FromServiceSearchView = (function() {
 		{
 			path = '#{0}::reference(Offering)';
 			if (this.dots.experience.organization)
-				path = path + "::and(#{0}>Sites>Site>Offerings>Offering)".format(this.dots.experience.organization.getValueID());
-				
-			return path.format(this.dots.experience.services[0].pickedObject.getValueID());
+				return "#{0}>Sites>Site>Offerings>Offering[Service={1}]"
+					.format(this.dots.experience.organization.getValueID(),
+							this.dots.experience.services[0].pickedObject.getValueID());
+			else
+				return "Offering[Service={0}]".format(this.dots.experience.services[0].pickedObject.getValueID());
 		}
 		else
 		{
 			if (this.typeName === "Offering")
-				path = '#{0}::reference(Offering)[_name{1}"{2}"]';
+			{
+				path = 'Offering[_name{1}"{2}"][Service={0}]';
+				if (this.dots.experience.organization)
+					path = "#{0}>Sites>Site>Offerings>".format(this.dots.experience.organization.getValueID()) + path;
+			}
 			else if (this.typeName === "Site")
 			{
-				path = '#{0}::reference(Offering)::and(Site[_name{1}"{2}"]>Offerings>Offering)';
+				path = 'Site[_name{1}"{2}"]>Offerings>Offering[Service={0}]';
+				if (this.dots.experience.organization)
+					path = "#{0}>Sites>".format(this.dots.experience.organization.getValueID()) + path;
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = '#{0}::reference(Offering)::and(Organization[_name{1}"{2}"]>Sites>Site>Offerings>Offering)';
+				if (this.dots.experience.organization)
+					path = "#{0}".format(this.dots.experience.organization.getValueID()) + 
+						   '[_name{1}"{2}"]>Sites>Site>Offerings>Offering[Service={0}]';
+				else
+					path = 'Organization[_name{1}"{2}"]>Sites>Site>Offerings>Offering[Service={0}]';
 			}
-
-			if (this.dots.experience.organization)
-				path = path + "::and(#{0}>Sites>Site>Offerings>Offering)".format(this.dots.experience.organization.getValueID());
 
 			var symbol = val.length < 3 ? "^=" : "*=";
 			
@@ -825,7 +875,7 @@ var FromServiceSearchView = (function() {
 				}
 			});
 
-		$(this.getDataChunker).on("dataLoaded.cr", function()
+		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
 				if (searchText && searchText.length > 0)
@@ -845,10 +895,7 @@ var FromServiceSearchView = (function() {
 					this.fields = _this.fields();
 					this.start(searchText);
 				}			
-			});
-			
-		
-
+			};
 	}
 	
 	return FromServiceSearchView;
