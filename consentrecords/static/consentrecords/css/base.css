@@ -481,19 +481,19 @@ input[type="date"]:focus {
 	overflow: hidden;
 }
 
-.date-row > div {
+.date-row > span {
 	display: inline-block;
 	position: relative;
 }
 
-.date-row > div:first-child {
+.date-row > span:first-child {
 	margin-right: 4px;
 }
-.date-row > div:last-child {
+.date-row > span:last-child {
 	margin-left: 4px;
 }
 
-.date-row > div > span {
+.date-row > span > span {
 	position: absolute;
 	right: 0px;
 	top: 4px;
