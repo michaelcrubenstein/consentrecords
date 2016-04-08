@@ -1463,8 +1463,8 @@ var NewExperienceStartDatePanel = (function () {
 		experience.appendView(experienceView);
 		
 		var birthday = experience.user.getDatum("Birthday");
-			
-		var startDateContainer = panel2Div.append('div')
+		
+		var startDateContainer = panel2Div.append('section')
 			.classed('date-container', true);
 
 		startDateContainer.append('label')
@@ -1488,7 +1488,7 @@ var NewExperienceStartDatePanel = (function () {
 			endDateInput.checkMinDate(minEndDate);
 		});
 		
-		var endDateContainer = panel2Div.append('div')
+		var endDateContainer = panel2Div.append('section')
 			.classed('date-container', true);
 		var endLabel = endDateContainer.append('label')
 			.text("End");
