@@ -569,8 +569,47 @@ var DotsSearchView = (function() {
 	return DotsSearchView;
 })();
 
+var MultiTypeSearchView = (function() {
+	MultiTypeSearchView.prototype = new DotsSearchView();
+	MultiTypeSearchView.prototype.typeName = "";
+	MultiTypeSearchView.prototype.initialTypeName = "";
+	
+	MultiTypeSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.typeName = this.initialTypeName;
+		this.startSearchTimeout("");
+	}
+	
+	MultiTypeSearchView.prototype.fields = function()
+	{
+		var fields = SearchView.prototype.fields.call(this);
+		fields.push('type');
+		return fields;
+	}
+	
+	MultiTypeSearchView.prototype.search = function(val)
+	{
+		if (!this.initialTypeName || !this.initialTypeName.length)
+			throw "unset initialTypeName";
+			
+		this.typeName = this.initialTypeName;
+		DotsSearchView.prototype.search.call(this, val);
+	}
+	
+	function MultiTypeSearchView(dots, container, placeholder)
+	{
+		DotsSearchView.call(this, dots, container, placeholder)
+	}
+	
+	return MultiTypeSearchView;
+	
+})();
+
 var ServiceDomainSearchView = (function() {
-	ServiceDomainSearchView.prototype = new DotsSearchView();
+	ServiceDomainSearchView.prototype = new MultiTypeSearchView();
+	ServiceDomainSearchView.prototype.typeName = null;
 	
 	ServiceDomainSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'service domain: ' + d.getDescription()))
@@ -585,15 +624,36 @@ var ServiceDomainSearchView = (function() {
 	{
 		if (compareText.length === 0)
 			return true;
-			
+		
+		if (typeof(d) != "object")
+			return true;
+	
 		if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 			return true;
 		return false;
 	}
 	
+	ServiceDomainSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		if (this.organizationButtons)
+			buttons = buttons.filter(function(d) { return d !== "Organization" && d !== "Offering"; });
+			
+		buttons.remove();
+	}
+	
+	ServiceDomainSearchView.prototype.canConstrain = function(searchText, constrainText)
+	{
+		/* Force searching if the searchText length is 0. */
+		if (searchText.length === 0)
+			return false;
+			
+		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
+	}
+	
 	ServiceDomainSearchView.prototype.searchPath = function(val)
 	{
-		var path = '"Service Domain"';
+		var path = this.typeName;
 			
 		if (val.length == 0)
 			return path;
@@ -605,49 +665,73 @@ var ServiceDomainSearchView = (function() {
 	
 	function ServiceDomainSearchView(dots, container, placeholder)
 	{
-		DotsSearchView.call(this, dots, container, placeholder)
+		this.initialTypeName = '"Service Domain"';
+		this.typeName = this.initialTypeName;
+		MultiTypeSearchView.call(this, dots, container, placeholder)
 		
+		var sections = this.appendButtonContainers(["Organization"]);
+		this.organizationButtons = appendViewButtons(sections, 
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+
+						leftText.append('div')
+							.text("Search By Organization");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Search By Organization'))
+				{
+					dots.setValue(NewExperiencePanelIndexes.organization);
+				}
+			});
+
+		sections = this.appendButtonContainers(["Offering"]);
+		this.offeringButtons = appendViewButtons(sections,  
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+
+						leftText.append('div')
+							.text("Search By Offering");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Search By Offering'))
+				{
+					dots.setValue(NewExperiencePanelIndexes.offering);
+				}
+			});
+
+		var _this = this;
 		this.getDataChunker._onDoneSearch = function()
 			{
-				if (!dots.experience.hasOrganization())
+				var searchText = _this._foundCompareText;
+				if (searchText && searchText.length > 0)
 				{
-					var sections = this.appendButtonContainers(["Organization"]);
-					this.organizationButtons = appendViewButtons(sections, 
-								function(buttons)
-								{
-									var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-									leftText.append('div')
-										.text("Search By Organization");
-								}
-						)
-						.on("click", function(d, i) {
-							if (prepareClick('click', 'Search By Organization'))
-							{
-								dots.setValue(NewExperiencePanelIndexes.organization);
-							}
-						});
-				}
-		
-				if (!dots.experience.hasOffering())
-				{
-					sections = this.appendButtonContainers(["Offering"]);
-					this.offeringButtons = appendViewButtons(sections,  
-								function(buttons)
-								{
-									var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-									leftText.append('div')
-										.text("Search By Offering");
-								}
-						)
-						.on("click", function(d, i) {
-							if (prepareClick('click', 'Search By Offering'))
-							{
-								dots.setValue(NewExperiencePanelIndexes.offering);
-							}
-						});
-				}
+					if (_this.typeName === '"Service Domain"')
+					{
+						_this.typeName = "Service";
+					}
+					else if (_this.typeName === "Service")
+					{
+						_this.typeName = "Offering";
+					}
+					else if (_this.typeName === "Offering")
+					{
+						_this.typeName = "Site";
+					}
+					else if (_this.typeName === "Site")
+					{
+						_this.typeName = "Organization";
+					}
+					else
+						return;
+			
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.start(searchText);
+				}			
 			};
 	}
 	
@@ -704,8 +788,7 @@ var ServiceSearchView = (function() {
 })();
 
 var FromServiceSearchView = (function() {
-	FromServiceSearchView.prototype = new DotsSearchView();
-	FromServiceSearchView.prototype.typeName = "";
+	FromServiceSearchView.prototype = new MultiTypeSearchView();
 	
 	FromServiceSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -805,33 +888,12 @@ var FromServiceSearchView = (function() {
 		}
 	}
 	
-	FromServiceSearchView.prototype.textCleared = function()
-	{
-		SearchView.prototype.textCleared.call(this);
-		
-		this.typeName = "Offering";
-		this.startSearchTimeout("");
-	}
-	
 	FromServiceSearchView.prototype.noResultString = function()
 	{
 		if (this.typeName === "Organization" || !this._foundCompareText || this._foundCompareText.length == 0)
 			return "No Results";
 		else
 			return "";
-	}
-	
-	FromServiceSearchView.prototype.fields = function()
-	{
-		var fields = SearchView.prototype.fields.call(this);
-		fields.push('type');
-		return fields;
-	}
-	
-	FromServiceSearchView.prototype.search = function(val)
-	{
-		this.typeName = "Offering";
-		DotsSearchView.prototype.search.call(this, val);
 	}
 	
 	FromServiceSearchView.prototype.clearListPanel = function()
@@ -846,9 +908,10 @@ var FromServiceSearchView = (function() {
 	function FromServiceSearchView(dots, container, placeholder)
 	{
 		var _this = this;
-		this.typeName = "Offering";
+		this.initialTypeName = "Offering";
+		this.typeName = this.initialTypeName;
 		
-		DotsSearchView.call(this, dots, container, placeholder, function(buttons) { _this.appendDescriptions(buttons); });
+		MultiTypeSearchView.call(this, dots, container, placeholder, function(buttons) { _this.appendDescriptions(buttons); });
 				
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButtons = appendViewButtons(sections, 
@@ -1265,6 +1328,9 @@ var NewExperiencePanel = (function () {
 		
 		var next = function()
 		{
+			experienceView.selectAll("*").remove();
+			dots.experience.appendView(experienceView);
+			
 			searchView.clearListPanel();
 			searchView.typeName = "Offering";
 			searchView.search(searchView.inputCompareText());				

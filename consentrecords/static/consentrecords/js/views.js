@@ -1937,6 +1937,12 @@ var SearchView = (function () {
 		this._foundCompareText = null;
 	}
 	
+	SearchView.prototype.canConstrain = function(searchText, constrainText)
+	{
+		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
+			   (searchText.length >= 3 || constrainText.length < 3);
+	}
+	
 	SearchView.prototype.textChanged = function()
 	{
 		if (this._searchTimeout != null)
@@ -1951,8 +1957,7 @@ var SearchView = (function () {
 			this.textCleared();
 		}
 		else if (this._foundCompareText != null && 
-				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&
-				 (this._foundCompareText.length >= 3 || val.length < 3))
+				 this.canConstrain(this._foundCompareText, val))
 		{
 			if (this.getDataChunker.hasShortResults())
 				this.constrainFoundObjects(val);
