@@ -1201,26 +1201,7 @@ var PickServicePanel = (function () {
 				d3.event.preventDefault();
 			});
 		backButton.append("span").text("Cancel");
-	
-		var addButton = navContainer.appendRightButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'add service'))
-				{
-					if (!experience.getServiceByName(searchInputNode.value))
-					{
-						var newValue = _this.getObjectByDescription(rootObjects, searchInputNode.value);
-						success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
-					}
-				
-					hidePanelRight(_this.node());
-				}
-				d3.event.preventDefault();
-			});
-		addButton.append('span').text(oldReportedObject ? 'Change' : 'Add');
-		addButton.classed("site-disabled-text", true);
-		addButton.classed("site-active-text", false);
-	
+		
 		navContainer.appendTitle(header);
 	
 		var textChanged = function(){
@@ -1229,23 +1210,29 @@ var PickServicePanel = (function () {
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
-					.style("display", null);
+					.style("display", function(d, i)
+						{
+							return i > 0 ? null : 'none';
+						});
 			}
 			else
 			{
 				/* Show the items whose description is this.value */
 				panel2Div.selectAll("li")
-					.style("display", function(d)
+					.style("display", function(d, i)
 						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
+							if (i == 0)
+							{
+								if (_this.getObjectByDescription(rootObjects, searchInputNode.value))
+									return 'none';
+								else
+									return null;
+							}
 							else
-								return "none";
+								return d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ? null : 'none';
 						});
+				customButton.selectAll('.description-text').text('"{0}"'.format(this.value));
 			}
-		
-			addButton.classed("site-disabled-text", val.length == 0);
-			addButton.classed("site-active-text", val.length > 0);
 		}
 
 		var searchInputNode = _this.appendSearchBar(textChanged);
@@ -1260,9 +1247,41 @@ var PickServicePanel = (function () {
 			}
 			d3.event.preventDefault();
 		}
+		
+		var itemsDiv = panel2Div.append("section")
+			.classed("multiple", true)
+			.append("ol");
+
+		var customButton = itemsDiv.append('li')
+			.style('display', 'none')
+			.on ('click', function() {
+					if (prepareClick('click', 'add custom service'))
+					{
+						var newValue = _this.getObjectByDescription(rootObjects, searchInputNode.value);
+						success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
+						hidePanelRight(_this.node());
+					}
+					d3.event.preventDefault();
+				});
+		appendViewButtons(customButton, function(buttons) {
+				buttons.append("div")
+					.classed("description-text", true)
+					.text("");
+			});
 	
-		var buttons = appendButtons(panel2Div, rootObjects, buttonClicked);
-	
+		var i = 0;
+		var sections = itemsDiv.selectAll("li")
+					.data(rootObjects, function(d) {
+						/* Ensure that this operation appends without replacing any items. */
+						i += 1;
+						return i;
+					  })
+					.enter()
+					.append("li");
+
+		appendViewButtons(sections, appendDescriptions)
+			.on("click", buttonClicked);
+
 		if (oldReportedObject)
 		{
 			if (oldReportedObject.pickedObject)
