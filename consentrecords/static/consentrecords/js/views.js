@@ -777,11 +777,13 @@ function appendDeleteControls(buttons)
 
 function appendRightChevrons(buttons)
 {
-	buttons.append("div")
-		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true)
+	var containers = buttons.append("div")
+		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true);
+	containers
 		.append("img")
 		.attr("src", rightChevronPath)
 		.attr("height", "18px");
+	return containers;
 }
 
 function appendLeftChevrons(buttons)
