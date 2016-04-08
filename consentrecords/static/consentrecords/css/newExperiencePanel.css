@@ -66,6 +66,11 @@
 		font-size: smaller;
 		color: #999;
 	}
+	
+	panel.new-experience-markers section p {
+		margin: 10px;
+		
+	}
 
     .dots ~ panel {
     	height: calc(100% - 50px);

@@ -85,16 +85,6 @@ var DotsNavigator = (function () {
 		this.checkForwardEnabled();
 	}
 	
-	DotsNavigator.prototype.getServiceByName = function(name)
-	{
-		for (i = 0; i < this.services.length; ++i)
-		{
-			if (this.services[i].getDescription() == name)
-				return this.services[i];
-		}
-		return null;
-	}
-	
 	DotsNavigator.prototype.goBack = function()
 	{
 		var _this = this;

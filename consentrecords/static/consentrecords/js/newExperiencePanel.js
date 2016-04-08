@@ -180,6 +180,16 @@ var Experience = (function() {
 		}
 	}
 	
+	Experience.prototype.getServiceByName = function(name)
+	{
+		for (i = 0; i < this.services.length; ++i)
+		{
+			if (this.services[i].getDescription() == name)
+				return this.services[i];
+		}
+		return null;
+	}
+	
 	Experience.prototype.getMarkerList = function()
 	{
 		var names = [];
@@ -1173,7 +1183,7 @@ var PickServicePanel = (function () {
 		return null;
 	}
 
-	function PickServicePanel(previousPanelNode, rootObjects, oldReportedObject, dots, success)
+	function PickServicePanel(previousPanelNode, rootObjects, oldReportedObject, experience, success)
 	{
 		var header = oldReportedObject ? "Marker" : "New Marker";
 		SitePanel.call(this, previousPanelNode, rootObjects, header, "list");
@@ -1197,7 +1207,7 @@ var PickServicePanel = (function () {
 			{
 				if (prepareClick('click', 'add service'))
 				{
-					if (!dots.getServiceByName(searchInputNode.value))
+					if (!experience.getServiceByName(searchInputNode.value))
 					{
 						var newValue = _this.getObjectByDescription(rootObjects, searchInputNode.value);
 						success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
@@ -1410,6 +1420,160 @@ var ServiceDomainSearchView = (function() {
 	return ServiceDomainSearchView;
 })();
 
+var NewExperienceMarkersPanel = (function () {
+	NewExperienceMarkersPanel.prototype = new SitePanel();
+	NewExperienceMarkersPanel.prototype.experience = null;
+	
+	function NewExperienceMarkersPanel(previousPanelNode, experience, done)
+	{
+		SitePanel.call(this, previousPanelNode, null, "Markers", "edit new-experience-markers");
+
+		var _this = this;
+		var navContainer = this.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+				{
+					if (prepareClick('click', 'Close Right'))
+					{
+						done();
+						hidePanelRight(_this.node());
+					}
+				});
+				
+		appendLeftChevrons(backButton).classed("site-active-text", true);
+		backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
+		
+		navContainer.appendTitle("Markers");
+		
+		var panel2Div = this.appendScrollArea();
+
+		var header = panel2Div.append('section')
+			.append('p');
+		
+		if (experience.offering && experience.offering.getCell("Service").data.length > 0)
+			header.text("Markers indicate the type or the benefit of this experience.");
+		else
+			header.text("Some experiences need more than one marker, such as being the captain of a soccer team or getting a summer job working with computers.");
+
+		var obj = panel2Div.append('section')
+			.classed("cell edit multiple", true);
+		
+		var labelDiv = obj.append('label')
+			.text("Markers");
+		
+		var itemsDiv = obj.append("ol")
+			.classed("border-above", true);
+
+		var clickFunction;
+		clickFunction = function(d) {
+				var _this = this;
+				if (prepareClick('click', 'marker: ' + d.getDescription()))
+				{
+					crp.getData({path: "Service", 
+					done: function(rootObjects)
+					{
+						var success = function(newReportedObject)
+						{
+							var divs = d3.select($(_this).parents("li")[0]);
+							/* Set the datum for the li and this object so that the correct object is used in future clicks. */
+							divs.datum(newReportedObject);
+							d3.select(_this).datum(newReportedObject);
+							var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
+							experience.services[experience.services.indexOf(d)] = newReportedObject;
+						}
+						new PickServicePanel(_this.node(), rootObjects, d, experience, success);
+					}, 
+					fail: syncFailFunction});
+				}
+			};
+	
+		function appendOfferingServices()
+		{
+			if (experience.offering != null)
+			{
+				var fixedDivs = appendItems(itemsDiv, experience.offering.getCell("Service").data);
+				var itemDivs = fixedDivs.append("div")
+					.classed("multi-row-content", true)
+				appendButtonDescriptions(itemDivs);
+			}
+		}
+	
+		function _confirmDeleteClick(d)
+		{
+			var a = experience.services;
+			a.splice($.inArray(d, a), 1);
+			var item = $(this).parents("li")[0];
+			$(item).animate({height: "0px"}, 200, 'swing', function() { $(item).remove(); });
+		}
+
+		function appendServices(services)
+		{
+			var divs;
+			if (experience.offering && 
+				services[0].pickedObject && 
+				experience.offering.getCell("Service").data.find(function(d)
+					{
+						return d.getValueID() == services[0].pickedObject.getValueID()
+					}))
+			{
+				divs = appendItems(itemsDiv, services.filter(function(d, i) { return i > 0; }));
+			}
+			else
+			{
+				divs = appendItems(itemsDiv, services);
+			}
+			
+			appendConfirmDeleteControls(divs)
+				.on('click', _confirmDeleteClick);
+		
+			var buttons = appendRowButtons(divs);
+			buttons.on("click", clickFunction);
+			appendDeleteControls(buttons);
+			appendRightChevrons(buttons);
+			appendButtonDescriptions(buttons);
+		}
+	
+		appendOfferingServices();
+		appendServices(experience.services);
+	
+		/* Add one more button for the add Button item. */
+		var buttonDiv = obj.append("div")
+			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+			.on("click", function(cell) {
+				var _thisButton = this;
+				if (prepareClick('click', 'add marker'))
+				{
+					crp.getData({path: "Service", 
+					done: function(rootObjects)
+					{
+						var success = function(newReportedObject)
+						{
+							experience.services.push(newReportedObject);
+							appendServices([newReportedObject]);
+						}
+						new PickServicePanel(_this.node(), rootObjects, null, experience, success);
+					}, 
+					fail: syncFailFunction});
+				}
+				d3.event.preventDefault();
+			})
+			.append("div").classed("pull-left", true);
+		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
+		buttonDiv.append("span").text(" add marker");
+	
+		this.onReveal = function()
+		{
+			itemsDiv.selectAll('li').remove();
+			appendOfferingServices();
+			appendServices(experience.services);
+		}
+	
+	}
+	
+	return NewExperienceMarkersPanel;
+})();
+
 var NewExperienceStartDatePanel = (function () {
 	NewExperienceStartDatePanel.prototype = new SitePanel();
 	NewExperienceStartDatePanel.prototype.experience = null;
@@ -1551,11 +1715,25 @@ var NewExperienceStartDatePanel = (function () {
 				$chevron.width(0);
 				$chevron.height($dateRow.height());	/* Force them to the same height. */
 			});
-
+		
+		this.appendActionButton("Markers", function()
+			{
+				if (prepareClick('click', 'new NewExperienceMarkersPanel'))
+				{
+					var panel = new NewExperienceMarkersPanel(_this.node(), experience,
+						function()
+						{
+							experienceView.selectAll('*').remove();
+							experience.appendView(experienceView);
+						});
+					showPanelLeft(panel.node(), unblockClick);
+				}
+			});	
 	}
 	
 	return NewExperienceStartDatePanel;
 })();
+
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new SitePanel();
 	
@@ -1720,130 +1898,6 @@ var NewExperiencePanel = (function () {
 // 		}
 // 		crp.getData({path: "Service", done: done, fail: asyncFailFunction});
 // 		dotsPanel.onReveal = null;
-// 	}
-// 
-// 	NewExperiencePanel.prototype.setupServicesPanel = function(dots)
-// 	{
-// 		var sitePanelNode = $(this).parents("panel.site-panel")[0];
-// 		var p1 = d3.select(this);
-// 		var header = p1.append('div')
-// 			.append('p');
-// 		
-// 		if (dots.experience.offering && dots.experience.offering.getCell("Service").data.length > 0)
-// 			header.text("Markers indicate the type or the benefit of this experience.");
-// 		else
-// 			header.text("Some experiences need more than one marker, such as being the captain of a soccer team or getting a summer job working with computers.");
-// 
-// 		var obj = p1.append('div')
-// 			.classed('body', true)
-// 			.append('div')
-// 			.append('section')
-// 			.classed("cell multiple", true);
-// 		
-// 		var labelDiv = obj.append('label')
-// 			.text("Markers");
-// 		
-// 		var itemsDiv = obj.append("ol").classed("panel-fill", true);
-// 
-// 		itemsDiv.classed("border-above", true);
-// 
-// 		var clickFunction;
-// 		clickFunction = function(d) {
-// 				var _this = this;
-// 				if (prepareClick('click', 'marker: ' + d.getDescription()))
-// 				{
-// 					crp.getData({path: "Service", 
-// 					done: function(rootObjects)
-// 					{
-// 						var success = function(newReportedObject)
-// 						{
-// 							var divs = d3.select($(_this).parents("li")[0]);
-// 							/* Set the datum for the li and this object so that the correct object is used in future clicks. */
-// 							divs.datum(newReportedObject);
-// 							d3.select(_this).datum(newReportedObject);
-// 							var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
-// 							dots.experience.services[dots.experience.services.indexOf(d)] = newReportedObject;
-// 						}
-// 						new PickServicePanel(sitePanelNode, rootObjects, d, dots, success);
-// 					}, 
-// 					fail: syncFailFunction});
-// 				}
-// 			};
-// 	
-// 		function appendOfferingServices()
-// 		{
-// 			if (dots.experience.offering != null)
-// 			{
-// 				var fixedDivs = appendItems(itemsDiv, dots.experience.offering.getCell("Service").data);
-// 				var itemDivs = fixedDivs.append("div")
-// 					.classed("multi-row-content", true)
-// 				appendButtonDescriptions(itemDivs);
-// 			}
-// 		}
-// 	
-// 		function _confirmDeleteClick(d)
-// 		{
-// 			var a = dots.experience.services;
-// 			a.splice($.inArray(d, a), 1);
-// 			var item = $(this).parents("li")[0];
-// 			$(item).animate({height: "0px"}, 200, 'swing', function() { $(item).remove(); });
-// 		}
-// 
-// 		function appendServices(services)
-// 		{
-// 			var divs = appendItems(itemsDiv, services);
-// 			appendConfirmDeleteControls(divs)
-// 				.on('click', _confirmDeleteClick);
-// 		
-// 			var buttons = appendRowButtons(divs);
-// 			buttons.on("click", clickFunction);
-// 			appendDeleteControls(buttons);
-// 			appendRightChevrons(buttons);
-// 			appendButtonDescriptions(buttons);
-// 		}
-// 	
-// 		appendOfferingServices();
-// 		appendServices(dots.experience.services);
-// 	
-// 		/* Add one more button for the add Button item. */
-// 		var buttonDiv = obj.append("div")
-// 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
-// 			.on("click", function(cell) {
-// 				var _thisButton = this;
-// 				if (prepareClick('click', 'add marker'))
-// 				{
-// 					crp.getData({path: "Service", 
-// 					done: function(rootObjects)
-// 					{
-// 						var success = function(newReportedObject)
-// 						{
-// 							dots.experience.services.push(newReportedObject);
-// 							appendServices([newReportedObject]);
-// 						}
-// 						new PickServicePanel(sitePanelNode, rootObjects, null, dots, success);
-// 					}, 
-// 					fail: syncFailFunction});
-// 				}
-// 				d3.event.preventDefault();
-// 			})
-// 			.append("div").classed("pull-left", true);
-// 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-// 		buttonDiv.append("span").text(" add marker");
-// 	
-// 		this.onReveal = function()
-// 		{
-// 			itemsDiv.selectAll('li').remove();
-// 			appendOfferingServices();
-// 			appendServices(dots.experience.services);
-// 		}
-// 	
-// 		this.onGoingBack = function()
-// 		{
-// 			if (dots.experience.hasServices())
-// 				dots.setValue(dots.value - 2);
-// 			else
-// 				dots.setValue(dots.value - 1);
-// 		}		
 // 	}
 // 
 // 	function NewExperiencePanel(pathway, previousPanelNode) {
