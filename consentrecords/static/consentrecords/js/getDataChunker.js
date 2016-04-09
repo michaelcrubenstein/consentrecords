@@ -127,6 +127,10 @@ var GetDataChunker = (function() {
 		}
 		
 		var scrollingNode = this._containerNode.offsetParent;
+		
+		if (!scrollingNode)
+			throw "offsetParent not specified; containerNode is not displayed"
+			
 		$(scrollingNode).scroll(startVal, this._check);
 		$(window).resize(startVal, this._check);
 		$(scrollingNode).on("remove", function()
