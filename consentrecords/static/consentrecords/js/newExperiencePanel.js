@@ -2054,7 +2054,11 @@ var NewExperiencePanel = (function () {
 		var searchView = new ServiceDomainSearchView(this, experience);
 		searchView.search("");
 
-		showPanelUp(this.node(), unblockClick);
+		showPanelUp(this.node(), function()
+			{
+				searchView.inputBox.focus();
+				unblockClick();
+			});
 	}
 	
 	return NewExperiencePanel;
