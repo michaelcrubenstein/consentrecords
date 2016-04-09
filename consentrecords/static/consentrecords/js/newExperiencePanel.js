@@ -773,7 +773,7 @@ var FromServiceSearchView = (function() {
 	}
 			
 	FromServiceSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'service: ' + d.getDescription()))
+		if (prepareClick('click', 'offering: ' + d.getDescription()))
 		{
 			this.experience.setOffering({instance: d});
 			/* Set the organization, then the site, because setting the organization may
@@ -1312,11 +1312,32 @@ var ServiceDomainSearchView = (function() {
 	}
 			
 	ServiceDomainSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'service domain: ' + d.getDescription()))
+		if (d.typeName === 'Service Domain')
 		{
-			this.experience.serviceDomain = d;
-			var panel = new NewExperienceServicePanel(this.experience, this.sitePanel.node());
-			showPanelLeft(panel.node(), unblockClick);
+			if (prepareClick('click', 'service domain: ' + d.getDescription()))
+			{
+				this.experience.serviceDomain = d;
+				var panel = new NewExperienceServicePanel(this.experience, this.sitePanel.node());
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === 'Organization')
+		{
+			throw "TODO: Clicked Organization";
+		}
+		else if (d.typeName === 'Offering')
+		{
+			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			{
+				this.experience.setOffering({instance: d});
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d.getValue("Organization")});
+				this.experience.setSite({instance: d.getValue("Site")});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
 		}
 		d3.event.preventDefault();
 	}
@@ -1530,6 +1551,7 @@ var NewExperienceMarkersPanel = (function () {
 		{
 			var divs;
 			if (experience.offering && 
+				services.length > 0 && 
 				services[0].pickedObject && 
 				experience.offering.getCell("Service").data.find(function(d)
 					{
