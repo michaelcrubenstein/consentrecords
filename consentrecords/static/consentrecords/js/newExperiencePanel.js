@@ -1279,7 +1279,7 @@ var PickServicePanel = (function () {
 					.enter()
 					.append("li");
 
-		appendViewButtons(sections, appendDescriptions)
+		var buttons = appendViewButtons(sections, appendDescriptions)
 			.on("click", buttonClicked);
 
 		if (oldReportedObject)
@@ -1507,7 +1507,7 @@ var NewExperienceMarkersPanel = (function () {
 
 		var clickFunction;
 		clickFunction = function(d) {
-				var _this = this;
+				var _thisButton = this;
 				if (prepareClick('click', 'marker: ' + d.getDescription()))
 				{
 					crp.getData({path: "Service", 
@@ -1515,10 +1515,10 @@ var NewExperienceMarkersPanel = (function () {
 					{
 						var success = function(newReportedObject)
 						{
-							var divs = d3.select($(_this).parents("li")[0]);
+							var divs = d3.select($(_thisButton).parents("li")[0]);
 							/* Set the datum for the li and this object so that the correct object is used in future clicks. */
 							divs.datum(newReportedObject);
-							d3.select(_this).datum(newReportedObject);
+							d3.select(_thisButton).datum(newReportedObject);
 							var s = divs.selectAll(".description-text").text(newReportedObject.getDescription());
 							experience.services[experience.services.indexOf(d)] = newReportedObject;
 						}
