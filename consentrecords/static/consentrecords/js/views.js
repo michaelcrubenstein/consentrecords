@@ -1360,6 +1360,8 @@ function getTextWidth(text, font) {
     return metrics.width;
 };
 
+/* A SiteNavContainer is a view for the navigation bar that appears at the top of a site panel. 
+ */
 var SiteNavContainer = (function() {
 	SiteNavContainer.prototype.nav = undefined;
 	SiteNavContainer.prototype.div = undefined;
@@ -1491,8 +1493,97 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBarDiv = this.panelDiv.append("div").classed("searchbar", true);
-		return setupSearchBar(searchBarDiv.node(), textChanged);
+		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
+	
+		var searchCancelButton = searchBar.append("span")
+			.classed("search-cancel-button site-active-text", true);
+		searchCancelButton.append("span").text("Cancel");
+	
+		var searchCancelButtonWidth = 0;
+		var oldPaddingLeft = searchCancelButton.style("padding-left");
+		var oldPaddingRight = searchCancelButton.style("padding-right");
+		$(searchCancelButton.node())
+			.css("padding-left", "0")
+			.css("padding-right", "0");
+	
+		var searchInputContainer = searchBar.append("div")
+			.classed("search-input-container", true);
+		
+		var searchInput = searchInputContainer
+			.append("input")
+			.classed("search-input", true)
+			.attr("placeholder", "Search");
+	
+		var lastText = "";	
+		$(searchInput.node()).on("keyup input paste", function(e) {
+				if (lastText != this.value)
+				{
+					lastText = this.value;
+					textChanged.call(this);
+				}
+			})
+			.on("focusin", function(e)
+			{
+				searchCancelButton.selectAll('span').text("Cancel");
+				$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
+													  "padding-left": oldPaddingLeft,
+													  "padding-right": oldPaddingRight}, 400, "swing");
+			})
+			.on("focusout", function(e)
+			{
+				if (searchInput.node().value.length == 0)
+					$(searchCancelButton.node()).animate({width: 0,
+														  "padding-left": 0,
+														  "padding-right": 0}, 400, "swing",
+														  function() {
+															searchCancelButton.selectAll('span').text(null);
+														  });
+			});
+	
+		$(searchCancelButton.node()).on("click", function(e) {
+			searchInput.node().value = "";
+			$(searchInput.node()).trigger("input");
+			$(this).animate({width: 0,
+							  "padding-left": 0,
+							  "padding-right": 0}, 400, "swing",
+							  function() {
+								searchCancelButton.selectAll('span').text(null);
+							  });
+		});
+	
+		function resizeSearchCancelHeight()
+		{
+			/* Calculate the width of the cancel button. */	
+			if (searchCancelButtonWidth == 0 &&
+				$(searchCancelButton.node()).width() > 0)
+			{
+				var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
+				var h = searchInputContainer.node().getBoundingClientRect().height
+					- cancelBoundingRect.height
+					+ parseInt(searchCancelButton.style("padding-top"))
+					+ parseInt(searchCancelButton.style("padding-bottom"));
+				searchCancelButton.style("padding-top",(h/2).toString()+"px")
+					.style("padding-bottom", (h/2).toString()+"px");
+		
+				var oldWidth = searchCancelButton.style("width");
+				searchCancelButton.style("width", null);
+				searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
+										  parseInt(oldPaddingRight) +
+										  parseInt(oldPaddingLeft);
+				$(searchCancelButton.node()).outerWidth(0);
+				searchCancelButton.select('span').text(null);
+			}
+		}
+	
+		$(window).on("resize", resizeSearchCancelHeight);
+		resizeSearchCancelHeight();
+	
+		$(searchInputContainer.node()).on("remove", function(e)
+		{
+			$(window).off("resize", resizeSearchCancelHeight);
+		});
+	
+		return searchInput.node();
 	}
 	
 	SitePanel.prototype.appendFillArea = function()
@@ -2031,102 +2122,6 @@ var PanelSearchView = (function() {
 })();
 
 	
-/* Returns the input DOM element that contains the text being searched. */
-function setupSearchBar(searchBarNode, textChanged)
-{
-	var searchBar = d3.select(searchBarNode);
-	
-	var searchCancelButton = searchBar.append("span")
-		.classed("search-cancel-button site-active-text", true);
-	searchCancelButton.append("span").text("Cancel");
-	
-	var searchCancelButtonWidth = 0;
-	var oldPaddingLeft = searchCancelButton.style("padding-left");
-	var oldPaddingRight = searchCancelButton.style("padding-right");
-	$(searchCancelButton.node())
-		.css("padding-left", "0")
-		.css("padding-right", "0");
-	
-	var searchInputContainer = searchBar.append("div")
-		.classed("search-input-container", true);
-		
-	var searchInput = searchInputContainer
-		.append("input")
-		.classed("search-input", true)
-		.attr("placeholder", "Search");
-	
-	var lastText = "";	
-	$(searchInput.node()).on("keyup input paste", function(e) {
-			if (lastText != this.value)
-			{
-				lastText = this.value;
-				textChanged.call(this);
-			}
-		})
-		.on("focusin", function(e)
-		{
-			searchCancelButton.selectAll('span').text("Cancel");
-			$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
-												  "padding-left": oldPaddingLeft,
-												  "padding-right": oldPaddingRight}, 400, "swing");
-		})
-		.on("focusout", function(e)
-		{
-			if (searchInput.node().value.length == 0)
-				$(searchCancelButton.node()).animate({width: 0,
-													  "padding-left": 0,
-													  "padding-right": 0}, 400, "swing",
-													  function() {
-													  	searchCancelButton.selectAll('span').text(null);
-													  });
-		});
-	
-	$(searchCancelButton.node()).on("click", function(e) {
-		searchInput.node().value = "";
-		$(searchInput.node()).trigger("input");
-		$(this).animate({width: 0,
-						  "padding-left": 0,
-						  "padding-right": 0}, 400, "swing",
-						  function() {
-							searchCancelButton.selectAll('span').text(null);
-						  });
-	});
-	
-	function resizeSearchCancelHeight()
-	{
-		/* Calculate the width of the cancel button. */	
-		if (searchCancelButtonWidth == 0 &&
-			$(searchCancelButton.node()).width() > 0)
-		{
-			var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
-			var h = searchInputContainer.node().getBoundingClientRect().height
-				- cancelBoundingRect.height
-				+ parseInt(searchCancelButton.style("padding-top"))
-				+ parseInt(searchCancelButton.style("padding-bottom"));
-			searchCancelButton.style("padding-top",(h/2).toString()+"px")
-				.style("padding-bottom", (h/2).toString()+"px");
-		
-			var oldWidth = searchCancelButton.style("width");
-			searchCancelButton.style("width", null);
-			searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
-									  parseInt(oldPaddingRight) +
-									  parseInt(oldPaddingLeft);
-			$(searchCancelButton.node()).outerWidth(0);
-			searchCancelButton.select('span').text(null);
-		}
-	}
-	
-	$(window).on("resize", resizeSearchCancelHeight);
-	resizeSearchCancelHeight();
-	
-	$(searchInputContainer.node()).on("remove", function(e)
-	{
-		$(window).off("resize", resizeSearchCancelHeight);
-	});
-	
-	return searchInput.node();
-}
-
 /* Gets the text for the header of a view panel based on the specified data. */
 function getViewPanelHeader(objectData)
 {
