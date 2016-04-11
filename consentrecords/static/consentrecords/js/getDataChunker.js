@@ -114,7 +114,7 @@ var GetDataChunker = (function() {
 		this._inGetData = true;
 	}
 	
-	GetDataChunker.prototype.start = function(startVal)
+	GetDataChunker.prototype._setScrollCheck = function(startVal)
 	{
 		var _this = this;
 		
@@ -123,7 +123,7 @@ var GetDataChunker = (function() {
 
 		this._check = function(eventObject)
 		{
-			_this.onScroll(eventObject.data);
+			_this._onScroll(eventObject.data);
 		}
 		
 		var scrollingNode = this._containerNode.offsetParent;
@@ -137,6 +137,18 @@ var GetDataChunker = (function() {
 			{
 				$(window).off("resize", _this.check);
 			});
+	}
+	
+	GetDataChunker.prototype.checkStart = function(startVal)
+	{
+		this._setScrollCheck(startVal);
+		this.showLoadingMessage();
+		this._onScroll(startVal);
+	}
+	
+	GetDataChunker.prototype.start = function(startVal)
+	{
+		this._setScrollCheck(startVal);
 		this._continue(startVal);
 	}
 	
@@ -146,7 +158,7 @@ var GetDataChunker = (function() {
 		return node.offsetTop > $(p).scrollTop() + $(p).height();
 	}
 	
-	GetDataChunker.prototype.onScroll = function(startVal)
+	GetDataChunker.prototype._onScroll = function(startVal)
 	{
 		if (this._loadingMessage != null && !this._inGetData)
 		{
