@@ -82,7 +82,19 @@ var FlagData = (function() {
 
 	FlagData.prototype.getDescription = function()
 	{
-		return this.experience.getDescription();
+		var d = this.experience.getValue("Offering");
+		if (d && d.getValueID())
+			return d.getDescription();
+		var s = this.experience.getDatum("User Entered Offering");
+		if (s && s.length)
+			return s;
+		d = this.experience.getValue("Service");
+		if (d && d.getValueID())
+			return d.getDescription();
+		s = this.experience.getDatum("User Entered Service");
+		if (s && s.length)
+			return s;
+		return "None";
 	}
 	
 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
