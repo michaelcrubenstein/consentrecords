@@ -347,14 +347,12 @@ var MultiTypeSearchView = (function() {
 				}
 			}
 	
-	MultiTypeSearchView.prototype.textCleared = function()
+	MultiTypeSearchView.prototype.startSearchTimeout = function(val)
 	{
-		SearchView.prototype.textCleared.call(this);
-		
 		this.typeName = this.initialTypeName;
-		this.startSearchTimeout("");
+		SearchView.prototype.startSearchTimeout.call(this, val);
 	}
-	
+				
 	MultiTypeSearchView.prototype.fields = function()
 	{
 		var fields = SearchView.prototype.fields.call(this);
@@ -381,6 +379,7 @@ var MultiTypeSearchView = (function() {
 	
 })();
 
+/* A search view for picking a service from a service domain. */
 var ServiceSearchView = (function() {
 	ServiceSearchView.prototype = new MultiTypeSearchView();
 	
@@ -396,12 +395,20 @@ var ServiceSearchView = (function() {
 	
 	ServiceSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		if (compareText.length === 0)
-			return true;
+		if (button == this.customButton.node())
+		{
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+		}
+		else
+		{
+			if (compareText.length === 0)
+				return true;
 			
-		if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-			return true;
-		return false;
+			return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+		}
 	}
 	
 	ServiceSearchView.prototype.searchPath = function(val)
@@ -423,10 +430,60 @@ var ServiceSearchView = (function() {
 		this.startSearchTimeout("");
 	}
 	
+	ServiceSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d, i) { return i > 0; });
+			
+		buttons.remove();
+		this.customButton.style("display", "none");
+	}
+	
+	ServiceSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
+	}
+	
+	ServiceSearchView.prototype.showObjects = function(foundObjects)
+	{
+		var buttons = SearchView.prototype.showObjects.call(this, foundObjects);
+			
+		if (this.experience.services.length > 0)
+		{
+			var _this = this;
+			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return typeof(d) == "object" && d == _this.experience.services[0]; });
+		}
+		
+		return buttons;
+	}
+	
 	function ServiceSearchView(experience, sitePanel)
 	{
 		this.initialTypeName = "Service";
 		MultiTypeSearchView.call(this, sitePanel, experience, "Service");
+		
+		var _this = this;
+		this.customButton = appendViewButtons(this.appendButtonContainers(["Service"]), 
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+						leftText.text("");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Set Custom Service'))
+				{
+					experience.addService({text: _this.inputText()});
+					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience);
+					showPanelLeft(panel.node(), unblockClick);
+				}
+			})
+			.style("display", "none");
 	}
 	
 	return ServiceSearchView;
@@ -463,7 +520,7 @@ var NewExperienceServicePanel = (function () {
 		navContainer.appendTitle(header);
 						
 		var searchView = new ServiceSearchView(experience, this);
-		searchView.search("");
+		$(this.node()).one("revealing.cr", function() { searchView.search(""); });
 	}
 	
 	return NewExperienceServicePanel;
@@ -478,27 +535,60 @@ var FromServiceSearchView = (function() {
 	}
 			
 	FromServiceSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'offering: ' + d.getDescription()))
+		if (d.typeName === "Offering")
 		{
-			this.experience.setOffering({instance: d});
-			/* Set the organization, then the site, because setting the organization may
-				also set the site.
-			 */
-			this.experience.setOrganization({instance: d.getValue("Organization")});
-			this.experience.setSite({instance: d.getValue("Site")});
-			var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
-			showPanelLeft(panel.node(), unblockClick);
+			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			{
+				this.experience.setOffering({instance: d});
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d.getValue("Organization")});
+				this.experience.setSite({instance: d.getValue("Site")});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
 			
-			/* Do not clear the services in case we come back to this item. */
+				/* Do not clear the services in case we come back to this item. */
+			}
+		}
+		else if (d.typeName === "Site")
+		{
+			if (prepareClick('click', 'site: ' + d.getDescription()))
+			{
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d.getValue("Organization")});
+				this.experience.setSite({instance: d});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			
+				/* Do not clear the services in case we come back to this item. */
+			}
+		}
+		else if (d.typeName === "Organization")
+		{
+			if (prepareClick('click', 'organization: ' + d.getDescription()))
+			{
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
 		}
 		d3.event.preventDefault();
 	}
 	
 	FromServiceSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		if (d === "Organization")
+		if (button == this.organizationButton.node())
 		{
-			return true;
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
 		}
 		else
 		{
@@ -526,40 +616,77 @@ var FromServiceSearchView = (function() {
 		}
 		else if (val.length == 0)
 		{
-			path = '#{0}::reference(Offering)';
-			if (this.experience.organization)
-				return "#{0}>Sites>Site>Offerings>Offering[Service={1}]"
-					.format(this.experience.organization.getValueID(),
-							this.experience.services[0].pickedObject.getValueID());
+			path = this.experience.organization 
+							? "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID())
+							: "Offering";
+			if (this.experience.services[0].pickedObject)
+				return "{0}[Service={1}".format(path, this.experience.services[0].pickedObject.getValueID());
+			else if (this.experience.organization)
+				return path;
 			else
-				return "Offering[Service={0}]".format(this.experience.services[0].pickedObject.getValueID());
+				return "Service";
 		}
 		else
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[_name{1}"{2}"][Service={0}]';
+				path = 'Offering[_name{0}"{1}"]';
 				if (this.experience.organization)
 					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+				if (this.experience.services[0].pickedObject)
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+			}
+			else if (this.typeName === "Offering from Site")
+			{
+				if (!(this.experience.organization == null && this.experience.organizationName == null))
+					throw "Invalid case: organization is specified";
+				path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+				if (this.experience.services[0].pickedObject)
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+			}
+			else if (this.typeName === "Offering from Organization")
+			{
+				if (!(this.experience.organization == null && this.experience.organizationName == null))
+					throw "Invalid case: organization is specified";
+				path = 'Organization[_name{0}"{1}"]>Sites>Site>Offerings>Offering';
+				if (this.experience.services[0].pickedObject)
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
 			else if (this.typeName === "Site")
 			{
-				path = 'Site[_name{1}"{2}"]>Offerings>Offering[Service={0}]';
 				if (this.experience.organization)
-					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+				{
+					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + 
+						   'Site[_name{0}"{1}"]>Offerings>Offering';
+					if (this.experience.services[0].pickedObject)
+						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				}
+				else if (!this.experience.organizationName)
+					path = 'Site[_name{0}"{1}"]';
+				else
+					return "";
 			}
 			else if (this.typeName === "Organization")
 			{
 				if (this.experience.organization)
+				{
 					path = "#{0}".format(this.experience.organization.getValueID()) + 
-						   '[_name{1}"{2}"]>Sites>Site>Offerings>Offering[Service={0}]';
+						   '[_name{0}"{1}"]>Sites>Site>Offerings>Offering';
+					if (this.experience.services[0].pickedObject)
+						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				}
+				else if (!this.experience.organizationName)
+				{
+					path = 'Organization[_name{0}"{1}"]';
+				}
 				else
-					path = 'Organization[_name{1}"{2}"]>Sites>Site>Offerings>Offering[Service={0}]';
+					return "";
 			}
+			
 
 			var symbol = val.length < 3 ? "^=" : "*=";
 			
-			return path.format(this.experience.services[0].pickedObject.getValueID(), symbol, val);
+			return path.format(symbol, val);
 		}
 	}
 	
@@ -571,13 +698,29 @@ var FromServiceSearchView = (function() {
 			return "";
 	}
 	
+	FromServiceSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
 	FromServiceSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		if (this.organizationButtons)
-			buttons = buttons.filter(function(d) { return d !== "Organization"; });
+		buttons = buttons.filter(function(d) { return d !== "Organization"; });
 			
 		buttons.remove();
+		this.organizationButton.style("display", "none");
+	}
+	
+	FromServiceSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.organizationButton.selectAll('.description-text').text('At "{0}"'.format(val));
 	}
 	
 	function FromServiceSearchView(sitePanel, experience)
@@ -589,29 +732,24 @@ var FromServiceSearchView = (function() {
 		MultiTypeSearchView.call(this, sitePanel, experience, "Organization, Offering", function(buttons) { _this.appendDescriptions(buttons); });
 				
 		var sections = this.appendButtonContainers(["Organization"]);
-		this.organizationButtons = appendViewButtons(sections, 
+		this.organizationButton = appendViewButtons(sections, 
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
 
 						leftText.append('div')
-							.text("Search By Organization");
+							.text("");
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Search By Organization'))
+				if (prepareClick('click', 'Set Custom Organization'))
 				{
-					var panel = new ExperienceOrganizationPanel(sitePanel.node(), _this.experience,
-						function()
-						{
-							_this.experienceView.selectAll('*').remove();
-							_this.experience.appendView(_this.experienceView);
-							_this.textChanged();
-							panel.hide();
-						});
+					experience.setOrganization({text: _this.inputText() });
+					var panel = new NewExperienceStartDatePanel(sitePanel.node(), experience);
 					showPanelLeft(panel.node(), unblockClick);
 				}
-			});
+			})
+			.style("display", "none");
 
 		this.getDataChunker._onDoneSearch = function()
 			{
@@ -620,8 +758,16 @@ var FromServiceSearchView = (function() {
 				{
 					if (_this.typeName === "Offering")
 					{
-						_this.typeName = "Site";
+						if (experience.organization == null && experience.organizationName == null &&
+							experience.site == null && experience.siteName == null)
+							_this.typeName = "Offering from Site";
+						else
+							_this.typeName = "Site";
 					}
+					else if (_this.typeName === "Offering from Site")
+						_this.typeName = "Offering from Organization";
+					else if (_this.typeName === "Offering from Organization")
+						_this.typeName = "Site";
 					else if (_this.typeName === "Site")
 					{
 						_this.typeName = "Organization";
@@ -631,7 +777,7 @@ var FromServiceSearchView = (function() {
 					
 					this.path = _this.searchPath(searchText);
 					this.fields = _this.fields();
-					this.start(searchText);
+					this.checkStart(searchText);
 				}			
 			};
 	}
@@ -639,13 +785,14 @@ var FromServiceSearchView = (function() {
 	return FromServiceSearchView;
 })();
 
+/* This panel appears when there is a single service associated with the experience.  */
 var NewExperienceFromServicePanel = (function () {
 	NewExperienceFromServicePanel.prototype = new SitePanel();
 	
 	function NewExperienceFromServicePanel(previousPanelNode, experience)
 	{
 		var header = "Add Experience";
-		SitePanel.call(this, previousPanelNode, null, header, "edit new-experience-panel");
+		SitePanel.call(this, previousPanelNode, null, header, "edit experience new-experience-panel");
 			
 		var _this = this;
 		var hide = function() { asyncHidePanelDown(_this.node()); };
@@ -672,185 +819,261 @@ var NewExperienceFromServicePanel = (function () {
 		searchView.experienceView = experienceView;
 		
 		experience.appendView(experienceView);
-		searchView.search("");
+		$(this.node()).one("revealing.cr", function() { searchView.search(""); });
 	}
 	
 	return NewExperienceFromServicePanel;
 })();
 
-var OrganizationSearchView = (function() {
-	OrganizationSearchView.prototype = new SearchView();
-	OrganizationSearchView.prototype.dots = null;
-	OrganizationSearchView.prototype.container = null;
+var FromOrganizationSearchView = (function() {
+	FromOrganizationSearchView.prototype = new MultiTypeSearchView();
 	
-	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	FromOrganizationSearchView.prototype.appendDescriptions = function(buttons)
 	{
-		var leftText = buttons.append('div').classed("left-expanding-div", true);
-
-		leftText.append('div')
-			.classed("sub-text", function(d) { return d.getValue("Organization"); })
-			.text(function(d) {
-				if (d.getValue("Organization"))
-					return d.getValue("Organization").getDescription();
-				else
-					return d.getDescription();
-			});
-		leftText.append('div')
-			.classed("sub-text", true)
-			.text(function(d) { 
-				if (d.getValue("Organization"))
-					return d.getDescription();
-				else
-					return "";
-			});
+		buttons.each(this.drawButton);
 	}
 			
-	OrganizationSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'experience organization: ' + d.getDescription()))
+	FromOrganizationSearchView.prototype.onClickButton = function(d, i) {
+		if (d.typeName === "Offering")
 		{
-			this.experience.setOrganization({instance: d});
-
-			this.inputBox.value = d.getDescription();
-			$(this.inputBox).trigger("input");
-			if (this.experience.site)
-				this.dots.setValue(this.dots.value + 2);
-			else
-				this.dots.setValue(this.dots.value + 1);
-		}
-		d3.event.preventDefault();
-	}
-	
-	OrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-			
-		if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-			return true;
-		return false;
-	}
-	
-	OrganizationSearchView.prototype.searchPath = function(val)
-	{
-		if (val.length == 0)
-			return "";
-		else if (val.length < 3)
-			return '(Organization,Site)[_name^="'+val+'"]';
-		else
-			return '(Organization,Site)[_name*="'+val+'"]';
-	}
-	
-	OrganizationSearchView.prototype.appendSearchArea = function()
-	{
-		var w = this.container.append('div').classed('body', true)
-				  .append('div')
-				  .append('div');
-		return w.append("section")
-			.classed("multiple", true)
-			.append("ol");
-	}
-	
-	function OrganizationSearchView(dots, container, placeholder)
-	{
-		this.dots = dots;
-		this.container = container;
-		SearchView.call(this, container.node(), placeholder, this.appendDescriptions, GetDataChunker)
-	}
-	
-	return OrganizationSearchView;
-})();
-
-var SiteSearchView = (function() {
-	SiteSearchView.prototype = new SearchView();
-	SiteSearchView.prototype.dots = null;
-	SiteSearchView.prototype.container = null;
-	
-	SiteSearchView.prototype.appendDescriptions = function(buttons)
-	{
-		buttons.append("div")
-			.classed("description-text", true)
-			.text(_getDataDescription)
-			.each(_pushTextChanged);
-		buttons.each(function(site)
-		{
-			var _button = this;
-			var address = site.getValue("Address");
-			appendAddress.call(this, address);
-		});
-	}
-			
-	SiteSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'experience site: ' + d.getDescription()))
-		{
-			this.experience.setSite({instance: d});
-
-			this.inputBox.value = d.getDescription();
-			$(this.inputBox).trigger("input");
-			this.dots.setValue(this.dots.value + 1);
-		}
-		d3.event.preventDefault();
-	}
-	
-	SiteSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		var retVal = false;
-		if (compareText.length === 0)
-			return true;
-			
-		d3.select(button).selectAll('div').each(function()
+			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				retVal |= d3.select(this).text().toLocaleLowerCase().indexOf(compareText) >= 0;
-			});
-		return retVal;
-	}
-	
-	SiteSearchView.prototype.searchPath = function(val)
-	{
-		if (!this.experience.organization)
-			return "";
+				this.experience.setOffering({instance: d});
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setSite({instance: d.getValue("Site")});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
 			
-		var s = "#"+this.experience.organization.getValueID() + ">Sites>Site";
-		if (val.length == 0)
-			return s;
-		else if (val.length < 3)
-			return s + '[_name^="'+val+'"]';
-		else
-			return s + '[_name*="'+val+'"]';
+				/* Do not clear the services in case we come back to this item. */
+			}
+		}
+		else if (d.typeName === "Site")
+		{
+			if (prepareClick('click', 'site: ' + d.getDescription()))
+			{
+				this.experience.setSite({instance: d});
+				var panel = new NewExperienceFromSitePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === "Service")
+		{
+			if (prepareClick('click', 'service: ' + d.getDescription()))
+			{
+				this.experience.addService({instance: d});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		d3.event.preventDefault();
 	}
 	
-	SiteSearchView.prototype.textCleared = function()
+	FromOrganizationSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (button == this.customButton.node())
+		{
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+		}
+		else
+		{
+			if (compareText.length === 0)
+				return true;
+			
+			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+				return true;
+			if (d.typeName === "Offering")
+			{
+				if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+					return true;
+				if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+					return true;
+			}
+			else if (d.typeName === "Site")
+			{
+				if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+					return true;
+			}
+			return false;
+		}
+	}
+	
+	FromOrganizationSearchView.prototype.searchPath = function(val)
+	{
+		var path;
+		
+		if (this.experience.organizationName != null &&
+			this.experience.organization == null)
+		{
+			return "Service";	/* Can't look up offerings for a custom organization name. */
+		}
+		else if (val.length == 0)
+		{
+			if (!this.experience.organization)
+				return "Service";
+			else if (this.typeName === "Site")
+				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
+			else if (this.typeName === "Offering")
+				return "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID())
+			else if (this.typeName === "Service")
+				return "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID())
+			else
+				return "Service";
+		}
+		else
+		{
+			if (this.typeName === "Offering")
+			{
+				path = 'Offering[_name{0}"{1}"]';
+				if (this.experience.organization)
+					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+			}
+			else if (this.typeName === "Site")
+			{
+				path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+				if (this.experience.organization)
+					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+			}
+			else if (this.typeName === "Service")
+			{
+				path = 'Service[_name{0}"{1}"]';
+			}
+			
+			var symbol = val.length < 3 ? "^=" : "*=";
+			
+			return path.format(symbol, val);
+		}
+	}
+	
+	FromOrganizationSearchView.prototype.noResultString = function()
+	{
+		return "";
+	}
+	
+	FromOrganizationSearchView.prototype.textCleared = function()
 	{
 		SearchView.prototype.textCleared.call(this);
 		
-		if (this.experience.organization)
-		{
-			this.startSearchTimeout("");
-		}
+		this.startSearchTimeout("");
 	}
 	
-	SiteSearchView.prototype.fields = function()
+	FromOrganizationSearchView.prototype.clearListPanel = function()
 	{
-		return ["Address"];
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d) { return typeof(d) === "object"; });
+			
+		buttons.remove();
+		this.customButton.style("display", "none");
 	}
 	
-	SiteSearchView.prototype.appendSearchArea = function()
+	FromOrganizationSearchView.prototype.textChanged = function()
 	{
-		var w = this.container.append('div').classed('body', true)
-				  .append('div')
-				  .append('div');
-		return w.append("section")
-			.classed("multiple", true)
-			.append("ol");
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
 	}
 	
-	function SiteSearchView(dots, container, placeholder)
+	function FromOrganizationSearchView(sitePanel, experience)
 	{
-		this.dots = dots;
-		this.container = container;
-		SearchView.call(this, container.node(), placeholder, this.appendDescriptions, GetDataChunker)
+		var _this = this;
+		this.initialTypeName = "Site";
+		this.typeName = this.initialTypeName;
+		
+		MultiTypeSearchView.call(this, sitePanel, experience, "Site, Offering, Marker", function(buttons) { _this.appendDescriptions(buttons); });
+				
+		var sections = this.appendButtonContainers(["Organization"]);
+		this.customButton = appendViewButtons(sections, 
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+
+						leftText.append('div')
+							.text("");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Set Custom Marker'))
+				{
+					experience.addService({text: _this.inputText() });
+					var panel = new NewExperienceStartDatePanel(sitePanel.node(), experience);
+					showPanelLeft(panel.node(), unblockClick);
+				}
+			})
+			.style('display', 'none');
+
+		this.getDataChunker._onDoneSearch = function()
+			{
+				var searchText = _this._foundCompareText;
+				if (searchText && searchText.length > 0)
+				{
+					if (_this.experience.organizationName &&
+						!_this.experience.organization)
+						return;
+					else if (_this.typeName === "Site")
+					{
+						_this.typeName = "Offering";
+					}
+					else if (_this.typeName === "Offering")
+					{
+						_this.typeName = "Service";
+					}
+					else
+						return;
+					
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.checkStart(searchText);
+				}			
+			};
 	}
 	
-	return SiteSearchView;
+	return FromOrganizationSearchView;
+})();
+
+/* In this case, the experience contains an organization or an organizationName, but nothing else. */
+var NewExperienceFromOrganizationPanel = (function () {
+	NewExperienceFromOrganizationPanel.prototype = new SitePanel();
+	
+	function NewExperienceFromOrganizationPanel(previousPanelNode, experience)
+	{
+		var header = "Add Experience";
+		SitePanel.call(this, previousPanelNode, null, header, "edit experience new-experience-panel");
+			
+		var _this = this;
+		var hide = function() { asyncHidePanelDown(_this.node()); };
+		$(experience).on("experienceAdded.cr", hide);
+		$(this.node()).on("remove", function () { $(experience).off("experienceAdded.cr", hide); });
+			
+		var navContainer = this.appendNavContainer();
+
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'edit object panel: Cancel'))
+				{
+					_this.hide();
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append("span").text("Back");
+		
+		navContainer.appendTitle(header);
+						
+		var experienceView = this.panelDiv.append('div');
+		var searchView = new FromOrganizationSearchView(this, experience);
+		searchView.experienceView = experienceView;
+		
+		experience.appendView(experienceView);
+		$(this.node()).one("revealing.cr", function() { searchView.search(""); });
+	}
+	
+	return NewExperienceFromOrganizationPanel;
 })();
 
 /* A reported object combines a name and an object value that might be picked. */
@@ -875,6 +1098,8 @@ var ReportedObject = function () {
     return ReportedObject;
 }();
 
+/* This panel is called from the NewExperiencesMarkersPanel to pick a new marker or change to a marker.
+ */
 var PickServicePanel = (function () {
 	PickServicePanel.prototype = new SitePanel();
 	
@@ -1007,164 +1232,7 @@ var PickServicePanel = (function () {
 	return PickServicePanel;
 })();
 
-var ServiceDomainSearchView = (function() {
-	ServiceDomainSearchView.prototype = new MultiTypeSearchView();
-	ServiceDomainSearchView.prototype.typeName = null;
-	
-	ServiceDomainSearchView.prototype.appendDescriptions = function(buttons)
-	{
-		buttons.each(this.drawButton);
-	}
-			
-	ServiceDomainSearchView.prototype.onClickButton = function(d, i) {
-		if (d.typeName === 'Service Domain')
-		{
-			if (prepareClick('click', 'service domain: ' + d.getDescription()))
-			{
-				this.experience.serviceDomain = d;
-				var panel = new NewExperienceServicePanel(this.experience, this.sitePanel.node());
-				showPanelLeft(panel.node(), unblockClick);
-			}
-		}
-		else if (d.typeName === 'Organization')
-		{
-			throw "TODO: Clicked Organization";
-		}
-		else if (d.typeName === 'Offering')
-		{
-			if (prepareClick('click', 'offering: ' + d.getDescription()))
-			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
-				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
-				showPanelLeft(panel.node(), unblockClick);
-			}
-		}
-		d3.event.preventDefault();
-	}
-	
-	ServiceDomainSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-		
-		if (typeof(d) != "object")
-			return true;
-	
-		if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-			return true;
-		return false;
-	}
-	
-	ServiceDomainSearchView.prototype.clearListPanel = function()
-	{
-		var buttons = this.listPanel.selectAll("li");
-		if (this.organizationButtons)
-			buttons = buttons.filter(function(d) { return d !== "Organization" && d !== "Offering"; });
-			
-		buttons.remove();
-	}
-	
-	ServiceDomainSearchView.prototype.canConstrain = function(searchText, constrainText)
-	{
-		/* Force searching if the searchText length is 0. */
-		if (searchText.length === 0)
-			return false;
-			
-		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
-	}
-	
-	ServiceDomainSearchView.prototype.searchPath = function(val)
-	{
-		var path = this.typeName;
-			
-		if (val.length == 0)
-			return path;
-		else if (val.length < 3)
-			return '{1}[_name^="{0}"]'.format(val, path);
-		else
-			return '{1}[_name*="{0}"]'.format(val, path);
-	}
-	
-	function ServiceDomainSearchView(sitePanel, experience)
-	{
-		this.initialTypeName = '"Service Domain"';
-		this.typeName = this.initialTypeName;
-		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Marker", function(buttons) { _this.appendDescriptions(buttons); })
-		
-		var sections = this.appendButtonContainers(["Organization"]);
-		this.organizationButtons = appendViewButtons(sections, 
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Organization");
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Search By Organization'))
-				{
-					throw "TODO: Clicked on Search By Organization";
-				}
-			});
-
-		sections = this.appendButtonContainers(["Offering"]);
-		this.offeringButtons = appendViewButtons(sections,  
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Offering");
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Search By Offering'))
-				{
-					throw "TODO: Clicked on Search By Offering";
-				}
-			});
-
-		var _this = this;
-		this.getDataChunker._onDoneSearch = function()
-			{
-				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
-				{
-					if (_this.typeName === '"Service Domain"')
-					{
-						_this.typeName = "Service";
-					}
-					else if (_this.typeName === "Service")
-					{
-						_this.typeName = "Offering";
-					}
-					else if (_this.typeName === "Offering")
-					{
-						_this.typeName = "Site";
-					}
-					else if (_this.typeName === "Site")
-					{
-						_this.typeName = "Organization";
-					}
-					else
-						return;
-			
-					this.path = _this.searchPath(searchText);
-					this.fields = _this.fields();
-					this.start(searchText);
-				}			
-			};
-	}
-	
-	return ServiceDomainSearchView;
-})();
-
+/* This is the panel that appears from the final panel to add markers, if desired */
 var NewExperienceMarkersPanel = (function () {
 	NewExperienceMarkersPanel.prototype = new SitePanel();
 	NewExperienceMarkersPanel.prototype.experience = null;
@@ -1320,6 +1388,11 @@ var NewExperienceMarkersPanel = (function () {
 	return NewExperienceMarkersPanel;
 })();
 
+/* This is the final panel for the workflow. The experience contains either an organization or organizationName
+	as well as at least one service. It may also contain a site and/or an offering. In this panel, it may set multiple markers
+	as well as the start date and end date.
+	
+	If the experience contains no offering, it is displayed as if the first marker were the offering, not a marker. */
 var NewExperienceStartDatePanel = (function () {
 	NewExperienceStartDatePanel.prototype = new SitePanel();
 	NewExperienceStartDatePanel.prototype.experience = null;
@@ -1480,258 +1553,219 @@ var NewExperienceStartDatePanel = (function () {
 	return NewExperienceStartDatePanel;
 })();
 
+var NewExperienceSearchView = (function() {
+	NewExperienceSearchView.prototype = new MultiTypeSearchView();
+	NewExperienceSearchView.prototype.typeName = null;
+	
+	NewExperienceSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		buttons.each(this.drawButton);
+	}
+			
+	NewExperienceSearchView.prototype.onClickButton = function(d, i) {
+		if (d.typeName === 'Service Domain')
+		{
+			if (prepareClick('click', 'service domain: ' + d.getDescription()))
+			{
+				this.experience.serviceDomain = d;
+				var panel = new NewExperienceServicePanel(this.experience, this.sitePanel.node());
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === 'Service')
+		{
+			if (prepareClick('click', 'service: ' + d.getDescription()))
+			{
+				this.experience.addService({instance: d});
+				var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === 'Organization')
+		{
+			if (prepareClick('click', 'organization: ' + d.getDescription()))
+			{
+				this.experience.setOrganization({instance: d});
+				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === 'Site')
+		{
+			throw "TODO: Clicked Organization";
+		}
+		else if (d.typeName === 'Offering')
+		{
+			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			{
+				this.experience.setOffering({instance: d});
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d.getValue("Organization")});
+				this.experience.setSite({instance: d.getValue("Site")});
+				var panel = new NewExperienceStartDatePanel(this.sitePanel.node(), this.experience);
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		d3.event.preventDefault();
+	}
+	
+	NewExperienceSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (typeof(d) != "object")
+		{
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+		}
+		else
+		{
+			if (compareText.length === 0)
+				return true;
+			
+			return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+		}
+	}
+	
+	NewExperienceSearchView.prototype.noResultString = function()
+	{
+		return "";
+	}
+	
+	NewExperienceSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	NewExperienceSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d) { return d !== "Organization" && d !== "Offering"; });
+			
+		buttons.remove();
+		this.organizationButton.style("display", "none");
+		this.offeringButton.style("display", "none");
+	}
+	
+	NewExperienceSearchView.prototype.canConstrain = function(searchText, constrainText)
+	{
+		/* Force searching if the searchText length is 0. */
+		if (searchText.length === 0)
+			return false;
+			
+		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
+	}
+	
+	NewExperienceSearchView.prototype.searchPath = function(val)
+	{
+		var path = this.typeName;
+			
+		if (val.length == 0)
+			return path;
+		else if (val.length < 3)
+			return '{1}[_name^="{0}"]'.format(val, path);
+		else
+			return '{1}[_name*="{0}"]'.format(val, path);
+	}
+	
+	NewExperienceSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.organizationButton.selectAll('.description-text').text('At "{0}"'.format(val));
+		this.offeringButton.selectAll('.description-text').text('"{0}"'.format(val));
+	}
+	
+	function NewExperienceSearchView(sitePanel, experience)
+	{
+		this.initialTypeName = '"Service Domain"';
+		this.typeName = this.initialTypeName;
+		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Marker", function(buttons) { _this.appendDescriptions(buttons); })
+		
+		var sections = this.appendButtonContainers(["Organization"]);
+		this.organizationButton = appendViewButtons(sections, 
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+
+						leftText.append('div')
+							.text("Search By Organization");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Search By Organization'))
+				{
+					experience.setOrganization({text: _this.inputText()});
+					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience);
+					showPanelLeft(panel.node(), unblockClick);
+				}
+			})
+			.style("display", "none");
+
+		sections = this.appendButtonContainers(["Offering"]);
+		this.offeringButton = appendViewButtons(sections,  
+					function(buttons)
+					{
+						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+
+						leftText.append('div')
+							.text("Search By Offering");
+					}
+			)
+			.on("click", function(d, i) {
+				if (prepareClick('click', 'Set Custom Service'))
+				{
+					experience.addService({text: _this.inputText()});
+					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience);
+					showPanelLeft(panel.node(), unblockClick);
+				}
+			})
+			.style("display", "none");
+
+		var _this = this;
+		this.getDataChunker._onDoneSearch = function()
+			{
+				var searchText = _this._foundCompareText;
+				if (searchText && searchText.length > 0)
+				{
+					if (_this.typeName === '"Service Domain"')
+					{
+						_this.typeName = "Service";
+					}
+					else if (_this.typeName === "Service")
+					{
+						_this.typeName = "Offering";
+					}
+					else if (_this.typeName === "Offering")
+					{
+						_this.typeName = "Site";
+					}
+					else if (_this.typeName === "Site")
+					{
+						_this.typeName = "Organization";
+					}
+					else
+						return;
+			
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.checkStart(searchText);
+				}			
+			};
+	}
+	
+	return NewExperienceSearchView;
+})();
+
+/* This is the entry panel for the workflow. The experience contains no data on entry. */
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new SitePanel();
-	
-// 	NewExperiencePanel.prototype.addInput = function(p, placeholder)
-// 	{
-// 		var searchBar = p.append("div").classed("searchbar", true);
-// 	
-// 		var searchInputContainer = searchBar.append("div")
-// 			.classed("search-input-container", true);
-// 		
-// 		return searchInputContainer
-// 			.append("input")
-// 			.classed("search-input", true)
-// 			.attr("placeholder", placeholder);
-// 	}
-// 
-// 	NewExperiencePanel.prototype._getMinEndDate = function(dots)
-// 	{
-// 		if (dots.experience.startDate && dots.experience.startDate.length > 0)
-// 			return new Date(dots.experience.startDate);
-// 		else
-// 		{
-// 			var birthday = dots.user.getDatum("Birthday");
-// 			if (birthday)
-// 				return new Date(birthday);
-// 		}
-// 		return undefined;
-// 	}
-// 
-// 	NewExperiencePanel.prototype.setupEndDatePanel = function(dotsPanel, dots)
-// 	{
-// 		var p = d3.select(dotsPanel);
-// 		var _this = this;
-// 		var endDateInput;
-// 		
-// 		p.append('div')
-// 			.append('p').text("When did you finish " + dots.experience.offeringName + "?");
-// 		p.append('div')
-// 			.append('p').classed('site-active-text', true)
-// 			.on('click', function()
-// 				{
-// 					if (prepareClick('click', "It isn't finished."))
-// 					{
-// 						endDateInput.clear();
-// 						dotsPanel.onGoingForward();
-// 					}
-// 				})
-// 			.text("It isn't finished.");
-// 
-// 		endDateInput = new DateInput(dotsPanel, this._getMinEndDate(dots))
-// 
-// 		dotsPanel.onGoingForward = function(goToNext)
-// 		{
-// 			if (dots.experience.hasServices())
-// 				dots.setValue(dots.value + 2);
-// 			else
-// 				dots.setValue(dots.value + 1);
-// 		}
-// 		
-// 		dotsPanel.onDoneClicked = function()
-// 		{
-// 			dots.experience.endDate = endDateInput.value();
-// 		}
-// 
-// 		dotsPanel.onReveal = function(dots)
-// 		{
-// 			endDateInput.checkMinDate(_this._getMinEndDate(dots))
-// 		}
-// 	}
-// 	
-// 	NewExperiencePanel.prototype.setupConfirmPanel = function(dots)
-// 	{
-// 		var p = d3.select(this);
-// 	
-// 		p.selectAll("*").remove();
-// 	
-// 		var p = d3.select(this)
-// 			.classed('confirm-experience', true);
-// 	
-// 		p.append('div')
-// 			.append('p').text("Add this experience to your pathway?");
-// 
-// 		var summary = p.append('div')
-// 			.classed('summary body', true)
-// 			.append('div')
-// 			.append('div');
-// 		dots.experience.appendView(summary);
-// 	}
-// 
-// 	NewExperiencePanel.prototype.setupFirstMarkerPanel = function(dotsPanel, dots)
-// 	{
-// 		var p0 = d3.select(dotsPanel);
-// 		p0.append('div')
-// 			.append('p').text("Every experience leaves some marker along your pathway that describes what you got from that experience.");
-// 		p0.append('div')
-// 			.append('p').text("Choose one of the markers below, or create your own marker. If more than one marker applies, pick one and then you can add others.");
-// 		
-// 		var searchInput = this.addInput(p0, "Experience");
-// 	
-// 		var lastText = "";	
-// 		$(searchInput.node()).on("keyup input paste", function(e) {
-// 			if (lastText != this.value)
-// 			{
-// 				lastText = this.value;
-// 				if (lastText.length == 0)
-// 				{
-// 					/* Show all of the items. */
-// 					p0.selectAll("li")
-// 						.style("display", "block");
-// 				}
-// 				else
-// 				{
-// 					/* Show the items whose description is this.value */
-// 					p0.selectAll("li")
-// 						.style("display", function(d)
-// 							{
-// 								if (d.getDescription().toLocaleLowerCase().indexOf(lastText.toLocaleLowerCase()) >= 0)
-// 									return null;
-// 								else
-// 									return "none";
-// 							});
-// 				}
-// 			}
-// 		});
-// 
-// 		function done(rootObjects)
-// 		{
-// 			function sortByDescription(a, b)
-// 			{
-// 				return a.getDescription().localeCompare(b.getDescription());
-// 			}
-// 
-// 			function buttonClicked(d)
-// 			{
-// 				if (prepareClick('click', 'experience first marker: ' + d.getDescription()))
-// 				{
-// 					experience.addService({instance: d});
-// 			
-// 					searchInput.node().value = d.getDescription();
-// 					$(searchInput.node()).trigger("input");
-// 					dots.setValue(dots.value + 1);
-// 				}
-// 			}
-// 		
-// 			rootObjects.sort(sortByDescription);
-// 			p0.datum(rootObjects);
-// 			var w = p0.append('div').classed('body', true)
-// 					  .append('div')
-// 					  .append('div');
-// 			appendButtons(w, rootObjects, buttonClicked);
-// 		}
-// 	
-// 		p0.node().onDoneClicked = function()
-// 		{
-// 			var newName = searchInput.node().value.trim();
-// 		
-// 			/* Identify if the new name matches the name of an existing service. */
-// 			var rootObjects = p0.datum();
-// 			var newValue = rootObjects.find(function(d) { return d.getDescription() == newName; });
-// 			
-// 			dots.experience.addService({text: newName, instance: newValue});
-// 		}
-// 		crp.getData({path: "Service", done: done, fail: asyncFailFunction});
-// 		dotsPanel.onReveal = null;
-// 	}
-// 
-// 	function NewExperiencePanel(pathway, previousPanelNode) {
-// 		var header = "Add Experience";
-// 		SitePanel.call(this, previousPanelNode, null, header, "edit new-experience-panel");
-// 			
-// 		var navContainer = this.appendNavContainer();
-// 
-// 		var panel2Div = this.appendScrollArea()
-// 			.classed("vertical-scrolling", false)
-// 			.classed("no-scrolling", true);
-// 		
-// 		var dots = new DotsNavigator(panel2Div, 8);	
-// 		dots.finalText = "Add";
-// 		dots.user = pathway.user;
-// 		dots.experience = new Experience();
-// 
-// 		var _this = this;
-// 		var onAddClick = function()
-// 			{
-// 				bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
-// 
-// 				var moreExperiencesObject = dots.user.getValue("More Experiences");
-// 				
-// 				function successFunction3(newData)
-// 				{
-// 					crp.pushCheckCells(newData, undefined, 
-// 						function() {
-// 							function addExperience() {
-// 								pathway.addMoreExperience.call(pathway, newData);
-// 								_this.hidePanelDown();
-// 							}
-// 							var offering = newData.getValue("Offering");
-// 							if (offering && offering.getValueID() && !offering.isDataLoaded)
-// 								crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-// 							else
-// 								addExperience();
-// 						},
-// 						syncFailFunction);
-// 				}
-// 				
-// 				function successFunction2(newData)
-// 				{
-// 					if (newData != moreExperiencesObject)
-// 					{
-// 						var cell = dots.user.getCell("More Experiences");
-// 						cell.addValue(newData);
-// 						moreExperiencesObject = dots.user.getValue("More Experiences");
-// 					}
-// 					
-// 					field = {ofKind: "More Experience", name: "More Experience"};
-// 					var initialData = {};
-// 
-// 					dots.experience.appendData(initialData);
-// 					
-// 					cr.createInstance(field, moreExperiencesObject.getValueID(), initialData, successFunction3, syncFailFunction);
-// 				}
-// 				
-// 				if (moreExperiencesObject && moreExperiencesObject.getValueID())
-// 				{
-// 					successFunction2(moreExperiencesObject);
-// 				}
-// 				else
-// 				{
-// 					field = {ofKind: "More Experiences", name: "More Experiences"};
-// 					cr.createInstance(field, dots.user.getValueID(), [], successFunction2, syncFailFunction);
-// 				}
-// 			};
-// 
-// 		dots.appendForwardButton(navContainer, onAddClick);
-// 		dots.appendBackButton(navContainer, function() {
-// 			_this.hidePanelDown();
-// 		});
-// 		
-// 		navContainer.appendTitle(header);
-// 		
-// 		dots.nthPanel(0).onReveal = this.setupPanel2;
-// 		dots.nthPanel(1).onReveal = this.setupPanel3;
-// 		dots.nthPanel(2).onReveal = function(dots) { _this.setupFromServicePanel(this, dots); };
-// 		dots.nthPanel(3).onReveal = this.setupStartDatePanel;
-// 		dots.nthPanel(4).onReveal = function(dots) { _this.setupEndDatePanel(this, dots); };
-// 		dots.nthPanel(5).onReveal = function(dots) { _this.setupFirstMarkerPanel(this, dots); };
-// 		dots.nthPanel(6).onReveal = this.setupServicesPanel;
-// 		dots.nthPanel(7).onReveal = this.setupConfirmPanel;
-// 				
-// 		showPanelUp(this.node(), unblockClick);
-// 		dots.showDots();
-// 	}
 	
 	function NewExperiencePanel(pathway, previousPanelNode) {
 		var header = "Add Experience";
@@ -1778,8 +1812,9 @@ var NewExperiencePanel = (function () {
 		
 		navContainer.appendTitle(header);
 						
-		var searchView = new ServiceDomainSearchView(this, experience);
-		searchView.search("");
+		var searchView = new NewExperienceSearchView(this, experience);
+		
+		$(this.node()).one("revealing.cr", function() { searchView.search(""); });
 
 		showPanelUp(this.node(), function()
 			{
