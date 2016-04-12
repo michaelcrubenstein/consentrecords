@@ -123,13 +123,6 @@
 		max-width: 100%;
 	}
 	
-	panel.confirm-experience label {
-		color: #222;
-		font-weight: normal;
-		margin: 0;
-		padding: 6px 12px;
-	}
-
 	panel.new-experience-panel section.list-container {
 		position: relative;
 		overflow-y: scroll;
