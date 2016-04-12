@@ -132,11 +132,7 @@ var GetDataChunker = (function() {
 			throw "offsetParent not specified; containerNode is not displayed"
 			
 		$(scrollingNode).scroll(startVal, this._check);
-		$(window).resize(startVal, this._check);
-		$(scrollingNode).on("remove", function()
-			{
-				$(window).off("resize", _this.check);
-			});
+		$(scrollingNode).on("resize.cr", this._check);
 	}
 	
 	GetDataChunker.prototype.checkStart = function(startVal)
