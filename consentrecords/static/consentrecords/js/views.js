@@ -1627,15 +1627,6 @@ var SitePanel = (function () {
 				_this.calculateHeight();
 			});
 		
-		resizeFunction = function()
-			{
-				_this.calculateHeight();
-			}
-		$(window).on("resize", resizeFunction);
-		$(this.node()).on("remove", function(){
-			$(window).off("resize", resizeFunction);
-		});
-			
 		this.mainDiv.appendHeader = function()
 		{
 			return this.append("header")
@@ -1858,6 +1849,14 @@ var SitePanel = (function () {
 			cr.logRecord('click', 'Close Down blocked');
 			
 	}
+	
+	$(window).resize(function()
+		{
+			$(".site-panel").each(function()
+				{
+					this.sitePanel.calculateHeight();
+				});
+		});
 	return SitePanel;
 })();
 
