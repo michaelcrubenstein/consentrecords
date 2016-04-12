@@ -151,7 +151,7 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="site-panel initial background-gradient-panel" >
+  		<panel id="id_user_home_panel" class="initial background-gradient-panel" >
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
@@ -171,7 +171,7 @@
 			</section>
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel site-panel reveal background-gradient-panel">
+		<panel id="id_sign_in_panel" class="level-2-panel reveal background-gradient-panel">
 		  <form class="form-simple form-signin">
 			<div class="site-title">Sign In to PathAdvisor</div>
 			<div class="alert-container"></div>
@@ -201,7 +201,7 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_forgot_password_panel" class="level-2-panel site-panel reveal background-gradient-panel">
+		<panel id="id_forgot_password_panel" class="level-2-panel reveal background-gradient-panel">
 			<form class="form-simple">
 				<div class="site-title">Forgot your Password?</div>
 				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
@@ -235,7 +235,7 @@
 			</form>
 		</panel>
 
-	    <panel id="id_your_plans_panel" class="level-2-panel site-panel reveal list">
+	    <panel id="id_your_plans_panel" class="level-2-panel reveal list">
 			<nav role="navigation">
 				<div>
 					<!-- Collect the nav links, forms, and other content for toggling -->
@@ -341,7 +341,7 @@
 		/* Hide the currently displaying panel with no further action. */		
 		function hidePanel()
 		{
-			var sitePanelNode = $(this).parents(".site-panel")[0];
+			var sitePanelNode = $(this).parents("panel")[0];
 			if (prepareClick('click', 'hide panel button'))
 			{
 				showClickFeedback(this);
@@ -466,7 +466,7 @@
 			$("#id_sign_in_panel #id_signup_link").click(function(e) {
 				if (prepareClick('click', 'Signin sign up'))
 				{
-					var signUp = new Signup($(this).parents(".site-panel")[0]);
+					var signUp = new Signup($(this).parents("panel")[0]);
 				}
 				e.preventDefault();
 			});
@@ -474,7 +474,7 @@
 			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
 				if (prepareClick('click', 'Signin forgot password'))
 				{
-					showFixedPanel($(this).parents(".site-panel")[0], "#id_forgot_password_panel");
+					showFixedPanel($(this).parents("panel")[0], "#id_forgot_password_panel");
 				}
 				e.preventDefault();
 			});
@@ -921,7 +921,7 @@
 							{
 								showClickFeedback(this);
 
-								var sitePanel = showSessionDetails(session, null, $(container).parents(".site-panel")[0]);
+								var sitePanel = showSessionDetails(session, null, $(container).parents("panel")[0]);
 			
 								showPanelLeft(sitePanel.node(), unblockClick);
 							}

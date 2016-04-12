@@ -10,10 +10,8 @@ body {
 body>panel {
 	height: 100%;
 	width: 100%;
-}
-.site-panel {
 	display: block;
-	position: absolute;
+	position: absolute;	/* So that z-index's are maintained properly. */
 	overflow-y: hidden;
 }
 panel.site-panel>nav {
