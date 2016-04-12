@@ -1737,8 +1737,6 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.handleResize = function()
 	{
-		this.sitePanel.calculateHeight();
-		
 		var newHeight = this.sitePanel.scrollAreaHeight();
 		var pathwayContainer = $(this.pathwayContainer.node());
 		$(this.timeContainer.node()).height(newHeight);
@@ -1792,15 +1790,7 @@ var Pathtree = (function () {
 				_this.setupExperienceTriggers(d);
 			});
 
-		$(window).on("resize", null, this, resizeFunction);
-		$(this).on("clearing.cr", function()
-		{
-			$(window).off("resize", null, resizeFunction);
-		});
-		$(this).on("clear.cr", function()
-		{
-			$(window).off("resize", null, resizeFunction);
-		});
+		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	
 		this.appendExperiences();
 	}
