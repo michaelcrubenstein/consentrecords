@@ -1575,13 +1575,7 @@ var SitePanel = (function () {
 			}
 		}
 	
-		$(window).on("resize", resizeSearchCancelHeight);
-		resizeSearchCancelHeight();
-	
-		$(searchInputContainer.node()).on("remove", function(e)
-		{
-			$(window).off("resize", resizeSearchCancelHeight);
-		});
+		$(this.node()).one("revealing.cr", resizeSearchCancelHeight);
 	
 		return searchInput.node();
 	}
