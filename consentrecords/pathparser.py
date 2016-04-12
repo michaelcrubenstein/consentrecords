@@ -189,7 +189,6 @@ def _refineResults(resultSet, path, userInfo):
                     symbol = params[1]
                     testValue = params[2]
                     f = _excludeByField(resultSet, i, symbol, testValue)
-                    print (f.query)
                     return f, path[4:]
                 else:
                     raise ValueError("unrecognized contents within ':not([...])'")
