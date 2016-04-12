@@ -132,7 +132,10 @@ var FlagData = (function() {
 		if (this.x < 0)
 			return this.maxEnergy;
 		else if (this.x + this.width > maxX)
-			return this.maxEnergy;
+		{
+			var d = maxX - (this.x + this.width);
+			return d * d * PathSpring.prototype.overlapTerm + (this.flagSpacing * this.flagSpacing * PathSpring.prototype.marginTerm);
+		}
 		else if (this.x + this.width > maxX - this.flagSpacing)
 		{
 			var d = maxX - this.flagSpacing - (this.x + this.width);
