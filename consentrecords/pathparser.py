@@ -176,7 +176,7 @@ def _refineResults(resultSet, path, userInfo):
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif path[0] == '|':
-    	return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
+        return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
     elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
         if path[2] == '(':
             if path[3][0] == '[':

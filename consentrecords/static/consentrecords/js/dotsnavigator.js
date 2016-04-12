@@ -85,16 +85,6 @@ var DotsNavigator = (function () {
 		this.checkForwardEnabled();
 	}
 	
-	DotsNavigator.prototype.getServiceByName = function(name)
-	{
-		for (i = 0; i < this.services.length; ++i)
-		{
-			if (this.services[i].getDescription() == name)
-				return this.services[i];
-		}
-		return null;
-	}
-	
 	DotsNavigator.prototype.goBack = function()
 	{
 		var _this = this;
@@ -235,11 +225,7 @@ var DotsNavigator = (function () {
 			});
 		}
 	
-		$(window).on("resize", layoutPanels);
-		$(this.div.node()).on("remove", function()
-		{
-			$(window).off("resize", layoutPanels);
-		});
+		$(panel2Div.node()).on("resize.cr", layoutPanels);
 	}
 	
 	return DotsNavigator;

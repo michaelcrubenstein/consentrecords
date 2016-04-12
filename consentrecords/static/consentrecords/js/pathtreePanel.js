@@ -82,7 +82,19 @@ var FlagData = (function() {
 
 	FlagData.prototype.getDescription = function()
 	{
-		return this.experience.getDescription();
+		var d = this.experience.getValue("Offering");
+		if (d && d.getValueID())
+			return d.getDescription();
+		var s = this.experience.getDatum("User Entered Offering");
+		if (s && s.length)
+			return s;
+		d = this.experience.getValue("Service");
+		if (d && d.getValueID())
+			return d.getDescription();
+		s = this.experience.getDatum("User Entered Service");
+		if (s && s.length)
+			return s;
+		return "None";
 	}
 	
 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
@@ -1725,8 +1737,6 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.handleResize = function()
 	{
-		this.sitePanel.calculateHeight();
-		
 		var newHeight = this.sitePanel.scrollAreaHeight();
 		var pathwayContainer = $(this.pathwayContainer.node());
 		$(this.timeContainer.node()).height(newHeight);
@@ -1780,15 +1790,7 @@ var Pathtree = (function () {
 				_this.setupExperienceTriggers(d);
 			});
 
-		$(window).on("resize", null, this, resizeFunction);
-		$(this).on("clearing.cr", function()
-		{
-			$(window).off("resize", null, resizeFunction);
-		});
-		$(this).on("clear.cr", function()
-		{
-			$(window).off("resize", null, resizeFunction);
-		});
+		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	
 		this.appendExperiences();
 	}

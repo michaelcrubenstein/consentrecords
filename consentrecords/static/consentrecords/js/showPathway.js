@@ -1981,9 +1981,12 @@ var PickOrCreateSearchView = (function () {
 	}
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
-	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d)
+	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		return d.getDescription().toLocaleLowerCase().indexOf(this._constrainCompareText) >= 0;
+		if (compareText.length === 0)
+			return true;
+			
+		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
 	}
 	
 	/* Overrides SearchView.searchPath */
@@ -2118,17 +2121,13 @@ var PickOrCreatePanel = (function () {
 		{
 			var newText = this.searchView.inputText();
 			var compareText = newText.toLocaleLowerCase()
-			if (this._foundObjects)
-			{
-				for (var i = 0; i < this._foundObjects.length; ++i)
+			var d = this.searchView.getDataChunker.buttons().data().find(function(d)
 				{
-					var v = this._foundObjects[i];
-					if (v.getDescription().toLocaleLowerCase() === compareText)
-					{
-						this.updateValues(v, null);
-						return;
-					}
-				}
+					return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
+				});
+			if (d) {
+				this.updateValues(d, null);
+				return;
 			}
 
 			if (newText.length == 0)

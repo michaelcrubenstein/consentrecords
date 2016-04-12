@@ -28,18 +28,47 @@
     	background: white;
     }
     
-    panel.new-experience-panel div.date-row {
-		text-align: center;
+    panel.new-experience-date-panel section.date-container {
+		text-align: right;
+    }
+    
+    panel.new-experience-date-panel section.date-container div.date-row {
+    	display: inline-block;
+    	overflow-x: hidden;
+    	position: relative;
+    	white-space: nowrap;	/* To prevent wrapping during animation. */
+    }
+    
+    panel.new-experience-date-panel section.date-container>label {
+		float: left;
+    }
+    
+    panel.new-experience-date-panel section.date-container>span.in-cell-button {
+		display: block;
+		padding-left: 12px;
+		padding-right: 12px;
+		padding-bottom: 4px;
 		width: 100%;
-		height: auto;
-		padding: 6px 12px;
-		background: white;
+		text-align: left;
+    	position: relative;
+    }
+    
+    panel.new-experience-date-panel section.date-container>.right-vertical-chevron {
+		display: inline-block;
+		overflow-x: hidden;
+		float: none;
+    	position: relative;
     }
     
 	panel.new-experience-panel .address-line {
 		margin-left: 0px;
 		font-size: smaller;
 		color: #999;
+	}
+	
+	panel.new-experience-markers section p {
+		margin: 10px;
+		
 	}
 
     .dots ~ panel {
@@ -55,36 +84,66 @@
 		margin: 10px;
 	}
 	
-	panel.confirm-experience div.summary {
-		background-color: white;
+	panel.experience nav
+	{
+		border-bottom-color: #f8f8f8;
 	}
 	
-	panel.confirm-experience header
+	panel.experience header
+	{
+		padding-left: 12px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		border-bottom: 1px solid #eee;
+		background-color: #F8F8F8;
+	}
+	
+	panel.experience header .title
 	{
 		width: 100%;
-		padding: 6px 12px;
 		text-align: left;
 		font-weight: bold;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
-	panel.confirm-experience .organization {
-		margin-left: 12px;
-		padding-bottom: 5px;
-		border-bottom: 1px solid #eee;
+	panel.experience header .organization {
 	}
-	panel.confirm-experience .organization>label {
+	panel.experience header .organization>label {
 		font-weight: normal;
 	}
-	panel.confirm-experience .address-line {
+	panel.experience header .address-line {
 		margin-left: 0px;
 		font-size: smaller;
 	}
-	panel.confirm-experience label {
-		color: #222;
-		font-weight: normal;
-		margin: 0;
-		padding: 6px 12px;
+	panel.experience header .markers {
+		font-size: smaller;
+		color: #555;
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
+	}
+	
+	panel.new-experience-panel section.list-container {
+		position: relative;
+		overflow-y: scroll;
+		overflow-x: hidden;
+	}
+	
+	panel.new-experience-panel section.list-container header
+	{
+		width: 100%;
+		text-align: left;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
+	panel.new-experience-panel section.list-container .organization {
+		font-size: smaller;
+	}
+	panel.new-experience-panel section.list-container .organization>label {
+		font-weight: normal;
+	}
+	panel.new-experience-panel section.list-container .address-line {
+		margin-left: 0px;
+	}

@@ -507,35 +507,35 @@ class api:
         data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
     
         if 'parents' in fields:
-            while uuObject.parent:
-                uuObject = Instance.objects\
+            p = uuObject
+            while p.parent:
+                p = Instance.objects\
                                 .select_related('typeID')\
                                 .select_related('parent')\
                                 .select_related('description')\
                                 .select_related('typeID__description')\
-                                .get(pk=uuObject.parent.id)
+                                .get(pk=p.parent.id)
                                 
-                kindObject = uuObject.typeID
-                fieldData = kindObject.getParentReferenceFieldData()
+                fieldData = p.typeID.getParentReferenceFieldData()
             
-                parentData = uuObject.getReferenceData(userInfo, language)
+                parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
                 data["cells"].append({"field": fieldData, "data": [parentData]})
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
-                uuObject = Terms.administerPrivilegeEnum
+                saObject = Terms.administerPrivilegeEnum
             elif userInfo.authUser.is_staff:
-                uuObject = Terms.writePrivilegeEnum
+                saObject = Terms.writePrivilegeEnum
             else:
-                uuObject = None
-            if uuObject:
+                saObject = None
+            if saObject:
                 fieldData = Terms.systemAccess.getParentReferenceFieldData()
                 parentData = [{'id': None, 
-                              'instanceID' : uuObject.id,
-                              'description': uuObject.getDescription(language),
+                              'instanceID' : saObject.id,
+                              'description': saObject.getDescription(language),
                               'position': 0,
-                              'privilege': uuObject.description.text}]
+                              'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
         if 'type' in fields:

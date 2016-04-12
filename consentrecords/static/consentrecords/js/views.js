@@ -23,6 +23,28 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
+$.fn.calculateFillHeight = function()
+{
+	var parent = this.parent();
+	var n = this.get(0);
+	newHeight = parent.children().toArray().reduce(function(h, childNode) {
+			var child = $(childNode);
+			if (child.css("display") != "none" && 
+				child.css("position") != "absolute" &&
+				childNode != n)
+				return h - child.outerHeight(true);
+			else
+				return h;
+		},
+		parseInt(parent.height()));
+	this.css("height", "{0}px".format(newHeight));
+	this.one("resize.cr", function(eventObject)
+		{
+			eventObject.stopPropagation();
+		});
+	this.trigger("resize.cr");
+};
+
 /* A utility function for formatting strings like printf */
 String.prototype.format = function () {
   var args = arguments;
@@ -221,6 +243,21 @@ function asyncHidePanelRight(panelNode, doRemove, completeFunction)
 	closealert();
 	$(panelNode).trigger("hiding.cr");
 	$(panelNode).hide("slide", {direction: "right"}, 400, 
+		function() {
+			if (doRemove)
+				$(this).remove();
+			if (completeFunction)
+				completeFunction();
+		});
+}
+
+function asyncHidePanelDown(panelNode, doRemove, completeFunction)
+{
+	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
+	
+	closealert();
+	$(panelNode).trigger("hiding.cr");
+	$(panelNode).hide("slide", {direction: "down"}, 400,
 		function() {
 			if (doRemove)
 				$(this).remove();
@@ -755,11 +792,13 @@ function appendDeleteControls(buttons)
 
 function appendRightChevrons(buttons)
 {
-	buttons.append("div")
-		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true)
+	var containers = buttons.append("div")
+		.classed("site-chevron-right right-fixed-width-div right-vertical-chevron", true);
+	containers
 		.append("img")
 		.attr("src", rightChevronPath)
 		.attr("height", "18px");
+	return containers;
 }
 
 function appendLeftChevrons(buttons)
@@ -1321,6 +1360,8 @@ function getTextWidth(text, font) {
     return metrics.width;
 };
 
+/* A SiteNavContainer is a view for the navigation bar that appears at the top of a site panel. 
+ */
 var SiteNavContainer = (function() {
 	SiteNavContainer.prototype.nav = undefined;
 	SiteNavContainer.prototype.div = undefined;
@@ -1452,8 +1493,91 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.appendSearchBar = function(textChanged)
 	{
-		var searchBarDiv = this.panelDiv.append("div").classed("searchbar", true);
-		return setupSearchBar(searchBarDiv.node(), textChanged);
+		var searchBar = this.panelDiv.append("div").classed("searchbar", true);
+	
+		var searchCancelButton = searchBar.append("span")
+			.classed("search-cancel-button site-active-text", true);
+		searchCancelButton.append("span").text("Cancel");
+	
+		var searchCancelButtonWidth = 0;
+		var oldPaddingLeft = searchCancelButton.style("padding-left");
+		var oldPaddingRight = searchCancelButton.style("padding-right");
+		$(searchCancelButton.node())
+			.css("padding-left", "0")
+			.css("padding-right", "0");
+	
+		var searchInputContainer = searchBar.append("div")
+			.classed("search-input-container", true);
+		
+		var searchInput = searchInputContainer
+			.append("input")
+			.classed("search-input", true)
+			.attr("placeholder", "Search");
+	
+		var lastText = "";	
+		$(searchInput.node()).on("keyup input paste", function(e) {
+				if (lastText != this.value)
+				{
+					lastText = this.value;
+					textChanged.call(this);
+				}
+			})
+			.on("focusin", function(e)
+			{
+				searchCancelButton.selectAll('span').text("Cancel");
+				$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
+													  "padding-left": oldPaddingLeft,
+													  "padding-right": oldPaddingRight}, 400, "swing");
+			})
+			.on("focusout", function(e)
+			{
+				if (searchInput.node().value.length == 0)
+					$(searchCancelButton.node()).animate({width: 0,
+														  "padding-left": 0,
+														  "padding-right": 0}, 400, "swing",
+														  function() {
+															searchCancelButton.selectAll('span').text(null);
+														  });
+			});
+	
+		$(searchCancelButton.node()).on("click", function(e) {
+			searchInput.node().value = "";
+			$(searchInput.node()).trigger("input");
+			$(this).animate({width: 0,
+							  "padding-left": 0,
+							  "padding-right": 0}, 400, "swing",
+							  function() {
+								searchCancelButton.selectAll('span').text(null);
+							  });
+		});
+	
+		function resizeSearchCancelHeight()
+		{
+			/* Calculate the width of the cancel button. */	
+			if (searchCancelButtonWidth == 0 &&
+				$(searchCancelButton.node()).width() > 0)
+			{
+				var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
+				var h = searchInputContainer.node().getBoundingClientRect().height
+					- cancelBoundingRect.height
+					+ parseInt(searchCancelButton.style("padding-top"))
+					+ parseInt(searchCancelButton.style("padding-bottom"));
+				searchCancelButton.style("padding-top",(h/2).toString()+"px")
+					.style("padding-bottom", (h/2).toString()+"px");
+		
+				var oldWidth = searchCancelButton.style("width");
+				searchCancelButton.style("width", null);
+				searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
+										  parseInt(oldPaddingRight) +
+										  parseInt(oldPaddingLeft);
+				$(searchCancelButton.node()).outerWidth(0);
+				searchCancelButton.select('span').text(null);
+			}
+		}
+	
+		$(this.node()).one("revealing.cr", resizeSearchCancelHeight);
+	
+		return searchInput.node();
 	}
 	
 	SitePanel.prototype.appendFillArea = function()
@@ -1481,17 +1605,8 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.calculateHeight = function()
 	{
-		var _this = this;
-		newHeight = $(this.node()).children().toArray().reduce(function(h, child) {
-				if ($(child).css("display") != "none" && 
-					$(child).css("position") != "absolute" &&
-					child != _this.mainDiv.node())
-					return h - $(child).outerHeight(true);
-				else
-					return h;
-			},
-			parseInt(this.panelDiv.style("height")));
-		this.mainDiv.style("height", "{0}px".format(newHeight));
+		var varNode = this.mainDiv.node();
+		$(varNode).calculateFillHeight();
 	}
 	
 	SitePanel.prototype.appendScrollArea = function()
@@ -1506,15 +1621,6 @@ var SitePanel = (function () {
 				_this.calculateHeight();
 			});
 		
-		resizeFunction = function()
-			{
-				_this.calculateHeight();
-			}
-		$(window).on("resize", resizeFunction);
-		$(this.node()).on("remove", function(){
-			$(window).off("resize", resizeFunction);
-		});
-			
 		this.mainDiv.appendHeader = function()
 		{
 			return this.append("header")
@@ -1737,6 +1843,14 @@ var SitePanel = (function () {
 			cr.logRecord('click', 'Close Down blocked');
 			
 	}
+	
+	$(window).resize(function()
+		{
+			$(".site-panel").each(function()
+				{
+					this.sitePanel.calculateHeight();
+				});
+		});
 	return SitePanel;
 })();
 
@@ -1746,7 +1860,6 @@ var SearchView = (function () {
 	SearchView.prototype.getDataChunker = null;
 	SearchView.prototype._fill = null;
 	SearchView.prototype._foundCompareText = null;
-	SearchView.prototype._foundObjects = null;
 	SearchView.prototype._constrainCompareText = null;
 	SearchView.prototype._searchTimeout = null;
 	
@@ -1770,13 +1883,10 @@ var SearchView = (function () {
 			{
 				if (_this.inputBox.value.toLocaleLowerCase().trim() == startVal)
 				{
-					if (_this._foundObjects === null)
-						_this._foundObjects = foundObjects;
-					else
-						_this._foundObjects = _this._foundObjects.concat(foundObjects);
 					_this.showObjects(foundObjects);
-					_this.noResultsDiv.text(_this.noResultString());
-					_this.noResultsDiv.style('display', _this._foundObjects.length == 0 ? null : 'none');
+					var text = _this.noResultString();
+					_this.noResultsDiv.text(text);
+					_this.noResultsDiv.style('display', (_this.getDataChunker.hasButtons() || text.length === 0) ? 'none' : null);
 				}
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
@@ -1792,7 +1902,7 @@ var SearchView = (function () {
 		throw ("need to override SearchView.onClick");
 	}
 	
-	SearchView.prototype.isButtonVisible = function(button, d)
+	SearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		throw ("need to override SearchView.isButtonVisible");
 	}
@@ -1832,19 +1942,14 @@ var SearchView = (function () {
 			this._constrainCompareText = val;
 			
 		var buttons = this.listPanel.selectAll(".btn");
-		if (this._constrainCompareText != this._foundCompareText)
-		{
-			var _this = this;
-			buttons.style("display", function(d) 
-				{ 
-					if (_this.isButtonVisible(this, d))
-						return null;
-					else
-						return "none";
-				});
-		}
-		else
-			buttons.style("display", null);
+		var _this = this;
+		buttons.style("display", function(d) 
+			{ 
+				if (_this.isButtonVisible(this, d, _this._constrainCompareText))
+					return null;
+				else
+					return "none";
+			});
 	}
 	
 	SearchView.prototype.showObjects = function(foundObjects)
@@ -1860,6 +1965,9 @@ var SearchView = (function () {
 		return buttons;
 	}
 	
+	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
+		sent to the middle tier.
+	 */
 	SearchView.prototype.fields = function()
 	{
 		return ["parents"];
@@ -1877,7 +1985,6 @@ var SearchView = (function () {
 			this._foundCompareText = val;
 			this._constrainCompareText = val;
 		}
-		this._foundObjects = null;	/* Clear any old object sets. */
 			
 		var searchPath = this.searchPath(this._constrainCompareText);
 		if (searchPath && searchPath.length > 0)
@@ -1894,9 +2001,12 @@ var SearchView = (function () {
 		}
 	}
 	
-	SearchView.prototype.inputText = function()
+	SearchView.prototype.inputText = function(val)
 	{
-		return this.inputBox.value.trim()
+		if (val === undefined)
+			return this.inputBox.value.trim();
+		else
+			this.inputBox.value = val;
 	}
 	
 	SearchView.prototype.inputCompareText = function()
@@ -1925,8 +2035,13 @@ var SearchView = (function () {
 	{
 		this.clearListPanel();
 		this.getDataChunker.clearLoadingMessage();
-		this._foundObjects = null;
 		this._foundCompareText = null;
+	}
+	
+	SearchView.prototype.canConstrain = function(searchText, constrainText)
+	{
+		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
+			   (searchText.length >= 3 || constrainText.length < 3);
 	}
 	
 	SearchView.prototype.textChanged = function()
@@ -1943,10 +2058,9 @@ var SearchView = (function () {
 			this.textCleared();
 		}
 		else if (this._foundCompareText != null && 
-				 (this._foundCompareText.length == 0 || val.indexOf(this._foundCompareText) == 0) &&
-				 (this._foundCompareText.length >= 3 || val.length < 3))
+				 this.canConstrain(this._foundCompareText, val))
 		{
-			if (this._foundObjects && this._foundObjects.length < 50)
+			if (this.getDataChunker.hasShortResults())
 				this.constrainFoundObjects(val);
 			else
 				this.startSearchTimeout(val);
@@ -2001,102 +2115,6 @@ var PanelSearchView = (function() {
 })();
 
 	
-/* Returns the input DOM element that contains the text being searched. */
-function setupSearchBar(searchBarNode, textChanged)
-{
-	var searchBar = d3.select(searchBarNode);
-	
-	var searchCancelButton = searchBar.append("span")
-		.classed("search-cancel-button site-active-text", true);
-	searchCancelButton.append("span").text("Cancel");
-	
-	var searchCancelButtonWidth = 0;
-	var oldPaddingLeft = searchCancelButton.style("padding-left");
-	var oldPaddingRight = searchCancelButton.style("padding-right");
-	$(searchCancelButton.node())
-		.css("padding-left", "0")
-		.css("padding-right", "0");
-	
-	var searchInputContainer = searchBar.append("div")
-		.classed("search-input-container", true);
-		
-	var searchInput = searchInputContainer
-		.append("input")
-		.classed("search-input", true)
-		.attr("placeholder", "Search");
-	
-	var lastText = "";	
-	$(searchInput.node()).on("keyup input paste", function(e) {
-			if (lastText != this.value)
-			{
-				lastText = this.value;
-				textChanged.call(this);
-			}
-		})
-		.on("focusin", function(e)
-		{
-			searchCancelButton.selectAll('span').text("Cancel");
-			$(searchCancelButton.node()).animate({width: searchCancelButtonWidth,
-												  "padding-left": oldPaddingLeft,
-												  "padding-right": oldPaddingRight}, 400, "swing");
-		})
-		.on("focusout", function(e)
-		{
-			if (searchInput.node().value.length == 0)
-				$(searchCancelButton.node()).animate({width: 0,
-													  "padding-left": 0,
-													  "padding-right": 0}, 400, "swing",
-													  function() {
-													  	searchCancelButton.selectAll('span').text(null);
-													  });
-		});
-	
-	$(searchCancelButton.node()).on("click", function(e) {
-		searchInput.node().value = "";
-		$(searchInput.node()).trigger("input");
-		$(this).animate({width: 0,
-						  "padding-left": 0,
-						  "padding-right": 0}, 400, "swing",
-						  function() {
-							searchCancelButton.selectAll('span').text(null);
-						  });
-	});
-	
-	function resizeSearchCancelHeight()
-	{
-		/* Calculate the width of the cancel button. */	
-		if (searchCancelButtonWidth == 0 &&
-			$(searchCancelButton.node()).width() > 0)
-		{
-			var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
-			var h = searchInputContainer.node().getBoundingClientRect().height
-				- cancelBoundingRect.height
-				+ parseInt(searchCancelButton.style("padding-top"))
-				+ parseInt(searchCancelButton.style("padding-bottom"));
-			searchCancelButton.style("padding-top",(h/2).toString()+"px")
-				.style("padding-bottom", (h/2).toString()+"px");
-		
-			var oldWidth = searchCancelButton.style("width");
-			searchCancelButton.style("width", null);
-			searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
-									  parseInt(oldPaddingRight) +
-									  parseInt(oldPaddingLeft);
-			$(searchCancelButton.node()).outerWidth(0);
-			searchCancelButton.select('span').text(null);
-		}
-	}
-	
-	$(window).on("resize", resizeSearchCancelHeight);
-	resizeSearchCancelHeight();
-	
-	$(searchInputContainer.node()).on("remove", function(e)
-	{
-		$(window).off("resize", resizeSearchCancelHeight);
-	});
-	
-	return searchInput.node();
-}
-
 /* Gets the text for the header of a view panel based on the specified data. */
 function getViewPanelHeader(objectData)
 {

@@ -9,14 +9,15 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._isSpinning = null;
 	GetDataChunker.prototype._start = 0;
 	GetDataChunker.prototype._inGetData = false;
-	GetDataChunker.prototype._onGetDataDone = null;
+	GetDataChunker.prototype._onFoundInstances = null;
+	GetDataChunker.prototype._onDoneSearch = null;
 	GetDataChunker.prototype._check = null;
 	
 	GetDataChunker.prototype._clearScrollCheck = function()
 	{
 		if (this._check != null)
 		{
-			$(this._containerNode).off("scroll", this._check);
+			$(this._containerNode.offsetParent).off("scroll", this._check);
 			$(window).off("resize", this._check);
 			this._check = null;
 		}
@@ -33,37 +34,47 @@ var GetDataChunker = (function() {
 			this._isSpinning = false;
 		}
 		this._clearScrollCheck();
+		this._start = 0;
 	}
 	
 	GetDataChunker.prototype._restart = function(instances, startVal)
 	{
-		if (this._loadingMessage != null)
+		if (!this._loadingMessage)
+			throw "loadingMessage is not set up";
+			
+		if (instances.length < this._increment)
 		{
-			if (instances.length < this._increment)
-			{
-				this.clearLoadingMessage();
-				this._start = 0;
-			}
+			this.clearLoadingMessage();
+			if (this._onDoneSearch)
+				this._onDoneSearch();
+		}
+		else
+		{
+			this._start += this._increment;
+			if (!this.isOverflowingY(this._loadingMessage.node()))
+				this._continue(startVal);
 			else
-			{
-				this._start += this._increment;
-				if (!this.isOverflowingY(this._loadingMessage.node()))
-					this._continue(startVal);
-				else
-					this._inGetData = false;
-			}
+				this._inGetData = false;
 		}
 	}
 	
 	GetDataChunker.prototype._doneGetData = function(instances, startVal)
 	{
-		if (this._loadingMessage != null)
+// 		if (this._loadingMessage != null)
+// 		{
+// 			crv.stopLoadingMessage(this._loadingMessage);
+// 			this._isSpinning = false;
+// 		}
+
+		/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
+			this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
+			which is handled here.
+		 */
+		if (this._inGetData)
 		{
-			crv.stopLoadingMessage(this._loadingMessage);
-			this._isSpinning = false;
+			this._onFoundInstances(instances, startVal);
+			this._restart(instances, startVal);
 		}
-		this._onGetDataDone(instances, startVal);
-		this._restart(instances, startVal);
 	}
 	
 	GetDataChunker.prototype.showLoadingMessage = function()
@@ -95,30 +106,45 @@ var GetDataChunker = (function() {
 					start: this._start,
 					end: this._start + this._increment,
 					fields: this.fields, 
-					done: function(instances) { _this._doneGetData(instances, startVal); }, 
+					done: function(instances) 
+						{ 
+							_this._doneGetData(instances, startVal); 
+						}, 
 					fail: asyncFailFunction});
 		this._inGetData = true;
 	}
 	
-	GetDataChunker.prototype.start = function(startVal)
+	GetDataChunker.prototype._setScrollCheck = function(startVal)
 	{
 		var _this = this;
 		
 		this._clearScrollCheck();
 		this._start = 0;
 
-		this._check = function()
+		this._check = function(eventObject)
 		{
-			_this.onScroll(startVal);
+			_this._onScroll(eventObject.data);
 		}
 		
 		var scrollingNode = this._containerNode.offsetParent;
-		$(scrollingNode).scroll(this._check);
-		$(window).resize(this._check);
-		$(scrollingNode).on("remove", function()
-			{
-				$(window).off("resize", _this.check);
-			});
+		
+		if (!scrollingNode)
+			throw "offsetParent not specified; containerNode is not displayed"
+			
+		$(scrollingNode).scroll(startVal, this._check);
+		$(scrollingNode).on("resize.cr", this._check);
+	}
+	
+	GetDataChunker.prototype.checkStart = function(startVal)
+	{
+		this._setScrollCheck(startVal);
+		this.showLoadingMessage();
+		this._onScroll(startVal);
+	}
+	
+	GetDataChunker.prototype.start = function(startVal)
+	{
+		this._setScrollCheck(startVal);
 		this._continue(startVal);
 	}
 	
@@ -128,7 +154,7 @@ var GetDataChunker = (function() {
 		return node.offsetTop > $(p).scrollTop() + $(p).height();
 	}
 	
-	GetDataChunker.prototype.onScroll = function(startVal)
+	GetDataChunker.prototype._onScroll = function(startVal)
 	{
 		if (this._loadingMessage != null && !this._inGetData)
 		{
@@ -162,7 +188,22 @@ var GetDataChunker = (function() {
 		return d3.selectAll(items);
 	}
 	
-	function GetDataChunker(containerNode, onGetDataDone)
+	GetDataChunker.prototype.hasShortResults = function()
+	{
+		return d3.select(this._containerNode).selectAll('li').size() < 50 && !this._inGetData;
+	}
+	
+	GetDataChunker.prototype.hasButtons = function()
+	{
+		return d3.select(this._containerNode).selectAll('li').size() > 0;
+	}
+	
+	GetDataChunker.prototype.buttons = function()
+	{
+		return d3.select(this._containerNode).selectAll('li');
+	}
+	
+	function GetDataChunker(containerNode, onFoundInstances, onDoneSearch)
 	{
 		this._containerNode = containerNode;
 		this._loadingMessage = null;
@@ -170,7 +211,8 @@ var GetDataChunker = (function() {
 		this.path = null;
 		this._start = 0;
 		this._inGetData = false;
-		this._onGetDataDone = onGetDataDone;
+		this._onFoundInstances = onFoundInstances;
+		this._onDoneSearch = onDoneSearch;
 		this._check = null;
 	}
 	
