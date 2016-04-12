@@ -724,9 +724,8 @@
 			submit: function(successFunction, failFunction) {
 				bootstrap_alert.success('Sending email (this may take a few minutes)...', '#id_alert_success');
 				
-				deferredObject = $.post("{% url 'resetPassword' %}", 
-					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
-						"email": $("#id_email").val()
+				$.post("{% url 'resetPassword' %}", 
+					{ "email": $("#id_email").val()
 					})
 				  .done(function(json, textStatus, jqXHR)
 					{
