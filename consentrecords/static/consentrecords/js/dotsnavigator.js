@@ -225,11 +225,7 @@ var DotsNavigator = (function () {
 			});
 		}
 	
-		$(window).on("resize", layoutPanels);
-		$(this.div.node()).on("remove", function()
-		{
-			$(window).off("resize", layoutPanels);
-		});
+		$(panel2Div.node()).on("resize.cr", layoutPanels);
 	}
 	
 	return DotsNavigator;
