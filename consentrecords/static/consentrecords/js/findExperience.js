@@ -383,8 +383,11 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		this.searchView = new PickOfferingSearchView(this, marker);
-		this.searchView.search("");
+		var searchView = new PickOfferingSearchView(this, marker);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
 
 		showPanelLeft(this.node(), unblockClick);
 	}
@@ -468,8 +471,11 @@ var FindExperiencePanel = (function () {
 			
 		navContainer.appendTitle(header);
 		
-		this.searchView = new FindExperienceSearchView(this, offeringID);
-		this.searchView.search("");
+		var searchView = new FindExperienceSearchView(this, offeringID);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
 	}
 	
 	return FindExperiencePanel;
