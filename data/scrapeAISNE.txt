@@ -1,3 +1,7 @@
+Service
+    _name: Preschool
+Service
+    _name: High School Post Graduate
 Organization
     _name: The Academy at Charlemont
     Web Site: http://www.charlemont.org
@@ -2376,9 +2380,10 @@ Organization
             _name: Charles River School
             Address
                 Street: 6 Old Meadow Road
-                City: P.O. Box 339
-                State: Do
-                Zip Code: ver
+                Street: P.O. Box 339
+                City: Dover
+                State: MA
+                Zip Code: 02030
             Offerings
                 Offering
                     _name: Pre-K
@@ -4530,9 +4535,10 @@ Organization
             _name: Holderness School
             Address
                 Street: Chapel Lane
-                City: PO Box 1879
-                State: Pl
-                Zip Code: ymouth
+                Street: PO Box 1879
+                City: Plymouth
+                State: NH
+                Zip Code: 03264
             Offerings
                 Offering
                     _name: Grade 9
@@ -4695,12 +4701,12 @@ Organization
     Web Site: http://www.isbos.org
     Sites
         Site
-            _name: International School of Boston
+            _name: Preschool & Kindergarten
             Address
                 Street: 17 Irving Street
-                City: Arlington (Preschool & Kindergarten). 45 Matignon Road (Lower
-                State: Mi
-                Zip Code: ddle & Upper Schools)
+                City: Arlington
+                State: MA
+                Zip Code: 02476
             Offerings
                 Offering
                     _name: Preschool
@@ -4720,12 +4726,14 @@ Organization
                     Sessions
                         Session
                             _name: 2016-2017
-                Offering
-                    _name: Kindergarten
-                    Service: Kindergarten
-                    Sessions
-                        Session
-                            _name: 2016-2017
+        Site
+            _name: Lower, Middle & Upper Schools
+            Address
+                Street: 45 Matignon Road
+                City: Cambridge
+                State: MA
+                Zip Code: 02140
+            Offerings
                 Offering
                     _name: Grade 1
                     Service: Grade 1
@@ -5118,9 +5126,10 @@ Organization
             _name: Landmark School
             Address
                 Street: 429 Hale Street
-                City: P.O. Box 227
-                State: Pr
-                Zip Code: ides Crossing
+                Street: P.O. Box 227
+                City: Prides Crossing
+                State: MA
+                Zip Code: 01965
             Offerings
                 Offering
                     _name: Grade 2
@@ -5898,9 +5907,10 @@ Organization
             _name: Middlesex School
             Address
                 Street: P.O. Box 9122
-                City: 1400 Lowell Rd
-                State: Co
-                Zip Code: ncord
+                Street: 1400 Lowell Rd
+                City: Concord
+                State: MA
+                Zip Code: 01742
             Offerings
                 Offering
                     _name: Grade 9
