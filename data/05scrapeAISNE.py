@@ -45,10 +45,11 @@ def scrape():
                 fOut.write('            _name: %s\n' % orgCell.get_text().strip())
                 fOut.write('            Address\n')
                 a = list(map(lambda s: s.strip(), address.split(',')))
-                fOut.write('                Street: %s\n' % a[0])
-                fOut.write('                City: %s\n' % a[1])
-                fOut.write('                State: %s\n' % a[2][0:2])
-                zipCode = a[2][2:].strip()
+                for street in a[0:-2]:
+                    fOut.write('                Street: %s\n' % street)
+                fOut.write('                City: %s\n' % a[-2])
+                fOut.write('                State: %s\n' % a[-1][0:2])
+                zipCode = a[-1][2:].strip()
                 if len(zipCode) > 0:
                     fOut.write('                Zip Code: %s\n' % zipCode)
                 fOut.write('            Offerings\n')
