@@ -4,20 +4,20 @@ class Emailer():
     # Sends a reset password message to the specified email recipient.
     def sendResetPasswordEmail(senderEMail, recipientEMail, resetURL):
         htmlMessage = """\
-<p>There has been a request to reset your password at consentrecords.org.</p>
+<p>There has been a request to reset your password at pathadvisor.com.</p>
 <p>Click <a href="%s">here</a> to reset your password.</p>
 
-<b>The Consent Records Team</b>
+<b>The PathAdvisor Team</b>
 """ % resetURL
 
         message = """\
-There has been a request to reset your password at consentrecords.org.
+There has been a request to reset your password at pathadvisor.com.
 Open the following link in your web browser to reset your password:
 
 %s
 
 Thanks.
-The Consent Records Team
+The PathAdvisor Team
 """ % resetURL
         
         send_mail('Password Reset', message, senderEMail,
