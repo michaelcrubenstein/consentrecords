@@ -37,7 +37,9 @@ var PathSpring = (function() {
 		var d = this.right.x - (this.left.x + this.left.width);
 		if (d < 0)	/* Overlap */
 		{
-			return (d * d * this.overlapTerm) + (this.flagSpacing * this.flagSpacing * this.marginTerm);
+			var minWidth = this.left.width - 12;
+			var t = 100 - ((minWidth + d) / minWidth * 100);
+			return (t * t * this.overlapTerm) + (this.flagSpacing * this.flagSpacing * this.marginTerm);
 		}
 		else if (d < this.flagSpacing)
 		{
@@ -134,7 +136,8 @@ var FlagData = (function() {
 		else if (this.x + this.width > maxX)
 		{
 			var d = maxX - (this.x + this.width);
-			return d * d * PathSpring.prototype.overlapTerm + (this.flagSpacing * this.flagSpacing * PathSpring.prototype.marginTerm);
+			var t = d / this.width * 100;	/* Normalize to a range from 0 to 100. */
+			return t * t * PathSpring.prototype.overlapTerm + (this.flagSpacing * this.flagSpacing * PathSpring.prototype.marginTerm);
 		}
 		else if (this.x + this.width > maxX - this.flagSpacing)
 		{
