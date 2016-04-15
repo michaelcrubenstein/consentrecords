@@ -56,6 +56,13 @@ var Settings = (function () {
 						showPanelLeft(panel.node(), unblockClick);
 					}
 				});
+				
+			this.appendActionButton('Sign Out', function() {
+					if (prepareClick('click', 'Sign Out'))
+					{
+						sign_out(syncFailFunction);
+					}
+				});
 		}
 		
 		showPanelLeft(this.node(), unblockClick);

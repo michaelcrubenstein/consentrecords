@@ -2135,52 +2135,6 @@ var PathtreePanel = (function () {
 			backButton.append("span").text("Done");
 		}
 		
-		if (user == cr.signedinUser)
-		{
-			var signinSpan = navContainer.appendRightButton()
-				.on("click", function()
-					{
-						showClickFeedback(this);
-						if (prepareClick('click',  'Sign Out button'))
-						{
-							if (cr.signedinUser.getValueID())
-							{
-								var successFunction = function()
-								{
-									cr.signedinUser.clearValue();
-									$(cr.signedinUser).trigger("signout.cr");
-									unblockClick();
-								};
-					
-								sign_out(successFunction, syncFailFunction);
-							}
-							else
-							{
-								showFixedPanel(_this.node(), "#id_sign_in_panel");
-							}
-						}
-						d3.event.preventDefault();
-					})
-				.append('span').text('Sign Out');
-			
-			updateSignoutText = function(eventObject) {
-				var panel = new WelcomePanel(previousPanel);
-				if (_this.pathtree)
-					$(_this.pathtree).trigger("clearing.cr");
-				showPanelLeft(panel.node(),
-					function()
-					{
-						$(_this.node()).remove();
-					});
-			};
-			
-			$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
-			$(this.node()).on("remove", null, cr.signedinUser, function(eventObject)
-				{
-					$(cr.signedinUser).off("signout.cr", null, updateSignoutText);
-				});
-		}
-
 		navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
