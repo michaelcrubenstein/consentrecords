@@ -226,8 +226,9 @@ function showPanelNow(panelNode)
 function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
-	$(panelNode).hide("slide", {direction: "right"}, 0);
-	$(panelNode).css("display", "block")
+	$(panelNode).css("top", 0)
+				.hide("slide", {direction: "right"}, 0)
+				.css("display", "block")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
