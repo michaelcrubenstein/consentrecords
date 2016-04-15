@@ -2674,7 +2674,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
 					}
-					hidePanelRight(sitePanel.node());
+					sitePanel.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -2712,7 +2712,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			/* d is the ObjectValue that the user clicked. */
 			var successFunction = function()
 			{
-				hidePanelRight(sitePanel.node());
+				sitePanel.hidePanelRight(unblockClick);
 			}
 			
 			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
