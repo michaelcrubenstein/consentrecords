@@ -1247,25 +1247,6 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 		.on("click", buttonClicked);
 }
 
-function appendActionButton(text, onClick)
-{
-	var itemsDiv = this.append('section')
-		.classed('cell edit unique', true)
-		.classed('btn row-button', true)
-		.on('click', onClick)
-		.append('ol');
-	
-	var button = itemsDiv.append('li')
-		.append('div')
-		.classed('left-expanding-div', true);
-	appendRightChevrons(button);
-		
-	button.append('div')
-		.classed("description-text string-value-view", true)
-		.text(text);	
-		
-}
-
 /* Append a set of buttons to each section for displaying the text for each item. */
 function appendViewButtons(sections, fill)
 {
