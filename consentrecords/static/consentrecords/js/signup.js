@@ -76,10 +76,11 @@ var Signup = (function () {
 						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								sitePanel.hidePanelDown(true,
+								sitePanel.hidePanelDown(
 									function()
 									{
 										$(cr.signedinUser).trigger("signin.cr");
+										unblockClick();
 									});
 							},
 						syncFailFunction);
@@ -88,7 +89,7 @@ var Signup = (function () {
 				
 			});
 		this.dots.appendBackButton(navContainer, function() {
-			sitePanel.hidePanelDown();
+			sitePanel.hidePanelDown(unblockClick);
 		});
 		
 		navContainer.appendTitle('Create a New Account');

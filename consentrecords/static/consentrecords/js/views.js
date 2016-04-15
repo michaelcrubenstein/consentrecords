@@ -1462,7 +1462,7 @@ var SitePanel = (function () {
 			{
 				this.hide = function()
 					{
-						_this.hidePanelDown();
+						_this.hidePanelDown(unblockClick);
 					};
 			}
 			else
@@ -1816,19 +1816,15 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
-	SitePanel.prototype.hidePanelDown = function(doRemove, completeFunction)
+	SitePanel.prototype.hidePanelDown = function(done)
 	{
-		doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
 		closealert();
 		$(this.node()).trigger("hiding.cr");
 		$(this.node()).hide("slide", {direction: "down"}, 400,
 			function() {
-				if (doRemove)
-					$(this).remove();
-				unblockClick();
-				if (completeFunction)
-					completeFunction();
+				$(this).remove();
+				if (done)
+					done();
 			});
 	}
 	
@@ -1838,7 +1834,7 @@ var SitePanel = (function () {
 		{
 			cr.logRecord('click', 'Close Down');
 			_blockClick();
-			this.hidePanelDown();
+			this.hidePanelDown(unblockClick);
 		}
 		else
 			cr.logRecord('click', 'Close Down blocked');
