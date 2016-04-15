@@ -37,7 +37,7 @@ var UpdatePasswordPanel = (function () {
 			{
 				if (prepareClick('click', 'Cancel'))
 				{
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -59,8 +59,12 @@ var UpdatePasswordPanel = (function () {
 										  currentPasswordInput.property('value'),
 										  newPasswordInput.property('value'),
 										  function() {
-										  	hidePanelRight(_this.node());
-										  	bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
+										  	_this.hidePanelRight(
+										  		function()
+										  		{
+										  			bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
+										  			unblockClick();
+										  		});
 										  },
 										  syncFailFunction);
 					}
@@ -145,7 +149,7 @@ var UpdateUsernamePanel = (function () {
 			{
 				if (prepareClick('click', 'Cancel'))
 				{
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -164,8 +168,11 @@ var UpdateUsernamePanel = (function () {
 						cr.updateUsername(newUsernameInput.property('value'),
 										  currentPasswordInput.property('value'),
 										  function() {
-										  	hidePanelRight(_this.node());
-										  	bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
+										  	_this.hidePanelRight(function()
+										  		{
+										  			bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
+										  			unblockClick();
+										  		});
 										  },
 										  syncFailFunction);
 					}

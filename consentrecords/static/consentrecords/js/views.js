@@ -1841,6 +1841,18 @@ var SitePanel = (function () {
 			
 	}
 	
+	SitePanel.prototype.hidePanelRight = function(done)
+	{
+		closealert();
+		$(this.node()).trigger("hiding.cr");
+		$(this.node()).hide("slide", {direction: "right"}, 400, 
+			function() {
+				$(this).remove();
+				if (done)
+					done();
+			});
+	}
+		
 	$(window).resize(function()
 		{
 			$(".site-panel").each(function()

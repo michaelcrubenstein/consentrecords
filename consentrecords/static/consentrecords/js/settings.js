@@ -13,7 +13,7 @@ var Settings = (function () {
 				if (prepareClick('click', 'Cancel'))
 				{
 					showClickFeedback(this);
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			})
