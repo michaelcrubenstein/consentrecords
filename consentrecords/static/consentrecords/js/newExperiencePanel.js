@@ -1473,7 +1473,7 @@ var PickServicePanel = (function () {
 			{
 				if (prepareClick('click', 'cancel'))
 				{
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -1520,7 +1520,7 @@ var PickServicePanel = (function () {
 			if (prepareClick('click', 'pick service: ' + d.getDescription()))
 			{
 				success(new ReportedObject({pickedObject: d}));
-				hidePanelRight(_this.node());
+				_this.hidePanelRight(unblockClick);
 			}
 			d3.event.preventDefault();
 		}
@@ -1536,7 +1536,7 @@ var PickServicePanel = (function () {
 					{
 						var newValue = _this.getObjectByDescription(rootObjects, searchInputNode.value);
 						success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
-						hidePanelRight(_this.node());
+						_this.hidePanelRight(unblockClick);
 					}
 					d3.event.preventDefault();
 				});
@@ -1597,7 +1597,7 @@ var NewExperienceMarkersPanel = (function () {
 					if (prepareClick('click', 'Close Right'))
 					{
 						done();
-						hidePanelRight(_this.node());
+						_this.hidePanelRight(unblockClick);
 					}
 				});
 				

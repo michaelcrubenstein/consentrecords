@@ -13,7 +13,7 @@ var Settings = (function () {
 				if (prepareClick('click', 'Cancel'))
 				{
 					showClickFeedback(this);
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			})
@@ -54,6 +54,13 @@ var Settings = (function () {
 					{
 						var panel = new UpdatePasswordPanel(_this.node());
 						showPanelLeft(panel.node(), unblockClick);
+					}
+				});
+				
+			this.appendActionButton('Sign Out', function() {
+					if (prepareClick('click', 'Sign Out'))
+					{
+						sign_out(syncFailFunction);
 					}
 				});
 		}

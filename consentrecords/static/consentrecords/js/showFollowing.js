@@ -234,7 +234,6 @@ var FollowingPanel = (function() {
 			function(foundObjects, startVal) { _this.getPendingRequestsDone(foundObjects, startVal); });
 		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
 		this._pendingChunker.fields = [];
-		this._pendingChunker.start("");			
 			
 		this._followingSection = panel2Div.appendSections([user])
 				.classed("cell edit multiple", true);
@@ -249,7 +248,12 @@ var FollowingPanel = (function() {
 			function(foundObjects, startVal) { _this.getFollowingRequestsDone(foundObjects, startVal); });
 		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)'.format(this.user.getValueID());
 		this._followingChunker.fields = [];
-		this._followingChunker.start("");			
+		
+		$(this.node()).one("revealing.cr", function()
+			{
+				_this._pendingChunker.start("");			
+				_this._followingChunker.start("");
+			});	
 			
 		showPanelLeft(this.node(), unblockClick);
 	}

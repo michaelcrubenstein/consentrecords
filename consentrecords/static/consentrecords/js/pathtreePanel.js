@@ -170,14 +170,31 @@ var FlagData = (function() {
 			this.getCurrentSpringEnergy();
 	}
 	
-	/* Get the change in energy of fi when the value of the specified field changes by dx. */
-	FlagData.prototype.getDelta = function(field, dx, rightEdge)
+	FlagData.prototype.incrementX = function(dx)
 	{
-		this[field] += dx;
+		this.x += dx;
+	}
+	
+	FlagData.prototype.incrementWidth = function(dx)
+	{
+		this.width += dx;
+	}
+	
+	FlagData.prototype.incrementLeft = function(dx)
+	{
+		/* Keep the right edge the same, but move the left edge. */
+		this.x += dx;
+		this.width -= dx;
+	}
+	
+	/* Get the change in energy of fi when the value of the specified field changes by dx. */
+	FlagData.prototype.getDelta = function(f, dx, rightEdge)
+	{
+		f.call(this, dx);
 		
 		var delta = this.getCurrentEnergy(rightEdge) - this.getCachedEnergy();
 		
-		this[field] -= dx;
+		f.call(this, -dx);
 		
 		return delta;
 	}
@@ -409,12 +426,12 @@ var Pathtree = (function () {
 		return oldDayHeight != this.dayHeight;
 	}
 	
-	Pathtree.prototype.bestDeltaF = function(field, delta)
+	Pathtree.prototype.bestDeltaF = function(f, delta)
 	{
 		return function(previous, current, index)
 		{
 			if (current < previous.e)
-				return {e: current, delta: delta, index: index, v: field};
+				return {e: current, delta: delta, index: index, f: f};
 			else
 				return previous;
 		}
@@ -425,18 +442,20 @@ var Pathtree = (function () {
 		var best = {e: 0.0, delta: 0.0, index: -1};
 		
 		var _this = this;
-		["x", "width"].forEach(function(field)
+		[FlagData.prototype.incrementX,
+		 FlagData.prototype.incrementWidth,
+		 FlagData.prototype.incrementLeft].forEach(function(f)
 			{
-				best = fds.map(function(fi) { return fi.getDelta(field, delta, rightEdge); })
-					.reduce(_this.bestDeltaF(field, delta), best);
-				best = fds.map(function(fi) { return fi.getDelta(field, -delta, rightEdge); })
-					.reduce(_this.bestDeltaF(field, -delta), best);
+				best = fds.map(function(fi) { return fi.getDelta(f, delta, rightEdge); })
+					.reduce(_this.bestDeltaF(f, delta), best);
+				best = fds.map(function(fi) { return fi.getDelta(f, -delta, rightEdge); })
+					.reduce(_this.bestDeltaF(f, -delta), best);
 			});
 			
 		if (best.e < -0.01)
 		{
 			var fi = fds[best.index];
-			fi[best.v] += best.delta;
+			best.f.call(fi, best.delta);
 			fi.setEnergy(rightEdge);
 			
 			return best;
@@ -501,11 +520,15 @@ var Pathtree = (function () {
 			return b.index - a.index;
 			});
 			
-		/* Create a spring between each pair of items whose x values overlap, but there isn't an item
+		/* Create a spring between each pair of items whose y values overlap, but there isn't an item
 			that overlaps both of them with an x value between them.
 		 */
 		
-		/* First, create the overlaps for each experience. */
+		/* First, create the overlaps for each experience. 
+			For each experience (fi), an overlap is created for experiences that are after it and 
+			whose y coordinate is less than this item plus its height. The overlap is associated with
+			the experience (fi or fj) that has the minimum x-coordinate.
+		 */
 		fds.forEach(function(fi, index)
 			{
 				var maxY = fi.y + fi.height;
@@ -523,6 +546,11 @@ var Pathtree = (function () {
 				}
 			});
 		
+		/* Sort the overlaps by their x coordinate, filter for only overlaps that
+			don't intersect with other overlaps and create springs for each such overlap.
+			
+			return the total list of springs.
+		 */
 		return fds.map(function(fi)
 			{
 				var s = fi.overlaps
@@ -537,6 +565,8 @@ var Pathtree = (function () {
 							return true;
 						})
 					.map(function(overlapJ) { return new PathSpring(fi, overlapJ.r2); });
+					
+				/* Add each spring to its left and right edge. */
 				s.forEach(function (spring) {
 					spring.left.springs.push(spring);
 					spring.right.springs.push(spring);
@@ -546,9 +576,9 @@ var Pathtree = (function () {
 			.reduce(function(a, b) { return a.concat(b); }, []);
 	}
 	
-	Pathtree.prototype.setSprings = function(g)
+	Pathtree.prototype.setSprings = function(fds)
 	{
-		var springs = this.getSprings(g.data());
+		var springs = this.getSprings(fds);
 		springs.forEach(function(s) { s.setEnergy(); });
 		return springs;
 	}
@@ -570,7 +600,8 @@ var Pathtree = (function () {
 	Pathtree.prototype.optimize = function(g)
 	{
 		var fds = g.data();
-		
+		var springs = this.setSprings(fds);
+				
 		var _this = this;
 		var rightEdge = $(this.svg.node()).width();
 		fds.forEach(function(fi) { 
@@ -587,11 +618,9 @@ var Pathtree = (function () {
 			delta /= 2;
 		}
 		
-		/* Assign the width of each item. */
-		/* Make a list of every item */
-		/* Flag all of the items whose widths are < bestWidth as immovable. */
-		/* MORE TO DO HERE */
-		
+		/* Recompute the springs to ensure that newly separated items don't overlap. */
+		springs = this.setSprings(fds);
+				
 		/* Set the spanWidth of every item leftover to the width of the span from it to the right */
 		fds.forEach(function(fi) { fi.isFixed = (fi.width < fi.bestWidth); });
 		var items = fds.filter(function(fi) { return !fi.isFixed; });
@@ -858,8 +887,6 @@ var Pathtree = (function () {
 				fd.column = j;
 			}
 		}
-		
-		var springs = this.setSprings(g);
 		
 		if (this.detailFlagData != null)
 		{
@@ -1496,7 +1523,6 @@ var Pathtree = (function () {
 				function()
 				{
 					var allG = _this.experienceGroup.selectAll('g');
-					var springs = _this.setSprings(allG);
 					_this.optimize(allG)
 				});
 		}
@@ -2135,52 +2161,22 @@ var PathtreePanel = (function () {
 			backButton.append("span").text("Done");
 		}
 		
-		if (user == cr.signedinUser)
-		{
-			var signinSpan = navContainer.appendRightButton()
-				.on("click", function()
-					{
-						showClickFeedback(this);
-						if (prepareClick('click',  'Sign Out button'))
-						{
-							if (cr.signedinUser.getValueID())
-							{
-								var successFunction = function()
-								{
-									cr.signedinUser.clearValue();
-									$(cr.signedinUser).trigger("signout.cr");
-									unblockClick();
-								};
-					
-								sign_out(successFunction, syncFailFunction);
-							}
-							else
-							{
-								showFixedPanel(_this.node(), "#id_sign_in_panel");
-							}
-						}
-						d3.event.preventDefault();
-					})
-				.append('span').text('Sign Out');
-			
-			updateSignoutText = function(eventObject) {
-				var panel = new WelcomePanel(previousPanel);
-				if (_this.pathtree)
-					$(_this.pathtree).trigger("clearing.cr");
-				showPanelLeft(panel.node(),
-					function()
-					{
-						$(_this.node()).remove();
-					});
-			};
-			
-			$(cr.signedinUser).on("signout.cr", null, signinSpan.node(), updateSignoutText);
-			$(this.node()).on("remove", null, cr.signedinUser, function(eventObject)
+		var addExperienceButton = navContainer.appendRightButton()
+			.on("click", function(d) {
+				if (prepareClick('click', 'add experience'))
 				{
-					$(cr.signedinUser).off("signout.cr", null, updateSignoutText);
-				});
-		}
-
+					showClickFeedback(this);
+	
+					var newPanel = new NewExperiencePanel(_this.pathtree, _this.node());
+				}
+				d3.event.preventDefault();
+			})
+			.classed('add-experience-button', true)
+			.style("display", "none");
+		addExperienceButton.append("span")
+			.classed('site-active-text', true)
+			.text("+");
+		
 		navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
@@ -2227,19 +2223,6 @@ var PathtreePanel = (function () {
 					});
 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
-		
-		var addExperienceButton = bottomNavContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick('click', 'add experience'))
-				{
-					showClickFeedback(this);
-	
-					var newPanel = new NewExperiencePanel(_this.pathtree, _this.node());
-				}
-				d3.event.preventDefault();
-			});
-		addExperienceButton.append("i").classed("site-active-text fa fa-lg fa-plus", true);
-		addExperienceButton.style("display", "none");
 		
 		/* Add buttons that sit on top of the scroll area. */
 		this.expandButton = this.panelDiv.append('button')

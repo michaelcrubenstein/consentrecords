@@ -226,8 +226,9 @@ function showPanelNow(panelNode)
 function showPanelLeft(panelNode, done)
 {
 	window.scrollTo(0, 0);
-	$(panelNode).hide("slide", {direction: "right"}, 0);
-	$(panelNode).css("display", "block")
+	$(panelNode).css("top", 0)
+				.hide("slide", {direction: "right"}, 0)
+				.css("display", "block")
 				.trigger("revealing.cr");
 	$(window).trigger("resize");
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
@@ -1246,25 +1247,6 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 		.on("click", buttonClicked);
 }
 
-function appendActionButton(text, onClick)
-{
-	var itemsDiv = this.append('section')
-		.classed('cell edit unique', true)
-		.classed('btn row-button', true)
-		.on('click', onClick)
-		.append('ol');
-	
-	var button = itemsDiv.append('li')
-		.append('div')
-		.classed('left-expanding-div', true);
-	appendRightChevrons(button);
-		
-	button.append('div')
-		.classed("description-text string-value-view", true)
-		.text(text);	
-		
-}
-
 /* Append a set of buttons to each section for displaying the text for each item. */
 function appendViewButtons(sections, fill)
 {
@@ -1461,7 +1443,7 @@ var SitePanel = (function () {
 			{
 				this.hide = function()
 					{
-						_this.hidePanelDown();
+						_this.hidePanelDown(unblockClick);
 					};
 			}
 			else
@@ -1815,19 +1797,15 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
-	SitePanel.prototype.hidePanelDown = function(doRemove, completeFunction)
+	SitePanel.prototype.hidePanelDown = function(done)
 	{
-		doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
 		closealert();
 		$(this.node()).trigger("hiding.cr");
 		$(this.node()).hide("slide", {direction: "down"}, 400,
 			function() {
-				if (doRemove)
-					$(this).remove();
-				unblockClick();
-				if (completeFunction)
-					completeFunction();
+				$(this).remove();
+				if (done)
+					done();
 			});
 	}
 	
@@ -1837,13 +1815,25 @@ var SitePanel = (function () {
 		{
 			cr.logRecord('click', 'Close Down');
 			_blockClick();
-			this.hidePanelDown();
+			this.hidePanelDown(unblockClick);
 		}
 		else
 			cr.logRecord('click', 'Close Down blocked');
 			
 	}
 	
+	SitePanel.prototype.hidePanelRight = function(done)
+	{
+		closealert();
+		$(this.node()).trigger("hiding.cr");
+		$(this.node()).hide("slide", {direction: "right"}, 400, 
+			function() {
+				$(this).remove();
+				if (done)
+					done();
+			});
+	}
+		
 	$(window).resize(function()
 		{
 			$(".site-panel").each(function()
@@ -2665,7 +2655,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						// In this case, delete the item on cancel. 
 						oldData.cell.deleteValue(oldData);
 					}
-					hidePanelRight(sitePanel.node());
+					sitePanel.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -2703,7 +2693,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			/* d is the ObjectValue that the user clicked. */
 			var successFunction = function()
 			{
-				hidePanelRight(sitePanel.node());
+				sitePanel.hidePanelRight(unblockClick);
 			}
 			
 			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))

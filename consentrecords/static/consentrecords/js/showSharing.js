@@ -280,7 +280,7 @@ var SharingPanel = (function() {
 			{
 				if (prepareClick('click', 'Sharing Done'))
 				{
-					hidePanelRight(_this.node());
+					_this.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});

@@ -62,7 +62,7 @@
     		z-index: 4;
     	}
     	.background-gradient-panel > nav {
-    		opacity: 0.8;
+    		opacity: 1.0;
     	}
     	.centered-right-glyph {
 			position: absolute;
@@ -780,9 +780,24 @@
 			showPanelLeft(panel.node(), unblockClick);
 		}
 			
-		function sign_out(successFunction, failFunction) {
+		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout(successFunction, failFunction);
+			var done = function()
+			{
+				cr.signedinUser.clearValue();
+				$(cr.signedinUser).trigger("signout.cr");
+				var sitePanels = $("panel.site-panel");
+				var panel = new WelcomePanel("panel.initial");
+				showPanelNow(panel.node());
+				sitePanels.trigger("hiding.cr");
+				$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+					function() {
+						sitePanels.remove();
+						closealert();
+					});
+				unblockClick();
+			}
+			cr.submitSignout(done, syncFailFunction);
 		}
 		
 		function show_consent_records(containerDiv) {

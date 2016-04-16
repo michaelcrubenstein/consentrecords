@@ -3,7 +3,7 @@ var WelcomePanel = (function () {
 	
 	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Welcome", "welcome");
+		SitePanel.call(this, previousPanel, null, "Welcome", "welcome background-gradient-panel");
 		var navContainer = this.appendNavContainer();
 
 		var signinSpan = navContainer.appendRightButton()

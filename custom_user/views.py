@@ -44,7 +44,7 @@ def forgotPassword(request):
     })
     return HttpResponse(template.render(context))
 
-# Displays a web page in which a user can specify a new password based on a key.
+# Displays a web page in which a user can change their password.
 def password(request):
     if not request.user.is_authenticated():
         return signin(request)
@@ -58,9 +58,9 @@ def password(request):
     })
     return HttpResponse(template.render(context))
 
+# Displays a web page in which a user can specify a new password based on a key.
 def passwordReset(request):
-    if not request.user.is_authenticated():
-        return signin(request)
+    # Don't rely on authentication.
     
     template = loader.get_template('custom_user/passwordreset.html')
     resetKey = request.GET.get('key', "")

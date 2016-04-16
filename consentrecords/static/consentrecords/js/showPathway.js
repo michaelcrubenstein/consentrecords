@@ -907,7 +907,7 @@ var EditExperiencePanel = (function () {
 			new ConfirmAlert(this.node(), "Delete Experience", 
 				function() { 
 					_this.datum().deleteValue(
-						function() { _this.hidePanelDown() },
+						function() { _this.hidePanelDown(unblockClick) },
 						syncFailFunction);
 				}, 
 				function() { 
