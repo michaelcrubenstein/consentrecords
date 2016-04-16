@@ -2135,6 +2135,22 @@ var PathtreePanel = (function () {
 			backButton.append("span").text("Done");
 		}
 		
+		var addExperienceButton = navContainer.appendRightButton()
+			.on("click", function(d) {
+				if (prepareClick('click', 'add experience'))
+				{
+					showClickFeedback(this);
+	
+					var newPanel = new NewExperiencePanel(_this.pathtree, _this.node());
+				}
+				d3.event.preventDefault();
+			})
+			.classed('add-experience-button', true)
+			.style("display", "none");
+		addExperienceButton.append("span")
+			.classed('site-active-text', true)
+			.text("+");
+		
 		navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
@@ -2181,19 +2197,6 @@ var PathtreePanel = (function () {
 					});
 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
-		
-		var addExperienceButton = bottomNavContainer.appendRightButton()
-			.on("click", function(d) {
-				if (prepareClick('click', 'add experience'))
-				{
-					showClickFeedback(this);
-	
-					var newPanel = new NewExperiencePanel(_this.pathtree, _this.node());
-				}
-				d3.event.preventDefault();
-			});
-		addExperienceButton.append("i").classed("site-active-text fa fa-lg fa-plus", true);
-		addExperienceButton.style("display", "none");
 		
 		/* Add buttons that sit on top of the scroll area. */
 		this.expandButton = this.panelDiv.append('button')

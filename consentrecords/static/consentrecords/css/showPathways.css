@@ -34,6 +34,11 @@
 		font-size: smaller;
 		fill: #555;
 	}
+	
+	panel.pathway .add-experience-button {
+		font-size: 28px;
+		line-height: 18px;
+	}
 
 	panel.pathway button.expand {
 		position: absolute;
