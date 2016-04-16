@@ -1242,13 +1242,19 @@ var Pathtree = (function () {
 
 	Pathtree.prototype.showDetailPanel = function(fd, i)
 	{
-		if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
+		if (fd.experience.typeName == "Experience") {
+			;	/* Nothing to edit */
+		}
+		else
 		{
-			var panel = $(this).parents(".site-panel")[0];
-			var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
+			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
+			{
+				var panel = $(this).parents(".site-panel")[0];
+				var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
 												  
-			revealPanelLeft(editPanel.node());
-			d3.event.stopPropagation();
+				revealPanelLeft(editPanel.node());
+				d3.event.stopPropagation();
+			}
 		}
 	}
 	
