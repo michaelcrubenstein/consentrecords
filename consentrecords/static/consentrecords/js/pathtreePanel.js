@@ -50,8 +50,7 @@ var PathSpring = (function() {
 		}
 		else
 		{
-			d -= this.flagSpacing;
-			return d * d * this.expandedTerm;
+			return 0;
 		}
 	}
 	
@@ -180,7 +179,11 @@ var FlagData = (function() {
 		if (d > 0)
 			return (d * d * this.widthStretchedTerm);
 		else
+		{
+			/* Normalize the range from 0 to 100 */
+			d = d / this.bestWidth * 100;
 			return d * d * this.widthCompressedTerm;
+		}
 	}
 	
 	/* Returns massive amounts of energy if this item falls outside the display area. */
@@ -655,10 +658,98 @@ var Pathtree = (function () {
 	Pathtree.prototype.optimize = function(g)
 	{
 		var fds = g.data();
+		if (fds.length == 0)
+			return;
+			
 		var springs = this.setSprings(fds);
 				
 		var _this = this;
 		var rightEdge = $(this.svg.node()).width();
+		
+		/* Step 1: lay out the items based on their springs without compression anything. */
+		var items = fds.slice();
+		var stack;
+		fds.forEach(function(fi) { fi.spanWidth = 0.0; });
+		while (items.length > 0)
+		{
+			/* For every item in the list that has no lines to the right that are in the list, 
+				add its width + flagSpacing to all of its items on the left 
+				and remove it from the list. */
+			items.filter(function(fi)
+					{
+						return fi.springs.filter(function(s) { return s.left == fi && 
+																	  s.right.spanWidth == 0.0; }).length == 0; 
+					})
+				.forEach(function(fi)
+					{
+						fi.setSpanWidth(rightEdge);
+						items.splice(items.indexOf(fi), 1);
+					});
+		}
+		fds.forEach(function(fi) { fi.isFixed = false; });
+		items = fds.slice();
+		items.sort(function(a, b) { return b.spanWidth - a.spanWidth; });
+		rightEdge = items[0].spanWidth;
+		
+		var stack;
+		function pushNeighbors(fi)
+		{
+			/* Don't push items on the right if there are items on its left which are not yet set. */
+			fi.rightSprings().filter(function(s) { return !s.right.isFixed &&
+				s.right.leftSprings().find(function(s) { return !s.left.isFixed; }) === undefined; })
+				.sort(function(a, b) { return a.right.spanWidth - b.right.spanWidth; })
+				.forEach(function(s) { stack.push(s.right); });
+			fi.leftSprings().filter(function(s) { return !s.left.isFixed; })
+				.sort(function(a, b) { return a.left.width - b.left.width; })
+				.forEach(function(s) { stack.push(s.left); });
+		}
+		function placeFlag(fi, x)
+		{
+			fi.x = x;
+			fi.isFixed = true;
+			items.splice(items.indexOf(fi), 1);
+			pushNeighbors(fi);
+		}
+		
+		/* Now place all of the items */
+		while (items.length > 0)
+		{
+			/* Find the item with the largest spanWidth. */
+			var fi = items.shift();
+			
+			fi.x = 0.0;
+			fi.isFixed = true;
+			
+			/* Place items that aren't already placed relative to this item. */
+			stack = [];
+			pushNeighbors(fi);
+			while (stack.length > 0)
+			{
+				fi = stack.pop();
+				if (!fi.isFixed)
+				{
+					var maxRight = fi.leftSprings().filter(function(s) { return s.left.isFixed; })
+						.map(function(s) { return s.left.x + s.left.width; })
+						.reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
+					if (maxRight > -Infinity)
+						placeFlag(fi, maxRight + fi.flagSpacing);
+					else
+					{
+						var minX = fi.rightSprings().filter(function(s) { return s.right.isFixed; })
+							.map(function(s) { return s.right.x; })
+							.reduce(function(a, b) { return Math.min(a, b) }, Infinity);
+						if (minX < Infinity)
+							placeFlag(fi, minX - fi.flagSpacing - fi.width);
+						else
+							throw "Invalid case: can not position flag";
+					}
+				}
+			}
+		}
+		
+		/* Step 2: Use a new set of springs and other energy terms to compress the flags within the specified width. */
+		rightEdge = $(this.svg.node()).width();
+		springs = this.setSprings(fds);
 		fds.forEach(function(fi) { 
 			fi.cacheFlagEnergy(rightEdge);
 		});
@@ -673,12 +764,12 @@ var Pathtree = (function () {
 			delta /= 2;
 		}
 		
-		/* Recompute the springs to ensure that newly separated items don't overlap. */
+		/* Step 3: Recompute the springs to ensure that newly separated items don't overlap. */
 		springs = this.setSprings(fds);
 				
 		/* Set the spanWidth of every item leftover to the width of the span from it to the right */
 		fds.forEach(function(fi) { fi.isFixed = (fi.width < fi.bestWidth); });
-		var items = fds.filter(function(fi) { return !fi.isFixed; });
+		items = fds.filter(function(fi) { return !fi.isFixed; });
 		fds.forEach(function(fi) { fi.spanWidth = 0.0; });
 		
 		/* For any item to the right of a compressed item, don't shift those items. */
@@ -710,7 +801,7 @@ var Pathtree = (function () {
 					{
 						return fi.springs.filter(function(s) { return s.left == fi && 
 																	  s.right.spanWidth == 0.0 &&
-																	  !s.right.isFixed; }) == 0; 
+																	  !s.right.isFixed; }).length == 0; 
 					})
 				.forEach(function(fi)
 					{
@@ -750,25 +841,8 @@ var Pathtree = (function () {
 			fi.isFixed = true;
 			
 			/* Place items that aren't already placed relative to this item. */
-			var stack = [];
-			function pushNeighbors(fi)
-			{
-				fi.rightSprings().filter(function(s) { return !s.right.isFixed; })
-					.sort(function(a, b) { return a.right.spanWidth - b.right.spanWidth; })
-					.forEach(function(s) { stack.push(s.right); });
-				fi.leftSprings().filter(function(s) { return !s.left.isFixed; })
-					.sort(function(a, b) { return a.left.width - b.left.width; })
-					.forEach(function(s) { stack.push(s.left); });
-			}
+			stack = [];
 			pushNeighbors(fi);
-			function placeFlag(fi, x)
-			{
-				fi.x = x;
-				fi.isFixed = true;
-				items.splice(items.indexOf(fi), 1);
-				pushNeighbors(fi);
-			}
-			
 			while (stack.length > 0)
 			{
 				fi = stack.pop();
