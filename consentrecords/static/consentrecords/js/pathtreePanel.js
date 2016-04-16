@@ -39,7 +39,7 @@ var PathSpring = (function() {
 		{
 			var minWidth = this.left.width - 12;
 			var t = 100 - ((minWidth + d) / minWidth * 100);
-			return (t * t * this.overlapTerm) + (this.flagSpacing * this.flagSpacing * this.marginTerm);
+			return (t * t * this.overlapTerm) + (this.flagSpacing * this.flagSpacing * this.marginTerm) + this.expandedTerm;
 		}
 		else if (d < this.flagSpacing)
 		{
