@@ -2372,6 +2372,7 @@ var PathtreePanel = (function () {
 				addExperienceButton.style("display", canAddExperience ? null : "none");
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
+				_this.calculateHeight();
 			});
 	}
 	
