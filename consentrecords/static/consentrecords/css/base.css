@@ -97,7 +97,7 @@ panel>nav .left-link {
 	text-align: left;
 	white-space: nowrap;
 	display: inline-block;
-	margin-right: 24px;
+	margin-right: 12px;
 }
 panel>nav .right-link {
 	max-width: 100%;
@@ -106,7 +106,7 @@ panel>nav .right-link {
 	text-align: right;
 	white-space: nowrap;
 	display: inline-block;
-	margin-left: 24px;
+	margin-left: 12px;
 }
 nav .site-left-chevron {
 	height: 18px;
@@ -242,6 +242,16 @@ section.cell {
 	padding: 6px 12px;
 	padding-right: 0px;	/* Since the ol to the right has 12 px of left padding */
 }
+
+.cell.action {
+	font-size: medium;
+	text-align: center;
+}
+
+.panel-fill>section.cell.action.first {
+	margin-top: 12px;
+}
+
 .string-value-view {
 	position: relative;
 	overflow: hidden;

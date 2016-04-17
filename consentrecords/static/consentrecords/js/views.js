@@ -208,7 +208,8 @@ function showPanelUp(panelNode, done)
 	$(panelNode).hide("slide", {direction: "down"}, 0);
 	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
 							if (done)
 								done();
@@ -220,7 +221,8 @@ function showPanelNow(panelNode)
 	$(panelNode).offset({top: 0, left: 0})
 				.css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 }
 
 function showPanelLeft(panelNode, done)
@@ -230,7 +232,8 @@ function showPanelLeft(panelNode, done)
 				.hide("slide", {direction: "right"}, 0)
 				.css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
 							if (done)
 								done();
@@ -1587,8 +1590,11 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.calculateHeight = function()
 	{
-		var varNode = this.mainDiv.node();
-		$(varNode).calculateFillHeight();
+		if (this.mainDiv)
+		{
+			var varNode = this.mainDiv.node();
+			$(varNode).calculateFillHeight();
+		}
 	}
 	
 	SitePanel.prototype.appendScrollArea = function()
@@ -1775,21 +1781,18 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.appendActionButton = function(text, onClick)
 	{
-		var itemsDiv = this.mainDiv.append('section')
-			.classed('cell edit unique', true)
-			.classed('btn row-button', true)
-			.on('click', onClick)
-			.append('ol');
+		var sectionDiv = this.mainDiv.append('section')
+			.classed('cell unique btn action', true)
+			.on('click', onClick);
+		var itemsDiv = sectionDiv.append('ol');
 		
 		var button = itemsDiv.append('li')
-			.append('div')
-			.classed('left-expanding-div', true);
-		appendRightChevrons(button);
+			.append('div');
 			
 		button.append('div')
-			.classed("description-text string-value-view", true)
+			.classed("site-active-text string-value-view", true)
 			.text(text);	
-			
+		return sectionDiv;	
 	}
 	
 	SitePanel.prototype.datum = function()

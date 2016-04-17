@@ -3,29 +3,15 @@ var Settings = (function () {
 
 	function Settings(user, previousPanel) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Settings", "edit settings-panel");
+		SitePanel.call(this, previousPanel, null, "Settings", "edit settings-panel", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
-
-		navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'Cancel'))
-				{
-					showClickFeedback(this);
-					_this.hidePanelRight(unblockClick);
-				}
-				d3.event.preventDefault();
-			})
-			.append("span").text("Cancel");
 
 		var doneButton = navContainer.appendRightButton();
 			
 		navContainer.appendTitle('Settings');
 		
-		var panel2Div = this.appendScrollArea()
-			.classed("vertical-scrolling", false)
-			.classed("no-scrolling", true);
+		var panel2Div = this.appendScrollArea();
 			
 		doneButton.on("click", function()
 				{
@@ -40,32 +26,57 @@ var Settings = (function () {
 					 
 		this.showEditCells(cells);
 		
+		if (user.privilege === "_administer")
+		{
+			this.appendActionButton('Sharing', function() {
+					if (prepareClick('click', 'Sharing'))
+					{
+						showClickFeedback(this);
+						var panel = new SharingPanel(user, _this.node());
+						showPanelUp(panel.node(), unblockClick);
+					}
+				})
+				.classed('first', true);
+				
+			this.appendActionButton('Following', function() {
+					if (prepareClick('click', 'Following'))
+					{
+						showClickFeedback(this);
+						var panel = new FollowingPanel(user, _this.node());
+						showPanelUp(panel.node(), unblockClick);
+					}
+				});
+		}
+				
 		if (user == cr.signedinUser)
 		{
 			this.appendActionButton('Change Email', function() {
 					if (prepareClick('click', 'Change Email'))
 					{
+						showClickFeedback(this);
 						var panel = new UpdateUsernamePanel(user, _this.node());
+						showPanelUp(panel.node(), unblockClick);
 					}
 				});
 		
 			this.appendActionButton('Change Password', function() {
 					if (prepareClick('click', 'Change Password'))
 					{
+						showClickFeedback(this);
 						var panel = new UpdatePasswordPanel(_this.node());
-						showPanelLeft(panel.node(), unblockClick);
+						showPanelUp(panel.node(), unblockClick);
 					}
 				});
-				
+
 			this.appendActionButton('Sign Out', function() {
 					if (prepareClick('click', 'Sign Out'))
 					{
+						showClickFeedback(this);
 						sign_out(syncFailFunction);
 					}
-				});
+				})
+				.classed('first', true);
 		}
-		
-		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return Settings;

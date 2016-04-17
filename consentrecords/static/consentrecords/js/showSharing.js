@@ -158,16 +158,6 @@ var SharingPanel = (function() {
 			.append("div").classed("pull-left", true);
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
 		buttonDiv.append("span").text(" add user or group");
-		
-		this.appendActionButton('Following', function() {
-				if (prepareClick('click', 'Following'))
-				{
-					showClickFeedback(this);
-					var settings = new FollowingPanel(_this.user, _this.node());
-				}
-			});
-				
-		showPanelLeft(this.node(), unblockClick);
 	}
 
 	SharingPanel.prototype.getPrivileges = function(panel2Div, enumerators)
@@ -269,7 +259,7 @@ var SharingPanel = (function() {
 
 	function SharingPanel(user, previousPanelNode)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit sharing", revealPanelLeft);
+		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit sharing", revealPanelUp);
 		this.user = user;
 		var _this = this;
 		
@@ -280,11 +270,13 @@ var SharingPanel = (function() {
 			{
 				if (prepareClick('click', 'Sharing Done'))
 				{
-					_this.hidePanelRight(unblockClick);
+					_this.hide();
 				}
 				d3.event.preventDefault();
 			});
-		backButton.append("span").text("Done");
+		appendLeftChevrons(backButton).classed("site-active-text", true);
+		backButton.append("span").text("Settings");
+		
 		navContainer.appendTitle('Sharing');
 		
 		var panel2Div = this.appendScrollArea();

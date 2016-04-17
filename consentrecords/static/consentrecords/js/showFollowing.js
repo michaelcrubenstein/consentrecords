@@ -196,12 +196,20 @@ var FollowingPanel = (function() {
 	function FollowingPanel(user, previousPanel) {
 		var header = "Following";
 		this.user = user;
-		SitePanel.call(this, previousPanel, null, header, "edit following");
+		SitePanel.call(this, previousPanel, null, header, "edit following", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
-		navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent)
-		    .append("span").text("Done");
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'Following Done'))
+				{
+					_this.hide();
+				}
+				d3.event.preventDefault();
+			});
+		appendLeftChevrons(backButton).classed("site-active-text", true);
+		backButton.append("span").text("Settings");
 		
 		var _this = this;	
 		var addExperienceButton = navContainer.appendRightButton()
@@ -254,8 +262,6 @@ var FollowingPanel = (function() {
 				_this._pendingChunker.start("");			
 				_this._followingChunker.start("");
 			});	
-			
-		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return FollowingPanel;

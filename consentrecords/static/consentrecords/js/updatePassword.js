@@ -27,7 +27,7 @@ var UpdatePasswordPanel = (function () {
 	}
 
 	function UpdatePasswordPanel(previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Password", "background-gradient-panel", revealPanelLeft);
+		SitePanel.call(this, previousPanelNode, null, "Password", "background-gradient-panel", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -37,7 +37,7 @@ var UpdatePasswordPanel = (function () {
 			{
 				if (prepareClick('click', 'Cancel'))
 				{
-					_this.hidePanelRight(unblockClick);
+					_this.hide();
 				}
 				d3.event.preventDefault();
 			});
@@ -106,6 +106,11 @@ var UpdatePasswordPanel = (function () {
 			.attr('required', '1')
 			.classed('form-control', true);
 			
+		$(this.node()).on("revealing.cr", function()
+			{
+				currentPasswordInput.node().focus();
+			});
+			
 	}
 	
 	return UpdatePasswordPanel;
@@ -139,7 +144,7 @@ var UpdateUsernamePanel = (function () {
 	}
 
 	function UpdateUsernamePanel(user, previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Username", "background-gradient-panel", revealPanelLeft);
+		SitePanel.call(this, previousPanelNode, null, "Username", "background-gradient-panel", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -149,7 +154,7 @@ var UpdateUsernamePanel = (function () {
 			{
 				if (prepareClick('click', 'Cancel'))
 				{
-					_this.hidePanelRight(unblockClick);
+					_this.hide();
 				}
 				d3.event.preventDefault();
 			});
@@ -222,10 +227,10 @@ var UpdateUsernamePanel = (function () {
 					e.preventDefault();
 				}
 			});
-	
-		showPanelLeft(this.node(), function() {
+			
+		$(this.node()).on("revealing.cr", function()
+			{
 				newUsernameInput.node().focus();
-				unblockClick();
 			});
 	}
 	
