@@ -195,7 +195,7 @@ var FlagData = (function() {
 		{
 			var d = maxX - (this.x + this.width);
 			var t = d / this.width * 100;	/* Normalize to a range from 0 to 100. */
-			return t * t * PathSpring.prototype.overlapTerm + (this.flagSpacing * this.flagSpacing * PathSpring.prototype.marginTerm);
+			return t * t * PathSpring.prototype.overlapTerm * 4 + (this.flagSpacing * this.flagSpacing * PathSpring.prototype.marginTerm);
 		}
 		else if (this.x + this.width > maxX - this.flagSpacing)
 		{
@@ -837,7 +837,7 @@ var Pathtree = (function () {
 					})
 				.reduce(function(a, b) { return Math.max(a, b); }, 0.0);
 			var leftEdge = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
-			fi.x = leftEdge + (rightEdge - leftEdge - fi.spanWidth) / 2;
+			fi.x = Math.max(leftEdge + (rightEdge - leftEdge - fi.spanWidth) / 2, 0.0);
 			fi.isFixed = true;
 			
 			/* Place items that aren't already placed relative to this item. */
