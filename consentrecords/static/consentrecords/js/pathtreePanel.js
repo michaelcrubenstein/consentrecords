@@ -668,8 +668,11 @@ var Pathtree = (function () {
 		
 		/* Step 1: lay out the items based on their springs without compression anything. */
 		var items = fds.slice();
-		var stack;
-		fds.forEach(function(fi) { fi.spanWidth = 0.0; });
+		
+		/* Clear spanWidth (because it is used in the test below) and isFixed (because it is
+			used internally in setSpanWidth).
+		 */
+		fds.forEach(function(fi) { fi.spanWidth = 0.0; fi.isFixed = false;});
 		while (items.length > 0)
 		{
 			/* For every item in the list that has no lines to the right that are in the list, 
@@ -686,7 +689,6 @@ var Pathtree = (function () {
 						items.splice(items.indexOf(fi), 1);
 					});
 		}
-		fds.forEach(function(fi) { fi.isFixed = false; });
 		items = fds.slice();
 		items.sort(function(a, b) { return b.spanWidth - a.spanWidth; });
 		rightEdge = items[0].spanWidth;
