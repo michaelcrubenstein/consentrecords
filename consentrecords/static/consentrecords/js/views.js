@@ -208,7 +208,8 @@ function showPanelUp(panelNode, done)
 	$(panelNode).hide("slide", {direction: "down"}, 0);
 	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
 							if (done)
 								done();
@@ -220,7 +221,8 @@ function showPanelNow(panelNode)
 	$(panelNode).offset({top: 0, left: 0})
 				.css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 }
 
 function showPanelLeft(panelNode, done)
@@ -230,7 +232,8 @@ function showPanelLeft(panelNode, done)
 				.hide("slide", {direction: "right"}, 0)
 				.css("display", "block")
 				.trigger("revealing.cr");
-	$(window).trigger("resize");
+	if (panelNode.sitePanel)
+		panelNode.sitePanel.calculateHeight();
 	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
 							if (done)
 								done();
