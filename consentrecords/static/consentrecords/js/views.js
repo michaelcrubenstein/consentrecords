@@ -1590,8 +1590,11 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.calculateHeight = function()
 	{
-		var varNode = this.mainDiv.node();
-		$(varNode).calculateFillHeight();
+		if (this.mainDiv)
+		{
+			var varNode = this.mainDiv.node();
+			$(varNode).calculateFillHeight();
+		}
 	}
 	
 	SitePanel.prototype.appendScrollArea = function()
