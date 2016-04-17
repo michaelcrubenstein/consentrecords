@@ -2255,13 +2255,33 @@ var PathtreePanel = (function () {
 
 		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
 		var navContainer = this.appendNavContainer();
+		var settingsButton;
+		
 		if (canDone)
 		{
 			var backButton = navContainer.appendLeftButton()
 				.on("click", handleCloseRightEvent);
 			backButton.append("span").text("Done");
+			settingsButton = navContainer.appendRightButton();
 		}
-		
+		else
+			settingsButton = navContainer.appendLeftButton();
+
+		settingsButton
+			.on("click", 
+				function() {
+					if (prepareClick('click', "Settings"))
+					{
+						var panel = new Settings(user, _this.node());
+						showPanelUp(panel.node(), unblockClick);
+					}
+					d3.event.preventDefault();
+				})
+			.classed("settings", true)
+			.style("display", "none")
+			.append("img")
+			.attr("src", settingsImagePath);
+
 		var addExperienceButton = navContainer.appendRightButton()
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))
@@ -2286,31 +2306,6 @@ var PathtreePanel = (function () {
 
 		var bottomNavContainer = this.appendBottomNavContainer();
 
-		var settingsButton = bottomNavContainer.appendLeftButton()
-			.on("click", 
-				function() {
-					if (prepareClick('click', "Settings"))
-					{
-						var settings = new Settings(user, _this.node());
-					}
-					d3.event.preventDefault();
-				});
-		settingsButton.append("i").classed("site-active-text fa fa-lg fa-cog", true);
-		settingsButton.style("display", "none");
-
-		var sharingButton = bottomNavContainer.appendLeftButton()
-			.on("click", 
-				function() {
-					if (prepareClick('click', "Sharing"))
-					{
-						var settings = new SharingPanel(user, _this.node());
-					}
-		
-					d3.event.preventDefault();
-				});
-		sharingButton.append("i").classed("site-active-text fa fa-lg fa-users", true);
-		sharingButton.style("display", "none");
-		
 		var findButton = bottomNavContainer.appendRightButton()
 				.on("click",
 					function() {
@@ -2376,7 +2371,6 @@ var PathtreePanel = (function () {
 				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 				addExperienceButton.style("display", canAddExperience ? null : "none");
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
-				sharingButton.style("display", user.privilege === "_administer" ? null : "none");
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 			});
 	}

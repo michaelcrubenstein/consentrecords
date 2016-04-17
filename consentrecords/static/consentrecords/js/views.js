@@ -1775,21 +1775,18 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.appendActionButton = function(text, onClick)
 	{
-		var itemsDiv = this.mainDiv.append('section')
-			.classed('cell edit unique', true)
-			.classed('btn row-button', true)
-			.on('click', onClick)
-			.append('ol');
+		var sectionDiv = this.mainDiv.append('section')
+			.classed('cell unique btn action', true)
+			.on('click', onClick);
+		var itemsDiv = sectionDiv.append('ol');
 		
 		var button = itemsDiv.append('li')
-			.append('div')
-			.classed('left-expanding-div', true);
-		appendRightChevrons(button);
+			.append('div');
 			
 		button.append('div')
-			.classed("description-text string-value-view", true)
+			.classed("site-active-text string-value-view", true)
 			.text(text);	
-			
+		return sectionDiv;	
 	}
 	
 	SitePanel.prototype.datum = function()

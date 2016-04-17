@@ -35,6 +35,11 @@
 		fill: #555;
 	}
 	
+	panel.pathway .settings>img {
+		width: 22px;
+		height: 22px;
+	}
+	
 	panel.pathway .add-experience-button {
 		font-size: 28px;
 		line-height: 18px;
