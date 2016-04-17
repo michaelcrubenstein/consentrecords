@@ -127,7 +127,8 @@ function getUserDescription(user)
 				
 function showUser(user, previousPanelNode)
 {
-	var panel = new UserPanel(user, previousPanelNode);
+	var panel = new PathtreePanel(user, previousPanelNode);
+	panel.pathtree.setUser(user, true);
 	showPanelLeft(panel.node(), unblockClick);
 }
 
