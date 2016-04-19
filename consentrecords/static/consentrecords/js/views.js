@@ -2462,7 +2462,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		else
 		{
 			$(cr.signedinUser).on("signin.cr", null, navContainer.nav.node(), checkEdit);
-			$(navContainer.nav.node()).on("remove", null, cr.signedinUser, function()
+			$(navContainer.nav.node()).on("remove", null, cr.signedinUser, function(eventObject)
 				{
 					$(eventObject.data).off("signin.cr", navContainer.nav.node(), checkEdit);
 				});
