@@ -838,8 +838,7 @@ var Pathtree = (function () {
 						return 0.0;
 					})
 				.reduce(function(a, b) { return Math.max(a, b); }, 0.0);
-			var leftEdge = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
-			fi.x = Math.max(leftEdge + (rightEdge - leftEdge - fi.spanWidth) / 2, 0.0);
+			fi.x = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
 			fi.isFixed = true;
 			
 			/* Place items that aren't already placed relative to this item. */
@@ -1631,7 +1630,7 @@ var Pathtree = (function () {
 		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
 		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
 		
-		$(node).on("remove", null, fd.experience, function()
+		$(node).on("remove", null, fd.experience, function(eventObject)
 		{
 			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
 			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
@@ -1668,7 +1667,7 @@ var Pathtree = (function () {
 	{
 		var _this = this;
 
-		this.experienceGroup.selectAll('g').remove();
+		$(this.experienceGroup.selectAll('g')[0]).remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
@@ -1784,7 +1783,7 @@ var Pathtree = (function () {
 		var index = this.allExperiences.indexOf(experience);
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		if (experience == this.detailFlagData.experience)
+		if (this.detailFlagData && experience == this.detailFlagData.experience)
 			this.hideDetail(function() { }, 0);
 		this.clearLayout();
 		this.checkLayout();
