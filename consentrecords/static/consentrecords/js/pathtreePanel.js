@@ -2319,6 +2319,18 @@ var PathtreePanel = (function () {
 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
 		
+		var shareButton = bottomNavContainer.appendLeftButton()
+			.classed("share", true)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'delete experience'))
+					{
+						new ShareOptions(_this.node());
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+		
 		/* Add buttons that sit on top of the scroll area. */
 		this.expandButton = this.panelDiv.append('button')
 			.classed('expand', true)
@@ -2376,5 +2388,86 @@ var PathtreePanel = (function () {
 	}
 	
 	return PathtreePanel;
+})();
+
+var ShareOptions = (function () {
+
+	function ShareOptions(panelNode)
+	{
+		var dimmer = d3.select(panelNode).append('div')
+			.classed('dimmer', true);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		function onCancel(e)
+		{
+			if (prepareClick('click', 'Cancel'))
+			{
+				$(confirmButton.node()).off('blur');
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					unblockClick();
+				});
+				$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
+					function()
+					{
+						dimmer.remove();
+					}});
+			}
+			e.preventDefault();
+		}
+		
+		var confirmButton = div.append('button')
+			.text("Email Pathway Link")
+			.classed("site-active-text", true)
+			.on("click", function()
+				{
+					if (prepareClick('click', "Email Pathway Link"))
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							var user = panelNode.sitePanel.pathtree.user;
+							if (user.getValueID() == cr.signedinUser.getValueID())
+							{
+								window.open('mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+											.format(window.location.origin, user.getDatum("_email")));
+							}
+							else
+							{
+								window.open('mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+											.format(getUserDescription(user), window.location.origin, user.getDatum("_email")));
+							}
+							unblockClick();
+						});
+						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
+							function()
+							{
+								dimmer.remove();
+							}});
+					}
+				});
+				
+		$(confirmButton.node()).on('blur', onCancel);
+		var cancelButton = div.append('button')
+			.text("Cancel")
+			.classed("site-active-text", true);
+		
+		$(cancelButton.node()).click(onCancel);
+		
+		$(dimmer.node()).animate({opacity: 0.3}, 400);
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		$(dimmer.node()).mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ShareOptions;
 })();
 
