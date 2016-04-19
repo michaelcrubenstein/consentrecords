@@ -419,6 +419,7 @@ div.add-value>button {
 }
 
 .glyphicon-minus-sign {
+	position: relative;
 	margin-right: 12px;
 	color: red;
 	-ms-transform: rotate(90deg); /* IE 9 */

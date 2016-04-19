@@ -144,9 +144,10 @@ var FollowingPanel = (function() {
 				}
 			});
 		var buttons = appendRowButtons(divs);
-		appendDeleteControls(buttons);
-		buttons.append('div').classed("left-expanding-div description-text", true)
-			.text(_getDataDescription);
+		var deleteControls = this.appendDeleteControls(buttons);
+		appendButtonDescriptions(buttons);
+		if (!this.inEditMode)
+			this.hideDeleteControlsNow(deleteControls);
 		
 		return buttons;
 	}
@@ -212,19 +213,40 @@ var FollowingPanel = (function() {
 		backButton.append("span").text("Settings");
 		
 		var _this = this;	
-		var addExperienceButton = navContainer.appendRightButton()
-			.classed('add-button', true)
-			.on("click", function(d) {
-				if (prepareClick('click', 'request follow'))
+		this.inEditMode = false;
+		var editButton = navContainer.appendRightButton()
+			.on("click", function()
+			{
+				if (_this.inEditMode)
 				{
-					showClickFeedback(this);
-	
-					var newPanel = new RequestFollowPanel(user, _this);
+					showClickFeedback(this, function()
+						{
+							editButton.selectAll('span').text("Edit");
+						});
+					if (prepareClick('click', 'Done Editing'))
+					{
+						_this.hideDeleteControls();
+						
+						_this.inEditMode = false;
+						unblockClick();
+					}
 				}
-				d3.event.preventDefault();
+				else
+				{
+					if (prepareClick('click', 'Start Editing'))
+					{
+						showClickFeedback(this, function()
+							{
+								editButton.selectAll('span').text("Done");
+							});
+						_this.showDeleteControls();
+						_this.inEditMode = true;
+						unblockClick();
+					}
+				}
 			});
-		addExperienceButton.append("span").text("+");
-
+		editButton.append('span').text("Edit");
+		
 		navContainer.appendTitle(header);
 		
 		var panel2Div = this.appendScrollArea();
@@ -242,6 +264,17 @@ var FollowingPanel = (function() {
 			function(foundObjects, startVal) { _this.getPendingRequestsDone(foundObjects, startVal); });
 		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
 		this._pendingChunker.fields = [];
+		
+		this.appendActionButton("Ask To Follow...", function()
+			{
+				if (prepareClick('click', 'request follow'))
+				{
+					showClickFeedback(this);
+	
+					var newPanel = new RequestFollowPanel(user, _this);
+				}
+				d3.event.preventDefault();
+			});
 			
 		this._followingSection = panel2Div.appendSections([user])
 				.classed("cell edit multiple", true);

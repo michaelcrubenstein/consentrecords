@@ -127,8 +127,7 @@ var crv = {
 				d3.event.preventDefault();
 			})
 			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add " + cell.field.name);
+		buttonDiv.append("span").text("Add " + cell.field.name + "…");
 	},
 };
 
@@ -192,10 +191,15 @@ function prepareClick(name, message, forceCloseAlert)
 	return true;
 }
  
-function showClickFeedback(obj)
+function showClickFeedback(obj, done)
 {
 	var oldOpacity = $(obj).css("opacity");
-	$(obj).animate({opacity: "0.2"}, 200)
+	$(obj).animate({opacity: done ? "0.0" : "0.2"}, 200,
+				function()
+				{
+					if (done)
+						done();
+				})
 		   .animate({opacity: oldOpacity}, 600, "swing",
 		   	function() {
 		   		$(obj).css("opacity", "");
@@ -336,7 +340,7 @@ function _checkItemsDivDisplay(node)
 	var items = itemsDiv.selectAll("li");
 	
 	if (isEdit)
-		isVisible = items.size() > 0;
+		isVisible = true;
 	else
 	{
 		isVisible = false;
@@ -772,7 +776,7 @@ function appendConfirmDeleteControls(divs, onClick)
 
 function appendDeleteControls(buttons)
 {
-	buttons.append("button")
+	return buttons.append("button")
 		.classed("glyphicon glyphicon-minus-sign pull-left", true)
 		.on("click", function(e)
 		{
@@ -1836,7 +1840,71 @@ var SitePanel = (function () {
 					done();
 			});
 	}
-		
+	
+	SitePanel.prototype.appendDeleteControls = function(buttons)
+	{
+		return buttons.append("button")
+			.classed("glyphicon glyphicon-minus-sign pull-left", true)
+			.on("click", function(e)
+			{
+				if ($(this).css("opacity") > 0 &&
+					prepareClick('click', 'delete button'))
+				{
+					$(this).animateRotate(90, 180, 600, 'swing');
+					var confirmButton = $($(this).parents("li")[0]).children("button");
+					autoWidth = confirmButton.css('width', 'auto')
+						.width();
+					confirmButton.width(0)
+						.animate({width: autoWidth+24, "padding-left": "12px", "padding-right": "12px"}, 600, 'swing', 
+						function () 
+						{ 
+							unblockClick(); 
+							this.focus();
+						});
+				};
+				d3.event.preventDefault();
+			});
+	}
+	
+	SitePanel.prototype.hideDeleteControlsNow = function()
+	{
+		$(this.node()).find(".glyphicon-minus-sign")
+			.animate({left: "-24px", opacity: 0}, 0);
+		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
+		if (adj.length > 0)
+		{
+			var newWidth = adj.width();
+			adj.css("display", "inline-block");
+			adj.animate({left: "-24px", width: "{0}px".format(newWidth + 24)}, 0);
+		}
+	}
+	
+	SitePanel.prototype.showDeleteControls = function()
+	{
+		$(this.node()).find(".glyphicon-minus-sign")
+			.animate({left: "0px", opacity: 1}, 400);
+		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
+		if (adj.length > 0)
+		{
+			var newWidth = adj.width();
+			adj.css("display", "inline-block");
+			adj.animate({left: "0px", width: "{0}px".format(newWidth - 24)}, 400);
+		}
+	}
+	
+	SitePanel.prototype.hideDeleteControls = function()
+	{
+		$(this.node()).find(".glyphicon-minus-sign")
+			.animate({left: "-24px", opacity: 0}, 400);
+		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
+		if (adj.length > 0)
+		{
+			var newWidth = adj.width();
+			adj.css("display", "inline-block");
+			adj.animate({left: "-24px", width: "{0}px".format(newWidth + 24)}, 400);
+		}
+	}
+
 	$(window).resize(function()
 		{
 			$(".site-panel").each(function()

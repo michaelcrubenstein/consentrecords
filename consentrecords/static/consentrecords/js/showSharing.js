@@ -1,43 +1,44 @@
-function appendUserControls(items, panelNode)
-{
-	appendConfirmDeleteControls(items);
-	
-	var buttons = appendRowButtons(items);
-
-	appendDeleteControls(buttons);
-	appendInfoButtons(buttons, panelNode);
-
-	appendButtonDescriptions(buttons)
-		.each(_pushTextChanged);
-		
-	return buttons;
-}
-
-/* Produces a function which adds new value view to a container view
-	when the new data is added.
-	the viewFunction is called when the item is clicked.
- */
-function onUserAdded(itemsDivNode, newValue)
-{
-	var previousPanelNode = $(itemsDivNode).parents(".site-panel")[0];
-	var itemsDiv = d3.select(itemsDivNode);
-	var item = appendItem(itemsDiv, newValue);
-	_checkItemsDivDisplay(itemsDivNode);
-		
-	appendUserControls(item, previousPanelNode);
-
-	item.style("display", null);
-	var newHeight = item.style("height");
-	item.style("height", "0");
-	$(item.node()).animate({height: newHeight}, 400, "swing");
-}
-
 var SharingPanel = (function() {
 	SharingPanel.prototype = new SitePanel();
 	SharingPanel.prototype.privilegesByID = null;
 	SharingPanel.prototype.privileges = null;
 	SharingPanel.prototype.user = null;
 	
+	SharingPanel.prototype.appendUserControls = function(items)
+	{
+		appendConfirmDeleteControls(items);
+	
+		var buttons = appendRowButtons(items);
+
+		var deleteControls = this.appendDeleteControls(buttons);
+	
+		appendInfoButtons(buttons, this.node());
+
+		appendButtonDescriptions(buttons)
+			.each(_pushTextChanged);
+		if (!this.inEditMode)
+			this.hideDeleteControlsNow(deleteControls);
+		
+		return buttons;
+	}
+
+	/* Produces a function which adds new value view to a container view
+		when the new data is added.
+		the viewFunction is called when the item is clicked.
+	 */
+	SharingPanel.prototype.onUserAdded = function(itemsDivNode, newValue)
+	{
+		var itemsDiv = d3.select(itemsDivNode);
+		var item = appendItem(itemsDiv, newValue);
+		
+		this.appendUserControls(item);
+
+		item.style("display", null);
+		var newHeight = item.style("height");
+		item.style("height", "0");
+		$(item.node()).animate({height: newHeight}, 400, "swing");
+	}
+
 	SharingPanel.prototype.appendApplyButtons = function(buttons)
 	{
 		var spans = buttons.append('span').classed('site-active-text', true)
@@ -135,7 +136,7 @@ var SharingPanel = (function() {
 			.data(this.privileges)
 			.enter()
 			.append("section")
-			.classed("cell multiple", true);
+			.classed("cell multiple edit", true);
 		cells.append("label")
 			.text(function(d) { return d.label });
 			
@@ -147,7 +148,7 @@ var SharingPanel = (function() {
 		
 		var items = appendItems(itemCells, function(d) { return d.accessors });
 		
-		appendUserControls(items, this.node());
+		this.appendUserControls(items);
 		
 		/* Add one more button for the add Button item. */
 		var buttonDiv = cells.append("div")
@@ -156,8 +157,7 @@ var SharingPanel = (function() {
 				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);
 			})
 			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add user or group");
+		buttonDiv.append("span").text("Add User or Group...");
 	}
 
 	SharingPanel.prototype.getPrivileges = function(panel2Div, enumerators)
@@ -203,6 +203,7 @@ var SharingPanel = (function() {
 	
 	SharingPanel.prototype.addAccess = function(accessorLevel, pickedUser, cellName, done)
 	{
+		var _this = this;
 		if (accessorLevel.accessRecords.length == 0)
 		{
 			function _createAccessRecordSuccess(newData)
@@ -211,7 +212,7 @@ var SharingPanel = (function() {
 					var userCell = newData.getCell(cellName);
 					var newValue = userCell.data[0];
 					accessorLevel.accessRecords.push(newData);
-					onUserAdded(accessorLevel.itemsDiv, newValue);
+					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
 					done();
 				},
 				syncFailFunction);
@@ -225,7 +226,7 @@ var SharingPanel = (function() {
 		{
 			function _addUserSuccess(newValue)
 			{
-				onUserAdded(accessorLevel.itemsDiv, newValue);
+				_this.onUserAdded(accessorLevel.itemsDiv, newValue);
 				done();
 			}
 
@@ -276,6 +277,39 @@ var SharingPanel = (function() {
 			});
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text("Settings");
+		
+		this.inEditMode = false;
+		var editButton = navContainer.appendRightButton()
+			.on("click", function()
+			{
+				if (_this.inEditMode)
+				{
+					if (prepareClick('click', 'Done Editing'))
+					{
+						showClickFeedback(this, function()
+							{
+								editButton.selectAll('span').text("Edit");
+							});
+						_this.hideDeleteControls();
+						_this.inEditMode = false;
+						unblockClick();
+					}
+				}
+				else
+				{
+					if (prepareClick('click', 'Start Editing'))
+					{
+						showClickFeedback(this, function()
+							{
+								editButton.selectAll('span').text("Done");
+							});
+						_this.showDeleteControls();
+						_this.inEditMode = true;
+						unblockClick();
+					}
+				}
+			});
+		editButton.append('span').text("Edit");
 		
 		navContainer.appendTitle('Sharing');
 		
