@@ -838,8 +838,7 @@ var Pathtree = (function () {
 						return 0.0;
 					})
 				.reduce(function(a, b) { return Math.max(a, b); }, 0.0);
-			var leftEdge = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
-			fi.x = Math.max(leftEdge + (rightEdge - leftEdge - fi.spanWidth) / 2, 0.0);
+			fi.x = maxLeft > 0.0 ? maxLeft + fi.flagSpacing : 0.0;
 			fi.isFixed = true;
 			
 			/* Place items that aren't already placed relative to this item. */
