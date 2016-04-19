@@ -1784,7 +1784,7 @@ var Pathtree = (function () {
 		var index = this.allExperiences.indexOf(experience);
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		if (experience == this.detailFlagData.experience)
+		if (this.detailFlagData && experience == this.detailFlagData.experience)
 			this.hideDetail(function() { }, 0);
 		this.clearLayout();
 		this.checkLayout();
