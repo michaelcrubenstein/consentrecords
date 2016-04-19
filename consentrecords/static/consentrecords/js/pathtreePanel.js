@@ -1630,7 +1630,7 @@ var Pathtree = (function () {
 		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
 		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
 		
-		$(node).on("remove", null, fd.experience, function()
+		$(node).on("remove", null, fd.experience, function(eventObject)
 		{
 			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
 			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
