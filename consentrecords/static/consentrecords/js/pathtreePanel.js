@@ -1668,7 +1668,7 @@ var Pathtree = (function () {
 	{
 		var _this = this;
 
-		this.experienceGroup.selectAll('g').remove();
+		$(this.experienceGroup.selectAll('g')[0]).remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
