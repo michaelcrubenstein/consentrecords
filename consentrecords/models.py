@@ -435,7 +435,9 @@ class Instance(dbmodels.Model):
     def getReadableSubValues(self, field, userInfo):
         return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
             .order_by('position')\
-            .select_related('referenceValue')
+            .select_related('referenceValue')\
+            .select_related('referenceValue__typeID')\
+            .select_related('referenceValue__typeID__description__text')
     
     
     def _getCellData(self, fieldData, values, userInfo, language=None):
