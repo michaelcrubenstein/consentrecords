@@ -728,9 +728,11 @@ var FromServiceSearchView = (function() {
 				
 			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
-			if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			var s = d.getValue("Site");
+			if (s && s.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
-			if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			var org = d.getValue("Organization");
+			if (org && org.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
 			return false;
 		}
