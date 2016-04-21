@@ -2097,7 +2097,6 @@ var Pathtree = (function () {
 			_this.allExperiences = experiences;
 			$(experiences).each(function()
 			{
-				this.typeName = "Experience";
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
@@ -2158,7 +2157,6 @@ var Pathtree = (function () {
 			
 			$(experiences).each(function()
 			{
-				this.typeName = "More Experience";
 				this.calculateDescription();
 			});
 			
@@ -2222,8 +2220,8 @@ var Pathtree = (function () {
 		}
 		
 		var path = "#" + this.user.getValueID() + '::reference(Experience)';
-		cr.getData({path: path, 
-				   fields: ["parents"], 
+		crp.getData({path: path, 
+				   fields: ["parents", "type"], 
 				   done: successFunction1, 
 				   fail: asyncFailFunction});
 	}
