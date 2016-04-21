@@ -7,6 +7,7 @@
 		position: absolute;
 		overflow-x: scroll;
 		overflow-y: scroll;
+		-webkit-overflow-scrolling: touch;
 		display: inline;
 		width: calc(100% - 40px);
 		left: 40px;
@@ -16,6 +17,7 @@
 		position: absolute;
 		overflow-x: none;
 		overflow-y: scroll;
+		-webkit-overflow-scrolling: touch;
 		display: inline;
 		width: 40px;
 	}
