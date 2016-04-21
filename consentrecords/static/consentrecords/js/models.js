@@ -133,7 +133,8 @@ var CRP = (function() {
 				var storedI = _this.getInstance(i.getValueID());
 				if (storedI && storedI.isDataLoaded)
 				{
-					i.importCells(storedI.cells);
+					if (i !== storedI)
+						i.importCells(storedI.cells);
 					successFunction();
 					return true;
 				}
@@ -197,10 +198,9 @@ var CRP = (function() {
 								end: args.end,
 								fields: args.fields,
 								done: function(newInstances) {
-											_this.paths[args.path] = newInstances;
-											newInstances.forEach(function(i)
-												{ crp.pushInstance(i); });
-											args.done(newInstances);
+											var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
+											_this.paths[args.path] = mappedInstances;
+											args.done(mappedInstances);
 											_this.queue.next();
 										}, 
 								fail: args.fail});
@@ -1033,25 +1033,37 @@ cr.ObjectValue = (function() {
 		
 		var _this = this;
 	
-		var jsonArray = { "path" : "#" + this.getValueID(),
-						  "fieldName" : fieldName };
-		
-		$.getJSON(cr.urls.getCellData,
-			jsonArray, 
-			function(json)
-			{
-				if (json.success) {
-					var newObjects = json.objects.map(function(v)
-					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});
-					done(newObjects);
+		crp.queue.add(
+			function() {
+				var cell = _this.getCell(fieldName);
+				if (cell != null)
+					done(cell.data);
+				else
+				{
+					var jsonArray = { "path" : "#" + _this.getValueID(),
+									  "fieldName" : fieldName };
+					$.getJSON(cr.urls.getCellData,
+						jsonArray, 
+						function(json)
+						{
+							if (json.success) {
+								field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
+								var oldCell = {field: field, data: json.objects};
+								if (!_this.cells)
+									_this.cells = [];
+								cell = _this.importCell(oldCell);
+								
+								done(cell.data);
+								crp.queue.next();
+							}
+							else {
+								fail(json.error);
+							}
+						}
+					);
+					return false;
 				}
-				else {
-					fail(json.error);
-				}
-			}
-		);
+			});
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
@@ -1176,6 +1188,7 @@ cr.createSignedinUser = function(instanceID, description)
 	cr.signedinUser.setDescription(description);
 	crp.pushCheckCells(cr.signedinUser, ["_system access"], function()
 		{
+			cr.signedinUser = crp.pushInstance(cr.signedinUser);
 			$(cr.signedinUser).trigger("signin.cr");
 		}, asyncFailFunction);
 }
