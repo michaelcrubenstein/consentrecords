@@ -308,7 +308,6 @@ var Experience = (function() {
 		function onCreatedInstance(newData)
 		{
 			$(_this).trigger("experienceAdded.cr", newData);
-			_this.done(newData);
 		}
 		
 		function successFunction2(newData)
@@ -339,9 +338,57 @@ var Experience = (function() {
 		}
 	}
 	
-	function Experience()
+	function Experience(dataExperience)
 	{
 		this.services = [];
+		
+		if (dataExperience)
+		{
+			function getReportedObject(dataExperience, pickedName, createdName)
+			{
+				var pickedObject = dataExperience.getValue(pickedName);
+				if (pickedObject && pickedObject.isEmpty())
+					pickedObject = null;
+				if (pickedObject)
+					return new ReportedObject({name: pickedObject.getDescription(), pickedObject: pickedObject});
+				else
+				{
+					var createdObject = dataExperience.getValue(createdName);
+					if (createdObject && !createdObject.isEmpty())
+						return new ReportedObject({name: createdObject.getDescription()});
+					else
+						return new ReportedObject();
+				}
+			}
+			
+			var r;
+			r = getReportedObject(dataExperience, "Organization", "User Entered Organization");
+			this.organization = r.pickedObject;
+			this.organizationName = r.name;
+			
+			r = getReportedObject(dataExperience, "Site", "User Entered Site");
+			this.site = r.pickedObject;
+			this.siteName = r.name;
+			
+			r = getReportedObject(dataExperience, "Offering", "User Entered Offering");
+			this.offering = r.pickedObject;
+			this.offeringName = r.name;
+			
+			var servicesCell = dataExperience.getCell("Service");
+			var _this = this;
+			servicesCell.data.forEach(function(d)
+				{
+					if (!d.isEmpty())
+						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: d}));
+				});
+				
+			servicesCell = dataExperience.getCell("User Entered Service");
+			servicesCell.data.forEach(function(d)
+				{
+					if (!d.isEmpty())
+						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: null}));
+				});
+		}
 	}
 	
 	return Experience;
@@ -421,12 +468,12 @@ var MultiTypeSearchView = (function() {
 var NewExperienceBasePanel = (function() {
 	NewExperienceBasePanel.prototype = new SitePanel();
 	
-	function NewExperienceBasePanel(previousPanelNode, experience, panelClass)
+	function NewExperienceBasePanel(previousPanelNode, experience, panelClass, showFunction)
 	{
 		if (previousPanelNode)
 		{
 			var header = "Add Experience";
-			SitePanel.call(this, previousPanelNode, null, header, panelClass);
+			SitePanel.call(this, previousPanelNode, null, header, panelClass, showFunction);
 		
 			var _this = this;
 			var hide = function() { 
@@ -680,9 +727,11 @@ var FromServiceSearchView = (function() {
 				
 			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
-			if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			var s = d.getValue("Site");
+			if (s && s.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
-			if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			var org = d.getValue("Organization");
+			if (org && org.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
 			return false;
 		}
@@ -1429,6 +1478,7 @@ var ReportedObject = function () {
 	ReportedObject.prototype.pickedObject = null;
 	
 	function ReportedObject(args) {
+		args = args !== undefined ? args : {};
 		if (!("name" in args)) args.name = null;
 		if (!("pickedObject" in args)) args.pickedObject = null;
 		
@@ -1744,9 +1794,9 @@ var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
 	
-	function NewExperienceFinishPanel(previousPanelNode, experience, onBack)
+	function NewExperienceFinishPanel(previousPanelNode, experience, onBack, showFunction)
 	{
-		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-date-panel");
+		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-date-panel", showFunction);
 		
 		var _this = this;
 		var navContainer = this.appendNavContainer();
@@ -2157,22 +2207,22 @@ var NewExperiencePanel = (function () {
 		var _this = this;
 		var navContainer = this.appendNavContainer();
 
-		experience.done = function(newData)
-		{
-			crp.pushCheckCells(newData, undefined, 
-				function() {
-					function addExperience() {
-						pathway.addMoreExperience.call(pathway, newData);
-						unblockClick();
-					}
-					var offering = newData.getValue("Offering");
-					if (offering && offering.getValueID() && !offering.isDataLoaded)
-						crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-					else
-						addExperience();
-				},
-				syncFailFunction);
-		}
+		$(experience).on("experienceAdded.cr", function(eventObject, newData)
+			{
+				crp.pushCheckCells(newData, undefined, 
+					function() {
+						function addExperience() {
+							pathway.addMoreExperience.call(pathway, newData);
+							unblockClick();
+						}
+						var offering = newData.getValue("Offering");
+						if (offering && offering.getValueID() && !offering.isDataLoaded)
+							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+						else
+							addExperience();
+					},
+					syncFailFunction);
+			});
 		
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()

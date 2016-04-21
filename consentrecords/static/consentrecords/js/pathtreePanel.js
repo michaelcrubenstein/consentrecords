@@ -2094,10 +2094,9 @@ var Pathtree = (function () {
 		
 		var successFunction1 = function(experiences)
 		{
-			_this.allExperiences = experiences;
+			_this.allExperiences = experiences.slice();
 			$(experiences).each(function()
 			{
-				this.typeName = "Experience";
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
@@ -2158,7 +2157,6 @@ var Pathtree = (function () {
 			
 			$(experiences).each(function()
 			{
-				this.typeName = "More Experience";
 				this.calculateDescription();
 			});
 			
@@ -2222,8 +2220,8 @@ var Pathtree = (function () {
 		}
 		
 		var path = "#" + this.user.getValueID() + '::reference(Experience)';
-		cr.getData({path: path, 
-				   fields: ["parents"], 
+		crp.getData({path: path, 
+				   fields: ["parents", "type"], 
 				   done: successFunction1, 
 				   fail: asyncFailFunction});
 	}
@@ -2429,13 +2427,13 @@ var ShareOptions = (function () {
 							var user = panelNode.sitePanel.pathtree.user;
 							if (user.getValueID() == cr.signedinUser.getValueID())
 							{
-								window.open('mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum("_email")));
+								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+											.format(window.location.origin, user.getDatum("_email"));
 							}
 							else
 							{
-								window.open('mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum("_email")));
+								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
 							}
 							unblockClick();
 						});

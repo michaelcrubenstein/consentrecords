@@ -944,6 +944,19 @@ var EditExperiencePanel = (function () {
 				})
 			.append("span").classed("text-danger", true).text("Delete");
 			
+		var shareButton = bottomNavContainer.appendLeftButton()
+			.classed("share", true)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'delete experience'))
+					{
+						new ExperienceShareOptions(_this.node(), experience);
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+		
+			
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
 				 new PickOrCreateOfferingCell(experience),
@@ -981,112 +994,98 @@ var EditExperiencePanel = (function () {
 	return EditExperiencePanel;
 })();
 
-var AddExperiencePanel = (function () {
-	AddExperiencePanel.prototype = new SitePanel();
-	AddExperiencePanel.prototype.experience = null;
-	
-	function AddExperiencePanel(container, experience, previousPanel, showFunction, done) {
-		var newExperience = new cr.ObjectValue();
-		newExperience.importCells(experience.cells);
-		newExperience.privilege = container.privilege;
-		newExperience.isDataLoaded = true;
-		
-		SitePanel.call(this, previousPanel, newExperience, "Add Experience", "edit", showFunction);
-		var navContainer = this.appendNavContainer();
-		var panel2Div = this.appendScrollArea();
+var ExperienceShareOptions = (function () {
 
-		var _this = this;
-
-		doneButton = navContainer.appendRightButton();
-		doneButton.append("span").text("Add");
-		doneButton.on("click", 	function(d) {
-			if (prepareClick('click', 'done adding'))
+	function ExperienceShareOptions(panelNode, experience)
+	{
+		var dimmer = d3.select(panelNode).append('div')
+			.classed('dimmer', true);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		function onCancel(e)
+		{
+			if (prepareClick('click', 'Cancel'))
 			{
-				showClickFeedback(this);
-				
-				var initialData = {}
-				var sections = panel2Div.selectAll("section");
-				sections.each(
-					function(cell) {
-						if ("updateCell" in cell)
-						{
-							cell.updateCell(this);
-							cell.appendData(initialData);
-						}
-					});
-	
-				field = {ofKind: "More Experience", name: "More Experience"};
-				cr.createInstance(field, container.getValueID(), initialData, 
-					function(newData)
+				$(emailAddExperienceButton.node()).off('blur');
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					unblockClick();
+				});
+				$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
+					function()
 					{
-						newData.checkCells([],
-							function() {
-								if (done)
-									done(newData);
-							},
-						syncFailFunction);
-					}, 
-					syncFailFunction);
+						dimmer.remove();
+					}});
 			}
-			d3.event.preventDefault();
-		});
-		
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function()
-			{
-				if (prepareClick('click', 'AddExperiencePanel: Cancel'))
-				{
-					_this.hide();
-				}
-				d3.event.preventDefault();
-			});
-		backButton.append("span").text("Cancel");
-
-		navContainer.appendTitle("Add Experience");
-			
-		cells = [new PickOrCreateOrganizationCell(newExperience),
-				 new PickOrCreateSiteCell(newExperience),
-				 new PickOrCreateOfferingCell(newExperience),
-				 newExperience.getCell("Start"),
-				 newExperience.getCell("End"),
-				];
-				
-		this.showEditCells(cells);
-		
-		var startSection = panel2Div.selectAll(":nth-child(4)");
-		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
-		var endSection = panel2Div.selectAll(":nth-child(5)");
-		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
-		endDateInput.checkMinDate(new Date(startDateInput.value));
-		
-		$(startDateInput).on('change', function()
-		{
-			endDateInput.checkMinDate(new Date(startDateInput.value()));
-		});
-		
-		var offeringCell = newExperience.getCell("Offering");
-		function showMarkers()
-		{
-			var offeringServiceCell = new OfferingServiceCell(offeringCell);
-			_this.showViewCells([offeringServiceCell])
-					 .each(function(cell)
-						{
-							offeringServiceCell.setupHandlers(this, _this.node());
-						});
-		
-			var serviceCell = newExperience.getCell("Service");
-			var userServiceCell = newExperience.getCell("User Entered Service");
-			var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
-			var sections = _this.showEditCells([myMarkersCell]);
+			e.preventDefault();
 		}
 		
-		var offering = newExperience.getValue("Offering");
-		if (offering && offering.getValueID())
-			crp.pushCheckCells(offering, undefined, showMarkers, asyncFailFunction);
-		else
-			showMarkers();
+		var addToMyPathwayButton = div.append('button')
+			.text("Add to My Pathway")
+			.classed("site-active-text", true)
+			.on("click", function()
+				{
+					if (prepareClick('click', "Add to My Pathway"))
+					{
+						var tempExperience = new Experience(experience);
+						tempExperience.user = cr.signedinUser;
+						var newPanel = new NewExperienceFinishPanel(panel.node(), tempExperience, null, revealPanelUp);
+						showPanelUp(newPanel.node(), function()
+							{
+								$(emailAddExperienceButton.node()).off('blur');
+								panel.remove();
+								dimmer.remove();
+								unblockClick();
+							});
+					}
+				});
+				
+		$(addToMyPathwayButton.node()).on('blur', onCancel);
+		
+		var emailAddExperienceButton = div.append('button')
+			.text("Email Add Experience Link")
+			.classed("site-active-text", true)
+			.on("click", function()
+				{
+					if (prepareClick('click', "Email Add Experience Link"))
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}.'
+										.format(window.location.origin, experience.getValueID());
+							unblockClick();
+						});
+						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
+							function()
+							{
+								dimmer.remove();
+							}});
+					}
+				});
+				
+		$(emailAddExperienceButton.node()).on('blur', onCancel);
+		
+		var cancelButton = div.append('button')
+			.text("Cancel")
+			.classed("site-active-text", true);
+		
+		$(cancelButton.node()).click(onCancel);
+		
+		$(dimmer.node()).animate({opacity: 0.3}, 400);
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(emailAddExperienceButton.node()).focus();
+				unblockClick();
+			}});
+		$(dimmer.node()).mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
 	}
 	
-	return AddExperiencePanel;
+	return ExperienceShareOptions;
 })();
 
