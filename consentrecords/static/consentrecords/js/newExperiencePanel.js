@@ -339,9 +339,57 @@ var Experience = (function() {
 		}
 	}
 	
-	function Experience()
+	function Experience(dataExperience)
 	{
 		this.services = [];
+		
+		if (dataExperience)
+		{
+			function getReportedObject(dataExperience, pickedName, createdName)
+			{
+				var pickedObject = dataExperience.getValue(pickedName);
+				if (pickedObject && pickedObject.isEmpty())
+					pickedObject = null;
+				if (pickedObject)
+					return new ReportedObject({name: pickedObject.getDescription(), pickedObject: pickedObject});
+				else
+				{
+					var createdObject = dataExperience.getValue(createdName);
+					if (createdObject && !createdObject.isEmpty())
+						return new ReportedObject({name: createdObject.getDescription()});
+					else
+						return new ReportedObject();
+				}
+			}
+			
+			var r;
+			r = getReportedObject(dataExperience, "Organization", "User Entered Organization");
+			this.organization = r.pickedObject;
+			this.organizationName = r.name;
+			
+			r = getReportedObject(dataExperience, "Site", "User Entered Site");
+			this.site = r.pickedObject;
+			this.siteName = r.name;
+			
+			r = getReportedObject(dataExperience, "Offering", "User Entered Offering");
+			this.offering = r.pickedObject;
+			this.offeringName = r.name;
+			
+			var servicesCell = dataExperience.getCell("Service");
+			var _this = this;
+			servicesCell.data.forEach(function(d)
+				{
+					if (!d.isEmpty())
+						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: d}));
+				});
+				
+			servicesCell = dataExperience.getCell("User Entered Service");
+			servicesCell.data.forEach(function(d)
+				{
+					if (!d.isEmpty())
+						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: null}));
+				});
+		}
 	}
 	
 	return Experience;
