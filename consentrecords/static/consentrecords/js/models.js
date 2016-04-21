@@ -133,7 +133,8 @@ var CRP = (function() {
 				var storedI = _this.getInstance(i.getValueID());
 				if (storedI && storedI.isDataLoaded)
 				{
-					i.importCells(storedI.cells);
+					if (i !== storedI)
+						i.importCells(storedI.cells);
 					successFunction();
 					return true;
 				}
@@ -197,10 +198,9 @@ var CRP = (function() {
 								end: args.end,
 								fields: args.fields,
 								done: function(newInstances) {
-											_this.paths[args.path] = newInstances;
-											newInstances.forEach(function(i)
-												{ crp.pushInstance(i); });
-											args.done(newInstances);
+											var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
+											_this.paths[args.path] = mappedInstances;
+											args.done(mappedInstances);
 											_this.queue.next();
 										}, 
 								fail: args.fail});
