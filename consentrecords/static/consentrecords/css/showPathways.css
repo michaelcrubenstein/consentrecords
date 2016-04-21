@@ -154,7 +154,7 @@
 		display: none; 
 	}
 	
-	panel.pathway .dimmer {
+	panel.site-panel > div.dimmer {
 		position: absolute;
 		top: 0px;
 		left: 0px;
