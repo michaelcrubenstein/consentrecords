@@ -1479,6 +1479,7 @@ var ReportedObject = function () {
 	ReportedObject.prototype.pickedObject = null;
 	
 	function ReportedObject(args) {
+		args = args !== undefined ? args : {};
 		if (!("name" in args)) args.name = null;
 		if (!("pickedObject" in args)) args.pickedObject = null;
 		
