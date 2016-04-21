@@ -2427,13 +2427,13 @@ var ShareOptions = (function () {
 							var user = panelNode.sitePanel.pathtree.user;
 							if (user.getValueID() == cr.signedinUser.getValueID())
 							{
-								window.open('mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum("_email")));
+								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+											.format(window.location.origin, user.getDatum("_email"));
 							}
 							else
 							{
-								window.open('mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum("_email")));
+								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
 							}
 							unblockClick();
 						});
