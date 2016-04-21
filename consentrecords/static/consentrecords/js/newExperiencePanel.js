@@ -1794,9 +1794,9 @@ var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
 	
-	function NewExperienceFinishPanel(previousPanelNode, experience, onBack)
+	function NewExperienceFinishPanel(previousPanelNode, experience, onBack, showFunction)
 	{
-		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-date-panel");
+		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-date-panel", showFunction);
 		
 		var _this = this;
 		var navContainer = this.appendNavContainer();
