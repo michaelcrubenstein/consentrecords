@@ -2039,6 +2039,12 @@ var SearchView = (function () {
 		return "No Results";
 	}
 	
+	SearchView.prototype.cancelSearch = function()
+	{
+		this.clearListPanel();
+		this.getDataChunker.clearLoadingMessage();
+	}
+	
 	SearchView.prototype.search = function(val)
 	{
 		if (val !== undefined)
@@ -2057,8 +2063,7 @@ var SearchView = (function () {
 		}
 		else
 		{
-			this.clearListPanel();
-			this.getDataChunker.clearLoadingMessage();
+			this.cancelSearch();
 		}
 	}
 	
@@ -2067,7 +2072,10 @@ var SearchView = (function () {
 		if (val === undefined)
 			return this.inputBox.value.trim();
 		else
+		{
 			this.inputBox.value = val;
+			$(this.inputBox).trigger("input");
+		}
 	}
 	
 	SearchView.prototype.inputCompareText = function()

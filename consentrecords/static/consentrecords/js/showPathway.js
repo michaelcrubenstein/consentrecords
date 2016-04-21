@@ -12,28 +12,23 @@ var PickOrCreateSearchView = (function () {
 		d3.event.preventDefault();
 	}
 	
-	/* Overrides SearchView.setupInputBox */
-	PickOrCreateSearchView.prototype.setupInputBox = function()
-	{
-		if (!this.createDatum.isEmpty())
-		{
-			this.inputBox.value = this.createDatum.getDescription();
-			$(this.inputBox).trigger("input");
-		}
-		else if (!this.pickDatum.isEmpty())
-		{
-			this.inputBox.value = this.pickDatum.getDescription();
-			$(this.inputBox).trigger("input");
-		}
-	}
-	
 	/* Overrides SearchView.prototype.isButtonVisible */
 	PickOrCreateSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		if (compareText.length === 0)
-			return true;
+		if (button == this.customButton.node())
+		{
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+		}
+		else
+		{
+			if (compareText.length === 0)
+				return true;
 			
-		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+			return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+		}
 	}
 	
 	/* Overrides SearchView.searchPath */
@@ -47,6 +42,30 @@ var PickOrCreateSearchView = (function () {
 			var symbol = (val.length < 3) ? "^=" : "*=";
 			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
 		}
+	}
+	
+	PickOrCreateSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d, i) { return i > 0; });
+			
+		buttons.remove();
+		this.customButton.style("display", "none");
+	}
+	
+	PickOrCreateSearchView.prototype.cancelSearch = function()
+	{
+		SearchView.prototype.cancelSearch.call(this);
+		this.customButton.style("display", this.inputText().length > 0 ? null : "none");
+	}
+	
+	PickOrCreateSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
 	}
 	
 	PickOrCreateSearchView.prototype.showObjects = function(foundObjects)
@@ -69,6 +88,64 @@ var PickOrCreateSearchView = (function () {
 			this.pickDatum = pickDatum;
 			this.createDatum = createDatum;
 			PanelSearchView.call(this, sitePanel, pickDatum.cell.field.name, undefined, GetDataChunker /* Could be SelectAllChunker */);
+			var _this = this;
+			this.customButton = appendViewButtons(this.appendButtonContainers(["Custom"]), 
+						function(buttons)
+						{
+							var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
+							leftText.text("");
+						}
+				)
+				.on("click", function(d, i) {
+					d3.event.preventDefault();
+
+					if (prepareClick('click', 'Done'))
+					{
+						var newText = _this.inputText();
+						var compareText = newText.toLocaleLowerCase()
+						var d = _this.getDataChunker.buttons().data().find(function(d)
+							{
+								return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
+							});
+						if (d) {
+							sitePanel.updateValues(d, null);
+							return;
+						}
+
+						if (newText.length == 0)
+						{
+							sitePanel.updateValues(null, null);
+						}
+						else
+						{
+							function done(newInstances)
+							{
+								if (newInstances.length == 0)
+									sitePanel.updateValues(null, newText);
+								else
+									sitePanel.updateValues(newInstances[0], null);
+							}
+				
+							var searchPath = _this.searchPath("");
+							if (searchPath.length > 0)
+							{
+								cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
+									end: 50, done: done, fail: syncFailFunction});
+							}
+							else
+							{
+								sitePanel.updateValues(null, newText);
+							}
+						}
+					}
+				})
+				.style("display", "none");
+				
+			/* Load the inputBox */
+			if (!this.createDatum.isEmpty())
+				this.inputText(this.createDatum.getDescription());
+			else if (!this.pickDatum.isEmpty())
+				this.inputText(this.pickDatum.getDescription());
 		}
 		else
 			PanelSearchView.call(this);
@@ -161,51 +238,6 @@ var PickOrCreatePanel = (function () {
 		}
 	}
 	
-	PickOrCreatePanel.prototype.onClickDone = function(d, i) {
-		d3.event.preventDefault();
-
-		if (prepareClick('click', 'Done'))
-		{
-			var newText = this.searchView.inputText();
-			var compareText = newText.toLocaleLowerCase()
-			var d = this.searchView.getDataChunker.buttons().data().find(function(d)
-				{
-					return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
-				});
-			if (d) {
-				this.updateValues(d, null);
-				return;
-			}
-
-			if (newText.length == 0)
-			{
-				this.updateValues(null, null);
-			}
-			else
-			{
-				var _this = this;
-				function done(newInstances)
-				{
-					if (newInstances.length == 0)
-						_this.updateValues(null, newText);
-					else
-						_this.updateValues(newInstances[0], null);
-				}
-				
-				var searchPath = this.searchView.searchPath("");
-				if (searchPath.length > 0)
-				{
-					cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
-						end: 50, done: done, fail: syncFailFunction});
-				}
-				else
-				{
-					this.updateValues(null, newText);
-				}
-			}
-		}
-	}
-	
 	PickOrCreatePanel.prototype.getTitle = function()
 	{
 		return this.pickDatum.cell.field.name;
@@ -238,13 +270,6 @@ var PickOrCreatePanel = (function () {
 				});
 			backButton.append("span").text("Cancel");
 			
-			this.navContainer.appendRightButton()
-				.on("click", function()
-				{
-					_this.onClickDone();
-				})
-				.append("span").text("Done");
-
 			var title = this.getTitle();
 			if (title)
 				this.navContainer.appendTitle(title);
