@@ -1188,6 +1188,7 @@ cr.createSignedinUser = function(instanceID, description)
 	cr.signedinUser.setDescription(description);
 	crp.pushCheckCells(cr.signedinUser, ["_system access"], function()
 		{
+			cr.signedinUser = crp.pushInstance(cr.signedinUser);
 			$(cr.signedinUser).trigger("signin.cr");
 		}, asyncFailFunction);
 }

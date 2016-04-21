@@ -408,6 +408,7 @@
 						hidePanelRight($("#id_sign_in_panel")[0], false,
 							function()
 							{
+								crp.pushInstance(cr.signedinUser);
 								$(cr.signedinUser).trigger("signin.cr");
 							});
 						
