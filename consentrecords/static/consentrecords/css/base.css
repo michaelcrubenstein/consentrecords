@@ -54,6 +54,7 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
 }
 
 .panel-fill {
@@ -63,6 +64,7 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 	position: relative;
 	overflow-y: scroll;
 	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
 }
 .no-scrolling {
 	overflow-y: hidden;
