@@ -626,6 +626,7 @@ class api:
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
         data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
+        data['typeName'] = v.referenceValue.typeID.getDescription();
         return data;
     
     def getCellData(user, data):
