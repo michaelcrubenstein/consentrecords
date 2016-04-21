@@ -308,7 +308,6 @@ var Experience = (function() {
 		function onCreatedInstance(newData)
 		{
 			$(_this).trigger("experienceAdded.cr", newData);
-			_this.done(newData);
 		}
 		
 		function successFunction2(newData)
@@ -2208,22 +2207,22 @@ var NewExperiencePanel = (function () {
 		var _this = this;
 		var navContainer = this.appendNavContainer();
 
-		experience.done = function(newData)
-		{
-			crp.pushCheckCells(newData, undefined, 
-				function() {
-					function addExperience() {
-						pathway.addMoreExperience.call(pathway, newData);
-						unblockClick();
-					}
-					var offering = newData.getValue("Offering");
-					if (offering && offering.getValueID() && !offering.isDataLoaded)
-						crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-					else
-						addExperience();
-				},
-				syncFailFunction);
-		}
+		$(experience).on("experienceAdded.cr", function(eventObject, newData)
+			{
+				crp.pushCheckCells(newData, undefined, 
+					function() {
+						function addExperience() {
+							pathway.addMoreExperience.call(pathway, newData);
+							unblockClick();
+						}
+						var offering = newData.getValue("Offering");
+						if (offering && offering.getValueID() && !offering.isDataLoaded)
+							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+						else
+							addExperience();
+					},
+					syncFailFunction);
+			});
 		
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
