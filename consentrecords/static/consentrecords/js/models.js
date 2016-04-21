@@ -1033,25 +1033,37 @@ cr.ObjectValue = (function() {
 		
 		var _this = this;
 	
-		var jsonArray = { "path" : "#" + this.getValueID(),
-						  "fieldName" : fieldName };
-		
-		$.getJSON(cr.urls.getCellData,
-			jsonArray, 
-			function(json)
-			{
-				if (json.success) {
-					var newObjects = json.objects.map(function(v)
-					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});
-					done(newObjects);
+		crp.queue.add(
+			function() {
+				var cell = _this.getCell(fieldName);
+				if (cell != null)
+					done(cell.data);
+				else
+				{
+					var jsonArray = { "path" : "#" + _this.getValueID(),
+									  "fieldName" : fieldName };
+					$.getJSON(cr.urls.getCellData,
+						jsonArray, 
+						function(json)
+						{
+							if (json.success) {
+								field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
+								var oldCell = {field: field, data: json.objects};
+								if (!_this.cells)
+									_this.cells = [];
+								cell = _this.importCell(oldCell);
+								
+								done(cell.data);
+								crp.queue.next();
+							}
+							else {
+								fail(json.error);
+							}
+						}
+					);
+					return false;
 				}
-				else {
-					fail(json.error);
-				}
-			}
-		);
+			});
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
