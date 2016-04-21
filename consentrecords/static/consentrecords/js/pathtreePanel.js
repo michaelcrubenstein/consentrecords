@@ -2094,7 +2094,7 @@ var Pathtree = (function () {
 		
 		var successFunction1 = function(experiences)
 		{
-			_this.allExperiences = experiences;
+			_this.allExperiences = experiences.slice();
 			$(experiences).each(function()
 			{
 				this.setDescription(this.getValue("Offering").getDescription());
