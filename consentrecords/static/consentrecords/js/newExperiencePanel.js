@@ -469,12 +469,12 @@ var MultiTypeSearchView = (function() {
 var NewExperienceBasePanel = (function() {
 	NewExperienceBasePanel.prototype = new SitePanel();
 	
-	function NewExperienceBasePanel(previousPanelNode, experience, panelClass)
+	function NewExperienceBasePanel(previousPanelNode, experience, panelClass, showFunction)
 	{
 		if (previousPanelNode)
 		{
 			var header = "Add Experience";
-			SitePanel.call(this, previousPanelNode, null, header, panelClass);
+			SitePanel.call(this, previousPanelNode, null, header, panelClass, showFunction);
 		
 			var _this = this;
 			var hide = function() { 
