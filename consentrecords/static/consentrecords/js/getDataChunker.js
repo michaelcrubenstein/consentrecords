@@ -203,6 +203,12 @@ var GetDataChunker = (function() {
 		this._onFoundInstances = onFoundInstances;
 		this._onDoneSearch = onDoneSearch;
 		this._check = null;
+		
+		var _this = this;
+		$(this._containerNode).on("remove", function()
+			{
+				_this._inGetData = false;
+			});
 	}
 	
 	return GetDataChunker;
