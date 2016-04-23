@@ -2204,7 +2204,7 @@ var Pathtree = (function () {
 				
 				var newBBox = _this.promptAddText.node().getBBox();
 				if (bbox.x + bbox.width + _this.textLeftMargin + newBBox.width >
-					$(_this.bg.node()).width - _this.flagsRightMargin)
+					$(_this.bg.node()).width() - _this.flagsRightMargin)
 				{
 					_this.promptAddText.attr("x", _this.loadingText.attr("x"))
 						.attr("y", parseFloat(_this.loadingText.attr("y")) + bbox.height);
