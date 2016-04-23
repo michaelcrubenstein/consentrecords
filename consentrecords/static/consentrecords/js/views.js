@@ -1947,7 +1947,10 @@ var SearchView = (function () {
 					var text = _this.noResultString();
 					_this.noResultsDiv.text(text);
 					_this.noResultsDiv.style('display', (_this.getDataChunker.hasButtons() || text.length === 0) ? 'none' : null);
+					return true;
 				}
+				else
+					return false;
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
 			this.getDataChunker = new chunkerType(this.listPanel.node(), done);

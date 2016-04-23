@@ -162,6 +162,7 @@ var FollowingPanel = (function() {
 			this._foundPendingRequests = this._foundPendingRequests.concat(foundObjects);
 		this.showPendingObjects(foundObjects);
 		this._noPendingResultsDiv.style('display', this._foundPendingRequests.length === 0 ? null : 'none');
+		return true;
 	}
 	
 	FollowingPanel.prototype.showFollowingObjects = function(foundObjects)
@@ -194,6 +195,7 @@ var FollowingPanel = (function() {
 			this._foundFollowingRequests = this._foundFollowingRequests.concat(foundObjects);
 		this.showFollowingObjects(foundObjects);
 		this._noFollowingResultsDiv.style('display', this._foundFollowingRequests.length === 0 ? null : 'none');
+		return true;
 	}
 	
 	function FollowingPanel(user, previousPanel) {
@@ -263,7 +265,7 @@ var FollowingPanel = (function() {
 			.text("None")
 			.style("display", "none")
 		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
-			function(foundObjects, startVal) { _this.getPendingRequestsDone(foundObjects, startVal); });
+			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
 		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
 		this._pendingChunker.fields = [];
 		
@@ -288,7 +290,7 @@ var FollowingPanel = (function() {
 			.text("None")
 			.style("display", "none")
 		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
-			function(foundObjects, startVal) { _this.getFollowingRequestsDone(foundObjects, startVal); });
+			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
 		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)'.format(this.user.getValueID());
 		this._followingChunker.fields = [];
 		
