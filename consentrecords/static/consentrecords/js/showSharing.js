@@ -17,7 +17,9 @@ var SharingPanel = (function() {
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
 		if (!this.inEditMode)
-			this.hideDeleteControlsNow(deleteControls);
+			this.hideDeleteControlsNow($(deleteControls[0]));
+		else
+			this.showDeleteControls($(deleteControls[0]), 0);
 		
 		return buttons;
 	}

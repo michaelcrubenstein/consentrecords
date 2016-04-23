@@ -2134,15 +2134,19 @@ var Pathtree = (function () {
 								
 			crp.pushCheckCells(_this.user, undefined, 
 				function() {
-					var m = _this.user.getValue("More Experiences");
-					if (m && m.getValueID())
+					/* Check the user in case the panel has been closed. */
+					if (_this.user != null)
 					{
-						m.getCellData("More Experience",
-									  successFunction2, 
-									  asyncFailFunction);
+						var m = _this.user.getValue("More Experiences");
+						if (m && m.getValueID())
+						{
+							m.getCellData("More Experience",
+										  successFunction2, 
+										  asyncFailFunction);
+						}
+						else
+							successFunction2([]);	/* There are none. */
 					}
-					else
-						successFunction2([]);	/* There are none. */
 				},
 				function(err)
 				{
@@ -2153,6 +2157,9 @@ var Pathtree = (function () {
 
 		var successFunction2 = function(experiences)
 		{
+			if (_this.user == null)
+				return;	/* The panel has been closed before this asynchronous action occured. */
+				
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
 			$(experiences).each(function()
@@ -2204,7 +2211,7 @@ var Pathtree = (function () {
 				
 				var newBBox = _this.promptAddText.node().getBBox();
 				if (bbox.x + bbox.width + _this.textLeftMargin + newBBox.width >
-					$(_this.bg.node()).width - _this.flagsRightMargin)
+					$(_this.bg.node()).width() - _this.flagsRightMargin)
 				{
 					_this.promptAddText.attr("x", _this.loadingText.attr("x"))
 						.attr("y", parseFloat(_this.loadingText.attr("y")) + bbox.height);
@@ -2381,6 +2388,8 @@ var PathtreePanel = (function () {
 				addExperienceButton.style("display", canAddExperience ? null : "none");
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
+				
+				this.isMinHeight = true;
 				_this.calculateHeight();
 			});
 	}

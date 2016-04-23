@@ -147,7 +147,9 @@ var FollowingPanel = (function() {
 		var deleteControls = this.appendDeleteControls(buttons);
 		appendButtonDescriptions(buttons);
 		if (!this.inEditMode)
-			this.hideDeleteControlsNow(deleteControls);
+			this.hideDeleteControlsNow($(deleteControls[0]));
+		else
+			this.showDeleteControls($(deleteControls[0]), 0);
 		
 		return buttons;
 	}
