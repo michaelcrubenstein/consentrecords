@@ -2134,15 +2134,19 @@ var Pathtree = (function () {
 								
 			crp.pushCheckCells(_this.user, undefined, 
 				function() {
-					var m = _this.user.getValue("More Experiences");
-					if (m && m.getValueID())
+					/* Check the user in case the panel has been closed. */
+					if (_this.user != null)
 					{
-						m.getCellData("More Experience",
-									  successFunction2, 
-									  asyncFailFunction);
+						var m = _this.user.getValue("More Experiences");
+						if (m && m.getValueID())
+						{
+							m.getCellData("More Experience",
+										  successFunction2, 
+										  asyncFailFunction);
+						}
+						else
+							successFunction2([]);	/* There are none. */
 					}
-					else
-						successFunction2([]);	/* There are none. */
 				},
 				function(err)
 				{
@@ -2153,6 +2157,9 @@ var Pathtree = (function () {
 
 		var successFunction2 = function(experiences)
 		{
+			if (_this.user == null)
+				return;	/* The panel has been closed before this asynchronous action occured. */
+				
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
 			$(experiences).each(function()
