@@ -437,6 +437,15 @@ div.add-value>button {
 .glyphicon-minus-sign:focus {
 	outline: none;
 }
+
+.delete-dial
+{
+	left: -12px;
+	top: 9px;
+	opacity: 0;
+	position: absolute;
+}
+
 .delete-confirm-container>button {
 	background: red;
 	color: white;

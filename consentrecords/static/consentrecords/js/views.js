@@ -1844,7 +1844,7 @@ var SitePanel = (function () {
 	SitePanel.prototype.appendDeleteControls = function(buttons)
 	{
 		return buttons.append("button")
-			.classed("glyphicon glyphicon-minus-sign pull-left", true)
+			.classed("delete-dial glyphicon glyphicon-minus-sign", true)
 			.on("click", function(e)
 			{
 				if ($(this).css("opacity") > 0 &&
@@ -1866,42 +1866,41 @@ var SitePanel = (function () {
 			});
 	}
 	
-	SitePanel.prototype.hideDeleteControlsNow = function()
+	SitePanel.prototype.hideDeleteControlsNow = function(dials)
 	{
-		$(this.node()).find(".glyphicon-minus-sign")
-			.animate({left: "-24px", opacity: 0}, 0);
-		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
+		this.hideDeleteControls(dials, 0);
+	}
+	
+	SitePanel.prototype.showDeleteControls = function(dials, duration)
+	{
+		duration = duration !== undefined ? duration : 400;
+		dials = dials !== undefined ? dials : $(this.node()).find(".delete-dial");
+		
+		dials
+			.css("display", "")
+			.animate({left: "12px", opacity: 1}, duration);
+		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
 			var newWidth = adj.width();
-			adj.css("display", "inline-block");
-			adj.animate({left: "-24px", width: "{0}px".format(newWidth + 24)}, 0);
+			adj.animate({"margin-left": "24px"}, duration);
 		}
 	}
 	
-	SitePanel.prototype.showDeleteControls = function()
+	SitePanel.prototype.hideDeleteControls = function(dials, duration)
 	{
-		$(this.node()).find(".glyphicon-minus-sign")
-			.animate({left: "0px", opacity: 1}, 400);
-		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
+		duration = duration !== undefined ? duration : 400;
+		dials = dials !== undefined ? dials : $(this.node()).find(".delete-dial");
+		
+		dials
+			.animate({left: "-12px", opacity: 0}, duration, function() {
+					$(this).css("display", "none");
+				});
+		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
 			var newWidth = adj.width();
-			adj.css("display", "inline-block");
-			adj.animate({left: "0px", width: "{0}px".format(newWidth - 24)}, 400);
-		}
-	}
-	
-	SitePanel.prototype.hideDeleteControls = function()
-	{
-		$(this.node()).find(".glyphicon-minus-sign")
-			.animate({left: "-24px", opacity: 0}, 400);
-		var adj = $(this.node()).find(".glyphicon-minus-sign ~ div");
-		if (adj.length > 0)
-		{
-			var newWidth = adj.width();
-			adj.css("display", "inline-block");
-			adj.animate({left: "-24px", width: "{0}px".format(newWidth + 24)}, 400);
+			adj.animate({"margin-left": "0px"}, duration);
 		}
 	}
 
