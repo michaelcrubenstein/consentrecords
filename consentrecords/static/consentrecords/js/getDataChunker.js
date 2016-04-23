@@ -58,25 +58,6 @@ var GetDataChunker = (function() {
 		}
 	}
 	
-	GetDataChunker.prototype._doneGetData = function(instances, startVal)
-	{
-// 		if (this._loadingMessage != null)
-// 		{
-// 			crv.stopLoadingMessage(this._loadingMessage);
-// 			this._isSpinning = false;
-// 		}
-
-		/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
-			this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
-			which is handled here.
-		 */
-		if (this._inGetData)
-		{
-			this._onFoundInstances(instances, startVal);
-			this._restart(instances, startVal);
-		}
-	}
-	
 	GetDataChunker.prototype.showLoadingMessage = function()
 	{
 		if (this._loadingMessage == null)
@@ -108,7 +89,15 @@ var GetDataChunker = (function() {
 					fields: this.fields, 
 					done: function(instances) 
 						{ 
-							_this._doneGetData(instances, startVal); 
+							/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
+								this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
+								which is handled here.
+							 */
+							if (_this._inGetData)
+							{
+								if (_this._onFoundInstances(instances, startVal))
+									_this._restart(instances, startVal);
+							}
 						}, 
 					fail: asyncFailFunction});
 		this._inGetData = true;
@@ -214,6 +203,12 @@ var GetDataChunker = (function() {
 		this._onFoundInstances = onFoundInstances;
 		this._onDoneSearch = onDoneSearch;
 		this._check = null;
+		
+		var _this = this;
+		$(this._containerNode).on("remove", function()
+			{
+				_this._inGetData = false;
+			});
 	}
 	
 	return GetDataChunker;
