@@ -2097,7 +2097,14 @@ var SearchView = (function () {
 		var _this = this;
 		function endSearchTimeout() {
 			_this._searchTimeout = null;
-			_this.search(val);
+			try
+			{
+				_this.search(val);
+			}
+			catch(err)
+			{
+				asyncFailFunction(err);
+			}
 		}
 		this._searchTimeout = setTimeout(endSearchTimeout, 300);
 	}
