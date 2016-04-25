@@ -263,7 +263,6 @@ var Experience = (function() {
 			
 		if (this.siteName)
 			orgDiv.append('div')
-				.classed('address-line', true)
 				.text(this.siteName);
 	
 		{
@@ -1816,6 +1815,7 @@ var NewExperienceFinishPanel = (function () {
 		var nextButton = navContainer.appendRightButton()
 			.classed("site-active-text", false)
 			.classed("site-disabled-text", true)
+			.classed("default-link", true)
 			.on("click", function()
 			{
 				if (startDateInput.year && startDateInput.month)

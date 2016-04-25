@@ -942,12 +942,13 @@ var EditExperiencePanel = (function () {
 	}
 	
 	function EditExperiencePanel(experience, previousPanel, showFunction) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit session", showFunction);
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();
 
 		navContainer.appendRightButton()
+			.classed("default-link", true)
 			.on("click", function()
 				{
 					panel2Div.handleDoneEditingButton.call(this,
