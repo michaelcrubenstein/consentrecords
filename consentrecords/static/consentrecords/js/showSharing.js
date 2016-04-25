@@ -159,7 +159,7 @@ var SharingPanel = (function() {
 				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);
 			})
 			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").text("Add User or Group...");
+		buttonDiv.append("span").text("Add User or Group");
 	}
 
 	SharingPanel.prototype.getPrivileges = function(panel2Div, enumerators)

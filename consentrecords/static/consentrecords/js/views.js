@@ -127,7 +127,7 @@ var crv = {
 				d3.event.preventDefault();
 			})
 			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").text("Add " + cell.field.name + "…");
+		buttonDiv.append("span").text("Add " + cell.field.name);
 	},
 };
 
