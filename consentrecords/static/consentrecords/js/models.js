@@ -1428,6 +1428,10 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
 		var jsonArray = {
 					properties: JSON.stringify(initialData),
 					timezoneoffset: new Date().getTimezoneOffset()
