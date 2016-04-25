@@ -269,7 +269,7 @@ var FollowingPanel = (function() {
 		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
 		this._pendingChunker.fields = [];
 		
-		this.appendActionButton("Ask To Follow...", function()
+		this.appendActionButton("Ask To Follow", function()
 			{
 				if (prepareClick('click', 'request follow'))
 				{

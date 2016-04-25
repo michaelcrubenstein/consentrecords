@@ -110,6 +110,10 @@ panel>nav .right-link {
 	display: inline-block;
 	margin-left: 12px;
 }
+panel>nav .default-link {
+	font-weight: 500
+}
+
 nav .site-left-chevron {
 	height: 18px;
 }
@@ -187,7 +191,7 @@ panel.view .panel-fill>header
 }
 .row-button {
 	position: relative;
-	font-size: medium;	/* To override the smaller button. */
+	font-size: 15px;	/* To override the smaller button. */
 	background: white;
 	display: block;		/* To override inline-block from btn */
 	width: 100%;
@@ -203,6 +207,7 @@ panel.view .panel-fill>header
 }
 .cell>ol {
 	margin: 0;				/* To override bootstrap ol style */
+	font-size: 15px;
 }
 .multi-row-content {
 	padding: 6px 12px;
@@ -239,6 +244,7 @@ section.cell {
 }
 .cell>label {
     color: #222;
+	font-size: 15px;
 	font-weight: normal;
 	margin: 0;
 	padding: 6px 12px;
@@ -247,7 +253,7 @@ section.cell {
 
 .cell.action {
 	font-size: medium;
-	text-align: center;
+	text-align: left;
 }
 
 .panel-fill>section.cell.action.first {
@@ -284,6 +290,9 @@ section.cell {
 }
 .cell.multiple.edit>label {
 	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
+	font-size: 14px;
+	font-weight: 500;
+	padding-bottom: 2px;
 }
 .cell.multiple.edit > ol {
 	background: white;

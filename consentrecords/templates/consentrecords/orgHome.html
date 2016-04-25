@@ -136,6 +136,8 @@
 	</head>
 	
   	<body class="site-body">
+		<!-- Following is required so that the csrf token cookie is included in the document cookies. -->
+  		{% csrf_token %}
   	
 		{% if facebookIntegration %}
   		<div id="fb-root"></div>

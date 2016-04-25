@@ -102,6 +102,7 @@
 	{
 		width: 100%;
 		text-align: left;
+		font-size: 15px;
 		font-weight: bold;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -112,13 +113,14 @@
 	panel.experience header .organization>label {
 		font-weight: normal;
 	}
-	panel.experience header .address-line {
+	panel.experience header .organization>div {
 		margin-left: 0px;
+		color: #444;
 		font-size: smaller;
 	}
 	panel.experience header .markers {
 		font-size: smaller;
-		color: #555;
+		color: #666;
 		overflow-x: hidden;
 		text-overflow: ellipsis;
 		max-width: 100%;
