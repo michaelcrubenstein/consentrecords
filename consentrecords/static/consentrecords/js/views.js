@@ -1941,7 +1941,9 @@ var SearchView = (function () {
 
 			var done = function(foundObjects, startVal)
 			{
-				if (_this.inputBox.value.toLocaleLowerCase().trim() == startVal)
+				var currentVal = _this.inputCompareText();
+				if (currentVal == startVal ||
+					_this.canConstrain(startVal, currentVal))
 				{
 					_this.showObjects(foundObjects);
 					var text = _this.noResultString();
