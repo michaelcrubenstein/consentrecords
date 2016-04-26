@@ -318,6 +318,16 @@
 			}
 		});
 
+		window.onbeforeunload = function(event) {
+			event = event || window.event;
+			
+			if (event)
+				event.returnValue = "Leaving this page will leave the PathAdvisor web application.";
+			
+			// For Safari
+			return "Leaving this page will leave the PathAdvisor web application.";
+		};
+
 		/* The global object used to identify the current user. */
 		var userFirstName = null;
 		var userLastName = null;
