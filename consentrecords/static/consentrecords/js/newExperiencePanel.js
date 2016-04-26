@@ -1153,6 +1153,9 @@ var FromOrganizationSearchView = (function() {
 	
 	function FromOrganizationSearchView(sitePanel, experience)
 	{
+		if (!experience.organizationName)
+			throw "experience organization name is not specified";
+			
 		var _this = this;
 		this.initialTypeName = "Site";
 		this.typeName = this.initialTypeName;
@@ -1400,6 +1403,9 @@ var FromSiteSearchView = (function() {
 	
 	function FromSiteSearchView(sitePanel, experience)
 	{
+		if (!experience.siteName)
+			throw "experience site name is not specified";
+			
 		var _this = this;
 		this.initialTypeName = "Offering";
 		this.typeName = this.initialTypeName;
