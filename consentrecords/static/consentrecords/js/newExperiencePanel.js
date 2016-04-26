@@ -1136,7 +1136,7 @@ var FromOrganizationSearchView = (function() {
 	FromOrganizationSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return typeof(d) === "object"; });
+		buttons = buttons.filter(function(d, i) { return i > 0; });
 			
 		buttons.remove();
 		this.customButton.style("display", "none");
@@ -1163,14 +1163,11 @@ var FromOrganizationSearchView = (function() {
 		
 		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
-		var sections = this.appendButtonContainers(["Organization"]);
+		var sections = this.appendButtonContainers(["Custom"]);
 		this.customButton = appendViewButtons(sections, 
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("");
 					}
 			)
 			.on("click", function(d, i) {
