@@ -983,8 +983,105 @@ var NewExperienceFromServicePanel = (function () {
 	return NewExperienceFromServicePanel;
 })();
 
+/* This is a parent class for the FromOrganizationSearchView and the FromSiteSearchView */
+var FromOfferingParentSearchView = (function() {
+	FromOfferingParentSearchView.prototype = new MultiTypeSearchView();
+	FromOfferingParentSearchView.prototype.customButton = null;
+	
+	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
+	{
+		var _this = this;
+		if (this.experience.services.length == 0)
+		{
+			var service = this.experience.addService(r);
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+			function()
+			{
+				_this.experience.removeService(service);
+			});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+		else if (this.experience.services[0].pickedObject)
+		{
+			this.experience.setOffering(r);
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				function()
+				{
+					_this.experience.clearOffering();
+				});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+		else
+		{
+			var oldService = this.experience.services[0];
+			this.experience.removeService(oldService);
+			var newService = this.experience.addService(r);
+			this.experience.setOffering({text: oldService.getDescription() });
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				function()
+				{
+					_this.experience.removeService(newService);
+					_this.experience.addService(oldService);
+					_this.experience.clearOffering();
+				});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+	}
+	
+	FromOfferingParentSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d, i) { return i > 0; });
+			
+		buttons.remove();
+		this.customButton.style("display", "none");
+	}
+	
+	FromOfferingParentSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
+	}
+	
+	FromOfferingParentSearchView.prototype.cancelSearch = function()
+	{
+		SearchView.prototype.cancelSearch.call(this);
+		this.customButton.style("display", this.inputText().length > 0 ? null : "none");
+	}
+	
+	function FromOfferingParentSearchView(sitePanel, experience, placeholder, appendDescriptions)
+	{
+		MultiTypeSearchView.call(this, sitePanel, experience, placeholder, appendDescriptions)
+		
+		if (sitePanel)
+		{
+			var _this = this;
+			var sections = this.appendButtonContainers(["Custom"]);
+			this.customButton = appendViewButtons(sections, 
+						function(buttons)
+						{
+							buttons.append('div').classed("left-expanding-div description-text", true);
+						}
+				)
+				.on("click", function(d, i) {
+					if (prepareClick('click', 'Set Custom Marker'))
+					{
+						_this.showFinishPanel({text: _this.inputText() });
+					}
+				})
+				.style('display', 'none');
+
+		}
+	}
+	
+	return FromOfferingParentSearchView;
+})();
+
 var FromOrganizationSearchView = (function() {
-	FromOrganizationSearchView.prototype = new MultiTypeSearchView();
+	FromOrganizationSearchView.prototype = new FromOfferingParentSearchView();
 	
 	FromOrganizationSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1133,24 +1230,6 @@ var FromOrganizationSearchView = (function() {
 		this.startSearchTimeout("");
 	}
 	
-	FromOrganizationSearchView.prototype.clearListPanel = function()
-	{
-		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d, i) { return i > 0; });
-			
-		buttons.remove();
-		this.customButton.style("display", "none");
-	}
-	
-	FromOrganizationSearchView.prototype.textChanged = function()
-	{
-		SearchView.prototype.textChanged.call(this);
-
-		var val = this.inputText();
-		
-		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
-	}
-	
 	function FromOrganizationSearchView(sitePanel, experience)
 	{
 		if (!experience.organizationName)
@@ -1164,29 +1243,8 @@ var FromOrganizationSearchView = (function() {
 			"Offering, Marker" :
 			"Site, Offering, Marker";
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
+		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
-		var sections = this.appendButtonContainers(["Custom"]);
-		this.customButton = appendViewButtons(sections, 
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Marker'))
-				{
-					var service = experience.addService({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
-					function()
-					{
-						experience.removeService(service);
-					});
-					showPanelLeft(panel.node(), unblockClick);
-				}
-			})
-			.style('display', 'none');
-
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
@@ -1261,7 +1319,7 @@ var NewExperienceFromOrganizationPanel = (function () {
 })();
 
 var FromSiteSearchView = (function() {
-	FromSiteSearchView.prototype = new MultiTypeSearchView();
+	FromSiteSearchView.prototype = new FromOfferingParentSearchView();
 	
 	FromSiteSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1383,24 +1441,6 @@ var FromSiteSearchView = (function() {
 		this.startSearchTimeout("");
 	}
 	
-	FromSiteSearchView.prototype.clearListPanel = function()
-	{
-		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return typeof(d) === "object"; });
-			
-		buttons.remove();
-		this.customButton.style("display", "none");
-	}
-	
-	FromSiteSearchView.prototype.textChanged = function()
-	{
-		SearchView.prototype.textChanged.call(this);
-
-		var val = this.inputText();
-		
-		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
-	}
-	
 	function FromSiteSearchView(sitePanel, experience)
 	{
 		if (!experience.siteName)
@@ -1410,32 +1450,12 @@ var FromSiteSearchView = (function() {
 		this.initialTypeName = "Offering";
 		this.typeName = this.initialTypeName;
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, "Offering, Marker", function(buttons) { _this.appendDescriptions(buttons); });
+		var placeHolder = "Offering";
+		if (experience.services.length == 0)
+			placeHolder += ", Marker";
+		
+		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
-		var sections = this.appendButtonContainers(["Organization"]);
-		this.customButton = appendViewButtons(sections, 
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("");
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Marker'))
-				{
-					var service = experience.addService({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
-					function()
-					{
-						_this.experience.removeService(service);
-					});
-					showPanelLeft(panel.node(), unblockClick);
-				}
-			})
-			.style('display', 'none');
-
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
