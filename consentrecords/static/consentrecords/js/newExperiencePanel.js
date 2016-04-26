@@ -681,7 +681,7 @@ var FromServiceSearchView = (function() {
 				 */
 				this.experience.setOrganization({instance: d.getValue("Organization")});
 				this.experience.setSite({instance: d});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				var panel = new NewExperienceFromSitePanel(this.sitePanel.node(), this.experience,
 					function()
 					{
 						_this.experience.clearOrganization();
@@ -699,7 +699,7 @@ var FromServiceSearchView = (function() {
 					also set the site.
 				 */
 				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
 					function()
 					{
 						_this.experience.clearOrganization();
@@ -897,7 +897,7 @@ var FromServiceSearchView = (function() {
 				if (prepareClick('click', 'Set Custom Organization'))
 				{
 					experience.setOrganization({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
+					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
 					function()
 					{
 						experience.clearOrganization();
@@ -1175,19 +1175,26 @@ var FromOrganizationSearchView = (function() {
 	{
 		var path;
 		
-		if (this.experience.organizationName != null &&
-			this.experience.organization == null)
+		if (this.experience.organization == null)
 		{
-			return "Service";	/* Can't look up offerings for a custom organization name. */
+			if (this.experience.services.length == 0)
+				return "Service";	/* Can't look up offerings for a custom organization name. */
+			else
+				return "";
 		}
 		else if (val.length == 0)
 		{
-			if (!this.experience.organization)
-				return "Service";
-			else if (this.typeName === "Site")
+			if (this.typeName === "Site")
 				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
 			else if (this.typeName === "Offering")
-				return "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID())
+			{
+				path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
+				if (this.experiences.services.length > 0 && this.experiences.services[0].pickedObject)
+				{
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				}
+				return path;
+			}
 			else if (this.typeName === "Service")
 				return "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID())
 			else
@@ -1239,27 +1246,37 @@ var FromOrganizationSearchView = (function() {
 		this.initialTypeName = "Site";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = (experience.organizationName && !experience.organization) ?
-			"Offering, Marker" :
-			"Site, Offering, Marker";
+		var placeHolder = experience.organization ? "Site, Offering" : "Offering";
+		if (experience.services.length == 0)
+			placeHolder += ", Marker";
 		
 		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
+				if (experience.organization && searchText && searchText.length > 0)
 				{
-					if (_this.experience.organizationName &&
-						!_this.experience.organization)
-						return;
-					else if (_this.typeName === "Site")
+					if (_this.typeName === "Site")
 					{
 						_this.typeName = "Offering";
 					}
-					else if (_this.typeName === "Offering")
+					else if (_this.typeName === "Offering" && experience.services.length == 0)
 					{
 						_this.typeName = "Service";
+					}
+					else
+						return;
+					
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.checkStart(searchText);
+				}
+				else if (experience.organization && experience.services.length > 0)
+				{
+					if (_this.typeName === "Site")
+					{
+						_this.typeName = "Offering";
 					}
 					else
 						return;
@@ -1459,12 +1476,9 @@ var FromSiteSearchView = (function() {
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
+				if (experience.site && searchText && searchText.length > 0)
 				{
-					if (_this.experience.siteName &&
-						!_this.experience.site)
-						return;
-					else if (_this.typeName === "Offering")
+					if (_this.typeName === "Offering" && experience.services.length === 0)
 					{
 						_this.typeName = "Service";
 					}
