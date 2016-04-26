@@ -707,6 +707,27 @@ var FromServiceSearchView = (function() {
 				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
+		else if (d.typeName === "Service")
+		{
+			if (prepareClick('click', 'service: ' + d.getDescription()))
+			{
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				var oldService = this.experience.services[0];
+				this.experience.removeService(oldService);
+				var newService = this.experience.addService({instance: d});
+				this.experience.setOffering({text: oldService.getDescription() });
+				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+					function()
+					{
+						_this.experience.removeService(newService);
+						_this.experience.addService(oldService);
+						_this.experience.clearOffering();
+					});
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
 		d3.event.preventDefault();
 	}
 	
