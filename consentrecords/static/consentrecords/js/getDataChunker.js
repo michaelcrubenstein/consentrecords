@@ -80,6 +80,8 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._continue = function(startVal)
 	{
 		var _this = this;
+		if (!this.path)
+			throw ("path is not specified to GetDataChunker._continue");
 		
 		this.showLoadingMessage();
 
