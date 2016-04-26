@@ -1,5 +1,6 @@
 Organization
     _name: Citizen Schools
+    _public access: _read
     Web Site: http://www.citizenschools.org/massachusetts/
     Sites
         Site
