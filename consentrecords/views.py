@@ -568,6 +568,9 @@ class api:
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
             path = data.get('path', None)
+            if path.startswith('::NewExperience:'):
+                return api.getNewExperienceChoices(user, data)
+            
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
         
@@ -604,6 +607,90 @@ class api:
                                                             
             fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+        
+            results = {'success':True, 'data': p}
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("getData data:%s" % str(data))
+            
+            results = {'success':False, 'error': str(e)}
+        
+        return JsonResponse(results)
+        
+    def _addPreloadData(uuObjects, userInfo):
+        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .select_related('referenceValue__description')
+
+        return uuObjects.select_related('typeID').select_related('parent')\
+                        .select_related('description')\
+                        .prefetch_related(Prefetch('value_set',
+                                                   queryset=valueQueryset,
+                                                   to_attr='values'))
+
+    
+    def getNewExperienceChoices(user, data):
+        pathparser.currentTimestamp = datetime.datetime.now()
+        try:
+            path = data.get('path', None)
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
+        
+            if not path:
+                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+            
+            fieldString = data.get('fields', "[]")
+            fields = json.loads(fieldString)
+            
+            language = data.get('language', None)
+
+            userInfo=UserInfo(user)
+            
+            testValue = path[len('::NewExperience:'):]
+            
+            if len(testValue) > 0:
+                a = ["Service Domain", "Service", "Offering", "Site", "Organization"]
+            else:
+                a = ["Service Domain"]
+            results = []
+            for termName in a:
+                term = Terms.getNamedInstance(termName)
+                uuObjects = Instance.objects.filter(typeID=term)
+                
+                if len(testValue) >= 3:
+                    vFilter = Value.objects.filter(field=Terms.name, 
+                                                   stringValue__icontains=testValue,referenceValue__isnull=True,
+                                                   deleteTransaction__isnull=True)
+                    uuObjects = uuObjects.filter(value__in=vFilter)
+                elif len(testValue) > 0:
+                    vFilter = Value.objects.filter(field=Terms.name, 
+                                                   stringValue__istartswith=testValue,referenceValue__isnull=True,
+                                                   deleteTransaction__isnull=True)
+                    uuObjects = uuObjects.filter(value__in=vFilter)
+                uuObjects = userInfo.readFilter(uuObjects)
+                uuObjects = uuObjects.order_by('description__text', 'id');
+                c = uuObjects.count()
+                if c <= start:
+                    start -= c
+                    end -= c
+                elif c <= end:
+                    uuObjects = api._addPreloadData(uuObjects, userInfo)
+                    results += uuObjects[start:]
+                    end -= c
+                    start = 0
+                else:
+                    uuObjects = api._addPreloadData(uuObjects, userInfo)
+                    results += uuObjects[start:end]
+                    end = 0
+                    start = 0
+                    break
+            
+            fieldsDataDictionary = {}
+            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
         
             results = {'success':True, 'data': p}
         except Exception as e:

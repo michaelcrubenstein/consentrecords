@@ -2060,7 +2060,6 @@ var SearchView = (function () {
 		var searchPath = this.searchPath(this._constrainCompareText);
 		if (searchPath && searchPath.length > 0)
 		{
-			//cr.selectAll({path: searchPath, end: 50, done: done, fail: asyncFailFunction});
 			this.getDataChunker.path = searchPath;
 			this.getDataChunker.fields = this.fields();
 			this.getDataChunker.start(this._constrainCompareText);			

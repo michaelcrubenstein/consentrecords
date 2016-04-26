@@ -2152,14 +2152,15 @@ var NewExperienceSearchView = (function() {
 	
 	NewExperienceSearchView.prototype.searchPath = function(val)
 	{
-		var path = this.typeName;
-			
-		if (val.length == 0)
-			return path;
-		else if (val.length < 3)
-			return '{1}[_name^="{0}"]'.format(val, path);
-		else
-			return '{1}[_name*="{0}"]'.format(val, path);
+		return '::NewExperience:'+val;
+// 		var path = this.typeName;
+// 			
+// 		if (val.length == 0)
+// 			return path;
+// 		else if (val.length < 3)
+// 			return '{1}[_name^="{0}"]'.format(val, path);
+// 		else
+// 			return '{1}[_name*="{0}"]'.format(val, path);
 	}
 	
 	NewExperienceSearchView.prototype.textChanged = function()
@@ -2221,35 +2222,35 @@ var NewExperienceSearchView = (function() {
 			.style("display", "none");
 
 		var _this = this;
-		this.getDataChunker._onDoneSearch = function()
-			{
-				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
-				{
-					if (_this.typeName === '"Service Domain"')
-					{
-						_this.typeName = "Service";
-					}
-					else if (_this.typeName === "Service")
-					{
-						_this.typeName = "Offering";
-					}
-					else if (_this.typeName === "Offering")
-					{
-						_this.typeName = "Site";
-					}
-					else if (_this.typeName === "Site")
-					{
-						_this.typeName = "Organization";
-					}
-					else
-						return;
-			
-					this.path = _this.searchPath(searchText);
-					this.fields = _this.fields();
-					this.checkStart(searchText);
-				}			
-			};
+// 		this.getDataChunker._onDoneSearch = function()
+// 			{
+// 				var searchText = _this._foundCompareText;
+// 				if (searchText && searchText.length > 0)
+// 				{
+// 					if (_this.typeName === '"Service Domain"')
+// 					{
+// 						_this.typeName = "Service";
+// 					}
+// 					else if (_this.typeName === "Service")
+// 					{
+// 						_this.typeName = "Offering";
+// 					}
+// 					else if (_this.typeName === "Offering")
+// 					{
+// 						_this.typeName = "Site";
+// 					}
+// 					else if (_this.typeName === "Site")
+// 					{
+// 						_this.typeName = "Organization";
+// 					}
+// 					else
+// 						return;
+// 			
+// 					this.path = _this.searchPath(searchText);
+// 					this.fields = _this.fields();
+// 					this.checkStart(searchText);
+// 				}			
+// 			};
 	}
 	
 	return NewExperienceSearchView;
