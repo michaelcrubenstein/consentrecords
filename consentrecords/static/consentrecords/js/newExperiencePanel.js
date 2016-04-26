@@ -681,7 +681,7 @@ var FromServiceSearchView = (function() {
 				 */
 				this.experience.setOrganization({instance: d.getValue("Organization")});
 				this.experience.setSite({instance: d});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				var panel = new NewExperienceFromSitePanel(this.sitePanel.node(), this.experience,
 					function()
 					{
 						_this.experience.clearOrganization();
@@ -699,7 +699,7 @@ var FromServiceSearchView = (function() {
 					also set the site.
 				 */
 				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
 					function()
 					{
 						_this.experience.clearOrganization();
@@ -897,7 +897,7 @@ var FromServiceSearchView = (function() {
 				if (prepareClick('click', 'Set Custom Organization'))
 				{
 					experience.setOrganization({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
+					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
 					function()
 					{
 						experience.clearOrganization();
@@ -941,7 +941,9 @@ var FromServiceSearchView = (function() {
 	return FromServiceSearchView;
 })();
 
-/* This panel appears when there is a single service associated with the experience.  */
+/* This is an intermediate panel for the workflow. The experience contains a marker and nothing else. 
+	From here, the user can specify an organization, a known site, a known offering.
+ */
 var NewExperienceFromServicePanel = (function () {
 	NewExperienceFromServicePanel.prototype = new NewExperienceBasePanel();
 	
@@ -981,8 +983,105 @@ var NewExperienceFromServicePanel = (function () {
 	return NewExperienceFromServicePanel;
 })();
 
+/* This is a parent class for the FromOrganizationSearchView and the FromSiteSearchView */
+var FromOfferingParentSearchView = (function() {
+	FromOfferingParentSearchView.prototype = new MultiTypeSearchView();
+	FromOfferingParentSearchView.prototype.customButton = null;
+	
+	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
+	{
+		var _this = this;
+		if (this.experience.services.length == 0)
+		{
+			var service = this.experience.addService(r);
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+			function()
+			{
+				_this.experience.removeService(service);
+			});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+		else if (this.experience.services[0].pickedObject)
+		{
+			this.experience.setOffering(r);
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				function()
+				{
+					_this.experience.clearOffering();
+				});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+		else
+		{
+			var oldService = this.experience.services[0];
+			this.experience.removeService(oldService);
+			var newService = this.experience.addService(r);
+			this.experience.setOffering({text: oldService.getDescription() });
+			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
+				function()
+				{
+					_this.experience.removeService(newService);
+					_this.experience.addService(oldService);
+					_this.experience.clearOffering();
+				});
+			showPanelLeft(panel.node(), unblockClick);
+		}
+	}
+	
+	FromOfferingParentSearchView.prototype.clearListPanel = function()
+	{
+		var buttons = this.listPanel.selectAll("li");
+		buttons = buttons.filter(function(d, i) { return i > 0; });
+			
+		buttons.remove();
+		this.customButton.style("display", "none");
+	}
+	
+	FromOfferingParentSearchView.prototype.textChanged = function()
+	{
+		SearchView.prototype.textChanged.call(this);
+
+		var val = this.inputText();
+		
+		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
+	}
+	
+	FromOfferingParentSearchView.prototype.cancelSearch = function()
+	{
+		SearchView.prototype.cancelSearch.call(this);
+		this.customButton.style("display", this.inputText().length > 0 ? null : "none");
+	}
+	
+	function FromOfferingParentSearchView(sitePanel, experience, placeholder, appendDescriptions)
+	{
+		MultiTypeSearchView.call(this, sitePanel, experience, placeholder, appendDescriptions)
+		
+		if (sitePanel)
+		{
+			var _this = this;
+			var sections = this.appendButtonContainers(["Custom"]);
+			this.customButton = appendViewButtons(sections, 
+						function(buttons)
+						{
+							buttons.append('div').classed("left-expanding-div description-text", true);
+						}
+				)
+				.on("click", function(d, i) {
+					if (prepareClick('click', 'Set Custom Marker'))
+					{
+						_this.showFinishPanel({text: _this.inputText() });
+					}
+				})
+				.style('display', 'none');
+
+		}
+	}
+	
+	return FromOfferingParentSearchView;
+})();
+
 var FromOrganizationSearchView = (function() {
-	FromOrganizationSearchView.prototype = new MultiTypeSearchView();
+	FromOrganizationSearchView.prototype = new FromOfferingParentSearchView();
 	
 	FromOrganizationSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1076,19 +1175,26 @@ var FromOrganizationSearchView = (function() {
 	{
 		var path;
 		
-		if (this.experience.organizationName != null &&
-			this.experience.organization == null)
+		if (this.experience.organization == null)
 		{
-			return "Service";	/* Can't look up offerings for a custom organization name. */
+			if (this.experience.services.length == 0)
+				return "Service";	/* Can't look up offerings for a custom organization name. */
+			else
+				return "";
 		}
 		else if (val.length == 0)
 		{
-			if (!this.experience.organization)
-				return "Service";
-			else if (this.typeName === "Site")
+			if (this.typeName === "Site")
 				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
 			else if (this.typeName === "Offering")
-				return "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID())
+			{
+				path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
+				if (this.experiences.services.length > 0 && this.experiences.services[0].pickedObject)
+				{
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				}
+				return path;
+			}
 			else if (this.typeName === "Service")
 				return "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID())
 			else
@@ -1131,75 +1237,46 @@ var FromOrganizationSearchView = (function() {
 		this.startSearchTimeout("");
 	}
 	
-	FromOrganizationSearchView.prototype.clearListPanel = function()
-	{
-		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return typeof(d) === "object"; });
-			
-		buttons.remove();
-		this.customButton.style("display", "none");
-	}
-	
-	FromOrganizationSearchView.prototype.textChanged = function()
-	{
-		SearchView.prototype.textChanged.call(this);
-
-		var val = this.inputText();
-		
-		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
-	}
-	
 	function FromOrganizationSearchView(sitePanel, experience)
 	{
+		if (!experience.organizationName)
+			throw "experience organization name is not specified";
+			
 		var _this = this;
 		this.initialTypeName = "Site";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = (experience.organizationName && !experience.organization) ?
-			"Offering, Marker" :
-			"Site, Offering, Marker";
+		var placeHolder = experience.organization ? "Site, Offering" : "Offering";
+		if (experience.services.length == 0)
+			placeHolder += ", Marker";
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
+		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
-		var sections = this.appendButtonContainers(["Organization"]);
-		this.customButton = appendViewButtons(sections, 
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("");
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Marker'))
-				{
-					var service = experience.addService({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
-					function()
-					{
-						experience.removeService(service);
-					});
-					showPanelLeft(panel.node(), unblockClick);
-				}
-			})
-			.style('display', 'none');
-
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
+				if (experience.organization && searchText && searchText.length > 0)
 				{
-					if (_this.experience.organizationName &&
-						!_this.experience.organization)
-						return;
-					else if (_this.typeName === "Site")
+					if (_this.typeName === "Site")
 					{
 						_this.typeName = "Offering";
 					}
-					else if (_this.typeName === "Offering")
+					else if (_this.typeName === "Offering" && experience.services.length == 0)
 					{
 						_this.typeName = "Service";
+					}
+					else
+						return;
+					
+					this.path = _this.searchPath(searchText);
+					this.fields = _this.fields();
+					this.checkStart(searchText);
+				}
+				else if (experience.organization && experience.services.length > 0)
+				{
+					if (_this.typeName === "Site")
+					{
+						_this.typeName = "Offering";
 					}
 					else
 						return;
@@ -1214,7 +1291,11 @@ var FromOrganizationSearchView = (function() {
 	return FromOrganizationSearchView;
 })();
 
-/* In this case, the experience contains an organization or an organizationName, but nothing else. */
+/* This is an intermediate panel for the workflow. The experience contains an organization or an organizationName.
+	The experience may or may not also have a marker. 
+	From here, the user can specify, if the organization is known, a site or offering within that organization. 
+	If the experience has no marker, the user can specify a known marker or a custom marker.
+ */
 var NewExperienceFromOrganizationPanel = (function () {
 	NewExperienceFromOrganizationPanel.prototype = new NewExperienceBasePanel();
 	
@@ -1255,7 +1336,7 @@ var NewExperienceFromOrganizationPanel = (function () {
 })();
 
 var FromSiteSearchView = (function() {
-	FromSiteSearchView.prototype = new MultiTypeSearchView();
+	FromSiteSearchView.prototype = new FromOfferingParentSearchView();
 	
 	FromSiteSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1377,65 +1458,27 @@ var FromSiteSearchView = (function() {
 		this.startSearchTimeout("");
 	}
 	
-	FromSiteSearchView.prototype.clearListPanel = function()
-	{
-		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return typeof(d) === "object"; });
-			
-		buttons.remove();
-		this.customButton.style("display", "none");
-	}
-	
-	FromSiteSearchView.prototype.textChanged = function()
-	{
-		SearchView.prototype.textChanged.call(this);
-
-		var val = this.inputText();
-		
-		this.customButton.selectAll('.description-text').text('"{0}"'.format(val));
-	}
-	
 	function FromSiteSearchView(sitePanel, experience)
 	{
+		if (!experience.siteName)
+			throw "experience site name is not specified";
+			
 		var _this = this;
 		this.initialTypeName = "Offering";
 		this.typeName = this.initialTypeName;
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, "Offering, Marker", function(buttons) { _this.appendDescriptions(buttons); });
+		var placeHolder = "Offering";
+		if (experience.services.length == 0)
+			placeHolder += ", Marker";
+		
+		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
-		var sections = this.appendButtonContainers(["Organization"]);
-		this.customButton = appendViewButtons(sections, 
-					function(buttons)
-					{
-						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("");
-					}
-			)
-			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Marker'))
-				{
-					var service = experience.addService({text: _this.inputText() });
-					var panel = new NewExperienceFinishPanel(sitePanel.node(), experience,
-					function()
-					{
-						_this.experience.removeService(service);
-					});
-					showPanelLeft(panel.node(), unblockClick);
-				}
-			})
-			.style('display', 'none');
-
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
-				if (searchText && searchText.length > 0)
+				if (experience.site && searchText && searchText.length > 0)
 				{
-					if (_this.experience.siteName &&
-						!_this.experience.site)
-						return;
-					else if (_this.typeName === "Offering")
+					if (_this.typeName === "Offering" && experience.services.length === 0)
 					{
 						_this.typeName = "Service";
 					}
@@ -1452,7 +1495,10 @@ var FromSiteSearchView = (function() {
 	return FromSiteSearchView;
 })();
 
-/* In this case, the experience contains a site or a siteName, but no offering or marker. */
+/* This is an intermediate panel for the workflow. the experience contains a site or a siteName, but no offering or marker. 
+	From here, the user can specify a known marker, custom marker or, if the site is known, 
+	an offering within that site.
+ */
 var NewExperienceFromSitePanel = (function () {
 	NewExperienceFromSitePanel.prototype = new NewExperienceBasePanel();
 	
@@ -1805,11 +1851,10 @@ var NewExperienceMarkersPanel = (function () {
 	return NewExperienceMarkersPanel;
 })();
 
-/* This is the final panel for the workflow. The experience contains either an organization or organizationName
-	as well as at least one service. It may also contain a site and/or an offering. In this panel, it may set multiple markers
-	as well as the start date and end date.
+/* This is the exit panel for the workflow. The experience contains either an organization or organizationName
+	as well as at least one service. It may also contain a site and/or an offering.
 	
-	If the experience contains no offering, it is displayed as if the first marker were the offering, not a marker. */
+	This panel can modify the markers and set the start and end dates. */
 var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
@@ -2089,11 +2134,11 @@ var NewExperienceSearchView = (function() {
 	NewExperienceSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return d !== "Organization" && d !== "Offering"; });
+		buttons = buttons.filter(function(d, i) { return i > 1; });
 			
 		buttons.remove();
 		this.organizationButton.style("display", "none");
-		this.offeringButton.style("display", "none");
+		this.customServiceButton.style("display", "none");
 	}
 	
 	NewExperienceSearchView.prototype.canConstrain = function(searchText, constrainText)
@@ -2124,7 +2169,7 @@ var NewExperienceSearchView = (function() {
 		var val = this.inputText();
 		
 		this.organizationButton.selectAll('.description-text').text('At "{0}"'.format(val));
-		this.offeringButton.selectAll('.description-text').text('"{0}"'.format(val));
+		this.customServiceButton.selectAll('.description-text').text('"{0}"'.format(val));
 	}
 	
 	function NewExperienceSearchView(sitePanel, experience)
@@ -2138,13 +2183,10 @@ var NewExperienceSearchView = (function() {
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Organization");
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Search By Organization'))
+				if (prepareClick('click', 'Set Custom Organization'))
 				{
 					experience.setOrganization({text: _this.inputText()});
 					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
@@ -2158,13 +2200,10 @@ var NewExperienceSearchView = (function() {
 			.style("display", "none");
 
 		sections = this.appendButtonContainers(["Offering"]);
-		this.offeringButton = appendViewButtons(sections,  
+		this.customServiceButton = appendViewButtons(sections,  
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Offering");
 					}
 			)
 			.on("click", function(d, i) {
@@ -2216,35 +2255,18 @@ var NewExperienceSearchView = (function() {
 	return NewExperienceSearchView;
 })();
 
-/* This is the entry panel for the workflow. The experience contains no data on entry. */
+/* This is the entry panel for the workflow. The experience contains no data on entry. 
+	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
+	One can also specify a custom service or a custom organization. */
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new NewExperienceBasePanel();
 	
-	function NewExperiencePanel(pathway, previousPanelNode) {
-		var experience = new Experience();
-		experience.user = pathway.user;
+	function NewExperiencePanel(experience, previousPanelNode) {
 
 		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit new-experience-panel", revealPanelUp);
 		var _this = this;
 		var navContainer = this.appendNavContainer();
 
-		$(experience).on("experienceAdded.cr", function(eventObject, newData)
-			{
-				crp.pushCheckCells(newData, undefined, 
-					function() {
-						function addExperience() {
-							pathway.addMoreExperience.call(pathway, newData);
-							unblockClick();
-						}
-						var offering = newData.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-						else
-							addExperience();
-					},
-					syncFailFunction);
-			});
-		
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{

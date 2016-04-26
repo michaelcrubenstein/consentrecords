@@ -2150,6 +2150,8 @@ var SearchView = (function () {
 			else
 				this.startSearchTimeout(val);
 		}
+		else if (this.searchPath(val) === "")
+			this.cancelSearch();
 		else
 			this.startSearchTimeout(val);
 	}

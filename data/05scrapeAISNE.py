@@ -39,6 +39,7 @@ def scrape():
                 address = p.get_text().strip()
                 fOut.write('Organization\n')
                 fOut.write('    _name: %s\n' % orgCell.get_text().strip())
+                fOut.write('    _public access: _read\n')
                 fOut.write('    Web Site: %s\n' % websiteCell.find('a').get('href'))
                 fOut.write('    Sites\n')
                 fOut.write('        Site\n')
