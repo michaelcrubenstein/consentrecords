@@ -1964,6 +1964,32 @@ var Pathtree = (function () {
 		this.years = [];
 	}
 	
+	Pathtree.prototype.startNewExperience = function()
+	{
+		var experience = new Experience();
+		var _this = this;
+		experience.user = this.user;
+
+		$(experience).on("experienceAdded.cr", function(eventObject, newData)
+			{
+				crp.pushCheckCells(newData, undefined, 
+					function() {
+						function addExperience() {
+							_this.addMoreExperience(newData);
+							unblockClick();
+						}
+						var offering = newData.getValue("Offering");
+						if (offering && offering.getValueID() && !offering.isDataLoaded)
+							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+						else
+							addExperience();
+					},
+					syncFailFunction);
+			});
+		
+		var panel = new NewExperiencePanel(experience, this.sitePanel.node());
+	}
+	
 	Pathtree.prototype.setUser = function(user, editable)
 	{
 		if (user.privilege === '_find')
@@ -2198,7 +2224,7 @@ var Pathtree = (function () {
 							try
 							{
 								showClickFeedback(this);
-								var newPanel = new NewExperiencePanel(_this, _this.sitePanel.node());
+								_this.startNewExperience();
 							}
 							catch (err)
 							{
@@ -2291,8 +2317,7 @@ var PathtreePanel = (function () {
 				if (prepareClick('click', 'add experience'))
 				{
 					showClickFeedback(this);
-	
-					var newPanel = new NewExperiencePanel(_this.pathtree, _this.node());
+					_this.pathtree.startNewExperience();
 				}
 				d3.event.preventDefault();
 			})

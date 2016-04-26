@@ -2220,31 +2220,12 @@ var NewExperienceSearchView = (function() {
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new NewExperienceBasePanel();
 	
-	function NewExperiencePanel(pathway, previousPanelNode) {
-		var experience = new Experience();
-		experience.user = pathway.user;
+	function NewExperiencePanel(experience, previousPanelNode) {
 
 		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit new-experience-panel", revealPanelUp);
 		var _this = this;
 		var navContainer = this.appendNavContainer();
 
-		$(experience).on("experienceAdded.cr", function(eventObject, newData)
-			{
-				crp.pushCheckCells(newData, undefined, 
-					function() {
-						function addExperience() {
-							pathway.addMoreExperience.call(pathway, newData);
-							unblockClick();
-						}
-						var offering = newData.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-						else
-							addExperience();
-					},
-					syncFailFunction);
-			});
-		
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
