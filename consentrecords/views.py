@@ -581,8 +581,6 @@ class api:
 
             userInfo=UserInfo(user)
             uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            fieldsDataDictionary = {}
-            nameLists = NameList()
             
             # preload the typeID, parent, value_set and description to improve performance.
             valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
@@ -604,6 +602,7 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
+            fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'success':True, 'data': p}
