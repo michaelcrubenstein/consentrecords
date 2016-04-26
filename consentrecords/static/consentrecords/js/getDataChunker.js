@@ -3,7 +3,7 @@
 var GetDataChunker = (function() {
 	GetDataChunker.prototype.path = null;
 	GetDataChunker.prototype.fields = [];
-	GetDataChunker.prototype._increment = 50;
+	GetDataChunker.prototype._increment = 20;
 	GetDataChunker.prototype._containerNode = null;
 	GetDataChunker.prototype._loadingMessage = null;
 	GetDataChunker.prototype._isSpinning = null;
@@ -181,7 +181,8 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return d3.select(this._containerNode).selectAll('li').size() < 50 && !this._inGetData;
+		return d3.select(this._containerNode).selectAll('li').size() < this._increment &&
+			   !this._inGetData;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()
