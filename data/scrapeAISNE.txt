@@ -4,6 +4,7 @@ Service
     _name: High School Post Graduate
 Organization
     _name: The Academy at Charlemont
+    _public access: _read
     Web Site: http://www.charlemont.org
     Sites
         Site
@@ -58,6 +59,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Academy Hill School
+    _public access: _read
     Web Site: http://www.academyhill.org
     Sites
         Site
@@ -136,6 +138,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Advent School
+    _public access: _read
     Web Site: http://www.adventschool.org
     Sites
         Site
@@ -202,6 +205,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Amherst Montessori School
+    _public access: _read
     Web Site: http://www.amherstmontessori.org
     Sites
         Site
@@ -286,6 +290,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Andover School of Montessori
+    _public access: _read
     Web Site: http://www.andovermontessori.org
     Sites
         Site
@@ -358,6 +363,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Applewild School
+    _public access: _read
     Web Site: http://www.applewild.org
     Sites
         Site
@@ -442,6 +448,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Atrium School
+    _public access: _read
     Web Site: http://www.atrium.org
     Sites
         Site
@@ -520,6 +527,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Austin Preparatory School
+    _public access: _read
     Web Site: http://www.austinprep.org
     Sites
         Site
@@ -574,6 +582,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Bancroft School
+    _public access: _read
     Web Site: http://www.bancroftschool.org
     Sites
         Site
@@ -676,6 +685,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Bay Farm Montessori Academy
+    _public access: _read
     Web Site: http://www.bfarm.org
     Sites
         Site
@@ -754,6 +764,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Beaver Country Day School
+    _public access: _read
     Web Site: http://www.bcdschool.org
     Sites
         Site
@@ -808,6 +819,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Belmont Day School
+    _public access: _read
     Web Site: http://www.belmontday.org
     Sites
         Site
@@ -880,6 +892,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Belmont Hill School
+    _public access: _read
     Web Site: http://www.belmonthill.org
     Sites
         Site
@@ -928,6 +941,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Bement School
+    _public access: _read
     Web Site: http://www.bement.org
     Sites
         Site
@@ -1000,6 +1014,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Berkshire School
+    _public access: _read
     Web Site: http://www.berkshireschool.org
     Sites
         Site
@@ -1042,6 +1057,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Berwick Academy
+    _public access: _read
     Web Site: http://www.berwickacademy.org
     Sites
         Site
@@ -1150,6 +1166,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Birches School
+    _public access: _read
     Web Site: http://www.birchesschool.org
     Sites
         Site
@@ -1204,6 +1221,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Boston College High School
+    _public access: _read
     Web Site: http://www.bchigh.edu/
     Sites
         Site
@@ -1252,6 +1270,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Boston Trinity Academy
+    _public access: _read
     Web Site: http://www.bostontrinity.org
     Sites
         Site
@@ -1306,6 +1325,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Boston University Academy
+    _public access: _read
     Web Site: http://www.buacademy.org
     Sites
         Site
@@ -1342,6 +1362,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Brewster Academy
+    _public access: _read
     Web Site: http://www.brewsteracademy.org
     Sites
         Site
@@ -1384,6 +1405,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Brimmer and May School
+    _public access: _read
     Web Site: http://www.brimmer.org
     Sites
         Site
@@ -1480,6 +1502,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Brooks School
+    _public access: _read
     Web Site: http://www.brooksschool.org
     Sites
         Site
@@ -1516,6 +1539,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Brookwood School
+    _public access: _read
     Web Site: http://www.brookwood.edu
     Sites
         Site
@@ -1594,6 +1618,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Buckingham Browne & Nichols School
+    _public access: _read
     Web Site: http://www.bbns.org
     Sites
         Site
@@ -1690,6 +1715,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Buxton School
+    _public access: _read
     Web Site: http://www.buxtonschool.org
     Sites
         Site
@@ -1726,6 +1752,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cambridge Friends School
+    _public access: _read
     Web Site: http://www.cfsmass.org
     Sites
         Site
@@ -1804,6 +1831,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cambridge Montessori School
+    _public access: _read
     Web Site: http://www.cambridgemontessori.org
     Sites
         Site
@@ -1900,6 +1928,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cambridge School of Weston
+    _public access: _read
     Web Site: http://www.csw.org
     Sites
         Site
@@ -1942,6 +1971,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cape Cod Academy
+    _public access: _read
     Web Site: http://www.capecodacademy.org
     Sites
         Site
@@ -2044,6 +2074,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cardigan Mountain School
+    _public access: _read
     Web Site: http://www.cardigan.org
     Sites
         Site
@@ -2080,6 +2111,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Carroll School
+    _public access: _read
     Web Site: http://www.carrollschool.org
     Sites
         Site
@@ -2146,6 +2178,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cathedral High School
+    _public access: _read
     Web Site: http://www.cathedralhighschool.net
     Sites
         Site
@@ -2194,6 +2227,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Catholic Memorial School
+    _public access: _read
     Web Site: http://www.CatholicMemorial.org
     Sites
         Site
@@ -2242,6 +2276,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Center School
+    _public access: _read
     Web Site: http://www.centerschool.net
     Sites
         Site
@@ -2332,6 +2367,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Chapel Hill-Chauncy Hall School
+    _public access: _read
     Web Site: http://www.chch.org
     Sites
         Site
@@ -2374,6 +2410,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Charles River School
+    _public access: _read
     Web Site: http://www.charlesriverschool.org
     Sites
         Site
@@ -2453,6 +2490,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Chestnut Hill School
+    _public access: _read
     Web Site: http://www.tchs.org
     Sites
         Site
@@ -2513,6 +2551,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cohen Hillel Academy
+    _public access: _read
     Web Site: http://www.cohenhillel.org
     Sites
         Site
@@ -2579,6 +2618,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Common School
+    _public access: _read
     Web Site: http://www.commonschool.org
     Sites
         Site
@@ -2639,6 +2679,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Commonwealth Learning Center/Stratford Foundation
+    _public access: _read
     Web Site: http://www.commlearn.com
     Sites
         Site
@@ -2651,6 +2692,7 @@ Organization
             Offerings
 Organization
     _name: Commonwealth School
+    _public access: _read
     Web Site: http://www.commschool.org
     Sites
         Site
@@ -2687,6 +2729,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Community Preparatory School
+    _public access: _read
     Web Site: http://www.communityprep.org
     Sites
         Site
@@ -2735,6 +2778,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Concord Academy
+    _public access: _read
     Web Site: http://www.concordacademy.org
     Sites
         Site
@@ -2771,6 +2815,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Cushing Academy
+    _public access: _read
     Web Site: http://www.cushing.org
     Sites
         Site
@@ -2813,6 +2858,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Dana Hall School
+    _public access: _read
     Web Site: http://www.danahall.org
     Sites
         Site
@@ -2873,6 +2919,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Dedham Country Day School
+    _public access: _read
     Web Site: http://www.dedhamcountryday.org
     Sites
         Site
@@ -2945,6 +2992,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Deerfield Academy
+    _public access: _read
     Web Site: http://www.deerfield.edu
     Sites
         Site
@@ -2987,6 +3035,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Derby Academy
+    _public access: _read
     Web Site: http://www.derbyacademy.org
     Sites
         Site
@@ -3065,6 +3114,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Derryfield School
+    _public access: _read
     Web Site: http://www.derryfield.org
     Sites
         Site
@@ -3119,6 +3169,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Dexter Southfield School
+    _public access: _read
     Web Site: http://www.dextersouthfield.org
     Sites
         Site
@@ -3221,6 +3272,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Dublin School
+    _public access: _read
     Web Site: http://www.dublinschool.org
     Sites
         Site
@@ -3257,6 +3309,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Eagle Hill School
+    _public access: _read
     Web Site: http://www.ehs1.org
     Sites
         Site
@@ -3299,6 +3352,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Eaglebrook School
+    _public access: _read
     Web Site: http://www.eaglebrook.org/page
     Sites
         Site
@@ -3335,6 +3389,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Epiphany  School
+    _public access: _read
     Web Site: http://www.epiphanyschool.com
     Sites
         Site
@@ -3371,6 +3426,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Esperanza Academy
+    _public access: _read
     Web Site: http://www.esperanzaacademy.org
     Sites
         Site
@@ -3407,6 +3463,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Falmouth Academy
+    _public access: _read
     Web Site: http://www.falmouthacademy.org
     Sites
         Site
@@ -3455,6 +3512,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Fay School
+    _public access: _read
     Web Site: http://www.fayschool.org/welcome
     Sites
         Site
@@ -3539,6 +3597,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Fayerweather Street School
+    _public access: _read
     Web Site: http://www.fayerweather.org
     Sites
         Site
@@ -3623,6 +3682,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Fenn School
+    _public access: _read
     Web Site: http://www.fenn.org
     Sites
         Site
@@ -3671,6 +3731,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Fessenden School
+    _public access: _read
     Web Site: http://www.fessenden.org
     Sites
         Site
@@ -3755,6 +3816,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Fontbonne Academy
+    _public access: _read
     Web Site: http://www.fontbonneacademy.org
     Sites
         Site
@@ -3791,6 +3853,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Friends Academy
+    _public access: _read
     Web Site: http://www.friendsacademy1810.org
     Sites
         Site
@@ -3863,6 +3926,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Gann Academy
+    _public access: _read
     Web Site: http://www.gannacademy.org
     Sites
         Site
@@ -3899,6 +3963,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Glen Urquhart School
+    _public access: _read
     Web Site: http://www.gus.org
     Sites
         Site
@@ -3965,6 +4030,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Gordon School
+    _public access: _read
     Web Site: http://www.gordonschool.org
     Sites
         Site
@@ -4043,6 +4109,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Governor's Academy
+    _public access: _read
     Web Site: http://www.thegovernorsacademy.org
     Sites
         Site
@@ -4079,6 +4146,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Great Barrington Rudolf Steiner School
+    _public access: _read
     Web Site: http://www.gbrss.org
     Sites
         Site
@@ -4145,6 +4213,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Groton School
+    _public access: _read
     Web Site: http://www.groton.org
     Sites
         Site
@@ -4187,6 +4256,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Harborlight-Stoneridge Montessori School
+    _public access: _read
     Web Site: http://www.h-sms.org
     Sites
         Site
@@ -4283,6 +4353,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Hartsbrook School
+    _public access: _read
     Web Site: http://http:www.hartsbrook.org
     Sites
         Site
@@ -4385,6 +4456,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Heritage Academy
+    _public access: _read
     Web Site: http://www.heritageacademy.org
     Sites
         Site
@@ -4451,6 +4523,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: High Mowing School
+    _public access: _read
     Web Site: http://www.highmowing.org
     Sites
         Site
@@ -4487,6 +4560,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Hillside School
+    _public access: _read
     Web Site: http://www.hillsideschool.net
     Sites
         Site
@@ -4529,6 +4603,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Holderness School
+    _public access: _read
     Web Site: http://www.holderness.org
     Sites
         Site
@@ -4566,6 +4641,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Hyde School
+    _public access: _read
     Web Site: http://www.hyde.edu
     Sites
         Site
@@ -4608,6 +4684,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Inly School
+    _public access: _read
     Web Site: http://www.inlyschool.org
     Sites
         Site
@@ -4698,6 +4775,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: International School of Boston
+    _public access: _read
     Web Site: http://www.isbos.org
     Sites
         Site
@@ -4808,6 +4886,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Jackson School
+    _public access: _read
     Web Site: http://www.jwpschools.org
     Sites
         Site
@@ -4862,6 +4941,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: JCDS, Boston's Jewish Community Day School
+    _public access: _read
     Web Site: http://www.jcdsboston.org
     Sites
         Site
@@ -4928,6 +5008,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Jewish Community Day School of Rhode Island
+    _public access: _read
     Web Site: http://www.jcdsri.org
     Sites
         Site
@@ -4988,6 +5069,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Kents Hill School
+    _public access: _read
     Web Site: http://www.kentshill.org
     Sites
         Site
@@ -5030,6 +5112,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Kingsley Montessori School
+    _public access: _read
     Web Site: http://www.kingsley.org
     Sites
         Site
@@ -5108,6 +5191,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lander Grinspoon Academy
+    _public access: _read
     Web Site: http://www.lgaschechter.org
     Sites
         Site
@@ -5120,6 +5204,7 @@ Organization
             Offerings
 Organization
     _name: Landmark School
+    _public access: _read
     Web Site: http://www.landmarkschool.org
     Sites
         Site
@@ -5199,6 +5284,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Laurel School
+    _public access: _read
     Web Site: http://www.laurelschoolcapecod.org
     Sites
         Site
@@ -5259,6 +5345,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lawrence Academy
+    _public access: _read
     Web Site: http://www.lacademy.edu
     Sites
         Site
@@ -5295,6 +5382,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Learning Project
+    _public access: _read
     Web Site: http://www.learningproject.org  
     Sites
         Site
@@ -5349,6 +5437,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lesley Ellis School
+    _public access: _read
     Web Site: http://www.lesleyellis.org
     Sites
         Site
@@ -5421,6 +5510,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lexington Christian Academy
+    _public access: _read
     Web Site: http://www.lca.edu
     Sites
         Site
@@ -5475,6 +5565,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lexington Montessori School
+    _public access: _read
     Web Site: http://www.lexmontessori.org
     Sites
         Site
@@ -5559,6 +5650,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Lincoln School
+    _public access: _read
     Web Site: http://www.lincolnschool.org
     Sites
         Site
@@ -5679,6 +5771,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Malden Catholic High School
+    _public access: _read
     Web Site: http://www.maldencatholic.org
     Sites
         Site
@@ -5715,6 +5808,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Maple Street School
+    _public access: _read
     Web Site: http://maplestreetschool.com
     Sites
         Site
@@ -5787,6 +5881,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Meadowbrook School of Weston
+    _public access: _read
     Web Site: http://www.meadowbrook-ma.org
     Sites
         Site
@@ -5853,6 +5948,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Middlebridge School
+    _public access: _read
     Web Site: http://www.middlebridgeschool.org
     Sites
         Site
@@ -5901,6 +5997,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Middlesex School
+    _public access: _read
     Web Site: http://www.mxschool.edu
     Sites
         Site
@@ -5938,6 +6035,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Milton Academy
+    _public access: _read
     Web Site: http://www.milton.edu
     Sites
         Site
@@ -6028,6 +6126,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Miss Hall's School
+    _public access: _read
     Web Site: http://www.misshalls.org
     Sites
         Site
@@ -6070,6 +6169,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Montessori School of Northampton
+    _public access: _read
     Web Site: http://www.northamptonmontessori.org
     Sites
         Site
@@ -6148,6 +6248,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Montrose School
+    _public access: _read
     Web Site: http://www.montroseschool.org
     Sites
         Site
@@ -6202,6 +6303,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Moses Brown School
+    _public access: _read
     Web Site: http://www.mosesbrown.org
     Sites
         Site
@@ -6298,6 +6400,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Mother Caroline Academy and Education Center
+    _public access: _read
     Web Site: http://www.mcaec.org
     Sites
         Site
@@ -6340,6 +6443,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Mount Alvernia High School
+    _public access: _read
     Web Site: http://www.mountalverniahs.org
     Sites
         Site
@@ -6388,6 +6492,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Nantucket New School
+    _public access: _read
     Web Site: http://www.nantucketnewschool.org
     Sites
         Site
@@ -6460,6 +6565,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Nashoba Brooks School
+    _public access: _read
     Web Site: http://www.nashobabrooks.org
     Sites
         Site
@@ -6544,6 +6650,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Newman School
+    _public access: _read
     Web Site: http://www.newmanboston.org
     Sites
         Site
@@ -6580,6 +6687,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Newton Country Day School
+    _public access: _read
     Web Site: http://www.newtoncountryday.org
     Sites
         Site
@@ -6640,6 +6748,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Newton Montessori School
+    _public access: _read
     Web Site: http://www.newtonmontessori.org
     Sites
         Site
@@ -6724,6 +6833,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Noble and Greenough School
+    _public access: _read
     Web Site: http://www.nobles.edu
     Sites
         Site
@@ -6772,6 +6882,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Northfield Mount Hermon School
+    _public access: _read
     Web Site: http://www.nmhschool.org
     Sites
         Site
@@ -6814,6 +6925,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Notre Dame Academy, Hingham
+    _public access: _read
     Web Site: http://www.ndahingham.com
     Sites
         Site
@@ -6862,6 +6974,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Notre Dame Academy, Worcester
+    _public access: _read
     Web Site: http://www.nda-worc.org
     Sites
         Site
@@ -6898,6 +7011,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Oak Meadow School
+    _public access: _read
     Web Site: http://www.oakmeadow.org
     Sites
         Site
@@ -6970,6 +7084,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Odyssey Day School
+    _public access: _read
     Web Site: http://www.odysseydayschool.org
     Sites
         Site
@@ -7066,6 +7181,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Park School
+    _public access: _read
     Web Site: http://www.parkschool.org
     Sites
         Site
@@ -7150,6 +7266,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Pennfield School
+    _public access: _read
     Web Site: http://www.pennfield.org
     Sites
         Site
@@ -7234,6 +7351,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Phillips Academy
+    _public access: _read
     Web Site: http://www.andover.edu
     Sites
         Site
@@ -7276,6 +7394,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Phillips Exeter Academy
+    _public access: _read
     Web Site: http://www.exeter.edu
     Sites
         Site
@@ -7318,6 +7437,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Phoenix School
+    _public access: _read
     Web Site: http://www.phoenixschool.org/
     Sites
         Site
@@ -7396,6 +7516,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Pike School
+    _public access: _read
     Web Site: http://www.pikeschool.org
     Sites
         Site
@@ -7480,6 +7601,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Pine Cobble School
+    _public access: _read
     Web Site: http://www.pinecobble.org
     Sites
         Site
@@ -7582,6 +7704,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Pine Hill Waldorf School
+    _public access: _read
     Web Site: http://www.pinehill.org
     Sites
         Site
@@ -7678,6 +7801,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Pingree School
+    _public access: _read
     Web Site: http://www.pingree.org
     Sites
         Site
@@ -7714,6 +7838,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Pioneer Valley Montessori School
+    _public access: _read
     Web Site: http://www.pvms.org
     Sites
         Site
@@ -7780,6 +7905,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Portsmouth Abbey School
+    _public access: _read
     Web Site: http://www.portsmouthabbey.org
     Sites
         Site
@@ -7816,6 +7942,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Providence Country Day School
+    _public access: _read
     Web Site: http://www.providencecountryday.org
     Sites
         Site
@@ -7870,6 +7997,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Putney School
+    _public access: _read
     Web Site: http://www.putneyschool.org
     Sites
         Site
@@ -7912,6 +8040,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Quest Montessori School
+    _public access: _read
     Web Site: http://www.questschool.org
     Sites
         Site
@@ -7996,6 +8125,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Rashi School
+    _public access: _read
     Web Site: http://www.rashi.org
     Sites
         Site
@@ -8062,6 +8192,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Riverbend School
+    _public access: _read
     Web Site: http://www.theriverbendschool.org
     Sites
         Site
@@ -8158,6 +8289,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Rivers School
+    _public access: _read
     Web Site: http://www.rivers.org
     Sites
         Site
@@ -8212,6 +8344,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Riverview School
+    _public access: _read
     Web Site: http://www.riverviewschool.org
     Sites
         Site
@@ -8272,6 +8405,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Rocky Hill School
+    _public access: _read
     Web Site: http://www.rockyhill.org
     Sites
         Site
@@ -8368,6 +8502,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Roxbury Latin School
+    _public access: _read
     Web Site: http://www.roxburylatin.org/
     Sites
         Site
@@ -8416,6 +8551,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Sage School
+    _public access: _read
     Web Site: http://www.sageschool.org
     Sites
         Site
@@ -8494,6 +8630,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Saint John's High School
+    _public access: _read
     Web Site: http://www.stjohnshigh.org
     Sites
         Site
@@ -8530,6 +8667,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Saint Joseph Preparatory High School
+    _public access: _read
     Web Site: http://www.saintjosephprep.org
     Sites
         Site
@@ -8566,6 +8704,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: School One
+    _public access: _read
     Web Site: http://school-one.org/
     Sites
         Site
@@ -8602,6 +8741,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: School Year Abroad
+    _public access: _read
     Web Site: http://www.sya.org
     Sites
         Site
@@ -8626,6 +8766,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Shady Hill School
+    _public access: _read
     Web Site: http://www.shs.org
     Sites
         Site
@@ -8704,6 +8845,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Shore Country Day School
+    _public access: _read
     Web Site: http://www.shoreschool.org
     Sites
         Site
@@ -8788,6 +8930,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Shrewsbury Montessori School
+    _public access: _read
     Web Site: http://www.shrewsburymontessori.org
     Sites
         Site
@@ -8848,6 +8991,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Solomon Schechter Day School Inc.
+    _public access: _read
     Web Site: http://www.ssdsboston.org
     Sites
         Site
@@ -8938,6 +9082,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Sophia Academy
+    _public access: _read
     Web Site: http://www.sophia-academy.org
     Sites
         Site
@@ -8974,6 +9119,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Andrew's School
+    _public access: _read
     Web Site: http://www.standrews-ri.org
     Sites
         Site
@@ -9034,6 +9180,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. George's School
+    _public access: _read
     Web Site: http://www.stgeorges.edu
     Sites
         Site
@@ -9070,6 +9217,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. John's Preparatory School
+    _public access: _read
     Web Site: http://www.stjohnsprep.org
     Sites
         Site
@@ -9124,6 +9272,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Mark's School
+    _public access: _read
     Web Site: http://www.stmarksschool.org
     Sites
         Site
@@ -9160,6 +9309,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Mary's High School
+    _public access: _read
     Web Site: http://www.stmaryslynn.com
     Sites
         Site
@@ -9214,6 +9364,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Michael's Country Day School
+    _public access: _read
     Web Site: http://www.stmichaelscountryday.org
     Sites
         Site
@@ -9292,6 +9443,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Paul's Choir School
+    _public access: _read
     Web Site: http://www.stpaulchoirschool.com
     Sites
         Site
@@ -9334,6 +9486,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Paul's School
+    _public access: _read
     Web Site: http://www.sps.edu
     Sites
         Site
@@ -9346,6 +9499,7 @@ Organization
             Offerings
 Organization
     _name: St. Sebastian's  School
+    _public access: _read
     Web Site: http://www.stsebastiansschool.org
     Sites
         Site
@@ -9394,6 +9548,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: St. Stephen's Armenian Elem. School
+    _public access: _read
     Web Site: http://www.ssaes.org
     Sites
         Site
@@ -9454,6 +9609,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Steppingstone Foundation
+    _public access: _read
     Web Site: http://www.tsf.org
     Sites
         Site
@@ -9520,6 +9676,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Stoneleigh-Burnham School
+    _public access: _read
     Web Site: http://www.sbschool.org
     Sites
         Site
@@ -9574,6 +9731,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Striar Hebrew Academy
+    _public access: _read
     Web Site: http://www.striarhebrew.org
     Sites
         Site
@@ -9658,6 +9816,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Summit Montessori School
+    _public access: _read
     Web Site: http://www.summitmontessori.org
     Sites
         Site
@@ -9724,6 +9883,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Tabor Academy
+    _public access: _read
     Web Site: http://www.taboracademy.org
     Sites
         Site
@@ -9760,6 +9920,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Tenacre Country Day School
+    _public access: _read
     Web Site: http://www.tenacrecds.org
     Sites
         Site
@@ -9826,6 +9987,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Thacher Montessori School
+    _public access: _read
     Web Site: http://www.thacherschool.org/
     Sites
         Site
@@ -9904,6 +10066,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Thayer Academy
+    _public access: _read
     Web Site: http://www.thayer.org
     Sites
         Site
@@ -9958,6 +10121,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Tilton School
+    _public access: _read
     Web Site: http://www.TiltonSchool.org
     Sites
         Site
@@ -10000,6 +10164,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Touchstone Community School
+    _public access: _read
     Web Site: http://www.touchstoneschool.com
     Sites
         Site
@@ -10084,6 +10249,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Tower School
+    _public access: _read
     Web Site: http://www.towerschool.org
     Sites
         Site
@@ -10162,6 +10328,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Tremont School
+    _public access: _read
     Web Site: http://www.tremontschool.org
     Sites
         Site
@@ -10222,6 +10389,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Ursuline Academy
+    _public access: _read
     Web Site: http://ursulineacademy.net
     Sites
         Site
@@ -10270,6 +10438,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Waldorf High School of Massachusetts Bay
+    _public access: _read
     Web Site: http://www.waldorfhighschool.org
     Sites
         Site
@@ -10306,6 +10475,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Waldorf School at Moraine Farm
+    _public access: _read
     Web Site: http://www.waldorfmoraine.org
     Sites
         Site
@@ -10402,6 +10572,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Waldorf School of Lexington
+    _public access: _read
     Web Site: http://www.thewaldorfschool.org
     Sites
         Site
@@ -10498,6 +10669,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Walnut Hill School for the Arts
+    _public access: _read
     Web Site: http://www.walnuthillarts.org
     Sites
         Site
@@ -10540,6 +10712,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Waring School
+    _public access: _read
     Web Site: http://www.waringschool.org
     Sites
         Site
@@ -10594,6 +10767,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Waynflete School
+    _public access: _read
     Web Site: http://www.waynflete.org
     Sites
         Site
@@ -10690,6 +10864,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Wheeler School
+    _public access: _read
     Web Site: http://www.wheelerschool.org
     Sites
         Site
@@ -10798,6 +10973,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The White Mountain School
+    _public access: _read
     Web Site: http://www.whitemountain.org
     Sites
         Site
@@ -10840,6 +11016,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Wilbraham & Monson Academy
+    _public access: _read
     Web Site: http://www.WMA.us
     Sites
         Site
@@ -10900,6 +11077,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Williston Northampton School
+    _public access: _read
     Web Site: http://www.williston.com
     Sites
         Site
@@ -10954,6 +11132,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Willow Hill School
+    _public access: _read
     Web Site: http://www.willowhillschool.org
     Sites
         Site
@@ -11008,6 +11187,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Winsor School
+    _public access: _read
     Web Site: http://www.winsor.edu
     Sites
         Site
@@ -11068,6 +11248,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: The Woodward School
+    _public access: _read
     Web Site: http://www.thewoodwardschool.org
     Sites
         Site
@@ -11122,6 +11303,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Worcester Academy
+    _public access: _read
     Web Site: http://www.worcesteracademy.org
     Sites
         Site
@@ -11182,6 +11364,7 @@ Organization
                             _name: 2016-2017
 Organization
     _name: Xaverian Brothers High School
+    _public access: _read
     Web Site: http://www.xbhs.com
     Sites
         Site
