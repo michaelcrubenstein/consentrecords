@@ -2122,13 +2122,18 @@ var SearchView = (function () {
 			   (searchText.length >= 3 || constrainText.length < 3);
 	}
 	
-	SearchView.prototype.textChanged = function()
+	SearchView.prototype.clearSearchTimeout = function()
 	{
 		if (this._searchTimeout != null)
 		{
 			clearTimeout(this._searchTimeout);
 			this._searchTimeout = null;
 		}
+	}
+	
+	SearchView.prototype.textChanged = function()
+	{
+		this.clearSearchTimeout();
 		
 		var val = this.inputCompareText();
 		if (val.length == 0)
@@ -2178,6 +2183,15 @@ var PanelSearchView = (function() {
 			/* Set sitePanel first for call to appendSearchArea */
 			this.sitePanel = sitePanel;
 			SearchView.call(this, sitePanel.node(), placeholder, fill, chunkerType);
+			
+			var _this = this;
+			
+			/* Clear any search timeout that is pending. */
+			$(sitePanel.node()).on("hiding.cr", function()
+			{
+				_this.clearSearchTimeout();
+				_this.getDataChunker.clearLoadingMessage();
+			});
 		}
 		else
 			SearchView.call(this);
