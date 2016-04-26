@@ -941,7 +941,9 @@ var FromServiceSearchView = (function() {
 	return FromServiceSearchView;
 })();
 
-/* This panel appears when there is a single service associated with the experience.  */
+/* This is an intermediate panel for the workflow. The experience contains a marker and nothing else. 
+	From here, the user can specify an organization, a known site, a known offering.
+ */
 var NewExperienceFromServicePanel = (function () {
 	NewExperienceFromServicePanel.prototype = new NewExperienceBasePanel();
 	
@@ -1214,7 +1216,11 @@ var FromOrganizationSearchView = (function() {
 	return FromOrganizationSearchView;
 })();
 
-/* In this case, the experience contains an organization or an organizationName, but nothing else. */
+/* This is an intermediate panel for the workflow. The experience contains an organization or an organizationName.
+	The experience may or may not also have a marker. 
+	From here, the user can specify, if the organization is known, a site or offering within that organization. 
+	If the experience has no marker, the user can specify a known marker or a custom marker.
+ */
 var NewExperienceFromOrganizationPanel = (function () {
 	NewExperienceFromOrganizationPanel.prototype = new NewExperienceBasePanel();
 	
@@ -1452,7 +1458,10 @@ var FromSiteSearchView = (function() {
 	return FromSiteSearchView;
 })();
 
-/* In this case, the experience contains a site or a siteName, but no offering or marker. */
+/* This is an intermediate panel for the workflow. the experience contains a site or a siteName, but no offering or marker. 
+	From here, the user can specify a known marker, custom marker or, if the site is known, 
+	an offering within that site.
+ */
 var NewExperienceFromSitePanel = (function () {
 	NewExperienceFromSitePanel.prototype = new NewExperienceBasePanel();
 	
@@ -1805,13 +1814,10 @@ var NewExperienceMarkersPanel = (function () {
 	return NewExperienceMarkersPanel;
 })();
 
-/* This is the final panel for the workflow. The experience contains either an organization or organizationName
-	as well as at least one service. It may also contain a site and/or an offering. In this panel, it may set multiple markers
-	as well as the start date and end date.
+/* This is the exit panel for the workflow. The experience contains either an organization or organizationName
+	as well as at least one service. It may also contain a site and/or an offering.
 	
-	If the experience contains no offering, it is displayed as if the first marker were the offering, not a marker. */
-/* This is the exit panel for the workflow. The experience contains organization, site and offering data plus
-	optionally, markers. This panel can modify the markers and set the start and end dates. */
+	This panel can modify the markers and set the start and end dates. */
 var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
