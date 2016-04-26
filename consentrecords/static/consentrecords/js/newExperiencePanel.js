@@ -1810,6 +1810,8 @@ var NewExperienceMarkersPanel = (function () {
 	as well as the start date and end date.
 	
 	If the experience contains no offering, it is displayed as if the first marker were the offering, not a marker. */
+/* This is the exit panel for the workflow. The experience contains organization, site and offering data plus
+	optionally, markers. This panel can modify the markers and set the start and end dates. */
 var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
@@ -2089,11 +2091,11 @@ var NewExperienceSearchView = (function() {
 	NewExperienceSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return d !== "Organization" && d !== "Offering"; });
+		buttons = buttons.filter(function(d, i) { return i > 1; });
 			
 		buttons.remove();
 		this.organizationButton.style("display", "none");
-		this.offeringButton.style("display", "none");
+		this.customServiceButton.style("display", "none");
 	}
 	
 	NewExperienceSearchView.prototype.canConstrain = function(searchText, constrainText)
@@ -2124,7 +2126,7 @@ var NewExperienceSearchView = (function() {
 		var val = this.inputText();
 		
 		this.organizationButton.selectAll('.description-text').text('At "{0}"'.format(val));
-		this.offeringButton.selectAll('.description-text').text('"{0}"'.format(val));
+		this.customServiceButton.selectAll('.description-text').text('"{0}"'.format(val));
 	}
 	
 	function NewExperienceSearchView(sitePanel, experience)
@@ -2138,13 +2140,10 @@ var NewExperienceSearchView = (function() {
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Organization");
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Search By Organization'))
+				if (prepareClick('click', 'Set Custom Organization'))
 				{
 					experience.setOrganization({text: _this.inputText()});
 					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
@@ -2158,13 +2157,10 @@ var NewExperienceSearchView = (function() {
 			.style("display", "none");
 
 		sections = this.appendButtonContainers(["Offering"]);
-		this.offeringButton = appendViewButtons(sections,  
+		this.customServiceButton = appendViewButtons(sections,  
 					function(buttons)
 					{
 						var leftText = buttons.append('div').classed("left-expanding-div description-text", true);
-
-						leftText.append('div')
-							.text("Search By Offering");
 					}
 			)
 			.on("click", function(d, i) {
@@ -2216,7 +2212,9 @@ var NewExperienceSearchView = (function() {
 	return NewExperienceSearchView;
 })();
 
-/* This is the entry panel for the workflow. The experience contains no data on entry. */
+/* This is the entry panel for the workflow. The experience contains no data on entry. 
+	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
+	One can also specify a custom service or a custom organization. */
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new NewExperienceBasePanel();
 	
