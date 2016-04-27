@@ -799,14 +799,6 @@ var FromServiceSearchView = (function() {
 				if (this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
-			else if (this.typeName === "Offering from Organization")
-			{
-				if (!(this.experience.organization == null && this.experience.organizationName == null))
-					throw "Invalid case: organization is specified";
-				path = 'Organization[_name{0}"{1}"]>Sites>Site>Offerings>Offering';
-				if (this.experience.services[0].pickedObject)
-					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-			}
 			else if (this.typeName === "Site")
 			{
 				if (this.experience.organization)
@@ -917,15 +909,13 @@ var FromServiceSearchView = (function() {
 				{
 					if (_this.typeName === "Offering")
 					{
-						if (experience.organization == null && experience.organizationName == null &&
-							experience.site == null && experience.siteName == null)
+						if (experience.organizationName == null &&
+							experience.siteName == null)
 							_this.typeName = "Offering from Site";
 						else
 							_this.typeName = "Site";
 					}
 					else if (_this.typeName === "Offering from Site")
-						_this.typeName = "Offering from Organization";
-					else if (_this.typeName === "Offering from Organization")
 						_this.typeName = "Site";
 					else if (_this.typeName === "Site")
 					{
