@@ -590,7 +590,7 @@ var ServiceSearchView = (function() {
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Service'))
+				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
 					var service = experience.addService({text: _this.inputText()});
 					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience,
@@ -894,7 +894,7 @@ var FromServiceSearchView = (function() {
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Organization'))
+				if (prepareClick('click', 'Custom Organization: ' + _this.inputText()))
 				{
 					experience.setOrganization({text: _this.inputText() });
 					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
@@ -2187,7 +2187,7 @@ var NewExperienceSearchView = (function() {
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Organization'))
+				if (prepareClick('click', 'Custom Organization: ' + _this.inputText()))
 				{
 					experience.setOrganization({text: _this.inputText()});
 					var panel = new NewExperienceFromOrganizationPanel(sitePanel.node(), experience,
@@ -2208,7 +2208,7 @@ var NewExperienceSearchView = (function() {
 					}
 			)
 			.on("click", function(d, i) {
-				if (prepareClick('click', 'Set Custom Service'))
+				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
 					var service = experience.addService({text: _this.inputText()});
 					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience,
