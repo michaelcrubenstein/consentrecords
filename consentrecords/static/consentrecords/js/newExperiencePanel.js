@@ -1182,7 +1182,7 @@ var FromOrganizationSearchView = (function() {
 			else if (this.typeName === "Offering")
 			{
 				path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
-				if (this.experiences.services.length > 0 && this.experiences.services[0].pickedObject)
+				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
 				{
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 				}
