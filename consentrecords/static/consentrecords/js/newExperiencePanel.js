@@ -942,6 +942,15 @@ var NewExperienceFromServicePanel = (function () {
 	
 	function NewExperienceFromServicePanel(previousPanelNode, experience, onBack)
 	{
+		if (experience.organizationName)
+			throw "experience.organizationName is unexpectedly set";
+		if (experience.organization)
+			throw "experience.organization is unexpectedly set";
+		if (experience.siteName)
+			throw "experience.siteName is unexpectedly set";
+		if (experience.site)
+			throw "experience.site is unexpectedly set";
+			
 		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-panel");
 			
 		var _this = this;
