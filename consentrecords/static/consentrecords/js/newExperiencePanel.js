@@ -786,8 +786,6 @@ var FromServiceSearchView = (function() {
 			if (this.typeName === "Offering")
 			{
 				path = 'Offering[_name{0}"{1}"]';
-				if (this.experience.organization)
-					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
 				if (this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
@@ -801,33 +799,11 @@ var FromServiceSearchView = (function() {
 			}
 			else if (this.typeName === "Site")
 			{
-				if (this.experience.organization)
-				{
-					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + 
-						   'Site[_name{0}"{1}"]>Offerings>Offering';
-					if (this.experience.services[0].pickedObject)
-						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-				}
-				else if (!this.experience.organizationName)
-					path = 'Site[_name{0}"{1}"]';
-				else
-					return "";
+				path = 'Site[_name{0}"{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				if (this.experience.organization)
-				{
-					path = "#{0}".format(this.experience.organization.getValueID()) + 
-						   '[_name{0}"{1}"]>Sites>Site>Offerings>Offering';
-					if (this.experience.services[0].pickedObject)
-						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-				}
-				else if (!this.experience.organizationName)
-				{
-					path = 'Organization[_name{0}"{1}"]';
-				}
-				else
-					return "";
+				path = 'Organization[_name{0}"{1}"]';
 			}
 			
 
