@@ -607,6 +607,9 @@ var ServiceSearchView = (function() {
 	return ServiceSearchView;
 })();
 
+/* This is an intermediate panel for the workflow. The experience contains a service domain and nothing else. 
+	From here, the user can specify a custom service, a known site, a known offering.
+ */
 var NewExperienceServicePanel = (function () {
 	NewExperienceServicePanel.prototype = new NewExperienceBasePanel();
 	
