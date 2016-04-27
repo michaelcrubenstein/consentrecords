@@ -27,7 +27,7 @@ from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
 def home(request):
-    LogRecord.emit(request.user, 'consentrecords/home', '')
+    LogRecord.emit(request.user, 'pathAdvisor/home', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -53,7 +53,7 @@ def home(request):
     return HttpResponse(template.render(context))
 
 def orgHome(request):
-    LogRecord.emit(request.user, 'consentrecords/orgHome', '')
+    LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
     
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
@@ -79,7 +79,7 @@ def orgHome(request):
     return HttpResponse(template.render(context))
 
 def find(request, serviceid, offeringid):
-    LogRecord.emit(request.user, 'consentrecords/find', '')
+    LogRecord.emit(request.user, 'pathAdvisor/find', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -106,7 +106,7 @@ def find(request, serviceid, offeringid):
     return HttpResponse(template.render(context))
 
 def list(request):
-    LogRecord.emit(request.user, 'consentrecords/list', '')
+    LogRecord.emit(request.user, 'pathAdvisor/list', '')
     
     try:
         # The type of the root object.
@@ -141,7 +141,7 @@ def list(request):
         return HttpResponse(str(e))
 
 def showPathway(request, email):
-    LogRecord.emit(request.user, 'consentrecords/showPathway', email)
+    LogRecord.emit(request.user, 'pathAdvisor/showPathway', email)
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -169,7 +169,7 @@ def showPathway(request, email):
     return HttpResponse(template.render(context))
 
 def addExperience(request, experienceID):
-    LogRecord.emit(request.user, 'consentrecords/addExperience', experienceID)
+    LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
