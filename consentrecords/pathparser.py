@@ -1,5 +1,6 @@
 from django.db import models as dbmodels
 from django.db.models import F, Q, Prefetch
+from django.contrib.auth.models import AnonymousUser
 
 import html.parser
 import logging
@@ -233,6 +234,9 @@ def selectAllObjects(path, startSet=[], userInfo=None, securityFilter=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
 
+    if not userInfo: userInfo = UserInfo(AnonymousUser())
+    if not securityFilter: securityFilter = userInfo.findFilter
+    
     parsed = _parse(startSet, _tokenize(path), userInfo)
     return securityFilter(parsed).distinct()
 #     logger = logging.getLogger(__name__)
