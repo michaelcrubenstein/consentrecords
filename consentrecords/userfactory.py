@@ -3,7 +3,7 @@ from django.db import transaction
 import logging
 import uuid
 
-from consentrecords.models import TransactionState, Terms, TermNames, Instance, Value, NameList
+from consentrecords.models import TransactionState, Terms, terms, TermNames, Instance, Value, NameList
 from consentrecords import instancecreator
 
 class UserFactory:
