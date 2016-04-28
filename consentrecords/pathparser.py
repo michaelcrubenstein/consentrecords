@@ -10,7 +10,7 @@ from parse.cssparser import parser as cssparser
 from consentrecords.models import Instance, Value, Terms, terms, UserInfo
 
 def _getValueFilter(field, symbol, testValue):
-    if Terms.isUUID(testValue):
+    if terms.isUUID(testValue):
         if symbol == '=':
             vFilter = Value.objects.filter(referenceValue_id=testValue)
         else:

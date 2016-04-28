@@ -46,7 +46,7 @@ def getChildrenByName(parent, field, name):
     return parent.value_set.filter(deleteTransaction__isnull=True,
                                     field=field,
                                     referenceValue__value__deleteTransaction__isnull=True,
-                                    referenceValue__value__field=Terms.name,
+                                    referenceValue__value__field=terms.name,
                                     referenceValue__value__stringValue__iexact=name)
 def getValueByReference(parent, field, r):
     return parent.value_set.filter(deleteTransaction__isnull=True,
@@ -64,7 +64,6 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         userInfo = UserInfo(user)
         
         orgTerm = terms['Organization']

@@ -92,12 +92,12 @@ class Instance(dbmodels.Model):
         return i
     
     def getDataType(self, field):
-        configuration = self.typeID.children.filter(typeID=Terms.configuration,deleteTransaction__isnull=True)[0]
-        fields = configuration.children.filter(typeID=Terms.field,deleteTransaction__isnull=True)
-        f = fields.get(value__field=Terms.name,
+        configuration = self.typeID.children.filter(typeID=terms.configuration,deleteTransaction__isnull=True)[0]
+        fields = configuration.children.filter(typeID=terms.field,deleteTransaction__isnull=True)
+        f = fields.get(value__field=terms.name,
                           value__referenceValue=field,
                           value__deleteTransaction__isnull=True)
-        v = f.value_set.filter(field=Terms.dataType,deleteTransaction__isnull=True)[0]
+        v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
         return v.referenceValue
     
     # addValue ensures that the value can be found for object values. 
@@ -107,7 +107,7 @@ class Instance(dbmodels.Model):
             raise ValueError("value is not specified")
         
         dt = self.getDataType(field)
-        if dt==Terms.objectEnum:
+        if dt==terms.objectEnum:
             if "instanceID" in value:
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
                 if len(f) == 0:
@@ -118,7 +118,7 @@ class Instance(dbmodels.Model):
             elif not value._canFind(transactionState.user):
                 raise Instance.DoesNotExist()
             return self.addReferenceValue(field, value, position, transactionState)
-        elif dt==Terms.translationEnum:
+        elif dt==terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
             return self.addStringValue(field, value["text"], position, transactionState)
@@ -152,7 +152,7 @@ class Instance(dbmodels.Model):
             raise ValueError("the value is null")
             
         # If the field is special access, then make this and all of its children sourced to self.
-        if field == Terms.specialAccess and value == Terms.customAccessEnum:
+        if field == terms.specialAccess and value == terms.customAccessEnum:
             descendents = self._descendents()
             n = AccessRecord.objects.filter(id__in=descendents).delete()
             AccessRecord.objects.bulk_create(map(lambda i: AccessRecord(id=i,source=self), descendents))
@@ -164,13 +164,13 @@ class Instance(dbmodels.Model):
             raise ValueError("the position %s is not valid", position)
             
         dt = self.getDataType(field)
-        if dt==Terms.objectEnum:
+        if dt==terms.objectEnum:
             if not Value.objects.filter(instance=self,field=field,referenceValue=value,
                                     deleteTransaction__isnull=True).exists():
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding object %s(%s)" % (str(self), str(field), str(value)))
                 self.addReferenceValue(field, value, position, transactionState)
-        elif dt==Terms.translationEnum:
+        elif dt==terms.translationEnum:
             if not Value.objects.filter(instance=self,field=field,stringValue=value["text"],
                                     languageCode=value["languageCode"],
                                     deleteTransaction__isnull=True).exists():
@@ -192,7 +192,7 @@ class Instance(dbmodels.Model):
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
         for v in vs:
-            if v.field not in Terms.securityFields or cache.value:
+            if v.field not in terms.securityFields or cache.value:
                 fieldID = v.field.id
                 if fieldID not in values:
                     values[fieldID] = [v]
@@ -230,12 +230,12 @@ class Instance(dbmodels.Model):
     # The first of the pair is the hex UUID of the name, the second is the hex UUID of the dataType
     @property
     def _descriptors(self):
-        configuration = self.getSubInstance(Terms.configuration)
+        configuration = self.getSubInstance(terms.configuration)
         results = []
         if configuration:
-            elementIDs = [Terms.name, Terms.dataType]
-            for fieldObject in configuration._getSubInstances(Terms.field):
-                r = fieldObject.getSubInstance(Terms.descriptorType)
+            elementIDs = [terms.name, terms.dataType]
+            for fieldObject in configuration._getSubInstances(terms.field):
+                r = fieldObject.getSubInstance(terms.descriptorType)
                 if r:
                     n = [fieldObject.getSubValue(x) for x in elementIDs]
                     dataTypeInstance = n[1] and n[1].referenceValue
@@ -251,9 +251,9 @@ class Instance(dbmodels.Model):
         verbs = nameLists.getNameUUIDs(self.typeID)
         r = []
         for field, dataType, descriptorType in verbs:
-            if descriptorType == Terms.textEnum:
+            if descriptorType == terms.textEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
-                if dataType == Terms.objectEnum:
+                if dataType == terms.objectEnum:
                     for v in vs:
                         try:
                             if not v.referenceValue:
@@ -263,11 +263,11 @@ class Instance(dbmodels.Model):
                             r.append(v.referenceValue._description)
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
-            elif descriptorType == Terms.countEnum:
+            elif descriptorType == terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
             else:
-                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(Terms.textEnum), str(Terms.countEnum)))
+                raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(terms.textEnum), str(terms.countEnum)))
                     
         s = " ".join(r)
         Description.objects.update_or_create(instance = self, 
@@ -333,7 +333,7 @@ class Instance(dbmodels.Model):
     # the instance referenced by self from the key field.
     # Self is an instance of type field.
     def _getSubValueReferences(self):
-        vs2 = Value.objects.filter(field=Terms.name,
+        vs2 = Value.objects.filter(field=terms.name,
                                    deleteTransaction__isnull=True)
         vs1 = self.value_set.filter(deleteTransaction__isnull=True)\
                             .select_related('referenceValue')\
@@ -348,9 +348,9 @@ class Instance(dbmodels.Model):
         name = self.description.text
         fieldData = {"name" : name,
                      "nameID" : self.id,
-                     "dataType" : TermNames.object,
-                     "dataTypeID" : Terms.objectEnum.id,
-                     "capacity" : TermNames.uniqueValue,
+                     "dataType" : TermNames.objectEnum,
+                     "dataTypeID" : terms.objectEnum.id,
+                     "capacity" : TermNames.uniqueValueEnum,
                      "ofKind" : name,
                      "ofKindID" : self.id}
         return fieldData
@@ -361,38 +361,38 @@ class Instance(dbmodels.Model):
     
     def _getFieldDataFromValues(self, values, language):
         fieldData = None
-        if Terms.name in values and Terms.dataType in values:
-            nameReference = values[Terms.name]
-            dataTypeReference = values[Terms.dataType]
+        if terms.name in values and terms.dataType in values:
+            nameReference = values[terms.name]
+            dataTypeReference = values[terms.dataType]
             fieldData = {"id" : self.id, 
                          "name" : nameReference[0],
                          "nameID" : nameReference[1],
                          "dataType" : dataTypeReference[0],
                          "dataTypeID" : dataTypeReference[1]}
-            if Terms.maxCapacity in values:
-                fieldData["capacity"] = values[Terms.maxCapacity][0]
+            if terms.maxCapacity in values:
+                fieldData["capacity"] = values[terms.maxCapacity][0]
             else:
-                fieldData["capacity"] = TermNames.multipleValues
+                fieldData["capacity"] = TermNames.multipleValuesEnum
                 
-            if Terms.descriptorType in values:
-                fieldData["descriptorType"] = values[Terms.descriptorType][0]
+            if terms.descriptorType in values:
+                fieldData["descriptorType"] = values[terms.descriptorType][0]
             
-            if Terms.addObjectRule in values:
-                fieldData["objectAddRule"] = values[Terms.addObjectRule][0]
+            if terms.addObjectRule in values:
+                fieldData["objectAddRule"] = values[terms.addObjectRule][0]
             
-            if fieldData["dataTypeID"] == Terms.objectEnum.id:
-                if Terms.ofKind in values:
-                    ofKindReference = values[Terms.ofKind]
+            if fieldData["dataTypeID"] == terms.objectEnum.id:
+                if terms.ofKind in values:
+                    ofKindReference = values[terms.ofKind]
                     fieldData["ofKind"] = ofKindReference[0]
                     fieldData["ofKindID"] = ofKindReference[1]
-                if Terms.pickObjectPath in values:
-                    fieldData["pickObjectPath"] = values[Terms.pickObjectPath]
+                if terms.pickObjectPath in values:
+                    fieldData["pickObjectPath"] = values[terms.pickObjectPath]
         
         return fieldData
     
     # Returns the fieldsData from the database for self, which is a term.
     def _getFieldsData(self, language=None):
-        vs2 = Value.objects.filter(field=Terms.name,
+        vs2 = Value.objects.filter(field=terms.name,
                             deleteTransaction__isnull=True)
 
         vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
@@ -402,7 +402,7 @@ class Instance(dbmodels.Model):
                                                        queryset=vs2,
                                                        to_attr='name_values'))
 
-        fields = Instance.objects.filter(typeID=Terms.field, deleteTransaction__isnull=True)\
+        fields = Instance.objects.filter(typeID=terms.field, deleteTransaction__isnull=True)\
                                  .filter(parent__parent=self)\
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
@@ -420,13 +420,13 @@ class Instance(dbmodels.Model):
             return fieldsData
 
     def _getCellValues(dataTypeID, values, userInfo, language=None):
-        if dataTypeID == Terms.objectEnum.id:
+        if dataTypeID == terms.objectEnum.id:
             return [{ "id": v.id,
                       "instanceID" : v.referenceValue.id, 
                       "description": v.referenceValue._description,
                       'privilege': v.referenceValue.getPrivilege(userInfo).getDescription(),
                       "position": v.position } for v in values]
-        elif dataTypeID == Terms.translationEnum.id:
+        elif dataTypeID == terms.translationEnum.id:
             return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
         else:
             # Default case is that each datum in this cell contains a unique value.
@@ -456,7 +456,7 @@ class Instance(dbmodels.Model):
 
     # self should be a configuration object with fields.
     def getConfiguration(self):
-        return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(Terms.field)]
+        return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(terms.field)]
 
     def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
@@ -528,12 +528,12 @@ class Instance(dbmodels.Model):
     def getFieldByName(self, name):
         return self.value_set.select_related('referenceValue')\
                              .get(deleteTransaction__isnull=True,
-                                  field=Terms.field,
+                                  field=terms.field,
                                   referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__field=Terms.name,
-                                  referenceValue__value__referenceValue__typeID=Terms.term,
+                                  referenceValue__value__field=terms.name,
+                                  referenceValue__value__referenceValue__typeID=terms.term,
                                   referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue__value__field=Terms.name,
+                                  referenceValue__value__referenceValue__value__field=terms.name,
                                   referenceValue__value__referenceValue__value__stringValue=name)\
                              .referenceValue
 
@@ -542,9 +542,9 @@ class Instance(dbmodels.Model):
     def getFieldByReferenceValue(self, key):
         return self.value_set.select_related('referenceValue')\
                              .get(deleteTransaction__isnull=True,
-                                  field=Terms.field,
+                                  field=terms.field,
                                   referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__field=Terms.name,
+                                  referenceValue__value__field=terms.name,
                                   referenceValue__value__referenceValue__id=key)\
                              .referenceValue
 
@@ -558,8 +558,8 @@ class Instance(dbmodels.Model):
         elif not a:
             return b
                 
-        privileges = [Terms.findPrivilegeEnum, Terms.readPrivilegeEnum, Terms.registerPrivilegeEnum, 
-                      Terms.writePrivilegeEnum, Terms.administerPrivilegeEnum]
+        privileges = [terms.findPrivilegeEnum, terms.readPrivilegeEnum, terms.registerPrivilegeEnum, 
+                      terms.writePrivilegeEnum, terms.administerPrivilegeEnum]
                       
         aIndex = privileges.index(a)
         return b if b in privileges[(aIndex+1):] else a
@@ -567,15 +567,15 @@ class Instance(dbmodels.Model):
     # returns the privilege level that the specified user instance has for this instance. 
     def getPrivilege(self, userInfo):
         if userInfo.is_administrator:
-            return Terms.administerPrivilegeEnum
+            return terms.administerPrivilegeEnum
             
         try:
             source = self.accessrecord.source
         except AccessRecord.DoesNotExist:
-            return Terms.readPrivilegeEnum
+            return terms.readPrivilegeEnum
             
         minPrivilege = None
-        minPrivilegeFilter = source.value_set.filter(field=Terms.publicAccess, deleteTransaction__isnull=True)\
+        minPrivilegeFilter = source.value_set.filter(field=terms.publicAccess, deleteTransaction__isnull=True)\
                                    .select_related('referenceValue__description__text')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
@@ -583,18 +583,18 @@ class Instance(dbmodels.Model):
         if not userInfo.instance:
             return minPrivilege
         
-        if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True).count():
-            if source.value_set.filter(field=Terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
-                return Terms.administerPrivilegeEnum
+        if source.value_set.filter(field=terms.primaryAdministrator, deleteTransaction__isnull=True).count():
+            if source.value_set.filter(field=terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
+                return terms.administerPrivilegeEnum
                 
-        f = source.children.filter(typeID=Terms.accessRecord, deleteTransaction__isnull=True)\
+        f = source.children.filter(typeID=terms.accessRecord, deleteTransaction__isnull=True)\
             .filter(Q(value__referenceValue=userInfo.instance,
                       value__deleteTransaction__isnull=True)|
                     (Q(value__deleteTransaction__isnull=True,
                        value__referenceValue__value__referenceValue=userInfo.instance,
                        value__referenceValue__value__deleteTransaction__isnull=True)))
                       
-        p = map(lambda i: i.value_set.filter(field=Terms.privilege, deleteTransaction__isnull=True)\
+        p = map(lambda i: i.value_set.filter(field=terms.privilege, deleteTransaction__isnull=True)\
                            .select_related('referenceValue__description__text')[0].referenceValue, f)
         
         return reduce(Instance.comparePrivileges, p, minPrivilege)
@@ -605,18 +605,18 @@ class Instance(dbmodels.Model):
                                        (Q(referenceValue__value__referenceValue=self)\
                                         &Q(referenceValue__value__deleteTransaction__isnull=True)\
                                        ),\
-                                       instance__typeID=Terms.accessRecord,
+                                       instance__typeID=terms.accessRecord,
                                        deleteTransaction__isnull=True
                                        ) \
             .annotate(pField=F('instance__value__field'),privilege=F('instance__value__referenceValue'),
                       pDeleted=F('instance__value__deleteTransaction')
                      ) \
-            .filter(pField=Terms.privilege.id, privilege__in=privilegeIDs,pDeleted=None)
+            .filter(pField=terms.privilege.id, privilege__in=privilegeIDs,pDeleted=None)
     
     ### Returns True if this user (self) is the primary administrator of the specified instance
     def isPrimaryAdministrator(self, instance):
         try:
-            return instance.accessrecord.source.value_set.filter(field=Terms.primaryAdministrator,
+            return instance.accessrecord.source.value_set.filter(field=terms.primaryAdministrator,
                 referenceValue=self,
                 deleteTransaction__isnull=True).exists()
         except AccessRecord.DoesNotExist:
@@ -626,15 +626,15 @@ class Instance(dbmodels.Model):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=Terms.accessRecord)&
+                        (Q(children__typeID=terms.accessRecord)&
                          Q(children__value__in=sourceValues))
                         |
-                        (((Q(value__field=Terms.publicAccess.id)\
+                        (((Q(value__field=terms.publicAccess.id)\
                            &Q(value__referenceValue__in=privilegeIDs)\
                            &Q(value__deleteTransaction__isnull=True)\
                           )\
                           |
-                          (Q(value__field=Terms.primaryAdministrator.id)\
+                          (Q(value__field=terms.primaryAdministrator.id)\
                            &Q(value__referenceValue=self)\
                            &Q(value__deleteTransaction__isnull=True)\
                           )\
@@ -650,21 +650,21 @@ class Instance(dbmodels.Model):
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def findFilter(self, f):
-        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id, 
-                      Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
+        privilegeIDs = [terms.findPrivilegeEnum.id, terms.readPrivilegeEnum.id, terms.registerPrivilegeEnum.id, 
+                      terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
         
         return self._securityFilter(f, privilegeIDs)
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def readFilter(self, f):
-        privilegeIDs = [Terms.readPrivilegeEnum.id,
-                      Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
+        privilegeIDs = [terms.readPrivilegeEnum.id,
+                      terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
         
         return self._securityFilter(f, privilegeIDs)
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def administerFilter(self, f):
-        privilegeIDs = [Terms.administerPrivilegeEnum.id]
+        privilegeIDs = [terms.administerPrivilegeEnum.id]
         
         return self._securityFilter(f, privilegeIDs, accessRecordOptional=False)
     
@@ -678,12 +678,12 @@ class Instance(dbmodels.Model):
                 return True
                             
         try:
-            if self.accessrecord.source.value_set.filter(field=Terms.publicAccess, 
+            if self.accessrecord.source.value_set.filter(field=terms.publicAccess, 
                                                          referenceValue__in=publicAccessPrivileges,
                                                          deleteTransaction__isnull=True).exists():
                 return True
             return userInstance and \
-                   self.accessrecord.source.children.filter(typeID=Terms.accessRecord, 
+                   self.accessrecord.source.children.filter(typeID=terms.accessRecord, 
                         value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
                         .exists()
         except AccessRecord.DoesNotExist:
@@ -693,42 +693,42 @@ class Instance(dbmodels.Model):
     ## associated with this instance.
     ## Otherwise, the user must have a permission, public access set to read or be the primary administrator.
     def _canFind(self, user):
-        publicAccessPrivileges = [Terms.findPrivilegeEnum, Terms.registerPrivilegeEnum, 
-                                  Terms.readPrivilegeEnum, 
-                                  Terms.writePrivilegeEnum]
-        accessRecordPrivilegeIDs = [Terms.findPrivilegeEnum.id,
-                                    Terms.registerPrivilegeEnum.id,
-                                    Terms.readPrivilegeEnum.id, 
-                                    Terms.writePrivilegeEnum.id, 
-                                    Terms.administerPrivilegeEnum.id]
+        publicAccessPrivileges = [terms.findPrivilegeEnum, terms.registerPrivilegeEnum, 
+                                  terms.readPrivilegeEnum, 
+                                  terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [terms.findPrivilegeEnum.id,
+                                    terms.registerPrivilegeEnum.id,
+                                    terms.readPrivilegeEnum.id, 
+                                    terms.writePrivilegeEnum.id, 
+                                    terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
     def _canRead(self, user):
-        publicAccessPrivileges = [Terms.readPrivilegeEnum, 
-                                  Terms.writePrivilegeEnum]
-        accessRecordPrivilegeIDs = [Terms.readPrivilegeEnum.id, 
-                                    Terms.writePrivilegeEnum.id, 
-                                    Terms.administerPrivilegeEnum.id]
+        publicAccessPrivileges = [terms.readPrivilegeEnum, 
+                                  terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [terms.readPrivilegeEnum.id, 
+                                    terms.writePrivilegeEnum.id, 
+                                    terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
     def _canRegister(self, user):
-        publicAccessPrivileges = [Terms.registerPrivilegeEnum, 
-                                  Terms.writePrivilegeEnum]
-        accessRecordPrivilegeIDs = [Terms.registerPrivilegeEnum.id,
-                                    Terms.writePrivilegeEnum.id,
-                                    Terms.administerPrivilegeEnum.id]
+        publicAccessPrivileges = [terms.registerPrivilegeEnum, 
+                                  terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [terms.registerPrivilegeEnum.id,
+                                    terms.writePrivilegeEnum.id,
+                                    terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
     def _canWrite(self, user):
-        publicAccessPrivileges = [Terms.writePrivilegeEnum]
-        accessRecordPrivilegeIDs = [Terms.writePrivilegeEnum.id,
-                                    Terms.administerPrivilegeEnum.id]
+        publicAccessPrivileges = [terms.writePrivilegeEnum]
+        accessRecordPrivilegeIDs = [terms.writePrivilegeEnum.id,
+                                    terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
     ## Instances can be administered if the specified user is a super user or the user is authenticated, the
@@ -736,14 +736,14 @@ class Instance(dbmodels.Model):
     ## or the user has administer privilege on the instance.                        
     def _canAdminister(self, user, userInstance=None):
         publicAccessPrivileges = []
-        accessRecordPrivilegeIDs = [Terms.administerPrivilegeEnum.id]
+        accessRecordPrivilegeIDs = [terms.administerPrivilegeEnum.id]
         return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
             
     def checkWriteAccess(self, user, field=None):
-        if self.typeID==Terms.accessRecord:
+        if self.typeID==terms.accessRecord:
             if not self._canAdminister(user):
                 raise RuntimeError("administer permission failed")
-        elif field in Terms.securityFields:
+        elif field in terms.securityFields:
             if not self._canAdminister(user):
                 raise RuntimeError("administer permission failed")
         else:
@@ -755,25 +755,25 @@ class Instance(dbmodels.Model):
     # This also handles the special case of submitting an access request to another user.
     def checkWriteValueAccess(self, user, field, value):
         if value:
-            if isinstance(value, str) and Terms.isUUID(value):
+            if isinstance(value, str) and terms.isUUID(value):
                 value = Instance.objects.get(pk=value, deleteTransaction__isnull=True)
             if isinstance(value, Instance) and \
-                value.typeID == Terms.user and \
+                value.typeID == terms.user and \
                 value._canAdminister(user) and \
-                field not in Terms.securityFields and \
+                field not in terms.securityFields and \
                 self._canRegister(user):
                 return
             if isinstance(value, Instance) and \
-                value.typeID == Terms.user and \
-                field == Terms.accessRequest and \
-                self.typeID == Terms.user:
+                value.typeID == terms.user and \
+                field == terms.accessRequest and \
+                self.typeID == terms.user:
                 return
         self.checkWriteAccess(user, field)
             
     def anonymousFindFilter():
         sources=Instance.objects.filter(\
-                          Q(value__field=Terms.publicAccess.id)&
-                          Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
+                          Q(value__field=terms.publicAccess.id)&
+                          Q(value__referenceValue__in=[terms.findPrivilegeEnum, terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
@@ -784,15 +784,15 @@ class Instance(dbmodels.Model):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=Terms.accessRecord)&
+                        (Q(children__typeID=terms.accessRecord)&
                          Q(children__value__in=sourceValues))
                         |
-                        (((Q(value__field=Terms.publicAccess.id)\
+                        (((Q(value__field=terms.publicAccess.id)\
                            &Q(value__referenceValue__in=privilegeIDs)\
                            &Q(value__deleteTransaction__isnull=True)\
                           )\
                           |
-                          (Q(value__field=Terms.primaryAdministrator.id)\
+                          (Q(value__field=terms.primaryAdministrator.id)\
                            &Q(value__referenceValue=self)\
                            &Q(value__deleteTransaction__isnull=True)\
                           )\
@@ -807,23 +807,23 @@ class Instance(dbmodels.Model):
     ### For the specified instance filter, filter only those instances that can be found by self. 
     @property   
     def findValueFilter(self):
-        privilegeIDs = [Terms.findPrivilegeEnum.id, Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
-                      Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
+        privilegeIDs = [terms.findPrivilegeEnum.id, terms.readPrivilegeEnum.id, terms.registerPrivilegeEnum.id,
+                      terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
         
         return self.securityValueFilter(privilegeIDs)
     
     ### For the specified instance filter, filter only those instances that can be read by self. 
     @property   
     def readValueFilter(self):
-        privilegeIDs = [Terms.readPrivilegeEnum.id, Terms.registerPrivilegeEnum.id,
-                      Terms.writePrivilegeEnum.id, Terms.administerPrivilegeEnum.id]
+        privilegeIDs = [terms.readPrivilegeEnum.id, terms.registerPrivilegeEnum.id,
+                      terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
         
         return self.securityValueFilter(privilegeIDs)
     
     
     @property                
     def defaultCustomAccess(self):
-        return self.value_set.filter(field=Terms.defaultAccess, deleteTransaction__isnull=True).exists()
+        return self.value_set.filter(field=terms.defaultAccess, deleteTransaction__isnull=True).exists()
                     
     def getUserInstance(user):
         field = terms[TermNames.userID]
@@ -918,12 +918,12 @@ class Value(dbmodels.Model):
     
     @property
     def isDescriptor(self):
-        return Instance.objects.filter(parent__parent=self.instance.typeID, typeID=Terms.field) \
+        return Instance.objects.filter(parent__parent=self.instance.typeID, typeID=terms.field) \
             .filter(deleteTransaction__isnull=True)\
-            .filter(value__field=Terms.name,\
+            .filter(value__field=terms.name,\
                     value__referenceValue=self.field,
                     value__deleteTransaction__isnull=True)\
-            .filter(value__field=Terms.descriptorType,
+            .filter(value__field=terms.descriptorType,
                     value__deleteTransaction__isnull=True)\
             .exists()
 
@@ -968,7 +968,7 @@ class Value(dbmodels.Model):
     def deepDelete(self, transactionState):
         # If the field is special access, then make this and all of its children 
         # sourced to the same source as the parent of self.
-        if self.field == Terms.specialAccess:
+        if self.field == terms.specialAccess:
             descendents = self.instance._descendents()
             n = AccessRecord.objects.filter(id__in=descendents).delete()
             if self.instance.parent and self.instance.parent.accessrecord:
@@ -981,12 +981,12 @@ class Value(dbmodels.Model):
     
     @property    
     def dataType(self):
-        f = Instance.objects.get(typeID=Terms.field,
-                                 value__field=Terms.name,
+        f = Instance.objects.get(typeID=terms.field,
+                                 value__field=terms.name,
                                  value__referenceValue=self.field,
                                  value__deleteTransaction__isnull=True,
                                  parent__parent=self.instance.typeID)
-        v = f.value_set.filter(field=Terms.dataType,deleteTransaction__isnull=True)[0]
+        v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
         return v.referenceValue
     
     # returns whether or not c has data to update self.
@@ -996,9 +996,9 @@ class Value(dbmodels.Model):
             raise ValueError("c is not specified")
         
         dt = self.dataType
-        if dt==Terms.objectEnum:
+        if dt==terms.objectEnum:
             return "instanceID" in c
-        elif dt==Terms.translationEnum:
+        elif dt==terms.translationEnum:
             return 'text' in c and 'languageCode' in c
         else:
             return 'text' in c
@@ -1008,8 +1008,8 @@ class Value(dbmodels.Model):
         
     def anonymousFindFilter():
         sources=Instance.objects.filter(\
-                          Q(value__field=Terms.publicAccess.id)&
-                          Q(value__referenceValue__in=[Terms.findPrivilegeEnum, Terms.readPrivilegeEnum])&\
+                          Q(value__field=terms.publicAccess.id)&
+                          Q(value__referenceValue__in=[terms.findPrivilegeEnum, terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
@@ -1019,8 +1019,8 @@ class Value(dbmodels.Model):
 
     def anonymousReadFilter():
         sources=Instance.objects.filter(\
-                          Q(value__field=Terms.publicAccess.id)&
-                          Q(value__referenceValue__in=[Terms.readPrivilegeEnum])&\
+                          Q(value__field=terms.publicAccess.id)&
+                          Q(value__referenceValue__in=[terms.readPrivilegeEnum])&\
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
@@ -1060,21 +1060,21 @@ class TermNames():
     boolean = '_boolean'
     name = '_name'
     dataType = '_data type'
-    string = '_string'
+    stringEnum = '_string'
     number = '_number'
     datestamp = '_datestamp'
     datestampDayOptional = '_datestamp (day optional)'
-    translation = '_translation'
-    object = '_object'
+    translationEnum = '_translation'
+    objectEnum = '_object'
     ofKind = '_of kind'
     pickObjectPath = '_pick object path'
     enumerator = 'enumerator'
     maxCapacity = '_max capacity'
-    uniqueValue = '_unique value'
-    multipleValues = '_multiple values'
+    uniqueValueEnum = '_unique value'
+    multipleValuesEnum = '_multiple values'
     addObjectRule = '_object add rule'
-    pickObjectRule = '_pick one'
-    createObjectRule = '_create one'
+    pickObjectRuleEnum = '_pick one'
+    createObjectRuleEnum = '_create one'
     descriptorType = '_descriptor type'
     yes = '_yes'
     no = '_no'
@@ -1090,11 +1090,11 @@ class TermNames():
     accessRequest = '_access request'
     systemAccess = '_system access'
     privilege = '_privilege'
-    findPrivilege = '_find'
-    readPrivilege = '_read'
-    writePrivilege = '_write'
-    administerPrivilege = '_administer'
-    registerPrivilege = '_register'
+    findPrivilegeEnum = '_find'
+    readPrivilegeEnum = '_read'
+    writePrivilegeEnum = '_write'
+    administerPrivilegeEnum = '_administer'
+    registerPrivilegeEnum = '_register'
     group = '_group'
     defaultAccess = '_default access'
     specialAccess = '_special access'
@@ -1130,136 +1130,135 @@ class TermNames():
         ]
 
 class Terms():
-    uuName = None
-    configuration = None                # identifies a configuration instance (contained by a uuName)
-    field = None                        # identifies a field instance (contained by a configuration)
-    boolean = None                      # identifies an instance of type Boolean
-    name = None
-    ofKind = None
-    pickObjectPath = None
-    enumerator = None
-    dataType = None
-    maxCapacity = None
-    addObjectRule = None
-    descriptorType = None
-    user = None
-    userID = None
-    email = None
-    firstName = None
-    lastName = None
-    translation = None
-    text = None
-    accessRecord = None
-    accessRequest = None
-    systemAccess = None
-    privilege = None
-    group = None
-    defaultAccess = None
-    specialAccess = None
-    publicAccess=None                   # Identifies fields used to determine what privileges the public has with regard to an instance.
-    primaryAdministrator=None           # Identifies fields that contain the primary administrator for an instance.
+#     uuName = None
+#     configuration = None                # identifies a configuration instance (contained by a uuName)
+#     field = None                        # identifies a field instance (contained by a configuration)
+#     boolean = None                      # identifies an instance of type Boolean
+#     name = None
+#     ofKind = None
+#     pickObjectPath = None
+#     enumerator = None
+#     dataType = None
+#     maxCapacity = None
+#     addObjectRule = None
+#     descriptorType = None
+#     user = None
+#     userID = None
+#     email = None
+#     firstName = None
+#     lastName = None
+#     translation = None
+#     text = None
+#     accessRecord = None
+#     accessRequest = None
+#     systemAccess = None
+#     privilege = None
+#     group = None
+#     defaultAccess = None
+#     specialAccess = None
+#     publicAccess=None                   # Identifies fields used to determine what privileges the public has with regard to an instance.
+#     primaryAdministrator=None           # Identifies fields that contain the primary administrator for an instance.
+#     
+#     textEnum = None                     # Identifies fields where instances of the containing type
+#                                         # are described by the text of values of this field type
+#                                         # contained within the instance.
+#     countEnum = None                    # Identifies fields where instances of the containing type 
+#                                         # are described by the number of values of this field type
+#                                         # contained within the instance. 
+#     
+#     objectEnum = None                   # Identifies fields whose values are other instances.
+#     stringEnum = None                   # Identifies fields whose values are strings.
+#     translationEnum = None              # Identifies fields whose values are translations.
+#     
+#     uniqueValueEnum = None              # Identifies fields that can have a single value
+#     multipleValuesEnum = None           # Identifies fields that can have 0 or more values
+#     
+#     pickObjectRuleEnum = None           # Identifies object fields that pick an existing object when adding a value
+#     createObjectRuleEnum = None         # Identifies object fields that create a new object when adding a value
+#     
+#     findPrivilegeEnum = None            # Identifies access records that give find access to an instance.
+#     readPrivilegeEnum = None            # Identifies access records that give read access to an instance.
+#     writePrivilegeEnum = None           # Identifies access records that give write access to an instance.
+#     administerPrivilegeEnum = None      # Identifies access records that give administer access to an instance.
+#     registerPrivilegeEnum = None        # Identifies access records that give register access to an instance.
+#     
+#     # Enumeration values of the default secure term.
+#     defaultCustomEnum = None            # Identifies instance types that have customized access by default.
+#     
+#     customAccessEnum = None             # Identifies instances that have customized access as a user setting.
+#     
+#     securityFields = None
     
-    textEnum = None                     # Identifies fields where instances of the containing type
-                                        # are described by the text of values of this field type
-                                        # contained within the instance.
-    countEnum = None                    # Identifies fields where instances of the containing type 
-                                        # are described by the number of values of this field type
-                                        # contained within the instance. 
-    
-    objectEnum = None                   # Identifies fields whose values are other instances.
-    stringEnum = None                   # Identifies fields whose values are strings.
-    translationEnum = None              # Identifies fields whose values are translations.
-    
-    uniqueValueEnum = None              # Identifies fields that can have a single value
-    multipleValuesEnum = None           # Identifies fields that can have 0 or more values
-    
-    pickObjectRuleEnum = None           # Identifies object fields that pick an existing object when adding a value
-    createObjectRuleEnum = None         # Identifies object fields that create a new object when adding a value
-    
-    findPrivilegeEnum = None            # Identifies access records that give find access to an instance.
-    readPrivilegeEnum = None            # Identifies access records that give read access to an instance.
-    writePrivilegeEnum = None           # Identifies access records that give write access to an instance.
-    administerPrivilegeEnum = None      # Identifies access records that give administer access to an instance.
-    registerPrivilegeEnum = None        # Identifies access records that give register access to an instance.
-    
-    # Enumeration values of the default secure term.
-    defaultCustomEnum = None            # Identifies instance types that have customized access by default.
-    
-    customAccessEnum = None             # Identifies instances that have customized access as a user setting.
-    
-    securityFields = None
-    
-    def initialize(transactionState=None):
+    def initialize(self, transactionState=None):
         try:
-            Terms.term = Terms.getUUName()
-            Terms.name = Terms.getName()
-            nameList = NameList()
-            Terms.configuration = Terms.getOrCreateTerm(TermNames.configuration, nameList, transactionState)
-            Terms.field = Terms.getOrCreateTerm(TermNames.field, nameList, transactionState)
-            Terms.boolean = Terms.getOrCreateTerm(TermNames.boolean, nameList, transactionState)
-            Terms.ofKind = Terms.getOrCreateTerm(TermNames.ofKind, nameList, transactionState)
-            Terms.pickObjectPath = Terms.getOrCreateTerm(TermNames.pickObjectPath, nameList, transactionState)
-            Terms.enumerator = Terms.getOrCreateTerm(TermNames.enumerator, nameList, transactionState)
-            Terms.dataType = Terms.getOrCreateTerm(TermNames.dataType, nameList, transactionState)
-            Terms.maxCapacity = Terms.getOrCreateTerm(TermNames.maxCapacity, nameList, transactionState)
-            Terms.addObjectRule = Terms.getOrCreateTerm(TermNames.addObjectRule, nameList, transactionState)
-            Terms.descriptorType = Terms.getOrCreateTerm(TermNames.descriptorType, nameList, transactionState)
-            Terms.user = Terms.getOrCreateTerm(TermNames.user, nameList, transactionState)
-            Terms.userID = Terms.getOrCreateTerm(TermNames.userID, nameList, transactionState)
-            Terms.email = Terms.getOrCreateTerm(TermNames.email, nameList, transactionState)
-            Terms.firstName = Terms.getOrCreateTerm(TermNames.firstName, nameList, transactionState)
-            Terms.lastName = Terms.getOrCreateTerm(TermNames.lastName, nameList, transactionState)
-            Terms.translation = Terms.getOrCreateTerm(TermNames.translation, nameList, transactionState)
-            Terms.accessRecord = Terms.getOrCreateTerm(TermNames.accessRecord, nameList, transactionState)
-            Terms.accessRequest = Terms.getOrCreateTerm(TermNames.accessRequest, nameList, transactionState)
-            Terms.systemAccess = Terms.getOrCreateTerm(TermNames.systemAccess, nameList, transactionState)
-            Terms.privilege = Terms.getOrCreateTerm(TermNames.privilege, nameList, transactionState)
-            Terms.group = Terms.getOrCreateTerm(TermNames.group, nameList, transactionState)
-            Terms.defaultAccess = Terms.getOrCreateTerm(TermNames.defaultAccess, nameList, transactionState)
-            Terms.specialAccess = Terms.getOrCreateTerm(TermNames.specialAccess, nameList, transactionState)
-            Terms.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, nameList, transactionState)
-            Terms.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, nameList, transactionState)
-            Terms.securityFields = [Terms.accessRecord, Terms.systemAccess, Terms.defaultAccess, Terms.specialAccess, Terms.publicAccess, Terms.primaryAdministrator, Terms.accessRequest]
+            self.term = Terms.getUUName()
+            self.name = Terms.getName()
+            self.configuration = Terms.getOrCreateTerm(TermNames.configuration,  transactionState)
+            self.field = Terms.getOrCreateTerm(TermNames.field,  transactionState)
+            self.boolean = Terms.getOrCreateTerm(TermNames.boolean,  transactionState)
+            self.ofKind = Terms.getOrCreateTerm(TermNames.ofKind,  transactionState)
+            self.pickObjectPath = Terms.getOrCreateTerm(TermNames.pickObjectPath,  transactionState)
+            self.enumerator = Terms.getOrCreateTerm(TermNames.enumerator,  transactionState)
+            self.dataType = Terms.getOrCreateTerm(TermNames.dataType,  transactionState)
+            self.maxCapacity = Terms.getOrCreateTerm(TermNames.maxCapacity,  transactionState)
+            self.addObjectRule = Terms.getOrCreateTerm(TermNames.addObjectRule,  transactionState)
+            self.descriptorType = Terms.getOrCreateTerm(TermNames.descriptorType,  transactionState)
+            self.user = Terms.getOrCreateTerm(TermNames.user, transactionState)
+            self.userID = Terms.getOrCreateTerm(TermNames.userID, transactionState)
+            self.email = Terms.getOrCreateTerm(TermNames.email, transactionState)
+            self.firstName = Terms.getOrCreateTerm(TermNames.firstName, transactionState)
+            self.lastName = Terms.getOrCreateTerm(TermNames.lastName, transactionState)
+            self.translation = Terms.getOrCreateTerm(TermNames.translationEnum, transactionState)
+            self.accessRecord = Terms.getOrCreateTerm(TermNames.accessRecord, transactionState)
+            self.accessRequest = Terms.getOrCreateTerm(TermNames.accessRequest, transactionState)
+            self.systemAccess = Terms.getOrCreateTerm(TermNames.systemAccess, transactionState)
+            self.privilege = Terms.getOrCreateTerm(TermNames.privilege, transactionState)
+            self.group = Terms.getOrCreateTerm(TermNames.group, transactionState)
+            self.defaultAccess = Terms.getOrCreateTerm(TermNames.defaultAccess, transactionState)
+            self.specialAccess = Terms.getOrCreateTerm(TermNames.specialAccess, transactionState)
+            self.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, transactionState)
+            self.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, transactionState)
+            self.securityFields = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     
-        try: Terms.textEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.textEnum)
+        try: self.textEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.textEnum)
         except Value.DoesNotExist: pass
-        try: Terms.countEnum = Terms.getNamedEnumerator(Terms.descriptorType, TermNames.countEnum);
-        except Value.DoesNotExist: pass
-    
-        try: Terms.objectEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.object);
-        except Value.DoesNotExist: pass
-        try: Terms.stringEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.string);
-        except Value.DoesNotExist: pass
-        try: Terms.translationEnum = Terms.getNamedEnumerator(Terms.dataType, TermNames.translation);
+        try: self.countEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.countEnum);
         except Value.DoesNotExist: pass
     
-        try: Terms.uniqueValueEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.uniqueValue);
+        try: self.objectEnum = Terms.getNamedEnumerator(self.dataType, TermNames.objectEnum);
         except Value.DoesNotExist: pass
-        try: Terms.multipleValuesEnum = Terms.getNamedEnumerator(Terms.maxCapacity, TermNames.multipleValues);
+        try: self.stringEnum = Terms.getNamedEnumerator(self.dataType, TermNames.stringEnum);
+        except Value.DoesNotExist: pass
+        try: self.translationEnum = Terms.getNamedEnumerator(self.dataType, TermNames.translationEnum);
+        except Value.DoesNotExist: pass
+    
+        try: self.uniqueValueEnum = Terms.getNamedEnumerator(self.maxCapacity, TermNames.uniqueValueEnum);
+        except Value.DoesNotExist: pass
+        try: self.multipleValuesEnum = Terms.getNamedEnumerator(self.maxCapacity, TermNames.multipleValuesEnum);
         except Value.DoesNotExist: pass
         
-        try: Terms.pickObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.pickObjectRule);
+        try: self.pickObjectRuleEnum = Terms.getNamedEnumerator(self.addObjectRule, TermNames.pickObjectRuleEnum);
         except Value.DoesNotExist: pass
-        try: Terms.createObjectRuleEnum = Terms.getNamedEnumerator(Terms.addObjectRule, TermNames.createObjectRule);
+        try: self.createObjectRuleEnum = Terms.getNamedEnumerator(self.addObjectRule, TermNames.createObjectRuleEnum);
         except Value.DoesNotExist: pass
         
-        try: Terms.findPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.findPrivilege);
+        try: self.findPrivilegeEnum = Terms.getNamedEnumerator(self.privilege, TermNames.findPrivilegeEnum);
         except Value.DoesNotExist: pass
-        try: Terms.readPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.readPrivilege);
+        try: self.readPrivilegeEnum = Terms.getNamedEnumerator(self.privilege, TermNames.readPrivilegeEnum);
         except Value.DoesNotExist: pass
-        try: Terms.writePrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.writePrivilege);
+        try: self.writePrivilegeEnum = Terms.getNamedEnumerator(self.privilege, TermNames.writePrivilegeEnum);
         except Value.DoesNotExist: pass
-        try: Terms.administerPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.administerPrivilege);
+        try: self.administerPrivilegeEnum = Terms.getNamedEnumerator(self.privilege, TermNames.administerPrivilegeEnum);
         except Value.DoesNotExist: pass
-        try: Terms.registerPrivilegeEnum = Terms.getNamedEnumerator(Terms.privilege, TermNames.registerPrivilege);
-        except Value.DoesNotExist: pass
-            
-        try: Terms.defaultCustomEnum = Terms.getNamedEnumerator(Terms.defaultAccess, TermNames.custom);
+        try: self.registerPrivilegeEnum = Terms.getNamedEnumerator(self.privilege, TermNames.registerPrivilegeEnum);
         except Value.DoesNotExist: pass
             
-        try: Terms.customAccessEnum = Terms.getNamedEnumerator(Terms.specialAccess, TermNames.custom);
+        try: self.defaultCustomEnum = Terms.getNamedEnumerator(self.defaultAccess, TermNames.custom);
+        except Value.DoesNotExist: pass
+            
+        try: self.customAccessEnum = Terms.getNamedEnumerator(self.specialAccess, TermNames.custom);
         except Value.DoesNotExist: pass
             
     def getUUName():
@@ -1268,7 +1267,7 @@ class Terms():
             value__stringValue=TermNames.term)
 
     def getName():
-        return Instance.objects.get(typeID=Terms.term,
+        return Instance.objects.get(typeID=terms.term,
             value__deleteTransaction__isnull=True,
             value__field=F('id'),
             value__stringValue=TermNames.name)
@@ -1277,23 +1276,49 @@ class Terms():
     # it is looked up by name.
     def __getitem__(self, name):
         try:
-            if Terms.isUUID(name):
+            if terms.isUUID(name):
                 return Instance.objects.get(pk=name);
             else:
-                return Instance.objects.get(typeID=Terms.term,
+                return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
-                    value__field = Terms.name,
+                    value__field = terms.name,
                     value__stringValue=name)
         except Instance.DoesNotExist:
             raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
+            
+    def __getattr__(self, name):
+        if name == 'term':
+            x = Terms.getUUName()
+        elif name == 'name':
+            x = Terms.getName()
+        elif name == 'securityFields': 
+            x = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
+        elif name in ['textEnum', 'countEnum']:
+            x = Terms.getNamedEnumerator(self.descriptorType, type.__getattribute__(TermNames, name))
+        elif name in ['objectEnum', 'stringEnum', 'translationEnum']:
+            x = Terms.getNamedEnumerator(self.dataType, type.__getattribute__(TermNames, name))
+        elif name in ['uniqueValueEnum', 'multipleValuesEnum']:
+            x = Terms.getNamedEnumerator(self.maxCapacity, type.__getattribute__(TermNames, name))
+        elif name in ['pickObjectRuleEnum', 'createObjectRuleEnum']:
+            x = Terms.getNamedEnumerator(self.addObjectRule, type.__getattribute__(TermNames, name))
+        elif name in ['findPrivilegeEnum', 'readPrivilegeEnum', 'writePrivilegeEnum', 'administerPrivilegeEnum', 'registerPrivilegeEnum']:
+            x = Terms.getNamedEnumerator(self.privilege, type.__getattribute__(TermNames, name))
+        elif name == 'defaultCustomEnum':
+            x = Terms.getNamedEnumerator(self.defaultAccess, TermNames.custom);
+        elif name == 'customAccessEnum':
+            x = Terms.getNamedEnumerator(self.specialAccess, TermNames.custom);
+        else:
+            x = self[type.__getattribute__(TermNames, name)]
+        self.__setattr__(name, x)
+        return x
         
-    def getOrCreateTerm(name, nameLists, transactionState):
+    def getOrCreateTerm(name, transactionState):
         try:
             return terms[name]
         except Instance.DoesNotExist:
             print('new term: %s' % name)
-            i = Terms.term.createEmptyInstance(None, transactionState)
-            i.addStringValue(Terms.name, name, 0, transactionState)
+            i = terms.term.createEmptyInstance(None, transactionState)
+            i.addStringValue(terms.name, name, 0, transactionState)
             return i
             
     
@@ -1301,23 +1326,23 @@ class Terms():
     def getNamedEnumerator(term, stringValue):
         if not term:
             raise ValueError("term is null")
-        v = Value.objects.get(instance=term, field=Terms.enumerator,
+        v = Value.objects.get(instance=term, field=terms.enumerator,
                           deleteTransaction__isnull=True,
-                          referenceValue__value__field=Terms.name,
+                          referenceValue__value__field=terms.name,
                           referenceValue__value__deleteTransaction__isnull=True,
                           referenceValue__value__stringValue=stringValue)
         return v.referenceValue
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
     def getTranslationNamedEnumerator(term, stringValue, languageCode):
-        v = Value.objects.get(instance=term, field = Terms.enumerator,
+        v = Value.objects.get(instance=term, field = terms.enumerator,
                               referenceValue__value__deleteTransaction__isnull=True,
-                              referenceValue__value__field=Terms.translation,
+                              referenceValue__value__field=terms.translation,
                               referenceValue__value__stringValue=stringValue,
                               referenceValue__value__languageCode=languageCode)
         return v.referenceValue
         
-    def isUUID(s):
+    def isUUID(self, s):
         return re.search('^[a-fA-F0-9]{32}$', s)
                 
 terms = Terms()

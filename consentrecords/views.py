@@ -334,7 +334,7 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
                 field = terms[fieldName]
@@ -429,7 +429,7 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
                 field = terms[fieldName]
@@ -464,7 +464,7 @@ class api:
             else:
                 return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
-            configurationObject = kindObject.getSubInstance(Terms.configuration)
+            configurationObject = kindObject.getSubInstance(terms.configuration)
         
             if not configurationObject:
                 return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
@@ -524,13 +524,13 @@ class api:
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
-                saObject = Terms.administerPrivilegeEnum
+                saObject = terms.administerPrivilegeEnum
             elif userInfo.authUser.is_staff:
-                saObject = Terms.writePrivilegeEnum
+                saObject = terms.writePrivilegeEnum
             else:
                 saObject = None
             if saObject:
-                fieldData = Terms.systemAccess.getParentReferenceFieldData()
+                fieldData = terms.systemAccess.getParentReferenceFieldData()
                 parentData = [{'id': None, 
                               'instanceID' : saObject.id,
                               'description': saObject.getDescription(language),
@@ -662,12 +662,12 @@ class api:
                 uuObjects = Instance.objects.filter(typeID=term)
                 
                 if len(testValue) >= 3:
-                    vFilter = Value.objects.filter(field=Terms.name, 
+                    vFilter = Value.objects.filter(field=terms.name, 
                                                    stringValue__icontains=testValue,referenceValue__isnull=True,
                                                    deleteTransaction__isnull=True)
                     uuObjects = uuObjects.filter(value__in=vFilter)
                 elif len(testValue) > 0:
-                    vFilter = Value.objects.filter(field=Terms.name, 
+                    vFilter = Value.objects.filter(field=terms.name, 
                                                    stringValue__istartswith=testValue,referenceValue__isnull=True,
                                                    deleteTransaction__isnull=True)
                     uuObjects = uuObjects.filter(value__in=vFilter)
@@ -728,7 +728,7 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
                 field = terms[fieldName]
@@ -979,7 +979,7 @@ def updateUsername(request):
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user)
                 transactionState = TransactionState(request.user, timezoneOffset)
-                v = userInstance.getSubValue(Terms.email)
+                v = userInstance.getSubValue(terms.email)
                 v.updateValue(request.user.email, transactionState)
                 nameLists = NameList()
                 userInstance.cacheDescription(nameLists);

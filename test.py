@@ -5,10 +5,7 @@ from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords.views import api
 
-# Initialize terms before using them.
-Terms.initialize()
-
-s = Terms.term
+s = terms.term
 print ('##################################')
 print ('# Test 1 ')
 print ('##################################')
@@ -37,8 +34,8 @@ Instance.updateDescriptions([u], nameLists)
 print ('##################################')
 print ('# Test 5 ')
 print ('##################################')
-c = us._getSubInstances(Terms.configuration)[0]
-fs = c._getSubInstances(Terms.field)
+c = us._getSubInstances(terms.configuration)[0]
+fs = c._getSubInstances(terms.field)
 
 print (c.getConfiguration())
 

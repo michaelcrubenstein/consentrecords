@@ -24,7 +24,6 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         orgTerm = terms['Organization']
         nameTerm = terms['_name']
         nameList = NameList()
