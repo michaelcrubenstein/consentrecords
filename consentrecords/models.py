@@ -826,7 +826,7 @@ class Instance(dbmodels.Model):
         return self.value_set.filter(field=Terms.defaultAccess, deleteTransaction__isnull=True).exists()
                     
     def getUserInstance(user):
-        field = Terms.getNamedInstance(TermNames.userID)
+        field = terms[TermNames.userID]
         userID = user.id
         if isinstance(userID, uuid.UUID):
             userID = userID.hex
@@ -836,7 +836,7 @@ class Instance(dbmodels.Model):
     
     @property    
     def user(self):
-        field = Terms.getNamedInstance(TermNames.userID)
+        field = terms[TermNames.userID]
         id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
         return AuthUser.objects.get(pk=id)
 
@@ -1273,18 +1273,23 @@ class Terms():
             value__field=F('id'),
             value__stringValue=TermNames.name)
 
-    def getNamedInstance(name):
+    # If name is a 32 character hex string, then it is considered that ID. Otherwise,
+    # it is looked up by name.
+    def __getitem__(self, name):
         try:
-            return Instance.objects.get(typeID=Terms.term,
-                value__deleteTransaction__isnull=True,
-                value__field = Terms.name,
-                value__stringValue=name)
+            if Terms.isUUID(name):
+                return Instance.objects.get(pk=name);
+            else:
+                return Instance.objects.get(typeID=Terms.term,
+                    value__deleteTransaction__isnull=True,
+                    value__field = Terms.name,
+                    value__stringValue=name)
         except Instance.DoesNotExist:
             raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
-    
+        
     def getOrCreateTerm(name, nameLists, transactionState):
         try:
-            return Terms.getNamedInstance(name)
+            return terms[name]
         except Instance.DoesNotExist:
             print('new term: %s' % name)
             i = Terms.term.createEmptyInstance(None, transactionState)
@@ -1314,16 +1319,9 @@ class Terms():
         
     def isUUID(s):
         return re.search('^[a-fA-F0-9]{32}$', s)
-    
-    # Return a 32 character hex string which represents the ID of the specified universal name.
-    # If the argument is a 32 character hex string, then it is considered that ID. Otherwise,
-    # it is looked up by name.
-    def getInstance(name):
-        if Terms.isUUID(name):
-            return Instance.objects.get(pk=name);
-        else:
-            return Terms.getNamedInstance(name)
-            
+                
+terms = Terms()
+
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser

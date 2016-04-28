@@ -10,7 +10,7 @@ import csv
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo, AccessRecord, NameList
+from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
@@ -67,20 +67,20 @@ if __name__ == "__main__":
         Terms.initialize(transactionState)
         userInfo = UserInfo(user)
         
-        orgTerm = Terms.getNamedInstance('Organization')
-        sitesTerm = Terms.getNamedInstance('Sites')
-        siteTerm = Terms.getNamedInstance('Site')
-        addressTerm = Terms.getNamedInstance('Address')
-        streetTerm = Terms.getNamedInstance('Street')
-        cityTerm = Terms.getNamedInstance('City')
-        stateTerm = Terms.getNamedInstance('State')
-        zipTerm = Terms.getNamedInstance('Zip Code')
-        offeringsTerm = Terms.getNamedInstance('Offerings')
-        offeringTerm = Terms.getNamedInstance('Offering')
-        serviceTerm = Terms.getNamedInstance('Service')
-        sessionsTerm = Terms.getNamedInstance('Sessions')
-        sessionTerm = Terms.getNamedInstance('Session')
-        nameTerm = Terms.getNamedInstance('_name')
+        orgTerm = terms['Organization']
+        sitesTerm = terms['Sites']
+        siteTerm = terms['Site']
+        addressTerm = terms['Address']
+        streetTerm = terms['Street']
+        cityTerm = terms['City']
+        stateTerm = terms['State']
+        zipTerm = terms['Zip Code']
+        offeringsTerm = terms['Offerings']
+        offeringTerm = terms['Offering']
+        serviceTerm = terms['Service']
+        sessionsTerm = terms['Sessions']
+        sessionTerm = terms['Session']
+        nameTerm = terms['_name']
         nameList = NameList()
         with open(sys.argv[1], 'r') as f:
             reader = csv.reader(f)

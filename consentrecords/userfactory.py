@@ -15,7 +15,7 @@ class UserFactory:
             else:
                 userID = user.id        # MySQL
 
-            ofKindObject = Terms.getNamedInstance(TermNames.user)
+            ofKindObject = terms[TermNames.user]
             if not propertyList: propertyList = {}
             propertyList[TermNames.email] = {"text": user.email}
             if user.first_name:
@@ -25,7 +25,7 @@ class UserFactory:
             item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
             
             # Add userID explicitly in case it isn't part of the configuration.
-            item.addStringValue(Terms.getNamedInstance(TermNames.userID), userID, 0, transactionState)
+            item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
             
             return item
 

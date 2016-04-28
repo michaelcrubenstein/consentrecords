@@ -19,10 +19,10 @@ print(s._getDescription(s.typeID._descriptors))
 print ('##################################')
 print ('# Test 2 ')
 print ('##################################')
-us = Terms.getNamedInstance('_user')
+us = terms['_user']
 u = us.typeInstances.all()[0]
 
-me = Terms.getNamedInstance('More Experiences')
+me = terms['More Experiences']
 v = u.getSubValue(me)
 print(v.referenceValue)
 print(v.referenceValue.getDescription())

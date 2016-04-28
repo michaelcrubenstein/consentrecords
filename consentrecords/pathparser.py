@@ -7,7 +7,7 @@ import logging
 from functools import reduce
 
 from parse.cssparser import parser as cssparser
-from consentrecords.models import Instance, Value, Terms
+from consentrecords.models import Instance, Value, Terms, terms, UserInfo
 
 def _getValueFilter(field, symbol, testValue):
     if Terms.isUUID(testValue):
@@ -104,7 +104,7 @@ def _refineResults(resultSet, path, userInfo):
         params = path[1]
         if params[0] == 'ancestor' and params[1] == ':':
             if params[2] != '?':
-                i = Terms.getInstance(params[2])
+                i = terms[params[2]]
             else:
                 i = None
             if len(params) == 3:
@@ -127,7 +127,7 @@ def _refineResults(resultSet, path, userInfo):
             return f, path[2:]
         else:
             if params[0] != '?':
-                i = Terms.getInstance(params[0])
+                i = terms[params[0]]
             else:
                 i = None
             if len(params) == 1:
@@ -144,7 +144,7 @@ def _refineResults(resultSet, path, userInfo):
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
     elif path[0] == '>':
-        i = Terms.getInstance(path[1])
+        i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
                                     referenceValues__field=i,
                                     referenceValues__deleteTransaction__isnull=True)\
@@ -155,12 +155,12 @@ def _refineResults(resultSet, path, userInfo):
         if function == 'reference':
             if path[2] == '(':
                 if path[3][0] == ',':
-                    t = map(Terms.getInstance, path[3][1])
+                    t = map(terms.__getitem__, path[3][1])
                     f = Instance.objects.filter(typeID__in=t,
                                                 value__deleteTransaction__isnull=True,
                                                 value__referenceValue__in=userInfo.findFilter(resultSet))
                 else:
-                    t = Terms.getInstance(path[3][0])
+                    t = terms[path[3][0]]
                     f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
                                                 Q(value__referenceValue__in=userInfo.findFilter(resultSet)),
                                                 typeID=t,
@@ -182,7 +182,7 @@ def _refineResults(resultSet, path, userInfo):
         if path[2] == '(':
             if path[3][0] == '[':
                 params = path[3][1]
-                i = Terms.getInstance(params[0])
+                i = terms[params[0]]
                 if len(params) == 1:
                     f = resultSet.exclude(value__in=Value.objects.filter(field=i,deleteTransaction__isnull=True))
                     return f, path[4:]
@@ -199,16 +199,16 @@ def _refineResults(resultSet, path, userInfo):
             raise ValueError("malformed 'not' expression")
     elif path[0] == '(': # Path[1] is a list of type IDs.
         if path[1][0] == ',':
-            t = map(Terms.getInstance, path[1][1])
+            t = map(terms.__getitem__, path[1][1])
             f = Instance.objects.filter(typeID__in=t,
                                         deleteTransaction__isnull=True)
         else:
-            t = Terms.getInstance(path[1][0])
+            t = terms[path[1][0]]
             f = Instance.objects.filter(typeID=t,
                                         deleteTransaction__isnull=True)
         return f, path[2:]
     else:   # Path[0] is a typeID.
-        i = Terms.getInstance(path[0])
+        i = terms[path[0]]
         f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
         return f, path[1:]
 

@@ -9,7 +9,7 @@ import sys
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo, AccessRecord, NameList
+from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
@@ -25,8 +25,8 @@ if __name__ == "__main__":
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
         Terms.initialize(transactionState)
-        orgTerm = Terms.getNamedInstance('Organization')
-        nameTerm = Terms.getNamedInstance('_name')
+        orgTerm = terms['Organization']
+        nameTerm = terms['_name']
         nameList = NameList()
         with open(sys.argv[1], 'r') as f:
             for s in f:

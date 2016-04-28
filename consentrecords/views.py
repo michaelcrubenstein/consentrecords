@@ -111,7 +111,7 @@ def list(request):
     try:
         # The type of the root object.
         rootType = request.GET.get('type', None)
-        root = rootType and Terms.getNamedInstance(rootType);
+        root = rootType and terms[rootType];
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
@@ -204,7 +204,7 @@ class api:
             elif not instanceType:
                 return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
             else:
-                ofKindObject = Terms.getNamedInstance(instanceType)
+                ofKindObject = terms[instanceType]
         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
@@ -215,11 +215,11 @@ class api:
             if elementUUID:
                 field = Instance.objects.get(pk=elementUUID)
             elif elementName:
-                field = Terms.getNamedInstance(elementName)
+                field = terms[elementName]
             elif instanceUUID:
                 field = Instance.objects.get(pk=instanceUUID)
             elif instanceName: 
-                field = Terms.getNamedInstance(instanceName)
+                field = terms[instanceName]
             
             # An optional set of properties associated with the object.
             propertyString = data.get('properties', None)
@@ -337,7 +337,7 @@ class api:
             elif Terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value added to the container.
             valueUUID = data.get('valueUUID', None)
@@ -432,7 +432,7 @@ class api:
             elif Terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value with the container.
             value = data.get('value', None)
@@ -460,7 +460,7 @@ class api:
             if typeUUID:
                 kindObject = Instance.objects.get(pk=typeUUID)
             elif typeName:
-                kindObject = Terms.getNamedInstance(typeName)
+                kindObject = terms[typeName]
             else:
                 return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
@@ -658,7 +658,7 @@ class api:
                 a = ["Service Domain"]
             results = []
             for termName in a:
-                term = Terms.getNamedInstance(termName)
+                term = terms[termName]
                 uuObjects = Instance.objects.filter(typeID=term)
                 
                 if len(testValue) >= 3:
@@ -731,7 +731,7 @@ class api:
             elif Terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
                 
             language = data.get('language', None)
 

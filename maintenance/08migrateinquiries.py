@@ -9,7 +9,7 @@ import sys
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo
+from consentrecords.models import *
 from consentrecords import pathparser
 
 if __name__ == "__main__":
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         transactionState = TransactionState(user, timezoneoffset)
         Terms.initialize(transactionState)
 
-        f = Instance.objects.filter(typeID=Terms.getNamedInstance('Inquiry'), deleteTransaction__isnull=True,
+        f = Instance.objects.filter(typeID=terms['Inquiry'], deleteTransaction__isnull=True,
                                     value__field=Terms.email,
                                     value__deleteTransaction__isnull=True)
 
