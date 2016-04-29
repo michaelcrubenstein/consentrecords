@@ -38,7 +38,7 @@ def _getValueFilter(field, symbol, testValue):
             vFilter = Value.objects.filter(Q(stringValue__gte=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__gte=testValue))
         else:
-            raise ValueError("unrecognized symbol: %s" & symbol)
+            raise ValueError("unrecognized symbol: %s"%symbol)
     vFilter = vFilter.filter(deleteTransaction__isnull=True)
     return vFilter.filter(field=field) if field else vFilter
 
@@ -92,6 +92,46 @@ def _getAncestorClause(symbol, testValue):
     else:
         return _getSimpleAncestorClause(symbol, testValue)
 
+def _getFilterClause(params, userInfo):
+    if len(params) > 3 and params[0] == ',' and params[2] == '>':
+        t = map(terms.__getitem__, params[1])
+        subF = _getFilterClause(params[3:], userInfo)
+        return Instance.objects.filter(value__field__in=t,
+                                    value__deleteTransaction__isnull=True,
+                                    value__referenceValue__in=userInfo.findFilter(subF))
+    elif len(params) > 2 and params[1] == '>':
+        t = terms[params[0]]
+        subF = _getFilterClause(params[2:], userInfo)
+        return Instance.objects.filter(value__field=t,
+                                       value__deleteTransaction__isnull=True,
+                                       value__referenceValue__in=userInfo.findFilter(subF))
+    else:
+        # Replace the field name with a * for any item.
+        return _parse([], ['*'] + params[1:], userInfo)
+
+def _getFieldClause(resultSet, params, userInfo):
+    if params[0] != '?':
+        i = terms[params[0]]
+    else:
+        i = None
+    if len(params) == 1:
+        return resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
+    elif len(params) > 2 and params[1]=='>':
+        return resultSet.filter(pk__in=_getFilterClause(params, userInfo))
+    elif len(params) > 3 and params[0] == ',' and params[2] == '>':
+        return resultSet.filter(pk__in=_getFilterClause(params, userInfo))
+    elif len(params) == 3 or (len(params) == 4 and params[2]==','):
+        # Get a Q clause that compares either a single test value or a comma-separated list of test values
+        # according to the specified symbol.
+        stringText = _getQClause(i, symbol=params[1], testValue=params[-1])
+    
+        # Need to add distinct after the tests to prevent duplicates if there is
+        # more than one value of the instance that matches.
+        return resultSet.filter(stringText).distinct()
+    else:
+        print(params)
+        raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+
 def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
 #     logger.error("_refineResults(%s, %s)" % (str(resultSet), path))
@@ -126,22 +166,7 @@ def _refineResults(resultSet, path, userInfo):
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
         else:
-            if params[0] != '?':
-                i = terms[params[0]]
-            else:
-                i = None
-            if len(params) == 1:
-                f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
-            elif len(params) == 3 or (len(params) == 4 and params[2]==','):
-                # Get a Q clause that compares either a single test value or a comma-separated list of test values
-                # according to the specified symbol.
-                stringText = _getQClause(i, symbol=params[1], testValue=params[-1])
-            
-                # Need to add distinct after the tests to prevent duplicates if there is
-                # more than one value of the instance that matches.
-                f = resultSet.filter(stringText).distinct()
-            else:
-                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
+            f = _getFieldClause(resultSet, params, userInfo)
             return f, path[2:]
     elif path[0] == '>':
         i = terms[path[1]]
