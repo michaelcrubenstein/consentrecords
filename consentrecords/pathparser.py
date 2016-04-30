@@ -93,9 +93,9 @@ def _getAncestorClause(symbol, testValue):
         return _getSimpleAncestorClause(symbol, testValue)
 
 def _getFilterClause(params, userInfo):
-    if len(params) > 3 and params[0] == ',' and params[2] == '>':
-        t = map(terms.__getitem__, params[1])
-        subF = _getFilterClause(params[3:], userInfo)
+    if len(params) > 2 and isinstance(params[0], list) and params[1] == '>':
+        t = map(terms.__getitem__, params[0])
+        subF = _getFilterClause(params[2:], userInfo)
         return Instance.objects.filter(value__field__in=t,
                                     value__deleteTransaction__isnull=True,
                                     value__referenceValue__in=userInfo.findFilter(subF))
@@ -110,20 +110,27 @@ def _getFilterClause(params, userInfo):
         return _parse([], ['*'] + params[1:], userInfo)
 
 def _getFieldClause(resultSet, params, userInfo):
-    if params[0] != '?':
-        i = terms[params[0]]
-    else:
-        i = None
     if len(params) == 1:
-        return resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
+        if isinstance(params[0], list):
+            return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]), 
+                                    value__deleteTransaction__isnull=True)
+        elif params[0] == '?':
+            return resultSet #degenerate case
+        else:
+            return resultSet.filter(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
     elif len(params) > 2 and params[1]=='>':
         return resultSet.filter(pk__in=_getFilterClause(params, userInfo))
-    elif len(params) > 3 and params[0] == ',' and params[2] == '>':
-        return resultSet.filter(pk__in=_getFilterClause(params, userInfo))
-    elif len(params) == 3 or (len(params) == 4 and params[2]==','):
+    elif len(params) == 3:
+        i = None if params[0] == '?' else \
+            map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
+            terms[params[0]]
         # Get a Q clause that compares either a single test value or a comma-separated list of test values
-        # according to the specified symbol.
-        stringText = _getQClause(i, symbol=params[1], testValue=params[-1])
+        # according to the specified symbol to a list of fields or a single field.
+        if isinstance(i, map):
+            stringText = reduce(lambda q1, q2: q1 | q2, \
+                                map(lambda field: _getQClause(field, params[1], params[2]), i))
+        else:
+            stringText = _getQClause(i, symbol=params[1], testValue=params[2])
     
         # Need to add distinct after the tests to prevent duplicates if there is
         # more than one value of the instance that matches.
@@ -143,13 +150,14 @@ def _refineResults(resultSet, path, userInfo):
     elif path[0] == '[':
         params = path[1]
         if params[0] == 'ancestor' and params[1] == ':':
+            # Filter by items that contain an ancestor with the specified field clause. 
             if params[2] != '?':
                 i = terms[params[2]]
             else:
                 i = None
             if len(params) == 3:
                 f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
-            elif len(params) == 5 or (len(params) == 6 and params[4]==','):
+            elif len(params) == 5:
                 # Get a Q clause that compares either a single test value or a comma-separated list of test values
                 # according to the specified symbol.
                 stringText = _getAncestorClause(symbol=params[3], testValue=params[-1])
@@ -178,60 +186,55 @@ def _refineResults(resultSet, path, userInfo):
     elif path[0] == '::':
         function = path[1]
         if function == 'reference':
-            if path[2] == '(':
-                if path[3][0] == ',':
-                    t = map(terms.__getitem__, path[3][1])
+            if isinstance(path[2], list):
+                if len(path[2]) != 1:
+                    t = map(terms.__getitem__, path[2])
                     f = Instance.objects.filter(typeID__in=t,
                                                 value__deleteTransaction__isnull=True,
                                                 value__referenceValue__in=userInfo.findFilter(resultSet))
                 else:
-                    t = terms[path[3][0]]
+                    t = terms[path[2][0]]
                     f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
                                                 Q(value__referenceValue__in=userInfo.findFilter(resultSet)),
                                                 typeID=t,
                                                )
-                return f, path[4:]
+                return f, path[3:]
             else:
                 raise ValueError("malformed reference (missing parentheses)")
         elif function == 'not':
-            if path[2] == '(':
-                f = resultSet.exclude(pk__in=_parse([], path[3], userInfo))
-                return f, path[4:]
+            if isinstance(path[2], list):
+                f = resultSet.exclude(pk__in=_parse([], path[2], userInfo))
+                return f, path[3:]
             else:
                 raise ValueError("malformed not (missing parentheses)")
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif path[0] == '|':
         return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
-    elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
-        if path[2] == '(':
-            if path[3][0] == '[':
-                params = path[3][1]
+    elif len(path) >= 3 and path[0] == ':' and path[1] == 'not':
+        if isinstance(path[2], list):
+            if path[2][0] == '[':
+                params = path[2][1]
                 i = terms[params[0]]
                 if len(params) == 1:
                     f = resultSet.exclude(value__in=Value.objects.filter(field=i,deleteTransaction__isnull=True))
-                    return f, path[4:]
+                    return f, path[3:]
                 elif len(params) == 3:
                     symbol = params[1]
                     testValue = params[2]
                     f = _excludeByField(resultSet, i, symbol, testValue)
-                    return f, path[4:]
+                    return f, path[3:]
                 else:
                     raise ValueError("unrecognized contents within ':not([...])'")
             else:
                 raise ValueError("unimplemented 'not' expression")
         else:
             raise ValueError("malformed 'not' expression")
-    elif path[0] == '(': # Path[1] is a list of type IDs.
-        if path[1][0] == ',':
-            t = map(terms.__getitem__, path[1][1])
-            f = Instance.objects.filter(typeID__in=t,
-                                        deleteTransaction__isnull=True)
-        else:
-            t = terms[path[1][0]]
-            f = Instance.objects.filter(typeID=t,
-                                        deleteTransaction__isnull=True)
-        return f, path[2:]
+    elif isinstance(path[0], list): # Path[0] is a list of type IDs.
+        t = map(terms.__getitem__, path[0])
+        f = Instance.objects.filter(typeID__in=t,
+                                    deleteTransaction__isnull=True)
+        return f, path[1:]
     else:   # Path[0] is a typeID.
         i = terms[path[0]]
         f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)

@@ -84,6 +84,19 @@ print ('# Tests selectAll on a type name. ')
 print ('##################################')
 print (json.loads(api.selectAll(None, {'path': '_user'}).content.decode('utf-8')))
 
+pathparser.selectAllObjects('Site[_name^=Jackson]')
+pathparser.selectAllObjects('"Service Domain"[?]')
+pathparser.selectAllObjects('_user[?*=ichael]')
+pathparser.selectAllObjects('_user[(_name,_email)*=ichael]')
+pathparser.selectAllObjects('_user["_first name"]')
+pathparser.selectAllObjects('_user[("_first name","_last name")]')
+pathparser.selectAllObjects('("Service Domain","Service")[_name=Education]')
+pathparser.selectAllObjects('Site[_name^=Jackson][Offerings>Offering>Service[_name="Grade 8"]]')
+pathparser.selectAllObjects('_user[_email^=michael]::reference(Experience,Enrollment)')
+pathparser.selectAllObjects('_user[_email^=michael]::reference(Experience)::reference(Experiences)::reference(Session)::reference(Sessions)::reference(Offering)')
+pathparser.selectAllObjects('_user::not(_user[_email^=michael])' +
+	'::not(_user[_email^=michael]::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user))')
+								
 # Test api.createInstance by creating an Organization with a name.
 # Test api.updateValues by editing the name of an Organization.
 # Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
