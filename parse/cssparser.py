@@ -26,7 +26,7 @@ class parser:
             elif c == '"':
                 if len(lastString) > 0:
                     a += [lastString]
-                    lastString=""	# Clear lastString so that it becomes just a double quote
+                    lastString=""   # Clear lastString so that it becomes just a double quote
                 inQuote = True
                 lastString += c
             elif c in ' ,':
@@ -66,8 +66,10 @@ class parser:
                     lastString = ""
                 lastString += c
         
-        if inQuote and parser._countTrailingQuotes(lastString[1:]) % 2 == 0:
-            lastString += '"'
+        if inQuote:
+            if parser._countTrailingQuotes(lastString[1:]) % 2 == 0:
+                lastString += '"'
+            lastString = lastString[1:-1].replace('""', '"')
             
         a += [lastString]
         
