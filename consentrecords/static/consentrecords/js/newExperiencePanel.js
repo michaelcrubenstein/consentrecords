@@ -435,6 +435,15 @@ var MultiTypeSearchView = (function() {
 				}
 			}
 	
+	MultiTypeSearchView.prototype.canConstrain = function(searchText, constrainText)
+	{
+		/* Force searching if the searchText length is 0. */
+		if (searchText.length === 0)
+			return false;
+			
+		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
+	}
+	
 	MultiTypeSearchView.prototype.restartSearchTimeout = function(val)
 	{
 		this.typeName = this.initialTypeName;
@@ -2125,15 +2134,6 @@ var NewExperienceSearchView = (function() {
 		buttons.remove();
 		this.organizationButton.style("display", "none");
 		this.customServiceButton.style("display", "none");
-	}
-	
-	NewExperienceSearchView.prototype.canConstrain = function(searchText, constrainText)
-	{
-		/* Force searching if the searchText length is 0. */
-		if (searchText.length === 0)
-			return false;
-			
-		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
 	}
 	
 	NewExperienceSearchView.prototype.searchPath = function(val)
