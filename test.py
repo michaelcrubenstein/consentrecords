@@ -85,6 +85,7 @@ print ('##################################')
 print (json.loads(api.selectAll(None, {'path': '_user'}).content.decode('utf-8')))
 
 pathparser.selectAllObjects('Site[_name^=Jackson]')
+pathparser.selectAllObjects('"Service Domain"')
 pathparser.selectAllObjects('"Service Domain"[?]')
 pathparser.selectAllObjects('_user[?*=ichael]')
 pathparser.selectAllObjects('_user[(_name,_email)*=ichael]')
@@ -96,6 +97,10 @@ pathparser.selectAllObjects('_user[_email^=michael]::reference(Experience,Enroll
 pathparser.selectAllObjects('_user[_email^=michael]::reference(Experience)::reference(Experiences)::reference(Session)::reference(Sessions)::reference(Offering)')
 pathparser.selectAllObjects('_user::not(_user[_email^=michael])' +
 	'::not(_user[_email^=michael]::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user))')
+pathparser.selectAllObjects('Offerings>Offering[_name="Grade 9"]')
+pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[_name="Grade 9"]]')
+pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[Service=%s]]'%\
+    pathparser.selectAllObjects('Service[_name="Grade 9"]')[0].id)
 								
 # Test api.createInstance by creating an Organization with a name.
 # Test api.updateValues by editing the name of an Organization.
