@@ -2132,6 +2132,14 @@ var SearchView = (function () {
 		}
 	}
 	
+	SearchView.prototype.restartSearchTimeout = function(val)
+	{
+		if (this.searchPath(val) === "")
+			this.cancelSearch();
+		else
+			this.startSearchTimeout(val);
+	}
+	
 	SearchView.prototype.textChanged = function()
 	{
 		this.clearSearchTimeout();
@@ -2149,10 +2157,8 @@ var SearchView = (function () {
 			else
 				this.startSearchTimeout(val);
 		}
-		else if (this.searchPath(val) === "")
-			this.cancelSearch();
-		else
-			this.startSearchTimeout(val);
+		else 
+			this.restartSearchTimeout(val);
 	}
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)

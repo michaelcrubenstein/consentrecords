@@ -435,6 +435,12 @@ var MultiTypeSearchView = (function() {
 				}
 			}
 	
+	MultiTypeSearchView.prototype.restartSearchTimeout = function(val)
+	{
+		this.typeName = this.initialTypeName;
+		SearchView.prototype.restartSearchTimeout.call(this, val);
+	}
+				
 	MultiTypeSearchView.prototype.startSearchTimeout = function(val)
 	{
 		this.typeName = this.initialTypeName;
