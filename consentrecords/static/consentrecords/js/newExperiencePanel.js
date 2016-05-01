@@ -409,9 +409,12 @@ var MultiTypeSearchView = (function() {
 	
 					orgDiv = leftText.append('div').classed("organization", true);		
 					orgDiv.append('div').text(d.getValue("Organization").getDescription());
-					orgDiv.append('div')
-						.classed('address-line', true)
-						.text(d.getValue("Site").getDescription());
+					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+					{
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getValue("Site").getDescription());
+					}
 				}
 				else if (d.typeName === "Site")
 				{
