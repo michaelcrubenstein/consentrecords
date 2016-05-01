@@ -664,6 +664,7 @@ var NewExperienceServicePanel = (function () {
 
 var FromServiceSearchView = (function() {
 	FromServiceSearchView.prototype = new MultiTypeSearchView();
+	FromServiceSearchView.prototype.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
 	
 	FromServiceSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -782,20 +783,11 @@ var FromServiceSearchView = (function() {
 	{
 		var path;
 		
-		if (this.experience.organizationName != null &&
-			this.experience.organization == null)
+		if (val.length == 0)
 		{
-			return "";	/* Can't look up offerings for a custom organization name. */
-		}
-		else if (val.length == 0)
-		{
-			path = this.experience.organization 
-							? "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID())
-							: "Offering";
+			path = "Offering";
 			if (this.experience.services[0].pickedObject)
 				return "{0}[Service={1}]".format(path, this.experience.services[0].pickedObject.getValueID());
-			else if (this.experience.organization)
-				return path;
 			else
 				return "Service";
 		}
@@ -809,17 +801,16 @@ var FromServiceSearchView = (function() {
 			}
 			else if (this.typeName === "Offering from Site")
 			{
-				if (!(this.experience.organization == null && this.experience.organizationName == null))
-					throw "Invalid case: organization is specified";
 				path = 'Site[_name{0}"{1}"]>Offerings>Offering';
 				if (this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
 			else if (this.typeName === "Site from Organization")
 			{
-				if (!(this.experience.organization == null && this.experience.organizationName == null))
-					throw "Invalid case: organization is specified";
 				path = 'Organization[_name{0}"{1}"]>Sites>Site';
+				if (this.experience.services[0].pickedObject)
+					path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getValueID());
+			}
 			else if (this.typeName === "Site")
 			{
 				path = 'Site[_name{0}"{1}"]';
@@ -828,6 +819,8 @@ var FromServiceSearchView = (function() {
 			{
 				path = 'Organization[_name{0}"{1}"]';
 			}
+			else
+				throw "Unrecognized typeName: {0}".format(this.typeName);
 			
 
 			var symbol = val.length < 3 ? "^=" : "*=";
@@ -838,7 +831,9 @@ var FromServiceSearchView = (function() {
 	
 	FromServiceSearchView.prototype.noResultString = function()
 	{
-		if (this.typeName === "Organization" || !this._foundCompareText || this._foundCompareText.length == 0)
+		if (this.typeName === this.typeNames[this.typeNames.length-1] || 
+			!this._foundCompareText || 
+			this._foundCompareText.length == 0)
 			return "No Results";
 		else
 			return "";
@@ -854,7 +849,7 @@ var FromServiceSearchView = (function() {
 	FromServiceSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d) { return d !== "Organization"; });
+		buttons = buttons.filter(function(d, i) { return i > 0; });
 			
 		buttons.remove();
 		this.organizationButton.style("display", "none");
@@ -872,7 +867,7 @@ var FromServiceSearchView = (function() {
 	function FromServiceSearchView(sitePanel, experience)
 	{
 		var _this = this;
-		this.initialTypeName = "Offering";
+		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		
 		MultiTypeSearchView.call(this, sitePanel, experience, "Organization, Offering", function(buttons) { _this.appendDescriptions(buttons); });
@@ -906,16 +901,11 @@ var FromServiceSearchView = (function() {
 				var searchText = _this._foundCompareText;
 				if (searchText && searchText.length > 0)
 				{
-					if (_this.typeName === "Offering")
-						_this.typeName = "Site";
-					else if (_this.typeName === "Site")
-						_this.typeName = "Organization";
-					else if (_this.typeName === "Organization")
-						_this.typeName = "Site from Organization";
-					else if (_this.typeName === "Site from Organization")
-						_this.typeName = "Offering from Site";
-					else
+					var i = _this.typeNames.indexOf(_this.typeName);
+					if (i === _this.typeNames.length - 1)
 						return;
+					else
+						_this.typeName = _this.typeNames[i+1];
 					
 					this.path = _this.searchPath(searchText);
 					this.fields = _this.fields();
@@ -1077,6 +1067,7 @@ var FromOfferingParentSearchView = (function() {
 
 var FromOrganizationSearchView = (function() {
 	FromOrganizationSearchView.prototype = new FromOfferingParentSearchView();
+	FromOrganizationSearchView.prototype.typeNames = ["Offering from Site", "Offering", "Site", "Service"];
 	
 	FromOrganizationSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1181,17 +1172,20 @@ var FromOrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Site")
 				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
-			else if (this.typeName === "Offering")
+			else if (this.typeName === "Offering from Site")
 			{
 				path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
 				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
-				{
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-				}
 				return path;
 			}
 			else if (this.typeName === "Service")
-				return "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID())
+			{
+				if (this.experience.services.length == 0)
+					return "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID())
+				else
+					return "";
+			}
 			else
 				return "Service";
 		}
@@ -1200,17 +1194,27 @@ var FromOrganizationSearchView = (function() {
 			if (this.typeName === "Offering")
 			{
 				path = 'Offering[_name{0}"{1}"]';
-				if (this.experience.organization)
-					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+				path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+			}
+			else if (this.typeName === "Offering from Site")
+			{
+				path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+				path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
+					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
 			else if (this.typeName === "Site")
 			{
-				path = 'Site[_name{0}"{1}"]>Offerings>Offering';
-				if (this.experience.organization)
-					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+				path = 'Site[_name{0}"{1}"]';
+				path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
 			}
 			else if (this.typeName === "Service")
 			{
+				if (this.experience.services.length > 0)
+					return "";
+
 				path = 'Service[_name{0}"{1}"]';
 			}
 			
@@ -1238,7 +1242,7 @@ var FromOrganizationSearchView = (function() {
 			throw "experience organization name is not specified";
 			
 		var _this = this;
-		this.initialTypeName = "Site";
+		this.initialTypeName = experience.organization ? "Offering from Site" : "Service";
 		this.typeName = this.initialTypeName;
 		
 		var placeHolder = experience.organization ? "Site, Offering" : "Offering";
@@ -1250,16 +1254,19 @@ var FromOrganizationSearchView = (function() {
 		this.getDataChunker._onDoneSearch = function()
 			{
 				var searchText = _this._foundCompareText;
-				if (experience.organization && searchText && searchText.length > 0)
+				if (experience.organization)
 				{
-					if (_this.typeName === "Site")
+					if (_this.typeName === "Offering from Site")
 					{
-						_this.typeName = "Offering";
+						if (searchText && searchText.length > 0)
+							_this.typeName = "Offering";
+						else
+							_this.typeName = "Site";
 					}
-					else if (_this.typeName === "Offering" && experience.services.length == 0)
-					{
+					else if (_this.typeName === "Offering")
+						_this.typeName = "Site";
+					else if (_this.typeName === "Site")
 						_this.typeName = "Service";
-					}
 					else
 						return;
 					
@@ -1267,19 +1274,6 @@ var FromOrganizationSearchView = (function() {
 					this.fields = _this.fields();
 					this.checkStart(searchText);
 				}
-				else if (experience.organization && experience.services.length > 0)
-				{
-					if (_this.typeName === "Site")
-					{
-						_this.typeName = "Offering";
-					}
-					else
-						return;
-					
-					this.path = _this.searchPath(searchText);
-					this.fields = _this.fields();
-					this.checkStart(searchText);
-				}			
 			};
 	}
 	
@@ -1406,16 +1400,13 @@ var FromSiteSearchView = (function() {
 	{
 		var path;
 		
-		if (this.experience.siteName != null &&
-			this.experience.site == null)
+		if (this.experience.site == null)
 		{
 			return "Service";	/* Can't look up offerings for a custom site name. */
 		}
 		else if (val.length == 0)
 		{
-			if (!this.experience.site)
-				return "Service";
-			else if (this.typeName === "Offering")
+			if (this.typeName === "Offering")
 				return "#{0}>Offerings>Offering".format(this.experience.site.getValueID())
 			else if (this.typeName === "Service")
 				return "#{0}>Offerings>Offering>Service".format(this.experience.site.getValueID())
