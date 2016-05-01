@@ -5,7 +5,7 @@ import datetime
 import numbers
 import uuid
 
-from consentrecords.models import Instance, Value, Terms, TermNames, NameList, AccessRecord, UserInfo
+from consentrecords.models import *
 from consentrecords import pathparser
 
 def _addElementData(parent, data, fieldData, nameLists, transactionState):
@@ -21,14 +21,14 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
         if not isinstance(d, dict):
             raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
             
-        if fieldData["dataTypeID"] == Terms.objectEnum.id:
+        if fieldData["dataTypeID"] == terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
                 if "instanceID" in d:
                     # This is a reference to an object.
                     values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
-                    elif d["instanceID"] == parent.id and field == Terms.primaryAdministrator:
+                    elif d["instanceID"] == parent.id and field == terms.primaryAdministrator:
                         # This is a special case of setting up the primary administrator. This
                         # is necessary when creating a user so that it can be bootstrapped.
                         parent.addReferenceValue(field, parent, i, transactionState)
@@ -59,7 +59,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     if parent and not parentField:
         raise ValueError("parent is specified but parentField is not")
     if parent and parentField:
-        configuration = parent.typeID.getSubInstance(Terms.configuration)
+        configuration = parent.typeID.getSubInstance(terms.configuration)
         fieldObject = configuration.getFieldByReferenceValue(parentField.id)
         fieldData = fieldObject.getFieldData()
         if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
@@ -70,7 +70,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # If the item being created is a user, then we have to set the primary administrator
     # of the user to itself so that the user has a primary administrator. Otherwise, we can't
     # add values to the user.
-    if typeInstance==Terms.user:
+    if typeInstance==terms.user:
         if TermNames.primaryAdministrator not in propertyList:
             propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
     elif parent:
@@ -105,12 +105,12 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
             for key in propertyList:
                 data = propertyList[key]
                 if not configuration:
-                    configuration = typeInstance.getSubInstance(Terms.configuration)
-                if Terms.isUUID(key):
+                    configuration = typeInstance.getSubInstance(terms.configuration)
+                if terms.isUUID(key):
                     # The key may be the key of a field object or the key of a term that is 
                     # the name of a field object in the configuration.
                     fieldObject = Instance.objects.get(pk=key)
-                    if fieldObject.typeID != Terms.field:
+                    if fieldObject.typeID != terms.field:
                         fieldObject = configuration.getFieldByReferenceValue(key)
                     elif fieldObject.parent != configuration:
                         raise RuntimeError("the specified field is not contained within the configuration of this type")

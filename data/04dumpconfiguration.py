@@ -10,7 +10,7 @@ import csv
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo, AccessRecord, NameList
+from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
@@ -48,7 +48,6 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         userInfo = UserInfo(user)
         fieldDataDictionary = {}
         

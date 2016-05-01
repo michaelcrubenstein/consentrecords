@@ -1,15 +1,16 @@
 from django.db import models as dbmodels
 from django.db.models import F, Q, Prefetch
+from django.contrib.auth.models import AnonymousUser
 
 import html.parser
 import logging
 from functools import reduce
 
 from parse.cssparser import parser as cssparser
-from consentrecords.models import Instance, Value, Terms
+from consentrecords.models import Instance, Value, Terms, terms, UserInfo
 
 def _getValueFilter(field, symbol, testValue):
-    if Terms.isUUID(testValue):
+    if terms.isUUID(testValue):
         if symbol == '=':
             vFilter = Value.objects.filter(referenceValue_id=testValue)
         else:
@@ -37,7 +38,7 @@ def _getValueFilter(field, symbol, testValue):
             vFilter = Value.objects.filter(Q(stringValue__gte=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__gte=testValue))
         else:
-            raise ValueError("unrecognized symbol: %s" & symbol)
+            raise ValueError("unrecognized symbol: %s"%symbol)
     vFilter = vFilter.filter(deleteTransaction__isnull=True)
     return vFilter.filter(field=field) if field else vFilter
 
@@ -91,6 +92,54 @@ def _getAncestorClause(symbol, testValue):
     else:
         return _getSimpleAncestorClause(symbol, testValue)
 
+def _getReferenceValues(params, userInfo):
+    if len(params) > 2 and params[1] == '>':
+        subF = _filterByReferenceValues(Instance.objects, params[2:], userInfo)
+    else:
+        # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
+        subF = _parse([], ['*'] + params[1:], userInfo)
+    return userInfo.findFilter(subF)
+    
+def _filterByReferenceValues(resultSet, params, userInfo):
+    if isinstance(params[0], list):
+        return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]),
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=_getReferenceValues(params, userInfo))
+    else:
+        return resultSet.filter(value__field=terms[params[0]],
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=_getReferenceValues(params, userInfo))
+
+def _filter(resultSet, params, userInfo):
+    if len(params) == 1:
+        if isinstance(params[0], list):
+            return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]), 
+                                    value__deleteTransaction__isnull=True)
+        elif params[0] == '?':
+            return resultSet #degenerate case
+        else:
+            return resultSet.filter(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
+    elif len(params) > 2 and params[1]=='>':
+        return _filterByReferenceValues(resultSet, params, userInfo)
+    elif len(params) == 3:
+        i = None if params[0] == '?' else \
+            map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
+            terms[params[0]]
+        # Get a Q clause that compares either a single test value or a comma-separated list of test values
+        # according to the specified symbol to a list of fields or a single field.
+        if isinstance(i, map):
+            stringText = reduce(lambda q1, q2: q1 | q2, \
+                                map(lambda field: _getQClause(field, params[1], params[2]), i))
+        else:
+            stringText = _getQClause(i, symbol=params[1], testValue=params[2])
+    
+        # Need to add distinct after the tests to prevent duplicates if there is
+        # more than one value of the instance that matches.
+        return resultSet.filter(stringText).distinct()
+    else:
+        print(params)
+        raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+
 def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
 #     logger.error("_refineResults(%s, %s)" % (str(resultSet), path))
@@ -102,13 +151,14 @@ def _refineResults(resultSet, path, userInfo):
     elif path[0] == '[':
         params = path[1]
         if params[0] == 'ancestor' and params[1] == ':':
+            # Filter by items that contain an ancestor with the specified field clause. 
             if params[2] != '?':
-                i = Terms.getInstance(params[2])
+                i = terms[params[2]]
             else:
                 i = None
             if len(params) == 3:
                 f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
-            elif len(params) == 5 or (len(params) == 6 and params[4]==','):
+            elif len(params) == 5:
                 # Get a Q clause that compares either a single test value or a comma-separated list of test values
                 # according to the specified symbol.
                 stringText = _getAncestorClause(symbol=params[3], testValue=params[-1])
@@ -125,25 +175,9 @@ def _refineResults(resultSet, path, userInfo):
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
         else:
-            if params[0] != '?':
-                i = Terms.getInstance(params[0])
-            else:
-                i = None
-            if len(params) == 1:
-                f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
-            elif len(params) == 3 or (len(params) == 4 and params[2]==','):
-                # Get a Q clause that compares either a single test value or a comma-separated list of test values
-                # according to the specified symbol.
-                stringText = _getQClause(i, symbol=params[1], testValue=params[-1])
-            
-                # Need to add distinct after the tests to prevent duplicates if there is
-                # more than one value of the instance that matches.
-                f = resultSet.filter(stringText).distinct()
-            else:
-                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
-            return f, path[2:]
+            return _filter(resultSet, params, userInfo), path[2:]
     elif path[0] == '>':
-        i = Terms.getInstance(path[1])
+        i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
                                     referenceValues__field=i,
                                     referenceValues__deleteTransaction__isnull=True)\
@@ -152,62 +186,57 @@ def _refineResults(resultSet, path, userInfo):
     elif path[0] == '::':
         function = path[1]
         if function == 'reference':
-            if path[2] == '(':
-                if path[3][0] == ',':
-                    t = map(Terms.getInstance, path[3][1])
+            if isinstance(path[2], list):
+                if len(path[2]) != 1:
+                    t = map(terms.__getitem__, path[2])
                     f = Instance.objects.filter(typeID__in=t,
                                                 value__deleteTransaction__isnull=True,
                                                 value__referenceValue__in=userInfo.findFilter(resultSet))
                 else:
-                    t = Terms.getInstance(path[3][0])
+                    t = terms[path[2][0]]
                     f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
                                                 Q(value__referenceValue__in=userInfo.findFilter(resultSet)),
                                                 typeID=t,
                                                )
-                return f, path[4:]
+                return f, path[3:]
             else:
                 raise ValueError("malformed reference (missing parentheses)")
         elif function == 'not':
-            if path[2] == '(':
-                f = resultSet.exclude(pk__in=_parse([], path[3], userInfo))
-                return f, path[4:]
+            if isinstance(path[2], list):
+                f = resultSet.exclude(pk__in=_parse([], path[2], userInfo))
+                return f, path[3:]
             else:
                 raise ValueError("malformed not (missing parentheses)")
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif path[0] == '|':
         return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
-    elif len(path) >= 4 and path[0] == ':' and path[1] == 'not':
-        if path[2] == '(':
-            if path[3][0] == '[':
-                params = path[3][1]
-                i = Terms.getInstance(params[0])
+    elif len(path) >= 3 and path[0] == ':' and path[1] == 'not':
+        if isinstance(path[2], list):
+            if path[2][0] == '[':
+                params = path[2][1]
+                i = terms[params[0]]
                 if len(params) == 1:
                     f = resultSet.exclude(value__in=Value.objects.filter(field=i,deleteTransaction__isnull=True))
-                    return f, path[4:]
+                    return f, path[3:]
                 elif len(params) == 3:
                     symbol = params[1]
                     testValue = params[2]
                     f = _excludeByField(resultSet, i, symbol, testValue)
-                    return f, path[4:]
+                    return f, path[3:]
                 else:
                     raise ValueError("unrecognized contents within ':not([...])'")
             else:
                 raise ValueError("unimplemented 'not' expression")
         else:
             raise ValueError("malformed 'not' expression")
-    elif path[0] == '(': # Path[1] is a list of type IDs.
-        if path[1][0] == ',':
-            t = map(Terms.getInstance, path[1][1])
-            f = Instance.objects.filter(typeID__in=t,
-                                        deleteTransaction__isnull=True)
-        else:
-            t = Terms.getInstance(path[1][0])
-            f = Instance.objects.filter(typeID=t,
-                                        deleteTransaction__isnull=True)
-        return f, path[2:]
+    elif isinstance(path[0], list): # Path[0] is a list of type IDs.
+        t = map(terms.__getitem__, path[0])
+        f = Instance.objects.filter(typeID__in=t,
+                                    deleteTransaction__isnull=True)
+        return f, path[1:]
     else:   # Path[0] is a typeID.
-        i = Terms.getInstance(path[0])
+        i = terms[path[0]]
         f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
         return f, path[1:]
 
@@ -233,6 +262,9 @@ def selectAllObjects(path, startSet=[], userInfo=None, securityFilter=None):
 #     logger = logging.getLogger(__name__)
 #     logger.error("selectAllObjects path: %s" % str(path))
 
+    if not userInfo: userInfo = UserInfo(AnonymousUser())
+    if not securityFilter: securityFilter = userInfo.findFilter
+    
     parsed = _parse(startSet, _tokenize(path), userInfo)
     return securityFilter(parsed).distinct()
 #     logger = logging.getLogger(__name__)

@@ -98,22 +98,23 @@
 		background-color: #F8F8F8;
 	}
 	
-	panel.experience header .title
+	panel.experience .title
 	{
 		width: 100%;
+		color: #333;
 		text-align: left;
 		font-size: 15px;
-		font-weight: bold;
+		font-weight: 500;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
-	panel.experience header .organization {
+	panel.experience .organization {
 	}
-	panel.experience header .organization>label {
+	panel.experience .organization>label {
 		font-weight: normal;
 	}
-	panel.experience header .organization>div {
+	panel.experience .organization>div {
 		margin-left: 0px;
 		color: #444;
 		font-size: smaller;

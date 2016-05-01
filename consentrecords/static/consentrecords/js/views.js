@@ -2117,6 +2117,9 @@ var SearchView = (function () {
 		this._foundCompareText = null;
 	}
 	
+	/* Given a change in the text, see if the new constrainText can use the 
+		results of a previous search
+	 */
 	SearchView.prototype.canConstrain = function(searchText, constrainText)
 	{
 		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
@@ -2130,6 +2133,14 @@ var SearchView = (function () {
 			clearTimeout(this._searchTimeout);
 			this._searchTimeout = null;
 		}
+	}
+	
+	SearchView.prototype.restartSearchTimeout = function(val)
+	{
+		if (this.searchPath(val) === "")
+			this.cancelSearch();
+		else
+			this.startSearchTimeout(val);
 	}
 	
 	SearchView.prototype.textChanged = function()
@@ -2149,10 +2160,8 @@ var SearchView = (function () {
 			else
 				this.startSearchTimeout(val);
 		}
-		else if (this.searchPath(val) === "")
-			this.cancelSearch();
-		else
-			this.startSearchTimeout(val);
+		else 
+			this.restartSearchTimeout(val);
 	}
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)

@@ -29,7 +29,7 @@ def readIndentedLine(f):
     
 def parseProperty(s):
     a = s.split(":", 1)
-    t = Terms.getNamedInstance(a[0].strip())
+    t = terms[a[0].strip()]
     v = a[1].strip() if len(a) > 1 else None
     return t, v
 
@@ -93,7 +93,7 @@ def getReferenceValue(parent, field, text, fd, nameLists, userInfo):
         
     # append a qualifier for the specified text to the pickObjectPath
     type = Instance.objects.get(pk=fd['ofKindID'])
-    verbs = list(filter(lambda verb: verb[2] == Terms.textEnum, nameLists.getNameUUIDs(type)))
+    verbs = list(filter(lambda verb: verb[2] == terms.textEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
     pickObjectPath += '[' + field.getDescription() + '="' + text + '"]'
@@ -116,7 +116,6 @@ if __name__ == "__main__":
     try:
         with transaction.atomic():
             transactionState = TransactionState(user, timezoneoffset)
-            Terms.initialize(transactionState)
             userInfo = UserInfo(user)
         
             nameList = NameList()
@@ -126,7 +125,7 @@ if __name__ == "__main__":
             c = 1
             with open(sys.argv[1], 'r') as f:
                 typeName = f.readline().strip()
-                type = Terms.getNamedInstance(typeName)
+                type = terms[typeName]
                 s, indent = readIndentedLine(f); c += 1
                 field, text = parseProperty(s)
                 print(type.getDescription(), field.getDescription(), text)
@@ -138,7 +137,7 @@ if __name__ == "__main__":
                         
                     print('%s  %s%s' % (c, ' ' * indent, s))
                     if len(items) == 0:
-                        type = Terms.getNamedInstance(s)
+                        type = terms[s]
                         s, indent = readIndentedLine(f); c += 1
                         field, text = parseProperty(s)
                         print(type.getDescription(), field.getDescription(), text)

@@ -27,7 +27,7 @@ from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
 def home(request):
-    LogRecord.emit(request.user, 'consentrecords/home', '')
+    LogRecord.emit(request.user, 'pathAdvisor/home', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -53,7 +53,7 @@ def home(request):
     return HttpResponse(template.render(context))
 
 def orgHome(request):
-    LogRecord.emit(request.user, 'consentrecords/orgHome', '')
+    LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
     
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
@@ -79,7 +79,7 @@ def orgHome(request):
     return HttpResponse(template.render(context))
 
 def find(request, serviceid, offeringid):
-    LogRecord.emit(request.user, 'consentrecords/find', '')
+    LogRecord.emit(request.user, 'pathAdvisor/find', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -106,12 +106,12 @@ def find(request, serviceid, offeringid):
     return HttpResponse(template.render(context))
 
 def list(request):
-    LogRecord.emit(request.user, 'consentrecords/list', '')
+    LogRecord.emit(request.user, 'pathAdvisor/list', '')
     
     try:
         # The type of the root object.
         rootType = request.GET.get('type', None)
-        root = rootType and Terms.getNamedInstance(rootType);
+        root = rootType and terms[rootType];
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
@@ -141,7 +141,7 @@ def list(request):
         return HttpResponse(str(e))
 
 def showPathway(request, email):
-    LogRecord.emit(request.user, 'consentrecords/showPathway', email)
+    LogRecord.emit(request.user, 'pathAdvisor/showPathway', email)
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -169,7 +169,7 @@ def showPathway(request, email):
     return HttpResponse(template.render(context))
 
 def addExperience(request, experienceID):
-    LogRecord.emit(request.user, 'consentrecords/addExperience', experienceID)
+    LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -204,7 +204,7 @@ class api:
             elif not instanceType:
                 return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
             else:
-                ofKindObject = Terms.getNamedInstance(instanceType)
+                ofKindObject = terms[instanceType]
         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
@@ -215,11 +215,11 @@ class api:
             if elementUUID:
                 field = Instance.objects.get(pk=elementUUID)
             elif elementName:
-                field = Terms.getNamedInstance(elementName)
+                field = terms[elementName]
             elif instanceUUID:
                 field = Instance.objects.get(pk=instanceUUID)
             elif instanceName: 
-                field = Terms.getNamedInstance(instanceName)
+                field = terms[instanceName]
             
             # An optional set of properties associated with the object.
             propertyString = data.get('properties', None)
@@ -334,10 +334,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value added to the container.
             valueUUID = data.get('valueUUID', None)
@@ -429,10 +429,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value with the container.
             value = data.get('value', None)
@@ -460,11 +460,11 @@ class api:
             if typeUUID:
                 kindObject = Instance.objects.get(pk=typeUUID)
             elif typeName:
-                kindObject = Terms.getNamedInstance(typeName)
+                kindObject = terms[typeName]
             else:
                 return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
-            configurationObject = kindObject.getSubInstance(Terms.configuration)
+            configurationObject = kindObject.getSubInstance(terms.configuration)
         
             if not configurationObject:
                 return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
@@ -524,13 +524,13 @@ class api:
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
-                saObject = Terms.administerPrivilegeEnum
+                saObject = terms.administerPrivilegeEnum
             elif userInfo.authUser.is_staff:
-                saObject = Terms.writePrivilegeEnum
+                saObject = terms.writePrivilegeEnum
             else:
                 saObject = None
             if saObject:
-                fieldData = Terms.systemAccess.getParentReferenceFieldData()
+                fieldData = terms.systemAccess.getParentReferenceFieldData()
                 parentData = [{'id': None, 
                               'instanceID' : saObject.id,
                               'description': saObject.getDescription(language),
@@ -658,16 +658,16 @@ class api:
                 a = ["Service Domain"]
             results = []
             for termName in a:
-                term = Terms.getNamedInstance(termName)
+                term = terms[termName]
                 uuObjects = Instance.objects.filter(typeID=term)
                 
                 if len(testValue) >= 3:
-                    vFilter = Value.objects.filter(field=Terms.name, 
+                    vFilter = Value.objects.filter(field=terms.name, 
                                                    stringValue__icontains=testValue,referenceValue__isnull=True,
                                                    deleteTransaction__isnull=True)
                     uuObjects = uuObjects.filter(value__in=vFilter)
                 elif len(testValue) > 0:
-                    vFilter = Value.objects.filter(field=Terms.name, 
+                    vFilter = Value.objects.filter(field=terms.name, 
                                                    stringValue__istartswith=testValue,referenceValue__isnull=True,
                                                    deleteTransaction__isnull=True)
                     uuObjects = uuObjects.filter(value__in=vFilter)
@@ -728,10 +728,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
                 
             language = data.get('language', None)
 
@@ -979,7 +979,7 @@ def updateUsername(request):
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user)
                 transactionState = TransactionState(request.user, timezoneOffset)
-                v = userInstance.getSubValue(Terms.email)
+                v = userInstance.getSubValue(terms.email)
                 v.updateValue(request.user.email, transactionState)
                 nameLists = NameList()
                 userInstance.cacheDescription(nameLists);

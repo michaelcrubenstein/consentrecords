@@ -46,7 +46,7 @@ var RequestFollowSearchView = (function () {
 	/* Overrides SearchView.searchPath */
 	RequestFollowSearchView.prototype.searchPath = function(val)
 	{
-		var s = '_user::not(#{0})::not(#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user))'.format(this.user.getValueID());
+		var s = '_user::not(#{0})::not(#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user))'.format(this.user.getValueID());
 		s += '::not(_user["_access request"={0}])'.format(this.user.getValueID());
 		if (val.length == 0)
 			return s;

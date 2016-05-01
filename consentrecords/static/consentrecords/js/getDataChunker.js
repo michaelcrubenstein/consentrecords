@@ -128,6 +128,9 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.checkStart = function(startVal)
 	{
+		if (!this.path)
+			return;
+			
 		this._setScrollCheck(startVal);
 		this.showLoadingMessage();
 		this._onScroll(startVal);

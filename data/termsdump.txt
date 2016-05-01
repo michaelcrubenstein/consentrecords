@@ -306,6 +306,8 @@ _term
             _data type: _number
             _max capacity: _unique value
 _term
+    _name: Offering Label
+_term
     _name: Offerings
     _configuration
         _name: Boston
@@ -363,6 +365,8 @@ _term
             _of kind: _group
             _pick object path: parent>_group
     _default access: _custom
+_term
+    _name: Organization Label
 _term
     _name: Period
     _configuration
@@ -500,6 +504,8 @@ _term
             _data type: _url
             _max capacity: _unique value
 _term
+    _name: Site Label
+_term
     _name: Sites
     _configuration
         _name: Boston
@@ -520,6 +526,102 @@ _term
         _name: MA
     enumerator
         _name: NH
+    enumerator
+        _name: AL
+    enumerator
+        _name: AK
+    enumerator
+        _name: AZ
+    enumerator
+        _name: AR
+    enumerator
+        _name: CA
+    enumerator
+        _name: CO
+    enumerator
+        _name: CT
+    enumerator
+        _name: DE
+    enumerator
+        _name: FL
+    enumerator
+        _name: GA
+    enumerator
+        _name: HI
+    enumerator
+        _name: ID
+    enumerator
+        _name: IL
+    enumerator
+        _name: IN
+    enumerator
+        _name: IA
+    enumerator
+        _name: KS
+    enumerator
+        _name: KY
+    enumerator
+        _name: LA
+    enumerator
+        _name: ME
+    enumerator
+        _name: MD
+    enumerator
+        _name: MI
+    enumerator
+        _name: MN
+    enumerator
+        _name: MS
+    enumerator
+        _name: MO
+    enumerator
+        _name: MT
+    enumerator
+        _name: NE
+    enumerator
+        _name: NV
+    enumerator
+        _name: NJ
+    enumerator
+        _name: NM
+    enumerator
+        _name: NY
+    enumerator
+        _name: NC
+    enumerator
+        _name: ND
+    enumerator
+        _name: OH
+    enumerator
+        _name: OK
+    enumerator
+        _name: OR
+    enumerator
+        _name: PA
+    enumerator
+        _name: RI
+    enumerator
+        _name: SC
+    enumerator
+        _name: SD
+    enumerator
+        _name: TN
+    enumerator
+        _name: TX
+    enumerator
+        _name: UT
+    enumerator
+        _name: VT
+    enumerator
+        _name: VA
+    enumerator
+        _name: WA
+    enumerator
+        _name: WV
+    enumerator
+        _name: WI
+    enumerator
+        _name: WY
 _term
     _name: Street
 _term

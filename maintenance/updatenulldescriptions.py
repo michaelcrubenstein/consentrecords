@@ -29,7 +29,6 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         
         # Uncomment the following line to recalculate them all.
         # Description.objects.all().delete()

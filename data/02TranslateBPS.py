@@ -12,7 +12,7 @@ from django.contrib.auth import authenticate
 
 from functools import reduce
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo, AccessRecord, NameList
+from consentrecords.models import TransactionState, Instance, Value, UserInfo, AccessRecord, NameList
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
