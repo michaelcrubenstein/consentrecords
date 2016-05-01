@@ -164,17 +164,17 @@ def addUniqueChild(parent, field, typeID, propertyList, nameList, transactionSta
         item, newValue = create(typeID, parent, field, -1, propertyList, nameList, transactionState)
         return item
 
-def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, transactionState):
-    children = parent.getChildrenByName(field, nameField, name)
+def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode, nameList, transactionState):
+    children = parent.getChildrenByName(field, nameField, text)
     if len(children):
         return children[0].referenceValue
     else:
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
         if fieldData['dataType'] == '_translation':
-            propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
+            propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
-            propertyList = {nameField.id: [{'text': name}]}
+            propertyList = {nameField.id: [{'text': text}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 

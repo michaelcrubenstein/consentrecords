@@ -850,7 +850,7 @@ class Instance(dbmodels.Model):
         else:
             return self.addValue(field, {'text': stringValue}, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
+    def getOrCreateTranslationValue(self, field, text, languageCode, transactionState):
         children = self.value_set.filter(field=field,
                                            stringValue=text,
                                            languageCode=languageCode,
@@ -864,7 +864,7 @@ class Instance(dbmodels.Model):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
-        if len(children):
+        if children.count():
             return children[0]
         else:
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
