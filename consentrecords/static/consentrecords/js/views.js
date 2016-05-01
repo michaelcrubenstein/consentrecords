@@ -2117,6 +2117,9 @@ var SearchView = (function () {
 		this._foundCompareText = null;
 	}
 	
+	/* Given a change in the text, see if the new constrainText can use the 
+		results of a previous search
+	 */
 	SearchView.prototype.canConstrain = function(searchText, constrainText)
 	{
 		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
