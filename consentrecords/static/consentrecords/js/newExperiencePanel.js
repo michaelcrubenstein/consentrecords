@@ -1418,8 +1418,7 @@ var FromSiteSearchView = (function() {
 			if (this.typeName === "Offering")
 			{
 				path = 'Offering[_name{0}"{1}"]';
-				if (this.experience.organization)
-					path = "#{0}>Offerings>".format(this.experience.site.getValueID()) + path;
+				path = "#{0}>Offerings>".format(this.experience.site.getValueID()) + path;
 			}
 			else if (this.typeName === "Service")
 			{
