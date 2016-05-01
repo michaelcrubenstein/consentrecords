@@ -92,24 +92,25 @@ def _getAncestorClause(symbol, testValue):
     else:
         return _getSimpleAncestorClause(symbol, testValue)
 
-def _getFilterClause(params, userInfo):
-    if len(params) > 2 and isinstance(params[0], list) and params[1] == '>':
-        t = map(terms.__getitem__, params[0])
-        subF = _getFilterClause(params[2:], userInfo)
-        return Instance.objects.filter(value__field__in=t,
-                                    value__deleteTransaction__isnull=True,
-                                    value__referenceValue__in=userInfo.findFilter(subF))
-    elif len(params) > 2 and params[1] == '>':
-        t = terms[params[0]]
-        subF = _getFilterClause(params[2:], userInfo)
-        return Instance.objects.filter(value__field=t,
-                                       value__deleteTransaction__isnull=True,
-                                       value__referenceValue__in=userInfo.findFilter(subF))
+def _getReferenceValues(params, userInfo):
+    if len(params) > 2 and params[1] == '>':
+        subF = _filterByReferenceValues(Instance.objects, params[2:], userInfo)
     else:
-        # Replace the field name with a * for any item.
-        return _parse([], ['*'] + params[1:], userInfo)
+        # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
+        subF = _parse([], ['*'] + params[1:], userInfo)
+    return userInfo.findFilter(subF)
+    
+def _filterByReferenceValues(resultSet, params, userInfo):
+    if isinstance(params[0], list):
+        return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]),
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=_getReferenceValues(params, userInfo))
+    else:
+        return resultSet.filter(value__field=terms[params[0]],
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=_getReferenceValues(params, userInfo))
 
-def _getFieldClause(resultSet, params, userInfo):
+def _filter(resultSet, params, userInfo):
     if len(params) == 1:
         if isinstance(params[0], list):
             return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]), 
@@ -119,7 +120,7 @@ def _getFieldClause(resultSet, params, userInfo):
         else:
             return resultSet.filter(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
     elif len(params) > 2 and params[1]=='>':
-        return resultSet.filter(pk__in=_getFilterClause(params, userInfo))
+        return _filterByReferenceValues(resultSet, params, userInfo)
     elif len(params) == 3:
         i = None if params[0] == '?' else \
             map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
@@ -174,8 +175,7 @@ def _refineResults(resultSet, path, userInfo):
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
         else:
-            f = _getFieldClause(resultSet, params, userInfo)
-            return f, path[2:]
+            return _filter(resultSet, params, userInfo), path[2:]
     elif path[0] == '>':
         i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
