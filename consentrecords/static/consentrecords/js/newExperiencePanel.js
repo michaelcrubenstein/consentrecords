@@ -240,7 +240,7 @@ var Experience = (function() {
 		if (this.organizationName)
 			orgDiv.append('div').text(this.organizationName);
 			
-		if (this.siteName)
+		if (this.siteName && this.siteName != this.organizationName)
 			orgDiv.append('div')
 				.text(this.siteName);
 	
