@@ -162,7 +162,6 @@ if __name__ == "__main__":
                         type = terms[s]
                         s, indent = readIndentedLine(f); c += 1
                         field, text = parseProperty(s)
-                        print(type.getDescription(), field.getDescription(), text)
                         items = [(0, loadRoot(type, field, text, nameList, transactionState))]
                         s, indent = readIndentedLine(f); c += 1
                     else:
