@@ -1,0 +1,21 @@
+Service Domain
+    _name: en - Career & Finance
+    Color: #983333
+Service Domain
+    _name: en - Education
+    Color: #2828E7
+Service Domain
+    _name: en - Extra Curricular
+    Color: #8328E7
+Service Domain
+    _name: en - Helping Out
+    Color: #D55900
+Service Domain
+    _name: en - Housing
+    Color: #804040
+Service Domain
+    _name: en - Other
+    Color: #0BBB0B
+Service Domain
+    _name: en - Wellness
+    Color: #0694F3
