@@ -1,3 +1,6 @@
+# python3 data/06loadscraped.py data/terms.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/services.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/bps.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeSWSG.txt michaelcrubenstein@gmail.com
@@ -205,10 +208,10 @@ if __name__ == "__main__":
                         else:
                             # This is an additional property.
                             if isTextField(fieldData):
-                                item.getOrCreateTextValue(field, text, transactionState)
+                                item.getOrCreateTextValue(field, {'text': text}, fieldData, transactionState)
                             elif isTranslationField(fieldData):
                                 languageCode, value = parseTranslation(text)
-                                item.getOrCreateTranslationValue(field, value, language, transactionState)
+                                item.getOrCreateTranslationValue(field, value, languageCode, fieldData, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
                                 item.getOrCreateReferenceValue(field, referenceValue, transactionState)
