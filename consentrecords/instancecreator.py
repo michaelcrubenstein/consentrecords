@@ -40,6 +40,8 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
                         raise RuntimeError("Path does not parse to an object: %s" % d["path"])
+                else:
+                    raise RuntimeError("%s field of type %s contains neither instanceID nor path: %s" % (field, parent.typeID, str(d)))
             else:
                 if "cells" in d and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])

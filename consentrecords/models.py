@@ -387,7 +387,9 @@ class Instance(dbmodels.Model):
                     fieldData["ofKindID"] = ofKindReference[1]
                 if terms.pickObjectPath in values:
                     fieldData["pickObjectPath"] = values[terms.pickObjectPath]
-        
+        else:
+            raise ValueError("values does not contain name or dataType: %s" % values)
+            
         return fieldData
     
     # Returns the fieldsData from the database for self, which is a term.
@@ -441,6 +443,8 @@ class Instance(dbmodels.Model):
     
     
     def _getCellData(self, fieldData, values, userInfo, language=None):
+        if not fieldData:
+            raise ValueError("fieldData is null")
         cell = {"field": fieldData}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
@@ -869,6 +873,8 @@ class Instance(dbmodels.Model):
         else:
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
+    # returns the querySet of values within self that are in the specified object field and named using
+    # a string within the referenceValue of the value.
     def getChildrenByName(self, field, nameField, name):
         return self.value_set.filter(deleteTransaction__isnull=True,
                                         field=field,
