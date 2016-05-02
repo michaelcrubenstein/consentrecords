@@ -316,6 +316,7 @@ var Experience = (function() {
 		}
 	}
 	
+		var cell = i.getCell(name);
 	function Experience(dataExperience)
 	{
 		this.services = [];
@@ -576,7 +577,7 @@ var ServiceSearchView = (function() {
 	function ServiceSearchView(experience, sitePanel)
 	{
 		this.initialTypeName = "Service";
-		MultiTypeSearchView.call(this, sitePanel, experience, "Service");
+		MultiTypeSearchView.call(this, sitePanel, experience, "Marker");
 		
 		var _this = this;
 		this.customButton = appendViewButtons(this.appendButtonContainers(["Service"]), 
