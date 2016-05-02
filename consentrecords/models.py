@@ -845,16 +845,22 @@ class Instance(dbmodels.Model):
         return AuthUser.objects.get(pk=id)
 
     # The following functions are used for loading scraped data into the system.
-    def getOrCreateTextValue(self, field, stringValue, transactionState):
+    def getOrCreateTextValue(self, field, value, fieldData, transactionState):
         children = self.value_set.filter(field=field,
-                                           stringValue=stringValue,
+                                           stringValue=value['text'],
                                            deleteTransaction__isnull=True)
         if len(children):
             return children[0]
         else:
-            return self.addValue(field, {'text': stringValue}, self.getNextElementIndex(field), transactionState)
+            if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
+                children = self.value_set.filter(field=field,
+                                                 deleteTransaction__isnull=True)
+                if len(children):
+                    return children[0].updateValue(value, transactionState)
+                    
+            return self.addValue(field, value, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateTranslationValue(self, field, text, languageCode, transactionState):
+    def getOrCreateTranslationValue(self, field, text, languageCode, fieldData, transactionState):
         children = self.value_set.filter(field=field,
                                            stringValue=text,
                                            languageCode=languageCode,
@@ -862,6 +868,12 @@ class Instance(dbmodels.Model):
         if len(children):
             return children[0]
         else:
+            if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
+                children = self.value_set.filter(field=field,
+                                                 deleteTransaction__isnull=True)
+                if len(children):
+                    return children[0].updateValue({'text': text, 'languageCode': languageCode}, transactionState)
+                    
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateReferenceValue(self, field, referenceValue, transactionState):

@@ -407,6 +407,18 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: Service Domain
+        _field
+            _name: Organization Label
+            _data type: _translation
+            _max capacity: _multiple values
+        _field
+            _name: Site Label
+            _data type: _translation
+            _max capacity: _multiple values
+        _field
+            _name: Offering Label
+            _data type: _translation
+            _max capacity: _multiple values
 _term
     _name: Service Domain
     _configuration
@@ -421,6 +433,18 @@ _term
             _name: Color
             _data type: _string
             _max capacity: _unique value
+        _field
+            _name: Organization Label
+            _data type: _translation
+            _max capacity: _multiple values
+        _field
+            _name: Site Label
+            _data type: _translation
+            _max capacity: _multiple values
+        _field
+            _name: Offering Label
+            _data type: _translation
+            _max capacity: _multiple values
 _term
     _name: Session
     _configuration

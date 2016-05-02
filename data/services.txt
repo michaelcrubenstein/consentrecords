@@ -45,38 +45,75 @@ Service
 Service
     _name: en - Grade 1
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 10
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 11
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 12
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 2
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 3
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 4
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 5
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 6
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 7
+    Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 8
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Grade 9
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class, Teacher
 Service
     _name: en - Gym
 Service
@@ -89,6 +126,8 @@ Service
 Service
     _name: en - Job
     Service Domain: Career & Finance
+    Organization Label: en - Employer
+    Offering Label: en - Job Title
 Service
     _name: en - Karate
 Service
@@ -126,6 +165,8 @@ Service
 Service
     _name: en - Summer Job
     Service Domain: Career & Finance
+    Organization Label: en - Employer
+    Offering Label: en - Job Title
 Service
     _name: en - Swimming
 Service

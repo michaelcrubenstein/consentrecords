@@ -153,27 +153,6 @@ var Experience = (function() {
 			this.services.splice(index, 1);
 	}
 	
-	Experience.prototype.hasOrganization = function()
-	{
-		return (this.organizationName && this.organizationName.length);
-	}
-
-	Experience.prototype.hasSite = function()
-	{
-		return (this.siteName && this.siteName.length);
-	}
-
-	Experience.prototype.hasOffering = function()
-	{
-		return (this.offeringName && this.offeringName.length);
-	}
-
-	Experience.prototype.hasServices = function()
-	{
-		return this.offering && this.offering.getCell("Service").data.length > 0 ||
-				this.services.length > 0;
-	}
-
 	Experience.prototype.appendData = function(initialData)
 	{
 		if (this.startDate && this.startDate.length > 0)
@@ -261,7 +240,7 @@ var Experience = (function() {
 		if (this.organizationName)
 			orgDiv.append('div').text(this.organizationName);
 			
-		if (this.siteName)
+		if (this.siteName && this.siteName != this.organizationName)
 			orgDiv.append('div')
 				.text(this.siteName);
 	
@@ -335,6 +314,51 @@ var Experience = (function() {
 			field = {ofKind: "More Experiences", name: "More Experiences"};
 			cr.createInstance(field, this.user.getValueID(), [], successFunction2, syncFailFunction);
 		}
+	}
+	
+	Experience.prototype._getInstanceLabel = function(i, name)
+	{
+		var cell = i.getCell(name);
+		if (cell && cell.data.length > 0)
+		{
+			var labelValue = cell.data[0];
+			if (!labelValue.isEmpty())
+				return labelValue.getDescription();
+		}
+		return null;
+	}
+	
+	Experience.prototype._getLabel = function(fieldName, defaultLabel)
+	{
+		if (this.services.length > 0 && this.services[0].pickedObject)
+		{
+			var label = this._getInstanceLabel(this.services[0].pickedObject, fieldName);
+			if (label)
+				return label;
+		}
+		if (this.serviceDomain)
+		{
+			var label = this._getInstanceLabel(this.serviceDomain, fieldName);
+			if (label)
+				return label;
+		}
+		
+		return defaultLabel;
+	}
+	
+	Experience.prototype.getOrganizationLabel = function()
+	{
+		return this._getLabel("Organization Label", "Organization");
+	}
+	
+	Experience.prototype.getSiteLabel = function()
+	{
+		return this._getLabel("Site Label", "Site");
+	}
+	
+	Experience.prototype.getOfferingLabel = function()
+	{
+		return this._getLabel("Offering Label", "Offering");
 	}
 	
 	function Experience(dataExperience)
@@ -597,7 +621,7 @@ var ServiceSearchView = (function() {
 	function ServiceSearchView(experience, sitePanel)
 	{
 		this.initialTypeName = "Service";
-		MultiTypeSearchView.call(this, sitePanel, experience, "Service");
+		MultiTypeSearchView.call(this, sitePanel, experience, "Marker");
 		
 		var _this = this;
 		this.customButton = appendViewButtons(this.appendButtonContainers(["Service"]), 
@@ -870,7 +894,11 @@ var FromServiceSearchView = (function() {
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, "Organization, Offering", function(buttons) { _this.appendDescriptions(buttons); });
+		var placeHolder = "{0}, {1}, {2}".format(experience.getOrganizationLabel(), 
+											     experience.getSiteLabel(), 
+											     experience.getOfferingLabel());
+		
+		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButton = appendViewButtons(sections, 
@@ -1245,7 +1273,8 @@ var FromOrganizationSearchView = (function() {
 		this.initialTypeName = experience.organization ? "Offering from Site" : "Service";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = experience.organization ? "Site, Offering" : "Offering";
+		var placeHolder = (experience.organization ? "{0}, {1}" : "{1}").format(experience.getSiteLabel(), 
+											experience.getOfferingLabel());
 		if (experience.services.length == 0)
 			placeHolder += ", Marker";
 		
@@ -1452,7 +1481,7 @@ var FromSiteSearchView = (function() {
 		this.initialTypeName = "Offering";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = "Offering";
+		var placeHolder = experience.getOfferingLabel();
 		if (experience.services.length == 0)
 			placeHolder += ", Marker";
 		
