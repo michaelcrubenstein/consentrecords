@@ -14,6 +14,7 @@ import getpass
 import traceback
 import sys
 import csv
+import re
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -33,7 +34,9 @@ def parseProperty(s):
     v = a[1].strip() if len(a) > 1 else None
     return t, v
 
-def loadRoot(type, field, text, nameList, transactionState):
+def loadRoot(type, field, value, nameList, transactionState):
+    languageCode, text = parseTranslation(value)
+    
     objs = Instance.objects.filter(deleteTransaction__isnull=True,
                             typeID=type,
                             value__deleteTransaction__isnull=True,
@@ -52,7 +55,7 @@ def loadRoot(type, field, text, nameList, transactionState):
             value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
         else:
-            propertyList = {'_name': [{'text': text, 'languageCode': 'en'}]}
+            propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
             root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
             print("+ %s: %s" % (text, root.id))
         
@@ -83,7 +86,15 @@ def isObjectField(fd):
 def isTranslationField(fd):
     return fd['dataType'] == '_translation'
     
-def getReferenceValue(parent, field, text, fd, nameLists, userInfo):
+def parseTranslation(text):
+    m = re.search('^([a-z]{2}) \- (.*)', text)
+    if m:
+        return m.groups(0)
+    else:
+        return 'en', text
+
+    
+def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
     if 'pickObjectPath' in fd:
         pickObjectPath = fd['pickObjectPath'];
         if pickObjectPath.startswith("parent") and pickObjectPath[6] in ">:=<":
@@ -92,17 +103,26 @@ def getReferenceValue(parent, field, text, fd, nameLists, userInfo):
         pickObjectPath = fd['ofKindID']
         
     # append a qualifier for the specified text to the pickObjectPath
-    type = Instance.objects.get(pk=fd['ofKindID'])
+    if 'ofKindID' in fd:
+        type = Instance.objects.get(pk=fd['ofKindID'])
+    else:
+        l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        type = l[0].typeID
+        
     verbs = list(filter(lambda verb: verb[2] == terms.textEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
+    if isTranslationField(fd):
+        languageCode, text = parseTranslation(value)
+    else:
+        text = value
     pickObjectPath += '[' + field.getDescription() + '="' + text + '"]'
     
     l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(l):
         return l[0]
     else:
-        raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), text))
+        raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), value))
     
 if __name__ == "__main__":
     django.setup()
@@ -111,11 +131,13 @@ if __name__ == "__main__":
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
-    user = authenticate(username=username, password=password)
+    user = authenticate(username=username, password=password) 
+    
+    check = '-check' in sys.argv
 
     try:
         with transaction.atomic():
-            transactionState = TransactionState(user, timezoneoffset)
+            transactionState = None if check else TransactionState(user, timezoneoffset)
             userInfo = UserInfo(user)
         
             nameList = NameList()
@@ -140,7 +162,6 @@ if __name__ == "__main__":
                         type = terms[s]
                         s, indent = readIndentedLine(f); c += 1
                         field, text = parseProperty(s)
-                        print(type.getDescription(), field.getDescription(), text)
                         items = [(0, loadRoot(type, field, text, nameList, transactionState))]
                         s, indent = readIndentedLine(f); c += 1
                     else:
@@ -160,11 +181,19 @@ if __name__ == "__main__":
                                 s, indent = readIndentedLine(f); c += 1
                             else:
                                 s, indent = readIndentedLine(f); c += 1
-                                nameField, text = parseProperty(s)
-                                if text:
+                                nameField, value = parseProperty(s)
+                                if value:
                                     fieldsData = type.getFieldsData(fieldsDataDictionary, language)
                                     fieldData = findFieldData(fieldsData, nameField)
-                                    child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, text, nameList, transactionState)
+                                    if isObjectField(fieldData):
+                                        referenceValue = getReferenceValue(item, nameField, value, fieldData, nameList, userInfo)
+                                        child = instancecreator.addNamedByReferenceChild(item, field, type, nameField, fieldData, referenceValue, nameList, transactionState)
+                                    else:
+                                        if isTranslationField(fieldData):
+                                            languageCode, textValue = parseTranslation(value)
+                                        else:
+                                            languageCode, textValue = (None, value)
+                                        child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, textValue, languageCode, nameList, transactionState)
                                     s, indent = readIndentedLine(f); c += 1
                                 else:
                                     child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)
@@ -178,7 +207,8 @@ if __name__ == "__main__":
                             if isTextField(fieldData):
                                 item.getOrCreateTextValue(field, text, transactionState)
                             elif isTranslationField(fieldData):
-                                item.getOrCreateTranslationValue(field, text, 'en', transactionState)
+                                languageCode, value = parseTranslation(text)
+                                item.getOrCreateTranslationValue(field, value, language, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
                                 item.getOrCreateReferenceValue(field, referenceValue, transactionState)

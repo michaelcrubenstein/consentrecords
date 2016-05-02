@@ -387,7 +387,9 @@ class Instance(dbmodels.Model):
                     fieldData["ofKindID"] = ofKindReference[1]
                 if terms.pickObjectPath in values:
                     fieldData["pickObjectPath"] = values[terms.pickObjectPath]
-        
+        else:
+            raise ValueError("values does not contain name or dataType: %s" % values)
+            
         return fieldData
     
     # Returns the fieldsData from the database for self, which is a term.
@@ -441,6 +443,8 @@ class Instance(dbmodels.Model):
     
     
     def _getCellData(self, fieldData, values, userInfo, language=None):
+        if not fieldData:
+            raise ValueError("fieldData is null")
         cell = {"field": fieldData}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
@@ -850,7 +854,7 @@ class Instance(dbmodels.Model):
         else:
             return self.addValue(field, {'text': stringValue}, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateTransactionValue(self, field, text, languageCode, transactionState):
+    def getOrCreateTranslationValue(self, field, text, languageCode, transactionState):
         children = self.value_set.filter(field=field,
                                            stringValue=text,
                                            languageCode=languageCode,
@@ -864,17 +868,28 @@ class Instance(dbmodels.Model):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
-        if len(children):
+        if children.count():
             return children[0]
         else:
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
+    # returns the querySet of values within self that are in the specified object field and named using
+    # a string within the referenceValue of the value.
     def getChildrenByName(self, field, nameField, name):
         return self.value_set.filter(deleteTransaction__isnull=True,
                                         field=field,
                                         referenceValue__value__deleteTransaction__isnull=True,
                                         referenceValue__value__field=nameField,
                                         referenceValue__value__stringValue__iexact=name)
+    
+    # returns the querySet of values within self that are in the specified object field and named using
+    # a referenceValue within the referenceValue of the value.
+    def getChildrenByReferenceName(self, field, nameField, name):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue__value__deleteTransaction__isnull=True,
+                                        referenceValue__value__field=nameField,
+                                        referenceValue__value__referenceValue=name)
     def getValueByReference(self, field, r):
         return self.value_set.filter(deleteTransaction__isnull=True,
                                         field=field,

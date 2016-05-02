@@ -40,6 +40,8 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
                         raise RuntimeError("Path does not parse to an object: %s" % d["path"])
+                else:
+                    raise RuntimeError("%s field of type %s contains neither instanceID nor path: %s" % (field, parent.typeID, str(d)))
             else:
                 if "cells" in d and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
@@ -164,17 +166,28 @@ def addUniqueChild(parent, field, typeID, propertyList, nameList, transactionSta
         item, newValue = create(typeID, parent, field, -1, propertyList, nameList, transactionState)
         return item
 
-def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, transactionState):
-    children = parent.getChildrenByName(field, nameField, name)
+def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode, nameList, transactionState):
+    children = parent.getChildrenByName(field, nameField, text)
     if len(children):
         return children[0].referenceValue
     else:
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
         if fieldData['dataType'] == '_translation':
-            propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
+            propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
-            propertyList = {nameField.id: [{'text': name}]}
+            propertyList = {nameField.id: [{'text': text}]}
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        return child
+
+def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenceValue, nameList, transactionState):
+    children = parent.getChildrenByReferenceName(field, nameField, referenceValue)
+    if len(children):
+        return children[0].referenceValue
+    else:
+        if fieldData['nameID'] != nameField.id:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
+        propertyList = {nameField.id: [{'instanceID': referenceValue.id}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 
