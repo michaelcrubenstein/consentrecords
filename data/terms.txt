@@ -356,7 +356,7 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=(_find,_read)]
         _field
             _name: Inquiry Access Group
             _data type: _object
@@ -917,7 +917,7 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_find,_read]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=(_find,_read)]
         _field
             _name: _primary administrator
             _data type: _object
