@@ -103,7 +103,12 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         pickObjectPath = fd['ofKindID']
         
     # append a qualifier for the specified text to the pickObjectPath
-    type = Instance.objects.get(pk=fd['ofKindID'])
+    if 'ofKindID' in fd:
+        type = Instance.objects.get(pk=fd['ofKindID'])
+    else:
+        l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        type = l[0].typeID
+        
     verbs = list(filter(lambda verb: verb[2] == terms.textEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
