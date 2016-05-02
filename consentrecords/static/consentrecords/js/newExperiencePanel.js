@@ -316,7 +316,51 @@ var Experience = (function() {
 		}
 	}
 	
+	Experience.prototype._getInstanceLabel = function(i, name)
+	{
 		var cell = i.getCell(name);
+		if (cell && cell.data.length > 0)
+		{
+			var labelValue = cell.data[0];
+			if (!labelValue.isEmpty())
+				return labelValue.getDescription();
+		}
+		return null;
+	}
+	
+	Experience.prototype._getLabel = function(fieldName, defaultLabel)
+	{
+		if (this.services.length > 0 && this.services[0].pickedObject)
+		{
+			var label = this._getInstanceLabel(this.services[0].pickedObject, fieldName);
+			if (label)
+				return label;
+		}
+		if (this.serviceDomain)
+		{
+			var label = this._getInstanceLabel(this.serviceDomain, fieldName);
+			if (label)
+				return label;
+		}
+		
+		return defaultLabel;
+	}
+	
+	Experience.prototype.getOrganizationLabel = function()
+	{
+		return this._getLabel("Organization Label", "Organization");
+	}
+	
+	Experience.prototype.getSiteLabel = function()
+	{
+		return this._getLabel("Site Label", "Site");
+	}
+	
+	Experience.prototype.getOfferingLabel = function()
+	{
+		return this._getLabel("Offering Label", "Offering");
+	}
+	
 	function Experience(dataExperience)
 	{
 		this.services = [];
@@ -850,7 +894,11 @@ var FromServiceSearchView = (function() {
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		
-		MultiTypeSearchView.call(this, sitePanel, experience, "Organization, Offering", function(buttons) { _this.appendDescriptions(buttons); });
+		var placeHolder = "{0}, {1}, {2}".format(experience.getOrganizationLabel(), 
+											     experience.getSiteLabel(), 
+											     experience.getOfferingLabel());
+		
+		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButton = appendViewButtons(sections, 
@@ -1225,7 +1273,8 @@ var FromOrganizationSearchView = (function() {
 		this.initialTypeName = experience.organization ? "Offering from Site" : "Service";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = experience.organization ? "Site, Offering" : "Offering";
+		var placeHolder = (experience.organization ? "{0}, {1}" : "{1}").format(experience.getSiteLabel(), 
+											experience.getOfferingLabel());
 		if (experience.services.length == 0)
 			placeHolder += ", Marker";
 		
@@ -1432,7 +1481,7 @@ var FromSiteSearchView = (function() {
 		this.initialTypeName = "Offering";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = "Offering";
+		var placeHolder = experience.getOfferingLabel();
 		if (experience.services.length == 0)
 			placeHolder += ", Marker";
 		
