@@ -153,27 +153,6 @@ var Experience = (function() {
 			this.services.splice(index, 1);
 	}
 	
-	Experience.prototype.hasOrganization = function()
-	{
-		return (this.organizationName && this.organizationName.length);
-	}
-
-	Experience.prototype.hasSite = function()
-	{
-		return (this.siteName && this.siteName.length);
-	}
-
-	Experience.prototype.hasOffering = function()
-	{
-		return (this.offeringName && this.offeringName.length);
-	}
-
-	Experience.prototype.hasServices = function()
-	{
-		return this.offering && this.offering.getCell("Service").data.length > 0 ||
-				this.services.length > 0;
-	}
-
 	Experience.prototype.appendData = function(initialData)
 	{
 		if (this.startDate && this.startDate.length > 0)
