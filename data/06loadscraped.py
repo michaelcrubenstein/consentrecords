@@ -131,11 +131,13 @@ if __name__ == "__main__":
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
-    user = authenticate(username=username, password=password)
+    user = authenticate(username=username, password=password) 
+    
+    check = '-check' in sys.argv
 
     try:
         with transaction.atomic():
-            transactionState = TransactionState(user, timezoneoffset)
+            transactionState = None if check else TransactionState(user, timezoneoffset)
             userInfo = UserInfo(user)
         
             nameList = NameList()
