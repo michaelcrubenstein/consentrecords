@@ -881,6 +881,15 @@ class Instance(dbmodels.Model):
                                         referenceValue__value__deleteTransaction__isnull=True,
                                         referenceValue__value__field=nameField,
                                         referenceValue__value__stringValue__iexact=name)
+    
+    # returns the querySet of values within self that are in the specified object field and named using
+    # a referenceValue within the referenceValue of the value.
+    def getChildrenByReferenceName(self, field, nameField, name):
+        return self.value_set.filter(deleteTransaction__isnull=True,
+                                        field=field,
+                                        referenceValue__value__deleteTransaction__isnull=True,
+                                        referenceValue__value__field=nameField,
+                                        referenceValue__value__referenceValue=name)
     def getValueByReference(self, field, r):
         return self.value_set.filter(deleteTransaction__isnull=True,
                                         field=field,

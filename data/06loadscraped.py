@@ -179,11 +179,15 @@ if __name__ == "__main__":
                                 if value:
                                     fieldsData = type.getFieldsData(fieldsDataDictionary, language)
                                     fieldData = findFieldData(fieldsData, nameField)
-                                    if isTranslationField(fieldData):
-                                        languageCode, textValue = parseTranslation(value)
+                                    if isObjectField(fieldData):
+                                        referenceValue = getReferenceValue(item, nameField, value, fieldData, nameList, userInfo)
+                                        child = instancecreator.addNamedByReferenceChild(item, field, type, nameField, fieldData, referenceValue, nameList, transactionState)
                                     else:
-                                        languageCode, textValue = (None, value)
-                                    child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, textValue, languageCode, nameList, transactionState)
+                                        if isTranslationField(fieldData):
+                                            languageCode, textValue = parseTranslation(value)
+                                        else:
+                                            languageCode, textValue = (None, value)
+                                        child = instancecreator.addNamedChild(item, field, type, nameField, fieldData, textValue, languageCode, nameList, transactionState)
                                     s, indent = readIndentedLine(f); c += 1
                                 else:
                                     child = instancecreator.addUniqueChild(item, field, type, {}, nameList, transactionState)

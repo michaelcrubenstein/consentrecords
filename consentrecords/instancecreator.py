@@ -180,3 +180,14 @@ def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode,
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 
+def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenceValue, nameList, transactionState):
+    children = parent.getChildrenByReferenceName(field, nameField, referenceValue)
+    if len(children):
+        return children[0].referenceValue
+    else:
+        if fieldData['nameID'] != nameField.id:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
+        propertyList = {nameField.id: [{'instanceID': referenceValue.id}]}
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        return child
+
