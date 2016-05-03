@@ -620,6 +620,77 @@
 					}
 					stateString = "";
 				}
+				else if (stateString.startsWith("addToPathway"))
+				{
+					var handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser, false);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
+						var pathway = pathwayPanel.pathtree;
+						{% if organization %}
+							var organizationName = "{{organization}}";
+						{% else %}
+							var organizationName = null;
+						{% endif %}
+						{% if site %}
+							var siteName = "{{site}}";
+						{% else %}
+							var siteName = null;
+						{% endif %}
+						{% if offering %}
+							var offeringName = "{{offering}}";
+						{% else %}
+							var offeringName = null;
+						{% endif %}
+						{% if service %}
+							var serviceName = {{service}};
+						{% else %}
+							var serviceName = null;
+						{% endif %}
+						if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
+						{
+							crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
+								done: function(offerings)
+								{
+									if (offerings.length > 0)
+									{
+										crp.pushCheckCells(cr.signedinUser, undefined, 
+											function() {
+												var m = cr.signedinUser.getValue("More Experiences");
+												if (offerings[0].typeName == "Offering")
+												{
+													var experience = pathway.createExperience();
+													experience.confirmOffering(offerings[0], pathwayPanel.node(), function(panelNode)
+														{
+															showPanelUp(panelNode);
+														});
+												}
+												else
+													asyncFailFunction("The specified offering does not appear to be an offering.");
+											},
+											function(err)
+											{
+												asyncFailFunction(err);
+											});
+									}
+									else
+									{
+										asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
+									}
+								},
+								fail: asyncFailFunction});
+						}
+					}
+					needsSignin = true;
+				}
 			{% endif %}
 
 			if (cr.signedinUser.getValueID())
