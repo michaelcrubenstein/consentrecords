@@ -1964,28 +1964,39 @@ var Pathtree = (function () {
 		this.years = [];
 	}
 	
-	Pathtree.prototype.startNewExperience = function()
+	Pathtree.prototype.onExperienceAdded = function(eventObject, newData)
+	{
+		var _this = this;
+		crp.pushCheckCells(newData, undefined, 
+			function() {
+				function addExperience() {
+					_this.addMoreExperience(newData);
+					unblockClick();
+				}
+				var offering = newData.getValue("Offering");
+				if (offering && offering.getValueID() && !offering.isDataLoaded)
+					crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+				else
+					addExperience();
+			},
+			syncFailFunction);
+	}
+	
+	Pathtree.prototype.createExperience = function()
 	{
 		var experience = new Experience();
 		var _this = this;
 		experience.user = this.user;
-
 		$(experience).on("experienceAdded.cr", function(eventObject, newData)
 			{
-				crp.pushCheckCells(newData, undefined, 
-					function() {
-						function addExperience() {
-							_this.addMoreExperience(newData);
-							unblockClick();
-						}
-						var offering = newData.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-						else
-							addExperience();
-					},
-					syncFailFunction);
+				_this.onExperienceAdded(eventObject, newData);
 			});
+		return experience;
+	}
+	
+	Pathtree.prototype.startNewExperience = function()
+	{
+		var experience = this.createExperience();
 		
 		var panel = new NewExperiencePanel(experience, this.sitePanel.node());
 	}
