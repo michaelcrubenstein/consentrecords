@@ -124,6 +124,19 @@
 		color: #AAA;
 	}
 	
+	panel.pathway span.badge {
+		background-color: #2C55CC;
+		position: relative;
+		left: -3px;
+		top: -3px;
+		font-weight: normal;
+		padding: 3px 5px;
+	}
+	
+	panel.pathway span.badge:hover {
+		background-color: #2222FF;
+	}
+	
 	panel.confirm {
 		position: absolute;
 		bottom: 0;
