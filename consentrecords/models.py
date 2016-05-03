@@ -300,10 +300,6 @@ class Instance(dbmodels.Model):
         d = self.description
         return d.text if d else "Deleted"
 
-    @property    
-    def _allInstances(self):    # was _getAllInstances()
-        return self.typeInstances.filter(deleteTransaction__isnull=True)
-            
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, userInfo, language=None):
