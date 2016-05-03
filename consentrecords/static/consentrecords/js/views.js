@@ -1793,7 +1793,7 @@ var SitePanel = (function () {
 		var button = itemsDiv.append('li')
 			.append('div');
 			
-		button.append('div')
+		button.append('span')
 			.classed("site-active-text string-value-view", true)
 			.text(text);	
 		return sectionDiv;	

@@ -169,6 +169,17 @@
 		display: none; 
 	}
 	
+	panel.settings span.badge {
+		background-color: #2C55CC;
+		font-weight: normal;
+		margin-left: 3px;
+		padding: 3px 5px;
+	}
+	
+	panel.settings span.badge:hover {
+		background-color: #2222FF;
+	}
+	
 	panel.site-panel > div.dimmer {
 		position: absolute;
 		top: 0px;

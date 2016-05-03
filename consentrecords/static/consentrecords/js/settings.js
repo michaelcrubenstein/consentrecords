@@ -3,7 +3,7 @@ var Settings = (function () {
 
 	function Settings(user, previousPanel) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Settings", "edit settings-panel", revealPanelUp);
+		SitePanel.call(this, previousPanel, null, "Settings", "edit settings", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
 
@@ -28,7 +28,15 @@ var Settings = (function () {
 		
 		if (user.privilege === "_administer")
 		{
-			this.appendActionButton('Sharing', function() {
+			function checkSharingBadge()
+			{
+				var cell = user.getCell("_access request");
+				var badgeCount = (cell && cell.data.length > 0) ? cell.data.length : "";
+
+				sharingButton.selectAll("span.badge").text(badgeCount);
+			}
+			
+			var sharingDiv = this.appendActionButton('Sharing', function() {
 					if (prepareClick('click', 'Sharing'))
 					{
 						showClickFeedback(this);
@@ -37,6 +45,17 @@ var Settings = (function () {
 					}
 				})
 				.classed('first', true);
+			var sharingButton = sharingDiv.select('ol>li>div');
+			sharingButton.append('span')
+				.classed('badge', true);
+			checkSharingBadge();
+			
+			$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSharingBadge);
+			$(sharingButton.node()).on("remove", function()
+			{
+				$(user.getCell("_access request")).off("valueDeleted.cr", checkSharingBadge)
+					.off("valueAdded.cr", checkSharingBadge);
+			});
 				
 			this.appendActionButton('Following', function() {
 					if (prepareClick('click', 'Following'))
