@@ -361,6 +361,25 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Offering");
 	}
 	
+	Experience.prototype.confirmOffering = function(d, previousNode, done)
+	{
+		this.setOffering({instance: d});
+		/* Set the organization, then the site, because setting the organization may
+			also set the site.
+		 */
+		this.setOrganization({instance: d.getValue("Organization")});
+		this.setSite({instance: d.getValue("Site")});
+		
+		var _this = this;
+		var panel = new NewExperienceFinishPanel(previousNode, this,
+			function()
+			{
+				_this.clearOffering();
+				_this.clearOrganization();
+			});
+		done(panel.node());
+	}
+	
 	function Experience(dataExperience)
 	{
 		this.services = [];
@@ -701,21 +720,10 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-					function()
+				this.experience.confirmOffering(d, this.sitePanel.node(), function(panelNode)
 					{
-						_this.experience.clearOffering();
-						_this.experience.clearOrganization();
+						showPanelLeft(panelNode, unblockClick);
 					});
-				showPanelLeft(panel.node(), unblockClick);
-			
-				/* Do not clear the services in case we come back to this item. */
 			}
 		}
 		else if (d.typeName === "Site")
@@ -2097,19 +2105,10 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-					function()
+				this.experience.confirmOffering(d, this.sitePanel.node(), function(panelNode)
 					{
-						_this.experience.clearOffering();
-						_this.experience.clearOrganization();
+						showPanelLeft(panelNode, unblockClick);
 					});
-				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
 		d3.event.preventDefault();
