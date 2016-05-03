@@ -291,7 +291,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=_read,_write,_administer]::reference(_user)'.format(this.user.getValueID());
+		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user)'.format(this.user.getValueID());
 		this._followingChunker.fields = [];
 		
 		$(this.node()).one("revealing.cr", function()

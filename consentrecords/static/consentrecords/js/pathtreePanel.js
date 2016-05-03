@@ -2279,6 +2279,15 @@ var PathtreePanel = (function () {
 	PathtreePanel.prototype = new SitePanel();
 	PathtreePanel.prototype.pathtree = null;
 	
+	PathtreePanel.prototype.userSettingsBadgeCount = function(user)
+	{
+		var cell = user.getCell("_access request");
+		if (cell && cell.data.length > 0)
+			return cell.data.length;
+		else
+			return "";
+	}
+
 	function PathtreePanel(user, previousPanel, canDone) {
 		canDone = canDone !== undefined ? canDone : true;
 		var _this = this;
@@ -2311,6 +2320,9 @@ var PathtreePanel = (function () {
 			.style("display", "none")
 			.append("img")
 			.attr("src", settingsImagePath);
+		settingsButton.append("span")
+			.classed("badge", true)
+			.text(this.userSettingsBadgeCount(user));
 
 		var addExperienceButton = navContainer.appendRightButton()
 			.on("click", function(d) {
@@ -2401,9 +2413,16 @@ var PathtreePanel = (function () {
 			
 		this.pathtree = new Pathtree(this, panel2Div.node());
 		
+		function checkSettingsBadge()
+		{
+			settingsButton.selectAll("span").text(_this.userSettingsBadgeCount(user));
+		}
+				
 		$(this.node()).on("remove", function()
 		{
 			_this.pathtree.clear();
+			$(user.getCell("_access request")).off("valueDeleted.cr", checkSettingsBadge)
+				.off("valueAdded.cr", checkSettingsBadge);
 		});
 		
 		$(this.pathtree).on("userSet.cr", function()
@@ -2412,6 +2431,10 @@ var PathtreePanel = (function () {
 				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 				addExperienceButton.style("display", canAddExperience ? null : "none");
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
+				
+				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);
+				checkSettingsBadge();
+				
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
