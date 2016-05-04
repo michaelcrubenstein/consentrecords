@@ -671,6 +671,8 @@
 						{% else %}
 							var serviceName = null;
 						{% endif %}
+						
+						var experience = pathway.createExperience();
 						if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 						{
 							crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
@@ -682,7 +684,6 @@
 											function() {
 												if (offerings[0].typeName == "Offering")
 												{
-													var experience = pathway.createExperience();
 													experience.createFromOffering(offerings[0], pathwayPanel.node(), function(panelNode)
 														{
 															showPanelUp(panelNode);
@@ -714,7 +715,6 @@
 											function() {
 												if (sites[0].typeName == "Site")
 												{
-													var experience = pathway.createExperience();
 													experience.createFromSite(sites[0], pathwayPanel.node(), function(panelNode)
 														{
 															showPanelUp(panelNode);
@@ -746,7 +746,6 @@
 											function() {
 												if (organizations[0].typeName == "Organization")
 												{
-													var experience = pathway.createExperience();
 													experience.createFromOrganization(organizations[0], pathwayPanel.node(), function(panelNode)
 														{
 															showPanelUp(panelNode);
@@ -766,6 +765,50 @@
 									}
 								},
 								fail: asyncFailFunction});
+						}
+						else if (organizationName)
+						{
+							crp.pushCheckCells(cr.signedinUser, undefined, 
+								function() {
+									var panel;
+									experience.setOrganization({text: organizationName });
+									
+									if (siteName)
+									{
+										experience.setSite({text: siteName });
+										if (offeringName)
+										{
+											var newService = experience.addService({text: offeringName});
+											panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
+												{
+													experience.removeService(newService);
+													experience.clearOrganization();
+													experience.clearSite();
+												});
+										}
+										else
+										{
+											panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
+												{
+													experience.clearOrganization();
+													experience.clearSite();
+												});
+										}
+									}
+									else
+									{
+										panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience,
+											function()
+											{
+												experience.clearOrganization();
+											});
+									}
+									showPanelUp(panel.node());
+								},
+								function(err)
+								{
+									asyncFailFunction(err);
+								});
 						}
 					}
 					needsSignin = true;

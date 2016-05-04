@@ -105,8 +105,10 @@ pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>S
 # urls
 http://127.0.0.1:8000/add/?o=Citizen Schools
 http://127.0.0.1:8000/add/?o=Boston Public Schools&s=Boston Day %26 Evening Academy
-http://127.0.0.1:8000/add/?o=Cambridge Public Schools&s=CambridgePort School&f=Grade 8&m=Grade 8
 http://127.0.0.1:8000/add/?o=Beacon%20Academy&s=Boston&f=Jump%20Year
+http://127.0.0.1:8000/add/?o=Cambridge Public Schools
+http://127.0.0.1:8000/add/?o=Cambridge Public Schools&s=CambridgePort School
+http://127.0.0.1:8000/add/?o=Cambridge Public Schools&s=CambridgePort School&f=Grade 8
 http://127.0.0.1:8000/add/?m=Job
 http://127.0.0.1:8000/add/?m=Catering Training
 								
