@@ -686,7 +686,7 @@ var NewExperienceServicePanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -980,7 +980,7 @@ var NewExperienceFromServicePanel = (function () {
 			{
 				if (prepareClick('click', 'NewExperienceFromServicePanel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1337,7 +1337,7 @@ var NewExperienceFromOrganizationPanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1536,7 +1536,7 @@ var NewExperienceFromSitePanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1893,7 +1893,7 @@ var NewExperienceFinishPanel = (function () {
 			{
 				if (prepareClick('click', 'NewExperienceFinishPanel: Back'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -2070,7 +2070,7 @@ var NewExperienceSearchView = (function() {
 				var service = this.experience.addService({instance: d});
 				var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
 					function() {
-						_this.experience.removeService(service);
+						this.removeService(service);
 					});
 				showPanelLeft(panel.node(), unblockClick);
 			}
@@ -2083,7 +2083,7 @@ var NewExperienceSearchView = (function() {
 				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
 					function()
 					{
-						_this.experience.clearOrganization();
+						this.clearOrganization();
 					});
 				showPanelLeft(panel.node(), unblockClick);
 			}
