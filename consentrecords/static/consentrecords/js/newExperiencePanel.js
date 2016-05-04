@@ -361,21 +361,69 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Offering");
 	}
 	
-	Experience.prototype.confirmOffering = function(d, previousNode, done)
+	Experience.prototype.createFromOrganization = function(d, previousNode, done)
+	{
+		this.setOrganization({instance: d});
+		
+		var panel = new NewExperienceFromOrganizationPanel(previousNode, this,
+			function()
+			{
+				this.clearOrganization();
+			});
+		done(panel.node());
+	}
+	
+	Experience.prototype.createFromSite = function(d, previousNode, done)
+	{
+		/* Call setOrganization, which recognizes this as a set and does the correct thing. */
+		this.setOrganization({instance: d});
+		
+		var panel = new NewExperienceFromSitePanel(previousNode, this,
+			function()
+			{
+				this.clearSite();
+			});
+		done(panel.node());
+	}
+
+	Experience.prototype.createFromOffering = function(d, previousNode, done)
 	{
 		this.setOffering({instance: d});
+		
+		var oldOrganization;
+		var oldSite;
+		
+		if (this.organization)
+			oldOrganization = {instance: this.organization};
+		else if (this.organizationName)
+			oldOrganization = {text: this.organizationName};
+		else
+			oldOrganization = null;
+		if (this.site)
+			oldSite = {instance: this.site};
+		else if (this.siteName)
+			oldSite = {text: this.siteName};
+		else
+			oldSite = null;
+		
 		/* Set the organization, then the site, because setting the organization may
 			also set the site.
 		 */
 		this.setOrganization({instance: d.getValue("Organization")});
 		this.setSite({instance: d.getValue("Site")});
 		
-		var _this = this;
 		var panel = new NewExperienceFinishPanel(previousNode, this,
 			function()
 			{
-				_this.clearOffering();
-				_this.clearOrganization();
+				this.clearOffering();
+				if (oldOrganization)
+					this.setOrganization(oldOrganization);
+				else
+					this.clearOrganization();
+				if (oldSite)
+					this.setSite(oldSite);
+				else
+					this.clearSite();
 			});
 		done(panel.node());
 	}
@@ -720,7 +768,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.confirmOffering(d, this.sitePanel.node(), function(panelNode)
+				this.experience.createFromOffering(d, this.sitePanel.node(), function(panelNode)
 					{
 						showPanelLeft(panelNode, unblockClick);
 					});
@@ -749,16 +797,10 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
-					function()
+				this.experience.createFromOrganization(d, this.sitePanel.node(), function(panelNode)
 					{
-						_this.experience.clearOrganization();
+						showPanelLeft(panelNode, unblockClick);
 					});
-				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
 		else if (d.typeName === "Service")
@@ -2092,20 +2134,17 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
-				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFromSitePanel(this.sitePanel.node(), this.experience,
-					function()
+				this.experience.createFromSite(d, this.sitePanel.node(), function(panelNode)
 					{
-						_this.experience.clearSite();
+						showPanelLeft(panelNode, unblockClick);
 					});
-				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
 		else if (d.typeName === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.confirmOffering(d, this.sitePanel.node(), function(panelNode)
+				this.experience.createFromOffering(d, this.sitePanel.node(), function(panelNode)
 					{
 						showPanelLeft(panelNode, unblockClick);
 					});

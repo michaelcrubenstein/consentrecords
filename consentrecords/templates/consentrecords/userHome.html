@@ -596,13 +596,29 @@
 								pathwayPanel = firstPanel;
 							}
 							var pathway = pathwayPanel.pathtree;
-							cr.getData({path: "#"+experienceID, done: function(experiences)
+							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
 								{
 									if (experiences.length > 0)
 									{
 										crp.pushCheckCells(cr.signedinUser, undefined, 
 											function() {
 												var m = cr.signedinUser.getValue("More Experiences");
+												if (experiences[0].typeName == "Service")
+												{
+													var experience = new Experience();
+													experience.addService({instance: experiences[0]});
+													var panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience, 
+														function() {});
+													showPanelUp(panel.node());
+												}
+												else if (experiences[0].typeName == "Organization")
+												{
+													var experience = new Experience();
+													experience.setOrganization({instance: experiences[0]});
+													var panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience, 
+														function() {});
+													showPanelUp(panel.node());
+												}
 											},
 											function(err)
 											{
@@ -664,11 +680,10 @@
 									{
 										crp.pushCheckCells(cr.signedinUser, undefined, 
 											function() {
-												var m = cr.signedinUser.getValue("More Experiences");
 												if (offerings[0].typeName == "Offering")
 												{
 													var experience = pathway.createExperience();
-													experience.confirmOffering(offerings[0], pathwayPanel.node(), function(panelNode)
+													experience.createFromOffering(offerings[0], pathwayPanel.node(), function(panelNode)
 														{
 															showPanelUp(panelNode);
 														});
@@ -684,6 +699,70 @@
 									else
 									{
 										asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
+									}
+								},
+								fail: asyncFailFunction});
+						}
+						else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
+						{
+							crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
+								done: function(sites)
+								{
+									if (sites.length > 0)
+									{
+										crp.pushCheckCells(cr.signedinUser, undefined, 
+											function() {
+												if (sites[0].typeName == "Site")
+												{
+													var experience = pathway.createExperience();
+													experience.createFromSite(sites[0], pathwayPanel.node(), function(panelNode)
+														{
+															showPanelUp(panelNode);
+														});
+												}
+												else
+													asyncFailFunction("The specified site does not appear to be an site.");
+											},
+											function(err)
+											{
+												asyncFailFunction(err);
+											});
+									}
+									else
+									{
+										asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
+									}
+								},
+								fail: asyncFailFunction});
+						}
+						else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
+						{
+							crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
+								done: function(organizations)
+								{
+									if (organizations.length > 0)
+									{
+										crp.pushCheckCells(cr.signedinUser, undefined, 
+											function() {
+												if (organizations[0].typeName == "Organization")
+												{
+													var experience = pathway.createExperience();
+													experience.createFromOrganization(organizations[0], pathwayPanel.node(), function(panelNode)
+														{
+															showPanelUp(panelNode);
+														});
+												}
+												else
+													asyncFailFunction("The specified organization does not appear to be an organization.");
+											},
+											function(err)
+											{
+												asyncFailFunction(err);
+											});
+									}
+									else
+									{
+										asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
 									}
 								},
 								fail: asyncFailFunction});
