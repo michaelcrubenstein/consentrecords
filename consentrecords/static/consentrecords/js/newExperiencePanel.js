@@ -609,7 +609,7 @@ var ServiceSearchView = (function() {
 			var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
 				function()
 				{
-					_this.experience.removeService(service);
+					this.removeService(service);
 				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
