@@ -2059,7 +2059,7 @@ var NewExperienceSearchView = (function() {
 			{
 				this.experience.serviceDomain = d;
 				var panel = new NewExperienceServicePanel(this.sitePanel.node(), this.experience,
-					function() { _this.experience.servicePanel = null; });
+					function() { this.serviceDomain = null; });
 				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
