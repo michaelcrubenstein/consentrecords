@@ -428,7 +428,7 @@ var Experience = (function() {
 		done(panel.node());
 	}
 	
-	Experience.prototype.createFromService(d, previousNode, done)
+	Experience.prototype.createFromService = function(d, previousNode, done)
 	{
 		var service = this.addService({instance: d});
 		var panel = new NewExperienceFromServicePanel(previousNode, this,
