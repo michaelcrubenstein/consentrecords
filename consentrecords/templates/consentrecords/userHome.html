@@ -640,48 +640,48 @@
 				{
 					var handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-								firstPanel.pathtree.setUser(cr.signedinUser, false);
-								showPanelUp(firstPanel.node());
-							}
-							pathwayPanel = firstPanel;
-						}
-						var pathway = pathwayPanel.pathtree;
-						{% if organization %}
-							var organizationName = "{{organization}}";
-						{% else %}
-							var organizationName = null;
-						{% endif %}
-						{% if site %}
-							var siteName = "{{site}}";
-						{% else %}
-							var siteName = null;
-						{% endif %}
-						{% if offering %}
-							var offeringName = "{{offering}}";
-						{% else %}
-							var offeringName = null;
-						{% endif %}
-						{% if service %}
-							var serviceName = {{service}};
-						{% else %}
-							var serviceName = null;
-						{% endif %}
-						
-						var experience = pathway.createExperience();
-						if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
-						{
-							crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
-								done: function(offerings)
+						crp.pushCheckCells(cr.signedinUser, undefined, 
+							function() {
+								if (!pathwayPanel)
 								{
-									if (offerings.length > 0)
+									if (!firstPanel)
 									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
+										firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+										firstPanel.pathtree.setUser(cr.signedinUser, false);
+										showPanelUp(firstPanel.node());
+									}
+									pathwayPanel = firstPanel;
+								}
+								var pathway = pathwayPanel.pathtree;
+								{% if organization %}
+									var organizationName = "{{organization}}";
+								{% else %}
+									var organizationName = null;
+								{% endif %}
+								{% if site %}
+									var siteName = "{{site}}";
+								{% else %}
+									var siteName = null;
+								{% endif %}
+								{% if offering %}
+									var offeringName = "{{offering}}";
+								{% else %}
+									var offeringName = null;
+								{% endif %}
+								{% if service %}
+									var serviceName = "{{service}}";
+								{% else %}
+									var serviceName = null;
+								{% endif %}
+						
+								var experience = pathway.createExperience();
+								if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
+								{
+									crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
+										done: function(offerings)
+										{
+											if (offerings.length > 0)
+											{
 												if (offerings[0].typeName == "Offering")
 												{
 													experience.createFromOffering(offerings[0], pathwayPanel.node(), function(panelNode)
@@ -691,28 +691,21 @@
 												}
 												else
 													asyncFailFunction("The specified offering does not appear to be an offering.");
-											},
-											function(err)
+											}
+											else
 											{
-												asyncFailFunction(err);
-											});
-									}
-									else
-									{
-										asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
-									}
-								},
-								fail: asyncFailFunction});
-						}
-						else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
-						{
-							crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
-								done: function(sites)
+												asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
+											}
+										},
+										fail: asyncFailFunction});
+								}
+								else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 								{
-									if (sites.length > 0)
-									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
+									crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
+										done: function(sites)
+										{
+											if (sites.length > 0)
+											{
 												if (sites[0].typeName == "Site")
 												{
 													experience.createFromSite(sites[0], pathwayPanel.node(), function(panelNode)
@@ -722,28 +715,21 @@
 												}
 												else
 													asyncFailFunction("The specified site does not appear to be an site.");
-											},
-											function(err)
+											}
+											else
 											{
-												asyncFailFunction(err);
-											});
-									}
-									else
-									{
-										asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
-									}
-								},
-								fail: asyncFailFunction});
-						}
-						else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
-						{
-							crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
-								done: function(organizations)
+												asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
+											}
+										},
+										fail: asyncFailFunction});
+								}
+								else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 								{
-									if (organizations.length > 0)
-									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
+									crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
+										done: function(organizations)
+										{
+											if (organizations.length > 0)
+											{
 												if (organizations[0].typeName == "Organization")
 												{
 													experience.createFromOrganization(organizations[0], pathwayPanel.node(), function(panelNode)
@@ -753,26 +739,19 @@
 												}
 												else
 													asyncFailFunction("The specified organization does not appear to be an organization.");
-											},
-											function(err)
+											}
+											else
 											{
-												asyncFailFunction(err);
-											});
-									}
-									else
-									{
-										asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
-									}
-								},
-								fail: asyncFailFunction});
-						}
-						else if (organizationName)
-						{
-							crp.pushCheckCells(cr.signedinUser, undefined, 
-								function() {
+												asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
+											}
+										},
+										fail: asyncFailFunction});
+								}
+								else if (organizationName)
+								{
 									var panel;
 									experience.setOrganization({text: organizationName });
-									
+							
 									if (siteName)
 									{
 										experience.setSite({text: siteName });
@@ -804,12 +783,33 @@
 											});
 									}
 									showPanelUp(panel.node());
-								},
-								function(err)
+								}
+								else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 								{
-									asyncFailFunction(err);
-								});
-						}
+									crp.getData({path: "#"+serviceName, fields: ["parents", "type"], 
+										done: function(services)
+										{
+											if (services.length > 0)
+											{
+												if (services[0].typeName == "Service")
+												{
+													experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
+														{
+															showPanelUp(panelNode);
+														});
+												}
+												else
+													asyncFailFunction("The specified marker does not appear to be an marker.");
+											}
+											else
+											{
+												asyncFailFunction("The specified marker does not exist or you do not have permission to view it.");
+											}
+										},
+										fail: asyncFailFunction});
+								}
+							},
+							asyncFailFunction);
 					}
 					needsSignin = true;
 				}
