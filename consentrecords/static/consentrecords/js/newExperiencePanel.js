@@ -428,6 +428,16 @@ var Experience = (function() {
 		done(panel.node());
 	}
 	
+	Experience.prototype.createFromService(d, previousNode, done)
+	{
+		var service = this.addService({instance: d});
+		var panel = new NewExperienceFromServicePanel(previousNode, this,
+			function() {
+				this.removeService(service);
+			});
+		done(panel.node());
+	}
+	
 	function Experience(dataExperience)
 	{
 		this.services = [];
@@ -604,14 +614,10 @@ var ServiceSearchView = (function() {
 	ServiceSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'service: ' + d.getDescription()))
 		{
-			var service = this.experience.addService({instance: d});
-			var _this = this;
-			var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
-				function()
+			this.experience.createFromService(d, this.sitePanel.node(), function(panelNode)
 				{
-					this.removeService(service);
+					showPanelLeft(panelNode, unblockClick);
 				});
-			showPanelLeft(panel.node(), unblockClick);
 		}
 		d3.event.preventDefault();
 	}
@@ -1053,14 +1059,13 @@ var FromOfferingParentSearchView = (function() {
 	
 	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
 	{
-		var _this = this;
 		if (this.experience.services.length == 0)
 		{
 			var service = this.experience.addService(r);
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 			function()
 			{
-				_this.experience.removeService(service);
+				this.removeService(service);
 			});
 			showPanelLeft(panel.node(), unblockClick);
 		}
@@ -1070,7 +1075,7 @@ var FromOfferingParentSearchView = (function() {
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 				function()
 				{
-					_this.experience.clearOffering();
+					this.clearOffering();
 				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
@@ -1083,9 +1088,9 @@ var FromOfferingParentSearchView = (function() {
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 				function()
 				{
-					_this.experience.removeService(newService);
-					_this.experience.addService(oldService);
-					_this.experience.clearOffering();
+					this.removeService(newService);
+					this.addService(oldService);
+					this.clearOffering();
 				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
@@ -2109,12 +2114,10 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				var service = this.experience.addService({instance: d});
-				var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
-					function() {
-						this.removeService(service);
+				this.experience.createFromService(d, this.sitePanel.node(), function(panelNode)
+					{
+						showPanelLeft(panelNode, unblockClick);
 					});
-				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
 		else if (d.typeName === 'Organization')
