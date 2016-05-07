@@ -932,13 +932,12 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.getCell = function(name)
 	{
 		if (this.cells)
-			for (var i = 0; i < this.cells.length; ++i)
-			{
-				var cell = this.cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-		return undefined;
+			return this.cells.find(function(cell)
+				{
+					return cell.field.name == name;
+				});
+		else
+			return undefined;
 	}
 
 	ObjectValue.prototype.getDatum = function(name)
