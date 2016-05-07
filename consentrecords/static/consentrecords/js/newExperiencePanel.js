@@ -649,7 +649,7 @@ var ServiceSearchView = (function() {
 	{
 		var path = '#{0}::reference(Service)'.format(this.experience.serviceDomain.getValueID());
 			
-		if (val.length == 0)
+		if (!val)
 			return path;
 		else if (val.length < 3)
 			return '{1}[_name^="{0}"]'.format(val, path);
@@ -868,7 +868,7 @@ var FromServiceSearchView = (function() {
 	{
 		var path;
 		
-		if (val.length == 0)
+		if (!val)
 		{
 			path = "Offering";
 			if (this.experience.services[0].pickedObject)
@@ -1256,7 +1256,7 @@ var FromOrganizationSearchView = (function() {
 			else
 				return "";
 		}
-		else if (val.length == 0)
+		else if (!val)
 		{
 			if (this.typeName === "Site")
 				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
@@ -1493,7 +1493,7 @@ var FromSiteSearchView = (function() {
 		{
 			return "Service";	/* Can't look up offerings for a custom site name. */
 		}
-		else if (val.length == 0)
+		else if (!val)
 		{
 			if (this.typeName === "Offering")
 				return "#{0}>Offerings>Offering".format(this.experience.site.getValueID())
@@ -1673,7 +1673,7 @@ var PickServicePanel = (function () {
 	
 		var textChanged = function(){
 			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
+			if (!val)
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
@@ -2206,7 +2206,7 @@ var NewExperienceSearchView = (function() {
 		return '::NewExperience:'+val;
 // 		var path = this.typeName;
 // 			
-// 		if (val.length == 0)
+// 		if (!val)
 // 			return path;
 // 		else if (val.length < 3)
 // 			return '{1}[_name^="{0}"]'.format(val, path);
