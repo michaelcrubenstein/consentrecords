@@ -102,16 +102,6 @@ pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>S
 pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[Service=%s]]'%\
     pathparser.selectAllObjects('Service[_name="Grade 9"]')[0].id)
     
-# urls
-http://127.0.0.1:8000/add/?o=Citizen Schools
-http://127.0.0.1:8000/add/?o=Boston Public Schools&s=Boston Day %26 Evening Academy
-http://127.0.0.1:8000/add/?o=Beacon%20Academy&s=Boston&f=Jump%20Year
-http://127.0.0.1:8000/add/?o=Cambridge Public Schools
-http://127.0.0.1:8000/add/?o=Cambridge Public Schools&s=CambridgePort School
-http://127.0.0.1:8000/add/?o=Cambridge Public Schools&s=CambridgePort School&f=Grade 8
-http://127.0.0.1:8000/add/?m=Job
-http://127.0.0.1:8000/add/?m=Catering Training
-								
 # Test api.createInstance by creating an Organization with a name.
 # Test api.updateValues by editing the name of an Organization.
 # Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
