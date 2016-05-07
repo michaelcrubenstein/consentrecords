@@ -361,6 +361,95 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Offering");
 	}
 	
+	Experience.prototype.createFromOrganization = function(d, services, previousNode, done)
+	{
+		this.setOrganization({instance: d});
+		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
+		var panel = new NewExperienceFromOrganizationPanel(previousNode, this,
+			function()
+			{
+				this.clearOrganization();
+				m.forEach(function(d) { _this.removeService(m); });
+			});
+		done(panel.node());
+	}
+	
+	Experience.prototype.createFromSite = function(d, services, previousNode, done)
+	{
+		/* Call setOrganization, which recognizes this as a set and does the correct thing. */
+		this.setOrganization({instance: d});
+		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
+		var panel = new NewExperienceFromSitePanel(previousNode, this,
+			function()
+			{
+				this.clearSite();
+				m.forEach(function(d) { _this.removeService(m); });
+			});
+		done(panel.node());
+	}
+
+	Experience.prototype.createFromOffering = function(d, services, previousNode, done)
+	{
+		this.setOffering({instance: d});
+		
+		var oldOrganization;
+		var oldSite;
+		
+		if (this.organization)
+			oldOrganization = {instance: this.organization};
+		else if (this.organizationName)
+			oldOrganization = {text: this.organizationName};
+		else
+			oldOrganization = null;
+		if (this.site)
+			oldSite = {instance: this.site};
+		else if (this.siteName)
+			oldSite = {text: this.siteName};
+		else
+			oldSite = null;
+		
+		/* Set the organization, then the site, because setting the organization may
+			also set the site.
+		 */
+		this.setOrganization({instance: d.getValue("Organization")});
+		this.setSite({instance: d.getValue("Site")});
+		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
+		var panel = new NewExperienceFinishPanel(previousNode, this,
+			function()
+			{
+				this.clearOffering();
+				if (oldOrganization)
+					this.setOrganization(oldOrganization);
+				else
+					this.clearOrganization();
+				if (oldSite)
+					this.setSite(oldSite);
+				else
+					this.clearSite();
+				m.forEach(function(d) { _this.removeService(m); });
+			});
+		done(panel.node());
+	}
+	
+	Experience.prototype.createFromService = function(d, previousNode, done)
+	{
+		var service = this.addService(d);
+		var panel = new NewExperienceFromServicePanel(previousNode, this,
+			function() {
+				this.removeService(service);
+			});
+		done(panel.node());
+	}
+	
 	function Experience(dataExperience)
 	{
 		this.services = [];
@@ -509,6 +598,11 @@ var MultiTypeSearchView = (function() {
 var NewExperienceBasePanel = (function() {
 	NewExperienceBasePanel.prototype = new SitePanel();
 	
+	NewExperienceBasePanel.prototype.showNextStep = function(panelNode)
+		{
+			showPanelLeft(panelNode, unblockClick);
+		}
+	
 	function NewExperienceBasePanel(previousPanelNode, experience, panelClass, showFunction)
 	{
 		if (previousPanelNode)
@@ -537,14 +631,7 @@ var ServiceSearchView = (function() {
 	ServiceSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'service: ' + d.getDescription()))
 		{
-			var service = this.experience.addService({instance: d});
-			var _this = this;
-			var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
-				function()
-				{
-					_this.experience.removeService(service);
-				});
-			showPanelLeft(panel.node(), unblockClick);
+			this.experience.createFromService({instance: d}, this.sitePanel.node(), this.sitePanel.showNextStep);
 		}
 		d3.event.preventDefault();
 	}
@@ -571,7 +658,7 @@ var ServiceSearchView = (function() {
 	{
 		var path = '#{0}::reference(Service)'.format(this.experience.serviceDomain.getValueID());
 			
-		if (val.length == 0)
+		if (!val)
 			return path;
 		else if (val.length < 3)
 			return '{1}[_name^="{0}"]'.format(val, path);
@@ -634,13 +721,7 @@ var ServiceSearchView = (function() {
 			.on("click", function(d, i) {
 				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
-					var service = experience.addService({text: _this.inputText()});
-					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience,
-						function()
-						{
-							experience.removeService(service);
-						});
-					showPanelLeft(panel.node(), unblockClick);
+					this.experience.createFromService({text: _this.inputText()}, this.sitePanel.node(), this.sitePanel.showNextStep);
 				}
 			})
 			.style("display", "none");
@@ -667,7 +748,7 @@ var NewExperienceServicePanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -701,21 +782,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-					function()
-					{
-						_this.experience.clearOffering();
-						_this.experience.clearOrganization();
-					});
-				showPanelLeft(panel.node(), unblockClick);
-			
-				/* Do not clear the services in case we come back to this item. */
+				this.experience.createFromOffering(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === "Site")
@@ -741,16 +808,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
-					function()
-					{
-						_this.experience.clearOrganization();
-					});
-				showPanelLeft(panel.node(), unblockClick);
+				this.experience.createFromOrganization(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === "Service")
@@ -807,7 +865,7 @@ var FromServiceSearchView = (function() {
 	{
 		var path;
 		
-		if (val.length == 0)
+		if (!val)
 		{
 			path = "Offering";
 			if (this.experience.services[0].pickedObject)
@@ -972,7 +1030,7 @@ var NewExperienceFromServicePanel = (function () {
 			{
 				if (prepareClick('click', 'NewExperienceFromServicePanel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1003,39 +1061,27 @@ var FromOfferingParentSearchView = (function() {
 	
 	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
 	{
-		var _this = this;
-		if (this.experience.services.length == 0)
+		if (this.experience.offeringName)
+			throw ("experience.offeringName unexpectedly set.");
+			
+		this.experience.setOffering(r);
+		if (this.experience.services.length == 0 && instance in r)
 		{
 			var service = this.experience.addService(r);
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 			function()
 			{
-				_this.experience.removeService(service);
+				this.removeService(service);
+				this.clearOffering();
 			});
-			showPanelLeft(panel.node(), unblockClick);
-		}
-		else if (this.experience.services[0].pickedObject)
-		{
-			this.experience.setOffering(r);
-			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-				function()
-				{
-					_this.experience.clearOffering();
-				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
 		else
 		{
-			var oldService = this.experience.services[0];
-			this.experience.removeService(oldService);
-			var newService = this.experience.addService(r);
-			this.experience.setOffering({text: oldService.getDescription() });
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 				function()
 				{
-					_this.experience.removeService(newService);
-					_this.experience.addService(oldService);
-					_this.experience.clearOffering();
+					this.clearOffering();
 				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
@@ -1196,7 +1242,7 @@ var FromOrganizationSearchView = (function() {
 			else
 				return "";
 		}
-		else if (val.length == 0)
+		else if (!val)
 		{
 			if (this.typeName === "Site")
 				return "#{0}>Sites>Site".format(this.experience.organization.getValueID())
@@ -1329,7 +1375,7 @@ var NewExperienceFromOrganizationPanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1433,7 +1479,7 @@ var FromSiteSearchView = (function() {
 		{
 			return "Service";	/* Can't look up offerings for a custom site name. */
 		}
-		else if (val.length == 0)
+		else if (!val)
 		{
 			if (this.typeName === "Offering")
 				return "#{0}>Offerings>Offering".format(this.experience.site.getValueID())
@@ -1528,7 +1574,7 @@ var NewExperienceFromSitePanel = (function () {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -1613,7 +1659,7 @@ var PickServicePanel = (function () {
 	
 		var textChanged = function(){
 			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
+			if (!val)
 			{
 				/* Show all of the items. */
 				panel2Div.selectAll("li")
@@ -1885,7 +1931,7 @@ var NewExperienceFinishPanel = (function () {
 			{
 				if (prepareClick('click', 'NewExperienceFinishPanel: Back'))
 				{
-					if (onBack) onBack();
+					if (onBack) onBack.call(experience);
 					_this.hide();
 				}
 				d3.event.preventDefault();
@@ -2051,7 +2097,7 @@ var NewExperienceSearchView = (function() {
 			{
 				this.experience.serviceDomain = d;
 				var panel = new NewExperienceServicePanel(this.sitePanel.node(), this.experience,
-					function() { _this.experience.servicePanel = null; });
+					function() { this.serviceDomain = null; });
 				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
@@ -2059,12 +2105,7 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				var service = this.experience.addService({instance: d});
-				var panel = new NewExperienceFromServicePanel(this.sitePanel.node(), this.experience,
-					function() {
-						_this.experience.removeService(service);
-					});
-				showPanelLeft(panel.node(), unblockClick);
+				this.experience.createFromService({instance: d}, this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === 'Organization')
@@ -2075,7 +2116,7 @@ var NewExperienceSearchView = (function() {
 				var panel = new NewExperienceFromOrganizationPanel(this.sitePanel.node(), this.experience,
 					function()
 					{
-						_this.experience.clearOrganization();
+						this.clearOrganization();
 					});
 				showPanelLeft(panel.node(), unblockClick);
 			}
@@ -2084,32 +2125,14 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
-				this.experience.setOrganization({instance: d});
-				var panel = new NewExperienceFromSitePanel(this.sitePanel.node(), this.experience,
-					function()
-					{
-						_this.experience.clearSite();
-					});
-				showPanelLeft(panel.node(), unblockClick);
+				this.experience.createFromSite(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.setOffering({instance: d});
-				/* Set the organization, then the site, because setting the organization may
-					also set the site.
-				 */
-				this.experience.setOrganization({instance: d.getValue("Organization")});
-				this.experience.setSite({instance: d.getValue("Site")});
-				var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-					function()
-					{
-						_this.experience.clearOffering();
-						_this.experience.clearOrganization();
-					});
-				showPanelLeft(panel.node(), unblockClick);
+				this.experience.createFromOffering(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		d3.event.preventDefault();
@@ -2160,7 +2183,7 @@ var NewExperienceSearchView = (function() {
 		return '::NewExperience:'+val;
 // 		var path = this.typeName;
 // 			
-// 		if (val.length == 0)
+// 		if (!val)
 // 			return path;
 // 		else if (val.length < 3)
 // 			return '{1}[_name^="{0}"]'.format(val, path);

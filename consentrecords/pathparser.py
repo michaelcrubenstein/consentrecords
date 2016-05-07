@@ -14,7 +14,7 @@ def _getValueFilter(field, symbol, testValue):
         if symbol == '=':
             vFilter = Value.objects.filter(referenceValue_id=testValue)
         else:
-            raise ValueError("unrecognized symbol: %s" & symbol)
+            raise ValueError("unrecognized symbol: %s" % symbol)
     else:
         if symbol == '^=':
             vFilter = Value.objects.filter(Q(stringValue__istartswith=testValue,referenceValue__isnull=True)|

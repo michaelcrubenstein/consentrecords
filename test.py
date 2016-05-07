@@ -101,7 +101,7 @@ pathparser.selectAllObjects('Offerings>Offering[_name="Grade 9"]')
 pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[_name="Grade 9"]]')
 pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[Service=%s]]'%\
     pathparser.selectAllObjects('Service[_name="Grade 9"]')[0].id)
-								
+    
 # Test api.createInstance by creating an Organization with a name.
 # Test api.updateValues by editing the name of an Organization.
 # Test api.updateValues by editing an address of a site by editing one Street Address and adding another.

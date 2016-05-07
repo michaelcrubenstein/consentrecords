@@ -192,6 +192,84 @@ def addExperience(request, experienceID):
         
     return HttpResponse(template.render(context))
 
+def _getOrganizationChildren(organization, siteName, offeringName):
+    site = None
+    offering = None
+    if siteName:
+        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
+        site = sites[0].referenceValue if len(sites) else None
+        if site and offeringName:
+            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0].referenceValue if len(offerings) else None
+            
+    return site, offering
+
+def addToPathway(request):
+    LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
+    
+    organizationName = request.GET.get('o', None)
+    siteName = request.GET.get('s', None)
+    offeringName = request.GET.get('f', None)
+    serviceName = request.GET.get('m', None)
+    
+    print(organizationName, siteName, offeringName, serviceName)
+
+    userInfo = UserInfo(request.user)
+    
+    if offeringName and terms.isUUID(offeringName):
+        offering = terms[offeringName]
+    elif siteName and terms.isUUID(siteName):
+        site = terms[siteName]
+        if offeringName:
+            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0] if len(offerings) else None
+    elif organizationName and terms.isUUID(organizationName):
+        organization = terms[organizationName]
+        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+    elif organizationName:
+        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
+        if organization:
+            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+        else:
+            site, offering = None, None
+    
+    if serviceName and terms.isUUID(serviceName):
+        service = terms[serviceName]
+    elif serviceName:
+        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
+    else:
+    	service = None
+        
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if organizationName:
+    	args['organization'] = organization.id if organization else organizationName
+    if siteName:
+    	args['site'] = site.id if site else siteName
+    if offeringName:
+    	args['offering'] = offering.id if offering else offeringName
+    if serviceName:
+        args['service'] = service.id if service else serviceName
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'addToPathway'
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
     def createInstance(user, data):

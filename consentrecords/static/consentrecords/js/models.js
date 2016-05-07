@@ -168,6 +168,8 @@ var CRP = (function() {
 					oldInstance._setCells(i.cells);
 					oldInstance.isDataLoaded = true;
 				}
+				if (!oldInstance.typeName && i.typeName)
+					oldInstance.typeName = i.typeName;
 				return oldInstance;
 			}
 		}

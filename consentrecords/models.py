@@ -300,10 +300,6 @@ class Instance(dbmodels.Model):
         d = self.description
         return d.text if d else "Deleted"
 
-    @property    
-    def _allInstances(self):    # was _getAllInstances()
-        return self.typeInstances.filter(deleteTransaction__isnull=True)
-            
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, userInfo, language=None):
@@ -527,6 +523,14 @@ class Instance(dbmodels.Model):
             for v in self.referenceValues.filter(instance=self.parent):
                 v.markAsDeleted(transactionState) 
                 
+    # Return a filter of all of the instances of this type that exactly match the specified name.
+    def getInstanceByName(self, nameField, name, userInfo):
+        f = userInfo.findFilter(self.typeInstances.filter(deleteTransaction__isnull=True,
+                                         value__deleteTransaction__isnull=True,
+                                         value__field=nameField,
+                                         value__stringValue__iexact=name))
+        return f[0] if len(f) else None
+                                            
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
     def getFieldByName(self, name):
