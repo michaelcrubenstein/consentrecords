@@ -619,10 +619,7 @@ var ServiceSearchView = (function() {
 	ServiceSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'service: ' + d.getDescription()))
 		{
-			this.experience.createFromService(d, this.sitePanel.node(), function(panelNode)
-				{
-					showPanelLeft(panelNode, unblockClick);
-				});
+			this.experience.createFromService({instance: d}, this.sitePanel.node(), this.sitePanel.showNextStep);
 		}
 		d3.event.preventDefault();
 	}
@@ -712,13 +709,7 @@ var ServiceSearchView = (function() {
 			.on("click", function(d, i) {
 				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
-					var service = experience.addService({text: _this.inputText()});
-					var panel = new NewExperienceFromServicePanel(sitePanel.node(), experience,
-						function()
-						{
-							experience.removeService(service);
-						});
-					showPanelLeft(panel.node(), unblockClick);
+					this.experience.createFromService({text: _this.inputText()}, this.sitePanel.node(), this.sitePanel.showNextStep);
 				}
 			})
 			.style("display", "none");
