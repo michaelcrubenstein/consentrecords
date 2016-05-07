@@ -361,32 +361,40 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Offering");
 	}
 	
-	Experience.prototype.createFromOrganization = function(d, previousNode, done)
+	Experience.prototype.createFromOrganization = function(d, services, previousNode, done)
 	{
 		this.setOrganization({instance: d});
 		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
 		var panel = new NewExperienceFromOrganizationPanel(previousNode, this,
 			function()
 			{
 				this.clearOrganization();
+				m.forEach(function(d) { _this.removeService(m); });
 			});
 		done(panel.node());
 	}
 	
-	Experience.prototype.createFromSite = function(d, previousNode, done)
+	Experience.prototype.createFromSite = function(d, services, previousNode, done)
 	{
 		/* Call setOrganization, which recognizes this as a set and does the correct thing. */
 		this.setOrganization({instance: d});
 		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
 		var panel = new NewExperienceFromSitePanel(previousNode, this,
 			function()
 			{
 				this.clearSite();
+				m.forEach(function(d) { _this.removeService(m); });
 			});
 		done(panel.node());
 	}
 
-	Experience.prototype.createFromOffering = function(d, previousNode, done)
+	Experience.prototype.createFromOffering = function(d, services, previousNode, done)
 	{
 		this.setOffering({instance: d});
 		
@@ -412,6 +420,9 @@ var Experience = (function() {
 		this.setOrganization({instance: d.getValue("Organization")});
 		this.setSite({instance: d.getValue("Site")});
 		
+		var _this = this;
+		m = services.map(function(serviceD) { return _this.addService(serviceD); });
+			
 		var panel = new NewExperienceFinishPanel(previousNode, this,
 			function()
 			{
@@ -424,6 +435,7 @@ var Experience = (function() {
 					this.setSite(oldSite);
 				else
 					this.clearSite();
+				m.forEach(function(d) { _this.removeService(m); });
 			});
 		done(panel.node());
 	}
@@ -770,10 +782,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.createFromOffering(d, this.sitePanel.node(), function(panelNode)
-					{
-						showPanelLeft(panelNode, unblockClick);
-					});
+				this.experience.createFromOffering(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === "Site")
@@ -799,10 +808,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
-				this.experience.createFromOrganization(d, this.sitePanel.node(), function(panelNode)
-					{
-						showPanelLeft(panelNode, unblockClick);
-					});
+				this.experience.createFromOrganization(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === "Service")
@@ -2099,10 +2105,7 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				this.experience.createFromService(d, this.sitePanel.node(), function(panelNode)
-					{
-						showPanelLeft(panelNode, unblockClick);
-					});
+				this.experience.createFromService({instance: d}, this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === 'Organization')
@@ -2122,20 +2125,14 @@ var NewExperienceSearchView = (function() {
 		{
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
-				this.experience.createFromSite(d, this.sitePanel.node(), function(panelNode)
-					{
-						showPanelLeft(panelNode, unblockClick);
-					});
+				this.experience.createFromSite(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		else if (d.typeName === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
-				this.experience.createFromOffering(d, this.sitePanel.node(), function(panelNode)
-					{
-						showPanelLeft(panelNode, unblockClick);
-					});
+				this.experience.createFromOffering(d, [], this.sitePanel.node(), this.sitePanel.showNextStep);
 			}
 		}
 		d3.event.preventDefault();

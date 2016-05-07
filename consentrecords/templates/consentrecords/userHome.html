@@ -402,6 +402,176 @@
 			}
 		}
 		
+		function addToPathway(pathwayPanel)
+		{
+			var pathway = pathwayPanel.pathtree;
+			{% if organization %}var organizationName = "{{organization}}";
+			{% else %}var organizationName = null;
+			{% endif %}
+			{% if site %}var siteName = "{{site}}";
+			{% else %}var siteName = null;
+			{% endif %}
+			{% if offering %}var offeringName = "{{offering}}";
+			{% else %}var offeringName = null;
+			{% endif %}
+			{% if service %}var serviceName = "{{service}}";
+			{% else %}var serviceName = null;
+			{% endif %}
+	
+			var experience = pathway.createExperience();
+			var done = function(services)
+			{
+				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
+				{
+					crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
+						done: function(offerings)
+						{
+							if (offerings.length > 0)
+							{
+								if (offerings[0].typeName == "Offering")
+								{
+									experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
+										{
+											showPanelUp(panelNode);
+										});
+								}
+								else
+									asyncFailFunction("The specified offering does not appear to be an offering.");
+							}
+							else
+							{
+								asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
+							}
+						},
+						fail: asyncFailFunction});
+				}
+				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
+				{
+					crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
+						done: function(sites)
+						{
+							if (sites.length > 0)
+							{
+								if (sites[0].typeName == "Site")
+								{
+									experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
+										{
+											showPanelUp(panelNode);
+										});
+								}
+								else
+									asyncFailFunction("The specified site does not appear to be an site.");
+							}
+							else
+							{
+								asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
+							}
+						},
+						fail: asyncFailFunction});
+				}
+				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
+				{
+					crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
+						done: function(organizations)
+						{
+							if (organizations.length > 0)
+							{
+								if (organizations[0].typeName == "Organization")
+								{
+									experience.createFromOrganization(organizations[0], services, pathwayPanel.node(), function(panelNode)
+										{
+											showPanelUp(panelNode);
+										});
+								}
+								else
+									asyncFailFunction("The specified organization does not appear to be an organization.");
+							}
+							else
+							{
+								asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
+							}
+						},
+						fail: asyncFailFunction});
+				}
+				else if (organizationName)
+				{
+					var panel;
+					var m = services.map(function(serviceD) { return experience.addService(serviceD); });
+					
+					experience.setOrganization({text: organizationName });
+		
+					if (siteName)
+					{
+						experience.setSite({text: siteName });
+						if (offeringName)
+						{
+							experience.setOffering({text: offeringName});
+							panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
+								{
+									m.forEach(function(sd) { experience.removeService(service); })
+									experience.clearOffering(newService);
+									experience.clearOrganization();
+									experience.clearSite();
+								});
+						}
+						else
+						{
+							panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
+								{
+									experience.clearOrganization();
+									experience.clearSite();
+								});
+						}
+					}
+					else
+					{
+						panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience,
+							function()
+							{
+								experience.clearOrganization();
+							});
+					}
+					showPanelUp(panel.node());
+				}
+				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				{
+					experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
+						{
+							showPanelUp(panelNode);
+						});
+				}
+				else if (serviceName)
+				{
+					var panel;
+					var service = experience.addService({text: serviceName });
+					panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience,
+						function()
+						{
+							experience.clearService();
+						});
+					showPanelUp(panel.node());
+				}
+			}
+			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+			{
+				crp.getData({path: "#"+serviceName, fields: ["parents", "type"], 
+					done: function(services)
+					{
+						if (services.length == 0)
+							asyncFailFunction("The specified marker does not exist or you do not have permission to view it.");
+						else if (services[0].typeName != "Service")
+							asyncFailFunction("The specified marker does not appear to be an marker.");
+						else
+							done([{instance: services[0]}]);
+					},
+					fail: asyncFailFunction});
+			}
+			else if (serviceName)
+				done([{text: serviceName}]);
+			else
+				done([]);
+		}
+		
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
@@ -652,162 +822,7 @@
 									}
 									pathwayPanel = firstPanel;
 								}
-								var pathway = pathwayPanel.pathtree;
-								{% if organization %}
-									var organizationName = "{{organization}}";
-								{% else %}
-									var organizationName = null;
-								{% endif %}
-								{% if site %}
-									var siteName = "{{site}}";
-								{% else %}
-									var siteName = null;
-								{% endif %}
-								{% if offering %}
-									var offeringName = "{{offering}}";
-								{% else %}
-									var offeringName = null;
-								{% endif %}
-								{% if service %}
-									var serviceName = "{{service}}";
-								{% else %}
-									var serviceName = null;
-								{% endif %}
-						
-								var experience = pathway.createExperience();
-								if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
-								{
-									crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
-										done: function(offerings)
-										{
-											if (offerings.length > 0)
-											{
-												if (offerings[0].typeName == "Offering")
-												{
-													experience.createFromOffering(offerings[0], pathwayPanel.node(), function(panelNode)
-														{
-															showPanelUp(panelNode);
-														});
-												}
-												else
-													asyncFailFunction("The specified offering does not appear to be an offering.");
-											}
-											else
-											{
-												asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
-											}
-										},
-										fail: asyncFailFunction});
-								}
-								else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
-								{
-									crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
-										done: function(sites)
-										{
-											if (sites.length > 0)
-											{
-												if (sites[0].typeName == "Site")
-												{
-													experience.createFromSite(sites[0], pathwayPanel.node(), function(panelNode)
-														{
-															showPanelUp(panelNode);
-														});
-												}
-												else
-													asyncFailFunction("The specified site does not appear to be an site.");
-											}
-											else
-											{
-												asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
-											}
-										},
-										fail: asyncFailFunction});
-								}
-								else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
-								{
-									crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
-										done: function(organizations)
-										{
-											if (organizations.length > 0)
-											{
-												if (organizations[0].typeName == "Organization")
-												{
-													experience.createFromOrganization(organizations[0], pathwayPanel.node(), function(panelNode)
-														{
-															showPanelUp(panelNode);
-														});
-												}
-												else
-													asyncFailFunction("The specified organization does not appear to be an organization.");
-											}
-											else
-											{
-												asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
-											}
-										},
-										fail: asyncFailFunction});
-								}
-								else if (organizationName)
-								{
-									var panel;
-									experience.setOrganization({text: organizationName });
-							
-									if (siteName)
-									{
-										experience.setSite({text: siteName });
-										if (offeringName)
-										{
-											var newService = experience.addService({text: offeringName});
-											panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
-												{
-													experience.removeService(newService);
-													experience.clearOrganization();
-													experience.clearSite();
-												});
-										}
-										else
-										{
-											panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
-												{
-													experience.clearOrganization();
-													experience.clearSite();
-												});
-										}
-									}
-									else
-									{
-										panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience,
-											function()
-											{
-												experience.clearOrganization();
-											});
-									}
-									showPanelUp(panel.node());
-								}
-								else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
-								{
-									crp.getData({path: "#"+serviceName, fields: ["parents", "type"], 
-										done: function(services)
-										{
-											if (services.length > 0)
-											{
-												if (services[0].typeName == "Service")
-												{
-													experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
-														{
-															showPanelUp(panelNode);
-														});
-												}
-												else
-													asyncFailFunction("The specified marker does not appear to be an marker.");
-											}
-											else
-											{
-												asyncFailFunction("The specified marker does not exist or you do not have permission to view it.");
-											}
-										},
-										fail: asyncFailFunction});
-								}
+								addToPathway(pathwayPanel);
 							},
 							asyncFailFunction);
 					}
