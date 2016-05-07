@@ -586,6 +586,11 @@ var MultiTypeSearchView = (function() {
 var NewExperienceBasePanel = (function() {
 	NewExperienceBasePanel.prototype = new SitePanel();
 	
+	NewExperienceBasePanel.prototype.showNextStep = function(panelNode)
+		{
+			showPanelLeft(panelNode, unblockClick);
+		}
+	
 	function NewExperienceBasePanel(previousPanelNode, experience, panelClass, showFunction)
 	{
 		if (previousPanelNode)
