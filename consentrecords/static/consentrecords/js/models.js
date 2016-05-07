@@ -163,10 +163,21 @@ var CRP = (function() {
 			else
 			{
 				var oldInstance = this.instances[i.getValueID()];
-				if (!oldInstance.cells && i.isDataLoaded)
+				if (i.isDataLoaded)
 				{
-					oldInstance._setCells(i.cells);
-					oldInstance.isDataLoaded = true;
+					if (!oldInstance.cells)
+					{
+						oldInstance._setCells(i.cells);
+						oldInstance.isDataLoaded = true;
+					}
+					else 
+						i.cells.forEach(function(cell)
+							{
+								if (!oldInstance.getCell(cell.field.name))
+								{
+									oldInstance.importCell(cell);
+								}
+							});
 				}
 				if (!oldInstance.typeName && i.typeName)
 					oldInstance.typeName = i.typeName;
