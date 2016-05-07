@@ -163,10 +163,21 @@ var CRP = (function() {
 			else
 			{
 				var oldInstance = this.instances[i.getValueID()];
-				if (!oldInstance.cells && i.isDataLoaded)
+				if (i.isDataLoaded)
 				{
-					oldInstance._setCells(i.cells);
-					oldInstance.isDataLoaded = true;
+					if (!oldInstance.cells)
+					{
+						oldInstance._setCells(i.cells);
+						oldInstance.isDataLoaded = true;
+					}
+					else 
+						i.cells.forEach(function(cell)
+							{
+								if (!oldInstance.getCell(cell.field.name))
+								{
+									oldInstance.importCell(cell);
+								}
+							});
 				}
 				if (!oldInstance.typeName && i.typeName)
 					oldInstance.typeName = i.typeName;
@@ -932,13 +943,12 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.getCell = function(name)
 	{
 		if (this.cells)
-			for (var i = 0; i < this.cells.length; ++i)
-			{
-				var cell = this.cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-		return undefined;
+			return this.cells.find(function(cell)
+				{
+					return cell.field.name == name;
+				});
+		else
+			return undefined;
 	}
 
 	ObjectValue.prototype.getDatum = function(name)

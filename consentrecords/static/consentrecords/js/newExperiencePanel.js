@@ -396,6 +396,11 @@ var Experience = (function() {
 
 	Experience.prototype.createFromOffering = function(d, services, previousNode, done)
 	{
+		if (!d.getValue("Organization"))
+			throw "Runtime Error: Organization is not present in offering record."
+		if (!d.getValue("Site"))
+			throw "Runtime Error: Site is not present in offering record."
+
 		this.setOffering({instance: d});
 		
 		var oldOrganization;
