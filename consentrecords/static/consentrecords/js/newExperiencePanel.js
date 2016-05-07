@@ -1055,37 +1055,26 @@ var FromOfferingParentSearchView = (function() {
 	
 	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
 	{
-		if (this.experience.services.length == 0)
+		if (this.experience.offeringName)
+			throw ("experience.offeringName unexpectedly set.");
+			
+		this.experience.setOffering(r);
+		if (this.experience.services.length == 0 && instance in r)
 		{
 			var service = this.experience.addService(r);
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 			function()
 			{
 				this.removeService(service);
+				this.clearOffering();
 			});
-			showPanelLeft(panel.node(), unblockClick);
-		}
-		else if (this.experience.services[0].pickedObject)
-		{
-			this.experience.setOffering(r);
-			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
-				function()
-				{
-					this.clearOffering();
-				});
 			showPanelLeft(panel.node(), unblockClick);
 		}
 		else
 		{
-			var oldService = this.experience.services[0];
-			this.experience.removeService(oldService);
-			var newService = this.experience.addService(r);
-			this.experience.setOffering({text: oldService.getDescription() });
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
 				function()
 				{
-					this.removeService(newService);
-					this.addService(oldService);
 					this.clearOffering();
 				});
 			showPanelLeft(panel.node(), unblockClick);
