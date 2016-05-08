@@ -305,9 +305,9 @@ var Pathtree = (function () {
 	Pathtree.prototype.flagSpacing = 5;
 	Pathtree.prototype.stemHeight = 3;
 	Pathtree.prototype.otherColor = "#bbbbbb";
-	Pathtree.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
-	Pathtree.prototype.textDetailRightMargin = 10; /* textRightMargin; */
-	Pathtree.prototype.detailTextSpacing = 2;		/* The space between lines of text in the detail box. */
+	Pathtree.prototype.textDetailLeftMargin = 7; /* textLeftMargin; */
+	Pathtree.prototype.textDetailRightMargin = 7; /* textRightMargin; */
+	Pathtree.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	Pathtree.prototype.pathBackground = "white";
 	Pathtree.prototype.showDetailIconWidth = 18;
 	
@@ -1274,74 +1274,76 @@ var Pathtree = (function () {
 		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
 		var lines = [];
-	
+		
 		var s;
+		var maxWidth = 0;
+		var tspan;
 		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
 		if (s && s.length > 0 && lines.indexOf(s) < 0)
 		{
-			var tspan = detailText.append('tspan')
+			tspan = detailText.append('tspan')
 				.style("font-weight", "bold")
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", 
-					function(d) {
-						return $(this).height() + _this.detailTextSpacing;
-					});
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		function checkSpacing(dy)
+		{
+			if (maxWidth > 0)
+				detailText.append('tspan')
+						  .text(' ')
+						  .attr("x", this.textDetailLeftMargin)
+						  .attr("dy", dy);
 		}
 			
 		s = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
 		if (s && s.length > 0 && lines.indexOf(s) < 0)
 		{
-			var tspan = detailText.append('tspan')
+			checkSpacing("4px");
+			tspan = detailText.append('tspan')
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", 
-					function(d) {
-						return $(this).height() + _this.detailTextSpacing;
-					});
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
 		if (s && s.length > 0 && lines.indexOf(s) < 0)
 		{
-			var tspan = detailText.append('tspan')
+			checkSpacing("2px");
+			tspan = detailText.append('tspan')
 				.classed('address-line', true)
 				.text(s)
-				.attr("x", this.textDetailLeftMargin);
-				
-			tspan.attr("dy", 
-					function(d) {
-						return $(this).height() + _this.detailTextSpacing;
-					});
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
-			var tspan = detailText.append('tspan')
+			checkSpacing("4px");
+			tspan = detailText.append('tspan')
 				.text(s)
-				.attr("x", this.textDetailLeftMargin);
-				
-			tspan.attr("dy", 
-					function(d) {
-						return $(this).height() + _this.detailTextSpacing;
-					});
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
 		var x = fd.x;
 		var y = fd.y;
 
-		var textBox = detailText.node().getBBox();
-		
 		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var maxX = $(this.svg.node()).width() - textBox.width - iconAreaWidth - (this.textDetailLeftMargin * 2);
+		var maxX = $(this.svg.node()).width() - maxWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
 		if (x > maxX)
 			x = maxX;
-		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
+		var rectWidth = maxWidth + iconAreaWidth + (this.textDetailLeftMargin * 2);
 		if (rectWidth < this.flagWidth)
 		{
 			rectWidth = this.flagWidth;
-			textBox.width = rectWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
+			maxWidth = rectWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
 		}
 
 		s = getMarkerList(fd.experience);
@@ -1350,30 +1352,24 @@ var Pathtree = (function () {
 			var text = d3.select(this),
 				words = s.split(/\s+/).reverse(),
 				word,
-				line = [],
-				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true);
+				line = [];
+			checkSpacing("4px");
+			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true);
 			while (word = words.pop()) {
 			  line.push(word);
 			  tspan.text(line.join(" "));
-			  if (tspan.node().getComputedTextLength() > textBox.width) {
+			  if (tspan.node().getComputedTextLength() > maxWidth) {
 				line.pop();
 				tspan.text(line.join(" "));
-				tspan.attr("dy", 
-					function(d) {
-						return $(this).height() + _this.detailTextSpacing;
-					});
+				tspan.attr("dy", this.detailTextSpacing);
 				line = [word];
 				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true).text(word);
 			  }
 			}
-			tspan.attr("dy", 
-				function(d) {
-					return $(this).height() + _this.detailTextSpacing;
-				});
-
-			textBox = detailText.node().getBBox();
+			tspan.attr("dy", this.detailTextSpacing);
 		}
 
+		var textBox = detailText.node().getBBox();
 		var rectHeight = textBox.height + (textBox.y * 2);
 		var strokeWidth = parseInt($(this.detailFrontRect.node()).css("stroke-width"));
 		var maxY = $(this.svg.node()).height() - rectHeight - strokeWidth;
@@ -1406,7 +1402,7 @@ var Pathtree = (function () {
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', textBox.width); 
+			.attr('width', maxWidth); 
 		
 		var iconClipRect;
 		
