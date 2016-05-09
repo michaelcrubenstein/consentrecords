@@ -1,4 +1,7 @@
 Service Domain
+    _name: en - Arts
+    Color: #8328E7
+Service Domain
     _name: en - Career & Finance
     Color: #983333
 Service Domain
