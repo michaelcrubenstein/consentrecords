@@ -93,6 +93,9 @@ Service
     _name: en - Education
     Service Domain: Education
 Service
+    _name: en - English Teaching
+    Service Domain: XHelping Out
+Service
     _name: en - Entrepreneurship Skills
     Service Domain: XCareer & Finance
 Service
@@ -266,6 +269,8 @@ Service
 Service
     _name: en - Martial Arts
 Service
+    _name: en - Math Teaching
+Service
     _name: en - Music Lessons
     Service Domain: Arts
     Stage: Training
@@ -314,6 +319,8 @@ Service
 Service
     _name: en - Somali Culture
 Service
+    _name: en - Spanish Teaching
+Service
     _name: en - Squash Playing
     Domain: Basketball
     Stage: Whatever
@@ -327,13 +334,6 @@ Service
     Offering Label: en - Job Title
 Service
     _name: en - Swimming
-Service
-    _name: en - Teach English
-    Service Domain: XHelping Out
-Service
-    _name: en - Teach Math
-Service
-    _name: en - Teach Spanish
 Service
     _name: en - Teen Programming
 Service
