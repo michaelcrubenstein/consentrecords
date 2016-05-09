@@ -341,7 +341,7 @@ Service
     Service Domain: XHelping Out
 Service
     _name: en - Tennis Playing
-    Domain: Basketball
+    Domain: Tennis
     Stage: Whatever
 Service
     _name: en - Trumpet Lessons
@@ -357,7 +357,7 @@ Service
     Service Domain: Arts
 Service
     _name: en - Volleyball Playing
-    Domain: Basketball
+    Domain: Volleyball
     Stage: Whatever
 Service
     _name: en - Volunteer
