@@ -34,5 +34,8 @@ vs = Value.objects.filter(referenceValue=ed, deleteTransaction__isnull=True)
 # Rename "Coach Football" to "Football Coaching"
 # Rename "Coach Soccer" to "Soccer Coaching"
 # Rename "Coach Tennis" to "Tennis Coaching"
+# Rename "Political Organizing" to "Political Organizing Volunteer"
 
+# Incorporate the Basketball Service into Play Basketball
+# Incorporate the Football Service into Play Football
 # Incorporate the Soccer Service into Play Soccer

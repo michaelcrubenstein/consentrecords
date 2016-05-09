@@ -1,7 +1,9 @@
 Service
     _name: en - After School Program
+    Service Domain: XExtra Curricular
 Service
     _name: en - Animal Shelter Volunteer
+    Service Domain: XExtra Curricular
     Domain: Animals
     Stage: Volunteering
 Service
@@ -11,6 +13,7 @@ Service
     Stage: Training
 Service
     _name: en - Baseball Coaching
+    Service Domain: XHelping Out
     Domain: Baseball
     Stage: Coaching
 Service
@@ -19,8 +22,12 @@ Service
     Stage: Working
 Service
     _name: en - Baseball Playing
+    Service Domain: XExtra Curricular
     Domain: Baseball
     Stage: Whatever
+Service
+    _name: en - Basketball
+    Service Domain: XExtra Curricular
 Service
     _name: en - Basketball Playing
     Domain: Basketball
@@ -48,28 +55,17 @@ Service
     _name: en - Cello Lessons
     Service Domain: Arts
 Service
+    _name: en - Chess Playing
+    Domain: Basketball
+    Stage: Whatever
+Service
     _name: en - Civic Group Participation
     Service Domain: XHelping Out
 Service
     _name: en - Clarinet Lessons
+    Service Domain: Arts
     Domain: Clarinet Performance
     Stage: Training
-Service
-    _name: en - Baseball Coaching
-    Service Domain: XHelping Out
-    Stage: Coaching
-Service
-    _name: en - Football Coaching
-    Service Domain: XHelping Out
-    Stage: Coaching
-Service
-    _name: en - Soccer Coaching
-    Service Domain: XHelping Out
-    Stage: Coaching
-Service
-    _name: en - Tennis Coaching
-    Domain: Tennis
-    Stage: Coaching
 Service
     _name: en - College
     Service Domain: Education
@@ -87,6 +83,7 @@ Service
     Service Domain: Arts
 Service
     _name: en - Drawing Lessons
+    Service Domain: Arts
     Domain: Drawing
     Stage: Training
 Service
@@ -99,6 +96,11 @@ Service
     _name: en - Entrepreneurship Skills
     Service Domain: XCareer & Finance
 Service
+    _name: en - Entrepreneurship Training
+    Service Domain: Business & Finance
+    Domain: Entrepreneurship
+    Stage: Training
+Service
     _name: en - Exercise
     Service Domain: Wellness
 Service
@@ -109,6 +111,13 @@ Service
     Service Domain: Arts
 Service
     _name: en - Football
+Service
+    _name: en - Football Coaching
+    Service Domain: XHelping Out
+Service
+    _name: en - Football Playing
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Get a Mentor
 Service
@@ -227,10 +236,12 @@ Service
     Service Domain: Education
 Service
     _name: en - Internship
+    Service Domain: XCareer & Finance
     Stage: Training
 Service
     _name: en - Job
     _name: en - Employment
+    Service Domain: XCareer & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
@@ -242,9 +253,11 @@ Service
     Stage: Studying
 Service
     _name: en - Leadership Skills
+    Service Domain: XCareer & Finance
     Stage: Studying
 Service
     _name: en - Leadership Training
+    Service Domain: XExtra Curricular
     Stage: Training
 Service
     _name: en - Learn English
@@ -268,44 +281,19 @@ Service
     Service Domain: XExtra Curricular
     Service Domain: Arts
 Service
-    _name: en - Baseball Playing
-    Domain: Baseball
-    Stage: Whatever
-Service
-    _name: en - Play Basketball
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Chess
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Football
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Soccer
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Squash
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Tennis
-    Domain: Basketball
-    Stage: Whatever
-Service
-    _name: en - Play Volleyball
-    Domain: Basketball
-    Stage: Whatever
-Service
     _name: en - Political Organizing Job
     Domain: Political Organizing
     Stage: Working
 Service
+    _name: en - Political Organizing Volunteer
+    Service Domain: XExtra Curricular
+    Domain: Political Organizing
+    Stage: Volunteering
+Service
     _name: en - Preschool
     Service Domain: Education
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Provide a Summer Job
     Service Domain: XHelping Out
@@ -313,10 +301,22 @@ Service
     _name: en - Safety
 Service
     _name: en - School
+    Service Domain: Education
     Domain: School
     Stage: Studying
 Service
+    _name: en - Soccer Coaching
+    Service Domain: XHelping Out
+Service
+    _name: en - Soccer Playing
+    Domain: Basketball
+    Stage: Whatever
+Service
     _name: en - Somali Culture
+Service
+    _name: en - Squash Playing
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Summer Camp
     Service Domain: XExtra Curricular
@@ -337,6 +337,13 @@ Service
 Service
     _name: en - Teen Programming
 Service
+    _name: en - Tennis Coaching
+    Service Domain: XHelping Out
+Service
+    _name: en - Tennis Playing
+    Domain: Basketball
+    Stage: Whatever
+Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
 Service
@@ -348,6 +355,10 @@ Service
 Service
     _name: en - Voice Lessons
     Service Domain: Arts
+Service
+    _name: en - Volleyball Playing
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Volunteer
     Service Domain: XHelping Out
