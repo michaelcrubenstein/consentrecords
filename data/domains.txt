@@ -28,6 +28,9 @@ Domain
     _name: en - Drums
     Service Domain: Arts
 Domain
+    _name: en - English
+    Service Domain: Humanities
+Domain
     _name: en - Entrepreneurship
     Service Domain: Business & Finance
 Domain
@@ -45,6 +48,9 @@ Domain
 Domain
     _name: en - Lacrosse
     Service Domain: Sports
+Domain
+    _name: en - Math
+    Service Domain: Science, Technology, Engineering & Math
 Domain
     _name: en - Oboe Performance
     Service Domain: Arts
@@ -76,7 +82,13 @@ Domain
     _name: en - Soccer
     Service Domain: Sports
 Domain
+    _name: en - Spanish
+    Service Domain: Humanities
+Domain
     _name: en - Squash
+    Service Domain: Sports
+Domain
+    _name: en - Swimming
     Service Domain: Sports
 Domain
     _name: en - Tennis
@@ -85,7 +97,16 @@ Domain
     _name: en - Track & Field
     Service Domain: Sports
 Domain
+    _name: en - Trumpet Performance
+    Service Domain: Arts
+Domain
     _name: en - Violin Performance
+    Service Domain: Arts
+Domain
+    _name: en - Viola Performance
+    Service Domain: Arts
+Domain
+    _name: en - Vocal Performance
     Service Domain: Arts
 Domain
     _name: en - Volleyball

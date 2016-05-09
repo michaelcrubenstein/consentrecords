@@ -69,6 +69,8 @@ Service
 Service
     _name: en - College
     Service Domain: Education
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Computer Lab
 Service
@@ -89,12 +91,20 @@ Service
 Service
     _name: en - Drum Lessons
     Service Domain: Arts
+    Domain: Drums
+    Stage: Training
 Service
     _name: en - Education
     Service Domain: Education
 Service
+    _name: en - English Class
+    Domain: English
+    Stage: Studying
+Service
     _name: en - English Teaching
     Service Domain: XHelping Out
+    Domain: English
+    Stage: Teaching
 Service
     _name: en - Entrepreneurship Skills
     Service Domain: XCareer & Finance
@@ -112,6 +122,8 @@ Service
 Service
     _name: en - Flute Lessons
     Service Domain: Arts
+    Domain: Flute Performance
+    Stage: Training
 Service
     _name: en - Football
 Service
@@ -253,6 +265,7 @@ Service
 Service
     _name: en - Kindergarten
     Service Domain: Education
+    Domain: School
     Stage: Studying
 Service
     _name: en - Leadership Skills
@@ -263,13 +276,11 @@ Service
     Service Domain: XExtra Curricular
     Stage: Training
 Service
-    _name: en - Learn English
-Service
-    _name: en - Learn Spanish
-Service
     _name: en - Martial Arts
 Service
     _name: en - Math Teaching
+    Domain: Math
+    Stage: Teaching
 Service
     _name: en - Music Lessons
     Service Domain: Arts
@@ -319,7 +330,13 @@ Service
 Service
     _name: en - Somali Culture
 Service
+    _name: en - Spanish Class
+    Domain: Spanish
+    Stage: Studying
+Service
     _name: en - Spanish Teaching
+    Domain: Spanish
+    Stage: Teaching
 Service
     _name: en - Squash Playing
     Domain: Basketball
@@ -327,18 +344,24 @@ Service
 Service
     _name: en - Summer Camp
     Service Domain: XExtra Curricular
+    Stage: Whatever
 Service
     _name: en - Summer Job
     Service Domain: XCareer & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
+    Stage: Working
 Service
     _name: en - Swimming
+    Domain: Swimming
+    Stage: Whatever
 Service
     _name: en - Teen Programming
 Service
     _name: en - Tennis Coaching
     Service Domain: XHelping Out
+    Domain: Tennis
+    Stage: Coaching
 Service
     _name: en - Tennis Playing
     Domain: Tennis
@@ -346,15 +369,23 @@ Service
 Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
+    Domain: Trumpet Performance
+    Stage: Training
 Service
     _name: en - Viola Lessons
     Service Domain: Arts
+    Domain: Viola Performance
+    Stage: Training
 Service
     _name: en - Violin Lessons
     Service Domain: Arts
+    Domain: Violin Performance
+    Stage: Training
 Service
     _name: en - Voice Lessons
     Service Domain: Arts
+    Domain: Vocal Performance
+    Stage: Training
 Service
     _name: en - Volleyball Playing
     Domain: Volleyball
@@ -362,3 +393,4 @@ Service
 Service
     _name: en - Volunteer
     Service Domain: XHelping Out
+    Stage: Volunteering
