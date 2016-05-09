@@ -1,33 +1,45 @@
 Service
     _name: en - After School Program
-    Service Domain: Extra Curricular
 Service
-    _name: en - Animals
-    Service Domain: Extra Curricular
+    _name: en - Animal Shelter Volunteer
+    Domain: Animals
+    Stage: Volunteering
 Service
-    _name: en - Art Lessons
+    _name: en - Ballet Training
     Service Domain: Arts
+    Domain: Ballet
+    Stage: Training
 Service
-    _name: en - Ballet
+    _name: en - Baseball Coaching
+    Domain: Baseball
+    Stage: Coaching
 Service
-    _name: en - Baseball
+    _name: en - Baseball Job
+    Domain: Baseball
+    Stage: Working
 Service
-    _name: en - Basketball
+    _name: en - Baseball Playing
+    Domain: Baseball
+    Stage: Whatever
+Service
+    _name: en - Basketball Playing
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Bass Lessons
     Service Domain: Arts
 Service
     _name: en - Be A Coach
-    Service Domain: Helping Out
+    Service Domain: XHelping Out
 Service
-    _name: en - Be a Foster Parent
-    Service Domain: Helping Out
+    _name: en - Be A Foster Parent
+    Service Domain: XHelping Out
 Service
-    _name: en - Be a Mentor
-    Service Domain: Helping Out
+    _name: en - Be A Mentor
+    Service Domain: XHelping Out
 Service
     _name: en - Be A Tutor
-    Service Domain: Helping Out
+    Service Domain: XHelping Out
 Service
     _name: en - Boys
 Service
@@ -37,22 +49,27 @@ Service
     Service Domain: Arts
 Service
     _name: en - Civic Group Participation
-    Service Domain: Helping Out
+    Service Domain: XHelping Out
 Service
     _name: en - Clarinet Lessons
-    Service Domain: Arts
+    Domain: Clarinet Performance
+    Stage: Training
 Service
-    _name: en - Coach Baseball
-    Service Domain: Helping Out
+    _name: en - Baseball Coaching
+    Service Domain: XHelping Out
+    Stage: Coaching
 Service
-    _name: en - Coach Football
-    Service Domain: Helping Out
+    _name: en - Football Coaching
+    Service Domain: XHelping Out
+    Stage: Coaching
 Service
-    _name: en - Coach Soccer
-    Service Domain: Helping Out
+    _name: en - Soccer Coaching
+    Service Domain: XHelping Out
+    Stage: Coaching
 Service
-    _name: en - Coach Tennis
-    Service Domain: Helping Out
+    _name: en - Tennis Coaching
+    Domain: Tennis
+    Stage: Coaching
 Service
     _name: en - College
     Service Domain: Education
@@ -60,13 +77,18 @@ Service
     _name: en - Computer Lab
 Service
     _name: en - Construction Skills
-    Service Domain: Career & Finance
+    Service Domain: XCareer & Finance
 Service
     _name: en - Dance Lessons
     Service Domain: Arts
 Service
     _name: en - Drama
     _name: en - Theater
+    Service Domain: Arts
+Service
+    _name: en - Drawing Lessons
+    Domain: Drawing
+    Stage: Training
 Service
     _name: en - Drum Lessons
     Service Domain: Arts
@@ -75,20 +97,20 @@ Service
     Service Domain: Education
 Service
     _name: en - Entrepreneurship Skills
-    Service Domain: Career & Finance
+    Service Domain: XCareer & Finance
 Service
     _name: en - Exercise
     Service Domain: Wellness
 Service
     _name: en - Extra-Curricular Activity
-    Service Domain: Extra Curricular
+    Service Domain: XExtra Curricular
 Service
     _name: en - Flute Lessons
     Service Domain: Arts
 Service
     _name: en - Football
 Service
-    _name: en - Get a mentor
+    _name: en - Get a Mentor
 Service
     _name: en - Girls
 Service
@@ -96,73 +118,97 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 10
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 11
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 12
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 2
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 3
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 4
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 5
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 6
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 7
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 8
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Grade 9
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Guitar Lessons
     Service Domain: Arts
@@ -171,6 +217,9 @@ Service
 Service
     _name: en - High School Post Graduate
     Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Grade Level
 Service
     _name: en - Housing
 Service
@@ -178,24 +227,25 @@ Service
     Service Domain: Education
 Service
     _name: en - Internship
-    Service Domain: Career & Finance
+    Stage: Training
 Service
     _name: en - Job
     _name: en - Employment
-    Service Domain: Career & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
+    Stage: Working
 Service
-    _name: en - Karate
+    _name: en - Karate Training
 Service
     _name: en - Kindergarten
     Service Domain: Education
+    Stage: Studying
 Service
     _name: en - Leadership Skills
-    Service Domain: Career & Finance
+    Stage: Studying
 Service
     _name: en - Leadership Training
-    Service Domain: Extra Curricular
+    Stage: Training
 Service
     _name: en - Learn English
 Service
@@ -205,80 +255,87 @@ Service
 Service
     _name: en - Music Lessons
     Service Domain: Arts
+    Stage: Training
 Service
     _name: en - Oboe Lessons
     Service Domain: Arts
+    Stage: Training
 Service
-    _name: en - Physical Conditioning
+    _name: en - Physical Conditioning Training
+    Stage: Training
 Service
     _name: en - Piano Lessons
+    Service Domain: XExtra Curricular
     Service Domain: Arts
-    Service Domain: Extra Curricular
 Service
-    _name: en - Play Baseball
-    Service Domain: Extra Curricular
+    _name: en - Baseball Playing
+    Domain: Baseball
+    Stage: Whatever
 Service
     _name: en - Play Basketball
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Chess
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Football
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Soccer
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Squash
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Tennis
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
     _name: en - Play Volleyball
-    Service Domain: Extra Curricular
+    Domain: Basketball
+    Stage: Whatever
 Service
-    _name: en - Political Organizing
-    Service Domain: Extra Curricular
+    _name: en - Political Organizing Job
+    Domain: Political Organizing
+    Stage: Working
 Service
     _name: en - Preschool
     Service Domain: Education
 Service
     _name: en - Provide a Summer Job
-    Service Domain: Helping Out
+    Service Domain: XHelping Out
 Service
     _name: en - Safety
 Service
     _name: en - School
-    Service Domain: Education
-Service
-    _name: en - Soccer
-    Service Domain: Extra Curricular
+    Domain: School
+    Stage: Studying
 Service
     _name: en - Somali Culture
 Service
     _name: en - Summer Camp
-    Service Domain: Extra Curricular
+    Service Domain: XExtra Curricular
 Service
     _name: en - Summer Job
-    Service Domain: Career & Finance
+    Service Domain: XCareer & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
 Service
     _name: en - Swimming
 Service
     _name: en - Teach English
-    Service Domain: Helping Out
+    Service Domain: XHelping Out
 Service
     _name: en - Teach Math
 Service
     _name: en - Teach Spanish
 Service
     _name: en - Teen Programming
-Service
-    _name: en - Theater
-    Service Domain: Arts
 Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
@@ -293,4 +350,4 @@ Service
     Service Domain: Arts
 Service
     _name: en - Volunteer
-    Service Domain: Helping Out
+    Service Domain: XHelping Out

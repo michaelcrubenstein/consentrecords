@@ -51,6 +51,21 @@ _term
     _configuration
         _name: Boston
 _term
+    _name: Domain
+    _configuration
+        _name: Boston
+        _field
+            _name: _name
+            _data type: _translation
+            _max capacity: _multiple values
+            _descriptor type: _by text
+        _field
+            _name: Service Domain
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Service Domain
+_term
     _name: Employee
     _configuration
         _name: Boston
@@ -419,6 +434,18 @@ _term
             _name: Offering Label
             _data type: _translation
             _max capacity: _multiple values
+        _field
+            _name: Domain
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Domain
+        _field
+            _name: Stage
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Stage
 _term
     _name: Service Domain
     _configuration
@@ -540,6 +567,14 @@ _term
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: Site
+_term
+    _name: Stage
+    _configuration
+        _field
+            _name: _name
+            _data type: _translation
+            _max capacity: _multiple values
+            _descriptor type: _by text
 _term
     _name: Start
 _term

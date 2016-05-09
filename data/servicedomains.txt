@@ -2,23 +2,36 @@ Service Domain
     _name: en - Arts
     Color: #8328E7
 Service Domain
-    _name: en - Career & Finance
+    _name: en - Business & Finance
     Color: #983333
 Service Domain
     _name: en - Education
     Color: #2828E7
 Service Domain
-    _name: en - Extra Curricular
-    Color: #8328E7
-Service Domain
-    _name: en - Helping Out
-    Color: #D55900
-Service Domain
     _name: en - Housing
     Color: #804040
+Service Domain
+    _name: en - Human, Social, Public Services
+Service Domain
+    _name: en - Humanities
+Service Domain
+    _name: en - Mass Communication, Media & Entertainment
 Service Domain
     _name: en - Other
     Color: #0BBB0B
 Service Domain
+    _name: en - Science, Technology, Engineering & Math
+Service Domain
+    _name: en - Sports
+Service Domain
     _name: en - Wellness
     Color: #0694F3
+Service Domain
+    _name: en - XCareer & Finance
+    Color: #983333
+Service Domain
+    _name: en - XExtra Curricular
+    Color: #8328E7
+Service Domain
+    _name: en - XHelping Out
+    Color: #D55900
