@@ -386,7 +386,7 @@ Service
 Service
     _name: en - Somali Culture Class
     Domain: Somali Culture
-    Stage: Study
+    Stage: Studying
 Service
     _name: en - Spanish Class
     Domain: Spanish
