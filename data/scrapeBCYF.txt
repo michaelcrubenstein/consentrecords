@@ -1,3 +1,19 @@
+Service
+    _name: Ballet
+Service
+    _name: Basketball
+Service
+    _name: Computer Lab
+Service
+    _name: Gym
+Service
+    _name: Karate
+Service
+    _name: Martial Arts
+Service
+    _name: Swimming
+Service
+    _name: Teen Programming
 Organization
     _name: BCYF
     Sites
@@ -11,26 +27,46 @@ Organization
             Offerings
                 Offering
                     _name: Adult Education including ESOL
+                    Service: Education
                 Offering
                     _name: Ballet
+                    Service: Ballet
+                    Service: Exercise
                 Offering
                     _name: Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Computer Lab Open Access Times
+                    Service: Computer Lab
                 Offering
                     _name: Gym Open Access Times
+                    Service: Gym
+                    Service: Exercise
                 Offering
                     _name: Karate
+                    Service: Karate
+                    Service: Martial Arts
+                    Service: Exercise
                 Offering
                     _name: Martial Arts
+                    Service: Martial Arts
+                    Service: Exercise
                 Offering
                     _name: Pool Open/Family Swim Times
+                    Service: Swimming
+                    Service: Exercise
                 Offering
                     _name: Swim Lessons
+                    Service: Swimming
+                    Service: Exercise
                 Offering
                     _name: Swim Team
+                    Service: Swimming
+                    Service: Exercise
                 Offering
                     _name: Youth Connection Teen Program
+                    Service: Teen Programming
         Site
             _name: Charlestown Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Charlestown.asp
@@ -41,34 +77,46 @@ Organization
             Offerings
                 Offering
                     _name: Adult Zumba
+                    Service: Exercise
                 Offering
                     _name: Baseball
+                    Service: Exercise
                 Offering
                     _name: Computer Lab Open Access Times
                 Offering
                     _name: Flag Football
+                    Service: Exercise
                 Offering
                     _name: Football
+                    Service: Exercise
                 Offering
                     _name: Girls Leadership Club
                 Offering
                     _name: Open Swim/Family Swim Times
+                    Service: Exercise
                 Offering
                     _name: Roller Hockey
+                    Service: Exercise
                 Offering
                     _name: Rugby and Reading Program
+                    Service: Exercise
                 Offering
                     _name: Smart from the Start Family Night
                 Offering
                     _name: Smart from the Start Playgroup
                 Offering
                     _name: Swim Lessons
+                    Service: Exercise
                 Offering
                     _name: Swim Team
+                    Service: Exercise
                 Offering
                     _name: Vacation Week Sports Program
+                    Service: Exercise
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
         Site
             _name: Cleveland Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Cleveland.asp
@@ -83,6 +131,7 @@ Organization
                     _name: Afterschool Homework Help Program
                 Offering
                     _name: Basketball
+                    Service: Basketball
                 Offering
                     _name: Cheerleading
                 Offering
@@ -137,6 +186,7 @@ Organization
                     _name: Adult Water Aerobics
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
                 Offering
                     _name: Books, Cooks and Hooks Tutoring Program
                 Offering
@@ -167,6 +217,7 @@ Organization
                     _name: Weight Training
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
         Site
             _name: Curley Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Curley.asp
@@ -211,6 +262,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Education including Basic Education and ESOL
                 Offering
@@ -265,6 +318,8 @@ Organization
                     _name: Young Leading Ladies Club
                 Offering
                     _name: Youth Basketball League
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Scratch Computer Class
                 Offering
@@ -317,6 +372,8 @@ Organization
                     _name: Amnesty Club
                 Offering
                     _name: Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Computer Lab Open Access Times
                 Offering
@@ -395,6 +452,8 @@ Organization
                     _name: Adult Education including HiSET Preparation Classes
                 Offering
                     _name: Basketball League
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Computer Open Access Times
                 Offering
@@ -415,6 +474,8 @@ Organization
                     _name: Young Men’s Workout Health Initiative
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
         Site
             _name: Hennigan Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Hennigan.asp
@@ -425,6 +486,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Aqua Aerobics
                 Offering
@@ -451,6 +514,8 @@ Organization
                     _name: Teen Program
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
         Site
             _name: Holland Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Holland.asp
@@ -461,6 +526,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Soccer
                 Offering
@@ -551,6 +618,8 @@ Organization
                     _name: Licensed Preschool
                 Offering
                     _name: Men's Basketball League
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Parent Child Computer Classes
                 Offering
@@ -571,6 +640,8 @@ Organization
                     _name: Volleyball
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Boxing
                 Offering
@@ -593,6 +664,8 @@ Organization
                     _name: Adult Enrichment Classes
                 Offering
                     _name: Adult Soccer, Basketball, and Volleyball Leagues
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Bollywood Dance
                 Offering
@@ -639,6 +712,8 @@ Organization
                     _name: Youth Baseball Clinic
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Floor Hockey
                 Offering
@@ -659,6 +734,8 @@ Organization
                     _name: Adult Cooking Classes
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Boot Camp Workout Program
                 Offering
@@ -731,6 +808,8 @@ Organization
                     _name: Workshop Wednesdays
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Cooking Classes
                 Offering
@@ -781,6 +860,8 @@ Organization
                     _name: Adult Art Program
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Volleyball
                 Offering
@@ -829,6 +910,8 @@ Organization
                     _name: Youth Art Program
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Coneball Instruction and Competition
                 Offering
@@ -873,6 +956,8 @@ Organization
                     _name: Adult Zumba
                 Offering
                     _name: Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Big Sisters Association of Greater Boston
                 Offering
@@ -917,6 +1002,8 @@ Organization
                     _name: Water Fitness and Games
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Drama
                 Offering
@@ -953,6 +1040,8 @@ Organization
                     _name: Band
                 Offering
                     _name: Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Big Sister Little Sister
                 Offering
@@ -981,6 +1070,8 @@ Organization
                     _name: Witness the Fitness
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Dance
                 Offering
@@ -1023,6 +1114,8 @@ Organization
                     _name: Youth Arts and Crafts Class
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Book/Video Club
                 Offering
@@ -1047,6 +1140,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Education including HiSET, ESOL
                 Offering
@@ -1119,6 +1214,8 @@ Organization
                     _name: Women Only Swim
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Fitness Program
                 Offering
@@ -1139,6 +1236,8 @@ Organization
                     _name: Adult and Baby/Toddler Swim
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Education including ESOL and HiSET Preparation Classes
                 Offering
@@ -1167,6 +1266,8 @@ Organization
                     _name: Swim Team
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
         Site
             _name: Pino Community Center
             Web Site: http://www.cityofboston.gov/BCYF/centers/Pino.asp
@@ -1191,8 +1292,12 @@ Organization
                     _name: Teen Wiffleball League
                 Offering
                     _name: Youth Basketball Fundamentals
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Basketball League
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Soccer Fundamentals
                 Offering
@@ -1235,6 +1340,8 @@ Organization
                     _name: Table Tennis
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Swim Lessons
         Site
@@ -1313,6 +1420,8 @@ Organization
                     _name: WRCC Players
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Karate
         Site
@@ -1325,8 +1434,12 @@ Organization
             Offerings
                 Offering
                     _name: 55+ Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Art Classes
                 Offering
@@ -1361,6 +1474,8 @@ Organization
                     _name: Woodworking
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Leadership Club
                 Offering
@@ -1375,6 +1490,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Social Media Classes
                 Offering
@@ -1431,6 +1548,8 @@ Organization
                     _name: Teen Theatre Arts
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Development Workshops
                 Offering
@@ -1453,6 +1572,8 @@ Organization
                     _name: Baseball/ Softball
                 Offering
                     _name: Basketball Clinics
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Boxing
                 Offering
@@ -1497,6 +1618,8 @@ Organization
                     _name: Yoga
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Connection
                 Offering
@@ -1515,6 +1638,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Volleyball
                 Offering
@@ -1531,6 +1656,8 @@ Organization
                     _name: Tots Gym
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Floor Hockey League
                 Offering
@@ -1545,6 +1672,8 @@ Organization
             Offerings
                 Offering
                     _name: Adult Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Adult Education including Basic Education,
                 Offering
@@ -1583,11 +1712,15 @@ Organization
                     _name: Strong Women, Strong Girls
                 Offering
                     _name: Sunday Basketball League
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Urban Dance Connection
                 Offering
                     _name: Urban Improv
                 Offering
                     _name: Youth Basketball
+                    Service: Basketball
+                    Service: Exercise
                 Offering
                     _name: Youth Connection

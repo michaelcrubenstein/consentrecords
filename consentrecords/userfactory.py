@@ -3,7 +3,7 @@ from django.db import transaction
 import logging
 import uuid
 
-from consentrecords.models import TransactionState, Terms, TermNames, Instance, Value, NameList
+from consentrecords.models import TransactionState, Terms, terms, TermNames, Instance, Value, NameList
 from consentrecords import instancecreator
 
 class UserFactory:
@@ -15,17 +15,17 @@ class UserFactory:
             else:
                 userID = user.id        # MySQL
 
-            ofKindObject = Terms.getNamedInstance(TermNames.user)
+            ofKindObject = terms[TermNames.user]
             if not propertyList: propertyList = {}
-            propertyList[TermNames.email] = user.email
+            propertyList[TermNames.email] = {"text": user.email}
             if user.first_name:
-                propertyList[TermNames.firstName] = user.first_name
+                propertyList[TermNames.firstName] = {"text": user.first_name}
             if user.last_name:
-                propertyList[TermNames.lastName] = user.last_name
+                propertyList[TermNames.lastName] = {"text": user.last_name}
             item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
             
             # Add userID explicitly in case it isn't part of the configuration.
-            item.addStringValue(Terms.getNamedInstance(TermNames.userID), userID, 0, transactionState)
+            item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
             
             return item
 

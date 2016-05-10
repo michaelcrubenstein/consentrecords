@@ -10,7 +10,7 @@ import csv
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo, AccessRecord, NameList
+from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
@@ -46,7 +46,7 @@ def getChildrenByName(parent, field, name):
     return parent.value_set.filter(deleteTransaction__isnull=True,
                                     field=field,
                                     referenceValue__value__deleteTransaction__isnull=True,
-                                    referenceValue__value__field=Terms.name,
+                                    referenceValue__value__field=terms.name,
                                     referenceValue__value__stringValue__iexact=name)
 def getValueByReference(parent, field, r):
     return parent.value_set.filter(deleteTransaction__isnull=True,
@@ -64,23 +64,22 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         userInfo = UserInfo(user)
         
-        orgTerm = Terms.getNamedInstance('Organization')
-        sitesTerm = Terms.getNamedInstance('Sites')
-        siteTerm = Terms.getNamedInstance('Site')
-        addressTerm = Terms.getNamedInstance('Address')
-        streetTerm = Terms.getNamedInstance('Street')
-        cityTerm = Terms.getNamedInstance('City')
-        stateTerm = Terms.getNamedInstance('State')
-        zipTerm = Terms.getNamedInstance('Zip Code')
-        offeringsTerm = Terms.getNamedInstance('Offerings')
-        offeringTerm = Terms.getNamedInstance('Offering')
-        serviceTerm = Terms.getNamedInstance('Service')
-        sessionsTerm = Terms.getNamedInstance('Sessions')
-        sessionTerm = Terms.getNamedInstance('Session')
-        nameTerm = Terms.getNamedInstance('_name')
+        orgTerm = terms['Organization']
+        sitesTerm = terms['Sites']
+        siteTerm = terms['Site']
+        addressTerm = terms['Address']
+        streetTerm = terms['Street']
+        cityTerm = terms['City']
+        stateTerm = terms['State']
+        zipTerm = terms['Zip Code']
+        offeringsTerm = terms['Offerings']
+        offeringTerm = terms['Offering']
+        serviceTerm = terms['Service']
+        sessionsTerm = terms['Sessions']
+        sessionTerm = terms['Session']
+        nameTerm = terms['_name']
         nameList = NameList()
         with open(sys.argv[1], 'r') as f:
             reader = csv.reader(f)
@@ -92,7 +91,7 @@ if __name__ == "__main__":
                 stateName = s[4].strip()
                 zipName = s[5].strip()
                 grades = s[6:]
-                statePath='_uuname[_uuname=State]>enumerator[_name='+stateName+']'
+                statePath='_term[_name=State]>enumerator[_name='+stateName+']'
                 stateInstance = pathparser.selectAllObjects(statePath, userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
                 
                 schoolInstance = pathparser.selectAllObjects('Service[_name=School]',

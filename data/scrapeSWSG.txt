@@ -1,0 +1,1111 @@
+Service
+    _name: Get A Mentor
+Service
+    _name: Leadership Skills
+Service
+    _name: Be A Mentor
+Organization
+    _name: Strong Women Strong Girls
+    Sites
+        Site
+            _name: Jackson Mann K-8 School
+            Address
+                Street: 40 Armington St.
+                City:  Allston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Thomas Gardner Pilot Academy
+            Address
+                Street: 30 Athol St.
+                City:  Allston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: West End House Boys & Girls Club
+            Address
+                Street: 105 Allston St.
+                City:  Allston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Mary Lyon School
+            Address
+                Street: 50 Beechcroft St.
+                City:  Brighton
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: St. Columbkille Partnership School
+            Address
+                Street: 25 Arlington St.
+                City:  Brighton
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Thomas A. Edison School
+            Address
+                Street: 60 Glenmont Rd.
+                City:  Brighton
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Winship Elementary School
+            Address
+                Street: 54 Dighton St.
+                City:  Brighton
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Cambridge Boys & Girls Club
+            Address
+                Street: 119 Windsor St.
+                City:  Cambridge
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: East End House
+            Address
+                Street: 105 Spring St.
+                City:  Cambridge
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Gately Youth Center
+            Address
+                Street: 70R Rindge Avenue
+                City:  Cambridge
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Charlestown Boys & Girls Club
+            Address
+                Street: 15 Green St.
+                City:  Charlestown
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Warren Prescott Elementary School
+            Address
+                Street: 50 School St.
+                City:  Charlestown
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Josiah Quincy Elementary School
+            Address
+                Street: 885 Washington St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Red Oak (Boston Chinatown Neighborhood Center)
+            Address
+                Street: 885 Washington St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Dorchester YMCA
+            Address
+                Street: 776 Washington St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Epiphany School
+            Address
+                Street: 154 Centre St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Edward Everett Elementary School
+            Address
+                Street: 71 Pleasant St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Holmes Elementary School*
+            Address
+                Street: 40 School St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Martin Luther King K-8 School
+            Address
+                Street: 77 Lawrence Ave.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Mather Elementary School
+            Address
+                Street: 1 Parish St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Orchard Gardens K-8 School
+            Address
+                Street: 906 Albany St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Pope John Paul II Catholic Academy: Neponset Campus
+            Address
+                Street: 239 Neponset St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Roger Clapp Innovation School
+            Address
+                Street: 35 Harvest St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Russell Elementary School
+            Address
+                Street: 750 Columbia Rd.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Sarah Greenwood Elementary School
+            Address
+                Street: 186 Glenway St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: UP Academy: Dorchester
+            Address
+                Street: 35 Westville St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: UP Academy: Holland
+            Address
+                Street: 85 Olney St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: VietAid
+            Address
+                Street: 42 Charles St.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: William W. Henderson Elementary School
+            Address
+                Street: 1669 Dorchester Ave.
+                City:  Dorchester
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Patrick J. Kennedy PreK-5 School
+            Address
+                Street: 343 Saratoga St.
+                City:  East Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Elihu Greenwood Leadership Academy
+            Address
+                Street: 612 Metropolitan Ave.
+                City:  Hyde Park
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Curley K-8 School
+            Address
+                Street: 493 Centre St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: James W. Hennigan Elementary School
+            Address
+                Street: 200 Heath St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: John F. Kennedy Elementary School
+            Address
+                Street: 7 Bolster St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Mission Hill School
+            Address
+                Street: 20 Child St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Pope John Paul II Catholic Academy: Mattapan Campus
+            Address
+                Street: 120 Babson St.
+                City:  Mattapan
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Saint Clement School
+            Address
+                Street: 589 Boston Ave.
+                City:  Medford
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Saint Joseph School
+            Address
+                Street: 132 High St.
+                City:  Medford
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Eliot School
+            Address
+                Street: 585 Commercial St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Paul Revere Innovation School
+            Address
+                Street: 395 Revere St.
+                City:  Revere
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Phineas Bates Elementary School
+            Address
+                Street: 426 Beech Street
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Rafael Hernandez School
+            Address
+                Street: 61 School St.
+                City:  Boston MA 02119
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Samuel W. Mason Elementary School
+            Address
+                Street: 150 Norfolk Ave.
+                City:  Boston MA 02119
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Our Lady of Perpetual Help Mission Grammar School
+            Address
+                Street: 94 St. Alphonsus St.
+                City:  Boston MA 02120
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: William M. Trotter Elementary School
+            Address
+                Street: 135 Humboldt St.
+                City:  Boston MA 02119
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Yawkey Boys & Girls Club of Roxbury
+            Address
+                Street: 115 Warren St.
+                City:  Boston MA 02119
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Arthur D. Healey School
+            Address
+                Street: 5 Meacham St.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Benjamin G. Brown School
+            Address
+                Street: 201 Willow Ave.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: East Somerville Community School
+            Address
+                Street: 50 Cross St.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Elizabeth Peabody House
+            Address
+                Street: 277 Broadway St.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Prospect Hill Academy
+            Address
+                Street: 17 Franklin St.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Somerville YMCA
+            Address
+                Street: 101 Highland Ave.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: West Somerville Neighborhood School
+            Address
+                Street: 177 Powderhouse Blvd.
+                City:  Somerville
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Condon Boys & Girls Club
+            Address
+                Street: 200 D. St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: South Boston Boys & Girls Club
+            Address
+                Street: 275 West Broadway
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Castle Square Tenants Organizations
+            Address
+                Street: 464 Tremont St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Ellis Memorial School
+            Address
+                Street: 66 Berkeley St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor
+        Site
+            _name: Joseph J. Hurley Elementary School
+            Address
+                Street: 70 Worcester St.
+                City:  Boston
+                State: MA
+            Offerings
+                Offering
+                    _name: Strong Women Strong Girls For Girls
+                    Service: Get A Mentor
+                    Service: Leadership Skills
+                    Minimum Grade: 3
+                    Maximum Grade: 5
+                Offering
+                    _name: Strong Women Strong Girls For College Women
+                    Service: Be A Mentor
+                Offering
+                    _name: Strong Women Strong Girls For Professionals
+                    Service: Be A Mentor

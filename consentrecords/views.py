@@ -21,13 +21,13 @@ import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
-from consentrecords.models import TransactionState, Terms, Instance, Value, NameList, UserInfo, Description
+from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
 def home(request):
-    LogRecord.emit(request.user, 'consentrecords/home', '')
+    LogRecord.emit(request.user, 'pathAdvisor/home', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -52,8 +52,34 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+def orgHome(request):
+    LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
+    
+    template = loader.get_template('consentrecords/orgHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    state = request.GET.get('state', None)
+    if state:
+        args['state'] = state
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 def find(request, serviceid, offeringid):
-    LogRecord.emit(request.user, 'consentrecords/find', '')
+    LogRecord.emit(request.user, 'pathAdvisor/find', '')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -80,13 +106,13 @@ def find(request, serviceid, offeringid):
     return HttpResponse(template.render(context))
 
 def list(request):
-    LogRecord.emit(request.user, 'consentrecords/list', '')
+    LogRecord.emit(request.user, 'pathAdvisor/list', '')
     
     try:
         # The type of the root object.
         rootType = request.GET.get('type', None)
-        root = rootType and Terms.getNamedInstance(rootType);
-        path=request.GET.get('path', "_uuname")
+        root = rootType and terms[rootType];
+        path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
         template = loader.get_template('consentrecords/configuration.html')
@@ -102,11 +128,147 @@ def list(request):
             argList["rootID"] = root.id
             argList["singularName"] = root._description
         
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+            argList['userID'] = user.id
+        
         context = RequestContext(request, argList)
         
         return HttpResponse(template.render(context))
     except Exception as e:
         return HttpResponse(str(e))
+
+def showPathway(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/showPathway', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = '_user[_email=%s]' % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'pathway%s' % objs[0].id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def addExperience(request, experienceID):
+    LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'addExperience%s' % experienceID
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def _getOrganizationChildren(organization, siteName, offeringName):
+    site = None
+    offering = None
+    if siteName:
+        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
+        site = sites[0].referenceValue if len(sites) else None
+        if site and offeringName:
+            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0].referenceValue if len(offerings) else None
+            
+    return site, offering
+
+def addToPathway(request):
+    LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
+    
+    organizationName = request.GET.get('o', None)
+    siteName = request.GET.get('s', None)
+    offeringName = request.GET.get('f', None)
+    serviceName = request.GET.get('m', None)
+    
+    print(organizationName, siteName, offeringName, serviceName)
+
+    userInfo = UserInfo(request.user)
+    
+    if offeringName and terms.isUUID(offeringName):
+        offering = terms[offeringName]
+    elif siteName and terms.isUUID(siteName):
+        site = terms[siteName]
+        if offeringName:
+            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0] if len(offerings) else None
+    elif organizationName and terms.isUUID(organizationName):
+        organization = terms[organizationName]
+        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+    elif organizationName:
+        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
+        if organization:
+            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+        else:
+            site, offering = None, None
+    
+    if serviceName and terms.isUUID(serviceName):
+        service = terms[serviceName]
+    elif serviceName:
+        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
+    else:
+    	service = None
+        
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if organizationName:
+    	args['organization'] = organization.id if organization else organizationName
+    if siteName:
+    	args['site'] = site.id if site else siteName
+    if offeringName:
+    	args['offering'] = offering.id if offering else offeringName
+    if serviceName:
+        args['service'] = service.id if service else serviceName
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'addToPathway'
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
 
 # Handle a POST event to create a new instance of an object with a set of properties.
 class api:
@@ -120,7 +282,7 @@ class api:
             elif not instanceType:
                 return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
             else:
-                ofKindObject = Terms.getNamedInstance(instanceType)
+                ofKindObject = terms[instanceType]
         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
@@ -131,11 +293,11 @@ class api:
             if elementUUID:
                 field = Instance.objects.get(pk=elementUUID)
             elif elementName:
-                field = Terms.getNamedInstance(elementName)
+                field = terms[elementName]
             elif instanceUUID:
                 field = Instance.objects.get(pk=instanceUUID)
             elif instanceName: 
-                field = Terms.getNamedInstance(instanceName)
+                field = terms[instanceName]
             
             # An optional set of properties associated with the object.
             propertyString = data.get('properties', None)
@@ -147,6 +309,9 @@ class api:
             # The client time zone offset, stored with the transaction.
             timezoneoffset = data['timezoneoffset']
             languageID = None
+            language = None
+            
+            userInfo = UserInfo(user)
             
             with transaction.atomic():
                 transactionState = TransactionState(user, timezoneoffset)
@@ -162,9 +327,9 @@ class api:
                     Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData()}
+                    results = {'success':True, 'object': newValue.getReferenceData(userInfo, language)}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData()}
+                    results = {'success':True, 'object': item.getReferenceData(userInfo, language)}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -198,9 +363,9 @@ class api:
 
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
-                        if "value" in c and c["value"] != None:
-                            container.checkWriteValueAccess(user, oldValue.field, c["value"])
-                            item = oldValue.updateValue(c["value"], transactionState)
+                        if oldValue.hasNewValue(c):
+                            container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
+                            item = oldValue.updateValue(c, transactionState)
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -209,16 +374,16 @@ class api:
 
                         field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
                         newIndex = c["index"]
-                        newValue = c["value"]
+                        instanceID = c["instanceID"] if "instanceID" in c else None
 
-                        container.checkWriteValueAccess(user, field, newValue)
+                        container.checkWriteValueAccess(user, field, instanceID)
 
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             propertyList = newValue
-                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, newValue, nameLists, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
                         else:
-                            item = container.addValue(field, newValue, newIndex, transactionState)
+                            item = container.addValue(field, c, newIndex, transactionState)
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -247,10 +412,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value added to the container.
             valueUUID = data.get('valueUUID', None)
@@ -317,7 +482,7 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
             
-            p = [i.getReferenceData(language) for i in uuObjects]                                                
+            p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
             results = {'success':True, 'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -342,10 +507,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
             
             # A value with the container.
             value = data.get('value', None)
@@ -355,7 +520,7 @@ class api:
             
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
-            p = map(lambda v: v.getReferenceData(language=language), itertools.chain.from_iterable(m))
+            p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
                             
             results = {'success':True, 'objects': [i for i in p]}
         except Exception as e:
@@ -373,11 +538,11 @@ class api:
             if typeUUID:
                 kindObject = Instance.objects.get(pk=typeUUID)
             elif typeName:
-                kindObject = Terms.getNamedInstance(typeName)
+                kindObject = terms[typeName]
             else:
                 return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
         
-            configurationObject = kindObject.getSubInstance(Terms.configuration)
+            configurationObject = kindObject.getSubInstance(terms.configuration)
         
             if not configurationObject:
                 return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
@@ -416,38 +581,74 @@ class api:
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
         
-        vs = uuObject.values
-            
-        cells = uuObject.getData(vs, fieldsData, language, userInfo)
-    
-        data = {"id": uuObject.id, 
-                "description": uuObject.getDescription(language),
-                "parentID": uuObject.parent and uuObject.parent.id, 
-                "cells" : cells }
+        data = uuObject.getReferenceData(userInfo, language)
+        data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
     
         if 'parents' in fields:
-            while uuObject.parent:
-                uuObject = Instance.objects\
+            p = uuObject
+            while p.parent:
+                p = Instance.objects\
                                 .select_related('typeID')\
                                 .select_related('parent')\
                                 .select_related('description')\
                                 .select_related('typeID__description')\
-                                .get(pk=uuObject.parent.id)
+                                .get(pk=p.parent.id)
                                 
-                kindObject = uuObject.typeID
-                fieldData = kindObject.getParentReferenceFieldData()
+                fieldData = p.typeID.getParentReferenceFieldData()
             
-                parentData = {'id': None, 
-                        'value': {'id': uuObject.id, 'description': uuObject.getDescription(language)},
-                        'position': 0}
-                data["cells"].append({"field": fieldData, "data": parentData})
+                parentData = p.getReferenceData(userInfo, language)
+                parentData['position'] = 0
+                data["cells"].append({"field": fieldData, "data": [parentData]})
         
+        if TermNames.systemAccess in fields:
+            if userInfo.authUser.is_superuser:
+                saObject = terms.administerPrivilegeEnum
+            elif userInfo.authUser.is_staff:
+                saObject = terms.writePrivilegeEnum
+            else:
+                saObject = None
+            if saObject:
+                fieldData = terms.systemAccess.getParentReferenceFieldData()
+                parentData = [{'id': None, 
+                              'instanceID' : saObject.id,
+                              'description': saObject.getDescription(language),
+                              'position': 0,
+                              'privilege': saObject.description.text}]
+                data["cells"].append({"field": fieldData, "data": parentData})
+                
+        if 'type' in fields:
+            data['typeName'] = uuObject.typeID.getDescription();
+                
+        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .select_related('referenceValue__description')
+
+        for cell in data["cells"]:
+            if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
+                and "ofKindID" in cell["field"]:
+                typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
+                fieldsData = typeID.getFieldsData(fieldsDataDictionary, language)
+                for d in cell["data"]:
+                    i = Instance.objects.select_related('typeID').select_related('parent')\
+                                        .select_related('description')\
+                                        .prefetch_related(Prefetch('value_set',
+                                                            queryset=valueQueryset,
+                                                            to_attr='values'))\
+                                        .get(pk=d["instanceID"])
+                    d["cells"] = i.getData(i.values, fieldsData, userInfo, language)
+            
         return data;
         
     def getData(user, data):
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
             path = data.get('path', None)
+            if path.startswith('::NewExperience:'):
+                return api.getNewExperienceChoices(user, data)
+            
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
         
@@ -461,8 +662,6 @@ class api:
 
             userInfo=UserInfo(user)
             uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            fieldsDataDictionary = {}
-            nameLists = NameList()
             
             # preload the typeID, parent, value_set and description to improve performance.
             valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
@@ -484,7 +683,92 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
+            fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+        
+            results = {'success':True, 'data': p}
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("getData data:%s" % str(data))
+            
+            results = {'success':False, 'error': str(e)}
+        
+        return JsonResponse(results)
+        
+    def _addPreloadData(uuObjects, userInfo):
+        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
+            .order_by('position')\
+            .select_related('field')\
+            .select_related('field__id')\
+            .select_related('referenceValue')\
+            .select_related('referenceValue__description')
+
+        return uuObjects.select_related('typeID').select_related('parent')\
+                        .select_related('description')\
+                        .prefetch_related(Prefetch('value_set',
+                                                   queryset=valueQueryset,
+                                                   to_attr='values'))
+
+    
+    def getNewExperienceChoices(user, data):
+        pathparser.currentTimestamp = datetime.datetime.now()
+        try:
+            path = data.get('path', None)
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
+        
+            if not path:
+                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+            
+            fieldString = data.get('fields', "[]")
+            fields = json.loads(fieldString)
+            
+            language = data.get('language', None)
+
+            userInfo=UserInfo(user)
+            
+            testValue = path[len('::NewExperience:'):]
+            
+            if len(testValue) > 0:
+                a = ["Service Domain", "Service", "Offering", "Site", "Organization"]
+            else:
+                a = ["Service Domain"]
+            results = []
+            for termName in a:
+                term = terms[termName]
+                uuObjects = Instance.objects.filter(typeID=term)
+                
+                if len(testValue) >= 3:
+                    vFilter = Value.objects.filter(field=terms.name, 
+                                                   stringValue__icontains=testValue,referenceValue__isnull=True,
+                                                   deleteTransaction__isnull=True)
+                    uuObjects = uuObjects.filter(value__in=vFilter)
+                elif len(testValue) > 0:
+                    vFilter = Value.objects.filter(field=terms.name, 
+                                                   stringValue__istartswith=testValue,referenceValue__isnull=True,
+                                                   deleteTransaction__isnull=True)
+                    uuObjects = uuObjects.filter(value__in=vFilter)
+                uuObjects = userInfo.readFilter(uuObjects)
+                uuObjects = uuObjects.order_by('description__text', 'id');
+                c = uuObjects.count()
+                if c <= start:
+                    start -= c
+                    end -= c
+                elif c <= end:
+                    uuObjects = api._addPreloadData(uuObjects, userInfo)
+                    results += uuObjects[start:]
+                    end -= c
+                    start = 0
+                else:
+                    uuObjects = api._addPreloadData(uuObjects, userInfo)
+                    results += uuObjects[start:end]
+                    end = 0
+                    start = 0
+                    break
+            
+            fieldsDataDictionary = {}
+            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
         
             results = {'success':True, 'data': p}
         except Exception as e:
@@ -498,14 +782,15 @@ class api:
     
     def _getValueData(v, fieldsDataDictionary, language, userInfo):
         fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
-        data = v.getReferenceData(language)
+        data = v.getReferenceData(userInfo, language)
         vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
             .select_related('field')\
             .select_related('field__id')\
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
-        data["value"]["cells"] = v.referenceValue.getData(vs, fieldsData, language, userInfo)
+        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
+        data['typeName'] = v.referenceValue.typeID.getDescription();
         return data;
     
     def getCellData(user, data):
@@ -521,10 +806,10 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif Terms.isUUID(fieldName):
+            elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
-                field = Terms.getNamedInstance(fieldName)
+                field = terms[fieldName]
                 
             language = data.get('language', None)
 
@@ -609,7 +894,7 @@ def createInstance(request):
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.createInstance(request.user, request.POST)
@@ -618,7 +903,7 @@ def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.updateValues(request.user, request.POST)
@@ -628,7 +913,7 @@ def addValue(request):
     if request.method != "POST":
         raise Http404("addValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.addValue(request.user, request.POST)
@@ -637,7 +922,7 @@ def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
         
     return api.deleteInstances(request.user, request.POST)
@@ -646,7 +931,7 @@ def deleteValue(request):
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
     
     return api.deleteValue(request.user, request.POST)
@@ -729,7 +1014,7 @@ def submitsignin(request):
         results = userviews.signinResults(request)
         if results["success"]:
             user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
-            results["user"] = { "id": user.id, "description" : user.getDescription(None) }        
+            results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -752,7 +1037,30 @@ def submitNewUser(request):
             results = userviews.newUserResults(request)
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-                results["user"] = { "id": userInstance.id, "description" : userInstance.getDescription(None) }
+                results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
+    return JsonResponse(results)
+
+def updateUsername(request):
+    if request.method != "POST":
+        raise Http404("updateUsername only responds to POST methods")
+    
+    try:
+        timezoneOffset = request.POST["timezoneoffset"]
+    
+        with transaction.atomic():
+            results = userviews.updateUsernameResults(request)
+            if results["success"]:
+                userInstance = Instance.getUserInstance(request.user)
+                transactionState = TransactionState(request.user, timezoneOffset)
+                v = userInstance.getSubValue(terms.email)
+                v.updateValue(request.user.email, transactionState)
+                nameLists = NameList()
+                userInstance.cacheDescription(nameLists);
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

@@ -5,7 +5,7 @@ import datetime
 import numbers
 import uuid
 
-from consentrecords.models import Instance, Value, Terms, TermNames, NameList, AccessRecord, UserInfo
+from consentrecords.models import *
 from consentrecords import pathparser
 
 def _addElementData(parent, data, fieldData, nameLists, transactionState):
@@ -18,29 +18,34 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     field = Instance.objects.get(pk=fieldData["nameID"])
     userInfo=UserInfo(transactionState.user)
     for d in data:
-        if fieldData["dataTypeID"] == Terms.objectEnum.id:
+        if not isinstance(d, dict):
+            raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+            
+        if fieldData["dataTypeID"] == terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-                if Terms.isUUID(d):
+                if "instanceID" in d:
                     # This is a reference to an object.
-                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d)))
+                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
-                    elif d == parent.id and field == Terms.primaryAdministrator:
+                    elif d["instanceID"] == parent.id and field == terms.primaryAdministrator:
                         # This is a special case of setting up the primary administrator. This
                         # is necessary when creating a user so that it can be bootstrapped.
                         parent.addReferenceValue(field, parent, i, transactionState)
                     else:
                         raise RuntimeError("find permission failed for %s" % field)
-                elif d is not None:
-                    ids = pathparser.selectAllObjects(d, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                elif "path" in d:
+                    ids = pathparser.selectAllObjects(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
                         parent.addReferenceValue(field, ids[-1], i, transactionState)
                     else:
-                        raise RuntimeError("Path does not parse to an object: %s" % d)
+                        raise RuntimeError("Path does not parse to an object: %s" % d["path"])
+                else:
+                    raise RuntimeError("%s field of type %s contains neither instanceID nor path: %s" % (field, parent.typeID, str(d)))
             else:
-                if isinstance(d, dict) and "ofKindID" in fieldData:
+                if "cells" in d and "ofKindID" in fieldData:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    create(ofKindObject, parent, field, -1, d, nameLists, transactionState)
+                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
                 else:
                     raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
         else:
@@ -53,15 +58,23 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
 #     logger.error("propertyList: %s" % str(propertyList))
     if not typeInstance:
         raise ValueError("typeInstance is null")
+    if parent and not parentField:
+        raise ValueError("parent is specified but parentField is not")
+    if parent and parentField:
+        configuration = parent.typeID.getSubInstance(terms.configuration)
+        fieldObject = configuration.getFieldByReferenceValue(parentField.id)
+        fieldData = fieldObject.getFieldData()
+        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
+            raise ValueError("instances can not be created in parents with a _pick one field")
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
     # If the item being created is a user, then we have to set the primary administrator
     # of the user to itself so that the user has a primary administrator. Otherwise, we can't
     # add values to the user.
-    if typeInstance==Terms.user:
+    if typeInstance==terms.user:
         if TermNames.primaryAdministrator not in propertyList:
-            propertyList[TermNames.primaryAdministrator] = item.id
+            propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
@@ -94,12 +107,12 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
             for key in propertyList:
                 data = propertyList[key]
                 if not configuration:
-                    configuration = typeInstance.getSubInstance(Terms.configuration)
-                if Terms.isUUID(key):
+                    configuration = typeInstance.getSubInstance(terms.configuration)
+                if terms.isUUID(key):
                     # The key may be the key of a field object or the key of a term that is 
                     # the name of a field object in the configuration.
                     fieldObject = Instance.objects.get(pk=key)
-                    if fieldObject.typeID != Terms.field:
+                    if fieldObject.typeID != terms.field:
                         fieldObject = configuration.getFieldByReferenceValue(key)
                     elif fieldObject.parent != configuration:
                         raise RuntimeError("the specified field is not contained within the configuration of this type")
@@ -140,7 +153,7 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
         if not s in items:
             items[s] = create(type, parent, field, position, [], nameLists, transactionState)[0]
             position += 1
-            items[s].addValue(descriptor, s, 0, transactionState)
+            items[s].addValue(descriptor, {"text": s}, 0, transactionState)
     
     return items
         
@@ -153,17 +166,28 @@ def addUniqueChild(parent, field, typeID, propertyList, nameList, transactionSta
         item, newValue = create(typeID, parent, field, -1, propertyList, nameList, transactionState)
         return item
 
-def addNamedChild(parent, field, type, nameField, fieldData, name, nameList, transactionState):
-    children = parent.getChildrenByName(field, nameField, name)
+def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode, nameList, transactionState):
+    children = parent.getChildrenByName(field, nameField, text)
     if len(children):
         return children[0].referenceValue
     else:
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
         if fieldData['dataType'] == '_translation':
-            propertyList = {nameField.id: [{'text': name, 'languageCode': 'en'}]}
+            propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
-            propertyList = {nameField.id: name}
+            propertyList = {nameField.id: [{'text': text}]}
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        return child
+
+def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenceValue, nameList, transactionState):
+    children = parent.getChildrenByReferenceName(field, nameField, referenceValue)
+    if len(children):
+        return children[0].referenceValue
+    else:
+        if fieldData['nameID'] != nameField.id:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
+        propertyList = {nameField.id: [{'instanceID': referenceValue.id}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
         return child
 

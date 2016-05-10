@@ -11,7 +11,10 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-transluscent">
 	
-    <title>{{header}}</title>
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor {{header}}">
+    
+    <title>PathAdvisor - {{header}}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
@@ -36,7 +39,10 @@
   </head>
 
   <body>
-	<panel id="id_panel1" class="site-panel initial list">
+	<!-- Following is required so that the csrf token cookie is included in the document cookies. -->
+	{% csrf_token %}
+	
+	<panel id="id_panel1" class="initial list">
 	</panel>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -63,8 +69,6 @@
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
 		
-		$("title").text(headerText);
-		
 		/* For show methods, the obj is the DOM object that contains the item being shown.
 							 the d object contains the field information.
 							 d["_data"] has the data for the instance of this field.
@@ -82,6 +86,13 @@
 			}
 		});
 
+		/* The global object used to identify the current user. */
+		var userFirstName = null;
+		var userLastName = null;
+		{% if userID %}
+		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+		{% endif %}
+		
 		$(document).ready (function(e) {
 			$("#id_cancelButton").click(function(e) {
 				window.location = "{{ backURL }}";
@@ -116,18 +127,6 @@
 				done: getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
 				fail: asyncFailFunction});
 		});
-		
-// 		$(document).ready(function(e) { resetidObjectsHeight() });
-// 		$(window).resize(function(e) { resetidObjectsHeight() });
-// 		
-// 		resetidObjectsHeight = function()
-// 		{
-// 			var newHeight = window.innerHeight;
-// 			$("#id_panel1").children().each(
-// 				function() { if (this != document.getElementById("id_scrollableArea")) newHeight -= $(this).height(); }
-// 			);
-// 			$("#id_scrollableArea").height(newHeight);
-// 		}
 	</script>
 
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->

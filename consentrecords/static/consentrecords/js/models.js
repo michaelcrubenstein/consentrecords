@@ -114,7 +114,7 @@ var CRP = (function() {
 			});
 	};
 	
-	CRP.prototype.pushCheckCells = function(i, successFunction, failFunction)
+	CRP.prototype.pushCheckCells = function(i, fields, successFunction, failFunction)
 	{
 		if (typeof(successFunction) != "function")
 			throw "successFunction is not a function";
@@ -122,19 +122,25 @@ var CRP = (function() {
 			throw "failFunction is not a function";
 		if (!i)
 			throw "i is not defined";
+		if (!i.getValueID())
+			throw "i does not have an instanceID";
+		if (i.privilege === "_find")
+			throw "You do not have permission to see information about {0}".format(i.getDescription());
+
 		var _this = this;
 		this.queue.add(
 			function() {
-				storedI = crp.getInstance(i.getValueID());
+				var storedI = _this.getInstance(i.getValueID());
 				if (storedI && storedI.isDataLoaded)
 				{
-					i.importCells(storedI.value.cells);
+					if (i !== storedI)
+						i.importCells(storedI.cells);
 					successFunction();
 					return true;
 				}
 				else
 				{
-					i.checkCells(undefined,
+					i.checkCells(fields,
 						function() {
 							successFunction();
 							_this.queue.next();
@@ -147,7 +153,7 @@ var CRP = (function() {
 	
 	CRP.prototype.pushInstance = function(i)
 	{
-		if ("value" in i && "id" in i.value)
+		if (i.getValueID())
 		{
 			if (!(i.getValueID() in this.instances))
 			{
@@ -156,12 +162,25 @@ var CRP = (function() {
 			}
 			else
 			{
-				oldInstance = this.instances[i.getValueID()];
-				if (!oldInstance.value.cells && i.isDataLoaded)
+				var oldInstance = this.instances[i.getValueID()];
+				if (i.isDataLoaded)
 				{
-					oldInstance.value._setCells(i.value.cells);
-					oldInstance.isDataLoaded = true;
+					if (!oldInstance.cells)
+					{
+						oldInstance._setCells(i.cells);
+						oldInstance.isDataLoaded = true;
+					}
+					else 
+						i.cells.forEach(function(cell)
+							{
+								if (!oldInstance.getCell(cell.field.name))
+								{
+									oldInstance.importCell(cell);
+								}
+							});
 				}
+				if (!oldInstance.typeName && i.typeName)
+					oldInstance.typeName = i.typeName;
 				return oldInstance;
 			}
 		}
@@ -192,10 +211,9 @@ var CRP = (function() {
 								end: args.end,
 								fields: args.fields,
 								done: function(newInstances) {
-											_this.paths[args.path] = newInstances;
-											newInstances.forEach(function(i)
-												{ crp.pushInstance(i); });
-											args.done(newInstances);
+											var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
+											_this.paths[args.path] = mappedInstances;
+											args.done(mappedInstances);
 											_this.queue.next();
 										}, 
 								fail: args.fail});
@@ -236,7 +254,7 @@ var CRP = (function() {
 var crp = new CRP();
 
 var cr = {}
-
+	
 cr.Cell = (function() 
 	{
 		Cell.prototype.data = [];
@@ -257,7 +275,7 @@ cr.Cell = (function()
 	
 			/* If this is a unique value and there is no value, set up an unspecified one. */
 			if (this.data.length == 0 &&
-				this.field.capacity == "_unique value") {
+				this.isUnique()) {
 				this.pushValue(this.newValue());
 			}
 		};
@@ -271,6 +289,11 @@ cr.Cell = (function()
 			}
 			return true;
 		};
+		
+		Cell.prototype.isUnique = function()
+		{
+			return this.field && this.field.capacity === "_unique value";
+		}
 
 		Cell.prototype.pushValue = function(newValue)
 		{
@@ -295,13 +318,11 @@ cr.Cell = (function()
 		Cell.prototype.deleteValue = function(oldData)
 		{
 			function remove(arr, item) {
-				  for(var i = arr.length; i--;) {
-					  if(arr[i] === item) {
-						  arr.splice(i, 1);
-					  }
-				  }
+				var i = arr.indexOf(item);
+				if (i >= 0)
+					arr.splice(i, 1);
 			  }
-			if (this.field.capacity == "_unique value")
+			if (this.isUnique())
 			{
 				oldData.id = null;
 				oldData.clearValue();
@@ -336,8 +357,7 @@ cr.StringCell = (function() {
 		var newValue = new cr.StringValue();
 		if (oldValue.id !== null && oldValue.id !== undefined)
 			newValue.id = oldValue.id;
-		if (oldValue.value !== null && oldValue.value !== undefined)
-			newValue.value = oldValue.value;
+		newValue.text = oldValue.text;
 		return newValue;
 	}
 	
@@ -346,9 +366,9 @@ cr.StringCell = (function() {
 		var newData = [];
 		$(this.data).each(function()
 			{
-				if (this.value)
+				if (this.text)
 				{
-					var newDatum = this.value;
+					var newDatum = {text: this.text};
 					newData.push(newDatum);
 				}
 			});
@@ -372,12 +392,10 @@ cr.TranslationCell = (function() {
 	
 	TranslationCell.prototype.copyValue = function(oldValue) {
 		var newValue = new cr.TranslationValue();
-		if (oldValue.id !== null && oldValue.id !== undefined)
+		if (oldValue.id)
 			newValue.id = oldValue.id;
-		if (oldValue.value !== null && oldValue.value !== undefined)
-			newValue.value = oldValue.value;
-		if (oldValue.languageCode !== null && oldValue.languageCode !== undefined)
-			newValue.languageCode = oldValue.languageCode;
+		newValue.text = oldValue.text;
+		newValue.languageCode = oldValue.languageCode;
 		return newValue;
 	}
 	
@@ -386,10 +404,9 @@ cr.TranslationCell = (function() {
 		var newData = [];
 		$(this.data).each(function()
 			{
-				if (this.value)
+				if (this.text)
 				{
-					var v = this.value;
-					newData.push(v);
+					newData.push({text: this.text, languageCode: this.languageCode});
 				}
 			});
 		if (newData.length > 0)
@@ -482,19 +499,21 @@ cr.ObjectCell = (function() {
 	
 	ObjectCell.prototype.copyValue = function(oldValue) {
 		var newValue = new cr.ObjectValue();
-		if (oldValue.id !== null && oldValue.id !== undefined)
+		
+		if (oldValue.id)
 			newValue.id = oldValue.id;
-		if (oldValue.value !== null && oldValue.value !== undefined)
+		newValue.instanceID = oldValue.instanceID;
+		newValue.description = oldValue.description;
+		if ("privilege" in oldValue)
+			newValue.privilege = oldValue.privilege;
+		if ("typeName" in oldValue)
+			newValue.typeName = oldValue.typeName;
+		if (oldValue.cells)
 		{
-			if (oldValue.value.id)
-				newValue.value.id = oldValue.value.id;
-			if (oldValue.value.description)
-				newValue.setDescription(oldValue.value.description);
-			if (oldValue.value.cells)
-			{
-				newValue.importCells(oldValue.value.cells);
-			}
+			newValue.importCells(oldValue.cells);
+			newValue.isDataLoaded = true;
 		}
+
 		return newValue;
 	}
 	
@@ -524,18 +543,18 @@ cr.ObjectCell = (function() {
 				if (d.getValueID())
 				{
 					/* This case is true if we are picking an object. */
-					newData.push(d.getValueID());
+					newData.push({instanceID: d.getValueID()});
 				}
-				else if ("cells" in d.value)
+				else if ("cells" in d)
 				{
 					/* This case is true if we are creating an object */
 					var newDatum = {};
-					d.value.cells.forEach(function(cell)
+					d.cells.forEach(function(cell)
 					{
 						cell.appendData(newDatum);
 					});
 					
-					newData.push(newDatum);
+					newData.push({cells: newDatum});
 				}
 				/* Otherwise, it is blank and shouldn't be saved. */
 			}
@@ -566,7 +585,7 @@ cr.ObjectCell = (function() {
 							var newData = _this.newValue();
 							newData.id = json.id;
 							newData.setDescription(initialData.getDescription());
-							newData.value.id = initialData.getValueID();
+							newData.instanceID = initialData.getValueID();
 							_this.addValue(newData);
 							successFunction(newData);
 						}
@@ -589,14 +608,20 @@ cr.ObjectCell = (function() {
 })();
 
 cr.CellValue = (function() {
-	CellValue.prototype.getDescription = function() { return this.value; };
+	CellValue.prototype.getDescription = function()
+	{ 
+		throw "getDescription must be overwritten";
+	};
 	
 	CellValue.prototype.isEmpty = function()
 	{
-		return this.value === null || this.value === undefined || this.value === "";
+		throw "isEmpty must be overwritten";
 	}
 	
-	CellValue.prototype.clearValue = function() { this.value = null; };
+	CellValue.prototype.clearValue = function()
+	{
+		throw "clearValue must be overwritten";
+	};
 	
 	CellValue.prototype.triggerDeleteValue = function()
 	{
@@ -611,12 +636,12 @@ cr.CellValue = (function() {
 		$(this).trigger("dataChanged.cr", this);
 	}
 	
-	CellValue.prototype.deleteValue = function(successFunction, failFunction)
+	CellValue.prototype.deleteValue = function(done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 			
 		var _this = this;
 		if (this.id == null)	/* It was never saved */
@@ -635,26 +660,26 @@ cr.CellValue = (function() {
 					{
 						if (json.success)
 						{
-							if (successFunction) 
+							if (done) 
 							{
 								_this.triggerDeleteValue();
-								successFunction(_this);
+								done(_this);
 							}
 						}
 						else
 						{
-							failFunction(json.error);
+							fail(json.error);
 						}
 					})
 					.fail(function(jqXHR, textStatus, errorThrown)
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 					});
 			}
 			else
 			{
 				_this.triggerDeleteValue();
-				successFunction(_this);
+				done(_this);
 			}
 		}
 		else
@@ -667,27 +692,26 @@ cr.CellValue = (function() {
 				{
 					if (json.success)
 					{
-						if (successFunction) 
+						if (done) 
 						{
 							_this.triggerDeleteValue();
-							successFunction(_this);
+							done(_this);
 						}
 					}
 					else
 					{
-						failFunction(json.error);
+						fail(json.error);
 					}
 				})
 				.fail(function(jqXHR, textStatus, errorThrown)
 				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 				});
 		}
 	};
 			
 	function CellValue() {
 		this.id = null; 
-		this.value = null;
 		this.cell = null;	/* Initialize the container cell to empty. */
 	};
 	
@@ -697,22 +721,30 @@ cr.CellValue = (function() {
 cr.StringValue = (function() {
 	StringValue.prototype = new cr.CellValue();
 
+	StringValue.prototype.getDescription = function() { return this.text; };
+	
+	StringValue.prototype.isEmpty = function()
+	{
+		return this.text === null || this.text === undefined || this.text === "";
+	}
+	StringValue.prototype.clearValue = function() { this.text = null; }
+
 	StringValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
 		if (newValue === "")
 			newValue = null;
 			
 		/* If both are null, then they are equal. */
-		if (!newValue && !this.value)
-			newValue = this.value;
+		if (!newValue && !this.text)
+			newValue = this.text;
 		
 		var command;
-		if (newValue != this.value)
+		if (newValue != this.text)
 		{
 			if (this.id)
 			{
 				if (newValue)
-					command = {id: this.id, value: newValue}
+					command = {id: this.id, text: newValue}
 				else
 					command = {id: this.id}	/* No value, so delete this item. */
 			}
@@ -720,7 +752,7 @@ cr.StringValue = (function() {
 			{
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
-						   value: newValue,
+						   text: newValue,
 						   index: i};
 			}
 			initialData.push(command);
@@ -730,7 +762,7 @@ cr.StringValue = (function() {
 	
 	StringValue.prototype.updateFromChangeData = function(changeData)
 	{
-		this.value = changeData.value;
+		this.text = changeData.text;
 	}
 
 	function StringValue() {
@@ -742,13 +774,8 @@ cr.StringValue = (function() {
 	
 cr.TranslationValue = (function() {
 	TranslationValue.prototype = new cr.StringValue();
-	TranslationValue.prototype.getDescription = function() { return this.value.text; };
-	TranslationValue.prototype.isEmpty = function()
-	{
-		return this.value.text === null || this.value.text === undefined || this.value.text === "";
-	}
 	
-	TranslationValue.prototype.clearValue = function() { this.value = null; this.languageCode = null; }
+	TranslationValue.prototype.clearValue = function() { this.text = null; this.languageCode = null; }
 
 	TranslationValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
@@ -756,17 +783,17 @@ cr.TranslationValue = (function() {
 			newValue.text = null;
 			
 		/* If both are null, then they are equal. */
-		if (!newValue.text && !this.value.text)
-			newValue.text = this.value.text;
+		if (!newValue.text && !this.text)
+			newValue.text = this.text;
 		
-		if (newValue.text !== this.value.text || 
-			newValue.languageCode !== this.value.languageCode)
+		if (newValue.text !== this.text || 
+			newValue.languageCode !== this.languageCode)
 		{
 			var command;
 			if (this.id)
 			{
 				if (newValue.text)
-					command = {id: this.id, value: newValue};
+					command = {id: this.id, text: newValue.text, languageCode: newValue.languageCode};
 				else
 					command = {id: this.id}; /* No value, so delete the command. */
 			}
@@ -774,7 +801,8 @@ cr.TranslationValue = (function() {
 			{
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
-						   value: newValue,
+						   text: newValue.text, 
+						   languageCode: newValue.languageCode,
 						   index: i};
 			}
 			initialData.push(command);
@@ -782,9 +810,16 @@ cr.TranslationValue = (function() {
 		}
 	}
 
+	TranslationValue.prototype.updateFromChangeData = function(changeData)
+	{
+		this.text = changeData.text;
+		this.languageCode = changeData.languageCode;
+	}
+
 	function TranslationValue() {
 		cr.StringValue.call(this);
-		this.value = {text: null, languageCode: null};
+		this.text = null;
+		this.languageCode = null;
 	};
 	
 	return TranslationValue;
@@ -792,10 +827,9 @@ cr.TranslationValue = (function() {
 	
 cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
-	
-	ObjectValue.prototype = new cr.CellValue();
-	ObjectValue.prototype.getDescription = function() { return this.value.description; };
-	ObjectValue.prototype.getValueID = function() { return this.value.id; };
+	ObjectValue.prototype.getDescription = function() { return this.description; };
+	ObjectValue.prototype.getValueID = function()
+		{ return this.instanceID; };
 
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
@@ -818,11 +852,11 @@ cr.ObjectValue = (function() {
 			if (this.getValueID() == newValueID)
 				return;
 			if (this.id)
-				command = {id: this.id, value: newValueID, description: newDescription};
+				command = {id: this.id, instanceID: newValueID, description: newDescription};
 			else
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
-						   value: newValueID,
+						   instanceID: newValueID,
 						   description: newDescription,
 						   index: i};
 		}
@@ -834,44 +868,50 @@ cr.ObjectValue = (function() {
 	{
 		/* Replace the value completely so that its cells are eliminated and will be
 			re-accessed from the server. This handles the case where a value has been added. */
-		this.value = {id: changeData.value, description: changeData.description};
+		this.instanceID = changeData.instanceID;
+		this.description = changeData.description;
+		this.cells = null;
+		this.isDataLoaded = false;
 	}
 	
 	ObjectValue.prototype.completeUpdate = function(newData)
 	{
 		this.id = newData.id;
-		this.updateFromChangeData({value: newData.getValueID(), description: newData.getDescription()});
+		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
 		this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return !this.value.id && !this.value.cells;
+		return !this.instanceID && !this.cells;
 	}
 
 	ObjectValue.prototype.clearValue = function()
 	{
-		this.value = {id: null, description: "None" };
+		this.instanceID = null; 
+		this.description="None";
+		this.cells = null;
+		this.privilege = null;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
 	{
-		this.value.description = newDescription.length > 0 ? newDescription : "None";
+		this.description = newDescription.length > 0 ? newDescription : "None";
 	}
 	
 	ObjectValue.prototype.calculateDescription = function()
 	{
-		if (!("cells" in this.value))
+		if (!("cells" in this))
 		{
-			if (this.value.description.length == 0)
-				this.value.description = "None";
+			if (this.description.length == 0)
+				this.description = "None";
 		}
 		else
 		{
 			var nameArray = [];
-			for (var i = 0; i < this.value.cells.length; ++i)
+			for (var i = 0; i < this.cells.length; ++i)
 			{
-				var cell = this.value.cells[i];
+				var cell = this.cells[i];
 				if (cell.field.descriptorType == "_by text")
 				{
 					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
@@ -884,18 +924,15 @@ cr.ObjectValue = (function() {
 					nameArray.push(cell.data.length.toString());
 				}
 			}
-			if (nameArray.length == 0)
-				this.value.description = "None";
-			else
-				this.setDescription(nameArray.join(separator = ' '));
+			this.setDescription(nameArray.length ? nameArray.join(separator = ' ') : "None");
 		}
 	}
 
 	ObjectValue.prototype.hasTextDescription = function()
 	{
-		for (var i = 0; i < this.value.cells.length; ++i)
+		for (var i = 0; i < this.cells.length; ++i)
 		{
-			var cell = this.value.cells[i];
+			var cell = this.cells[i];
 			if (cell.field.descriptorType == "_by text" &&
 				cell.data.length > 0)
 				return true;
@@ -905,20 +942,19 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		if (this.value.cells)
-			for (var i = 0; i < this.value.cells.length; ++i)
-			{
-				var cell = this.value.cells[i];
-				if (cell.field.name == name)
-					return cell;
-			}
-		return undefined;
+		if (this.cells)
+			return this.cells.find(function(cell)
+				{
+					return cell.field.name == name;
+				});
+		else
+			return undefined;
 	}
 
 	ObjectValue.prototype.getDatum = function(name)
 	{
 		var cell = this.getCell(name);
-		return cell && cell.data.length && cell.data[0].value;
+		return cell && cell.data.length && cell.data[0].text;
 	}
 		
 	ObjectValue.prototype.getValue = function(name)
@@ -953,25 +989,25 @@ cr.ObjectValue = (function() {
 			});
 		}
 		newCell.setup(this);
-		this.value.cells.push(newCell);
+		this.cells.push(newCell);
 		return newCell;
 	}
 
 	ObjectValue.prototype.importCells = function(oldCells)
 	{
-		this.value.cells = [];
+		this.cells = [];
 		for (var j = 0; j < oldCells.length; ++j)
 		{
 			this.importCell(oldCells[j]);
 		}
 	}
 
-	ObjectValue.prototype.saveNew = function(initialData, successFunction, failFunction)
+	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 
 		var containerCell = this.cell;
 		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
@@ -982,14 +1018,14 @@ cr.ObjectValue = (function() {
 			{
 				_this.completeUpdate(newData);
 				_this.isDataLoaded = true;
-				successFunction(newData);
+				done(newData);
 			}, 
-			failFunction);
+			fail);
 	}
 	
 	ObjectValue.prototype._setCells = function(oldCells)
 	{
-		this.value.cells = oldCells;
+		this.cells = oldCells;
 		oldCells.forEach(function(cell) {
 			cell.setParent(this);
 		});
@@ -1009,25 +1045,37 @@ cr.ObjectValue = (function() {
 		
 		var _this = this;
 	
-		var jsonArray = { "path" : "#" + this.getValueID(),
-						  "fieldName" : fieldName };
-		
-		$.getJSON(cr.urls.getCellData,
-			jsonArray, 
-			function(json)
-			{
-				if (json.success) {
-					var newObjects = json.objects.map(function(v)
-					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});
-					done(newObjects);
+		crp.queue.add(
+			function() {
+				var cell = _this.getCell(fieldName);
+				if (cell != null)
+					done(cell.data);
+				else
+				{
+					var jsonArray = { "path" : "#" + _this.getValueID(),
+									  "fieldName" : fieldName };
+					$.getJSON(cr.urls.getCellData,
+						jsonArray, 
+						function(json)
+						{
+							if (json.success) {
+								field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
+								var oldCell = {field: field, data: json.objects};
+								if (!_this.cells)
+									_this.cells = [];
+								cell = _this.importCell(oldCell);
+								
+								done(cell.data);
+								crp.queue.next();
+							}
+							else {
+								fail(json.error);
+							}
+						}
+					);
+					return false;
 				}
-				else {
-					fail(json.error);
-				}
-			}
-		);
+			});
 	}
 
 	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
@@ -1036,8 +1084,13 @@ cr.ObjectValue = (function() {
 			throw "successFunction is not a function";
 		if (typeof(failFunction) != "function")
 			throw "failFunction is not a function";
+		if (this.privilege == "_find")
+		{
+			failFunction("You do not have permission to see information about {0}".format(this.getDescription()));
+			return;
+		}
 	
-		if (this.value.cells && this.isDataLoaded)
+		if (this.cells && this.isDataLoaded)
 		{
 			successFunction();
 		}
@@ -1051,17 +1104,29 @@ cr.ObjectValue = (function() {
 				jsonArray, 
 				function(json)
 				{
-					if (json.success) {
-						/* If the data length is 0, then this item can not be read. */
-						if (json.data.length > 0)
-							_this.importCells(json.data[0].cells);
-						else
-							_this.importCells([]);
-						_this.isDataLoaded = true;
-						successFunction();
+					try {
+						if (json.success) {
+							/* If the data length is 0, then this item can not be read. */
+							if (json.data.length > 0)
+							{
+								_this.importCells(json.data[0].cells);
+								_this.privilege = json.data[0].privilege;
+							}
+							else
+							{
+								_this.importCells([]);
+								_this.privilege = null;
+							}
+							_this.isDataLoaded = true;
+							successFunction();
+						}
+						else {
+							failFunction(json.error);
+						}
 					}
-					else {
-						failFunction(json.error);
+					catch (err)
+					{
+						failFunction(err);
 					}
 				}
 			);
@@ -1073,7 +1138,7 @@ cr.ObjectValue = (function() {
 			cr.getConfiguration(this, this.cell.field.ofKindID, 
 				function(newCells)
 				{
-					_this.value.cells = newCells;
+					_this.cells = newCells;
 					successFunction();
 				},
 				failFunction);
@@ -1089,7 +1154,7 @@ cr.ObjectValue = (function() {
 		if (!this.cell)
 			throw "cell is not specified for this object";
 		
-		if (this.value.cells)
+		if (this.cells)
 		{
 			successFunction();
 		}
@@ -1100,21 +1165,45 @@ cr.ObjectValue = (function() {
 			cr.getConfiguration(this, this.cell.field.ofKindID, 
 				function(newCells)
 				{
-					_this.value.cells = newCells;
+					_this.cells = newCells;
 					successFunction();
 				},
 				failFunction);
 		}
 	}
 	
+	ObjectValue.prototype.canWrite = function()
+	{
+		if (this.getValueID() === null)
+			throw(this.getDescription() + " has not been saved");
+		if (this.privilege === undefined)
+			throw(this.getDescription() + " privilege is not specified");
+			
+		return ["_write", "_administer"].indexOf(this.privilege) >= 0;
+	}
+	
 	function ObjectValue() {
 		cr.CellValue.call(this);
-		this.value = {id: null, description: "None" };
+		this.instanceID = null;
+		this.description = "None";
 		this.isDataLoaded = false;
 	};
 	
 	return ObjectValue;
 })();
+
+cr.signedinUser = new cr.ObjectValue();
+
+cr.createSignedinUser = function(instanceID, description)
+{
+	cr.signedinUser.instanceID = instanceID;
+	cr.signedinUser.setDescription(description);
+	crp.pushCheckCells(cr.signedinUser, ["_system access"], function()
+		{
+			cr.signedinUser = crp.pushInstance(cr.signedinUser);
+			$(cr.signedinUser).trigger("signin.cr");
+		}, asyncFailFunction);
+}
 
 cr.cellFactory = {
 	_string: cr.StringCell,
@@ -1150,6 +1239,7 @@ cr.urls = {
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
 		submitNewUser: '/submitnewuser/',
+		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
 		log: '/monitor/log/',
 	};
@@ -1173,34 +1263,35 @@ cr.selectAll = function(args)
 			throw ("failFunction is not specified");
 		if (!args.done)
 			throw ("done function is not specified");
-		var argList = {};
-		if (args.path)
-			argList.path = args.path;
-		else
+		if (!args.path)
 			throw "path was not specified to selectAll"
-			
-		if (args.start !== undefined)
-			argList.start = args.start;
-		if (args.end !== undefined)
-			argList.end = args.end;
+
+		var data = {path : args.path};
+		if (cr.accessToken)
+			data["access_token"] = cr.accessToken;
 		
-		$.getJSON(cr.urls.selectAll, 
-			argList,
+		if (args.start !== undefined)
+			data.start = args.start;
+		if (args.end !== undefined)
+			data.end = args.end;
+		
+		$.getJSON(cr.urls.selectAll, data,
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = json.objects.map(function(v)
-					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});					
-					args.done(newObjects);
+					var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
+					args.done(instances);
 				}
-				else
-				{
+				else {
 					args.fail(json.error);
 				}
 			}
-		);
+		)
+		.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
+					}
+				);
 	};
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail.
@@ -1304,7 +1395,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 				{
 					if (json.success) {
 						oldValue.id = json.valueIDs[0];
-						oldValue.updateFromChangeData({value: d.getValueID(), description: d.getDescription()});
+						oldValue.updateFromChangeData(d);
 						oldValue.triggerDataChanged();
 						successFunction();
 					}
@@ -1349,6 +1440,10 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 			throw ("failFunction is not specified");
 		if (!successFunction)
 			throw ("successFunction is not specified");
+		if (typeof(successFunction) != "function")
+			throw "successFunction is not a function";
+		if (typeof(failFunction) != "function")
+			throw "failFunction is not a function";
 		var jsonArray = {
 					properties: JSON.stringify(initialData),
 					timezoneoffset: new Date().getTimezoneOffset()
@@ -1386,8 +1481,8 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 								the id of the value object in the database. */
 							if (containerUUID)
 								newData.id = json.object.id;
-							newData.value.id = json.object.value.id;
-							newData.setDescription(json.object.value.description);
+							newData.instanceID = json.object.instanceID;
+							newData.setDescription(json.object.description);
 							successFunction(newData);
 						}
 					}
@@ -1429,7 +1524,7 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							
 							/* Object Values have an instance ID as well. */
 							if (newInstanceID)
-								d.value.id = newInstanceID;
+								d.instanceID = newInstanceID;
 								
 							d.triggerDataChanged();
 						}
@@ -1520,7 +1615,7 @@ cr.getData = function(args)
 		if (!args.done)
 			throw ("successFunction is not specified");
 		if (!args.path)
-			throw ("path is not specified");
+			throw ("path is not specified to getData");
 			
 		var data = {path : args.path}
 		if (args.fields)
@@ -1537,20 +1632,15 @@ cr.getData = function(args)
 			function(json)
 			{
 				if (json.success) {
-					var instances = [];
-					for (var i = 0; i < json.data.length; ++i)
+					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
+					try
 					{
-						var datum = json.data[i];
-						var v = new cr.ObjectValue();
-						v.importCells(datum.cells);
-						v.value.id = datum.id;
-						v.setDescription(datum.description);
-						v.value.parentID = datum.parentID;
-						v.isDataLoaded = true;
-						instances.push(v);
+						args.done(instances);
 					}
-				
-					args.done(instances);
+					catch(err)
+					{
+						args.fail(err);
+					}
 				}
 				else {
 					args.fail(json.error);
@@ -1574,6 +1664,27 @@ cr.submitSignout = function(done, fail)
 			else
 				fail(json.error);
 		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+
+cr.updateUsername = function(newUsername, password, done, fail)
+	{
+		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
+										password: password,
+										timezoneoffset: new Date().getTimezoneOffset()},
+			   function(json) {
+					if (json['success']) {
+						var v = cr.signedinUser.getValue('_email');
+						v.updateFromChangeData({text: newUsername});
+						v.triggerDataChanged();
+						done();
+					}
+					else
+						fail(json.error);
+			   })
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);

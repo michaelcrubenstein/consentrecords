@@ -16,6 +16,7 @@ var DotsNavigator = (function () {
 	DotsNavigator.prototype.count = 0;
 	DotsNavigator.prototype.value = 0;
 	DotsNavigator.prototype.done = null;
+	DotsNavigator.prototype.cancel = null;
 	DotsNavigator.prototype.finalText = "Add";
 	DotsNavigator.prototype.services = [];
 	DotsNavigator.prototype.datum = null;
@@ -84,32 +85,36 @@ var DotsNavigator = (function () {
 		this.checkForwardEnabled();
 	}
 	
-	DotsNavigator.prototype.getServiceByName = function(name)
+	DotsNavigator.prototype.goBack = function()
 	{
-		for (i = 0; i < services.length; ++i)
+		var _this = this;
+		var goToPrevious = function()
 		{
-			if (services[i].getDescription() == name)
-				return services[i];
+			if (_this.value > 0)
+				_this.setValue(_this.value - 1);
+			else
+				_this.cancel();
 		}
-		return null;
+		
+		if (prepareClick('click', this.backButton.selectAll('span').text()))
+		{
+			showClickFeedback(this.backButton.node());
+			var p = this.nthPanel(this.value);
+			if (p.onGoingBack)
+				p.onGoingBack(goToPrevious);
+			else
+				goToPrevious();
+		}
 	}
 	
 	DotsNavigator.prototype.appendBackButton = function(navContainer, cancel)
 	{
 		var _this = this;
+		this.cancel = cancel;
 		this.backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick('click', _this.backButton.selectAll('span').text()))
-				{
-					showClickFeedback(this);
-					if (_this.value > 0)
-					{
-						_this.setValue(_this.value - 1);
-					}
-					else
-						cancel();
-				}
+				_this.goBack();
 				d3.event.preventDefault();
 			});
 		this.backButton.append("span").text("Cancel");
@@ -123,9 +128,7 @@ var DotsNavigator = (function () {
 			if (_this.value == _this.count - 1)
 				_this.done();
 			else
-			{
 				_this.setValue(_this.value + 1);
-			}
 		}
 		if (prepareClick('click', this.doneButton.selectAll('span').text()))
 		{
@@ -149,12 +152,12 @@ var DotsNavigator = (function () {
 		var _this = this;
 		this.done = done;
 		
-		this.doneButton = navContainer.appendRightButton();
+		this.doneButton = navContainer.appendRightButton()
+			.on("click", function(d) {
+				_this.goForward();
+				d3.event.preventDefault();
+			});
 		this.doneButton.append("span").text("Next");
-		this.doneButton.on("click", function(d) {
-			_this.goForward();
-			d3.event.preventDefault();
-		});
 	}
 	
 	DotsNavigator.prototype.isForwardEnabled = function()
@@ -222,11 +225,7 @@ var DotsNavigator = (function () {
 			});
 		}
 	
-		$(window).on("resize", layoutPanels);
-		$(this.div.node()).on("remove", function()
-		{
-			$(window).off("resize", layoutPanels);
-		});
+		$(panel2Div.node()).on("resize.cr", layoutPanels);
 	}
 	
 	return DotsNavigator;

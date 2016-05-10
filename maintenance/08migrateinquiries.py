@@ -9,7 +9,7 @@ import sys
 from django.db import transaction
 from django.contrib.auth import authenticate
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, UserInfo
+from consentrecords.models import *
 from consentrecords import pathparser
 
 if __name__ == "__main__":
@@ -23,16 +23,15 @@ if __name__ == "__main__":
 
     with transaction.atomic():
         transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
 
-        f = Instance.objects.filter(typeID=Terms.getNamedInstance('Inquiry'), deleteTransaction__isnull=True,
-                                    value__field=Terms.email,
+        f = Instance.objects.filter(typeID=terms['Inquiry'], deleteTransaction__isnull=True,
+                                    value__field=terms.email,
                                     value__deleteTransaction__isnull=True)
 
         print ("Inquiry Count: %s" % f.count())
         userInfo = UserInfo(user)
         for inquiry in f:
-            email = inquiry.value_set.get(field=Terms.email,
+            email = inquiry.value_set.get(field=terms.email,
                                         deleteTransaction__isnull=True)
             email.markAsDeleted(transactionState)
             path = '_user[_email="%s"]' % email.stringValue
@@ -43,7 +42,7 @@ if __name__ == "__main__":
                 if inquiries:
                     print("l: %s" % str(l))
                     transactionState = TransactionState(l[0].user, timezoneoffset)
-                    inquiries.addReferenceValue(Terms.user, l[0], 0, transactionState)
+                    inquiries.addReferenceValue(terms.user, l[0], 0, transactionState)
                     print("update inquiry for session %s: user %s" % (inquiry.parent.parent, l[0]))
                     inquiry.markAsDeleted(transactionState)
                 else:

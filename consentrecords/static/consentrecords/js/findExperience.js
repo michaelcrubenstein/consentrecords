@@ -1,5 +1,5 @@
 /* Create a panel to show the details of the session and allow the user to sign up. */
-function showSessionDetails(userInstance, session, service, previousPanelNode)
+function showSessionDetails(session, service, previousPanelNode)
 {
 	var organization = session.getValue("Organization");
 	var offering = session.getValue("Offering");
@@ -38,35 +38,10 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				.text(site.getDescription());
 		}
 		
-		crp.pushCheckCells(site, function()
+		crp.pushCheckCells(site, undefined, function()
 		{
 			var address = site.getValue("Address");
-			crp.pushCheckCells(address, function()
-			{
-				var streetCell = address.getCell("Street");
-				var cityCell = address.getCell("City");
-				var stateCell = address.getCell("State");
-				var zipCell = address.getCell("Zip Code");
-				if (streetCell)
-					$(streetCell.data).each(function() {
-						orgDiv.append('div')
-							.classed("address-line", true)
-							.text(this.value);
-					});
-				line = "";
-				if (cityCell && cityCell.data.length)
-					line += cityCell.data[0].value;
-				if (stateCell && stateCell.data.length)
-					line += ", " + stateCell.data[0].getDescription();
-				if (zipCell && zipCell.data.length && zipCell.data[0].value)
-					line += "  " + zipCell.data[0].value;
-				if (line.trim())
-					orgDiv.append('div')
-						.classed('address-line', true)
-						.text(line.trim());
-			},
-			function() {
-			});
+			appendAddress.call(orgDiv.node(), address);
 		},
 		function() { }
 		);
@@ -100,9 +75,10 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	var cellDiv = panel2Div.append("section")
 		.classed("cell", true);
 	
-	crp.pushCheckCells(offering, function()
+	crp.pushCheckCells(offering, undefined, function()
 		{
 			var serviceCell = offering.getCell("Service");
+			serviceCell.field.label = "Markers";
 			if (!service && serviceCell.data.length > 0)
 				service = serviceCell.data[0];
 				
@@ -117,9 +93,8 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 
 			if (serviceCell.data.length > 0)
 			{
-				var labelDiv = cellDiv.append("label")
-					.text("Markers");
-				var itemsDiv = cellDiv.append("ol").classed("items-div", true);
+				serviceCell.appendLabel(cellDiv.node());
+				var itemsDiv = cellDiv.append("ol");
 
 				var divs = appendItems(itemsDiv, serviceCell.data);
 				var buttons = divs.append("div").classed("multi-line-item", true);
@@ -179,7 +154,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		}
 	};
 	
-	var addInquiry = function()
+	var addInquiry = function(user)
 	{
 		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
 		cr.selectAll({path: groupPath,
@@ -187,7 +162,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 				{
 					cr.addObjectValue('#'+session.getValueID()+">Inquiries",
 									  '_user',
-									  userInstance,
+									  user,
 									  function(newInquiryID) { 
 											function done()
 											{
@@ -200,7 +175,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 											if (groupPaths.length == 0)
 												done();
 											else {
-												addMissingAccess(userInstance, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+												addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
 											}
 										},
 										asyncFailFunction);
@@ -211,9 +186,9 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	
 	var tryAddInquiry = function()
 	{
-		if (userInstance.getValueID())
+		if (cr.signedinUser.getValueID())
 		{
-			addInquiry();
+			addInquiry(cr.signedinUser);
 			unblockClick();
 		}
 		else
@@ -237,7 +212,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 						}
 						else
 						{
-							addInquiry();
+							addInquiry(_this);
 						}
 					},
 					fail: asyncFailFunction});
@@ -246,10 +221,10 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 			{
 			};
 			
-			$(userInstance).on("signin.cr", null, panel, onSignin);
-			$(userInstance).on("signinCanceled.cr", null, panel, onSigninCanceled);
+			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
+			$(cr.signedinUser).on("signinCanceled.cr", null, panel, onSigninCanceled);
 			
-			$(panel).on("hiding.cr", null, userInstance, function(eventObject)
+			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
 				$(eventObject.data).off("signin.cr", null, onSignin);
 				$(eventObject.data).off("signinCanceled.cr", null, onSigninCanceled);
@@ -291,7 +266,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		d3.event.preventDefault();
 	};
 	
-	if (userInstance.getValueID())
+	if (cr.signedinUser.getValueID())
 	{
 		function done(values)
 		{
@@ -299,7 +274,7 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 		}
 		cr.getValues({path: '#'+session.getValueID()+">Inquiries",
 			field: "_user",
-			value: userInstance.getValueID(),
+			value: cr.signedinUser.getValueID(),
 			done: done,
 			fail: asyncFailFunction});
 	}
@@ -309,168 +284,95 @@ function showSessionDetails(userInstance, session, service, previousPanelNode)
 	return sitePanel;
 }
 		
-var PickOfferingPanel = (function() {
-	PickOfferingPanel.prototype = new SitePanel();
-	PickOfferingPanel.prototype.panel2Div = null;
-	PickOfferingPanel.prototype.section = null;
-	PickOfferingPanel.prototype.unloadedItems = null;
-	PickOfferingPanel.prototype.marker = null;
-	PickOfferingPanel.prototype.offeringID = null;
+var PickOfferingSearchView = (function () {
+	PickOfferingSearchView.prototype = new PanelSearchView();
 	
-	PickOfferingPanel.prototype.onGetDataDone = function(sessions)
-	{
-		$(sessions).each(function() { this.calculateDescription(); });
-		
-		if (sessions.length == 0)
+	/* Overrides SearchView.prototype.onClickButton */
+	PickOfferingSearchView.prototype.onClickButton = function(d, i) {
+		if (prepareClick('click', 'pick ' + d.getDescription()))
 		{
-			if (this.section.selectAll('li').size() == 0)
-			{
-				this.panel2Div.append("p")
-					.append("p")
-					.text('Sorry, there are no upcoming offerings for "' + this.marker.getDescription() + '".');
-			}
+			this.sitePanel.updateValues(d, null);
 		}
-		else
-		{
-			sessions.sort(compareSessions);
-			
-			var oldTop = $(this.section.node()).position().top;
-		
-			var divs = appendItems(this.section, sessions)
-				.classed("consent-record", true);	// So that each button appears on its own row.
-				
-			var _this = this;
-			divs.each(function() { _this.unloadedItems.push(this);});
-			
-			this.checkSearchText(divs);
-			
-			var buttons = divs.append("button").classed("btn row-button", true)
-				.on("click", function(session)
-					{
-						if (prepareClick('click', 'show details: ' + session.getDescription()))
-						{
-							showClickFeedback(this);
-
-							var sitePanel = showSessionDetails(userInstance, session, _this.marker, _this.node());
-		
-							showPanelLeft(sitePanel.node());
-						}
-					});
-
-			appendRightChevrons(buttons);
-			var rightText = buttons.append('span').classed("centered-right-2", true);
-		
-			rightText.append('div')
-				.classed("sub-text", true)
-				.text(getDateRange);
-			rightText.append('div').classed("sub-text", true)
-				.text(function(d) {
-					var registrationDeadline = d.getDatum("Registration Deadline");
-					if (registrationDeadline)
-						return "register by " + registrationDeadline;
-					else
-						return "";
-				});
-		
-			appendSessionDescriptions(buttons);
-			
-			var newTop = $(this.section.node()).position().top;
-			
-			$(this.panel2Div.node()).scrollTop($(this.panel2Div.node()).scrollTop() + oldTop - newTop);
-			
-			/* Check the setup offeringID to see if we should automatically go to a div. */
-			if (this.offeringID != null)
-			{
-				divs.each(function(d)
-				{
-					if (d.getValueID() == _this.offeringID)
-					{
-				
-						var sitePanel = showSessionDetails(userInstance, d, _this.marker, _this.node());
-						showPanelNow(sitePanel.node());
-					}
-				});
-			}
-			else
-			{
-				this.onScroll();
-			}
-		}
+		d3.event.preventDefault();
 	}
 	
-	PickOfferingPanel.prototype.onScroll = function()
+	/* Overrides SearchView.prototype.isButtonVisible */
+	PickOfferingSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		var _thisPanel = this;
-		$(this.unloadedItems).each(function()
-			{
-				var panelHeight = $(_thisPanel.panel2Div.node()).height();
-				var position = $(this).position();
-				var height = $(this).height();
-				var _this = this;
-				if (height > 0 && $(this).css("display") != "none")
+		if (compareText.length === 0)
+			return true;
+			
+		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0 ||
+			   d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+	}
+	
+	/* Overrides SearchView.searchPath */
+	PickOfferingSearchView.prototype.searchPath = function(val)
+	{
+		var currentDate = new Date();
+		var todayString = currentDate.toISOString().substring(0, 10);
+		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.marker.instanceID);
+		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
+		s += ':not([End<"{0}"])'.format(todayString);
+		if (val.length == 0)
+			return s;
+		else if (val.length < 3)
+			return s + '[ancestor:_name^="' + val + '"]';
+		else
+			return s + '[ancestor:_name*="' + val + '"]';
+	}
+	
+	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
+	{
+		var _this = this;
+		var sections = this.appendButtonContainers(foundObjects);
+		var buttons = sections.append("button").classed("btn row-button", true)
+			.on("click", function(session)
 				{
-					var isVisible = position.top + height >= 0 && position.top < panelHeight;
-					if (isVisible)
+					if (prepareClick('click', 'show details: ' + session.getDescription()))
 					{
-						var d = d3.select(this).datum();
-						var path = "#" + d.getValueID() + "::reference(Sessions)::reference(Offering)";
-						
-						var done = function(offerings)
-						{
-							var thisBlock = d3.select(_this).selectAll(".centered-right-2");
-							var oldOffering = d.getValue("Offering");
-							var offering = offerings[0];
-							oldOffering.cells = offering.cells;
-							
-							var ageText = getOfferingAgeRange(offering);
-							var gradeText = getOfferingGradeRange(offering);
-							if (ageText.length > 0)
-							{
-								thisBlock.append('div').classed("sub-text", true)
-									.text("Ages: " + ageText);
-							}
-							if (gradeText.length > 0)
-							{
-								thisBlock.append('div').classed("sub-text", true)
-									.text("Grades: " + gradeText);
-							}
-						}
-						cr.getData({path: path, 
-									fields: ["parents"], 
-									done: done, 
-									fail: asyncFailFunction});
-						
-						_thisPanel.unloadedItems.splice(_thisPanel.unloadedItems.indexOf(this), 1);
+						showClickFeedback(this);
+
+						var sitePanel = showSessionDetails(session, _this.marker, _this.sitePanel.node());
+	
+						showPanelLeft(sitePanel.node(), unblockClick);
 					}
-				}
-			});
-	};
+				});
 
-	PickOfferingPanel.prototype.checkSearchText = function(divs)
-		{
-			var val = this.searchInputNode.value.toLocaleLowerCase();
-			if (val.length == 0)
-			{
-				/* Show all of the items. */
-				divs.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				divs.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Offering").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(val) >= 0 ||
-								d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
+		appendSessionDescriptions(buttons);
+		
+		this.constrainFoundObjects();
+		return buttons;
+	}
+	
+	PickOfferingSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	PickOfferingSearchView.prototype.noResultString = function()
+	{
+		return "There are no upcoming opportunities for {0}.".format(this.marker.getDescription());
+	}
+	
+	function PickOfferingSearchView(sitePanel, marker)
+	{
+		this.marker = marker;
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
+	}
+	
+	return PickOfferingSearchView;
+})();
 
-	function PickOfferingPanel(userInstance, marker, offeringID, previousPanel) {
+var PickOfferingPanel = (function() {
+	PickOfferingPanel.prototype = new SitePanel();
+	PickOfferingPanel.prototype.offeringID = null;
+	
+	function PickOfferingPanel(marker, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -481,50 +383,84 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		var _this = this;
-		
-		function textChanged() { _this.checkSearchText(_this.panel2Div.selectAll("li"));}
-
-		this.searchInputNode = this.appendSearchBar(textChanged);
-
-		this.panel2Div = this.appendScrollArea();
-
-		this.marker = marker;
-		this.offeringID = offeringID;
-		this.unloadedItems = [];
-
-		/* Set up the code that will ensure that all of the visible items have their
-			ancillary data filled in as the scrolling area scrolls.
-		 */
-		function checkScroll() { _this.onScroll(); }
-		$(this.panel2Div.node()).scroll(checkScroll);
-		$(window).resize(checkScroll);
-		$(this.panel2Div.node()).on("remove", function()
-			{
-				$(window).off("resize", checkScroll);
+		var searchView = new PickOfferingSearchView(this, marker);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
 			});
-		this.section = this.panel2Div.append("section")
-			.classed("cell", true);
-		
-		function checkOnGetDataDone(instances) { _this.onGetDataDone(instances); }
-		var currentDate = new Date();
-		var todayString = currentDate.toISOString().substring(0, 10);
-		this.getDataChunker = new GetDataChunker(this.panel2Div.node(), checkOnGetDataDone);
 
-		this.getDataChunker.path = "#" + marker.value.id + '::reference(Offering)>Sessions>Session:not(["Registration Deadline"<"' + todayString + '"])';
-		this.getDataChunker.fields = ["parents"];
-		this.getDataChunker.start();
-
-		showPanelLeft(this.node());
+		showPanelLeft(this.node(), unblockClick);
 	}
 	
 	return PickOfferingPanel;
 })();
 
+var FindExperienceSearchView = (function () {
+	FindExperienceSearchView.prototype = new PanelSearchView();
+	FindExperienceSearchView.prototype.offeringID = null;
+	
+	/* Overrides SearchView.prototype.onClickButton */
+	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
+		if (prepareClick('click', 'pick ' + d.typeName + ': ' + d.getDescription()))
+		{
+			showClickFeedback(button);
+			
+			var panel = new PickOfferingPanel(d, this.offeringID, this.sitePanel.node());
+		}
+		d3.event.preventDefault();
+	}
+	
+	FindExperienceSearchView.prototype.fields = function()
+	{
+		return ["parents", "type"];
+	}
+	
+	/* Overrides SearchView.searchPath */
+	FindExperienceSearchView.prototype.searchPath = function(val)
+	{
+		var s = "Service";
+		if (val.length == 0)
+			return s;
+		else
+		{
+			if (val.length < 3)
+				return s + '[_name^="' + val + '"]';
+			else
+				return s + '[_name*="' + val + '"]';
+		}
+	}
+	
+	FindExperienceSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+			
+		var i = d.getDescription().toLocaleLowerCase().indexOf(compareText);
+		if (compareText.length < 3)
+			return i == 0;
+		else
+			return i >= 0;
+	}
+	
+	FindExperienceSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	function FindExperienceSearchView(sitePanel, offeringID) {
+		this.offeringID = offeringID;
+		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
+	}
+	
+	return FindExperienceSearchView;
+})();
+
 var FindExperiencePanel = (function () {
 	FindExperiencePanel.prototype = new SitePanel();
 	
-	function FindExperiencePanel(userInstance, serviceValueID, offeringID, previousPanel) {
+	function FindExperiencePanel(user, serviceValueID, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -533,101 +469,13 @@ var FindExperiencePanel = (function () {
 			.on("click", handleCloseRightEvent)
 		    .append("span").text("Done");
 			
-		navContainer.appendRightButton()
-			.classed('add-button', true)
-			.on("click", function()
-			{
-				if (prepareClick('click', '+'))
-				{
-					hidePanelRight(sitePanel.node());
-				}
-				d3.event.preventDefault();
-			})
-			.append("span").text("+");
-		
 		navContainer.appendTitle(header);
 		
-		textChanged = function()
-		{
-			var val = this.value.toLocaleLowerCase();
-			if (val.length == 0)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style("display", null);
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style("display", function(d)
-						{
-							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
-								return null;
-							else
-								return "none";
-						});
-			}
-		}
-
-		this.appendSearchBar(textChanged);
-		
-		var panel2Div = this.appendScrollArea();
-
-		var field = {
-					  dataType: "_object",
-					  name: "Service",
-					  capacity: "_multiple values",
-					  };
-		var cell = cr.createCell(field);
-		cell.setup(null);
-
-		var itemsDiv = panel2Div.append("section")
-			.classed("multiple", true)
-			.append("ol")
-			.classed("items-div border-above", true)
-			.datum(cell);
-
-		var _this = this;
-		var successFunction = function(newInstances)
-		{
-			for (var i = 0; i < newInstances.length; i++)
-			{
-				var newI = crp.pushInstance(newInstances[i]);
-				cell.pushValue(newI);
-			}
-			
-			panel2Div.datum(cell);
-			appendViewCellItems(itemsDiv, cell, 
-				function(d) {
-					if (prepareClick('click', 'pick ' + d.cell.field.name + ': ' + d.getDescription()))
-					{
-						showClickFeedback(this);
-						
-						var panel = new PickOfferingPanel(userInstance, d, offeringID, _this.node());
-					}
-				});
-				
-			panel2Div.selectAll('p').remove();
-			for (var i = 0; i < cell.data.length; ++i)
-			{
-				var d = cell.data[i];
-				if (d.getValueID() == serviceValueID)
-				{
-					var panel = new PickOfferingPanel(userInstance, d, offeringID, _this.node);
-					break;
-				}
-			}
-		}
-		
-		crv.appendLoadingMessage(panel2Div.node());
-			
-		var path = "Service";
-		crp.getData({path: path, 
-					 done: successFunction, 
-					 fail: asyncFailFunction});
-
-		showPanelLeft(this.node());
+		var searchView = new FindExperienceSearchView(this, offeringID);
+		$(this.node()).one("revealing.cr", function() { 
+				searchView.search(""); 
+				searchView.inputBox.focus();
+			});
 	}
 	
 	return FindExperiencePanel;

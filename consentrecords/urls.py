@@ -17,7 +17,6 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 from consentrecords import views
-from consentrecords.models import Terms
 
 urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
@@ -28,11 +27,16 @@ urlpatterns = [
     url(r'^monitor/', include('monitor.urls')),
     url(r'^developer/', include('developer.urls')),
     url(r'^$', views.home, name='home'),
+    url(r'^org/$', views.orgHome, name='orgHome'),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
     url(r'^list', views.list, name='list'),
+    url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
+    url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
+    url(r'^add/', views.addToPathway),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
+    url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
 
     url(r'^local/getuserid/', views.getUserID),
     url(r'^local/getdata/', views.getData),
@@ -62,5 +66,3 @@ urlpatterns = [
     
     url(r'^doc/features/', views.features),
 ]
-
-Terms.initialize()

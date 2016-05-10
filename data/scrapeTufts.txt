@@ -1,0 +1,179 @@
+Organization
+    _name: Tufts University
+    Sites:
+        Site:
+            _name: School of Arts and Sciences
+            Offerings:
+                Offering:
+                    _name: Africana Studies Major
+                    Service: Education
+                Offering:
+                    _name: American Studies Major
+                    Service: Education
+                Offering:
+                    _name: Anthropology Major
+                    Service: Education
+                Offering:
+                    _name: Applied Physics Major
+                    Service: Education
+                Offering:
+                    _name: Arabic Major
+                    Service: Education
+                Offering:
+                    _name: Archaeology Major
+                    Service: Education
+                Offering:
+                    _name: Architectural Studies Major
+                    Service: Education
+                Offering:
+                    _name: Art History Major
+                    Service: Education
+                Offering:
+                    _name: Astrophysics Major
+                    Service: Education
+                Offering:
+                    _name: Biochemistry Major
+                    Service: Education
+                Offering:
+                    _name: Biology Major
+                    Service: Education
+                Offering:
+                    _name: Biomedical Sciences Major
+                    Service: Education
+                Offering:
+                    _name: Biopsychology Major
+                    Service: Education
+                Offering:
+                    _name: Biotechnology Major
+                    Service: Education
+                Offering:
+                    _name: Chemical Physics Major
+                    Service: Education
+                Offering:
+                    _name: Chemistry Major
+                    Service: Education
+                Offering:
+                    _name: Child Study and Human Development Major
+                    Service: Education
+                Offering:
+                    _name: Chinese Major
+                    Service: Education
+                Offering:
+                    _name: Classical Studies Major
+                    Service: Education
+                Offering:
+                    _name: Clinical Psychology Major
+                    Service: Education
+                Offering:
+                    _name: Cognitive and Brain Sciences Major
+                    Service: Education
+                Offering:
+                    _name: Community Health Major
+                    Service: Education
+                Offering:
+                    _name: Computer Science Major
+                    Service: Education
+                Offering:
+                    _name: Drama Major
+                    Service: Education
+                Offering:
+                    _name: Earth and Ocean Sciences Major
+                    Service: Education
+                Offering:
+                    _name: Economics Major
+                    Service: Education
+                Offering:
+                    _name: English Major
+                    Service: Education
+                Offering:
+                    _name: Environmental Studies Major
+                    Service: Education
+                Offering:
+                    _name: French Major
+                    Service: Education
+                Offering:
+                    _name: German Language and Literature Major
+                    Service: Education
+                Offering:
+                    _name: German Studies Major
+                    Service: Education
+                Offering:
+                    _name: Greek Major
+                    Service: Education
+                Offering:
+                    _name: History Major
+                    Service: Education
+                Offering:
+                    _name: Human Factors (Engineering Psychology) Major
+                    Service: Education
+                Offering:
+                    _name: Interdisciplinary Studies Major
+                    Service: Education
+                Offering:
+                    _name: International Letters and Visual Studies Major
+                    Service: Education
+                Offering:
+                    _name: International Relations Major
+                    Service: Education
+                Offering:
+                    _name: Italian Studies Major
+                    Service: Education
+                Offering:
+                    _name: Japanese Major
+                    Service: Education
+                Offering:
+                    _name: Judaic Studies Major
+                    Service: Education
+                Offering:
+                    _name: Latin Major
+                    Service: Education
+                Offering:
+                    _name: Latin American Studies Major
+                    Service: Education
+                Offering:
+                    _name: Mathematics Major
+                    Service: Education
+                Offering:
+                    _name: Middle Eastern Studies Major
+                    Service: Education
+                Offering:
+                    _name: Music Major
+                    Service: Education
+                Offering:
+                    _name: Peace and Justice Studies Major
+                    Service: Education
+                Offering:
+                    _name: Philosophy Major
+                    Service: Education
+                Offering:
+                    _name: Physics Major
+                    Service: Education
+                Offering:
+                    _name: Political Science Major
+                    Service: Education
+                Offering:
+                    _name: Psychology Major
+                    Service: Education
+                Offering:
+                    _name: Quantitative Economics Major
+                    Service: Education
+                Offering:
+                    _name: Religion Major
+                    Service: Education
+                Offering:
+                    _name: Russian Language and Literature Major
+                    Service: Education
+                Offering:
+                    _name: Russian and Eastern European Studies Major
+                    Service: Education
+                Offering:
+                    _name: Sociology Major
+                    Service: Education
+                Offering:
+                    _name: Spanish Major
+                    Service: Education
+                Offering:
+                    _name: Women’s, Gender, and Sexuality Studies Major
+                    Service: Education
+        Site:
+            _name: School of Engineering

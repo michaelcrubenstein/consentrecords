@@ -31,7 +31,7 @@ def signin(request):
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
 def forgotPassword(request):
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return signin(request)
     
     template = loader.get_template('custom_user/forgotpassword.html')
@@ -44,9 +44,9 @@ def forgotPassword(request):
     })
     return HttpResponse(template.render(context))
 
-# Displays a web page in which a user can specify a new password based on a key.
+# Displays a web page in which a user can change their password.
 def password(request):
-    if not request.user.is_authenticated:
+    if not request.user.is_authenticated():
         return signin(request)
     
     template = loader.get_template('custom_user/password.html')
@@ -58,9 +58,9 @@ def password(request):
     })
     return HttpResponse(template.render(context))
 
+# Displays a web page in which a user can specify a new password based on a key.
 def passwordReset(request):
-    if not request.user.is_authenticated:
-        return signin(request)
+    # Don't rely on authentication.
     
     template = loader.get_template('custom_user/passwordreset.html')
     resetKey = request.GET.get('key', "")
@@ -266,12 +266,44 @@ def newUserResults(request):
 def newUser(request):
     return JsonResponse(newUserResults(results))
 
+def updateUsernameResults(request):
+    results = {'success':False, 'error': 'updateUsername failed'}
+    try:
+        if request.method != "POST":
+            raise Exception("UpdateUsername only responds to POST requests")
+        if not request.user.is_authenticated():
+            raise Exception("The current login is invalid")
+            
+        POST = request.POST;
+        password = POST.get('password', '')
+        newUsername = POST.get('newUsername', '')
+        
+        testUser = authenticate(username=request.user.email, password=password)
+        if testUser is not None:
+            if testUser.is_active:
+                testUser.email = newUsername
+                testUser.save(using=get_user_model().objects._db)
+                login(request, testUser)
+            else:
+                raise AccountDisabledError()
+                # Return a 'disabled account' error message
+        else:
+            raise AuthFailedError()
+
+        results = {'success':True}
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+    
+    return results
+
 def updatePassword(request):
     results = {'success':False, 'error': 'updatePassword failed'}
     try:
         if request.method != "POST":
             raise Exception("UpdatePassword only responds to POST requests")
-        if not request.user.is_authenticated:
+        if not request.user.is_authenticated():
             raise Exception("The current login is invalid")
             
         POST = request.POST;
