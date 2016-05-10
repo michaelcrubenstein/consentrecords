@@ -238,7 +238,7 @@ def addToPathway(request):
     elif serviceName:
         service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
     else:
-    	service = None
+        service = None
         
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -246,12 +246,19 @@ def addToPathway(request):
         'backURL': '/',
     }
     
+    if settings.FACEBOOK_SHOW:
+        args['fbURL'] = request.build_absolute_uri()
+        args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
+        atText = (organizationName if organizationName == siteName else \
+                ('%s//%s' % (organizationName, siteName)) if siteName else organizationName)
+        args['fbDescription'] = atText
+
     if organizationName:
-    	args['organization'] = organization.id if organization else organizationName
+        args['organization'] = organization.id if organization else organizationName
     if siteName:
-    	args['site'] = site.id if site else siteName
+        args['site'] = site.id if site else siteName
     if offeringName:
-    	args['offering'] = offering.id if offering else offeringName
+        args['offering'] = offering.id if offering else offeringName
     if serviceName:
         args['service'] = service.id if service else serviceName
     
