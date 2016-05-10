@@ -115,6 +115,9 @@ Domain
     _name: en - Soccer
     Service Domain: Sports
 Domain
+    _name: en - Somali Culture
+    Service Domain: Humanities
+Domain
     _name: en - Spanish
     Service Domain: Humanities
 Domain
