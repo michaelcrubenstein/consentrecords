@@ -2,7 +2,7 @@
 # python3 data/04dumpconfiguration.py -path Service -user michaelcrubenstein@gmail.com > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Service Domain"' -user michaelcrubenstein@gmail.com > data/servicedomains.txt 
 # python3 data/04dumpconfiguration.py -path Domain -user michaelcrubenstein@gmail.com > data/domains.txt 
-# python3 data/04dumpconfiguration.py -path Stage -user michaelcrubenstein@gmail.com > data/stage.txt 
+# python3 data/04dumpconfiguration.py -path Stage -user michaelcrubenstein@gmail.com > data/stages.txt 
 
 import datetime
 import django
