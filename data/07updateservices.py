@@ -21,3 +21,5 @@ vs = Value.objects.filter(referenceValue=ed, deleteTransaction__isnull=True)
 # Incorporate the Basketball Service into Play Basketball
 # Incorporate the Football Service into Play Football
 # Incorporate the Soccer Service into Play Soccer
+# Incorporate Theater into Theater Role
+

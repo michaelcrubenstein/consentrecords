@@ -22,6 +22,24 @@ Domain
     _name: en - Clarinet Performance
     Service Domain: Arts
 Domain
+    _name: en - Camping
+    Service Domain: Wellness
+Domain
+    _name: en - Computer Applications
+    Service Domain: Science, Technology, Engineering & Math
+Domain
+    _name: en - Computer Hardware
+    Service Domain: Science, Technology, Engineering & Math
+Domain
+    _name: en - Computer Software & Programming
+    Service Domain: Science, Technology, Engineering & Math
+Domain
+    _name: en - Construction
+    Service Domain: Science, Technology, Engineering & Math
+Domain
+    _name: en - Dance
+    Service Domain: Arts
+Domain
     _name: en - Drawing
     Service Domain: Arts
 Domain
@@ -43,14 +61,29 @@ Domain
     _name: en - Guitar
     Service Domain: Arts
 Domain
+    _name: en - Housing
+    Service Domain: Housing
+Domain
     _name: en - Ice Hockey
     Service Domain: Sports
+Domain
+    _name: en - Martial Arts
+    Service Domain: Wellness
 Domain
     _name: en - Lacrosse
     Service Domain: Sports
 Domain
+    _name: en - Leadership
+    Service Domain: Leadership
+Domain
+    _name: en - Life Skills
+    Service Domain: Wellness
+Domain
     _name: en - Math
     Service Domain: Science, Technology, Engineering & Math
+Domain
+    _name: en - Music
+    Service Domain: Arts
 Domain
     _name: en - Oboe Performance
     Service Domain: Arts
