@@ -1,0 +1,306 @@
+##################################################################
+# Connecting to the ec2 instance (ubuntu server)
+##################################################################
+
+-- Documents/BeTheChangeProjects.pem was created to validate access to the server.
+ssh -i Documents/BeTheChangeProjects.pem ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
+
+##################################################################
+# sftp to the ec2 instance (ubuntu server)
+##################################################################
+export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
+sftp -b - -i ~/Development/keys/BeTheChangeProjects.pem ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
+cd eb_django_app/prod/consentrecords
+lcd ~/GitHub/consentrecords
+
+##################################################################
+# Creating a self-sign certificate
+##################################################################
+
+-- REFERENCE: https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs
+
+-- Outputs the public key that corresponds to the private key in the pem file.
+openssl rsa -in Documents/BeTheChangeProjects.pem -pubout > Documents/BeTheChangeProjects.pub
+
+-- Create a .key file and a .crt file for a self-signed certificate or consentrecords certificate.
+openssl req \
+-newkey rsa:2048 -nodes -keyout ~/consentrecords.org.key \
+-out ~/consentrecords.org.csr
+Country Name (2 letter code) [AU]:US
+State or Province Name (full name) [Some-State]:Massachusetts
+Locality Name (eg, city) []:Boston
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:Be The Change, Inc.
+Organizational Unit Name (eg, section) []:Technology
+Common Name (e.g. server FQDN or YOUR name) []:www.consentrecords.org
+Email Address []:mrubenstein@bethechangeinc.org
+
+A challenge password []:XXXX (see LastPass)
+An optional company name []:Be The Change, Inc.
+
+-- Creates a .crt file from a .key file and a .csr file
+openssl x509 \
+-signkey Documents/BeTheChangeInc.org.key \
+-in Documents/BeTheChangeInc.org.csr \
+-req -days 730 -out Documents/BeTheChangeInc.org.crt
+
+##################################################################
+# Installing pip
+##################################################################
+
+-- Displays the current version of python installed.
+-- It must by 2.7 or later to install awscli
+python --version
+
+-- Displays the path to the pip application if it is already installed.
+which pip
+
+-- Installs pip if it isn't already installed.
+curl -O https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+
+-- Installs the aws command line interface (cli)
+-- It is installed on top of python 2.7.
+sudo pip install awscli
+
+-- Installs the aws elastic beanstalk command line interface
+-- It is installed on top of python 2.7.
+sudo pip install awsebcli
+
+-- Installs the MySQL client for python 3
+sudo apt-get install git
+pip3 install --allow-all-external git+git://github.com/multiplay/mysql-connector-python
+
+-- Installs the OAuth2 Library on local system.
+pip3 install django-oauth-toolkit django-cors-headers
+pip3 install django-cors-headers
+
+-- Installs the oauth library on Ubuntu
+-- Make sure the virtualenv is set up.
+sudo apt-get install python3-oauthlib
+pip3 install django-cors-headers
+pip3 install django-oauth-toolkit
+pip3 install django-oauth2-provider
+
+-- Identifies the current version of django
+python3
+import django
+django.get_version()
+
+-- Installs tzlocal, used to get the local timezone
+pip3 install tzlocal
+##################################################################
+# Installing aws cli
+##################################################################
+
+
+-- Configures the aws application.
+-- The AWS Access Key ID and AWS Secret Access Key are created using AWS IAM -> Encryption Keys
+aws configure
+AWS Access Key ID [None]: XXXXX
+AWS Secret Access Key [None]: XXXXX
+Default region name [None]: us-east-1
+Default output format [None]: json
+
+-- Displays the files created by the aws configure command.
+ls ~/.aws
+
+-- Displays the current ec2 instances
+aws ec2 describe-instances
+
+-- Uploads a certificate.
+aws iam upload-server-certificate --server-certificate-name BeTheChangeInc-org-ss-cert --certificate-body file://Development/keys/BeTheChangeInc.org.crt --private-key file://Development/keys/BeTheChangeInc.org.key --certificate-chain file://Development/keys/BeTheChangeInc.org.crt 
+
+##################################################################
+# Upload the certificate from ssl.com for www.consentrecords.org to amazon iam
+##################################################################
+cd ~/Documents
+aws iam upload-server-certificate \
+--server-certificate-name www-consent-records-org-cert-1 \
+--certificate-body file://~/Development/keys/www_consentrecords_org/www_consentrecords_org.crt \
+--private-key file://~/Development/keys/consentrecords.org.key \
+--certificate-chain file://~/Development/keys/www_consentrecords_org/ca-chain-amazon.crt 
+
+-- Sets up a load balancer with the above certificate.
+aws elb create-load-balancer --load-balancer-name btc-load-balancer --listeners "Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=80" "Protocol=HTTPS,LoadBalancerPort=443,InstanceProtocol=HTTPS,InstancePort=443,SSLCertificateId=arn:aws:iam::047227712223:server-certificate/BeTheChangeInc-org-ss-cert" --subnets subnet-58097273 subnet-db9a76e6 subnet-db9a76e6 subnet-db9a76e6 --security-groups sg-eda5398a
+
+##################################################################
+# Create a virtual environment
+##################################################################
+
+virtualenv ~/eb_django_app/prod
+
+##################################################################
+# Create the requirements file for elb
+##################################################################
+
+-- from the eb-django-app directory
+pip3 freeze > requirements.txt
+-- After you do this, you have to prefix the line that contains mysql-connector-python with --allow-external
+sudo nano requirements.txt
+
+##################################################################
+# Create the database schema after it is connected to the mysql database
+##################################################################
+
+python3 manage.py migrate
+python3 manage.py createsuperuser
+
+##################################################################
+For Local Mac setup.
+
+##################################################################
+# Web site for downloading latest version of community server
+##################################################################
+http://dev.mysql.com/downloads/
+
+##################################################################
+# Create a link to the mysql client after installing it on a Mac
+##################################################################
+ln -s -i /usr/local/mysql/bin/mysql /usr/local/bin/mysql
+
+##################################################################
+# Command to launch mysql 
+##################################################################
+mysql -u root -h 127.0.0.1 -p
+
+##################################################################
+# SQL Command to reset password
+##################################################################
+SET PASSWORD = PASSWORD('XXXX')
+
+# Command to create the database
+CREATE DATABASE consentrecordsdev
+  DEFAULT CHARACTER SET utf8
+  DEFAULT COLLATE utf8_general_ci;
+  
+#command to set a variable needed to run properly to a non-default value
+set range_optimizer_max_mem_size=(1536000*3);
+SET GLOBAL range_optimizer_max_mem_size=(1536000*3), SESSION range_optimizer_max_mem_size=(1536000*3);
+
+#command to use the database
+use consentrecordsdev;
+
+##################################################################
+# Update to .bashrc and .bash_profile packages
+##################################################################
+export PATH=/Library/Frameworks/Python.framework/Versions/3.4/bin:$PATH
+
+pip3 install virtualenv
+virtualenv ~/GitHub
+cd ~/GitHub
+. bin/activate
+pip3 install django
+
+##################################################################
+# Set the environment variable DJANGO_SETTINGS_MODULE for collectstatic operation
+##################################################################
+
+export DJANGO_SETTINGS_MODULE=consentrecords.settings
+export PYTHONPATH=~/eb_django_app/prod/consentrecords:$PYTHONPATH
+export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
+
+export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+
+##################################################################
+# How to bring up the development system from a reboot.
+##################################################################
+cd ~/GitHub
+source ./bin/activate
+cd ~/GitHub
+export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+export DJANGO_SETTINGS_MODULE=consentrecords.settings
+cd consentrecords
+python3 manage.py runserver
+
+# Command to launch the mySQL server with the production database.
+mysql -uadmin -p -hbtcdbproduction.cgbhphj40gae.us-east-1.rds.amazonaws.com --database=btcdb
+
+# Command to initialize the bootstrap facts in the database:
+python3 consentrecords/bootstrap.py
+
+##################################################################
+# How to initialize a python session to work with objects.
+##################################################################
+
+import profile
+import getpass
+import django; django.setup()
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from consentrecords.models import *
+from consentrecords import pathparser
+from consentrecords import instancecreator
+from parse import cssparser
+from consentrecords.views import api
+
+user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
+
+##################################################################
+# Python script for updating the reference values:
+##################################################################
+
+i = 0
+for v in Value.objects.all():
+    if i % 10 == 0:
+        print(i)
+    i += 1
+    if Terms.isUUID(v.stringValue):
+        try:
+            v.referenceValue = Instance.objects.get(id=v.stringValue)
+            v.save()
+        except Instance.DoesNotExist:
+            print("Instance %s does not exist" % v.stringValue)
+
+##################################################################
+# Python script for updating the parentValues:
+##################################################################
+
+i = 0
+for v in Value.objects.all():
+    if i % 10 == 0:
+        print(i)
+    i += 1
+    if v.referenceValue and v.referenceValue.parent == v.instance:
+        v.referenceValue.parentValue = v
+        v.referenceValue.save()
+
+##################################################################
+# Python script for running a profile text
+##################################################################
+
+user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
+user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
+q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44%3A%3Areference(Offering)%3ESessions%3ESession%3Anot(%5B%22Registration+Deadline%22%3C%222016-02-02%22%5D)%3A%3Areference(Sessions)%3A%3Areference(Offering)&fields=%5B%22parents%22%5D')
+
+import django; django.setup()
+import profile
+import getpass
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from consentrecords.models import *
+from consentrecords import pathparser
+from consentrecords import instancecreator
+from parse import cssparser
+from consentrecords.views import api
+terms.initialize()
+
+user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
+from django.http import QueryDict
+q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%5D')
+profile.run('api.getData(user, q)')
+
+userInfo = UserInfo(user)
+
+org = Instance.objects.filter(value__stringValue='Organization', value__deleteTransaction__isnull=True)[0]
+fields = Instance.objects.filter(parent__parent=org, deleteTransaction__isnull=True)
+orgs = Instance.objects.filter(typeID=org)
+values = map(lambda m: m._getValues(userInfo), orgs)
+profile.run('vs = list(values)')
+
+q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%5D')
+
+Value.objects.filter(stringValue='_uuname').update(stringValue='_term')
+
+##################################################################
+# Commands to update the EC2 ubuntu with the latest security patches:
+##################################################################
+sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
+sudo reboot

@@ -1,6 +1,8 @@
 # python3 data/04dumpconfiguration.py -path _term -user michaelcrubenstein@gmail.com > data/terms.txt 
 # python3 data/04dumpconfiguration.py -path Service -user michaelcrubenstein@gmail.com > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Service Domain"' -user michaelcrubenstein@gmail.com > data/servicedomains.txt 
+# python3 data/04dumpconfiguration.py -path Domain -user michaelcrubenstein@gmail.com > data/domains.txt 
+# python3 data/04dumpconfiguration.py -path Stage -user michaelcrubenstein@gmail.com > data/stage.txt 
 
 import datetime
 import django
@@ -41,34 +43,39 @@ def writeinstance(i, indent, fieldDataDictionary):
 
 if __name__ == "__main__":
     django.setup()
-
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
-    try:
-        username = sys.argv[sys.argv.index('-user') + 1]
-    except ValueError:
-        username = input('Email Address: ')
-    except IndexError:
-        username = input('Email Address: ')
     
     try:
-        path = sys.argv[sys.argv.index('-path') + 1]
-    except ValueError:
-        path = '_term'
-    except IndexError:
-        path = '_term'
+        timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
+        try:
+            username = sys.argv[sys.argv.index('-user') + 1]
+        except ValueError:
+            username = input('Email Address: ')
+        except IndexError:
+            username = input('Email Address: ')
     
-    password = getpass.getpass("Password: ")
+        try:
+            path = sys.argv[sys.argv.index('-path') + 1]
+        except ValueError:
+            path = input('Path: ')
+        except IndexError:
+            path = input('Path: ')
+    
+        password = getpass.getpass("Password: ")
 
-    user = authenticate(username=username, password=password)
+        user = authenticate(username=username, password=password)
 
-    with transaction.atomic():
-        userInfo = UserInfo(user)
-        fieldDataDictionary = {}
+        with transaction.atomic():
+            userInfo = UserInfo(user)
+            fieldDataDictionary = {}
         
-        terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
-                          .select_related('typeID')\
-                          .select_related('description')\
-                          .order_by('description__text', 'id')
+            terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
+                              .select_related('typeID')\
+                              .select_related('description')\
+                              .order_by('description__text', 'id')
 
-        for term in terms:
-            writeinstance(term, 0, fieldDataDictionary)
+            sys.stderr.write('Count: %s\n'%len(terms))
+            
+            for term in terms:
+                writeinstance(term, 0, fieldDataDictionary)
+    except Exception as e:
+        sys.stderr.write("%s\n" % traceback.format_exc())
