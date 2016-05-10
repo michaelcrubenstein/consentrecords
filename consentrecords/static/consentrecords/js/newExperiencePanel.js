@@ -1070,7 +1070,7 @@ var FromOfferingParentSearchView = (function() {
 			throw ("experience.offeringName unexpectedly set.");
 			
 		this.experience.setOffering(r);
-		if (this.experience.services.length == 0 && instance in r)
+		if (this.experience.services.length == 0 && "instance" in r)
 		{
 			var service = this.experience.addService(r);
 			var panel = new NewExperienceFinishPanel(this.sitePanel.node(), this.experience,
