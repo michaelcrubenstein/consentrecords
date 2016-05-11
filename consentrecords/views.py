@@ -744,7 +744,8 @@ class api:
             results = []
             for termName in a:
                 term = terms[termName]
-                uuObjects = Instance.objects.filter(typeID=term)
+                uuObjects = Instance.objects.filter(typeID=term, 
+                                                    deleteTransaction__isnull=True)
                 
                 if len(testValue) >= 3:
                     vFilter = Value.objects.filter(field=terms.name, 
