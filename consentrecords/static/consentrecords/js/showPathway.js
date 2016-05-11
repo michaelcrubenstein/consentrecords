@@ -398,10 +398,10 @@ var PickOrCreateOfferingPanel = (function () {
 	return PickOrCreateOfferingPanel;
 })();
 
-var PickOrCreateMarkerPanel = (function () {
-	PickOrCreateMarkerPanel.prototype = new PickOrCreatePanel();
+var PickOrCreateTagPanel = (function () {
+	PickOrCreateTagPanel.prototype = new PickOrCreatePanel();
 	
-	function PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done)
+	function PickOrCreateTagPanel(previousPanelNode, pickDatum, createDatum, done)
 	{
 		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
 		
@@ -411,7 +411,7 @@ var PickOrCreateMarkerPanel = (function () {
 		}
 	}
 	
-	return PickOrCreateMarkerPanel;
+	return PickOrCreateTagPanel;
 })();
 
 var PickOrCreateValue = (function() {
@@ -892,7 +892,7 @@ var OfferingServiceCell = (function () {
 	}
 	
 	function OfferingServiceCell(offeringCell) {
-		var field = {capacity: "_multiple values", name: "Marker", label: "Markers"};
+		var field = {capacity: "_multiple values", name: "Tag", label: "Tags"};
 		cr.Cell.call(this, field);
 		this.offeringCell = offeringCell;
 	}
@@ -900,24 +900,24 @@ var OfferingServiceCell = (function () {
 	return OfferingServiceCell;
 })();
 
-var MyMarkersCell = (function () {
-	MyMarkersCell.prototype = new PickOrCreateCell();
+var MyTagsCell = (function () {
+	MyTagsCell.prototype = new PickOrCreateCell();
 	
-	MyMarkersCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
+	MyTagsCell.prototype.showPickOrCreatePanel = function(pickDatum, createDatum, previousPanelNode)
 	{
 		var _this = this;
 		var done = function(d, i)
 		{
 			_this.pickedObject(d);
 		}
-		this.editPanel = new PickOrCreateMarkerPanel(previousPanelNode, pickDatum, createDatum, done);
+		this.editPanel = new PickOrCreateTagPanel(previousPanelNode, pickDatum, createDatum, done);
 	}
 	
-	function MyMarkersCell(pickCell, createCell) {
-		var field = {capacity: "_multiple values", name: "marker", label: "My Markers"};
+	function MyTagsCell(pickCell, createCell) {
+		var field = {capacity: "_multiple values", name: "tag", label: "My Tags"};
 		PickOrCreateCell.call(this, pickCell, createCell, field);
 	}
-	return MyMarkersCell;
+	return MyTagsCell;
 })();
 
 var EditExperiencePanel = (function () {
@@ -954,7 +954,7 @@ var EditExperiencePanel = (function () {
 					panel2Div.handleDoneEditingButton.call(this,
 						function()
 						{
-							myMarkersCell.data.forEach(function(d)
+							myTagsCell.data.forEach(function(d)
 								{ d.removeUnusedValue(); });
 						});
 				})
@@ -1013,8 +1013,8 @@ var EditExperiencePanel = (function () {
 		
 		var serviceCell = experience.getCell("Service");
 		var userServiceCell = experience.getCell("User Entered Service");
-		var myMarkersCell = new MyMarkersCell(serviceCell, userServiceCell);
-		var sections = this.showEditCells([myMarkersCell]);
+		var myTagsCell = new MyTagsCell(serviceCell, userServiceCell);
+		var sections = this.showEditCells([myTagsCell]);
 	}
 	
 	return EditExperiencePanel;

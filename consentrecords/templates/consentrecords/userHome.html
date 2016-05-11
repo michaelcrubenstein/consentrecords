@@ -558,9 +558,9 @@
 					done: function(services)
 					{
 						if (services.length == 0)
-							asyncFailFunction("The specified marker does not exist or you do not have permission to view it.");
+							asyncFailFunction("The specified tag does not exist or you do not have permission to view it.");
 						else if (services[0].typeName != "Service")
-							asyncFailFunction("The specified marker does not appear to be an marker.");
+							asyncFailFunction("The specified tag does not appear to be an tag.");
 						else
 							done([{instance: services[0]}]);
 					},
