@@ -78,7 +78,7 @@ function showSessionDetails(session, service, previousPanelNode)
 	crp.pushCheckCells(offering, undefined, function()
 		{
 			var serviceCell = offering.getCell("Service");
-			serviceCell.field.label = "Markers";
+			serviceCell.field.label = "Tags";
 			if (!service && serviceCell.data.length > 0)
 				service = serviceCell.data[0];
 				
@@ -313,7 +313,7 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.marker.instanceID);
+		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.instanceID);
 		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
 		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)
@@ -335,7 +335,7 @@ var PickOfferingSearchView = (function () {
 					{
 						showClickFeedback(this);
 
-						var sitePanel = showSessionDetails(session, _this.marker, _this.sitePanel.node());
+						var sitePanel = showSessionDetails(session, _this.tag, _this.sitePanel.node());
 	
 						showPanelLeft(sitePanel.node(), unblockClick);
 					}
@@ -356,12 +356,12 @@ var PickOfferingSearchView = (function () {
 	
 	PickOfferingSearchView.prototype.noResultString = function()
 	{
-		return "There are no upcoming opportunities for {0}.".format(this.marker.getDescription());
+		return "There are no upcoming opportunities for {0}.".format(this.tag.getDescription());
 	}
 	
-	function PickOfferingSearchView(sitePanel, marker)
+	function PickOfferingSearchView(sitePanel, tag)
 	{
-		this.marker = marker;
+		this.tag = tag;
 		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
@@ -372,7 +372,7 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.offeringID = null;
 	
-	function PickOfferingPanel(marker, offeringID, previousPanel) {
+	function PickOfferingPanel(tag, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -383,7 +383,7 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		var searchView = new PickOfferingSearchView(this, marker);
+		var searchView = new PickOfferingSearchView(this, tag);
 		$(this.node()).one("revealing.cr", function() { 
 				searchView.search(""); 
 				searchView.inputBox.focus();

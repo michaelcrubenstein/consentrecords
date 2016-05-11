@@ -1346,7 +1346,7 @@ var Pathtree = (function () {
 			maxWidth = rectWidth - iconAreaWidth - (this.textDetailLeftMargin * 2);
 		}
 
-		s = getMarkerList(fd.experience);
+		s = getTagList(fd.experience);
 		if (s && s.length > 0)
 		{
 			var text = d3.select(this),
@@ -1354,7 +1354,7 @@ var Pathtree = (function () {
 				word,
 				line = [];
 			checkSpacing("4px");
-			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true);
+			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true);
 			while (word = words.pop()) {
 			  line.push(word);
 			  tspan.text(line.join(" "));
@@ -1363,7 +1363,7 @@ var Pathtree = (function () {
 				tspan.text(line.join(" "));
 				tspan.attr("dy", this.detailTextSpacing);
 				line = [word];
-				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('markers', true).text(word);
+				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true).text(word);
 			  }
 			}
 			tspan.attr("dy", this.detailTextSpacing);

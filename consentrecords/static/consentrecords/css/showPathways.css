@@ -32,7 +32,7 @@
 		fill: #555;
 	}
 	
-	panel.pathway tspan.markers {
+	panel.pathway tspan.tags {
 		font-size: smaller;
 		fill: #555;
 	}

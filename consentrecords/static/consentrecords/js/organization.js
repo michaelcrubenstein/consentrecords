@@ -308,7 +308,7 @@ function getPickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
-function getMarkerList(experience)
+function getTagList(experience)
 {
 	var names = [];
 	

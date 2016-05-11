@@ -209,7 +209,7 @@ var Experience = (function() {
 		return null;
 	}
 	
-	Experience.prototype.getMarkerList = function()
+	Experience.prototype.getTagList = function()
 	{
 		var names = [];
 	
@@ -266,11 +266,11 @@ var Experience = (function() {
 			}
 		}
 
-		var s = this.getMarkerList();
+		var s = this.getTagList();
 		if (s.length > 0)
 		{
 			header.append('div')
-				.classed('markers', true)
+				.classed('tags', true)
 				.text(s);
 		}
 	}
@@ -713,7 +713,7 @@ var ServiceSearchView = (function() {
 	function ServiceSearchView(experience, sitePanel)
 	{
 		this.initialTypeName = "Service";
-		MultiTypeSearchView.call(this, sitePanel, experience, "Marker");
+		MultiTypeSearchView.call(this, sitePanel, experience, "Tag");
 		
 		var _this = this;
 		this.customButton = appendViewButtons(this.appendButtonContainers(["Service"]), 
@@ -1008,7 +1008,7 @@ var FromServiceSearchView = (function() {
 	return FromServiceSearchView;
 })();
 
-/* This is an intermediate panel for the workflow. The experience contains a marker and nothing else. 
+/* This is an intermediate panel for the workflow. The experience contains a tag and nothing else. 
 	From here, the user can specify an organization, a known site, a known offering.
  */
 var NewExperienceFromServicePanel = (function () {
@@ -1131,7 +1131,7 @@ var FromOfferingParentSearchView = (function() {
 						}
 				)
 				.on("click", function(d, i) {
-					if (prepareClick('click', 'Set Custom Marker'))
+					if (prepareClick('click', 'Set Custom Tag'))
 					{
 						_this.showFinishPanel({text: _this.inputText() });
 					}
@@ -1327,7 +1327,7 @@ var FromOrganizationSearchView = (function() {
 		var placeHolder = (experience.organization ? "{0}, {1}" : "{1}").format(experience.getSiteLabel(), 
 											experience.getOfferingLabel());
 		if (experience.services.length == 0)
-			placeHolder += ", Marker";
+			placeHolder += ", Tag";
 		
 		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
@@ -1361,9 +1361,9 @@ var FromOrganizationSearchView = (function() {
 })();
 
 /* This is an intermediate panel for the workflow. The experience contains an organization or an organizationName.
-	The experience may or may not also have a marker. 
+	The experience may or may not also have a tag. 
 	From here, the user can specify, if the organization is known, a site or offering within that organization. 
-	If the experience has no marker, the user can specify a known marker or a custom marker.
+	If the experience has no tag, the user can specify a known tag or a custom tag.
  */
 var NewExperienceFromOrganizationPanel = (function () {
 	NewExperienceFromOrganizationPanel.prototype = new NewExperienceBasePanel();
@@ -1534,7 +1534,7 @@ var FromSiteSearchView = (function() {
 		
 		var placeHolder = experience.getOfferingLabel();
 		if (experience.services.length == 0)
-			placeHolder += ", Marker";
+			placeHolder += ", Tag";
 		
 		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
@@ -1560,8 +1560,8 @@ var FromSiteSearchView = (function() {
 	return FromSiteSearchView;
 })();
 
-/* This is an intermediate panel for the workflow. the experience contains a site or a siteName, but no offering or marker. 
-	From here, the user can specify a known marker, custom marker or, if the site is known, 
+/* This is an intermediate panel for the workflow. the experience contains a site or a siteName, but no offering or tag. 
+	From here, the user can specify a known tag, custom tag or, if the site is known, 
 	an offering within that site.
  */
 var NewExperienceFromSitePanel = (function () {
@@ -1626,7 +1626,7 @@ var ReportedObject = function () {
     return ReportedObject;
 }();
 
-/* This panel is called from the NewExperiencesMarkersPanel to pick a new marker or change to a marker.
+/* This panel is called from the NewExperiencesTagsPanel to pick a new tag or change to a tag.
  */
 var PickServicePanel = (function () {
 	PickServicePanel.prototype = new SitePanel();
@@ -1643,7 +1643,7 @@ var PickServicePanel = (function () {
 
 	function PickServicePanel(previousPanelNode, rootObjects, oldReportedObject, experience, success)
 	{
-		var header = oldReportedObject ? "Marker" : "New Marker";
+		var header = oldReportedObject ? "Tag" : "New Tag";
 		SitePanel.call(this, previousPanelNode, rootObjects, header, "list");
 		var _this = this;
 
@@ -1760,14 +1760,14 @@ var PickServicePanel = (function () {
 	return PickServicePanel;
 })();
 
-/* This is the panel that appears from the final panel to add markers, if desired */
-var NewExperienceMarkersPanel = (function () {
-	NewExperienceMarkersPanel.prototype = new SitePanel();
-	NewExperienceMarkersPanel.prototype.experience = null;
+/* This is the panel that appears from the final panel to add tags, if desired */
+var NewExperienceTagsPanel = (function () {
+	NewExperienceTagsPanel.prototype = new SitePanel();
+	NewExperienceTagsPanel.prototype.experience = null;
 	
-	function NewExperienceMarkersPanel(previousPanelNode, experience, done)
+	function NewExperienceTagsPanel(previousPanelNode, experience, done)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Markers", "edit new-experience-markers");
+		SitePanel.call(this, previousPanelNode, null, "Tags", "edit new-experience-tags");
 
 		var _this = this;
 		var navContainer = this.appendNavContainer();
@@ -1785,23 +1785,20 @@ var NewExperienceMarkersPanel = (function () {
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("span").text(" " + previousPanelNode.getAttribute("headerText"));
 		
-		navContainer.appendTitle("Markers");
+		navContainer.appendTitle("Tags");
 		
 		var panel2Div = this.appendScrollArea();
 
 		var header = panel2Div.append('section')
 			.append('p');
 		
-		if (experience.offering && experience.offering.getCell("Service").data.length > 0)
-			header.text("Markers indicate the type or the benefit of this experience.");
-		else
-			header.text("Some experiences need more than one marker, such as being the captain of a soccer team or getting a summer job working with computers.");
+		header.text("Tags indicate the type or the benefit of this experience.");
 
 		var obj = panel2Div.append('section')
 			.classed("cell edit multiple", true);
 		
 		var labelDiv = obj.append('label')
-			.text("Markers");
+			.text("Tags");
 		
 		var itemsDiv = obj.append("ol")
 			.classed("border-above", true);
@@ -1809,7 +1806,7 @@ var NewExperienceMarkersPanel = (function () {
 		var clickFunction;
 		clickFunction = function(d) {
 				var _thisButton = this;
-				if (prepareClick('click', 'marker: ' + d.getDescription()))
+				if (prepareClick('click', 'tag: ' + d.getDescription()))
 				{
 					crp.getData({path: "Service", 
 					done: function(rootObjects)
@@ -1884,7 +1881,7 @@ var NewExperienceMarkersPanel = (function () {
 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 			.on("click", function(cell) {
 				var _thisButton = this;
-				if (prepareClick('click', 'add marker'))
+				if (prepareClick('click', 'add tag'))
 				{
 					crp.getData({path: "Service", 
 					done: function(rootObjects)
@@ -1902,7 +1899,7 @@ var NewExperienceMarkersPanel = (function () {
 			})
 			.append("div").classed("pull-left", true);
 		buttonDiv.append("span").classed("glyphicon glyphicon-plus", true);
-		buttonDiv.append("span").text(" add marker");
+		buttonDiv.append("span").text(" add tag");
 	
 		this.onReveal = function()
 		{
@@ -1913,13 +1910,13 @@ var NewExperienceMarkersPanel = (function () {
 	
 	}
 	
-	return NewExperienceMarkersPanel;
+	return NewExperienceTagsPanel;
 })();
 
 /* This is the exit panel for the workflow. The experience contains either an organization or organizationName
 	as well as at least one service. It may also contain a site and/or an offering.
 	
-	This panel can modify the markers and set the start and end dates. */
+	This panel can modify the tags and set the start and end dates. */
 var NewExperienceFinishPanel = (function () {
 	NewExperienceFinishPanel.prototype = new NewExperienceBasePanel();
 	NewExperienceFinishPanel.prototype.experience = null;
@@ -2067,11 +2064,11 @@ var NewExperienceFinishPanel = (function () {
 				$chevron.height($dateRow.height());	/* Force them to the same height. */
 			});
 		
-		this.appendActionButton("Markers", function()
+		this.appendActionButton("Tags", function()
 			{
-				if (prepareClick('click', 'new NewExperienceMarkersPanel'))
+				if (prepareClick('click', 'new NewExperienceTagsPanel'))
 				{
-					var panel = new NewExperienceMarkersPanel(_this.node(), experience,
+					var panel = new NewExperienceTagsPanel(_this.node(), experience,
 						function()
 						{
 							experienceView.selectAll('*').remove();
@@ -2210,7 +2207,7 @@ var NewExperienceSearchView = (function() {
 	{
 		this.initialTypeName = '"Service Domain"';
 		this.typeName = this.initialTypeName;
-		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Marker", function(buttons) { _this.appendDescriptions(buttons); })
+		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Tag", function(buttons) { _this.appendDescriptions(buttons); })
 		
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButton = appendViewButtons(sections, 
