@@ -1059,14 +1059,21 @@ cr.ObjectValue = (function() {
 						function(json)
 						{
 							if (json.success) {
-								field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
-								var oldCell = {field: field, data: json.objects};
-								if (!_this.cells)
-									_this.cells = [];
-								cell = _this.importCell(oldCell);
+								try
+								{
+									field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
+									var oldCell = {field: field, data: json.objects};
+									if (!_this.cells)
+										_this.cells = [];
+									cell = _this.importCell(oldCell);
 								
-								done(cell.data);
-								crp.queue.next();
+									done(cell.data);
+									crp.queue.next();
+								}
+								catch (err)
+								{
+									fail(err);
+								}
 							}
 							else {
 								fail(json.error);
