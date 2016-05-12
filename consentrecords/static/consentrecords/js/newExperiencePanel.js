@@ -661,8 +661,13 @@ var ServiceSearchView = (function() {
 	
 	ServiceSearchView.prototype.searchPath = function(val)
 	{
-		var path = '#{0}::reference(Service)'.format(this.experience.serviceDomain.getValueID());
-			
+		var path;
+		
+		if (this.experience.serviceDomain)
+			path = '#{0}::reference(Domain)::reference(Service)'.format(this.experience.serviceDomain.getValueID());
+		else if (this.experience.stage)
+			path = '#{0}::reference(Service)'.format(this.experience.stage.getValueID());
+		
 		if (!val)
 			return path;
 		else if (val.length < 3)
@@ -2100,6 +2105,16 @@ var NewExperienceSearchView = (function() {
 				this.experience.serviceDomain = d;
 				var panel = new NewExperienceServicePanel(this.sitePanel.node(), this.experience,
 					function() { this.serviceDomain = null; });
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
+		else if (d.typeName === 'Stage')
+		{
+			if (prepareClick('click', 'stage: ' + d.getDescription()))
+			{
+				this.experience.stage = d;
+				var panel = new NewExperienceServicePanel(this.sitePanel.node(), this.experience,
+					function() { this.stage = null; });
 				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
