@@ -17,7 +17,9 @@ from consentrecords import pathparser
 from consentrecords import instancecreator
 
 def removeService(name, check, transactionState):
-    service = Instance.objects.get(typeID=terms['Service'],description__text=name)
+    service = Instance.objects.get(typeID=terms['Service'],
+                                   deleteTransaction__isnull=True,
+                                   description__text=name)
     vs = Value.objects.filter(referenceValue=service, deleteTransaction__isnull=True)
 
     print('%s Service: %s'%(name, vs.count()))
@@ -28,6 +30,7 @@ def removeService(name, check, transactionState):
     if not check:
         for v in vs:
             v.markAsDeleted(transactionState)
+        service.markAsDeleted(transactionState)
             
 if __name__ == "__main__":
     django.setup()
