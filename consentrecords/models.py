@@ -108,16 +108,19 @@ class Instance(dbmodels.Model):
         
         dt = self.getDataType(field)
         if dt==terms.objectEnum:
-            if "instanceID" in value:
+            if isinstance(value, Instance):
+                if value._canFind(transactionState.user):
+                    self.addReferenceValue(field, value, position, transactionState)
+                else:
+                    raise Instance.DoesNotExist()
+            elif isinstance(value, dict) and "instanceID" in value:
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
                 if len(f) == 0:
                     raise Value.DoesNotExist("specified primary key for instance does not exist")
                 value = f[0]
-            elif not isinstance(value, Instance):
-                raise RuntimeError("specified value is not an Instance or an instanceID")
-            elif not value._canFind(transactionState.user):
-                raise Instance.DoesNotExist()
-            return self.addReferenceValue(field, value, position, transactionState)
+                self.addReferenceValue(field, value, position, transactionState)
+            else:
+                raise RuntimeError("specified value is not an Instance or a dictionary with an instanceID")
         elif dt==terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
