@@ -2198,14 +2198,6 @@ var NewExperienceSearchView = (function() {
 	NewExperienceSearchView.prototype.searchPath = function(val)
 	{
 		return '::NewExperience:'+val;
-// 		var path = this.typeName;
-// 			
-// 		if (!val)
-// 			return path;
-// 		else if (val.length < 3)
-// 			return '{1}[_name^="{0}"]'.format(val, path);
-// 		else
-// 			return '{1}[_name*="{0}"]'.format(val, path);
 	}
 	
 	NewExperienceSearchView.prototype.textChanged = function()
