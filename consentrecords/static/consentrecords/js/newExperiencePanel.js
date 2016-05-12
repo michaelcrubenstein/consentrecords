@@ -2214,7 +2214,7 @@ var NewExperienceSearchView = (function() {
 	{
 		this.initialTypeName = '"Service Domain"';
 		this.typeName = this.initialTypeName;
-		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Tag", function(buttons) { _this.appendDescriptions(buttons); })
+		MultiTypeSearchView.call(this, sitePanel, experience, "Search", function(buttons) { _this.appendDescriptions(buttons); })
 		
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButton = appendViewButtons(sections, 
