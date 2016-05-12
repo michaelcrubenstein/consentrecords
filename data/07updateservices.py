@@ -16,16 +16,24 @@ from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
-def removeService(name, check, transactionState):
-    service = Instance.objects.get(typeID=terms['Service'],
-                                   deleteTransaction__isnull=True,
-                                   description__text=name)
+def removeService(typeName, name, check, transactionState):
+    try:
+        service = Instance.objects.get(typeID=terms[typeName],
+                                       deleteTransaction__isnull=True,
+                                       description__text=name)
+    except Instance.DoesNotExist:
+        return
     vs = Value.objects.filter(referenceValue=service, deleteTransaction__isnull=True)
 
-    print('%s Service: %s'%(name, vs.count()))
-    print('    Total: %s'%vs.count())
-    print("    Offerings: %s"%vs.filter(instance__typeID=terms['Offering']).count())
-    print("    More Experiences: %s"%vs.filter(instance__typeID=terms['More Experience']).count())
+    print('%s %s: %s'%(name, typeName, vs.count()))
+    countServices = vs.filter(instance__typeID=terms['Service']).count()
+    if countServices: print("    Service: %s"%countServices)
+
+    countOfferings = vs.filter(instance__typeID=terms['Offering']).count()
+    if countOfferings: print("    Offerings: %s"%countOfferings)
+
+    countExperiences = vs.filter(instance__typeID=terms['More Experience']).count()
+    if countExperiences: print("    More Experiences: %s"%countExperiences)
     
     if not check:
         for v in vs:
@@ -51,7 +59,10 @@ if __name__ == "__main__":
         
         with transaction.atomic():
             transactionState = None if check else TransactionState(user, timezoneoffset)
-            removeService('Education', check, transactionState)
+            removeService('Service', 'Education', check, transactionState)
+            removeService('Service Domain', 'XCareer & Finance', check, transactionState)
+            removeService('Service Domain', 'XExtra Curricular', check, transactionState)
+            removeService('Service Domain', 'XHelping Out', check, transactionState)
                     
     except Exception as e:
         print("%s" % traceback.format_exc())# Incorporate the Basketball Service into Play Basketball
