@@ -570,11 +570,16 @@ _term
 _term
     _name: Stage
     _configuration
+        _name: Boston
         _field
             _name: _name
             _data type: _translation
             _max capacity: _multiple values
             _descriptor type: _by text
+        _field
+            _name: Color
+            _data type: _string
+            _max capacity: _unique value
 _term
     _name: Start
 _term

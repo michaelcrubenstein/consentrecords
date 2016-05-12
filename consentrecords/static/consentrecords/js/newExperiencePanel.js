@@ -661,8 +661,13 @@ var ServiceSearchView = (function() {
 	
 	ServiceSearchView.prototype.searchPath = function(val)
 	{
-		var path = '#{0}::reference(Service)'.format(this.experience.serviceDomain.getValueID());
-			
+		var path;
+		
+		if (this.experience.serviceDomain)
+			path = '#{0}::reference(Domain)::reference(Service)'.format(this.experience.serviceDomain.getValueID());
+		else if (this.experience.stage)
+			path = '#{0}::reference(Service)'.format(this.experience.stage.getValueID());
+		
 		if (!val)
 			return path;
 		else if (val.length < 3)
@@ -2103,6 +2108,16 @@ var NewExperienceSearchView = (function() {
 				showPanelLeft(panel.node(), unblockClick);
 			}
 		}
+		else if (d.typeName === 'Stage')
+		{
+			if (prepareClick('click', 'stage: ' + d.getDescription()))
+			{
+				this.experience.stage = d;
+				var panel = new NewExperienceServicePanel(this.sitePanel.node(), this.experience,
+					function() { this.stage = null; });
+				showPanelLeft(panel.node(), unblockClick);
+			}
+		}
 		else if (d.typeName === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
@@ -2183,14 +2198,6 @@ var NewExperienceSearchView = (function() {
 	NewExperienceSearchView.prototype.searchPath = function(val)
 	{
 		return '::NewExperience:'+val;
-// 		var path = this.typeName;
-// 			
-// 		if (!val)
-// 			return path;
-// 		else if (val.length < 3)
-// 			return '{1}[_name^="{0}"]'.format(val, path);
-// 		else
-// 			return '{1}[_name*="{0}"]'.format(val, path);
 	}
 	
 	NewExperienceSearchView.prototype.textChanged = function()
@@ -2207,7 +2214,7 @@ var NewExperienceSearchView = (function() {
 	{
 		this.initialTypeName = '"Service Domain"';
 		this.typeName = this.initialTypeName;
-		MultiTypeSearchView.call(this, sitePanel, experience, "Place, Program, Tag", function(buttons) { _this.appendDescriptions(buttons); })
+		MultiTypeSearchView.call(this, sitePanel, experience, "Search", function(buttons) { _this.appendDescriptions(buttons); })
 		
 		var sections = this.appendButtonContainers(["Organization"]);
 		this.organizationButton = appendViewButtons(sections, 

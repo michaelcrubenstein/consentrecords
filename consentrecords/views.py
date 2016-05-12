@@ -738,9 +738,9 @@ class api:
             testValue = path[len('::NewExperience:'):]
             
             if len(testValue) > 0:
-                a = ["Service Domain", "Service", "Offering", "Site", "Organization"]
+                a = ["Service Domain", "Stage", "Service", "Offering", "Site", "Organization"]
             else:
-                a = ["Service Domain"]
+                a = ["Service Domain", "Stage"]
             results = []
             for termName in a:
                 term = terms[termName]
