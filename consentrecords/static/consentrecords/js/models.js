@@ -1286,8 +1286,15 @@ cr.selectAll = function(args)
 			function(json)
 			{
 				if (json.success) {
-					var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
-					args.done(instances);
+					try
+					{
+						var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
+						args.done(instances);
+					}
+					catch(err)
+					{
+						args.fail(err);
+					}
 				}
 				else {
 					args.fail(json.error);
@@ -1335,12 +1342,19 @@ cr.getValues = function (args)
 			function(json)
 			{
 				if (json.success) {
-					var newObjects = json.objects.map(function(v)
+					try
 					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});
+						var newObjects = json.objects.map(function(v)
+						{
+							return cr.ObjectCell.prototype.copyValue(v);
+						});
 					
-					args.done(newObjects);
+						args.done(newObjects);
+					}
+					catch(err)
+					{
+						args.fail(err);
+					}
 				}
 				else
 				{
@@ -1478,19 +1492,26 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 				{
 					if (json.success)
 					{
-						if (successFunction) 
+						try
 						{
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData = new cr.ObjectValue();
-							/* If there is a container, then the id in newData will contain
-								the id of the value object in the database. */
-							if (containerUUID)
-								newData.id = json.object.id;
-							newData.instanceID = json.object.instanceID;
-							newData.setDescription(json.object.description);
-							successFunction(newData);
+							if (successFunction) 
+							{
+								/* Copy the data from json object into newData so that 
+									any functions are properly initialized.
+								 */
+								var newData = new cr.ObjectValue();
+								/* If there is a container, then the id in newData will contain
+									the id of the value object in the database. */
+								if (containerUUID)
+									newData.id = json.object.id;
+								newData.instanceID = json.object.instanceID;
+								newData.setDescription(json.object.description);
+								successFunction(newData);
+							}
+						}
+						catch(err)
+						{
+							failFunction(err);
 						}
 					}
 					else
