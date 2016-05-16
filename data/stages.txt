@@ -1,22 +1,33 @@
 Stage
     _name: en - Certificate
+    Color: #2828E7
 Stage
     _name: en - Coaching
+    Color: #D55900
 Stage
     _name: en - Expert
+    Color: #805050
 Stage
     _name: en - Mentoring
+    Color: #D55900
 Stage
     _name: en - Studying
+    Color: #2828E7
 Stage
     _name: en - Teaching
+    Color: #805050
 Stage
     _name: en - Training
+    Color: #8328E7
 Stage
     _name: en - Tutoring
+    Color: #D55900
 Stage
     _name: en - Volunteering
+    Color: #D55900
 Stage
     _name: en - Whatever
+    Color: #8328E7
 Stage
     _name: en - Working
+    Color: #805050
