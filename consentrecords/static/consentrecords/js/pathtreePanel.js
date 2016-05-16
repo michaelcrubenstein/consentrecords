@@ -1842,7 +1842,6 @@ var Pathtree = (function () {
 	Pathtree.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
-		experience.typeName = "More Experience";
 		
 		this.checkOfferingCells(experience);
 		
@@ -1961,7 +1960,7 @@ var Pathtree = (function () {
 	Pathtree.prototype.onExperienceAdded = function(eventObject, newData)
 	{
 		var _this = this;
-		crp.pushCheckCells(newData, undefined, 
+		crp.pushCheckCells(newData, ["type"], 
 			function() {
 				function addExperience() {
 					_this.addMoreExperience(newData);
