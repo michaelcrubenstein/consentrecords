@@ -267,6 +267,70 @@ var FlagData = (function() {
 		this.spanWidth = this.width + (maxRightSpan === 0.0 ? 0.0 : maxRightSpan + this.flagSpacing);
 	}
 	
+	FlagData.prototype.getService = function()
+	{
+		var offering = this.experience.getValue("Offering");
+		if (offering && offering.getValueID())
+		{
+			var service = offering.getValue("Service");
+			if (service)
+				return service;
+		}
+		return this.experience.getValue("Service");
+	}
+	
+	FlagData.prototype.getServiceDomain = function()
+	{
+		var service = this.getService();
+		if (!service)
+			return null;
+		service = crp.getInstance(service.getValueID());
+		var domain = service.getValue("Domain");
+		if (domain)
+			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
+			if (sd)
+				return sd;
+		return service.getValue("Service Domain");
+	}
+
+	FlagData.prototype.getStage = function()
+	{
+		var service = this.getService();
+		return service && crp.getInstance(service.getValueID()).getValue("Stage")
+	}
+
+	FlagData.prototype.getColumn = function()
+	{
+		var sd = this.getServiceDomain();
+		if (sd && sd.getDescription() == "Housing")
+			return 0;
+		var stage = this.getStage();
+		var stageDescription = stage && stage.getDescription();
+		if (stageDescription)
+		{
+		if (["Studying", "Training", "Certificate"].indexOf(stageDescription) >= 0)
+			return 1;
+		if (["Working", "Teaching", "Expert"].indexOf(stageDescription) >= 0)
+			return 2;
+		if (["Mentoring", "Tutoring", "Coaching", "Volunteering"].indexOf(stageDescription) >= 0)
+			return 3;
+		}
+		if (sd && sd.getDescription() == "Wellness")
+			return 4;
+		/* Whatever/ Other */
+		return 5;
+	}
+	
+	FlagData.prototype.getStartDate = function()
+	{
+		return this.experience.getDatum("Start");
+	}
+	
+	FlagData.prototype.getEndDate = function()
+	{
+		return this.experience.getDatum("End") || new Date().toISOString().substr(0, 10);
+	}
+	
 	function FlagData(experience)
 	{
 		this.experience = experience;
@@ -338,62 +402,21 @@ var Pathtree = (function () {
 		.y(function(d) { return d.y; })
 		.interpolate("linear");
 
-	Pathtree.prototype.getService = function(experience)
+	Pathtree.prototype._compareExperiences = function(a, b)
 	{
-		var offering = experience.getValue("Offering");
-		if (offering && offering.getValueID())
-		{
-			var service = offering.getValue("Service");
-			if (service)
-				return service;
-		}
-		return experience.getValue("Service");
-	}
-	
-	Pathtree.prototype.getServiceDomain = function(experience)
-	{
-		var service = this.getService(experience);
-		return service && crp.getInstance(service.getValueID()).getValue("Service Domain")
-	}
-
-	Pathtree.prototype._compareExperiences = function(a, b, ordered)
-	{
-		var aServiceDomain = this.getServiceDomain(a);
-		var bServiceDomain = this.getServiceDomain(b);
-		if (!bServiceDomain)
-		{
-			if (aServiceDomain) return -1;
-		}
-		else if (!aServiceDomain)
-			return 1;
-		else
-		{
-			var aDescription = aServiceDomain.getDescription();
-			var bDescription = bServiceDomain.getDescription();
-			var aOrder = ordered.indexOf(aDescription);
-			var bOrder = ordered.indexOf(bDescription);
-			if (aOrder < 0) 
-			{
-				ordered.push(aDescription);
-				aOrder = ordered.length;
-			}
-			if (bOrder < 0)
-			{
-				ordered.push(bDescription);
-				bOrder = ordered.length;
-			}
-			if (aOrder != bOrder)
-				return aOrder - bOrder;
-		}
+		var aOrder = a.column;
+		var bOrder = b.column;
+		if (aOrder != bOrder)
+			return aOrder - bOrder;
 		
-		var aStartDate = getStartDate(a);
-		var bStartDate = getStartDate(b);
+		var aStartDate = a.getStartDate();
+		var bStartDate = b.getStartDate();
 		if (aStartDate > bStartDate) return 1;
 		else if (aStartDate < bStartDate) return -1;
 		else
 		{
-			var aEndDate = getEndDate(a);
-			var bEndDate = getEndDate(b);
+			var aEndDate = a.getEndDate();
+			var bEndDate = b.getEndDate();
 			if (aEndDate > bEndDate) return 1;
 			else if (aEndDate < bEndDate) return -1;
 			else return 0;
@@ -412,10 +435,10 @@ var Pathtree = (function () {
 		return this.DateToY(Date.parse(getEndDate(fd.experience)));
 	}
 
-	Pathtree.prototype.getExperienceHeight = function(experience)
+	Pathtree.prototype.getExperienceHeight = function(fd)
 	{
-		var startDate = getStartDate(experience);
-		var endDate = getEndDate(experience);
+		var startDate = fd.getStartDate();
+		var endDate = fd.getEndDate();
 		var days = (new TimeSpan(Date.parse(endDate)-Date.parse(startDate))).days;
 		return days * this.dayHeight;
 	}
@@ -875,36 +898,23 @@ var Pathtree = (function () {
 		
 		var _thisPathway = this;
 		
-		var ordered = ["Housing", "Education", "Extra Curricular", "Wellness", "Career & Finance", "Helping Out"];
+		g.each(function(fd)
+		{
+			fd.column = fd.getColumn();
+		});
+		numColumns = g.data().map(function(fd) { return fd.column; })
+							 .reduce(function(a, b) { if (a > b) return a; else return b; }, -1) + 1;
 		
 		/* Restore the sort order to startDate/endDate */
 		g.sort(function(a, b)
 		{
-			return _thisPathway._compareExperiences(a.experience, b.experience, ordered);
+			return _thisPathway._compareExperiences(a, b);
 		});
 	
-		var columns = ordered.map(function(d) { return []; }).concat([[]]);
+		var columns = new Array(numColumns);
+		for (i = 0; i < numColumns; ++i)
+			columns[i] = [];
 
-		/* MaxHeight is the maximum height of the top of a column before skipping to the
-			next column.
-			this represents the SVG group being added. */
-		function addToBestColumn(fd, columns)
-		{
-			var sd = _thisPathway.getServiceDomain(fd.experience);
-			if (sd)
-			{
-				var i = ordered.indexOf(sd.getDescription());
-				if (i < 0)
-					columns[ordered.length].push(this);
-				else
-					columns[i].push(this);
-			}
-			else
-				columns[ordered.length].push(this);
-		}
-		
-		/* Compute the y attribute for every item */
-		
 		/* Reset the text for each object, in case it was previously squashed. */
 		g.selectAll('text').text(function(d) { return d.getDescription(); });
 		
@@ -912,7 +922,7 @@ var Pathtree = (function () {
 		g.each(function(fd, i)
 			{
 				fd.y = _thisPathway.getExperienceY(fd);
-				fd.height = _thisPathway.getExperienceHeight(fd.experience);
+				fd.height = _thisPathway.getExperienceHeight(fd);
 				var textNode = d3.select(this).selectAll('text').node();
 				if (fd.height < _thisPathway.flagHeight)
 				{
@@ -931,7 +941,7 @@ var Pathtree = (function () {
 							_thisPathway.textLeftMargin + _thisPathway.textRightMargin;
 				fd.bestWidth = fd.width;
 				fd.bestY = fd.y;
-				addToBestColumn.call(this, fd, columns);
+				columns[fd.column].push(this);
 			});
 		
 		/* Compute the column width for each column of flags + spacing to its right. 
@@ -1082,24 +1092,27 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.setDateRange = function()
 	{
+		this.maxDate = new Date().toISOString().substr(0, 10);
+
 		var birthday = this.user.getValue("Birthday");
 		if (birthday && birthday.text)
-			this.minDate = new Date(birthday.text);
+			this.minDate = birthday.text;
 		else
-			this.minDate = new Date();
+			this.minDate = this.maxDate;
 		
-		this.maxDate = new Date();
 		var _this = this;
-		$(this.allExperiences).each(function()
+		this.minDate = this.allExperiences.map(function(e)
 			{
-				var startDate = new Date(getStartDate(this));
-				var endDate = new Date(getEndDate(this));
-				if (_this.minDate > startDate)
-					_this.minDate = startDate;
-				if (_this.maxDate < endDate)
-					_this.maxDate = endDate;
-			});
-			
+				return getStartDate(e);
+			}).reduce(function(a, b) { if (a < b) return a; else return b; }, this.minDate);
+		this.minDate = new Date(this.minDate);
+		
+		this.maxDate = this.allExperiences.map(function(e)
+			{
+				return getEndDate(e);
+			}).reduce(function(a, b) { if (a > b) return a; else return b; }, this.maxDate);
+		this.maxDate = new Date(this.maxDate);
+					
 		/* Make the timespan start on Jan. 1 of that year. */
 		this.minDate.setUTCMonth(0);
 		this.minDate.setUTCDate(1);
