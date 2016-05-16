@@ -2141,7 +2141,7 @@ var Pathtree = (function () {
 							{
 							},
 							fail: asyncFailFunction});			
-			crp.getData({path: "Service", 
+			crp.getData({path: "(Service,Domain,Stage)", 
 						 done: function(newInstances)
 							{
 							},
