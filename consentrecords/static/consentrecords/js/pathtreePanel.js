@@ -308,17 +308,21 @@ var FlagData = (function() {
 		var stageDescription = stage && stage.getDescription();
 		if (stageDescription)
 		{
-		if (["Studying", "Training", "Certificate"].indexOf(stageDescription) >= 0)
+		if (["Studying"].indexOf(stageDescription) >= 0)
 			return 1;
-		if (["Working", "Teaching", "Expert"].indexOf(stageDescription) >= 0)
+		if (["Certificate"].indexOf(stageDescription) >= 0)
 			return 2;
-		if (["Mentoring", "Tutoring", "Coaching", "Volunteering"].indexOf(stageDescription) >= 0)
+		if (["Training"].indexOf(stageDescription) >= 0)
 			return 3;
+		if (["Working", "Teaching", "Expert"].indexOf(stageDescription) >= 0)
+			return 4;
+		if (["Mentoring", "Tutoring", "Coaching", "Volunteering"].indexOf(stageDescription) >= 0)
+			return 5;
 		}
 		if (sd && sd.getDescription() == "Wellness")
-			return 4;
+			return 6;
 		/* Whatever/ Other */
-		return 5;
+		return 7;
 	}
 	
 	FlagData.prototype.getStartDate = function()
