@@ -1,9 +1,7 @@
 Service
     _name: en - After School Program
-    Service Domain: XExtra Curricular
 Service
     _name: en - Animal Shelter Volunteer
-    Service Domain: XExtra Curricular
     Domain: Animals
     Stage: Volunteering
 Service
@@ -13,7 +11,6 @@ Service
     Stage: Training
 Service
     _name: en - Baseball Coaching
-    Service Domain: XHelping Out
     Domain: Baseball
     Stage: Coaching
 Service
@@ -22,12 +19,10 @@ Service
     Stage: Working
 Service
     _name: en - Baseball Playing
-    Service Domain: XExtra Curricular
     Domain: Baseball
     Stage: Whatever
 Service
     _name: en - Basketball
-    Service Domain: XExtra Curricular
 Service
     _name: en - Basketball Playing
     Domain: Basketball
@@ -37,16 +32,12 @@ Service
     Service Domain: Arts
 Service
     _name: en - Be A Coach
-    Service Domain: XHelping Out
 Service
     _name: en - Be A Foster Parent
-    Service Domain: XHelping Out
 Service
     _name: en - Be A Mentor
-    Service Domain: XHelping Out
 Service
     _name: en - Be A Tutor
-    Service Domain: XHelping Out
 Service
     _name: en - Boys
 Service
@@ -60,7 +51,6 @@ Service
     Stage: Whatever
 Service
     _name: en - Civic Group Participation
-    Service Domain: XHelping Out
 Service
     _name: en - Clarinet Lessons
     Service Domain: Arts
@@ -85,7 +75,6 @@ Service
     Stage: Studying
 Service
     _name: en - Construction Skills
-    Service Domain: XCareer & Finance
     Domain: Construction
     Stage: Training
 Service
@@ -124,7 +113,6 @@ Service
     Stage: Studying
 Service
     _name: en - English Teaching
-    Service Domain: XHelping Out
     Domain: English
     Stage: Teaching
 Service
@@ -137,7 +125,6 @@ Service
     Service Domain: Wellness
 Service
     _name: en - Extra-Curricular Activity
-    Service Domain: XExtra Curricular
 Service
     _name: en - Flute Lessons
     Service Domain: Arts
@@ -147,7 +134,6 @@ Service
     _name: en - Football
 Service
     _name: en - Football Coaching
-    Service Domain: XHelping Out
     Domain: Football
     Stage: Coaching
 Service
@@ -286,12 +272,10 @@ Service
     Stage: Studying
 Service
     _name: en - Internship
-    Service Domain: XCareer & Finance
     Stage: Training
 Service
     _name: en - Job
     _name: en - Employment
-    Service Domain: XCareer & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
@@ -306,12 +290,10 @@ Service
     Stage: Studying
 Service
     _name: en - Leadership Class
-    Service Domain: XCareer & Finance
     Domain: Leadership
     Stage: Studying
 Service
     _name: en - Leadership Training
-    Service Domain: XExtra Curricular
     Domain: Leadership
     Stage: Training
 Service
@@ -338,13 +320,11 @@ Service
     Stage: Training
 Service
     _name: en - Piano Lessons
-    Service Domain: XExtra Curricular
     Service Domain: Arts
     Domain: Piano Performance
     Stage: Training
 Service
     _name: en - Piano Teaching
-    Service Domain: XExtra Curricular
     Service Domain: Arts
     Domain: Piano Performance
     Stage: Teaching
@@ -354,7 +334,6 @@ Service
     Stage: Working
 Service
     _name: en - Political Organizing Volunteer
-    Service Domain: XExtra Curricular
     Domain: Political Organizing
     Stage: Volunteering
 Service
@@ -364,7 +343,6 @@ Service
     Stage: Studying
 Service
     _name: en - Provide a Summer Job
-    Service Domain: XHelping Out
 Service
     _name: en - Safety Training
     Domain: Life Skills
@@ -376,7 +354,6 @@ Service
     Stage: Studying
 Service
     _name: en - Soccer Coaching
-    Service Domain: XHelping Out
     Domain: Soccer
     Stage: Coaching
 Service
@@ -401,12 +378,10 @@ Service
     Stage: Whatever
 Service
     _name: en - Summer Camp
-    Service Domain: XExtra Curricular
     Domain: Camping
     Stage: Whatever
 Service
     _name: en - Summer Job
-    Service Domain: XCareer & Finance
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
@@ -418,7 +393,6 @@ Service
     _name: en - Teen Programming
 Service
     _name: en - Tennis Coaching
-    Service Domain: XHelping Out
     Domain: Tennis
     Stage: Coaching
 Service
@@ -451,5 +425,4 @@ Service
     Stage: Whatever
 Service
     _name: en - Volunteer
-    Service Domain: XHelping Out
     Stage: Volunteering
