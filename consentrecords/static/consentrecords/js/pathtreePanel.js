@@ -1436,6 +1436,13 @@ var Pathtree = (function () {
 		this.flagElement = g;
 		
 		var experience = this.detailFlagData.experience;
+		
+		function handleChangeDetailGroup(eventObject, newValue)
+		{
+			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
+				_this.refreshDetail();
+		}
+		
 		[experience.getCell("Organization"),
 		 experience.getCell("User Entered Organization"),
 		 experience.getCell("Site"),
@@ -1450,8 +1457,8 @@ var Pathtree = (function () {
 			 */
 			if (d)
 			{
-				$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
+				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
 		[experience.getCell("Service"),
@@ -1462,33 +1469,12 @@ var Pathtree = (function () {
 			 */
 			if (d)
 			{
-				$(d).on("valueDeleted.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
 		 
-	}
-	
-	Pathtree.prototype.handleChangeDetailGroup = function(eventObject, newValue)
-	{
-		if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
-			eventObject.data.refreshDetail();
-	}
-	
-	Pathtree.prototype.clearDetail = function()
-	{
-		this.detailGroup.selectAll('text').remove();
-		this.detailGroup.selectAll('rect').attr('height', 0);
-		/* Remove the image here instead of when the other clipPath ends
-			so that it is sure to be removed when the done method is called. 
-		 */
-		this.detailGroup.selectAll('image').remove();
-		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
-		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
-		
-		var _this = this;
-		if (this.detailFlagData)
-		{
-			var experience = this.detailFlagData.experience;
+		 $(this).one("clearTriggers.cr", function(eventObject)
+		 {
 			[experience.getCell("Organization"),
 			 experience.getCell("User Entered Organization"),
 			 experience.getCell("Site"),
@@ -1503,8 +1489,8 @@ var Pathtree = (function () {
 				 */
 			 	if (d)
 			 	{
-					$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
-					$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
+					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
+					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
 				}
 			 });
 			[experience.getCell("Service"),
@@ -1515,13 +1501,27 @@ var Pathtree = (function () {
 				 */
 				if (d)
 				{
-					$(d).off("valueDeleted.cr", null, _this.handleChangeDetailGroup);
+					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
 				}
 			 });
-			 
-			 this.detailFrontRect.each(this.clearServicesTriggers);
-			 
-		}
+		 });
+		 
+	}
+	
+	Pathtree.prototype.clearDetail = function()
+	{
+		this.detailGroup.selectAll('text').remove();
+		this.detailGroup.selectAll('rect').attr('height', 0);
+		/* Remove the image here instead of when the other clipPath ends
+			so that it is sure to be removed when the done method is called. 
+		 */
+		this.detailGroup.selectAll('image').remove();
+		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
+		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
+		
+		var _this = this;
+		$(this).trigger("clearTriggers.cr");
+		$(this.detailFrontRect).trigger("clearTriggers.cr");
 		
 		this.detailGroup.datum(null);
 		this.detailGroup.selectAll('rect').datum(null);
@@ -1584,7 +1584,7 @@ var Pathtree = (function () {
 		var _this = this;
 		var valueDeleted = function(eventObject)
 		{
-			d3.select(eventObject.data).remove();
+			$(eventObject.data).remove();
 			_this.handleValueDeleted(this);
 		};
 		
@@ -1617,30 +1617,45 @@ var Pathtree = (function () {
 		});
 	}
 	
-	Pathtree.prototype.handleChangeServices = function(eventObject)
+	Pathtree.prototype.handleChangeServices = function(r, fd)
 	{
-		var rect = d3.select(eventObject.data);
-		var experience = rect.datum();
-		
-		Pathtree.prototype.setColor.call(eventObject.data, experience);
+		this.setColor(r, fd);
 	}
 	
-	Pathtree.prototype.setupServicesTriggers = function(fd)
+	Pathtree.prototype.handleChangedExperience = function(r, fd)
+	{
+		var _this = this;
+		
+		var expChanged = function(eventObject)
 		{
-			var e = fd.experience;
-			var serviceCell = e.getCell("Service");
-			var userServiceCell = e.getCell("User Entered Service");
-			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathtree.prototype.handleChangeServices);
-			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathtree.prototype.handleChangeServices);
+			_this.setColor(r, fd);
 		}
-	
-	Pathtree.prototype.clearServicesTriggers = function(fd)
+		
+		$(fd.experience).on("dataChanged.cr", null, r, expChanged);
+		$(this).on("remove", null, fd.experience, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, expChanged);
+		});
+	}
+
+	Pathtree.prototype.setupServicesTriggers = function(r, fd)
 		{
 			var e = fd.experience;
 			var serviceCell = e.getCell("Service");
 			var userServiceCell = e.getCell("User Entered Service");
-			$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathtree.prototype.handleChangeServices);
-			$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathtree.prototype.handleChangeServices);
+			var _this = this;
+			function f(eventObject)
+			{
+				_this.setColor(r, fd);
+			}
+			
+			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+			$(r).one("clearTriggers.cr remove", function()
+				{
+					$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+					$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+				});
 		}
 	
 	Pathtree.prototype.appendExperiences = function()
@@ -1680,22 +1695,6 @@ var Pathtree = (function () {
 			.attr('x', 0)
 			.attr('y', 0);
 			
-		var handleChangedExperience = function(fd)
-		{
-			var r = this;
-			
-			var expChanged = function(eventObject)
-			{
-				Pathtree.prototype.setColor.call(eventObject.data, fd);
-			}
-			
-			$(fd.experience).on("dataChanged.cr", null, this, expChanged);
-			$(this).on("remove", null, fd.experience, function(eventObject)
-			{
-				$(eventObject.data).off("dataChanged.cr", null, expChanged);
-			});
-		}
-
 		g.append('rect')
 			.each(function()
 				{ this.pathtree = _this; })
@@ -1706,16 +1705,22 @@ var Pathtree = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", showDetail)
-			.each(this.setColor)
-			.each(handleChangedExperience)
-			.each(this.setupServicesTriggers)
+			.each(function(d) 
+					{ 
+						_this.setColor(this, d); 
+						_this.handleChangedExperience(this, d);
+						_this.setupServicesTriggers(this, d);
+					})
 			.attr('x', 0)
 			.attr('y', 0);
 			
 		g.append('line')
-			.each(this.setColor)
-			.each(handleChangedExperience)
-			.each(this.setupServicesTriggers)
+			.each(function(d) 
+					{ 
+						_this.setColor(this, d); 
+						_this.handleChangedExperience(this, d);
+						_this.setupServicesTriggers(this, d);
+					})
 			.attr('x1', 1)
 			.attr('x2', 1)
 			.attr('y1', 0)
@@ -2141,7 +2146,7 @@ var Pathtree = (function () {
 									{
 										color = newInstances[i].getValue("Color");
 										if (color && color.text)
-											otherColor = color.text;
+											_this.otherColor = color.text;
 										break;
 									}
 								}
