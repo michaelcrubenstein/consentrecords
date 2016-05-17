@@ -52,6 +52,10 @@ Service
 Service
     _name: en - Civic Group Participation
 Service
+    _name: en - Civics Class
+    Domain: Government
+    Stage: Studying
+Service
     _name: en - Clarinet Lessons
     Service Domain: Arts
     Domain: Clarinet Performance
