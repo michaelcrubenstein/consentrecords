@@ -282,7 +282,7 @@ var FlagData = (function() {
 	FlagData.prototype.getServiceDomain = function()
 	{
 		var service = this.getService();
-		if (!service)
+		if (!service || !service.getValueID())
 			return null;
 		service = crp.getInstance(service.getValueID());
 		var domain = service.getValue("Domain");
@@ -296,7 +296,7 @@ var FlagData = (function() {
 	FlagData.prototype.getStage = function()
 	{
 		var service = this.getService();
-		return service && crp.getInstance(service.getValueID()).getValue("Stage")
+		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
 	}
 
 	FlagData.prototype.getColumn = function()
