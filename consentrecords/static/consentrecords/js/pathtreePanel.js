@@ -1443,14 +1443,19 @@ var Pathtree = (function () {
 				_this.refreshDetail();
 		}
 		
-		[experience.getCell("Organization"),
+		var allCells = [experience.getCell("Organization"),
 		 experience.getCell("User Entered Organization"),
 		 experience.getCell("Site"),
 		 experience.getCell("User Entered Site"),
 		 experience.getCell("Start"),
 		 experience.getCell("End"),
 		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")].forEach(function(d)
+		 experience.getCell("User Entered Service")];
+		 
+		var serviceCells = [experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		allCells.forEach(function(d)
 		 {
 			/* d will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
@@ -1461,8 +1466,7 @@ var Pathtree = (function () {
 				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
-		[experience.getCell("Service"),
-		 experience.getCell("User Entered Service")].forEach(function(d)
+		serviceCells.forEach(function(d)
 		 {
 			/* d will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
@@ -1475,14 +1479,7 @@ var Pathtree = (function () {
 		 
 		 $(this).one("clearTriggers.cr", function(eventObject)
 		 {
-			[experience.getCell("Organization"),
-			 experience.getCell("User Entered Organization"),
-			 experience.getCell("Site"),
-			 experience.getCell("User Entered Site"),
-			 experience.getCell("Start"),
-			 experience.getCell("End"),
-			 experience.getCell("Service"),
-			 experience.getCell("User Entered Service")].forEach(function(d)
+			allCells.forEach(function(d)
 			 {
 				/* d will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
@@ -1493,8 +1490,7 @@ var Pathtree = (function () {
 					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
 				}
 			 });
-			[experience.getCell("Service"),
-			 experience.getCell("User Entered Service")].forEach(function(d)
+			serviceCells.forEach(function(d)
 			 {
 				/* d will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
