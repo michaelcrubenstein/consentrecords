@@ -1116,8 +1116,11 @@ cr.ObjectValue = (function() {
 							/* If the data length is 0, then this item can not be read. */
 							if (json.data.length > 0)
 							{
-								_this.importCells(json.data[0].cells);
-								_this.privilege = json.data[0].privilege;
+								var src = json.data[0];
+								_this.importCells(src.cells);
+								_this.privilege = src.privilege;
+								if (src.typeName)
+									_this.typeName = src.typeName;
 							}
 							else
 							{

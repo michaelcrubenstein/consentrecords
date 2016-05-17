@@ -267,6 +267,92 @@ var FlagData = (function() {
 		this.spanWidth = this.width + (maxRightSpan === 0.0 ? 0.0 : maxRightSpan + this.flagSpacing);
 	}
 	
+	FlagData.prototype.getService = function()
+	{
+		var offering = this.experience.getValue("Offering");
+		if (offering && offering.getValueID())
+		{
+			var service = offering.getValue("Service");
+			if (service)
+				return service;
+		}
+		return this.experience.getValue("Service");
+	}
+	
+	FlagData.prototype.getServiceDomain = function()
+	{
+		var service = this.getService();
+		if (!service || !service.getValueID())
+			return null;
+		service = crp.getInstance(service.getValueID());
+		var domain = service.getValue("Domain");
+		if (domain)
+			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
+			if (sd)
+				return sd;
+		return service.getValue("Service Domain");
+	}
+
+	FlagData.prototype.getStage = function()
+	{
+		var service = this.getService();
+		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
+	}
+
+	FlagData.prototype.getColumn = function()
+	{
+		var sd = this.getServiceDomain();
+		if (sd && sd.getDescription() == "Housing")
+			return 0;
+		var stage = this.getStage();
+		var stageDescription = stage && stage.getDescription();
+		if (stageDescription)
+		{
+		if (["Studying", "Training", "Certificate"].indexOf(stageDescription) >= 0)
+			return 1;
+		if (["Working", "Teaching", "Expert"].indexOf(stageDescription) >= 0)
+			return 2;
+		if (["Mentoring", "Tutoring", "Coaching", "Volunteering"].indexOf(stageDescription) >= 0)
+			return 3;
+		}
+		if (sd && sd.getDescription() == "Wellness")
+			return 4;
+		/* Whatever/ Other */
+		return 5;
+	}
+	
+	FlagData.prototype.getStartDate = function()
+	{
+		return this.experience.getDatum("Start");
+	}
+	
+	FlagData.prototype.getEndDate = function()
+	{
+		return this.experience.getDatum("End") || new Date().toISOString().substr(0, 10);
+	}
+	
+	FlagData.prototype.getColor = function()
+	{
+		var color = null;
+		var stage = this.getStage();
+		if (stage && stage.getValueID())
+		{
+			color = crp.getInstance(stage.getValueID()).getValue("Color");
+			if (color && color.text)
+				return color.text;
+		}
+		
+		sd = this.getServiceDomain();
+		if (sd && sd.getValueID())
+		{
+			color = crp.getInstance(sd.getValueID()).getValue("Color");
+			if (color && color.text)
+				return color.text;
+		}
+		
+		return null;
+	}
+	
 	function FlagData(experience)
 	{
 		this.experience = experience;
@@ -338,62 +424,21 @@ var Pathtree = (function () {
 		.y(function(d) { return d.y; })
 		.interpolate("linear");
 
-	Pathtree.prototype.getService = function(experience)
+	Pathtree.prototype._compareExperiences = function(a, b)
 	{
-		var offering = experience.getValue("Offering");
-		if (offering && offering.getValueID())
-		{
-			var service = offering.getValue("Service");
-			if (service)
-				return service;
-		}
-		return experience.getValue("Service");
-	}
-	
-	Pathtree.prototype.getServiceDomain = function(experience)
-	{
-		var service = this.getService(experience);
-		return service && crp.getInstance(service.getValueID()).getValue("Service Domain")
-	}
-
-	Pathtree.prototype._compareExperiences = function(a, b, ordered)
-	{
-		var aServiceDomain = this.getServiceDomain(a);
-		var bServiceDomain = this.getServiceDomain(b);
-		if (!bServiceDomain)
-		{
-			if (aServiceDomain) return -1;
-		}
-		else if (!aServiceDomain)
-			return 1;
-		else
-		{
-			var aDescription = aServiceDomain.getDescription();
-			var bDescription = bServiceDomain.getDescription();
-			var aOrder = ordered.indexOf(aDescription);
-			var bOrder = ordered.indexOf(bDescription);
-			if (aOrder < 0) 
-			{
-				ordered.push(aDescription);
-				aOrder = ordered.length;
-			}
-			if (bOrder < 0)
-			{
-				ordered.push(bDescription);
-				bOrder = ordered.length;
-			}
-			if (aOrder != bOrder)
-				return aOrder - bOrder;
-		}
+		var aOrder = a.column;
+		var bOrder = b.column;
+		if (aOrder != bOrder)
+			return aOrder - bOrder;
 		
-		var aStartDate = getStartDate(a);
-		var bStartDate = getStartDate(b);
+		var aStartDate = a.getStartDate();
+		var bStartDate = b.getStartDate();
 		if (aStartDate > bStartDate) return 1;
 		else if (aStartDate < bStartDate) return -1;
 		else
 		{
-			var aEndDate = getEndDate(a);
-			var bEndDate = getEndDate(b);
+			var aEndDate = a.getEndDate();
+			var bEndDate = b.getEndDate();
 			if (aEndDate > bEndDate) return 1;
 			else if (aEndDate < bEndDate) return -1;
 			else return 0;
@@ -412,10 +457,10 @@ var Pathtree = (function () {
 		return this.DateToY(Date.parse(getEndDate(fd.experience)));
 	}
 
-	Pathtree.prototype.getExperienceHeight = function(experience)
+	Pathtree.prototype.getExperienceHeight = function(fd)
 	{
-		var startDate = getStartDate(experience);
-		var endDate = getEndDate(experience);
+		var startDate = fd.getStartDate();
+		var endDate = fd.getEndDate();
 		var days = (new TimeSpan(Date.parse(endDate)-Date.parse(startDate))).days;
 		return days * this.dayHeight;
 	}
@@ -875,36 +920,23 @@ var Pathtree = (function () {
 		
 		var _thisPathway = this;
 		
-		var ordered = ["Housing", "Education", "Extra Curricular", "Wellness", "Career & Finance", "Helping Out"];
+		g.each(function(fd)
+		{
+			fd.column = fd.getColumn();
+		});
+		numColumns = g.data().map(function(fd) { return fd.column; })
+							 .reduce(function(a, b) { if (a > b) return a; else return b; }, -1) + 1;
 		
 		/* Restore the sort order to startDate/endDate */
 		g.sort(function(a, b)
 		{
-			return _thisPathway._compareExperiences(a.experience, b.experience, ordered);
+			return _thisPathway._compareExperiences(a, b);
 		});
 	
-		var columns = ordered.map(function(d) { return []; }).concat([[]]);
+		var columns = new Array(numColumns);
+		for (i = 0; i < numColumns; ++i)
+			columns[i] = [];
 
-		/* MaxHeight is the maximum height of the top of a column before skipping to the
-			next column.
-			this represents the SVG group being added. */
-		function addToBestColumn(fd, columns)
-		{
-			var sd = _thisPathway.getServiceDomain(fd.experience);
-			if (sd)
-			{
-				var i = ordered.indexOf(sd.getDescription());
-				if (i < 0)
-					columns[ordered.length].push(this);
-				else
-					columns[i].push(this);
-			}
-			else
-				columns[ordered.length].push(this);
-		}
-		
-		/* Compute the y attribute for every item */
-		
 		/* Reset the text for each object, in case it was previously squashed. */
 		g.selectAll('text').text(function(d) { return d.getDescription(); });
 		
@@ -912,7 +944,7 @@ var Pathtree = (function () {
 		g.each(function(fd, i)
 			{
 				fd.y = _thisPathway.getExperienceY(fd);
-				fd.height = _thisPathway.getExperienceHeight(fd.experience);
+				fd.height = _thisPathway.getExperienceHeight(fd);
 				var textNode = d3.select(this).selectAll('text').node();
 				if (fd.height < _thisPathway.flagHeight)
 				{
@@ -931,7 +963,7 @@ var Pathtree = (function () {
 							_thisPathway.textLeftMargin + _thisPathway.textRightMargin;
 				fd.bestWidth = fd.width;
 				fd.bestY = fd.y;
-				addToBestColumn.call(this, fd, columns);
+				columns[fd.column].push(this);
 			});
 		
 		/* Compute the column width for each column of flags + spacing to its right. 
@@ -1082,24 +1114,27 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.setDateRange = function()
 	{
+		this.maxDate = new Date().toISOString().substr(0, 10);
+
 		var birthday = this.user.getValue("Birthday");
 		if (birthday && birthday.text)
-			this.minDate = new Date(birthday.text);
+			this.minDate = birthday.text;
 		else
-			this.minDate = new Date();
+			this.minDate = this.maxDate;
 		
-		this.maxDate = new Date();
 		var _this = this;
-		$(this.allExperiences).each(function()
+		this.minDate = this.allExperiences.map(function(e)
 			{
-				var startDate = new Date(getStartDate(this));
-				var endDate = new Date(getEndDate(this));
-				if (_this.minDate > startDate)
-					_this.minDate = startDate;
-				if (_this.maxDate < endDate)
-					_this.maxDate = endDate;
-			});
-			
+				return getStartDate(e);
+			}).reduce(function(a, b) { if (a < b) return a; else return b; }, this.minDate);
+		this.minDate = new Date(this.minDate);
+		
+		this.maxDate = this.allExperiences.map(function(e)
+			{
+				return getEndDate(e);
+			}).reduce(function(a, b) { if (a > b) return a; else return b; }, this.maxDate);
+		this.maxDate = new Date(this.maxDate);
+					
 		/* Make the timespan start on Jan. 1 of that year. */
 		this.minDate.setUTCMonth(0);
 		this.minDate.setUTCDate(1);
@@ -1183,47 +1218,11 @@ var Pathtree = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
-	Pathtree.prototype.setColorByService = function(service)
+	Pathtree.prototype.setColor = function(r, fd)
 	{
-		var serviceInstance = crp.getInstance(service.getValueID());
-		var serviceDomain = serviceInstance && serviceInstance.getValue("Service Domain");
-		if (serviceDomain && serviceDomain.getValueID())
-		{
-			var sdInstance = crp.getInstance(serviceDomain.getValueID());
-			color = sdInstance.getValue("Color");
-			if (color && color.text)
-				this.attr("fill", color.text)
-					 .attr("stroke", color.text);
-		}
-		else
-			this.attr("fill", otherColor)
-				.attr("stroke", otherColor);
-	}
-
-	Pathtree.prototype.setColor = function(fd)
-	{
-		var _this = d3.select(this);
-
-		var offering = fd.experience.getValue("Offering");
-		if (offering && offering.getValueID())
-		{
-			var experienceColor = otherColor;
-			var service = offering.getValue("Service");
-			if (service)
-				Pathtree.prototype.setColorByService.call(_this, service);
-			else
-				_this.attr("fill", otherColor)
-					 .attr("stroke", otherColor);
-		}
-		else
-		{
-			var service = fd.experience.getValue("Service");
-			if (service && service.getValueID())
-				Pathtree.prototype.setColorByService.call(_this, service);
-			else
-				_this.attr("fill", otherColor)
-					 .attr("stroke", otherColor);
-		}
+		var colorText = fd.getColor() || this.otherColor;
+		d3.select(r).attr("fill", colorText)
+			 		.attr("stroke", colorText);
 	}
 
 	Pathtree.prototype.showDetailPanel = function(fd, i)
@@ -1369,8 +1368,8 @@ var Pathtree = (function () {
 			.attr("width", rectWidth)
 		   .attr("x", textBox.x - this.textDetailLeftMargin)
 		   .attr("y", 0);
-		this.detailFrontRect.each(this.setColor)
-					   .each(this.setupServicesTriggers);
+		this.setColor(this.detailFrontRect.node(), this.detailFrontRect.datum());
+		this.detailFrontRect.each(function(d) { _this.setupServicesTriggers(this, d); });
 		if (duration > 0)
 		{
 			this.detailGroup.selectAll('rect').attr("height", 0)
@@ -1437,42 +1436,72 @@ var Pathtree = (function () {
 		this.flagElement = g;
 		
 		var experience = this.detailFlagData.experience;
-		[experience.getCell("Organization"),
+		
+		function handleChangeDetailGroup(eventObject, newValue)
+		{
+			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
+				_this.refreshDetail();
+		}
+		
+		var allCells = [experience.getCell("Organization"),
 		 experience.getCell("User Entered Organization"),
 		 experience.getCell("Site"),
 		 experience.getCell("User Entered Site"),
 		 experience.getCell("Start"),
 		 experience.getCell("End"),
 		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")].forEach(function(d)
+		 experience.getCell("User Entered Service")];
+		 
+		var serviceCells = [experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		allCells.forEach(function(d)
 		 {
 			/* d will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
 			 */
 			if (d)
 			{
-				$(d).on("dataChanged.cr", null, _this, _this.handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
+				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
-		[experience.getCell("Service"),
-		 experience.getCell("User Entered Service")].forEach(function(d)
+		serviceCells.forEach(function(d)
 		 {
 			/* d will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
 			 */
 			if (d)
 			{
-				$(d).on("valueDeleted.cr", null, _this, _this.handleChangeDetailGroup);
+				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
 		 
-	}
-	
-	Pathtree.prototype.handleChangeDetailGroup = function(eventObject, newValue)
-	{
-		if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
-			eventObject.data.refreshDetail();
+		 $(this).one("clearTriggers.cr", function(eventObject)
+		 {
+			allCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+			 	if (d)
+			 	{
+					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
+					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
+				}
+			 });
+			serviceCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
+				}
+			 });
+		 });
+		 
 	}
 	
 	Pathtree.prototype.clearDetail = function()
@@ -1487,42 +1516,8 @@ var Pathtree = (function () {
 		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
-		if (this.detailFlagData)
-		{
-			var experience = this.detailFlagData.experience;
-			[experience.getCell("Organization"),
-			 experience.getCell("User Entered Organization"),
-			 experience.getCell("Site"),
-			 experience.getCell("User Entered Site"),
-			 experience.getCell("Start"),
-			 experience.getCell("End"),
-			 experience.getCell("Service"),
-			 experience.getCell("User Entered Service")].forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-			 	if (d)
-			 	{
-					$(d).off("dataChanged.cr", null, _this.handleChangeDetailGroup);
-					$(d).off("valueAdded.cr", null, _this.handleChangeDetailGroup);
-				}
-			 });
-			[experience.getCell("Service"),
-			 experience.getCell("User Entered Service")].forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-				if (d)
-				{
-					$(d).off("valueDeleted.cr", null, _this.handleChangeDetailGroup);
-				}
-			 });
-			 
-			 this.detailFrontRect.each(this.clearServicesTriggers);
-			 
-		}
+		$(this).trigger("clearTriggers.cr");
+		$(this.detailFrontRect).trigger("clearTriggers.cr");
 		
 		this.detailGroup.datum(null);
 		this.detailGroup.selectAll('rect').datum(null);
@@ -1585,7 +1580,7 @@ var Pathtree = (function () {
 		var _this = this;
 		var valueDeleted = function(eventObject)
 		{
-			d3.select(eventObject.data).remove();
+			$(eventObject.data).remove();
 			_this.handleValueDeleted(this);
 		};
 		
@@ -1618,30 +1613,45 @@ var Pathtree = (function () {
 		});
 	}
 	
-	Pathtree.prototype.handleChangeServices = function(eventObject)
+	Pathtree.prototype.handleChangeServices = function(r, fd)
 	{
-		var rect = d3.select(eventObject.data);
-		var experience = rect.datum();
-		
-		Pathtree.prototype.setColor.call(eventObject.data, experience);
+		this.setColor(r, fd);
 	}
 	
-	Pathtree.prototype.setupServicesTriggers = function(fd)
+	Pathtree.prototype.handleChangedExperience = function(r, fd)
+	{
+		var _this = this;
+		
+		var expChanged = function(eventObject)
 		{
-			var e = fd.experience;
-			var serviceCell = e.getCell("Service");
-			var userServiceCell = e.getCell("User Entered Service");
-			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathtree.prototype.handleChangeServices);
-			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, Pathtree.prototype.handleChangeServices);
+			_this.setColor(r, fd);
 		}
-	
-	Pathtree.prototype.clearServicesTriggers = function(fd)
+		
+		$(fd.experience).on("dataChanged.cr", null, r, expChanged);
+		$(this).on("remove", null, fd.experience, function(eventObject)
+		{
+			$(eventObject.data).off("dataChanged.cr", null, expChanged);
+		});
+	}
+
+	Pathtree.prototype.setupServicesTriggers = function(r, fd)
 		{
 			var e = fd.experience;
 			var serviceCell = e.getCell("Service");
 			var userServiceCell = e.getCell("User Entered Service");
-			$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathtree.prototype.handleChangeServices);
-			$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, Pathtree.prototype.handleChangeServices);
+			var _this = this;
+			function f(eventObject)
+			{
+				_this.setColor(r, fd);
+			}
+			
+			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+			$(r).one("clearTriggers.cr remove", function()
+				{
+					$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+					$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+				});
 		}
 	
 	Pathtree.prototype.appendExperiences = function()
@@ -1681,22 +1691,6 @@ var Pathtree = (function () {
 			.attr('x', 0)
 			.attr('y', 0);
 			
-		var handleChangedExperience = function(fd)
-		{
-			var r = this;
-			
-			var expChanged = function(eventObject)
-			{
-				Pathtree.prototype.setColor.call(eventObject.data, fd);
-			}
-			
-			$(fd.experience).on("dataChanged.cr", null, this, expChanged);
-			$(this).on("remove", null, fd.experience, function(eventObject)
-			{
-				$(eventObject.data).off("dataChanged.cr", null, expChanged);
-			});
-		}
-
 		g.append('rect')
 			.each(function()
 				{ this.pathtree = _this; })
@@ -1707,16 +1701,22 @@ var Pathtree = (function () {
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", showDetail)
-			.each(this.setColor)
-			.each(handleChangedExperience)
-			.each(this.setupServicesTriggers)
+			.each(function(d) 
+					{ 
+						_this.setColor(this, d); 
+						_this.handleChangedExperience(this, d);
+						_this.setupServicesTriggers(this, d);
+					})
 			.attr('x', 0)
 			.attr('y', 0);
 			
 		g.append('line')
-			.each(this.setColor)
-			.each(handleChangedExperience)
-			.each(this.setupServicesTriggers)
+			.each(function(d) 
+					{ 
+						_this.setColor(this, d); 
+						_this.handleChangedExperience(this, d);
+						_this.setupServicesTriggers(this, d);
+					})
 			.attr('x1', 1)
 			.attr('x2', 1)
 			.attr('y1', 0)
@@ -1829,7 +1829,6 @@ var Pathtree = (function () {
 	Pathtree.prototype.addMoreExperience = function(experience)
 	{
 		this.checkDateRange(experience);
-		experience.typeName = "More Experience";
 		
 		this.checkOfferingCells(experience);
 		
@@ -1948,7 +1947,7 @@ var Pathtree = (function () {
 	Pathtree.prototype.onExperienceAdded = function(eventObject, newData)
 	{
 		var _this = this;
-		crp.pushCheckCells(newData, undefined, 
+		crp.pushCheckCells(newData, ["type"], 
 			function() {
 				function addExperience() {
 					_this.addMoreExperience(newData);
@@ -2129,7 +2128,7 @@ var Pathtree = (function () {
 							{
 							},
 							fail: asyncFailFunction});			
-			crp.getData({path: "Service", 
+			crp.getData({path: "(Service,Domain,Stage)", 
 						 done: function(newInstances)
 							{
 							},
@@ -2143,7 +2142,7 @@ var Pathtree = (function () {
 									{
 										color = newInstances[i].getValue("Color");
 										if (color && color.text)
-											otherColor = color.text;
+											_this.otherColor = color.text;
 										break;
 									}
 								}

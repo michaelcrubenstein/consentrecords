@@ -28,12 +28,3 @@ Service Domain
 Service Domain
     _name: en - Wellness
     Color: #0694F3
-Service Domain
-    _name: en - XCareer & Finance
-    Color: #983333
-Service Domain
-    _name: en - XExtra Curricular
-    Color: #8328E7
-Service Domain
-    _name: en - XHelping Out
-    Color: #D55900
