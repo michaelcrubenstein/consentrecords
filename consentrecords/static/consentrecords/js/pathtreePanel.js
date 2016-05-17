@@ -331,6 +331,28 @@ var FlagData = (function() {
 		return this.experience.getDatum("End") || new Date().toISOString().substr(0, 10);
 	}
 	
+	FlagData.prototype.getColor = function()
+	{
+		var color = null;
+		var stage = this.getStage();
+		if (stage && stage.getValueID())
+		{
+			color = crp.getInstance(stage.getValueID()).getValue("Color");
+			if (color && color.text)
+				return color.text;
+		}
+		
+		sd = this.getServiceDomain();
+		if (sd && sd.getValueID())
+		{
+			color = crp.getInstance(sd.getValueID()).getValue("Color");
+			if (color && color.text)
+				return color.text;
+		}
+		
+		return null;
+	}
+	
 	function FlagData(experience)
 	{
 		this.experience = experience;
@@ -1196,47 +1218,11 @@ var Pathtree = (function () {
 		return this.minDate < oldMinDate || this.maxDate > oldMaxDate;
 	}
 	
-	Pathtree.prototype.setColorByService = function(service)
+	Pathtree.prototype.setColor = function(r, fd)
 	{
-		var serviceInstance = crp.getInstance(service.getValueID());
-		var serviceDomain = serviceInstance && serviceInstance.getValue("Service Domain");
-		if (serviceDomain && serviceDomain.getValueID())
-		{
-			var sdInstance = crp.getInstance(serviceDomain.getValueID());
-			color = sdInstance.getValue("Color");
-			if (color && color.text)
-				this.attr("fill", color.text)
-					 .attr("stroke", color.text);
-		}
-		else
-			this.attr("fill", otherColor)
-				.attr("stroke", otherColor);
-	}
-
-	Pathtree.prototype.setColor = function(fd)
-	{
-		var _this = d3.select(this);
-
-		var offering = fd.experience.getValue("Offering");
-		if (offering && offering.getValueID())
-		{
-			var experienceColor = otherColor;
-			var service = offering.getValue("Service");
-			if (service)
-				Pathtree.prototype.setColorByService.call(_this, service);
-			else
-				_this.attr("fill", otherColor)
-					 .attr("stroke", otherColor);
-		}
-		else
-		{
-			var service = fd.experience.getValue("Service");
-			if (service && service.getValueID())
-				Pathtree.prototype.setColorByService.call(_this, service);
-			else
-				_this.attr("fill", otherColor)
-					 .attr("stroke", otherColor);
-		}
+		var colorText = fd.getColor() || this.otherColor;
+		d3.select(r).attr("fill", colorText)
+			 		.attr("stroke", colorText);
 	}
 
 	Pathtree.prototype.showDetailPanel = function(fd, i)
@@ -1382,8 +1368,8 @@ var Pathtree = (function () {
 			.attr("width", rectWidth)
 		   .attr("x", textBox.x - this.textDetailLeftMargin)
 		   .attr("y", 0);
-		this.detailFrontRect.each(this.setColor)
-					   .each(this.setupServicesTriggers);
+		this.setColor(this.detailFrontRect.node(), this.detailFrontRect.datum());
+		this.detailFrontRect.each(function(d) { _this.setupServicesTriggers(this, d); });
 		if (duration > 0)
 		{
 			this.detailGroup.selectAll('rect').attr("height", 0)
