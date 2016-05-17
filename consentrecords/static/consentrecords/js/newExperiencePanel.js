@@ -1631,6 +1631,129 @@ var ReportedObject = function () {
     return ReportedObject;
 }();
 
+var PickServiceSearchView = (function() {
+	PickServiceSearchView.prototype = new PanelSearchView();
+	
+	PickServiceSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				leftText.text(d.getDescription());
+			});
+	}
+			
+	PickServiceSearchView.prototype.onClickButton = function(d, i) {
+		var _this = this;
+		if (d.typeName === "Service")
+		{
+			if (prepareClick('click', 'pick service: ' + d.getDescription()))
+			{
+				_this.success(new ReportedObject({pickedObject: d}));
+				_this.hidePanelRight(unblockClick);
+			}
+		}
+		d3.event.preventDefault();
+	}
+	
+	PickServiceSearchView.prototype.isButtonVisible = function(button, d, compareText)
+	{
+		if (button == this.customButton.node())
+		{
+			if (compareText.length === 0)
+				return false;
+			var data = this.listPanel.selectAll("li").data();
+			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+		}
+		else
+		{
+			if (compareText.length === 0)
+				return true;
+			
+			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+				return true;
+			return false;
+		}
+	}
+	
+	PickServiceSearchView.prototype.searchPath = function(val)
+	{
+		var path;
+		
+		if (!val)
+		{
+			return "Service";
+		}
+		else
+		{
+			path = 'Service[_name{0}"{1}"]';
+			
+			var symbol = val.length < 3 ? "^=" : "*=";
+			
+			return path.format(symbol, val);
+		}
+	}
+	
+	PickServiceSearchView.prototype.noResultString = function()
+	{
+		return "";
+	}
+	
+	PickServiceSearchView.prototype.textCleared = function()
+	{
+		SearchView.prototype.textCleared.call(this);
+		
+		this.startSearchTimeout("");
+	}
+	
+	PickServiceSearchView.prototype.showObjects = function(foundObjects)
+	{
+		var buttons = SearchView.prototype.showObjects.call(this, foundObjects);
+			
+		if (this.experience.services.length > 0)
+		{
+			var _this = this;
+			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return typeof(d) == "object" && d == _this.experience.services[0]; });
+		}
+		
+		return buttons;
+	}
+	
+	function PickServiceSearchView(sitePanel, experience, oldReportedObject, success)
+	{
+		var _this = this;
+
+		PanelSearchView.call(this, sitePanel, experience, "Tag");
+
+		if (sitePanel)
+		{
+			var _this = this;
+			this.success = success;
+			this.experience = experience;
+			
+			var sections = this.appendButtonContainers(["Custom"]);
+			this.customButton = appendViewButtons(sections, 
+						function(buttons)
+						{
+							buttons.append('div').classed("left-expanding-div description-text", true);
+						}
+				)
+				.on("click", function() {
+					if (prepareClick('click', 'add custom service'))
+					{
+						success(new ReportedObject({name: _this.inputText(), pickedObject: null}));
+						_this.hidePanelRight(unblockClick);
+					}
+					d3.event.preventDefault();
+				})
+				.style('display', 'none');
+		}
+	}
+	
+	return PickServiceSearchView;
+})();
+
 /* This panel is called from the NewExperiencesTagsPanel to pick a new tag or change to a tag.
  */
 var PickServicePanel = (function () {
@@ -1667,83 +1790,13 @@ var PickServicePanel = (function () {
 		
 		navContainer.appendTitle(header);
 	
-		var textChanged = function(){
-			var val = this.value.toLocaleLowerCase();
-			if (!val)
-			{
-				/* Show all of the items. */
-				panel2Div.selectAll("li")
-					.style("display", function(d, i)
-						{
-							return i > 0 ? null : 'none';
-						});
-			}
-			else
-			{
-				/* Show the items whose description is this.value */
-				panel2Div.selectAll("li")
-					.style("display", function(d, i)
-						{
-							if (i == 0)
-							{
-								if (_this.getObjectByDescription(rootObjects, searchInputNode.value))
-									return 'none';
-								else
-									return null;
-							}
-							else
-								return d.getDescription().toLocaleLowerCase().indexOf(val) >= 0 ? null : 'none';
-						});
-				customButton.selectAll('.description-text').text('"{0}"'.format(this.value));
-			}
-		}
-
-		var searchInputNode = _this.appendSearchBar(textChanged);
-
-		var panel2Div = _this.appendScrollArea();
-	
-		function buttonClicked(d) {
-			if (prepareClick('click', 'pick service: ' + d.getDescription()))
-			{
-				success(new ReportedObject({pickedObject: d}));
-				_this.hidePanelRight(unblockClick);
-			}
-			d3.event.preventDefault();
-		}
+		var searchView = new PickServiceSearchView(this, experience, oldReportedObject, success);
 		
-		var itemsDiv = panel2Div.append("section")
-			.classed("multiple", true)
-			.append("ol");
-
-		var customButton = itemsDiv.append('li')
-			.style('display', 'none')
-			.on ('click', function() {
-					if (prepareClick('click', 'add custom service'))
-					{
-						var newValue = _this.getObjectByDescription(rootObjects, searchInputNode.value);
-						success(new ReportedObject({name: searchInputNode.value, pickedObject: newValue}));
-						_this.hidePanelRight(unblockClick);
-					}
-					d3.event.preventDefault();
-				});
-		appendViewButtons(customButton, function(buttons) {
-				buttons.append("div")
-					.classed("description-text", true)
-					.text("");
+		$(this.node()).one("revealing.cr", function() 
+			{ 
+				searchView.search(""); 
+				searchView.inputBox.focus();
 			});
-	
-		var i = 0;
-		var sections = itemsDiv.selectAll("li")
-					.data(rootObjects, function(d) {
-						/* Ensure that this operation appends without replacing any items. */
-						i += 1;
-						return i;
-					  })
-					.enter()
-					.append("li");
-
-		var buttons = appendViewButtons(sections, appendDescriptions)
-			.on("click", buttonClicked);
 
 		if (oldReportedObject)
 		{
