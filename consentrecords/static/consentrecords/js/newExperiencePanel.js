@@ -1650,7 +1650,7 @@ var PickServiceSearchView = (function() {
 			if (prepareClick('click', 'pick service: ' + d.getDescription()))
 			{
 				_this.success(new ReportedObject({pickedObject: d}));
-				_this.hidePanelRight(unblockClick);
+				_this.sitePanel.hide(unblockClick);
 			}
 		}
 		d3.event.preventDefault();
@@ -1674,6 +1674,13 @@ var PickServiceSearchView = (function() {
 				return true;
 			return false;
 		}
+	}
+	
+	PickServiceSearchView.prototype.fields = function()
+	{
+		var fields = SearchView.prototype.fields.call(this);
+		fields.push('type');
+		return fields;
 	}
 	
 	PickServiceSearchView.prototype.searchPath = function(val)
@@ -1724,7 +1731,7 @@ var PickServiceSearchView = (function() {
 	{
 		var _this = this;
 
-		PanelSearchView.call(this, sitePanel, experience, "Tag");
+		PanelSearchView.call(this, sitePanel, "Tag", undefined, GetDataChunker);
 
 		if (sitePanel)
 		{
