@@ -217,7 +217,7 @@ if __name__ == "__main__":
                                 item.getOrCreateTranslationValue(field, value, languageCode, fieldData, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
-                                item.getOrCreateReferenceValue(field, referenceValue, transactionState)
+                                item.getOrCreateReferenceValue(field, referenceValue, fieldData, transactionState)
                             
                             if 'descriptorType' in fieldData:
                                 Instance.updateDescriptions([item], nameList)

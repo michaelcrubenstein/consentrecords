@@ -897,13 +897,19 @@ class Instance(dbmodels.Model):
                     
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+    def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
         if children.count():
             return children[0]
         else:
+            if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
+                children = self.value_set.filter(field=field,
+                                                 deleteTransaction__isnull=True)
+                if len(children):
+                    return children[0].updateValue(referenceValue, transactionState)
+                    
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
     # returns the querySet of values within self that are in the specified object field and named using
