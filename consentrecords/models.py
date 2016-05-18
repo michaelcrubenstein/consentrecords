@@ -266,6 +266,20 @@ class Instance(dbmodels.Model):
                             r.append(v.referenceValue._description)
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
+            elif descriptorType == terms.firstTextEnum:
+                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
+                if vs.count() > 0:
+                    v = vs[0]
+                    if dataType == terms.objectEnum:
+                        try:
+                            if not v.referenceValue:
+                                raise ValueError("no reference value for %s in %s: %s(%s)" % (str(v.instance), str(self), str(v.field), v.stringValue))
+                            r.append(v.referenceValue.description.text)
+                        except Description.DoesNotExist:
+                            r.append(v.referenceValue._description)
+                    else:
+                        if v.stringValue:
+                            r.extend([v.stringValue])
             elif descriptorType == terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
@@ -1119,6 +1133,7 @@ class TermNames():
     lastName = '_last name'
     text = '_text'
     textEnum = '_by text'
+    firstTextEnum = '_by first text'
     countEnum = '_by count'
     accessRecord = '_access record'
     accessRequest = '_access request'
@@ -1258,6 +1273,8 @@ class Terms():
     
         try: self.textEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.textEnum)
         except Value.DoesNotExist: pass
+        try: self.firstTextEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.firstTextEnum)
+        except Value.DoesNotExist: pass
         try: self.countEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.countEnum);
         except Value.DoesNotExist: pass
     
@@ -1327,7 +1344,7 @@ class Terms():
             x = Terms.getName()
         elif name == 'securityFields': 
             x = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
-        elif name in ['textEnum', 'countEnum']:
+        elif name in ['textEnum', 'firstTextEnum', 'countEnum']:
             x = Terms.getNamedEnumerator(self.descriptorType, type.__getattribute__(TermNames, name))
         elif name in ['objectEnum', 'stringEnum', 'translationEnum']:
             x = Terms.getNamedEnumerator(self.dataType, type.__getattribute__(TermNames, name))
