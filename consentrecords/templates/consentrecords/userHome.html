@@ -402,19 +402,25 @@
 			}
 		}
 		
+		function decodeEntities(encodedString) {
+			var textArea = document.createElement('textarea');
+			textArea.innerHTML = encodedString;
+			return textArea.value;
+		}
+
 		function addToPathway(pathwayPanel)
 		{
 			var pathway = pathwayPanel.pathtree;
-			{% if organization %}var organizationName = "{{organization}}";
+			{% if organization %}var organizationName = decodeEntities("{{organization}}");
 			{% else %}var organizationName = null;
 			{% endif %}
-			{% if site %}var siteName = "{{site}}";
+			{% if site %}var siteName = decodeEntities("{{site}}");
 			{% else %}var siteName = null;
 			{% endif %}
-			{% if offering %}var offeringName = "{{offering}}";
+			{% if offering %}var offeringName = decodeEntities("{{offering}}");
 			{% else %}var offeringName = null;
 			{% endif %}
-			{% if service %}var serviceName = "{{service}}";
+			{% if service %}var serviceName = decodeEntities("{{service}}");
 			{% else %}var serviceName = null;
 			{% endif %}
 	
