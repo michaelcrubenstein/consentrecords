@@ -279,7 +279,7 @@ class Instance(dbmodels.Model):
                             r.append(v.referenceValue._description)
                     else:
                         if v.stringValue:
-                            r.extend([v.stringValue])
+                            r.append(v.stringValue)
             elif descriptorType == terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
