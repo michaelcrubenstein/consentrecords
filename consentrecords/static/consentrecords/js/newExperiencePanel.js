@@ -511,8 +511,41 @@ var Experience = (function() {
 	return Experience;
 })();
 
+var NamedTypeSearchView = (function() {
+	NamedTypeSearchView.prototype = new PanelSearchView();
+
+	NamedTypeSearchView.prototype.hasNamedButton = function(compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+		var data = this.listPanel.selectAll("li").data();
+		return data.find(function(d) {
+				return d.getCell && d.getCell("_name").data.find(
+					function(d) { return d.text.toLocaleLowerCase() === compareText;});
+			});
+	}
+	
+	/* Returns true if the specified datum has a name that contains compareText. */
+	NamedTypeSearchView.prototype.isMatchingDatum = function(d, compareText)
+	{
+		if (compareText.length === 0)
+			return true;
+		
+		return d.getDescription && 
+			   d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+	}
+	
+	function NamedTypeSearchView(sitePanel, placeholder, appendDescriptions, chunker)
+	{
+		PanelSearchView.call(this, sitePanel, placeholder, appendDescriptions, chunker)
+	}
+	
+	return NamedTypeSearchView;
+	
+})();
+
 var MultiTypeSearchView = (function() {
-	MultiTypeSearchView.prototype = new PanelSearchView();
+	MultiTypeSearchView.prototype = new NamedTypeSearchView();
 	MultiTypeSearchView.prototype.experience = null;
 	MultiTypeSearchView.prototype.typeName = "";
 	MultiTypeSearchView.prototype.initialTypeName = "";
@@ -593,7 +626,7 @@ var MultiTypeSearchView = (function() {
 	function MultiTypeSearchView(sitePanel, experience, placeholder, appendDescriptions)
 	{
 		this.experience = experience;
-		PanelSearchView.call(this, sitePanel, placeholder, appendDescriptions, GetDataChunker)
+		NamedTypeSearchView.call(this, sitePanel, placeholder, appendDescriptions, GetDataChunker)
 	}
 	
 	return MultiTypeSearchView;
@@ -645,17 +678,11 @@ var ServiceSearchView = (function() {
 	{
 		if (button == this.customButton.node())
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
-				return true;
-			
-			return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+			return this.isMatchingDatum(d, compareText);
 		}
 	}
 	
@@ -849,18 +876,13 @@ var FromServiceSearchView = (function() {
 	{
 		if (button == this.organizationButton.node())
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
+			if (this.isMatchingDatum(d, compareText))
 				return true;
-				
-			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-				return true;
+
 			var s = d.getValue("Site");
 			if (s && s.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
 				return true;
@@ -924,8 +946,7 @@ var FromServiceSearchView = (function() {
 	FromServiceSearchView.prototype.noResultString = function()
 	{
 		if (this.typeName === this.typeNames[this.typeNames.length-1] || 
-			!this._foundCompareText || 
-			this._foundCompareText.length == 0)
+			!this._foundCompareText)
 			return "No Results";
 		else
 			return "";
@@ -1213,18 +1234,13 @@ var FromOrganizationSearchView = (function() {
 	{
 		if (button == this.customButton.node())
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
+			if (this.isMatchingDatum(d, compareText))
 				return true;
-			
-			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-				return true;
+
 			if (d.typeName === "Offering")
 			{
 				if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
@@ -1458,18 +1474,13 @@ var FromSiteSearchView = (function() {
 	{
 		if (button == this.customButton.node())
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
+			if (this.isMatchingDatum(d, compareText))
 				return true;
-			
-			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-				return true;
+
 			if (d.typeName === "Offering")
 			{
 				if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
@@ -1632,7 +1643,7 @@ var ReportedObject = function () {
 }();
 
 var PickServiceSearchView = (function() {
-	PickServiceSearchView.prototype = new PanelSearchView();
+	PickServiceSearchView.prototype = new NamedTypeSearchView();
 	
 	PickServiceSearchView.prototype.appendDescriptions = function(buttons)
 	{
@@ -1660,19 +1671,11 @@ var PickServiceSearchView = (function() {
 	{
 		if (button == this.customButton.node())
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
-				return true;
-			
-			if (d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
-				return true;
-			return false;
+			return this.isMatchingDatum(d, compareText);
 		}
 	}
 	
@@ -1731,7 +1734,7 @@ var PickServiceSearchView = (function() {
 	{
 		var _this = this;
 
-		PanelSearchView.call(this, sitePanel, "Tag", undefined, GetDataChunker);
+		NamedTypeSearchView.call(this, sitePanel, "Tag", undefined, GetDataChunker);
 
 		if (sitePanel)
 		{
@@ -2219,17 +2222,11 @@ var NewExperienceSearchView = (function() {
 	{
 		if (typeof(d) != "object")
 		{
-			if (compareText.length === 0)
-				return false;
-			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !this.hasNamedButton(compareText);
 		}
 		else
 		{
-			if (compareText.length === 0)
-				return true;
-			
-			return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+			return this.isMatchingDatum(d, compareText);
 		}
 	}
 	
