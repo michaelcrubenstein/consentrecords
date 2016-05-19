@@ -556,7 +556,7 @@ var MultiTypeSearchView = (function() {
 	MultiTypeSearchView.prototype.canConstrain = function(searchText, constrainText)
 	{
 		/* Force searching if the searchText length is 0. */
-		if (searchText.length === 0)
+		if (!searchText)
 			return false;
 			
 		return SearchView.prototype.canConstrain.call(this, searchText, constrainText);
