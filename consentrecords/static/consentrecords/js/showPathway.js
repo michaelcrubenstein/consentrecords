@@ -20,7 +20,15 @@ var PickOrCreateSearchView = (function () {
 			if (compareText.length === 0)
 				return false;
 			var data = this.listPanel.selectAll("li").data();
-			return !data.find(function(d) { return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText; });
+			return !data.find(function(d) {
+				return typeof(d) == "object" &&
+					crp.getInstance(d.getValueID()).cells.find(function(cell)
+					{
+						return (cell.field.descriptorType == "_by text" ||
+							    cell.field.descriptorType == "_by first text") &&
+							cell.data.find(function(d) { return d.getDescription().toLocaleLowerCase() === compareText; });
+					});
+				});
 		}
 		else
 		{
@@ -145,7 +153,24 @@ var PickOrCreateSearchView = (function () {
 			if (!this.createDatum.isEmpty())
 				this.inputText(this.createDatum.getDescription());
 			else if (!this.pickDatum.isEmpty())
-				this.inputText(this.pickDatum.getDescription());
+			{
+				var cell = crp.getInstance(this.pickDatum.getValueID()).cells.find(function(cell)
+					{
+						return (cell.field.descriptorType == "_by text" ||
+							cell.field.descriptorType == "_by first text") &&
+							cell.data.find(function(d) { return !d.isEmpty(); });
+					});
+				if (cell)
+				{
+					var d = cell.data.find(function(d) { return !d.isEmpty(); });
+					if (d)
+						this.inputText(d.getDescription());
+					else
+						this.inputText(this.pickDatum.getDescription());
+				}
+				else
+					this.inputText(this.pickDatum.getDescription());
+			}
 		}
 		else
 			PanelSearchView.call(this);

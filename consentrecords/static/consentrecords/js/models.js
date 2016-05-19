@@ -917,7 +917,14 @@ cr.ObjectValue = (function() {
 					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
 						.map(function (d) { return d.getDescription(); });
 					if (cellNames.length > 0)
-						nameArray.push(cellNames.join(separator='/'));
+						nameArray.push(cellNames.join(separator=' '));
+				}
+				else if (cell.field.descriptorType == "_by first text")
+				{
+					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
+						.map(function (d) { return d.getDescription(); });
+					if (cellNames.length > 0)
+						nameArray.push(cellNames[0]);
 				}
 				else if (cell.field.descriptorType == "_by count")
 				{

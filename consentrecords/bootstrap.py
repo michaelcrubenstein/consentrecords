@@ -60,7 +60,7 @@ def createMaxCapacities(transactionState):
     _addEnumerators(terms.maxCapacity, [TermNames.uniqueValueEnum, TermNames.multipleValuesEnum], transactionState)
     
 def createDescriptorTypes(transactionState):
-    _addEnumerators(terms.descriptorType, [TermNames.textEnum, TermNames.countEnum], transactionState)
+    _addEnumerators(terms.descriptorType, [TermNames.textEnum, TermNames.firstTextEnum, TermNames.countEnum], transactionState)
     
 def createBooleans(transactionState):
     _addEnumeratorTranslations(terms.boolean, [TermNames.yes, TermNames.no], transactionState)

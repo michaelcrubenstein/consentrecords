@@ -266,6 +266,20 @@ class Instance(dbmodels.Model):
                             r.append(v.referenceValue._description)
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
+            elif descriptorType == terms.firstTextEnum:
+                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
+                if vs.count() > 0:
+                    v = vs[0]
+                    if dataType == terms.objectEnum:
+                        try:
+                            if not v.referenceValue:
+                                raise ValueError("no reference value for %s in %s: %s(%s)" % (str(v.instance), str(self), str(v.field), v.stringValue))
+                            r.append(v.referenceValue.description.text)
+                        except Description.DoesNotExist:
+                            r.append(v.referenceValue._description)
+                    else:
+                        if v.stringValue:
+                            r.append(v.stringValue)
             elif descriptorType == terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
@@ -883,13 +897,19 @@ class Instance(dbmodels.Model):
                     
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+    def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
         if children.count():
             return children[0]
         else:
+            if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
+                children = self.value_set.filter(field=field,
+                                                 deleteTransaction__isnull=True)
+                if len(children):
+                    return children[0].updateValue(referenceValue, transactionState)
+                    
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
     # returns the querySet of values within self that are in the specified object field and named using
@@ -1119,6 +1139,7 @@ class TermNames():
     lastName = '_last name'
     text = '_text'
     textEnum = '_by text'
+    firstTextEnum = '_by first text'
     countEnum = '_by count'
     accessRecord = '_access record'
     accessRequest = '_access request'
@@ -1258,6 +1279,8 @@ class Terms():
     
         try: self.textEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.textEnum)
         except Value.DoesNotExist: pass
+        try: self.firstTextEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.firstTextEnum)
+        except Value.DoesNotExist: pass
         try: self.countEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.countEnum);
         except Value.DoesNotExist: pass
     
@@ -1327,7 +1350,7 @@ class Terms():
             x = Terms.getName()
         elif name == 'securityFields': 
             x = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
-        elif name in ['textEnum', 'countEnum']:
+        elif name in ['textEnum', 'firstTextEnum', 'countEnum']:
             x = Terms.getNamedEnumerator(self.descriptorType, type.__getattribute__(TermNames, name))
         elif name in ['objectEnum', 'stringEnum', 'translationEnum']:
             x = Terms.getNamedEnumerator(self.dataType, type.__getattribute__(TermNames, name))

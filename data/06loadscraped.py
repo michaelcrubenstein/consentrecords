@@ -115,7 +115,7 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         type = l[0].typeID
         
-    verbs = list(filter(lambda verb: verb[2] == terms.textEnum, nameLists.getNameUUIDs(type)))
+    verbs = list(filter(lambda verb: verb[2] == terms.textEnum or verb[2] == terms.firstTextEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
     if isTranslationField(fd):
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                                 item.getOrCreateTranslationValue(field, value, languageCode, fieldData, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
-                                item.getOrCreateReferenceValue(field, referenceValue, transactionState)
+                                item.getOrCreateReferenceValue(field, referenceValue, fieldData, transactionState)
                             
                             if 'descriptorType' in fieldData:
                                 Instance.updateDescriptions([item], nameList)

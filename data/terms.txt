@@ -414,7 +414,7 @@ _term
             _name: _name
             _data type: _translation
             _max capacity: _multiple values
-            _descriptor type: _by text
+            _descriptor type: _by first text
             _object add rule: _create one
         _field
             _name: Service Domain
@@ -799,6 +799,8 @@ _term
     _name: _descriptor type
     enumerator
         _name: _by text
+    enumerator
+        _name: _by first text
     enumerator
         _name: _by count
 _term
