@@ -941,7 +941,7 @@ function _getTranslationValue()
 	var sel = languageInput.node();
 	var selectedOption = sel.options[sel.selectedIndex];
 	var languageCode = d3.select(selectedOption).datum().code;
-	console.log(sel.options[sel.selectedIndex].value)
+
 	return {text: textInput.property("value").trim(),
 				languageCode: languageCode};
 }
