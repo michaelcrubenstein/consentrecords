@@ -21,8 +21,13 @@ var PickOrCreateSearchView = (function () {
 				return false;
 			var data = this.listPanel.selectAll("li").data();
 			return !data.find(function(d) {
-				return typeof(d) == "object" &&
-					crp.getInstance(d.getValueID()).cells.find(function(cell)
+				if (typeof(d) !== "object")
+					return false;
+					
+				/* If there are not cells, check the cache */
+				if (!d.cells)
+					d = crp.getInstance(d.getValueID());
+				return d.cells.find(function(cell)
 					{
 						return (cell.field.descriptorType == "_by text" ||
 							    cell.field.descriptorType == "_by first text") &&
@@ -95,7 +100,7 @@ var PickOrCreateSearchView = (function () {
 		{
 			this.pickDatum = pickDatum;
 			this.createDatum = createDatum;
-			PanelSearchView.call(this, sitePanel, pickDatum.cell.field.name, undefined, GetDataChunker /* Could be SelectAllChunker */);
+			PanelSearchView.call(this, sitePanel, pickDatum.cell.field.name, undefined, GetDataChunker);
 			var _this = this;
 			this.customButton = appendViewButtons(this.appendButtonContainers(["Custom"]), 
 						function(buttons)
@@ -154,22 +159,29 @@ var PickOrCreateSearchView = (function () {
 				this.inputText(this.createDatum.getDescription());
 			else if (!this.pickDatum.isEmpty())
 			{
-				var cell = crp.getInstance(this.pickDatum.getValueID()).cells.find(function(cell)
-					{
-						return (cell.field.descriptorType == "_by text" ||
-							cell.field.descriptorType == "_by first text") &&
-							cell.data.find(function(d) { return !d.isEmpty(); });
-					});
-				if (cell)
+				if (!this.pickDatum.cells && !crp.getInstance(this.pickDatum.getValueID()))
+					this.inputText(this.pickDatum.getDescription());
+				else
 				{
-					var d = cell.data.find(function(d) { return !d.isEmpty(); });
-					if (d)
-						this.inputText(d.getDescription());
+					var cells = this.pickDatum.cells ||
+						crp.getInstance(this.pickDatum.getValueID()).cells;
+					var cell = cells.find(function(cell)
+						{
+							return (cell.field.descriptorType == "_by text" ||
+								cell.field.descriptorType == "_by first text") &&
+								cell.data.find(function(d) { return !d.isEmpty(); });
+						});
+					if (cell)
+					{
+						var d = cell.data.find(function(d) { return !d.isEmpty(); });
+						if (d)
+							this.inputText(d.getDescription());
+						else
+							this.inputText(this.pickDatum.getDescription());
+					}
 					else
 						this.inputText(this.pickDatum.getDescription());
 				}
-				else
-					this.inputText(this.pickDatum.getDescription());
 			}
 		}
 		else
