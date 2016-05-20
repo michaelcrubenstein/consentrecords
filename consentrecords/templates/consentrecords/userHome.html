@@ -515,7 +515,7 @@
 							panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
 								{
 									m.forEach(function(sd) { experience.removeService(service); })
-									experience.clearOffering(newService);
+									experience.clearOffering();
 									experience.clearOrganization();
 									experience.clearSite();
 								});
