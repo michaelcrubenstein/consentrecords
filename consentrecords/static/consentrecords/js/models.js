@@ -314,6 +314,12 @@ cr.Cell = (function()
 			$(this).trigger("valueAdded.cr", newValue);
 			return newValue;
 		};
+		
+		/* Returns true if the cell's values need to persist through a delete operation. */
+		Cell.prototype.hasPersistentValues = function()
+		{
+			return this.isUnique();
+		}
 
 		Cell.prototype.deleteValue = function(oldData)
 		{
@@ -322,7 +328,7 @@ cr.Cell = (function()
 				if (i >= 0)
 					arr.splice(i, 1);
 			  }
-			if (this.isUnique())
+			if (this.hasPersistentValues())
 			{
 				oldData.id = null;
 				oldData.clearValue();

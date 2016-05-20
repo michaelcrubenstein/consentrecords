@@ -107,7 +107,7 @@ var PickOrCreateSearchView = (function () {
 				.on("click", function(d, i) {
 					d3.event.preventDefault();
 
-					if (prepareClick('click', 'Done'))
+					if (prepareClick('click', 'Custom Button: ' + _this.inputText()))
 					{
 						var newText = _this.inputText();
 						var compareText = newText.toLocaleLowerCase()
@@ -201,8 +201,22 @@ var PickOrCreatePanel = (function () {
 		if (initialData.length > 0)
 		{
 			var _this = this;
+			
+			/* Override the hasPersistentValues function of the pickDatum and createDatum
+				cells to ensure that they aren't deleted (which they would be for the MyTagsCell).
+			 */
+			var f = function() {
+				return true;
+			}
+			var oldF = this.pickDatum.cell.hasPersistentValues;
+			this.pickDatum.cell.hasPersistentValues = f;
+			this.createDatum.cell.hasPersistentValues = f;
 			cr.updateValues(initialData, sourceObjects,
-				function () { _this.hide(); },
+				function () {
+					_this.pickDatum.cell.hasPersistentValues = oldF;
+					_this.createDatum.cell.hasPersistentValues = oldF;
+					_this.hide();
+					},
 				syncFailFunction);
 		}
 		else
