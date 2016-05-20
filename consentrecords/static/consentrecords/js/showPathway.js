@@ -107,7 +107,7 @@ var PickOrCreateSearchView = (function () {
 				.on("click", function(d, i) {
 					d3.event.preventDefault();
 
-					if (prepareClick('click', 'Done'))
+					if (prepareClick('click', 'Custom Button: ' + _this.inputText()))
 					{
 						var newText = _this.inputText();
 						var compareText = newText.toLocaleLowerCase()
