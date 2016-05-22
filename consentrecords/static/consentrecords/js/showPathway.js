@@ -898,6 +898,8 @@ var OfferingServiceCell = (function () {
 				done,
 				fail);
 		}
+		else
+			done();
 	}
 	
 	OfferingServiceCell.prototype.clear = function(obj)
@@ -909,11 +911,10 @@ var OfferingServiceCell = (function () {
 	{
 		this.clear(obj);
 		var _this = this;
-		this.checkCells(function() {
-							var offering = _this.offeringCell.data[0];
-							offering.getCell("Service").show(obj, containerPanel);
-						},
-						asyncFailFunction);
+		if (!this.offeringCell.isEmpty()) {
+			var offering = this.offeringCell.data[0];
+			offering.getCell("Service").show(obj, containerPanel);
+		}
 	}
 	
 	OfferingServiceCell.prototype.setupHandlers = function(obj, containerPanel)
@@ -997,6 +998,7 @@ var EditExperiencePanel = (function () {
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();
+		var myTagsCell;
 
 		navContainer.appendRightButton()
 			.classed("default-link", true)
@@ -1056,16 +1058,22 @@ var EditExperiencePanel = (function () {
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
-		this.showViewCells([offeringServiceCell])
-				 .each(function(cell)
-					{
-						offeringServiceCell.setupHandlers(this, _this.node());
-					});
 		
-		var serviceCell = experience.getCell("Service");
-		var userServiceCell = experience.getCell("User Entered Service");
-		var myTagsCell = new MyTagsCell(serviceCell, userServiceCell);
-		var sections = this.showEditCells([myTagsCell]);
+		offeringServiceCell.checkCells(
+			function()
+			{
+				_this.showViewCells([offeringServiceCell])
+						 .each(function(cell)
+							{
+								offeringServiceCell.setupHandlers(this, _this.node());
+							});
+		
+				var serviceCell = experience.getCell("Service");
+				var userServiceCell = experience.getCell("User Entered Service");
+				myTagsCell = new MyTagsCell(serviceCell, userServiceCell);
+				var sections = _this.showEditCells([myTagsCell]);
+			},
+			asyncFailFunction);
 	}
 	
 	return EditExperiencePanel;
