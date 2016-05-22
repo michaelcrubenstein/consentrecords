@@ -1092,27 +1092,32 @@ cr.ObjectValue = (function() {
 								fail(json.error);
 							}
 						}
-					);
+					)
+					.fail(function(jqXHR, textStatus, errorThrown)
+							{
+								cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+							}
+						 );
 					return false;
 				}
 			});
 	}
 
-	ObjectValue.prototype.checkCells = function(fields, successFunction, failFunction)
+	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
+		if (typeof(done) != "function")
+			throw "done is not a function";
+		if (typeof(fail) != "function")
+			throw "fail is not a function";
 		if (this.privilege == "_find")
 		{
-			failFunction("You do not have permission to see information about {0}".format(this.getDescription()));
+			fail("You do not have permission to see information about {0}".format(this.getDescription()));
 			return;
 		}
 	
 		if (this.cells && this.isDataLoaded)
 		{
-			successFunction();
+			done();
 		}
 		else if (this.getValueID())
 		{
@@ -1141,18 +1146,23 @@ cr.ObjectValue = (function() {
 								_this.privilege = null;
 							}
 							_this.isDataLoaded = true;
-							successFunction();
+							done();
 						}
 						else {
-							failFunction(json.error);
+							fail(json.error);
 						}
 					}
 					catch (err)
 					{
-						failFunction(err);
+						fail(err);
 					}
 				}
-			);
+			)
+			.fail(function(jqXHR, textStatus, errorThrown)
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+					}
+				 );
 		}
 		else if (this.cell.field.ofKindID)
 		{
@@ -1162,9 +1172,9 @@ cr.ObjectValue = (function() {
 				function(newCells)
 				{
 					_this.cells = newCells;
-					successFunction();
+					done();
 				},
-				failFunction);
+				fail);
 		}
 	}
 
