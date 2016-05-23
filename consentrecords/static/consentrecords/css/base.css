@@ -242,9 +242,13 @@ section.cell {
 .cell.unique.edit {
 	border-bottom: 1px solid #eee;
 }
+.cell.unique.edit>label {
+	line-height: 23px;
+}
+
 .cell>label {
     color: #222;
-	font-size: 15px;
+	font-size: 13px;
 	font-weight: normal;
 	margin: 0;
 	padding: 6px 12px;
@@ -290,7 +294,7 @@ section.cell {
 }
 .cell.multiple.edit>label {
 	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 500;
 	padding-bottom: 2px;
 }

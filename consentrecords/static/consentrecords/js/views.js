@@ -537,8 +537,6 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(this.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll(".date-row").style("line-height"));
 		}
 	}
 	else
@@ -634,8 +632,6 @@ function _showEditTranslationCell(obj, cell, inputType)
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(cell.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
 		}
 	}
 	else
