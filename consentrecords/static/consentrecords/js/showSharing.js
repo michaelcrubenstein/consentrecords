@@ -89,16 +89,24 @@ var SharingPanel = (function() {
 	SharingPanel.prototype.loadAccessRecords = function(panel2Div, accessRecords)
 	{
 		var _this = this;
+		var cells, itemCells, items;
+		var accessRequestSection, accessRequestList;
 		
-		cells = panel2Div.append("section")
+		accessRequestSection = panel2Div.append("section")
 			.datum(this.user.getCell("_access request"))
-			.classed("cell multiple", true);
-		cells.append("label")
+			.classed("cell multiple edit", true);
+		accessRequestSection.append("label")
 			.text("Access Requests");
-		itemCells = cells.append("ol")
+		accessRequestList = accessRequestSection.append("ol")
 			.classed("cell-items", true);
 			
-		items = appendItems(itemCells, cells.datum().data);
+		items = appendItems(accessRequestList, accessRequestSection.datum().data,
+			function()
+			{
+				accessRequestSection.style('display', accessRequestList.selectAll('li').size() ? "" : "none");
+			});
+		accessRequestSection.style('display', items.size() ? "" : "none");
+		
 		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
 		var infoButtons = appendInfoButtons(buttons, this.node());
 		
@@ -134,21 +142,26 @@ var SharingPanel = (function() {
 			}
 		}
 	
-		var cells = panel2Div.selectAll("section")
-			.data(this.privileges)
+		var key = 0;
+		cells = panel2Div.selectAll("section")
+			.data(this.privileges, function(d) {
+				/* Ensure that this operation appends without replacing any items. */
+				key += 1;
+				return key;
+			  })
 			.enter()
 			.append("section")
 			.classed("cell multiple edit", true);
 		cells.append("label")
 			.text(function(d) { return d.label });
 			
-		var itemCells = cells.append("ol")
+		itemCells = cells.append("ol")
 			.classed("cell-items", true);
 	
 		// Reference the views back to the privileges objects.
 		itemCells.each(function(d) { d.itemsDiv = this; });
 		
-		var items = appendItems(itemCells, function(d) { return d.accessors });
+		items = appendItems(itemCells, function(d) { return d.accessors });
 		
 		this.appendUserControls(items);
 		

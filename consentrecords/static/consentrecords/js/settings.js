@@ -1,5 +1,9 @@
 var Settings = (function () {
 	Settings.prototype = new SitePanel();
+	Settings.prototype.firstNameLabel = "First Name";
+	Settings.prototype.lastNameLabel = "Last Name";
+	Settings.prototype.publicAccessLabel = "Public Access to Me";
+	Settings.prototype.accessRequestLabel = "Access Requests";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
@@ -18,7 +22,11 @@ var Settings = (function () {
 					panel2Div.handleDoneEditingButton.call(this);
 				})
  			.append("span").text("Done");
-			
+		
+		user.getCell("_first name").field.label = this.firstNameLabel;
+		user.getCell("_last name").field.label = this.lastNameLabel;
+		user.getCell("_public access").field.label = this.publicAccessLabel;
+		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
 					 user.getCell("Birthday"),
@@ -31,6 +39,7 @@ var Settings = (function () {
 			function checkSharingBadge()
 			{
 				var cell = user.getCell("_access request");
+				cell.field.label = _this.accessRequestLabel;
 				var badgeCount = (cell && cell.data.length > 0) ? cell.data.length : "";
 
 				sharingButton.selectAll("span.badge").text(badgeCount);

@@ -382,7 +382,7 @@ function removeItem(itemNode, done)
 	});
 }
 
-function _setupItemHandlers(d)
+function _setupItemHandlers(d, done)
 {
 	/* This method may be called for a set of items that were gotten directly and are not
 		part of a cell. Therefore, we have to test whether d.cell is not null.
@@ -391,7 +391,7 @@ function _setupItemHandlers(d)
 	{
 		var f = function(eventObject)
 		{
-			removeItem(eventObject.data);
+			removeItem(eventObject.data, done);
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
 		$(this).on("remove", this, d, function(eventObject)
@@ -446,17 +446,16 @@ function _showEditStringCell(obj, cell, inputType)
 			.append("li")
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 	
+		var label = cell.field.label || cell.field.name;
 		divs.append("input")
 			.attr("type", inputType)
-			.attr("placeholder", cell.field.name)
+			.attr("placeholder", label)
 			.property("value", _getDataValue);
 
 		if (cell.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(cell.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
+				.text(label);
 		}
 	}
 	else
@@ -536,9 +535,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 		if (this.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(this.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll(".date-row").style("line-height"));
+				.text(this.field.label || this.field.name);
 		}
 	}
 	else
@@ -633,9 +630,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 		if (cell.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(cell.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
+				.text(cell.field.label || cell.field.name);
 		}
 	}
 	else
@@ -1018,7 +1013,7 @@ function _updateTranslationCell(sectionObj)
 cr.Cell.prototype.appendLabel = function(obj)
 {
 	return d3.select(obj).append("label")
-		.text(this.field.label ? this.field.label : this.field.name);
+		.text(this.field.label || this.field.name);
 }
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
@@ -1266,7 +1261,7 @@ function appendViewButtons(sections, fill)
 	return buttons;
 }
 
-function appendItems(container, data)
+function appendItems(container, data, doneDelete)
 {
 	var i = 0;
 	return container.selectAll("li")
@@ -1277,7 +1272,7 @@ function appendItems(container, data)
 		  })
 		.enter()
 		.append("li")	// So that each button appears on its own row.
-		.each(_setupItemHandlers);
+		.each(function(d) { _setupItemHandlers.call(this, d, doneDelete); });
 }
 
 function appendItem(container, d)
