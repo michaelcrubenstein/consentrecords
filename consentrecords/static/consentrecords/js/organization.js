@@ -53,12 +53,32 @@ function getEndDate(d) {
 
 function getDateRange(d)
 {
+	function getDateString(s)
+	{
+		if (s.length == 7)
+			return Date.CultureInfo.monthNames[parseInt(s.substr(5))] + " " + s.substr(0, 4);
+		else if (s.length == 10)
+		{
+			var a = new Date(s);
+			a.setTime(a.getTime() + a.getTimezoneOffset() * 60 * 1000);
+			return a.toLocaleDateString();
+		}
+		else
+			return s;
+	}
+	
 	var startDate = getStartDate(d);
 	if (startDate === undefined || startDate === null)
 		startDate = "";
+	else
+		startDate = getDateString(startDate);
+		
 	var endDate = getEndDate(d);
 	if (endDate === undefined || endDate === null)
 		endDate = "";
+	else
+		endDate = getDateString(endDate);
+		
 	var connector;
 	if (startDate || endDate)
 		connector = " - ";
