@@ -446,17 +446,16 @@ function _showEditStringCell(obj, cell, inputType)
 			.append("li")
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 	
+		var label = cell.field.label || cell.field.name;
 		divs.append("input")
 			.attr("type", inputType)
-			.attr("placeholder", cell.field.name)
+			.attr("placeholder", label)
 			.property("value", _getDataValue);
 
 		if (cell.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(cell.field.name);
-			labelDiv
-				.style("line-height", divs.selectAll("input").style("line-height"));
+				.text(label);
 		}
 	}
 	else
@@ -536,7 +535,7 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 		if (this.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(this.field.name);
+				.text(this.field.label || this.field.name);
 		}
 	}
 	else
@@ -631,7 +630,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 		if (cell.field.descriptorType != "_by text")
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(cell.field.name);
+				.text(cell.field.label || cell.field.name);
 		}
 	}
 	else
@@ -1014,7 +1013,7 @@ function _updateTranslationCell(sectionObj)
 cr.Cell.prototype.appendLabel = function(obj)
 {
 	return d3.select(obj).append("label")
-		.text(this.field.label ? this.field.label : this.field.name);
+		.text(this.field.label || this.field.name);
 }
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
