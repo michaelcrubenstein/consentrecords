@@ -382,7 +382,7 @@ function removeItem(itemNode, done)
 	});
 }
 
-function _setupItemHandlers(d)
+function _setupItemHandlers(d, done)
 {
 	/* This method may be called for a set of items that were gotten directly and are not
 		part of a cell. Therefore, we have to test whether d.cell is not null.
@@ -391,7 +391,7 @@ function _setupItemHandlers(d)
 	{
 		var f = function(eventObject)
 		{
-			removeItem(eventObject.data);
+			removeItem(eventObject.data, done);
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
 		$(this).on("remove", this, d, function(eventObject)
@@ -1262,7 +1262,7 @@ function appendViewButtons(sections, fill)
 	return buttons;
 }
 
-function appendItems(container, data)
+function appendItems(container, data, doneDelete)
 {
 	var i = 0;
 	return container.selectAll("li")
@@ -1273,7 +1273,7 @@ function appendItems(container, data)
 		  })
 		.enter()
 		.append("li")	// So that each button appears on its own row.
-		.each(_setupItemHandlers);
+		.each(function(d) { _setupItemHandlers.call(this, d, doneDelete); });
 }
 
 function appendItem(container, d)
