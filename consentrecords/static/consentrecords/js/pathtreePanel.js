@@ -74,7 +74,8 @@ var FlagData = (function() {
 	FlagData.prototype.y = null;
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
-	FlagData.prototype.springs = null;
+	FlagData.prototype.leftSprings = null;
+	FlagData.prototype.rightSprings = null;
 	
 	FlagData.prototype.flagSpacing = 5;
 	FlagData.prototype.maxEnergy = 99999999;
@@ -108,7 +109,7 @@ var FlagData = (function() {
 	{
 		var _this = this;
 		var fds = springs.map(function(s) { return s.left; });
-		var energies = fds.map(function(fi) { return f(fi.rightSprings()); });
+		var energies = fds.map(function(fi) { return f(fi.rightSprings); });
 		return energies.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
@@ -117,15 +118,15 @@ var FlagData = (function() {
 	{
 		var _this = this;
 		var fds = springs.map(function(s) { return s.right; });
-		var energies = fds.map(function(fi) { return f(fi.leftSprings()); });
+		var energies = fds.map(function(fi) { return f(fi.leftSprings); });
 		return energies.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
 	/* Returns the energy that attracts this object to its walls or screen edges. */
 	FlagData.prototype.getXSpringEnergy = function(f)
 	{
-		var rightSprings = this.rightSprings();
-		var leftSprings = this.leftSprings();
+		var rightSprings = this.rightSprings;
+		var leftSprings = this.leftSprings;
 		
 		var leftEnergy = f(leftSprings) + this._getLeftEnergy(leftSprings, f);
 		var rightEnergy = f(rightSprings) + this._getRightEnergy(rightSprings, f);
@@ -198,7 +199,8 @@ var FlagData = (function() {
 	
 	FlagData.prototype.setEnergy = function(rightEdge)
 	{
-		this.springs.forEach(function(s) { s.setEnergy(); });
+		this.rightSprings.forEach(function(s) { s.setEnergy(); });
+		this.leftSprings.forEach(function(s) { s.setEnergy(); });
 		this.cacheFlagEnergy(rightEdge);
 	}
 	
@@ -242,21 +244,9 @@ var FlagData = (function() {
 		return delta;
 	}
 	
-	FlagData.prototype.rightSprings = function()
-	{
-		var _this = this;
-		return this.springs.filter(function(s) { return s.left == _this; });
-	}
-	
-	FlagData.prototype.leftSprings = function()
-	{
-		var _this = this;
-		return this.springs.filter(function(s) { return s.right == _this; });
-	}
-	
 	FlagData.prototype.setSpanWidth = function(rightEdge)
 	{
-		var maxRightSpan = this.rightSprings()
+		var maxRightSpan = this.rightSprings
 			.map(function(s) {
 				if (s.right.isFixed)
 					return rightEdge - s.right.x;
@@ -600,7 +590,7 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.getSprings = function(fds)
 	{
-		fds.forEach(function(fd, index) { fd.springs = []; fd.overlaps = []; fd.index = index;});
+		fds.forEach(function(fd, index) { fd.leftSprings = []; fd.rightSprings = []; fd.overlaps = []; fd.index = index;});
 
 		fds.sort(function(a, b) {
 			if (a.y != b.y)
@@ -660,8 +650,8 @@ var Pathtree = (function () {
 					
 				/* Add each spring to its left and right edge. */
 				s.forEach(function (spring) {
-					spring.left.springs.push(spring);
-					spring.right.springs.push(spring);
+					spring.left.rightSprings.push(spring);
+					spring.right.leftSprings.push(spring);
 				});
 				return s;
 			})
@@ -714,8 +704,7 @@ var Pathtree = (function () {
 				and remove it from the list. */
 			items.filter(function(fi)
 					{
-						return fi.springs.filter(function(s) { return s.left == fi && 
-																	  s.right.spanWidth == 0.0; }).length == 0; 
+						return fi.rightSprings.filter(function(s) { return s.right.spanWidth == 0.0; }).length == 0; 
 					})
 				.forEach(function(fi)
 					{
@@ -731,11 +720,11 @@ var Pathtree = (function () {
 		function pushNeighbors(fi)
 		{
 			/* Don't push items on the right if there are items on its left which are not yet set. */
-			fi.rightSprings().filter(function(s) { return !s.right.isFixed &&
-				s.right.leftSprings().find(function(s) { return !s.left.isFixed; }) === undefined; })
+			fi.rightSprings.filter(function(s) { return !s.right.isFixed &&
+				s.right.leftSprings.find(function(s) { return !s.left.isFixed; }) === undefined; })
 				.sort(function(a, b) { return a.right.spanWidth - b.right.spanWidth; })
 				.forEach(function(s) { stack.push(s.right); });
-			fi.leftSprings().filter(function(s) { return !s.left.isFixed; })
+			fi.leftSprings.filter(function(s) { return !s.left.isFixed; })
 				.sort(function(a, b) { return a.left.width - b.left.width; })
 				.forEach(function(s) { stack.push(s.left); });
 		}
@@ -764,14 +753,14 @@ var Pathtree = (function () {
 				fi = stack.pop();
 				if (!fi.isFixed)
 				{
-					var maxRight = fi.leftSprings().filter(function(s) { return s.left.isFixed; })
+					var maxRight = fi.leftSprings.filter(function(s) { return s.left.isFixed; })
 						.map(function(s) { return s.left.x + s.left.width; })
 						.reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 					if (maxRight > -Infinity)
 						placeFlag(fi, maxRight + fi.flagSpacing);
 					else
 					{
-						var minX = fi.rightSprings().filter(function(s) { return s.right.isFixed; })
+						var minX = fi.rightSprings.filter(function(s) { return s.right.isFixed; })
 							.map(function(s) { return s.right.x; })
 							.reduce(function(a, b) { return Math.min(a, b) }, Infinity);
 						if (minX < Infinity)
@@ -811,7 +800,7 @@ var Pathtree = (function () {
 		/* For any item to the right of a compressed item, don't shift those items. */
 		var cQueue = items.filter(function(fi)
 			{
-				return fi.leftSprings().filter(function(s) { return s.left.isFixed; }).length > 0;
+				return fi.leftSprings.filter(function(s) { return s.left.isFixed; }).length > 0;
 			});
 		while (cQueue.length > 0)
 		{
@@ -821,7 +810,7 @@ var Pathtree = (function () {
 			if (index >= 0)
 			{
 				items.splice(index, 1);
-				fi.rightSprings().forEach(function(s)
+				fi.rightSprings.forEach(function(s)
 					{
 						cQueue.push(s.right);
 					});
@@ -835,8 +824,7 @@ var Pathtree = (function () {
 				and remove it from the list. */
 			items.filter(function(fi)
 					{
-						return fi.springs.filter(function(s) { return s.left == fi && 
-																	  s.right.spanWidth == 0.0 &&
+						return fi.rightSprings.filter(function(s) { return s.right.spanWidth == 0.0 &&
 																	  !s.right.isFixed; }).length == 0; 
 					})
 				.forEach(function(fi)
@@ -864,7 +852,7 @@ var Pathtree = (function () {
 			
 			/* If it is to the right of a fixed item, then place it there, otherwise
 				place it so that its maxSpan is centered from 0 to rightEdge. */
-			var maxLeft = fi.leftSprings()
+			var maxLeft = fi.leftSprings
 				.map(function(s) {
 					if (s.left.isFixed)
 						return s.left.x + s.left.width;
@@ -883,14 +871,14 @@ var Pathtree = (function () {
 				fi = stack.pop();
 				if (!fi.isFixed)
 				{
-					var maxRight = fi.leftSprings().filter(function(s) { return s.left.isFixed; })
+					var maxRight = fi.leftSprings.filter(function(s) { return s.left.isFixed; })
 						.map(function(s) { return s.left.x + s.left.width; })
 						.reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 					if (maxRight > -Infinity)
 						placeFlag(fi, maxRight + fi.flagSpacing);
 					else
 					{
-						var minX = fi.rightSprings().filter(function(s) { return s.right.isFixed; })
+						var minX = fi.rightSprings.filter(function(s) { return s.right.isFixed; })
 							.map(function(s) { return s.right.x; })
 							.reduce(function(a, b) { return Math.min(a, b) }, Infinity);
 						if (minX < Infinity)
