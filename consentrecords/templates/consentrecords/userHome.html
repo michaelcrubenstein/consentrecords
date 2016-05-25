@@ -581,7 +581,7 @@
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
-				show_plans("#id_plans");
+				show_plans(cr.signedinUser, "#id_plans");
 			});
 			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
 				{
@@ -1126,7 +1126,7 @@
 			}
 		}
 		
-		function show_plans(container) {
+		function show_plans(user, container) {
 			var successFunction = function(sessions)
 			{
 				var containerPanel = d3.select(container);
@@ -1152,7 +1152,7 @@
 							{
 								showClickFeedback(this);
 
-								var sitePanel = showSessionDetails(session, null, $(container).parents("panel")[0]);
+								var sitePanel = showSessionDetails(user, session, null, $(container).parents("panel")[0]);
 			
 								showPanelLeft(sitePanel.node(), unblockClick);
 							}
