@@ -1936,41 +1936,12 @@ var Pathtree = (function () {
 		this.years = [];
 	}
 	
-	Pathtree.prototype.onExperienceAdded = function(eventObject, newData)
+	Pathtree.prototype.setupExperienceHandlers = function(experience)
 	{
-		var _this = this;
-		crp.pushCheckCells(newData, ["type"], 
-			function() {
-				function addExperience() {
-					_this.addMoreExperience(newData);
-					unblockClick();
-				}
-				var offering = newData.getValue("Offering");
-				if (offering && offering.getValueID() && !offering.isDataLoaded)
-					crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-				else
-					addExperience();
-			},
-			syncFailFunction);
-	}
-	
-	Pathtree.prototype.createExperience = function()
-	{
-		var experience = new Experience();
-		var _this = this;
-		experience.user = this.user;
-		$(experience).on("experienceAdded.cr", function(eventObject, newData)
+		$(experience).on("experienceAdded.cr", null, this, function(eventObject, newData)
 			{
-				_this.onExperienceAdded(eventObject, newData);
+				eventObject.data.addMoreExperience(newData);
 			});
-		return experience;
-	}
-	
-	Pathtree.prototype.startNewExperience = function()
-	{
-		var experience = this.createExperience();
-		
-		var panel = new NewExperiencePanel(experience, this.sitePanel.node());
 	}
 	
 	Pathtree.prototype.setUser = function(user, editable)
@@ -2207,7 +2178,7 @@ var Pathtree = (function () {
 							try
 							{
 								showClickFeedback(this);
-								_this.startNewExperience();
+								_this.sitePanel.startNewExperience();
 							}
 							catch (err)
 							{
@@ -2253,6 +2224,11 @@ var Pathtree = (function () {
 			this.clearDetail();
 		});
 		
+		$(containerDiv).on("remove", null, this, function(eventObject)
+		{
+			eventObject.data.clear();
+		});
+		
 	}
 	
 	return Pathtree;
@@ -2261,6 +2237,8 @@ var Pathtree = (function () {
 var PathtreePanel = (function () {
 	PathtreePanel.prototype = new SitePanel();
 	PathtreePanel.prototype.pathtree = null;
+	PathtreePanel.prototype.navContainer = null;
+	PathtreePanel.prototype.bottomNavContainer = null;
 	
 	PathtreePanel.prototype.userSettingsBadgeCount = function(user)
 	{
@@ -2270,25 +2248,10 @@ var PathtreePanel = (function () {
 		else
 			return "";
 	}
-
-	function PathtreePanel(user, previousPanel, canDone) {
-		canDone = canDone !== undefined ? canDone : true;
+	
+	PathtreePanel.prototype.setupSettingsButton = function(settingsButton, user)
+	{
 		var _this = this;
-
-		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
-		var navContainer = this.appendNavContainer();
-		var settingsButton;
-		
-		if (canDone)
-		{
-			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
-			backButton.append("span").text("Done");
-			settingsButton = navContainer.appendRightButton();
-		}
-		else
-			settingsButton = navContainer.appendLeftButton();
-
 		settingsButton
 			.on("click", 
 				function() {
@@ -2306,13 +2269,31 @@ var PathtreePanel = (function () {
 		settingsButton.append("span")
 			.classed("badge", true)
 			.text(this.userSettingsBadgeCount(user));
-
-		var addExperienceButton = navContainer.appendRightButton()
+	}
+	
+	PathtreePanel.prototype.createExperience = function()
+	{
+		var experience = new Experience();
+		experience.user = this.pathtree.user;
+		this.pathtree.setupExperienceHandlers(experience);
+		return experience;
+	}
+	
+	PathtreePanel.prototype.startNewExperience = function()
+	{
+		var experience = this.createExperience();
+		var panel = new NewExperiencePanel(experience, this.node());
+	}
+	
+	PathtreePanel.prototype.setupAddExperienceButton = function(addExperienceButton)
+	{
+		_this = this;
+		addExperienceButton
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))
 				{
 					showClickFeedback(this);
-					_this.pathtree.startNewExperience();
+					_this.startNewExperience();
 				}
 				d3.event.preventDefault();
 			})
@@ -2321,16 +2302,39 @@ var PathtreePanel = (function () {
 		addExperienceButton.append("span")
 			.classed('site-active-text', true)
 			.text("+");
+	}
+
+	function PathtreePanel(user, previousPanel, canDone) {
+		canDone = canDone !== undefined ? canDone : true;
+		var _this = this;
+
+		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
+		this.navContainer = this.appendNavContainer();
+		var settingsButton;
 		
-		navContainer.appendTitle(getUserDescription(user));
+		if (canDone)
+		{
+			var backButton = this.navContainer.appendLeftButton()
+				.on("click", handleCloseRightEvent);
+			backButton.append("span").text("Done");
+			settingsButton = this.navContainer.appendRightButton();
+		}
+		else
+			settingsButton = this.navContainer.appendLeftButton();
+
+		this.setupSettingsButton(settingsButton, user);
+
+		var addExperienceButton = this.navContainer.appendRightButton();
+		
+		this.navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.classed('vertical-scrolling', false)
 			.classed('no-scrolling', true);
 
-		var bottomNavContainer = this.appendBottomNavContainer();
+		this.bottomNavContainer = this.appendBottomNavContainer();
 
-		var findButton = bottomNavContainer.appendRightButton()
+		var findButton = this.bottomNavContainer.appendRightButton()
 				.on("click",
 					function() {
 						if (prepareClick('click', 'find experience'))
@@ -2344,7 +2348,7 @@ var PathtreePanel = (function () {
 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
 		
-		var shareButton = bottomNavContainer.appendLeftButton()
+		var shareButton = this.bottomNavContainer.appendLeftButton()
 			.classed("share", true)
 			.on('click', function()
 				{
@@ -2403,13 +2407,14 @@ var PathtreePanel = (function () {
 				
 		$(this.node()).on("remove", function()
 		{
-			_this.pathtree.clear();
 			$(user.getCell("_access request")).off("valueDeleted.cr", checkSettingsBadge)
 				.off("valueAdded.cr", checkSettingsBadge);
 		});
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{
+				_this.setupAddExperienceButton(addExperienceButton);
+				
 				var moreExperiences = user.getValue("More Experiences");
 				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 				addExperienceButton.style("display", canAddExperience ? null : "none");
