@@ -145,12 +145,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		if (newValueID)
 		{
 			buttonDiv.text("Back Out");
-			buttonDiv.on("click", function() { deleteInquiryFunction(user); });
+			buttonDiv.on("click", function() { deleteInquiryFunction.call(this, user); });
 		}
 		else
 		{
 			buttonDiv.text("Sign Up");
-			buttonDiv.on("click", function() { addNameFunction(user); });
+			buttonDiv.on("click", function() { addNameFunction.call(this, user); });
 		}
 	};
 	
