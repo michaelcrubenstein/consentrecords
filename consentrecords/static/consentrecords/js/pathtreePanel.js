@@ -2111,7 +2111,7 @@ var Pathtree = (function () {
 							},
 						fail: asyncFailFunction});
 								
-			crp.pushCheckCells(_this.path, ["More Experience"],
+			crp.pushCheckCells(_this.path, ["More Experience", "type"],
 						  successFunction2, 
 						  asyncFailFunction);
 		}
