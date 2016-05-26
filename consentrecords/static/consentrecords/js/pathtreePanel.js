@@ -1369,7 +1369,7 @@ var Pathtree = (function () {
 		}
 
 		var textBox = detailText.node().getBBox();
-		var rectHeight = textBox.height + (textBox.y * 2);
+		var rectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 		var strokeWidth = parseInt($(this.detailFrontRect.node()).css("stroke-width"));
 		var maxY = $(this.svg.node()).height() - rectHeight - strokeWidth;
 		if (y > maxY)
@@ -1427,24 +1427,24 @@ var Pathtree = (function () {
 			textClipRect.attr('height', 0)
 				.transition()
 				.duration(duration)
-				.attr('height', textBox.height); 
+				.attr('height', rectHeight); 
 			detailText				
 				.transition()
 				.duration(duration)
-				.attr("height", textBox.height);
+				.attr("height", rectHeight);
 
 			if (hasEditChevron)
 				iconClipRect.attr('height', 0)
 					.transition()
 					.duration(duration)
-					.attr('height', textBox.height);
+					.attr('height', rectHeight);
 		}
 		else
 		{
-			textClipRect.attr('height', textBox.height); 
-			detailText.attr("height", textBox.height);
+			textClipRect.attr('height', rectHeight); 
+			detailText.attr("height", rectHeight);
 			if (hasEditChevron)
-				iconClipRect.attr('height', textBox.height);
+				iconClipRect.attr('height', rectHeight);
 		}
 		
 		this.detailFlagData = fd;
