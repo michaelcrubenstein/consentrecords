@@ -2285,7 +2285,7 @@ var PathtreePanel = (function () {
 		var panel = new NewExperiencePanel(experience, this.node());
 	}
 	
-	PathtreePanel.prototype.setupAddExperienceButton = function(addExperienceButton)
+	PathtreePanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
 	{
 		_this = this;
 		addExperienceButton
@@ -2302,6 +2302,10 @@ var PathtreePanel = (function () {
 		addExperienceButton.append("span")
 			.classed('site-active-text', true)
 			.text("+");
+			
+		var moreExperiences = user.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 
 	function PathtreePanel(user, previousPanel, canDone) {
@@ -2413,11 +2417,8 @@ var PathtreePanel = (function () {
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				_this.setupAddExperienceButton(addExperienceButton);
+				_this.setupAddExperienceButton(user, addExperienceButton);
 				
-				var moreExperiences = user.getValue("More Experiences");
-				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
-				addExperienceButton.style("display", canAddExperience ? null : "none");
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);
