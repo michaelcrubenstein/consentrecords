@@ -19,7 +19,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     userInfo=UserInfo(transactionState.user)
     for d in data:
         if not isinstance(d, dict):
-            raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+            raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
         if fieldData["dataTypeID"] == terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
@@ -75,6 +75,11 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     if typeInstance==terms.user:
         if TermNames.primaryAdministrator not in propertyList:
             propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
+        # Add userID explicitly in case it isn't part of the configuration.
+        userID = transactionState.user.id
+        if isinstance(userID, uuid.UUID):
+            userID = userID.hex    # SQLite
+        item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
@@ -96,31 +101,27 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         AccessRecord.objects.create(id=item, source=item)
     else:
         try:
-            parentAccessRecord = AccessRecord.objects.get(id=parent)
+            parentAccessRecord = parent.accessrecord
             AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
         except AccessRecord.DoesNotExist:
             pass
 
     if propertyList:
-        configuration = None
         if isinstance(propertyList, dict):
-            for key in propertyList:
-                data = propertyList[key]
-                if not configuration:
-                    configuration = typeInstance.getSubInstance(terms.configuration)
-                if terms.isUUID(key):
-                    # The key may be the key of a field object or the key of a term that is 
-                    # the name of a field object in the configuration.
-                    fieldObject = Instance.objects.get(pk=key)
-                    if fieldObject.typeID != terms.field:
-                        fieldObject = configuration.getFieldByReferenceValue(key)
-                    elif fieldObject.parent != configuration:
-                        raise RuntimeError("the specified field is not contained within the configuration of this type")
-                else:
-                    fieldObject = configuration.getFieldByName(key)
-                fieldData = fieldObject.getFieldData()
-                if fieldData:
-                    _addElementData(item, data, fieldData, nameLists, transactionState)
+            if len(propertyList) > 0:
+                configuration = typeInstance.getSubInstance(terms.configuration)
+            
+                # Handle security fields before all other fields so that children have the
+                # correct security.
+                for key in filter(lambda key: terms[key] in terms.securityFields, propertyList):
+                    fieldData = configuration.getFieldDataByName(key) 
+                    if fieldData:
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                
+                for key in filter(lambda key: terms[key] not in terms.securityFields, propertyList):
+                    fieldData = configuration.getFieldDataByName(key) 
+                    if fieldData:
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
     

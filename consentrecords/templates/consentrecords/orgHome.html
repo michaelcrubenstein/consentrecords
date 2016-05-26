@@ -244,30 +244,6 @@
 			</form>
 		</panel>
 
-	    <panel id="id_your_plans_panel" class="level-2-panel reveal list">
-			<nav role="navigation">
-				<div>
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Plans</span></div>
-					</div>
-				</div>
-			</nav>
-			<div class="alert-container"></div>
-			<div class="body">
-				<div>
-					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
-						<div id="id_searchArea" class="searchbar">
-						</div>
-						<div id="id_plans">
-						</div>
-					</div>
-				</div>
-			</div>
-	    </panel>
 	    <panel id="id_consent_forms_panel" class="level-2-panel reveal list">
 			<nav role="navigation">
 				<div>
@@ -497,10 +473,6 @@
 		}
 		
 		$(document).ready (function(e) {
-			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
-			{
-				show_plans("#id_plans");
-			});
 			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
 				{
 					show_consent_records("#id_openConsentForms");
@@ -868,55 +840,6 @@
 				else
 					return a.getDescription().localeCompare(b.getDescription());
 			}
-		}
-		
-		function show_plans(container) {
-			var successFunction = function(sessions)
-			{
-				var containerPanel = d3.select(container);
-				containerPanel.selectAll('section').remove();
-				containerPanel.selectAll('p').remove();
-				
-				if (sessions.length > 0)
-				{
-					$(sessions).each(function() { this.calculateDescription(); });
-					sessions.sort(compareSessions);
-				
-					var section = containerPanel.append("section")
-						.classed("cell", true);
-					var divs = section.selectAll("li")
-						.data(sessions)
-						.enter()
-						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
-	
-					var buttons = divs.append("button").classed("btn row-button", true)
-						.on("click", function(session)
-						{
-							if (prepareClick('click', 'session ' + session.getDescription()))
-							{
-								showClickFeedback(this);
-
-								var sitePanel = showSessionDetails(session, null, $(container).parents("panel")[0]);
-			
-								showPanelLeft(sitePanel.node(), unblockClick);
-							}
-						});
-	
-					appendSessionDescriptions(buttons);
-				}
-				else
-				{
-					containerPanel.append("p")
-						.append("p")
-						.text('Sorry, there are no experiences for which you are enrolled.');
-				}
-			}
-			
-			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
-			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
 		}
 		
 		function hide_organizations()

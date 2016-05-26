@@ -74,7 +74,8 @@ var FlagData = (function() {
 	FlagData.prototype.y = null;
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
-	FlagData.prototype.springs = null;
+	FlagData.prototype.leftSprings = null;
+	FlagData.prototype.rightSprings = null;
 	
 	FlagData.prototype.flagSpacing = 5;
 	FlagData.prototype.maxEnergy = 99999999;
@@ -108,7 +109,7 @@ var FlagData = (function() {
 	{
 		var _this = this;
 		var fds = springs.map(function(s) { return s.left; });
-		var energies = fds.map(function(fi) { return f(fi.rightSprings()); });
+		var energies = fds.map(function(fi) { return f(fi.rightSprings); });
 		return energies.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
@@ -117,15 +118,15 @@ var FlagData = (function() {
 	{
 		var _this = this;
 		var fds = springs.map(function(s) { return s.right; });
-		var energies = fds.map(function(fi) { return f(fi.leftSprings()); });
+		var energies = fds.map(function(fi) { return f(fi.leftSprings); });
 		return energies.reduce(function(a, b) { return a + b; }, 0.0);
 	}
 	
 	/* Returns the energy that attracts this object to its walls or screen edges. */
 	FlagData.prototype.getXSpringEnergy = function(f)
 	{
-		var rightSprings = this.rightSprings();
-		var leftSprings = this.leftSprings();
+		var rightSprings = this.rightSprings;
+		var leftSprings = this.leftSprings;
 		
 		var leftEnergy = f(leftSprings) + this._getLeftEnergy(leftSprings, f);
 		var rightEnergy = f(rightSprings) + this._getRightEnergy(rightSprings, f);
@@ -198,7 +199,8 @@ var FlagData = (function() {
 	
 	FlagData.prototype.setEnergy = function(rightEdge)
 	{
-		this.springs.forEach(function(s) { s.setEnergy(); });
+		this.rightSprings.forEach(function(s) { s.setEnergy(); });
+		this.leftSprings.forEach(function(s) { s.setEnergy(); });
 		this.cacheFlagEnergy(rightEdge);
 	}
 	
@@ -242,21 +244,9 @@ var FlagData = (function() {
 		return delta;
 	}
 	
-	FlagData.prototype.rightSprings = function()
-	{
-		var _this = this;
-		return this.springs.filter(function(s) { return s.left == _this; });
-	}
-	
-	FlagData.prototype.leftSprings = function()
-	{
-		var _this = this;
-		return this.springs.filter(function(s) { return s.right == _this; });
-	}
-	
 	FlagData.prototype.setSpanWidth = function(rightEdge)
 	{
-		var maxRightSpan = this.rightSprings()
+		var maxRightSpan = this.rightSprings
 			.map(function(s) {
 				if (s.right.isFixed)
 					return rightEdge - s.right.x;
@@ -374,7 +364,7 @@ var Pathtree = (function () {
 	Pathtree.prototype.dataLeftMargin = 40;			/* The space between the left margin and the beginning of the flags */
 	Pathtree.prototype.textLeftMargin = 3;
 	Pathtree.prototype.textRightMargin = 3;
-	Pathtree.prototype.textBottomBorder = 3;
+	Pathtree.prototype.textBottomMargin = 2;
 	Pathtree.prototype.flagsLeftMargin = 14;
 	Pathtree.prototype.flagsRightMargin = 14;
 	Pathtree.prototype.flagSpacing = 5;
@@ -600,7 +590,7 @@ var Pathtree = (function () {
 	
 	Pathtree.prototype.getSprings = function(fds)
 	{
-		fds.forEach(function(fd, index) { fd.springs = []; fd.overlaps = []; fd.index = index;});
+		fds.forEach(function(fd, index) { fd.leftSprings = []; fd.rightSprings = []; fd.overlaps = []; fd.index = index;});
 
 		fds.sort(function(a, b) {
 			if (a.y != b.y)
@@ -660,8 +650,8 @@ var Pathtree = (function () {
 					
 				/* Add each spring to its left and right edge. */
 				s.forEach(function (spring) {
-					spring.left.springs.push(spring);
-					spring.right.springs.push(spring);
+					spring.left.rightSprings.push(spring);
+					spring.right.leftSprings.push(spring);
 				});
 				return s;
 			})
@@ -714,8 +704,7 @@ var Pathtree = (function () {
 				and remove it from the list. */
 			items.filter(function(fi)
 					{
-						return fi.springs.filter(function(s) { return s.left == fi && 
-																	  s.right.spanWidth == 0.0; }).length == 0; 
+						return fi.rightSprings.filter(function(s) { return s.right.spanWidth == 0.0; }).length == 0; 
 					})
 				.forEach(function(fi)
 					{
@@ -731,11 +720,11 @@ var Pathtree = (function () {
 		function pushNeighbors(fi)
 		{
 			/* Don't push items on the right if there are items on its left which are not yet set. */
-			fi.rightSprings().filter(function(s) { return !s.right.isFixed &&
-				s.right.leftSprings().find(function(s) { return !s.left.isFixed; }) === undefined; })
+			fi.rightSprings.filter(function(s) { return !s.right.isFixed &&
+				s.right.leftSprings.find(function(s) { return !s.left.isFixed; }) === undefined; })
 				.sort(function(a, b) { return a.right.spanWidth - b.right.spanWidth; })
 				.forEach(function(s) { stack.push(s.right); });
-			fi.leftSprings().filter(function(s) { return !s.left.isFixed; })
+			fi.leftSprings.filter(function(s) { return !s.left.isFixed; })
 				.sort(function(a, b) { return a.left.width - b.left.width; })
 				.forEach(function(s) { stack.push(s.left); });
 		}
@@ -764,14 +753,14 @@ var Pathtree = (function () {
 				fi = stack.pop();
 				if (!fi.isFixed)
 				{
-					var maxRight = fi.leftSprings().filter(function(s) { return s.left.isFixed; })
+					var maxRight = fi.leftSprings.filter(function(s) { return s.left.isFixed; })
 						.map(function(s) { return s.left.x + s.left.width; })
 						.reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 					if (maxRight > -Infinity)
 						placeFlag(fi, maxRight + fi.flagSpacing);
 					else
 					{
-						var minX = fi.rightSprings().filter(function(s) { return s.right.isFixed; })
+						var minX = fi.rightSprings.filter(function(s) { return s.right.isFixed; })
 							.map(function(s) { return s.right.x; })
 							.reduce(function(a, b) { return Math.min(a, b) }, Infinity);
 						if (minX < Infinity)
@@ -811,7 +800,7 @@ var Pathtree = (function () {
 		/* For any item to the right of a compressed item, don't shift those items. */
 		var cQueue = items.filter(function(fi)
 			{
-				return fi.leftSprings().filter(function(s) { return s.left.isFixed; }).length > 0;
+				return fi.leftSprings.filter(function(s) { return s.left.isFixed; }).length > 0;
 			});
 		while (cQueue.length > 0)
 		{
@@ -821,7 +810,7 @@ var Pathtree = (function () {
 			if (index >= 0)
 			{
 				items.splice(index, 1);
-				fi.rightSprings().forEach(function(s)
+				fi.rightSprings.forEach(function(s)
 					{
 						cQueue.push(s.right);
 					});
@@ -835,8 +824,7 @@ var Pathtree = (function () {
 				and remove it from the list. */
 			items.filter(function(fi)
 					{
-						return fi.springs.filter(function(s) { return s.left == fi && 
-																	  s.right.spanWidth == 0.0 &&
+						return fi.rightSprings.filter(function(s) { return s.right.spanWidth == 0.0 &&
 																	  !s.right.isFixed; }).length == 0; 
 					})
 				.forEach(function(fi)
@@ -864,7 +852,7 @@ var Pathtree = (function () {
 			
 			/* If it is to the right of a fixed item, then place it there, otherwise
 				place it so that its maxSpan is centered from 0 to rightEdge. */
-			var maxLeft = fi.leftSprings()
+			var maxLeft = fi.leftSprings
 				.map(function(s) {
 					if (s.left.isFixed)
 						return s.left.x + s.left.width;
@@ -883,14 +871,14 @@ var Pathtree = (function () {
 				fi = stack.pop();
 				if (!fi.isFixed)
 				{
-					var maxRight = fi.leftSprings().filter(function(s) { return s.left.isFixed; })
+					var maxRight = fi.leftSprings.filter(function(s) { return s.left.isFixed; })
 						.map(function(s) { return s.left.x + s.left.width; })
 						.reduce(function(a, b) { return Math.max(a, b) }, -Infinity);
 					if (maxRight > -Infinity)
 						placeFlag(fi, maxRight + fi.flagSpacing);
 					else
 					{
-						var minX = fi.rightSprings().filter(function(s) { return s.right.isFixed; })
+						var minX = fi.rightSprings.filter(function(s) { return s.right.isFixed; })
 							.map(function(s) { return s.right.x; })
 							.reduce(function(a, b) { return Math.min(a, b) }, Infinity);
 						if (minX < Infinity)
@@ -1081,6 +1069,29 @@ var Pathtree = (function () {
 		this.isLayoutDirty = false;
 	}
 	
+	Pathtree.prototype.redoLayout = function(g)
+	{
+		/* bbox is used for various height calculations. */
+		var tempG = this.experienceGroup.append('g');
+		t = tempG.append('text')
+			.attr('dy', '1.1')
+			.text('MMM');
+		var bbox = t.node().getBBox();
+			
+		this.flagHeight = bbox.height + this.textBottomMargin;
+		this.flagY = bbox.y;
+		
+		t.style('font-size', '10px');
+		var smallBBox = t.node().getBBox();
+		this.smallFlagHeight = smallBBox.height + this.textBottomMargin;
+		this.smallFlagY = smallBBox.y;
+
+		tempG.remove();
+
+		this.clearLayout();
+		this.checkLayout();
+	}
+	
 	Pathtree.prototype.scale = function(multiple, done)
 	{
 		var newDataHeight = this.dayHeight * multiple * this.timespan;
@@ -1120,7 +1131,7 @@ var Pathtree = (function () {
 	{
 		this.maxDate = new Date().toISOString().substr(0, 10);
 
-		var birthday = this.user.getValue("Birthday");
+		var birthday = this.path.getValue("Birthday");
 		if (birthday && birthday.text)
 			this.minDate = birthday.text;
 		else
@@ -1358,7 +1369,7 @@ var Pathtree = (function () {
 		}
 
 		var textBox = detailText.node().getBBox();
-		var rectHeight = textBox.height + (textBox.y * 2);
+		var rectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 		var strokeWidth = parseInt($(this.detailFrontRect.node()).css("stroke-width"));
 		var maxY = $(this.svg.node()).height() - rectHeight - strokeWidth;
 		if (y > maxY)
@@ -1416,24 +1427,24 @@ var Pathtree = (function () {
 			textClipRect.attr('height', 0)
 				.transition()
 				.duration(duration)
-				.attr('height', textBox.height); 
+				.attr('height', rectHeight); 
 			detailText				
 				.transition()
 				.duration(duration)
-				.attr("height", textBox.height);
+				.attr("height", rectHeight);
 
 			if (hasEditChevron)
 				iconClipRect.attr('height', 0)
 					.transition()
 					.duration(duration)
-					.attr('height', textBox.height);
+					.attr('height', rectHeight);
 		}
 		else
 		{
-			textClipRect.attr('height', textBox.height); 
-			detailText.attr("height", textBox.height);
+			textClipRect.attr('height', rectHeight); 
+			detailText.attr("height", rectHeight);
 			if (hasEditChevron)
-				iconClipRect.attr('height', textBox.height);
+				iconClipRect.attr('height', rectHeight);
 		}
 		
 		this.detailFlagData = fd;
@@ -1727,11 +1738,10 @@ var Pathtree = (function () {
 			.attr('stroke-width', 2);
 
 		/* t is the set of all text nodes. */
-		var t = g.append('text')
+		g.append('text')
 			.each(function() { this.pathtree = _this; })
-			.attr("x", 0)
+			.attr("x", _this.textLeftMargin)
 			.attr("dy", "1.1")
-			.attr("transform", "translate({0}, 0)".format(_this.textLeftMargin))
 			.text(function(fd) { return fd.getDescription(); })
 			.on("click", function() 
 				{ 
@@ -1739,28 +1749,7 @@ var Pathtree = (function () {
 				})
 			.on("click.cr", showDetail);
 	
-		/* bbox is used for various height calculations. */
-		var bbox;
-		if (t.node())
-			bbox = t.node().getBBox();
-		else
-			bbox = {height: 20, y: -18};
-			
-		this.flagHeight = bbox.height + this.textBottomBorder;
-		this.flagY = bbox.y;
-		
-		var smallBBox;
-		t.style('font-size', '10px');
-		if (t.node())
-			smallBBox = t.node().getBBox();
-		else
-			smallBBox = {height: 20, y: -18};
-		this.smallFlagHeight = smallBBox.height + this.textBottomBorder;
-		this.smallFlagY = smallBBox.y;
-		t.style('font-size', null);
-
-		this.clearLayout();
-		this.checkLayout();
+		this.redoLayout(g);
 	}
 	
 	Pathtree.prototype.handleValueDeleted = function(experience)
@@ -1821,7 +1810,7 @@ var Pathtree = (function () {
 			}
 			else
 			{
-				offering.checkCells(undefined, done, asyncFailFunction);
+				offering.checkCells(undefined, function() { if (done) done(); }, asyncFailFunction);
 			}
 		}
 		else
@@ -1879,8 +1868,7 @@ var Pathtree = (function () {
 				isPinnedWidth)
 				svg.width(pathwayContainer.width());
 				
-			this.clearLayout();
-			this.checkLayout();
+			this.redoLayout(this.experienceGroup.selectAll('g'));
 		}
 	}
 	
@@ -1917,7 +1905,7 @@ var Pathtree = (function () {
 		
 		d3.select(this.containerDiv).selectAll('div').remove();
 		
-		this.user = null;
+		this.path = null;
 		this.allExperiences = [];
 		this.pathwayContainer = null;
 		this.timeContainer = null;
@@ -1948,53 +1936,24 @@ var Pathtree = (function () {
 		this.years = [];
 	}
 	
-	Pathtree.prototype.onExperienceAdded = function(eventObject, newData)
+	Pathtree.prototype.setupExperienceHandlers = function(experience)
 	{
-		var _this = this;
-		crp.pushCheckCells(newData, ["type"], 
-			function() {
-				function addExperience() {
-					_this.addMoreExperience(newData);
-					unblockClick();
-				}
-				var offering = newData.getValue("Offering");
-				if (offering && offering.getValueID() && !offering.isDataLoaded)
-					crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-				else
-					addExperience();
-			},
-			syncFailFunction);
-	}
-	
-	Pathtree.prototype.createExperience = function()
-	{
-		var experience = new Experience();
-		var _this = this;
-		experience.user = this.user;
-		$(experience).on("experienceAdded.cr", function(eventObject, newData)
+		$(experience).on("experienceAdded.cr", null, this, function(eventObject, newData)
 			{
-				_this.onExperienceAdded(eventObject, newData);
+				eventObject.data.addMoreExperience(newData);
 			});
-		return experience;
 	}
 	
-	Pathtree.prototype.startNewExperience = function()
+	Pathtree.prototype.setUser = function(path, editable)
 	{
-		var experience = this.createExperience();
-		
-		var panel = new NewExperiencePanel(experience, this.sitePanel.node());
-	}
-	
-	Pathtree.prototype.setUser = function(user, editable)
-	{
-		if (user.privilege === '_find')
-			throw "You do not have permission to see information about {0}".format(user.getDescription());
-		if (this.user)
-			throw "user has already been set for this pathtree";
+		if (path.privilege === '_find')
+			throw "You do not have permission to see information about {0}".format(path.getDescription());
+		if (this.path)
+			throw "path has already been set for this pathtree";
 			
 		var _this = this;
 		
-		this.user = user;
+		this.path = path;
 		editable = (editable !== undefined ? editable : true);
 		
 		var container = d3.select(this.containerDiv);
@@ -2075,8 +2034,7 @@ var Pathtree = (function () {
 			.style("top", "0");
 		
 		this.experienceGroup = this.svg.append('g')
-				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
-				.attr("font-size", "1.3rem");
+				.classed("experiences", true);
 		this.yearGroup = this.svgTime.append('g')
 			.attr("fill", "#777");
 			
@@ -2121,13 +2079,13 @@ var Pathtree = (function () {
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
-			crp.getData({path: "#" + _this.user.getValueID() + '::reference(Experience)::reference(Experiences)' + 
+			crp.getData({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)',
 						 done: function(newInstances)
 							{
 							},
 							fail: asyncFailFunction});
-			crp.getData({path: "#" + _this.user.getValueID() + '>"More Experiences">"More Experience">Offering',
+			crp.getData({path: "#" + _this.path.getValueID() + '>"More Experience">Offering',
 						 done: function(newInstances)
 							{
 							},
@@ -2153,34 +2111,18 @@ var Pathtree = (function () {
 							},
 						fail: asyncFailFunction});
 								
-			crp.pushCheckCells(_this.user, undefined, 
-				function() {
-					/* Check the user in case the panel has been closed. */
-					if (_this.user != null)
-					{
-						var m = _this.user.getValue("More Experiences");
-						if (m && m.getValueID())
-						{
-							m.getCellData("More Experience",
-										  successFunction2, 
-										  asyncFailFunction);
-						}
-						else
-							successFunction2([]);	/* There are none. */
-					}
-				},
-				function(err)
-				{
-					asyncHidePanelRight(_this.sitePanel.node());
-					asyncFailFunction(err);
-				});
+			crp.pushCheckCells(_this.path, ["More Experience", "type"],
+						  successFunction2, 
+						  asyncFailFunction);
 		}
 
-		var successFunction2 = function(experiences)
+		var successFunction2 = function()
 		{
-			if (_this.user == null)
+			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 				
+			var experiences = _this.path.getCell("More Experience").data;
+			
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
 			$(experiences).each(function()
@@ -2219,7 +2161,7 @@ var Pathtree = (function () {
 							try
 							{
 								showClickFeedback(this);
-								_this.startNewExperience();
+								_this.sitePanel.startNewExperience();
 							}
 							catch (err)
 							{
@@ -2247,7 +2189,7 @@ var Pathtree = (function () {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var path = "#" + this.user.getValueID() + '::reference(Experience)';
+		var path = "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)';
 		crp.getData({path: path, 
 				   fields: ["parents", "type"], 
 				   done: successFunction1, 
@@ -2265,6 +2207,11 @@ var Pathtree = (function () {
 			this.clearDetail();
 		});
 		
+		$(containerDiv).on("remove", null, this, function(eventObject)
+		{
+			eventObject.data.clear();
+		});
+		
 	}
 	
 	return Pathtree;
@@ -2272,7 +2219,10 @@ var Pathtree = (function () {
 
 var PathtreePanel = (function () {
 	PathtreePanel.prototype = new SitePanel();
+	PathtreePanel.prototype.user = null;
 	PathtreePanel.prototype.pathtree = null;
+	PathtreePanel.prototype.navContainer = null;
+	PathtreePanel.prototype.bottomNavContainer = null;
 	
 	PathtreePanel.prototype.userSettingsBadgeCount = function(user)
 	{
@@ -2282,25 +2232,10 @@ var PathtreePanel = (function () {
 		else
 			return "";
 	}
-
-	function PathtreePanel(user, previousPanel, canDone) {
-		canDone = canDone !== undefined ? canDone : true;
+	
+	PathtreePanel.prototype.setupSettingsButton = function(settingsButton, user)
+	{
 		var _this = this;
-
-		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
-		var navContainer = this.appendNavContainer();
-		var settingsButton;
-		
-		if (canDone)
-		{
-			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
-			backButton.append("span").text("Done");
-			settingsButton = navContainer.appendRightButton();
-		}
-		else
-			settingsButton = navContainer.appendLeftButton();
-
 		settingsButton
 			.on("click", 
 				function() {
@@ -2318,13 +2253,31 @@ var PathtreePanel = (function () {
 		settingsButton.append("span")
 			.classed("badge", true)
 			.text(this.userSettingsBadgeCount(user));
-
-		var addExperienceButton = navContainer.appendRightButton()
+	}
+	
+	PathtreePanel.prototype.createExperience = function(user)
+	{
+		var experience = new Experience();
+		experience.user = user;
+		this.pathtree.setupExperienceHandlers(experience);
+		return experience;
+	}
+	
+	PathtreePanel.prototype.startNewExperience = function()
+	{
+		var experience = this.createExperience(this.user);
+		var panel = new NewExperiencePanel(experience, this.node());
+	}
+	
+	PathtreePanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
+	{
+		_this = this;
+		addExperienceButton
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))
 				{
 					showClickFeedback(this);
-					_this.pathtree.startNewExperience();
+					_this.startNewExperience();
 				}
 				d3.event.preventDefault();
 			})
@@ -2333,16 +2286,44 @@ var PathtreePanel = (function () {
 		addExperienceButton.append("span")
 			.classed('site-active-text', true)
 			.text("+");
+			
+		var moreExperiences = user.getValue("More Experiences");
+		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+		addExperienceButton.style("display", canAddExperience ? null : "none");
+	}
+
+	function PathtreePanel(user, previousPanel, canDone) {
+		canDone = canDone !== undefined ? canDone : true;
+		var _this = this;
+		this.user = user;
 		
-		navContainer.appendTitle(getUserDescription(user));
+		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
+		this.navContainer = this.appendNavContainer();
+		var settingsButton;
+		
+		if (canDone)
+		{
+			var backButton = this.navContainer.appendLeftButton()
+				.on("click", handleCloseRightEvent);
+			backButton.append("span").text("Done");
+			settingsButton = this.navContainer.appendRightButton();
+		}
+		else
+			settingsButton = this.navContainer.appendLeftButton();
+
+		this.setupSettingsButton(settingsButton, user);
+
+		var addExperienceButton = this.navContainer.appendRightButton();
+		
+		this.navContainer.appendTitle(getUserDescription(user));
 		
 		var panel2Div = this.appendScrollArea();
 		panel2Div.classed('vertical-scrolling', false)
 			.classed('no-scrolling', true);
 
-		var bottomNavContainer = this.appendBottomNavContainer();
+		this.bottomNavContainer = this.appendBottomNavContainer();
 
-		var findButton = bottomNavContainer.appendRightButton()
+		var findButton = this.bottomNavContainer.appendRightButton()
 				.on("click",
 					function() {
 						if (prepareClick('click', 'find experience'))
@@ -2356,7 +2337,7 @@ var PathtreePanel = (function () {
 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 		findButton.style("display", "none");
 		
-		var shareButton = bottomNavContainer.appendLeftButton()
+		var shareButton = this.bottomNavContainer.appendLeftButton()
 			.classed("share", true)
 			.on('click', function()
 				{
@@ -2415,16 +2396,14 @@ var PathtreePanel = (function () {
 				
 		$(this.node()).on("remove", function()
 		{
-			_this.pathtree.clear();
 			$(user.getCell("_access request")).off("valueDeleted.cr", checkSettingsBadge)
 				.off("valueAdded.cr", checkSettingsBadge);
 		});
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				var moreExperiences = user.getValue("More Experiences");
-				var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
-				addExperienceButton.style("display", canAddExperience ? null : "none");
+				_this.setupAddExperienceButton(user, addExperienceButton);
+				
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);

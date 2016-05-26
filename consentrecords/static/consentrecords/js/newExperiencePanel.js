@@ -285,7 +285,19 @@ var Experience = (function() {
 		
 		function onCreatedInstance(newData)
 		{
-			$(_this).trigger("experienceAdded.cr", newData);
+			crp.pushCheckCells(newData, ["type"], 
+				function() {
+					function addExperience() {
+						$(_this).trigger("experienceAdded.cr", newData);
+						unblockClick();
+					}
+					var offering = newData.getValue("Offering");
+					if (offering && offering.getValueID() && !offering.isDataLoaded)
+						crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
+					else
+						addExperience();
+				},
+				syncFailFunction);
 		}
 		
 		function successFunction2(newData)
@@ -758,7 +770,7 @@ var ServiceSearchView = (function() {
 			.on("click", function(d, i) {
 				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
-					this.experience.createFromService({text: _this.inputText()}, this.sitePanel.node(), this.sitePanel.showNextStep);
+					_this.experience.createFromService({text: _this.inputText()}, _this.sitePanel.node(), _this.sitePanel.showNextStep);
 				}
 			})
 			.style("display", "none");

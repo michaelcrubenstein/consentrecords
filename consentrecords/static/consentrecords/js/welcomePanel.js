@@ -44,7 +44,7 @@ var WelcomePanel = (function () {
 
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-			pathwayPanel.pathtree.setUser(cr.signedinUser, true);
+			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
 			showPanelLeft(pathwayPanel.node(),
 				function()
 				{

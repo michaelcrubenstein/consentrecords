@@ -1,5 +1,5 @@
 /* Create a panel to show the details of the session and allow the user to sign up. */
-function showSessionDetails(session, service, previousPanelNode)
+function showSessionDetails(user, session, service, previousPanelNode)
 {
 	var organization = session.getValue("Organization");
 	var offering = session.getValue("Offering");
@@ -139,18 +139,18 @@ function showSessionDetails(session, service, previousPanelNode)
 
 	var inquiryValueID = null;
 	
-	var checkInquiryFunction = function(newValueID)
+	var checkInquiryFunction = function(user, newValueID)
 	{
 		inquiryValueID = newValueID;
 		if (newValueID)
 		{
 			buttonDiv.text("Back Out");
-			buttonDiv.on("click", deleteInquiryFunction);
+			buttonDiv.on("click", function() { deleteInquiryFunction.call(this, user); });
 		}
 		else
 		{
 			buttonDiv.text("Sign Up");
-			buttonDiv.on("click", addNameFunction);
+			buttonDiv.on("click", function() { addNameFunction.call(this, user); });
 		}
 	};
 	
@@ -166,11 +166,14 @@ function showSessionDetails(session, service, previousPanelNode)
 									  function(newInquiryID) { 
 											function done()
 											{
-												bootstrap_alert.success("You have signed up for " + 
-															  offering.getDescription() + "/" + session.getDescription() + "." +
-															  " Look out for a notice when you are enrolled.",
+												s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
+													.format(offering.getDescription(),
+															session.getDescription(),
+															user === cr.signedinUser ? "You have" : getUserDescription(user) + " has",
+															user === cr.signedinUser ? "you are" : getUserDescription(user) + " is");
+												bootstrap_alert.success(s,
 															  ".alert-container");
-												checkInquiryFunction(newInquiryID); 
+												checkInquiryFunction(user, newInquiryID); 
 											};
 											if (groupPaths.length == 0)
 												done();
@@ -184,11 +187,11 @@ function showSessionDetails(session, service, previousPanelNode)
 			});
 	}
 	
-	var tryAddInquiry = function()
+	var tryAddInquiry = function(user)
 	{
-		if (cr.signedinUser.getValueID())
+		if (user.getValueID())
 		{
-			addInquiry(cr.signedinUser);
+			addInquiry(user);
 			unblockClick();
 		}
 		else
@@ -204,7 +207,7 @@ function showSessionDetails(session, service, previousPanelNode)
 					{
 						if (valueIDs.length > 0)
 						{
-							checkInquiryFunction(valueIDs[0].id);
+							checkInquiryFunction(user, valueIDs[0].id);
 							bootstrap_alert.success(_this.getDescription() + 
 												  " already signed up for " + 
 												  offering.getDescription() + "/" + session.getDescription(),
@@ -234,18 +237,18 @@ function showSessionDetails(session, service, previousPanelNode)
 		}
 	}
 	
-	var addNameFunction = function(e)
+	var addNameFunction = function(user)
 	{
 		if (prepareClick('click', 'Sign Up'))
 		{
 			showClickFeedback(this);
 			
-			tryAddInquiry();
+			tryAddInquiry(user);
 		}
 		d3.event.preventDefault();
 	};
 	
-	var deleteInquiryFunction = function(e)
+	var deleteInquiryFunction = function(user)
 	{
 		if (prepareClick('click', 'Back Out'))
 		{
@@ -256,7 +259,7 @@ function showSessionDetails(session, service, previousPanelNode)
 				bootstrap_alert.success("You have backed out of " + 
 							  offering.getDescription() + "/" + session.getDescription() + ".",
 							  ".alert-container");
-				checkInquiryFunction(null);
+				checkInquiryFunction(user, null);
 			}
 			
 			cr.deleteValue(inquiryValueID, successFunction, asyncFailFunction);
@@ -266,26 +269,28 @@ function showSessionDetails(session, service, previousPanelNode)
 		d3.event.preventDefault();
 	};
 	
-	if (cr.signedinUser.getValueID())
+	if (user.getValueID())
 	{
 		function done(values)
 		{
-			checkInquiryFunction(values.length ? values[0].id : null);
+			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
 		cr.getValues({path: '#'+session.getValueID()+">Inquiries",
 			field: "_user",
-			value: cr.signedinUser.getValueID(),
+			value: user.getValueID(),
 			done: done,
 			fail: asyncFailFunction});
 	}
 	else
-		checkInquiryFunction(null);
+		checkInquiryFunction(user, null);
 	
 	return sitePanel;
 }
 		
 var PickOfferingSearchView = (function () {
 	PickOfferingSearchView.prototype = new PanelSearchView();
+	PickOfferingSearchView.prototype.tag = null;
+	PickOfferingSearchView.prototype.user = null;
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	PickOfferingSearchView.prototype.onClickButton = function(d, i) {
@@ -335,7 +340,7 @@ var PickOfferingSearchView = (function () {
 					{
 						showClickFeedback(this);
 
-						var sitePanel = showSessionDetails(session, _this.tag, _this.sitePanel.node());
+						var sitePanel = showSessionDetails(_this.user, session, _this.tag, _this.sitePanel.node());
 	
 						showPanelLeft(sitePanel.node(), unblockClick);
 					}
@@ -359,9 +364,10 @@ var PickOfferingSearchView = (function () {
 		return "There are no upcoming opportunities for {0}.".format(this.tag.getDescription());
 	}
 	
-	function PickOfferingSearchView(sitePanel, tag)
+	function PickOfferingSearchView(sitePanel, user, tag)
 	{
 		this.tag = tag;
+		this.user = user;
 		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
@@ -372,7 +378,7 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.offeringID = null;
 	
-	function PickOfferingPanel(tag, offeringID, previousPanel) {
+	function PickOfferingPanel(user, tag, offeringID, previousPanel) {
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
@@ -383,7 +389,7 @@ var PickOfferingPanel = (function() {
 			
 		navContainer.appendTitle(header);
 
-		var searchView = new PickOfferingSearchView(this, tag);
+		var searchView = new PickOfferingSearchView(this, user, tag);
 		$(this.node()).one("revealing.cr", function() { 
 				searchView.search(""); 
 				searchView.inputBox.focus();
@@ -398,6 +404,7 @@ var PickOfferingPanel = (function() {
 var FindExperienceSearchView = (function () {
 	FindExperienceSearchView.prototype = new PanelSearchView();
 	FindExperienceSearchView.prototype.offeringID = null;
+	FindExperienceSearchView.prototype.user = null;
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
@@ -405,7 +412,7 @@ var FindExperienceSearchView = (function () {
 		{
 			showClickFeedback(button);
 			
-			var panel = new PickOfferingPanel(d, this.offeringID, this.sitePanel.node());
+			var panel = new PickOfferingPanel(this.user, d, this.offeringID, this.sitePanel.node());
 		}
 		d3.event.preventDefault();
 	}
@@ -449,8 +456,9 @@ var FindExperienceSearchView = (function () {
 		this.startSearchTimeout("");
 	}
 	
-	function FindExperienceSearchView(sitePanel, offeringID) {
+	function FindExperienceSearchView(sitePanel, user, offeringID) {
 		this.offeringID = offeringID;
+		this.user = user;
 		PanelSearchView.call(this, sitePanel, "Search", undefined, GetDataChunker);
 	}
 	
@@ -471,7 +479,7 @@ var FindExperiencePanel = (function () {
 			
 		navContainer.appendTitle(header);
 		
-		var searchView = new FindExperienceSearchView(this, offeringID);
+		var searchView = new FindExperienceSearchView(this, user, offeringID);
 		$(this.node()).one("revealing.cr", function() { 
 				searchView.search(""); 
 				searchView.inputBox.focus();

@@ -633,6 +633,8 @@ class api:
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
 
+		# For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
+		# values in that cell.
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
@@ -645,7 +647,8 @@ class api:
                                                             queryset=valueQueryset,
                                                             to_attr='values'))\
                                         .get(pk=d["instanceID"])
-                    d["cells"] = i.getData(i.values, fieldsData, userInfo, language)
+                    d['cells'] = i.getData(i.values, fieldsData, userInfo, language)
+                    d['typeName'] = i.typeID.getDescription();
             
         return data;
         
@@ -814,8 +817,6 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
                 field = terms[fieldName]
                 

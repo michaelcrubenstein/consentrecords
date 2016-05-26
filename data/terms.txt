@@ -278,6 +278,10 @@ _term
             _descriptor type: _by count
             _object add rule: _create one
             _of kind: More Experience
+        _field
+            _name: Birthday
+            _data type: _datestamp (day optional)
+            _max capacity: _unique value
 _term
     _name: Offering
     _configuration

@@ -147,9 +147,13 @@ function getUserDescription(user)
 				
 function showUser(user, previousPanelNode)
 {
-	var panel = new PathtreePanel(user, previousPanelNode);
-	panel.pathtree.setUser(user, true);
-	showPanelLeft(panel.node(), unblockClick);
+	user.checkCells([], function()
+		{
+			var panel = new PathtreePanel(user, previousPanelNode);
+			panel.pathtree.setUser(user.getValue("More Experiences"), true);
+			showPanelLeft(panel.node(), unblockClick);
+		},
+		syncFailFunction);
 }
 
 function drawInfoButtons(infoButtons)

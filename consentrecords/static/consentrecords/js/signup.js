@@ -65,7 +65,12 @@ var Signup = (function () {
 
 		this.dots.appendForwardButton(navContainer, function()
 			{
-				var initialData = {"Birthday": [{text: _thisSignup.getBirthday()}]};
+				var birthDay = _thisSignup.getBirthday();
+				var birthMonth = birthDay.substr(0, 7);
+				var initialData = {"Birthday": [{text: birthDay}],
+				                   "More Experiences": 
+				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
+				                   		]};
 				if (_thisSignup.getPublicAccess())
 					initialData["_public access"] = [{instanceID: _thisSignup.getPublicAccess()}];
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 

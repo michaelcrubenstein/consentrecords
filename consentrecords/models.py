@@ -368,6 +368,20 @@ class Instance(dbmodels.Model):
                      "ofKindID" : self.id}
         return fieldData
     
+    # Returns a dictionary of information about a field with this configuration.
+    def getFieldDataByName(self, name, language=None):
+        if terms.isUUID(name):
+            # The key may be the key of a field object or the key of a term that is 
+            # the name of a field object in the configuration.
+            fieldObject = Instance.objects.get(pk=name)
+            if fieldObject.typeID != terms.field:
+                fieldObject = self.getFieldByReferenceValue(name)
+            elif fieldObject.parent != self:
+                raise RuntimeError("the specified field is not contained within the configuration of this type")
+        else:
+            fieldObject = self._getValueByName(name)
+        return fieldObject.getFieldData(language)
+
     # Returns a dictionary of information about a field instance.                 
     def getFieldData(self, language=None):
         return self._getFieldDataFromValues(self._getSubValueReferences(), language)
@@ -550,7 +564,7 @@ class Instance(dbmodels.Model):
                                             
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
-    def getFieldByName(self, name):
+    def _getValueByName(self, name):
         return self.value_set.select_related('referenceValue')\
                              .get(deleteTransaction__isnull=True,
                                   field=terms.field,
@@ -1334,7 +1348,7 @@ class Terms():
     def __getitem__(self, name):
         try:
             if terms.isUUID(name):
-                return Instance.objects.get(pk=name);
+                return Instance.objects.get(pk=name, deleteTransaction__isnull=True);
             else:
                 return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
