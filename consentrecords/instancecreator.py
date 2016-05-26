@@ -19,7 +19,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     userInfo=UserInfo(transactionState.user)
     for d in data:
         if not isinstance(d, dict):
-            raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+            raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
         if fieldData["dataTypeID"] == terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
