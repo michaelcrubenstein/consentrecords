@@ -331,18 +331,6 @@
 		/* The global object used to identify the current user. */
 		var userFirstName = null;
 		var userLastName = null;
-		{% if userID %}
-		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
-		{% endif %}
-		
-		/* Initialize all of the objects that are dependent on whether or not the user is
-			signed in.
-		 */
-		if (!cr.signedinUser.getValueID())
-		{
-			$(cr.signedinUser).trigger("signout.cr");
-		}
-		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 
 		/* Show a pre-defined panel associated with this button. */
 		function showPanel()
@@ -740,7 +728,7 @@
 									if (users.length > 0)
 									{
 										var panel = new PathtreePanel(users[0], firstPanel.node(), true);
-										panel.pathtree.setUser(users[0], true);
+										panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
 										showPanelLeft(panel.node());
 									}
 									else
@@ -766,7 +754,7 @@
 								if (!firstPanel)
 								{
 									firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathtree.setUser(cr.signedinUser, false);
+									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 									showPanelUp(firstPanel.node());
 								}
 								pathwayPanel = firstPanel;
@@ -822,7 +810,7 @@
 									if (!firstPanel)
 									{
 										firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-										firstPanel.pathtree.setUser(cr.signedinUser, false);
+										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 										showPanelUp(firstPanel.node());
 									}
 									pathwayPanel = firstPanel;
@@ -835,13 +823,29 @@
 				}
 			{% endif %}
 
+			{% if userID %}
+			cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+			{% endif %}
+		
+			/* Initialize all of the objects that are dependent on whether or not the user is
+				signed in.
+			 */
+			if (!cr.signedinUser.getValueID())
+			{
+				$(cr.signedinUser).trigger("signout.cr");
+			}
+			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
 			if (cr.signedinUser.getValueID())
 			{
-				firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-				firstPanel.pathtree.setUser(cr.signedinUser, false);
-				showPanelNow(firstPanel.node());
-				if (handleState)
-					handleState();
+				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+					{
+						firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+						showPanelNow(firstPanel.node());
+						if (handleState)
+							handleState();
+					});
 			}
 			else if (!needsSignin)
 			{

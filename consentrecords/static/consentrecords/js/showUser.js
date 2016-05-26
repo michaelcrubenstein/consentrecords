@@ -39,7 +39,7 @@ var UserPanel = (function() {
 							if (prepareClick('click', 'Pathway'))
 							{
 								var panel = new PathtreePanel(user, _this.node());
-								panel.pathtree.setUser(user, true);
+								panel.pathtree.setUser(user.getValue("More Experiences"), true);
 								showPanelLeft(panel.node(), unblockClick);
 							}
 						});		

@@ -1069,6 +1069,33 @@ var Pathtree = (function () {
 		this.isLayoutDirty = false;
 	}
 	
+	Pathtree.prototype.redoLayout = function(g)
+	{
+		/* bbox is used for various height calculations. */
+		var bbox;
+		var t = g.selectAll('text');
+		if (t.node())
+			bbox = t.node().getBBox();
+		else
+			bbox = {height: 20, y: -18};
+			
+		this.flagHeight = bbox.height + this.textBottomBorder;
+		this.flagY = bbox.y;
+		
+		var smallBBox;
+		t.style('font-size', '10px');
+		if (t.node())
+			smallBBox = t.node().getBBox();
+		else
+			smallBBox = {height: 20, y: -18};
+		this.smallFlagHeight = smallBBox.height + this.textBottomBorder;
+		this.smallFlagY = smallBBox.y;
+		t.style('font-size', null);
+
+		this.clearLayout();
+		this.checkLayout();
+	}
+	
 	Pathtree.prototype.scale = function(multiple, done)
 	{
 		var newDataHeight = this.dayHeight * multiple * this.timespan;
@@ -1108,7 +1135,7 @@ var Pathtree = (function () {
 	{
 		this.maxDate = new Date().toISOString().substr(0, 10);
 
-		var birthday = this.user.getValue("Birthday");
+		var birthday = this.path.getValue("Birthday");
 		if (birthday && birthday.text)
 			this.minDate = birthday.text;
 		else
@@ -1715,7 +1742,7 @@ var Pathtree = (function () {
 			.attr('stroke-width', 2);
 
 		/* t is the set of all text nodes. */
-		var t = g.append('text')
+		g.append('text')
 			.each(function() { this.pathtree = _this; })
 			.attr("x", 0)
 			.attr("dy", "1.1")
@@ -1727,28 +1754,7 @@ var Pathtree = (function () {
 				})
 			.on("click.cr", showDetail);
 	
-		/* bbox is used for various height calculations. */
-		var bbox;
-		if (t.node())
-			bbox = t.node().getBBox();
-		else
-			bbox = {height: 20, y: -18};
-			
-		this.flagHeight = bbox.height + this.textBottomBorder;
-		this.flagY = bbox.y;
-		
-		var smallBBox;
-		t.style('font-size', '10px');
-		if (t.node())
-			smallBBox = t.node().getBBox();
-		else
-			smallBBox = {height: 20, y: -18};
-		this.smallFlagHeight = smallBBox.height + this.textBottomBorder;
-		this.smallFlagY = smallBBox.y;
-		t.style('font-size', null);
-
-		this.clearLayout();
-		this.checkLayout();
+		this.redoLayout(g);
 	}
 	
 	Pathtree.prototype.handleValueDeleted = function(experience)
@@ -1809,7 +1815,7 @@ var Pathtree = (function () {
 			}
 			else
 			{
-				offering.checkCells(undefined, done, asyncFailFunction);
+				offering.checkCells(undefined, function() { if (done) done(); }, asyncFailFunction);
 			}
 		}
 		else
@@ -1867,8 +1873,7 @@ var Pathtree = (function () {
 				isPinnedWidth)
 				svg.width(pathwayContainer.width());
 				
-			this.clearLayout();
-			this.checkLayout();
+			this.redoLayout(this.experienceGroup.selectAll('g'));
 		}
 	}
 	
@@ -1905,7 +1910,7 @@ var Pathtree = (function () {
 		
 		d3.select(this.containerDiv).selectAll('div').remove();
 		
-		this.user = null;
+		this.path = null;
 		this.allExperiences = [];
 		this.pathwayContainer = null;
 		this.timeContainer = null;
@@ -1944,16 +1949,16 @@ var Pathtree = (function () {
 			});
 	}
 	
-	Pathtree.prototype.setUser = function(user, editable)
+	Pathtree.prototype.setUser = function(path, editable)
 	{
-		if (user.privilege === '_find')
-			throw "You do not have permission to see information about {0}".format(user.getDescription());
-		if (this.user)
-			throw "user has already been set for this pathtree";
+		if (path.privilege === '_find')
+			throw "You do not have permission to see information about {0}".format(path.getDescription());
+		if (this.path)
+			throw "path has already been set for this pathtree";
 			
 		var _this = this;
 		
-		this.user = user;
+		this.path = path;
 		editable = (editable !== undefined ? editable : true);
 		
 		var container = d3.select(this.containerDiv);
@@ -2080,13 +2085,13 @@ var Pathtree = (function () {
 				this.setDescription(this.getValue("Offering").getDescription());
 			});
 		
-			crp.getData({path: "#" + _this.user.getValueID() + '::reference(Experience)::reference(Experiences)' + 
+			crp.getData({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)',
 						 done: function(newInstances)
 							{
 							},
 							fail: asyncFailFunction});
-			crp.getData({path: "#" + _this.user.getValueID() + '>"More Experiences">"More Experience">Offering',
+			crp.getData({path: "#" + _this.path.getValueID() + '>"More Experience">Offering',
 						 done: function(newInstances)
 							{
 							},
@@ -2112,34 +2117,18 @@ var Pathtree = (function () {
 							},
 						fail: asyncFailFunction});
 								
-			crp.pushCheckCells(_this.user, undefined, 
-				function() {
-					/* Check the user in case the panel has been closed. */
-					if (_this.user != null)
-					{
-						var m = _this.user.getValue("More Experiences");
-						if (m && m.getValueID())
-						{
-							m.getCellData("More Experience",
-										  successFunction2, 
-										  asyncFailFunction);
-						}
-						else
-							successFunction2([]);	/* There are none. */
-					}
-				},
-				function(err)
-				{
-					asyncHidePanelRight(_this.sitePanel.node());
-					asyncFailFunction(err);
-				});
+			crp.pushCheckCells(_this.path, ["More Experience"],
+						  successFunction2, 
+						  asyncFailFunction);
 		}
 
-		var successFunction2 = function(experiences)
+		var successFunction2 = function()
 		{
-			if (_this.user == null)
+			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 				
+			var experiences = _this.path.getCell("More Experience").data;
+			
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
 			$(experiences).each(function()
@@ -2206,7 +2195,7 @@ var Pathtree = (function () {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var path = "#" + this.user.getValueID() + '::reference(Experience)';
+		var path = "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)';
 		crp.getData({path: path, 
 				   fields: ["parents", "type"], 
 				   done: successFunction1, 
