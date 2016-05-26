@@ -364,7 +364,7 @@ var Pathtree = (function () {
 	Pathtree.prototype.dataLeftMargin = 40;			/* The space between the left margin and the beginning of the flags */
 	Pathtree.prototype.textLeftMargin = 3;
 	Pathtree.prototype.textRightMargin = 3;
-	Pathtree.prototype.textBottomBorder = 3;
+	Pathtree.prototype.textBottomMargin = 2;
 	Pathtree.prototype.flagsLeftMargin = 14;
 	Pathtree.prototype.flagsRightMargin = 14;
 	Pathtree.prototype.flagSpacing = 5;
@@ -1079,7 +1079,7 @@ var Pathtree = (function () {
 		else
 			bbox = {height: 20, y: -18};
 			
-		this.flagHeight = bbox.height + this.textBottomBorder;
+		this.flagHeight = bbox.height + this.textBottomMargin;
 		this.flagY = bbox.y;
 		
 		var smallBBox;
@@ -1088,7 +1088,7 @@ var Pathtree = (function () {
 			smallBBox = t.node().getBBox();
 		else
 			smallBBox = {height: 20, y: -18};
-		this.smallFlagHeight = smallBBox.height + this.textBottomBorder;
+		this.smallFlagHeight = smallBBox.height + this.textBottomMargin;
 		this.smallFlagY = smallBBox.y;
 		t.style('font-size', null);
 
