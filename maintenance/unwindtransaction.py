@@ -21,10 +21,10 @@ if __name__ == "__main__":
             i.save()
         
         if t.value_set.count():
-            sys.stderr.write('Deleting %s values'%t.value_set.count())
+            sys.stderr.write('Deleting %s values\n'%t.value_set.count())
     
         if t.instance_set.count():
-            sys.stderr.write('Deleting %s instances'%t.instance_set.count())
+            sys.stderr.write('Deleting %s instances\n'%t.instance_set.count())
     
         t.delete()
     
