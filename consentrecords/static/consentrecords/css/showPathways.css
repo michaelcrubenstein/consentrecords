@@ -137,6 +137,11 @@
 		background-color: #2222FF;
 	}
 	
+	panel.pathway g.experiences {
+		font-family: San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif;
+		font-size: 1.3rem;
+	}
+		
 	panel.confirm {
 		position: absolute;
 		bottom: 0;

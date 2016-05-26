@@ -2039,8 +2039,7 @@ var Pathtree = (function () {
 			.style("top", "0");
 		
 		this.experienceGroup = this.svg.append('g')
-				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
-				.attr("font-size", "1.3rem");
+				.classed("experiences", true);
 		this.yearGroup = this.svgTime.append('g')
 			.attr("fill", "#777");
 			
