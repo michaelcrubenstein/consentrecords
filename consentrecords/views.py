@@ -647,7 +647,8 @@ class api:
                                                             queryset=valueQueryset,
                                                             to_attr='values'))\
                                         .get(pk=d["instanceID"])
-                    d["cells"] = i.getData(i.values, fieldsData, userInfo, language)
+                    d['cells'] = i.getData(i.values, fieldsData, userInfo, language)
+                    d['typeName'] = i.typeID.getDescription();
             
         return data;
         
