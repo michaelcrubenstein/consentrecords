@@ -1740,9 +1740,8 @@ var Pathtree = (function () {
 		/* t is the set of all text nodes. */
 		g.append('text')
 			.each(function() { this.pathtree = _this; })
-			.attr("x", 0)
+			.attr("x", _this.textLeftMargin)
 			.attr("dy", "1.1")
-			.attr("transform", "translate({0}, 0)".format(_this.textLeftMargin))
 			.text(function(fd) { return fd.getDescription(); })
 			.on("click", function() 
 				{ 
