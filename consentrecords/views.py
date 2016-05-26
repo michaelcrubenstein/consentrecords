@@ -814,8 +814,6 @@ class api:
         
             if fieldName is None:
                 return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
                 field = terms[fieldName]
                 

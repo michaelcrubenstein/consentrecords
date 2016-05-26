@@ -1348,7 +1348,7 @@ class Terms():
     def __getitem__(self, name):
         try:
             if terms.isUUID(name):
-                return Instance.objects.get(pk=name);
+                return Instance.objects.get(pk=name, deleteTransaction__isnull=True);
             else:
                 return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
