@@ -633,6 +633,8 @@ class api:
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
 
+		# For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
+		# values in that cell.
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
