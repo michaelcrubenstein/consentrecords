@@ -1072,25 +1072,21 @@ var Pathtree = (function () {
 	Pathtree.prototype.redoLayout = function(g)
 	{
 		/* bbox is used for various height calculations. */
-		var bbox;
-		var t = g.selectAll('text');
-		if (t.node())
-			bbox = t.node().getBBox();
-		else
-			bbox = {height: 20, y: -18};
+		var tempG = this.experienceGroup.append('g');
+		t = tempG.append('text')
+			.attr('dy', '1.1')
+			.text('MMM');
+		var bbox = t.node().getBBox();
 			
 		this.flagHeight = bbox.height + this.textBottomMargin;
 		this.flagY = bbox.y;
 		
-		var smallBBox;
 		t.style('font-size', '10px');
-		if (t.node())
-			smallBBox = t.node().getBBox();
-		else
-			smallBBox = {height: 20, y: -18};
+		var smallBBox = t.node().getBBox();
 		this.smallFlagHeight = smallBBox.height + this.textBottomMargin;
 		this.smallFlagY = smallBBox.y;
-		t.style('font-size', null);
+
+		tempG.remove();
 
 		this.clearLayout();
 		this.checkLayout();
