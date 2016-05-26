@@ -770,7 +770,7 @@ var ServiceSearchView = (function() {
 			.on("click", function(d, i) {
 				if (prepareClick('click', 'Custom Service: ' + _this.inputText()))
 				{
-					this.experience.createFromService({text: _this.inputText()}, this.sitePanel.node(), this.sitePanel.showNextStep);
+					_this.experience.createFromService({text: _this.inputText()}, _this.sitePanel.node(), _this.sitePanel.showNextStep);
 				}
 			})
 			.style("display", "none");

@@ -2225,6 +2225,7 @@ var Pathtree = (function () {
 
 var PathtreePanel = (function () {
 	PathtreePanel.prototype = new SitePanel();
+	PathtreePanel.prototype.user = null;
 	PathtreePanel.prototype.pathtree = null;
 	PathtreePanel.prototype.navContainer = null;
 	PathtreePanel.prototype.bottomNavContainer = null;
@@ -2260,17 +2261,17 @@ var PathtreePanel = (function () {
 			.text(this.userSettingsBadgeCount(user));
 	}
 	
-	PathtreePanel.prototype.createExperience = function()
+	PathtreePanel.prototype.createExperience = function(user)
 	{
 		var experience = new Experience();
-		experience.user = this.pathtree.user;
+		experience.user = user;
 		this.pathtree.setupExperienceHandlers(experience);
 		return experience;
 	}
 	
 	PathtreePanel.prototype.startNewExperience = function()
 	{
-		var experience = this.createExperience();
+		var experience = this.createExperience(this.user);
 		var panel = new NewExperiencePanel(experience, this.node());
 	}
 	
@@ -2300,7 +2301,8 @@ var PathtreePanel = (function () {
 	function PathtreePanel(user, previousPanel, canDone) {
 		canDone = canDone !== undefined ? canDone : true;
 		var _this = this;
-
+		this.user = user;
+		
 		SitePanel.call(this, previousPanel, null, "My Pathtree", "pathway");
 		this.navContainer = this.appendNavContainer();
 		var settingsButton;

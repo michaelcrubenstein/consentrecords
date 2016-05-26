@@ -412,7 +412,7 @@
 			{% else %}var serviceName = null;
 			{% endif %}
 	
-			var experience = pathwayPanel.createExperience();
+			var experience = pathwayPanel.createExperience(cr.signedinUser);
 			var done = function(services)
 			{
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
