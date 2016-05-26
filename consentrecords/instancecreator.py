@@ -96,7 +96,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         AccessRecord.objects.create(id=item, source=item)
     else:
         try:
-            parentAccessRecord = AccessRecord.objects.get(id=parent)
+            parentAccessRecord = parent.accessrecord
             AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
         except AccessRecord.DoesNotExist:
             pass
