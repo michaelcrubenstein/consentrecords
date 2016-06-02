@@ -130,9 +130,22 @@ nav .site-left-chevron {
 	margin-left: 18px;	/* Same as the width of the .site-left-chevron-span, above. */
 } 
 
+nav.transparentTop {
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	opacity: 0.85;
+}
+
 nav.bottom {
 	width: 100%;
 	border-top: 1px solid #eee;
+}
+
+nav.transparentBottom {
+	position: absolute;
+	top: calc(100% - 40px);
+	opacity: 0.85;
 }
 
 .panel-fill > p
