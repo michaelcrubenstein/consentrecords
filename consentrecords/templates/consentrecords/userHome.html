@@ -512,6 +512,7 @@
 						{
 							panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
 								{
+									m.forEach(function(sd) { experience.removeService(sd); })
 									experience.clearOrganization();
 									experience.clearSite();
 								});
