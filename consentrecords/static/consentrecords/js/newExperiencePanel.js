@@ -384,7 +384,7 @@ var Experience = (function() {
 			function()
 			{
 				this.clearOrganization();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
@@ -401,7 +401,7 @@ var Experience = (function() {
 			function()
 			{
 				this.clearSite();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
@@ -452,7 +452,7 @@ var Experience = (function() {
 					this.setSite(oldSite);
 				else
 					this.clearSite();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
