@@ -415,6 +415,7 @@
 			var experience = pathwayPanel.createExperience(cr.signedinUser);
 			var done = function(services)
 			{
+				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
 					crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
@@ -472,7 +473,6 @@
 							{
 								if (organizations[0].typeName == "Organization")
 								{
-									experience.createFromOrganization(organizations[0], services, pathwayPanel.node(), function(panelNode)
 										{
 											showPanelUp(panelNode);
 										});
