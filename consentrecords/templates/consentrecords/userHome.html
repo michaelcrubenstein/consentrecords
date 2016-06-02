@@ -415,6 +415,7 @@
 			var experience = pathwayPanel.createExperience(cr.signedinUser);
 			var done = function(services)
 			{
+				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
 					crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
@@ -472,8 +473,12 @@
 							{
 								if (organizations[0].typeName == "Organization")
 								{
-									experience.createFromOrganization(organizations[0], services, pathwayPanel.node(), function(panelNode)
-										{
+									experience.createFromData({instance: organizations[0] },
+										siteName && {text : siteName},
+										offeringName && {text : offeringName},
+										services,
+										pathwayPanel.node(),
+										function(panelNode) {
 											showPanelUp(panelNode);
 										});
 								}
@@ -489,43 +494,14 @@
 				}
 				else if (organizationName)
 				{
-					var panel;
-					var m = services.map(function(serviceD) { return experience.addService(serviceD); });
-					
-					experience.setOrganization({text: organizationName });
-		
-					if (siteName)
-					{
-						experience.setSite({text: siteName });
-						if (offeringName)
-						{
-							experience.setOffering({text: offeringName});
-							panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
-								{
-									m.forEach(function(sd) { experience.removeService(service); })
-									experience.clearOffering();
-									experience.clearOrganization();
-									experience.clearSite();
-								});
-						}
-						else
-						{
-							panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
-								{
-									experience.clearOrganization();
-									experience.clearSite();
-								});
-						}
-					}
-					else
-					{
-						panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience,
-							function()
-							{
-								experience.clearOrganization();
-							});
-					}
-					showPanelUp(panel.node());
+					experience.createFromData({text: organizationName },
+						siteName && {text : siteName},
+						offeringName && {text : offeringName},
+						services,
+						pathwayPanel.node(),
+						function(panelNode) {
+							showPanelUp(panelNode);
+						});
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{

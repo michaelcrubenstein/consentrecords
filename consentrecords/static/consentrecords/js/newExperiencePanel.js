@@ -373,6 +373,50 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Offering");
 	}
 	
+	Experience.prototype.createFromData = function(organizationD, siteD, offeringD, services, previousNode, done)
+	{
+		var _this = this;
+		var panel;
+		
+		this.setOrganization(organizationD);
+		m = services.map(function(d) { return _this.addService(d); });
+		
+		if (siteD)
+		{
+			this.setSite(siteD);
+			if (offeringD)
+			{
+				this.setOffering(offeringD);
+				panel = new NewExperienceFinishPanel(previousNode, this, function()
+					{
+						m.forEach(function(d) { _this.removeService(d); });
+						_this.clearOffering();
+						_this.clearOrganization();
+						_this.clearSite();
+					});
+			}
+			else
+			{
+				panel = new NewExperienceFromSitePanel(previousNode, this, function()
+					{
+						m.forEach(function(d) { _this.removeService(d); })
+						_this.clearOrganization();
+						_this.clearSite();
+					});
+			}
+		}
+		else
+		{
+			panel = new NewExperienceFromOrganizationPanel(previousNode, this,
+				function()
+				{
+					this.clearOrganization();
+					m.forEach(function(d) { _this.removeService(d); });
+				});
+		}
+		done(panel.node());
+	}
+	
 	Experience.prototype.createFromOrganization = function(d, services, previousNode, done)
 	{
 		this.setOrganization({instance: d});
@@ -384,7 +428,7 @@ var Experience = (function() {
 			function()
 			{
 				this.clearOrganization();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
@@ -401,7 +445,7 @@ var Experience = (function() {
 			function()
 			{
 				this.clearSite();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
@@ -452,7 +496,7 @@ var Experience = (function() {
 					this.setSite(oldSite);
 				else
 					this.clearSite();
-				m.forEach(function(d) { _this.removeService(m); });
+				m.forEach(function(d) { _this.removeService(d); });
 			});
 		done(panel.node());
 	}
