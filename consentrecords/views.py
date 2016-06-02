@@ -52,6 +52,30 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+def showLines(request):
+    LogRecord.emit(request.user, 'pathAdvisor/showLines', '')
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = "me"
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 def orgHome(request):
     LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
     

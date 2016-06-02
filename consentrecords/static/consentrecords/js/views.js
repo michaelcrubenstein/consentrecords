@@ -27,7 +27,7 @@ $.fn.calculateFillHeight = function()
 {
 	var parent = this.parent();
 	var n = this.get(0);
-	newHeight = parent.children().toArray().reduce(function(h, childNode) {
+	var newHeight = parent.children().toArray().reduce(function(h, childNode) {
 			var child = $(childNode);
 			if (child.css("display") != "none" && 
 				child.css("position") != "absolute" &&

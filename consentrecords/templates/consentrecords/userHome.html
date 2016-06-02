@@ -821,6 +821,27 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("me"))
+				{
+					var handleState = function(pathwayPanel)
+					{
+						crp.pushCheckCells(cr.signedinUser, undefined, 
+							function() {
+								if (!pathwayPanel)
+								{
+									if (!firstPanel)
+									{
+										firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+										showPanelUp(firstPanel.node());
+									}
+									pathwayPanel = firstPanel;
+								}
+							},
+							asyncFailFunction);
+					}
+					needsSignin = true;
+				}
 			{% endif %}
 
 			{% if userID %}
@@ -840,7 +861,12 @@
 			{
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
 					{
-						firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+						{% if state %}
+							if ("{{state}}" === "me")
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+							else
+						{% endif %}
+								firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
 						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 						showPanelNow(firstPanel.node());
 						if (handleState)
