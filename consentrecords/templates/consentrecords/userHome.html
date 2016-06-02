@@ -502,7 +502,7 @@
 							experience.setOffering({text: offeringName});
 							panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
 								{
-									m.forEach(function(sd) { experience.removeService(service); })
+									m.forEach(function(sd) { experience.removeService(sd); });
 									experience.clearOffering();
 									experience.clearOrganization();
 									experience.clearSite();
