@@ -84,19 +84,19 @@ var FlagData = (function() {
 
 	FlagData.prototype.getDescription = function()
 	{
-		var d = this.experience.getValue("Offering");
-		if (d && d.getValueID())
-			return d.getDescription();
-		var s = this.experience.getDatum("User Entered Offering");
-		if (s && s.length)
-			return s;
-		d = this.experience.getValue("Service");
-		if (d && d.getValueID())
-			return d.getDescription();
-		s = this.experience.getDatum("User Entered Service");
-		if (s && s.length)
-			return s;
-		return "None";
+		var _this = this;
+		var f = function(name)
+		{
+			var d = _this.experience.getValue(name);
+			return d && d.getValueID() && d.getDescription();
+		}
+		return f("Offering") ||
+			this.experience.getDatum("User Entered Offering") ||
+			f("Service") ||
+			this.experience.getDatum("User Entered Service") ||
+			f("Organization") ||
+			this.experience.getDatum("User Entered Organization") ||
+			"None";
 	}
 	
 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
@@ -376,6 +376,7 @@ var PathView = (function() {
 	PathView.prototype.detailGroup = null;
 	PathView.prototype.detailBackRect = null;
 	PathView.prototype.detailFrontRect = null;
+	PathView.prototype.detailRectHeight = 0;
 	PathView.prototype.detailFlagData = null;
 	PathView.prototype.flagElement = null;
 	
@@ -407,18 +408,14 @@ var PathView = (function() {
 		});
 	}
 
+	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
+		The trigger runs the specified handler.
+	 */
 	PathView.prototype.setupServiceTriggers = function(r, fd, handler)
 		{
 			var e = fd.experience;
 			var serviceCell = e.getCell("Service");
 			var userServiceCell = e.getCell("User Entered Service");
-			var _this = this;
-			if (!handler)
-				handler = function(eventObject)
-				{
-					var fd = d3.select(eventObject.data).datum();
-					_this.setColor(eventObject.data, fd);
-				};
 			var f = function(eventObject, v)
 			{
 				if (!v.isEmpty())
@@ -433,6 +430,19 @@ var PathView = (function() {
 					$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
 				});
 		}
+	
+	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
+		The trigger sets the color of the specified element (r).
+	 */	
+	PathView.prototype.setupColorWatchTriggers = function(r, fd)
+	{
+		var _this = this;
+		this.setupServiceTriggers(r, fd, function(eventObject)
+				{
+					var fd = d3.select(eventObject.data).datum();
+					_this.setColor(eventObject.data, fd);
+				});
+	}
 	
 	PathView.prototype.checkOfferingCells = function(experience, done)
 	{
@@ -602,7 +612,7 @@ var PathView = (function() {
 		   .attr("x", textBox.x - this.textDetailLeftMargin)
 		   .attr("y", 0);
 		this.setColor(this.detailFrontRect.node(), this.detailFrontRect.datum());
-		this.detailFrontRect.each(function(d) { _this.setupServiceTriggers(this, d); });
+		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
 		if (duration > 0)
 		{
 			this.detailGroup.selectAll('rect').attr("height", 0)
@@ -829,6 +839,10 @@ var PathView = (function() {
 		}
 	}
 	
+	/* Sets up triggers that fire when the data associated with an experience changes.
+		Also, sets up triggers that fire when the start date or end date are added, deleted or changed
+			and that dynamically move the flags to their correct locations.
+	 */
 	PathView.prototype.setupExperienceTriggers = function(experience)
 	{
 		var _this = this;
@@ -902,7 +916,8 @@ var PathView = (function() {
 var PathLines = (function() {
 	PathLines.prototype = new PathView();
 	PathLines.prototype.dataLeftMargin = 0;
-	PathLines.prototype.textDetailLeftMargin = 7; /* textLeftMargin; */
+	PathLines.prototype.poleSpacing = 4;
+	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	PathLines.prototype.pathBackground = "white";
@@ -910,6 +925,12 @@ var PathLines = (function() {
 	PathLines.prototype.loadingMessageTop = "45px";
 	PathLines.prototype.experiencesTop = 33;
 	PathLines.prototype.bottomNavHeight = 40;
+	
+	/* Translate coordinates for the elements of the experienceGroup */
+	PathLines.prototype.experienceGroupDX = 20;
+	PathLines.prototype.experienceGroupDY = 0;
+
+	PathLines.prototype.detailRectX = 1.5;
 	
 	PathLines.prototype.pathwayContainer = null;
 	PathLines.prototype.svg = null;
@@ -925,10 +946,14 @@ var PathLines = (function() {
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
 		var index = this.allExperiences.indexOf(experience);
+		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
 		if (this.detailFlagData && experience == this.detailFlagData.experience)
-			this.hideDetail(function() { }, 0);
+			this.hideDetail(function() {
+					_this.setupHeights();
+					_this.setupWidths();
+				}, 0);
 		this.clearLayout();
 		this.checkLayout();
 	};
@@ -938,8 +963,20 @@ var PathLines = (function() {
 		var _this = eventObject.data;
 		_this.transitionPositions(_this.experienceGroup.selectAll('g'))
 	}
+	
+	PathLines.prototype.setFlagText = function(node)
+	{
+		var g = d3.select(node);
+		g.selectAll('text').selectAll('tspan:nth-child(1)')
+			.text(function(d) { return d.getDescription(); })
+		g.selectAll('rect')
+			.attr('width', function(fd)
+				{
+					return $(this.parentNode).children('text').outerWidth() + 5;
+				});	
+	}
 		
-	/* setup up each group (this) that displays an experience to delete itself if
+	/* Sets up each group (this) that displays an experience to delete itself if
 		the experience is deleted.
 	 */
 	PathLines.prototype.setupDelete = function(fd, node) 
@@ -953,15 +990,7 @@ var PathLines = (function() {
 		
 		var dataChanged = function(eventObject)
 		{
-			var g = d3.select(eventObject.data);
-			var t = g.selectAll('text');
-			t.text(function(d) { return d.getDescription(); })
-			fd.width = t.node().getBBox().width + 
-						_this.textLeftMargin + _this.textRightMargin;
-			_this.checkOfferingCells(this,
-				function()
-				{
-				});
+			_this.setFlagText(eventObject.data);
 		}
 		
 		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
@@ -993,21 +1022,44 @@ var PathLines = (function() {
 		var lastFlag = null;
 		var _this = this;
 
+		var numColumns = 7;
+		var columns = new Array(numColumns);
+		for (var i = 0; i < numColumns; ++i)
+			columns[i] = [];
+
 		g.each(function(fd, i)
 			{
-				if (!lastFlag)
+				fd.x = 20 * (fd.column);
+				var column = columns[fd.column];
+				column.push(fd);
+				for (var i = column.length - 2; i >= 0; --i)
 				{
-					fd.y = _this.experiencesTop;
-					fd.x = 20 * (fd.column);
+					var lastFD = column[i];
+					if (column[i].getStartDate() < fd.getEndDate())
+					{
+						fd.x = column[i].x + _this.poleSpacing;
+						break;
+					}
 				}
-				else
-				{
-					fd.x = 20 * (fd.column);
-					if (fd.x == lastFlag.x)
-						fd.x += 8;
-					fd.y = lastFlag.y + 16;
-				}
+				
+				fd.y = lastFlag ? lastFlag.y + 22 : _this.experiencesTop;
 				lastFlag = fd;
+			});
+			
+		
+		g.each(function(fd, i)
+			{
+				fd.y2 = fd.y + 20;
+				var parent = d3.select(this.parentNode);
+				for (var j = i + 1; j < g.size(); ++j)
+				{
+					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
+					nextDatum = n.datum();
+					if (nextDatum.getEndDate() > fd.getStartDate() && nextDatum.x > fd.x)
+						fd.y2 = nextDatum.y + 20;
+					else
+						break;
+				}
 			});
 		
 		 return lastFlag ? lastFlag.y + 20 : this.experiencesTop;
@@ -1029,14 +1081,17 @@ var PathLines = (function() {
 		/* Restore the sort order to startDate/endDate */
 		g.sort(this._compareExperiences);
 	
-		/* Reset the text for each object, in case it was previously squashed. */
-		g.selectAll('text').text(function(d) { return d.getDescription(); });
-		
 		var flagHeights = this.setCoordinates(g);
 		
 		this.setupHeights(flagHeights + this.bottomNavHeight);
 			
 		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y); });
+		
+		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
+			to the fd.y position.
+		 */
+		g.selectAll('line')
+			.attr('y2', function(fd) { return fd.y2 - fd.y; });
 		
 		if (this.detailFlagData != null)
 		{
@@ -1049,6 +1104,7 @@ var PathLines = (function() {
 		}
 		
 		this.setupClipPaths();
+		this.setupWidths();
 	}
 
 	PathLines.prototype.checkLayout = function()
@@ -1071,12 +1127,291 @@ var PathLines = (function() {
 	
 	PathLines.prototype.transitionPositions = function(g)
 	{
-		g.sort(_this._compareExperiences);
-		_this.setCoordinates(g);
+		g.sort(this._compareExperiences);
+		this.setCoordinates(g);
 		g.transition()
 			.duration(1000)
 			.ease("in-out")
 			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y);});
+	}
+	
+	PathLines.prototype.showDetailGroup = function(g, fd, duration)
+	{
+		duration = (duration !== undefined ? duration : 700);
+		var _this = this;
+		
+		this.detailGroup.datum(fd);
+		this.detailGroup.selectAll('rect').datum(fd);
+		var detailText = this.detailGroup.append('text')
+			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
+			
+		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
+
+		var lines = [];
+		
+		var s;
+		var maxWidth = 0;
+		var tspan;
+		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('detail-offering', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		function checkSpacing(dy)
+		{
+			if (maxWidth > 0)
+				detailText.append('tspan')
+						  .text(' ')
+						  .attr("x", this.textDetailLeftMargin)
+						  .attr("dy", dy);
+		}
+			
+		s = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			checkSpacing("4px");
+			tspan = detailText.append('tspan')
+				.classed('detail-organization', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			checkSpacing("2px");
+			tspan = detailText.append('tspan')
+				.classed('address-line', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = getDateRange(fd.experience);
+		if (s && s.length > 0)
+		{
+			checkSpacing("4px");
+			tspan = detailText.append('tspan')
+				.classed('detail-dates', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		var x = fd.x;
+		var y = fd.y;
+
+		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
+		var rectWidth = maxWidth + iconAreaWidth + (this.textDetailLeftMargin * 2);
+
+		s = getTagList(fd.experience);
+		if (s && s.length > 0)
+		{
+			var text = d3.select(this),
+				words = s.split(/\s+/).reverse(),
+				word,
+				line = [];
+			checkSpacing("4px");
+			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true);
+			while (word = words.pop()) {
+			  line.push(word);
+			  tspan.text(line.join(" "));
+			  if (tspan.node().getComputedTextLength() > maxWidth) {
+				line.pop();
+				tspan.text(line.join(" "));
+				tspan.attr("dy", this.detailTextSpacing);
+				line = [word];
+				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true).text(word);
+			  }
+			}
+			tspan.attr("dy", this.detailTextSpacing);
+		}
+
+			
+		var textBox = detailText.node().getBBox();
+		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
+
+		this.detailGroup.attr("transform", "translate({0},{1})".format(x + this.experienceGroupDX, y + this.experienceGroupDY))
+				 .attr("height", 0);
+		this.detailGroup.selectAll('rect')
+			.attr("width", rectWidth)
+			.attr("x", this.detailRectX)	/* half the stroke width */;
+		this.setColor(this.detailFrontRect.node(), this.detailFrontRect.datum());
+		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
+		if (duration > 0)
+		{
+			
+			this.detailGroup.selectAll('rect').attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", this.detailRectHeight);
+		}
+		else
+		{
+			this.detailGroup.selectAll('rect').attr("height", this.detailRectHeight);
+		}
+	   
+		/* Set the clip path of the text to grow so the text is revealed in parallel */
+		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
+			.attr('x', textBox.x)
+			.attr('y', textBox.y)
+			.attr('width', maxWidth); 
+		
+		var iconClipRect;
+		
+		if (hasEditChevron)
+		{	
+			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
+				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y)
+				.attr('width', this.showDetailIconWidth);
+				
+			var detailChevron = this.detailGroup.append('image')
+				.attr("width", this.showDetailIconWidth)
+				.attr("height", this.showDetailIconWidth)
+				.attr("xlink:href", rightChevronPath)
+				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+
+			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		}
+			
+		if (duration > 0)
+		{
+			textClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', this.detailRectHeight); 
+			detailText				
+				.transition()
+				.duration(duration)
+				.attr("height", this.detailRectHeight);
+
+			if (hasEditChevron)
+				iconClipRect.attr('height', 0)
+					.transition()
+					.duration(duration)
+					.attr('height', this.detailRectHeight);
+		}
+		else
+		{
+			textClipRect.attr('height', this.detailRectHeight); 
+			detailText.attr("height", this.detailRectHeight);
+			if (hasEditChevron)
+				iconClipRect.attr('height', this.detailRectHeight);
+		}
+		
+		this.detailFlagData = fd;
+		this.flagElement = g;
+		
+		var experience = this.detailFlagData.experience;
+		
+		function handleChangeDetailGroup(eventObject, newValue)
+		{
+			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
+				_this.refreshDetail();
+		}
+		
+		var allCells = [experience.getCell("Organization"),
+		 experience.getCell("User Entered Organization"),
+		 experience.getCell("Site"),
+		 experience.getCell("User Entered Site"),
+		 experience.getCell("Start"),
+		 experience.getCell("End"),
+		 experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		var serviceCells = [experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		allCells.forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
+				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
+			}
+		 });
+		serviceCells.forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
+			}
+		 });
+		 
+		 $(this).one("clearTriggers.cr", function(eventObject)
+		 {
+			allCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+			 	if (d)
+			 	{
+					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
+					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
+				}
+			 });
+			serviceCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
+				}
+			 });
+		 });
+		
+		this.setupHeights();
+		this.setupWidths();
+		
+		if (duration > 0)
+		{
+			if (this.containerDiv.scrollTop < 
+				(parseFloat(this.pathwayContainer.style('top')) + y + this.experienceGroupDY + this.detailRectHeight) - ($(this.containerDiv).height() - this.bottomNavHeight))
+			{
+				$(this.containerDiv).animate(
+					{ scrollTop: "{0}px".format((parseFloat(this.pathwayContainer.style('top')) + y + this.experienceGroupDY + this.detailRectHeight) - ($(this.containerDiv).height() - this.bottomNavHeight)) });
+			}
+			else if (this.containerDiv.scrollTop > 
+					 (y + this.experienceGroupDY))
+			{
+				$(this.containerDiv).animate(
+					{ scrollTop: "{0}px".format(y + this.experienceGroupDY) });
+			}
+		
+			if (this.containerDiv.scrollLeft < 
+				x + this.experienceGroupDX + rectWidth)
+			{
+				$(this.containerDiv).animate(
+					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX + rectWidth) });
+			}
+			else if (this.containerDiv.scrollLeft >
+					 (x + this.experienceGroupDX))
+			{
+				$(this.containerDiv).animate(
+					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX) });
+			}
+		}
 	}
 	
 	PathLines.prototype.appendExperiences = function()
@@ -1101,7 +1436,6 @@ var PathLines = (function() {
 			.on("click.cr", showDetail)
 			.each(function(d) 
 					{ 
-						_this.handleChangedExperience(this, d);
 						_this.setupServiceTriggers(this, d, function(eventObject)
 							{
 								d.column = d.getColumn();
@@ -1119,23 +1453,29 @@ var PathLines = (function() {
 				});
 		}
 		
-		g.append('path').classed('base', true)
-			.attr('d', 'M 00 00 L  6 10 L 00 20 L -6 10 z');
-		g.append('path').classed('diamond', true)
-			.attr('d', 'M 00 00 L  6 10 L 00 20 L -6 10 z')
+		g.append('line').classed('flag-pole', true)
 			.each(function(d)
 				{
 					_this.setColor(this, d);
-					_this.setupServiceTriggers(this, d);
+					_this.handleChangedExperience(this, d);
+					_this.setupColorWatchTriggers(this, d);
 				});
-		g.append('path').classed('tint-diamond', true)
-			.attr('d', 'M 00 00 L 00 10 L -6 10 z');
-		g.append('path').classed('shade-diamond', true)
-			.attr('d', 'M 00 20 L 00 10 L  6 10 z');
-		g.append('text').classed('diamond-label', true)
-			.attr('x', '8').attr('y', '13')
-			.text(function(fd) { return fd.getDescription(); });
-			
+		g.append('rect').classed('bg', true)
+			.attr('height', 20)
+			.attr('x', '0')
+			.each(function(d)
+				{
+					_this.setColor(this, d);
+					_this.handleChangedExperience(this, d);
+					_this.setupColorWatchTriggers(this, d);
+				});
+		var text = g.append('text').classed('flag-label', true)
+			.attr('x', this.textDetailLeftMargin);
+		text.append('tspan')
+			.attr('dy', '1.1em');
+		
+		g.each(function() { _this.setFlagText(this); });
+
 		this.redoLayout(g);
 	}
 	
@@ -1145,9 +1485,6 @@ var PathLines = (function() {
 	
 	PathLines.prototype.showAllExperiences = function()
 	{
-// 		this.setDateRange();
-// 		this.scaleDayHeightToSize();
-		
 		var _this = this;
 		
 		var resizeFunction = function()
@@ -1179,6 +1516,21 @@ var PathLines = (function() {
 		else
 			svgHeight = minHeight;
 		
+		if (this.flagElement != null)
+		{
+			var h = this.detailFlagData.y + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
+			if (svgHeight < h)
+				svgHeight = h;
+		}
+		
+		var _this = this;
+		this.experienceGroup.selectAll('g:nth-last-child(1)').each(function (fd)
+			{
+				var h = parseFloat(d3.select(this).selectAll('rect').attr('height')) + fd.y + _this.experienceGroupDY + _this.bottomNavHeight;
+				if (svgHeight < h)
+					svgHeight = h;
+			});
+
 		$(this.svg.node()).height(svgHeight);
 		$(this.bg.node()).height(svgHeight);
 		$(this.bg.node()).width($(this.svg.node()).width());
@@ -1186,6 +1538,26 @@ var PathLines = (function() {
 			.attr('height', svgHeight);
 		this.guideGroup.selectAll('line')
 			.attr('y2', svgHeight - this.bottomNavHeight);
+	}
+	
+	PathLines.prototype.setupWidths = function()
+	{
+		var newWidth = this.sitePanel.scrollAreaWidth() - this.dataLeftMargin;
+		if (this.flagElement != null)
+		{
+			var w = this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width')) + this.experienceGroupDX;
+			if (newWidth < w)
+				newWidth = w;
+		}
+		
+		this.experienceGroup.selectAll('g').each(function (fd)
+			{
+				var w = parseFloat(d3.select(this).selectAll('rect').attr('width')) + fd.x + this.experienceGroupDX;
+				if (newWidth < w)
+					newWidth = w;
+			});
+		$(this.svg.node()).width(newWidth);
+		$(this.bg.node()).width(newWidth);
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
@@ -1203,19 +1575,15 @@ var PathLines = (function() {
 		var container = d3.select(this.containerDiv);
 		
 		this.pathwayContainer = container.append('div')
-			.classed("pathlines", true)
-			.style("width", "100%")
-			.style("height", "100%");
+			.classed("pathlines", true);
 			
 		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway pathlines", true)
-			.style("width", "100%");
+			.classed("pathway pathlines", true);
 		
 		this.defs = this.svg.append('defs');
 	
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
-			.attr("x", 0).attr("y", 0)
 			.style("width", "100%")
 			.style("height", "100%")
 			.attr("fill", this.pathBackground);
@@ -1261,40 +1629,37 @@ var PathLines = (function() {
 			.enter()
 			.append('tspan')
 			.attr('x', 0)
-			.attr('dy', function(d, i) { return i * 11; })
+			.attr('dy', function(d, i) { return "{0}em".format(i); })
 			.text(function(d) { return d; });
 		guides.append('line')
 			.classed('column', true)
 			.attr('x1', 0)
-			.attr('y1', function(d) { return d.labelY + 4; })
+			.attr('y1', function(d) { 
+				return d.labelY + 3 + (9 * (d.name.split(' ').length - 1)); 
+				})
 			.attr('x2', 0)
 			.attr('y2', 500)
 			.attr('stroke', function(d) { return d.color; });
 		
 		this.experienceGroup = this.svg.append('g')
 				.classed("experiences", true)
-				.attr('transform', 'translate(20, 0)');
+				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
 			
 		this.detailGroup = this.svg.append('g')
-				.attr("font-family", "San Francisco,Helvetica Neue,Arial,Helvetica,sans-serif")
-				.attr("font-size", "1.3rem")
-			.style("width", "100%")
-			.style("height", "100%")
+			.classed('detail', true)
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
 				})
 			.on("click.cr", this.showDetailPanel);
 		this.detailBackRect = this.detailGroup.append('rect')
-			.attr("fill", this.pathBackground)
-			.attr("width", "100%");
+			.classed('bg', true);
 		this.detailFrontRect = this.detailGroup.append('rect')
-			.attr("fill-opacity", "0.3")
-			.attr("stroke-opacity", "0.8")
-			.attr("width", "100%");
+			.classed('detail', true);
 			
-		$(_this.sitePanel.node()).one("revealing.cr", function()
+		$(this.sitePanel.node()).one("revealing.cr", function()
 			{
+				_this.setupWidths();
 				$(_this.svg.node()).width(_this.sitePanel.scrollAreaWidth() - _this.dataLeftMargin);
 			});
 
@@ -1305,7 +1670,11 @@ var PathLines = (function() {
 			})
 			.on("click.cr", function() {
 				cr.logRecord('click', 'hide details');
-				_this.hideDetail();
+				_this.hideDetail(function()
+					{
+						_this.setupHeights();
+						_this.setupWidths();
+					});
 			});
 		
 		this.setupHeights();
@@ -1434,6 +1803,8 @@ var PathLines = (function() {
 
 	function PathLines(sitePanel, containerDiv) {
 		PathView.call(this, sitePanel, containerDiv);
+		d3.select(containerDiv).classed('vertical-scrolling', false)
+			.classed('all-scrolling', true);
 	}
 	
 	return PathLines;
@@ -1575,41 +1946,6 @@ var PathlinesPanel = (function () {
 		shareButton.append("img")
 			.attr("src", shareImagePath);
 		
-// 		Add buttons that sit on top of the scroll area. */
-// 		this.expandButton = this.panelDiv.append('button')
-// 			.classed('expand', true)
-// 			.on('click', function(d)
-// 				{
-// 					if (prepareClick('click', 'expand'))
-// 					{
-// 						var _thisButton = d3.select(this);
-// 						_thisButton.classed('pressed', true);
-// 						_this.pathtree.scale(1.3,
-// 							function() { _thisButton.classed('pressed', false); unblockClick(); });
-// 						d3.event.preventDefault();
-// 					}
-// 				});
-// 		this.expandButton
-// 			.append('span').text("+");
-// 		this.contractButton = this.panelDiv.append('button')
-// 			.classed('contract', true)
-// 			.on('click', function(d)
-// 				{
-// 					var _thisButton = d3.select(this);
-// 					if (!_thisButton.classed('disabled'))
-// 					{
-// 						if (prepareClick('click', 'contract'))
-// 						{
-// 							_thisButton.classed('pressed', true);
-// 							_this.pathtree.scale(1/1.3,
-// 								function() { _thisButton.classed('pressed', false); unblockClick(); });
-// 							d3.event.preventDefault();
-// 						}
-// 					}
-// 				});
-// 		this.contractButton
-// 			.append('span').text("—");
-// 		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			
@@ -2193,7 +2529,7 @@ var PathCalendar = (function () {
 		});
 	
 		var columns = new Array(numColumns);
-		for (i = 0; i < numColumns; ++i)
+		for (var i = 0; i < numColumns; ++i)
 			columns[i] = [];
 
 		/* Reset the text for each object, in case it was previously squashed. */
@@ -2587,7 +2923,7 @@ var PathCalendar = (function () {
 					{ 
 						_this.setColor(this, d); 
 						_this.handleChangedExperience(this, d);
-						_this.setupServiceTriggers(this, d);
+						_this.setupColorWatchTriggers(this, d);
 					})
 			.attr('x', 0)
 			.attr('y', 0);
@@ -2597,7 +2933,7 @@ var PathCalendar = (function () {
 					{ 
 						_this.setColor(this, d); 
 						_this.handleChangedExperience(this, d);
-						_this.setupServiceTriggers(this, d);
+						_this.setupColorWatchTriggers(this, d);
 					})
 			.attr('x1', 1)
 			.attr('x2', 1)
