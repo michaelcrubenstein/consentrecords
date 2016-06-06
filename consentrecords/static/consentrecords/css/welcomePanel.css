@@ -1,0 +1,44 @@
+panel.welcome ol li {
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: white;
+}
+
+panel.welcome ol li.active {
+}
+
+panel.welcome ol li p {
+	position: absolute;
+}
+
+panel.welcome a.left {
+	position: absolute;
+	top: calc(50% - 10px);
+}
+
+panel.welcome a.right {
+	position: absolute;
+	top: calc(50% - 10px);
+	left: calc(100% - 20px);
+}
+
+panel.welcome svg {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+panel.welcome svg path {
+	fill: transparent;
+	stroke-width: 3px;
+	stroke: #000;
+}
+
+panel.welcome p {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	margin: 10px;
+}
