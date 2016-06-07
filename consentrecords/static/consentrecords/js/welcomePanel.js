@@ -12,7 +12,7 @@ var WelcomePanel = (function () {
 				return "{0}px".format(i < activeIndex ? -width :
 					   				  i == activeIndex ? 0 : width);
 			});
-		this.mainDiv.selectAll('svg')
+		this.mainDiv.selectAll('li svg')
 			.attr('width', width)
 			.attr('height', this.scrollAreaHeight());
 	}
