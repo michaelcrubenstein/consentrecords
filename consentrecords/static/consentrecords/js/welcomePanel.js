@@ -197,6 +197,12 @@ var WelcomePanel = (function () {
 										 function()
 										 {
 											d3.select(this).classed('active', true);
+											var isFirst = parseInt(d3.select(this).attr('index')) ==
+												0;
+											_this.mainDiv.selectAll('a.right')
+												.style('display', null);
+											_this.mainDiv.selectAll('a.left')
+												.style('display', isFirst ? "none" : null);
 											unblockClick();
 										 });
 						}
@@ -231,6 +237,12 @@ var WelcomePanel = (function () {
 										 function()
 										 {
 											d3.select(this).classed('active', true);
+											var isLast = parseInt(d3.select(this).attr('index')) ==
+												li.size() - 1;
+											_this.mainDiv.selectAll('a.right')
+												.style('display', isLast ? "none" : null);
+											_this.mainDiv.selectAll('a.left')
+												.style('display', null);
 											unblockClick();
 										 });
 						}
