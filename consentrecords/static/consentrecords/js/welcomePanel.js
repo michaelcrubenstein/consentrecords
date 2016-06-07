@@ -76,7 +76,7 @@ var WelcomePanel = (function () {
 				{text: "Seeing other pathways can give you ideas for what you want to do next.",
 				 textLeft: "0px",
 				 textTop: "0px",
-				 path: "M0,125 C100,120 160,100 200,140 S300,150 400,150",
+				 path: "M0,125 C100,120 160,100 240,100 S250,300 415,190",
 				 color0: PathLines.prototype.backgroundData[3].color,
 				},
 				{text: "Your pathway and goals, whatever they have been, can also inspire others along their journeys.",
