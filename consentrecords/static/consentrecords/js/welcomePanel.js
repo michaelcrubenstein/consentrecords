@@ -94,14 +94,14 @@ var WelcomePanel = (function () {
 				{text: "A 22-year-old with the following experiences: College, Government Job",
 				 textLeft: "0px",
 				 textTop: "20%",
-				 pathID: '{{path1}}',
+				 pathDescription: '"More Experiences"[Birthday>=1992][Birthday<=1994]["More Experience">Service[_name="College"]]::reference(_user)',
 				 path: "M0,250 C100,250 140,150 180,225 S350,300 400,300",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "A 53-year-old with the following experiences: Piano Lessons, Entrepreneur",
 				 textLeft: "0px",
 				 textTop: "30%",
-				 pathID: '{{path2}}',
+				 pathDescription: '"More Experiences"[Birthday>=1962][Birthday<=1963]["More Experience">Service[_name="Piano Lessons"]]::reference(_user)',
 				 path: "M0,300 C100,300 160,250 200,230 S320,200 400,200",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
@@ -129,11 +129,6 @@ var WelcomePanel = (function () {
 			.classed('active', true);
 		;
 	
-		li.append('p')
-			.text(function(d) { return d.text; })
-			.style('left', function(d) { return d.textLeft; })
-			.style('top', function(d) { return d.textTop; });
-			
 		var svg = li.append('svg')
 			.attr('viewBox', '0 0 400 400')
 			.attr('preserveAspectRatio', 'none');
@@ -141,6 +136,39 @@ var WelcomePanel = (function () {
 			.attr('d', function(d) { return d.path; })
 			.attr('stroke', function(d) { return d.color0; });
 		
+		var p = li.append('p')
+			.style('left', function(d) { return d.textLeft; })
+			.style('top', function(d) { return d.textTop; })
+			.text(function(d) { return d.text; });
+		
+		p.each(function(d)
+			{
+				if (d.pathDescription)
+				{
+					d3.select(this)
+						.classed('site-active-text path-description-link', true)
+						.on('click', function(d)
+							{
+								if (prepareClick('click', 'sample user'))
+								{
+									cr.getData({path: d.pathDescription,
+										fields: ["typeName"],
+										done: function(newInstances)
+											{
+												if (newInstances.length == 0)
+													syncFailFunction("Sorry, this path is not available.");
+												else
+												{
+													firstPanel = new PathlinesPanel(newInstances[0], _this.node(), true);
+													firstPanel.pathtree.setUser(newInstances[0].getValue("More Experiences"), false);
+													showPanelUp(firstPanel.node(), unblockClick);
+												}
+											},
+										fail: syncFailFunction});
+								}
+							});
+				}
+			});	
 			
 		var leftControl = d.append('a')
 			.classed('left', true)
