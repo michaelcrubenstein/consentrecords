@@ -173,6 +173,7 @@ var WelcomePanel = (function () {
 		var leftControl = d.append('a')
 			.classed('left', true)
 			.attr('role', 'button')
+			.style('display', 'none')
 			.on("click", function()
 				{
 					var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
