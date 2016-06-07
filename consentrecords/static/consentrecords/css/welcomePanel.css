@@ -40,7 +40,6 @@ panel.welcome svg {
 panel.welcome svg path {
 	fill: transparent;
 	stroke-width: 3px;
-	stroke: #000;
 }
 
 panel.welcome p {
