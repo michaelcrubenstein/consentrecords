@@ -47,21 +47,25 @@ var WelcomePanel = (function () {
 				 textLeft: "0px",
 				 textTop: "0px",
 				 path: "M0,300 C50,200 150,100 200,200 S300,200 400,200",
+				 color0: PathLines.prototype.backgroundData[0].color,
 				},
 				{text: "With PathAdvisor, young people can answer three important questions:",
 				 textLeft: "0px",
 				 textTop: "5%",
 				 path: "M0,200 C100,200 150,175 200,250 S300,250 400,250",
+				 color0: PathLines.prototype.backgroundData[2].color,
 				},
 				{text: "With what I've done, what opportunities should I take advantage of?",
 				 textLeft: "0px",
 				 textTop: "10%",
 				 path: "M0,250 C100,250 160,100 200,200 S300,300 400,300",
+				 color0: PathLines.prototype.backgroundData[2].color,
 				},
 				{text: "What are people a few years older than me with similar goals to mine doing?",
 				 textLeft: "0px",
 				 textTop: "15%",
 				 path: "M0,300 C100,300 160,100 200,250 S300,300 404,196",
+				 color0: PathLines.prototype.backgroundData[2].color,
 				},
 				{text: "How can I share my story with adults who can help guide me?",
 				 textLeft: "0px",
@@ -72,6 +76,7 @@ var WelcomePanel = (function () {
 				 textLeft: "0px",
 				 textTop: "0px",
 				 path: "M0,125 C100,120 160,100 200,140 S300,150 400,150",
+				 color0: PathLines.prototype.backgroundData[3].color,
 				},
 				{text: "Your pathway is unique, but other pathways can give you ideas for what you want to do next.",
 				 textLeft: "0px",
@@ -82,23 +87,27 @@ var WelcomePanel = (function () {
 				 textLeft: "0px",
 				 textTop: "5%",
 				 path: "M-15,210 C150,100 160,100 200,230 S300,200 404,252",
+				 color0: PathLines.prototype.backgroundData[3].color,
 				},
 				{text: "Here are some examples of pathways:",
 				 textLeft: "0px",
 				 textTop: "0px",
 				 path: "M-4,248 C100,300 160,100 200,230 S350,250 400,250",
+				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "A 22-year-old with the following experiences: College, Government Job",
 				 textLeft: "0px",
 				 textTop: "20%",
 				 pathID: '{{path1}}',
 				 path: "M0,250 C100,250 140,150 180,225 S350,300 400,300",
+				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "A 53-year-old with the following experiences: Piano Lessons, Entrepreneur",
 				 textLeft: "0px",
 				 textTop: "30%",
 				 pathID: '{{path2}}',
 				 path: "M0,300 C100,300 160,250 200,230 S320,200 400,200",
+				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "Organizations can use PathAdvisor to discover where the young people who " +
 					   "participate in their programs have come from and what those young people " +
@@ -132,7 +141,8 @@ var WelcomePanel = (function () {
 			.attr('viewBox', '0 0 400 400')
 			.attr('preserveAspectRatio', 'none');
 		var path = svg.append('path')
-			.attr('d', function(d) { return d.path; });
+			.attr('d', function(d) { return d.path; })
+			.attr('stroke', function(d) { return d.color0; });
 		
 			
 		var leftControl = d.append('a')

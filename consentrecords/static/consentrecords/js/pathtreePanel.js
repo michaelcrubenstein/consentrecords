@@ -943,6 +943,16 @@ var PathLines = (function() {
 	PathLines.prototype.flagHeight = 0;
 	PathLines.prototype.flagWidth = 0;
 	
+	PathLines.prototype.labelYs = [PathLines.prototype.experiencesTop - 4 - 18, PathLines.prototype.experiencesTop - 4];
+
+	PathLines.prototype.backgroundData = [{name: "Housing", labelY: PathLines.prototype.labelYs[0], color: "#804040"},
+							  {name: "School", labelY: PathLines.prototype.labelYs[1], color: "#2828E7"},
+							  {name: "Interests", labelY: PathLines.prototype.labelYs[0], color: "#8328E7"},
+							  {name: "Career", labelY: PathLines.prototype.labelYs[1], color: "#805050"},
+							  {name: "Giving Back", labelY: PathLines.prototype.labelYs[0], color: "#D55900"},
+							  {name: "Wellness", labelY: PathLines.prototype.labelYs[1], color: "#0694F3"},
+							  {name: "Other", labelY: PathLines.prototype.labelYs[0], color: "#0BBB0B"}];
+
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
 		var index = this.allExperiences.indexOf(experience);
@@ -1592,22 +1602,13 @@ var PathLines = (function() {
 			.style("position", "absolute")
 			.style("left", "0")
 			.style("top", this.loadingMessageTop);
-		
-		var labelYs = [this.experiencesTop - 4 - 18, this.experiencesTop - 4];
-		var backgroundData = [{name: "Housing", labelY: labelYs[0], color: "#804040"},
-							  {name: "School", labelY: labelYs[1], color: "#2828E7"},
-							  {name: "Interests", labelY: labelYs[0], color: "#8328E7"},
-							  {name: "Career", labelY: labelYs[1], color: "#805050"},
-							  {name: "Giving Back", labelY: labelYs[0], color: "#D55900"},
-							  {name: "Wellness", labelY: labelYs[1], color: "#0694F3"},
-							  {name: "Other", labelY: labelYs[0], color: "#0BBB0B"}];
-		
+				
 		this.guideGroup = this.svg.append('g')
 				.classed("guide", true)
 				.attr('transform', "translate(20, 0)");
 				
 		var guides = this.guideGroup.selectAll('g')
-			.data(backgroundData)
+			.data(this.backgroundData)
 			.enter()
 			.append('g')
 			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * 20); });
