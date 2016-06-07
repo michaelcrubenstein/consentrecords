@@ -1,6 +1,22 @@
 var WelcomePanel = (function () {
 	WelcomePanel.prototype = new SitePanel();
 	
+	WelcomePanel.prototype.handleResize = function()
+	{
+		var ol = this.mainDiv.selectAll('ol');
+		var li = ol.selectAll('li');
+		var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+		var width = this.scrollAreaWidth();
+		li.style('left', function(fd, i)
+			{
+				return "{0}px".format(i < activeIndex ? -width :
+					   				  i == activeIndex ? 0 : width);
+			});
+		this.mainDiv.selectAll('li svg')
+			.attr('width', width)
+			.attr('height', this.scrollAreaHeight());
+	}
+	
 	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
 		SitePanel.call(this, previousPanel, null, "Welcome", "welcome background-gradient-panel");
@@ -22,25 +38,219 @@ var WelcomePanel = (function () {
 		
 		var panel2Div = this.appendScrollArea();
 		
-		var d = panel2Div.append('div');
+		var d = panel2Div;
 		
-		panel2Div.append('p')
-			.text('Share your pathway and goals with your friends');
+		var slides = 
+			[
+				{text: "PathAdvisor is a network to discover the best " + 
+					   "opportunities for you and to help others by sharing your experiences.",
+				 textLeft: "0px",
+				 textTop: "0px",
+				 path: "M0,300 C50,200 150,100 200,200 S300,200 400,200",
+				 color0: PathLines.prototype.backgroundData[0].color,
+				},
+				{text: "With PathAdvisor, you can answer three important questions:",
+				 textLeft: "0px",
+				 textTop: "5%",
+				 path: "M0,200 C100,200 150,175 200,250 S300,250 400,250",
+				 color0: PathLines.prototype.backgroundData[2].color,
+				},
+				{text: "With what I've done, what opportunities should I take advantage of?",
+				 textLeft: "0px",
+				 textTop: "10%",
+				 path: "M0,250 C100,250 160,100 200,200 S300,300 400,300",
+				 color0: PathLines.prototype.backgroundData[2].color,
+				},
+				{text: "What are people a few years older than me with similar goals to mine doing?",
+				 textLeft: "0px",
+				 textTop: "15%",
+				 path: "M0,300 C100,300 160,100 200,250 S300,300 404,196",
+				 color0: PathLines.prototype.backgroundData[2].color,
+				},
+				{text: "How can I share my story with adults who can help guide me?",
+				 textLeft: "0px",
+				 textTop: "20%",
+				 path: "M-4,204 C100,100 150,130 200,150 S300,130 400,125",
+				 color0: PathLines.prototype.backgroundData[2].color,
+				},
+				{text: "Seeing other pathways can give you ideas for what you want to do next.",
+				 textLeft: "0px",
+				 textTop: "0px",
+				 path: "M0,125 C100,120 160,100 240,100 S250,300 415,190",
+				 color0: PathLines.prototype.backgroundData[3].color,
+				},
+				{text: "Your pathway and goals, whatever they have been, can also inspire others along their journeys.",
+				 textLeft: "0px",
+				 textTop: "5%",
+				 path: "M-15,210 C150,100 160,100 200,230 S300,200 404,252",
+				 color0: PathLines.prototype.backgroundData[3].color,
+				},
+				{text: "Here are some examples of pathways:",
+				 textLeft: "0px",
+				 textTop: "0px",
+				 path: "M-4,248 C100,300 160,100 200,230 S350,250 400,250",
+				 color0: PathLines.prototype.backgroundData[4].color,
+				},
+				{text: "A 22-year-old with the following experiences: College, Government Job",
+				 textLeft: "0px",
+				 textTop: "20%",
+				 pathDescription: '"More Experiences"[Birthday>=1992][Birthday<=1994]["More Experience">Service[_name="College"]]::reference(_user)',
+				 path: "M0,250 C100,250 140,150 180,225 S350,300 400,300",
+				 color0: PathLines.prototype.backgroundData[4].color,
+				},
+				{text: "A 53-year-old with the following experiences: Piano Lessons, Entrepreneur",
+				 textLeft: "0px",
+				 textTop: "30%",
+				 pathDescription: '"More Experiences"[Birthday>=1962][Birthday<=1963]["More Experience">Service[_name="Piano Lessons"]]::reference(_user)',
+				 path: "M0,300 C100,300 160,250 200,230 S320,200 400,200",
+				 color0: PathLines.prototype.backgroundData[4].color,
+				},
+				{text: "Organizations can use PathAdvisor to discover where the young people who " +
+					   "participate in their programs have come from and what those young people " +
+					   "do as they grow older.",
+				 textLeft: "0px",
+				 textTop: "55%",
+				 path: "M0,200 C80,200 200,100 240,150 S300,160 400,150",
+				 color0: PathLines.prototype.backgroundData[2].color,
+				},
+			];
+		
+		
+		var ol = d.append('ol');
 			
-		panel2Div.append('p')
-			.text('Discover how your experiences can unlock new opportunities');
+	    <!-- Indicators -->
+		var li = ol.selectAll('li')
+			.data(slides)
+			.enter()
+			.append('li')
+			.attr('index', function(fd, i) { return i; });
 			
-		panel2Div.append('p')
-			.text('Introduce yourself to mentors who can help you');
+		ol.selectAll('li:nth-child(1)')
+			.classed('active', true);
+		;
+	
+		var svg = li.append('svg')
+			.attr('viewBox', '0 0 400 400')
+			.attr('preserveAspectRatio', 'none');
+		var path = svg.append('path')
+			.attr('d', function(d) { return d.path; })
+			.attr('stroke', function(d) { return d.color0; });
+		
+		var p = li.append('p')
+			.style('left', function(d) { return d.textLeft; })
+			.style('top', function(d) { return d.textTop; })
+			.text(function(d) { return d.text; });
+		
+		p.each(function(d)
+			{
+				if (d.pathDescription)
+				{
+					d3.select(this)
+						.classed('site-active-text path-description-link', true)
+						.on('click', function(d)
+							{
+								if (prepareClick('click', 'sample user'))
+								{
+									cr.getData({path: d.pathDescription,
+										fields: ["typeName"],
+										done: function(newInstances)
+											{
+												if (newInstances.length == 0)
+													syncFailFunction("Sorry, this path is not available.");
+												else
+												{
+													firstPanel = new PathlinesPanel(newInstances[0], _this.node(), true);
+													firstPanel.pathtree.setUser(newInstances[0].getValue("More Experiences"), false);
+													showPanelUp(firstPanel.node(), unblockClick);
+												}
+											},
+										fail: syncFailFunction});
+								}
+							});
+				}
+			});	
 			
-		panel2Div.append('p')
-			.text('Follow others who have taken paths similar to yours');
-			
-		panel2Div.append('p')
-			.text('Find opportunities that can help you reach your goals');
+		var leftControl = d.append('a')
+			.classed('left', true)
+			.attr('role', 'button')
+			.style('display', 'none')
+			.on("click", function()
+				{
+					var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+					if (activeIndex > 0)
+					{
+						if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
+						{
+							$(ol.selectAll('li.active').node())
+								.animate({left: "{0}px".format(_this.scrollAreaWidth())},
+										 700,
+										 function()
+										 {
+											d3.select(this).classed('active', false);
+										 });
 
-		panel2Div.append('p')
-			.text('All from a safe place where you are in charge');
+							/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
+								activates the previous item. */
+							$(ol.selectAll('li:nth-child({0})'.format(activeIndex)).node())
+								.animate({left: "{0}px".format(0)},
+										 700,
+										 function()
+										 {
+											d3.select(this).classed('active', true);
+											var isFirst = parseInt(d3.select(this).attr('index')) ==
+												0;
+											_this.mainDiv.selectAll('a.right')
+												.style('display', null);
+											_this.mainDiv.selectAll('a.left')
+												.style('display', isFirst ? "none" : null);
+											unblockClick();
+										 });
+						}
+					}
+				});
+		
+		appendLeftChevronSVG(leftControl)
+			.classed('site-active-text', true);
+			
+		var rightControl = d.append('a')
+			.classed('right', true)
+			.attr('role', 'button')
+			.on("click", function()
+				{
+					var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+					if (activeIndex < ol.selectAll('li').size() - 1)
+					{
+						if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
+						{
+							$(ol.selectAll('li.active').node())
+								.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
+										 700,
+										 function()
+										 {
+											d3.select(this).classed('active', false);
+										 });
+							/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
+								activates the next item. */
+							$(ol.selectAll('li:nth-child({0})'.format(activeIndex + 2)).node())
+								.animate({left: "{0}px".format(0)},
+										 700,
+										 function()
+										 {
+											d3.select(this).classed('active', true);
+											var isLast = parseInt(d3.select(this).attr('index')) ==
+												li.size() - 1;
+											_this.mainDiv.selectAll('a.right')
+												.style('display', isLast ? "none" : null);
+											_this.mainDiv.selectAll('a.left')
+												.style('display', null);
+											unblockClick();
+										 });
+						}
+					}
+				});
+		
+		appendRightChevronSVG(rightControl)
+			.classed('site-active-text', true);	
 
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
@@ -55,8 +265,13 @@ var WelcomePanel = (function () {
 			
 		};
 		
-		$(cr.signedinUser).on("signin.cr", null, _this.node(), signedIn);
-		$(_this.node()).on("remove", null, function()
+		$(this.mainDiv.node()).on("resize.cr", function()
+			{
+				_this.handleResize();
+			});
+		
+		$(cr.signedinUser).on("signin.cr", null, this.node(), signedIn);
+		$(this.node()).on("remove", null, function()
 			{
 				$(cr.signedinUser).off("signin.cr", null, signedIn);
 			});
