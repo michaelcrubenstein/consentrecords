@@ -42,14 +42,14 @@ var WelcomePanel = (function () {
 		
 		var slides = 
 			[
-				{text: "PathAdvisor is a platform to help young people discover " + 
-					   "opportunities that fuel their passions and realize their dreams.",
+				{text: "PathAdvisor is a network to discover the best " + 
+					   "opportunities for you and to help others by sharing your experiences.",
 				 textLeft: "0px",
 				 textTop: "0px",
 				 path: "M0,300 C50,200 150,100 200,200 S300,200 400,200",
 				 color0: PathLines.prototype.backgroundData[0].color,
 				},
-				{text: "With PathAdvisor, young people can answer three important questions:",
+				{text: "With PathAdvisor, you can answer three important questions:",
 				 textLeft: "0px",
 				 textTop: "5%",
 				 path: "M0,200 C100,200 150,175 200,250 S300,250 400,250",
@@ -72,18 +72,13 @@ var WelcomePanel = (function () {
 				 textTop: "20%",
 				 path: "M-4,204 C100,100 150,130 200,150 S300,130 400,125",
 				},
-				{text: "Every person has a pathway through life.",
+				{text: "Seeing other pathways can give you ideas for what you want to do next.",
 				 textLeft: "0px",
 				 textTop: "0px",
 				 path: "M0,125 C100,120 160,100 200,140 S300,150 400,150",
 				 color0: PathLines.prototype.backgroundData[3].color,
 				},
-				{text: "Your pathway is unique, but other pathways can give you ideas for what you want to do next.",
-				 textLeft: "0px",
-				 textTop: "0px",
-				 path: "M0,150 C100,150 160,100 240,100 S250,300 415,190",
-				},
-				{text: "Your pathway and goals, whatever they have been, can also inspire others along their journey.",
+				{text: "Your pathway and goals, whatever they have been, can also inspire others along their journeys.",
 				 textLeft: "0px",
 				 textTop: "5%",
 				 path: "M-15,210 C150,100 160,100 200,230 S300,200 404,252",
