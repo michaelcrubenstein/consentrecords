@@ -129,7 +129,7 @@ def find(request, serviceid, offeringid):
         
     return HttpResponse(template.render(context))
 
-def list(request):
+def showInstances(request):
     LogRecord.emit(request.user, 'pathAdvisor/list', '')
     
     try:
