@@ -13,6 +13,10 @@ panel.welcome ol li p {
 	position: absolute;
 }
 
+panel.welcome ol li p.path-description-link {
+	text-decoration: underline;
+}
+
 panel.welcome a.left {
 	position: absolute;
 	bottom: 40px;
