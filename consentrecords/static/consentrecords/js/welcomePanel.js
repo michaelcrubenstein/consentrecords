@@ -71,6 +71,7 @@ var WelcomePanel = (function () {
 				 textLeft: "0px",
 				 textTop: "20%",
 				 path: "M-4,204 C100,100 150,130 200,150 S300,130 400,125",
+				 color0: PathLines.prototype.backgroundData[2].color,
 				},
 				{text: "Seeing other pathways can give you ideas for what you want to do next.",
 				 textLeft: "0px",
@@ -110,6 +111,7 @@ var WelcomePanel = (function () {
 				 textLeft: "0px",
 				 textTop: "55%",
 				 path: "M0,200 C80,200 200,100 240,150 S300,160 400,150",
+				 color0: PathLines.prototype.backgroundData[2].color,
 				},
 			];
 		
