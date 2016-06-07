@@ -166,13 +166,9 @@ var WelcomePanel = (function () {
 						}
 					}
 				});
-			
-		leftControl.append('span')
-			.classed('glyphicon glyphicon-chevron-left', true)
-			.attr('aria-hidden', 'true');
-		leftControl.append('span')
-			.classed('sr-only', true)
-			.text('Previous');
+		
+		appendLeftChevronSVG(leftControl)
+			.classed('site-active-text', true);
 			
 		var rightControl = d.append('a')
 			.classed('right', true)
@@ -204,13 +200,9 @@ var WelcomePanel = (function () {
 						}
 					}
 				});
-			
-		rightControl.append('span')
-			.classed('glyphicon glyphicon-chevron-right', true)
-			.attr('aria-hidden', 'true');
-		rightControl.append('span')
-			.classed('sr-only', true)
-			.text('Next');
+		
+		appendRightChevronSVG(rightControl)
+			.classed('site-active-text', true);	
 
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);

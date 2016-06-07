@@ -813,6 +813,24 @@ function appendLeftChevrons(buttons)
 		.attr("src", leftChevronPath);
 }
 
+function appendLeftChevronSVG(container)
+{
+	var svg = container.append('svg')
+		.attr('viewBox', '0 0 512 512');
+	svg.append('polygon')
+		.attr('points', "352,128.4 319.7,96 160,256 160,256 160,256 319.7,416 352,383.6 224.7,256 ");
+	return svg;
+}
+
+function appendRightChevronSVG(container)
+{
+	var svg = container.append('svg')
+		.attr('viewBox', '0 0 512 512');
+	svg.append('polygon')
+		.attr('points', "160,128.4 192.3,96 352,256 352,256 352,256 192.3,416 160,383.6 287.3,256");
+	return svg;
+}
+
 /* This function appends the descriptions of each object to the button. */
 function appendButtonDescriptions(buttons)
 {
