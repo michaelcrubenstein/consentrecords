@@ -177,6 +177,11 @@ var WelcomePanel = (function () {
 			.text('PathAdvisor for Organizations')
 			.on('click', function()
 				{
+					if (prepareClick('click', 'PathAdvisor for Organizations'))
+					{
+						var panel = new WelcomeOrganizationPanel(_this.node());
+						showPanelUp(panel.node(), unblockClick);
+					}
 				});
 		
 		if (!cr.signedinUser.getValueID())

@@ -71,3 +71,43 @@ panel.welcome svg path {
 	stroke-width: 3px;
 }
 
+panel.welcome-organization {
+	background: white;
+}
+
+panel.welcome-organization p {
+	margin-top: 10px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent1 {
+	margin-top: 10px;
+	margin-left: 30px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent2 {
+	margin-top: 10px;
+	margin-left: 40px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent3 {
+	margin-top: 10px;
+	margin-left: 50px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent4 {
+	margin-top: 10px;
+	margin-left: 60px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent5 {
+	margin-top: 10px;
+	margin-left: 70px;
+	margin-right: 10px;
+}
+
