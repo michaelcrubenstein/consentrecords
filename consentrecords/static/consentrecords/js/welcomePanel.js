@@ -45,13 +45,13 @@ var WelcomePanel = (function () {
 				{text: "PathAdvisor is a network to discover the best " + 
 					   "opportunities for you and to help others by sharing your experiences.",
 				 textLeft: "0px",
-				 textTop: "0px",
+				 textTop: "1em",
 				 path: "M0,300 C50,200 150,100 200,200 S300,200 400,200",
 				 color0: PathLines.prototype.backgroundData[0].color,
 				},
 				{text: "With PathAdvisor, you can answer three important questions:",
 				 textLeft: "0px",
-				 textTop: "5%",
+				 textTop: "2em",
 				 path: "M0,200 C100,200 150,175 200,250 S300,250 400,250",
 				 color0: PathLines.prototype.backgroundData[2].color,
 				},
@@ -75,39 +75,37 @@ var WelcomePanel = (function () {
 				},
 				{text: "Seeing other pathways can give you ideas for what you want to do next.",
 				 textLeft: "0px",
-				 textTop: "0px",
+				 textTop: "1em",
 				 path: "M0,125 C100,120 160,100 240,100 S250,300 415,190",
 				 color0: PathLines.prototype.backgroundData[3].color,
 				},
 				{text: "Your pathway and goals, whatever they have been, can also inspire others along their journeys.",
 				 textLeft: "0px",
-				 textTop: "5%",
+				 textTop: "2em",
 				 path: "M-15,210 C150,100 160,100 200,230 S300,200 404,252",
 				 color0: PathLines.prototype.backgroundData[3].color,
 				},
 				{text: "Here are some examples of pathways:",
 				 textLeft: "0px",
-				 textTop: "0px",
+				 textTop: "1em",
 				 path: "M-4,248 C100,300 160,100 200,230 S350,250 400,250",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "A 22-year-old with the following experiences: College, Government Job",
 				 textLeft: "0px",
-				 textTop: "20%",
+				 textTop: "3em",
 				 pathDescription: '"More Experiences"[Birthday>=1992][Birthday<=1994]["More Experience">Service[_name="College"]]::reference(_user)',
 				 path: "M0,250 C100,250 140,150 180,225 S350,300 400,300",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
 				{text: "A 53-year-old with the following experiences: Piano Lessons, Entrepreneur",
 				 textLeft: "0px",
-				 textTop: "30%",
+				 textTop: "4em",
 				 pathDescription: '"More Experiences"[Birthday>=1962][Birthday<=1963]["More Experience">Service[_name="Piano Lessons"]]::reference(_user)',
 				 path: "M0,300 C100,300 160,250 200,230 S320,200 400,200",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
-				{text: "Organizations can use PathAdvisor to discover where the young people who " +
-					   "participate in their programs have come from and what those young people " +
-					   "do as they grow older.",
+				{text: "Ready to begin?",
 				 textLeft: "0px",
 				 textTop: "55%",
 				 path: "M0,200 C80,200 200,100 240,150 S300,160 400,150",
@@ -115,6 +113,9 @@ var WelcomePanel = (function () {
 				},
 			];
 		
+// 				{text: "Organizations can use PathAdvisor to discover where the young people who " +
+// 					   "participate in their programs have come from and what those young people " +
+// 					   "do as they grow older.",
 		
 		var ol = d.append('ol');
 			
@@ -127,8 +128,7 @@ var WelcomePanel = (function () {
 			
 		ol.selectAll('li:nth-child(1)')
 			.classed('active', true);
-		;
-	
+			
 		var svg = li.append('svg')
 			.attr('viewBox', '0 0 400 400')
 			.attr('preserveAspectRatio', 'none');
@@ -137,6 +137,7 @@ var WelcomePanel = (function () {
 			.attr('stroke', function(d) { return d.color0; });
 		
 		var p = li.append('p')
+			.classed('body', true)
 			.style('left', function(d) { return d.textLeft; })
 			.style('top', function(d) { return d.textTop; })
 			.text(function(d) { return d.text; });
@@ -170,6 +171,45 @@ var WelcomePanel = (function () {
 				}
 			});	
 			
+		ol.selectAll('li:first-child')
+			.append('p')
+			.classed('about-organizations site-active-text', true)
+			.text('PathAdvisor for Organizations')
+			.on('click', function()
+				{
+					if (prepareClick('click', 'PathAdvisor for Organizations'))
+					{
+						var panel = new WelcomeOrganizationPanel(_this.node());
+						showPanelUp(panel.node(), unblockClick);
+					}
+				});
+		
+		if (!cr.signedinUser.getValueID())
+		{		
+			ol.selectAll('li:last-child')
+				.append('p')
+				.classed('sign-in-prompt site-active-text', true)
+				.text('Sign In')
+				.on('click', function()
+					{
+						if (prepareClick('click', 'Sign In Prompt'))
+						{
+							showFixedPanel(_this.node(), "#id_sign_in_panel");
+						}
+					});
+			ol.selectAll('li:last-child')
+				.append('p')
+				.classed('create-account-prompt site-active-text', true)
+				.text('Create An Account')
+				.on('click', function()
+					{
+						if (prepareClick('click', 'Create An Account'))
+						{
+							var signUp = new Signup(_this.node());
+						}
+					});
+		}
+	
 		var leftControl = d.append('a')
 			.classed('left', true)
 			.attr('role', 'button')
