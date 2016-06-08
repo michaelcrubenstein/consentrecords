@@ -105,9 +105,7 @@ var WelcomePanel = (function () {
 				 path: "M0,300 C100,300 160,250 200,230 S320,200 400,200",
 				 color0: PathLines.prototype.backgroundData[4].color,
 				},
-				{text: "Organizations can use PathAdvisor to discover where the young people who " +
-					   "participate in their programs have come from and what those young people " +
-					   "do as they grow older.",
+				{text: "Ready to begin?",
 				 textLeft: "0px",
 				 textTop: "55%",
 				 path: "M0,200 C80,200 200,100 240,150 S300,160 400,150",
@@ -115,6 +113,9 @@ var WelcomePanel = (function () {
 				},
 			];
 		
+// 				{text: "Organizations can use PathAdvisor to discover where the young people who " +
+// 					   "participate in their programs have come from and what those young people " +
+// 					   "do as they grow older.",
 		
 		var ol = d.append('ol');
 			
@@ -127,8 +128,7 @@ var WelcomePanel = (function () {
 			
 		ol.selectAll('li:nth-child(1)')
 			.classed('active', true);
-		;
-	
+			
 		var svg = li.append('svg')
 			.attr('viewBox', '0 0 400 400')
 			.attr('preserveAspectRatio', 'none');
@@ -137,6 +137,7 @@ var WelcomePanel = (function () {
 			.attr('stroke', function(d) { return d.color0; });
 		
 		var p = li.append('p')
+			.classed('body', true)
 			.style('left', function(d) { return d.textLeft; })
 			.style('top', function(d) { return d.textTop; })
 			.text(function(d) { return d.text; });
@@ -170,6 +171,40 @@ var WelcomePanel = (function () {
 				}
 			});	
 			
+		ol.selectAll('li:first-child')
+			.append('p')
+			.classed('about-organizations site-active-text', true)
+			.text('PathAdvisor for Organizations')
+			.on('click', function()
+				{
+				});
+		
+		if (!cr.signedinUser.getValueID())
+		{		
+			ol.selectAll('li:last-child')
+				.append('p')
+				.classed('sign-in-prompt site-active-text', true)
+				.text('Sign In')
+				.on('click', function()
+					{
+						if (prepareClick('click', 'Sign In Prompt'))
+						{
+							showFixedPanel(_this.node(), "#id_sign_in_panel");
+						}
+					});
+			ol.selectAll('li:last-child')
+				.append('p')
+				.classed('create-account-prompt site-active-text', true)
+				.text('Create An Account')
+				.on('click', function()
+					{
+						if (prepareClick('click', 'Create An Account'))
+						{
+							var signUp = new Signup(_this.node());
+						}
+					});
+		}
+	
 		var leftControl = d.append('a')
 			.classed('left', true)
 			.attr('role', 'button')
