@@ -1,0 +1,113 @@
+panel.welcome ol li {
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: white;
+}
+
+panel.welcome p.body {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+panel.welcome ol li p.path-description-link {
+	text-decoration: underline;
+}
+
+panel.welcome ol li p.about-organizations {
+	position: absolute;
+	font-size: 0.9em;
+	top: calc(100% - 42px);
+	left: 10px;
+	text-decoration: underline;
+}
+
+panel.welcome ol li p.sign-in-prompt {
+	position: absolute;
+	top: calc(80% - 3em);
+	right: 18px;
+	text-align: right;
+	text-decoration: underline;
+}
+
+panel.welcome ol li p.create-account-prompt {
+	position: absolute;
+	top: calc(80% - 1.3em);
+	right: 18px;
+	text-align: right;
+	text-decoration: underline;
+}
+
+panel.welcome a.left {
+	position: absolute;
+	bottom: 40px;
+	left: 0px;
+}
+
+panel.welcome a.right {
+	position: absolute;
+	bottom: 40px;
+	right: 40px;
+}
+
+panel.welcome a svg {
+	height: 40px;
+	width: 40px;
+	fill: #2c55CC;
+}
+
+panel.welcome svg {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+panel.welcome svg path {
+	fill: transparent;
+	stroke-width: 3px;
+}
+
+panel.welcome-organization {
+	background: white;
+}
+
+panel.welcome-organization p {
+	margin-top: 10px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent1 {
+	margin-top: 10px;
+	margin-left: 30px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent2 {
+	margin-top: 10px;
+	margin-left: 40px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent3 {
+	margin-top: 10px;
+	margin-left: 50px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent4 {
+	margin-top: 10px;
+	margin-left: 60px;
+	margin-right: 10px;
+}
+
+panel.welcome-organization p.indent5 {
+	margin-top: 10px;
+	margin-left: 70px;
+	margin-right: 10px;
+}
+

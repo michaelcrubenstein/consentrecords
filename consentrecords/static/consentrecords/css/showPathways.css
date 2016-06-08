@@ -146,10 +146,37 @@
 		position: relative;
 		top: 45px;
 	}
+	
+	svg g.detail {
+		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+		font-size: 1.3rem;
+		width: 100%;
+		height: 100%;
+	}
+	
+	svg g.detail rect.bg {
+		fill: white;
+	}
+		
+	svg g.detail rect.detail {
+		fill-opacity: 0.3;
+		stroke-opacity: 0.8;
+	}
+		
+	svg.pathlines g.detail {
+		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+		font-size: 1em;
+	}
+	
+	svg.pathlines g.detail rect.detail {
+		fill-opacity: 0.3;
+		stroke-width: 0;
+		stroke-opacity: 0.0;
+	}
 		
 	svg.pathlines g text {
 		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-		font-size: 10px;
+		font-size: .7em;
 	}
 	svg.pathlines g.guide line.column {
 		stroke-width: 2;
@@ -159,35 +186,24 @@
 		font-size: 0.5em;
 		text-anchor: middle;
 		fill: #999;
-		stroke-width: ".2px"
+		stroke-width: .2
 	}
 	svg.pathlines g.guide rect.column-icon {
 		stroke-width: 2;
 		stroke-opacity: 0.0;
 		fill-opacity: 0.0;
 	}
-	svg.pathlines g.experiences path.base {
-		stroke: white;
-		fill: white;
-		stroke-width: 1px;
+	svg.pathlines g.experiences rect.bg {
+		fill-opacity: 0.3;
+		stroke-opacity: 0.0;
 	}
-	svg.pathlines g.experiences path.diamond {
-		fill-opacity: 0.8;
+	svg.pathlines g.experiences line.flag-pole {
+		stroke-opacity: 0.8;
+		stroke-width: 3;
 	}
-	svg.pathlines g.experiences path.tint-diamond {
-		fill: #FFF;
-		fill-opacity: 0.2;
-	}
-	svg.pathlines g.experiences path.shade-diamond {
-		fill: #000;
-		fill-opacity: 0.2;
-	}
-	svg.pathlines g.experiences text.diamond-label {
-		fill: #777;
+	svg.pathlines g.experiences text.flag-label {
+		fill: #333;
 		text-anchor: start;
-	}
-	svg.pathlines g.experiences rect.diamond-label-background {
-		fill: #FFF;
 	}
 
 	panel.confirm {

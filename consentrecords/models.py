@@ -565,16 +565,19 @@ class Instance(dbmodels.Model):
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
     def _getValueByName(self, name):
-        return self.value_set.select_related('referenceValue')\
-                             .get(deleteTransaction__isnull=True,
-                                  field=terms.field,
-                                  referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__field=terms.name,
-                                  referenceValue__value__referenceValue__typeID=terms.term,
-                                  referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue__value__field=terms.name,
-                                  referenceValue__value__referenceValue__value__stringValue=name)\
-                             .referenceValue
+        try:
+            return self.value_set.select_related('referenceValue')\
+                                 .get(deleteTransaction__isnull=True,
+                                      field=terms.field,
+                                      referenceValue__value__deleteTransaction__isnull=True,
+                                      referenceValue__value__field=terms.name,
+                                      referenceValue__value__referenceValue__typeID=terms.term,
+                                      referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
+                                      referenceValue__value__referenceValue__value__field=terms.name,
+                                      referenceValue__value__referenceValue__value__stringValue=name)\
+                                 .referenceValue
+        except Value.DoesNotExist:
+            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration' % (name, self))
 
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
