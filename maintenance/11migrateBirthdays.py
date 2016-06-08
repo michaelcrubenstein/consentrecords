@@ -7,6 +7,8 @@ import django
 import tzlocal
 import getpass
 import sys
+import logging
+import traceback
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -33,17 +35,25 @@ if __name__ == "__main__":
         nameLists = NameList()
         for i in users:
             print("user: %s"%i.getDescription())
-            birthday = i.value_set.get(field=birthdayTerm, deleteTransaction__isnull=True).stringValue[0:7]
-            pathFilter = i.value_set.filter(field=pathTerm, deleteTransaction__isnull=True)
-            if not pathFilter.exists():
-                print("  Add path: %s"%(birthday))
-                path, newValue = instancecreator.create(pathTerm, i, pathTerm, 0, 
-                    {'Birthday': {'text': birthday}}, nameLists, 
-                    TransactionState(i.user, timezoneoffset))
-            else:
-                path = pathFilter[0].referenceValue
-                birthdayFilter = path.value_set.filter(field=birthdayTerm, deleteTransaction__isnull=True)
+            try:
+                birthdayFilter = i.value_set.filter(field=birthdayTerm, deleteTransaction__isnull=True)
+                pathFilter = i.value_set.filter(field=pathTerm, deleteTransaction__isnull=True)
                 if not birthdayFilter.exists():
-                    print("  Add birthday: %s"%(birthday))
-                    path.addStringValue(birthdayTerm, birthday, 0, 
-                                        TransactionState(i.user, timezoneoffset))
+                    print("  No birthday")
+                elif not pathFilter.exists():
+                    birthday = birthdayFilter[0].stringValue[0:7]
+                    print("  Add path: %s"%(birthday))
+                    path, newValue = instancecreator.create(pathTerm, i, pathTerm, 0, 
+                        {'Birthday': {'text': birthday}}, nameLists, 
+                        TransactionState(i.user, timezoneoffset))
+                else:
+                    birthday = birthdayFilter[0].stringValue[0:7]
+                    path = pathFilter[0].referenceValue
+                    birthdayFilter = path.value_set.filter(field=birthdayTerm, deleteTransaction__isnull=True)
+                    if not birthdayFilter.exists():
+                        print("  Add birthday: %s"%(birthday))
+                        path.addStringValue(birthdayTerm, birthday, 0, 
+                                            TransactionState(i.user, timezoneoffset))
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.error("%s" % traceback.format_exc())
