@@ -17,6 +17,85 @@ var WelcomePanel = (function () {
 			.attr('height', this.scrollAreaHeight());
 	}
 	
+	WelcomePanel.prototype.showPrevious = function()
+	{
+		var _this = this;
+		var ol = this.mainDiv.selectAll('ol');
+		var li = ol.selectAll('li');
+
+		var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+		if (activeIndex > 0)
+		{
+			if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
+			{
+				$(ol.selectAll('li.active').node())
+					.animate({left: "{0}px".format(_this.scrollAreaWidth())},
+							 700,
+							 function()
+							 {
+								d3.select(this).classed('active', false);
+							 });
+
+				/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
+					activates the previous item. */
+				$(ol.selectAll('li:nth-child({0})'.format(activeIndex)).node())
+					.animate({left: "{0}px".format(0)},
+							 700,
+							 function()
+							 {
+								d3.select(this).classed('active', true);
+								var isFirst = parseInt(d3.select(this).attr('index')) ==
+									0;
+								_this.mainDiv.selectAll('a.right')
+									.style('display', null);
+								_this.mainDiv.selectAll('a.left')
+									.style('display', isFirst ? "none" : null);
+								unblockClick();
+							 });
+			}
+		}
+	}
+
+	
+	WelcomePanel.prototype.showNext = function()
+	{
+		var _this = this;
+		var ol = this.mainDiv.selectAll('ol');
+		var li = ol.selectAll('li');
+		
+		var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+		if (activeIndex < ol.selectAll('li').size() - 1)
+		{
+			if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
+			{
+				$(ol.selectAll('li.active').node())
+					.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
+							 700,
+							 function()
+							 {
+								d3.select(this).classed('active', false);
+							 });
+				/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
+					activates the next item. */
+				$(ol.selectAll('li:nth-child({0})'.format(activeIndex + 2)).node())
+					.animate({left: "{0}px".format(0)},
+							 700,
+							 function()
+							 {
+								d3.select(this).classed('active', true);
+								var isLast = parseInt(d3.select(this).attr('index')) ==
+									li.size() - 1;
+								_this.mainDiv.selectAll('a.right')
+									.style('display', isLast ? "none" : null);
+								_this.mainDiv.selectAll('a.left')
+									.style('display', null);
+								unblockClick();
+							 });
+			}
+		}
+	}
+
+	
 	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
 		SitePanel.call(this, previousPanel, null, "Welcome", "welcome background-gradient-panel");
@@ -124,7 +203,21 @@ var WelcomePanel = (function () {
 			.data(slides)
 			.enter()
 			.append('li')
-			.attr('index', function(fd, i) { return i; });
+			.attr('index', function(fd, i) { return i; })
+			.each(function(d, i) {
+				if (i < slides.length - 1)
+				{
+					$(this).on('swipeleft', function() { 
+						_this.showNext(); 
+					});
+				}
+				if (i > 0)
+				{
+					$(this).on('swiperight', function() { 
+						_this.showPrevious(); 
+					});
+				}
+			});
 			
 		ol.selectAll('li:nth-child(1)')
 			.classed('active', true);
@@ -214,40 +307,7 @@ var WelcomePanel = (function () {
 			.classed('left', true)
 			.attr('role', 'button')
 			.style('display', 'none')
-			.on("click", function()
-				{
-					var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
-					if (activeIndex > 0)
-					{
-						if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
-						{
-							$(ol.selectAll('li.active').node())
-								.animate({left: "{0}px".format(_this.scrollAreaWidth())},
-										 700,
-										 function()
-										 {
-											d3.select(this).classed('active', false);
-										 });
-
-							/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
-								activates the previous item. */
-							$(ol.selectAll('li:nth-child({0})'.format(activeIndex)).node())
-								.animate({left: "{0}px".format(0)},
-										 700,
-										 function()
-										 {
-											d3.select(this).classed('active', true);
-											var isFirst = parseInt(d3.select(this).attr('index')) ==
-												0;
-											_this.mainDiv.selectAll('a.right')
-												.style('display', null);
-											_this.mainDiv.selectAll('a.left')
-												.style('display', isFirst ? "none" : null);
-											unblockClick();
-										 });
-						}
-					}
-				});
+			.on("click", function() { _this.showPrevious(); });
 		
 		appendLeftChevronSVG(leftControl)
 			.classed('site-active-text', true);
@@ -255,39 +315,7 @@ var WelcomePanel = (function () {
 		var rightControl = d.append('a')
 			.classed('right', true)
 			.attr('role', 'button')
-			.on("click", function()
-				{
-					var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
-					if (activeIndex < ol.selectAll('li').size() - 1)
-					{
-						if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
-						{
-							$(ol.selectAll('li.active').node())
-								.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
-										 700,
-										 function()
-										 {
-											d3.select(this).classed('active', false);
-										 });
-							/* nth-child is 1-based, activeIndex is 0-based. Thus, this 
-								activates the next item. */
-							$(ol.selectAll('li:nth-child({0})'.format(activeIndex + 2)).node())
-								.animate({left: "{0}px".format(0)},
-										 700,
-										 function()
-										 {
-											d3.select(this).classed('active', true);
-											var isLast = parseInt(d3.select(this).attr('index')) ==
-												li.size() - 1;
-											_this.mainDiv.selectAll('a.right')
-												.style('display', isLast ? "none" : null);
-											_this.mainDiv.selectAll('a.left')
-												.style('display', null);
-											unblockClick();
-										 });
-						}
-					}
-				});
+			.on("click", function() { _this.showNext(); });
 		
 		appendRightChevronSVG(rightControl)
 			.classed('site-active-text', true);	
