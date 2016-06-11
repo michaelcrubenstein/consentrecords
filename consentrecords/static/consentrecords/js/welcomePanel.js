@@ -205,15 +205,17 @@ var WelcomePanel = (function () {
 			.append('li')
 			.attr('index', function(fd, i) { return i; })
 			.each(function(d, i) {
+				var mc = new Hammer(this);
+				
 				if (i < slides.length - 1)
 				{
-					$(this).on('swipeleft', function() { 
+					mc.on('panleft', function() { 
 						_this.showNext(); 
 					});
 				}
 				if (i > 0)
 				{
-					$(this).on('swiperight', function() { 
+					mc.on('panright', function() { 
 						_this.showPrevious(); 
 					});
 				}
