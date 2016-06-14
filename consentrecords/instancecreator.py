@@ -99,7 +99,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # Process the access records for this new item.
     if typeInstance.defaultCustomAccess:
         AccessRecord.objects.create(id=item, source=item)
-    else:
+    elif parent:
         try:
             parentAccessRecord = parent.accessrecord
             AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
