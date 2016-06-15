@@ -917,6 +917,10 @@ var PathLines = (function() {
 	PathLines.prototype = new PathView();
 	PathLines.prototype.dataLeftMargin = 0;
 	PathLines.prototype.poleSpacing = 4;
+	
+	PathLines.prototype.flagHeight = 20;
+	PathLines.prototype.flagSpacing = 2;
+	
 	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
@@ -940,7 +944,6 @@ var PathLines = (function() {
 	PathLines.prototype.loadingText = null;
 	PathLines.prototype.promptAddText = null;
 	PathLines.prototype.experienceGroup = null;
-	PathLines.prototype.flagHeight = 0;
 	PathLines.prototype.flagWidth = 0;
 	
 	PathLines.prototype.labelYs = [PathLines.prototype.experiencesTop - 4 - 18, PathLines.prototype.experiencesTop - 4];
@@ -1052,27 +1055,27 @@ var PathLines = (function() {
 					}
 				}
 				
-				fd.y = lastFlag ? lastFlag.y + 22 : _this.experiencesTop;
+				fd.y = lastFlag ? lastFlag.y + _this.flagHeight + _this.flagSpacing : _this.experiencesTop;
 				lastFlag = fd;
 			});
 			
 		
 		g.each(function(fd, i)
 			{
-				fd.y2 = fd.y + 20;
+				fd.y2 = fd.y + _this.flagHeight;
 				var parent = d3.select(this.parentNode);
 				for (var j = i + 1; j < g.size(); ++j)
 				{
 					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
 					nextDatum = n.datum();
 					if (nextDatum.getEndDate() > fd.getStartDate() && nextDatum.x > fd.x)
-						fd.y2 = nextDatum.y + 20;
+						fd.y2 = nextDatum.y + _this.flagHeight;
 					else
 						break;
 				}
 			});
 		
-		 return lastFlag ? lastFlag.y + 20 : this.experiencesTop;
+		 return lastFlag ? lastFlag.y + this.flagHeight : this.experiencesTop;
 	}
 
 	/* Lay out all of the contents within the svg object. */
@@ -1471,7 +1474,7 @@ var PathLines = (function() {
 					_this.setupColorWatchTriggers(this, d);
 				});
 		g.append('rect').classed('bg', true)
-			.attr('height', 20)
+			.attr('height', this.flagHeight)
 			.attr('x', '0')
 			.each(function(d)
 				{
@@ -2012,7 +2015,6 @@ var PathCalendar = (function () {
 	PathCalendar.prototype.experienceGroup = null;
 	PathCalendar.prototype.yearGroup = null;
 
-	PathCalendar.prototype.flagHeight = 0;
 	PathCalendar.prototype.flagWidth = 0;
 	
 	PathCalendar.prototype.minDate = null;
