@@ -928,7 +928,7 @@ var PathLines = (function() {
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "45px";
 	PathLines.prototype.experiencesTop = 33;
-	PathLines.prototype.bottomNavHeight = 40;
+	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup */
 	PathLines.prototype.experienceGroupDX = 20;
@@ -1979,6 +1979,7 @@ var PathlinesPanel = (function () {
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
+				_this.pathtree.setBottomNavHeight($(_this.bottomNavContainer.nav.node()).outerHeight());
 				_this.calculateHeight();
 			});
 	}
