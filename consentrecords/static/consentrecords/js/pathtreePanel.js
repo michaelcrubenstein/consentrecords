@@ -1806,6 +1806,14 @@ var PathLines = (function() {
 					  successFunction2, 
 					  asyncFailFunction);
 	}
+	
+	PathLines.prototype.setBottomNavHeight = function(h)
+	{
+		this.bottomNavHeight = h;
+		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
+		var flagHeights = lastFlag.size() ? lastFlag.datum().y + this.flagHeight : this.experiencesTop;
+		this.setupHeights(flagHeights + this.bottomNavHeight);
+	}
 
 	function PathLines(sitePanel, containerDiv) {
 		PathView.call(this, sitePanel, containerDiv);
