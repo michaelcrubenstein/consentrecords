@@ -1413,10 +1413,11 @@ var PathLines = (function() {
 			}
 		
 			if (this.containerDiv.scrollLeft < 
-				x + this.experienceGroupDX + rectWidth)
+				x + this.experienceGroupDX + rectWidth - $(this.containerDiv).width())
 			{
 				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX + rectWidth) });
+					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX + 
+						rectWidth - $(this.containerDiv).width()) });
 			}
 			else if (this.containerDiv.scrollLeft >
 					 (x + this.experienceGroupDX))
