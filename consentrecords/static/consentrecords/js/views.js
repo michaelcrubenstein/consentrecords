@@ -1442,7 +1442,8 @@ var SitePanel = (function () {
     	{
     		var previousZIndex = parseInt($(containerPanel).css("z-index"));
 			if (isNaN(previousZIndex))
-				throw "containerPanel's z-index is not specified";
+				previousIndex = 0;
+				//throw "containerPanel's z-index is not specified";
 		
 			var rootPanel = d3.select("body");
 			var zindex = previousZIndex+1;
