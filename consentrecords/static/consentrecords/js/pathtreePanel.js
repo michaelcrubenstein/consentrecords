@@ -1575,6 +1575,11 @@ var PathLines = (function() {
 		$(this.bg.node()).width(newWidth);
 	}
 	
+	PathLines.prototype.getUser = function()
+	{
+		return this.path.getValue("_user");
+	}
+	
 	PathLines.prototype.setUser = function(path, editable)
 	{
 		if (path.privilege === '_find')
@@ -1758,8 +1763,7 @@ var PathLines = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var path = "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)';
-		crp.getData({path: path, 
+		crp.getData({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents", "type"], 
 				   done: function(experiences)
 					{
@@ -1802,7 +1806,7 @@ var PathLines = (function() {
 						},
 					fail: asyncFailFunction});
 							
-		crp.pushCheckCells(this.path, ["More Experience", "type"],
+		crp.pushCheckCells(this.path, ["More Experience", "parents", "type"],
 					  successFunction2, 
 					  asyncFailFunction);
 	}
@@ -1898,7 +1902,7 @@ var PathlinesPanel = (function () {
 		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
-
+	
 	function PathlinesPanel(user, previousPanel, canDone) {
 		canDone = canDone !== undefined ? canDone : true;
 		var _this = this;
@@ -3100,6 +3104,11 @@ var PathCalendar = (function () {
 		this.years = [];
 	}
 	
+	PathCalendar.prototype.getUser = function()
+	{
+		return this.path.getValue("_user");
+	}
+	
 	PathCalendar.prototype.setUser = function(path, editable)
 	{
 		if (path.privilege === '_find')
@@ -3344,7 +3353,7 @@ var PathCalendar = (function () {
 						},
 					fail: asyncFailFunction});
 							
-		crp.pushCheckCells(this.path, ["More Experience", "type"],
+		crp.pushCheckCells(this.path, ["More Experience", "parents", "type"],
 					  successFunction2, 
 					  asyncFailFunction);
 	}
@@ -3619,18 +3628,24 @@ var ShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
-							var user = panelNode.sitePanel.pathtree.user;
-							if (user.getValueID() == cr.signedinUser.getValueID())
+							var user = panelNode.sitePanel.pathtree.getUser();
+							if (user)
 							{
-								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum("_email"));
+								user = crp.getInstance(user.getValueID());
+								if (user.getValueID() == cr.signedinUser.getValueID())
+								{
+									window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+												.format(window.location.origin, user.getDatum("_email"));
+								}
+								else
+								{
+									window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+												.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
+								}
+								unblockClick();
 							}
 							else
-							{
-								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
-							}
-							unblockClick();
+								syncFailFunction('the specified user is not available');
 						});
 						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
 							function()
