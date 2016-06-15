@@ -974,7 +974,7 @@ var PathLines = (function() {
 	PathLines.prototype.handleExperienceDateChanged = function(eventObject)
 	{
 		var _this = eventObject.data;
-		_this.transitionPositions(_this.experienceGroup.selectAll('g'))
+		_this.transitionPositions(_this.experienceGroup.selectAll('g.flag'))
 	}
 	
 	PathLines.prototype.setFlagText = function(node)
@@ -1081,7 +1081,7 @@ var PathLines = (function() {
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
-		var g = this.experienceGroup.selectAll('g');
+		var g = this.experienceGroup.selectAll('g.flag');
 		
 		var _this = this;
 		
@@ -1433,11 +1433,12 @@ var PathLines = (function() {
 
 		this.setupClipID();
 		
-		$(this.experienceGroup.selectAll('g')[0]).remove();
+		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
+			.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
@@ -1537,7 +1538,7 @@ var PathLines = (function() {
 		}
 		
 		var _this = this;
-		this.experienceGroup.selectAll('g:nth-last-child(1)').each(function (fd)
+		this.experienceGroup.selectAll('g.flag:nth-last-child(1)').each(function (fd)
 			{
 				var h = parseFloat(d3.select(this).selectAll('rect').attr('height')) + fd.y + _this.experienceGroupDY + _this.bottomNavHeight;
 				if (svgHeight < h)
@@ -1563,7 +1564,7 @@ var PathLines = (function() {
 				newWidth = w;
 		}
 		
-		this.experienceGroup.selectAll('g').each(function (fd)
+		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
 				var w = parseFloat(d3.select(this).selectAll('rect').attr('width')) + fd.x + this.experienceGroupDX;
 				if (newWidth < w)
@@ -2886,6 +2887,7 @@ var PathCalendar = (function () {
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
+			.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
