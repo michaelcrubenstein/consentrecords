@@ -3496,7 +3496,7 @@ var PathtreePanel = (function () {
 			.classed("share", true)
 			.on('click', function()
 				{
-					if (prepareClick('click', 'delete experience'))
+					if (prepareClick('click', 'share'))
 					{
 						new ShareOptions(_this.node());
 					}
