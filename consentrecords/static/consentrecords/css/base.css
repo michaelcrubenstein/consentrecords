@@ -150,7 +150,7 @@ nav.bottom {
 
 nav.transparentBottom {
 	position: absolute;
-	top: calc(100% - 40px);
+	bottom: 0px;
 	opacity: 0.85;
 }
 

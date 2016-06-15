@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="20" height="26" viewBox="0, 0, 20, 26">
+  <g id="Layer_1">
+    <g>
+      <path d="M1.653,11.65 L7.88,11.65 L7.88,14.85 L1.653,14.85" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M1.653,15.1 L1.653,11.4" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M3.425,25.5 L3.425,21.8" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+      <path d="M3.425,22.05 L9.652,22.05 L9.652,25.25 L3.425,25.25" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+    </g>
+    <g>
+      <path d="M2.432,17.05 L8.658,17.05 L8.658,20.25 L2.432,20.25" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M2.432,20.5 L2.432,16.8" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M12.03,17.05 L18.256,17.05 L18.256,20.25 L12.03,20.25" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M12.03,20.5 L12.03,16.8" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M11.252,11.65 L17.478,11.65 L17.478,14.85 L11.252,14.85" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M11.252,15.1 L11.252,11.4" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M0.875,6.5 L7.101,6.5 L7.101,9.7 L0.875,9.7" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M0.875,9.95 L0.875,6.25" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M10.473,6.5 L16.7,6.5 L16.7,9.7 L10.473,9.7" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+      <path d="M10.473,9.95 L10.473,6.25" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M13.024,25.5 L13.024,21.8" fill-opacity="0" stroke="#2C55CC" stroke-width="1"/>
+      <path d="M13.024,22.05 L19.25,22.05 L19.25,25.25 L13.024,25.25" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+    </g>
+    <path d="M9.75,17.125" fill-opacity="0" stroke="#2C55CC" stroke-width="0.5"/>
+  </g>
+</svg>

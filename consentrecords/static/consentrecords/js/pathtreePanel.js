@@ -917,6 +917,10 @@ var PathLines = (function() {
 	PathLines.prototype = new PathView();
 	PathLines.prototype.dataLeftMargin = 0;
 	PathLines.prototype.poleSpacing = 4;
+	
+	PathLines.prototype.flagHeight = 20;
+	PathLines.prototype.flagSpacing = 2;
+	
 	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
@@ -924,7 +928,7 @@ var PathLines = (function() {
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "45px";
 	PathLines.prototype.experiencesTop = 33;
-	PathLines.prototype.bottomNavHeight = 40;
+	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup */
 	PathLines.prototype.experienceGroupDX = 20;
@@ -940,7 +944,6 @@ var PathLines = (function() {
 	PathLines.prototype.loadingText = null;
 	PathLines.prototype.promptAddText = null;
 	PathLines.prototype.experienceGroup = null;
-	PathLines.prototype.flagHeight = 0;
 	PathLines.prototype.flagWidth = 0;
 	
 	PathLines.prototype.labelYs = [PathLines.prototype.experiencesTop - 4 - 18, PathLines.prototype.experiencesTop - 4];
@@ -971,7 +974,7 @@ var PathLines = (function() {
 	PathLines.prototype.handleExperienceDateChanged = function(eventObject)
 	{
 		var _this = eventObject.data;
-		_this.transitionPositions(_this.experienceGroup.selectAll('g'))
+		_this.transitionPositions(_this.experienceGroup.selectAll('g.flag'))
 	}
 	
 	PathLines.prototype.setFlagText = function(node)
@@ -1052,33 +1055,33 @@ var PathLines = (function() {
 					}
 				}
 				
-				fd.y = lastFlag ? lastFlag.y + 22 : _this.experiencesTop;
+				fd.y = lastFlag ? lastFlag.y + _this.flagHeight + _this.flagSpacing : _this.experiencesTop;
 				lastFlag = fd;
 			});
 			
 		
 		g.each(function(fd, i)
 			{
-				fd.y2 = fd.y + 20;
+				fd.y2 = fd.y + _this.flagHeight;
 				var parent = d3.select(this.parentNode);
 				for (var j = i + 1; j < g.size(); ++j)
 				{
 					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
 					nextDatum = n.datum();
 					if (nextDatum.getEndDate() > fd.getStartDate() && nextDatum.x > fd.x)
-						fd.y2 = nextDatum.y + 20;
+						fd.y2 = nextDatum.y + _this.flagHeight;
 					else
 						break;
 				}
 			});
 		
-		 return lastFlag ? lastFlag.y + 20 : this.experiencesTop;
+		 return lastFlag ? lastFlag.y + this.flagHeight : this.experiencesTop;
 	}
 
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
-		var g = this.experienceGroup.selectAll('g');
+		var g = this.experienceGroup.selectAll('g.flag');
 		
 		var _this = this;
 		
@@ -1410,10 +1413,11 @@ var PathLines = (function() {
 			}
 		
 			if (this.containerDiv.scrollLeft < 
-				x + this.experienceGroupDX + rectWidth)
+				x + this.experienceGroupDX + rectWidth - $(this.containerDiv).width())
 			{
 				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX + rectWidth) });
+					{ scrollLeft: "{0}px".format(x + this.experienceGroupDX + 
+						rectWidth - $(this.containerDiv).width()) });
 			}
 			else if (this.containerDiv.scrollLeft >
 					 (x + this.experienceGroupDX))
@@ -1430,11 +1434,12 @@ var PathLines = (function() {
 
 		this.setupClipID();
 		
-		$(this.experienceGroup.selectAll('g')[0]).remove();
+		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var g = this.experienceGroup.selectAll('g')
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
+			.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
@@ -1471,7 +1476,7 @@ var PathLines = (function() {
 					_this.setupColorWatchTriggers(this, d);
 				});
 		g.append('rect').classed('bg', true)
-			.attr('height', 20)
+			.attr('height', this.flagHeight)
 			.attr('x', '0')
 			.each(function(d)
 				{
@@ -1534,7 +1539,7 @@ var PathLines = (function() {
 		}
 		
 		var _this = this;
-		this.experienceGroup.selectAll('g:nth-last-child(1)').each(function (fd)
+		this.experienceGroup.selectAll('g.flag:nth-last-child(1)').each(function (fd)
 			{
 				var h = parseFloat(d3.select(this).selectAll('rect').attr('height')) + fd.y + _this.experienceGroupDY + _this.bottomNavHeight;
 				if (svgHeight < h)
@@ -1560,7 +1565,7 @@ var PathLines = (function() {
 				newWidth = w;
 		}
 		
-		this.experienceGroup.selectAll('g').each(function (fd)
+		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
 				var w = parseFloat(d3.select(this).selectAll('rect').attr('width')) + fd.x + this.experienceGroupDX;
 				if (newWidth < w)
@@ -1568,6 +1573,11 @@ var PathLines = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
+	}
+	
+	PathLines.prototype.getUser = function()
+	{
+		return this.path.getValue("_user");
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
@@ -1753,8 +1763,7 @@ var PathLines = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var path = "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)';
-		crp.getData({path: path, 
+		crp.getData({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents", "type"], 
 				   done: function(experiences)
 					{
@@ -1797,9 +1806,17 @@ var PathLines = (function() {
 						},
 					fail: asyncFailFunction});
 							
-		crp.pushCheckCells(this.path, ["More Experience", "type"],
+		crp.pushCheckCells(this.path, ["More Experience", "parents", "type"],
 					  successFunction2, 
 					  asyncFailFunction);
+	}
+	
+	PathLines.prototype.setBottomNavHeight = function(h)
+	{
+		this.bottomNavHeight = h;
+		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
+		var flagHeights = lastFlag.size() ? lastFlag.datum().y + this.flagHeight : this.experiencesTop;
+		this.setupHeights(flagHeights + this.bottomNavHeight);
 	}
 
 	function PathLines(sitePanel, containerDiv) {
@@ -1885,7 +1902,7 @@ var PathlinesPanel = (function () {
 		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
-
+	
 	function PathlinesPanel(user, previousPanel, canDone) {
 		canDone = canDone !== undefined ? canDone : true;
 		var _this = this;
@@ -1975,6 +1992,7 @@ var PathlinesPanel = (function () {
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
+				_this.pathtree.setBottomNavHeight($(_this.bottomNavContainer.nav.node()).outerHeight());
 				_this.calculateHeight();
 			});
 	}
@@ -2012,7 +2030,6 @@ var PathCalendar = (function () {
 	PathCalendar.prototype.experienceGroup = null;
 	PathCalendar.prototype.yearGroup = null;
 
-	PathCalendar.prototype.flagHeight = 0;
 	PathCalendar.prototype.flagWidth = 0;
 	
 	PathCalendar.prototype.minDate = null;
@@ -2884,6 +2901,7 @@ var PathCalendar = (function () {
 			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 			.enter()
 			.append('g')
+			.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
@@ -3084,6 +3102,11 @@ var PathCalendar = (function () {
 		this.isMinHeight = false;
 		this.dayHeight = 0;
 		this.years = [];
+	}
+	
+	PathCalendar.prototype.getUser = function()
+	{
+		return this.path.getValue("_user");
 	}
 	
 	PathCalendar.prototype.setUser = function(path, editable)
@@ -3330,7 +3353,7 @@ var PathCalendar = (function () {
 						},
 					fail: asyncFailFunction});
 							
-		crp.pushCheckCells(this.path, ["More Experience", "type"],
+		crp.pushCheckCells(this.path, ["More Experience", "parents", "type"],
 					  successFunction2, 
 					  asyncFailFunction);
 	}
@@ -3491,7 +3514,7 @@ var PathtreePanel = (function () {
 			.classed("share", true)
 			.on('click', function()
 				{
-					if (prepareClick('click', 'delete experience'))
+					if (prepareClick('click', 'share'))
 					{
 						new ShareOptions(_this.node());
 					}
@@ -3605,18 +3628,24 @@ var ShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
-							var user = panelNode.sitePanel.pathtree.user;
-							if (user.getValueID() == cr.signedinUser.getValueID())
+							var user = panelNode.sitePanel.pathtree.getUser();
+							if (user)
 							{
-								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum("_email"));
+								user = crp.getInstance(user.getValueID());
+								if (user.getValueID() == cr.signedinUser.getValueID())
+								{
+									window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+												.format(window.location.origin, user.getDatum("_email"));
+								}
+								else
+								{
+									window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+												.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
+								}
+								unblockClick();
 							}
 							else
-							{
-								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
-							}
-							unblockClick();
+								syncFailFunction('the specified user is not available');
 						});
 						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
 							function()
