@@ -1479,7 +1479,7 @@ var PathLines = (function() {
 			.attr('x', '1.5');
 		g.append('rect').classed('bg', true)
 			.attr('height', this.flagHeight)
-			.attr('x', '0')
+			.attr('x', '1.5')
 			.each(function(d)
 				{
 					_this.setColor(this, d);
@@ -1499,7 +1499,7 @@ var PathLines = (function() {
 	PathLines.prototype.handleResize = function()
 	{
 	}
-	
+		
 	PathLines.prototype.showAllExperiences = function()
 	{
 		var _this = this;
