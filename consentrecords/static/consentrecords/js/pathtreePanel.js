@@ -1551,8 +1551,6 @@ var PathLines = (function() {
 		$(this.svg.node()).height(svgHeight);
 		$(this.bg.node()).height(svgHeight);
 		$(this.bg.node()).width($(this.svg.node()).width());
-		this.guideGroup
-			.attr('height', svgHeight);
 		this.guideGroup.selectAll('line')
 			.attr('y2', svgHeight - this.bottomNavHeight);
 	}
