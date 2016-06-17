@@ -1234,7 +1234,6 @@ var PathLines = (function() {
 		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
 			to the fd.y position.
 		 */
-		g.selectAll('line')
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return fd.y2 - fd.y; });
 			
