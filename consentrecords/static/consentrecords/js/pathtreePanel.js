@@ -3200,6 +3200,7 @@ var PathCalendar = (function () {
 		this.experienceGroup = this.svg.append('g')
 				.classed("experiences", true);
 		this.yearGroup = this.svgTime.append('g')
+			.classed('year', true)
 			.attr("fill", "#777");
 			
 		this.detailGroup = this.svg.append('g')

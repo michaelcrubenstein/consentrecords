@@ -142,6 +142,11 @@
 		font-size: 1.3rem;
 	}
 	
+	g.year text {
+		font-size: .6em;
+		fill: #777;
+	}
+	
 	div.pathlines {
 		position: relative;
 		top: 45px;
