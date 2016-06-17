@@ -3039,7 +3039,7 @@ var PathCalendar = (function () {
 		
 		function showDetail(fd, i)
 		{
-			cr.logRecord('click', 'show detail: ' + fd.getDescription());
+			cr.logRecord('click', 'expand flag: ' + fd.getDescription());
 			var g = this.parentNode;
 			var pathtree = this.pathtree;
 			
