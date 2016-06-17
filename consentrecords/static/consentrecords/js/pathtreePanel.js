@@ -942,6 +942,7 @@ var PathLines = (function() {
 	PathLines.prototype.bg = null;
 	PathLines.prototype.loadingText = null;
 	PathLines.prototype.promptAddText = null;
+	PathLines.prototype.guideGroup = null;
 	PathLines.prototype.experienceGroup = null;
 	PathLines.prototype.flagWidth = 0;
 	
