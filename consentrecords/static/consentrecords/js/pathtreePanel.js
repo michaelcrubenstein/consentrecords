@@ -930,6 +930,8 @@ var PathLines = (function() {
 	/* Translate coordinates for the elements of the experienceGroup */
 	PathLines.prototype.experienceGroupDX = 20;
 	PathLines.prototype.experienceGroupDY = 0;
+	
+	PathLines.prototype.guideHSpacing = 20;
 
 	PathLines.prototype.detailRectX = 1.5;
 	
@@ -1039,7 +1041,7 @@ var PathLines = (function() {
 
 		g.each(function(fd, i)
 			{
-				fd.x = 20 * (fd.column);
+				fd.x = _this.guideHSpacing * (fd.column);
 				var column = columns[fd.column];
 				column.push(fd);
 				for (var i = column.length - 2; i >= 0; --i)
@@ -1620,7 +1622,7 @@ var PathLines = (function() {
 			.data(this.backgroundData)
 			.enter()
 			.append('g')
-			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * 20); });
+			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
 			
 		guides.append('rect')
 			.classed('column-icon', true)
