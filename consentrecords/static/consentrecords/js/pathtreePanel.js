@@ -1024,8 +1024,8 @@ var PathLines = (function() {
 				   ((d2 > d1) ? -1 :
 				   0);
 		}
-		return (-compareDates(a.getEndDate(), b.getEndDate()) ||
-				a.column - b.column) ||
+		return -compareDates(a.getEndDate(), b.getEndDate()) ||
+				a.column - b.column ||
 				compareDates(a.getStartDate(), b.getStartDate());
 	}
 	
