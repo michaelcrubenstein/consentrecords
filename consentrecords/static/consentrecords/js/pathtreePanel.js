@@ -1068,7 +1068,7 @@ var PathLines = (function() {
 				{
 					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
 					nextDatum = n.datum();
-					if (nextDatum.getEndDate() > fd.getStartDate() && nextDatum.x > fd.x)
+					if (nextDatum.getEndDate() > fd.getStartDate())
 						fd.y2 = nextDatum.y + _this.flagHeight;
 					else
 						break;
