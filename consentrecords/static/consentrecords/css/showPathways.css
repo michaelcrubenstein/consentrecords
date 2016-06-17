@@ -193,6 +193,11 @@
 		stroke-opacity: 0.0;
 		fill-opacity: 0.0;
 	}
+	svg.pathlines g.experiences g.flag rect.opaque {
+		fill-opacity: 1.0;
+		fill: white;
+		stroke-opacity: 0.0;
+	}
 	svg.pathlines g.experiences rect.bg {
 		fill-opacity: 0.3;
 		stroke-opacity: 0.0;

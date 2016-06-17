@@ -1475,6 +1475,8 @@ var PathLines = (function() {
 					_this.handleChangedExperience(this, d);
 					_this.setupColorWatchTriggers(this, d);
 				});
+		g.append('rect').classed('opaque', true)
+			.attr('x', '1.5');
 		g.append('rect').classed('bg', true)
 			.attr('height', this.flagHeight)
 			.attr('x', '0')
