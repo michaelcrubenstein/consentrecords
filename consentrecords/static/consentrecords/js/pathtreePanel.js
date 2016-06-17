@@ -1478,7 +1478,6 @@ var PathLines = (function() {
 		g.append('rect').classed('opaque', true)
 			.attr('x', '1.5');
 		g.append('rect').classed('bg', true)
-			.attr('height', this.flagHeight)
 			.attr('x', '1.5')
 			.each(function(d)
 				{
