@@ -1030,7 +1030,7 @@ var PathLines = (function() {
 	}
 	
 	/* Returns the total height of the items in g. */
-	PathLines.prototype.setCoordinates = function(g)
+	PathLines.prototype._setCoordinates = function(g)
 	{
 		var lastFlag = null;
 		var _this = this;
@@ -1094,7 +1094,7 @@ var PathLines = (function() {
 		/* Restore the sort order to startDate/endDate */
 		g.sort(this._compareExperiences);
 	
-		var flagHeights = this.setCoordinates(g);
+		var flagHeights = this._setCoordinates(g);
 		
 		this.setupHeights(flagHeights + this.bottomNavHeight);
 			
@@ -1141,7 +1141,7 @@ var PathLines = (function() {
 	PathLines.prototype.transitionPositions = function(g)
 	{
 		g.sort(this._compareExperiences);
-		this.setCoordinates(g);
+		this._setCoordinates(g);
 		g.transition()
 			.duration(1000)
 			.ease("in-out")
