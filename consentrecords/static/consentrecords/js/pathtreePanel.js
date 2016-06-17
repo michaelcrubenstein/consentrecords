@@ -603,10 +603,7 @@ var PathView = (function() {
 		if (y > maxY)
 			y = maxY;
 			
-		this.detailGroup.attr("x", x)
-				 .attr("y", y)
-				 .attr("transform", "translate("+x + "," + y+")")
-				 .attr("height", 0);
+		this.detailGroup.attr("transform", "translate({0},{1})".format(x, y));
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 		   .attr("x", textBox.x - this.textDetailLeftMargin)
