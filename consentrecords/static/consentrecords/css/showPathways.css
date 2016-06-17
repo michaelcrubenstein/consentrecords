@@ -183,6 +183,12 @@
 		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 		font-size: .7em;
 	}
+	
+	svg.pathlines g.year text {
+		font-size: .6em;
+		fill: #777;
+	}
+	
 	svg.pathlines g.guide line.column {
 		stroke-width: 2;
 		stroke-opacity: 0.1;
