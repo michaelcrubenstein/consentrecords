@@ -1138,10 +1138,11 @@ var PathLines = (function() {
 				for (var j = i + 1; j < fds.length; ++j)
 				{
 					var fdj = fds[j];
-					if (fdj.y < fdi.y2 && (fdj.y + this.flagHeight) >= fdi.y2 - this.flagSpacing)	/* If this is the last one, eliminate its top. */
+					if (fdj.y < fdi.y2 && fdj.y2 >= fdi.y2)	/* If this crosses the bottom,  */
 					{
 						if (j < fds.length - 1)
 						{
+							var isShortFlagpole = fdj.y + this.flagHeight == fdj.y2;
 							var fdk = fds[j+1];
 							/* If the item after i's flag-pole has the same top year
 									then eliminate i's bottom (it is a duplicate year marker). 
@@ -1152,18 +1153,18 @@ var PathLines = (function() {
 										then eliminate the lower item's top (it is a duplicate year marker and higher.)
 								otherwise, eliminate j's top.
 							 */
-							if (fdk.yearBounds.top == fdi.yearBounds.bottom)
+							if (isShortFlagpole && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
 								fdi.yearBounds.bottom = undefined;
 							else if (fdj.yearBounds.bottom < fdi.yearBounds.bottom)
 							{
-								if (fdj.y + this.flagHeight == fdj.y2)
+								if (isShortFlagpole)
 									fdi.yearBounds.bottom = undefined;
 								else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
 									fdj.yearBounds.top = undefined;
 							}
-							else	/* if fdj.yearBounds.bottom >= fdi.yearBounds.bottom */
+							else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
 							{
-								if (fdj.y + this.flagHeight == fdj.y2)
+								if (fdj.y2 <= fdi.y2 + this.flagSpacing)
 								{
 									// The bottoms overlap.
 									if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
@@ -1175,7 +1176,8 @@ var PathLines = (function() {
 						}
 						else
 							fdj.yearBounds.top = undefined;
-						break;
+						if (!fdi.yearBounds.bottom)
+							break;
 					}
 				}
 			}
