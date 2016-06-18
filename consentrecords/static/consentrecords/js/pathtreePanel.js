@@ -1046,19 +1046,6 @@ var PathLines = (function() {
 				compareDates(a.getStartDate(), b.getStartDate());
 	}
 	
-	PathLines.prototype._compareExperienceStarts = function(a, b)
-	{
-		function compareDates(d1, d2)
-		{
-			return (d1 > d2) ? 1 :
-				   ((d2 > d1) ? -1 :
-				   0);
-		}
-		return compareDates(a.getStartDate(), b.getStartDate()) ||
-				a.column - b.column ||
-				-compareDates(a.getEndDate(), b.getEndDate());
-	}
-	
 	/* Returns the total height of the items in g. */
 	PathLines.prototype._setCoordinates = function(g)
 	{
@@ -1156,15 +1143,35 @@ var PathLines = (function() {
 						if (j < fds.length - 1)
 						{
 							var fdk = fds[j+1];
-							/* If the item after i's flag-pole has the same top year 
-								or the item at i's flag-pole has a lesser year than i's flag-pole, 
-								then eliminate i's bottom; otherwise, eliminate j's top.
+							/* If the item after i's flag-pole has the same top year
+									then eliminate i's bottom (it is a duplicate year marker). 
+								or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
+									then if that item doesn't extend below i,
+										then eliminate i's bottom (two labels will overlap)
+									otherwise, if the lower item's top is the same as i's bottom,
+										then eliminate the lower item's top (it is a duplicate year marker and higher.)
+								otherwise, eliminate j's top.
 							 */
-							if (fdk.yearBounds.top == fdi.yearBounds.bottom ||
-								fdj.yearBounds.bottom < fdi.yearBounds.bottom)
+							if (fdk.yearBounds.top == fdi.yearBounds.bottom)
 								fdi.yearBounds.bottom = undefined;
-							else
-								fdj.yearBounds.top = undefined;
+							else if (fdj.yearBounds.bottom < fdi.yearBounds.bottom)
+							{
+								if (fdj.y + this.flagHeight == fdj.y2)
+									fdi.yearBounds.bottom = undefined;
+								else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
+									fdj.yearBounds.top = undefined;
+							}
+							else	/* if fdj.yearBounds.bottom >= fdi.yearBounds.bottom */
+							{
+								if (fdj.y + this.flagHeight == fdj.y2)
+								{
+									// The bottoms overlap.
+									if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
+										fdi.yearBounds.bottom = undefined;
+									else
+										fdj.yearBounds.bottom = undefined;
+								}
+							}
 						}
 						else
 							fdj.yearBounds.top = undefined;
@@ -1172,15 +1179,6 @@ var PathLines = (function() {
 					}
 				}
 			}
-		}
-		
-		fds.sort(this._compareExperienceStarts);
-		for (i = 0; i < fds.length - 1; ++i)
-		{
-			var ybi = fds[i].yearBounds;
- 			var ybj = fds[i+1].yearBounds;
-			if (ybj.bottom && fds[i].y2 <= fds[i+1].y2 + yearHeight)
-			    ybi.bottom = undefined;
 		}
 		
 		fds.forEach(function(fd)
