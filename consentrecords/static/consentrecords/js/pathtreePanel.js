@@ -1280,6 +1280,16 @@ var PathLines = (function() {
 			.duration(1000)
 			.ease("in-out")
 			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y);});
+		
+		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
+			to the fd.y position.
+		 */
+		g.selectAll('line.flag-pole')
+			.transition()
+			.duration(1000)
+			.ease("in-out")
+			.attr('y2', function(fd) { return fd.y2 - fd.y; });
+
 		this.layoutYears(g);
 	}
 	
