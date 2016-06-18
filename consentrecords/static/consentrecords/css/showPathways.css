@@ -142,6 +142,11 @@
 		font-size: 1.3rem;
 	}
 	
+	g.year text {
+		font-size: .6em;
+		fill: #777;
+	}
+	
 	div.pathlines {
 		position: relative;
 		top: 45px;
@@ -178,6 +183,12 @@
 		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 		font-size: .7em;
 	}
+	
+	svg.pathlines g.year text {
+		font-size: .6em;
+		fill: #777;
+	}
+	
 	svg.pathlines g.guide line.column {
 		stroke-width: 2;
 		stroke-opacity: 0.1;
@@ -192,6 +203,11 @@
 		stroke-width: 2;
 		stroke-opacity: 0.0;
 		fill-opacity: 0.0;
+	}
+	svg.pathlines g.experiences g.flag rect.opaque {
+		fill-opacity: 1.0;
+		fill: white;
+		stroke-opacity: 0.0;
 	}
 	svg.pathlines g.experiences rect.bg {
 		fill-opacity: 0.3;

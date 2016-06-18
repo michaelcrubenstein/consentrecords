@@ -848,8 +848,8 @@
 							else
 						{% endif %}
 								firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 						showPanelNow(firstPanel.node());
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 						if (handleState)
 							handleState();
 					});
