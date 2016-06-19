@@ -38,7 +38,7 @@ var UserPanel = (function() {
 					_this.appendActionButton('Pathway', function() {
 							if (prepareClick('click', 'Pathway'))
 							{
-								var panel = new PathtreePanel(user, _this.node());
+								var panel = new PathlinesPanel(user, _this.node(), true);
 								panel.pathtree.setUser(user.getValue("More Experiences"), true);
 								showPanelLeft(panel.node(), unblockClick);
 							}

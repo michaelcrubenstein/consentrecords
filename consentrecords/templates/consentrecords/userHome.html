@@ -708,7 +708,7 @@
 								{
 									if (users.length > 0)
 									{
-										var panel = new PathtreePanel(users[0], firstPanel.node(), true);
+										var panel = new PathlinesPanel(users[0], firstPanel.node(), true);
 										panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
 										showPanelLeft(panel.node());
 									}
@@ -734,7 +734,7 @@
 							{
 								if (!firstPanel)
 								{
-									firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 									showPanelUp(firstPanel.node());
 								}
@@ -790,7 +790,7 @@
 								{
 									if (!firstPanel)
 									{
-										firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+										firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 										showPanelUp(firstPanel.node());
 									}
@@ -842,12 +842,7 @@
 			{
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
 					{
-						{% if state %}
-							if ("{{state}}" === "me")
-								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-							else
-						{% endif %}
-								firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+						firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 						showPanelNow(firstPanel.node());
 						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
 						if (handleState)

@@ -149,7 +149,7 @@ function showUser(user, previousPanelNode)
 {
 	user.checkCells([], function()
 		{
-			var panel = new PathtreePanel(user, previousPanelNode);
+			var panel = new PathlinesPanel(user, previousPanelNode, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
 			showPanelLeft(panel.node(), unblockClick);
 		},
