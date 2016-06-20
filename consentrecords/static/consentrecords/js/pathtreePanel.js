@@ -939,6 +939,7 @@ var PathLines = (function() {
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "45px";
 	PathLines.prototype.experiencesTop = 33;
+	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
 	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup */
@@ -1644,6 +1645,8 @@ var PathLines = (function() {
 	
 	PathLines.prototype.handleResize = function()
 	{
+		this.setupHeights();
+		this.setupWidths();
 	}
 		
 	PathLines.prototype.showAllExperiences = function()
@@ -1672,8 +1675,9 @@ var PathLines = (function() {
 	
 	PathLines.prototype.setupHeights = function()
 	{
-		var svgHeight;
-		svgHeight = $(this.containerDiv).height();
+		var containerBounds = this.containerDiv.getBoundingClientRect();
+		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
+		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		
 		if (this.flagElement != null)
 		{
@@ -1715,11 +1719,62 @@ var PathLines = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
+
+		/* Position the promptAddText based on the width. */
+		if (this.promptAddText)
+		{
+			this.loadingText
+				.attr("y", this.experiencesTop + this.loadingText.node().getBBox().height);
+	
+			var bbox = this.loadingText.node().getBBox();
+			var newBBox = this.promptAddText.node().getBBox();
+			if (bbox.x + bbox.width + this.textLeftMargin + newBBox.width >
+				newWidth - this.dataLeftMargin - this.promptRightMargin)
+			{
+				this.promptAddText.attr("x", this.loadingText.attr("x"))
+					.attr("y", parseFloat(this.loadingText.attr("y")) + bbox.height);
+			}
+			else
+			{
+				this.promptAddText.attr("x", bbox.x + bbox.width + this.textLeftMargin)
+					.attr("y", this.loadingText.attr("y"));
+			}
+		}
 	}
 	
 	PathLines.prototype.getUser = function()
 	{
 		return this.path.getValue("_user");
+	}
+	
+	PathLines.prototype.showInitialPrompt = function()
+	{
+		var _this = this;
+		this.loadingText = this.svg.append('text')
+			.attr("x", this.dataLeftMargin).attr("y", this.experienceTop)
+			.attr("fill", "#777")
+			.text('Ready to record an experience?');
+		
+		this.promptAddText = this.svg.append('text')
+			.attr("fill", "#2C55CC")
+			.text(" Record one now.")
+			.on("click", function(d) {
+				if (prepareClick('click', 'Record one now prompt'))
+				{
+					try
+					{
+						showClickFeedback(this);
+						_this.sitePanel.startNewExperience();
+					}
+					catch (err)
+					{
+						syncFailFunction(err);
+					}
+				}
+				d3.event.preventDefault();
+			})
+			.attr("cursor", "pointer");
+		
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
@@ -1732,7 +1787,7 @@ var PathLines = (function() {
 		var _this = this;
 		
 		this.path = path;
-		editable = (editable !== undefined ? editable : true);
+		this.editable = (editable !== undefined ? editable : true);
 		
 		var container = d3.select(this.containerDiv);
 		
@@ -1813,25 +1868,25 @@ var PathLines = (function() {
 		this.detailFrontRect = this.detailGroup.append('rect')
 			.classed('detail', true);
 			
-		$(this.sitePanel.node()).one("revealing.cr", function()
-			{
-				_this.setupWidths();
-			});
-
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 
 			})
 			.on("click.cr", function() {
-				cr.logRecord('click', 'hide details');
-				_this.hideDetail(function()
-					{
-						_this.setupHeights();
-						_this.setupWidths();
-					});
+				if (_this.flagElement)
+				{
+					cr.logRecord('click', 'hide details');
+					_this.hideDetail(function()
+						{
+							_this.setupHeights();
+							_this.setupWidths();
+						});
+				}
 			});
 		
+		/* setupHeights now so that the initial height of the svg and the vertical lines
+			consume the entire container. */
 		this.setupHeights();
 		
 		var successFunction2 = function()
@@ -1858,51 +1913,6 @@ var PathLines = (function() {
 			
 			crv.stopLoadingMessage(_this.loadingMessage);
 			_this.loadingMessage.remove();
-			
-			if (_this.allExperiences.length == 0 && editable)
-			{
-				_this.loadingText = _this.svg.append('text')
-					.attr("x", 0).attr("y", 0)
-					.attr("fill", "#777")
-					.text('Ready to record an experience?');
-				
-				_this.loadingText
-					.attr("y", _this.loadingText.node().getBBox().height);
-			
-				var bbox = _this.loadingText.node().getBBox();
-				_this.promptAddText = _this.svg.append('text')
-					.attr("fill", "#2C55CC")
-					.text(" Record one now.")
-					.on("click", function(d) {
-						if (prepareClick('click', 'Record one now prompt'))
-						{
-							try
-							{
-								showClickFeedback(this);
-								_this.sitePanel.startNewExperience();
-							}
-							catch (err)
-							{
-								syncFailFunction(err);
-							}
-						}
-						d3.event.preventDefault();
-					})
-					.attr("cursor", "pointer");
-				
-				var newBBox = _this.promptAddText.node().getBBox();
-				if (bbox.x + bbox.width + _this.textLeftMargin + newBBox.width >
-					$(_this.bg.node()).width() - _this.flagsRightMargin)
-				{
-					_this.promptAddText.attr("x", _this.loadingText.attr("x"))
-						.attr("y", parseFloat(_this.loadingText.attr("y")) + bbox.height);
-				}
-				else
-				{
-					_this.promptAddText.attr("x", bbox.x + bbox.width + _this.textLeftMargin)
-						.attr("y", _this.loadingText.attr("y"));
-				}
-			}
 			
 			$(_this).trigger("userSet.cr");
 		}
@@ -2133,9 +2143,15 @@ var PathlinesPanel = (function () {
 				
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
+				if (_this.pathtree.allExperiences.length == 0 && _this.pathtree.editable)
+				{
+					_this.pathtree.showInitialPrompt();
+				}
+			
 				this.isMinHeight = true;
 				_this.pathtree.setBottomNavHeight($(_this.bottomNavContainer.nav.node()).outerHeight());
 				_this.calculateHeight();
+				
 			});
 	}
 	
@@ -3258,7 +3274,7 @@ var PathCalendar = (function () {
 		var _this = this;
 		
 		this.path = path;
-		editable = (editable !== undefined ? editable : true);
+		this.editable = (editable !== undefined ? editable : true);
 		
 		var container = d3.select(this.containerDiv);
 		

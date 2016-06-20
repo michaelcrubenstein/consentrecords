@@ -323,7 +323,7 @@ var WelcomePanel = (function () {
 			.classed('site-active-text', true);	
 
 		var signedIn = function(eventObject) {
-			var pathwayPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
+			var pathwayPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
 			showPanelLeft(pathwayPanel.node(),
 				function()
