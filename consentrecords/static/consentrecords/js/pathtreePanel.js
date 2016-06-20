@@ -1270,7 +1270,7 @@ var PathLines = (function() {
 		this.isLayoutDirty = false;
 	}
 	
-	PathLines.prototype.redoLayout = function(g)
+	PathLines.prototype.redoLayout = function()
 	{
 		this.clearLayout();
 		this.checkLayout();
