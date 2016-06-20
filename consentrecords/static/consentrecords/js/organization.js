@@ -151,7 +151,10 @@ function showUser(user, previousPanelNode)
 		{
 			var panel = new PathlinesPanel(user, previousPanelNode, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
-			showPanelLeft(panel.node(), unblockClick);
+			showPanelLeft(panel.node(), function() {
+				panel.pathtree.setupWidths();
+				unblockClick();
+				});
 		},
 		syncFailFunction);
 }
