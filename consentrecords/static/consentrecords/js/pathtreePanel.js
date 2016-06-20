@@ -1000,11 +1000,6 @@ var PathLines = (function() {
 		var g = d3.select(node);
 		g.selectAll('text').selectAll('tspan:nth-child(1)')
 			.text(function(d) { return d.getDescription(); })
-		g.selectAll('rect')
-			.attr('width', function(fd)
-				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
-				});	
 	}
 		
 	/* Sets up each group (this) that displays an experience to delete itself if
@@ -1221,7 +1216,13 @@ var PathLines = (function() {
 		var tempY = this.yearGroup.append('text').text('2000');
 		this.flagHeight = 2 * tempY.node().getBBox().height;
 		tempY.remove();
-		g.selectAll('rect').attr('height', this.flagHeight);
+		
+		g.selectAll('rect')
+			.attr('height', this.flagHeight)
+			.attr('width', function(fd)
+				{
+					return $(this.parentNode).children('text').outerWidth() + 5;
+				});	
 		
 		/* Restore the sort order to startDate/endDate */
 		g.sort(this._compareExperiences);
