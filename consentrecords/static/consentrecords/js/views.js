@@ -1368,6 +1368,11 @@ var SiteNavContainer = (function() {
 	SiteNavContainer.prototype.nav = undefined;
 	SiteNavContainer.prototype.div = undefined;
 	
+	SiteNavContainer.prototype.appendButton = function()
+	{
+		return this.div.append("div").classed("site-navbar-link site-active-text", true);
+	}
+	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
 		return this.div.append("div").classed("left-link pull-left", true)

@@ -889,6 +889,8 @@ var PathView = (function() {
 		this.setupExperienceTriggers(experience);
 		
 		this.appendExperiences();
+
+		this.redoLayout();
 	}
 	
 	PathView.prototype.setupExperienceHandlers = function(experience)
@@ -1000,11 +1002,6 @@ var PathLines = (function() {
 		var g = d3.select(node);
 		g.selectAll('text').selectAll('tspan:nth-child(1)')
 			.text(function(d) { return d.getDescription(); })
-		g.selectAll('rect')
-			.attr('width', function(fd)
-				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
-				});	
 	}
 		
 	/* Sets up each group (this) that displays an experience to delete itself if
@@ -1221,7 +1218,13 @@ var PathLines = (function() {
 		var tempY = this.yearGroup.append('text').text('2000');
 		this.flagHeight = 2 * tempY.node().getBBox().height;
 		tempY.remove();
-		g.selectAll('rect').attr('height', this.flagHeight);
+		
+		g.selectAll('rect')
+			.attr('height', this.flagHeight)
+			.attr('width', function(fd)
+				{
+					return $(this.parentNode).children('text').outerWidth() + 5;
+				});	
 		
 		/* Restore the sort order to startDate/endDate */
 		g.sort(this._compareExperiences);
@@ -1269,7 +1272,7 @@ var PathLines = (function() {
 		this.isLayoutDirty = false;
 	}
 	
-	PathLines.prototype.redoLayout = function(g)
+	PathLines.prototype.redoLayout = function()
 	{
 		this.clearLayout();
 		this.checkLayout();
@@ -1639,23 +1642,39 @@ var PathLines = (function() {
 			.attr('dy', '1.1em');
 		
 		g.each(function() { _this.setFlagText(this); });
-
-		this.redoLayout(g);
 	}
 	
 	PathLines.prototype.handleResize = function()
 	{
-		this.setupHeights();
-		this.setupWidths();
+		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
+		if (this.isLayoutDirty)
+			this.checkLayout();
+		else
+		{
+			this.setupHeights();
+			this.setupWidths();
+		}
 	}
 		
 	PathLines.prototype.showAllExperiences = function()
 	{
 		var _this = this;
+		var firstTime = true;
 		
 		var resizeFunction = function()
 		{
-			_this.handleResize();
+			/* Wrap handleResize in a setTimeout call so that it happens after all of the
+				css positioning.
+			 */
+			setTimeout(function()
+				{
+					if (firstTime)
+					{
+						_this.appendExperiences();
+						firstTime = false;
+					}
+					_this.handleResize();
+				}, 0);
 		}
 	
 		var node = this.sitePanel.node();
@@ -1669,8 +1688,6 @@ var PathLines = (function() {
 			});
 
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
-	
-		this.appendExperiences();
 	}
 	
 	PathLines.prototype.setupHeights = function()
@@ -1694,7 +1711,6 @@ var PathLines = (function() {
 
 		$(this.svg.node()).height(svgHeight);
 		$(this.bg.node()).height(svgHeight);
-		$(this.bg.node()).width($(this.svg.node()).width());
 		this.guideGroup.selectAll('line')
 			.attr('y2', svgHeight - this.bottomNavHeight);
 	}
@@ -1965,12 +1981,6 @@ var PathLines = (function() {
 					  asyncFailFunction);
 	}
 	
-	PathLines.prototype.setBottomNavHeight = function(h)
-	{
-		this.bottomNavHeight = h;
-		this.setupHeights();
-	}
-
 	function PathLines(sitePanel, containerDiv) {
 		PathView.call(this, sitePanel, containerDiv);
 		d3.select(containerDiv).classed('vertical-scrolling', false)
@@ -2149,7 +2159,6 @@ var PathlinesPanel = (function () {
 				}
 			
 				this.isMinHeight = true;
-				_this.pathtree.setBottomNavHeight($(_this.bottomNavContainer.nav.node()).outerHeight());
 				_this.calculateHeight();
 				
 			});
