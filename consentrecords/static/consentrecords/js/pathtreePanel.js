@@ -889,6 +889,8 @@ var PathView = (function() {
 		this.setupExperienceTriggers(experience);
 		
 		this.appendExperiences();
+
+		this.redoLayout();
 	}
 	
 	PathView.prototype.setupExperienceHandlers = function(experience)
@@ -1640,23 +1642,39 @@ var PathLines = (function() {
 			.attr('dy', '1.1em');
 		
 		g.each(function() { _this.setFlagText(this); });
-
-		this.redoLayout(g);
 	}
 	
 	PathLines.prototype.handleResize = function()
 	{
-		this.setupHeights();
-		this.setupWidths();
+		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
+		if (this.isLayoutDirty)
+			this.checkLayout();
+		else
+		{
+			this.setupHeights();
+			this.setupWidths();
+		}
 	}
 		
 	PathLines.prototype.showAllExperiences = function()
 	{
 		var _this = this;
+		var firstTime = true;
 		
 		var resizeFunction = function()
 		{
-			_this.handleResize();
+			/* Wrap handleResize in a setTimeout call so that it happens after all of the
+				css positioning.
+			 */
+			setTimeout(function()
+				{
+					if (firstTime)
+					{
+						_this.appendExperiences();
+						firstTime = false;
+					}
+					_this.handleResize();
+				}, 0);
 		}
 	
 		var node = this.sitePanel.node();
@@ -1670,8 +1688,6 @@ var PathLines = (function() {
 			});
 
 		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
-	
-		this.appendExperiences();
 	}
 	
 	PathLines.prototype.setupHeights = function()
@@ -1695,7 +1711,6 @@ var PathLines = (function() {
 
 		$(this.svg.node()).height(svgHeight);
 		$(this.bg.node()).height(svgHeight);
-		$(this.bg.node()).width($(this.svg.node()).width());
 		this.guideGroup.selectAll('line')
 			.attr('y2', svgHeight - this.bottomNavHeight);
 	}
@@ -1966,12 +1981,6 @@ var PathLines = (function() {
 					  asyncFailFunction);
 	}
 	
-	PathLines.prototype.setBottomNavHeight = function(h)
-	{
-		this.bottomNavHeight = h;
-		this.setupHeights();
-	}
-
 	function PathLines(sitePanel, containerDiv) {
 		PathView.call(this, sitePanel, containerDiv);
 		d3.select(containerDiv).classed('vertical-scrolling', false)
@@ -2150,7 +2159,6 @@ var PathlinesPanel = (function () {
 				}
 			
 				this.isMinHeight = true;
-				_this.pathtree.setBottomNavHeight($(_this.bottomNavContainer.nav.node()).outerHeight());
 				_this.calculateHeight();
 				
 			});
