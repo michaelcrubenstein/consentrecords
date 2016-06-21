@@ -196,8 +196,8 @@
 	svg.pathlines g.guide text.column-label {
 		font-size: 0.5em;
 		text-anchor: middle;
-		fill: #999;
-		stroke-width: .2
+		fill: #777;
+		stroke-width: .3
 	}
 	svg.pathlines g.guide rect.column-icon {
 		stroke-width: 2;
