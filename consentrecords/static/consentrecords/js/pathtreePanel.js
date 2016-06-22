@@ -711,8 +711,8 @@ var PathLines = (function() {
 	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
-	PathLines.prototype.loadingMessageTop = "45px";
-	PathLines.prototype.experiencesTop = 33;
+	PathLines.prototype.loadingMessageTop = "4.5em";
+	PathLines.prototype.experiencesTop = 37;
 	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
 	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
@@ -720,7 +720,8 @@ var PathLines = (function() {
 	PathLines.prototype.experienceGroupDX = 0;
 	PathLines.prototype.experienceGroupDY = 0;
 	
-	PathLines.prototype.guideHSpacing = 20;
+	PathLines.prototype.guideHSpacing = 30;
+	PathLines.prototype.labelYs = [11, 33];
 
 	PathLines.prototype.detailRectX = 1.5;
 	
@@ -737,8 +738,6 @@ var PathLines = (function() {
 
 	PathLines.prototype.flagWidth = 0;
 	
-	PathLines.prototype.labelYs = [PathLines.prototype.experiencesTop - 4 - 18, PathLines.prototype.experiencesTop - 4];
-
 	PathLines.prototype.backgroundData = [{name: "Housing", labelY: PathLines.prototype.labelYs[0], color: "#804040"},
 							  {name: "School", labelY: PathLines.prototype.labelYs[1], color: "#2828E7"},
 							  {name: "Interests", labelY: PathLines.prototype.labelYs[0], color: "#8328E7"},
@@ -1092,7 +1091,7 @@ var PathLines = (function() {
 		if (s && s.length > 0 && lines.indexOf(s) < 0)
 		{
 			tspan = detailText.append('tspan')
-				.classed('detail-offering', true)
+				.classed('flag-label', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
 				.attr("dy", this.detailTextSpacing);
@@ -1539,7 +1538,7 @@ var PathLines = (function() {
 	{
 		var _this = this;
 		this.loadingText = this.svg.append('text')
-			.attr("x", this.dataLeftMargin).attr("y", this.experienceTop)
+			.attr("x", this.dataLeftMargin).attr("y", this.experiencesTop)
 			.attr("fill", "#777")
 			.text('Ready to record an experience?');
 		
@@ -1890,7 +1889,7 @@ var PathlinesPanel = (function () {
 			.classed("share", true)
 			.on('click', function()
 				{
-					if (prepareClick('click', 'delete experience'))
+					if (prepareClick('click', 'share'))
 					{
 						new ShareOptions(_this.node());
 					}
