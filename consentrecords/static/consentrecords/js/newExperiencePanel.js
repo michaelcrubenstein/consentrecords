@@ -1052,12 +1052,23 @@ var FromServiceSearchView = (function() {
 	function FromServiceSearchView(sitePanel, experience)
 	{
 		var _this = this;
-		this.initialTypeName = this.typeNames[0];
-		this.typeName = this.initialTypeName;
+		var placeHolder;
 		
-		var placeHolder = "{0}, {1}, {2}".format(experience.getOrganizationLabel(), 
+		if (experience.services[0].pickedObject)
+		{
+			this.initialTypeName = this.typeNames[0];
+			placeHolder = "{0} or {1} or {2}".format(experience.getOrganizationLabel(), 
 											     experience.getSiteLabel(), 
 											     experience.getOfferingLabel());
+		}
+		else
+		{
+			this.initialTypeName = "Site";
+			placeHolder = "{0} or {1}".format(experience.getOrganizationLabel(), 
+											  experience.getSiteLabel());
+		}
+		
+		this.typeName = this.initialTypeName;
 		
 		MultiTypeSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
