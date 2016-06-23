@@ -101,13 +101,21 @@ var Experience = (function() {
 		this.offeringName = null;
 	}
 	
+	/* Args can either be a ReportedObject or a dictionary with a "text" or "instance" property. */
 	Experience.prototype.addService = function(args)
 	{
-		if ("text" in args)
+		var service;
+		
+		if (args.constructor === ReportedObject)
+		{
+			service = args;
+			this.services.push(service);
+		}
+		else if ("text" in args)
 		{
 			var newName = args.text;
 			var d = args.instance;
-			var service = new ReportedObject({name: newName, pickedObject: d});
+			service = new ReportedObject({name: newName, pickedObject: d});
 			if (this.services.length > 0)
 			{
 				var index = this.services.findIndex(function(d) { return d.getDescription() == newName; });
@@ -115,12 +123,10 @@ var Experience = (function() {
 					this.services.splice(index, 1);
 
 				this.services[0] = service;
-				return service;
 			}
 			else if (newName.length > 0)
 			{
 				this.services.push(service);
-				return service;
 			}
 		}
 		else if ("instance" in args)
@@ -142,8 +148,11 @@ var Experience = (function() {
 			{
 				this.services.push(service);
 			}
-			return service;
 		}
+		else
+			throw "Invalid arguments to addService";
+			
+		return service;
 	}
 	
 	Experience.prototype.removeService = function(service)
@@ -952,6 +961,9 @@ var FromServiceSearchView = (function() {
 	FromServiceSearchView.prototype.searchPath = function(val)
 	{
 		var path;
+		
+		if (this.experience.services.length == 0)
+			throw "Invalid service length";
 		
 		if (!val)
 		{
