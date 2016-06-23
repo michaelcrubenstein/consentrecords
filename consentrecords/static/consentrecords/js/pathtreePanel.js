@@ -849,20 +849,20 @@ var PathLines = (function() {
 						  .attr("dy", dy);
 		}
 			
-		s = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
+		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
 		{
 			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-organization', true)
-				.text(s)
+				.text(orgString)
 				.attr("x", this.textDetailLeftMargin)
 				.attr("dy", this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		if (s && s.length > 0 && s !== orgString)
 		{
 			checkSpacing("2px");
 			tspan = detailText.append('tspan')
