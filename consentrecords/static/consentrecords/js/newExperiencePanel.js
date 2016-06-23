@@ -939,6 +939,19 @@ var FromServiceSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
+	FromServiceSearchView.prototype.hasUniqueSite = function(d)
+	{
+		var compareText = d.getDescription();
+	
+		var data = this.listPanel.selectAll("li").data();
+		return data.find(function(d) {
+				return d.typeName === "Site" &&
+					   d.getDescription() === compareText &&
+					   d.getValue("Organization").getDescription() === compareText;
+			});
+		return false;
+	}
+	
 	FromServiceSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		if (button == this.organizationButton.node())
@@ -947,6 +960,11 @@ var FromServiceSearchView = (function() {
 		}
 		else
 		{
+			/* Do not display organizations if there is a site with the same name. */
+			if (d.typeName === "Organization" &&
+				this.hasUniqueSite(d))
+				return false;
+				
 			if (this.isMatchingDatum(d, compareText))
 				return true;
 
