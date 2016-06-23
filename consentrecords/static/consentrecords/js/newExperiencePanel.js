@@ -989,9 +989,13 @@ var FromServiceSearchView = (function() {
 			}
 			else if (this.typeName === "Site from Organization")
 			{
-				path = 'Organization[_name{0}"{1}"]>Sites>Site';
 				if (this.experience.services[0].pickedObject)
+				{
+					path = 'Organization[_name{0}"{1}"]>Sites>Site::not(Site[_name{0}"{1}"])';
 					path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getValueID());
+				}
+				else
+					return ""
 			}
 			else if (this.typeName === "Site")
 			{
