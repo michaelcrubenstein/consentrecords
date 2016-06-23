@@ -971,7 +971,7 @@ var FromServiceSearchView = (function() {
 			if (this.experience.services[0].pickedObject)
 				return "{0}[Service={1}]".format(path, this.experience.services[0].pickedObject.getValueID());
 			else
-				return "Service";
+				return "";
 		}
 		else
 		{
