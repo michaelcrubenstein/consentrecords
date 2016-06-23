@@ -1172,6 +1172,7 @@ var NewExperienceFromServicePanel = (function () {
 var FromOfferingParentSearchView = (function() {
 	FromOfferingParentSearchView.prototype = new MultiTypeSearchView();
 	FromOfferingParentSearchView.prototype.customButton = null;
+	FromOfferingParentSearchView.prototype.serviceIsOfferingButton = null;
 	
 	FromOfferingParentSearchView.prototype.showFinishPanel = function(r)
 	{
@@ -1204,10 +1205,13 @@ var FromOfferingParentSearchView = (function() {
 	FromOfferingParentSearchView.prototype.clearListPanel = function()
 	{
 		var buttons = this.listPanel.selectAll("li");
-		buttons = buttons.filter(function(d, i) { return i > 0; });
+		var lastFixedButtonIndex = this.serviceIsOfferingButton ? 1 : 0;
+		buttons = buttons.filter(function(d, i) { return i > lastFixedButtonIndex; });
 			
 		buttons.remove();
 		this.customButton.style("display", "none");
+		if (this.serviceIsOfferingButton)
+			this.serviceIsOfferingButton.style("display", "none");
 	}
 	
 	FromOfferingParentSearchView.prototype.textChanged = function()
@@ -1223,6 +1227,10 @@ var FromOfferingParentSearchView = (function() {
 	{
 		SearchView.prototype.cancelSearch.call(this);
 		this.customButton.style("display", this.inputText().length > 0 ? null : "none");
+		if (this.serviceIsOfferingButton)
+		{
+			this.serviceIsOfferingButton.style("display", null);
+		}
 	}
 	
 	function FromOfferingParentSearchView(sitePanel, experience, placeholder, appendDescriptions)
@@ -1246,7 +1254,23 @@ var FromOfferingParentSearchView = (function() {
 					}
 				})
 				.style('display', 'none');
-
+			if (experience.services.length > 0)
+			{
+				this.serviceIsOfferingButton = appendViewButtons(this.appendButtonContainers(["ServiceIsOffering"]),
+					function(buttons)
+					{
+						buttons.append('div').classed("left-expanding-div description-text", true)
+							.text(experience.services[0].getDescription());
+					}
+				)
+					.on("click", function(d, i) {
+						if (prepareClick('click', 'Set Offering By Service'))
+						{
+							_this.showFinishPanel({text: experience.services[0].getDescription() });
+						}
+					})
+					.style('display', 'none');
+			}
 		}
 	}
 	
@@ -1318,6 +1342,10 @@ var FromOrganizationSearchView = (function() {
 		if (button == this.customButton.node())
 		{
 			return !this.hasNamedButton(compareText);
+		}
+		else if (this.serviceIsOfferingButton && button == this.serviceIsOfferingButton.node())
+		{
+			return !this.hasNamedButton(this.experience.services[0].getDescription());
 		}
 		else
 		{
@@ -1558,6 +1586,10 @@ var FromSiteSearchView = (function() {
 		if (button == this.customButton.node())
 		{
 			return !this.hasNamedButton(compareText);
+		}
+		else if (this.serviceIsOfferingButton && button == this.serviceIsOfferingButton.node())
+		{
+			return !this.hasNamedButton(this.experience.services[0].getDescription());
 		}
 		else
 		{
