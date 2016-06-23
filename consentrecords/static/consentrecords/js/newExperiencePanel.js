@@ -1413,7 +1413,7 @@ var FromOrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[_name{0}"{1}"]';
+				path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
 				path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
 				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
