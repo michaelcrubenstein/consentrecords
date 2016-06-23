@@ -1468,10 +1468,10 @@ var FromOrganizationSearchView = (function() {
 		this.initialTypeName = experience.organization ? "Offering from Site" : "Service";
 		this.typeName = this.initialTypeName;
 		
-		var placeHolder = (experience.organization ? "{0}, {1}" : "{1}").format(experience.getSiteLabel(), 
+		var placeHolder = (experience.organization ? "{0} or {1}" : "{1}").format(experience.getSiteLabel(), 
 											experience.getOfferingLabel());
 		if (experience.services.length == 0)
-			placeHolder += ", Tag";
+			placeHolder += "or Tag";
 		
 		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
@@ -1693,7 +1693,7 @@ var FromSiteSearchView = (function() {
 		
 		var placeHolder = experience.getOfferingLabel();
 		if (experience.services.length == 0)
-			placeHolder += ", Tag";
+			placeHolder += "or Tag";
 		
 		FromOfferingParentSearchView.call(this, sitePanel, experience, placeHolder, function(buttons) { _this.appendDescriptions(buttons); });
 				
