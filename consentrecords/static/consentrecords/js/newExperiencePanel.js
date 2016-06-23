@@ -1375,7 +1375,12 @@ var FromOrganizationSearchView = (function() {
 		if (this.experience.organization == null)
 		{
 			if (this.experience.services.length == 0)
-				return "Service";	/* Can't look up offerings for a custom organization name. */
+			{
+				path = "Service";	/* Can't look up offerings for a custom organization name. */
+				if (this.experience.serviceDomain)
+					path += '[Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+				return path;
+			}
 			else
 				return "";
 		}
@@ -1388,6 +1393,10 @@ var FromOrganizationSearchView = (function() {
 				path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
 				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				else if (this.experience.serviceDomain)
+					path += '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+				else
+					return path;
 				return path;
 			}
 			else if (this.typeName === "Service")
@@ -1408,6 +1417,8 @@ var FromOrganizationSearchView = (function() {
 				path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
 				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				else if (this.experience.serviceDomain)
+					path += '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
 			}
 			else if (this.typeName === "Offering from Site")
 			{
@@ -1415,6 +1426,8 @@ var FromOrganizationSearchView = (function() {
 				path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
 				if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
+				else if (this.experience.serviceDomain)
+					path += '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
 			}
 			else if (this.typeName === "Site")
 			{
@@ -1618,9 +1631,21 @@ var FromSiteSearchView = (function() {
 		else if (!val)
 		{
 			if (this.typeName === "Offering")
-				return "#{0}>Offerings>Offering".format(this.experience.site.getValueID())
+			{
+				path = "#{0}>Offerings>Offering".format(this.experience.site.getValueID());
+				if (this.experience.serviceDomain)
+					return path + '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+				else
+					return path;
+			}
 			else if (this.typeName === "Service")
-				return "#{0}>Offerings>Offering>Service".format(this.experience.site.getValueID())
+			{
+				path = "#{0}>Offerings>Offering>Service".format(this.experience.site.getValueID());
+				if (this.experience.serviceDomain)
+					return path + '[Domain>["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+				else
+					return path;
+			}
 			else
 				return "Service";
 		}
@@ -1630,10 +1655,14 @@ var FromSiteSearchView = (function() {
 			{
 				path = 'Offering[_name{0}"{1}"]';
 				path = "#{0}>Offerings>".format(this.experience.site.getValueID()) + path;
+				if (this.experience.serviceDomain)
+					path = path + '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
 			}
 			else if (this.typeName === "Service")
 			{
 				path = 'Service[_name{0}"{1}"]';
+				if (this.experience.serviceDomain)
+					path = path + '[Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
 			}
 			
 			var symbol = val.length < 3 ? "^=" : "*=";
