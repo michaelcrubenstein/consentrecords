@@ -977,7 +977,7 @@ var FromServiceSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[_name{0}"{1}"]';
+				path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering])';
 				if (this.experience.services[0].pickedObject)
 					path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
 			}
