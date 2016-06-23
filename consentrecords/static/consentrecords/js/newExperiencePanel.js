@@ -634,15 +634,18 @@ var MultiTypeSearchView = (function() {
 				}
 				else if (d.typeName === "Site")
 				{
-					orgDiv.append('div').text(d.getValue("Organization").getDescription());
-					orgDiv.append('div')
-						.classed('address-line', true)
-						.text(d.getDescription());
-				}
-				else if (d.typeName === "Organization")
-				{
-					orgDiv = leftText.append('div').classed("organization", true);		
-					orgDiv.append('div').text(d.getDescription());
+					if (d.getValue("Organization").getDescription() == d.getDescription())
+					{
+						leftText.text(d.getDescription());
+					}
+					else
+					{
+						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv.append('div').text(d.getValue("Organization").getDescription());
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getDescription());
+					}
 				}
 				else
 				{
