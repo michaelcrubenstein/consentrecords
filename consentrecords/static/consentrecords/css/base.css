@@ -568,6 +568,34 @@ input[type="date"]:focus {
 	padding-left: 0px;
 }
 
+section.date-container ol {
+	text-align: right;
+}
+
+section.date-container div.date-row {
+	display: inline-block;
+	overflow-x: hidden;
+	position: relative;
+	white-space: nowrap;	/* To prevent wrapping during animation. */
+}
+
+/* section.date-container is in the new-experience panel and the edit experience panel. */
+section.date-container>span.in-cell-button {
+	display: block;
+	padding-left: 12px;
+	padding-right: 12px;
+	padding-bottom: 4px;
+	width: 100%;
+	text-align: left;
+	position: relative;
+}
+
+section.date-container .right-vertical-chevron {
+	display: inline-block;
+	overflow-x: hidden;
+	position: relative;
+}
+
 select::-ms-expand {
     display: none;
 }

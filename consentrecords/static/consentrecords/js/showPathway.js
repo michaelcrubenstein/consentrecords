@@ -1045,9 +1045,15 @@ var EditExperiencePanel = (function () {
 				
 		this.showEditCells(cells);
 		
-		var startSection = panel2Div.selectAll(":nth-child(4)");
+		var startSection = panel2Div.selectAll("section:nth-child(4)");
 		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
-		var endSection = panel2Div.selectAll(":nth-child(5)");
+		var endSection = panel2Div.selectAll("section:nth-child(5)");
+		
+		startSection.classed('date-container', true)
+			.classed('string', false);
+		endSection.classed('date-container', true)
+			.classed('string', false);
+		
 		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
 		endDateInput.checkMinDate(new Date(startDateInput.value));
 		
@@ -1055,6 +1061,41 @@ var EditExperiencePanel = (function () {
 		{
 			endDateInput.checkMinDate(new Date(startDateInput.value()));
 		});
+		
+		var hidableEndDate = new HidableDiv(endSection.selectAll(".date-row").node());
+		
+		var hidingChevron = new HidingChevron(endSection.selectAll("li"), 
+			function()
+			{
+				hidableEndDate.show(function()
+					{
+						notFinishedSpan.enable();
+						unblockClick();
+					});
+			});
+		
+		var notFinishedSpan = new CellToggleText(endSection, "It isn't finished.", 
+			function()
+				{
+					if (prepareClick('click', "It isn't finished."))
+					{
+						hidableEndDate.hide(function()
+							{
+								hidingChevron.show(function()
+									{
+										endDateInput.clear();
+										notFinishedSpan.disable();
+										unblockClick();
+									});
+							});
+					}
+				});
+
+		/* Calculate layout-based variables after css is complete. */
+		setTimeout(function()
+			{
+				hidingChevron.height(hidableEndDate.height());
+			}, 0);
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);
