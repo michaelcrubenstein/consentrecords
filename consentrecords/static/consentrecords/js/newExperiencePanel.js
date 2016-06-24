@@ -2231,70 +2231,44 @@ var NewExperienceFinishPanel = (function () {
 			.classed('cell edit unique date-container', true);
 		var endLabel = endDateContainer.append('label')
 			.text("End");
-		var endLabelWidth;
 		
 		var itemsDiv = endDateContainer.append('ol');
 		var itemDiv = itemsDiv.append('li');
 		var endDateInput = new DateInput(itemDiv.node(), new Date(birthday));
-		var $dateRow = $(endDateContainer.selectAll(".date-row").node());
-		var dateWidth;
+		var hidableDateRow = new HidableDiv(endDateContainer.selectAll(".date-row").node());
 
-		var endDateChevron = appendRightChevrons(itemDiv);
-		var $chevron = $(endDateChevron.node());
-		var chevronWidth;
-		$chevron.width(0);
-		$chevron.css('display', 'none');
+		var hidingChevron = new HidingChevron(itemDiv, 
+			function()
+			{
+				hidableDateRow.show(function()
+					{
+						notFinishedSpan.enable();
+						unblockClick();
+					});
+			});
 		
-		var notFinishedSpan = endDateContainer.append('span')
-			.classed('in-cell-button site-active-text', true)
-			.on('click', function()
+		var notFinishedSpan = new CellToggleText(endDateContainer, "It isn't finished.", 
+			function()
 				{
 					if (prepareClick('click', "It isn't finished."))
 					{
-						$dateRow.animate({left: dateWidth, width: 0}, 400, function()
+						hidableDateRow.hide(function()
 							{
-								endDateInput.clear();
-								$dateRow.css('display', 'none');
-								$chevron.css('display', '');
-								$chevron.animate({left: 0, width: chevronWidth}, 200, function()
+								hidingChevron.show(function()
 									{
-										notFinishedSpan.classed('site-active-text', false)
-											.classed('site-disabled-text', true);
+										endDateInput.clear();
+										notFinishedSpan.disable();
 										unblockClick();
 									});
-							}
-						);
+							});
 					}
-				})
-			.text("It isn't finished.");
-			
-		endDateChevron.on('click', function()
+				});
+		
+		/* Calculate layout-based variables after css is complete. */
+		setTimeout(function()
 			{
-				if (prepareClick('click', 'end date chevron'))
-				{
-					$chevron.animate({left: chevronWidth, width: 0}, 200, function()
-						{
-							$chevron.css('display', 'none');
-							$dateRow.css('display', '');
-							$dateRow.animate({left: 0, width: dateWidth}, 400, function()
-								{
-									notFinishedSpan.classed('site-active-text', true)
-										.classed('site-disabled-text', false);
-									unblockClick();
-								});
-						});
-				}
-			});
-			
-		$(this.node()).one("revealing.cr", function()
-			{
-				dateWidth = $dateRow.width();
-				
-				$chevron.css("width", "");
-				chevronWidth = $chevron.width();
-				$chevron.width(0);
-				$chevron.height($dateRow.height());	/* Force them to the same height. */
-			});
+				hidingChevron.height(hidableDateRow.height());
+			}, 0);
 		
 		this.appendActionButton("Tags", function()
 			{
@@ -2308,7 +2282,8 @@ var NewExperienceFinishPanel = (function () {
 						});
 					showPanelLeft(panel.node(), unblockClick);
 				}
-			});	
+			});
+
 	}
 	
 	return NewExperienceFinishPanel;

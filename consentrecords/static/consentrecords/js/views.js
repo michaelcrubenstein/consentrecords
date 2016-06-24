@@ -2237,7 +2237,107 @@ var PanelSearchView = (function() {
 	return PanelSearchView;
 })();
 
+/* A div that can be shown or hidden to the right. */
+var HidableDiv = (function()
+{
+	HidableDiv.prototype.width = 0;
+	HidableDiv.prototype.duration = 400;
+	HidableDiv.prototype.$div = null;
 	
+	HidableDiv.prototype.show = function(done)
+	{
+		this.$div.css('display', '');
+		this.$div.animate({left: 0, width: this.width}, this.duration, done);
+	}
+	
+	HidableDiv.prototype.hide = function(done)
+	{
+		this.$div.animate({left: this.width, width: 0}, this.duration, function()
+			{
+				$(this).css('display', 'none');
+				done();
+			});
+	}
+	
+	HidableDiv.prototype.height = function(newHeight)
+	{
+		return (newHeight === undefined) ? this.$div.height() : this.$div.height(newHeight); 
+	}
+	
+	function HidableDiv(div, startDisplay, duration)
+	{
+		if (div)
+		{
+			var _this = this;
+			startDisplay = startDisplay !== undefined ? startDisplay : '';
+			duration = duration !== undefined ? duration : 400;
+		
+			this.$div = $(div);
+			this.duration = duration;
+			_this.$div.css('display', startDisplay);
+		
+			setTimeout(function()
+				{
+					_this.width = _this.$div.width();
+					if (startDisplay === 'none')
+						_this.$div.width(0);
+				}, 0);
+		}
+	}
+	
+	return HidableDiv;
+})();
+
+/* A chevron that can be shown or hidden to the right. */
+var HidingChevron = (function () {
+	HidingChevron.prototype = new HidableDiv();
+	
+	function HidingChevron(itemDiv, doneHide)
+	{
+		var _this = this;
+		var endDateChevron = appendRightChevrons(itemDiv);
+		
+		HidableDiv.call(this, endDateChevron.node(), 'none', 200);
+		
+		endDateChevron.on('click', function()
+			{
+				if (prepareClick('click', 'end date chevron'))
+				{
+					_this.hide(doneHide);
+				}
+			});
+	}
+	
+	return HidingChevron;
+})();
+
+var CellToggleText = (function()
+{
+	CellToggleText.prototype.span = null;
+	
+	CellToggleText.prototype.enable = function()
+	{
+		this.span.classed('site-active-text', true)
+			.classed('site-disabled-text', false);
+	}
+	
+	CellToggleText.prototype.disable = function()
+	{
+		this.span.classed('site-active-text', false)
+			.classed('site-disabled-text', true);
+	}
+	
+	function CellToggleText(container, text, onClick)
+	{
+		this.span = container.append('span')
+			.classed('in-cell-button site-active-text', true)
+			.on('click', onClick)
+			.text(text);
+	}
+	
+	return CellToggleText;
+})();
+
 /* Gets the text for the header of a view panel based on the specified data. */
 function getViewPanelHeader(objectData)
 {
