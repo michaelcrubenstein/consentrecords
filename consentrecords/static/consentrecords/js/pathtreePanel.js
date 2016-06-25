@@ -61,29 +61,34 @@ var FlagData = (function() {
 		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
 	}
 
+	FlagData.prototype.stageColumns = {
+		Studying: 1,
+		Certificate: 1,
+		Training: 2,
+		Whatever: 2,
+		Working: 3,
+		Teaching: 3,
+		Expert: 3,
+		Mentoring: 4,
+		Tutoring: 4,
+		Coaching: 4,
+		Volunteering: 4
+	};
 	FlagData.prototype.getColumn = function()
 	{
 		var sd = this.getServiceDomain();
 		if (sd && sd.getDescription() == "Housing")
 			return 0;
+
 		var stage = this.getStage();
 		var stageDescription = stage && stage.getDescription();
-		if (stageDescription)
-		{
-		if (["Studying"].indexOf(stageDescription) >= 0)
-			return 1;
-		if (["Certificate"].indexOf(stageDescription) >= 0)
-			return 1;
-		if (["Training"].indexOf(stageDescription) >= 0)
-			return 2;
-		if (["Working", "Teaching", "Expert"].indexOf(stageDescription) >= 0)
-			return 3;
-		if (["Mentoring", "Tutoring", "Coaching", "Volunteering"].indexOf(stageDescription) >= 0)
-			return 4;
-		}
+		if (stageDescription &&
+			stageDescription in this.stageColumns)
+			return this.stageColumns[stageDescription];
+
 		if (sd && sd.getDescription() == "Wellness")
 			return 5;
-		/* Whatever/ Other */
+		/* Other */
 		return 6;
 	}
 	
@@ -112,26 +117,17 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getColor = function()
 	{
-		var color = null;
-		var stage = this.getStage();
-		if (stage && stage.getValueID())
-		{
-			color = crp.getInstance(stage.getValueID()).getValue("Color");
-			if (color && color.text)
-				return color.text;
-		}
-		
-		sd = this.getServiceDomain();
-		if (sd && sd.getValueID())
-		{
-			color = crp.getInstance(sd.getValueID()).getValue("Color");
-			if (color && color.text)
-				return color.text;
-		}
-		
-		return null;
+		var column = this.getColumn();
+		return PathLines.prototype.backgroundData[column].color;
 	}
 	
+	FlagData.prototype.colorElement = function(r)
+	{
+		var colorText = this.getColor();
+		r.setAttribute("fill", colorText);
+		r.setAttribute("stroke", colorText);
+	}
+
 	function FlagData(experience)
 	{
 		this.experience = experience;
@@ -148,7 +144,6 @@ var PathView = (function() {
 	PathView.prototype.sitePanel = null;
 	PathView.prototype.containerDiv = null;
 
-	PathView.prototype.otherColor = "#bbbbbb";
 	PathView.prototype.isLayoutDirty = true;
 	
 	/* Constants related to the detail rectangle. */
@@ -165,16 +160,9 @@ var PathView = (function() {
 	PathView.prototype.detailFlagData = null;
 	PathView.prototype.flagElement = null;
 	
-	PathView.prototype.setColor = function(r, fd)
-	{
-		var colorText = fd.getColor() || this.otherColor;
-		d3.select(r).attr("fill", colorText)
-			 		.attr("stroke", colorText);
-	}
-
 	PathView.prototype.handleChangeServices = function(r, fd)
 	{
-		this.setColor(r, fd);
+		fd.colorElement(r);
 	}
 	
 	PathView.prototype.handleChangedExperience = function(r, fd)
@@ -183,7 +171,7 @@ var PathView = (function() {
 		
 		var expChanged = function(eventObject)
 		{
-			_this.setColor(r, fd);
+			fd.colorElement(eventObject.data);
 		}
 		
 		$(fd.experience).on("dataChanged.cr", null, r, expChanged);
@@ -225,7 +213,7 @@ var PathView = (function() {
 		this.setupServiceTriggers(r, fd, function(eventObject)
 				{
 					var fd = d3.select(eventObject.data).datum();
-					_this.setColor(eventObject.data, fd);
+					fd.colorElement(eventObject.data);
 				});
 	}
 	
@@ -923,7 +911,7 @@ var PathLines = (function() {
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 			.attr("x", this.detailRectX)	/* half the stroke width */;
-		this.setColor(this.detailFrontRect.node(), this.detailFrontRect.datum());
+		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
 		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
 		if (duration > 0)
 		{
@@ -1135,7 +1123,7 @@ var PathLines = (function() {
 		g.append('line').classed('flag-pole', true)
 			.each(function(d)
 				{
-					_this.setColor(this, d);
+					d.colorElement(this);
 					_this.handleChangedExperience(this, d);
 					_this.setupColorWatchTriggers(this, d);
 				});
@@ -1145,7 +1133,7 @@ var PathLines = (function() {
 			.attr('x', '1.5')
 			.each(function(d)
 				{
-					_this.setColor(this, d);
+					d.colorElement(this);
 					_this.handleChangedExperience(this, d);
 					_this.setupColorWatchTriggers(this, d);
 				});
@@ -1476,16 +1464,6 @@ var PathLines = (function() {
 		crp.getData({path: '"Service Domain"', 
 					 done: function(newInstances)
 						{
-							for (i = 0; i < newInstances.length; ++i)
-							{
-								if (newInstances[i].getDescription() == "Other")
-								{
-									color = newInstances[i].getValue("Color");
-									if (color && color.text)
-										_this.otherColor = color.text;
-									break;
-								}
-							}
 						},
 					fail: asyncFailFunction});
 							
