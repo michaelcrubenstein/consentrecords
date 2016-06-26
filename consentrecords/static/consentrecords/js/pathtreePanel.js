@@ -159,7 +159,6 @@ var PathView = (function() {
 	PathView.prototype.detailFrontRect = null;
 	PathView.prototype.detailRectHeight = 0;
 	PathView.prototype.detailFlagData = null;
-	PathView.prototype.flagElement = null;
 	
 	PathView.prototype.handleChangeServices = function(r, fd)
 	{
@@ -278,7 +277,6 @@ var PathView = (function() {
 		this.detailGroup.datum(null);
 		this.detailGroup.selectAll('rect').datum(null);
 		this.detailFlagData = null;
-		this.flagElement = null;
 	}
 
 	PathView.prototype.hideDetail = function(done, duration)
@@ -286,7 +284,7 @@ var PathView = (function() {
 		duration = (duration !== undefined ? duration : 250);
 		
 		var _this = this;
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			if (duration === 0)
 			{
@@ -321,10 +319,9 @@ var PathView = (function() {
 	PathView.prototype.refreshDetail = function()
 	{
 		var oldFlagData = this.detailFlagData;
-		var oldElement = this.flagElement;
 		var _this = this;
 		this.hideDetail(
-			function() { _this.showDetailGroup(oldElement, oldFlagData, 0); },
+			function() { _this.showDetailGroup(oldFlagData, 0); },
 			0);
 	}
 	
@@ -401,7 +398,6 @@ var PathView = (function() {
 		this.containerDiv = containerDiv;
 		this.sitePanel = sitePanel;
 		this.detailFlagData = null;
-		this.flagElement = null;
 		this.allExperiences = [];
 		
 		if (sitePanel)
@@ -740,17 +736,26 @@ var PathLines = (function() {
 		
 		if (this.detailFlagData != null)
 		{
-			/*( Restore the flagElement */
-			 g.each(function(fd)
-			 {
-				if (fd === _this.detailFlagData)
-					_this.flagElement = this;
-			 });
+			/*( Restore the detailFlagData */
+			var fds = g.data();
+			var i = fds.findIndex(function(fd) { return fd.experience === _this.detailFlagData.experience; });
+			if (i >= 0)
+			{
+				_this.hideDetail(function()
+					{
+						_this.setupClipPaths();
+						_this.showDetailGroup(fds[i], 0);
+					}, 0
+				);
+			}
+			else
+				throw "experience lost in layout";
 		}
+		else
+			this.setupClipPaths();
 		
 		this.layoutYears(g);
 		
-		this.setupClipPaths();
 		this.setupWidths();
 	}
 
@@ -793,7 +798,7 @@ var PathLines = (function() {
 		this.layoutYears(g);
 	}
 	
-	PathLines.prototype.showDetailGroup = function(g, fd, duration)
+	PathLines.prototype.showDetailGroup = function(fd, duration)
 	{
 		duration = (duration !== undefined ? duration : 700);
 		var _this = this;
@@ -970,7 +975,6 @@ var PathLines = (function() {
 		}
 		
 		this.detailFlagData = fd;
-		this.flagElement = g;
 		
 		var experience = this.detailFlagData.experience;
 		
@@ -1106,10 +1110,9 @@ var PathLines = (function() {
 		function showDetail(fd, i)
 		{
 			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			var g = this;
 			
 			_this.hideDetail(function() {
-					_this.showDetailGroup(g, fd); 
+					_this.showDetailGroup(fd); 
 				});
 		}
 		
@@ -1190,7 +1193,7 @@ var PathLines = (function() {
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
 		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			var h = this.detailFlagData.y + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
 			if (svgHeight < h)
@@ -1214,7 +1217,7 @@ var PathLines = (function() {
 		var newWidth = this.sitePanel.scrollAreaWidth();
 		var _this = this;
 		
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			var w = this.dataLeftMargin + this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
 			if (newWidth < w)
@@ -1387,7 +1390,7 @@ var PathLines = (function() {
 				d3.event.stopPropagation(); 
 			})
 			.on("click.cr", function() {
-				if (_this.flagElement)
+				if (_this.detailFlagData)
 				{
 					cr.logRecord('click', 'hide details');
 					_this.hideDetail(function()
