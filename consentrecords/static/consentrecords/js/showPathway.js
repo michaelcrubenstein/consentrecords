@@ -1027,7 +1027,7 @@ var EditExperiencePanel = (function () {
 			.classed("share", true)
 			.on('click', function()
 				{
-					if (prepareClick('click', 'delete experience'))
+					if (prepareClick('click', 'share'))
 					{
 						new ExperienceShareOptions(_this.node(), experience, path);
 					}
