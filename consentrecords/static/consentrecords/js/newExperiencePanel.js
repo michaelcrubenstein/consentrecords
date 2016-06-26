@@ -9,6 +9,9 @@ var Experience = (function() {
 	Experience.prototype.startDate = null;
 	Experience.prototype.endDate = null;
 	
+	/* The path containing the object to which to add the experience. */
+	Experience.prototype.path = null;
+	
 	Experience.prototype.setOrganization = function(args) {
 		if ("instance" in args)
 		{
@@ -288,8 +291,6 @@ var Experience = (function() {
 	{
 		bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
 
-		var moreExperiencesObject = this.user.getValue("More Experiences");
-		
 		var _this = this;
 		
 		function onCreatedInstance(newData)
@@ -297,6 +298,7 @@ var Experience = (function() {
 			crp.pushCheckCells(newData, ["type"], 
 				function() {
 					function addExperience() {
+						_this.path.getCell("More Experience").addValue(newData);
 						$(_this).trigger("experienceAdded.cr", newData);
 						unblockClick();
 					}
@@ -309,32 +311,12 @@ var Experience = (function() {
 				syncFailFunction);
 		}
 		
-		function successFunction2(newData)
-		{
-			if (newData != moreExperiencesObject)
-			{
-				var cell = _this.user.getCell("More Experiences");
-				cell.addValue(newData);
-				moreExperiencesObject = _this.user.getValue("More Experiences");
-			}
-			
-			field = {ofKind: "More Experience", name: "More Experience"};
-			var initialData = {};
+		field = {ofKind: "More Experience", name: "More Experience"};
+		var initialData = {};
 
-			_this.appendData(initialData);
-			
-			cr.createInstance(field, moreExperiencesObject.getValueID(), initialData, onCreatedInstance, syncFailFunction);
-		}
+		_this.appendData(initialData);
 		
-		if (moreExperiencesObject && moreExperiencesObject.getValueID())
-		{
-			successFunction2(moreExperiencesObject);
-		}
-		else
-		{
-			field = {ofKind: "More Experiences", name: "More Experiences"};
-			cr.createInstance(field, this.user.getValueID(), [], successFunction2, syncFailFunction);
-		}
+		cr.createInstance(field, this.path.getValueID(), initialData, onCreatedInstance, syncFailFunction);
 	}
 	
 	Experience.prototype._getInstanceLabel = function(i, name)
@@ -520,9 +502,15 @@ var Experience = (function() {
 		done(panel.node());
 	}
 	
-	function Experience(dataExperience)
+	function Experience(path, dataExperience)
 	{
+		if (!path)
+			throw "path is not specified";
+		if (typeof(path) !== "object")
+			throw "path is not an object";
+			
 		this.services = [];
+		this.path = path;
 		
 		if (dataExperience)
 		{
@@ -692,7 +680,15 @@ var MultiTypeSearchView = (function() {
 	
 	function MultiTypeSearchView(sitePanel, experience, placeholder, appendDescriptions)
 	{
-		this.experience = experience;
+		if (sitePanel)
+		{
+			if (!experience)
+				throw "experience is not specified";
+			if (typeof(experience) != "object")
+				throw "experience is not an object";
+
+			this.experience = experience;
+		}
 		NamedTypeSearchView.call(this, sitePanel, placeholder, appendDescriptions, GetDataChunker)
 	}
 	
@@ -2199,7 +2195,7 @@ var NewExperienceFinishPanel = (function () {
 		var experienceView = panel2Div.append('header');
 		experience.appendView(experienceView);
 		
-		var birthday = experience.user.getDatum("Birthday");
+		var birthday = experience.path.getDatum("Birthday");
 		
 		var startDateContainer = panel2Div.append('section')
 			.classed('cell edit unique date-container', true);

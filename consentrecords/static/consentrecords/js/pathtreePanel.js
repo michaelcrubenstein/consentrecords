@@ -140,6 +140,7 @@ var FlagData = (function() {
 })();
 
 var PathView = (function() {
+	PathView.prototype.path = null;
 	PathView.prototype.allExperiences = [];
 	PathView.prototype.sitePanel = null;
 	PathView.prototype.containerDiv = null;
@@ -158,7 +159,6 @@ var PathView = (function() {
 	PathView.prototype.detailFrontRect = null;
 	PathView.prototype.detailRectHeight = 0;
 	PathView.prototype.detailFlagData = null;
-	PathView.prototype.flagElement = null;
 	
 	PathView.prototype.handleChangeServices = function(r, fd)
 	{
@@ -277,7 +277,6 @@ var PathView = (function() {
 		this.detailGroup.datum(null);
 		this.detailGroup.selectAll('rect').datum(null);
 		this.detailFlagData = null;
-		this.flagElement = null;
 	}
 
 	PathView.prototype.hideDetail = function(done, duration)
@@ -285,7 +284,7 @@ var PathView = (function() {
 		duration = (duration !== undefined ? duration : 250);
 		
 		var _this = this;
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			if (duration === 0)
 			{
@@ -320,10 +319,9 @@ var PathView = (function() {
 	PathView.prototype.refreshDetail = function()
 	{
 		var oldFlagData = this.detailFlagData;
-		var oldElement = this.flagElement;
 		var _this = this;
 		this.hideDetail(
-			function() { _this.showDetailGroup(oldElement, oldFlagData, 0); },
+			function() { _this.showDetailGroup(oldFlagData, 0); },
 			0);
 	}
 	
@@ -342,8 +340,8 @@ var PathView = (function() {
 		{
 			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 			{
-				var panel = $(this).parents(".site-panel")[0];
-				var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
+				var panel = this.sitePanel.node();
+				var editPanel = new EditExperiencePanel(fd.experience, this.path, panel, revealPanelLeft);
 												  
 				revealPanelLeft(editPanel.node());
 				d3.event.stopPropagation();
@@ -395,20 +393,11 @@ var PathView = (function() {
 		this.redoLayout();
 	}
 	
-	PathView.prototype.setupExperienceHandlers = function(experience)
-	{
-		$(experience).on("experienceAdded.cr", null, this, function(eventObject, newData)
-			{
-				eventObject.data.addMoreExperience(newData);
-			});
-	}
-	
 	function PathView(sitePanel, containerDiv)
 	{
 		this.containerDiv = containerDiv;
 		this.sitePanel = sitePanel;
 		this.detailFlagData = null;
-		this.flagElement = null;
 		this.allExperiences = [];
 		
 		if (sitePanel)
@@ -747,17 +736,26 @@ var PathLines = (function() {
 		
 		if (this.detailFlagData != null)
 		{
-			/*( Restore the flagElement */
-			 g.each(function(fd)
-			 {
-				if (fd === _this.detailFlagData)
-					_this.flagElement = this;
-			 });
+			/*( Restore the detailFlagData */
+			var fds = g.data();
+			var i = fds.findIndex(function(fd) { return fd.experience === _this.detailFlagData.experience; });
+			if (i >= 0)
+			{
+				_this.hideDetail(function()
+					{
+						_this.setupClipPaths();
+						_this.showDetailGroup(fds[i], 0);
+					}, 0
+				);
+			}
+			else
+				throw "experience lost in layout";
 		}
+		else
+			this.setupClipPaths();
 		
 		this.layoutYears(g);
 		
-		this.setupClipPaths();
 		this.setupWidths();
 	}
 
@@ -800,7 +798,7 @@ var PathLines = (function() {
 		this.layoutYears(g);
 	}
 	
-	PathLines.prototype.showDetailGroup = function(g, fd, duration)
+	PathLines.prototype.showDetailGroup = function(fd, duration)
 	{
 		duration = (duration !== undefined ? duration : 700);
 		var _this = this;
@@ -977,7 +975,6 @@ var PathLines = (function() {
 		}
 		
 		this.detailFlagData = fd;
-		this.flagElement = g;
 		
 		var experience = this.detailFlagData.experience;
 		
@@ -1113,10 +1110,9 @@ var PathLines = (function() {
 		function showDetail(fd, i)
 		{
 			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			var g = this;
 			
 			_this.hideDetail(function() {
-					_this.showDetailGroup(g, fd); 
+					_this.showDetailGroup(fd); 
 				});
 		}
 		
@@ -1197,7 +1193,7 @@ var PathLines = (function() {
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
 		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			var h = this.detailFlagData.y + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
 			if (svgHeight < h)
@@ -1221,7 +1217,7 @@ var PathLines = (function() {
 		var newWidth = this.sitePanel.scrollAreaWidth();
 		var _this = this;
 		
-		if (this.flagElement != null)
+		if (this.detailFlagData != null)
 		{
 			var w = this.dataLeftMargin + this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
 			if (newWidth < w)
@@ -1379,7 +1375,10 @@ var PathLines = (function() {
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", this.showDetailPanel);
+			.on("click.cr", function(fd, i)
+				{
+					_this.showDetailPanel(fd, i);
+				});
 		this.detailBackRect = this.detailGroup.append('rect')
 			.classed('bg', true);
 		this.detailFrontRect = this.detailGroup.append('rect')
@@ -1391,7 +1390,7 @@ var PathLines = (function() {
 				d3.event.stopPropagation(); 
 			})
 			.on("click.cr", function() {
-				if (_this.flagElement)
+				if (_this.detailFlagData)
 				{
 					cr.logRecord('click', 'hide details');
 					_this.hideDetail(function()
@@ -1411,7 +1410,18 @@ var PathLines = (function() {
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 				
-			var experiences = _this.path.getCell("More Experience").data;
+			var cell = _this.path.getCell("More Experience");
+			var addedFunction = function(eventObject, newData)
+				{
+					eventObject.data.addMoreExperience(newData);
+				}
+			$(cell).on("valueAdded.cr", null, _this, addedFunction);
+			$(_this.pathwayContainer.node()).on("remove", function()
+				{
+					$(cell).off("valueAdded.cr", null, addedFunction);
+				});
+				
+			var experiences = cell.data;
 			
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
@@ -1519,17 +1529,14 @@ var PathlinesPanel = (function () {
 			.text(this.userSettingsBadgeCount(user));
 	}
 	
-	PathlinesPanel.prototype.createExperience = function(user)
+	PathlinesPanel.prototype.createExperience = function()
 	{
-		var experience = new Experience();
-		experience.user = user;
-		this.pathtree.setupExperienceHandlers(experience);
-		return experience;
+		return new Experience(this.pathtree.path);
 	}
 	
 	PathlinesPanel.prototype.startNewExperience = function()
 	{
-		var experience = this.createExperience(this.user);
+		var experience = this.createExperience();
 		var panel = new NewExperiencePanel(experience, this.node());
 	}
 	

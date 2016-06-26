@@ -417,7 +417,7 @@
 			{% else %}var serviceName = null;
 			{% endif %}
 	
-			var experience = pathwayPanel.createExperience(cr.signedinUser);
+			var experience = pathwayPanel.createExperience();
 			var done = function(services)
 			{
 				var panel;
@@ -741,6 +741,7 @@
 								pathwayPanel = firstPanel;
 							}
 							var pathway = pathwayPanel.pathtree;
+							var experiencesPath = cr.signedinUser.getValue("More Experiences");
 							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
 								{
 									if (experiences.length > 0)
@@ -749,7 +750,7 @@
 											function() {
 												if (experiences[0].typeName == "Service")
 												{
-													var experience = new Experience();
+													var experience = new Experience(experiencesPath);
 													experience.addService({instance: experiences[0]});
 													var panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience, 
 														function() {});
@@ -757,7 +758,7 @@
 												}
 												else if (experiences[0].typeName == "Organization")
 												{
-													var experience = new Experience();
+													var experience = new Experience(experiencesPath);
 													experience.setOrganization({instance: experiences[0]});
 													var panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience, 
 														function() {});
