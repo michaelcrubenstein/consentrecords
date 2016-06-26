@@ -140,6 +140,7 @@ var FlagData = (function() {
 })();
 
 var PathView = (function() {
+	PathView.prototype.path = null;
 	PathView.prototype.allExperiences = [];
 	PathView.prototype.sitePanel = null;
 	PathView.prototype.containerDiv = null;
@@ -342,8 +343,8 @@ var PathView = (function() {
 		{
 			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 			{
-				var panel = $(this).parents(".site-panel")[0];
-				var editPanel = new EditExperiencePanel(fd.experience, panel, revealPanelLeft);
+				var panel = this.sitePanel.node();
+				var editPanel = new EditExperiencePanel(fd.experience, this.path, panel, revealPanelLeft);
 												  
 				revealPanelLeft(editPanel.node());
 				d3.event.stopPropagation();
@@ -393,14 +394,6 @@ var PathView = (function() {
 		this.appendExperiences();
 
 		this.redoLayout();
-	}
-	
-	PathView.prototype.setupExperienceHandlers = function(experience)
-	{
-		$(experience).on("experienceAdded.cr", null, this, function(eventObject, newData)
-			{
-				eventObject.data.addMoreExperience(newData);
-			});
 	}
 	
 	function PathView(sitePanel, containerDiv)
@@ -1379,7 +1372,10 @@ var PathLines = (function() {
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", this.showDetailPanel);
+			.on("click.cr", function(fd, i)
+				{
+					_this.showDetailPanel(fd, i);
+				});
 		this.detailBackRect = this.detailGroup.append('rect')
 			.classed('bg', true);
 		this.detailFrontRect = this.detailGroup.append('rect')
@@ -1411,7 +1407,18 @@ var PathLines = (function() {
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 				
-			var experiences = _this.path.getCell("More Experience").data;
+			var cell = _this.path.getCell("More Experience");
+			var addedFunction = function(eventObject, newData)
+				{
+					eventObject.data.addMoreExperience(newData);
+				}
+			$(cell).on("valueAdded.cr", null, _this, addedFunction);
+			$(_this.pathwayContainer.node()).on("remove", function()
+				{
+					$(cell).off("valueAdded.cr", null, addedFunction);
+				});
+				
+			var experiences = cell.data;
 			
 			_this.allExperiences = _this.allExperiences.concat(experiences);
 			
@@ -1519,17 +1526,14 @@ var PathlinesPanel = (function () {
 			.text(this.userSettingsBadgeCount(user));
 	}
 	
-	PathlinesPanel.prototype.createExperience = function(user)
+	PathlinesPanel.prototype.createExperience = function()
 	{
-		var experience = new Experience();
-		experience.user = user;
-		this.pathtree.setupExperienceHandlers(experience);
-		return experience;
+		return new Experience(this.pathtree.path);
 	}
 	
 	PathlinesPanel.prototype.startNewExperience = function()
 	{
-		var experience = this.createExperience(this.user);
+		var experience = this.createExperience();
 		var panel = new NewExperiencePanel(experience, this.node());
 	}
 	

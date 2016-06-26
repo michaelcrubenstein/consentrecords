@@ -993,7 +993,7 @@ var EditExperiencePanel = (function () {
 		}
 	}
 	
-	function EditExperiencePanel(experience, previousPanel, showFunction) {
+	function EditExperiencePanel(experience, path, previousPanel, showFunction) {
 		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
@@ -1029,7 +1029,7 @@ var EditExperiencePanel = (function () {
 				{
 					if (prepareClick('click', 'delete experience'))
 					{
-						new ExperienceShareOptions(_this.node(), experience);
+						new ExperienceShareOptions(_this.node(), experience, path);
 					}
 				});
 		shareButton.append("img")
@@ -1122,7 +1122,7 @@ var EditExperiencePanel = (function () {
 
 var ExperienceShareOptions = (function () {
 
-	function ExperienceShareOptions(panelNode, experience)
+	function ExperienceShareOptions(panelNode, experience, path)
 	{
 		var dimmer = d3.select(panelNode).append('div')
 			.classed('dimmer', true);
@@ -1147,27 +1147,31 @@ var ExperienceShareOptions = (function () {
 			e.preventDefault();
 		}
 		
-		var addToMyPathwayButton = div.append('button')
-			.text("Add to My Pathway")
-			.classed("site-active-text", true)
-			.on("click", function()
-				{
-					if (prepareClick('click', "Add to My Pathway"))
+		if (cr.signedinUser)
+		{
+			var duplicateText = (path == cr.signedinUser.getValue("More Experiences")) ? "Duplicate Experience" : "Add to My Pathway";
+		
+			var addToMyPathwayButton = div.append('button')
+				.text(duplicateText)
+				.classed("site-active-text", true)
+				.on("click", function()
 					{
-						var tempExperience = new Experience(experience);
-						tempExperience.user = cr.signedinUser;
-						var newPanel = new NewExperienceFinishPanel(panel.node(), tempExperience, null, revealPanelUp);
-						showPanelUp(newPanel.node(), function()
-							{
-								$(emailAddExperienceButton.node()).off('blur');
-								panel.remove();
-								dimmer.remove();
-								unblockClick();
-							});
-					}
-				});
+						if (prepareClick('click', duplicateText))
+						{
+							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
+							var newPanel = new NewExperienceFinishPanel(panel.node(), tempExperience, null, revealPanelUp);
+							showPanelUp(newPanel.node(), function()
+								{
+									$(emailAddExperienceButton.node()).off('blur');
+									panel.remove();
+									dimmer.remove();
+									unblockClick();
+								});
+						}
+					});
 				
-		$(addToMyPathwayButton.node()).on('blur', onCancel);
+			$(addToMyPathwayButton.node()).on('blur', onCancel);
+		}
 		
 		var emailAddExperienceButton = div.append('button')
 			.text("Email Add Experience Link")
