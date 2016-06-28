@@ -1521,20 +1521,17 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 					{
 						try
 						{
-							if (successFunction) 
-							{
-								/* Copy the data from json object into newData so that 
-									any functions are properly initialized.
-								 */
-								var newData = new cr.ObjectValue();
-								/* If there is a container, then the id in newData will contain
-									the id of the value object in the database. */
-								if (containerUUID)
-									newData.id = json.object.id;
-								newData.instanceID = json.object.instanceID;
-								newData.setDescription(json.object.description);
-								successFunction(newData);
-							}
+							/* Copy the data from json object into newData so that 
+								any functions are properly initialized.
+							 */
+							var newData = new cr.ObjectValue();
+							/* If there is a container, then the id in newData will contain
+								the id of the value object in the database. */
+							if (containerUUID)
+								newData.id = json.object.id;
+							newData.instanceID = json.object.instanceID;
+							newData.setDescription(json.object.description);
+							successFunction(newData);
 						}
 						catch(err)
 						{
