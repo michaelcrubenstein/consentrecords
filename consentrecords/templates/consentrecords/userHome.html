@@ -803,6 +803,43 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("accept"))
+				{
+					handleState = function()
+					{
+						function clearAccessRequests(newValue)
+						{
+							var cell = cr.signedinUser.getCell("_access request");
+							for (var i = 0; i < cell.data.length; ++i)
+							{
+								var d = cell.data[i];
+								if (d.getValueID() == newValue.getValueID())
+									d.triggerDeleteValue();
+							}
+						}
+						
+						cr.share("{{follower}}", "{{cell}}", "{{privilege}}", function(newValue)
+							{
+								// Remove any access request with this name.
+								if (newValue.typeName == '_access record')
+								{
+									newValue.checkCells(["typeName"], function()
+										{
+											newValue = newValue.getCell("{{cell}}").data[0];
+											clearAccessRequests(newValue);
+											bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+										},
+										asyncFailFunction);
+								}
+								else
+								{
+									clearAccessRequests(newValue);
+									bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+								}
+							}, asyncFailFunction);
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function(pathwayPanel)

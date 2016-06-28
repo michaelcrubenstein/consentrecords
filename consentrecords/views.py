@@ -192,6 +192,105 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+def accept(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/accept', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = '_user[_email=%s]' % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'accept'
+        args['follower'] = objs[0].id
+        args['cell'] = '_user'
+        args['privilege'] = terms.readPrivilegeEnum.id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def acceptFollower(request):
+    if request.method != "POST":
+        raise Http404("acceptFollower only responds to POST methods")
+    
+    try:    
+        timezoneoffset = request.POST["timezoneoffset"]
+        language = None
+        followerID = request.POST["follower"]
+        cellName = request.POST["cell"]
+        privilegeID = request.POST["privilege"]
+        
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                results = {'success':False, 'error': "user is not set up: %s" % request.user.get_full_name()}
+            else:
+                followerPath = '#%s' % followerID
+                userInfo = UserInfo(request.user)
+                objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                if len(objs) > 0:
+                    follower = objs[0]
+                    ars = user.value_set.filter(field=terms['_access record'],
+                                          deleteTransaction__isnull=True) \
+                                  .filter(referenceValue__value__field=terms[cellName],
+                                          referenceValue__value__deleteTransaction__isnull=True,
+                                          referenceValue__value__referenceValue_id=followerID)
+                    if ars.count():
+                        results = {'success':False, 'error': '%s is already following you' % follower.description.text}
+                    else:
+                        with transaction.atomic():
+                            transactionState = TransactionState(request.user, timezoneoffset)
+                            nameLists = NameList()
+                            try:
+                                ar = user.value_set.filter(field=terms['_access record'],
+                                                           deleteTransaction__isnull=True) \
+                                             .get(referenceValue__value__field=terms['_privilege'],
+                                                  referenceValue__value__deleteTransaction__isnull=True,
+                                                  referenceValue__value__referenceValue_id=privilegeID).referenceValue
+                                newValue = ar.addReferenceValue(terms[cellName], follower, ar.getNextElementIndex(terms[cellName]), transactionState)
+                            except Value.DoesNotExist:
+                                ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
+                                    {'_privilege': [{'instanceID': privilegeID}],
+                                     cellName: [{'instanceID': followerID}]}, nameLists, transactionState)
+            
+                            # Remove any corresponding access requests.
+                            vs = user.value_set.filter(field=terms['_access request'],
+                                                   deleteTransaction__isnull=True,
+                                                   referenceValue_id=followerID)
+                            for v in vs:
+                                v.deepDelete(transactionState)
+                        
+                            data = newValue.getReferenceData(userInfo, language)
+                            data["typeName"] = newValue.referenceValue.typeID.getDescription()
+                            results = {'success':True, 'object': data} 
+        else:
+            results = {'success':False, 'error': "user is not authenticated"}
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
+    return JsonResponse(results)
+        
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
@@ -657,8 +756,8 @@ class api:
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
 
-		# For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
-		# values in that cell.
+        # For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
+        # values in that cell.
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:

@@ -1274,6 +1274,7 @@ cr.urls = {
 		submitNewUser: '/submitnewuser/',
 		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
+		acceptFollower: '/user/acceptFollower/',
 		log: '/monitor/log/',
 	};
 	
@@ -1753,6 +1754,35 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 									function(json){
 			if (json['success']) {
 				done();
+			}
+			else
+				fail(json.error);
+		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+
+cr.share = function(followerID, cellName, privilegeID, done, fail)
+	{
+		$.post(cr.urls.acceptFollower, {follower: followerID,
+										cell: cellName, 
+										privilege: privilegeID, 
+					  					timezoneoffset: new Date().getTimezoneOffset(),
+										}, 
+									function(json){
+			if (json['success']) {
+				/* Copy the data from json object into newData so that 
+					any functions are properly initialized.
+				 */
+				var newData = new cr.ObjectValue();
+				newData.id = json.object.id;
+				newData.instanceID = json.object.instanceID;
+				newData.setDescription(json.object.description);
+				newData.privilege = json.object.privilege;
+				newData.typeName = json.object.typeName;
+				done(newData);
 			}
 			else
 				fail(json.error);

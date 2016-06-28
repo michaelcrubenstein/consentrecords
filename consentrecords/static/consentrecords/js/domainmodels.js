@@ -23,6 +23,7 @@ cr.urls = {
 		submitNewUser: '/submitnewuser/',
 		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
+		acceptFollower: '/user/acceptFollower/',
 		log: '/monitor/log/',
 	};
 	
