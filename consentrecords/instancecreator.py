@@ -106,6 +106,16 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         except AccessRecord.DoesNotExist:
             pass
 
+    # propertyList should be either null or a dictionary of properties.
+    # The key of each element in the dictionary is the name of a term which is the fieldID.
+    # The value is an array.
+    #    Each element of the value array is a dictionary that has one item in the field.
+    #    The dictionary can have the following elements:
+    #        "instanceID": The value should be a hex string for a GUID.
+    #        "path": The value should be a path to an object.
+    #        "cells": A dictionary which matches a dictionary of properties passed to a recursive call to instancecreator.create.
+    #        "text" and "languageCode": the text and language code for a translation.
+    #        "text": the text of a string element.
     if propertyList:
         if isinstance(propertyList, dict):
             if len(propertyList) > 0:
