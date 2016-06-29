@@ -805,8 +805,19 @@
 				}
 				else if (stateString.startsWith("accept"))
 				{
-					handleState = function()
+					handleState = function(pathwayPanel)
 					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
+
 						function clearAccessRequests(newValue)
 						{
 							var cell = cr.signedinUser.getCell("_access request");
@@ -842,8 +853,18 @@
 				}
 				else if (stateString.startsWith("ignore"))
 				{
-					handleState = function()
+					handleState = function(pathwayPanel)
 					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
 						var cell = cr.signedinUser.getCell("_access request");
 						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
 						if (v)
