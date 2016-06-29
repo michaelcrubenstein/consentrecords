@@ -210,7 +210,7 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -241,7 +241,7 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -317,9 +317,7 @@ def acceptFollower(request):
     return JsonResponse(results)
         
 
-    context = RequestContext(request, args)
         
-    return HttpResponse(template.render(context))
 
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
