@@ -1,94 +1,267 @@
-+Organization
-+    _name: YMCA Boston
-+    Sites
-+        Site
-+            _name: Burbank YMCA
-+            Web Site: http://ymcaboston.org/burbank
-+            Address
-+                Street: 36 Arthur B. Lord Drive
-+                City:  Reading
-+                State: MA
-+        Site
-+            _name: Charles River YMCA
-+            Web Site: http://ymcaboston.org/charlesriver
-+            Address
-+                Street: 380 Chestnut Street
-+                City:  Needham
-+                State: MA    
-+        Site
-+            _name: Charlestown YMCA
-+            Web Site: http://ymcaboston.org/charlestown
-+            Address
-+                Street: 150 Third Avenue Charlestown Navy Yard 
-+                City: Boston
-+                State: MA     
-+        Site
-+            _name: Dorchester YMCA
-+            Web Site: http://ymcaboston.org/dorchester
-+            Address
-+                Street: 776 Washington Street
-+                City: Dorchester
-+                State: MA     
-+        Site
-+            _name: East Boston YMCA
-+            Web Site: http://ymcaboston.org/eastboston
-+            Address
-+                Street: 215 Bremen Street
-+                City: East Boston
-+                State: MA      
-+        Site
-+            _name: Huntington Avenue YMCA
-+            Web Site: http://ymcaboston.org/huntington
-+            Address
-+                Street: 316 Huntington Avenue 
-+                City: Boston
-+                State: MA      
-+        Site
-+            _name: North Suburban YMCA
-+            Web Site: http://ymcaboston.org/northsuburban
-+            Address
-+                Street: 137 Lexington St
-+                City: Woburn
-+                State: MA                      
-+        Site
-+            _name: Oak Square YMCA
-+            Web Site: http://ymcaboston.org/oaksquare
-+            Address
-+                Street: 615 Washington Street
-+                City: Brighton
-+                State: MA                   
-+        Site
-+            _name: Parkway Community (West Roxbury) YMCA
-+            Web Site: http://ymcaboston.org/parkway
-+            Address
-+                Street: 1972 Centre Street
-+                City: West Roxbury
-+                State: MA                  
-+        Site
-+            _name: Roxbury YMCA
-+            Web Site: http://ymcaboston.org/roxbury
-+            Address
-+                Street: 285 Martin Luther King Boulevard 
-+                City: Roxbury
-+                State: MA                           
-+        Site
-+            _name: Thomas M. Menino YMCA
-+            Web Site: http://ymcaboston.org/menino
-+            Address
-+                Street: 1137 River Street
-+                City: Hyde Park
-+                State: MA                   
-+        Site
-+            _name: Waltham YMCA
-+            Web Site: http://ymcaboston.org/waltham
-+            Address
-+                Street: 725 Lexington Street
-+                City: Waltham
-+                State: MA                  
-+        Site
-+            _name: Wang YMCA
-+            Web Site: http://ymcaboston.org/wang
-+            Address
-+                Street: 8 Oak Street West
-+                City: Waltham
-+                State: MA   
+Organization
+    _name: YMCA Boston
+    Sites
+        Site
+            _name: Burbank YMCA
+            Web Site: http://ymcaboston.org/burbank
+            Address
+                Street: 36 Arthur B. Lord Drive
+                City:  Reading
+                State: MA
+              Offerings
+                Offering
+                    _name: Burbank YMCA After School Program
+                    Service: Education
+                Offering
+                    _name: Healthy Kids Club
+                    Service: Exercise
+                Offering
+                    _name: Sports Prep Program
+                    Service: Exercise
+                Offering
+                    _name: Tennis 
+                    Service: Tennis Lessons
+                    Service: Exercise
+                Offering
+                    _name: Sports Conditioning
+                    Service: Exercise
+                Offering
+                    _name: Kids on the Run
+                    Service: Excercise
+                Offering
+                    _name: Baseball
+                    Service:Baseball Playing
+                    Service: Exercise
+                Offering
+                    _name: Flag Football
+                    Service: Exercise
+                Offering
+                    _name: Sports Prep Program
+                    Service: Exercise
+                Offering
+                    _name: Pool Open/Family Swim Times
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Swim Lessons
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Water Aerobics
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Strech and Tone 
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                   _name: Weight Lifting
+                    Service: Weight Training
+                    Service: Exercise
+                Offering
+                    _name: Water Yoga
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                   _name: Teen Dodgeball
+                   Service: Excercise
+                Offering
+                 _name: Floor Hockey
+                 Service: Hockey
+                 Service: Exercise
+                Offering
+                 _name: Running Club
+                 Service: Exercise
+        Site
+            _name: Charles River YMCA
+            Web Site: http://ymcaboston.org/charlesriver
+            Address
+                Street: 380 Chestnut Street
+                City:  Needham
+                State: MA    
+               Offerings
+                Offering
+                    _name: Charles River Adventurer
+                    Service: Education
+                  Offering
+                    _name: Charles River Explorer
+                    Service: Education
+                  Offering
+                    _name: Charles River Expedition
+                    Service: Education
+                Offering
+                    _name: 10 and Under Swim Team
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name:  11 and Up Swim Team
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Private Swimming  
+                    Service: Swimming Lessons
+                    Service: Exercise
+                Offering
+                    _name: Baseball Team
+                    Service: Baseball Playing
+                    Service: Exercise
+                Offering
+                    _name: Kids on the Run
+                    Service: Exercise
+                Offering
+                    _name: Baseball
+                    Service:Baseball Playing
+                    Service: Exercise
+                Offering
+                    _name: Flag Football
+                    Service: Exercise
+                Offering
+                    _name: Pool Open/Family Swim Times
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Swim Lessons
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                   _name: Teen Dodgeball
+                   Service: Exercise
+                Offering
+                 _name: Floor Hockey
+                 Service: Hockey
+                 Service: Exercise
+        Site
+            _name: Charlestown YMCA
+            Web Site: http://ymcaboston.org/charlestown
+            Address
+                Street: 150 Third Avenue Charlestown Navy Yard 
+                City: Boston
+                State: MA   
+              Offering
+                    _name: Swim Lessons
+                    Service: Swimming
+                    Service: Exercise
+              Offering
+                   _name:  Tae Kwon Do
+                   Service: Martial Arts
+                   Service: Exercise
+              Offering
+                 _name: Toddler Tumbling
+                 Service: Gymnastics
+                 Service: Exercise
+              Offering
+                 _name: Youth Tumbling
+                 Service: Gymnastics
+                 Service: Exercise
+        Site
+            _name: Dorchester YMCA
+            Web Site: http://ymcaboston.org/dorchester
+            Address
+                Street: 776 Washington Street
+                City: Dorchester
+                State: MA     
+              Offerings
+                  Offering
+                    _name: Dorchester Summer Explorer
+                    Service: Education
+                  Offering
+                    _name: Charles River Expedition
+                    Service: Education
+                Offering
+                    _name: Youth Basketball League
+                    Service: Basketball
+                    Service: Exercise
+                Offering
+                    _name:  Strength Training
+                    Service: Exercise
+                Offering
+                    _name: Swimming  
+                    Service: Swimming Lessons
+                    Service: Exercise
+                Offering
+                    _name: Intro to Hip-Hop
+                    Service: Dance
+                    Service: Exercise
+                Offering
+                    _name: Youth Karate
+                    Service: Martial Arts
+                    Service: Exercise
+                Offering
+                    _name: Youth Soccer
+                    Service: Soccer Playing
+                    Service: Exercise
+                Offering
+                    _name: Intro to Ballet
+                    Service: Dance
+                    Service: Exercise
+                Offering
+                    _name: Pool Open/Family Swim Times
+                    Service: Swimming
+                    Service: Exercise
+                Offering
+                    _name: Swim Lessons
+                    Service: Swimming
+                    Service: Exercise
+        Site
+            _name: East Boston YMCA
+            Web Site: http://ymcaboston.org/eastboston
+            Address
+                Street: 215 Bremen Street
+                City: East Boston
+                State: MA      
+        Site
+            _name: Huntington Avenue YMCA
+            Web Site: http://ymcaboston.org/huntington
+            Address
+                Street: 316 Huntington Avenue 
+                City: Boston
+                State: MA      
+        Site
+            _name: North Suburban YMCA
+            Web Site: http://ymcaboston.org/northsuburban
+            Address
+                Street: 137 Lexington St
+                City: Woburn
+                State: MA                      
+        Site
+            _name: Oak Square YMCA
+            Web Site: http://ymcaboston.org/oaksquare
+            Address
+                Street: 615 Washington Street
+                City: Brighton
+                State: MA                   
+        Site
+            _name: Parkway Community (West Roxbury) YMCA
+            Web Site: http://ymcaboston.org/parkway
+            Address
+                Street: 1972 Centre Street
+                City: West Roxbury
+                State: MA                  
+        Site
+            _name: Roxbury YMCA
+            Web Site: http://ymcaboston.org/roxbury
+            Address
+                Street: 285 Martin Luther King Boulevard 
+                City: Roxbury
+                State: MA                           
+        Site
+            _name: Thomas M. Menino YMCA
+            Web Site: http://ymcaboston.org/menino
+            Address
+                Street: 1137 River Street
+                City: Hyde Park
+                State: MA                   
+        Site
+            _name: Waltham YMCA
+            Web Site: http://ymcaboston.org/waltham
+            Address
+                Street: 725 Lexington Street
+                City: Waltham
+                State: MA                  
+        Site
+            _name: Wang YMCA
+            Web Site: http://ymcaboston.org/wang
+            Address
+                Street: 8 Oak Street West
+                City: Waltham
+                State: MA   
