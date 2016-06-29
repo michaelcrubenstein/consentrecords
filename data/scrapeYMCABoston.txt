@@ -137,6 +137,7 @@ Organization
                 Street: 150 Third Avenue Charlestown Navy Yard 
                 City: Boston
                 State: MA   
+            Offerings
               Offering
                     _name: Swim Lessons
                     Service: Swimming
@@ -208,7 +209,20 @@ Organization
             Address
                 Street: 215 Bremen Street
                 City: East Boston
-                State: MA      
+                State: MA    
+            Offerings 
+              Offering
+                 _name: East Boston Summer Camp
+                 Service: Educational
+              Offering
+                   _name: Group Cycling and Sculpting
+                   Service: Exercise
+              Offering
+                 _name: Boot Camp
+                 Service: Exercise
+              Offering
+                 _name: Stress Reduction
+                 Service: Exercise
         Site
             _name: Huntington Avenue YMCA
             Web Site: http://ymcaboston.org/huntington
@@ -216,6 +230,21 @@ Organization
                 Street: 316 Huntington Avenue 
                 City: Boston
                 State: MA      
+            Offerings 
+              Offering
+                 _name: Urban Adventure Camp
+                 Service: Educational
+              Offering
+                 _name: Egleston Little Leaders
+                 Service: Educational
+              Offering
+                   _name: Youth Basketball Clinic
+                   Service: Basketball
+                   Service: Exercise
+              Offering
+                 _name: Tumble Time
+                 Service: Gymnastics
+                 Service: Exercise
         Site
             _name: North Suburban YMCA
             Web Site: http://ymcaboston.org/northsuburban
