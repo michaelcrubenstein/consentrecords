@@ -223,6 +223,36 @@ def accept(request, email):
         
     return HttpResponse(template.render(context))
 
+def ignore(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+        'backURL': '/',
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = '_user[_email=%s]' % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'ignore'
+        args['follower'] = objs[0].id
+        args['follower_description'] = objs[0].getDescription()
+        
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 def acceptFollower(request):
     if request.method != "POST":
         raise Http404("acceptFollower only responds to POST methods")
