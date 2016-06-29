@@ -3,6 +3,12 @@
 		background: white;
 	}
 	
+	panel.pathway .alert-container {
+		top: 45px;
+		z-index: 9999;
+		position: absolute;
+	}
+	
 	panel.pathway text {
 		text-decoration: none;
 		cursor: pointer;

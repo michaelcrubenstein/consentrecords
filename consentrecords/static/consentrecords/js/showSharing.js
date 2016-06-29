@@ -54,10 +54,10 @@ var SharingPanel = (function() {
 					var accessorLevel = _this.privileges[1];
 					function done()
 					{
-						d.deleteValue(function() { 
-										unblockClick();
-										},
-									  syncFailFunction);
+						/* Since this item was deleted as part of adding access,  
+							trigger a deleteValue event. */
+						d.triggerDeleteValue();
+						unblockClick();
 					};
 					
 					_this.addAccess(accessorLevel, d, "_user", done);
@@ -200,19 +200,37 @@ var SharingPanel = (function() {
 	
 	SharingPanel.prototype.addAccessRecord = function(accessorLevel, pickedUser, cellName, done)
 	{
-		var accessRecordCell = this.user.getCell("_access record");
-		var field = accessRecordCell.field;
-		var initialData = {"_privilege": [{instanceID: accessorLevel.id}] };
-		initialData[cellName] = [{instanceID: pickedUser.getValueID() }];
-		cr.createInstance(field, this.user.getValueID(), initialData, done, syncFailFunction);
+		var _this = this;
+
+		cr.share(pickedUser.getValueID(), cellName, accessorLevel.id, function(newData)
+			{
+				var accessRecordCell = _this.user.getCell("_access record");
+				accessRecordCell.addValue(newData);
+				accessorLevel.accessRecords.push(newData);
+				newData.checkCells(undefined, function()
+					{
+						var cell = newData.getCell(cellName);
+						var newValue = cell.data[0];
+						_this.onUserAdded(accessorLevel.itemsDiv, newValue);
+						done();
+					}, syncFailFunction);
+			}, syncFailFunction);
 	}
 	
 	SharingPanel.prototype.addAccessUser = function(accessorLevel, pickedUser, cellName, done)
 	{
+		var _this = this;
+
 		var ar = accessorLevel.accessRecords[0]
 		ar.checkCells(undefined, function()
 		{
-			ar.getCell(cellName).addObjectValue(pickedUser, done, syncFailFunction);
+			cr.share(pickedUser.getValueID(), cellName, accessorLevel.id, function(newValue)
+				{
+					var cell = ar.getCell(cellName);
+					cell.addValue(newValue);
+					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
+					done();
+				}, syncFailFunction);
 		}, syncFailFunction);
 	}
 	
@@ -221,32 +239,14 @@ var SharingPanel = (function() {
 		var _this = this;
 		if (accessorLevel.accessRecords.length == 0)
 		{
-			function _createAccessRecordSuccess(newData)
-			{
-				newData.checkCells(undefined, function() {
-					var userCell = newData.getCell(cellName);
-					var newValue = userCell.data[0];
-					accessorLevel.accessRecords.push(newData);
-					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
-					done();
-				},
-				syncFailFunction);
-			}
-
 			// Create an instance of an access record with this accessor level
 			// and this user.
-			this.addAccessRecord(accessorLevel, pickedUser, cellName, _createAccessRecordSuccess);
+			this.addAccessRecord(accessorLevel, pickedUser, cellName, done);
 		}
 		else
 		{
-			function _addUserSuccess(newValue)
-			{
-				_this.onUserAdded(accessorLevel.itemsDiv, newValue);
-				done();
-			}
-
 			// Add this user to the access record associated with this accessor level.
-			this.addAccessUser(accessorLevel, pickedUser, cellName, _addUserSuccess);
+			this.addAccessUser(accessorLevel, pickedUser, cellName, done);
 		}
 	}
 

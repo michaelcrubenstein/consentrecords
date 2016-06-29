@@ -803,6 +803,83 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("accept"))
+				{
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
+
+						function clearAccessRequests(newValue)
+						{
+							var cell = cr.signedinUser.getCell("_access request");
+							for (var i = 0; i < cell.data.length; ++i)
+							{
+								var d = cell.data[i];
+								if (d.getValueID() == newValue.getValueID())
+									d.triggerDeleteValue();
+							}
+						}
+						
+						cr.share("{{follower}}", "{{cell}}", "{{privilege}}", function(newValue)
+							{
+								// Remove any access request with this name.
+								if (newValue.typeName == '_access record')
+								{
+									newValue.checkCells(["typeName"], function()
+										{
+											newValue = newValue.getCell("{{cell}}").data[0];
+											clearAccessRequests(newValue);
+											bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+										},
+										asyncFailFunction);
+								}
+								else
+								{
+									clearAccessRequests(newValue);
+									bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+								}
+							}, asyncFailFunction);
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("ignore"))
+				{
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), false);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
+						var cell = cr.signedinUser.getCell("_access request");
+						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						if (v)
+						{
+							v.deleteValue(function()
+								{
+									bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
+								},
+								asyncFailFunction);
+						}
+						else
+							bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function(pathwayPanel)

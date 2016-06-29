@@ -33,11 +33,16 @@ urlpatterns = [
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
     url(r'^add/', views.addToPathway),
-    url(r'^me/', views.showLines),
+    url(r'^accept/([^/@]+@[^/@]+\.[^/@]+)/', views.accept),
+    url(r'^ignore/([^/@]+@[^/@]+\.[^/@]+)/', views.ignore),
+    url(r'^accept/([A-Fa-f0-9]{32})/', views.accept),
+    url(r'^ignore/([A-Fa-f0-9]{32})/', views.ignore),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
     url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
+    url(r'^user/acceptFollower/', views.acceptFollower, name='acceptFollower'),
+    url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
 
     url(r'^local/getuserid/', views.getUserID),
     url(r'^local/getdata/', views.getData),

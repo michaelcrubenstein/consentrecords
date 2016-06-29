@@ -34,7 +34,7 @@ var RequestFollowSearchView = (function () {
 							unblockClick();
 						});
 					}
-					cr.addObjectValue("#"+d.getValueID(), "_access request", _this.user, done, syncFailFunction);
+					cr.requestAccess(_this.user, d, done, syncFailFunction);
 				}
 				d3.event.preventDefault();
 			});

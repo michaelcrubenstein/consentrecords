@@ -1542,7 +1542,7 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
 	{
-		_this = this;
+		var _this = this;
 		addExperienceButton
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))

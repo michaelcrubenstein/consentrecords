@@ -1274,6 +1274,8 @@ cr.urls = {
 		submitNewUser: '/submitnewuser/',
 		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
+		acceptFollower: '/user/acceptFollower/',
+		requestAccess: '/user/requestAccess/',
 		log: '/monitor/log/',
 	};
 	
@@ -1520,20 +1522,17 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 					{
 						try
 						{
-							if (successFunction) 
-							{
-								/* Copy the data from json object into newData so that 
-									any functions are properly initialized.
-								 */
-								var newData = new cr.ObjectValue();
-								/* If there is a container, then the id in newData will contain
-									the id of the value object in the database. */
-								if (containerUUID)
-									newData.id = json.object.id;
-								newData.instanceID = json.object.instanceID;
-								newData.setDescription(json.object.description);
-								successFunction(newData);
-							}
+							/* Copy the data from json object into newData so that 
+								any functions are properly initialized.
+							 */
+							var newData = new cr.ObjectValue();
+							/* If there is a container, then the id in newData will contain
+								the id of the value object in the database. */
+							if (containerUUID)
+								newData.id = json.object.id;
+							newData.instanceID = json.object.instanceID;
+							newData.setDescription(json.object.description);
+							successFunction(newData);
 						}
 						catch(err)
 						{
@@ -1762,6 +1761,55 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
 	}
+
+cr.share = function(followerID, cellName, privilegeID, done, fail)
+	{
+		$.post(cr.urls.acceptFollower, {follower: followerID,
+										cell: cellName, 
+										privilege: privilegeID, 
+					  					timezoneoffset: new Date().getTimezoneOffset(),
+										}, 
+									function(json){
+			if (json['success']) {
+				/* Copy the data from json object into newData so that 
+					any functions are properly initialized.
+				 */
+				var newData = new cr.ObjectValue();
+				newData.id = json.object.id;
+				newData.instanceID = json.object.instanceID;
+				newData.setDescription(json.object.description);
+				newData.privilege = json.object.privilege;
+				newData.typeName = json.object.typeName;
+				done(newData);
+			}
+			else
+				fail(json.error);
+		})
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+	}
+
+cr.requestAccess = function(follower, following, done, fail)
+{
+		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
+									   following: following.getValueID(),
+					  				   timezoneoffset: new Date().getTimezoneOffset(),
+					  				  },
+			   function(json){
+					if (json['success']) {
+						done();
+					}
+					else
+						fail(json.error);
+				}
+		)
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+}
 
 cr._logQueue = new Queue(true)
 cr.logRecord = function(name, message)
