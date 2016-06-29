@@ -21,6 +21,7 @@ import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
+from custom_user.emailer import Emailer
 from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
@@ -315,9 +316,71 @@ def acceptFollower(request):
         results = {'success':False, 'error': str(e)}
         
     return JsonResponse(results)
-        
 
+def requestAccess(request):
+    if request.method != "POST":
+        raise Http404("requestAccess only responds to POST methods")
+    
+    try:    
+        timezoneoffset = request.POST["timezoneoffset"]
+        language = None
+        followingID = request.POST["following"]
+        followerID = request.POST["follower"]
         
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                results = {'success':False, 'error': "user is not set up: %s" % request.user.get_full_name()}
+            else:
+                followingPath = '#%s' % followingID
+                userInfo = UserInfo(request.user)
+                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                if len(objs) > 0:
+                    following = objs[0]
+                    followerPath = '#%s' % followerID
+                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(objs) > 0:
+                        follower = objs[0]
+                        fieldTerm = terms['_access request']
+                        ars = following.value_set.filter(field=fieldTerm,
+                                                         deleteTransaction__isnull=True,
+                                                         referenceValue_id=follower.id)
+                        if ars.count():
+                            if follower == user:
+                                error = 'You have already requested to follow %s.' % following.description.text
+                            else:
+                                error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
+                            results = {'success':False, 'error': error}
+                        else:
+                            with transaction.atomic():
+                                transactionState = TransactionState(request.user, timezoneoffset)
+                                nameLists = NameList()
+                            
+                                v = following.addReferenceValue(fieldTerm, follower, following.getNextElementIndex(fieldTerm), transactionState)
+            
+                                data = v.getReferenceData(userInfo, language)
+                                data["typeName"] = v.referenceValue.typeID.getDescription()
+                            
+                                # Send an email to the following user.
+                                protocol = "https://" if request.is_secure() else "http://"
+
+                                # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
+                                recipientEMail = following.value_set.filter(field=terms.email,
+                                                                            deleteTransaction__isnull=True)[0].stringValue
+                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, recipientEMail, 
+                                    follower.getDescription(),
+                                    protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
+                                    protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
+                            
+                                results = {'success':True, 'object': data} 
+        else:
+            results = {'success':False, 'error': "user is not authenticated"}
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        results = {'success':False, 'error': str(e)}
+        
+    return JsonResponse(results)
 
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)

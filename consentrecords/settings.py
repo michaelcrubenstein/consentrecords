@@ -121,6 +121,12 @@ PASSWORD_RESET_SENDER = r'consentrecordsinfo@gmail.com'
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
 
+# Path of the web page to accept a follower.
+ACCEPT_FOLLOWER_PATH = r'/accept/'
+
+# Path of the web page to ignore a follower.
+IGNORE_FOLLOWER_PATH = r'/ignore/'
+
 CR_TOKEN_URL = r'http://localhost:8000/o/token/'
 CR_GETUSERID_URL = r'http://localhost:8000/getuserid'
 CR_REDIRECT_URL = r'http://localhost:8000/'

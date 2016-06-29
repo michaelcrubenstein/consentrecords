@@ -1275,6 +1275,7 @@ cr.urls = {
 		updateUsername: '/user/updateusername/',
 		updatePassword: '/user/updatepassword/',
 		acceptFollower: '/user/acceptFollower/',
+		requestAccess: '/user/requestAccess/',
 		log: '/monitor/log/',
 	};
 	
@@ -1789,6 +1790,26 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
 		});
 	}
+
+cr.requestAccess = function(follower, following, done, fail)
+{
+		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
+									   following: following.getValueID(),
+					  				   timezoneoffset: new Date().getTimezoneOffset(),
+					  				  },
+			   function(json){
+					if (json['success']) {
+						done();
+					}
+					else
+						fail(json.error);
+				}
+		)
+		.fail(function(jqXHR, textStatus, errorThrown)
+		{
+			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+		});
+}
 
 cr._logQueue = new Queue(true)
 cr.logRecord = function(name, message)
