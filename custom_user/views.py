@@ -84,10 +84,7 @@ def resetPassword(request):
             raise Exception("This email address is not recognized.");
             
         newKey = PasswordReset.createPasswordReset(email)
-        if request.is_secure():
-            protocol = "https://"
-        else: 
-            protocol = "http://"
+        protocol = "https://" if request.is_secure() else "http://"
         
         Emailer.sendResetPasswordEmail(settings.PASSWORD_RESET_SENDER, email, 
             protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey)
