@@ -11,7 +11,7 @@ Organization
               Offerings
                 Offering
                     _name: Burbank YMCA After School Program
-                    Service: Education
+                    Service: Summer Camp
                 Offering
                     _name: Healthy Kids Club
                     Service: Exercise
@@ -82,13 +82,13 @@ Organization
                Offerings
                 Offering
                     _name: Charles River Adventurer
-                    Service: Education
+                    Service: Summer Camp
                   Offering
                     _name: Charles River Explorer
-                    Service: Education
+                    Service: Summer Camp
                   Offering
                     _name: Charles River Expedition
-                    Service: Education
+                    Service: Summer Camp
                 Offering
                     _name: 10 and Under Swim Team
                     Service: Swimming
@@ -164,10 +164,10 @@ Organization
               Offerings
                   Offering
                     _name: Dorchester Summer Explorer
-                    Service: Education
+                    Service: Summer Camp
                   Offering
                     _name: Charles River Expedition
-                    Service: Education
+                    Service: Summer Camp
                 Offering
                     _name: Youth Basketball League
                     Service: Basketball
@@ -213,7 +213,7 @@ Organization
             Offerings 
               Offering
                  _name: East Boston Summer Camp
-                 Service: Educational
+                 Service: Summer Camp
               Offering
                    _name: Group Cycling and Sculpting
                    Service: Exercise
@@ -233,10 +233,10 @@ Organization
             Offerings 
               Offering
                  _name: Urban Adventure Camp
-                 Service: Educational
+                 Service: Summer Camp
               Offering
                  _name: Egleston Little Leaders
-                 Service: Educational
+                 Service: Summer Camp
               Offering
                    _name: Youth Basketball Clinic
                    Service: Basketball
@@ -251,46 +251,315 @@ Organization
             Address
                 Street: 137 Lexington St
                 City: Woburn
-                State: MA                      
+                State: MA    
+            Offerings 
+              Offering
+                 _name: Camp Mighty
+                 Service: Summer Camp
+              Offering
+                 _name: Camp Mini
+                 Service: Summer Camp
+              Offering
+                 _name: Woburn Sports Camp
+                 Service: Summer Camp
+              Offering
+                 _name: Woburn Youth Leaders
+                 Service: Summer Camp
+              Offering
+                 _name: Rock Climbing
+                 Service: Exercise
+              Offering
+                 _name: Swim Lessons
+                 Service: Swimming
+                 Service: Exercise
+              Offering
+                 _name: Swim Club
+                 Service: Swimming
+                 Service: Exercise
+              Offering
+                   _name: Youth Basketball Clinic
+                   Service: Basketball
+                   Service: Exercise
+              Offering
+                 _name: Pilates
+                 Service: Exercise
+              Offering
+                 _name: Hip Hop Dance Class
+                 Service: Dance
+                 Service: Exercise
+              Offering
+                 _name: Intro to Ballet
+                 Service: Dance
+                 Service: Exercise
         Site
             _name: Oak Square YMCA
             Web Site: http://ymcaboston.org/oaksquare
             Address
                 Street: 615 Washington Street
                 City: Brighton
-                State: MA                   
+                State: MA   
+            Offerings 
+              Offering
+                 _name: Oak Square Scamper Camp
+                 Service: Summer Camp
+              Offering
+                 _name: Oak Square Scout Camp
+                 Service: Summer Camp
+              Offering
+                 _name: Oak Square Sports Camp
+                 Service: Summer Camp
+              Offering
+                 _name: Water Aerobics
+                 Service: Exercise
+              Offering
+                 _name: Sports Conditioning
+                 Service: Exercise
+              Offering
+                 _name: Youth Track and Field
+                 Service: Exercise
+              Offering
+                 _name: Youth Soccer
+                 Service: Exercise
+              Offering
+                 _name: Rock Climbing
+                 Service: Exercise
+              Offering
+                 _name: Swim Lessons
+                 Service: Swimming
+                 Service: Exercise
+              Offering
+                 _name: Swim Club
+                 Service: Swimming
+                 Service: Exercise
+              Offering
+                   _name: Youth Basketball Clinic
+                   Service: Basketball
+                   Service: Exercise
+              Offering
+                   _name: Youth Basketball League
+                   Service: Basketball
+                   Service: Exercise
+              Offering
+                   _name: Youth Soccer League
+                   Service: Soccer
+                   Service: Exercise
+              Offering
+                 _name: Adult Karate
+                 Service: Martial Arts
+                 Service: Exercise
+              Offering
+                 _name: Youth Tae Kwon Do
+                 Service: Martial Arts
+                 Service: Exercise
+              Offering
+                 _name: Youth Tennis Clinic
+                 Service: Tennis
+                 Service: Exercise
+              Offering
+                 _name: Womens Weightlifting
+                 Service: Exercise
+             Offering
+                   _name: Youth Gymnastics
+                   Service: Gymnastics
+                   Service: Exercise
         Site
             _name: Parkway Community (West Roxbury) YMCA
             Web Site: http://ymcaboston.org/parkway
             Address
                 Street: 1972 Centre Street
                 City: West Roxbury
-                State: MA                  
+                State: MA     
+            Offerings
+             Offering
+                   _name: West Roxbury Summer Camp
+                   Service: Summer Camp
+             Offering
+                   _name: Youth Basketball League
+                   Service: Basketball
+                   Service: Exercise
+             Offering
+                   _name: Swim Club
+                   Service: Swimming
+                   Service: Exercise
+             Offering
+                   _name: Swim Lessons
+                   Service: Swimming
+                   Service: Exercise
+             Offering
+                   _name: Dedham Enrichment Camp
+                   Service: Summer Camp
+             Offering
+                   _name: West Roxbury Summer Camp
+                   Service: Summer Camp
         Site
             _name: Roxbury YMCA
             Web Site: http://ymcaboston.org/roxbury
             Address
                 Street: 285 Martin Luther King Boulevard 
                 City: Roxbury
-                State: MA                           
+                State: MA      
+            Offerings
+             Offering
+                   _name: Roxbury Explorers
+                   Service: Summer Camp
+             Offering
+                 _name: Roxbury Trailblazers
+                 Service: Summer Camp
+             Offering
+                   _name: Youth Basketball League
+                   Service: Basketball
+                   Service: Exercise
+             Offering
+                   _name: Preschool Basketball League
+                   Service: Basketball
+                   Service: Exercise
+            Offering
+                   _name: Youth Baseball
+                   Service: Baseball
+                   Service: Exercise
+            Offering
+                   _name: Youth Karate
+                   Service: Martial Arts
+                   Service: Exercise
+             Offering
+                   _name: Ballet
+                   Service: Dance
+                   Service: Exercise
         Site
             _name: Thomas M. Menino YMCA
             Web Site: http://ymcaboston.org/menino
             Address
                 Street: 1137 River Street
                 City: Hyde Park
-                State: MA                   
+                State: MA           
+                Offerings
+            Offerings
+             Offering
+                   _name: Camp Ponkapoag
+                   Service: Summer Camp
+             Offering
+                 _name: Urban Camp Ponkapoag
+                 Service: Summer Camp
+             Offering
+                 _name: Menino Camper
+                 Service: Summer Camp
+             Offering
+                 _name: Swim Club
+                 Service: Swimming
+                 Service: Exercise
+             Offering
+                 _name: Swim Lesson
+                 Service: Swimming
+                 Service: Exercise
+             Offering
+                 _name: Triathlon Training
+                 Service: Exercise
+             Offering
+                   _name: Youth Soccer League
+                   Service: Soccer
+                   Service: Exercise
+             Offering
+                   _name: Preschool Soccer League
+                   Service: Soccer
+                   Service: Exercise
+            Offering
+                   _name: Youth Karate
+                   Service: Martial Arts
+                   Service: Exercise
+            
         Site
             _name: Waltham YMCA
             Web Site: http://ymcaboston.org/waltham
             Address
                 Street: 725 Lexington Street
                 City: Waltham
-                State: MA                  
+                State: MA     
+            Offerings
+             Offering
+                   _name: Waltham Camp Cabot
+                   Service: Summer Camp
+             Offering
+                 _name: Waltham Pioneers
+                 Service: Summer Camp
+             Offering
+                 _name: Waltham Caboteers
+                 Service: Summer Camp
+             Offering
+                 _name: Waltham Champions
+                 Service: Summer Camp
+             Offering
+                 _name: Waltham Rookies
+                 Service: Summer Camp
+             Offering
+                 _name: Waltham Young All Stars
+                 Service: Summer Camp
+             Offering
+                 _name: Waltham Voyagers
+                 Service: Summer Camp
+             Offering
+                 _name: Swim Club
+                 Service: Swimming
+                 Service: Exercise
+             Offering
+                 _name: Swim Lesson
+                 Service: Swimming
+                 Service: Exercise
+             Offering
+                 _name: Womens Weightlifting 
+                 Service: Exercise
+             Offering
+                   _name: Youth Intro Soccer 
+                   Service: Soccer
+                   Service: Exercise
+             Offering
+                   _name: Youth Basketball 
+                   Service: Basketball
+                   Service: Exercise
+             Offering
+                   _name: Archery
+                   Service: Exercise
+             Offering
+                   _name: Barre
+                   Service: Exercise
+             Offering
+                   _name: Youth Gymnastics 
+                   Service: Gymnastics
+                   Service: Exercise
+             Offering
+                   _name: Preschool Gymnastics 
+                   Service: Gymnastics
+                   Service: Exercise
+            Offering
+                   _name: Youth Karate
+                   Service: Martial Arts
+                   Service: Exercise
         Site
-            _name: Wang YMCA
+            _name: Wang YMCA of Chinatown
             Web Site: http://ymcaboston.org/wang
             Address
                 Street: 8 Oak Street West
                 City: Waltham
-                State: MA   
+                State: MA  
+             Offerings
+             Offering
+                   _name: Green Mountain Club
+                   Service: Summer Camp
+             Offering
+                   _name: Swim Lessons
+                   Service: Swimming
+                   Service: Excercise
+             Offering
+                   _name: Youth Basketball Clinic
+                   Service: Basketball
+                   Service: Exercise
+             Offering
+                   _name: Yoga
+                   Service: Exercise
+             Offering
+                   _name: Teen Basketball
+                   Service: Basketball
+                   Service: Exercise
+             Offering
+                   _name: Youth Karate
+                   Service: Martial Arts
+                   Service: Exercise
