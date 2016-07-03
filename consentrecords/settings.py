@@ -115,8 +115,12 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'consentrecordsinfo@gmail.com'
 EMAIL_HOST_PASSWORD = 'Hu7RHmjvNw7f'
 
-# Email address of the sender of the password reset email.
-PASSWORD_RESET_SENDER = r'consentrecordsinfo@gmail.com'
+EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
+EMAIL_HOST_USER = 'AKIAIZXPWRNRBG7CTMRQ'
+EMAIL_HOST_PASSWORD = 'Am/dXeuOJ6ZiUYDZdZuqrqWRYHzV0EZEGaqe5XDb0Qs8'
+
+# Email address of the sender of emails.
+PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
 
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
