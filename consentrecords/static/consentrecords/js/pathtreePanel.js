@@ -393,6 +393,118 @@ var PathView = (function() {
 		this.redoLayout();
 	}
 	
+	PathView.prototype.layoutYears = function(g)
+	{
+		var _this = this;
+		
+		this.yearGroup.selectAll('text').remove();
+		var yearHeight = this.flagHeight / 2;
+		var fds = g.data();
+		fds.forEach(function(fd)
+		{
+			fd.yearBounds = fd.getYearArray();
+		});
+		
+		// Eliminate aboves >= aboves, tops or belows of previous items.
+		for (var i = 0; i < fds.length - 1; ++i)
+		{
+			var fdi = fds[i];
+			var ybi = fdi.yearBounds;
+			var ybj = fds[i+1].yearBounds;
+			if (ybi.top == ybi.bottom ||
+			    ybi.top == ybj.top ||
+			    ybi.top == ybj.bottom)
+			    ybi.top = undefined;
+			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
+				for (var j = i + 1; j < fds.length; ++j)
+				{
+					var fdj = fds[j];
+					ybj = fdj.yearBounds;
+					if (ybi.top == ybj.top ||
+						ybi.top == ybj.bottom)
+					{
+						ybi.top = undefined;
+						break;
+					}
+				}
+			}
+			
+			ybj = fds[i+1].yearBounds;
+			if (ybi.bottom == ybj.top)
+				ybi.bottom = undefined;
+			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
+				for (var j = i + 1; j < fds.length; ++j)
+				{
+					var fdj = fds[j];
+					if (fdj.y < fdi.y2 && fdj.y2 >= fdi.y2)	/* If this crosses the bottom,  */
+					{
+						if (j < fds.length - 1)
+						{
+							var isShortFlagpole = fdj.y + this.flagHeight == fdj.y2;
+							var fdk = fds[j+1];
+							/* If the item after i's flag-pole has the same top year
+									then eliminate i's bottom (it is a duplicate year marker). 
+								or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
+									then if that item doesn't extend below i,
+										then eliminate i's bottom (two labels will overlap)
+									otherwise, if the lower item's top is the same as i's bottom,
+										then eliminate the lower item's top (it is a duplicate year marker and higher.)
+								otherwise, eliminate j's top.
+							 */
+							if (isShortFlagpole && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
+								fdi.yearBounds.bottom = undefined;
+							else if (fdj.yearBounds.bottom < fdi.yearBounds.bottom)
+							{
+								if (isShortFlagpole)
+									fdi.yearBounds.bottom = undefined;
+								else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
+									fdj.yearBounds.top = undefined;
+							}
+							else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
+							{
+								if (fdj.y2 <= fdi.y2 + this.flagSpacing)
+								{
+									// The bottoms overlap.
+									if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
+										fdi.yearBounds.bottom = undefined;
+									else
+										fdj.yearBounds.bottom = undefined;
+								}
+							}
+						}
+						else
+							fdj.yearBounds.top = undefined;
+					}
+					else if (ybi.bottom == fdj.yearBounds.top ||
+						     ybi.bottom == fdj.yearBounds.bottom)
+					{
+						ybi.bottom = undefined;
+					}
+					if (!ybi.bottom)
+						break;
+				}
+			}
+		}
+		
+		fds.forEach(function(fd)
+		{
+			if (fd.yearBounds.top)
+			{
+				_this.yearGroup.append('text')
+					.text(fd.yearBounds.top)
+					.attr("x", _this.textLeftMargin)
+					.attr('y', _this.experienceGroupDY + fd.y + yearHeight);
+			}
+			if (fd.yearBounds.bottom)
+			{
+				_this.yearGroup.append('text')
+					.text(fd.yearBounds.bottom)
+					.attr("x", _this.textLeftMargin)
+					.attr('y', _this.experienceGroupDY + fd.y2);
+			}
+		});
+	}
+	
 	function PathView(sitePanel, containerDiv)
 	{
 		this.containerDiv = containerDiv;
@@ -418,7 +530,6 @@ var PathView = (function() {
 
 var PathLines = (function() {
 	PathLines.prototype = new PathView();
-	PathLines.prototype.dataLeftMargin = 40;			/* The space between the left margin and the beginning of the flags */
 	PathLines.prototype.poleSpacing = 4;
 	
 	PathLines.prototype.flagHeight = 20;
@@ -431,13 +542,12 @@ var PathLines = (function() {
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "4.5em";
-	PathLines.prototype.experiencesTop = 37;
 	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
 	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
-	/* Translate coordinates for the elements of the experienceGroup */
-	PathLines.prototype.experienceGroupDX = 0;
-	PathLines.prototype.experienceGroupDY = 0;
+	/* Translate coordinates for the elements of the experienceGroup within the svg */
+	PathLines.prototype.experienceGroupDX = 40;
+	PathLines.prototype.experienceGroupDY = 37;
 	
 	PathLines.prototype.guideHSpacing = 30;
 	PathLines.prototype.labelYs = [11, 33];
@@ -537,7 +647,6 @@ var PathLines = (function() {
 	/* Returns the total height of the items in g. */
 	PathLines.prototype._setCoordinates = function(g)
 	{
-		var lastFlag = null;
 		var _this = this;
 
 		var numColumns = 7;
@@ -545,26 +654,26 @@ var PathLines = (function() {
 		for (var i = 0; i < numColumns; ++i)
 			columns[i] = [];
 
+		var nextY = 0;
 		g.each(function(fd, i)
 			{
 				fd.x = _this.guideHSpacing * (fd.column);
 				var column = columns[fd.column];
 				column.push(fd);
-				for (var i = column.length - 2; i >= 0; --i)
+				for (var j = column.length - 2; j >= 0; --j)
 				{
-					var lastFD = column[i];
-					if (column[i].getStartDate() < fd.getEndDate())
+					var lastFD = column[j];
+					if (lastFD.getStartDate() < fd.getEndDate())
 					{
-						fd.x = column[i].x + _this.poleSpacing;
+						fd.x = lastFD.x + _this.poleSpacing;
 						break;
 					}
 				}
 				
-				fd.y = lastFlag ? lastFlag.y + _this.flagHeight + _this.flagSpacing : _this.experiencesTop;
-				lastFlag = fd;
+				fd.y = nextY;
+				nextY += _this.flagHeight + _this.flagSpacing;
 			});
 			
-		
 		g.each(function(fd, i)
 			{
 				fd.y2 = fd.y + _this.flagHeight;
@@ -579,117 +688,8 @@ var PathLines = (function() {
 						break;
 				}
 			});
-		
-		 return lastFlag ? lastFlag.y + this.flagHeight : this.experiencesTop;
 	}
 	
-	PathLines.prototype.layoutYears = function(g)
-	{
-		var _this = this;
-		
-		this.yearGroup.selectAll('text').remove();
-		var yearHeight = this.flagHeight / 2;
-		var fds = g.data();
-		fds.forEach(function(fd)
-		{
-			fd.yearBounds = fd.getYearArray();
-		});
-		
-		// Eliminate aboves >= aboves, tops or belows of previous items.
-		for (var i = 0; i < fds.length - 1; ++i)
-		{
-			var fdi = fds[i];
-			var ybi = fdi.yearBounds;
-			var ybj = fds[i+1].yearBounds;
-			if (ybi.top == ybi.bottom ||
-			    ybi.top == ybj.top ||
-			    ybi.top == ybj.bottom)
-			    ybi.top = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
-				for (var j = i + 1; j < fds.length; ++j)
-				{
-					var fdj = fds[j];
-					vybj = fdj.yearBounds;
-					if (ybi.top == ybj.top ||
-						ybi.top == ybj.bottom)
-					{
-						ybi.top = undefined;
-						break;
-					}
-				}
-			}
-			
-			ybj = fds[i+1].yearBounds;
-			if (ybi.bottom == ybj.top)
-				ybi.bottom = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
-				for (var j = i + 1; j < fds.length; ++j)
-				{
-					var fdj = fds[j];
-					if (fdj.y < fdi.y2 && fdj.y2 >= fdi.y2)	/* If this crosses the bottom,  */
-					{
-						if (j < fds.length - 1)
-						{
-							var isShortFlagpole = fdj.y + this.flagHeight == fdj.y2;
-							var fdk = fds[j+1];
-							/* If the item after i's flag-pole has the same top year
-									then eliminate i's bottom (it is a duplicate year marker). 
-								or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
-									then if that item doesn't extend below i,
-										then eliminate i's bottom (two labels will overlap)
-									otherwise, if the lower item's top is the same as i's bottom,
-										then eliminate the lower item's top (it is a duplicate year marker and higher.)
-								otherwise, eliminate j's top.
-							 */
-							if (isShortFlagpole && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
-								fdi.yearBounds.bottom = undefined;
-							else if (fdj.yearBounds.bottom < fdi.yearBounds.bottom)
-							{
-								if (isShortFlagpole)
-									fdi.yearBounds.bottom = undefined;
-								else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
-									fdj.yearBounds.top = undefined;
-							}
-							else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
-							{
-								if (fdj.y2 <= fdi.y2 + this.flagSpacing)
-								{
-									// The bottoms overlap.
-									if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
-										fdi.yearBounds.bottom = undefined;
-									else
-										fdj.yearBounds.bottom = undefined;
-								}
-							}
-						}
-						else
-							fdj.yearBounds.top = undefined;
-						if (!fdi.yearBounds.bottom)
-							break;
-					}
-				}
-			}
-		}
-		
-		fds.forEach(function(fd)
-		{
-			if (fd.yearBounds.top)
-			{
-				_this.yearGroup.append('text')
-					.text(fd.yearBounds.top)
-					.attr("x", _this.textLeftMargin)
-					.attr('y', fd.y + yearHeight);
-			}
-			if (fd.yearBounds.bottom)
-			{
-				_this.yearGroup.append('text')
-					.text(fd.yearBounds.bottom)
-					.attr("x", _this.textLeftMargin)
-					.attr('y', fd.y2);
-			}
-		});
-	}
-
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
@@ -719,10 +719,8 @@ var PathLines = (function() {
 		/* Restore the sort order to startDate/endDate */
 		g.sort(this._compareExperiences);
 	
-		var flagHeights = this._setCoordinates(g);
+		this._setCoordinates(g);
 		
-		this.setupHeights();
-			
 		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y); });
 		
 		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
@@ -731,9 +729,6 @@ var PathLines = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return fd.y2 - fd.y; });
 			
-		g.selectAll('text.flag-label')
-			.attr('x', this.textDetailLeftMargin);
-		
 		if (this.detailFlagData != null)
 		{
 			/*( Restore the detailFlagData */
@@ -756,6 +751,7 @@ var PathLines = (function() {
 		
 		this.layoutYears(g);
 		
+		this.setupHeights();
 		this.setupWidths();
 	}
 
@@ -905,7 +901,7 @@ var PathLines = (function() {
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
 		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.dataLeftMargin + this.experienceGroupDX, y + this.experienceGroupDY));
+		                      "translate({0},{1})".format(x + this.experienceGroupDX, y + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 			.attr("x", this.detailRectX)	/* half the stroke width */;
@@ -1048,31 +1044,33 @@ var PathLines = (function() {
 		
 		if (duration > 0)
 		{
+			var topToContainer = y + this.experienceGroupDY;
+			var bottomToContainer = topToContainer + this.detailRectHeight;
+			var leftToContainer = x + this.experienceGroupDX;
+			var rightToContainer = leftToContainer + rectWidth;
+			
 			if (this.containerDiv.scrollTop < 
-				(parseFloat(this.pathwayContainer.style('top')) + y + this.experienceGroupDY + this.detailRectHeight) - ($(this.containerDiv).height() - this.bottomNavHeight))
+				(parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight))
 			{
 				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format((parseFloat(this.pathwayContainer.style('top')) + y + this.experienceGroupDY + this.detailRectHeight) - ($(this.containerDiv).height() - this.bottomNavHeight)) });
+					{ scrollTop: "{0}px".format((parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight)) });
 			}
-			else if (this.containerDiv.scrollTop > 
-					 (y + this.experienceGroupDY))
+			else if (this.containerDiv.scrollTop > topToContainer)
 			{
 				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format(y + this.experienceGroupDY) });
+					{ scrollTop: "{0}px".format(topToContainer) });
 			}
 		
 			if (this.containerDiv.scrollLeft < 
-				x + this.dataLeftMargin + this.experienceGroupDX + rectWidth - $(this.containerDiv).width())
+				rightToContainer - $(this.containerDiv).width())
 			{
 				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(x + this.dataLeftMargin + this.experienceGroupDX + 
-						rectWidth - $(this.containerDiv).width()) });
+					{ scrollLeft: "{0}px".format(rightToContainer - $(this.containerDiv).width()) });
 			}
-			else if (this.containerDiv.scrollLeft >
-					 (x + this.dataLeftMargin + this.experienceGroupDX))
+			else if (this.containerDiv.scrollLeft > leftToContainer)
 			{
 				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(x + this.dataLeftMargin + this.experienceGroupDX) });
+					{ scrollLeft: "{0}px".format(leftToContainer) });
 			}
 		}
 	}
@@ -1202,7 +1200,7 @@ var PathLines = (function() {
 		
 		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
-		var flagHeights = (lastFlag.size() ? lastFlag.datum().y + this.flagHeight + this.experienceGroupDY : this.experiencesTop) + this.bottomNavHeight;
+		var flagHeights = (lastFlag.size() ? lastFlag.datum().y + this.flagHeight + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
 			svgHeight = flagHeights;
 
@@ -1219,14 +1217,14 @@ var PathLines = (function() {
 		
 		if (this.detailFlagData != null)
 		{
-			var w = this.dataLeftMargin + this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
+			var w = this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
 			if (newWidth < w)
 				newWidth = w;
 		}
 		
 		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
-				var w = _this.dataLeftMargin +  _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
+				var w = _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
 				if (newWidth < w)
 					newWidth = w;
 			});
@@ -1237,12 +1235,12 @@ var PathLines = (function() {
 		if (this.promptAddText)
 		{
 			this.loadingText
-				.attr("y", this.experiencesTop + this.loadingText.node().getBBox().height);
+				.attr("y", this.experienceGroupDY + this.loadingText.node().getBBox().height);
 	
 			var bbox = this.loadingText.node().getBBox();
 			var newBBox = this.promptAddText.node().getBBox();
 			if (bbox.x + bbox.width + this.textLeftMargin + newBBox.width >
-				newWidth - this.dataLeftMargin - this.promptRightMargin)
+				newWidth - this.experienceGroupDX - this.promptRightMargin)
 			{
 				this.promptAddText.attr("x", this.loadingText.attr("x"))
 					.attr("y", parseFloat(this.loadingText.attr("y")) + bbox.height);
@@ -1264,7 +1262,7 @@ var PathLines = (function() {
 	{
 		var _this = this;
 		this.loadingText = this.svg.append('text')
-			.attr("x", this.dataLeftMargin).attr("y", this.experiencesTop)
+			.attr("x", this.experienceGroupDX).attr("y", this.experienceGroupDY)
 			.attr("fill", "#777")
 			.text('Ready to record an experience?');
 		
@@ -1287,7 +1285,6 @@ var PathLines = (function() {
 				d3.event.preventDefault();
 			})
 			.attr("cursor", "pointer");
-		
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
@@ -1328,7 +1325,7 @@ var PathLines = (function() {
 				
 		this.guideGroup = this.svg.append('g')
 				.classed("guide", true)
-				.attr('transform', "translate({0}, 0)".format(_this.dataLeftMargin));
+				.attr('transform', "translate({0}, 0)".format(_this.experienceGroupDX));
 				
 		var guides = this.guideGroup.selectAll('g')
 			.data(this.backgroundData)
@@ -1367,7 +1364,7 @@ var PathLines = (function() {
 		
 		this.experienceGroup = this.svg.append('g')
 				.classed("experiences", true)
-				.attr('transform', 'translate({0},{1})'.format(_this.dataLeftMargin + this.experienceGroupDX, this.experienceGroupDY));
+				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
 			
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)

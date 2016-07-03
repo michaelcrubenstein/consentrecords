@@ -172,6 +172,31 @@ var FollowingPanel = (function() {
 		var buttons = appendViewButtons(sections, function(buttons)
 			{
 				appendRightChevrons(buttons);
+				
+				buttons.append("div")
+					.classed("info-button right-fixed-width-div", true)
+					.on("click", function(user) {
+						if (prepareClick('click', 'compare to: ' + user.getDescription()))
+						{
+							user.checkCells([], function()
+							{
+								try
+								{
+									var panel = new ComparePathsPanel(_this.user, user, _this.node());
+									showPanelUp(panel.node(), unblockClick);
+								}
+								catch(err)
+								{
+									syncFailFunction(err);
+								}
+							},
+							syncFailFunction);
+						}
+						d3.event.preventDefault();
+						d3.event.stopPropagation();
+					})
+					.append("img")
+					.attr("src", compareImagePath);
 		
 				buttons.append('div').classed("left-expanding-div description-text", true)
 					.text(_getDataDescription);
@@ -183,7 +208,7 @@ var FollowingPanel = (function() {
 					showUser(user, _this.node());
 				}
 			});
-		
+			
 		return buttons;
 	}
 
