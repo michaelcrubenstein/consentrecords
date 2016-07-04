@@ -14,100 +14,11 @@
 		cursor: pointer;
 	}
 	
-	panel.compare-paths tspan.address-line {
-		font-size: smaller;
-		fill: #555;
-	}
-	
-	panel.compare-paths tspan.tags {
-		font-size: smaller;
-		fill: #555;
-	}
-	
-	panel.compare-paths .settings>img {
-		width: 22px;
-		height: 22px;
-	}
-	
-	panel.compare-paths .add-experience-button {
-		font-size: 28px;
-		line-height: 18px;
-	}
-
-	panel.compare-paths span.badge {
-		background-color: #2C55CC;
-		position: relative;
-		left: -3px;
-		top: -3px;
-		font-weight: normal;
-		padding: 3px 5px;
-	}
-	
-	panel.compare-paths span.badge:hover {
-		background-color: #2222FF;
-	}
-	
 	div.compare-paths {
 		position: relative;
 		top: 45px;
 	}
 	
-	svg.compare-paths g.detail {
-		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-		font-size: 1em;
-	}
-	
-	svg.compare-paths g.detail rect.bg {
-		fill: white;
-	}
-		
-	svg.compare-paths g.detail rect.detail {
-		fill-opacity: 0.2;
-		stroke-width: 0;
-		stroke-opacity: 0.0;
-	}
-		
-	svg.compare-paths g text {
-		font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
-		font-size: .7em;
-	}
-	
-	svg.compare-paths g.year text {
-		font-size: .7em;
-		fill: #777;
-	}
-	
-	svg.compare-paths g.guide line.column {
-		stroke-width: 2;
-		stroke-opacity: 0.1;
-	}
 	svg.compare-paths g.guide text.column-label {
-		font-size: 0.7em;
-		text-anchor: middle;
-		fill: #777;
-		stroke-width: .3
-	}
-	svg.compare-paths g.guide rect.column-icon {
-		stroke-width: 2;
-		stroke-opacity: 0.0;
-		fill-opacity: 0.0;
-	}
-	svg.compare-paths g.experiences g.flag rect.opaque {
-		fill-opacity: 1.0;
-		fill: white;
-		stroke-opacity: 0.0;
-	}
-	svg.compare-paths g.experiences rect.bg {
-		fill-opacity: 0.2;
-		stroke-opacity: 0.0;
-	}
-	svg.compare-paths g.experiences line.flag-pole {
-		stroke-opacity: 0.6;
-		stroke-width: 3;
-	}
-	svg.compare-paths .flag-label {	/* For both flags and detail panels */
-		fill: #222;
 		text-anchor: start;
-		font-weight: 500;
 	}
-

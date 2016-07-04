@@ -98,9 +98,6 @@ var ComparePath = (function() {
 	ComparePath.prototype = new PathView();
 	ComparePath.prototype.poleSpacing = 4;
 	
-	ComparePath.prototype.flagHeight = 20;
-	ComparePath.prototype.flagSpacing = 2;
-	
 	ComparePath.prototype.textLeftMargin = 3;
 	ComparePath.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	ComparePath.prototype.textDetailRightMargin = 7; /* textRightMargin; */
@@ -135,13 +132,6 @@ var ComparePath = (function() {
 
 	ComparePath.prototype.flagWidth = 0;
 	
-	ComparePath.prototype.backgroundData = [{name: "Housing", labelY: ComparePath.prototype.labelYs[0], color: "#804040"},
-							  {name: "School", labelY: ComparePath.prototype.labelYs[1], color: "#2828E7"},
-							  {name: "Interests", labelY: ComparePath.prototype.labelYs[0], color: "#8328E7"},
-							  {name: "Career", labelY: ComparePath.prototype.labelYs[1], color: "#805050"},
-							  {name: "Giving Back", labelY: ComparePath.prototype.labelYs[0], color: "#D55900"},
-							  {name: "Wellness", labelY: ComparePath.prototype.labelYs[1], color: "#0694F3"},
-							  {name: "Other", labelY: ComparePath.prototype.labelYs[0], color: "#0BBB0B"}];
 	ComparePath.prototype.columnData = [{labelY: PathView.prototype.labelYs[0], color: "#666"}, 
 										{labelY: PathView.prototype.labelYs[0], color: "#666"}];
 
@@ -214,52 +204,6 @@ var ComparePath = (function() {
 				compareDates(a.getStartAge(), b.getStartAge());
 	}
 	
-	/* Sets the x, y and y2 coordinates of each flag. */
-	ComparePath.prototype._setCoordinates = function(g)
-	{
-		var _this = this;
-		
-		var numColumns = 2;
-		var columns = new Array(numColumns);
-		for (var i = 0; i < numColumns; ++i)
-			columns[i] = [];
-
-		var nextY = 0;
-		g.each(function(fd, i)
-			{
-				fd.x = _this.guideHSpacing * (fd.column);
-				var column = columns[fd.column];
-				column.push(fd);
-				for (var j = column.length - 2; j >= 0; --j)
-				{
-					var lastFD = column[j];
-					if (lastFD.getStartAge() < fd.getEndAge())
-					{
-						fd.x = lastFD.x + _this.poleSpacing;
-						break;
-					}
-				}
-				
-				fd.y = nextY;
-				nextY += _this.flagHeight + _this.flagSpacing;
-			});
-			
-		g.each(function(fd, i)
-			{
-				fd.y2 = fd.y + _this.flagHeight;
-				var parent = d3.select(this.parentNode);
-				for (var j = i + 1; j < g.size(); ++j)
-				{
-					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
-					nextDatum = n.datum();
-					if (nextDatum.getEndAge() > fd.getStartAge())
-						fd.y2 = nextDatum.y + _this.flagHeight;
-					else
-						break;
-				}
-			});
-	}
-	
 	ComparePath.prototype.getColumn = function(fd)
 	{
 		if (fd.experience.cell.parent == this.rightPath)
@@ -307,7 +251,7 @@ var ComparePath = (function() {
 		tempY.remove();
 		
 		g.selectAll('rect')
-			.attr('height', this.flagHeight)
+			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
 					return $(this.parentNode).children('text').outerWidth() + 5;
@@ -318,13 +262,13 @@ var ComparePath = (function() {
 	
 		this._setCoordinates(g);
 		
-		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y); });
+		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 		
 		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
 			to the fd.y position.
 		 */
 		g.selectAll('line.flag-pole')
-			.attr('y2', function(fd) { return fd.y2 - fd.y; });
+			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 			
 		if (this.detailFlagData != null)
 		{
@@ -445,7 +389,7 @@ var ComparePath = (function() {
 		{
 			checkSpacing("2px");
 			tspan = detailText.append('tspan')
-				.classed('address-line', true)
+				.classed('site', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
 				.attr("dy", this.detailTextSpacing);
@@ -473,24 +417,15 @@ var ComparePath = (function() {
 		s = getTagList(fd.experience);
 		if (s && s.length > 0)
 		{
-			var text = d3.select(this),
-				words = s.split(/\s+/).reverse(),
-				word,
-				line = [];
 			checkSpacing("4px");
-			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true);
-			while (word = words.pop()) {
-			  line.push(word);
-			  tspan.text(line.join(" "));
-			  if (tspan.node().getComputedTextLength() > maxWidth) {
-				line.pop();
-				tspan.text(line.join(" "));
-				tspan.attr("dy", this.detailTextSpacing);
-				line = [word];
-				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true).text(word);
-			  }
-			}
-			tspan.attr("dy", this.detailTextSpacing);
+			this.appendWrappedText(s, function()
+				{
+					return detailText.append("tspan")
+						.classed('tags', true)
+						.attr("x", _this.textDetailLeftMargin)
+						.attr("dy", _this.detailTextSpacing);
+				},
+				maxWidth);
 		}
 
 			
@@ -498,7 +433,7 @@ var ComparePath = (function() {
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
 		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.experienceGroupDX, y + this.experienceGroupDY));
+		                      "translate({0},{1})".format(x + this.experienceGroupDX, (y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 			.attr("x", this.detailRectX)	/* half the stroke width */;
@@ -641,34 +576,14 @@ var ComparePath = (function() {
 		
 		if (duration > 0)
 		{
-			var topToContainer = y + this.experienceGroupDY;
-			var bottomToContainer = topToContainer + this.detailRectHeight;
-			var leftToContainer = x + this.experienceGroupDX;
-			var rightToContainer = leftToContainer + rectWidth;
-			
-			if (this.containerDiv.scrollTop < 
-				(parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight))
-			{
-				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format((parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight)) });
-			}
-			else if (this.containerDiv.scrollTop > topToContainer)
-			{
-				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format(topToContainer) });
-			}
-		
-			if (this.containerDiv.scrollLeft < 
-				rightToContainer - $(this.containerDiv).width())
-			{
-				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(rightToContainer - $(this.containerDiv).width()) });
-			}
-			else if (this.containerDiv.scrollLeft > leftToContainer)
-			{
-				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(leftToContainer) });
-			}
+			this.scrollToRectangle(this.containerDiv, 
+							   {y: (y * this.emToPX) + this.experienceGroupDY,
+							    x: x + this.experienceGroupDX,
+							    height: this.detailRectHeight,
+							    width: rectWidth},
+							   parseFloat(this.pathwayContainer.style('top')),
+							   this.bottomNavHeight,
+							   duration);
 		}
 	}
 	
@@ -796,6 +711,33 @@ var ComparePath = (function() {
 			.attr('y2', 500)
 			.attr('stroke', function(d) { return d.color; });
 	
+		var leftCell = this.leftPath.getCell("More Experience");
+		var rightCell = this.rightPath.getCell("More Experience");
+		var addedFunction = function(eventObject, newData)
+			{
+				eventObject.data.addMoreExperience(newData);
+			}
+		$(leftCell).on("valueAdded.cr", null, this, addedFunction);
+		$(rightCell).on("valueAdded.cr", null, this, addedFunction);
+		$(this.pathwayContainer.node()).on("remove", function()
+			{
+				$(leftCell).off("valueAdded.cr", null, addedFunction);
+				$(rightCell).off("valueAdded.cr", null, addedFunction);
+			});
+			
+		var experiences = leftCell.data;
+		
+		this.allExperiences = this.allExperiences.concat(experiences);
+		
+		this.allExperiences = this.allExperiences.concat(rightCell.data);
+		$(rightCell.data).each(function() { this.calculateDescription(); });
+	
+		/* Ensure that all of the offerings have their associated cells. */
+		this.allExperiences.forEach(function(experience)
+			{
+				_this.checkOfferingCells(experience, null);
+			});
+			
 		var resizeFunction = function()
 		{
 			/* Wrap handleResize in a setTimeout call so that it happens after all of the
@@ -838,14 +780,14 @@ var ComparePath = (function() {
 		
 		if (this.detailFlagData != null)
 		{
-			var h = this.detailFlagData.y + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
+			var h = (this.detailFlagData.y * this.emToPX) + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
 			if (svgHeight < h)
 				svgHeight = h;
 		}
 		
 		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
-		var flagHeights = (lastFlag.size() ? lastFlag.datum().y + this.flagHeight + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
+		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
 			svgHeight = flagHeights;
 
@@ -919,7 +861,7 @@ var ComparePath = (function() {
 			.classed("compare-paths", true);
 			
 		this.svg = this.pathwayContainer.append('svg')
-			.classed("compare-paths", true);
+			.classed("pathway compare-paths", true);
 		
 		this.defs = this.svg.append('defs');
 	
@@ -985,33 +927,6 @@ var ComparePath = (function() {
 		{
 			if (_this.leftPath == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
-				
-			var leftCell = _this.leftPath.getCell("More Experience");
-			var rightCell = _this.rightPath.getCell("More Experience");
-			var addedFunction = function(eventObject, newData)
-				{
-					eventObject.data.addMoreExperience(newData);
-				}
-			$(leftCell).on("valueAdded.cr", null, _this, addedFunction);
-			$(rightCell).on("valueAdded.cr", null, _this, addedFunction);
-			$(_this.pathwayContainer.node()).on("remove", function()
-				{
-					$(leftCell).off("valueAdded.cr", null, addedFunction);
-					$(rightCell).off("valueAdded.cr", null, addedFunction);
-				});
-				
-			var experiences = leftCell.data;
-			
-			_this.allExperiences = _this.allExperiences.concat(experiences);
-			
-			_this.allExperiences = _this.allExperiences.concat(rightCell.data);
-			$(rightCell.data).each(function() { this.calculateDescription(); });
-		
-			/* Ensure that all of the offerings have their associated cells. */
-			_this.allExperiences.forEach(function(experience)
-				{
-					_this.checkOfferingCells(experience, null);
-				});
 				
 			_this.showAllExperiences();
 			

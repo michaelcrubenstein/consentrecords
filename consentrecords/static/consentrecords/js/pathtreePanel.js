@@ -118,7 +118,7 @@ var FlagData = (function() {
 	FlagData.prototype.getColor = function()
 	{
 		var column = this.getColumn();
-		return PathLines.prototype.backgroundData[column].color;
+		return PathLines.prototype.guideData[column].color;
 	}
 	
 	FlagData.prototype.colorElement = function(r)
@@ -149,6 +149,11 @@ var PathView = (function() {
 	
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
+	PathView.prototype.yearTextX = "3.0em";
+	PathView.prototype.flagHeight = 20;
+	PathView.prototype.flagHeightEM = 2.333;
+	PathView.prototype.flagSpacing = 2;
+	PathView.prototype.flagSpacingEM = 0.1;
 
 	/* Variables related to the detail rectangle. */
 	PathView.prototype.nextClipID = 1;
@@ -159,6 +164,39 @@ var PathView = (function() {
 	PathView.prototype.detailFrontRect = null;
 	PathView.prototype.detailRectHeight = 0;
 	PathView.prototype.detailFlagData = null;
+	
+	PathView.prototype.guideHSpacing = 30;
+	PathView.prototype.labelYs = [11, 33];
+	PathView.prototype.guideData = [{name: "Housing", labelY: PathView.prototype.labelYs[0], color: "#804040"},
+							  {name: "School", labelY: PathView.prototype.labelYs[1], color: "#2828E7"},
+							  {name: "Interests", labelY: PathView.prototype.labelYs[0], color: "#8328E7"},
+							  {name: "Career", labelY: PathView.prototype.labelYs[1], color: "#805050"},
+							  {name: "Giving Back", labelY: PathView.prototype.labelYs[0], color: "#D55900"},
+							  {name: "Wellness", labelY: PathView.prototype.labelYs[1], color: "#0694F3"},
+							  {name: "Other", labelY: PathView.prototype.labelYs[0], color: "#0BBB0B"}];
+							  
+	PathView.prototype.emToPX = 11;
+							  
+	PathView.prototype.appendWrappedText = function(s, newSpan, maxWidth)
+	{
+		var words = s.split(/\s+/).reverse(),
+			word,
+			line = [];
+		tspan = newSpan(0);
+		var nextIndex = 1;
+		
+		while (word = words.pop()) {
+			line.push(word);
+			tspan.text(line.join(" "));
+			if (tspan.node().getComputedTextLength() > maxWidth) {
+				line.pop();
+				tspan.text(line.join(" "));
+				line = [word];
+				tspan = newSpan(nextIndex).text(word);
+				++nextIndex;
+			}
+		}
+	}
 	
 	PathView.prototype.handleChangeServices = function(r, fd)
 	{
@@ -398,7 +436,7 @@ var PathView = (function() {
 		var _this = this;
 		
 		this.yearGroup.selectAll('text').remove();
-		var yearHeight = this.flagHeight / 2;
+		var yearHeight = this.flagHeightEM / 2;
 		var fds = g.data();
 		fds.forEach(function(fd)
 		{
@@ -415,7 +453,7 @@ var PathView = (function() {
 			    ybi.top == ybj.top ||
 			    ybi.top == ybj.bottom)
 			    ybi.top = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
+			else if (fdi.y2 > fdi.y + this.flagHeightEM) {	/* Overlapping flag-pole */
 				for (var j = i + 1; j < fds.length; ++j)
 				{
 					var fdj = fds[j];
@@ -432,7 +470,7 @@ var PathView = (function() {
 			ybj = fds[i+1].yearBounds;
 			if (ybi.bottom == ybj.top)
 				ybi.bottom = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeight) {	/* Overlapping flag-pole */
+			else if (fdi.y2 > fdi.y + this.flagHeightEM) {	/* Overlapping flag-pole */
 				for (var j = i + 1; j < fds.length; ++j)
 				{
 					var fdj = fds[j];
@@ -492,17 +530,98 @@ var PathView = (function() {
 			{
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.top)
-					.attr("x", _this.textLeftMargin)
-					.attr('y', _this.experienceGroupDY + fd.y + yearHeight);
+					.attr("x", _this.yearTextX)
+					.attr('y', _this.experienceGroupDY + (fd.y + yearHeight) * _this.emToPX);
 			}
 			if (fd.yearBounds.bottom)
 			{
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.bottom)
-					.attr("x", _this.textLeftMargin)
-					.attr('y', _this.experienceGroupDY + fd.y2);
+					.attr("x", _this.yearTextX)
+					.attr('y', _this.experienceGroupDY + (fd.y2 * _this.emToPX));
 			}
 		});
+	}
+	
+	/* Sets the x, y and y2 coordinates of each flag. */
+	PathView.prototype._setCoordinates = function(g)
+	{
+		var _this = this;
+
+		var numColumns = this.columnData.length;
+		var columns = new Array(numColumns);
+		for (var i = 0; i < numColumns; ++i)
+			columns[i] = [];
+
+		var nextY = 0;
+		g.each(function(fd, i)
+			{
+				fd.x = _this.guideHSpacing * (fd.column);
+				var column = columns[fd.column];
+				column.push(fd);
+				for (var j = column.length - 2; j >= 0; --j)
+				{
+					var lastFD = column[j];
+					if (lastFD.getStartDate() < fd.getEndDate())
+					{
+						fd.x = lastFD.x + _this.poleSpacing;
+						break;
+					}
+				}
+				
+				fd.y = nextY;
+				nextY += _this.flagHeightEM + _this.flagSpacingEM;
+			});
+			
+		g.each(function(fd, i)
+			{
+				fd.y2 = fd.y + _this.flagHeightEM;
+				var parent = d3.select(this.parentNode);
+				for (var j = i + 1; j < g.size(); ++j)
+				{
+					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
+					nextDatum = n.datum();
+					if (nextDatum.getEndDate() > fd.getStartDate())
+						fd.y2 = nextDatum.y + _this.flagHeightEM;
+					else
+						break;
+				}
+			});
+	}
+	
+	/*
+		r has x, y, height and width for the rectangle to be displayed.
+		bottomPadding: number of pixels below r that must be visible within container.
+		topMargin: number of pixels above r that need not be visible when scrolling up.
+	 */
+	PathView.prototype.scrollToRectangle = function(container, r, topPadding, bottomPadding, duration)
+	{
+		var bottomToContainer = r.y + r.height;
+		var rightToContainer = r.x + r.width;
+		
+		if (container.scrollTop < 
+			(topPadding + bottomToContainer + bottomPadding - $(container).height()))
+		{
+			$(container).animate(
+				{ scrollTop: "{0}px".format(topPadding + bottomToContainer + bottomPadding - ($(container).height())) });
+		}
+		else if (container.scrollTop > r.y)
+		{
+			$(container).animate(
+				{ scrollTop: "{0}px".format(r.y) });
+		}
+	
+		if (container.scrollLeft < 
+			rightToContainer - $(container).width())
+		{
+			$(container).animate(
+				{ scrollLeft: "{0}px".format(rightToContainer - $(container).width()) });
+		}
+		else if (container.scrollLeft > r.x)
+		{
+			$(container).animate(
+				{ scrollLeft: "{0}px".format(r.x) });
+		}
 	}
 	
 	function PathView(sitePanel, containerDiv)
@@ -531,10 +650,7 @@ var PathView = (function() {
 var PathLines = (function() {
 	PathLines.prototype = new PathView();
 	PathLines.prototype.poleSpacing = 4;
-	
-	PathLines.prototype.flagHeight = 20;
-	PathLines.prototype.flagSpacing = 2;
-	
+		
 	PathLines.prototype.textLeftMargin = 3;
 	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
@@ -549,9 +665,6 @@ var PathLines = (function() {
 	PathLines.prototype.experienceGroupDX = 40;
 	PathLines.prototype.experienceGroupDY = 37;
 	
-	PathLines.prototype.guideHSpacing = 30;
-	PathLines.prototype.labelYs = [11, 33];
-
 	PathLines.prototype.detailRectX = 1.5;
 	
 	PathLines.prototype.pathwayContainer = null;
@@ -567,13 +680,7 @@ var PathLines = (function() {
 
 	PathLines.prototype.flagWidth = 0;
 	
-	PathLines.prototype.backgroundData = [{name: "Housing", labelY: PathLines.prototype.labelYs[0], color: "#804040"},
-							  {name: "School", labelY: PathLines.prototype.labelYs[1], color: "#2828E7"},
-							  {name: "Interests", labelY: PathLines.prototype.labelYs[0], color: "#8328E7"},
-							  {name: "Career", labelY: PathLines.prototype.labelYs[1], color: "#805050"},
-							  {name: "Giving Back", labelY: PathLines.prototype.labelYs[0], color: "#D55900"},
-							  {name: "Wellness", labelY: PathLines.prototype.labelYs[1], color: "#0694F3"},
-							  {name: "Other", labelY: PathLines.prototype.labelYs[0], color: "#0BBB0B"}];
+	PathLines.prototype.columnData = PathView.prototype.guideData;
 
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
@@ -644,52 +751,6 @@ var PathLines = (function() {
 				compareDates(a.getStartDate(), b.getStartDate());
 	}
 	
-	/* Returns the total height of the items in g. */
-	PathLines.prototype._setCoordinates = function(g)
-	{
-		var _this = this;
-
-		var numColumns = 7;
-		var columns = new Array(numColumns);
-		for (var i = 0; i < numColumns; ++i)
-			columns[i] = [];
-
-		var nextY = 0;
-		g.each(function(fd, i)
-			{
-				fd.x = _this.guideHSpacing * (fd.column);
-				var column = columns[fd.column];
-				column.push(fd);
-				for (var j = column.length - 2; j >= 0; --j)
-				{
-					var lastFD = column[j];
-					if (lastFD.getStartDate() < fd.getEndDate())
-					{
-						fd.x = lastFD.x + _this.poleSpacing;
-						break;
-					}
-				}
-				
-				fd.y = nextY;
-				nextY += _this.flagHeight + _this.flagSpacing;
-			});
-			
-		g.each(function(fd, i)
-			{
-				fd.y2 = fd.y + _this.flagHeight;
-				var parent = d3.select(this.parentNode);
-				for (var j = i + 1; j < g.size(); ++j)
-				{
-					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
-					nextDatum = n.datum();
-					if (nextDatum.getEndDate() > fd.getStartDate())
-						fd.y2 = nextDatum.y + _this.flagHeight;
-					else
-						break;
-				}
-			});
-	}
-	
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
@@ -710,7 +771,7 @@ var PathLines = (function() {
 		tempY.remove();
 		
 		g.selectAll('rect')
-			.attr('height', this.flagHeight)
+			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
 					return $(this.parentNode).children('text').outerWidth() + 5;
@@ -721,13 +782,13 @@ var PathLines = (function() {
 	
 		this._setCoordinates(g);
 		
-		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y); });
+		g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 		
 		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
 			to the fd.y position.
 		 */
 		g.selectAll('line.flag-pole')
-			.attr('y2', function(fd) { return fd.y2 - fd.y; });
+			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 			
 		if (this.detailFlagData != null)
 		{
@@ -848,7 +909,7 @@ var PathLines = (function() {
 		{
 			checkSpacing("2px");
 			tspan = detailText.append('tspan')
-				.classed('address-line', true)
+				.classed('site', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
 				.attr("dy", this.detailTextSpacing);
@@ -876,24 +937,16 @@ var PathLines = (function() {
 		s = getTagList(fd.experience);
 		if (s && s.length > 0)
 		{
-			var text = d3.select(this),
-				words = s.split(/\s+/).reverse(),
-				word,
-				line = [];
 			checkSpacing("4px");
-			tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true);
-			while (word = words.pop()) {
-			  line.push(word);
-			  tspan.text(line.join(" "));
-			  if (tspan.node().getComputedTextLength() > maxWidth) {
-				line.pop();
-				tspan.text(line.join(" "));
-				tspan.attr("dy", this.detailTextSpacing);
-				line = [word];
-				tspan = detailText.append("tspan").attr("x", this.textDetailLeftMargin).classed('tags', true).text(word);
-			  }
-			}
-			tspan.attr("dy", this.detailTextSpacing);
+			
+			this.appendWrappedText(s, function()
+				{
+					return detailText.append("tspan")
+						.classed('tags', true)
+						.attr("x", _this.textDetailLeftMargin)
+						.attr("dy", _this.detailTextSpacing);
+				},
+				maxWidth);
 		}
 
 			
@@ -901,7 +954,7 @@ var PathLines = (function() {
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
 		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.experienceGroupDX, y + this.experienceGroupDY));
+		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
 			.attr("width", rectWidth)
 			.attr("x", this.detailRectX)	/* half the stroke width */;
@@ -1044,34 +1097,14 @@ var PathLines = (function() {
 		
 		if (duration > 0)
 		{
-			var topToContainer = y + this.experienceGroupDY;
-			var bottomToContainer = topToContainer + this.detailRectHeight;
-			var leftToContainer = x + this.experienceGroupDX;
-			var rightToContainer = leftToContainer + rectWidth;
-			
-			if (this.containerDiv.scrollTop < 
-				(parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight))
-			{
-				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format((parseFloat(this.pathwayContainer.style('top')) + bottomToContainer) - ($(this.containerDiv).height() - this.bottomNavHeight)) });
-			}
-			else if (this.containerDiv.scrollTop > topToContainer)
-			{
-				$(this.containerDiv).animate(
-					{ scrollTop: "{0}px".format(topToContainer) });
-			}
-		
-			if (this.containerDiv.scrollLeft < 
-				rightToContainer - $(this.containerDiv).width())
-			{
-				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(rightToContainer - $(this.containerDiv).width()) });
-			}
-			else if (this.containerDiv.scrollLeft > leftToContainer)
-			{
-				$(this.containerDiv).animate(
-					{ scrollLeft: "{0}px".format(leftToContainer) });
-			}
+			this.scrollToRectangle(this.containerDiv, 
+							   {y: (y * this.emToPX) + this.experienceGroupDY,
+							    x: x + this.experienceGroupDX,
+							    height: this.detailRectHeight,
+							    width: rectWidth},
+							   parseFloat(this.pathwayContainer.style('top')),
+							   this.bottomNavHeight,
+							   duration);
 		}
 	}
 	
@@ -1193,14 +1226,14 @@ var PathLines = (function() {
 		
 		if (this.detailFlagData != null)
 		{
-			var h = this.detailFlagData.y + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
+			var h = (this.detailFlagData.y * this.emToPX) + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
 			if (svgHeight < h)
 				svgHeight = h;
 		}
 		
 		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
-		var flagHeights = (lastFlag.size() ? lastFlag.datum().y + this.flagHeight + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
+		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
 			svgHeight = flagHeights;
 
@@ -1325,10 +1358,10 @@ var PathLines = (function() {
 				
 		this.guideGroup = this.svg.append('g')
 				.classed("guide", true)
-				.attr('transform', "translate({0}, 0)".format(_this.experienceGroupDX));
+				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
 				
 		var guides = this.guideGroup.selectAll('g')
-			.data(this.backgroundData)
+			.data(this.guideData)
 			.enter()
 			.append('g')
 			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
