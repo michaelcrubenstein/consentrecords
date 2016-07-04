@@ -130,6 +130,7 @@ var ComparePath = (function() {
 	ComparePath.prototype.loadingText = null;
 	ComparePath.prototype.promptAddText = null;
 	ComparePath.prototype.yearGroup = null;
+	ComparePath.prototype.guideGroup = null;
 	ComparePath.prototype.experienceGroup = null;
 
 	ComparePath.prototype.flagWidth = 0;
@@ -141,6 +142,8 @@ var ComparePath = (function() {
 							  {name: "Giving Back", labelY: ComparePath.prototype.labelYs[0], color: "#D55900"},
 							  {name: "Wellness", labelY: ComparePath.prototype.labelYs[1], color: "#0694F3"},
 							  {name: "Other", labelY: ComparePath.prototype.labelYs[0], color: "#0BBB0B"}];
+	ComparePath.prototype.columnData = [{labelY: PathView.prototype.labelYs[0], color: "#666"}, 
+										{labelY: PathView.prototype.labelYs[0], color: "#666"}];
 
 	ComparePath.prototype.handleValueDeleted = function(experience)
 	{
@@ -280,6 +283,24 @@ var ComparePath = (function() {
 		numColumns = 2;
 		this.guideHSpacing = (this.sitePanel.scrollAreaWidth() - this.experienceGroupDX) / numColumns;
 		
+		/* Space out all of the guides */
+		this.guideGroup.selectAll('g')
+			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
+			
+		this.guideGroup.selectAll('tspan').remove();
+		this.guideGroup.selectAll('g>text')
+			.each(function(d, i)
+				{
+					var t = d3.select(this);
+					_this.appendWrappedText(d.name, function(i)
+							{
+								return t.append("tspan")
+									.attr("x", 0)
+									.attr("dy", "{0}em".format(i));
+							},
+							_this.guideHSpacing - _this.textDetailRightMargin);
+				});
+
 		/* Make all of the flag rectangles twice the height of the year text. */
 		var tempY = this.yearGroup.append('text').text('2000');
 		this.flagHeight = 2 * tempY.node().getBBox().height;
@@ -717,6 +738,14 @@ var ComparePath = (function() {
 		g.each(function() { _this.setFlagText(this); });
 	}
 	
+	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
+	{
+		if (path.cell.parent)
+			return getUserDescription(path.cell.parent);
+		else
+			return "{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10)));
+	}
+	
 	ComparePath.prototype.handleResize = function()
 	{
 		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
@@ -733,6 +762,40 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
+		this.ageCalculators = {};
+		this.ageCalculators[this.leftPath.getValueID()] = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
+		this.ageCalculators[this.rightPath.getValueID()] = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+
+		this.columnData[0].name = this.getPathDescription(this.leftPath, this.ageCalculators[this.leftPath.getValueID()]);
+		this.columnData[1].name = this.getPathDescription(this.rightPath, this.ageCalculators[this.rightPath.getValueID()]);
+		
+		var guides = this.guideGroup.selectAll('g')
+			.data(this.columnData)
+			.enter()
+			.append('g');
+		
+		guides.append('rect')
+			.classed('column-icon', true)
+			.attr('x', -10)
+			.attr('y', function(d) { return d.labelY - 31; })
+			.attr('height', 20)
+			.attr('width', 20)
+			.attr('stroke', function(d) { return d.color; })
+			.attr('fill', function(d) { return d.color; });
+		guides.append('text')
+			.classed('column-label', true)
+			.attr('x', 0)
+			.attr('y', function(d, i) { return d.labelY; });
+		guides.append('line')
+			.classed('column', true)
+			.attr('x1', 0)
+			.attr('y1', function(d) { 
+				return d.labelY + 3 + (9 * (d.name.split(' ').length - 1)); 
+				})
+			.attr('x2', 0)
+			.attr('y2', 500)
+			.attr('stroke', function(d) { return d.color; });
+	
 		var resizeFunction = function()
 		{
 			/* Wrap handleResize in a setTimeout call so that it happens after all of the
@@ -788,6 +851,8 @@ var ComparePath = (function() {
 
 		$(this.svg.node()).height(svgHeight);
 		$(this.bg.node()).height(svgHeight);
+		this.guideGroup.selectAll('line')
+			.attr('y2', svgHeight - this.bottomNavHeight);
 	}
 	
 	ComparePath.prototype.setupWidths = function()
@@ -872,6 +937,10 @@ var ComparePath = (function() {
 		this.yearGroup = this.svg.append('g')
 			.classed('year', true);
 				
+		this.guideGroup = this.svg.append('g')
+				.classed("guide", true)
+				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
+				
 		this.experienceGroup = this.svg.append('g')
 				.classed("experiences", true)
 				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
@@ -917,10 +986,6 @@ var ComparePath = (function() {
 			if (_this.leftPath == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
 				
-			_this.ageCalculators = {}
-			_this.ageCalculators[_this.leftPath.getValueID()] = new AgeCalculator(_this.leftPath.getValue("Birthday").getDescription());
-			_this.ageCalculators[_this.rightPath.getValueID()] = new AgeCalculator(_this.rightPath.getValue("Birthday").getDescription());
-		
 			var leftCell = _this.leftPath.getCell("More Experience");
 			var rightCell = _this.rightPath.getCell("More Experience");
 			var addedFunction = function(eventObject, newData)
@@ -1022,7 +1087,7 @@ var ComparePathsPanel = (function () {
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
-		this.navContainer.appendTitle(getUserDescription(rightUser));
+		this.navContainer.appendTitle("Compare Paths");
 		
 		this.bottomNavContainer = this.appendBottomNavContainer();
 		this.bottomNavContainer.nav
