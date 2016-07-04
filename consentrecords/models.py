@@ -323,7 +323,8 @@ class Instance(dbmodels.Model):
         d = {'id': None, 
              'instanceID': self.id, 
              'description': self.getDescription(language),
-             'parentID': self.parent and self.parent.id}
+             'parentID': self.parent and self.parent.id,
+             'typeName': self.typeID.getDescription()}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             d["privilege"] = privilege.getDescription()
@@ -1006,13 +1007,14 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, userInfo, language=None):
-        d = { "id": self.id,
-              "instanceID" : self.referenceValue.id, 
-              "description": self.referenceValue.getDescription(language),
-              "position": self.position }
+        d = { 'id': self.id,
+              'instanceID' : self.referenceValue.id, 
+              'description': self.referenceValue.getDescription(language),
+              'position': self.position,
+              'typeName': self.referenceValue.typeID.getDescription() }
         privilege = self.referenceValue.getPrivilege(userInfo)
         if privilege:
-            d["privilege"] = privilege.getDescription()
+            d['privilege'] = privilege.getDescription()
         return d
             
     # Updates the value of the specified object

@@ -306,7 +306,6 @@ def acceptFollower(request):
                                 v.deepDelete(transactionState)
                         
                             data = newValue.getReferenceData(userInfo, language)
-                            data["typeName"] = newValue.referenceValue.typeID.getDescription()
                             results = {'success':True, 'object': data} 
         else:
             results = {'success':False, 'error': "user is not authenticated"}
@@ -359,7 +358,6 @@ def requestAccess(request):
                                 v = following.addReferenceValue(fieldTerm, follower, following.getNextElementIndex(fieldTerm), transactionState)
             
                                 data = v.getReferenceData(userInfo, language)
-                                data["typeName"] = v.referenceValue.typeID.getDescription()
                             
                                 # Send an email to the following user.
                                 protocol = "https://" if request.is_secure() else "http://"
@@ -837,9 +835,6 @@ class api:
                               'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
-        if 'type' in fields:
-            data['typeName'] = uuObject.typeID.getDescription();
-                
         valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
             .order_by('position')\
             .select_related('field')\
@@ -962,7 +957,9 @@ class api:
             for termName in a:
                 term = terms[termName]
                 uuObjects = Instance.objects.filter(typeID=term, 
-                                                    deleteTransaction__isnull=True)
+                                                    deleteTransaction__isnull=True)\
+                                            .select_related('typeID')\
+                                            .select_related('description')
                 
                 if len(testValue) >= 3:
                     vFilter = Value.objects.filter(field=terms.name, 
@@ -1015,7 +1012,6 @@ class api:
             .select_related('referenceValue')\
             .select_related('referenceValue__description')
         data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
-        data['typeName'] = v.referenceValue.typeID.getDescription();
         return data;
     
     def getCellData(user, data):
