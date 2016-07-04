@@ -52,7 +52,6 @@ export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
 tar -xf c.tar
 
 # Remove unused production files
-rm c.tar
 rm consentrecords/__pycache__/* 
 rm consentrecords/migrations/__pycache__/* 
 rm custom_user/__pycache__/* 
@@ -70,6 +69,8 @@ django-admin collectstatic --noinput
 python3 manage.py migrate
 # python3 maintenance/initializefacts.py michaelcrubenstein@gmail.com
 # python3 maintenance/updatenulldescriptions.py michaelcrubenstein@gmail.com
+
+rm c.tar
 
 cd ../..
 eb deploy
