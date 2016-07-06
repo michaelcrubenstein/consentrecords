@@ -4,6 +4,7 @@ var Settings = (function () {
 	Settings.prototype.lastNameLabel = "Last Name";
 	Settings.prototype.publicAccessLabel = "Public Access to Me";
 	Settings.prototype.accessRequestLabel = "Access Requests";
+	Settings.prototype.screenNameLabel = "Screen Name";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
@@ -26,11 +27,13 @@ var Settings = (function () {
 		user.getCell("_first name").field.label = this.firstNameLabel;
 		user.getCell("_last name").field.label = this.lastNameLabel;
 		user.getCell("_public access").field.label = this.publicAccessLabel;
+		user.getValue("More Experiences").getCell("_name").field.label = this.screenNameLabel;
 		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
 					 user.getCell("Birthday"),
-					 user.getCell("_public access")];
+					 user.getCell("_public access"),
+					 user.getValue("More Experiences").getCell("_name")];
 					 
 		this.showEditCells(cells);
 		

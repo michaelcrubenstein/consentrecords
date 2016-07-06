@@ -282,6 +282,10 @@ _term
             _name: Birthday
             _data type: _datestamp (day optional)
             _max capacity: _unique value
+        _field
+            _name: _name
+            _data type: _string
+            _max capacity: _unique value
 _term
     _name: Offering
     _configuration
