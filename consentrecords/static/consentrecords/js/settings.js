@@ -17,10 +17,27 @@ var Settings = (function () {
 		navContainer.appendTitle('Settings');
 		
 		var panel2Div = this.appendScrollArea();
+		var birthdayCell = user.getCell("Birthday");
+		var oldAppendUpdateBirthdayCommands = birthdayCell.data[0].appendUpdateCommands;
+		
+		/* Change the birthdayCell's data command to validate the birthday and update the
+			corresponding birthday in the More Experiences object.
+		 */
+		birthdayCell.data[0].appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
+		{
+			if (!newValue)
+				throw ("Your birthday is required.");
+			var birthMonth = newValue.substr(0, 7);
+			if (birthMonth.length < 7)
+				throw ("Your birthday must include a year and a month.");
+			oldAppendUpdateBirthdayCommands.call(birthdayCell.data[0], i, newValue, initialData, sourceObjects);
+			user.getValue("More Experiences").getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
+		}
 			
 		doneButton.on("click", function()
 				{
 					panel2Div.handleDoneEditingButton.call(this);
+					birthdayCell.data[0].appendUpdateCommands = oldAppendUpdateBirthdayCommands;
 				})
  			.append("span").text("Done");
 		
@@ -31,7 +48,7 @@ var Settings = (function () {
 		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
-					 user.getCell("Birthday"),
+					 birthdayCell,
 					 user.getCell("_public access"),
 					 user.getValue("More Experiences").getCell("_name")];
 					 
