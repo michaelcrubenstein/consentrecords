@@ -2,9 +2,10 @@ var Settings = (function () {
 	Settings.prototype = new SitePanel();
 	Settings.prototype.firstNameLabel = "First Name";
 	Settings.prototype.lastNameLabel = "Last Name";
-	Settings.prototype.publicAccessLabel = "Public Access to Me";
+	Settings.prototype.publicAccessLabel = "Public Access to My Profile";
 	Settings.prototype.accessRequestLabel = "Access Requests";
 	Settings.prototype.screenNameLabel = "Screen Name";
+	Settings.prototype.pathPublicAccessLabel = "Public Access to My Path";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
@@ -17,6 +18,8 @@ var Settings = (function () {
 		navContainer.appendTitle('Settings');
 		
 		var panel2Div = this.appendScrollArea();
+		
+		var path = user.getValue("More Experiences");
 		var birthdayCell = user.getCell("Birthday");
 		var oldAppendUpdateBirthdayCommands = birthdayCell.data[0].appendUpdateCommands;
 		
@@ -31,26 +34,82 @@ var Settings = (function () {
 			if (birthMonth.length < 7)
 				throw ("Your birthday must include a year and a month.");
 			oldAppendUpdateBirthdayCommands.call(birthdayCell.data[0], i, newValue, initialData, sourceObjects);
-			user.getValue("More Experiences").getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
+			path.getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
+		}
+		
+		pathPublicAccessCell = path.getCell("_public access");
+		var oldAppendUpdatePathPublicAccessCommands = pathPublicAccessCell.data[0].appendUpdateCommands;
+		var oldAddPathPublicAccessValue = pathPublicAccessCell.addObjectValue;
+		var oldDeletePathPublicAccessValue = pathPublicAccessCell.data[0].deleteValue;
+		
+		/* Change the _public access appendUpdateCommands function so that
+			1. when the _public access is set to _read, the _special access is set to _custom
+			2. when the _public access is cleared, the _special access is cleared
+		 */
+		
+		pathPublicAccessCell.addObjectValue = function(initialData, done, fail)
+		{
+			/* Add the public access value and then the special access value so that 
+			    the system is never in an invalid state. 
+			 */
+			oldAddPathPublicAccessValue.call(pathPublicAccessCell, initialData, 
+				function(newPublicAccessData)
+				{
+					var pathSpecialAccessCell = path.getCell("_special access");
+					crp.getData({path: '_term[_name="_special access"]>enumerator',
+								 done: function(newInstances)
+								 	{
+										var newSpecialAccessData = newInstances[0];
+										pathSpecialAccessCell.addObjectValue(newSpecialAccessData, 
+											function()
+											{
+												done(newPublicAccessData);
+											},
+											fail);
+								 	},
+								 fail: fail});
+				}, fail);
+		}
+		
+		pathPublicAccessCell.data[0].deleteValue = function(done, fail)
+		{
+			/* Remove the special access value and then the public access value so that 
+			    the system is never in an invalid state. 
+			 */
+			var pathSpecialAccessCell = path.getCell("_special access");
+			if (pathSpecialAccessCell.data.length > 0 && !pathSpecialAccessCell.data[0].isEmpty())
+			{
+				pathSpecialAccessCell.data[0].deleteValue(function()
+					{
+						oldDeletePathPublicAccessValue.call(pathPublicAccessCell.data[0], done, fail);
+					},
+					fail);
+			}
+			else
+				oldDeletePathPublicAccessValue.call(pathPublicAccessCell.data[0], done, fail);
 		}
 			
 		doneButton.on("click", function()
 				{
 					panel2Div.handleDoneEditingButton.call(this);
 					birthdayCell.data[0].appendUpdateCommands = oldAppendUpdateBirthdayCommands;
+					pathPublicAccessCell.addObjectValue = oldAddPathPublicAccessValue;
+					pathPublicAccessCell.data[0].deleteValue = oldDeletePathPublicAccessValue;
 				})
  			.append("span").text("Done");
 		
 		user.getCell("_first name").field.label = this.firstNameLabel;
 		user.getCell("_last name").field.label = this.lastNameLabel;
 		user.getCell("_public access").field.label = this.publicAccessLabel;
-		user.getValue("More Experiences").getCell("_name").field.label = this.screenNameLabel;
+		path.getCell("_name").field.label = this.screenNameLabel;
+		pathPublicAccessCell.field.label = this.pathPublicAccessLabel;
 		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
 					 birthdayCell,
 					 user.getCell("_public access"),
-					 user.getValue("More Experiences").getCell("_name")];
+					 path.getCell("_name"),
+					 pathPublicAccessCell];
 					 
 		this.showEditCells(cells);
 		

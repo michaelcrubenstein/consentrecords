@@ -286,6 +286,20 @@ _term
             _name: _name
             _data type: _string
             _max capacity: _unique value
+        _field
+            _name: _special access
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name="_special access"]>enumerator
+        _field
+            _name: _public access
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_register]
 _term
     _name: Offering
     _configuration

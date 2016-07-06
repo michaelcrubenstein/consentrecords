@@ -1098,7 +1098,7 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 			{
 				/* Do nothing. */ ;
 			}
-			else if ("cells" in d)
+			else if ("cells" in d && d.cells)
 			{
 				/* This case is true if we are creating an object */
 				var subData = {}
