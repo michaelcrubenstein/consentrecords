@@ -60,7 +60,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Pool Open/Family Swim Times
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lessons
