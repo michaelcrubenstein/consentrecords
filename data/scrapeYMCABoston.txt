@@ -573,7 +573,7 @@ Organization
               Offering
                     _name: Swim Lessons
                     Service: Swimming Lessons
-                    Service: Excercise
+                    Service: Exercise
               Offering
                     _name: Youth Basketball Clinic
                     Service: Basketball Training
