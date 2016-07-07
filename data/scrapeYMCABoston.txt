@@ -18,6 +18,10 @@ Service
     _name: Basketball Training
     Domain: Basketball
     Stage: Training
+Service
+    _name: Floor Hockey For Fun
+    Domain: Floor Hockey
+    Stage: Whatever
 Organization
     _name: YMCA Boston
     Sites
@@ -87,7 +91,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Floor Hockey
-                    Service: Hockey
+                    Service: Hockey For Fun
                     Service: Exercise
               Offering
                     _name: Running Club
@@ -148,8 +152,8 @@ Organization
                    _name: Teen Dodgeball
                    Service: Exercise
               Offering
-                    _name: Floor Hockey
-                    Service: Hockey
+                    _name: Floor Hockey For Fun
+                    Service: Floor Hockey
                     Service: Exercise
         Site
             _name: Charlestown YMCA
