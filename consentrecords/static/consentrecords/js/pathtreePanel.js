@@ -150,7 +150,6 @@ var PathView = (function() {
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
-	PathView.prototype.flagHeight = 20;
 	PathView.prototype.flagHeightEM = 2.333;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
@@ -478,7 +477,7 @@ var PathView = (function() {
 					{
 						if (j < fds.length - 1)
 						{
-							var isShortFlagpole = fdj.y + this.flagHeight == fdj.y2;
+							var isShortFlagpole = fdj.y + this.flagHeightEM == fdj.y2;
 							var fdk = fds[j+1];
 							/* If the item after i's flag-pole has the same top year
 									then eliminate i's bottom (it is a duplicate year marker). 
@@ -764,11 +763,6 @@ var PathLines = (function() {
 			fd.column = fd.getColumn();
 		});
 		numColumns = 7;
-		
-		/* Make all of the flag rectangles twice the height of the year text. */
-		var tempY = this.yearGroup.append('text').text('2000');
-		this.flagHeight = 2 * tempY.node().getBBox().height;
-		tempY.remove();
 		
 		g.selectAll('rect')
 			.attr('height', "{0}em".format(this.flagHeightEM))
