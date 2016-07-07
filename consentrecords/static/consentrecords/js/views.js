@@ -1098,7 +1098,7 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 			{
 				/* Do nothing. */ ;
 			}
-			else if ("cells" in d)
+			else if ("cells" in d && d.cells)
 			{
 				/* This case is true if we are creating an object */
 				var subData = {}
@@ -1691,33 +1691,40 @@ var SitePanel = (function () {
 			{
 				showClickFeedback(this);
 		
-				var sections = _this.mainDiv.selectAll("section");
-				var initialData = [];
-				var sourceObjects = [];
-				sections.each(function(cell) {
-						/* cell may be null if this is a pseudo-section, such as for the Change Password
-							section in the Settings panel.
-						 */
-						if (cell)
-						{
-							if ("appendUpdateCommands" in cell)
-								cell.appendUpdateCommands(this, initialData, sourceObjects);
-						}
-					});
-				if (initialData.length > 0) {
-					cr.updateValues(initialData, sourceObjects, 
-						function() {
-							if (done)
-								done();
-							_this.hide();
-						}, 
-						syncFailFunction);
-				}
-				else
+				try
 				{
-					if (done)
-						done();
-					_this.hide();
+					var sections = _this.mainDiv.selectAll("section");
+					var initialData = [];
+					var sourceObjects = [];
+					sections.each(function(cell) {
+							/* cell may be null if this is a pseudo-section, such as for the Change Password
+								section in the Settings panel.
+							 */
+							if (cell)
+							{
+								if ("appendUpdateCommands" in cell)
+									cell.appendUpdateCommands(this, initialData, sourceObjects);
+							}
+						});
+					if (initialData.length > 0) {
+						cr.updateValues(initialData, sourceObjects, 
+							function() {
+								if (done)
+									done();
+								_this.hide();
+							}, 
+							syncFailFunction);
+					}
+					else
+					{
+						if (done)
+							done();
+						_this.hide();
+					}
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
 				}
 			}
 			d3.event.preventDefault();
@@ -1729,38 +1736,45 @@ var SitePanel = (function () {
 			{
 				showClickFeedback(this);
 				
-				var sections = _this.mainDiv.selectAll("section");
-				if (d.cell.parent == null ||
-					d.cell.parent.getValueID() != null)
+				try
 				{
-					var initialData = {}
-					sections.each(
-						function(cell) {
-							cell.updateCell(this);
-							cell.appendData(initialData);
-						});
+					var sections = _this.mainDiv.selectAll("section");
+					if (d.cell.parent == null ||
+						d.cell.parent.getValueID() != null)
+					{
+						var initialData = {}
+						sections.each(
+							function(cell) {
+								cell.updateCell(this);
+								cell.appendData(initialData);
+							});
 		
-					d.saveNew(initialData, 
-						function() { 
-							_this.hide(); 
-						}, 
-						syncFailFunction);
-				}
-				else
-				{
-					/* In this case, we are editing an object that is contained in 
-						an object that is being edited. This object will be saved
-						as part of completing that edit operation. */
-					d.cells = [];
-					sections.each(
-						function(cell) {
-							cell.updateCell(this);
-							d.importCell(cell);
-						});
+						d.saveNew(initialData, 
+							function() { 
+								_this.hide(); 
+							}, 
+							syncFailFunction);
+					}
+					else
+					{
+						/* In this case, we are editing an object that is contained in 
+							an object that is being edited. This object will be saved
+							as part of completing that edit operation. */
+						d.cells = [];
+						sections.each(
+							function(cell) {
+								cell.updateCell(this);
+								d.importCell(cell);
+							});
 	
-					d.calculateDescription();
-					d.triggerDataChanged();
-					_this.hide();
+						d.calculateDescription();
+						d.triggerDataChanged();
+						_this.hide();
+					}
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
 				}
 			}
 			d3.event.preventDefault();

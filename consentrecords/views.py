@@ -599,7 +599,6 @@ class api:
 
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
-                            propertyList = newValue
                             newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)

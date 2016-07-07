@@ -108,6 +108,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
 
     # propertyList should be either null or a dictionary of properties.
     # The key of each element in the dictionary is the name of a term which is the fieldID.
+    #    If the key is not a field in the configuration, then it is ignored.
     # The value is an array.
     #    Each element of the value array is a dictionary that has one item in the field.
     #    The dictionary can have the following elements:
