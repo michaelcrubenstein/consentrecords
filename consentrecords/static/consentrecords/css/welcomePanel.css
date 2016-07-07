@@ -18,28 +18,26 @@ panel.welcome ol li p.path-description-link {
 	text-decoration: underline;
 }
 
-panel.welcome ol li p.about-organizations {
+panel.welcome ol li span.about-organizations {
 	position: absolute;
 	font-size: 0.9em;
-	top: calc(100% - 42px);
-	left: 10px;
+	bottom: 1.1em;
+	left: 1.0417em;
 	text-decoration: underline;
 }
 
-panel.welcome ol li p.sign-in-prompt {
+panel.welcome ol li span.sign-in-prompt {
 	position: absolute;
-	top: calc(80% - 3em);
-	right: 18px;
+	bottom: 5.0em;
+	right: 0.9375em;
 	text-align: right;
-	text-decoration: underline;
 }
 
-panel.welcome ol li p.create-account-prompt {
+panel.welcome span.create-account-prompt {
 	position: absolute;
-	top: calc(80% - 1.3em);
-	right: 18px;
+	bottom: 3.0em;
+	right: 0.9375em;
 	text-align: right;
-	text-decoration: underline;
 }
 
 panel.welcome a.left {

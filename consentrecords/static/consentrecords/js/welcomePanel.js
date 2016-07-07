@@ -267,12 +267,12 @@ var WelcomePanel = (function () {
 			});	
 			
 		ol.selectAll('li:first-child')
-			.append('p')
+			.append('span')
 			.classed('about-organizations site-active-text', true)
-			.text('PathAdvisor for Organizations')
+			.text('For Organizations')
 			.on('click', function()
 				{
-					if (prepareClick('click', 'PathAdvisor for Organizations'))
+					if (prepareClick('click', 'For Organizations'))
 					{
 						var panel = new WelcomeOrganizationPanel(_this.node());
 						showPanelUp(panel.node(), unblockClick);
@@ -282,7 +282,7 @@ var WelcomePanel = (function () {
 		if (!cr.signedinUser.getValueID())
 		{		
 			ol.selectAll('li:last-child')
-				.append('p')
+				.append('span')
 				.classed('sign-in-prompt site-active-text', true)
 				.text('Sign In')
 				.on('click', function()
@@ -292,19 +292,20 @@ var WelcomePanel = (function () {
 							showFixedPanel(_this.node(), "#id_sign_in_panel");
 						}
 					});
-			ol.selectAll('li:last-child')
-				.append('p')
-				.classed('create-account-prompt site-active-text', true)
-				.text('Create An Account')
-				.on('click', function()
-					{
-						if (prepareClick('click', 'Create An Account'))
-						{
-							var signUp = new Signup(_this.node());
-						}
-					});
 		}
 	
+		panel2Div
+			.append('span')
+			.classed('create-account-prompt site-active-text', true)
+			.text('Create An Account')
+			.on('click', function()
+				{
+					if (prepareClick('click', 'Create An Account'))
+					{
+						var signUp = new Signup(_this.node());
+					}
+				});
+
 		var leftControl = d.append('a')
 			.classed('left', true)
 			.attr('role', 'button')
