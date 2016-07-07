@@ -211,7 +211,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Youth Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
               Offering
                     _name: Youth Soccer
