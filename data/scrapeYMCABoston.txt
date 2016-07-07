@@ -47,7 +47,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Kids on the Run
-                    Service: Excercise
+                    Service: Exercise
               Offering
                     _name: Baseball
                     Service:Baseball Training
@@ -64,15 +64,15 @@ Organization
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Water Aerobics
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Strech and Tone 
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Weight Lifting
@@ -80,7 +80,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Water Yoga
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Teen Dodgeball
