@@ -91,7 +91,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Floor Hockey
-                    Service: Hockey For Fun
+                    Service: Floor Hockey For Fun
                     Service: Exercise
               Offering
                     _name: Running Club
