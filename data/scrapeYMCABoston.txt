@@ -76,7 +76,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Weight Lifting
-                    Service: Weight Training
+                    Service: Physical Conditioning Training
                     Service: Exercise
               Offering
                     _name: Water Yoga
@@ -195,6 +195,7 @@ Organization
                     Service: Exercise
               Offering
                     _name:  Strength Training
+                    Service: Physical Conditioning Training
                     Service: Exercise
               Offering
                     _name: Swimming  
