@@ -195,7 +195,7 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Youth Basketball League
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name:  Strength Training
