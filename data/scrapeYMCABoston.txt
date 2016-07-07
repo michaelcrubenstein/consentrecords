@@ -2,6 +2,22 @@ Service
     _name: Tennis Lessons
     Domain: Tennis
     Stage: Training
+Service
+    _name: Baseball Training
+    Domain: Baseball
+    Stage: Training
+Service
+    _name: Running Training
+    Domain: Running
+    Stage: Training
+Service
+    _name: Gymnastics For Fun
+    Domain: Gymnastics
+    Stage: Whatever
+Service
+    _name: Basketball Training
+    Domain: Basketball
+    Stage: Training
 Organization
     _name: YMCA Boston
     Sites
@@ -34,7 +50,7 @@ Organization
                     Service: Excercise
               Offering
                     _name: Baseball
-                    Service:Baseball Playing
+                    Service:Baseball Training
                     Service: Exercise
               Offering
                     _name: Flag Football
@@ -75,6 +91,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Running Club
+                    Service: Running Training
                     Service: Exercise
         Site
             _name: Charles River YMCA
@@ -95,11 +112,11 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: 10 and Under Swim Team
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name:  11 and Up Swim Team
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Private Swimming  
@@ -107,25 +124,25 @@ Organization
                     Service: Exercise
               Offering
                     _name: Baseball Team
-                    Service: Baseball Playing
+                    Service: Baseball Training
                     Service: Exercise
               Offering
                     _name: Kids on the Run
                     Service: Exercise
               Offering
                     _name: Baseball
-                    Service:Baseball Playing
+                    Service: Baseball Training
                     Service: Exercise
               Offering
                     _name: Flag Football
                     Service: Exercise
               Offering
                     _name: Pool Open/Family Swim Times
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                    _name: Teen Dodgeball
@@ -144,7 +161,7 @@ Organization
             Offerings
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                    _name:  Tae Kwon Do
@@ -152,11 +169,11 @@ Organization
                    Service: Exercise
               Offering
                     _name: Toddler Tumbling
-                    Service: Gymnastics
+                    Service: Gymnastics For FUn
                     Service: Exercise
               Offering
                     _name: Youth Tumbling
-                    Service: Gymnastics
+                    Service: Gymnastics For Fun
                     Service: Exercise
         Site
             _name: Dorchester YMCA
@@ -181,11 +198,11 @@ Organization
                     Service: Exercise
               Offering
                     _name: Swimming  
-                    Service: Swimming Lessons
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Intro to Hip-Hop
-                    Service: Dance
+                    Service: Dance Lessons
                     Service: Exercise
               Offering
                     _name: Youth Karate
@@ -197,15 +214,15 @@ Organization
                     Service: Exercise
               Offering
                     _name: Intro to Ballet
-                    Service: Dance
+                    Service: Dance Lessons
                     Service: Exercise
               Offering
                     _name: Pool Open/Family Swim Times
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
         Site
             _name: East Boston YMCA
@@ -243,11 +260,11 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Youth Basketball Clinic
-                    Service: Basketball
+                    Service: Basketball Training
                     Service: Exercise
               Offering
                     _name: Tumble Time
-                    Service: Gymnastics
+                    Service: Gymnastics For Fun
                     Service: Exercise
         Site
             _name: North Suburban YMCA
@@ -274,26 +291,26 @@ Organization
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Swim Club
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Youth Basketball Clinic
-                    Service: Basketball
+                    Service: Basketball Training
                     Service: Exercise
               Offering
                     _name: Pilates
                     Service: Exercise
               Offering
                     _name: Hip Hop Dance Class
-                    Service: Dance
+                    Service: Dance Lessons
                     Service: Exercise
               Offering
                     _name: Intro to Ballet
-                    Service: Dance
+                    Service: Dance Lessons
                     Service: Exercise
         Site
             _name: Oak Square YMCA
@@ -323,48 +340,49 @@ Organization
                     Service: Exercise
               Offering
                     _name: Youth Soccer
+                    Service: Soccer Playing
                     Service: Exercise
               Offering
                     _name: Rock Climbing
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Swim Club
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Youth Basketball Clinic
-                    Service: Basketball
+                    Service: Basketball Training
                     Service: Exercise
               Offering
                     _name: Youth Basketball League
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Youth Soccer League
-                    Service: Soccer
+                    Service: Soccer Playing
                     Service: Exercise
               Offering
                     _name: Adult Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
               Offering
                     _name: Youth Tae Kwon Do
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
               Offering
                     _name: Youth Tennis Clinic
-                    Service: Tennis
+                    Service: Tennis Lessons
                     Service: Exercise
               Offering
                     _name: Womens Weightlifting
                     Service: Exercise
              Offering
                     _name: Youth Gymnastics
-                    Service: Gymnastics
+                    Service: Gymnastics For Fun
                     Service: Exercise
         Site
             _name: Parkway Community (West Roxbury) YMCA
@@ -379,15 +397,15 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Youth Basketball League
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Swim Club
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
              Offering
                     _name: Dedham Enrichment Camp
@@ -411,23 +429,23 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Youth Basketball League
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Preschool Basketball League
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Youth Baseball
-                    Service: Baseball
+                    Service: Baseball Training
                     Service: Exercise
               Offering
                     _name: Youth Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
               Offering
                     _name: Ballet
-                    Service: Dance
+                    Service: Dance Lessons
                     Service: Exercise
         Site
             _name: Thomas M. Menino YMCA
@@ -449,26 +467,26 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Swim Club
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lesson
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Triathlon Training
                     Service: Exercise
               Offering
                     _name: Youth Soccer League
-                    Service: Soccer
+                    Service: Soccer Playing
                     Service: Exercise
               Offering
                     _name: Preschool Soccer League
-                    Service: Soccer
+                    Service: Soccer Playing
                     Service: Exercise
               Offering
                     _name: Youth Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
         Site
             _name: Waltham YMCA
@@ -501,40 +519,41 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Swim Club
-                    Service: Swimming
+                    Service: Swimming For Fun
                     Service: Exercise
               Offering
                     _name: Swim Lesson
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Exercise
               Offering
                     _name: Womens Weightlifting 
                     Service: Exercise
               Offering
                     _name: Youth Intro Soccer 
-                    Service: Soccer
+                    Service: Soccer Playing
                     Service: Exercise
               Offering
                     _name: Youth Basketball 
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Archery
                     Service: Exercise
               Offering
                     _name: Barre
+                    Service: Dance Lessons
                     Service: Exercise
               Offering
                     _name: Youth Gymnastics 
-                    Service: Gymnastics
+                    Service: Gymnastics For Fun
                     Service: Exercise
               Offering
                     _name: Preschool Gymnastics 
-                    Service: Gymnastics
+                    Service: Gymnastics For Fun
                     Service: Exercise
               Offering
                     _name: Youth Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
         Site
             _name: Wang YMCA of Chinatown
@@ -549,20 +568,20 @@ Organization
                     Service: Summer Camp
               Offering
                     _name: Swim Lessons
-                    Service: Swimming
+                    Service: Swimming Lessons
                     Service: Excercise
               Offering
                     _name: Youth Basketball Clinic
-                    Service: Basketball
+                    Service: Basketball Training
                     Service: Exercise
               Offering
                     _name: Yoga
                     Service: Exercise
               Offering
                     _name: Teen Basketball
-                    Service: Basketball
+                    Service: Basketball Playing
                     Service: Exercise
               Offering
                     _name: Youth Karate
-                    Service: Martial Arts
+                    Service: Martial Arts Training
                     Service: Exercise
