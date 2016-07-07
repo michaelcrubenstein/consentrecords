@@ -152,8 +152,8 @@ Organization
                    _name: Teen Dodgeball
                    Service: Exercise
               Offering
-                    _name: Floor Hockey For Fun
-                    Service: Floor Hockey
+                    _name: Floor Hockey
+                    Service: Floor Hockey For Fun
                     Service: Exercise
         Site
             _name: Charlestown YMCA
