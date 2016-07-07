@@ -84,7 +84,7 @@ Organization
                     Service: Exercise
               Offering
                     _name: Teen Dodgeball
-                    Service: Excercise
+                    Service: Exercise
               Offering
                     _name: Floor Hockey
                     Service: Hockey
