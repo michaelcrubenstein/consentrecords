@@ -458,8 +458,7 @@ Organization
             Address
                 Street: 1137 River Street
                 City: Hyde Park
-                State: MA           
-                Offerings
+                State: MA
             Offerings
               Offering
                     _name: Camp Ponkapoag
