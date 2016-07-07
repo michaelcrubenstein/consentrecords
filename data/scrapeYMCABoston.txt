@@ -1,3 +1,7 @@
+Service
+    _name: Tennis Lessons
+    Domain: Tennis
+    Stage: Training
 Organization
     _name: YMCA Boston
     Sites
