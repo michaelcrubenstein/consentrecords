@@ -245,11 +245,6 @@ var ComparePath = (function() {
 							_this.guideHSpacing - _this.textDetailRightMargin);
 				});
 
-		/* Make all of the flag rectangles twice the height of the year text. */
-		var tempY = this.yearGroup.append('text').text('2000');
-		this.flagHeight = 2 * tempY.node().getBBox().height;
-		tempY.remove();
-		
 		g.selectAll('rect')
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
