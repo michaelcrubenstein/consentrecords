@@ -128,7 +128,7 @@ function appendSessionDescriptions(buttons)
 		});
 }
 
-function getUserDescription(user)
+function getUserName(user)
 {
 	var firstName = user.getDatum("_first name");
 	var lastName = user.getDatum("_last name");
@@ -139,10 +139,21 @@ function getUserDescription(user)
 		else
 			return firstName;
 	}
-	else if (lastName)
+	else 
 		return lastName;
-	else
-		return user.getDescription();
+}
+
+function getPathDescription(path)
+{
+	return (path.cell.parent && getUserName(path.cell.parent)) ||
+			path.getDatum("_name") ||
+		   (path.cell.parent && path.cell.parent.getDescription()) ||
+		   null;
+}
+
+function getUserDescription(user)
+{
+	return getUserName(user) || user.getDescription();
 }
 				
 function showUser(user, previousPanelNode)
