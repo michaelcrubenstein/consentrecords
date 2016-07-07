@@ -8,7 +8,7 @@ Organization
                 Street: 36 Arthur B. Lord Drive
                 City:  Reading
                 State: MA
-             Offerings
+            Offerings
               Offering
                     _name: Burbank YMCA After School Program
                     Service: Summer Camp
@@ -79,7 +79,7 @@ Organization
                 Street: 380 Chestnut Street
                 City:  Needham
                 State: MA    
-             Offerings
+            Offerings
               Offering
                     _name: Charles River Adventurer
                     Service: Summer Camp
@@ -137,7 +137,7 @@ Organization
                 Street: 150 Third Avenue Charlestown Navy Yard 
                 City: Boston
                 State: MA   
-             Offerings
+            Offerings
               Offering
                     _name: Swim Lessons
                     Service: Swimming
@@ -161,7 +161,7 @@ Organization
                 Street: 776 Washington Street
                 City: Dorchester
                 State: MA     
-             Offerings
+            Offerings
               Offering
                     _name: Dorchester Summer Explorer
                 Service: Summer Camp
@@ -210,7 +210,7 @@ Organization
                 Street: 215 Bremen Street
                 City: East Boston
                 State: MA    
-             Offerings 
+            Offerings 
               Offering
                     _name: East Boston Summer Camp
                     Service: Summer Camp
@@ -230,7 +230,7 @@ Organization
                 Street: 316 Huntington Avenue 
                 City: Boston
                 State: MA      
-             Offerings 
+            Offerings 
               Offering
                     _name: Urban Adventure Camp
                     Service: Summer Camp
@@ -252,7 +252,7 @@ Organization
                 Street: 137 Lexington St
                 City: Woburn
                 State: MA    
-             Offerings 
+            Offerings 
               Offering
                     _name: Camp Mighty
                     Service: Summer Camp
@@ -298,7 +298,7 @@ Organization
                 Street: 615 Washington Street
                 City: Brighton
                 State: MA   
-             Offerings 
+            Offerings 
               Offering
                     _name: Oak Square Scamper Camp
                     Service: Summer Camp
@@ -369,7 +369,7 @@ Organization
                 Street: 1972 Centre Street
                 City: West Roxbury
                 State: MA     
-             Offerings
+            Offerings
               Offering
                     _name: West Roxbury Summer Camp
                     Service: Summer Camp
@@ -398,7 +398,7 @@ Organization
                 Street: 285 Martin Luther King Boulevard 
                 City: Roxbury
                 State: MA      
-             Offerings
+            Offerings
               Offering
                     _name: Roxbury Explorers
                     Service: Summer Camp
@@ -433,7 +433,7 @@ Organization
                 City: Hyde Park
                 State: MA           
                 Offerings
-             Offerings
+            Offerings
               Offering
                     _name: Camp Ponkapoag
                     Service: Summer Camp
@@ -473,7 +473,7 @@ Organization
                 Street: 725 Lexington Street
                 City: Waltham
                 State: MA     
-             Offerings
+            Offerings
               Offering
                     _name: Waltham Camp Cabot
                     Service: Summer Camp
@@ -539,7 +539,7 @@ Organization
                 Street: 8 Oak Street West
                 City: Waltham
                 State: MA  
-             Offerings
+            Offerings
               Offering
                     _name: Green Mountain Club
                     Service: Summer Camp
