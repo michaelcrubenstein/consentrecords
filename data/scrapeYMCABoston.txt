@@ -169,7 +169,7 @@ Organization
                     Service: Exercise
               Offering
                    _name:  Tae Kwon Do
-                   Service: Martial Arts
+                   Service: Martial Arts Training
                    Service: Exercise
               Offering
                     _name: Toddler Tumbling
