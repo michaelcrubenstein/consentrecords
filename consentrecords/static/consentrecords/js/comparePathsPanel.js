@@ -96,6 +96,9 @@ var CompareFlag = (function() {
 
 var ComparePath = (function() {
 	ComparePath.prototype = new PathView();
+	
+	ComparePath.prototype.youName = "You";
+	
 	ComparePath.prototype.poleSpacing = 4;
 	
 	ComparePath.prototype.textLeftMargin = 3;
@@ -650,10 +653,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		if (path.cell.parent)
-			return getUserDescription(path.cell.parent);
-		else
-			return "{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10)));
+		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
+			getPathDescription(path) ||
+			"{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10)));
 	}
 	
 	ComparePath.prototype.handleResize = function()
