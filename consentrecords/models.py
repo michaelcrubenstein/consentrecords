@@ -33,7 +33,7 @@ class Transaction(dbmodels.Model):
 class TransactionState:
     mutex = Lock()
     
-    def __init__(self, user, timeZoneOffset):
+    def __init__(self, user):
         self.currentTransaction = None
         self.user = user
             
