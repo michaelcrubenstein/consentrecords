@@ -9,8 +9,7 @@ var UpdatePasswordPanel = (function () {
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
 				username: username,
 				oldPassword: oldPassword,
-				newPassword: newPassword,
-				timezoneoffset : new Date().getTimezoneOffset()
+				newPassword: newPassword
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
@@ -126,8 +125,7 @@ var UpdateUsernamePanel = (function () {
 		$.post(cr.urls.updateUsername, 
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
 				newUsername: newUsername,
-				password: password,
-				timezoneoffset : new Date().getTimezoneOffset()
+				password: password
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
