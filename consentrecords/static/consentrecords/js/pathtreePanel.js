@@ -1657,11 +1657,23 @@ var PathlinesPanel = (function () {
 		{
 			settingsButton.selectAll("span").text(_this.userSettingsBadgeCount(user));
 		}
+		
+		function checkTitle()
+		{
+			_this.navContainer.setTitle(getUserDescription(user));
+		}
 				
 		$(this.node()).on("remove", function()
 		{
-			$(user.getCell("_access request")).off("valueDeleted.cr", checkSettingsBadge)
+			$(user.getCell("_access request"))
+				.off("valueDeleted.cr", checkSettingsBadge)
 				.off("valueAdded.cr", checkSettingsBadge);
+			$(user.getCell("_first name"))
+				.off("dataChanged.cr", checkTitle);
+			$(user.getCell("_last name"))
+				.off("dataChanged.cr", checkTitle);
+			$(user.getCell("_email"))
+				.off("dataChanged.cr", checkTitle);
 		});
 		
 		$(this.pathtree).on("userSet.cr", function()
@@ -1672,6 +1684,10 @@ var PathlinesPanel = (function () {
 				
 				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);
 				checkSettingsBadge();
+				
+				$(user.getCell("_first name")).on("dataChanged.cr", checkTitle);
+				$(user.getCell("_last name")).on("dataChanged.cr", checkTitle);
+				$(user.getCell("_email")).on("dataChanged.cr", checkTitle);
 				
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
