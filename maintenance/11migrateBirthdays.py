@@ -20,7 +20,6 @@ from consentrecords import pathparser
 if __name__ == "__main__":
     django.setup()
 
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     username = sys.argv[1] if len(sys.argv) > 1 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
@@ -45,7 +44,7 @@ if __name__ == "__main__":
                     print("  Add path: %s"%(birthday))
                     path, newValue = instancecreator.create(pathTerm, i, pathTerm, 0, 
                         {'Birthday': {'text': birthday}}, nameLists, 
-                        TransactionState(i.user, timezoneoffset))
+                        TransactionState(i.user))
                 else:
                     birthday = birthdayFilter[0].stringValue[0:7]
                     path = pathFilter[0].referenceValue
@@ -53,7 +52,7 @@ if __name__ == "__main__":
                     if not birthdayFilter.exists():
                         print("  Add birthday: %s"%(birthday))
                         path.addStringValue(birthdayTerm, birthday, 0, 
-                                            TransactionState(i.user, timezoneoffset))
+                                            TransactionState(i.user))
             except Exception as e:
                 logger = logging.getLogger(__name__)
                 logger.error("%s" % traceback.format_exc())

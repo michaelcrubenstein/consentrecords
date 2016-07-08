@@ -7,9 +7,9 @@ from consentrecords.models import TransactionState, Terms, terms, TermNames, Ins
 from consentrecords import instancecreator
 
 class UserFactory:
-    def createUserInstance(user, propertyList, timezoneOffset):
+    def createUserInstance(user, propertyList):
         with transaction.atomic():
-            transactionState = TransactionState(user, timezoneOffset)
+            transactionState = TransactionState(user)
 
             ofKindObject = terms[TermNames.user]
             if not propertyList: propertyList = {}

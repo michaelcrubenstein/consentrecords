@@ -91,11 +91,11 @@ class ValueAdmin(admin.ModelAdmin):
     
 class TransactionAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'user', 'creation_time', 'time_zone_offset')
+    list_display = ('id', 'user', 'creation_time')
     fieldsets = (
-        (None, {'fields': ('id', 'user', 'creation_time', 'time_zone_offset')}),
+        (None, {'fields': ('id', 'user', 'creation_time')}),
     )
-    readonly_fields = ('id', 'user', 'creation_time', 'time_zone_offset')
+    readonly_fields = ('id', 'user', 'creation_time')
     search_fields = ('id',)
     
     inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline]

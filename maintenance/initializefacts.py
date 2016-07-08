@@ -15,7 +15,6 @@ from consentrecords import bootstrap
 if __name__ == "__main__":
     django.setup()
 
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     if len(sys.argv) > 1:
         username = sys.argv[1]
     else:
@@ -25,5 +24,5 @@ if __name__ == "__main__":
     user = authenticate(username=username, password=password)
 
     with transaction.atomic():
-        transactionState = TransactionState(user, timezoneoffset)  
+        transactionState = TransactionState(user)  
         bootstrap.initializeFacts(transactionState) 

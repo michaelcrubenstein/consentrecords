@@ -134,7 +134,6 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
 if __name__ == "__main__":
     django.setup()
 
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
@@ -144,7 +143,7 @@ if __name__ == "__main__":
 
     try:
         with transaction.atomic():
-            transactionState = None if check else TransactionState(user, timezoneoffset)
+            transactionState = None if check else TransactionState(user)
             userInfo = UserInfo(user)
         
             nameList = NameList()

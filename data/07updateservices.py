@@ -71,7 +71,6 @@ if __name__ == "__main__":
     django.setup()
 
     try:
-        timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
         try:
             username = sys.argv[sys.argv.index('-user') + 1]
         except ValueError:
@@ -85,7 +84,7 @@ if __name__ == "__main__":
         check = '-check' in sys.argv
         
         with transaction.atomic():
-            transactionState = None if check else TransactionState(user, timezoneoffset)
+            transactionState = None if check else TransactionState(user)
             removeService('Service', 'Education', check, transactionState)
             removeService('Service Domain', 'XCareer & Finance', check, transactionState)
             removeService('Service Domain', 'XExtra Curricular', check, transactionState)

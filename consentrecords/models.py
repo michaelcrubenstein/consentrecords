@@ -19,30 +19,28 @@ class Transaction(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False)
     creation_time = dbmodels.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)
-    time_zone_offset = dbmodels.SmallIntegerField(editable=False)
     
     def __str__(self):
         return str(self.creation_time)
     
-    def createTransaction(user, timeZoneOffset):
+    def createTransaction(user):
         if not user.is_authenticated():
             raise RuntimeError('current user is not authenticated')
         if not user.is_active:
             raise RuntimeError('current user is not active')
-        return Transaction.objects.create(user=user, time_zone_offset=timeZoneOffset)
+        return Transaction.objects.create(user=user)
         
 class TransactionState:
     mutex = Lock()
     
-    def __init__(self, user, timeZoneOffset):
+    def __init__(self, user):
         self.currentTransaction = None
         self.user = user
-        self.timeZoneOffset = timeZoneOffset
             
     @property    
     def transaction(self):
         if self.currentTransaction == None:
-            self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
+            self.currentTransaction = Transaction.createTransaction(self.user)
 
         return self.currentTransaction
 

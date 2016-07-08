@@ -15,14 +15,13 @@ from consentrecords import pathparser
 if __name__ == "__main__":
     django.setup()
 
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     username = sys.argv[1] if len(sys.argv) > 1 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
     user = authenticate(username=username, password=password)
 
     with transaction.atomic():
-        transactionState = TransactionState(user, timezoneoffset)
+        transactionState = TransactionState(user)
 
         f = Instance.objects.filter(typeID=terms['Inquiry'], deleteTransaction__isnull=True,
                                     value__field=terms.email,
@@ -41,7 +40,7 @@ if __name__ == "__main__":
                 inquiries = inquiry.parent
                 if inquiries:
                     print("l: %s" % str(l))
-                    transactionState = TransactionState(l[0].user, timezoneoffset)
+                    transactionState = TransactionState(l[0].user)
                     inquiries.addReferenceValue(terms.user, l[0], 0, transactionState)
                     print("update inquiry for session %s: user %s" % (inquiry.parent.parent, l[0]))
                     inquiry.markAsDeleted(transactionState)
