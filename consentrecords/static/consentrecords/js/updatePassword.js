@@ -6,8 +6,7 @@ var UpdatePasswordPanel = (function () {
 		bootstrap_alert.show($('.alert-container'), "Updating Password...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.updatePassword, 
-			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
-				username: username,
+			{ username: username,
 				oldPassword: oldPassword,
 				newPassword: newPassword
 			})
@@ -123,8 +122,7 @@ var UpdateUsernamePanel = (function () {
 		bootstrap_alert.show($('.alert-container'), "Updating Email...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.updateUsername, 
-			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
-				newUsername: newUsername,
+			{ newUsername: newUsername,
 				password: password
 			})
 		  .done(function(json, textStatus, jqXHR)

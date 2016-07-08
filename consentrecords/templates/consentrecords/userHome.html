@@ -968,8 +968,7 @@
 				
 				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 				
-				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
-											  username : $("#id_username").val(),
+				$.post("{% url 'submitSignin' %}", { username : $("#id_username").val(),
 											  password : $("#id_password").val() }, 
 					function(json){
 				if (json.success) {
