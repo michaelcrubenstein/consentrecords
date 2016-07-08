@@ -581,8 +581,7 @@ cr.ObjectCell = (function() {
 			$.post(cr.urls.addValue, 
 					{ path: '#' + this.parent.getValueID(),
 					  fieldName: this.field.nameID,
-					  valueUUID: initialData.getValueID(),
-					  timezoneoffset: new Date().getTimezoneOffset()
+					  valueUUID: initialData.getValueID()
 					})
 				  .done(function(json, textStatus, jqXHR)
 					{
@@ -658,8 +657,7 @@ cr.CellValue = (function() {
 			{
 				/* In this case, this is a root object, so we just need to 
 					delete the instance. */
-				var jsonArray = { path: "#" + this.getValueID(),
-							timezoneoffset: new Date().getTimezoneOffset()
+				var jsonArray = { path: "#" + this.getValueID()
 						};
 				$.post(cr.urls.deleteInstances, jsonArray)
 					.done(function(json, textStatus, jqXHR)
@@ -690,8 +688,7 @@ cr.CellValue = (function() {
 		}
 		else
 		{
-			var jsonArray = { valueID: this.id,
-						timezoneoffset: new Date().getTimezoneOffset()
+			var jsonArray = { valueID: this.id
 					};
 			$.post(cr.urls.deleteValue, jsonArray)
 				.done(function(json, textStatus, jqXHR)
@@ -1407,8 +1404,7 @@ cr.addObjectValue = function(containerPath, fieldName, initialData, done, fail)
 		$.post(cr.urls.addValue, 
 				{ path: containerPath,
 				  fieldName: fieldName,
-				  valueUUID: initialData.getValueID(),
-				  timezoneoffset: new Date().getTimezoneOffset()
+				  valueUUID: initialData.getValueID()
 				})
 			  .done(function(json, textStatus, jqXHR)
 				{
@@ -1437,8 +1433,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 		var sourceObjects = [];
 		oldValue.appendUpdateCommands(i, d, initialData, sourceObjects);
 		$.post(cr.urls.updateValues, 
-				{ commands: JSON.stringify(initialData),
-				  timezoneoffset: new Date().getTimezoneOffset()
+				{ commands: JSON.stringify(initialData)
 				})
 			  .done(function(json, textStatus, jqXHR)
 				{
@@ -1466,8 +1461,7 @@ cr.deleteValue = function(valueID, successFunction, failFunction)
 		if (!successFunction)
 			throw ("successFunction is not specified");
 			
-		var jsonArray = { valueID: valueID,
-					timezoneoffset: new Date().getTimezoneOffset()
+		var jsonArray = { valueID: valueID
 				};
 		$.post(cr.urls.deleteValue, jsonArray)
 			.done(function(json, textStatus, jqXHR)
@@ -1494,8 +1488,7 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 		if (typeof(failFunction) != "function")
 			throw "failFunction is not a function";
 		var jsonArray = {
-					properties: JSON.stringify(initialData),
-					timezoneoffset: new Date().getTimezoneOffset()
+					properties: JSON.stringify(initialData)
 				};
 		if (field.nameID)
 			jsonArray.elementUUID = field.nameID;
@@ -1558,8 +1551,7 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		$.post(cr.urls.updateValues, 
-			{ commands: JSON.stringify(initialData),
-			  timezoneoffset: new Date().getTimezoneOffset()
+			{ commands: JSON.stringify(initialData)
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
@@ -1609,8 +1601,7 @@ cr.getUserID = function(successFunction, failFunction)
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		$.getJSON(cr.urls.getUserID,
-			{"access_token": cr.accessToken,
-			 "timezoneoffset": new Date().getTimezoneOffset()},
+			{"access_token": cr.accessToken},
 			function(json)
 			{
 				if (json.success)
@@ -1726,8 +1717,7 @@ cr.submitSignout = function(done, fail)
 cr.updateUsername = function(newUsername, password, done, fail)
 	{
 		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
-										password: password,
-										timezoneoffset: new Date().getTimezoneOffset()},
+										password: password},
 			   function(json) {
 					if (json['success']) {
 						var v = cr.signedinUser.getValue('_email');
@@ -1766,8 +1756,7 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 	{
 		$.post(cr.urls.acceptFollower, {follower: followerID,
 										cell: cellName, 
-										privilege: privilegeID, 
-					  					timezoneoffset: new Date().getTimezoneOffset(),
+										privilege: privilegeID
 										}, 
 									function(json){
 			if (json['success']) {
@@ -1794,8 +1783,7 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 cr.requestAccess = function(follower, following, done, fail)
 {
 		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
-									   following: following.getValueID(),
-					  				   timezoneoffset: new Date().getTimezoneOffset(),
+									   following: following.getValueID()
 					  				  },
 			   function(json){
 					if (json['success']) {

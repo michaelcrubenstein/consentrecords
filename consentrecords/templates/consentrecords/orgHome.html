@@ -616,8 +616,7 @@
 				
 				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
 											  username : $("#id_username").val(),
-											  password : $("#id_password").val(),
-											  timezoneoffset : new Date().getTimezoneOffset() }, 
+											  password : $("#id_password").val() }, 
 					function(json){
 				if (json.success) {
 					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))

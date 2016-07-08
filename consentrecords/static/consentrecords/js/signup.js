@@ -32,8 +32,7 @@ var Signup = (function () {
 			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
 				username: username,
 				password: password,
-				properties: JSON.stringify(initialData),
-				timezoneoffset : new Date().getTimezoneOffset()
+				properties: JSON.stringify(initialData)
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
