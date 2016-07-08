@@ -1255,7 +1255,7 @@ def updateUsername(request):
                 userInstance = Instance.getUserInstance(request.user)
                 transactionState = TransactionState(request.user)
                 v = userInstance.getSubValue(terms.email)
-                v.updateValue(request.user.email, transactionState)
+                v.updateValue({"text": request.user.email}, transactionState)
                 nameLists = NameList()
                 userInstance.cacheDescription(nameLists);
     except Exception as e:
