@@ -259,7 +259,6 @@ def acceptFollower(request):
         raise Http404("acceptFollower only responds to POST methods")
     
     try:    
-        timezoneoffset = request.POST["timezoneoffset"]
         language = None
         followerID = request.POST["follower"]
         cellName = request.POST["cell"]
@@ -284,7 +283,7 @@ def acceptFollower(request):
                         results = {'success':False, 'error': '%s is already following you' % follower.description.text}
                     else:
                         with transaction.atomic():
-                            transactionState = TransactionState(request.user, timezoneoffset)
+                            transactionState = TransactionState(request.user)
                             nameLists = NameList()
                             try:
                                 ar = user.value_set.filter(field=terms['_access record'],
@@ -321,7 +320,6 @@ def requestAccess(request):
         raise Http404("requestAccess only responds to POST methods")
     
     try:    
-        timezoneoffset = request.POST["timezoneoffset"]
         language = None
         followingID = request.POST["following"]
         followerID = request.POST["follower"]
@@ -352,7 +350,7 @@ def requestAccess(request):
                             results = {'success':False, 'error': error}
                         else:
                             with transaction.atomic():
-                                transactionState = TransactionState(request.user, timezoneoffset)
+                                transactionState = TransactionState(request.user)
                                 nameLists = NameList()
                             
                                 v = following.addReferenceValue(fieldTerm, follower, following.getNextElementIndex(fieldTerm), transactionState)
@@ -526,14 +524,13 @@ class api:
             index = int(indexString)
         
             # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
             languageID = None
             language = None
             
             userInfo = UserInfo(user)
             
             with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
+                transactionState = TransactionState(user)
                 if containerUUID:
                     containerObject = Instance.objects.get(pk=containerUUID)
                 else:
@@ -562,16 +559,13 @@ class api:
             commandString = data.get('commands', "[]")
             commands = json.loads(commandString)
         
-            # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
-        
             valueIDs = []
             instanceIDs = []
             nameLists = NameList()
             descriptionQueue = []
             
             with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
+                transactionState = TransactionState(user)
                 for c in commands:
                     newInstance = None
                     if "id" in c:
@@ -646,11 +640,8 @@ class api:
             # The index of the value within the container.
             indexString = data.get('index', None)
         
-            # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
-        
             with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
+                transactionState = TransactionState(user)
                 
                 if containerPath:
                     userInfo = UserInfo(user)
@@ -1054,11 +1045,8 @@ class api:
             path = data.get('path', None)
         
             if path:
-                # The client time zone offset, stored with the transaction.
-                timezoneoffset = data['timezoneoffset']
-        
                 with transaction.atomic():
-                    transactionState = TransactionState(user, timezoneoffset)
+                    transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
@@ -1084,13 +1072,10 @@ class api:
             if valueID:
                 v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
 
-                # The client time zone offset, stored with the transaction.
-                timezoneoffset = data['timezoneoffset']
-
                 with transaction.atomic():
                     v.checkWriteAccess(user)
                     
-                    transactionState = TransactionState(user, timezoneoffset)
+                    transactionState = TransactionState(user)
                     v.deepDelete(transactionState)
                     
                     if v.isDescriptor:
@@ -1227,11 +1212,9 @@ def submitsignin(request):
         raise Http404("submitsignin only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         results = userviews.signinResults(request)
         if results["success"]:
-            user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
+            user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
             results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -1245,8 +1228,6 @@ def submitNewUser(request):
         raise Http404("submitNewUser only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         # An optional set of properties associated with the object.
         propertyString = request.POST.get('properties', "")
         propertyList = json.loads(propertyString)
@@ -1254,7 +1235,7 @@ def submitNewUser(request):
         with transaction.atomic():
             results = userviews.newUserResults(request)
             if results["success"]:
-                userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
+                userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
                 results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
@@ -1268,13 +1249,11 @@ def updateUsername(request):
         raise Http404("updateUsername only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         with transaction.atomic():
             results = userviews.updateUsernameResults(request)
             if results["success"]:
                 userInstance = Instance.getUserInstance(request.user)
-                transactionState = TransactionState(request.user, timezoneOffset)
+                transactionState = TransactionState(request.user)
                 v = userInstance.getSubValue(terms.email)
                 v.updateValue(request.user.email, transactionState)
                 nameLists = NameList()

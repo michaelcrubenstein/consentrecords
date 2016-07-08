@@ -56,14 +56,13 @@ def getValueByReference(parent, field, r):
 if __name__ == "__main__":
     django.setup()
 
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
     user = authenticate(username=username, password=password)
 
     with transaction.atomic():
-        transactionState = TransactionState(user, timezoneoffset)
+        transactionState = TransactionState(user)
         userInfo = UserInfo(user)
         
         orgTerm = terms['Organization']
