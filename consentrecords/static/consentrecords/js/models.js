@@ -1699,8 +1699,7 @@ cr.getData = function(args)
 	},
 cr.submitSignout = function(done, fail)
 	{
-		$.post(cr.urls.submitSignout, { csrfmiddlewaretoken: $.cookie("csrftoken") }, 
-									function(json){
+		$.post(cr.urls.submitSignout, { }, function(json){
 			if (json['success']) {
 				crp.clear();
 				done();

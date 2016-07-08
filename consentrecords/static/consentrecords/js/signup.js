@@ -5,8 +5,7 @@ var Signup = (function () {
 		bootstrap_alert.show($('.alert-container'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.checkUnusedEmail, 
-			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
-			  email: email,
+			{ email: email,
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
@@ -29,8 +28,7 @@ var Signup = (function () {
 		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
-			{ csrfmiddlewaretoken: $.cookie("csrftoken"), 
-				username: username,
+			{ username: username,
 				password: password,
 				properties: JSON.stringify(initialData)
 			})
