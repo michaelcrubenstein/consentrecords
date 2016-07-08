@@ -23,7 +23,7 @@ if __name__ == "__main__":
     user = authenticate(username=username, password=password)
 
     with transaction.atomic():
-        transactionState = TransactionState(user, timezoneoffset)
+        transactionState = TransactionState(user)
         orgTerm = terms['Organization']
         nameTerm = terms['_name']
         nameList = NameList()
