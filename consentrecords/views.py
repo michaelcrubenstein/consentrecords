@@ -852,10 +852,9 @@ class api:
             
         return data;
         
-    def getData(user, data):
+    def getData(user, path, data):
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
-            path = data.get('path', None)
             if path.startswith('::NewExperience:'):
                 return api.getNewExperienceChoices(user, data)
             
@@ -1041,10 +1040,8 @@ class api:
     
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def deleteInstances(user, data):
+    def deleteInstances(user, path):
         try:
-            path = data.get('path', None)
-        
             if path:
                 with transaction.atomic():
                     transactionState = TransactionState(user)
@@ -1129,7 +1126,7 @@ def deleteInstances(request):
     if not request.user.is_authenticated():
         raise PermissionDenied
         
-    return api.deleteInstances(request.user, request.POST)
+    return api.deleteInstances(request.user, request.POST.get('path', None))
     
 def deleteValue(request):
     if request.method != "POST":
@@ -1169,6 +1166,16 @@ def getData(request):
         return api.getData(request.user, request.GET.get('path', None), request.GET)
     else:
         raise Http404("getData only responds to GET methods")
+
+def handleURL(request, urlPath):
+    if request.method == 'GET':
+        return api.getData(request.user, urlPath, request.GET)
+    elif request.method == 'DELETE':
+        if not request.user.is_authenticated():
+        	raise PermissionDenied
+        return api.deleteInstances(request.user, urlPath)
+    else:
+        raise Http404("api only responds to GET methods")
 
 def getCellData(request):
     if request.method != "GET":
