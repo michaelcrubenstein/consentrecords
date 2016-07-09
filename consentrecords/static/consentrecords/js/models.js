@@ -1283,9 +1283,9 @@ cr.tokenType = null;
 cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 	{
 		if (textStatus == "timeout")
-			failFunction("This operation ran out of time. Try again.")
+			failFunction("This operation ran out of time. Try again.");
 		else
-			failFunction("Connection error " + errorThrown + ": " + jqXHR.status + "; " + jqXHR.statusText)
+			failFunction(jqXHR.statusText);
 	};
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail */
@@ -1296,7 +1296,7 @@ cr.selectAll = function(args)
 		if (!args.done)
 			throw ("done function is not specified");
 		if (!args.path)
-			throw "path was not specified to selectAll"
+			throw "path was not specified to selectAll";
 
 		var data = {path : args.path};
 		if (cr.accessToken)
