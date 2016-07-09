@@ -70,5 +70,7 @@ urlpatterns = [
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
+    url(r'^api/(.*)', views.handleURL),
+    
     url(r'^doc/features/', views.features),
 ]
