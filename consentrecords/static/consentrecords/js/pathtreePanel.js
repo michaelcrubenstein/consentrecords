@@ -256,7 +256,7 @@ var PathView = (function() {
 	
 	PathView.prototype.checkOfferingCells = function(experience, done)
 	{
-		offering = experience.getValue("Offering");
+		var offering = experience.getValue("Offering");
 		if (offering && offering.getValueID() && !offering.isDataLoaded)
 		{
 			var storedI = crp.getInstance(offering.getValueID());
