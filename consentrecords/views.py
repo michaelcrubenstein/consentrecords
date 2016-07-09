@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.db import transaction, connection
 from django.db.models import F, Q, Prefetch
-from django.http import HttpResponse, JsonResponse, Http404
+from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token
+from django.core.exceptions import PermissionDenied
 
 from oauth2_provider.views.generic import ProtectedResourceView
 from oauth2_provider.models import AccessToken
@@ -497,10 +498,10 @@ class api:
             if instanceUUID:
                 ofKindObject = Instance.objects.get(pk=instanceUUID)
             elif not instanceType:
-                return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
+                return HttpResponseBadRequest(reason="Type was not specified in createInstance")
             else:
                 ofKindObject = terms[instanceType]
-        
+         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
         
@@ -1098,7 +1099,7 @@ def createInstance(request):
         raise Http404("createInstance only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.createInstance(request.user, request.POST)
     
@@ -1107,7 +1108,7 @@ def updateValues(request):
         raise Http404("updateValues only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.updateValues(request.user, request.POST)
     
@@ -1117,7 +1118,7 @@ def addValue(request):
         raise Http404("addValue only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.addValue(request.user, request.POST)
         
@@ -1126,7 +1127,7 @@ def deleteInstances(request):
         raise Http404("deleteInstances only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
         
     return api.deleteInstances(request.user, request.POST)
     
@@ -1135,7 +1136,7 @@ def deleteValue(request):
         raise Http404("deleteValue only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.deleteValue(request.user, request.POST)
     
@@ -1164,10 +1165,10 @@ def getUserID(request):
     return api.getUserID(request.user, request.GET)
 
 def getData(request):
-    if request.method != "GET":
+    if request.method == 'GET':
+        return api.getData(request.user, request.GET.get('path', None), request.GET)
+    else:
         raise Http404("getData only responds to GET methods")
-    
-    return api.getData(request.user, request.GET)
 
 def getCellData(request):
     if request.method != "GET":
