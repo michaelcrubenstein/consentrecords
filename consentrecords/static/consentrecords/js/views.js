@@ -2119,6 +2119,9 @@ var SearchView = (function () {
 		return this.inputText().toLocaleLowerCase();
 	}
 	
+	// Begin a timeout that, when it is done, begins a search.
+	// This gives the user time to update the search text without 
+	// doing a search for each change to the search text.
 	SearchView.prototype.startSearchTimeout = function(val)
 	{
 		this.clearListPanel();
