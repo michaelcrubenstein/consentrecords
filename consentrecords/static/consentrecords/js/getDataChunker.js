@@ -150,7 +150,17 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype._onScroll = function(startVal)
 	{
-		if (this._loadingMessage != null && !this._inGetData)
+		/* On a scroll event, if there is a loadingMessage and the path has
+		    been specified and we aren't already in a getData, then
+		    check to see if the loading message is visible. If it is, then
+		    start the search.
+		    
+		    The loadingMessage may be set in a separate event than the path being set.
+		    For example, in SearchView, the loadingMessage appears and then there is
+		    a short gap for the user to type. In that gap, there is no path and 
+		    we shouldn't continue.
+		 */
+		if (this._loadingMessage != null && this.path && !this._inGetData)
 		{
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
