@@ -2076,6 +2076,9 @@ var SearchView = (function () {
 		return "No Results";
 	}
 	
+	/*
+		Do all of the user interface tasks that indicate that a search to the database can't retrieve any values.
+	 */
 	SearchView.prototype.cancelSearch = function()
 	{
 		this.clearListPanel();
