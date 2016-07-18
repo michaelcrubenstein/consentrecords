@@ -162,17 +162,17 @@ var DateInput = (function () {
 		row.node().dateInput = this;
 		
 		var yearDiv = row.append('span');
-		yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		// yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.yearInput = yearDiv.append('select')
 			.classed('year', true);
 		
 		var monthDiv = row.append('span');
-		monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		// monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.monthInput = monthDiv.append('select').style('display', 'inline')
 			.classed('month', true);
 
 		var dateDiv = row.append('span');
-		dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
+		// dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.dateInput = dateDiv.append('select').style('display', 'inline')
 			.classed('day', true);
 	
