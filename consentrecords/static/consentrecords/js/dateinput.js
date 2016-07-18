@@ -9,24 +9,28 @@ var DateInput = (function () {
 	DateInput.prototype.month = undefined;
 	DateInput.prototype.day = undefined;
 	DateInput.prototype.minDate = undefined;
+	DateInput.prototype.maxDate = undefined;
 	DateInput.prototype.yearInput = null;
 	DateInput.prototype.monthInput = null;
 	DateInput.prototype.dateInput = null;
 	
-    function DateInput(node, minDate) {
+    function DateInput(node, minDate, maxDate) {
     	if (!node)
     		throw ("node is not specified");
+    		
+    	maxDate = maxDate !== undefined ? maxDate : new Date();
     		
     	this.year = undefined;
     	this.month = undefined;
     	this.day = undefined;
     	this.minDate = minDate;
+    	this.maxDate = maxDate;
     	
     	this.yearInput = null;
     	this.monthInput = null;
     	this.dateInput = null;
     	
-    	this._append(node, minDate);
+    	this._append(node, minDate, maxDate);
     };
     
     DateInput.prototype.checkOnYearChanged = function()
@@ -116,37 +120,70 @@ var DateInput = (function () {
 			this.dateInput.node().selectedIndex = oldDate;
     }
     
-    DateInput.prototype.checkMinDate = function(minDate)
+    DateInput.prototype.checkMinDate = function(minDate, maxDate)
     {
+    	maxDate = maxDate !== undefined ? maxDate : new Date();
+    	
 		var yearNode = this.yearInput.node();
 		var monthNode = this.monthInput.node();
 		var dateNode = this.dateInput.node();
 
 		var maxYear, minYear;
-		maxYear = (new Date()).getUTCFullYear();
+		maxYear = (maxDate).getUTCFullYear();
+		var thisYear = (new Date()).getUTCFullYear();
 	
 		this.minDate = minDate;
+		this.maxDate = maxDate;
+		
 		if (minDate === undefined)
 			minYear = maxYear - 100;
 		else
 			minYear = minDate.getUTCFullYear();
 
 		var newNumOptions = maxYear - minYear + 2;
-		if (this.yearInput.node().selectedIndex >= newNumOptions)
+		if (this.year)
 		{
-			this.year = minYear;
-			this.yearInput.node().selectedIndex = newNumOptions - 1;
+			if (this.year < minYear)
+				this.year = minYear;
+			if (this.year > maxYear)
+				this.year = maxYear;
 		}
 		
-		while (this.yearInput.selectAll('option:last-child').datum() < minYear)
+		this.yearInput.selectAll('option').remove();
+		if (maxYear < thisYear)
 		{
-			this.yearInput.selectAll('option:last-child').remove();
+			this.yearInput.append('option')
+				.datum('year')
+				.text('year');
+			if (this.year === undefined)
+				this.yearInput.node().selectedIndex = 0;
 		}
-		for (i = this.yearInput.selectAll('option:last-child').datum() - 1; i >= minYear; --i)
+		
+		for (i = maxYear; i >= minYear; --i)
 		{
+			if (i == thisYear)
+			{
+				this.yearInput.append('option')
+					.datum('year')
+					.text('year');
+				if (this.year === undefined)
+					this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
+			}
+			
 			this.yearInput.append('option')
 				.datum(i)
 				.text(i);
+			if (this.year == i)
+				this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
+		}
+		
+		if (minYear > thisYear)
+		{
+			this.yearInput.append('option')
+				.datum('year')
+				.text('year');
+			if (this.year === undefined)
+				this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
 		}
 		
 		this.checkOnYearChanged();
