@@ -48,7 +48,8 @@ function getStartDate(d)
 }
 
 function getEndDate(d) {
-	return d.getDatum("End") || new Date().toISOString().substr(0, 10);
+	return d.getDatum("End") || 
+		   (d.getDatum("Start") ? new Date().toISOString().substr(0, 10) : undefined);
 }	
 
 function getDateRange(d)

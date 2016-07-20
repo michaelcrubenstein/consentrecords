@@ -1055,7 +1055,7 @@ var EditExperiencePanel = (function () {
 			.classed('string', false);
 		
 		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
-		endDateInput.checkMinDate(new Date(startDateInput.value));
+		endDateInput.checkMinDate(new Date(startDateInput.value()));
 		
 		$(startDateInput).on('change', function()
 		{

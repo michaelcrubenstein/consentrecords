@@ -35,7 +35,11 @@ var DateInput = (function () {
     
     DateInput.prototype.checkOnYearChanged = function()
     {
-    	this.yearInput.selectAll(":first-child").attr('disabled', true);
+    	this.yearInput.selectAll('option').each(function(d, i)
+    		{
+    			if (d == 'year')
+    				d3.select(this).attr('disabled', true);
+    		});
     	if (this.minDate && this.year == this.minDate.getUTCFullYear())
     	{
     		minMonth = this.minDate.getUTCMonth();
@@ -120,6 +124,15 @@ var DateInput = (function () {
 			this.dateInput.node().selectedIndex = oldDate;
     }
     
+    DateInput.prototype.appendUnspecifiedYear = function()
+    {
+		this.yearInput.append('option')
+			.datum('year')
+			.text('year');
+		if (this.year === undefined)
+			this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
+    }
+    
     DateInput.prototype.checkMinDate = function(minDate, maxDate)
     {
     	maxDate = maxDate !== undefined ? maxDate : new Date();
@@ -130,7 +143,8 @@ var DateInput = (function () {
 
 		var maxYear, minYear;
 		maxYear = (maxDate).getUTCFullYear();
-		var thisYear = (new Date()).getUTCFullYear();
+		var thisDate = new Date();
+		var thisYear = thisDate.getUTCFullYear();
 	
 		this.minDate = minDate;
 		this.maxDate = maxDate;
@@ -161,13 +175,9 @@ var DateInput = (function () {
 		
 		for (i = maxYear; i >= minYear; --i)
 		{
-			if (i == thisYear)
+			if (i == thisYear && this.minDate < thisDate)
 			{
-				this.yearInput.append('option')
-					.datum('year')
-					.text('year');
-				if (this.year === undefined)
-					this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
+				this.appendUnspecifiedYear();
 			}
 			
 			this.yearInput.append('option')
@@ -175,6 +185,11 @@ var DateInput = (function () {
 				.text(i);
 			if (this.year == i)
 				this.yearInput.node().selectedIndex = this.yearInput.selectAll('option').size() - 1;
+
+			if (i == thisYear && this.minDate >= thisDate)
+			{
+				this.appendUnspecifiedYear();
+			}
 		}
 		
 		if (minYear > thisYear)
@@ -201,17 +216,17 @@ var DateInput = (function () {
 		var yearDiv = row.append('span');
 		// yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.yearInput = yearDiv.append('select')
-			.classed('year', true);
+			.classed('year site-active-text', true);
 		
 		var monthDiv = row.append('span');
 		// monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.monthInput = monthDiv.append('select').style('display', 'inline')
-			.classed('month', true);
+			.classed('month site-active-text', true);
 
 		var dateDiv = row.append('span');
 		// dateDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
 		this.dateInput = dateDiv.append('select').style('display', 'inline')
-			.classed('day', true);
+			.classed('day site-active-text', true);
 	
 		var yearNode = this.yearInput.node();
 		var monthNode = this.monthInput.node();
@@ -332,7 +347,12 @@ var DateInput = (function () {
 		this.year = undefined;
 		this.month = undefined;
 		this.day = undefined;
-		this.yearInput.node().selectedIndex = 0;
+		var _this = this;
+		this.yearInput.selectAll('option').each(function(d, i)
+			{
+				if (d === 'year')
+					_this.yearInput.node().selectedIndex = i;
+			});
 		this.monthInput.node().selectedIndex = 0;
 		this.dateInput.node().selectedIndex = 0;
 	}

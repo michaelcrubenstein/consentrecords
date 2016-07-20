@@ -94,25 +94,30 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start");
+		return this.experience.getDatum("Start") || "9999-12-31";
 	}
 	
 	FlagData.prototype.getEndDate = function()
 	{
-		return this.experience.getDatum("End") || new Date().toISOString().substr(0, 10);
+		return this.experience.getDatum("End") || 
+			(this.experience.getDatum("Start") ? new Date().toISOString().substr(0, 10) : "9999-12-31");
 	}
 	
 	FlagData.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
-		var ed;
-		if (e)
-			ed = new Date(e);
-		else
-			ed = new Date();
-		var sd = new Date(this.experience.getDatum("Start"));
+		var s = this.experience.getDatum("Start");
+		var top;
 		
-		return {top: ed.getUTCFullYear(), bottom: sd.getUTCFullYear()};
+		if (e)
+			top = new Date(e).getUTCFullYear();
+		else if (s)
+			top = "Now";
+		else
+			top = "Goal";
+		var bottom = s ? new Date(s).getUTCFullYear() : "Goal";
+		
+		return {top: top, bottom: bottom};
 	}
 	
 	FlagData.prototype.getColor = function()
@@ -256,7 +261,7 @@ var PathView = (function() {
 	
 	PathView.prototype.checkOfferingCells = function(experience, done)
 	{
-		var offering = experience.getValue("Offering");
+		offering = experience.getValue("Offering");
 		if (offering && offering.getValueID() && !offering.isDataLoaded)
 		{
 			var storedI = crp.getInstance(offering.getValueID());
@@ -377,10 +382,17 @@ var PathView = (function() {
 		{
 			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
 			{
-				var panel = this.sitePanel.node();
-				var editPanel = new EditExperiencePanel(fd.experience, this.path, panel, revealPanelLeft);
+				try
+				{
+					var panel = this.sitePanel.node();
+					var editPanel = new EditExperiencePanel(fd.experience, this.path, panel, revealPanelLeft);
 												  
-				revealPanelLeft(editPanel.node());
+					revealPanelLeft(editPanel.node());
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 				d3.event.stopPropagation();
 			}
 		}
@@ -466,6 +478,27 @@ var PathView = (function() {
 				}
 			}
 			
+			var thisYear = new Date().getUTCFullYear();
+			function compareDates(d1, d2)
+			{
+				// negative numbers mean d1 is earlier than d2 chronologically
+				if (d1 === "Goal")
+					return d2 === "Goal" ? 0 : 1;
+				else if (d2 === "Goal")
+					return -1;
+				else if (d1 === "Now")
+				{
+					if (d2 === "Now")
+						return 0;
+					else 
+						return d2 <= thisYear ? 1 : -1;
+				}
+				else if (d2 === "Now")
+					return d1 <= thisYear ? -1 : 1;
+				else
+					return d1 - d2;
+			}
+			
 			ybj = fds[i+1].yearBounds;
 			if (ybi.bottom == ybj.top)
 				ybi.bottom = undefined;
@@ -490,7 +523,7 @@ var PathView = (function() {
 							 */
 							if (isShortFlagpole && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
 								fdi.yearBounds.bottom = undefined;
-							else if (fdj.yearBounds.bottom < fdi.yearBounds.bottom)
+							else if (compareDates(fdj.yearBounds.bottom, fdi.yearBounds.bottom) < 0)
 							{
 								if (isShortFlagpole)
 									fdi.yearBounds.bottom = undefined;
@@ -741,6 +774,12 @@ var PathLines = (function() {
 	{
 		function compareDates(d1, d2)
 		{
+			/* null dates come first, because they are the future. */
+			if (!d2)
+				return d1 ? 1 : 0;
+			else if (!d1)
+				return -1;
+				
 			return (d1 > d2) ? 1 :
 				   ((d2 > d1) ? -1 :
 				   0);
@@ -910,7 +949,7 @@ var PathLines = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
-		s = getDateRange(fd.experience);
+		s = getDateRange(fd.experience) || "(Future Goal)";
 		if (s && s.length > 0)
 		{
 			checkSpacing("4px");
@@ -1539,8 +1578,15 @@ var PathlinesPanel = (function () {
 				function() {
 					if (prepareClick('click', "Settings"))
 					{
-						var panel = new Settings(user, _this.node());
-						showPanelUp(panel.node(), unblockClick);
+						try
+						{
+							var panel = new Settings(user, _this.node());
+							showPanelUp(panel.node(), unblockClick);
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
 					}
 					d3.event.preventDefault();
 				})
@@ -1571,8 +1617,15 @@ var PathlinesPanel = (function () {
 			.on("click", function(d) {
 				if (prepareClick('click', 'add experience'))
 				{
-					showClickFeedback(this);
-					_this.startNewExperience();
+					try
+					{
+						showClickFeedback(this);
+						_this.startNewExperience();
+					}
+					catch(err)
+					{
+						syncFailFunction(err);
+					}
 				}
 				d3.event.preventDefault();
 			})
@@ -1627,9 +1680,16 @@ var PathlinesPanel = (function () {
 					function() {
 						if (prepareClick('click', 'find experience'))
 						{
-							showClickFeedback(this);
-							var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
-							showPanelLeft(newPanel.node(), unblockClick);
+							try
+							{
+								showClickFeedback(this);
+								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+								showPanelLeft(newPanel.node(), unblockClick);
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
 						}
 						d3.event.preventDefault();
 					});
@@ -1642,7 +1702,14 @@ var PathlinesPanel = (function () {
 				{
 					if (prepareClick('click', 'share'))
 					{
-						new ShareOptions(_this.node());
+						try
+						{
+							new ShareOptions(_this.node());
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
 					}
 				});
 		shareButton.append("img")
@@ -1718,16 +1785,23 @@ var ShareOptions = (function () {
 		{
 			if (prepareClick('click', 'Cancel'))
 			{
-				$(confirmButton.node()).off('blur');
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					unblockClick();
-				});
-				$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
-					function()
-					{
-						dimmer.remove();
-					}});
+				try
+				{
+					$(confirmButton.node()).off('blur');
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						unblockClick();
+					});
+					$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
+						function()
+						{
+							dimmer.remove();
+						}});
+				}
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 			}
 			e.preventDefault();
 		}

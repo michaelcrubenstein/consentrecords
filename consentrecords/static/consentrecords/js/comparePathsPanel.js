@@ -394,7 +394,7 @@ var ComparePath = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
-		s = getDateRange(fd.experience);
+		s = getDateRange(fd.experience) || "(Future Goal)";
 		if (s && s.length > 0)
 		{
 			checkSpacing("4px");

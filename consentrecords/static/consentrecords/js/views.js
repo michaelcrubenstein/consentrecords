@@ -339,6 +339,8 @@ function _checkItemsDivDisplay(node)
 	var itemsDiv = d3.select(node);
 	var items = itemsDiv.selectAll("li");
 	
+	var isVisible;
+	
 	if (isEdit)
 		isVisible = true;
 	else
@@ -2282,6 +2284,11 @@ var HidableDiv = (function()
 	HidableDiv.prototype.height = function(newHeight)
 	{
 		return (newHeight === undefined) ? this.$div.height() : this.$div.height(newHeight); 
+	}
+	
+	HidableDiv.prototype.isVisible = function()
+	{
+		return this.$div.css('display') != 'none';
 	}
 	
 	function HidableDiv(div, startDisplay, duration)
