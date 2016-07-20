@@ -50,6 +50,7 @@ var DateInput = (function () {
     		if (this.month < minMonth + 1)
     		{
     			this.monthInput.node().selectedIndex = minMonth + 1;
+    			$(this.monthInput.node()).trigger("change");
     		}
     	}
     	else if (this.year && this.month)
@@ -103,6 +104,7 @@ var DateInput = (function () {
     		{
     			this.dateInput.node().selectedIndex = minDay;
     			this.day = minDay;
+    			$(this.dateInput.node()).trigger('change');
     			/* Don't reset the date to oldDate. */
     			if (oldDate < minDay)
     				oldDate = 0;
@@ -121,7 +123,10 @@ var DateInput = (function () {
     	}
 
 		if (oldDate > 0 && oldDate <= daysInMonth)
+		{
 			this.dateInput.node().selectedIndex = oldDate;
+			$(this.dateInput.node()).trigger('change');
+		}
     }
     
     DateInput.prototype.appendUnspecifiedYear = function()
