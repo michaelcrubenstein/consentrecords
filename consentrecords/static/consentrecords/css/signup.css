@@ -7,9 +7,9 @@
 	panel.sign-up h1 {
 		width: 100%;
 		text-align: center;
-		padding-top: 32px;
-		padding-bottom: 32px;
-		font-size: 32px;
+		margin-top: 1em;
+		margin-bottom: 1em;
+		font-size: 2em;
 		font-weight: normal;
 	}
 	
@@ -45,7 +45,6 @@
 	panel.sign-up table {
 		border-top: 1px solid #eee;
 		cellspacing: 0;
-		font-size: 18px;
 		width: 100%;
 	}
 
@@ -63,17 +62,11 @@
 		margin-right: 12px;
 	}
 	
-	div.select-container {
-		display: inline-block;
-		position: relative;
-		background-color: white;
-	}
-	
 	td .alert {
 		margin-bottom: 0px;
 	}
 
-	div.select-container span {
+	panel.birthday span {
 		position: absolute;
 		right: 0px;
 		top: 4px;
@@ -81,12 +74,14 @@
 		color: #AAA;
 	}
 
-	div.select-container select {
-		margin-left: 3px;
-		padding-left: 3px;
-		padding-right: 17px;
+	panel.birthday select {
+		display: inline-block;
 		position: relative;
-		background-color: transparent;
+		background-color: white;
+		margin-top: 6px;
+		margin-bottom: 6px;
+		margin-left: 3px;
+		padding-right: 1em;
 		border: none;
 		outline: none;
 		-webkit-appearance:none;
@@ -113,9 +108,15 @@
 		width: 100%;
 		min-width: 100%;
 	}
+	
+	panel.sign-up panel.birthday td.full-width {
+		text-align: right;
+	}
 
 	panel.sign-up td p {
-		padding: 0px 18px;
+		padding: 0;
+		margin-top: 0.2em;
+		margin-bottom: 0.2em;
 	}
 	
 	panel.sign-up input:focus {
@@ -124,9 +125,10 @@
 	
 	panel.sign-up p {
 		width: 100%;
-		padding: 6px 32px;
+		margin: 0;
+		padding: .4em 1.5em;
 		color: #777;
-		font-size: 16px;
+		font-size: 1em;
 		font-weight: normal;
 	}
 	
