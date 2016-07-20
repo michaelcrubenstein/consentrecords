@@ -3396,7 +3396,6 @@ var NewExperiencePanel = (function () {
 						
 		this.experienceView = this.panelDiv.append('header');
 		
-		experience.appendView(this.experienceView);
 		var searchView = new NewExperienceSearchView(this, experience);
 		
 		var birthday = experience.path.getDatum("Birthday");
@@ -3506,8 +3505,9 @@ var NewExperiencePanel = (function () {
 		startHidable.hideNotSureSpan(0, function() {});
 		endHidable.hideNotSureSpan(0, function() {});
 		
-		$(this.node()).one("revealing.cr", function() 
-			{ 
+		setTimeout(function()
+			{
+				experience.appendView(_this.experienceView, stepFunction);
 				searchView.search(""); 
 				searchView.inputBox.focus();
 			});
