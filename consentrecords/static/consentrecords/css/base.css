@@ -262,7 +262,7 @@ section.cell {
 	border-bottom: 1px solid #eee;
 }
 .cell.unique.edit>label {
-	line-height: 23px;
+	line-height: 1.5em;	/* The same as .cell.unique.view>label and .right-label */
 }
 
 .cell>label {
