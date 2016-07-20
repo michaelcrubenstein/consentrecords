@@ -435,32 +435,16 @@ var Experience = (function() {
 			if (offeringD)
 			{
 				this.setOffering(offeringD);
-				panel = new NewExperienceFinishPanel(previousNode, this, function()
-					{
-						m.forEach(function(d) { _this.removeService(d); });
-						_this.clearOffering();
-						_this.clearOrganization();
-						_this.clearSite();
-					});
+				panel = new NewExperiencePanel(this, previousNode);
 			}
 			else
 			{
-				panel = new NewExperienceFromSitePanel(previousNode, this, function()
-					{
-						m.forEach(function(d) { _this.removeService(d); })
-						_this.clearOrganization();
-						_this.clearSite();
-					});
+				panel = new NewExperiencePanel(this, previousNode);
 			}
 		}
 		else
 		{
-			panel = new NewExperienceFromOrganizationPanel(previousNode, this,
-				function()
-				{
-					this.clearOrganization();
-					m.forEach(function(d) { _this.removeService(d); });
-				});
+			panel = new NewExperiencePanel(this, previousNode);
 		}
 		done(panel.node());
 	}
@@ -472,12 +456,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperienceFromOrganizationPanel(previousNode, this,
-			function()
-			{
-				this.clearOrganization();
-				m.forEach(function(d) { _this.removeService(d); });
-			});
+		var panel = new NewExperiencePanel(this, previousNode);
 		done(panel.node());
 	}
 	
@@ -489,12 +468,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperienceFromSitePanel(previousNode, this,
-			function()
-			{
-				this.clearSite();
-				m.forEach(function(d) { _this.removeService(d); });
-			});
+		var panel = new NewExperiencePanel(this, previousNode);
 		done(panel.node());
 	}
 
@@ -507,22 +481,6 @@ var Experience = (function() {
 
 		this.setOffering({instance: d});
 		
-		var oldOrganization;
-		var oldSite;
-		
-		if (this.organization)
-			oldOrganization = {instance: this.organization};
-		else if (this.organizationName)
-			oldOrganization = {text: this.organizationName};
-		else
-			oldOrganization = null;
-		if (this.site)
-			oldSite = {instance: this.site};
-		else if (this.siteName)
-			oldSite = {text: this.siteName};
-		else
-			oldSite = null;
-		
 		/* Set the organization, then the site, because setting the organization may
 			also set the site.
 		 */
@@ -532,30 +490,14 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperienceFinishPanel(previousNode, this,
-			function()
-			{
-				this.clearOffering();
-				if (oldOrganization)
-					this.setOrganization(oldOrganization);
-				else
-					this.clearOrganization();
-				if (oldSite)
-					this.setSite(oldSite);
-				else
-					this.clearSite();
-				m.forEach(function(d) { _this.removeService(d); });
-			});
+		var panel = new NewExperiencePanel(this, previousNode);
 		done(panel.node());
 	}
 	
 	Experience.prototype.createFromService = function(d, previousNode, done)
 	{
 		var service = this.addService(d);
-		var panel = new NewExperienceFromServicePanel(previousNode, this,
-			function() {
-				this.removeService(service);
-			});
+		var panel = new NewExperiencePanel(this, previousNode);
 		done(panel.node());
 	}
 	
