@@ -49,12 +49,6 @@
     	.button-section {
     		float: bottom;
     	}
-    	panel.organization header {
-			width: 100%;
-			padding: 6px 12px;
-			text-align: left;
-			font-weight: bold;
-    	}
     	.level-2-panel {
     		top: 0;
     		z-index: 2;
@@ -66,6 +60,18 @@
     	.level-4-panel {
     		top: 0;
     		z-index: 4;
+    	}
+    	panel#id_sign_in_panel hr {
+			margin-top: 20px;
+			margin-bottom: 20px;
+			border: 0;
+			border-top: 1px solid #ccc
+    	}
+    	panel#id_sign_in_panel {
+    		background: white;
+    	}
+    	panel#id_forgot_password_panel {
+    		background: white;
     	}
     	.background-gradient-panel > nav {
     		opacity: 1.0;
@@ -159,7 +165,7 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial background-gradient-panel" >
+  		<panel id="id_user_home_panel" class="initial" >
 			<div class="alert-container"></div>
 			<section class="button-section">
 				<section class="row-button-group">
@@ -179,7 +185,7 @@
 			</section>
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel reveal background-gradient-panel">
+		<panel id="id_sign_in_panel" class="level-2-panel reveal">
 		  <form class="form-simple form-signin">
 			<div class="site-title">Sign In to PathAdvisor</div>
 			<div class="alert-container"></div>
@@ -209,7 +215,7 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_forgot_password_panel" class="level-2-panel reveal background-gradient-panel">
+		<panel id="id_forgot_password_panel" class="level-2-panel reveal">
 			<form class="form-simple">
 				<div class="site-title">Forgot your Password?</div>
 				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
