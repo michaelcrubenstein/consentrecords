@@ -204,7 +204,7 @@ var DateInput = (function () {
 		this.checkOnYearChanged();
     }
     
-	DateInput.prototype._append = function(node, minDate)
+	DateInput.prototype._append = function(node, minDate, maxDate)
 	{
 		var _this = this;
 		var p = d3.select(node);
@@ -233,7 +233,10 @@ var DateInput = (function () {
 		var dateNode = this.dateInput.node();
 
 		var maxYear, minYear;
-		maxYear = (new Date()).getUTCFullYear();
+		if (maxDate === undefined)
+			maxYear = (new Date()).getUTCFullYear();
+		else
+			maxYear = maxDate.getUTCFullYear();
 	
 		if (minDate === undefined)
 			minYear = maxYear - 100;

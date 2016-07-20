@@ -69,23 +69,16 @@ function getDateRange(d)
 	}
 	
 	var startDate = getStartDate(d);
-	if (startDate === undefined || startDate === null)
-		startDate = "";
-	else
-		startDate = getDateString(startDate);
+	startDate = startDate ? getDateString(startDate) : "";
 		
-	var endDate = getEndDate(d);
-	if (endDate === undefined || endDate === null)
-		endDate = "";
-	else
-		endDate = getDateString(endDate);
+	var endDate = d.getDatum("End");
+	endDate = endDate ? getDateString(endDate) : "";
 		
 	var connector;
 	if (startDate || endDate)
-		connector = " - ";
+		return "{0} - {1}".format(startDate, endDate);
 	else
-		connector = "";
-	return startDate + connector + endDate;
+		return "";
 }
 
 function appendSessionDescriptions(buttons)

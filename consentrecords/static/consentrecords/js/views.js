@@ -2266,10 +2266,12 @@ var HidableDiv = (function()
 	HidableDiv.prototype.duration = 400;
 	HidableDiv.prototype.$div = null;
 	
-	HidableDiv.prototype.show = function(done)
+	HidableDiv.prototype.show = function(done, duration)
 	{
+		duration = duration !== undefined ? duration : this.duration;
+		
 		this.$div.css('display', '');
-		this.$div.animate({left: 0, width: this.width}, this.duration, done);
+		this.$div.animate({left: 0, width: this.width}, duration, done);
 	}
 	
 	HidableDiv.prototype.hide = function(done)

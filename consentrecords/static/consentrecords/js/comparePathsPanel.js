@@ -194,19 +194,6 @@ var ComparePath = (function() {
 		});
 	}
 	
-	ComparePath.prototype._compareExperiences = function(a, b)
-	{
-		function compareDates(d1, d2)
-		{
-			return (d1 > d2) ? 1 :
-				   ((d2 > d1) ? -1 :
-				   0);
-		}
-		return -compareDates(a.getEndAge(), b.getEndAge()) ||
-				a.column - b.column ||
-				compareDates(a.getStartAge(), b.getStartAge());
-	}
-	
 	ComparePath.prototype.getColumn = function(fd)
 	{
 		if (fd.experience.cell.parent == this.rightPath)
@@ -394,7 +381,7 @@ var ComparePath = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
-		s = getDateRange(fd.experience) || "(Future Goal)";
+		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
 			checkSpacing("4px");

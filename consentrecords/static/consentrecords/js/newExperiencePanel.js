@@ -3460,7 +3460,7 @@ var NewExperiencePanel = (function () {
 		var birthday = experience.path.getDatum("Birthday");
 		
 		var optionPanel = this.panelDiv.append('section')
-			.classed('options', true);
+			.classed('date-range-options', true);
 		var previousExperienceButton = optionPanel.append('button')
 			.classed('previous pressed', true)
 			.on('click', function()
@@ -3510,7 +3510,7 @@ var NewExperiencePanel = (function () {
 			.text('Goal');
 			
 		var startDateContainer = this.panelDiv.append('section')
-			.classed('cell edit unique date-container', true);
+			.classed('cell unique date-container', true);
 
 		startDateContainer.append('label')
 			.text("Start");
@@ -3554,7 +3554,7 @@ var NewExperiencePanel = (function () {
 		});
 		
 		var endDateContainer = this.panelDiv.append('section')
-			.classed('cell edit unique date-container', true);
+			.classed('cell unique date-container', true);
 		var endLabel = endDateContainer.append('label')
 			.text("End");
 			

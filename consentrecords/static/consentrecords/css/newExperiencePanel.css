@@ -47,14 +47,14 @@
 		outline: none;
 	}
 	
-	panel.new-experience-panel section.options {
+	section.date-range-options {
 		margin-top: 24px;
 		background: white;
 		width: 100%;
 		text-align: center;
 	}
 	
-	panel.new-experience-panel section.options button {
+	section.date-range-options button {
 		border-bottom-style : solid;
 		border-bottom-width:  1px;
 		border-bottom-color: #2C55CC;
@@ -74,17 +74,17 @@
 		padding-right: .5em;
 	}
 	
-	panel.new-experience-panel section.options button.pressed {
+	section.date-range-options button.pressed {
 		background: #2C55CC;
 		color: #F8F8F8;
 	}
 	
-	panel.new-experience-panel section.options button:first-child {
+	section.date-range-options button:first-child {
 		border-top-left-radius: 3px;
 		border-bottom-left-radius: 3px;
 	}
 	
-	panel.new-experience-panel section.options button:last-child {
+	section.date-range-options button:last-child {
 		border-top-right-radius: 3px;
 		border-bottom-right-radius: 3px;
 		border-right-style : solid;
@@ -92,9 +92,8 @@
 		border-right-color: #2C55CC;
 	}
 	
-	panel.new-experience-panel section.cell.edit {
+	panel.new-experience-panel section.date-container {
 		margin-top: 0px;
-		border-bottom-style: none;
 	}
 	
 	panel.new-experience-panel section.date-container label {
@@ -106,6 +105,7 @@
 		border-top-color: #ddd;
 		margin-left: 12px;
 		padding-left: 0px;
+		text-align: left;
 	}
 	
 	panel.new-experience-panel section.date-container ol {
@@ -118,7 +118,6 @@
 	
 	panel.new-experience-tags section p {
 		margin: 10px;
-		
 	}
 
     .dots ~ panel {

@@ -575,6 +575,33 @@ var PathView = (function() {
 		});
 	}
 	
+	PathView.prototype._compareExperiences = function(a, b)
+	{
+		function compareDates(d1, d2)
+		{
+			/* null dates come first, because they are the future. */
+			if (!d2)
+				return d1 ? 1 : 0;
+			else if (!d1)
+				return -1;
+				
+			return (d1 > d2) ? 1 :
+				   ((d2 > d1) ? -1 :
+				   0);
+		}
+		
+		var diff = -compareDates(a.getEndDate(), b.getEndDate()) ||
+				a.column - b.column;
+		if (diff)
+			return diff;
+			
+		var thisDate = new Date().toISOString().substr(0, 10);
+		if ((a.getStartDate() <= thisDate) != (b.getStartDate() <= thisDate))
+			return -compareDates(a.getStartDate(), b.getStartDate());
+		else
+			return compareDates(a.getStartDate(), b.getStartDate());
+	}
+	
 	/* Sets the x, y and y2 coordinates of each flag. */
 	PathView.prototype._setCoordinates = function(g)
 	{
@@ -770,25 +797,6 @@ var PathLines = (function() {
 		});
 	}
 	
-	PathLines.prototype._compareExperiences = function(a, b)
-	{
-		function compareDates(d1, d2)
-		{
-			/* null dates come first, because they are the future. */
-			if (!d2)
-				return d1 ? 1 : 0;
-			else if (!d1)
-				return -1;
-				
-			return (d1 > d2) ? 1 :
-				   ((d2 > d1) ? -1 :
-				   0);
-		}
-		return -compareDates(a.getEndDate(), b.getEndDate()) ||
-				a.column - b.column ||
-				compareDates(a.getStartDate(), b.getStartDate());
-	}
-	
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
@@ -950,7 +958,7 @@ var PathLines = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
-		s = getDateRange(fd.experience) || "(Future Goal)";
+		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
 			checkSpacing("4px");
