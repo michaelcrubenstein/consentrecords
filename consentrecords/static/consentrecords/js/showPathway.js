@@ -993,8 +993,128 @@ var EditExperiencePanel = (function () {
 		}
 	}
 	
+	EditExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
+	{
+		var _this = this;
+		var itemsDiv = dateContainer.append('ol');
+		var itemDiv = itemsDiv.selectAll('li')
+			.data(function(cell) { return cell.data; })
+			.enter()
+			.append('li');
+		var dateInput = new DateInput(itemDiv.node(), minDate, maxDate);
+		var hidableDiv = new HidableDiv(dateContainer.selectAll(".date-row").node());
+
+		var hidingChevron = new HidingChevron(itemDiv, 
+			function()
+			{
+				hidableDiv.show(function()
+					{
+						unblockClick();
+					});
+				showNotSureSpan(200,
+					function()
+					{
+						_this.calculateHeight();
+					})
+			});
+		
+		var notSureSpan = dateContainer.append('div')
+				.classed('in-cell-button site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', "Not Sure"))
+						{
+							hidableDiv.hide(function()
+								{
+									hidingChevron.show(function()
+										{
+											dateInput.clear();
+											unblockClick();
+										});
+								});
+							hideNotSureSpan(200,
+								function()
+								{
+									_this.calculateHeight();
+								}
+							);
+						}
+					});
+		notSureSpan.append('div').text('Not Sure');
+		
+		var showNotSureSpan = function(duration, step, done)
+			{
+				var jNode = $(notSureSpan.node());
+				notSureSpan.selectAll('div').style('display', '');
+				if (!duration)
+				{
+					jNode.height('auto');
+					if (step) step();
+					if (done) done();
+				}
+				else
+				{
+					var oldHeight = jNode.height();
+					jNode.height('auto');
+					var height = jNode.height();
+					jNode.height(oldHeight);
+					jNode.animate({height: height}, {duration: duration, easing: 'swing', step: step, done: done});
+				}
+			}
+			
+		var hideNotSureSpan = function(duration, step, done)
+			{
+				var jNode = $(notSureSpan.node());
+				if (!duration)
+				{
+					jNode.height('0');
+					if (step) step();
+					if (done) done();
+					notSureSpan.selectAll('div').style('display', 'none');
+				}
+				else
+				{
+					jNode.animate({height: "0px"}, {duration: duration, easing: 'swing', step: step, done: 
+						function() {
+							notSureSpan.selectAll('div').style('display', 'none');
+							if (done) done();
+						}});
+				}
+			}
+			
+		forceDateVisible = function(duration, done)
+			{
+				hideNotSureSpan(duration,
+					function()
+					{
+						_this.calculateHeight();
+					}
+				);
+				hidingChevron.hide(
+					function()
+					{
+						hidableDiv.show(function()
+						{
+							if (done) done();
+						})
+					});
+			}
+		
+		/* Calculate layout-based variables after css is complete. */
+		setTimeout(function()
+			{
+				hidingChevron.height(hidableDiv.height());
+			}, 0);
+		
+		return {dateInput: dateInput, hidableDiv: hidableDiv, 
+			showNotSureSpan: showNotSureSpan,
+			hideNotSureSpan: hideNotSureSpan,
+			forceDateVisible: forceDateVisible
+		};
+	}
+	
 	function EditExperiencePanel(experience, path, previousPanel, showFunction) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit", showFunction);
+		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit new-experience-panel", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();
@@ -1004,12 +1124,47 @@ var EditExperiencePanel = (function () {
 			.classed("default-link", true)
 			.on("click", function()
 				{
-					panel2Div.handleDoneEditingButton.call(this,
-						function()
+					var _this = this;
+					function doAdd()
+					{
+						panel2Div.handleDoneEditingButton.call(_this,
+							function()
+							{
+								myTagsCell.data.forEach(function(d)
+									{ d.removeUnusedValue(); });
+							});
+					}
+				
+					if (offeringCell.isEmpty() &&
+						myTagsCell.isEmpty())
+						asyncFailFunction('Your experience needs at least a name or a tag.');
+					else if (previousExperienceButton.classed('pressed'))
+					{
+						if (!startDateInput.year || !startDateInput.month)
+							asyncFailFunction('You need to set the start year and month for this past experience.');
+						else if (!endDateInput.year || !endDateInput.month)
+							asyncFailFunction('You need to set the end year and month for this past experience.');
+						else
 						{
-							myTagsCell.data.forEach(function(d)
-								{ d.removeUnusedValue(); });
-						});
+							doAdd();
+						}
+					}
+					else if (presentExperienceButton.classed('pressed'))
+					{
+						if (!startDateInput.year || !startDateInput.month)
+							asyncFailFunction('You need to set the start year and month for this present experience.');
+						else
+						{
+							doAdd();
+						}
+					}
+					else if (goalButton.classed('pressed'))
+					{
+						doAdd();
+					}
+					else
+						asyncFailFunction('No timing button is pressed.');
+					d3.event.preventDefault();
 				})
 			.append("span").text("Done");
 
@@ -1035,67 +1190,195 @@ var EditExperiencePanel = (function () {
 		shareButton.append("img")
 			.attr("src", shareImagePath);
 		
-			
+		var offeringCell = 	new PickOrCreateOfferingCell(experience);
 		cells = [new PickOrCreateOrganizationCell(experience),
 				 new PickOrCreateSiteCell(experience),
-				 new PickOrCreateOfferingCell(experience),
-				 experience.getCell("Start"),
-				 experience.getCell("End"),
+				 offeringCell,
 				];
 				
 		this.showEditCells(cells);
 		
-		var startSection = panel2Div.selectAll("section:nth-child(4)");
-		var startDateInput = startSection.selectAll(".date-row").node().dateInput;
-		var endSection = panel2Div.selectAll("section:nth-child(5)");
+		var birthday = path.getDatum("Birthday");
+		var thisDate = new Date().toISOString().substr(0, 10);
 		
-		startSection.classed('date-container', true)
-			.classed('string', false);
-		endSection.classed('date-container', true)
-			.classed('string', false);
+		var stepFunction = function()
+			{
+			}
 		
-		var endDateInput = endSection.selectAll(".date-row").node().dateInput;
-		endDateInput.checkMinDate(new Date(startDateInput.value));
+		function onPreviousButtonPressed()
+		{
+			startHidable.forceDateVisible(200);
+			endHidable.forceDateVisible(200);
+			
+			startDateInput.checkMinDate(new Date(birthday), new Date());
+			$(startDateInput).trigger('change');
+		}
+		
+		function onPresentButtonPressed()
+		{
+			startHidable.forceDateVisible(200);
+			endHidable.showNotSureSpan(200, stepFunction);
+			
+			startDateInput.checkMinDate(new Date(birthday), new Date());
+			$(startDateInput).trigger('change');
+		}
+			
+		function onGoalButtonPressed()
+		{
+			startHidable.showNotSureSpan(200, stepFunction);
+			if (endHidable.hidableDiv.isVisible())
+				endHidable.showNotSureSpan(200, stepFunction);
+			
+			var startMaxDate = new Date();
+			startMaxDate.setUTCFullYear(startMaxDate.getUTCFullYear() + 50);
+			startDateInput.checkMinDate(new Date(), startMaxDate);
+			$(startDateInput).trigger('change');
+		}
+		
+		var optionPanel = panel2Div.append('section')
+			.classed('date-range-options', true)
+			.datum(null);
+		var previousExperienceButton = optionPanel.append('button')
+			.classed('previous', true)
+			.classed('pressed', experience.getDatum("Start") &&
+							    experience.getDatum("Start") <= thisDate &&
+							    experience.getDatum("End") &&
+							    experience.getDatum("End") <= thisDate)
+			.on('click', function()
+				{
+					presentExperienceButton.classed('pressed', false);
+					goalButton.classed('pressed', false);
+					previousExperienceButton.classed('pressed', true);
+					onPreviousButtonPressed();
+				})
+			.text('Past');
+		
+		var presentExperienceButton = optionPanel.append('button')
+			.classed('present', true)
+			.classed('pressed', experience.getDatum("Start") &&
+							    experience.getDatum("Start") <= thisDate &&
+								 (!experience.getDatum("End") ||
+								  experience.getDatum("End") > thisDate))
+			.on('click', function()
+				{
+					goalButton.classed('pressed', false);
+					previousExperienceButton.classed('pressed', false);
+					presentExperienceButton.classed('pressed', true);
+					onPresentButtonPressed();
+				})
+			.text('Present');
+		
+		var goalButton = optionPanel.append('button')
+			.classed('goal', true)
+			.classed('pressed', !experience.getDatum("Start") || experience.getDatum("Start") > thisDate)
+			.on('click', function()
+				{
+					previousExperienceButton.classed('pressed', false);
+					presentExperienceButton.classed('pressed', false);
+					goalButton.classed('pressed', true);
+					onGoalButtonPressed();
+				})
+			.text('Goal');
+			
+		var startDateContainer = panel2Div.append('section')
+			.classed('cell unique date-container', true)
+			.datum(experience.getCell("Start"));
+		startDateContainer.append('label')
+			.text("Start");
+			
+		var startMinDate, startMaxDate;
+		var endMinDate, endMaxDate;
+		
+		if (previousExperienceButton.classed('pressed'))
+		{
+			startMinDate = new Date(birthday);
+			startMaxDate = new Date();
+			endMinDate = startMinDate;
+			endMaxDate = startMaxDate;
+		}
+		else if (presentExperienceButton.classed('pressed'))
+		{
+			startMinDate = new Date(birthday);
+			startMaxDate = new Date();
+			endMinDate = startMaxDate;
+			endMaxDate = new Date();
+			endMaxDate.setUTCFullYear(endMinDate.getUTCFullYear() + 50);
+		}
+		else
+		{
+			startMinDate = new Date();
+			startMaxDate = new Date();
+			startMaxDate.setUTCFullYear(startMinDate.getUTCFullYear() + 50);
+			endMinDate = startMinDate;
+			endMaxDate = startMaxDate;
+		}
+		
+		var startHidable = this.appendHidableDateInput(startDateContainer, startMinDate, startMaxDate);
+		var startDateInput = startHidable.dateInput;
+
+		var endDateContainer = panel2Div.append('section')
+			.classed('cell unique date-container', true)
+			.datum(experience.getCell("End"));
+		endDateContainer.append('label')
+			.text("End");
+		var endHidable = this.appendHidableDateInput(endDateContainer, endMinDate, endMaxDate);
+		var endDateInput = endHidable.dateInput;
+
+		/* If startDateInput.value() == "", then new Date needs zero arguments. */
+		endDateInput.checkMinDate(startDateInput.value() ? new Date(startDateInput.value()) : new Date());
 		
 		$(startDateInput).on('change', function()
 		{
-			endDateInput.checkMinDate(new Date(startDateInput.value()));
+			var minEndDate, maxEndDate;
+			if (previousExperienceButton.classed('pressed'))
+			{
+				if (this.value() && this.value().length > 0)
+					minEndDate = new Date(this.value());
+				else if (birthday)
+					minEndDate = new Date(birthday);
+				else
+					minEndDate = new Date();
+			}
+			else if (presentExperienceButton.classed('pressed'))
+			{
+				minEndDate = new Date();
+			}
+			else
+			{
+				if (this.value() && this.value().length > 0)
+					minEndDate = new Date(this.value());
+				else
+					minEndDate = new Date();
+			}
+			
+			if (previousExperienceButton.classed('pressed'))
+			{
+				maxEndDate = new Date();
+			}
+			else
+			{
+				maxEndDate = new Date();
+				maxEndDate.setUTCFullYear(maxEndDate.getUTCFullYear() + 50);
+			}
+				
+			endDateInput.checkMinDate(minEndDate, maxEndDate);
 		});
 		
-		var hidableEndDate = new HidableDiv(endSection.selectAll(".date-row").node());
-		
-		var hidingChevron = new HidingChevron(endSection.selectAll("li"), 
-			function()
-			{
-				hidableEndDate.show(function()
-					{
-						notFinishedSpan.enable();
-						unblockClick();
-					});
-			});
-		
-		var notFinishedSpan = new CellToggleText(endSection, "It isn't finished.", 
-			function()
-				{
-					if (prepareClick('click', "It isn't finished."))
-					{
-						hidableEndDate.hide(function()
-							{
-								hidingChevron.show(function()
-									{
-										endDateInput.clear();
-										notFinishedSpan.disable();
-										unblockClick();
-									});
-							});
-					}
-				});
-
-		/* Calculate layout-based variables after css is complete. */
+		/* Do whatever is needed when the button is pressed after css layout is done. */
 		setTimeout(function()
 			{
-				hidingChevron.height(hidableEndDate.height());
-			}, 0);
+				startHidable.hidableDiv.show(undefined, 0);
+				endHidable.hidableDiv.show(undefined, 0);
+				if (previousExperienceButton.classed('pressed'))
+					onPreviousButtonPressed();
+				else if (presentExperienceButton.classed('pressed'))
+					onPresentButtonPressed();
+				else if (goalButton.classed('pressed'))
+					onGoalButtonPressed();
+				startDateInput.value(experience.getDatum("Start"));
+				endDateInput.value(experience.getDatum("End"));
+			},
+			0);
 		
 		var offeringCell = experience.getCell("Offering");
 		var offeringServiceCell = new OfferingServiceCell(offeringCell);

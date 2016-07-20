@@ -194,19 +194,6 @@ var ComparePath = (function() {
 		});
 	}
 	
-	ComparePath.prototype._compareExperiences = function(a, b)
-	{
-		function compareDates(d1, d2)
-		{
-			return (d1 > d2) ? 1 :
-				   ((d2 > d1) ? -1 :
-				   0);
-		}
-		return -compareDates(a.getEndAge(), b.getEndAge()) ||
-				a.column - b.column ||
-				compareDates(a.getStartAge(), b.getStartAge());
-	}
-	
 	ComparePath.prototype.getColumn = function(fd)
 	{
 		if (fd.experience.cell.parent == this.rightPath)
@@ -934,7 +921,7 @@ var ComparePath = (function() {
 		}
 		
 		crp.getData({path:  "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)', 
-				   fields: ["parents", "type"], 
+				   fields: ["parents"], 
 				   done: function(experiences)
 					{
 						_this.allExperiences = experiences.slice();
@@ -956,7 +943,7 @@ var ComparePath = (function() {
 						},
 						fail: asyncFailFunction});			
 							
-		crp.pushCheckCells(this.rightPath, ["More Experience", "parents", "type"],
+		crp.pushCheckCells(this.rightPath, ["More Experience", "parents"],
 					  successFunction2, 
 					  asyncFailFunction);
 	}

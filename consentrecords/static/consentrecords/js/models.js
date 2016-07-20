@@ -605,6 +605,14 @@ cr.ObjectCell = (function() {
 					);
 		};
 		
+	ObjectCell.prototype.find = function(value)
+	{
+		return this.data.find(function(d2)
+			{
+				return d2.getValueID() === value.getValueID();
+			});
+	}
+		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
 	}

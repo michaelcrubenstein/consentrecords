@@ -521,11 +521,7 @@
 				{
 					var panel;
 					var service = experience.addService({text: serviceName });
-					panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience,
-						function()
-						{
-							experience.clearService();
-						});
+					panel = new NewExperiencePanel(experience, pathwayPanel.node());
 					showPanelUp(panel.node());
 				}
 			}
@@ -754,16 +750,14 @@
 												{
 													var experience = new Experience(experiencesPath);
 													experience.addService({instance: experiences[0]});
-													var panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience, 
-														function() {});
+													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
 													showPanelUp(panel.node());
 												}
 												else if (experiences[0].typeName == "Organization")
 												{
 													var experience = new Experience(experiencesPath);
 													experience.setOrganization({instance: experiences[0]});
-													var panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience, 
-														function() {});
+													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
 													showPanelUp(panel.node());
 												}
 											},

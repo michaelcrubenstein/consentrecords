@@ -94,22 +94,37 @@ def _getAncestorClause(symbol, testValue):
 
 def _getReferenceValues(params, userInfo):
     if len(params) > 2 and params[1] == '>':
-        subF = _filterByReferenceValues(Instance.objects, params[2:], userInfo)
+        subF = _filterByReferenceValues(Instance.objects, params[2], _getReferenceValues(params[2:], userInfo))
     else:
         # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
         subF = _parse([], ['*'] + params[1:], userInfo)
     return userInfo.findFilter(subF)
-    
-def _filterByReferenceValues(resultSet, params, userInfo):
-    if isinstance(params[0], list):
-        return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]),
-                                value__deleteTransaction__isnull=True,
-                                value__referenceValue__in=_getReferenceValues(params, userInfo))
-    else:
-        return resultSet.filter(value__field=terms[params[0]],
-                                value__deleteTransaction__isnull=True,
-                                value__referenceValue__in=_getReferenceValues(params, userInfo))
 
+def _filterByReferenceValues(resultSet, fieldNames, referenceValues):
+    if isinstance(fieldNames, list):
+        return resultSet.filter(value__field__in=map(terms.__getitem__, fieldNames),
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=referenceValues)
+    else:
+        return resultSet.filter(value__field=terms[fieldNames],
+                                value__deleteTransaction__isnull=True,
+                                value__referenceValue__in=referenceValues)
+
+# Filter the resultSet according to the specified params.
+# If the parameter list is a single item:
+#     If there is a list, then the object must contain a value with the specified field type.
+#     If there is a question mark, then this is a no-op.
+#     If there is a single term name, then each instance must contain a value of that term.
+# If the parameter list is three or more items and the second item is a '>',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match params[2:]. For example:
+#     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+# If the parameter list is three or more items and the second item is a '[',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match the clause in params[2] and any following clauses. For example: 
+#     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+# If the parameter list is three values, interpret the three values as a query clause and
+#     filter the resultSet on that clause.  
 def _filter(resultSet, params, userInfo):
     if len(params) == 1:
         if isinstance(params[0], list):
@@ -120,7 +135,12 @@ def _filter(resultSet, params, userInfo):
         else:
             return resultSet.filter(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
     elif len(params) > 2 and params[1]=='>':
-        return _filterByReferenceValues(resultSet, params, userInfo)
+        return _filterByReferenceValues(resultSet, params[0], _getReferenceValues(params, userInfo))
+    elif len(params) > 2 and params[1]=='[':
+        subF = userInfo.findFilter(_parse([], ['*'] + params[1:3], userInfo))
+        if len(params) > 3:
+            subF = _parse(subF, params[3:], userInfo)
+        return _filterByReferenceValues(resultSet, params[0], subF)
     elif len(params) == 3:
         i = None if params[0] == '?' else \
             map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
@@ -137,7 +157,6 @@ def _filter(resultSet, params, userInfo):
         # more than one value of the instance that matches.
         return resultSet.filter(stringText).distinct()
     else:
-        print(params)
         raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
 def _refineResults(resultSet, path, userInfo):

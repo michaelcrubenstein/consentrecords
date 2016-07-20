@@ -339,6 +339,8 @@ function _checkItemsDivDisplay(node)
 	var itemsDiv = d3.select(node);
 	var items = itemsDiv.selectAll("li");
 	
+	var isVisible;
+	
 	if (isEdit)
 		isVisible = true;
 	else
@@ -928,7 +930,7 @@ function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
 
 function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sourceObjects)
 {
-	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
+	d3.select(sectionObj).selectAll("li").each(function(d, i)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
 			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
@@ -1000,7 +1002,7 @@ function _updateDatestampCell(sectionObj)
 
 function _updateDatestampDayOptionalCell(sectionObj)
 {
-	d3.select(sectionObj).selectAll(".string-input-container").each(function(d)
+	d3.select(sectionObj).selectAll("li").each(function(d)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
 			_updateTextValue(d, newValue);
@@ -2076,6 +2078,9 @@ var SearchView = (function () {
 		return "No Results";
 	}
 	
+	/*
+		Do all of the user interface tasks that indicate that a search to the database can't retrieve any values.
+	 */
 	SearchView.prototype.cancelSearch = function()
 	{
 		this.clearListPanel();
@@ -2119,6 +2124,9 @@ var SearchView = (function () {
 		return this.inputText().toLocaleLowerCase();
 	}
 	
+	// Begin a timeout that, when it is done, begins a search.
+	// This gives the user time to update the search text without 
+	// doing a search for each change to the search text.
 	SearchView.prototype.startSearchTimeout = function(val)
 	{
 		this.clearListPanel();
@@ -2258,10 +2266,12 @@ var HidableDiv = (function()
 	HidableDiv.prototype.duration = 400;
 	HidableDiv.prototype.$div = null;
 	
-	HidableDiv.prototype.show = function(done)
+	HidableDiv.prototype.show = function(done, duration)
 	{
+		duration = duration !== undefined ? duration : this.duration;
+		
 		this.$div.css('display', '');
-		this.$div.animate({left: 0, width: this.width}, this.duration, done);
+		this.$div.animate({left: 0, width: this.width}, duration, done);
 	}
 	
 	HidableDiv.prototype.hide = function(done)
@@ -2276,6 +2286,11 @@ var HidableDiv = (function()
 	HidableDiv.prototype.height = function(newHeight)
 	{
 		return (newHeight === undefined) ? this.$div.height() : this.$div.height(newHeight); 
+	}
+	
+	HidableDiv.prototype.isVisible = function()
+	{
+		return this.$div.css('display') != 'none';
 	}
 	
 	function HidableDiv(div, startDisplay, duration)

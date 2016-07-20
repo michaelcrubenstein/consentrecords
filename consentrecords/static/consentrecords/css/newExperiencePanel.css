@@ -34,9 +34,90 @@
 		color: #999;
 	}
 	
+	panel.new-experience-panel div.searchbar {
+		background: #F8F8F8;
+		border-bottom-color: #ddd;
+		border-bottom-style: solid;
+		border-bottom-width: 1px;
+	}
+	
+	panel.new-experience-panel input.search-input {
+		background-color: #ddd;
+		color: #222;
+		outline: none;
+	}
+	
+	section.date-range-options {
+		margin-top: 24px;
+		background: white;
+		width: 100%;
+		text-align: center;
+	}
+	
+	section.date-range-options button {
+		border-bottom-style : solid;
+		border-bottom-width:  1px;
+		border-bottom-color: #2C55CC;
+		border-left-style : solid;
+		border-left-width:  1px;
+		border-left-color: #2C55CC;
+		border-top-style : solid;
+		border-top-width:  1px;
+		border-top-color: #2C55CC;
+		border-right-style: none;
+		color: #2C55CC;
+		margin-top: 6px;
+		margin-bottom: 6px;
+		background: transparent;
+		font-size: 0.85em;
+		padding-left: .5em;
+		padding-right: .5em;
+	}
+	
+	section.date-range-options button.pressed {
+		background: #2C55CC;
+		color: #F8F8F8;
+	}
+	
+	section.date-range-options button:first-child {
+		border-top-left-radius: 3px;
+		border-bottom-left-radius: 3px;
+	}
+	
+	section.date-range-options button:last-child {
+		border-top-right-radius: 3px;
+		border-bottom-right-radius: 3px;
+		border-right-style : solid;
+		border-right-width:  1px;
+		border-right-color: #2C55CC;
+	}
+	
+	panel.new-experience-panel section.date-container {
+		margin-top: 0px;
+	}
+	
+	panel.new-experience-panel section.date-container label {
+		display: inline-block;
+		float: none;
+		width: calc(100% - 12px);
+		border-top-style: solid;
+		border-top-width: 1px;
+		border-top-color: #ddd;
+		margin-left: 12px;
+		padding-left: 0px;
+		text-align: left;
+	}
+	
+	panel.new-experience-panel section.date-container ol {
+		display: inline-block;
+		position: absolute;
+		right: 0px;
+		margin-top: 1px;	/* Don't use top. */
+		float: none;
+	}
+	
 	panel.new-experience-tags section p {
 		margin: 10px;
-		
 	}
 
     .dots ~ panel {
@@ -66,35 +147,58 @@
 		background-color: #F8F8F8;
 	}
 	
-	panel.experience .title
+	panel.experience .title>.title
 	{
-		width: 100%;
+		display: inline-block;
+		padding: .2em;
 		color: #333;
 		text-align: left;
 		font-size: 15px;
 		font-weight: 500;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		cursor: pointer;
+	}
+	
+	panel.experience .organization>.organization {
+		display: inline-block;
+		margin-left: 0px;
+		padding: .2em;
+		color: #444;
+		font-size: smaller;
+		cursor: pointer;
 	}
 
-	panel.experience .organization {
+	panel.experience .site>.site {
+		display: inline-block;
+		margin-left: 0px;
+		padding: .2em;
+		color: #444;
+		font-size: smaller;
+		cursor: pointer;
 	}
-	panel.experience .organization>label {
-		font-weight: normal;
-	}
-	panel.experience .organization>div {
+
+	panel.experience li .organization>div {
+		display: block;
 		margin-left: 0px;
 		color: #444;
 		font-size: smaller;
+		cursor: pointer;
 	}
+
 	panel.experience header .tags {
 		font-size: smaller;
 		color: #666;
 		overflow-x: hidden;
 		text-overflow: ellipsis;
 		max-width: 100%;
+		cursor: pointer;
 	}
 	
+	panel.experience span.tag {
+		margin-right: 1em;
+	}
+
 	panel.new-experience-panel section.list-container {
 		position: relative;
 		overflow-y: scroll;
