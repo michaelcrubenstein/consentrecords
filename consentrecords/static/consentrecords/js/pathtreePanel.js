@@ -1617,6 +1617,8 @@ var PathlinesPanel = (function () {
 	{
 		var experience = this.createExperience();
 		var panel = new NewExperiencePanel(experience, this.node());
+		
+		showPanelUp(panel.node(), unblockClick);
 	}
 	
 	PathlinesPanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)

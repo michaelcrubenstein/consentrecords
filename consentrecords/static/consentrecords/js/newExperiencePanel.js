@@ -3511,8 +3511,6 @@ var NewExperiencePanel = (function () {
 				searchView.search(""); 
 				searchView.inputBox.focus();
 			});
-		
-		showPanelUp(this.node(), unblockClick);
 	}
 	
 	return NewExperiencePanel;
