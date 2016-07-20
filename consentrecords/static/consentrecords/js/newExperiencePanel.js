@@ -3434,7 +3434,7 @@ var NewExperiencePanel = (function () {
 				else if (presentExperienceButton.classed('pressed'))
 				{
 					if (!startDateInput.year || !startDateInput.month)
-						asyncFailFunction('You need to set the start year and month for this past experience.');
+						asyncFailFunction('You need to set the start year and month for this present experience.');
 					else
 					{
 						doAdd();
