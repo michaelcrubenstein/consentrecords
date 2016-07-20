@@ -930,7 +930,7 @@ function _appendUpdateDatestampCommands(sectionObj, initialData, sourceObjects)
 
 function _appendUpdateDatestampDayOptionalCommands(sectionObj, initialData, sourceObjects)
 {
-	d3.select(sectionObj).selectAll(".string-input-container").each(function(d, i)
+	d3.select(sectionObj).selectAll("li").each(function(d, i)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
 			d.appendUpdateCommands(i, newValue, initialData, sourceObjects);
@@ -1002,7 +1002,7 @@ function _updateDatestampCell(sectionObj)
 
 function _updateDatestampDayOptionalCell(sectionObj)
 {
-	d3.select(sectionObj).selectAll(".string-input-container").each(function(d)
+	d3.select(sectionObj).selectAll("li").each(function(d)
 		{
 			var newValue = _getDatestampDayOptionalValue.call(this);
 			_updateTextValue(d, newValue);
