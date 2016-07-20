@@ -869,12 +869,13 @@ var PathLines = (function() {
 	
 	PathLines.prototype.transitionPositions = function(g)
 	{
+		var _this = this;
 		g.sort(this._compareExperiences);
 		this._setCoordinates(g);
 		g.transition()
 			.duration(1000)
 			.ease("in-out")
-			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y);});
+			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX);});
 		
 		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
 			to the fd.y position.
@@ -883,7 +884,7 @@ var PathLines = (function() {
 			.transition()
 			.duration(1000)
 			.ease("in-out")
-			.attr('y2', function(fd) { return fd.y2 - fd.y; });
+			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 
 		this.layoutYears(g);
 	}
