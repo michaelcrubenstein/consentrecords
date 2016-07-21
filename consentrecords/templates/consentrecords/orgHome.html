@@ -1575,17 +1575,27 @@
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
-												
-																	inquiryCell.addObjectValue(pickedUser,
-																						   function(newData)
-																						   {
-																								bootstrap_alert.success(pickedUser.getDescription() + 
-																									  " inquiry added to " + 
-																									  session.getDescription(),
-																									  ".alert-container");
-																								unblockClick();
-																						   },
-																						   syncFailFunction);
+																	
+																	var newValue = inquiryCell.addNewValue();
+																	cr.updateValues([{
+																			containerUUID: inquiriesInstance.getValueID(),
+																			fieldID: inquiryCell.field.nameID, 
+						   													instanceID: pickedUser.getValueID(),
+						   													description: pickedUser.getDescription()
+																		}], [newValue],
+																		function()
+																		   {
+																				bootstrap_alert.success(pickedUser.getDescription() + 
+																					  " inquiry added to " + 
+																					  session.getDescription(),
+																					  ".alert-container");
+																				unblockClick();
+																		   },
+																		function(err)
+																		{
+																			newValue.triggerDeleteValue();
+																			syncFailFunction(err);
+																		});
 																},
 																syncFailFunction);
 														}

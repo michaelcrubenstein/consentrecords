@@ -441,7 +441,20 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 							});
 						if (c.length > 0)
 						{
-							c[0].getCell(cellName).addObjectValue(target, done, fail);
+							var cell = c[0].getCell(cellName);
+							var newValue = cell.addNewValue();
+							
+							cr.updateValues([
+								{containerUUID: c[0].getValueID(), 
+								 fieldID: cell.field.nameID, 
+								 instanceID: target.getValueID(),
+								 description: target.getDescription()}
+								], [newValue], done, 
+								function(err)
+								{
+									newValue.triggerDeleteValue();
+									fail(err);
+								});
 						}
 						else
 						{
