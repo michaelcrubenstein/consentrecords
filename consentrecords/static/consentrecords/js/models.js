@@ -1586,13 +1586,11 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							d.triggerDeleteValue();
 						}
 					}
-					if (successFunction)
-						successFunction();
+					successFunction();
 				}
 				else
 				{
-					if (failFunction)
-						failFunction(json.error);
+					failFunction(json.error);
 				}
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown)
