@@ -587,7 +587,11 @@ class api:
                         container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
 
                         field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
-                        newIndex = c["index"]
+                        if "index" in c:
+                            newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
+                        else:
+                            newIndex = container.getNextElementIndex(field)
+                            
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
                         container.checkWriteValueAccess(user, field, instanceID)
@@ -1172,7 +1176,7 @@ def handleURL(request, urlPath):
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
-        	raise PermissionDenied
+            raise PermissionDenied
         return api.deleteInstances(request.user, urlPath)
     else:
         raise Http404("api only responds to GET methods")
