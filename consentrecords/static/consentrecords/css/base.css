@@ -355,6 +355,11 @@ panel.list .description-text {
 li > .row-button {
 	text-align: left;
 }
+
+li > .row-button > .glyphicon-ok {
+	margin-right: 0.3em;
+}
+
 /* If there is a label for a unique string item, right-align the input and its container. */
 .cell.unique.edit.string label+ol .string-input-container {
 	text-align: right;
