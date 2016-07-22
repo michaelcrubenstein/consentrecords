@@ -568,43 +568,6 @@ cr.ObjectCell = (function() {
 		initialData[this.field.id] = newData;
 	}
 
-	/* The success function takes a single argument: the new value being created. */
-	ObjectCell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
-		{
-			if (!failFunction)
-				throw ("failFunction is not specified");
-			if (!successFunction)
-				throw ("successFunction is not specified");
-			if (!this.parent.getValueID())
-				throw("cell parent does not have an ID")
-			var _this = this;
-			$.post(cr.urls.addValue, 
-					{ path: '#' + this.parent.getValueID(),
-					  fieldName: this.field.nameID,
-					  valueUUID: initialData.getValueID()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							var newData = _this.newValue();
-							newData.id = json.id;
-							newData.setDescription(initialData.getDescription());
-							newData.instanceID = initialData.getValueID();
-							_this.addValue(newData);
-							successFunction(newData);
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown)
-						{
-							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-						}
-					);
-		};
-		
 	ObjectCell.prototype.find = function(value)
 	{
 		return this.data.find(function(d2)
@@ -1578,7 +1541,7 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							/* Object Values have an instance ID as well. */
 							if (newInstanceID)
 								d.instanceID = newInstanceID;
-								
+							
 							d.triggerDataChanged();
 						}
 						else
