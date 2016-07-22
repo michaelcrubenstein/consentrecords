@@ -554,7 +554,16 @@ class api:
             results = {'success':False, 'error': str(e)}
             
         return JsonResponse(results)
-        
+    
+    def checkForInstance(c, user):
+        if "instance" in c:
+            userInfo = UserInfo(user)
+            instances = pathparser.selectAllObjects(c["instance"], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            if len(instances) > 0:
+                c["instanceID"] = instances[0].id
+            else:
+                raise RuntimeError("Specified path is not recognized")
+           
     def updateValues(user, data):
         try:
             commandString = data.get('commands', "[]")
@@ -568,13 +577,15 @@ class api:
             with transaction.atomic():
                 transactionState = TransactionState(user)
                 for c in commands:
-                    newInstance = None
+                    instanceID = None
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
                         oldValue.checkWriteAccess(user)
 
                         container = oldValue.instance
 
+                        api.checkForInstance(c, user)
+                        
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
                         if oldValue.hasNewValue(c):
@@ -591,7 +602,8 @@ class api:
                             newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
                         else:
                             newIndex = container.getNextElementIndex(field)
-                            
+                        
+                        api.checkForInstance(c, user)       
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
                         container.checkWriteValueAccess(user, field, instanceID)
@@ -599,6 +611,7 @@ class api:
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
+                            instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
                         if item.isDescriptor:
@@ -606,7 +619,7 @@ class api:
                     else:
                         raise ValueError("subject id was not specified")
                     valueIDs.append(item.id if item else None)
-                    instanceIDs.append(newInstance.id if newInstance else None)
+                    instanceIDs.append(instanceID)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
