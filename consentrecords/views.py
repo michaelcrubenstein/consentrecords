@@ -555,14 +555,14 @@ class api:
             
         return JsonResponse(results)
     
-    def checkForInstance(c, user):
-        if "instance" in c:
+    def checkForPath(c, user, pathKey, idKey):
+        if pathKey in c:
             userInfo = UserInfo(user)
-            instances = pathparser.selectAllObjects(c["instance"], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
             if len(instances) > 0:
-                c["instanceID"] = instances[0].id
+                c[idKey] = instances[0].id
             else:
-                raise RuntimeError("Specified path is not recognized")
+                raise RuntimeError("%s is not recognized" % pathKey)
            
     def updateValues(user, data):
         try:
@@ -584,7 +584,7 @@ class api:
 
                         container = oldValue.instance
 
-                        api.checkForInstance(c, user)
+                        api.checkForPath(c, user, "instance", "instanceID")
                         
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
@@ -594,16 +594,20 @@ class api:
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
-                    elif "containerUUID" in c:
+                    elif "containerUUID" in c or "container" in c:
+                        api.checkForPath(c, user, "container", "containerUUID")
                         container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
 
-                        field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
+                        if "field" in c:
+                            field = terms[c["field"]]
+                        else:
+                            field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
                         if "index" in c:
                             newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
                         else:
                             newIndex = container.getNextElementIndex(field)
                         
-                        api.checkForInstance(c, user)       
+                        api.checkForPath(c, user, "instance", "instanceID")
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
                         container.checkWriteValueAccess(user, field, instanceID)
