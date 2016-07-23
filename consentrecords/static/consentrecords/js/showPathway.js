@@ -822,6 +822,7 @@ var ConfirmAlert = (function () {
 
 	function ConfirmAlert(panelNode, confirmText, done, cancel)
 	{
+		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
 		var div = panel.append('div');
@@ -836,21 +837,27 @@ var ConfirmAlert = (function () {
 							panel.remove();
 							done();
 						});
+						dimmer.hide();
 					}
 				});
+				
+		var onCancel = function()
+			{
+				if (prepareClick('click', 'Cancel'))
+				{
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						cancel();
+					});
+					dimmer.hide();
+				}
+			}
+			
 		div.append('button')
 			.text("Cancel")
-			.on("click", function()
-				{
-					if (prepareClick('click', 'Cancel'))
-					{
-						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							panel.remove();
-							cancel();
-						});
-					}
-				});
+			.on("click", onCancel);
 		
+		dimmer.show();
 		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
 		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
 			function() {
@@ -867,6 +874,8 @@ var ConfirmAlert = (function () {
 					});
 				}
 			});
+			
+		dimmer.mousedown(onCancel);
 		$(panel.node()).mousedown(function(e)
 			{
 				e.preventDefault();
@@ -1403,12 +1412,46 @@ var EditExperiencePanel = (function () {
 	return EditExperiencePanel;
 })();
 
+var Dimmer = (function () {
+	Dimmer.prototype.dimmerDiv = null;
+	function Dimmer(panelNode)
+	{
+		this.dimmerDiv = d3.select(panelNode).append('div')
+			.classed('dimmer', true);
+	}
+	
+	Dimmer.prototype.show = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
+	}
+	
+	Dimmer.prototype.hide = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0}, {duration: 400, complete:
+			function()
+			{
+				d3.select(this).remove();
+			}});
+	}
+	
+	Dimmer.prototype.remove = function()
+	{
+		this.dimmerDiv.remove();
+	}
+	
+	Dimmer.prototype.mousedown = function(f)
+	{
+		$(this.dimmerDiv.node()).mousedown(f);
+	}
+	
+	return Dimmer;
+})();
+
 var ExperienceShareOptions = (function () {
 
 	function ExperienceShareOptions(panelNode, experience, path)
 	{
-		var dimmer = d3.select(panelNode).append('div')
-			.classed('dimmer', true);
+		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
 		var div = panel.append('div');
@@ -1421,11 +1464,7 @@ var ExperienceShareOptions = (function () {
 					panel.remove();
 					unblockClick();
 				});
-				$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
-					function()
-					{
-						dimmer.remove();
-					}});
+				dimmer.hide();
 			}
 			e.preventDefault();
 		}
@@ -1469,11 +1508,7 @@ var ExperienceShareOptions = (function () {
 										.format(window.location.origin, experience.getValueID());
 							unblockClick();
 						});
-						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
-							function()
-							{
-								dimmer.remove();
-							}});
+						dimmer.hide();
 					}
 				});
 				
@@ -1485,14 +1520,14 @@ var ExperienceShareOptions = (function () {
 		
 		$(cancelButton.node()).click(onCancel);
 		
-		$(dimmer.node()).animate({opacity: 0.3}, 400);
+		dimmer.show();
 		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
 		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
 			function() {
 				$(emailAddExperienceButton.node()).focus();
 				unblockClick();
 			}});
-		$(dimmer.node()).mousedown(onCancel);
+		dimmer.mousedown(onCancel);
 		$(panel.node()).mousedown(function(e)
 			{
 				e.preventDefault();
