@@ -12,12 +12,7 @@ var UpdatePasswordPanel = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -25,7 +20,7 @@ var UpdatePasswordPanel = (function () {
 	}
 
 	function UpdatePasswordPanel(previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Password", "background-gradient-panel", revealPanelUp);
+		SitePanel.call(this, previousPanelNode, null, "Password", "view", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -127,12 +122,7 @@ var UpdateUsernamePanel = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -140,7 +130,7 @@ var UpdateUsernamePanel = (function () {
 	}
 
 	function UpdateUsernamePanel(user, previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Username", "background-gradient-panel", revealPanelUp);
+		SitePanel.call(this, previousPanelNode, null, "Username", "view", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();

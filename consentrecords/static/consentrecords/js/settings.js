@@ -2,10 +2,15 @@ var Settings = (function () {
 	Settings.prototype = new SitePanel();
 	Settings.prototype.firstNameLabel = "First Name";
 	Settings.prototype.lastNameLabel = "Last Name";
-	Settings.prototype.publicAccessLabel = "Public Access to My Profile";
+	Settings.prototype.userPublicAccessLabel = "Profile Visibility";
 	Settings.prototype.accessRequestLabel = "Access Requests";
 	Settings.prototype.screenNameLabel = "Screen Name";
-	Settings.prototype.pathPublicAccessLabel = "Public Access to My Path";
+	Settings.prototype.pathPublicAccessLabel = "Path Visiblity";
+	Settings.prototype.pathSameAccessLabel = "Same As Profile";
+	Settings.prototype.pathAlwaysPublicAccessLabel = "Public";
+	Settings.prototype.profileHiddenLabel = "Hidden";
+	Settings.prototype.emailVisibleLabel = "Request by Email";
+	Settings.prototype.allVisibleLabel = "Public";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
@@ -37,84 +42,107 @@ var Settings = (function () {
 			path.getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
 		}
 		
-		pathPublicAccessCell = path.getCell("_public access");
-		var oldAppendUpdatePathPublicAccessCommands = pathPublicAccessCell.data[0].appendUpdateCommands;
-		var oldAddPathPublicAccessValue = pathPublicAccessCell.addObjectValue;
-		var oldDeletePathPublicAccessValue = pathPublicAccessCell.data[0].deleteValue;
-		
-		/* Change the _public access appendUpdateCommands function so that
-			1. when the _public access is set to _read, the _special access is set to _custom
-			2. when the _public access is cleared, the _special access is cleared
-		 */
-		
-		pathPublicAccessCell.addObjectValue = function(initialData, done, fail)
-		{
-			/* Add the public access value and then the special access value so that 
-			    the system is never in an invalid state. 
-			 */
-			oldAddPathPublicAccessValue.call(pathPublicAccessCell, initialData, 
-				function(newPublicAccessData)
-				{
-					var pathSpecialAccessCell = path.getCell("_special access");
-					crp.getData({path: '_term[_name="_special access"]>enumerator',
-								 done: function(newInstances)
-								 	{
-										var newSpecialAccessData = newInstances[0];
-										pathSpecialAccessCell.addObjectValue(newSpecialAccessData, 
-											function()
-											{
-												done(newPublicAccessData);
-											},
-											fail);
-								 	},
-								 fail: fail});
-				}, fail);
-		}
-		
-		pathPublicAccessCell.data[0].deleteValue = function(done, fail)
-		{
-			/* Remove the special access value and then the public access value so that 
-			    the system is never in an invalid state. 
-			 */
-			var pathSpecialAccessCell = path.getCell("_special access");
-			if (pathSpecialAccessCell.data.length > 0 && !pathSpecialAccessCell.data[0].isEmpty())
-			{
-				pathSpecialAccessCell.data[0].deleteValue(function()
-					{
-						oldDeletePathPublicAccessValue.call(pathPublicAccessCell.data[0], done, fail);
-					},
-					fail);
-			}
-			else
-				oldDeletePathPublicAccessValue.call(pathPublicAccessCell.data[0], done, fail);
-		}
-			
 		doneButton.on("click", function()
 				{
 					panel2Div.handleDoneEditingButton.call(this);
 					birthdayCell.data[0].appendUpdateCommands = oldAppendUpdateBirthdayCommands;
-					pathPublicAccessCell.addObjectValue = oldAddPathPublicAccessValue;
-					pathPublicAccessCell.data[0].deleteValue = oldDeletePathPublicAccessValue;
 				})
  			.append("span").text("Done");
+
+		var userPublicAccessCell = user.getCell("_public access");
+		var pathPublicAccessCell = path.getCell("_public access");
 		
 		user.getCell("_first name").field.label = this.firstNameLabel;
 		user.getCell("_last name").field.label = this.lastNameLabel;
-		user.getCell("_public access").field.label = this.publicAccessLabel;
 		path.getCell("_name").field.label = this.screenNameLabel;
+		userPublicAccessCell.field.label = this.userPublicAccessLabel;
+		userPublicAccessCell.data[0].getDescription = function() 
+			{
+				if (this.description == "_read" ||
+					this.description == _this.allVisibleLabel)
+					return _this.allVisibleLabel;
+				else if (this.description == "_find" ||
+					this.description == _this.emailVisibleLabel)
+					return _this.emailVisibleLabel;
+				else
+					return _this.profileHiddenLabel;
+			};
+		
 		pathPublicAccessCell.field.label = this.pathPublicAccessLabel;
+		pathPublicAccessCell.data[0].getDescription = function() 
+			{
+				if (this.description == "_read" ||
+					this.description == _this.pathAlwaysPublicAccessLabel)
+					return _this.pathAlwaysPublicAccessLabel;
+				else
+					return _this.pathSameAccessLabel;
+				};
 		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
-					 birthdayCell,
-					 user.getCell("_public access"),
 					 path.getCell("_name"),
-					 pathPublicAccessCell];
+					 birthdayCell
+					 ];
 					 
 		this.showEditCells(cells);
 		
+		var addUniqueCellSection = function(cell, label, clickFunction)
+		{
+			var sectionPanel = panel2Div.append('section')
+				.classed('cell edit unique btn row-button', true)
+				.datum(cell)
+				.on("click", clickFunction);
+				
+			sectionPanel.append('label')
+				.text(label);
+			
+			var itemsDiv = sectionPanel.append("ol")
+				.classed("right-label", true);
+
+			var divs = appendItems(itemsDiv, cell.data);
+	
+			var buttons = appendRowButtons(divs);
+
+			appendRightChevrons(buttons);	
+		
+			appendButtonDescriptions(buttons)
+				.each(_pushTextChanged);
+		}
+		
 		if (user.privilege === "_administer")
 		{
+			addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
+				function(cell) {
+					if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
+					{
+						try
+						{
+							var panel = new PickUserAccessPanel(cell.data[0], _this.node());
+							showPanelLeft(panel.node(), unblockClick);
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
+					}
+				});
+			
+			addUniqueCellSection(pathPublicAccessCell, this.pathPublicAccessLabel,
+				function(cell) {
+					if (prepareClick('click', 'pick ' + _this.pathPublicAccessLabel))
+					{
+						try
+						{
+							var panel = new PickPathAccessPanel(cell, path, user, _this.node());
+							showPanelLeft(panel.node(), unblockClick);
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
+					}
+				});
+		
 			function checkSharingBadge()
 			{
 				var cell = user.getCell("_access request");
@@ -187,4 +215,261 @@ var Settings = (function () {
 	}
 	
 	return Settings;
+})();
+
+var PickFromListPanel = (function () {
+	PickFromListPanel.prototype = new SitePanel();
+
+	function PickFromListPanel(previousPanel, title, panelClass) {
+		var _this = this;
+		SitePanel.call(this, previousPanel, null, title, "list " + panelClass, revealPanelLeft);
+
+		if (previousPanel)
+		{
+			var navContainer = this.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", function()
+				{
+					if (prepareClick('click', 'pick path access panel: Cancel'))
+					{
+						_this.hidePanelRight(unblockClick);
+					}
+					d3.event.preventDefault();
+				});
+			backButton.append("span").text("Cancel");
+		
+			navContainer.appendTitle(this.title);
+
+			var panel2Div = this.appendScrollArea();
+			var itemsDiv = panel2Div.append("section")
+				.classed("multiple", true)
+				.append("ol");
+		}
+	}
+	
+	return PickFromListPanel;
+
+})();
+
+var PickUserAccessPanel = (function () {
+	PickUserAccessPanel.prototype = new PickFromListPanel();
+	PickUserAccessPanel.prototype.title = Settings.prototype.userPublicAccessLabel;
+	PickUserAccessPanel.prototype.buttonData = [{description: Settings.prototype.profileHiddenLabel,
+						   instancePath: null
+						  },
+						  {description: Settings.prototype.emailVisibleLabel,
+						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]"
+						  },
+						  {description: Settings.prototype.allVisibleLabel,
+						   instancePath: "_term[_name=_privilege]>enumerator[_name=_read]"
+						  }
+						 ];
+	
+	function PickUserAccessPanel(oldValue, previousPanel) {
+		var _this = this;
+		PickFromListPanel.call(this, previousPanel, this.title, "list");
+
+		if (previousPanel)
+		{
+			var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+		
+			var buttons = itemsDiv.selectAll('li')
+				.data(this.buttonData)
+				.enter()
+				.append('li');
+			
+			buttons.append("div").classed("btn row-button multi-row-content expanding-div", true)
+				.append("div")
+						.classed("description-text", true)
+						.text(function(d) { return d.description; });
+					
+			buttons.selectAll('div.btn').filter(function(d, i)
+				{
+					return d.description === oldValue.getDescription();
+				})
+				.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
+					
+			buttons.selectAll('div.btn')
+				.on('click', function(d, i)
+					{
+						if (d.description === oldValue.getDescription())
+							return;
+						
+						if (prepareClick('click', d.description))
+						{
+							try
+							{
+								var sourceObjects = [oldValue];
+								var initialData;
+								if (!d.instancePath)
+								{
+									initialData = [{ id: oldValue.id }];
+								}
+								else if (oldValue.id)
+								{
+									initialData = [{ id: oldValue.id,
+													 instance: d.instancePath,
+													 description: d.description }];
+								}
+								else
+								{
+									initialData = [
+											{
+												containerUUID: oldValue.cell.parent.getValueID(),
+												fieldID: oldValue.cell.field.nameID,
+												instance: d.instancePath,
+												description: d.description
+											}];
+								}
+								cr.updateValues(initialData, sourceObjects, function()
+									{
+										hidePanelRight(_this.node());
+									},
+									syncFailFunction);
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
+						}
+					});
+		}
+	}
+	
+	return PickUserAccessPanel;
+})();
+
+var PickPathAccessPanel = (function () {
+	PickPathAccessPanel.prototype = new PickFromListPanel();
+	PickPathAccessPanel.prototype.title = Settings.prototype.pathPublicAccessLabel;
+
+	function PickPathAccessPanel(cell, path, user, previousPanel) {
+		var _this = this;
+		PickFromListPanel.call(this, previousPanel, this.title, "path-access");
+
+		if (cell)
+		{
+			var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+		
+			var noneButton = itemsDiv.append('li');
+		
+			if (cell.data.length == 0 ||
+				!cell.data[0].getValueID())
+			{
+				noneButton.on('click', function()
+					{
+						if (prepareClick('click', 'pick path access panel: Cancel Read Button'))
+						{
+							_this.hidePanelRight(unblockClick);
+						}
+					});
+			}
+			else
+			{
+				noneButton.on('click', function()
+					{
+						if (prepareClick('click', Settings.prototype.pathSameAccessLabel))
+						{
+							try
+							{
+								var sourceObjects = [path.getValue("_special access"), 
+													 path.getValue("_public access"),
+													 path.getValue("_primary administrator"),
+													];
+								var initialData = sourceObjects.map(function(d) { return { id: d.id };});
+								cr.updateValues(initialData, sourceObjects, function()
+									{
+										hidePanelRight(_this.node(), unblockClick);
+									},
+									syncFailFunction);
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
+						}
+					});
+			}
+			noneButton.append("div").classed("btn row-button multi-row-content expanding-div", true)
+				.append("div")
+						.classed("description-text", true)
+						.text(Settings.prototype.pathSameAccessLabel);
+			var readButton = itemsDiv.append('li');
+		
+			if (cell.data.length == 0 ||
+				!cell.data[0].getValueID())
+			{
+				readButton.on('click', function()
+					{
+						if (prepareClick('click', Settings.prototype.pathAlwaysPublicAccessLabel))
+						{
+							try
+							{
+								var sourceObjects = [path.getValue("_public access"),
+													 path.getValue("_primary administrator"),
+													 path.getValue("_special access"), 
+													];
+								var containerID = path.getValueID();
+								var primaryAdministrator = user.getValue("_primary administrator");
+								if (!primaryAdministrator.getValueID())
+									primaryAdministrator = user;
+								var initialData = [
+									{
+										containerUUID: containerID,
+										fieldID: path.getCell("_public access").field.nameID,
+										instance: "_term[_name=_privilege]>enumerator[_name=_read]",
+										description: Settings.prototype.pathAlwaysPublicAccessLabel
+									},
+									{
+										containerUUID: containerID,
+										fieldID: path.getCell("_primary administrator").field.nameID,
+										instanceID: primaryAdministrator.getValueID(),
+										description: primaryAdministrator.getDescription()
+									},
+									{
+										containerUUID: containerID,
+										fieldID: path.getCell("_special access").field.nameID,
+										instance: '_term[_name="_special access"]>enumerator[_name=_custom]',
+										description: '_custom'
+									},
+								];
+							
+								cr.updateValues(initialData, sourceObjects, function()
+									{
+										hidePanelRight(_this.node(), unblockClick);
+									},
+									syncFailFunction);
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
+						}
+					});
+			}
+			else
+			{
+				readButton.on('click', function()
+					{
+						if (prepareClick('click', 'pick path access panel: Cancel Read Button'))
+						{
+							_this.hidePanelRight(unblockClick);
+						}
+					});
+			}
+			readButton.append("div").classed("btn row-button multi-row-content expanding-div", true)
+				.append("div")
+						.classed("description-text", true)
+						.text(Settings.prototype.pathAlwaysPublicAccessLabel);
+
+			if (cell.data.length == 0 ||
+				!cell.data[0].getValueID())
+				noneButton.select('div:first-child').insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
+			else
+				readButton.select('div:first-child').insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);			
+		}
+	}
+	
+	return PickPathAccessPanel;
 })();

@@ -268,7 +268,7 @@ def acceptFollower(request):
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
-                results = {'success':False, 'error': "user is not set up: %s" % request.user.get_full_name()}
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 followerPath = '#%s' % followerID
                 userInfo = UserInfo(request.user)
@@ -281,7 +281,7 @@ def acceptFollower(request):
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=followerID)
                     if ars.count():
-                        results = {'success':False, 'error': '%s is already following you' % follower.description.text}
+                        return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
                     else:
                         with transaction.atomic():
                             transactionState = TransactionState(request.user)
@@ -306,13 +306,13 @@ def acceptFollower(request):
                                 v.deepDelete(transactionState)
                         
                             data = newValue.getReferenceData(userInfo, language)
-                            results = {'success':True, 'object': data} 
+                            results = {'object': data} 
         else:
-            results = {'success':False, 'error': "user is not authenticated"}
+            return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -328,7 +328,7 @@ def requestAccess(request):
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
-                results = {'success':False, 'error': "user is not set up: %s" % request.user.get_full_name()}
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 followingPath = '#%s' % followingID
                 userInfo = UserInfo(request.user)
@@ -348,7 +348,7 @@ def requestAccess(request):
                                 error = 'You have already requested to follow %s.' % following.description.text
                             else:
                                 error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
-                            results = {'success':False, 'error': error}
+                            raise RuntimeError(error)
                         else:
                             with transaction.atomic():
                                 transactionState = TransactionState(request.user)
@@ -369,13 +369,13 @@ def requestAccess(request):
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
-                                results = {'success':True, 'object': data} 
+                                results = {'object': data} 
         else:
-            results = {'success':False, 'error': "user is not authenticated"}
+            return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -544,17 +544,26 @@ class api:
                     Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData(userInfo, language)}
+                    results = {'object': newValue.getReferenceData(userInfo, language)}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData(userInfo, language)}
+                    results = {'object': item.getReferenceData(userInfo, language)}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
-        
+    
+    def checkForPath(c, user, pathKey, idKey):
+        if pathKey in c:
+            userInfo = UserInfo(user)
+            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            if len(instances) > 0:
+                c[idKey] = instances[0].id
+            else:
+                raise RuntimeError("%s is not recognized" % pathKey)
+           
     def updateValues(user, data):
         try:
             commandString = data.get('commands', "[]")
@@ -568,13 +577,15 @@ class api:
             with transaction.atomic():
                 transactionState = TransactionState(user)
                 for c in commands:
-                    newInstance = None
+                    instanceID = None
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
                         oldValue.checkWriteAccess(user)
 
                         container = oldValue.instance
 
+                        api.checkForPath(c, user, "instance", "instanceID")
+                        
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
                         if oldValue.hasNewValue(c):
@@ -583,11 +594,20 @@ class api:
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
-                    elif "containerUUID" in c:
+                    elif "containerUUID" in c or "container" in c:
+                        api.checkForPath(c, user, "container", "containerUUID")
                         container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
 
-                        field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
-                        newIndex = c["index"]
+                        if "field" in c:
+                            field = terms[c["field"]]
+                        else:
+                            field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
+                        if "index" in c:
+                            newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
+                        else:
+                            newIndex = container.getNextElementIndex(field)
+                        
+                        api.checkForPath(c, user, "instance", "instanceID")
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
                         container.checkWriteValueAccess(user, field, instanceID)
@@ -595,6 +615,7 @@ class api:
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
                             newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
+                            instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
                         if item.isDescriptor:
@@ -602,76 +623,19 @@ class api:
                     else:
                         raise ValueError("subject id was not specified")
                     valueIDs.append(item.id if item else None)
-                    instanceIDs.append(newInstance.id if newInstance else None)
+                    instanceIDs.append(instanceID)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
-                results = {'success':True, 'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
+                results = {'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
             
+            return JsonResponse(results)
+        
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-               
-        return JsonResponse(results)
+            return HttpResponseBadRequest(reason=str(e))
 
-    def addValue(user, data):
-        try:
-            # The path to the container object.
-            containerPath = data.get('path', None)
-        
-            # The field name for the new value within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # A value added to the container.
-            valueUUID = data.get('valueUUID', None)
-        
-            if valueUUID is None:
-                return JsonResponse({'success':False, 'error': 'the value was not specified'})
-            
-            referenceValue = Instance.objects.get(pk=valueUUID)
-            
-            # The index of the value within the container.
-            indexString = data.get('index', None)
-        
-            with transaction.atomic():
-                transactionState = TransactionState(user)
-                
-                if containerPath:
-                    userInfo = UserInfo(user)
-                    containers = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(containers) > 0:
-                        container = containers[0]
-                    else:
-                        raise RuntimeError("Specified path is not recognized")
-                else:
-                    raise RuntimeError("the container path was not specified")
-                container.checkWriteValueAccess(user, field, valueUUID)
-    
-                if indexString:
-                    newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
-                else:
-                    newIndex = container.getNextElementIndex(field)
-    
-                item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
-                if item.isDescriptor:
-                    Instance.updateDescriptions([container], NameList())
-                    
-            results = {'success':True, 'id': item.id}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-            
-        return JsonResponse(results)
-        
     def selectAll(user, data):
         try:
             path = data.get("path", None)
@@ -693,11 +657,11 @@ class api:
                 uuObjects = uuObjects[start:]
             
             p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
-            results = {'success':True, 'objects': p}
+            results = {'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
     
@@ -707,7 +671,7 @@ class api:
         try:
             path = data.get("path", None)
             if not path:
-                return JsonResponse({'success':False, 'error': 'the path was not specified'})
+                raise ValueError('the path was not specified')
                 
             userInfo = UserInfo(user)
             language=None
@@ -716,7 +680,7 @@ class api:
             fieldName = data.get('fieldName', None)
         
             if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
+                raise ValueError('the fieldName was not specified')
             elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
@@ -726,17 +690,17 @@ class api:
             value = data.get('value', None)
         
             if value is None:
-                return JsonResponse({'success':False, 'error': 'the value was not specified'})
+                raise ValueError('the value was not specified')
             
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
             p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
                             
-            results = {'success':True, 'objects': [i for i in p]}
+            results = {'objects': [i for i in p]}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
         
@@ -750,24 +714,24 @@ class api:
             elif typeName:
                 kindObject = terms[typeName]
             else:
-                return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
+                raise ValueError("typeName was not specified in getAddConfiguration")
         
             configurationObject = kindObject.getSubInstance(terms.configuration)
         
             if not configurationObject:
-                return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
+                raise ValueError("objects of this kind have no configuration object")
                 
             p = configurationObject.getConfiguration()
         
-            results = {'success':True, 'cells': p}
+            results = {'cells': p}
         except Instance.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
+            return HttpResponseBadRequest(reason="the specified instanceType was not recognized")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
 
@@ -780,11 +744,11 @@ class api:
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
             userID = Instance.getUserInstance(accessToken.user).id
-            results = {'success':True, 'userID': userID}
+            results = {'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
     
@@ -862,7 +826,7 @@ class api:
             end = int(data.get("end", "0"))
         
             if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+                raise ValueError("path was not specified in getData")
             
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
@@ -895,13 +859,12 @@ class api:
             fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
-            results = {'success':True, 'data': p}
+            results = {'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
         
@@ -928,7 +891,7 @@ class api:
             end = int(data.get("end", "0"))
         
             if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+                raise ValueError("path was not specified in getNewExperienceChoices")
             
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
@@ -982,59 +945,12 @@ class api:
             fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
         
-            results = {'success':True, 'data': p}
+            results = {'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
-        
-        return JsonResponse(results)
-    
-    def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
-        data = v.getReferenceData(userInfo, language)
-        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
-        return data;
-    
-    def getCellData(user, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
-        try:
-            path = data.get('path', None)
-        
-            if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
-            
-            # The field name for the values to find within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            else:
-                field = terms[fieldName]
-                
-            language = data.get('language', None)
-
-            userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            values = uuObjects[0].getReadableSubValues(field, userInfo)
-            fieldsDataDictionary = {}
-            p = [api._getValueData(v, fieldsDataDictionary, language, userInfo) for v in values]        
-        
-            results = {'success':True, 'objects': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
     
@@ -1054,12 +970,12 @@ class api:
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
-                return JsonResponse({'success':False, 'error': "path was not specified in delete"})
-            results = {'success':True}
+                raise ValueError("path was not specified in delete")
+            results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
         
@@ -1080,14 +996,14 @@ class api:
                         nameLists = NameList()
                         Instance.updateDescriptions([v.instance], nameLists)
             else:   
-                return JsonResponse({'success':False, 'error': "valueID was not specified in delete"})
-            results = {'success':True}
+                raise ValueError("valueID was not specified in delete")
+            results = {}
         except Value.DoesNotExist:
-            return JsonResponse({'success':False, 'error': "the specified value ID was not recognized"})
+            raise ValueError("the specified value ID was not recognized")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
 
@@ -1109,16 +1025,6 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-# Handle a POST event to add a value to an object that references another other or data.
-def addValue(request):
-    if request.method != "POST":
-        raise Http404("addValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.addValue(request.user, request.POST)
-        
 def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
@@ -1172,43 +1078,33 @@ def handleURL(request, urlPath):
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
-        	raise PermissionDenied
+            raise PermissionDenied
         return api.deleteInstances(request.user, urlPath)
     else:
         raise Http404("api only responds to GET methods")
-
-def getCellData(request):
-    if request.method != "GET":
-        raise Http404("getCellData only responds to GET methods")
-    
-    return api.getCellData(request.user, request.GET)
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/getdata/':
             return getData(request)
-        if request.path_info == '/api/getcelldata/':
-            return getCellData(request)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
         elif request.path_info == '/api/selectall/':
             return selectAll(request)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
-        return JsonResponse({'success':False, 'error': 'unrecognized url'})
+        return HttpResponseNotFound(reason='unrecognized url')
         
     def post(self, request, *args, **kwargs):
         if request.path_info == '/api/createinstance/':
             return createInstance(request)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/addvalue/':
-            return addValue(request)
         elif request.path_info == '/api/deleteinstances/':
             return deleteInstances(request)
         elif request.path_info == '/api/deletevalues/':
             return deleteValues(request)
-        return JsonResponse({'success':False, 'error': 'unrecognized url'})
+        return HttpResponseNotFound(reason='unrecognized url')
     
 class ApiGetUserIDEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
@@ -1221,13 +1117,12 @@ def submitsignin(request):
     
     try:
         results = userviews.signinResults(request)
-        if results["success"]:
-            user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
-            results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
+        user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
+        results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -1242,13 +1137,12 @@ def submitNewUser(request):
     
         with transaction.atomic():
             results = userviews.newUserResults(request)
-            if results["success"]:
-                userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
-                results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
+            userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
+            results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -1259,17 +1153,16 @@ def updateUsername(request):
     try:
         with transaction.atomic():
             results = userviews.updateUsernameResults(request)
-            if results["success"]:
-                userInstance = Instance.getUserInstance(request.user)
-                transactionState = TransactionState(request.user)
-                v = userInstance.getSubValue(terms.email)
-                v.updateValue({"text": request.user.email}, transactionState)
-                nameLists = NameList()
-                userInstance.cacheDescription(nameLists);
+            userInstance = Instance.getUserInstance(request.user)
+            transactionState = TransactionState(request.user)
+            v = userInstance.getSubValue(terms.email)
+            v.updateValue({"text": request.user.email}, transactionState)
+            nameLists = NameList()
+            userInstance.cacheDescription(nameLists);
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 

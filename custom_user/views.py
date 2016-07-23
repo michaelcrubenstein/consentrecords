@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db import transaction
 from django.db.utils import IntegrityError
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token
@@ -72,7 +72,6 @@ def passwordReset(request):
 
 # Creates a record so that a user can reset their password via email.
 def resetPassword(request):
-    results = {'success':False, 'error': u'request format invalid'}
     try:
         if request.method != "POST":
             raise Exception("resetPassword only responds to POST requests")
@@ -89,17 +88,16 @@ def resetPassword(request):
         Emailer.sendResetPasswordEmail(settings.PASSWORD_RESET_SENDER, email, 
             protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey)
         
-        results = {'success':True}
+        results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
             
     return JsonResponse(results)
 
 # Resets the password for the specified email address based on the key.
 def setResetPassword(request):
-    results = {'success':False, 'error': u'request format invalid'}
     try:
         logger = logging.getLogger(__name__)
         logger.error("%s" % "Start setResetPassword")
@@ -126,17 +124,16 @@ def setResetPassword(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                results = {'success':True}
             else:
                 raise Exception('This account is disabled.')
         else:
             raise Exception('This login is invalid.');
 
-        results = {'success':True}
+        results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
             
     return JsonResponse(results)
 
@@ -162,48 +159,39 @@ class AuthFailedError(ValueError):
         return "This login is invalid."
 
 def signinResults(request):
-    try:
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user is not None:
             if user.is_active:
                 login(request, user)
-                return {'success':True}
+                return {}
             else:
                 raise AccountDisabledError()
         else:
             raise AuthFailedError();
-    except AccountDisabledError as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % str(e))
-        return {'success':False, 'error': str(e)}
-    except AuthFailedError as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % str(e))
-        return {'success':False, 'error': str(e)}
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        return {'success':False, 'error': str(e)}
 
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
-    return JsonResponse(signinResults(request))
+    try:
+        return JsonResponse(signinResults(request))
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
     
 def submitSignout(request):
     try:
         logout(request)
-        results = {'success':True}
+        results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
 
     return JsonResponse(results)
     
 def checkUnusedEmail(request):
-    results = {'success':False, 'error': 'checkUnusedEmail failed'}
     try:
         if request.method != "POST":
             raise Exception("checkUnusedEmail only responds to POST requests")
@@ -212,22 +200,21 @@ def checkUnusedEmail(request):
         
         manager = get_user_model().objects
         if manager.filter(email=manager.normalize_email(email)).count() > 0:
-            results = {'success':False, 'error': 'That email address has already been used to sign up.'}
+            raise RuntimeError('That email address has already been used to sign up.')
         else:
-            results = {'success':True}
+            results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
         logger.error("%s" % str(request.POST))
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
     
     return JsonResponse(results)
 
 def newUserResults(request):
-    results = {'success':False, 'error': 'newUser failed'}
     try:
         if request.method != "POST":
-            raise Exception("newUser only responds to POST requests")
+            raise RuntimeError("newUser only responds to POST requests")
 
         data = request.POST
         username = data['username']
@@ -245,58 +232,50 @@ def newUserResults(request):
                 if user.is_active:
                     login(request, user)
                     if request.user is None:
-                        return {'success':False, 'error': 'user login failed.'}
+                        raise RuntimeError('user login failed.')
                     else:
-                        return {'success':True}
+                        return {}
                 else:
-                    return {'success':False, 'error': 'this user is disabled.'}
+                    raise RuntimeError('this user is disabled.')
                     # Return a 'disabled account' error message
             else:
-                return {'success':False, 'error': 'This login is invalid.'}
+                raise RuntimeError('This login is invalid.')
     except IntegrityError as e:
-        return {'success':False, 'error': 'That email address has already been used to sign up.'}
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error("%s" % traceback.format_exc())
-        return {'success':False, 'error': str(e)}
+        raise RuntimeError('That email address has already been used to sign up.')
 
 def newUser(request):
-    return JsonResponse(newUserResults(results))
-
-def updateUsernameResults(request):
-    results = {'success':False, 'error': 'updateUsername failed'}
     try:
-        if request.method != "POST":
-            raise Exception("UpdateUsername only responds to POST requests")
-        if not request.user.is_authenticated():
-            raise Exception("The current login is invalid")
-            
-        POST = request.POST;
-        password = POST.get('password', '')
-        newUsername = POST.get('newUsername', '')
-        
-        testUser = authenticate(username=request.user.email, password=password)
-        if testUser is not None:
-            if testUser.is_active:
-                testUser.email = newUsername
-                testUser.save(using=get_user_model().objects._db)
-                login(request, testUser)
-            else:
-                raise AccountDisabledError()
-                # Return a 'disabled account' error message
-        else:
-            raise AuthFailedError()
-
-        results = {'success':True}
+        return JsonResponse(newUserResults(results))
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
+
+def updateUsernameResults(request):
+    if request.method != "POST":
+        raise Exception("UpdateUsername only responds to POST requests")
+    if not request.user.is_authenticated():
+        raise Exception("The current login is invalid")
+        
+    POST = request.POST;
+    password = POST.get('password', '')
+    newUsername = POST.get('newUsername', '')
     
-    return results
+    testUser = authenticate(username=request.user.email, password=password)
+    if testUser is not None:
+        if testUser.is_active:
+            testUser.email = newUsername
+            testUser.save(using=get_user_model().objects._db)
+            login(request, testUser)
+        else:
+            raise AccountDisabledError()
+            # Return a 'disabled account' error message
+    else:
+        raise AuthFailedError()
+
+    return {}
 
 def updatePassword(request):
-    results = {'success':False, 'error': 'updatePassword failed'}
     try:
         if request.method != "POST":
             raise Exception("UpdatePassword only responds to POST requests")
@@ -319,10 +298,10 @@ def updatePassword(request):
         else:
             raise AuthFailedError()
 
-        results = {'success':True}
+        results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
     
     return JsonResponse(results)

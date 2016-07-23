@@ -568,43 +568,6 @@ cr.ObjectCell = (function() {
 		initialData[this.field.id] = newData;
 	}
 
-	/* The success function takes a single argument: the new value being created. */
-	ObjectCell.prototype.addObjectValue = function(initialData, successFunction, failFunction)
-		{
-			if (!failFunction)
-				throw ("failFunction is not specified");
-			if (!successFunction)
-				throw ("successFunction is not specified");
-			if (!this.parent.getValueID())
-				throw("cell parent does not have an ID")
-			var _this = this;
-			$.post(cr.urls.addValue, 
-					{ path: '#' + this.parent.getValueID(),
-					  fieldName: this.field.nameID,
-					  valueUUID: initialData.getValueID()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						if (json.success) {
-							closealert();
-							var newData = _this.newValue();
-							newData.id = json.id;
-							newData.setDescription(initialData.getDescription());
-							newData.instanceID = initialData.getValueID();
-							_this.addValue(newData);
-							successFunction(newData);
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown)
-						{
-							cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-						}
-					);
-		};
-		
 	ObjectCell.prototype.find = function(value)
 	{
 		return this.data.find(function(d2)
@@ -670,17 +633,10 @@ cr.CellValue = (function() {
 				$.post(cr.urls.deleteInstances, jsonArray)
 					.done(function(json, textStatus, jqXHR)
 					{
-						if (json.success)
+						if (done) 
 						{
-							if (done) 
-							{
-								_this.triggerDeleteValue();
-								done(_this);
-							}
-						}
-						else
-						{
-							fail(json.error);
+							_this.triggerDeleteValue();
+							done(_this);
 						}
 					})
 					.fail(function(jqXHR, textStatus, errorThrown)
@@ -701,17 +657,10 @@ cr.CellValue = (function() {
 			$.post(cr.urls.deleteValue, jsonArray)
 				.done(function(json, textStatus, jqXHR)
 				{
-					if (json.success)
+					if (done) 
 					{
-						if (done) 
-						{
-							_this.triggerDeleteValue();
-							done(_this);
-						}
-					}
-					else
-					{
-						fail(json.error);
+						_this.triggerDeleteValue();
+						done(_this);
 					}
 				})
 				.fail(function(jqXHR, textStatus, errorThrown)
@@ -1049,65 +998,6 @@ cr.ObjectValue = (function() {
 		});
 	}
 	
-	/* Get all of the data associated with the sub-objects in the specified field */
-	ObjectValue.prototype.getCellData = function(fieldName, done, fail)
-	{
-		if (typeof(done) != "function")
-			throw "done is not a function";
-		if (typeof(fail) != "function")
-			throw "fail is not a function";
-		if (!this.getValueID())
-			throw "this item is not saved";
-		if (!fieldName)
-			throw "fieldName is not specified";
-		
-		var _this = this;
-	
-		crp.queue.add(
-			function() {
-				var cell = _this.getCell(fieldName);
-				if (cell != null)
-					done(cell.data);
-				else
-				{
-					var jsonArray = { "path" : "#" + _this.getValueID(),
-									  "fieldName" : fieldName };
-					$.getJSON(cr.urls.getCellData,
-						jsonArray, 
-						function(json)
-						{
-							if (json.success) {
-								try
-								{
-									field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
-									var oldCell = {field: field, data: json.objects};
-									if (!_this.cells)
-										_this.cells = [];
-									cell = _this.importCell(oldCell);
-								
-									done(cell.data);
-									crp.queue.next();
-								}
-								catch (err)
-								{
-									fail(err);
-								}
-							}
-							else {
-								fail(json.error);
-							}
-						}
-					)
-					.fail(function(jqXHR, textStatus, errorThrown)
-							{
-								cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-							}
-						 );
-					return false;
-				}
-			});
-	}
-
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
 		if (typeof(done) != "function")
@@ -1135,27 +1025,22 @@ cr.ObjectValue = (function() {
 				function(json)
 				{
 					try {
-						if (json.success) {
-							/* If the data length is 0, then this item can not be read. */
-							if (json.data.length > 0)
-							{
-								var src = json.data[0];
-								_this.importCells(src.cells);
-								_this.privilege = src.privilege;
-								if (src.typeName)
-									_this.typeName = src.typeName;
-							}
-							else
-							{
-								_this.importCells([]);
-								_this.privilege = null;
-							}
-							_this.isDataLoaded = true;
-							done();
+						/* If the data length is 0, then this item can not be read. */
+						if (json.data.length > 0)
+						{
+							var src = json.data[0];
+							_this.importCells(src.cells);
+							_this.privilege = src.privilege;
+							if (src.typeName)
+								_this.typeName = src.typeName;
 						}
-						else {
-							fail(json.error);
+						else
+						{
+							_this.importCells([]);
+							_this.privilege = null;
 						}
+						_this.isDataLoaded = true;
+						done();
 					}
 					catch (err)
 					{
@@ -1266,10 +1151,8 @@ cr.urls = {
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
-		getCellData : "/api/getcelldata/",
 		getConfiguration : "/api/getconfiguration/",
 		createInstance : "/api/createinstance/",
-		addValue : "/api/addvalue/",
 		updateValues : "/api/updatevalues/",
 		deleteValue : '/api/deletevalue/',
 		deleteInstances : '/api/deleteinstances/',
@@ -1318,19 +1201,14 @@ cr.selectAll = function(args)
 		$.getJSON(cr.urls.selectAll, data,
 			function(json)
 			{
-				if (json.success) {
-					try
-					{
-						var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
-						args.done(instances);
-					}
-					catch(err)
-					{
-						args.fail(err);
-					}
+				try
+				{
+					var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
+					args.done(instances);
 				}
-				else {
-					args.fail(json.error);
+				catch(err)
+				{
+					args.fail(err);
 				}
 			}
 		)
@@ -1374,62 +1252,23 @@ cr.getValues = function (args)
 			argList,
 			function(json)
 			{
-				if (json.success) {
-					try
-					{
-						var newObjects = json.objects.map(function(v)
-						{
-							return cr.ObjectCell.prototype.copyValue(v);
-						});
-					
-						args.done(newObjects);
-					}
-					catch(err)
-					{
-						args.fail(err);
-					}
-				}
-				else
+				try
 				{
-					args.fail(json.error);
+					var newObjects = json.objects.map(function(v)
+					{
+						return cr.ObjectCell.prototype.copyValue(v);
+					});
+				
+					args.done(newObjects);
+				}
+				catch(err)
+				{
+					args.fail(err);
 				}
 			}
 		);
 	};
 	
-/* The success function takes a single argument: the id of the new value being created. */
-cr.addObjectValue = function(containerPath, fieldName, initialData, done, fail)
-	{
-		if (!fail)
-			throw ("fail is not specified");
-		if (!done)
-			throw ("done is not specified");
-		if (!fieldName || fieldName.length == 0)
-			throw("fieldName is not specified")
-		if (!containerPath || containerPath.length == 0)
-			throw("containerPath is not specified")
-		var _this = this;
-		$.post(cr.urls.addValue, 
-				{ path: containerPath,
-				  fieldName: fieldName,
-				  valueUUID: initialData.getValueID()
-				})
-			  .done(function(json, textStatus, jqXHR)
-				{
-					if (json.success) {
-						done(json.id);
-					}
-					else {
-						fail(json.error);
-					}
-				})
-			  .fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-					}
-				);
-	};
-			
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -1445,15 +1284,10 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 				})
 			  .done(function(json, textStatus, jqXHR)
 				{
-					if (json.success) {
-						oldValue.id = json.valueIDs[0];
-						oldValue.updateFromChangeData(d);
-						oldValue.triggerDataChanged();
-						successFunction();
-					}
-					else {
-						failFunction(json.error);
-					}
+					oldValue.id = json.valueIDs[0];
+					oldValue.updateFromChangeData(d);
+					oldValue.triggerDataChanged();
+					successFunction();
 				})
 			  .fail(function(jqXHR, textStatus, errorThrown)
 					{
@@ -1474,10 +1308,7 @@ cr.deleteValue = function(valueID, successFunction, failFunction)
 		$.post(cr.urls.deleteValue, jsonArray)
 			.done(function(json, textStatus, jqXHR)
 			{
-				if (json.success)
-					successFunction(valueID);
-				else
-					failFunction(json.error);
+				successFunction(valueID);
 			})
 			.fail(function(jqXHR, textStatus, errorThrown)
 			{
@@ -1519,30 +1350,23 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 				jsonArray)
 			  .done(function(json, textStatus, jqXHR)
 				{
-					if (json.success)
+					try
 					{
-						try
-						{
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData = new cr.ObjectValue();
-							/* If there is a container, then the id in newData will contain
-								the id of the value object in the database. */
-							if (containerUUID)
-								newData.id = json.object.id;
-							newData.instanceID = json.object.instanceID;
-							newData.setDescription(json.object.description);
-							successFunction(newData);
-						}
-						catch(err)
-						{
-							failFunction(err);
-						}
+						/* Copy the data from json object into newData so that 
+							any functions are properly initialized.
+						 */
+						var newData = new cr.ObjectValue();
+						/* If there is a container, then the id in newData will contain
+							the id of the value object in the database. */
+						if (containerUUID)
+							newData.id = json.object.id;
+						newData.instanceID = json.object.instanceID;
+						newData.setDescription(json.object.description);
+						successFunction(newData);
 					}
-					else
+					catch(err)
 					{
-						failFunction(json.error);
+						failFunction(err);
 					}
 				})
 			  .fail(function(jqXHR, textStatus, errorThrown)
@@ -1563,37 +1387,29 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json.success) {
-					for (var i = 0; i < sourceObjects.length; ++i)
-					{
-						d = sourceObjects[i];
-						newValueID = json.valueIDs[i];
-						newInstanceID = json.instanceIDs[i];
-						if (newValueID)
-						{
-							d.id = newValueID;
-							
-							d.updateFromChangeData(initialData[i]);
-							
-							/* Object Values have an instance ID as well. */
-							if (newInstanceID)
-								d.instanceID = newInstanceID;
-								
-							d.triggerDataChanged();
-						}
-						else
-						{
-							d.triggerDeleteValue();
-						}
-					}
-					if (successFunction)
-						successFunction();
-				}
-				else
+				for (var i = 0; i < sourceObjects.length; ++i)
 				{
-					if (failFunction)
-						failFunction(json.error);
+					d = sourceObjects[i];
+					newValueID = json.valueIDs[i];
+					newInstanceID = json.instanceIDs[i];
+					if (newValueID)
+					{
+						d.id = newValueID;
+						
+						d.updateFromChangeData(initialData[i]);
+						
+						/* Object Values have an instance ID as well. */
+						if (newInstanceID)
+							d.instanceID = newInstanceID;
+						
+						d.triggerDataChanged();
+					}
+					else
+					{
+						d.triggerDeleteValue();
+					}
 				}
+				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown)
 				{
@@ -1609,15 +1425,10 @@ cr.getUserID = function(successFunction, failFunction)
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		$.getJSON(cr.urls.getUserID,
-			{"access_token": cr.accessToken},
-			function(json)
+			{"access_token": cr.accessToken})
+		.done(function(json)
 			{
-				if (json.success)
-				{
-					successFunction(json.userID);
-				}
-				else
-					failFunction(json.error);
+				successFunction(json.userID);
 			})
 		.fail(function(jqXHR, textStatus, errorThrown)
 			{
@@ -1633,11 +1444,9 @@ cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
 		if (!successFunction)
 			throw ("successFunction is not specified");
 		$.getJSON(cr.urls.getConfiguration,
-			{ "typeID" : typeID }, 
-			function(json)
+			{ "typeID" : typeID })
+		.done(function(json)
 			{
-				if (json.success)
-				{
 					var cells = [];
 					json.cells.forEach(function(cell)
 					{
@@ -1647,11 +1456,10 @@ cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
 					});
 				
 					successFunction(cells);
-				}
-				else
-				{
-					failFunction(json.error);
-				}
+			})
+		.fail(function(jqXHR, textStatus, errorThrown)
+			{
+				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
 			}
 		);
 	},
@@ -1680,25 +1488,19 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		$.getJSON(cr.urls.getData, data,
-			function(json)
+		$.getJSON(cr.urls.getData, data)
+		.done(function(json)
 			{
-				if (json.success) {
-					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
-					try
-					{
-						args.done(instances);
-					}
-					catch(err)
-					{
-						args.fail(err);
-					}
+				var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
+				try
+				{
+					args.done(instances);
 				}
-				else {
-					args.fail(json.error);
+				catch(err)
+				{
+					args.fail(err);
 				}
-			}
-		)
+			})
 		.fail(function(jqXHR, textStatus, errorThrown)
 					{
 						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
@@ -1707,34 +1509,29 @@ cr.getData = function(args)
 	},
 cr.submitSignout = function(done, fail)
 	{
-		$.post(cr.urls.submitSignout, { }, function(json){
-			if (json['success']) {
+		$.post(cr.urls.submitSignout, { })
+		.done(function(json)
+			{
 				crp.clear();
 				done();
-			}
-			else
-				fail(json.error);
-		})
+			})
 		.fail(function(jqXHR, textStatus, errorThrown)
-		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-		});
+			{
+				cr.postFailed(jqXHR, textStatus, errorThrown, fail);
+			});
 	}
 
 cr.updateUsername = function(newUsername, password, done, fail)
 	{
 		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
-										password: password},
-			   function(json) {
-					if (json['success']) {
-						var v = cr.signedinUser.getValue('_email');
-						v.updateFromChangeData({text: newUsername});
-						v.triggerDataChanged();
-						done();
-					}
-					else
-						fail(json.error);
-			   })
+										password: password})
+		.done(function(json)
+			{
+				var v = cr.signedinUser.getValue('_email');
+				v.updateFromChangeData({text: newUsername});
+				v.triggerDataChanged();
+				done();
+		   })
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
@@ -1745,14 +1542,8 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 	{
 		$.post(cr.urls.updatePassword, {username: username,
 										oldPassword: oldPassword,
-										newPassword: newPassword }, 
-									function(json){
-			if (json['success']) {
-				done();
-			}
-			else
-				fail(json.error);
-		})
+										newPassword: newPassword })
+		.done(done)
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
@@ -1764,9 +1555,8 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 		$.post(cr.urls.acceptFollower, {follower: followerID,
 										cell: cellName, 
 										privilege: privilegeID
-										}, 
-									function(json){
-			if (json['success']) {
+										})
+		.done(function(json){
 				/* Copy the data from json object into newData so that 
 					any functions are properly initialized.
 				 */
@@ -1777,9 +1567,6 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 				newData.privilege = json.object.privilege;
 				newData.typeName = json.object.typeName;
 				done(newData);
-			}
-			else
-				fail(json.error);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
@@ -1791,15 +1578,8 @@ cr.requestAccess = function(follower, following, done, fail)
 {
 		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
 									   following: following.getValueID()
-					  				  },
-			   function(json){
-					if (json['success']) {
-						done();
-					}
-					else
-						fail(json.error);
-				}
-		)
+					  				  })
+		.done(done)
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
 			cr.postFailed(jqXHR, textStatus, errorThrown, fail);

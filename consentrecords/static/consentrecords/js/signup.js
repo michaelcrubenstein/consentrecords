@@ -9,14 +9,9 @@ var Signup = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json.success) {
-					closealert();
-					if (successFunction)
-						successFunction();
-				}
-				else {
-					failFunction(json.error);
-				}
+				closealert();
+				if (successFunction)
+					successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -34,12 +29,7 @@ var Signup = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -58,7 +48,8 @@ var Signup = (function () {
 			.classed("no-scrolling", true);
 		
 		this.dots = new DotsNavigator(panel2Div, 4);
-		this.dots.datum = this;		
+		this.dots.datum = this;	
+		this.dots.finalText = "Create";	
 
 		this.dots.appendForwardButton(navContainer, function()
 			{
@@ -94,11 +85,13 @@ var Signup = (function () {
 			sitePanel.hidePanelDown(unblockClick);
 		});
 		
-		navContainer.appendTitle('Create a New Account');
+		navContainer.appendTitle('New Account');
 
 		function setupPanel0(signup)
 		{
 			var p = d3.select(this);
+			
+			p.classed('birthday', true);
 
 			p.append('h1')
 				.text('Birthday');
@@ -107,27 +100,21 @@ var Signup = (function () {
 				.append('tr');
 			row.append('td').text('Birth Month');
 			var yearCell = row.append('td').classed('full-width', true);
-			var monthDiv = yearCell.append('div').classed('select-container', true);
-			monthDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-			var monthInput = monthDiv.append('select')
+			var monthInput = yearCell.append('select')
+				.classed('site-active-text', true)
 				.on('change', function(d)
 					{
-						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
 						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					})
-				.style('color', '#777');
+					});
 					
-			var yearDiv = yearCell.append('div').classed('select-container', true);
-			yearDiv.append('span').classed('glyphicon glyphicon-triangle-bottom', true);
-			var yearInput = yearDiv.append('select')
+			var yearInput = yearCell.append('select')
+				.classed('site-active-text', true)
 				.on('change', function(d)
 					{
-						d3.select(this).style('color', this.selectedIndex == 0 ? '#777' : null);
 						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
-					})
-				.style('color', '#777');
+					});
 				
 			p.append('p')
 				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
@@ -419,7 +406,7 @@ var Signup = (function () {
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
 			cell.append('span').text('Email Only');
-			row.append('td').append('p').text('Others can search for your email address, which lets them give you access to their profiles.');
+			row.append('td').append('p').text('Others can search for your email address and request access to your profile.');
 
 			row = t.append('tr');
 			cell = row.append('td');
@@ -433,7 +420,7 @@ var Signup = (function () {
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
 			cell.append('span').text('All');
-			row.append('td').append('p').text('Others can look at your information (except for information you restrict from view).');
+			row.append('td').append('p').text('Others can look at your profile (except for information you hide from view).');
 
 			signup.getPublicAccess = function()
 			{

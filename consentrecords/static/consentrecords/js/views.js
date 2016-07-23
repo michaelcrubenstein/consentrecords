@@ -2960,39 +2960,54 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			
 			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
 			{
-				if (d.getValueID() === oldData.getValueID()) {
-					successFunction();
-				}
-				else if (oldData.id)
+				try
 				{
-					if (d.getValueID())
-					{
-						cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
-					}
-					else
-					{
-						oldData.deleteValue(successFunction, syncFailFunction);
-					}
-				}
-				else if (d.getValueID())
-				{
-					if (oldData.cell.parent && oldData.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
-					{
-						oldData.cell.addObjectValue(d, successFunction, syncFailFunction);
-					}
-					else 
-					{
-						/* In this case, we are replacing an old value for
-						   an item that was added to the cell but not saved;
-						   a placeholder or a previously picked value.
-						 */
-						oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
-						oldData.triggerDataChanged();
+					if (d.getValueID() === oldData.getValueID()) {
 						successFunction();
 					}
+					else if (oldData.id)
+					{
+						if (d.getValueID())
+						{
+							cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
+						}
+						else
+						{
+							oldData.deleteValue(successFunction, syncFailFunction);
+						}
+					}
+					else if (d.getValueID())
+					{
+						if (oldData.cell.parent && oldData.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						{
+							var initialData;
+							/* The description value is used in updateFromChangeData. */
+							initialData = [
+								{containerUUID: oldData.cell.parent.getValueID(), 
+								 fieldID: oldData.cell.field.nameID, 
+								 instanceID: d.getValueID(),
+								 description: d.getDescription()}
+								];
+							cr.updateValues(initialData, [oldData], successFunction, syncFailFunction);
+						}
+						else 
+						{
+							/* In this case, we are replacing an old value for
+							   an item that was added to the cell but not saved;
+							   a placeholder or a previously picked value.
+							 */
+							oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
+							oldData.triggerDataChanged();
+							successFunction();
+						}
+					}
+					else
+						successFunction();
 				}
-				else
-					successFunction();
+				catch(err)
+				{
+					syncFailFunction(err);
+				}
 			}
 			d3.event.preventDefault();
 		}

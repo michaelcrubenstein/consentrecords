@@ -160,28 +160,34 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		cr.selectAll({path: groupPath,
 			done: function(groupPaths)
 				{
-					cr.addObjectValue('#'+session.getValueID()+">Inquiries",
-									  '_user',
-									  user,
-									  function(newInquiryID) { 
-											function done()
-											{
-												s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
-													.format(offering.getDescription(),
-															session.getDescription(),
-															user === cr.signedinUser ? "You have" : getUserDescription(user) + " has",
-															user === cr.signedinUser ? "you are" : getUserDescription(user) + " is");
-												bootstrap_alert.success(s,
-															  ".alert-container");
-												checkInquiryFunction(user, newInquiryID); 
-											};
-											if (groupPaths.length == 0)
-												done();
-											else {
-												addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
-											}
-										},
-										asyncFailFunction);
+					var initialData = [{
+							container: '#{0}>Inquiries'.format(session.getValueID()),
+							field: '_user',
+							instanceID: user.getValueID(),
+							description: getUserDescription(user)
+						}];
+					var sourceObjects = [new cr.ObjectValue()];
+					$(sourceObjects[0]).on('dataChanged.cr', null, user, function(eventObject)
+						{
+							var newInquiryID = this.id;
+							function done()
+							{
+								s = "{2} signed up for {0}/{1}.\n\nLook out for a notice when {3} enrolled."
+									.format(offering.getDescription(),
+											session.getDescription(),
+											user === cr.signedinUser ? "You have" : getUserDescription(user) + " has",
+											user === cr.signedinUser ? "you are" : getUserDescription(user) + " is");
+								bootstrap_alert.success(s,
+											  ".alert-container");
+								checkInquiryFunction(user, newInquiryID); 
+							};
+							if (groupPaths.length == 0)
+								done();
+							else {
+								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+							}
+						});
+					cr.updateValues(initialData, sourceObjects, function() {}, asyncFailFunction);
 				},
 			fail: asyncFailFunction 
 			});

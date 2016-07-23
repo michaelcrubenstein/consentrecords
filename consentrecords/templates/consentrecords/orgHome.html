@@ -67,6 +67,18 @@
     		top: 0;
     		z-index: 4;
     	}
+    	panel#id_sign_in_panel hr {
+			margin-top: 20px;
+			margin-bottom: 20px;
+			border: 0;
+			border-top: 1px solid #ccc
+    	}
+    	panel#id_sign_in_panel {
+    		background: white;
+    	}
+    	panel#id_forgot_password_panel {
+    		background: white;
+    	}
     	.background-gradient-panel > nav {
     		opacity: 0.8;
     	}
@@ -162,7 +174,7 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial background-gradient-panel" >
+  		<panel id="id_user_home_panel" class="initial" >
 			<nav role="navigation">
 				<div>
 					<div class="pull-right">
@@ -180,7 +192,7 @@
 			</section>
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel reveal background-gradient-panel">
+		<panel id="id_sign_in_panel" class="level-2-panel reveal">
 		  <form class="form-simple form-signin">
 			<div class="site-title">Sign In to PathAdvisor</div>
 			<div class="alert-container"></div>
@@ -210,7 +222,7 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_forgot_password_panel" class="level-2-panel reveal background-gradient-panel">
+		<panel id="id_forgot_password_panel" class="level-2-panel reveal">
 			<form class="form-simple">
 				<div class="site-title">Forgot your Password?</div>
 				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
@@ -615,30 +627,27 @@
 				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 				
 				$.post("{% url 'submitSignin' %}", { username : $("#id_username").val(),
-											  		 password : $("#id_password").val() }, 
-					function(json){
-				if (json.success) {
-					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
-						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
-					else
-						$.removeCookie("email");
-						
-					$("#id_sign_in_panel #id_username").val("")
-					$("#id_sign_in_panel #id_password").val("")
-						
-					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
+											  		 password : $("#id_password").val() })
+				.done(function(json)
 					{
-						successFunction(json.user);
-					}
-				}
-				else
-					failFunction(json.error);
-			  })
+						if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
+							$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
+						else
+							$.removeCookie("email");
+						
+						$("#id_sign_in_panel #id_username").val("")
+						$("#id_sign_in_panel #id_password").val("")
+						
+						$.cookie("authenticator", "email", { path: "/"});
+						if (successFunction)
+						{
+							successFunction(json.user);
+						}
+					})
 				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					});
 			}
 		};
 
@@ -676,13 +685,8 @@
 				  .done(function(json, textStatus, jqXHR)
 					{
 						closealert();
-						if (json.success) {
-							bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
-							successFunction();
-						}
-						else {
-							failFunction(json.error);
-						}
+						bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
+						successFunction();
 					})
 				  .fail(function(jqXHR, textStatus, errorThrown) {
 				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -907,7 +911,7 @@
 				}
 				
 				var sitePanel = new SitePanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData), "organization background-gradient-panel");
+											objectData, getViewPanelHeader(objectData), "organization view");
 
 				var navContainer = sitePanel.appendNavContainer();
 
@@ -1563,17 +1567,27 @@
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
-												
-																	inquiryCell.addObjectValue(pickedUser,
-																						   function(newData)
-																						   {
-																								bootstrap_alert.success(pickedUser.getDescription() + 
-																									  " inquiry added to " + 
-																									  session.getDescription(),
-																									  ".alert-container");
-																								unblockClick();
-																						   },
-																						   syncFailFunction);
+																	
+																	var newValue = inquiryCell.addNewValue();
+																	cr.updateValues([{
+																			containerUUID: inquiriesInstance.getValueID(),
+																			fieldID: inquiryCell.field.nameID, 
+						   													instanceID: pickedUser.getValueID(),
+						   													description: pickedUser.getDescription()
+																		}], [newValue],
+																		function()
+																		   {
+																				bootstrap_alert.success(pickedUser.getDescription() + 
+																					  " inquiry added to " + 
+																					  session.getDescription(),
+																					  ".alert-container");
+																				unblockClick();
+																		   },
+																		function(err)
+																		{
+																			newValue.triggerDeleteValue();
+																			syncFailFunction(err);
+																		});
 																},
 																syncFailFunction);
 														}
@@ -1679,8 +1693,10 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.getCellData("Enrollment", function(enrollments)
+						instance.checkCells(["Enrollment"], function()
 							{
+								var enrollments = instance.getCell("Enrollment").data;
+								
 								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();

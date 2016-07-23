@@ -106,7 +106,6 @@ pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>S
 # Test api.updateValues by editing the name of an Organization.
 # Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
 # Test api.updateValues by picking a new user for a group.
-# Test api.addValue by adding a user to a group.
 # Test api.getConfiguration by getting the configuration of an Organization
 # Test api.getData with a string by displaying an Organization Name Translation
 # Test api.deleteInstances by deleting an Organization with a name.
