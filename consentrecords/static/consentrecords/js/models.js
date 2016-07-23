@@ -1493,35 +1493,29 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json.success) {
-					for (var i = 0; i < sourceObjects.length; ++i)
-					{
-						d = sourceObjects[i];
-						newValueID = json.valueIDs[i];
-						newInstanceID = json.instanceIDs[i];
-						if (newValueID)
-						{
-							d.id = newValueID;
-							
-							d.updateFromChangeData(initialData[i]);
-							
-							/* Object Values have an instance ID as well. */
-							if (newInstanceID)
-								d.instanceID = newInstanceID;
-							
-							d.triggerDataChanged();
-						}
-						else
-						{
-							d.triggerDeleteValue();
-						}
-					}
-					successFunction();
-				}
-				else
+				for (var i = 0; i < sourceObjects.length; ++i)
 				{
-					failFunction(json.error);
+					d = sourceObjects[i];
+					newValueID = json.valueIDs[i];
+					newInstanceID = json.instanceIDs[i];
+					if (newValueID)
+					{
+						d.id = newValueID;
+						
+						d.updateFromChangeData(initialData[i]);
+						
+						/* Object Values have an instance ID as well. */
+						if (newInstanceID)
+							d.instanceID = newInstanceID;
+						
+						d.triggerDataChanged();
+					}
+					else
+					{
+						d.triggerDeleteValue();
+					}
 				}
+				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown)
 				{
@@ -1692,9 +1686,8 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 		$.post(cr.urls.acceptFollower, {follower: followerID,
 										cell: cellName, 
 										privilege: privilegeID
-										}, 
-									function(json){
-			if (json['success']) {
+										})
+		.done(function(json){
 				/* Copy the data from json object into newData so that 
 					any functions are properly initialized.
 				 */
@@ -1705,9 +1698,6 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 				newData.privilege = json.object.privilege;
 				newData.typeName = json.object.typeName;
 				done(newData);
-			}
-			else
-				fail(json.error);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{

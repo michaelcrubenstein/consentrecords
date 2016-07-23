@@ -268,7 +268,7 @@ def acceptFollower(request):
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
-                results = {'success':False, 'error': "user is not set up: %s" % request.user.get_full_name()}
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 followerPath = '#%s' % followerID
                 userInfo = UserInfo(request.user)
@@ -281,7 +281,7 @@ def acceptFollower(request):
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=followerID)
                     if ars.count():
-                        results = {'success':False, 'error': '%s is already following you' % follower.description.text}
+                        return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
                     else:
                         with transaction.atomic():
                             transactionState = TransactionState(request.user)
@@ -306,13 +306,13 @@ def acceptFollower(request):
                                 v.deepDelete(transactionState)
                         
                             data = newValue.getReferenceData(userInfo, language)
-                            results = {'success':True, 'object': data} 
+                            results = {'object': data} 
         else:
-            results = {'success':False, 'error': "user is not authenticated"}
+            return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -627,14 +627,14 @@ class api:
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
-                results = {'success':True, 'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
+                results = {'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
             
+            return JsonResponse(results)
+        
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-               
-        return JsonResponse(results)
+            return HttpResponseBadRequest(reason=str(e))
 
     def addValue(user, data):
         try:
