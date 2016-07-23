@@ -149,19 +149,20 @@ class Instance(dbmodels.Model):
             i += 1
         return d
 
-    def addReferenceValue(self, field, value, position, transactionState):
+    # Returns a newly created value contained by self with the specified referenceValue
+    def addReferenceValue(self, field, instance, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid" % position)
-        if not value:
-            raise ValueError("the value is null")
+        if not instance:
+            raise ValueError("the instance is null")
             
         # If the field is special access, then make this and all of its children sourced to self.
-        if field == terms.specialAccess and value == terms.customAccessEnum:
+        if field == terms.specialAccess and instance == terms.customAccessEnum:
             descendents = self._descendents()
             n = AccessRecord.objects.filter(id__in=descendents).delete()
             AccessRecord.objects.bulk_create(map(lambda i: AccessRecord(id=i,source=self), descendents))
             
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=value, position=position, transaction=transactionState.transaction)
+        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
