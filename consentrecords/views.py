@@ -636,63 +636,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    def addValue(user, data):
-        try:
-            # The path to the container object.
-            containerPath = data.get('path', None)
-        
-            # The field name for the new value within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # A value added to the container.
-            valueUUID = data.get('valueUUID', None)
-        
-            if valueUUID is None:
-                return JsonResponse({'success':False, 'error': 'the value was not specified'})
-            
-            referenceValue = Instance.objects.get(pk=valueUUID)
-            
-            # The index of the value within the container.
-            indexString = data.get('index', None)
-        
-            with transaction.atomic():
-                transactionState = TransactionState(user)
-                
-                if containerPath:
-                    userInfo = UserInfo(user)
-                    containers = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(containers) > 0:
-                        container = containers[0]
-                    else:
-                        raise RuntimeError("Specified path is not recognized")
-                else:
-                    raise RuntimeError("the container path was not specified")
-                container.checkWriteValueAccess(user, field, valueUUID)
-    
-                if indexString:
-                    newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
-                else:
-                    newIndex = container.getNextElementIndex(field)
-    
-                item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
-                if item.isDescriptor:
-                    Instance.updateDescriptions([container], NameList())
-                    
-            results = {'success':True, 'id': item.id}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-            
-        return JsonResponse(results)
-        
     def selectAll(user, data):
         try:
             path = data.get("path", None)
@@ -1130,16 +1073,6 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-# Handle a POST event to add a value to an object that references another other or data.
-def addValue(request):
-    if request.method != "POST":
-        raise Http404("addValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.addValue(request.user, request.POST)
-        
 def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
@@ -1223,8 +1156,6 @@ class ApiEndpoint(ProtectedResourceView):
             return createInstance(request)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/addvalue/':
-            return addValue(request)
         elif request.path_info == '/api/deleteinstances/':
             return deleteInstances(request)
         elif request.path_info == '/api/deletevalues/':

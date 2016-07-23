@@ -1232,7 +1232,6 @@ cr.urls = {
 		getCellData : "/api/getcelldata/",
 		getConfiguration : "/api/getconfiguration/",
 		createInstance : "/api/createinstance/",
-		addValue : "/api/addvalue/",
 		updateValues : "/api/updatevalues/",
 		deleteValue : '/api/deletevalue/',
 		deleteInstances : '/api/deleteinstances/',

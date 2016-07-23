@@ -53,7 +53,6 @@ urlpatterns = [
     
     url(r'^local/createinstance/', views.createInstance, name='createInstance'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
-    url(r'^local/addvalue/', views.addValue, name='addValue'),
     url(r'^local/deleteinstances/', views.deleteInstances, name='deleteInstances'),
     url(r'^local/deletevalue/', views.deleteValue, name='deleteValue'),
     

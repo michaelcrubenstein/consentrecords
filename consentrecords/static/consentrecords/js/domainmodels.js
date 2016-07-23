@@ -13,7 +13,6 @@ cr.urls = {
 		getCellData : "/local/getcelldata/",
 		getConfiguration : "/local/getconfiguration/",
 		createInstance : "/local/createinstance/",
-		addValue : "/local/addvalue/",
 		updateValues : "/local/updatevalues/",
 		deleteValue : '/local/deletevalue/',
 		deleteInstances : '/local/deleteinstances/',
