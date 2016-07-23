@@ -306,6 +306,12 @@ var PickUserAccessPanel = (function () {
 								{
 									initialData = [{ id: oldValue.id }];
 								}
+								else if (oldValue.id)
+								{
+									initialData = [{ id: oldValue.id,
+													 instance: d.instancePath,
+													 description: d.description }];
+								}
 								else
 								{
 									initialData = [
