@@ -1693,8 +1693,10 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.getCellData("Enrollment", function(enrollments)
+						instance.checkCells(["Enrollment"], function()
 							{
+								var enrollments = instance.getCell("Enrollment").data;
+								
 								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();

@@ -954,51 +954,6 @@ class api:
         
         return JsonResponse(results)
     
-    def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
-        data = v.getReferenceData(userInfo, language)
-        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
-        return data;
-    
-    def getCellData(user, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
-        try:
-            path = data.get('path', None)
-        
-            if not path:
-                raise ValueError("path was not specified in getCellData")
-            
-            # The field name for the values to find within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                raise ValueError('the fieldName was not specified')
-            else:
-                field = terms[fieldName]
-                
-            language = data.get('language', None)
-
-            userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            values = uuObjects[0].getReadableSubValues(field, userInfo)
-            fieldsDataDictionary = {}
-            p = [api._getValueData(v, fieldsDataDictionary, language, userInfo) for v in values]        
-        
-            results = {'objects': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-    
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
     def deleteInstances(user, path):
@@ -1128,18 +1083,10 @@ def handleURL(request, urlPath):
     else:
         raise Http404("api only responds to GET methods")
 
-def getCellData(request):
-    if request.method != "GET":
-        raise Http404("getCellData only responds to GET methods")
-    
-    return api.getCellData(request.user, request.GET)
-
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/getdata/':
             return getData(request)
-        if request.path_info == '/api/getcelldata/':
-            return getCellData(request)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
         elif request.path_info == '/api/selectall/':

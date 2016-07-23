@@ -998,60 +998,6 @@ cr.ObjectValue = (function() {
 		});
 	}
 	
-	/* Get all of the data associated with the sub-objects in the specified field */
-	ObjectValue.prototype.getCellData = function(fieldName, done, fail)
-	{
-		if (typeof(done) != "function")
-			throw "done is not a function";
-		if (typeof(fail) != "function")
-			throw "fail is not a function";
-		if (!this.getValueID())
-			throw "this item is not saved";
-		if (!fieldName)
-			throw "fieldName is not specified";
-		
-		var _this = this;
-	
-		crp.queue.add(
-			function() {
-				var cell = _this.getCell(fieldName);
-				if (cell != null)
-					done(cell.data);
-				else
-				{
-					var jsonArray = { "path" : "#" + _this.getValueID(),
-									  "fieldName" : fieldName };
-					$.getJSON(cr.urls.getCellData,
-						jsonArray, 
-						function(json)
-						{
-							try
-							{
-								field = {capacity: "_multiple values", name: fieldName, dataType: "_object"};
-								var oldCell = {field: field, data: json.objects};
-								if (!_this.cells)
-									_this.cells = [];
-								cell = _this.importCell(oldCell);
-							
-								done(cell.data);
-								crp.queue.next();
-							}
-							catch (err)
-							{
-								fail(err);
-							}
-						}
-					)
-					.fail(function(jqXHR, textStatus, errorThrown)
-							{
-								cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-							}
-						 );
-					return false;
-				}
-			});
-	}
-
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
 		if (typeof(done) != "function")
@@ -1205,7 +1151,6 @@ cr.urls = {
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
-		getCellData : "/api/getcelldata/",
 		getConfiguration : "/api/getconfiguration/",
 		createInstance : "/api/createinstance/",
 		updateValues : "/api/updatevalues/",
