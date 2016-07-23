@@ -627,30 +627,27 @@
 				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
 				
 				$.post("{% url 'submitSignin' %}", { username : $("#id_username").val(),
-											  		 password : $("#id_password").val() }, 
-					function(json){
-				if (json.success) {
-					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
-						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
-					else
-						$.removeCookie("email");
-						
-					$("#id_sign_in_panel #id_username").val("")
-					$("#id_sign_in_panel #id_password").val("")
-						
-					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
+											  		 password : $("#id_password").val() })
+				.done(function(json)
 					{
-						successFunction(json.user);
-					}
-				}
-				else
-					failFunction(json.error);
-			  })
+						if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
+							$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
+						else
+							$.removeCookie("email");
+						
+						$("#id_sign_in_panel #id_username").val("")
+						$("#id_sign_in_panel #id_password").val("")
+						
+						$.cookie("authenticator", "email", { path: "/"});
+						if (successFunction)
+						{
+							successFunction(json.user);
+						}
+					})
 				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
+					{
+						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+					});
 			}
 		};
 
@@ -688,13 +685,8 @@
 				  .done(function(json, textStatus, jqXHR)
 					{
 						closealert();
-						if (json.success) {
-							bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
-							successFunction();
-						}
-						else {
-							failFunction(json.error);
-						}
+						bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
+						successFunction();
 					})
 				  .fail(function(jqXHR, textStatus, errorThrown) {
 				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);

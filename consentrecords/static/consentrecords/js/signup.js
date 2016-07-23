@@ -9,14 +9,9 @@ var Signup = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json.success) {
-					closealert();
-					if (successFunction)
-						successFunction();
-				}
-				else {
-					failFunction(json.error);
-				}
+				closealert();
+				if (successFunction)
+					successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -34,12 +29,7 @@ var Signup = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);

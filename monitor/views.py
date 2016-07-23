@@ -17,11 +17,11 @@ def log(request):
         message = data.get('message', '')
         LogRecord.emit(user, name, message)
         
-        results = {'success':True}
+        results = {}
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
     
     return JsonResponse(results)
 

@@ -12,12 +12,7 @@ var UpdatePasswordPanel = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
@@ -127,12 +122,7 @@ var UpdateUsernamePanel = (function () {
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				if (json['success']) {
-					successFunction(json.user);
-				}
-				else {
-					failFunction(json.error);
-				}
+				successFunction(json.user);
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
 				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
