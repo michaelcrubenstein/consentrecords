@@ -1,0 +1,439 @@
+Organization
+    _name: Tenacity
+    Sites
+        Site
+            _name: Curley K-8
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 493 Centre St
+                City:  Jamaica Plain
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis
+        Site
+            _name: Fredrick Middle School
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 270 Columbia Road
+                City:  Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis
+        Site
+            _name: Irving Middle School
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 105 Cummings Hwy
+                City: Rosindale
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis
+        Site
+            _name: Jackson | Mann K-8
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 40 Armington St
+                City: Allston
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis
+        Site
+            _name: McCormack Middle School
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 315 Mt Vernon St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis
+        Site
+            _name: Mario Umana Academy
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 312 Border St
+                City: East Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service:Tennis
+        Site
+            _name: McCormack Middle School
+            Web Site: https://tenacity.org/middle-school-academy/
+            Address
+                Street: 315 Mt Vernon St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Middle School Academy
+                    Service:Tennis
+                    Service: After School Program
+                    Service: Literacy Training
+              Offering
+                    _name: Elementary Program
+                    Service: Tennis 
+        Site
+            _name: Billings Field
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 67 Bellevue Street
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Boston Common Tennis Courts
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street:139 Tremont Street
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Cassidy Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: Beacon St & Chestnut Hill Ave
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Constitution Beach
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: Coleridge St & Rice St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Dorchester Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 2174 Dorchester Ave
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: English High
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 70 Union Ave
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Harbor Point
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 24 Oyster Bay Point
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Hunt - Almont Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street:  38 Almont St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Lacono Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street:Lacono/Readville Playground
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Madison Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 122 Dewitt Dr
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Malcolm X - Washington Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: Malcolm X Park
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Martini Shell - Moynihan Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: Moynihan Playground
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Memorial Park - Sartori Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 143 Porter St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Moakley - Columbus Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 1005 Columbia Road
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Prince Street Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: N Washington St @ Commercial St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Ringer Playground 
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 40 Imrie Road
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Ripley Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: Ripley Road
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Rogers Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 56 Rogers Park Avenue
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Roxbury Latin School
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 55 St. Theresa Ave
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Ryan Playground
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 320 River St
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Savin Hill Park
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 27 Caspian Way
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: West Roxbury Education Complex
+            Web Site: https://tenacity.org/strp-boston/
+            Address
+                Street: 1205 Veterens of Foreign Wars Parkway
+                City: Boston
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Boston
+                    Service:Tennis
+                    Service: Literacy Training
+        Site
+            _name: Clark University
+            Web Site: https://tenacity.org/strp-worcester/
+            Address
+                Street: 97 Beaver St
+                City: Worcester
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Worcester
+                    Service: Tennis
+                    Service: Literacy Training
+        Site
+            _name: Crompton Park
+            Web Site: https://tenacity.org/strp-worcester/
+            Address
+                Street: Crompton Park
+                City: Worcester
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Worcester
+                    Service: Tennis
+                    Service: Literacy Training
+        Site
+            _name: Gaskill Field
+            Web Site: https://tenacity.org/strp-worcester/
+            Address
+                Street: Gaskill Field
+                City: Worcester
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Worcester
+                    Service: Tennis
+                    Service: Literacy Training
+        Site
+            _name: Greenwood Park
+            Web Site: https://tenacity.org/strp-worcester/
+            Address
+                Street: Greenwood Park
+                City: Worcester
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Worcester
+                    Service: Tennis
+                    Service: Literacy Training
+        Site
+            _name: Newton Square
+            Web Site: https://tenacity.org/strp-worcester/
+            Address
+                Street: 701 Pleasant Street
+                City: Worcester
+                State: MA
+            Offerings
+              Offering
+                    _name: Summer Tennis and Reading Program - Worcester
+                    Service: Tennis
+                    Service: Literacy Training
