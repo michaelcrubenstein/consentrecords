@@ -1481,7 +1481,7 @@ var ExperienceShareOptions = (function () {
 						if (prepareClick('click', duplicateText))
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
-							var newPanel = new NewExperienceFinishPanel(panel.node(), tempExperience, null, revealPanelUp);
+							var newPanel = new NewExperiencePanel(tempExperience, panel.node());
 							showPanelUp(newPanel.node(), function()
 								{
 									$(emailAddExperienceButton.node()).off('blur');
