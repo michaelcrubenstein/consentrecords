@@ -90,13 +90,16 @@ class Instance(dbmodels.Model):
         return i
     
     def getDataType(self, field):
-        configuration = self.typeID.children.filter(typeID=terms.configuration,deleteTransaction__isnull=True)[0]
-        fields = configuration.children.filter(typeID=terms.field,deleteTransaction__isnull=True)
-        f = fields.get(value__field=terms.name,
-                          value__referenceValue=field,
-                          value__deleteTransaction__isnull=True)
-        v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
-        return v.referenceValue
+        try:
+            configuration = self.typeID.children.filter(typeID=terms.configuration,deleteTransaction__isnull=True)[0]
+            fields = configuration.children.filter(typeID=terms.field,deleteTransaction__isnull=True)
+            f = fields.get(value__field=terms.name,
+                              value__referenceValue=field,
+                              value__deleteTransaction__isnull=True)
+            v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
+            return v.referenceValue
+        except Instance.DoesNotExist:
+            raise Instance.DoesNotExist('field "%s" does not exist in configuration of %s'%(field, self.typeID))
     
     # addValue ensures that the value can be found for object values. 
     # addValue does not validate that self is writable.           
