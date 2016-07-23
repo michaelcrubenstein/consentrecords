@@ -369,7 +369,7 @@ def requestAccess(request):
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
-                                results = {'success':True, 'object': data} 
+                                results = {'object': data} 
         else:
             return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
@@ -544,9 +544,9 @@ class api:
                     Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData(userInfo, language)}
+                    results = {'object': newValue.getReferenceData(userInfo, language)}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData(userInfo, language)}
+                    results = {'object': item.getReferenceData(userInfo, language)}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -657,7 +657,7 @@ class api:
                 uuObjects = uuObjects[start:]
             
             p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
-            results = {'success':True, 'objects': p}
+            results = {'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -696,7 +696,7 @@ class api:
             m = map(lambda i: i.findValues(field, value), containers)
             p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
                             
-            results = {'success':True, 'objects': [i for i in p]}
+            results = {'objects': [i for i in p]}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -723,7 +723,7 @@ class api:
                 
             p = configurationObject.getConfiguration()
         
-            results = {'success':True, 'cells': p}
+            results = {'cells': p}
         except Instance.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -744,7 +744,7 @@ class api:
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
             userID = Instance.getUserInstance(accessToken.user).id
-            results = {'success':True, 'userID': userID}
+            results = {'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -859,7 +859,7 @@ class api:
             fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
-            results = {'success':True, 'data': p}
+            results = {'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -891,7 +891,7 @@ class api:
             end = int(data.get("end", "0"))
         
             if not path:
-                raise ValueError("path was not specified in getNewExperienceChoices"})
+                raise ValueError("path was not specified in getNewExperienceChoices")
             
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
@@ -945,7 +945,7 @@ class api:
             fieldsDataDictionary = {}
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
         
-            results = {'success':True, 'data': p}
+            results = {'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -990,7 +990,7 @@ class api:
             fieldsDataDictionary = {}
             p = [api._getValueData(v, fieldsDataDictionary, language, userInfo) for v in values]        
         
-            results = {'success':True, 'objects': p}
+            results = {'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -1016,7 +1016,7 @@ class api:
                         uuObject.deepDelete(transactionState)
             else:   
                 raise ValueError("path was not specified in delete")
-            results = {'success':True}
+            results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -1042,7 +1042,7 @@ class api:
                         Instance.updateDescriptions([v.instance], nameLists)
             else:   
                 raise ValueError("valueID was not specified in delete")
-            results = {'success':True}
+            results = {}
         except Value.DoesNotExist:
             raise ValueError("the specified value ID was not recognized")
         except Exception as e:
