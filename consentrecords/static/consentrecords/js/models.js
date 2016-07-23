@@ -1360,39 +1360,6 @@ cr.getValues = function (args)
 		);
 	};
 	
-/* The success function takes a single argument: the id of the new value being created. */
-cr.addObjectValue = function(containerPath, fieldName, initialData, done, fail)
-	{
-		if (!fail)
-			throw ("fail is not specified");
-		if (!done)
-			throw ("done is not specified");
-		if (!fieldName || fieldName.length == 0)
-			throw("fieldName is not specified")
-		if (!containerPath || containerPath.length == 0)
-			throw("containerPath is not specified")
-		var _this = this;
-		$.post(cr.urls.addValue, 
-				{ path: containerPath,
-				  fieldName: fieldName,
-				  valueUUID: initialData.getValueID()
-				})
-			  .done(function(json, textStatus, jqXHR)
-				{
-					if (json.success) {
-						done(json.id);
-					}
-					else {
-						fail(json.error);
-					}
-				})
-			  .fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-					}
-				);
-	};
-			
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
