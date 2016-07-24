@@ -304,3 +304,4 @@ Value.objects.filter(stringValue='_uuname').update(stringValue='_term')
 ##################################################################
 sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
 sudo reboot
+

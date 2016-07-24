@@ -26,7 +26,7 @@ export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 
 # Create a local tar file of all of the website.
 cd ~/GitHub/consentrecords
-tar -cf c.tar consentrecords custom_user manage.py maintenance monitor parse static developer data
+tar -cf c.tar consentrecords custom_user manage.py maintenance monitor parse static developer data scripts
 
 # Start a remote connection with this command:
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com

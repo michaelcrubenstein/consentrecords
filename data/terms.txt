@@ -299,7 +299,19 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_register]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_read]
+        _field
+            _name: _primary administrator
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: _user
+        _field
+            _name: _access record
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _create one
+            _of kind: _access record
 _term
     _name: Offering
     _configuration
@@ -436,7 +448,7 @@ _term
             _name: _name
             _data type: _translation
             _max capacity: _multiple values
-            _descriptor type: _by first text
+            _descriptor type: _by text
             _object add rule: _create one
         _field
             _name: Service Domain
@@ -822,9 +834,9 @@ _term
     enumerator
         _name: _by text
     enumerator
-        _name: _by first text
-    enumerator
         _name: _by count
+    enumerator
+        _name: _by first text
 _term
     _name: _email
 _term
