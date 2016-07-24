@@ -448,7 +448,7 @@ _term
             _name: _name
             _data type: _translation
             _max capacity: _multiple values
-            _descriptor type: _by first text
+            _descriptor type: _by text
             _object add rule: _create one
         _field
             _name: Service Domain
