@@ -929,6 +929,15 @@ cr.ObjectValue = (function() {
 		var cell = this.getCell(name);
 		return cell && cell.data.length && cell.data[0];
 	}
+	
+	ObjectValue.prototype.getNonNullValue = function(name)
+	{
+		var d = this.getValue(name);
+		if (d && d.getValueID())
+			return d;
+		else
+			return undefined;
+	}
 		
 	ObjectValue.prototype.handleContentsChanged = function()
 	{

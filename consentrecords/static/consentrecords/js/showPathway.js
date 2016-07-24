@@ -1423,6 +1423,7 @@ var Dimmer = (function () {
 	Dimmer.prototype.show = function()
 	{
 		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
+		return this;
 	}
 	
 	Dimmer.prototype.hide = function()
@@ -1432,6 +1433,7 @@ var Dimmer = (function () {
 			{
 				d3.select(this).remove();
 			}});
+		return this;
 	}
 	
 	Dimmer.prototype.remove = function()

@@ -1777,6 +1777,7 @@ var PathlinesPanel = (function () {
 				this.isMinHeight = true;
 				_this.calculateHeight();
 				
+				var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path);
 			});
 	}
 	
@@ -1877,3 +1878,131 @@ var ShareOptions = (function () {
 	return ShareOptions;
 })();
 
+var ExperienceIdeas = (function() {
+	
+	function ExperienceIdeas(panelNode, path)
+	{
+		var _this = this;
+		this.panelNode = panelNode;
+		
+		var data;
+		
+		crp.getData({path: '"Experience Prompt"', 
+					 done: function(prompts)
+						{
+							data = prompts.map(function(d)
+								{
+									var datum = {name: d.getDatum('_name'),
+												 prompt: d.getDatum('_text'),
+												 experience: new Experience(path)};
+									var s = d.getNonNullValue('Service');
+									if (s) datum.experience.addService({instance: s});
+									datum.experience.domain = d.getNonNullValue('Domain');
+									datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
+									datum.experience.stage = d.getNonNullValue('Stage');
+									datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
+									datum.experience.setSite({instance: d.getNonNullValue('Site')});
+									datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
+									return datum;
+								});
+							getGetNext(0, "Here are some ideas to help fill in your pathway")();
+						},
+					fail: asyncFailFunction});
+		
+		function getGetNext(nextIndex, title)
+		{
+			return function(oldExperiencePanel)
+			{
+				var getNext = (nextIndex < data.length - 1 ? getGetNext(nextIndex + 1, "") : null);
+				var dimmer = oldExperiencePanel ? oldExperiencePanel.dimmer : new Dimmer(_this.panelNode).show();
+				new ExperienceIdeaPanel(_this.panelNode, 
+					dimmer,
+					title,
+					data[nextIndex].prompt,
+					data[nextIndex].experience,
+					getNext).show();
+			}
+		}
+		
+		
+	}
+	
+	return ExperienceIdeas;
+})();
+
+var ExperienceIdeaPanel = (function() {
+	ExperienceIdeaPanel.prototype.dimmer = null;
+	
+	ExperienceIdeaPanel.prototype.show = function()
+	{
+		$(this.ideaPanel.node()).animate({left: '17%'});
+	}
+	
+	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experience, getNext)
+	{
+		var _this = this;
+		this.dimmer = dimmer;
+		this.ideaPanel = d3.select(panelNode).append('panel')
+			.classed('idea', true)
+			.style('left', '100%');
+			
+		var onCancel = function()
+		{
+			_this.dimmer.hide();
+			_this.ideaPanel.remove();
+		}
+		
+		if (title)
+			this.ideaPanel.append('div')
+				.classed('title', true)
+				.text(title);
+		
+		var promptDiv = this.ideaPanel.append('div')
+			.classed('prompt', true)
+			.text(prompt);
+		
+		var footer = this.ideaPanel.append('footer');
+		
+		if (getNext)
+		{	
+			var skipButton = footer.append('button')
+				.classed('skip', true)
+				.text('Skip')
+				.on('click', function()
+					{
+						var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+						$(_this.ideaPanel.node()).animate({left: newLeft},
+							{done: function()
+								{
+									_this.ideaPanel.remove();
+									getNext(_this);
+								}});
+					});
+		}
+		
+		var answerButton = footer.append('button')
+			.classed('answer', true)
+			.text('Answer')
+			.on('click', function()
+				{
+					_this.dimmer.hide();
+					$(_this.ideaPanel.node()).animate({top: $(panelNode).height()},
+						{done: function()
+							{
+								_this.ideaPanel.remove();
+								var panel = new NewExperiencePanel(experience, panelNode);
+								showPanelUp(panel.node());
+							}});
+				});
+		
+		var closeButton = this.ideaPanel.append('button')
+			.classed('close', true)
+			.on('click', onCancel);
+		var closeSpan = closeButton.append('span')
+			.text(String.fromCharCode(215)	/* 215 - unicode value for times character */);
+		
+		this.dimmer.mousedown(onCancel);
+		this.dimmer.show();
+	}
+	return ExperienceIdeaPanel;
+})();

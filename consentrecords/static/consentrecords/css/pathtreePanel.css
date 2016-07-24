@@ -110,4 +110,108 @@ svg.pathway .flag-label {	/* For both flags and detail panels */
 	font-weight: 500;
 }
 
-panel
+panel.idea {
+	position: absolute;
+	background-color: #96AAd6;
+	width: 66%;
+	left: 17%;
+	height: 50%;
+	top: 25%;
+	border-style: solid;
+	border-radius: 0.5em;
+	border-width: 0.1em;
+	border-color: white;
+}
+
+panel.idea > .title {
+	margin: 0 1em;
+	position: absolute;
+	top: 1em;
+	color: white;
+	background-color: transparent;
+	text-align: center;
+	font-size: 0.8em;
+}
+
+panel.idea > .prompt {
+	margin: 0 1em;
+	position: absolute;
+	top: 30%;
+	color: white;
+	background-color: transparent;
+	outline: none;
+}
+
+panel.idea > footer {
+	position: absolute;
+	bottom: 0px;
+	width: 100%;
+	border-top-style: solid;
+	border-top-color: white;
+	border-top-width: 0.05em;
+	border-bottom-left-radius: 0.5em;
+	border-bottom-right-radius: 0.5em;
+}
+
+panel.idea footer button.skip {
+	position: absolute;
+	bottom: 0px;
+	width: 50%;
+	font-size: 0.8em;
+	padding: 0.3em 0;
+	color: white;
+	background-color: #2C55CC;
+	border: none;
+	border-top-style: solid;
+	border-top-color: white;
+	border-top-width: 0.05em;
+	border-right-style: solid;
+	border-right-color: white;
+	border-right-width: 0.05em;
+	border-bottom-left-radius: 0.5em;
+	outline: none;
+}
+
+panel.idea footer button.answer {
+	position: absolute;
+	bottom: 0px;
+	right: 0px;
+	width: 50%;
+	font-size: 0.8em;
+	padding: 0.3em 0;
+	color: white;
+	background-color: #2C55CC;
+	border: none;
+	border-top-style: solid;
+	border-top-color: white;
+	border-top-width: 0.05em;
+	border-bottom-right-radius: 0.5em;
+	outline: none;
+}
+
+panel.idea > footer button.answer:only-of-type {
+	width: 100%;
+	border-bottom-left-radius: 0.5em;
+}
+
+panel.idea > button.close {
+	-webkit-appearance: none;
+	color: white;
+	background-color: #2C55CC;
+	position: absolute;
+	right: -0.6em;
+	top: -0.6em;
+	font-size: 1.5em;
+	width: 1.2em;
+	height: 1.2em;
+	border-radius: 50%;
+	opacity: 1;
+	border-color: white;
+	border-width: 2px;
+	border-style: solid;
+}
+
+panel.idea > button.close > span {
+	position: relative;
+	top: -.13em;
+}

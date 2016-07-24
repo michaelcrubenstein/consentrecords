@@ -13,7 +13,7 @@ var Experience = (function() {
 	Experience.prototype.path = null;
 	
 	Experience.prototype.setOrganization = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			if (d.getValue("Organization"))
@@ -31,7 +31,7 @@ var Experience = (function() {
 				this.siteName = null;
 			}
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.site && textValue != this.site.getDescription() && textValue != this.organization.getDescription()) ||
@@ -55,13 +55,13 @@ var Experience = (function() {
 	}
 	
 	Experience.prototype.setSite = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			this.site = d;
 			this.siteName = d.getDescription();
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.site && textValue != this.site.getDescription()) ||
@@ -80,13 +80,13 @@ var Experience = (function() {
 	}
 	
 	Experience.prototype.setOffering = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			this.offering = d;
 			this.offeringName = d.getDescription();
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.offering && textValue != this.offering.getDescription()) ||
@@ -114,7 +114,7 @@ var Experience = (function() {
 			service = args;
 			this.services.push(service);
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var newName = args.text;
 			var d = args.instance;
@@ -124,7 +124,7 @@ var Experience = (function() {
 				this.services.push(service);
 			}
 		}
-		else if ("instance" in args)
+		else if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			var service = new ReportedObject({pickedObject: d})
@@ -3156,6 +3156,18 @@ var NewExperienceSearchView = (function() {
 			(this.inputText().length > 0  && !this.experience.offeringName) ? null : "none");
 	}
 	
+	NewExperienceSearchView.prototype.restartSearchTimeout = function(val)
+	{
+		if (this.typeNames[0] === "::NewExperience")
+			this.startSearchTimeout.call(this, val);
+		else
+		{
+			this.typeName = this.typeNames[0];
+			SearchView.prototype.restartSearchTimeout.call(this, val);
+		}
+	}
+				
+
 	function NewExperienceSearchView(sitePanel, experience)
 	{
 		this.typeNames = ["::NewExperience"];
