@@ -299,7 +299,19 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_register]
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_read]
+        _field
+            _name: _primary administrator
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: _user
+        _field
+            _name: _access record
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _create one
+            _of kind: _access record
 _term
     _name: Offering
     _configuration
