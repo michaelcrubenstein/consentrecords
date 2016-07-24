@@ -147,6 +147,61 @@ _term
             _data type: _datestamp
             _max capacity: _unique value
 _term
+    _name: Experience Prompt
+    _configuration
+        _name: Boston
+        _field
+            _name: _name
+            _data type: _string
+            _max capacity: _unique value
+            _descriptor type: _by text
+        _field
+            _name: _text
+            _data type: _translation
+            _max capacity: _multiple values
+        _field
+            _name: Organization
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Organization
+        _field
+            _name: Site
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Site
+        _field
+            _name: Offering
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Offering
+        _field
+            _name: Service
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Service
+        _field
+            _name: Domain
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Domain
+        _field
+            _name: Stage
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Stage
+        _field
+            _name: Service Domain
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: Service Domain
+_term
     _name: Experiences
     _configuration
         _name: Boston
