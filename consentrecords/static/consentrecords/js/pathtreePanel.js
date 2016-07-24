@@ -1769,15 +1769,17 @@ var PathlinesPanel = (function () {
 				
 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
-				if (_this.pathtree.allExperiences.length == 0 && _this.pathtree.editable)
-				{
-					_this.pathtree.showInitialPrompt();
-				}
-			
 				this.isMinHeight = true;
 				_this.calculateHeight();
 				
-				var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path);
+				if (_this.pathtree.allExperiences.length == 0 && _this.pathtree.editable)
+				{
+					if (path.canWrite())
+					{
+						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path);
+					}
+				}
+			
 			});
 	}
 	
