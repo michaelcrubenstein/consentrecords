@@ -834,9 +834,9 @@ _term
     enumerator
         _name: _by text
     enumerator
-        _name: _by first text
-    enumerator
         _name: _by count
+    enumerator
+        _name: _by first text
 _term
     _name: _email
 _term
