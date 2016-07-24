@@ -314,10 +314,12 @@ var Experience = (function() {
 					})
 			}));
 		
-		if (this.serviceDomain)
-			tags.push(this.serviceDomain);
+		if (this.domain)
+			tags.push(this.domain);
 		if (this.stage)
 			tags.push(this.stage);
+		if (this.serviceDomain)
+			tags.push(this.serviceDomain);
 			
 		tagDivs = tagsDiv.selectAll('span');
 		
@@ -506,6 +508,8 @@ var Experience = (function() {
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
 			return '[Service={0}'.format(this.services[0].pickedObject.getValueID());
+		else if (this.domain)
+			return '[Service[Domain={0}]]'.format(this.domain.getValueID());
 		else if (this.serviceDomain)
 			return '[Service>Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
 		else if (this.stage)
@@ -516,7 +520,9 @@ var Experience = (function() {
 	
 	Experience.prototype.getServiceConstraint = function()
 	{
-		if (this.serviceDomain)
+		if (this.domain)
+			return '[Domain={0}]'.format(this.domain.getValueID());
+		else if (this.serviceDomain)
 			return '[Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
 		else if (this.stage)
 			return '[Stage={0}]'.format(this.stage.getValueID());
@@ -2533,6 +2539,23 @@ var NewExperienceSearchView = (function() {
 							}
 						}
 					}
+					else if (d.typeName == "Domain")
+					{
+						if (prepareClick('click', 'remove domain: ' + d.getDescription()))
+						{
+							try
+							{
+								_this.setupUndoDeleteObject(d);
+								_this.experience.domain = null;
+								_this.onUpdatedExperience();
+								unblockClick();
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
+						}
+					}
 					else if (d.typeName == "Stage")
 					{
 						if (prepareClick('click', 'remove stage: ' + d.getDescription()))
@@ -2667,6 +2690,15 @@ var NewExperienceSearchView = (function() {
 			if (prepareClick('click', 'service domain: ' + d.getDescription()))
 			{
 				this.experience.serviceDomain = d;
+				this.onExperienceDataAdded();
+				unblockClick();
+			}
+		}
+		else if (d.typeName === 'Domain')
+		{
+			if (prepareClick('click', 'domain: ' + d.getDescription()))
+			{
+				this.experience.domain = d;
 				this.onExperienceDataAdded();
 				unblockClick();
 			}
@@ -2967,10 +2999,7 @@ var NewExperienceSearchView = (function() {
 				{
 					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
 					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
-					if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
-						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-					else if (this.experience.serviceDomain)
-						path += '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
@@ -3039,6 +3068,7 @@ var NewExperienceSearchView = (function() {
 			}
 		}
 		else if (this.experience.serviceDomain ||
+				 this.experience.domain ||
 				 this.experience.stage)
 		{
 			path = "Service" + this.experience.getServiceConstraint();
@@ -3100,7 +3130,7 @@ var NewExperienceSearchView = (function() {
 			else
 				this.typeNames = ["Site", "Organization", "Site from Organization"];
 		}
-		else if (this.experience.serviceDomain || this.experience.stage)
+		else if (this.experience.serviceDomain || this.experience.stage || this.experience.domain)
 		{
 			this.typeNames = ["Service"];
 		}

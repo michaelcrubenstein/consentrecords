@@ -903,7 +903,7 @@ class api:
             testValue = path[len('::NewExperience:'):]
             
             if len(testValue) > 0:
-                a = ["Service Domain", "Stage", "Service", "Offering", "Site", "Organization"]
+                a = ["Service Domain", "Stage", "Service", "Domain", "Offering", "Site", "Organization"]
             else:
                 a = ["Service Domain", "Stage"]
             results = []
