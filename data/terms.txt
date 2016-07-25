@@ -51,6 +51,8 @@ _term
     _configuration
         _name: Boston
 _term
+    _name: Disqualifying Tag
+_term
     _name: Domain
     _configuration
         _name: Boston
@@ -201,6 +203,12 @@ _term
             _max capacity: _unique value
             _object add rule: _pick one
             _of kind: Service Domain
+        _field
+            _name: Disqualifying Tag
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Service
 _term
     _name: Experiences
     _configuration

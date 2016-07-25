@@ -1996,22 +1996,52 @@ var ExperienceIdeas = (function() {
 		crp.getData({path: '"Experience Prompt"', 
 					 done: function(prompts)
 						{
-							data = prompts.map(function(d)
-								{
-									var datum = {name: d.getDatum('_name'),
-												 prompt: d.getDatum('_text'),
-												 experience: new Experience(path)};
-									var s = d.getNonNullValue('Service');
-									if (s) datum.experience.addService({instance: s});
-									datum.experience.domain = d.getNonNullValue('Domain');
-									datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
-									datum.experience.stage = d.getNonNullValue('Stage');
-									datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
-									datum.experience.setSite({instance: d.getNonNullValue('Site')});
-									datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
-									return datum;
-								});
-							getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
+							try
+							{
+								/* Remove prompts that have disqualifying tags */
+								var moreExperienceData = path.getCell("More Experience").data;
+								prompts = prompts.filter(function(d)
+									{
+										return !d.getCell("Disqualifying Tag").data.find(function(dt)
+											{
+												var dtID = dt.getValueID();
+												return moreExperienceData.find(function(experience)
+													{
+														return experience.getCell("Service").data.find(function(service)
+															{
+																return service.getValueID() == dtID;
+															}) ||
+															experience.getCell("Offering").data.find(function(offering)
+																{
+																	return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
+																		{
+																			return service.getValueID() == dtID;
+																		});
+																});
+													});
+											});
+									});
+								data = prompts.map(function(d)
+									{
+										var datum = {name: d.getDatum('_name'),
+													 prompt: d.getDatum('_text'),
+													 experience: new Experience(path)};
+										var s = d.getNonNullValue('Service');
+										if (s) datum.experience.addService({instance: s});
+										datum.experience.domain = d.getNonNullValue('Domain');
+										datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
+										datum.experience.stage = d.getNonNullValue('Stage');
+										datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
+										datum.experience.setSite({instance: d.getNonNullValue('Site')});
+										datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
+										return datum;
+									});
+								getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
+							}
+							catch(err)
+							{
+								fail(err)
+							}
 						},
 					fail: fail});
 		
