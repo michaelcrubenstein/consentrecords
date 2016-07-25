@@ -1957,7 +1957,6 @@ var AddOptions = (function () {
 			});
 			
 		addButton(div, 'More Ideas',
-			function(done)
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
