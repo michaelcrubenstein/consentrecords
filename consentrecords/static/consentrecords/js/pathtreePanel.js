@@ -1793,8 +1793,7 @@ var ShareOptions = (function () {
 
 	function ShareOptions(panelNode)
 	{
-		var dimmer = d3.select(panelNode).append('div')
-			.classed('dimmer', true);
+		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
 		var div = panel.append('div');
@@ -1809,11 +1808,7 @@ var ShareOptions = (function () {
 						panel.remove();
 						unblockClick();
 					});
-					$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
-						function()
-						{
-							dimmer.remove();
-						}});
+					dimmer.hide();
 				}
 				catch(err)
 				{
@@ -1851,11 +1846,7 @@ var ShareOptions = (function () {
 							else
 								syncFailFunction('the specified user is not available');
 						});
-						$(dimmer.node()).animate({opacity: 0}, {duration: 400, complete:
-							function()
-							{
-								dimmer.remove();
-							}});
+						dimmer.hide();
 					}
 				});
 				
@@ -1866,14 +1857,14 @@ var ShareOptions = (function () {
 		
 		$(cancelButton.node()).click(onCancel);
 		
-		$(dimmer.node()).animate({opacity: 0.3}, 400);
+		dimmer.show();
 		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
 		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
 			function() {
 				$(confirmButton.node()).focus();
 				unblockClick();
 			}});
-		$(dimmer.node()).mousedown(onCancel);
+		dimmer.mousedown(onCancel);
 		$(panel.node()).mousedown(function(e)
 			{
 				e.preventDefault();
