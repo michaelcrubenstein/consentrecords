@@ -3134,7 +3134,12 @@ var NewExperienceSearchView = (function() {
 		else if (this.experience.services.length > 0)
 		{
 			if (this.experience.services[0].pickedObject)
-				this.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
+			{
+				if (searchText && searchText.length > 0)
+					this.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
+				else
+					this.typeNames = ["Offering"];
+			}
 			else
 				this.typeNames = ["Site", "Organization", "Site from Organization"];
 		}
