@@ -1274,7 +1274,7 @@ var EditExperiencePanel = (function () {
 					previousExperienceButton.classed('pressed', true);
 					onPreviousButtonPressed();
 				})
-			.text('Past');
+			.text(NewExperiencePanel.prototype.previousExperienceLabel);
 		
 		var presentExperienceButton = optionPanel.append('button')
 			.classed('present', true)
@@ -1289,7 +1289,7 @@ var EditExperiencePanel = (function () {
 					presentExperienceButton.classed('pressed', true);
 					onPresentButtonPressed();
 				})
-			.text('Present');
+			.text(NewExperiencePanel.prototype.currentExperienceLabel);
 		
 		var goalButton = optionPanel.append('button')
 			.classed('goal', true)
@@ -1301,7 +1301,7 @@ var EditExperiencePanel = (function () {
 					goalButton.classed('pressed', true);
 					onGoalButtonPressed();
 				})
-			.text('Goal');
+			.text(NewExperiencePanel.prototype.goalLabel);
 			
 		var startDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true)
