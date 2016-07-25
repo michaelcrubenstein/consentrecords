@@ -263,8 +263,8 @@ var PickOrCreatePanel = (function () {
 			{
 				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 				{
-					this.pickDatum.appendUpdateCommands(0, newValue, initialData, sourceObjects);
-					this.createDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+					this.pickDatum.appendUpdateCommands(-1, newValue, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(-1, null, initialData, sourceObjects);
 					this.save(initialData, sourceObjects);
 				}
 				else 
@@ -283,8 +283,8 @@ var PickOrCreatePanel = (function () {
 			{
 				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 				{
-					this.pickDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
-					this.createDatum.appendUpdateCommands(0, newText, initialData, sourceObjects);
+					this.pickDatum.appendUpdateCommands(-1, null, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(-1, newText, initialData, sourceObjects);
 					this.save(initialData, sourceObjects);
 				}
 				else 

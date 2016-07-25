@@ -814,11 +814,14 @@ cr.ObjectValue = (function() {
 			if (this.id)
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
 			else
+			{
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
 						   instanceID: newValueID,
-						   description: newDescription,
-						   index: i};
+						   description: newDescription};
+				if (i >= 0)
+					command.index = i;
+			}
 		}
 		initialData.push(command);
 		sourceObjects.push(this);
