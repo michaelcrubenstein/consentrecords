@@ -7,7 +7,14 @@ var PickOrCreateSearchView = (function () {
 	PickOrCreateSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'pick ' + d.getDescription()))
 		{
-			this.sitePanel.updateValues(d, null);
+			try
+			{
+				this.sitePanel.updateValues(d, null);
+			}
+			catch(err)
+			{
+				syncFailFunction(err);
+			}
 		}
 		d3.event.preventDefault();
 	}
@@ -114,41 +121,48 @@ var PickOrCreateSearchView = (function () {
 
 					if (prepareClick('click', 'Custom Button: ' + _this.inputText()))
 					{
-						var newText = _this.inputText();
-						var compareText = newText.toLocaleLowerCase()
-						var d = _this.getDataChunker.buttons().data().find(function(d)
-							{
-								return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
-							});
-						if (d) {
-							sitePanel.updateValues(d, null);
-							return;
-						}
-
-						if (newText.length == 0)
+						try
 						{
-							sitePanel.updateValues(null, null);
-						}
-						else
-						{
-							function done(newInstances)
-							{
-								if (newInstances.length == 0)
-									sitePanel.updateValues(null, newText);
-								else
-									sitePanel.updateValues(newInstances[0], null);
+							var newText = _this.inputText();
+							var compareText = newText.toLocaleLowerCase()
+							var d = _this.getDataChunker.buttons().data().find(function(d)
+								{
+									return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
+								});
+							if (d) {
+								sitePanel.updateValues(d, null);
+								return;
 							}
-				
-							var searchPath = _this.searchPath("");
-							if (searchPath.length > 0)
+
+							if (newText.length == 0)
 							{
-								cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
-									end: 50, done: done, fail: syncFailFunction});
+								sitePanel.updateValues(null, null);
 							}
 							else
 							{
-								sitePanel.updateValues(null, newText);
+								function done(newInstances)
+								{
+									if (newInstances.length == 0)
+										sitePanel.updateValues(null, newText);
+									else
+										sitePanel.updateValues(newInstances[0], null);
+								}
+				
+								var searchPath = _this.searchPath("");
+								if (searchPath.length > 0)
+								{
+									cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
+										end: 50, done: done, fail: syncFailFunction});
+								}
+								else
+								{
+									sitePanel.updateValues(null, newText);
+								}
 							}
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
 						}
 					}
 				})
