@@ -718,6 +718,7 @@ var PathLines = (function() {
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "4.5em";
 	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
+	PathLines.prototype.topNavHeight = 0;		/* The height of the top nav container; set by container. */
 	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
@@ -1144,7 +1145,7 @@ var PathLines = (function() {
 							    x: x + this.experienceGroupDX,
 							    height: this.detailRectHeight,
 							    width: rectWidth},
-							   parseFloat(this.pathwayContainer.style('top')),
+							   this.topNavHeight,
 							   this.bottomNavHeight,
 							   duration);
 		}
@@ -1216,7 +1217,9 @@ var PathLines = (function() {
 	
 	PathLines.prototype.handleResize = function()
 	{
+		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
 		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
+		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
