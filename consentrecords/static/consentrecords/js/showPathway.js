@@ -1398,8 +1398,12 @@ var EditExperiencePanel = (function () {
 					onPresentButtonPressed();
 				else if (goalButton.classed('pressed'))
 					onGoalButtonPressed();
-				startDateInput.value(experience.getDatum("Start"));
-				endDateInput.value(experience.getDatum("End"));
+				var startDate = experience.getDatum("Start");
+				if (startDate)
+					startDateInput.value(startDate);
+				var endDate = experience.getDatum("End")
+				if (endDate)
+					endDateInput.value(endDate);
 			},
 			0);
 		
