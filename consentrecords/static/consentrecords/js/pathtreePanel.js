@@ -1353,7 +1353,7 @@ var PathLines = (function() {
 					try
 					{
 						showClickFeedback(this);
-						_this.sitePanel.startNewExperience();
+						_this.sitePanel.startNewExperience(undefined, asyncFailFunction);
 					}
 					catch (err)
 					{
@@ -1616,12 +1616,19 @@ var PathlinesPanel = (function () {
 		return new Experience(this.pathtree.path);
 	}
 	
-	PathlinesPanel.prototype.startNewExperience = function(phase, done)
+	PathlinesPanel.prototype.startNewExperience = function(phase, done, fail)
 	{
-		var experience = this.createExperience();
-		var panel = new NewExperiencePanel(experience, this.node(), phase);
+		try
+		{
+			var experience = this.createExperience();
+			var panel = new NewExperiencePanel(experience, this.node(), phase);
 		
-		showPanelUp(panel.node(), done);
+			showPanelUp(panel.node(), done);
+		}
+		catch(err)
+		{
+			fail(err);
+		}
 	}
 	
 	PathlinesPanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
@@ -1778,7 +1785,7 @@ var PathlinesPanel = (function () {
 				{
 					if (_this.pathtree.path.canWrite())
 					{
-						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path, undefined);
+						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path, undefined, asyncFailFunction);
 					}
 				}
 			
@@ -1883,7 +1890,7 @@ var AddOptions = (function () {
 			.classed("confirm", true);
 		var div = panel.append('div');
 		
-		function handleCancel(done)
+		function handleCancel(done, fail)
 		{
 			$(confirmButton.node()).off('blur');
 			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -1915,46 +1922,47 @@ var AddOptions = (function () {
 						if (prepareClick('click', name))
 						{
 							dimmer.hide();
-							clickFunction(unblockClick);
+							clickFunction(unblockClick, syncFailFunction);
 						}
 					});
 			return button;
 		}
 		
 		var confirmButton = addButton(div, "Add Previous Experience", 
-			function(done)
+			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 					panel.remove();
-					pathlinesPanel.startNewExperience('Previous', done);
+					pathlinesPanel.startNewExperience('Previous', done, fail);
 				});
 			});
 		$(confirmButton.node()).on('blur', onCancel);
 		
 		addButton(div, "Add Current Experience", 
-			function(done)
+			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 					panel.remove();
-					pathlinesPanel.startNewExperience('Current', done);
+					pathlinesPanel.startNewExperience('Current', done, fail);
 				});
 			});
 		
 		addButton(div, "Add Goal", 
-			function(done)
+			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 					panel.remove();
-					pathlinesPanel.startNewExperience('Goal', done);
+					pathlinesPanel.startNewExperience('Goal', done, fail);
 				});
 			});
 			
 		addButton(div, 'More Ideas',
 			function(done)
+			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 					panel.remove();
-					new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, done);
+					new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, done, fail);
 				});
 			});
 		
@@ -1979,7 +1987,7 @@ var AddOptions = (function () {
 
 var ExperienceIdeas = (function() {
 	
-	function ExperienceIdeas(panelNode, path, done)
+	function ExperienceIdeas(panelNode, path, done, fail)
 	{
 		var _this = this;
 		this.panelNode = panelNode;
@@ -2006,7 +2014,7 @@ var ExperienceIdeas = (function() {
 								});
 							getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
 						},
-					fail: syncFailFunction});
+					fail: fail});
 		
 		function getGetNext(nextIndex, title, done)
 		{
