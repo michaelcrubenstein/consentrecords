@@ -507,7 +507,7 @@ var Experience = (function() {
 	{
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
-			return '[Service={0}'.format(this.services[0].pickedObject.getValueID());
+			return '[Service={0}]'.format(this.services[0].pickedObject.getValueID());
 		else if (this.domain)
 			return '[Service[Domain={0}]]'.format(this.domain.getValueID());
 		else if (this.serviceDomain)
