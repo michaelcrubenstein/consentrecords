@@ -3,6 +3,7 @@
 # python3 data/06loadscraped.py data/domains.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/stages.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/services.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/experienceprompts.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/bps.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com

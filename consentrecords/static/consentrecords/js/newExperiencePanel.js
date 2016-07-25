@@ -13,7 +13,7 @@ var Experience = (function() {
 	Experience.prototype.path = null;
 	
 	Experience.prototype.setOrganization = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			if (d.getValue("Organization"))
@@ -31,7 +31,7 @@ var Experience = (function() {
 				this.siteName = null;
 			}
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.site && textValue != this.site.getDescription() && textValue != this.organization.getDescription()) ||
@@ -55,13 +55,13 @@ var Experience = (function() {
 	}
 	
 	Experience.prototype.setSite = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			this.site = d;
 			this.siteName = d.getDescription();
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.site && textValue != this.site.getDescription()) ||
@@ -80,13 +80,13 @@ var Experience = (function() {
 	}
 	
 	Experience.prototype.setOffering = function(args) {
-		if ("instance" in args)
+		if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			this.offering = d;
 			this.offeringName = d.getDescription();
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var textValue = args.text;
 			if ((this.offering && textValue != this.offering.getDescription()) ||
@@ -114,7 +114,7 @@ var Experience = (function() {
 			service = args;
 			this.services.push(service);
 		}
-		else if ("text" in args)
+		else if ("text" in args && args.text)
 		{
 			var newName = args.text;
 			var d = args.instance;
@@ -124,7 +124,7 @@ var Experience = (function() {
 				this.services.push(service);
 			}
 		}
-		else if ("instance" in args)
+		else if ("instance" in args && args.instance)
 		{
 			var d = args.instance;
 			var service = new ReportedObject({pickedObject: d})
@@ -314,10 +314,12 @@ var Experience = (function() {
 					})
 			}));
 		
-		if (this.serviceDomain)
-			tags.push(this.serviceDomain);
+		if (this.domain)
+			tags.push(this.domain);
 		if (this.stage)
 			tags.push(this.stage);
+		if (this.serviceDomain)
+			tags.push(this.serviceDomain);
 			
 		tagDivs = tagsDiv.selectAll('span');
 		
@@ -505,7 +507,9 @@ var Experience = (function() {
 	{
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
-			return '[Service={0}'.format(this.services[0].pickedObject.getValueID());
+			return '[Service={0}]'.format(this.services[0].pickedObject.getValueID());
+		else if (this.domain)
+			return '[Service[Domain={0}]]'.format(this.domain.getValueID());
 		else if (this.serviceDomain)
 			return '[Service>Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
 		else if (this.stage)
@@ -516,7 +520,9 @@ var Experience = (function() {
 	
 	Experience.prototype.getServiceConstraint = function()
 	{
-		if (this.serviceDomain)
+		if (this.domain)
+			return '[Domain={0}]'.format(this.domain.getValueID());
+		else if (this.serviceDomain)
 			return '[Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
 		else if (this.stage)
 			return '[Stage={0}]'.format(this.stage.getValueID());
@@ -655,7 +661,7 @@ var MultiTypeSearchView = (function() {
 						
 					if (orgValue.getDescription() == d.getDescription())
 					{
-						leftText.text(d.getDescription());
+						leftText.text(NewExperienceSearchView.prototype.organizationFormat.format(d.getDescription()));
 					}
 					else
 					{
@@ -665,6 +671,14 @@ var MultiTypeSearchView = (function() {
 							.classed('address-line', true)
 							.text(d.getDescription());
 					}
+				}
+				else if (d.typeName === "Organization")
+				{
+					leftText.text(NewExperienceSearchView.prototype.organizationFormat.format(d.getDescription()));
+				}
+				else if (d.typeName === "Service")
+				{
+					leftText.text(NewExperienceSearchView.prototype.tagFormat.format(d.getDescription()));
 				}
 				else
 				{
@@ -2533,6 +2547,23 @@ var NewExperienceSearchView = (function() {
 							}
 						}
 					}
+					else if (d.typeName == "Domain")
+					{
+						if (prepareClick('click', 'remove domain: ' + d.getDescription()))
+						{
+							try
+							{
+								_this.setupUndoDeleteObject(d);
+								_this.experience.domain = null;
+								_this.onUpdatedExperience();
+								unblockClick();
+							}
+							catch(err)
+							{
+								syncFailFunction(err);
+							}
+						}
+					}
 					else if (d.typeName == "Stage")
 					{
 						if (prepareClick('click', 'remove stage: ' + d.getDescription()))
@@ -2667,6 +2698,15 @@ var NewExperienceSearchView = (function() {
 			if (prepareClick('click', 'service domain: ' + d.getDescription()))
 			{
 				this.experience.serviceDomain = d;
+				this.onExperienceDataAdded();
+				unblockClick();
+			}
+		}
+		else if (d.typeName === 'Domain')
+		{
+			if (prepareClick('click', 'domain: ' + d.getDescription()))
+			{
+				this.experience.domain = d;
 				this.onExperienceDataAdded();
 				unblockClick();
 			}
@@ -2967,10 +3007,7 @@ var NewExperienceSearchView = (function() {
 				{
 					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
 					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
-					if (this.experience.services.length > 0 && this.experience.services[0].pickedObject)
-						path += '[Service={0}]'.format(this.experience.services[0].pickedObject.getValueID());
-					else if (this.experience.serviceDomain)
-						path += '[Service>Domain["Service Domain"={0}]]'.format(this.experience.serviceDomain.getValueID());
+					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
@@ -3039,6 +3076,7 @@ var NewExperienceSearchView = (function() {
 			}
 		}
 		else if (this.experience.serviceDomain ||
+				 this.experience.domain ||
 				 this.experience.stage)
 		{
 			path = "Service" + this.experience.getServiceConstraint();
@@ -3096,11 +3134,16 @@ var NewExperienceSearchView = (function() {
 		else if (this.experience.services.length > 0)
 		{
 			if (this.experience.services[0].pickedObject)
-				this.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
+			{
+				if (searchText && searchText.length > 0)
+					this.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
+				else
+					this.typeNames = ["Offering"];
+			}
 			else
 				this.typeNames = ["Site", "Organization", "Site from Organization"];
 		}
-		else if (this.experience.serviceDomain || this.experience.stage)
+		else if (this.experience.serviceDomain || this.experience.stage || this.experience.domain)
 		{
 			this.typeNames = ["Service"];
 		}
@@ -3126,6 +3169,18 @@ var NewExperienceSearchView = (function() {
 			(this.inputText().length > 0  && !this.experience.offeringName) ? null : "none");
 	}
 	
+	NewExperienceSearchView.prototype.restartSearchTimeout = function(val)
+	{
+		if (this.typeNames[0] === "::NewExperience")
+			this.startSearchTimeout.call(this, val);
+		else
+		{
+			this.typeName = this.typeNames[0];
+			SearchView.prototype.restartSearchTimeout.call(this, val);
+		}
+	}
+				
+
 	function NewExperienceSearchView(sitePanel, experience)
 	{
 		this.typeNames = ["::NewExperience"];
@@ -3202,6 +3257,14 @@ var NewExperienceSearchView = (function() {
 	One can also specify a custom service or a custom organization. */
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new NewExperienceBasePanel();
+	
+	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
+	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
+	NewExperiencePanel.prototype.goalLabel = "Goal";
+	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
+	NewExperiencePanel.prototype.previousStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this previous experience.';
+	NewExperiencePanel.prototype.previousEndYearAndMonthRequiredMessage = 'You need to set the end year and month for this previous experience.';
+	NewExperiencePanel.prototype.currentStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this current experience.';
 	
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
@@ -3320,7 +3383,7 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode) {
+	function NewExperiencePanel(experience, previousPanelNode, phase) {
 
 		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-panel", revealPanelUp);
 		var _this = this;
@@ -3361,22 +3424,22 @@ var NewExperiencePanel = (function () {
 				
 				if (!experience.offeringName &&
 					experience.services.length == 0)
-					asyncFailFunction('Your experience needs at least a name or a tag.');
+					asyncFailFunction(_this.nameOrTagRequiredMessage);
 				else if (previousExperienceButton.classed('pressed'))
 				{
 					if (!startDateInput.year || !startDateInput.month)
-						asyncFailFunction('You need to set the start year and month for this past experience.');
+						asyncFailFunction(_this.previousStartYearAndMonthRequiredMessage);
 					else if (!endDateInput.year || !endDateInput.month)
-						asyncFailFunction('You need to set the end year and month for this past experience.');
+						asyncFailFunction(_this.previousEndYearAndMonthRequiredMessage);
 					else
 					{
 						doAdd();
 					}
 				}
-				else if (presentExperienceButton.classed('pressed'))
+				else if (currentExperienceButton.classed('pressed'))
 				{
 					if (!startDateInput.year || !startDateInput.month)
-						asyncFailFunction('You need to set the start year and month for this present experience.');
+						asyncFailFunction(_this.currentStartYearAndMonthRequiredMessage);
 					else
 					{
 						doAdd();
@@ -3403,10 +3466,10 @@ var NewExperiencePanel = (function () {
 		var optionPanel = this.panelDiv.append('section')
 			.classed('date-range-options', true);
 		var previousExperienceButton = optionPanel.append('button')
-			.classed('previous pressed', true)
+			.classed('previous', true)
 			.on('click', function()
 				{
-					presentExperienceButton.classed('pressed', false);
+					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', true);
 					startHidable.forceDateVisible(200);
@@ -3415,29 +3478,29 @@ var NewExperiencePanel = (function () {
 					startDateInput.checkMinDate(new Date(birthday), new Date());
 					$(startDateInput).trigger('change');
 				})
-			.text('Past');
+			.text(this.previousExperienceLabel);
 		
-		var presentExperienceButton = optionPanel.append('button')
+		var currentExperienceButton = optionPanel.append('button')
 			.classed('present', true)
 			.on('click', function()
 				{
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', false);
-					presentExperienceButton.classed('pressed', true);
+					currentExperienceButton.classed('pressed', true);
 					startHidable.forceDateVisible(200);
 					endHidable.showNotSureSpan(200, stepFunction);
 					
 					startDateInput.checkMinDate(new Date(birthday), new Date());
 					$(startDateInput).trigger('change');
 				})
-			.text('Present');
+			.text(this.currentExperienceLabel);
 		
 		var goalButton = optionPanel.append('button')
 			.classed('goal', true)
 			.on('click', function()
 				{
 					previousExperienceButton.classed('pressed', false);
-					presentExperienceButton.classed('pressed', false);
+					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', true);
 					startHidable.showNotSureSpan(200, stepFunction);
 					if (endHidable.hidableDiv.isVisible())
@@ -3448,7 +3511,7 @@ var NewExperiencePanel = (function () {
 					startDateInput.checkMinDate(new Date(), startMaxDate);
 					$(startDateInput).trigger('change');
 				})
-			.text('Goal');
+			.text(this.goalLabel);
 			
 		var startDateContainer = this.panelDiv.append('section')
 			.classed('cell unique date-container', true);
@@ -3469,7 +3532,7 @@ var NewExperiencePanel = (function () {
 				else
 					minEndDate = new Date();
 			}
-			else if (presentExperienceButton.classed('pressed'))
+			else if (currentExperienceButton.classed('pressed'))
 			{
 				minEndDate = new Date();
 			}
@@ -3507,6 +3570,13 @@ var NewExperiencePanel = (function () {
 		
 		setTimeout(function()
 			{
+				if (phase == 'Current')
+					$(currentExperienceButton.node()).trigger('click');
+				else if (phase == 'Goal')
+					$(goalButton.node()).trigger('click')
+				else
+					$(previousExperienceButton.node()).trigger('click');
+					
 				experience.appendView(_this.experienceView, stepFunction);
 				searchView.search(""); 
 				searchView.inputBox.focus();

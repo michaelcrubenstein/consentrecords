@@ -903,7 +903,7 @@ class api:
             testValue = path[len('::NewExperience:'):]
             
             if len(testValue) > 0:
-                a = ["Service Domain", "Stage", "Service", "Offering", "Site", "Organization"]
+                a = ["Service Domain", "Stage", "Service", "Domain", "Offering", "Site", "Organization"]
             else:
                 a = ["Service Domain", "Stage"]
             results = []
@@ -999,7 +999,7 @@ class api:
                 raise ValueError("valueID was not specified in delete")
             results = {}
         except Value.DoesNotExist:
-            raise ValueError("the specified value ID was not recognized")
+            return HttpResponseBadRequest(reason="the specified value ID was not recognized")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())

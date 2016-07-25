@@ -814,11 +814,14 @@ cr.ObjectValue = (function() {
 			if (this.id)
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
 			else
+			{
 				command = {containerUUID: this.cell.parent.getValueID(), 
 						   fieldID: this.cell.field.nameID, 
 						   instanceID: newValueID,
-						   description: newDescription,
-						   index: i};
+						   description: newDescription};
+				if (i >= 0)
+					command.index = i;
+			}
 		}
 		initialData.push(command);
 		sourceObjects.push(this);
@@ -928,6 +931,15 @@ cr.ObjectValue = (function() {
 	{
 		var cell = this.getCell(name);
 		return cell && cell.data.length && cell.data[0];
+	}
+	
+	ObjectValue.prototype.getNonNullValue = function(name)
+	{
+		var d = this.getValue(name);
+		if (d && d.getValueID())
+			return d;
+		else
+			return undefined;
 	}
 		
 	ObjectValue.prototype.handleContentsChanged = function()

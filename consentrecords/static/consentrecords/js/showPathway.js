@@ -7,7 +7,14 @@ var PickOrCreateSearchView = (function () {
 	PickOrCreateSearchView.prototype.onClickButton = function(d, i) {
 		if (prepareClick('click', 'pick ' + d.getDescription()))
 		{
-			this.sitePanel.updateValues(d, null);
+			try
+			{
+				this.sitePanel.updateValues(d, null);
+			}
+			catch(err)
+			{
+				syncFailFunction(err);
+			}
 		}
 		d3.event.preventDefault();
 	}
@@ -114,41 +121,48 @@ var PickOrCreateSearchView = (function () {
 
 					if (prepareClick('click', 'Custom Button: ' + _this.inputText()))
 					{
-						var newText = _this.inputText();
-						var compareText = newText.toLocaleLowerCase()
-						var d = _this.getDataChunker.buttons().data().find(function(d)
-							{
-								return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
-							});
-						if (d) {
-							sitePanel.updateValues(d, null);
-							return;
-						}
-
-						if (newText.length == 0)
+						try
 						{
-							sitePanel.updateValues(null, null);
-						}
-						else
-						{
-							function done(newInstances)
-							{
-								if (newInstances.length == 0)
-									sitePanel.updateValues(null, newText);
-								else
-									sitePanel.updateValues(newInstances[0], null);
+							var newText = _this.inputText();
+							var compareText = newText.toLocaleLowerCase()
+							var d = _this.getDataChunker.buttons().data().find(function(d)
+								{
+									return d.getDescription && d.getDescription().toLocaleLowerCase() === compareText;
+								});
+							if (d) {
+								sitePanel.updateValues(d, null);
+								return;
 							}
-				
-							var searchPath = _this.searchPath("");
-							if (searchPath.length > 0)
+
+							if (newText.length == 0)
 							{
-								cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
-									end: 50, done: done, fail: syncFailFunction});
+								sitePanel.updateValues(null, null);
 							}
 							else
 							{
-								sitePanel.updateValues(null, newText);
+								function done(newInstances)
+								{
+									if (newInstances.length == 0)
+										sitePanel.updateValues(null, newText);
+									else
+										sitePanel.updateValues(newInstances[0], null);
+								}
+				
+								var searchPath = _this.searchPath("");
+								if (searchPath.length > 0)
+								{
+									cr.selectAll({path: searchPath+'[_name='+'"'+newText+'"]', 
+										end: 50, done: done, fail: syncFailFunction});
+								}
+								else
+								{
+									sitePanel.updateValues(null, newText);
+								}
 							}
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
 						}
 					}
 				})
@@ -249,8 +263,8 @@ var PickOrCreatePanel = (function () {
 			{
 				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 				{
-					this.pickDatum.appendUpdateCommands(0, newValue, initialData, sourceObjects);
-					this.createDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
+					this.pickDatum.appendUpdateCommands(-1, newValue, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(-1, null, initialData, sourceObjects);
 					this.save(initialData, sourceObjects);
 				}
 				else 
@@ -269,8 +283,8 @@ var PickOrCreatePanel = (function () {
 			{
 				if (this.pickDatum.cell.parent && this.pickDatum.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 				{
-					this.pickDatum.appendUpdateCommands(0, null, initialData, sourceObjects);
-					this.createDatum.appendUpdateCommands(0, newText, initialData, sourceObjects);
+					this.pickDatum.appendUpdateCommands(-1, null, initialData, sourceObjects);
+					this.createDatum.appendUpdateCommands(-1, newText, initialData, sourceObjects);
 					this.save(initialData, sourceObjects);
 				}
 				else 
@@ -1146,13 +1160,13 @@ var EditExperiencePanel = (function () {
 				
 					if (offeringCell.isEmpty() &&
 						myTagsCell.isEmpty())
-						asyncFailFunction('Your experience needs at least a name or a tag.');
+						asyncFailFunction(NewExperience.prototype.nameOrTagRequiredMessage);
 					else if (previousExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction('You need to set the start year and month for this past experience.');
+							asyncFailFunction(NewExperience.prototype.previousStartYearAndMonthRequiredMessage);
 						else if (!endDateInput.year || !endDateInput.month)
-							asyncFailFunction('You need to set the end year and month for this past experience.');
+							asyncFailFunction(NewExperience.prototype.previousEndYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();
@@ -1161,7 +1175,7 @@ var EditExperiencePanel = (function () {
 					else if (presentExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction('You need to set the start year and month for this present experience.');
+							asyncFailFunction(NewExperience.prototype.currentStartYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();
@@ -1260,7 +1274,7 @@ var EditExperiencePanel = (function () {
 					previousExperienceButton.classed('pressed', true);
 					onPreviousButtonPressed();
 				})
-			.text('Past');
+			.text(NewExperiencePanel.prototype.previousExperienceLabel);
 		
 		var presentExperienceButton = optionPanel.append('button')
 			.classed('present', true)
@@ -1275,7 +1289,7 @@ var EditExperiencePanel = (function () {
 					presentExperienceButton.classed('pressed', true);
 					onPresentButtonPressed();
 				})
-			.text('Present');
+			.text(NewExperiencePanel.prototype.currentExperienceLabel);
 		
 		var goalButton = optionPanel.append('button')
 			.classed('goal', true)
@@ -1287,7 +1301,7 @@ var EditExperiencePanel = (function () {
 					goalButton.classed('pressed', true);
 					onGoalButtonPressed();
 				})
-			.text('Goal');
+			.text(NewExperiencePanel.prototype.goalLabel);
 			
 		var startDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true)
@@ -1384,8 +1398,12 @@ var EditExperiencePanel = (function () {
 					onPresentButtonPressed();
 				else if (goalButton.classed('pressed'))
 					onGoalButtonPressed();
-				startDateInput.value(experience.getDatum("Start"));
-				endDateInput.value(experience.getDatum("End"));
+				var startDate = experience.getDatum("Start");
+				if (startDate)
+					startDateInput.value(startDate);
+				var endDate = experience.getDatum("End")
+				if (endDate)
+					endDateInput.value(endDate);
 			},
 			0);
 		
@@ -1423,6 +1441,7 @@ var Dimmer = (function () {
 	Dimmer.prototype.show = function()
 	{
 		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
+		return this;
 	}
 	
 	Dimmer.prototype.hide = function()
@@ -1432,6 +1451,7 @@ var Dimmer = (function () {
 			{
 				d3.select(this).remove();
 			}});
+		return this;
 	}
 	
 	Dimmer.prototype.remove = function()
