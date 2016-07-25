@@ -1777,7 +1777,7 @@ var PathlinesPanel = (function () {
 				
 				if (_this.pathtree.allExperiences.length == 0 && _this.pathtree.editable)
 				{
-					if (path.canWrite())
+					if (_this.pathtree.path.canWrite())
 					{
 						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path);
 					}
