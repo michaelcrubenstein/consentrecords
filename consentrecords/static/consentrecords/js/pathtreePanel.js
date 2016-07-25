@@ -2020,7 +2020,7 @@ var ExperienceIdeas = (function() {
 		{
 			return function(oldExperiencePanel)
 			{
-				var getNext = (nextIndex < data.length - 1 ? getGetNext(nextIndex + 1, "", undefined) : null);
+				var getNext = getGetNext(nextIndex < data.length - 1 ? nextIndex + 1 : 0, "", undefined);
 				var dimmer = oldExperiencePanel ? oldExperiencePanel.dimmer : new Dimmer(_this.panelNode).show();
 				new ExperienceIdeaPanel(_this.panelNode, 
 					dimmer,
