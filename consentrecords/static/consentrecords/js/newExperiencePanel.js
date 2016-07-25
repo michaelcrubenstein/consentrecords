@@ -3466,7 +3466,7 @@ var NewExperiencePanel = (function () {
 		var optionPanel = this.panelDiv.append('section')
 			.classed('date-range-options', true);
 		var previousExperienceButton = optionPanel.append('button')
-			.classed('previous pressed', true)
+			.classed('previous', true)
 			.on('click', function()
 				{
 					currentExperienceButton.classed('pressed', false);
@@ -3570,6 +3570,13 @@ var NewExperiencePanel = (function () {
 		
 		setTimeout(function()
 			{
+				if (phase == 'Current')
+					$(currentExperienceButton.node()).trigger('click');
+				else if (phase == 'Goal')
+					$(goalButton.node()).trigger('click')
+				else
+					$(previousExperienceButton.node()).trigger('click');
+					
 				experience.appendView(_this.experienceView, stepFunction);
 				searchView.search(""); 
 				searchView.inputBox.focus();
