@@ -661,7 +661,7 @@ var MultiTypeSearchView = (function() {
 						
 					if (orgValue.getDescription() == d.getDescription())
 					{
-						leftText.text(d.getDescription());
+						leftText.text(NewExperienceSearchView.prototype.organizationFormat.format(d.getDescription()));
 					}
 					else
 					{
@@ -671,6 +671,14 @@ var MultiTypeSearchView = (function() {
 							.classed('address-line', true)
 							.text(d.getDescription());
 					}
+				}
+				else if (d.typeName === "Organization")
+				{
+					leftText.text(NewExperienceSearchView.prototype.organizationFormat.format(d.getDescription()));
+				}
+				else if (d.typeName === "Service")
+				{
+					leftText.text(NewExperienceSearchView.prototype.tagFormat.format(d.getDescription()));
 				}
 				else
 				{
