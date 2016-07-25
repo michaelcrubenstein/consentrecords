@@ -1616,12 +1616,12 @@ var PathlinesPanel = (function () {
 		return new Experience(this.pathtree.path);
 	}
 	
-	PathlinesPanel.prototype.startNewExperience = function()
+	PathlinesPanel.prototype.startNewExperience = function(phase, done)
 	{
 		var experience = this.createExperience();
-		var panel = new NewExperiencePanel(experience, this.node());
+		var panel = new NewExperiencePanel(experience, this.node(), phase);
 		
-		showPanelUp(panel.node(), unblockClick);
+		showPanelUp(panel.node(), done);
 	}
 	
 	PathlinesPanel.prototype.setupAddExperienceButton = function(user, addExperienceButton)
@@ -1633,8 +1633,7 @@ var PathlinesPanel = (function () {
 				{
 					try
 					{
-						showClickFeedback(this);
-						_this.startNewExperience();
+						new AddOptions(_this);
 					}
 					catch(err)
 					{
@@ -1779,7 +1778,7 @@ var PathlinesPanel = (function () {
 				{
 					if (_this.pathtree.path.canWrite())
 					{
-						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path);
+						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path, undefined);
 					}
 				}
 			
@@ -1874,9 +1873,113 @@ var ShareOptions = (function () {
 	return ShareOptions;
 })();
 
+var AddOptions = (function () {
+
+	function AddOptions(pathlinesPanel)
+	{
+		var panelNode = pathlinesPanel.node();
+		var dimmer = new Dimmer(panelNode);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		
+		function handleCancel(done)
+		{
+			$(confirmButton.node()).off('blur');
+			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+				panel.remove();
+				if (done) done();
+			});
+		}
+		function onCancel(e)
+		{
+			try
+			{
+				handleCancel(undefined);
+				dimmer.hide();
+			}
+			catch(err)
+			{
+				asyncFailFunction(err);
+			}
+			e.preventDefault();
+		}
+		
+		function addButton(div, name, clickFunction)
+		{
+			var button = div.append('button')
+				.text(name)
+				.classed('site-active-text', true)
+				.on('click', function()
+					{
+						if (prepareClick('click', name))
+						{
+							dimmer.hide();
+							clickFunction(unblockClick);
+						}
+					});
+			return button;
+		}
+		
+		var confirmButton = addButton(div, "Add Previous Experience", 
+			function(done)
+			{
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					pathlinesPanel.startNewExperience('Previous', done);
+				});
+			});
+		$(confirmButton.node()).on('blur', onCancel);
+		
+		addButton(div, "Add Current Experience", 
+			function(done)
+			{
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					pathlinesPanel.startNewExperience('Current', done);
+				});
+			});
+		
+		addButton(div, "Add Goal", 
+			function(done)
+			{
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					pathlinesPanel.startNewExperience('Goal', done);
+				});
+			});
+			
+		addButton(div, 'More Ideas',
+			function(done)
+			{
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, done);
+				});
+			});
+		
+		var cancelButton = addButton(div, 'Cancel', handleCancel);
+		
+		dimmer.show();
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		dimmer.mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return AddOptions;
+})();
+
 var ExperienceIdeas = (function() {
 	
-	function ExperienceIdeas(panelNode, path)
+	function ExperienceIdeas(panelNode, path, done)
 	{
 		var _this = this;
 		this.panelNode = panelNode;
@@ -1901,22 +2004,22 @@ var ExperienceIdeas = (function() {
 									datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
 									return datum;
 								});
-							getGetNext(0, "Here are some ideas to help fill in your pathway")();
+							getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
 						},
-					fail: asyncFailFunction});
+					fail: syncFailFunction});
 		
-		function getGetNext(nextIndex, title)
+		function getGetNext(nextIndex, title, done)
 		{
 			return function(oldExperiencePanel)
 			{
-				var getNext = (nextIndex < data.length - 1 ? getGetNext(nextIndex + 1, "") : null);
+				var getNext = (nextIndex < data.length - 1 ? getGetNext(nextIndex + 1, "", undefined) : null);
 				var dimmer = oldExperiencePanel ? oldExperiencePanel.dimmer : new Dimmer(_this.panelNode).show();
 				new ExperienceIdeaPanel(_this.panelNode, 
 					dimmer,
 					title,
 					data[nextIndex].prompt,
 					data[nextIndex].experience,
-					getNext).show();
+					getNext).show(done);
 			}
 		}
 		
@@ -1929,9 +2032,10 @@ var ExperienceIdeas = (function() {
 var ExperienceIdeaPanel = (function() {
 	ExperienceIdeaPanel.prototype.dimmer = null;
 	
-	ExperienceIdeaPanel.prototype.show = function()
+	ExperienceIdeaPanel.prototype.show = function(done)
 	{
-		$(this.ideaPanel.node()).animate({left: '17%'});
+		$(this.ideaPanel.node()).animate({left: '17%'},
+			{done: done});
 	}
 	
 	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experience, getNext)

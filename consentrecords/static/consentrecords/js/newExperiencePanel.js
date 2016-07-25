@@ -3375,7 +3375,7 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode) {
+	function NewExperiencePanel(experience, previousPanelNode, phase) {
 
 		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-panel", revealPanelUp);
 		var _this = this;
