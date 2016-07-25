@@ -1160,13 +1160,13 @@ var EditExperiencePanel = (function () {
 				
 					if (offeringCell.isEmpty() &&
 						myTagsCell.isEmpty())
-						asyncFailFunction('Your experience needs at least a name or a tag.');
+						asyncFailFunction(NewExperience.prototype.nameOrTagRequiredMessage);
 					else if (previousExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction('You need to set the start year and month for this past experience.');
+							asyncFailFunction(NewExperience.prototype.previousStartYearAndMonthRequiredMessage);
 						else if (!endDateInput.year || !endDateInput.month)
-							asyncFailFunction('You need to set the end year and month for this past experience.');
+							asyncFailFunction(NewExperience.prototype.previousEndYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();
@@ -1175,7 +1175,7 @@ var EditExperiencePanel = (function () {
 					else if (presentExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction('You need to set the start year and month for this present experience.');
+							asyncFailFunction(NewExperience.prototype.currentStartYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();

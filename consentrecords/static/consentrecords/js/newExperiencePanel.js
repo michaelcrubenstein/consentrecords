@@ -3258,6 +3258,14 @@ var NewExperienceSearchView = (function() {
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new NewExperienceBasePanel();
 	
+	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
+	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
+	NewExperiencePanel.prototype.goalLabel = "Goal";
+	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
+	NewExperiencePanel.prototype.previousStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this previous experience.';
+	NewExperiencePanel.prototype.previousEndYearAndMonthRequiredMessage = 'You need to set the end year and month for this previous experience.';
+	NewExperiencePanel.prototype.currentStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this current experience.';
+	
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
 		var _this = this;
@@ -3416,22 +3424,22 @@ var NewExperiencePanel = (function () {
 				
 				if (!experience.offeringName &&
 					experience.services.length == 0)
-					asyncFailFunction('Your experience needs at least a name or a tag.');
+					asyncFailFunction(_this.nameOrTagRequiredMessage);
 				else if (previousExperienceButton.classed('pressed'))
 				{
 					if (!startDateInput.year || !startDateInput.month)
-						asyncFailFunction('You need to set the start year and month for this past experience.');
+						asyncFailFunction(_this.previousStartYearAndMonthRequiredMessage);
 					else if (!endDateInput.year || !endDateInput.month)
-						asyncFailFunction('You need to set the end year and month for this past experience.');
+						asyncFailFunction(_this.previousEndYearAndMonthRequiredMessage);
 					else
 					{
 						doAdd();
 					}
 				}
-				else if (presentExperienceButton.classed('pressed'))
+				else if (currentExperienceButton.classed('pressed'))
 				{
 					if (!startDateInput.year || !startDateInput.month)
-						asyncFailFunction('You need to set the start year and month for this present experience.');
+						asyncFailFunction(_this.currentStartYearAndMonthRequiredMessage);
 					else
 					{
 						doAdd();
@@ -3461,7 +3469,7 @@ var NewExperiencePanel = (function () {
 			.classed('previous pressed', true)
 			.on('click', function()
 				{
-					presentExperienceButton.classed('pressed', false);
+					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', true);
 					startHidable.forceDateVisible(200);
@@ -3470,29 +3478,29 @@ var NewExperiencePanel = (function () {
 					startDateInput.checkMinDate(new Date(birthday), new Date());
 					$(startDateInput).trigger('change');
 				})
-			.text('Past');
+			.text(this.previousExperienceLabel);
 		
-		var presentExperienceButton = optionPanel.append('button')
+		var currentExperienceButton = optionPanel.append('button')
 			.classed('present', true)
 			.on('click', function()
 				{
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', false);
-					presentExperienceButton.classed('pressed', true);
+					currentExperienceButton.classed('pressed', true);
 					startHidable.forceDateVisible(200);
 					endHidable.showNotSureSpan(200, stepFunction);
 					
 					startDateInput.checkMinDate(new Date(birthday), new Date());
 					$(startDateInput).trigger('change');
 				})
-			.text('Present');
+			.text(this.currentExperienceLabel);
 		
 		var goalButton = optionPanel.append('button')
 			.classed('goal', true)
 			.on('click', function()
 				{
 					previousExperienceButton.classed('pressed', false);
-					presentExperienceButton.classed('pressed', false);
+					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', true);
 					startHidable.showNotSureSpan(200, stepFunction);
 					if (endHidable.hidableDiv.isVisible())
@@ -3503,7 +3511,7 @@ var NewExperiencePanel = (function () {
 					startDateInput.checkMinDate(new Date(), startMaxDate);
 					$(startDateInput).trigger('change');
 				})
-			.text('Goal');
+			.text(this.goalLabel);
 			
 		var startDateContainer = this.panelDiv.append('section')
 			.classed('cell unique date-container', true);
@@ -3524,7 +3532,7 @@ var NewExperiencePanel = (function () {
 				else
 					minEndDate = new Date();
 			}
-			else if (presentExperienceButton.classed('pressed'))
+			else if (currentExperienceButton.classed('pressed'))
 			{
 				minEndDate = new Date();
 			}
