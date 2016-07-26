@@ -9,8 +9,8 @@ var Settings = (function () {
 	Settings.prototype.pathSameAccessLabel = "Same As Profile";
 	Settings.prototype.pathAlwaysPublicAccessLabel = "Public";
 	Settings.prototype.profileHiddenLabel = "Hidden";
-	Settings.prototype.emailVisibleLabel = "Request by Email";
-	Settings.prototype.allVisibleLabel = "Public";
+	Settings.prototype.emailVisibleLabel = "By Request";
+	Settings.prototype.allVisibleLabel = "Public Profile and Path";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
