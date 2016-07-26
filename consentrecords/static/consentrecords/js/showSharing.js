@@ -332,9 +332,7 @@ var SharingPanel = (function() {
 
 		this.privilegesByID =  {};
 		this.privileges =  [
-			{name: "_find", id: "", accessRecords: [], accessors: [], label: "Who Can Find You"},
-			{name: "_read", id: "", accessRecords: [], accessors: [], label: "Who Can Learn About You"},
-			{name: "_write", id: "", accessRecords: [], accessors: [], label: "Who Can Add Information About You"},
+			{name: "_read", id: "", accessRecords: [], accessors: [], label: "Who Can See Your Profile"},
 			{name: "_administer", id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
 		var privilegePath = "_term[_name=_privilege]>enumerator";
