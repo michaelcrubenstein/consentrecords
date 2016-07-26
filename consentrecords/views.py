@@ -323,21 +323,30 @@ def requestAccess(request):
     try:    
         language = None
         followingID = request.POST["following"]
+        print(followingID)
+        if terms.isUUID(followingID):
+            followingPath = '#%s' % followingID
+        else:
+            followingPath = followingID
+            
         followerID = request.POST["follower"]
+        print(followerID)
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
         
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
-                followingPath = '#%s' % followingID
                 userInfo = UserInfo(request.user)
                 objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                if len(objs) > 0:
+                if len(objs) > 0 and objs[0].typeID == terms.user:
                     following = objs[0]
-                    followerPath = '#%s' % followerID
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(objs) > 0:
+                    if len(objs) > 0 and objs[0].typeID == terms.user:
                         follower = objs[0]
                         fieldTerm = terms['_access request']
                         ars = following.value_set.filter(field=fieldTerm,
@@ -369,7 +378,11 @@ def requestAccess(request):
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
-                                results = {'object': data} 
+                                results = {'object': data}
+                    else:
+                        raise RuntimeError('the requestor is unrecognized')
+                else:
+                    raise RuntimeError('the user to follow is unrecognized')
         else:
             return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:

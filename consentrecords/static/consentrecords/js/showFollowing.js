@@ -1,105 +1,107 @@
-var RequestFollowSearchView = (function () {
-	RequestFollowSearchView.prototype = new PanelSearchView();
+/* RequestFollowPanel is used to specify the email address of a user the currently logged-in
+	user wants to follow. */
+var RequestFollowPanel = (function() {
+	RequestFollowPanel.prototype = new SitePanel();
+	RequestFollowPanel.prototype.followingPanel = null;
+	RequestFollowPanel.prototype.title = "Ask to Follow";
+	RequestFollowPanel.prototype.emailDocumentation = 
+		'If you know the email address of someone you want to follow, you can request access to their profile.';
+	RequestFollowPanel.prototype.badEmailMessage =
+		'Please specify a valid email address.';
 	
-	/* Overrides SearchView.prototype.onClickButton */
-	RequestFollowSearchView.prototype.onClickButton = function(d, i) {
-	}
-
-	RequestFollowSearchView.prototype.showObjects = function(foundObjects)
-	{
-		var buttons = SearchView.prototype.showObjects.call(this, foundObjects);
-		
+	function RequestFollowPanel(user, followingPanel) {
 		var _this = this;
-		buttons.on("click", function(d, i)
+		this.followingPanel = followingPanel;
+		SitePanel.call(this, followingPanel.node(), null, this.title, "list", revealPanelUp);
+		var navContainer = this.appendNavContainer();
+		
+		navContainer.appendLeftButton()
+			.on('click', function()
+				{
+					if (prepareClick('click', 'Cancel {0}'.format(_this.title)))
+					{
+						_this.hide();
+					}
+				})
+			.append('span').text('Cancel');
+		
+		navContainer.appendRightButton()
+			.on("click", function()
 			{
 				if (prepareClick('click', 'request to follow user', false))
 				{
-					var _thisButton = this;
 					var done = function()
 					{
-						bootstrap_alert.success("Access to {0} has been requested.".format(d.getDescription()),
-																		  ".alert-container");
-						_this.sitePanel.followingPanel.showPendingObjects([d]);
-						_this.sitePanel.followingPanel._pendingSection.selectAll('li').sort(
+						_this.followingPanel.showPendingObjects([
+							{text: email, getDescription: function() { return email; }}]);
+						_this.followingPanel._pendingSection.selectAll('li').sort(
 							function(a, b)
 							{
 								return a.getDescription().localeCompare(b.getDescription());
 							}
 						);
-						_this.sitePanel.followingPanel._noPendingResultsDiv.style('display', 'none');
-
-						$(_thisButton.parentNode).animate({height: "0px"}, 400, 'swing', function()
-						{
-							$(this).remove();
-							unblockClick();
-						});
+						_this.followingPanel._noPendingResultsDiv.style('display', 'none');
+						_this.hide();
+						bootstrap_alert.success("Access to {0} has been requested.".format(email),
+																		  ".alert-container");
 					}
-					cr.requestAccess(_this.user, d, done, syncFailFunction);
+					
+					try
+					{
+						var email = d3.select(_this.node()).selectAll('input').node().value;
+						function validateEmail(email) 
+						{
+							var re = /\S+@\S+\.\S\S+/;
+							return re.test(email);
+						}
+						if (!validateEmail(email))
+						{
+							syncFailFunction(_this.badEmailMessage);
+						}
+						else
+						{
+							cr.requestAccess(user, '_user[_email="{0}"]'.format(email), done, syncFailFunction);
+						}
+					}
+					catch(err)
+					{
+						syncFailFunction(err);
+					}
 				}
 				d3.event.preventDefault();
-			});
-			
-		return buttons;
-	}
-	
-	
-	/* Overrides SearchView.searchPath */
-	RequestFollowSearchView.prototype.searchPath = function(val)
-	{
-		var s = '_user::not(#{0})::not(#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user))'.format(this.user.getValueID());
-		s += '::not(_user["_access request"={0}])'.format(this.user.getValueID());
-		if (val.length == 0)
-			return s;
-		else if (val.length < 3)
-			return s + '[_email^="' + val + '"]';
-		else
-			return s + '[_email*="' + val + '"]';
-	}
-	
-	/* Overrides SearchView.prototype.isButtonVisible */
-	RequestFollowSearchView.prototype.isButtonVisible = function(button, d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-			
-		return d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
-	}
-	
-	function RequestFollowSearchView(sitePanel, user)
-	{
-		this.user = user;
-		PanelSearchView.call(this, sitePanel, "Email", undefined, SelectAllChunker);
-	}
-	
-	return RequestFollowSearchView;
-})();
-	
-var RequestFollowPanel = (function() {
-	RequestFollowPanel.prototype = new SitePanel();
-	RequestFollowPanel.prototype.followingPanel = null;
-	
-	function RequestFollowPanel(user, followingPanel) {
-		var header = "Ask to Follow";
-		this.followingPanel = followingPanel;
-		SitePanel.call(this, followingPanel.node(), null, header, "list", revealPanelUp);
-		var navContainer = this.appendNavContainer();
+			})
+		    .append("span").text("Request");
 		
-		navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent)
-		    .append("span").text("Done");
+		navContainer.appendTitle(this.title);
 		
-		var _this = this;	
+		var panel2Div = this.appendScrollArea();
 
-		navContainer.appendTitle(header);
+		var sectionPanel = panel2Div.append('section')
+			.classed('cell edit unique', true);
+			
+		var itemsDiv = sectionPanel.append("ol");
 
-		this.searchView = new RequestFollowSearchView(this, user);
-
+		var divs = itemsDiv.append("li")
+			.classed("string-input-container", true);	// So that each item appears on its own row.
+			
+		var emailInput = divs.append("input")
+			.attr("type", "email")
+			.attr("placeholder", 'Email');
+			
+		var docSection = panel2Div.append('section')
+			.classed('cell documentation', true);
+			
+		var docDiv = docSection.append('div')
+			.text(this.emailDocumentation);
+			
 		showPanelUp(this.node(), unblockClick);
 	}
 	
 	return RequestFollowPanel;
 })();
 
+/* FollowingPanel is used to identify and manage the users that the currently logged-in
+	user is following. */
 var FollowingPanel = (function() {
 	FollowingPanel.prototype = new SitePanel();
 	FollowingPanel.prototype.user = null;
@@ -119,7 +121,12 @@ var FollowingPanel = (function() {
 				var _thisItem = $(this).parents('li')[0];
 				if (prepareClick('click', 'delete access request'))
 				{
-					cr.getValues({path: '#{0}'.format(d.getValueID()),
+					var path;
+					if (d.getValueID)
+						path = '#{0}'.format(d.getValueID())
+					else
+						path = '_user[_email={0}]'.format(d.getDescription())
+					cr.getValues({path: path,
 						field: "_access request",
 						value: _this.user.getValueID(),
 						done: function(values)

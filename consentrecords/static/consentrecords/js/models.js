@@ -1586,10 +1586,10 @@ cr.share = function(followerID, cellName, privilegeID, done, fail)
 		});
 	}
 
-cr.requestAccess = function(follower, following, done, fail)
+cr.requestAccess = function(follower, followingPath, done, fail)
 {
 		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
-									   following: following.getValueID()
+									   following: followingPath
 					  				  })
 		.done(done)
 		.fail(function(jqXHR, textStatus, errorThrown)
