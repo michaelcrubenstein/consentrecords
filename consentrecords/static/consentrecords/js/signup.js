@@ -376,7 +376,7 @@ var Signup = (function () {
 				.text('Sharing');
 			
 			p.append('p')
-				.text('How much of your data do you want to be publicly available?');
+				.text('Do you want your profile to be visible to others?');
 			
 			var t = p.append('table').classed('option', true);	
 			var row = t.append('tr');
@@ -390,7 +390,7 @@ var Signup = (function () {
 						var _this = this;
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
-			cell.append('span').text('None');
+			cell.append('span').text('Hidden');
 			row.append('td').append('p').text('No one will be able to locate or identify you.');
 
 			row = t.append('tr');
@@ -405,8 +405,8 @@ var Signup = (function () {
 						var _this = this;
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
-			cell.append('span').text('Email Only');
-			row.append('td').append('p').text('Others can search for your email address and request access to your profile.');
+			cell.append('span').text('By Request');
+			row.append('td').append('p').text('Others can request access to your profile if they know your email address.');
 
 			row = t.append('tr');
 			cell = row.append('td');
@@ -419,7 +419,7 @@ var Signup = (function () {
 						var _this = this;
 						t.selectAll('input').attr('checked', function() { return (_this === this ? 1 : null); });
 					});
-			cell.append('span').text('All');
+			cell.append('span').text('Public');
 			row.append('td').append('p').text('Others can look at your profile (except for information you hide from view).');
 
 			signup.getPublicAccess = function()
