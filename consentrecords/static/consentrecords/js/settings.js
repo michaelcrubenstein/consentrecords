@@ -10,7 +10,12 @@ var Settings = (function () {
 	Settings.prototype.pathAlwaysPublicAccessLabel = "Public";
 	Settings.prototype.profileHiddenLabel = "Hidden";
 	Settings.prototype.emailVisibleLabel = "By Request";
+	Settings.prototype.pathVisibleLabel = "Public Path Only";
 	Settings.prototype.allVisibleLabel = "Public Profile and Path";
+	Settings.prototype.hiddenDocumentation = "No one will be able to locate or identify you.";
+	Settings.prototype.byRequestVisibleDocumentation = "Others can request access to your profile if they know your email address.";
+	Settings.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
+	Settings.prototype.allVisibleDocumentation = "Others can look at your profile and path (except for information you hide from view).";
 
 	function Settings(user, previousPanel) {
 		var _this = this;
@@ -61,22 +66,15 @@ var Settings = (function () {
 				if (this.description == "_read" ||
 					this.description == _this.allVisibleLabel)
 					return _this.allVisibleLabel;
+				else if (pathPublicAccessCell.data[0].description == "_read" ||
+				         this.description == _this.pathVisibleLabel)
+				    return _this.pathVisibleLabel;
 				else if (this.description == "_find" ||
-					this.description == _this.emailVisibleLabel)
+						 this.description == _this.emailVisibleLabel)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;
 			};
-		
-		pathPublicAccessCell.field.label = this.pathPublicAccessLabel;
-		pathPublicAccessCell.data[0].getDescription = function() 
-			{
-				if (this.description == "_read" ||
-					this.description == _this.pathAlwaysPublicAccessLabel)
-					return _this.pathAlwaysPublicAccessLabel;
-				else
-					return _this.pathSameAccessLabel;
-				};
 		
 		var cells = [user.getCell("_first name"),
 					 user.getCell("_last name"),
@@ -105,19 +103,22 @@ var Settings = (function () {
 
 			appendRightChevrons(buttons);	
 		
-			appendButtonDescriptions(buttons)
+			return appendButtonDescriptions(buttons)
 				.each(_pushTextChanged);
 		}
 		
 		if (user.privilege === "_administer")
 		{
-			addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
+			var userPublicAccessValue = userPublicAccessCell.data[0];
+			var pathPublicAccessValue = pathPublicAccessCell.data[0];
+			
+			var divs = addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
 				function(cell) {
 					if (prepareClick('click', 'pick ' + _this.userPublicAccessLabel))
 					{
 						try
 						{
-							var panel = new PickUserAccessPanel(cell.data[0], _this.node());
+							var panel = new PickUserAccessPanel(userPublicAccessValue, pathPublicAccessValue, _this.node());
 							showPanelLeft(panel.node(), unblockClick);
 						}
 						catch(err)
@@ -127,22 +128,54 @@ var Settings = (function () {
 					}
 				});
 			
-			addUniqueCellSection(pathPublicAccessCell, this.pathPublicAccessLabel,
-				function(cell) {
-					if (prepareClick('click', 'pick ' + _this.pathPublicAccessLabel))
-					{
-						try
-						{
-							var panel = new PickPathAccessPanel(cell, path, user, _this.node());
-							showPanelLeft(panel.node(), unblockClick);
-						}
-						catch(err)
-						{
-							syncFailFunction(err);
-						}
+			/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
+			divs.each(function()
+				{
+					var d = pathPublicAccessValue;
+					var f = function(eventObject) {
+						d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
 					}
+	
+					$(d).on("dataChanged.cr", null, this, f);
+					$(this).on("remove", null, d, function(eventObjects) {
+						$(this.eventObject).off("dataChanged.cr", null, f);
+					});
+	
+					$(d).on("valueDeleted.cr", null, this, f);
+					$(this).on("remove", null, d, function(eventObjects) {
+						$(this.eventObject).off("valueDeleted.cr", null, f);
+					});
 				});
-		
+			
+			var docSection = panel2Div.append('section')
+				.classed('cell documentation', true);
+			
+			var docDiv = docSection.append('div');
+			
+			var updateVisibilityDocumentation = function()
+			{
+				var description = userPublicAccessValue.getDescription();
+				var documentation;
+			
+				if (description === _this.profileHiddenLabel)
+					documentation = _this.hiddenDocumentation;
+				else if (description === _this.emailVisibleLabel)
+					documentation = _this.byRequestVisibleDocumentation;
+				else if (description === _this.pathVisibleLabel)
+					documentation = _this.pathVisibleDocumentation;
+				else if (description === _this.allVisibleLabel)
+					documentation = _this.allVisibleDocumentation;
+				docDiv.text(documentation);
+			}
+	
+			$(userPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
+			$(pathPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
+			$(docDiv).on("remove", null, null, function(eventObjects) {
+				$(userPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
+				$(pathPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
+			});
+			updateVisibilityDocumentation();
+	
 			function checkSharingBadge()
 			{
 				var cell = user.getCell("_access request");
@@ -261,12 +294,17 @@ var PickUserAccessPanel = (function () {
 						  {description: Settings.prototype.emailVisibleLabel,
 						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]"
 						  },
+						  {description: Settings.prototype.pathVisibleLabel,
+						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]",
+						   pathInstancePath: "_term[_name=_privilege]>enumerator[_name=_read]",
+						   pathDescription: "_read"
+						  },
 						  {description: Settings.prototype.allVisibleLabel,
 						   instancePath: "_term[_name=_privilege]>enumerator[_name=_read]"
 						  }
 						 ];
 	
-	function PickUserAccessPanel(oldValue, previousPanel) {
+	function PickUserAccessPanel(oldUserAccessValue, oldPathAccessValue, previousPanel) {
 		var _this = this;
 		PickFromListPanel.call(this, previousPanel, this.title, "list");
 
@@ -286,47 +324,141 @@ var PickUserAccessPanel = (function () {
 					
 			buttons.selectAll('div.btn').filter(function(d, i)
 				{
-					return d.description === oldValue.getDescription();
+					return d.description === oldUserAccessValue.getDescription();
 				})
 				.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
 					
 			buttons.selectAll('div.btn')
 				.on('click', function(d, i)
 					{
-						if (d.description === oldValue.getDescription())
+						if (d.description === oldUserAccessValue.getDescription())
 							return;
 						
 						if (prepareClick('click', d.description))
 						{
 							try
 							{
-								var sourceObjects = [oldValue];
-								var initialData;
-								if (!d.instancePath)
+								var sourceObjects = [];
+								var initialData = [];
+								if (d.description == Settings.prototype.profileHiddenLabel)
 								{
-									initialData = [{ id: oldValue.id }];
+									if (oldUserAccessValue.id)
+									{
+										sourceObjects.push(oldUserAccessValue);
+										initialData.push({ id: oldUserAccessValue.id });
+									}
+									if (oldPathAccessValue.id)
+									{
+										sourceObjects.push(oldPathAccessValue);
+										initialData.push({ id: oldPathAccessValue.id });
+									}
 								}
-								else if (oldValue.id)
+								else if (d.description == Settings.prototype.emailVisibleLabel)
 								{
-									initialData = [{ id: oldValue.id,
-													 instance: d.instancePath,
-													 description: d.description }];
+									if (oldUserAccessValue.id)
+									{
+										if (oldUserAccessValue.description != "_find")
+										{
+											sourceObjects.push(oldUserAccessValue);
+											initialData.push({ id: oldUserAccessValue.id,
+														 instance: d.instancePath,
+														 description: d.description });
+										}
+									}
+									else
+									{
+										sourceObjects.push(oldUserAccessValue);
+										initialData.push(
+												{
+													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+													fieldID: oldUserAccessValue.cell.field.nameID,
+													instance: d.instancePath,
+													description: d.description
+												});
+									}
+									if (oldPathAccessValue.id)
+									{
+										sourceObjects.push(oldPathAccessValue);
+										initialData.push({ id: oldPathAccessValue.id });
+									}
+								}
+								else if (d.description == Settings.prototype.pathVisibleLabel)
+								{
+									if (oldUserAccessValue.id)
+									{
+										if (oldUserAccessValue.description != "_find")
+										{
+											sourceObjects.push(oldUserAccessValue);
+											initialData.push({ id: oldUserAccessValue.id,
+														 instance: d.instancePath,
+														 description: d.description });
+										}
+									}
+									else
+									{
+										sourceObjects.push(oldUserAccessValue);
+										initialData.push(
+												{
+													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+													fieldID: oldUserAccessValue.cell.field.nameID,
+													instance: d.instancePath,
+													description: d.description
+												});
+									}
+									if (oldPathAccessValue.id)
+									{
+										sourceObjects.push(oldPathAccessValue);
+										initialData.push({ id: oldPathAccessValue.id,
+													 instance: d.pathInstancePath,
+													 description: d.description });
+									}
+									else
+									{
+										sourceObjects.push(oldPathAccessValue);
+										initialData.push(
+												{
+													containerUUID: oldPathAccessValue.cell.parent.getValueID(),
+													fieldID: oldPathAccessValue.cell.field.nameID,
+													instance: d.pathInstancePath,
+													description: d.pathDescription
+												});
+									}
 								}
 								else
 								{
-									initialData = [
-											{
-												containerUUID: oldValue.cell.parent.getValueID(),
-												fieldID: oldValue.cell.field.nameID,
-												instance: d.instancePath,
-												description: d.description
-											}];
-								}
-								cr.updateValues(initialData, sourceObjects, function()
+									if (oldUserAccessValue.id)
 									{
-										hidePanelRight(_this.node());
-									},
-									syncFailFunction);
+										sourceObjects.push(oldUserAccessValue);
+										initialData.push({ id: oldUserAccessValue.id,
+													 instance: d.instancePath,
+													 description: d.description });
+									}
+									else
+									{
+										sourceObjects.push(oldUserAccessValue);
+										initialData.push(
+												{
+													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+													fieldID: oldUserAccessValue.cell.field.nameID,
+													instance: d.instancePath,
+													description: d.description
+												});
+									}
+									if (oldPathAccessValue.id)
+									{
+										sourceObjects.push(oldPathAccessValue);
+										initialData.push({ id: oldPathAccessValue.id });
+									}
+								}
+								
+								if (initialData.length > 0)
+								{
+									cr.updateValues(initialData, sourceObjects, function()
+										{
+											hidePanelRight(_this.node());
+										},
+										syncFailFunction);
+								}
 							}
 							catch(err)
 							{
@@ -340,136 +472,3 @@ var PickUserAccessPanel = (function () {
 	return PickUserAccessPanel;
 })();
 
-var PickPathAccessPanel = (function () {
-	PickPathAccessPanel.prototype = new PickFromListPanel();
-	PickPathAccessPanel.prototype.title = Settings.prototype.pathPublicAccessLabel;
-
-	function PickPathAccessPanel(cell, path, user, previousPanel) {
-		var _this = this;
-		PickFromListPanel.call(this, previousPanel, this.title, "path-access");
-
-		if (cell)
-		{
-			var itemsDiv = d3.select(this.node()).selectAll('section>ol');
-		
-			var noneButton = itemsDiv.append('li');
-		
-			if (cell.data.length == 0 ||
-				!cell.data[0].getValueID())
-			{
-				noneButton.on('click', function()
-					{
-						if (prepareClick('click', 'pick path access panel: Cancel Read Button'))
-						{
-							_this.hidePanelRight(unblockClick);
-						}
-					});
-			}
-			else
-			{
-				noneButton.on('click', function()
-					{
-						if (prepareClick('click', Settings.prototype.pathSameAccessLabel))
-						{
-							try
-							{
-								var sourceObjects = [path.getValue("_special access"), 
-													 path.getValue("_public access"),
-													 path.getValue("_primary administrator"),
-													];
-								var initialData = sourceObjects.map(function(d) { return { id: d.id };});
-								cr.updateValues(initialData, sourceObjects, function()
-									{
-										hidePanelRight(_this.node(), unblockClick);
-									},
-									syncFailFunction);
-							}
-							catch(err)
-							{
-								syncFailFunction(err);
-							}
-						}
-					});
-			}
-			noneButton.append("div").classed("btn row-button multi-row-content expanding-div", true)
-				.append("div")
-						.classed("description-text", true)
-						.text(Settings.prototype.pathSameAccessLabel);
-			var readButton = itemsDiv.append('li');
-		
-			if (cell.data.length == 0 ||
-				!cell.data[0].getValueID())
-			{
-				readButton.on('click', function()
-					{
-						if (prepareClick('click', Settings.prototype.pathAlwaysPublicAccessLabel))
-						{
-							try
-							{
-								var sourceObjects = [path.getValue("_public access"),
-													 path.getValue("_primary administrator"),
-													 path.getValue("_special access"), 
-													];
-								var containerID = path.getValueID();
-								var primaryAdministrator = user.getValue("_primary administrator");
-								if (!primaryAdministrator.getValueID())
-									primaryAdministrator = user;
-								var initialData = [
-									{
-										containerUUID: containerID,
-										fieldID: path.getCell("_public access").field.nameID,
-										instance: "_term[_name=_privilege]>enumerator[_name=_read]",
-										description: Settings.prototype.pathAlwaysPublicAccessLabel
-									},
-									{
-										containerUUID: containerID,
-										fieldID: path.getCell("_primary administrator").field.nameID,
-										instanceID: primaryAdministrator.getValueID(),
-										description: primaryAdministrator.getDescription()
-									},
-									{
-										containerUUID: containerID,
-										fieldID: path.getCell("_special access").field.nameID,
-										instance: '_term[_name="_special access"]>enumerator[_name=_custom]',
-										description: '_custom'
-									},
-								];
-							
-								cr.updateValues(initialData, sourceObjects, function()
-									{
-										hidePanelRight(_this.node(), unblockClick);
-									},
-									syncFailFunction);
-							}
-							catch(err)
-							{
-								syncFailFunction(err);
-							}
-						}
-					});
-			}
-			else
-			{
-				readButton.on('click', function()
-					{
-						if (prepareClick('click', 'pick path access panel: Cancel Read Button'))
-						{
-							_this.hidePanelRight(unblockClick);
-						}
-					});
-			}
-			readButton.append("div").classed("btn row-button multi-row-content expanding-div", true)
-				.append("div")
-						.classed("description-text", true)
-						.text(Settings.prototype.pathAlwaysPublicAccessLabel);
-
-			if (cell.data.length == 0 ||
-				!cell.data[0].getValueID())
-				noneButton.select('div:first-child').insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
-			else
-				readButton.select('div:first-child').insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);			
-		}
-	}
-	
-	return PickPathAccessPanel;
-})();
