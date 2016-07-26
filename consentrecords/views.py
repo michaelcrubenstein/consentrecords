@@ -262,24 +262,31 @@ def acceptFollower(request):
     try:    
         language = None
         followerID = request.POST["follower"]
-        cellName = request.POST["cell"]
         privilegeID = request.POST["privilege"]
+        
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
         
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
-                followerPath = '#%s' % followerID
                 userInfo = UserInfo(request.user)
                 objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                 if len(objs) > 0:
                     follower = objs[0]
+                    if follower.typeID == terms.user:
+                        followerField = terms.user
+                    else:
+                        followerField = terms.group
                     ars = user.value_set.filter(field=terms['_access record'],
                                           deleteTransaction__isnull=True) \
-                                  .filter(referenceValue__value__field=terms[cellName],
+                                  .filter(referenceValue__value__field=followerField,
                                           referenceValue__value__deleteTransaction__isnull=True,
-                                          referenceValue__value__referenceValue_id=followerID)
+                                          referenceValue__value__referenceValue_id=follower.id)
                     if ars.count():
                         return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
                     else:
@@ -292,21 +299,23 @@ def acceptFollower(request):
                                              .get(referenceValue__value__field=terms['_privilege'],
                                                   referenceValue__value__deleteTransaction__isnull=True,
                                                   referenceValue__value__referenceValue_id=privilegeID).referenceValue
-                                newValue = ar.addReferenceValue(terms[cellName], follower, ar.getNextElementIndex(terms[cellName]), transactionState)
+                                newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
                             except Value.DoesNotExist:
                                 ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
                                     {'_privilege': [{'instanceID': privilegeID}],
-                                     cellName: [{'instanceID': followerID}]}, nameLists, transactionState)
+                                     followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
             
                             # Remove any corresponding access requests.
                             vs = user.value_set.filter(field=terms['_access request'],
                                                    deleteTransaction__isnull=True,
-                                                   referenceValue_id=followerID)
+                                                   referenceValue_id=follower.id)
                             for v in vs:
                                 v.deepDelete(transactionState)
                         
                             data = newValue.getReferenceData(userInfo, language)
                             results = {'object': data} 
+                else:
+                    raise RuntimeError('the user or group to accept is unrecognized')
         else:
             return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
@@ -323,14 +332,12 @@ def requestAccess(request):
     try:    
         language = None
         followingID = request.POST["following"]
-        print(followingID)
         if terms.isUUID(followingID):
             followingPath = '#%s' % followingID
         else:
             followingPath = followingID
             
         followerID = request.POST["follower"]
-        print(followerID)
         if terms.isUUID(followerID):
             followerPath = '#%s' % followerID
         else:
