@@ -1562,10 +1562,9 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 		});
 	}
 
-cr.share = function(followerID, cellName, privilegeID, done, fail)
+cr.share = function(path, privilegeID, done, fail)
 	{
-		$.post(cr.urls.acceptFollower, {follower: followerID,
-										cell: cellName, 
+		$.post(cr.urls.acceptFollower, {follower: path,
 										privilege: privilegeID
 										})
 		.done(function(json){

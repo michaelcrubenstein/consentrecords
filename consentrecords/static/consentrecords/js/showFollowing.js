@@ -239,7 +239,7 @@ var FollowingPanel = (function() {
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function()
 			{
-				if (prepareClick('click', 'Following Done'))
+				if (prepareClick('click', 'Back'))
 				{
 					_this.hide();
 				}

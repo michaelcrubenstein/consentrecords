@@ -60,7 +60,7 @@ var SharingPanel = (function() {
 						unblockClick();
 					};
 					
-					_this.addAccess(accessorLevel, d, "_user", done);
+					_this.addAccess(accessorLevel, "#{0}".format(d.getValueID()), done);
 				}
 			});
 			
@@ -198,34 +198,41 @@ var SharingPanel = (function() {
 					fail: asyncFailFunction});
 	}
 	
-	SharingPanel.prototype.addAccessRecord = function(accessorLevel, pickedUser, cellName, done)
+	SharingPanel.prototype.addAccessRecord = function(accessorLevel, path, done)
 	{
 		var _this = this;
 
-		cr.share(pickedUser.getValueID(), cellName, accessorLevel.id, function(newData)
+		cr.share(path, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell("_access record");
 				accessRecordCell.addValue(newData);
 				accessorLevel.accessRecords.push(newData);
 				newData.checkCells(undefined, function()
 					{
-						var cell = newData.getCell(cellName);
-						var newValue = cell.data[0];
-						_this.onUserAdded(accessorLevel.itemsDiv, newValue);
-						done();
+						try
+						{
+							var newValue = newData.getValue('_user') || newData.getValue('_group');
+							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
+							done();
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
 					}, syncFailFunction);
 			}, syncFailFunction);
 	}
 	
-	SharingPanel.prototype.addAccessUser = function(accessorLevel, pickedUser, cellName, done)
+	SharingPanel.prototype.addAccessUser = function(accessorLevel, path, done)
 	{
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
 		ar.checkCells(undefined, function()
 		{
-			cr.share(pickedUser.getValueID(), cellName, accessorLevel.id, function(newValue)
+			cr.share(path, accessorLevel.id, function(newValue)
 				{
+					var cellName = newValue.typeName == '_user' ? '_user' : '_group';
 					var cell = ar.getCell(cellName);
 					cell.addValue(newValue);
 					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
@@ -234,19 +241,19 @@ var SharingPanel = (function() {
 		}, syncFailFunction);
 	}
 	
-	SharingPanel.prototype.addAccess = function(accessorLevel, pickedUser, cellName, done)
+	SharingPanel.prototype.addAccess = function(accessorLevel, path, done)
 	{
 		var _this = this;
 		if (accessorLevel.accessRecords.length == 0)
 		{
 			// Create an instance of an access record with this accessor level
 			// and this user.
-			this.addAccessRecord(accessorLevel, pickedUser, cellName, done);
+			this.addAccessRecord(accessorLevel, path, done);
 		}
 		else
 		{
 			// Add this user to the access record associated with this accessor level.
-			this.addAccessUser(accessorLevel, pickedUser, cellName, done);
+			this.addAccessUser(accessorLevel, path, done);
 		}
 	}
 
@@ -260,14 +267,14 @@ var SharingPanel = (function() {
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
 			var accessRecordCell = user.getCell("_access record");
-			function onPick(pickedUser, cellName, currentPanelNode)
+			function onPick(path, currentPanelNode)
 			{
 				function done()
 				{
 					hidePanelRight(currentPanelNode);
 				}
 				
-				_this.addAccess(accessorLevel, pickedUser, cellName, done);
+				_this.addAccess(accessorLevel, path, done);
 			}
 			new PickSharingUserPanel("Add User Or Group", this.node(), onPick);
 		}
@@ -351,82 +358,82 @@ var SharingPanel = (function() {
  */
 var PickSharingUserPanel = (function() {
 	PickSharingUserPanel.prototype = new SitePanel();
+	PickSharingUserPanel.prototype.title = "User Or Group"
+	PickSharingUserPanel.prototype.badEmailMessage =
+		'Please specify a valid email address.';
+	PickSharingUserPanel.prototype.emailDocumentation = 
+		'Type the email address of someone you want to give access to your profile.';
 	
 	function PickSharingUserPanel(header, previousPanelNode, done)
 	{
-		SitePanel.call(this, previousPanelNode, null, header, "list");
+		var _this = this;
+		SitePanel.call(this, previousPanelNode, null, this.title, "list");
 
 		var navContainer = this.appendNavContainer();
 
-		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
-		backButton.append("span").text("Done");
-
-		var centerButton = navContainer.appendTitle(header);
-
-		var _this = this;
-		function show_users()
-		{
-			var val = this.value.toLocaleLowerCase().trim();
-			var inputBox = this;
-		
-			if (val.length == 0)
-			{
-				panel2Div.selectAll("section").remove();
-			}
-			else
-			{
-				var startVal = val;
-						
-				var symbol;
-				if (val.length < 3)
-					symbol = "^=";
-				else
-					symbol = "*=";
-				
-				function sortByDescription(a, b)
+		navContainer.appendLeftButton()
+			.on('click', function()
 				{
-					return a.getDescription().localeCompare(b.getDescription());
-				}
-				function selectedUsers(userObjects)
-				{
-					var selectAllSuccess = function(groupObjects)
+					if (prepareClick('click', 'Cancel {0}'.format(_this.title)))
 					{
-						if (inputBox.value.toLocaleLowerCase().trim() == startVal)
+						_this.hide();
+					}
+				})
+			.append('span').text('Cancel');
+		
+		navContainer.appendRightButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'Add', false))
+				{
+					try
+					{
+						var email = d3.select(_this.node()).selectAll('input').node().value;
+						function validateEmail(email) 
 						{
-							groupObjects.sort(sortByDescription);
-							var firstGroupIndex = userObjects.length;
-							allObjects = userObjects.concat(groupObjects);
-							panel2Div.selectAll("section").remove();
-							var sections = panel2Div.appendSections(allObjects);
-							var buttons = appendViewButtons(sections)
-								.on("click", function(user, i) {
-									var cellName =  i < firstGroupIndex ? "_user" : "_group";
-									if (prepareClick('click', 'add ' + cellName + ': ' + user.getDescription()))
-									{
-										done(user, cellName, _this.node());
-									}
-									d3.event.preventDefault();
-								});
-							appendInfoButtons(buttons, _this.node());
+							var re = /\S+@\S+\.\S\S+/;
+							return re.test(email);
+						}
+						if (!validateEmail(email))
+						{
+							syncFailFunction(_this.badEmailMessage);
+						}
+						else
+						{
+							done('_user[_email="{0}"]'.format(email), _this.node());
 						}
 					}
-			
-					if (inputBox.value.toLocaleLowerCase().trim() == startVal)
+					catch(err)
 					{
-						cr.selectAll({path: '_group[?'+symbol+'"'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
-						userObjects.sort(sortByDescription);
+						syncFailFunction(err);
 					}
 				}
-			
-				cr.selectAll({path: '_user[?'+symbol+'"'+val+'"]', end: 50, done: selectedUsers, fail: asyncFailFunction});
-			}
-		}
-	
-		this.appendSearchBar(show_users);
+				d3.event.preventDefault();
+			})
+		    .append("span").text("Add");
+		
+		navContainer.appendTitle(this.title);
 
 		var panel2Div = this.appendScrollArea();
 
+		var sectionPanel = panel2Div.append('section')
+			.classed('cell edit unique', true);
+			
+		var itemsDiv = sectionPanel.append("ol");
+
+		var divs = itemsDiv.append("li")
+			.classed("string-input-container", true);	// So that each item appears on its own row.
+			
+		var emailInput = divs.append("input")
+			.attr("type", "email")
+			.attr("placeholder", 'Email');
+			
+		var docSection = panel2Div.append('section')
+			.classed('cell documentation', true);
+			
+		var docDiv = docSection.append('div')
+			.text(this.emailDocumentation);
+			
 		showPanelLeft(this.node(), unblockClick);
 	}
 	
