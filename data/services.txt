@@ -301,6 +301,10 @@ Service
     Domain: Leadership
     Stage: Training
 Service
+    _name: en - Literacy Training
+    Domain: Literacy
+    Stage: Training
+Service
     _name: en - Martial Arts Training
     Domain: Martial Arts
     Stage: Training
@@ -399,6 +403,10 @@ Service
     _name: en - Tennis Coaching
     Domain: Tennis
     Stage: Coaching
+Service
+    _name: en - Tennis Lessons
+    Domain: Tennis
+    Stage: Training
 Service
     _name: en - Tennis Playing
     Domain: Tennis
