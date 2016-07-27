@@ -20,7 +20,7 @@
 		padding: 10px;
 		background: #F8F8F8;
 		border: 1px solid #e7e7e7;
-		border-radius: 4px;
+		border-radius: 8px;
 		font-size: larger;
 	}
 	panel.confirm >div>button.butted-down {
