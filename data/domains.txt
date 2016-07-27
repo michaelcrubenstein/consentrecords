@@ -82,6 +82,9 @@ Domain
     _name: en - Life Skills
     Service Domain: Wellness
 Domain
+    _name: en - Literacy
+    Service Domain: Humanities
+Domain
     _name: en - Math
     Service Domain: Science, Technology, Engineering & Math
 Domain
