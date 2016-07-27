@@ -51,6 +51,7 @@ Service
 Service
     _name: en - Cello Lessons
     Service Domain: Arts
+    Domain: Music
 Service
     _name: en - Chess Playing
     Domain: Basketball
@@ -69,6 +70,7 @@ Service
     _name: en - Clarinet Lessons
     Service Domain: Arts
     Domain: Clarinet Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - College
@@ -87,6 +89,10 @@ Service
     _name: en - Community Organizing Training
     Domain: Community Organizing
     Stage: Training
+Service
+    _name: en - Community Organizing Volunteer
+    Domain: Community Organizing
+    Stage: Volunteering
 Service
     _name: en - Computer Applications Training
     Domain: Computer Applications
@@ -135,6 +141,11 @@ Service
     Domain: Entrepreneurship
     Stage: Training
 Service
+    _name: en - Entrepreneurship Training
+    Service Domain: Business & Finance
+    Domain: Entrepreneurship
+    Stage: Training
+Service
     _name: en - Exercise
     Service Domain: Wellness
 Service
@@ -169,7 +180,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -177,7 +188,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -185,7 +196,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -193,7 +204,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -201,7 +212,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -209,7 +220,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -217,7 +228,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -225,7 +236,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -233,7 +244,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -241,7 +252,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -249,7 +260,7 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Class, Teacher
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
@@ -257,13 +268,14 @@ Service
     Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
-    Offering Label: en - Grade Level (e.g. Grade 9)
+    Offering Label: en - Grade Level
     Domain: School
     Stage: Studying
 Service
     _name: en - Guitar Lessons
     Service Domain: Arts
     Domain: Guitar
+    Domain: Music
     Stage: Training
 Service
     _name: en - Gym
@@ -417,7 +429,7 @@ Service
     Stage: Coaching
 Service
     _name: en - Soccer Playing
-    Domain: Basketball
+    Domain: Soccer
     Stage: Whatever
 Service
     _name: en - Softball Coaching
@@ -497,6 +509,7 @@ Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
     Domain: Trumpet Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Viola Lessons
