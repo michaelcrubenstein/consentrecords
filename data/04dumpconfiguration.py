@@ -1,8 +1,8 @@
 # python3 data/04dumpconfiguration.py -path _term -user michaelcrubenstein@gmail.com > data/terms.txt 
-# python3 data/04dumpconfiguration.py -path Service -user michaelcrubenstein@gmail.com > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Service Domain"' -user michaelcrubenstein@gmail.com > data/servicedomains.txt 
 # python3 data/04dumpconfiguration.py -path Domain -user michaelcrubenstein@gmail.com > data/domains.txt 
 # python3 data/04dumpconfiguration.py -path Stage -user michaelcrubenstein@gmail.com > data/stages.txt 
+# python3 data/04dumpconfiguration.py -path Service -user michaelcrubenstein@gmail.com > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Experience Prompt"' -user michaelcrubenstein@gmail.com > data/experienceprompts.txt 
 
 import datetime
