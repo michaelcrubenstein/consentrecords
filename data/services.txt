@@ -37,7 +37,7 @@ Service
 Service
     _name: en - Bass Lessons
     Service Domain: Arts
-    Domain: Music
+    Domain: Music Performance
 Service
     _name: en - Be a Coach
 Service
@@ -53,7 +53,7 @@ Service
 Service
     _name: en - Cello Lessons
     Service Domain: Arts
-    Domain: Music
+    Domain: Music Performance
 Service
     _name: en - Chess Playing
     Domain: Basketball
@@ -71,8 +71,7 @@ Service
 Service
     _name: en - Clarinet Lessons
     Service Domain: Arts
-    Domain: Clarinet Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - College
@@ -129,7 +128,7 @@ Service
     _name: en - Drum Lessons
     Service Domain: Arts
     Domain: Drums
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Education
@@ -164,8 +163,7 @@ Service
 Service
     _name: en - Flute Lessons
     Service Domain: Arts
-    Domain: Flute Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Football Coaching
@@ -282,8 +280,7 @@ Service
 Service
     _name: en - Guitar Lessons
     Service Domain: Arts
-    Domain: Guitar
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Gym
@@ -378,13 +375,12 @@ Service
 Service
     _name: en - Music Lessons
     Service Domain: Arts
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Oboe Lessons
     Service Domain: Arts
-    Domain: Oboe Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Physical Conditioning Training
@@ -393,14 +389,12 @@ Service
 Service
     _name: en - Piano Lessons
     Service Domain: Arts
-    Domain: Piano Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Piano Teaching
     Service Domain: Arts
-    Domain: Piano Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Teaching
 Service
     _name: en - Political Organizing Internship
@@ -520,25 +514,22 @@ Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
     Domain: Trumpet Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Viola Lessons
     Service Domain: Arts
-    Domain: Viola Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Violin Lessons
     Service Domain: Arts
-    Domain: Violin Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Voice Lessons
     Service Domain: Arts
-    Domain: Vocal Performance
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Volleyball Playing
