@@ -22,6 +22,9 @@ Domain
 Domain
     _name: en - Chess
 Domain
+    _name: en - Chinese
+    Service Domain: Humanities
+Domain
     _name: en - Clarinet Performance
     Service Domain: Arts
 Domain
@@ -67,6 +70,12 @@ Domain
     _name: en - Football
     Service Domain: Sports
 Domain
+    _name: en - French
+    Service Domain: Humanities
+Domain
+    _name: en - German
+    Service Domain: Humanities
+Domain
     _name: en - Government
     Service Domain: Human, Social, Public Services
     Service Domain: Arts
@@ -82,6 +91,12 @@ Domain
 Domain
     _name: en - Ice Hockey
     Service Domain: Sports
+Domain
+    _name: en - Japanese
+    Service Domain: Humanities
+Domain
+    _name: en - Korean
+    Service Domain: Humanities
 Domain
     _name: en - Lacrosse
     Service Domain: Sports
@@ -171,4 +186,7 @@ Domain
     Service Domain: Arts
 Domain
     _name: en - Volleyball
+    Service Domain: Sports
+Domain
+    _name: en - Wrestling
     Service Domain: Sports
