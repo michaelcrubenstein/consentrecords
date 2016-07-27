@@ -8,6 +8,7 @@ Service
     _name: en - Ballet Training
     Service Domain: Arts
     Domain: Ballet
+    Domain: Dance
     Stage: Training
 Service
     _name: en - Baseball Coaching
@@ -22,22 +23,29 @@ Service
     Domain: Baseball
     Stage: Whatever
 Service
-    _name: en - Basketball
+    _name: en - Baseball Training
+    Domain: Baseball
+    Stage: Training
 Service
     _name: en - Basketball Playing
     Domain: Basketball
     Stage: Whatever
 Service
+    _name: en - Basketball Training
+    Domain: Basketball
+    Stage: Training
+Service
     _name: en - Bass Lessons
     Service Domain: Arts
+    Domain: Music Performance
 Service
-    _name: en - Be A Coach
+    _name: en - Be a Coach
 Service
-    _name: en - Be A Foster Parent
+    _name: en - Be a Foster Parent
 Service
-    _name: en - Be A Mentor
+    _name: en - Be a Mentor
 Service
-    _name: en - Be A Tutor
+    _name: en - Be a Tutor
 Service
     _name: en - Boys
 Service
@@ -45,26 +53,47 @@ Service
 Service
     _name: en - Cello Lessons
     Service Domain: Arts
+    Domain: Music Performance
 Service
     _name: en - Chess Playing
     Domain: Basketball
     Stage: Whatever
 Service
     _name: en - Civic Group Participation
+    Domain: Community Organizing
+    Stage: Volunteering
 Service
     _name: en - Civics Class
+    Site Label: en - School
+    Offering Label: en - Class Name
     Domain: Government
     Stage: Studying
 Service
     _name: en - Clarinet Lessons
     Service Domain: Arts
-    Domain: Clarinet Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - College
     Service Domain: Education
     Domain: School
     Stage: Studying
+Service
+    _name: en - Community Organizing Internship
+    Domain: Community Organizing
+    Stage: Training
+Service
+    _name: en - Community Organizing Job
+    Domain: Community Organizing
+    Stage: Working
+Service
+    _name: en - Community Organizing Training
+    Domain: Community Organizing
+    Stage: Training
+Service
+    _name: en - Community Organizing Volunteer
+    Domain: Community Organizing
+    Stage: Volunteering
 Service
     _name: en - Computer Applications Training
     Domain: Computer Applications
@@ -82,22 +111,14 @@ Service
     Domain: Construction
     Stage: Training
 Service
+    _name: en - Cycling for Fun
+    Domain: Cycling
+    Stage: Whatever
+Service
     _name: en - Dance Lessons
     Service Domain: Arts
     Domain: Dance
     Stage: Training
-Service
-    _name: en - Theater Role
-    Service Domain: Arts
-    Domain: Acting
-    Stage: Whatever
-    Offering Label: Title of Role & Show
-Service
-    _name: en - Theater Role with Training
-    Service Domain: Arts
-    Domain: Acting
-    Stage: Training
-    Offering Label: Title of Role & Show
 Service
     _name: en - Drawing Lessons
     Service Domain: Arts
@@ -107,6 +128,7 @@ Service
     _name: en - Drum Lessons
     Service Domain: Arts
     Domain: Drums
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Education
@@ -125,17 +147,24 @@ Service
     Domain: Entrepreneurship
     Stage: Training
 Service
+    _name: en - Entrepreneurship Training
+    Service Domain: Business & Finance
+    Domain: Entrepreneurship
+    Stage: Training
+Service
     _name: en - Exercise
     Service Domain: Wellness
 Service
     _name: en - Extra-Curricular Activity
 Service
+    _name: en - Floor Hockey For Fun
+    Domain: Floor Hockey
+    Stage: Whatever
+Service
     _name: en - Flute Lessons
     Service Domain: Arts
-    Domain: Flute Performance
+    Domain: Music Performance
     Stage: Training
-Service
-    _name: en - Football
 Service
     _name: en - Football Coaching
     Domain: Football
@@ -251,12 +280,20 @@ Service
 Service
     _name: en - Guitar Lessons
     Service Domain: Arts
-    Domain: Guitar
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Gym
     Domain: Physical Conditioning
     Stage: Whatever
+Service
+    _name: en - Gymnastics For Fun
+    Domain: Gymnastics
+    Stage: Whatever
+Service
+    _name: en - Gymnastics Lessons
+    Domain: Gymnastics
+    Stage: Training
 Service
     _name: en - High School Post Graduate
     Service Domain: Education
@@ -284,6 +321,12 @@ Service
     Offering Label: en - Job Title
     Stage: Working
 Service
+    _name: en - Jump Year to Grade 9
+    Service Domain: Education
+    Organization Label: en - District
+    Site Label: en - School
+    Offering Label: en - Class
+Service
     _name: en - Karate Training
     Domain: Martial Arts
     Stage: Training
@@ -292,6 +335,18 @@ Service
     Service Domain: Education
     Domain: School
     Stage: Studying
+Service
+    _name: en - Lacrosse Coach
+    Domain: Lacrosse
+    Stage: Coaching
+Service
+    _name: en - Lacrosse Playing
+    Domain: Lacrosse
+    Stage: Whatever
+Service
+    _name: en - Lacrosse Training
+    Domain: Lacrosse
+    Stage: Training
 Service
     _name: en - Leadership Class
     Domain: Leadership
@@ -313,14 +368,19 @@ Service
     Domain: Math
     Stage: Teaching
 Service
+    _name: en - Math Tutoring
+    Offering Label: en - Program
+    Domain: Math
+    Stage: Tutoring
+Service
     _name: en - Music Lessons
     Service Domain: Arts
-    Domain: Music
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Oboe Lessons
     Service Domain: Arts
-    Domain: Oboe Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Physical Conditioning Training
@@ -329,13 +389,17 @@ Service
 Service
     _name: en - Piano Lessons
     Service Domain: Arts
-    Domain: Piano Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Piano Teaching
     Service Domain: Arts
-    Domain: Piano Performance
+    Domain: Music Performance
     Stage: Teaching
+Service
+    _name: en - Political Organizing Internship
+    Domain: Political Organizing
+    Stage: Training
 Service
     _name: en - Political Organizing Job
     Domain: Political Organizing
@@ -352,6 +416,10 @@ Service
 Service
     _name: en - Provide a Summer Job
 Service
+    _name: en - Running Training
+    Domain: Running
+    Stage: Training
+Service
     _name: en - Safety Training
     Domain: Life Skills
     Stage: Training
@@ -366,8 +434,22 @@ Service
     Stage: Coaching
 Service
     _name: en - Soccer Playing
-    Domain: Basketball
+    Domain: Soccer
     Stage: Whatever
+Service
+    _name: en - Softball Coaching
+    Service Domain: Sports
+    Domain: Softball
+    Stage: Coaching
+Service
+    _name: en - Softball For Fun
+    Service Domain: Sports
+    Domain: Softball
+    Stage: Whatever
+Service
+    _name: en - Softball Training
+    Domain: Softball
+    Stage: Training
 Service
     _name: en - Somali Culture Class
     Domain: Somali Culture
@@ -394,9 +476,14 @@ Service
     Offering Label: en - Job Title
     Stage: Working
 Service
-    _name: en - Swimming
+    _name: en - Swimming For Fun
     Domain: Swimming
     Stage: Whatever
+Service
+    _name: en - Swimming Lessons
+    Service Domain: Sports
+    Domain: Swimming
+    Stage: Training
 Service
     _name: en - Teen Programming
 Service
@@ -412,24 +499,37 @@ Service
     Domain: Tennis
     Stage: Whatever
 Service
+    _name: en - Theater Role
+    Service Domain: Arts
+    Offering Label: en - Title of Show & Role
+    Domain: Acting
+    Stage: Whatever
+Service
+    _name: en - Theater Role with Training
+    Service Domain: Arts
+    Offering Label: en - Title of Show & Role
+    Domain: Acting
+    Stage: Training
+Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
     Domain: Trumpet Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Viola Lessons
     Service Domain: Arts
-    Domain: Viola Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Violin Lessons
     Service Domain: Arts
-    Domain: Violin Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Voice Lessons
     Service Domain: Arts
-    Domain: Vocal Performance
+    Domain: Music Performance
     Stage: Training
 Service
     _name: en - Volleyball Playing
