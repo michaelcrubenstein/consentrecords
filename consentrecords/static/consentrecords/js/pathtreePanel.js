@@ -1935,7 +1935,8 @@ var AddOptions = (function () {
 					panel.remove();
 					pathlinesPanel.startNewExperience('Previous', done, fail);
 				});
-			});
+			})
+			.classed('butted-down', true);
 		$(confirmButton.node()).on('blur', onCancel);
 		
 		addButton(div, "Add Current Experience", 
@@ -1945,7 +1946,8 @@ var AddOptions = (function () {
 					panel.remove();
 					pathlinesPanel.startNewExperience('Current', done, fail);
 				});
-			});
+			})
+			.classed('butted-down', true);
 		
 		addButton(div, "Add Goal", 
 			function(done, fail)
@@ -2067,17 +2069,22 @@ var ExperienceIdeas = (function() {
 })();
 
 var ExperienceIdeaPanel = (function() {
+	ExperienceIdeaPanel.prototype.panelNode = null;
 	ExperienceIdeaPanel.prototype.dimmer = null;
 	
 	ExperienceIdeaPanel.prototype.show = function(done)
 	{
-		$(this.ideaPanel.node()).animate({left: '17%'},
+		$(this.ideaPanel.node()).css('top',
+			"{0}px".format(($(this.panelNode).height() - $(this.ideaPanel.node()).outerHeight()) / 2));
+		var newLeft = "{0}px".format(($(this.panelNode).width() - $(this.ideaPanel.node()).outerWidth()) / 2);
+		$(this.ideaPanel.node()).animate({left: newLeft},
 			{done: done});
 	}
 	
 	function ExperienceIdeaPanel(panelNode, dimmer, title, prompt, experience, getNext)
 	{
 		var _this = this;
+		this.panelNode = panelNode;
 		this.dimmer = dimmer;
 		this.ideaPanel = d3.select(panelNode).append('panel')
 			.classed('idea', true)

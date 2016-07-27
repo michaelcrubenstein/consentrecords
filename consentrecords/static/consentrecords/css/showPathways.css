@@ -23,6 +23,15 @@
 		border-radius: 4px;
 		font-size: larger;
 	}
+	panel.confirm >div>button.butted-down {
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+	panel.confirm >div>button.butted-down+button {
+		margin-top: 0px;
+		border-top-left-radius: 0px;
+		border-top-right-radius: 0px;
+	}
 	panel.confirm > div>button:focus {
 		outline: none;
 	}
