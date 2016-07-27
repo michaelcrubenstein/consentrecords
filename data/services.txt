@@ -8,6 +8,7 @@ Service
     _name: en - Ballet Training
     Service Domain: Arts
     Domain: Ballet
+    Domain: Dance
     Stage: Training
 Service
     _name: en - Baseball Coaching
@@ -36,6 +37,7 @@ Service
 Service
     _name: en - Bass Lessons
     Service Domain: Arts
+    Domain: Music
 Service
     _name: en - Be a Coach
 Service
@@ -110,6 +112,10 @@ Service
     Domain: Construction
     Stage: Training
 Service
+    _name: en - Cycling for Fun
+    Domain: Cycling
+    Stage: Whatever
+Service
     _name: en - Dance Lessons
     Service Domain: Arts
     Domain: Dance
@@ -123,6 +129,7 @@ Service
     _name: en - Drum Lessons
     Service Domain: Arts
     Domain: Drums
+    Domain: Music
     Stage: Training
 Service
     _name: en - Education
@@ -158,6 +165,7 @@ Service
     _name: en - Flute Lessons
     Service Domain: Arts
     Domain: Flute Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Football Coaching
@@ -376,6 +384,7 @@ Service
     _name: en - Oboe Lessons
     Service Domain: Arts
     Domain: Oboe Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Physical Conditioning Training
@@ -385,11 +394,13 @@ Service
     _name: en - Piano Lessons
     Service Domain: Arts
     Domain: Piano Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Piano Teaching
     Service Domain: Arts
     Domain: Piano Performance
+    Domain: Music
     Stage: Teaching
 Service
     _name: en - Political Organizing Internship
@@ -515,16 +526,19 @@ Service
     _name: en - Viola Lessons
     Service Domain: Arts
     Domain: Viola Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Violin Lessons
     Service Domain: Arts
     Domain: Violin Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Voice Lessons
     Service Domain: Arts
     Domain: Vocal Performance
+    Domain: Music
     Stage: Training
 Service
     _name: en - Volleyball Playing
