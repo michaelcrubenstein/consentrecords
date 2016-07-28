@@ -202,6 +202,29 @@ var ComparePath = (function() {
 			return 0;
 	}
 
+	ComparePath.prototype._compareExperiences = function(a, b)
+	{
+		function compareDates(d1, d2)
+		{
+			/* null dates come first, because they are the future. */
+			if (!d2)
+				return d1 ? 1 : 0;
+			else if (!d1)
+				return -1;
+				
+			return (d1 > d2) ? 1 :
+				   ((d2 > d1) ? -1 :
+				   0);
+		}
+		
+		var diff = -compareDates(a.getEndAge(), b.getEndAge()) ||
+				a.column - b.column;
+		if (diff)
+			return diff;
+			
+		return compareDates(a.getStartAge(), b.getStartAge());
+	}
+	
 	/* Lay out all of the contents within the svg object. */
 	ComparePath.prototype.layout = function()
 	{
