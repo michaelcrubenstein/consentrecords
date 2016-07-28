@@ -2112,36 +2112,41 @@ var ExperienceIdeaPanel = (function() {
 		
 		var footer = this.ideaPanel.append('footer');
 		
-		if (getNext)
-		{	
-			var skipButton = footer.append('button')
-				.classed('skip', true)
-				.text('Skip')
-				.on('click', function()
-					{
-						var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
-						$(_this.ideaPanel.node()).animate({left: newLeft},
-							{done: function()
-								{
-									_this.ideaPanel.remove();
-									getNext(_this);
-								}});
-					});
-		}
+		var skipButton = footer.append('button')
+			.classed('skip', true)
+			.text('Skip')
+			.on('click', function()
+				{
+					var newLeft = -($(_this.ideaPanel.node()).width() + $(closeButton.node()).width());
+					$(_this.ideaPanel.node()).animate({left: newLeft},
+						{done: function()
+							{
+								_this.ideaPanel.remove();
+								getNext(_this);
+							}});
+				});
 		
 		var answerButton = footer.append('button')
 			.classed('answer', true)
 			.text('Answer')
 			.on('click', function()
 				{
-					_this.dimmer.hide();
-					$(_this.ideaPanel.node()).animate({top: $(panelNode).height()},
-						{done: function()
-							{
-								_this.ideaPanel.remove();
-								var panel = new NewExperiencePanel(experience, panelNode);
-								showPanelUp(panel.node());
-							}});
+					if (prepareClick('click', 'Answer'))
+					{
+						try
+						{
+							var panel = new NewExperiencePanel(experience, panelNode, 'Previous',
+								function()
+								{
+									skipButton.on('click')();
+								});
+							showPanelUp(panel.node(), unblockClick);
+						}
+						catch(err)
+						{
+							syncFailFunction(err);
+						}
+					}
 				});
 		
 		var closeButton = this.ideaPanel.append('button')

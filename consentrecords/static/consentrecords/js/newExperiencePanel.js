@@ -741,35 +741,6 @@ var MultiTypeSearchView = (function() {
 	
 })();
 
-var NewExperienceBasePanel = (function() {
-	NewExperienceBasePanel.prototype = new SitePanel();
-	
-	NewExperienceBasePanel.prototype.showNextStep = function(panelNode)
-		{
-			showPanelLeft(panelNode, unblockClick);
-		}
-	
-	function NewExperienceBasePanel(previousPanelNode, experience, panelClass, showFunction)
-	{
-		if (previousPanelNode)
-		{
-			var header = "New Experience";
-			SitePanel.call(this, previousPanelNode, null, header, panelClass, showFunction);
-		
-			var _this = this;
-			var hide = function() { 
-				asyncHidePanelDown(_this.node()); 
-			};
-			$(experience).on("experienceAdded.cr", hide);
-			$(this.node()).on("remove", function () { $(experience).off("experienceAdded.cr", hide); });
-		}
-		else
-			SitePanel.call(this);
-	}
-	
-	return NewExperienceBasePanel;
-})();
-
 /* A reported object combines a name and an object value that might be picked. */
 var ReportedObject = function () {
 	ReportedObject.prototype.name = null;
@@ -1733,8 +1704,9 @@ var NewExperienceSearchView = (function() {
 	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
 	One can also specify a custom service or a custom organization. */
 var NewExperiencePanel = (function () {
-	NewExperiencePanel.prototype = new NewExperienceBasePanel();
-	
+	NewExperiencePanel.prototype = new SitePanel();
+
+	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
@@ -1860,9 +1832,16 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase) {
+	function NewExperiencePanel(experience, previousPanelNode, phase, done) {
 
-		NewExperienceBasePanel.call(this, previousPanelNode, experience, "edit experience new-experience-panel", revealPanelUp);
+		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
+	
+		var hide = function() { 
+				asyncHidePanelDown(_this.node()); 
+				if (done) done();
+			}
+		$(experience).on("experienceAdded.cr", hide);
+		$(this.node()).on("remove", function () { $(experience).off("experienceAdded.cr", hide); });
 		var _this = this;
 		
 		var stepFunction = function()
@@ -1932,7 +1911,7 @@ var NewExperiencePanel = (function () {
 			});
 		nextButton.append("span").text("Add");
 		
-		navContainer.appendTitle(this.headerText);
+		navContainer.appendTitle(this.title);
 						
 		this.experienceView = this.panelDiv.append('header');
 		

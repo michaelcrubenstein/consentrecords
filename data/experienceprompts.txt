@@ -6,4 +6,16 @@ Experience Prompt
 Experience Prompt
     _name: Musical Instrument
     _text: en - Have you ever studied a musical instrument?
-    Domain: Music
+    Domain: Music Performance
+Experience Prompt
+    _name: Summer Job
+    _text: en - Have you ever had a summer job?
+    Service: Summer Job
+Experience Prompt
+    _name: Team Sport
+    _text: en - Have you ever played a team sport?
+    Service Domain: Sports
+Experience Prompt
+    _name: Exercise
+    _text: en - What do you do for exercise?
+    Service: Exercise
