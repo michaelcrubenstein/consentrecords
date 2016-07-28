@@ -1832,12 +1832,13 @@ var NewExperiencePanel = (function () {
 		};
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase) {
+	function NewExperiencePanel(experience, previousPanelNode, phase, done) {
 
 		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
 	
 		var hide = function() { 
 				asyncHidePanelDown(_this.node()); 
+				if (done) done();
 			}
 		$(experience).on("experienceAdded.cr", hide);
 		$(this.node()).on("remove", function () { $(experience).off("experienceAdded.cr", hide); });
