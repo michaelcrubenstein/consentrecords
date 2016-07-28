@@ -103,6 +103,11 @@ var FlagData = (function() {
 			(this.experience.getDatum("Start") ? new Date().toISOString().substr(0, 10) : "9999-12-31");
 	}
 	
+	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
+	{
+		return this.getStartDate() < otherFD.getEndDate();
+	}
+	
 	FlagData.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
@@ -621,7 +626,7 @@ var PathView = (function() {
 				for (var j = column.length - 2; j >= 0; --j)
 				{
 					var lastFD = column[j];
-					if (lastFD.getStartDate() < fd.getEndDate())
+					if (lastFD.startsBeforeOtherEnd(fd))
 					{
 						fd.x = lastFD.x + _this.poleSpacing;
 						break;
@@ -640,7 +645,7 @@ var PathView = (function() {
 				{
 					var n =  parent.selectAll('g:nth-child({0})'.format(j+1));
 					nextDatum = n.datum();
-					if (nextDatum.getEndDate() > fd.getStartDate())
+					if (fd.startsBeforeOtherEnd(nextDatum))
 						fd.y2 = nextDatum.y + _this.flagHeightEM;
 					else
 						break;

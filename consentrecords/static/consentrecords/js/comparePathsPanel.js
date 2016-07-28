@@ -70,6 +70,11 @@ var CompareFlag = (function() {
 		return startDate - this.birthday;
 	}
 	
+	CompareFlag.prototype.startsBeforeOtherEnd = function(otherFD)
+	{
+		return this.getStartAge() < otherFD.getEndAge();
+	}
+	
 	CompareFlag.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
