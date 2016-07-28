@@ -70,6 +70,11 @@ var CompareFlag = (function() {
 		return startDate - this.birthday;
 	}
 	
+	CompareFlag.prototype.startsBeforeOtherEnd = function(otherFD)
+	{
+		return this.getStartAge() < otherFD.getEndAge();
+	}
+	
 	CompareFlag.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
@@ -902,7 +907,8 @@ var ComparePath = (function() {
 				})
 			.on("click.cr", function(fd, i)
 				{
-					_this.showDetailPanel(fd, i);
+					if (fd.experience.canWrite())
+						_this.showDetailPanel(fd, i);
 				});
 		this.detailBackRect = this.detailGroup.append('rect')
 			.classed('bg', true);
