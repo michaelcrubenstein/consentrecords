@@ -907,7 +907,8 @@ var ComparePath = (function() {
 				})
 			.on("click.cr", function(fd, i)
 				{
-					_this.showDetailPanel(fd, i);
+					if (fd.experience.canWrite())
+						_this.showDetailPanel(fd, i);
 				});
 		this.detailBackRect = this.detailGroup.append('rect')
 			.classed('bg', true);

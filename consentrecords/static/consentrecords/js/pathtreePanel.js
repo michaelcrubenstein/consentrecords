@@ -390,7 +390,7 @@ var PathView = (function() {
 				try
 				{
 					var panel = this.sitePanel.node();
-					var editPanel = new EditExperiencePanel(fd.experience, this.path, panel, revealPanelLeft);
+					var editPanel = new EditExperiencePanel(fd.experience, fd.experience.cell.parent, panel, revealPanelLeft);
 												  
 					revealPanelLeft(editPanel.node());
 				}
