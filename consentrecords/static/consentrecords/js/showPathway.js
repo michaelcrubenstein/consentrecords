@@ -1160,13 +1160,13 @@ var EditExperiencePanel = (function () {
 				
 					if (offeringCell.isEmpty() &&
 						myTagsCell.isEmpty())
-						asyncFailFunction(NewExperience.prototype.nameOrTagRequiredMessage);
+						asyncFailFunction(NewExperiencePanel.prototype.nameOrTagRequiredMessage);
 					else if (previousExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction(NewExperience.prototype.previousStartYearAndMonthRequiredMessage);
+							asyncFailFunction(NewExperiencePanel.prototype.previousStartYearAndMonthRequiredMessage);
 						else if (!endDateInput.year || !endDateInput.month)
-							asyncFailFunction(NewExperience.prototype.previousEndYearAndMonthRequiredMessage);
+							asyncFailFunction(NewExperiencePanel.prototype.previousEndYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();
@@ -1175,7 +1175,7 @@ var EditExperiencePanel = (function () {
 					else if (presentExperienceButton.classed('pressed'))
 					{
 						if (!startDateInput.year || !startDateInput.month)
-							asyncFailFunction(NewExperience.prototype.currentStartYearAndMonthRequiredMessage);
+							asyncFailFunction(NewExperiencePanel.prototype.currentStartYearAndMonthRequiredMessage);
 						else
 						{
 							doAdd();
@@ -1407,8 +1407,8 @@ var EditExperiencePanel = (function () {
 			},
 			0);
 		
-		var offeringCell = experience.getCell("Offering");
-		var offeringServiceCell = new OfferingServiceCell(offeringCell);
+		var pickedOfferingCell = experience.getCell("Offering");
+		var offeringServiceCell = new OfferingServiceCell(pickedOfferingCell);
 		
 		offeringServiceCell.checkCells(
 			function()
