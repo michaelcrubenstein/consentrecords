@@ -62,8 +62,8 @@ class Instance(dbmodels.Model):
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False)
     parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False)
     parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True)
-    transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
-    deleteTransaction = dbmodels.ForeignKey('consentrecords.Transaction', related_name='deletedInstance', db_index=True, null=True, editable=True)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True)
         
     def __str__(self):
         try:
@@ -970,14 +970,14 @@ class NameList():
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
-    field = dbmodels.ForeignKey('consentrecords.Instance', related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
+    instance = dbmodels.ForeignKey(Instance, db_index=True, editable=False)
+    field = dbmodels.ForeignKey(Instance, related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
     stringValue = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-    referenceValue = dbmodels.ForeignKey('consentrecords.Instance', related_name='referenceValues', db_index=True, null=True, editable=False)
+    referenceValue = dbmodels.ForeignKey(Instance, related_name='referenceValues', db_index=True, null=True, editable=False)
     position = dbmodels.IntegerField(editable=False)
-    transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
-    deleteTransaction = dbmodels.ForeignKey('consentrecords.Transaction', related_name='deletedValue', db_index=True, null=True, editable=True)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedValue', db_index=True, null=True, editable=True)
     
     def __str__(self):
         d = str(self.referenceValue) if self.referenceValue else self.stringValue
