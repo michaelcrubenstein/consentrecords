@@ -23,7 +23,7 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
-$.fn.calculateFillHeight = function()
+$.fn.getFillHeight = function()
 {
 	var parent = this.parent();
 	var n = this.get(0);
@@ -37,7 +37,12 @@ $.fn.calculateFillHeight = function()
 				return h;
 		},
 		parseInt(parent.height()));
-	this.css("height", "{0}px".format(newHeight));
+	return newHeight;
+}
+
+$.fn.calculateFillHeight = function()
+{
+	this.css("height", "{0}px".format(this.getFillHeight()));
 	this.one("resize.cr", function(eventObject)
 		{
 			eventObject.stopPropagation();
