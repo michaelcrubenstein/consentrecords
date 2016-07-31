@@ -144,8 +144,8 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.isOverflowingY = function(node)
 	{
-		var p = node.offsetParent;
-		return node.offsetTop > $(p).scrollTop() + $(p).height();
+		var $p = $(node).scrollParent();
+		return node.offsetTop > $p.scrollTop() + $p.height();
 	}
 	
 	GetDataChunker.prototype._onScroll = function(startVal)
