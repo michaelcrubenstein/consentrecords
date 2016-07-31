@@ -13,6 +13,11 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._onDoneSearch = null;
 	GetDataChunker.prototype._check = null;
 	
+	GetDataChunker.prototype.invalidatePendingData = function()
+	{
+		this._inGetData = false;
+	}
+	
 	GetDataChunker.prototype._clearScrollCheck = function()
 	{
 		if (this._check != null)
@@ -21,7 +26,7 @@ var GetDataChunker = (function() {
 			$(window).off("resize", this._check);
 			this._check = null;
 		}
-		this._inGetData = false;
+		this.invalidatePendingData();
 	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()

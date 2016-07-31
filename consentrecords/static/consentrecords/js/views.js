@@ -2121,6 +2121,7 @@ var SearchOptionsView = (function () {
 				
 		/* Once we have hit this point, old data is not valid. */
 		this._foundCompareText = null;
+		this.getDataChunker.invalidatePendingData();
 
 		var _this = this;
 		function endSearchTimeout() {
