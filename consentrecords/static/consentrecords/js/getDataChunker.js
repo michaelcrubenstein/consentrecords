@@ -22,8 +22,13 @@ var GetDataChunker = (function() {
 	{
 		if (this._check != null)
 		{
-			$(this._containerNode.offsetParent).off("scroll", this._check);
-			$(window).off("resize", this._check);
+			var scrollingNode;
+			if ($(this._containerNode).css('overflow-y') == 'scroll')
+				scrollingNode = $(this._containerNode);
+			else
+				scrollingNode = $(this._containerNode).scrollingParent();
+			scrollingNode.off("scroll", this._check);
+			scrollingNode.off("resize.cr", this._check);
 			this._check = null;
 		}
 		this.invalidatePendingData();
@@ -122,13 +127,17 @@ var GetDataChunker = (function() {
 			_this._onScroll(eventObject.data);
 		}
 		
-		var scrollingNode = this._containerNode.offsetParent;
+		var scrollingNode;
+		if ($(this._containerNode).css('overflow-y') == 'scroll')
+			scrollingNode = $(this._containerNode);
+		else
+			scrollingNode = $(this._containerNode).scrollingParent();
 		
-		if (!scrollingNode)
-			throw "offsetParent not specified; containerNode is not displayed"
+		if (scrollingNode.size() == 0)
+			throw "scrollingParent not specified; containerNode is not displayed"
 			
-		$(scrollingNode).scroll(startVal, this._check);
-		$(scrollingNode).on("resize.cr", this._check);
+		scrollingNode.scroll(startVal, this._check);
+		scrollingNode.on("resize.cr", this._check);
 	}
 	
 	GetDataChunker.prototype.checkStart = function(startVal)
