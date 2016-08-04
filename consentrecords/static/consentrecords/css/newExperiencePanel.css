@@ -41,10 +41,102 @@
 		border-bottom-width: 1px;
 	}
 	
-	panel.new-experience-panel input.search-input {
-		background-color: #ddd;
-		color: #222;
+	panel.new-experience-panel section {
+		background-color: white;
+	}
+	
+	panel.new-experience-panel section.cell.unique input {
+		-webkit-appearance: textfield;
+		-moz-appearance: textfield;
+		background-color: white;
+		border: none;
 		outline: none;
+		font-size: 0.9em;
+		width: calc(100% - 12px);
+		border-top-style: solid;
+		border-top-width: 1px;
+		border-top-color: #ddd;
+		margin-left: 12px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+	
+	panel.new-experience-panel section div.help {
+		padding: 6px 12px;
+		display: none;
+	}
+	
+	panel.new-experience-panel section div.help p {
+		font-size: 0.9em;
+		color: #777;
+	}
+	
+	panel.new-experience-panel section div.help p.list {
+		margin-bottom: 0;
+	}
+	
+	panel.new-experience-panel section.tags {
+		margin-top: 12px;
+	}
+	
+	panel.new-experience-panel section.tags span.offering-tags-container {
+		margin-left: 12px;
+	}
+	
+	panel.new-experience-panel section.tags input.tag {
+		display: inline-block;
+		background-color: white;
+		color: #2C55CC;
+		border-style: solid;
+		border-width: 1px;
+		border-color: transparent;
+		outline: none;
+		padding-left: 3px;
+	}
+	
+	/* draw any selected text yellow on red background */
+	panel.new-experience-panel section.tags input.tag::-moz-selection {
+	  color: white; background: #2C55CC;
+	}
+
+	panel.new-experience-panel section.tags input.tag::selection {
+	  color: white; background: #2C55CC;
+	}
+	
+	panel.new-experience-panel section.tags span.textWidth {
+		display: inline-block;
+		border-style: solid;
+		border-width: 1px;
+		font-size: 0.9em;
+		padding-left: 3px;
+	}
+	
+	panel.new-experience-panel section.tags input.tag:focus {
+		border-color: #ddd;
+	}
+	
+	panel.new-experience-panel input.offering {
+		display: block;
+	}
+	
+	panel.new-experience-panel section.cell.unique input.organization {
+		display: block;
+		border-top-style: none;
+	}
+	
+	panel.new-experience-panel input.site {
+		display: block;
+	}
+	
+	/* The following overrides settings that make the list too tall. */
+	panel.new-experience-panel section ol.search {
+		height: 100%;
+		overflow-y: scroll;
+		position: relative;
+	}
+	
+	panel.new-experience-panel div.tags input {
+		margin-left: 0.5em;
 	}
 	
 	section.date-range-options {
@@ -160,24 +252,6 @@
 		cursor: pointer;
 	}
 	
-	panel.experience .organization>.organization {
-		display: inline-block;
-		margin-left: 0px;
-		padding: .2em;
-		color: #444;
-		font-size: smaller;
-		cursor: pointer;
-	}
-
-	panel.experience .site>.site {
-		display: inline-block;
-		margin-left: 0px;
-		padding: .2em;
-		color: #444;
-		font-size: smaller;
-		cursor: pointer;
-	}
-
 	panel.experience li .organization>div {
 		display: block;
 		margin-left: 0px;

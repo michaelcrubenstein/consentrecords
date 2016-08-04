@@ -189,7 +189,8 @@ panel.view .panel-fill>header
 {
 	padding-left: 32px;
 }
-.noResults
+
+.no-results
 {
 	padding: 6px 12px;
 }
@@ -590,7 +591,6 @@ section.date-container>div.in-cell-button {
 	padding-left: 12px;
 	padding-right: 12px;
 	padding-bottom: 4px;
-	width: 100%;
 	text-align: right;
 	position: relative;
 }

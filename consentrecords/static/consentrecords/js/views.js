@@ -23,7 +23,7 @@ $.fn.animateRotate = function(startAngle, endAngle, duration, easing, complete) 
     });
 };
 
-$.fn.calculateFillHeight = function()
+$.fn.getFillHeight = function()
 {
 	var parent = this.parent();
 	var n = this.get(0);
@@ -37,7 +37,12 @@ $.fn.calculateFillHeight = function()
 				return h;
 		},
 		parseInt(parent.height()));
-	this.css("height", "{0}px".format(newHeight));
+	return newHeight;
+}
+
+$.fn.calculateFillHeight = function()
+{
+	this.css("height", "{0}px".format(this.getFillHeight()));
 	this.one("resize.cr", function(eventObject)
 		{
 			eventObject.stopPropagation();
@@ -1949,27 +1954,23 @@ var SitePanel = (function () {
 	return SitePanel;
 })();
 
-var SearchView = (function () {
-	SearchView.prototype.listPanel = null;
-	SearchView.prototype.inputBox = null;
-	SearchView.prototype.getDataChunker = null;
-	SearchView.prototype._fill = null;
-	SearchView.prototype._foundCompareText = null;
-	SearchView.prototype._constrainCompareText = null;
-	SearchView.prototype._searchTimeout = null;
-	
-	function SearchView(containerNode, placeHolder, fill, chunkerType) {
+var SearchOptionsView = (function () {
+	SearchOptionsView.prototype.listPanel = null;
+	SearchOptionsView.prototype.getDataChunker = null;
+	SearchOptionsView.prototype._fill = null;
+	SearchOptionsView.prototype._foundCompareText = null;
+	SearchOptionsView.prototype._constrainCompareText = null;
+	SearchOptionsView.prototype._searchTimeout = null;
+
+	function SearchOptionsView(containerNode, fill, chunkerType)
+	{
 		if (containerNode)
 		{
 			var _this = this;
 			this._fill = fill;
-			var inputBox = this.appendInput(containerNode, placeHolder);
-		
-			this.inputBox = inputBox.node();
-			$(this.inputBox).on("input", function() { _this.textChanged() });
 			
 			this.noResultsDiv = d3.select(containerNode).append('div')
-				.classed('help-block noResults', true)
+				.classed('no-results', true)
 				.style('display', 'none');
 
 			this.listPanel = this.appendSearchArea(containerNode);
@@ -1991,43 +1992,34 @@ var SearchView = (function () {
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
 			this.getDataChunker = new chunkerType(this.listPanel.node(), done);
-			
-			/* Call setupInputBox at the end because it may trigger an input event. */
-			this.setupInputBox();
-			
 		}
 	}
 	
-	SearchView.prototype.onClickButton = function(d, i) {
-		throw ("need to override SearchView.onClick");
+	SearchOptionsView.prototype.onClickButton = function(d, i) {
+		throw ("need to override SearchOptionsView.onClick");
 	}
 	
-	SearchView.prototype.isButtonVisible = function(button, d, compareText)
+	SearchOptionsView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		throw ("need to override SearchView.isButtonVisible");
+		throw ("need to override SearchOptionsView.isButtonVisible");
 	}
 	
-	SearchView.prototype.searchPath = function(val)
+	SearchOptionsView.prototype.searchPath = function(val)
 	{
-		throw ("need to override SearchView.searchPath");
+		throw ("need to override SearchOptionsView.searchPath");
 	}
 	
-	SearchView.prototype.setupInputBox = function()
-	{
-		/* Do nothing by default */
-	}
-	
-	SearchView.prototype.appendButtonContainers = function(foundObjects)
+	SearchOptionsView.prototype.appendButtonContainers = function(foundObjects)
 	{
 		return this.getDataChunker.appendButtonContainers(foundObjects);
 	}
 	
-	SearchView.prototype.clearListPanel = function()
+	SearchOptionsView.prototype.clearListPanel = function()
 	{
 		this.listPanel.selectAll("li").remove();
 	}
 	
-	SearchView.prototype.sortFoundObjects = function(foundObjects)
+	SearchOptionsView.prototype.sortFoundObjects = function(foundObjects)
 	{
 		function sortByDescription(a, b)
 		{
@@ -2036,11 +2028,13 @@ var SearchView = (function () {
 		foundObjects.sort(sortByDescription);
 	}
 	
-	SearchView.prototype.constrainFoundObjects = function(val)
+	SearchOptionsView.prototype.setConstrainText = function(val)
 	{
-		if (val !== undefined)
-			this._constrainCompareText = val;
-			
+		this._constrainCompareText = val;
+	}
+	
+	SearchOptionsView.prototype.constrainFoundObjects = function()
+	{
 		var buttons = this.listPanel.selectAll(".btn");
 		var _this = this;
 		buttons.style("display", function(d) 
@@ -2052,7 +2046,7 @@ var SearchView = (function () {
 			});
 	}
 	
-	SearchView.prototype.showObjects = function(foundObjects)
+	SearchOptionsView.prototype.showObjects = function(foundObjects)
 	{
 		var _this = this;
 		var sections = this.appendButtonContainers(foundObjects);
@@ -2068,12 +2062,12 @@ var SearchView = (function () {
 	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
 		sent to the middle tier.
 	 */
-	SearchView.prototype.fields = function()
+	SearchOptionsView.prototype.fields = function()
 	{
 		return ["parents"];
 	}
 	
-	SearchView.prototype.noResultString = function()
+	SearchOptionsView.prototype.noResultString = function()
 	{
 		return "No Results";
 	}
@@ -2081,13 +2075,13 @@ var SearchView = (function () {
 	/*
 		Do all of the user interface tasks that indicate that a search to the database can't retrieve any values.
 	 */
-	SearchView.prototype.cancelSearch = function()
+	SearchOptionsView.prototype.cancelSearch = function()
 	{
 		this.clearListPanel();
 		this.getDataChunker.clearLoadingMessage();
 	}
 	
-	SearchView.prototype.search = function(val)
+	SearchOptionsView.prototype.search = function(val)
 	{
 		if (val !== undefined)
 		{
@@ -2108,18 +2102,12 @@ var SearchView = (function () {
 		}
 	}
 	
-	SearchView.prototype.inputText = function(val)
+	SearchOptionsView.prototype.inputText = function(val)
 	{
-		if (val === undefined)
-			return this.inputBox.value.trim();
-		else
-		{
-			this.inputBox.value = val;
-			$(this.inputBox).trigger("input");
-		}
+		throw ("need to override SearchOptionsView.inputText");
 	}
 	
-	SearchView.prototype.inputCompareText = function()
+	SearchOptionsView.prototype.inputCompareText = function()
 	{
 		return this.inputText().toLocaleLowerCase();
 	}
@@ -2127,7 +2115,7 @@ var SearchView = (function () {
 	// Begin a timeout that, when it is done, begins a search.
 	// This gives the user time to update the search text without 
 	// doing a search for each change to the search text.
-	SearchView.prototype.startSearchTimeout = function(val)
+	SearchOptionsView.prototype.startSearchTimeout = function(val)
 	{
 		this.clearListPanel();
 		if (this.searchPath(val) != "")
@@ -2135,6 +2123,7 @@ var SearchView = (function () {
 				
 		/* Once we have hit this point, old data is not valid. */
 		this._foundCompareText = null;
+		this.getDataChunker.invalidatePendingData();
 
 		var _this = this;
 		function endSearchTimeout() {
@@ -2151,7 +2140,7 @@ var SearchView = (function () {
 		this._searchTimeout = setTimeout(endSearchTimeout, 300);
 	}
 	
-	SearchView.prototype.textCleared = function()
+	SearchOptionsView.prototype.textCleared = function()
 	{
 		this.clearListPanel();
 		this.getDataChunker.clearLoadingMessage();
@@ -2161,13 +2150,13 @@ var SearchView = (function () {
 	/* Given a change in the text, see if the new constrainText can use the 
 		results of a previous search
 	 */
-	SearchView.prototype.canConstrain = function(searchText, constrainText)
+	SearchOptionsView.prototype.canConstrain = function(searchText, constrainText)
 	{
 		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
 			   (searchText.length >= 3 || constrainText.length < 3);
 	}
 	
-	SearchView.prototype.clearSearchTimeout = function()
+	SearchOptionsView.prototype.clearSearchTimeout = function()
 	{
 		if (this._searchTimeout != null)
 		{
@@ -2176,7 +2165,7 @@ var SearchView = (function () {
 		}
 	}
 	
-	SearchView.prototype.restartSearchTimeout = function(val)
+	SearchOptionsView.prototype.restartSearchTimeout = function(val)
 	{
 		if (this.searchPath(val) === "")
 			this.cancelSearch();
@@ -2184,7 +2173,7 @@ var SearchView = (function () {
 			this.startSearchTimeout(val);
 	}
 	
-	SearchView.prototype.textChanged = function()
+	SearchOptionsView.prototype.textChanged = function()
 	{
 		this.clearSearchTimeout();
 		
@@ -2197,12 +2186,63 @@ var SearchView = (function () {
 				 this.canConstrain(this._foundCompareText, val))
 		{
 			if (this.getDataChunker.hasShortResults())
-				this.constrainFoundObjects(val);
+			{
+				this.setConstrainText(val);
+				this.constrainFoundObjects();
+			}
 			else
 				this.startSearchTimeout(val);
 		}
 		else 
 			this.restartSearchTimeout(val);
+	}
+	
+	SearchOptionsView.prototype.appendSearchArea = function()
+	{
+		throw ("SearchOptionsView.appendSearchArea must be overridden");
+	}
+
+	return SearchOptionsView;
+})();
+
+
+var SearchView = (function () {
+	SearchView.prototype = new SearchOptionsView;
+	SearchView.prototype.optionsView = null;
+	SearchView.prototype.inputBox = null;
+	
+	function SearchView(containerNode, placeHolder, fill, chunkerType) {
+		if (containerNode)
+		{
+			var _this = this;
+			var inputBox = this.appendInput(containerNode, placeHolder);
+		
+			this.inputBox = inputBox.node();
+			$(this.inputBox).on("input", function() { _this.textChanged() });
+		}
+		
+		SearchOptionsView.call(this, containerNode, fill, chunkerType);
+		if (containerNode)
+		{
+			/* Call setupInputBox at the end because it may trigger an input event. */
+			this.setupInputBox();
+		}
+	}
+	
+	SearchView.prototype.setupInputBox = function()
+	{
+		/* Do nothing by default */
+	}
+	
+	SearchView.prototype.inputText = function(val)
+	{
+		if (val === undefined)
+			return this.inputBox.value.trim();
+		else
+		{
+			this.inputBox.value = val;
+			$(this.inputBox).trigger("input");
+		}
 	}
 	
 	SearchView.prototype.appendInput = function(containerNode, placeholder)
@@ -2218,11 +2258,6 @@ var SearchView = (function () {
 			.attr("placeholder", placeholder);
 	}
 	
-	SearchView.prototype.appendSearchArea = function()
-	{
-		throw ("appendSearchArea must be overridden");
-	}
-
 	return SearchView;
 })();
 

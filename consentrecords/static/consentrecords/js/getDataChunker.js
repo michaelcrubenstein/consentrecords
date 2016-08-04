@@ -13,15 +13,25 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._onDoneSearch = null;
 	GetDataChunker.prototype._check = null;
 	
+	GetDataChunker.prototype.invalidatePendingData = function()
+	{
+		this._inGetData = false;
+	}
+	
 	GetDataChunker.prototype._clearScrollCheck = function()
 	{
 		if (this._check != null)
 		{
-			$(this._containerNode.offsetParent).off("scroll", this._check);
-			$(window).off("resize", this._check);
+			var scrollingNode;
+			if ($(this._containerNode).css('overflow-y') == 'scroll')
+				scrollingNode = $(this._containerNode);
+			else
+				scrollingNode = $(this._containerNode).scrollingParent();
+			scrollingNode.off("scroll", this._check);
+			scrollingNode.off("resize.cr", this._check);
 			this._check = null;
 		}
-		this._inGetData = false;
+		this.invalidatePendingData();
 	}
 	
 	GetDataChunker.prototype.clearLoadingMessage = function()
@@ -117,13 +127,17 @@ var GetDataChunker = (function() {
 			_this._onScroll(eventObject.data);
 		}
 		
-		var scrollingNode = this._containerNode.offsetParent;
+		var scrollingNode;
+		if ($(this._containerNode).css('overflow-y') == 'scroll')
+			scrollingNode = $(this._containerNode);
+		else
+			scrollingNode = $(this._containerNode).scrollingParent();
 		
-		if (!scrollingNode)
-			throw "offsetParent not specified; containerNode is not displayed"
+		if (scrollingNode.size() == 0)
+			throw "scrollingParent not specified; containerNode is not displayed"
 			
-		$(scrollingNode).scroll(startVal, this._check);
-		$(scrollingNode).on("resize.cr", this._check);
+		scrollingNode.scroll(startVal, this._check);
+		scrollingNode.on("resize.cr", this._check);
 	}
 	
 	GetDataChunker.prototype.checkStart = function(startVal)
@@ -144,8 +158,8 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.isOverflowingY = function(node)
 	{
-		var p = node.offsetParent;
-		return node.offsetTop > $(p).scrollTop() + $(p).height();
+		var $p = $(node).scrollParent();
+		return node.offsetTop > $p.scrollTop() + $p.height();
 	}
 	
 	GetDataChunker.prototype._onScroll = function(startVal)
