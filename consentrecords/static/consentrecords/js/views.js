@@ -1970,7 +1970,7 @@ var SearchOptionsView = (function () {
 			this._fill = fill;
 			
 			this.noResultsDiv = d3.select(containerNode).append('div')
-				.classed('help-block noResults', true)
+				.classed('no-results', true)
 				.style('display', 'none');
 
 			this.listPanel = this.appendSearchArea(containerNode);
@@ -2028,11 +2028,13 @@ var SearchOptionsView = (function () {
 		foundObjects.sort(sortByDescription);
 	}
 	
-	SearchOptionsView.prototype.constrainFoundObjects = function(val)
+	SearchOptionsView.prototype.setConstrainText = function(val)
 	{
-		if (val !== undefined)
-			this._constrainCompareText = val;
-			
+		this._constrainCompareText = val;
+	}
+	
+	SearchOptionsView.prototype.constrainFoundObjects = function()
+	{
 		var buttons = this.listPanel.selectAll(".btn");
 		var _this = this;
 		buttons.style("display", function(d) 
@@ -2184,7 +2186,10 @@ var SearchOptionsView = (function () {
 				 this.canConstrain(this._foundCompareText, val))
 		{
 			if (this.getDataChunker.hasShortResults())
-				this.constrainFoundObjects(val);
+			{
+				this.setConstrainText(val);
+				this.constrainFoundObjects();
+			}
 			else
 				this.startSearchTimeout(val);
 		}
