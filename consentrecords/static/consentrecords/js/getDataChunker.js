@@ -26,7 +26,7 @@ var GetDataChunker = (function() {
 			if ($(this._containerNode).css('overflow-y') == 'scroll')
 				scrollingNode = $(this._containerNode);
 			else
-				scrollingNode = $(this._containerNode).scrollingParent();
+				scrollingNode = $(this._containerNode).scrollParent();
 			scrollingNode.off("scroll", this._check);
 			scrollingNode.off("resize.cr", this._check);
 			this._check = null;
@@ -131,10 +131,10 @@ var GetDataChunker = (function() {
 		if ($(this._containerNode).css('overflow-y') == 'scroll')
 			scrollingNode = $(this._containerNode);
 		else
-			scrollingNode = $(this._containerNode).scrollingParent();
+			scrollingNode = $(this._containerNode).scrollParent();
 		
 		if (scrollingNode.size() == 0)
-			throw "scrollingParent not specified; containerNode is not displayed"
+			throw "scrollParent not specified; containerNode is not displayed"
 			
 		scrollingNode.scroll(startVal, this._check);
 		scrollingNode.on("resize.cr", this._check);
