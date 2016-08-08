@@ -109,7 +109,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.textLeftMargin = 3;
 	ComparePath.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	ComparePath.prototype.textDetailRightMargin = 7; /* textRightMargin; */
-	ComparePath.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	ComparePath.prototype.pathBackground = "white";
 	ComparePath.prototype.showDetailIconWidth = 18;
 	ComparePath.prototype.loadingMessageTop = "4.5em";
@@ -387,36 +386,33 @@ var ComparePath = (function() {
 		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
 		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-organization', true)
 				.text(orgString)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
 		if (s && s.length > 0 && s !== orgString)
 		{
-			checkSpacing("2px");
 			tspan = detailText.append('tspan')
 				.classed('site', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-dates', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
@@ -430,12 +426,12 @@ var ComparePath = (function() {
 		if (s && s.length > 0)
 		{
 			checkSpacing("4px");
-			this.appendWrappedText(s, function()
+			this.appendWrappedText(s, function(spanIndex)
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
 						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", _this.detailTextSpacing);
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
 				},
 				maxWidth);
 		}

@@ -157,6 +157,13 @@ var PathView = (function() {
 
 	PathView.prototype.isLayoutDirty = true;
 	
+	/* Constants related to the detail text. */
+	PathView.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
+	PathView.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
@@ -710,7 +717,6 @@ var PathLines = (function() {
 	PathLines.prototype.textLeftMargin = 3;
 	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
-	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "4.5em";
@@ -923,48 +929,36 @@ var PathLines = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
-		function checkSpacing(dy)
-		{
-			if (maxWidth > 0)
-				detailText.append('tspan')
-						  .text(' ')
-						  .attr("x", this.textDetailLeftMargin)
-						  .attr("dy", dy);
-		}
-			
 		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
 		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-organization', true)
 				.text(orgString)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
 		if (s && s.length > 0 && s !== orgString)
 		{
-			checkSpacing("2px");
 			tspan = detailText.append('tspan')
 				.classed('site', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-dates', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
@@ -977,14 +971,12 @@ var PathLines = (function() {
 		s = getTagList(fd.experience);
 		if (s && s.length > 0)
 		{
-			checkSpacing("4px");
-			
-			this.appendWrappedText(s, function()
+			this.appendWrappedText(s, function(spanIndex)
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
 						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", _this.detailTextSpacing);
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
 				},
 				maxWidth);
 		}
