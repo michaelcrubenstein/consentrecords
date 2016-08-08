@@ -128,7 +128,7 @@ var FlagData = (function() {
 	FlagData.prototype.getColor = function()
 	{
 		var column = this.getColumn();
-		return PathLines.prototype.guideData[column].color;
+		return PathGuides.data[column].color;
 	}
 	
 	FlagData.prototype.colorElement = function(r)
@@ -175,14 +175,6 @@ var PathView = (function() {
 	PathView.prototype.detailFlagData = null;
 	
 	PathView.prototype.guideHSpacing = 30;
-	PathView.prototype.labelYs = [11, 33];
-	PathView.prototype.guideData = [{name: "Housing", labelY: PathView.prototype.labelYs[0], color: "#804040"},
-							  {name: "School", labelY: PathView.prototype.labelYs[1], color: "#2828E7"},
-							  {name: "Interests", labelY: PathView.prototype.labelYs[0], color: "#8328E7"},
-							  {name: "Career", labelY: PathView.prototype.labelYs[1], color: "#805050"},
-							  {name: "Giving Back", labelY: PathView.prototype.labelYs[0], color: "#D55900"},
-							  {name: "Wellness", labelY: PathView.prototype.labelYs[1], color: "#0694F3"},
-							  {name: "Other", labelY: PathView.prototype.labelYs[0], color: "#0BBB0B"}];
 							  
 	PathView.prototype.emToPX = 11;
 							  
@@ -745,7 +737,7 @@ var PathLines = (function() {
 
 	PathLines.prototype.flagWidth = 0;
 	
-	PathLines.prototype.columnData = PathView.prototype.guideData;
+	PathLines.prototype.columnData = PathGuides.data;
 
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
@@ -1411,7 +1403,7 @@ var PathLines = (function() {
 				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
 				
 		var guides = this.guideGroup.selectAll('g')
-			.data(this.guideData)
+			.data(PathGuides.data)
 			.enter()
 			.append('g')
 			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });

@@ -121,7 +121,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.experienceGroupDY = 37;
 	
 	ComparePath.prototype.guideHSpacing = 0;
-	ComparePath.prototype.labelYs = [11, 33];
 
 	ComparePath.prototype.detailRectX = 1.5;
 	
@@ -140,8 +139,8 @@ var ComparePath = (function() {
 
 	ComparePath.prototype.flagWidth = 0;
 	
-	ComparePath.prototype.columnData = [{labelY: PathView.prototype.labelYs[0], color: "#666"}, 
-										{labelY: PathView.prototype.labelYs[0], color: "#666"}];
+	ComparePath.prototype.columnData = [{labelY: PathGuides.labelYs[0], color: "#666"}, 
+										{labelY: PathGuides.labelYs[0], color: "#666"}];
 
 	ComparePath.prototype.handleValueDeleted = function(experience)
 	{
