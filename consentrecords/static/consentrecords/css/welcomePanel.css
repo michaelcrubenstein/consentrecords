@@ -6,6 +6,14 @@ panel.welcome ol li {
 	background: white;
 }
 
+/* Center a div to be a maximum width of 400 pixels so that it
+	looks OK on a large screen.
+ */
+panel.welcome ol li > div {
+	max-width: 400px;
+	margin: auto;
+}
+
 panel.welcome p.body {
 	position: absolute;
 	top: 0px;
@@ -20,92 +28,95 @@ panel.welcome ol li p.path-description-link {
 
 panel.welcome ol li span.about-organizations {
 	position: absolute;
+	bottom: 0px;
+	vertical-align: middle;
+	line-height: 40px;
 	font-size: 0.9em;
-	bottom: 1.1em;
 	left: 1.0417em;
 	text-decoration: underline;
 }
 
-panel.welcome ol li span.sign-in-prompt {
+panel.welcome div.left {
 	position: absolute;
-	bottom: 5.0em;
-	right: 0.9375em;
-	text-align: right;
-}
-
-panel.welcome span.create-account-prompt {
-	position: absolute;
-	bottom: 3.0em;
-	right: 0.9375em;
-	text-align: right;
-}
-
-panel.welcome a.left {
-	position: absolute;
-	bottom: 40px;
+	bottom: 0px;
 	left: 0px;
+	padding: 12px;
 }
 
-panel.welcome a.right {
+panel.welcome div.right {
 	position: absolute;
-	bottom: 40px;
-	right: 40px;
+	bottom: 0px;
+	right: 0px;
+	padding: 12px;
+	padding-left: 0px;
 }
 
-panel.welcome a svg {
-	height: 40px;
-	width: 40px;
+panel.welcome svg.chevron {
+	height: 20px;
+	width: 12px;
 	fill: #2c55CC;
 }
 
-panel.welcome svg {
-	position: absolute;
-	top: 0px;
-	left: 0px;
+panel.welcome div.right div {
+	overflow-x: hidden;
+	white-space: nowrap;
 }
 
-panel.welcome svg path {
+panel.welcome div.right div > * {
+	position: relative;
+	white-space: nowrap;
+	padding-left: 12px;
+}
+
+panel.welcome div svg.chevron path {
 	fill: transparent;
 	stroke-width: 3px;
 }
 
-panel.welcome-organization {
+panel.welcome-info {
 	background: white;
 }
 
-panel.welcome-organization p {
+panel.welcome p {
 	margin-top: 10px;
 	margin-left: 10px;
 	margin-right: 10px;
 }
 
-panel.welcome-organization p.indent1 {
-	margin-top: 10px;
+panel.welcome p.heading1 {
+	font-weight: bold;
+}
+
+panel.welcome p.title {
+	font-weight: bold;
+	font-size: 1.4em;
+	text-align: center;
+	padding-top: 0.5em;
+	padding-bottom: 0.2em;
+}
+
+panel.welcome p.center {
+	text-align: center;
+}
+
+panel.welcome p.indent1 {
 	margin-left: 30px;
-	margin-right: 10px;
 }
 
-panel.welcome-organization p.indent2 {
-	margin-top: 10px;
+panel.welcome p.indent2 {
 	margin-left: 40px;
-	margin-right: 10px;
+	font-size: 0.9em;
 }
 
-panel.welcome-organization p.indent3 {
-	margin-top: 10px;
+panel.welcome p.indent3 {
 	margin-left: 50px;
-	margin-right: 10px;
 }
 
-panel.welcome-organization p.indent4 {
-	margin-top: 10px;
+panel.welcome p.indent4 {
 	margin-left: 60px;
-	margin-right: 10px;
 }
 
-panel.welcome-organization p.indent5 {
-	margin-top: 10px;
+panel.welcome p.indent5 {
 	margin-left: 70px;
-	margin-right: 10px;
 }
 
