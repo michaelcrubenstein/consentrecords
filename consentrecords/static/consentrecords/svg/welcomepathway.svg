@@ -167,8 +167,8 @@
 			}
 			
 			@keyframes moveup9 {
-    			from {transform: translate(90px, -0px);}
-    			to   {transform: translate(90px, 0px);}
+    			from {transform: translate(120px, -0px);}
+    			to   {transform: translate(120px, 210px);}
 			}
 			
 			svg.pathway g.flag.flag9 {
@@ -178,8 +178,8 @@
 			}
 			
 			@keyframes moveup10 {
-    			from {transform: translate(120px, -0px);}
-    			to   {transform: translate(120px, 210px);}
+    			from {transform: translate(150px, -0px);}
+    			to   {transform: translate(150px, 240px);}
 			}
 			
 			svg.pathway g.flag.flag10 {
@@ -187,9 +187,10 @@
 				animation-duration: 1s;
 				animation-delay: 5.1s;
 			}
+			
 			@keyframes moveup11 {
     			from {transform: translate(150px, -0px);}
-    			to   {transform: translate(150px, 240px);}
+    			to   {transform: translate(150px, 270px);}
 			}
 			
 			svg.pathway g.flag.flag11 {
@@ -197,9 +198,10 @@
 				animation-duration: 1s;
 				animation-delay: 5.7s;
 			}
+			
 			@keyframes moveup12 {
-    			from {transform: translate(150px, -0px);}
-    			to   {transform: translate(150px, 270px);}
+    			from {transform: translate(90px, -0px);}
+    			to   {transform: translate(90px, 0px);}
 			}
 			
 			svg.pathway g.flag.flag12 {
@@ -207,9 +209,10 @@
 				animation-duration: 1s;
 				animation-delay: 6.3s;
 			}
+			
 			@keyframes moveup13 {
     			from {transform: translate(180px, -0px);}
-    			to   {transform: translate(180px, 90px);}
+    			to   {transform: translate(180px, 30px);}
 			}
 			
 			svg.pathway g.flag.flag13 {
@@ -313,14 +316,6 @@
 			</text>
 		</g>
 		<g class="flag flag9">
-			<line class="flag-pole" fill="#805050" stroke="#805050" y2="2.333em"></line>
-			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
-			<rect class="bg" x="1.5" fill="#805050" stroke="#805050" height="2.333em" width="142"></rect>
-			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Career Goals</tspan>
-			</text>
-		</g>
-		<g class="flag flag10">
 			<line class="flag-pole" stroke="#D55900" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#D55900" height="2.333em" width="142"></rect>
@@ -328,7 +323,7 @@
 				<tspan dy="1.1em">Helping Others</tspan>
 			</text>
 		</g>
-		<g class="flag flag11">
+		<g class="flag flag10">
 			<line class="flag-pole" stroke="#0694F3" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#0694F3" height="2.333em" width="142"></rect>
@@ -336,12 +331,20 @@
 				<tspan dy="1.1em">Your Health</tspan>
 			</text>
 		</g>
-		<g class="flag flag12">
+		<g class="flag flag11">
 			<line class="flag-pole" stroke="#0694F3" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#0694F3" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
 				<tspan dy="1.1em">Exercise</tspan>
+			</text>
+		</g>
+		<g class="flag flag12">
+			<line class="flag-pole" fill="#805050" stroke="#805050" y2="2.333em"></line>
+			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
+			<rect class="bg" x="1.5" fill="#805050" stroke="#805050" height="2.333em" width="142"></rect>
+			<text class="flag-label" x="3">
+				<tspan dy="1.1em">Career Goals</tspan>
 			</text>
 		</g>
 		<g class="flag flag13">
