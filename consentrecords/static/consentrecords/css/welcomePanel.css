@@ -2,6 +2,9 @@ panel.welcome ol li {
 	display: block;
 	position: absolute;
 	width: 100%;
+}
+
+panel.welcome div.panel-fill > ol > li {
 	height: 100%;
 	background: white;
 }
