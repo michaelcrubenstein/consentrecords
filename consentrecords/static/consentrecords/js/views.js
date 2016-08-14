@@ -279,7 +279,7 @@ function asyncHidePanelDown(panelNode, doRemove, completeFunction)
 		});
 }
 
-function hidePanelRight(panelNode, doRemove, completeFunction)
+function hidePanelRight(panelNode, doRemove, done)
 {
 	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
 	
@@ -290,8 +290,8 @@ function hidePanelRight(panelNode, doRemove, completeFunction)
 			if (doRemove)
 				$(this).remove();
 			unblockClick();
-			if (completeFunction)
-				completeFunction();
+			if (done)
+				done();
 		});
 }
 		
@@ -823,7 +823,8 @@ function appendLeftChevrons(buttons)
 function appendLeftChevronSVG(container)
 {
 	var svg = container.append('svg')
-		.attr('viewBox', '0 0 512 512');
+		.attr('viewBox', '160 96 192 320')
+		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')
 		.attr('points', "352,128.4 319.7,96 160,256 160,256 160,256 319.7,416 352,383.6 224.7,256 ");
 	return svg;
@@ -832,9 +833,10 @@ function appendLeftChevronSVG(container)
 function appendRightChevronSVG(container)
 {
 	var svg = container.append('svg')
-		.attr('viewBox', '0 0 512 512');
+		.attr('viewBox', '0 96 192 320')
+		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')
-		.attr('points', "160,128.4 192.3,96 352,256 352,256 352,256 192.3,416 160,383.6 287.3,256");
+		.attr('points', "0,128.4 32.3,96 192,256 192,256 192,256 32.3,416 0,383.6 127.3,256");
 	return svg;
 }
 

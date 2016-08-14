@@ -128,7 +128,7 @@ var FlagData = (function() {
 	FlagData.prototype.getColor = function()
 	{
 		var column = this.getColumn();
-		return PathLines.prototype.guideData[column].color;
+		return PathGuides.data[column].color;
 	}
 	
 	FlagData.prototype.colorElement = function(r)
@@ -157,6 +157,13 @@ var PathView = (function() {
 
 	PathView.prototype.isLayoutDirty = true;
 	
+	/* Constants related to the detail text. */
+	PathView.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
+	PathView.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	PathView.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
@@ -175,14 +182,6 @@ var PathView = (function() {
 	PathView.prototype.detailFlagData = null;
 	
 	PathView.prototype.guideHSpacing = 30;
-	PathView.prototype.labelYs = [11, 33];
-	PathView.prototype.guideData = [{name: "Housing", labelY: PathView.prototype.labelYs[0], color: "#804040"},
-							  {name: "School", labelY: PathView.prototype.labelYs[1], color: "#2828E7"},
-							  {name: "Interests", labelY: PathView.prototype.labelYs[0], color: "#8328E7"},
-							  {name: "Career", labelY: PathView.prototype.labelYs[1], color: "#805050"},
-							  {name: "Giving Back", labelY: PathView.prototype.labelYs[0], color: "#D55900"},
-							  {name: "Wellness", labelY: PathView.prototype.labelYs[1], color: "#0694F3"},
-							  {name: "Other", labelY: PathView.prototype.labelYs[0], color: "#0BBB0B"}];
 							  
 	PathView.prototype.emToPX = 11;
 							  
@@ -718,7 +717,6 @@ var PathLines = (function() {
 	PathLines.prototype.textLeftMargin = 3;
 	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
-	PathLines.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "4.5em";
@@ -745,7 +743,7 @@ var PathLines = (function() {
 
 	PathLines.prototype.flagWidth = 0;
 	
-	PathLines.prototype.columnData = PathView.prototype.guideData;
+	PathLines.prototype.columnData = PathGuides.data;
 
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
@@ -931,48 +929,36 @@ var PathLines = (function() {
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
-		function checkSpacing(dy)
-		{
-			if (maxWidth > 0)
-				detailText.append('tspan')
-						  .text(' ')
-						  .attr("x", this.textDetailLeftMargin)
-						  .attr("dy", dy);
-		}
-			
 		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
 		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-organization', true)
 				.text(orgString)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
 		if (s && s.length > 0 && s !== orgString)
 		{
-			checkSpacing("2px");
 			tspan = detailText.append('tspan')
 				.classed('site', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
 		s = getDateRange(fd.experience);
 		if (s && s.length > 0)
 		{
-			checkSpacing("4px");
 			tspan = detailText.append('tspan')
 				.classed('detail-dates', true)
 				.text(s)
 				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
@@ -985,14 +971,12 @@ var PathLines = (function() {
 		s = getTagList(fd.experience);
 		if (s && s.length > 0)
 		{
-			checkSpacing("4px");
-			
-			this.appendWrappedText(s, function()
+			this.appendWrappedText(s, function(spanIndex)
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
 						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", _this.detailTextSpacing);
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
 				},
 				maxWidth);
 		}
@@ -1411,7 +1395,7 @@ var PathLines = (function() {
 				.attr('transform', "translate({0}, 0)".format(this.experienceGroupDX));
 				
 		var guides = this.guideGroup.selectAll('g')
-			.data(this.guideData)
+			.data(PathGuides.data)
 			.enter()
 			.append('g')
 			.attr('transform', function(d, i) { return "translate({0}, 0)".format(i * _this.guideHSpacing); });
@@ -1670,8 +1654,7 @@ var PathlinesPanel = (function () {
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
-	function PathlinesPanel(user, previousPanel, canDone) {
-		canDone = canDone !== undefined ? canDone : true;
+	function PathlinesPanel(user, previousPanel, done) {
 		var _this = this;
 		this.user = user;
 		
@@ -1685,11 +1668,22 @@ var PathlinesPanel = (function () {
 
 		var settingsButton;
 		
-		if (canDone)
+		if (done)
 		{
-			var backButton = this.navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+			var backButton = this.navContainer.appendLeftButton();
+			if (done === true)
+				backButton.on('click', handleCloseRightEvent);
+			else
+				backButton.on("click", function()
+					{
+						if (prepareClick('click', 'Close Right'))
+						{
+							hidePanelRight(_this.node(), true, done);
+						}
+						d3.event.preventDefault();
+					});
 			backButton.append("span").text("Done");
+			
 			settingsButton = this.navContainer.appendRightButton();
 		}
 		else
@@ -1704,17 +1698,19 @@ var PathlinesPanel = (function () {
 		this.bottomNavContainer = this.appendBottomNavContainer();
 		this.bottomNavContainer.nav
 			.classed("transparentBottom", true);
-
-		var findButton = this.bottomNavContainer.appendRightButton()
-				.on("click",
+		
+		if (!done)
+		{	
+			var infoButton = this.bottomNavContainer.appendRightButton()
+				.on('click',
 					function() {
-						if (prepareClick('click', 'find experience'))
+						if (prepareClick('click', 'show welcome'))
 						{
 							try
 							{
 								showClickFeedback(this);
-								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
-								showPanelLeft(newPanel.node(), unblockClick);
+								var newPanel = new WelcomePanel(_this.node());
+								showPanelUp(newPanel.node(), unblockClick);
 							}
 							catch(err)
 							{
@@ -1723,8 +1719,29 @@ var PathlinesPanel = (function () {
 						}
 						d3.event.preventDefault();
 					});
-		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
-		findButton.style("display", "none");
+			drawInfoButtons(infoButton);
+		}
+
+// 		var findButton = this.bottomNavContainer.appendRightButton()
+// 				.on("click",
+// 					function() {
+// 						if (prepareClick('click', 'find experience'))
+// 						{
+// 							try
+// 							{
+// 								showClickFeedback(this);
+// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+// 								showPanelLeft(newPanel.node(), unblockClick);
+// 							}
+// 							catch(err)
+// 							{
+// 								syncFailFunction(err);
+// 							}
+// 						}
+// 						d3.event.preventDefault();
+// 					});
+// 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
+// 		findButton.style("display", "none");
 		
 		var shareButton = this.bottomNavContainer.appendLeftButton()
 			.classed("share", true)
@@ -1786,7 +1803,7 @@ var PathlinesPanel = (function () {
 				$(user.getCell("_last name")).on("dataChanged.cr", checkTitle);
 				$(user.getCell("_email")).on("dataChanged.cr", checkTitle);
 				
-				findButton.style("display", user.privilege === "_administer" ? null : "none");
+// 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
 				_this.calculateHeight();

@@ -299,6 +299,7 @@
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}"></script>
 	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/comparePathsPanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
@@ -696,7 +697,7 @@
 					}
 					handleState = function()
 					{
-						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, firstPanel.node());
+						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, previousPanel);
 						showPanelLeft(panel.node());
 					}
 					stateString = "";	/* So it only happens once. */
@@ -713,7 +714,21 @@
 								{
 									if (users.length > 0)
 									{
-										var panel = new PathlinesPanel(users[0], firstPanel.node(), true);
+										var done;
+										var panel;
+										if (cr.signedinUser.getValueID())
+										{
+											panel = new PathlinesPanel(users[0], firstPanel.node(), true);
+										}	
+										else
+										{
+											done = function()
+												{
+													firstPanel = new WelcomePanel(previousPanel);
+													showPanelNow(firstPanel.node());
+												};
+											panel = new PathlinesPanel(users[0], previousPanel, done);
+										}
 										panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
 										showPanelLeft(panel.node());
 									}
@@ -727,65 +742,67 @@
 					}
 					stateString = "";
 				}
-				else if (stateString.startsWith("addExperience"))
-				{
-					stateString = stateString.substring("addExperience".length);
-					if (stateString.length > 0)
-					{
-						var experienceID = stateString;
-						var handleState = function(pathwayPanel)
-						{
-							if (!pathwayPanel)
-							{
-								if (!firstPanel)
-								{
-									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-									showPanelUp(firstPanel.node());
-								}
-								pathwayPanel = firstPanel;
-							}
-							var pathway = pathwayPanel.pathtree;
-							var experiencesPath = cr.signedinUser.getValue("More Experiences");
-							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
-								{
-									if (experiences.length > 0)
-									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
-												if (experiences[0].typeName == "Service")
-												{
-													var experience = new Experience(experiencesPath);
-													experience.addService({instance: experiences[0]});
-													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
-													showPanelUp(panel.node());
-												}
-												else if (experiences[0].typeName == "Organization")
-												{
-													var experience = new Experience(experiencesPath);
-													experience.setOrganization({instance: experiences[0]});
-													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
-													showPanelUp(panel.node());
-												}
-											},
-											function(err)
-											{
-												asyncFailFunction(err);
-											});
-									}
-									else
-									{
-										asyncFailFunction("The specified experience does not exist or you do not have permission to view it.");
-									}
-								},
-								fail: asyncFailFunction});
-						}
-						needsSignin = true;
-					}
-					stateString = "";
-				}
+// 				else if (stateString.startsWith("addExperience"))
+// 				{
+//					// This is superseded by "addToPathway".
+// 					stateString = stateString.substring("addExperience".length);
+// 					if (stateString.length > 0)
+// 					{
+// 						var experienceID = stateString;
+// 						var handleState = function(pathwayPanel)
+// 						{
+// 							if (!pathwayPanel)
+// 							{
+// 								if (!firstPanel)
+// 								{
+// 									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+// 									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+// 									showPanelUp(firstPanel.node());
+// 								}
+// 								pathwayPanel = firstPanel;
+// 							}
+// 							var pathway = pathwayPanel.pathtree;
+// 							var experiencesPath = cr.signedinUser.getValue("More Experiences");
+// 							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
+// 								{
+// 									if (experiences.length > 0)
+// 									{
+// 										crp.pushCheckCells(cr.signedinUser, undefined, 
+// 											function() {
+// 												if (experiences[0].typeName == "Service")
+// 												{
+// 													var experience = new Experience(experiencesPath);
+// 													experience.addService({instance: experiences[0]});
+// 													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
+// 													showPanelUp(panel.node());
+// 												}
+// 												else if (experiences[0].typeName == "Organization")
+// 												{
+// 													var experience = new Experience(experiencesPath);
+// 													experience.setOrganization({instance: experiences[0]});
+// 													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
+// 													showPanelUp(panel.node());
+// 												}
+// 											},
+// 											function(err)
+// 											{
+// 												asyncFailFunction(err);
+// 											});
+// 									}
+// 									else
+// 									{
+// 										asyncFailFunction("The specified experience does not exist or you do not have permission to view it.");
+// 									}
+// 								},
+// 								fail: asyncFailFunction});
+// 						}
+// 					}
+// 					needsSignin = true;
+// 					stateString = "";
+// 				}
 				else if (stateString.startsWith("addToPathway"))
 				{
+					/* Add an experience specified in the URL to this pathway. */
 					var handleState = function(pathwayPanel)
 					{
 						crp.pushCheckCells(cr.signedinUser, undefined, 
@@ -808,6 +825,7 @@
 				}
 				else if (stateString.startsWith("accept"))
 				{
+					/* Accept the specified follower */
 					handleState = function(pathwayPanel)
 					{
 						if (!pathwayPanel)
@@ -856,6 +874,7 @@
 				}
 				else if (stateString.startsWith("ignore"))
 				{
+					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
 						if (!pathwayPanel)
@@ -932,10 +951,13 @@
 			}
 			else if (!needsSignin)
 			{
-				firstPanel = new WelcomePanel(previousPanel);
-				showPanelNow(firstPanel.node());
 				if (handleState)
 					handleState();
+				else
+				{
+					firstPanel = new WelcomePanel(previousPanel);
+					showPanelNow(firstPanel.node());
+				}
 			}
 			else
 			{
