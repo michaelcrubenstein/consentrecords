@@ -3,20 +3,67 @@ var WelcomePanel = (function () {
 	
 	WelcomePanel.prototype.handleResize = function()
 	{
-		var ol = this.mainDiv.selectAll('ol');
-		var li = ol.selectAll('li');
-		var activeIndex = parseInt(ol.selectAll('li.active').attr('index'));
+		var ol = $(this.mainDiv.node()).children('ol');
+		var li = ol.children('li');
+		var activeIndex = ol.children('li.active').index();
 		var width = this.scrollAreaWidth();
-		li.style('left', function(fd, i)
+		li.css('left', function(i)
 			{
 				return "{0}px".format(i < activeIndex ? -width :
 					   				  i == activeIndex ? 0 : width);
 			});
+			
 		var _this = this;
+		var subOLs = li.find('ol');
+		subOLs.each(function()
+			{
+				var subOL = $(this);
+				var subLI = subOL.children('li');
+				var subActiveIndex = ol.children('li.active').index();
+				var subWidth = _this.scrollAreaWidth();
+				subLI.css('left', function(i)
+					{
+						return "{0}px".format(i < subActiveIndex ? -subWidth :
+					   						  i == subActiveIndex ? 0 : subWidth);
+					});
+			});
 		this.mainDiv.selectAll('li svg.pathway')
-			.attr('height', function(d) { 
+			.attr('height', function() { 
 				return _this.scrollAreaHeight() - $(this).position().top - 45;
 			});
+	}
+	
+	WelcomePanel.prototype.hideLastRightButton = function()
+	{
+		var div1 = $(this.mainDiv.node()).find('div.right>div');
+		var offset = div1.children(':first-child').outerWidth(true);
+		div1.children().animate({left: "{0}px".format(-offset)});
+	}
+
+	WelcomePanel.prototype.showLastRightButton = function()
+	{
+		var div1 = $(this.mainDiv.node()).find('div.right>div');
+		var offset = div1.children(':first-child').outerWidth(true) +
+					 div1.children(':nth-child(2)').outerWidth(true);
+		div1.children().animate({left: "{0}px".format(-offset)});
+	}
+	
+	WelcomePanel.prototype.highlightLabels = function(svg, index)
+	{
+		function highlight(tspan, isBold)
+		{
+			var newWeight = isBold ? 700 : 400;
+			var newFill = isBold ? '#222222' : '#666666';
+			tspan.css({'font-weight': newWeight, 
+					   fill: newFill, 
+					   transition: '0.7s'});
+		}
+		
+		highlight(svg.find('g.labels text tspan:nth-child(1)'), index == 0);
+		highlight(svg.find('g.labels text tspan:nth-child(2)'), index == 0);
+		highlight(svg.find('g.labels text tspan:nth-child(3)'), index == 1);
+		highlight(svg.find('g.labels text tspan:nth-child(4)'), index == 2);
+		highlight(svg.find('g.labels text tspan:nth-child(5)'), index == 3);
 	}
 	
 	WelcomePanel.prototype.showPrevious = function()
@@ -25,8 +72,53 @@ var WelcomePanel = (function () {
 		var ol = $(this.mainDiv.node()).children('ol');
 		
 		var curPanel = ol.children('li.active');
+		var subPanels = curPanel.find('ol');
+		if (subPanels)
+		{
+			var curSubPanel = subPanels.children('li.active');
+			if (curSubPanel.size())
+			{
+				var prevSubPanel = curSubPanel.prev('li');
+				if (prevSubPanel.size())
+				{
+					if (prepareClick('click', 'prev welcome subpanel'))
+					{
+						curSubPanel
+							.animate({left: "{0}px".format(_this.scrollAreaWidth())},
+									 700,
+									 function()
+									 {
+										d3.select(this).classed('active', false);
+									 });
+						prevSubPanel
+							.animate({left: "{0}px".format(0)},
+									 700,
+									 function()
+									 {
+										d3.select(this).classed('active', true);
+										unblockClick();
+									 });
+									 
+						var svg = curPanel.find('svg.experience-detail');
+						if (svg.size() > 0)
+						{
+							var subPanelIndex = prevSubPanel.index();
+							this.highlightLabels(svg, prevSubPanel.index());
+						}			 
+
+						if (curPanel.next().size() == 0 &&
+							curSubPanel.next().size() == 0)
+						{
+							this.hideLastRightButton();
+						}
+						return;
+					}
+				}
+			}
+		}
+		
 		var prevPanel = curPanel.prev('li');
-		var activeIndex = parseInt(curPanel.attr('index'));
+		var activeIndex = curPanel.index();
 		if (curPanel.size())
 		{
 			if (prepareClick('click', 'prev welcome panel {0}'.format(activeIndex)))
@@ -45,8 +137,7 @@ var WelcomePanel = (function () {
 							 function()
 							 {
 								d3.select(this).classed('active', true);
-								var isFirst = parseInt(d3.select(this).attr('index')) ==
-									0;
+								var isFirst = $(this).index() == 0;
 								_this.mainDiv.selectAll('div.left')
 									.style('display', isFirst ? "none" : null);
 								unblockClick();
@@ -60,24 +151,68 @@ var WelcomePanel = (function () {
 				}
 				else if (curPanel.get(0) == ol.children('li:last-child').get(0))
 				{
-					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					var offset = div1.children(':first-child').outerWidth(true);
-					div1.children().animate({left: "{0}px".format(-offset)});
+					this.hideLastRightButton();
 				}
 			}
 		}
 	}
 
-	
 	WelcomePanel.prototype.showNext = function()
 	{
 		var _this = this;
 		var ol = $(this.mainDiv.node()).children('ol');
 		
 		var curPanel = ol.children('li.active');
+		var subPanels = curPanel.find('ol');
+		if (subPanels)
+		{
+			var curSubPanel = subPanels.children('li.active');
+			if (curSubPanel.size())
+			{
+				var nextSubPanel = curSubPanel.next('li');
+				if (nextSubPanel.size())
+				{
+					if (prepareClick('click', 'next welcome subpanel'))
+					{
+						curSubPanel
+							.animate({left: "{0}px".format(-_this.scrollAreaWidth())},
+									 700,
+									 function()
+									 {
+										d3.select(this).classed('active', false);
+									 });
+						nextSubPanel
+							.animate({left: "{0}px".format(0)},
+									 700,
+									 function()
+									 {
+										d3.select(this).classed('active', true);
+										_this.mainDiv.selectAll('div.left')
+											.style('display', null);
+										unblockClick();
+									 });
+						
+						var svg = curPanel.find('svg.experience-detail');
+						if (svg.size() > 0)
+						{
+							var subPanelIndex = nextSubPanel.index();
+							this.highlightLabels(svg, nextSubPanel.index());
+						}			 
+
+						if (curPanel.next().size() == 0 &&
+							nextSubPanel.next().size() == 0)
+						{
+							this.showLastRightButton();
+						}
+						return;
+					}
+				}
+			}
+		}
+		
 		var nextPanel = curPanel.next('li');
-		var activeIndex = parseInt(curPanel.attr('index'));
-		if (curPanel.size())
+		var activeIndex = curPanel.index();
+		if (nextPanel.size())
 		{
 			if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
 			{
@@ -105,28 +240,15 @@ var WelcomePanel = (function () {
 					var offset = div1.children(':first-child').outerWidth(true);
 					div1.children().animate({left: "{0}px".format(-offset)});
 				}
-				else if (nextPanel.get(0) == ol.children('li:last-child').get(0))
+				else if (nextPanel.next().size() == 0)
 				{
-					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					var offset = div1.children(':first-child').outerWidth(true) +
-								 div1.children(':nth-child(2)').outerWidth(true);
-					div1.children().animate({left: "{0}px".format(-offset)});
+					if (nextPanel.find('ol').size() == 0)
+						this.showLastRightButton();
 				}
 			}
 		}
 	}
 	
-	WelcomePanel.prototype.addPathwayAnimation = function(svgNode)
-	{
-		var jSVG = $(svgNode);
-		var svgHeight = jSVG.height();
-		
-		var birthText = jSVG.find('text.birth');
-		birthText.attr('y', svgHeight - 3);
-		var birthLine = jSVG.find('line.birth');
-		birthLine.attr('y2', birthLine.attr('y1'));
-		birthLine.animate({y2: svgHeight - 14}, {duration: 1000});
-	}
 	
 	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
@@ -193,72 +315,70 @@ var WelcomePanel = (function () {
 				[
 					{text: "Let's take a look at an experience:",
 					},
-					{text: "Name & Organization",
-					 cssClass: "indent1",
-					},
 					{url: "/static/consentrecords/svg/experiencedetail.svg",
 					 cssClass: "center",
 					},
-					{text: "Most experiences can be described by the name of a program or service provided " +
-						   " and the name of the organization that provided the experience.",
-					 cssClass: "indent2",
-					},
-					{text: "When you specify an experience, the organization for that experience is optional.",
-					 cssClass: "indent2"
-					},
-				],
-				[
-					{text: "Location",
-					 cssClass: "indent1",
-					},
-					{url: "/static/consentrecords/svg/experiencedetail.svg",
-					 cssClass: "center",
-					},
-					{text: "For large organizations that provide experiences in more than one location, the location where " +
-						   "the experience was provided. The location may be the name of a place (such as the name of a school) " +
-						   "or a physical address.",
-					 cssClass: "indent2",
-					},
-					{text: "The location for an experience is optional.",
-					 cssClass: "indent2",
-					},
-				],
-				[
-					{text: "Start Date and End Date",
-					 cssClass: "indent1",
-					},
-					{url: "/static/consentrecords/svg/experiencedetail.svg",
-					 cssClass: "center",
-					},
-					{text: "The dates when the experience started and ended. When you specify dates, " +
-						   "the year and month are required. The day of the month is optional.",
-					 cssClass: "indent2",
-					},
-					{text: "When you create a previous experience, you must specify the start date and the end date.",
-					 cssClass: "indent2",
-					},
-					{text: "When you create a current experience, you must specify the start date. The end date is optional.",
-					 cssClass: "indent2",
-					},
-					{text: "When you create a goal, the start date and the end date are both optional.",
-					 cssClass: "indent2",
-					},
-				],
-				[
-					{text: "Tags",
-					 cssClass: "indent1",
-					},
-					{url: "/static/consentrecords/svg/experiencedetail.svg",
-					 cssClass: "center",
-					},
-					{text: "Finally, tags describe what you got out of the experience.",
-					 cssClass: "indent2",
-					},
-					{text: "When looking for pathways similar to yours, " +
-						   "others may have had similar experiences, but the experiences had different names or are at " +
-						   "different places. By comparing tags, you can identify similar experiences.",
-					 cssClass: "indent2",
-					},
+					{panels:
+						[
+							[
+								{text: "Name and Organization",
+								 cssClass: "indent1",
+								},
+								{text: "Most experiences can be described by the name of a program or service provided " +
+									   " and the name of the organization that provided the experience.",
+								 cssClass: "indent2",
+								},
+								{text: "The organization for an experience is optional.",
+								 cssClass: "indent2"
+								},
+							],
+							[
+								{text: "Location",
+								 cssClass: "indent1",
+								},
+								{text: "For large organizations that provide experiences in more than one location, the location where " +
+									   "the experience was provided. The location may be the name of a place (such as the name of a school) " +
+									   "or a physical address.",
+								 cssClass: "indent2",
+								},
+								{text: "The location for an experience is optional.",
+								 cssClass: "indent2",
+								},
+							],
+							[
+								{text: "Start Date and End Date",
+								 cssClass: "indent1",
+								},
+								{text: "The dates when the experience started and ended. When you specify dates, " +
+									   "the year and month are required. The day of the month is optional.",
+								 cssClass: "indent2",
+								},
+								{text: "When you create a previous experience, you must specify the start date and the end date.",
+								 cssClass: "indent2",
+								},
+								{text: "When you create a current experience, you must specify the start date. The end date is optional.",
+								 cssClass: "indent2",
+								},
+								{text: "When you create a goal, the start date and the end date are both optional.",
+								 cssClass: "indent2",
+								},
+							],
+							[
+								{text: "Tags",
+								 cssClass: "indent1",
+								},
+								{text: "Finally, tags are used to identify a specific type of experience, the benefits " +
+									   "an experience provides or values you achieved from an experience.",
+								 cssClass: "indent2",
+								},
+								{text: "When looking for pathways similar to yours, " +
+									   "others may have had similar experiences, but the experiences had different names or are at " +
+									   "different places. By comparing tags, you can identify similar experiences.",
+								 cssClass: "indent2",
+								},
+							],
+						]
+					}
 				],
 			];
 		var ol = panel2Div.append('ol');
@@ -268,16 +388,13 @@ var WelcomePanel = (function () {
 			.data(panelData)
 			.enter()
 			.append('li')
-			.attr('index', function(fd, i) { return i; })
 			.each(function(d, i) {
 				var mc = new Hammer(this);
 				
-				if (i < panelData.length - 1)
-				{
-					mc.on('panleft', function() { 
-						_this.showNext(); 
-					});
-				}
+				mc.on('panleft', function() { 
+					_this.showNext(); 
+				});
+				
 				if (i > 0)
 				{
 					mc.on('panright', function() { 
@@ -322,8 +439,6 @@ var WelcomePanel = (function () {
 											{
 												return $(this.parentNode).children('text').outerWidth(false) + 5;
 											});	
-		
-									_this.addPathwayAnimation(svg.node());
 								}
 								else if (d3Paragraph.select('svg.experience-detail').size() > 0)
 								{
@@ -334,30 +449,34 @@ var WelcomePanel = (function () {
 											.style('fill', '#222');
 									}
 									
-									var parentLI = d3Paragraph.node().parentNode.parentNode;
-									if (parentLI == ol.select('li:nth-child(4)').node())
-									{
-										highlight(svg.selectAll('g.labels text tspan:nth-child(1)'));
-										highlight(svg.selectAll('g.labels text tspan:nth-child(2)'));
-									}
-									else if (parentLI == ol.select('li:nth-child(5)').node())
-									{
-										highlight(svg.selectAll('g.labels text tspan:nth-child(3)'));
-									}
-									else if (parentLI == ol.select('li:nth-child(6)').node())
-									{
-										highlight(svg.selectAll('g.labels text tspan:nth-child(4)'));
-									}
-									else if (parentLI == ol.select('li:nth-child(7)').node())
-									{
-										highlight(svg.selectAll('g.labels text tspan:nth-child(5)'));
-									}
+									highlight(svg.selectAll('g.labels text tspan:nth-child(1)'));
+									highlight(svg.selectAll('g.labels text tspan:nth-child(2)'));
 								}
 							});
 					}
-				});
+					else if (d.panels)
+					{
+						var _thisParagraph = this;
+						d3Paragraph = d3.select(_thisParagraph);
+						var subLI = d3Paragraph.append('ol').selectAll('li')
+							.data(d.panels)
+							.enter()
+							.append('li')
+						subLI.selectAll('p')
+							.data(function(d) { return d; })
+							.enter()
+							.append('p')
+							.text(function(d) { return d.text; })
+							.each(function(d) {
+									if (d.cssClass)
+										d3.select(this).classed(d.cssClass, true);
+								});
+								
+						$(subLI.node()).addClass('active');
+					}
+			});
 		
-		ol.selectAll('li:first-child')
+		ol.select('li:first-child')
 			.append('span')
 			.classed('about-organizations site-active-text', true)
 			.text('For Organizations')
@@ -386,13 +505,21 @@ var WelcomePanel = (function () {
 				var curPanel = $(ol.selectAll('li.active:last-child').node());
 				if (curPanel.size() > 0)
 				{
-					if (prepareClick('click', 'Get Started'))
+					subOL = curPanel.find('ol');
+					if (subOL.size() > 0)
 					{
-						var signUp = new Signup(_this.node());
+						if (subOL.children('li.active').next().size() == 0)
+						{
+							if (prepareClick('click', 'Get Started'))
+							{
+								var signUp = new Signup(_this.node());
+								return;
+							}
+						}
 					}
 				}
-				else
-				 	_this.showNext();
+				
+				_this.showNext();
 			});
 		
 		var div1 = rightControl.append('div');
