@@ -1654,8 +1654,7 @@ var PathlinesPanel = (function () {
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
-	function PathlinesPanel(user, previousPanel, canDone) {
-		canDone = canDone !== undefined ? canDone : true;
+	function PathlinesPanel(user, previousPanel, done) {
 		var _this = this;
 		this.user = user;
 		
@@ -1669,11 +1668,22 @@ var PathlinesPanel = (function () {
 
 		var settingsButton;
 		
-		if (canDone)
+		if (done)
 		{
-			var backButton = this.navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+			var backButton = this.navContainer.appendLeftButton();
+			if (done === true)
+				backButton.on('click', handleCloseRightEvent);
+			else
+				backButton.on("click", function()
+					{
+						if (prepareClick('click', 'Close Right'))
+						{
+							hidePanelRight(_this.node(), true, done);
+						}
+						d3.event.preventDefault();
+					});
 			backButton.append("span").text("Done");
+			
 			settingsButton = this.navContainer.appendRightButton();
 		}
 		else
@@ -1688,17 +1698,19 @@ var PathlinesPanel = (function () {
 		this.bottomNavContainer = this.appendBottomNavContainer();
 		this.bottomNavContainer.nav
 			.classed("transparentBottom", true);
-
-		var findButton = this.bottomNavContainer.appendRightButton()
-				.on("click",
+		
+		if (!done)
+		{	
+			var infoButton = this.bottomNavContainer.appendRightButton()
+				.on('click',
 					function() {
-						if (prepareClick('click', 'find experience'))
+						if (prepareClick('click', 'show welcome'))
 						{
 							try
 							{
 								showClickFeedback(this);
-								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
-								showPanelLeft(newPanel.node(), unblockClick);
+								var newPanel = new WelcomePanel(_this.node());
+								showPanelUp(newPanel.node(), unblockClick);
 							}
 							catch(err)
 							{
@@ -1707,8 +1719,29 @@ var PathlinesPanel = (function () {
 						}
 						d3.event.preventDefault();
 					});
-		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
-		findButton.style("display", "none");
+			drawInfoButtons(infoButton);
+		}
+
+// 		var findButton = this.bottomNavContainer.appendRightButton()
+// 				.on("click",
+// 					function() {
+// 						if (prepareClick('click', 'find experience'))
+// 						{
+// 							try
+// 							{
+// 								showClickFeedback(this);
+// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+// 								showPanelLeft(newPanel.node(), unblockClick);
+// 							}
+// 							catch(err)
+// 							{
+// 								syncFailFunction(err);
+// 							}
+// 						}
+// 						d3.event.preventDefault();
+// 					});
+// 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
+// 		findButton.style("display", "none");
 		
 		var shareButton = this.bottomNavContainer.appendLeftButton()
 			.classed("share", true)
@@ -1770,7 +1803,7 @@ var PathlinesPanel = (function () {
 				$(user.getCell("_last name")).on("dataChanged.cr", checkTitle);
 				$(user.getCell("_email")).on("dataChanged.cr", checkTitle);
 				
-				findButton.style("display", user.privilege === "_administer" ? null : "none");
+// 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
 				_this.calculateHeight();

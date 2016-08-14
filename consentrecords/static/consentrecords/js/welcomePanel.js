@@ -269,6 +269,15 @@ var WelcomePanel = (function () {
 					})
 				.append('span').text('Sign In');
 		}
+		else
+		{
+			navContainer.appendLeftButton()
+				.on("click", function()
+					{
+						_this.handleCloseDownEvent();
+					})
+				.append('span').text('Done');
+		}
 			
 		navContainer.appendTitle("PathAdvisor");
 		
@@ -510,6 +519,9 @@ var WelcomePanel = (function () {
 					{
 						if (subOL.children('li.active').next().size() == 0)
 						{
+							if (cr.signedinUser.getValueID())
+								return;
+								
 							if (prepareClick('click', 'Get Started'))
 							{
 								var signUp = new Signup(_this.node());
@@ -538,7 +550,7 @@ var WelcomePanel = (function () {
 		var getStartedSpan = div1
 			.append('span')
 			.classed('get-started', true)
-			.text('Get Started')
+			.text(cr.signedinUser.getValueID() ? '' : 'Get Started')
 			.style('display', 'none');
 		
 		setTimeout(function()
