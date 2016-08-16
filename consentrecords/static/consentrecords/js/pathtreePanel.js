@@ -46,13 +46,16 @@ var FlagData = (function() {
 		var service = this.getService();
 		if (!service || !service.getValueID())
 			return null;
-		service = crp.getInstance(service.getValueID());
-		var domain = service.getValue("Domain");
+		var storedService = crp.getInstance(service.getValueID());
+		if (!storedService)
+			throw 'the "{0}" tag is obsolete'.format(service.getDescription());
+			
+		var domain = storedService.getValue("Domain");
 		if (domain)
 			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
 			if (sd)
 				return sd;
-		return service.getValue("Service Domain");
+		return storedService.getValue("Service Domain");
 	}
 
 	FlagData.prototype.getStage = function()
