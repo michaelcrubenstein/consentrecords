@@ -119,9 +119,9 @@ var Signup = (function () {
 			p.append('p')
 				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
 				
-			p.append('p')
-				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
-				
+// 			p.append('p')
+// 				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
+// 				
 			var minYear, maxYear;
 			maxYear = (new Date()).getUTCFullYear();
 	
