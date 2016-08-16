@@ -138,7 +138,9 @@ var crv = {
 
 function syncFailFunction(error)
 {
-	cr.logRecord('fail', error);
+	cr.logRecord('sync fail', error);
+	if (typeof(error) == 'object' && 'stack' in error)
+		cr.logRecord('sync fail stack', error.stack);
 	bootstrap_alert.warning(error, ".alert-container");
 	unblockClick();
 }
@@ -148,6 +150,8 @@ function syncFailFunction(error)
 function asyncFailFunction(error)
 {
 	cr.logRecord('async fail', error);
+	if (typeof(error) == 'object' && 'stack' in error)
+		cr.logRecord('async fail stack', error.stack);
 	bootstrap_alert.warning(error, ".alert-container");
 	/* Don't unblock here, because there was no block. */
 }

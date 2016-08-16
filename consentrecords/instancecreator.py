@@ -25,6 +25,9 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
                 if "instanceID" in d:
                     # This is a reference to an object.
+                    if not terms.isUUID(d["instanceID"]):
+                        raise RuntimeError("value(%s) for %s field is not an instance ID" % (d["instanceID"], field))
+                        
                     values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
