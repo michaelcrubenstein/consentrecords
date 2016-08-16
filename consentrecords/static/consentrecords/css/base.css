@@ -616,6 +616,7 @@ div.wheel ol {
 	display: inline-block;
 	margin-left: 1em;
 	margin-bottom: 0px;
+	-webkit-overflow-scrolling: touch;
 }
 
 div.wheel ol:first-child {
