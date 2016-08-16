@@ -87,6 +87,39 @@ var Signup = (function () {
 		
 		navContainer.appendTitle('New Account');
 
+		function getAlignmentFunction(done)
+		{
+			var timeout = null;
+			return function()
+				{
+					clearTimeout(timeout);
+					var _this = this;
+					timeout = setTimeout(function()
+						{
+							var itemHeight = Math.round($(_this).children('li:first-child').outerHeight());
+							var scrollTop =  Math.round($(_this).scrollTop());
+							if (scrollTop % itemHeight < itemHeight / 2)
+								$(_this).animate({"scrollTop": scrollTop - (scrollTop % itemHeight)}, 200, 'swing', done);
+							else
+								$(_this).animate({"scrollTop": scrollTop + itemHeight - (scrollTop % itemHeight)}, 200, 'swing', done);
+						}, 110);
+				}
+		}
+		
+		function getPickedItem(listNode)
+		{
+			var itemHeight = Math.round($(listNode).children('li:first-child').outerHeight());
+			var pickedItem = Math.round($(listNode).scrollTop() / itemHeight) + 3;
+			return $(listNode).children('li:nth-child({0})'.format(pickedItem + 1)).text();
+		}
+		
+		/* Return the 0-based index of the selected item. */
+		function getPickedIndex(listNode)
+		{
+			var itemHeight = Math.round($(listNode).children('li:first-child').outerHeight());
+			return Math.round($(listNode).scrollTop() / itemHeight);
+		}
+		
 		function setupPanel0(signup)
 		{
 			var p = d3.select(this);
@@ -100,82 +133,86 @@ var Signup = (function () {
 				.append('tr');
 			row.append('td').text('Birth Month');
 			var yearCell = row.append('td').classed('full-width', true);
-			var monthInput = yearCell.append('select')
+			var monthInput = yearCell.append('div')
 				.classed('site-active-text', true)
+				.text('month year')
 				.on('change', function(d)
 					{
+						console.log('monthInput change {0}'.format(monthInput.node().selectedIndex));
 						d3.select(this).selectAll(":first-child").attr('disabled', true);
 						signup.dots.checkForwardEnabled();
 					});
+			
+			var pickerRow = p.select('table').append('tr');
+			var pickerCell = pickerRow.append('td')
+				.attr('colspan', '2');		
+			var datePickerContainer = pickerCell.append('div')
+				.classed('wheel', true);
+			var monthPickerList = datePickerContainer.append('ol');
+			var yearPickerList = datePickerContainer.append('ol');
+			
+			function setPickedText()
+			{
+				var m = getPickedItem(monthPickerList.node());
+				var y = getPickedItem(yearPickerList.node());
+				monthInput.text("{0} {1}".format(m, y));
+			}
 					
-			var yearInput = yearCell.append('select')
-				.classed('site-active-text', true)
-				.on('change', function(d)
-					{
-						d3.select(this).selectAll(":first-child").attr('disabled', true);
-						signup.dots.checkForwardEnabled();
-					});
-				
+			$(monthPickerList.node()).scroll(getAlignmentFunction(setPickedText));
+			$(yearPickerList.node()).scroll(getAlignmentFunction(setPickedText));
+			
+			var topShade = datePickerContainer.append('div')
+				.classed('topShade', true);
+			var bottomShade = datePickerContainer.append('div')
+				.classed('bottomShade', true);
+					
 			p.append('p')
 				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
 				
-			p.append('p')
-				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
-				
+// 			p.append('p')
+// 				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
+// 				
 			var minYear, maxYear;
 			maxYear = (new Date()).getUTCFullYear();
 	
 			minYear = maxYear-100;
 		
-			var years = ['year'];
+			var years = [' ', ' ', ' '];
 			for (var i = maxYear; i >= minYear; --i)
 				years.push(i);
-			yearInput.selectAll('option')
+			years = years.concat([' ', ' ', ' ', ]);
+			
+			yearPickerList.selectAll('li')
 				.data(years)
 				.enter()
-				.append('option')
-				.text(function(d) { return d; })
-				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
+				.append('li')
+				.text(function(d) { return d; });
 					
-			var months = ['month'].concat(Date.CultureInfo.monthNames);
-			monthInput.selectAll('option')
+			var months = [' ', ' ', ' ', ].concat(Date.CultureInfo.monthNames)
+				.concat([' ', ' ', ' ', ]);
+			
+			monthPickerList.selectAll('li')
 				.data(months)
 				.enter()
-				.append('option')
-				.text(function(d) { return d; })
-				.style('color', function(d, i) { return i == 0 ? '#777' : null; });
+				.append('li')
+				.text(function(d) { return d; });
+				
+			var birthdayString = years[0] + "-" + "01";
 				
 			signup.getBirthday = function()
 			{
-				var yearNode = yearInput.node();
-				var monthNode = monthInput.node();
-				var year = parseInt(yearNode.options[yearNode.selectedIndex].text);
-				var month = monthNode.selectedIndex;
-
-				var m = month.toString();
-				if (m.length == 1)
-					m = "0" + m;
-				return year.toString() + "-" + m;
+				var m = getPickedIndex(monthPickerList.node());
+				var y = getPickedItem(yearPickerList.node());
+				m += 1;
+				if (m < 10)
+					m = "0{0}".format(m);
+				monthInput.text("{0}-{1}".format(y, m));
 			}
 			
+			setPickedText();
 			p.node().onGoingForward = function(gotoNext)
 			{
-				var yearNode = yearInput.node();
-				var monthNode = monthInput.node();
-				if (monthNode.selectedIndex == 0)
-				{
-					syncFailFunction("The month is required.");
-					monthNode.focus();
-				}
-				else if (yearNode.selectedIndex == 0)
-				{
-					syncFailFunction("The year is required.");
-					yearNode.focus();
-				}
-				else
-				{
-					gotoNext();
-				}
+				gotoNext();
 			}
 			
 			p.append('div')

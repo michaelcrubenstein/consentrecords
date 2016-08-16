@@ -604,3 +604,50 @@ section.date-container .right-vertical-chevron {
 select::-ms-expand {
     display: none;
 }
+
+div.wheel {
+	position: relative;
+	text-align: center;
+}
+
+div.wheel ol {
+	overflow-y: scroll;
+	height: 154px;
+	display: inline-block;
+	margin-left: 1em;
+	margin-bottom: 0px;
+	-webkit-overflow-scrolling: touch;
+}
+
+div.wheel ol:first-child {
+	text-align: right;
+}
+
+div.wheel ol>li {
+	height: 22px;
+}
+
+div.wheel>div.topShade {
+	position: absolute;
+	top: 0;
+	height: 66px;
+	width: 100%;
+	border-bottom: 1px solid #e7e7e7;
+  background: linear-gradient(rgba(255, 255, 255, 0.9),rgba(255, 255, 255, 0.8),rgba(255, 255, 255, 0.6),rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.2)); 
+  pointer-events:none;  	
+}
+
+div.wheel>div.bottomShade {
+	position: absolute;
+	bottom: 0;
+	height: 69px;
+	width: 100%;
+	border-top: 1px solid #e7e7e7;
+  background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.9));  
+  pointer-events:none;  	
+}
+
+div.wheel ol::-webkit-scrollbar { 
+    display: none; 
+}
+
