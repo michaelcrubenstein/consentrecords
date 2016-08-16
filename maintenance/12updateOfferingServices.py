@@ -36,7 +36,7 @@ if __name__ == "__main__":
             s3 = pathparser.selectAllObjects('Service[_name=Baseball]', [])[0]
             s4 = pathparser.selectAllObjects('Service[_name=Basketball]', [])[0]
             replacements = \
-                {"Swimming Lessons": s1,
+                {"Swimming Lessons": s1, "Swimming For Fun": s1,
                  "Tennis Lessons": s2,
                  "Baseball Training": s3,
                  "Basketball Training": s4,
