@@ -647,7 +647,11 @@ div.wheel>div.bottomShade {
   pointer-events:none;  	
 }
 
-div.wheel ol::-webkit-scrollbar { 
-    display: none; 
+::-webkit-scrollbar { 
+	display: none; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
 }
 

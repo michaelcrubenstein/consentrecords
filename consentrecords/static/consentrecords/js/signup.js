@@ -206,7 +206,7 @@ var Signup = (function () {
 				m += 1;
 				if (m < 10)
 					m = "0{0}".format(m);
-				monthInput.text("{0}-{1}".format(y, m));
+				return "{0}-{1}".format(y, m);
 			}
 			
 			setPickedText();

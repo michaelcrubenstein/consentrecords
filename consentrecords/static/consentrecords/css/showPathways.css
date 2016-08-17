@@ -41,10 +41,6 @@
 		outline: none;
 	}
 	
-	::-webkit-scrollbar { 
-		display: none; 
-	}
-	
 	panel.settings span.badge {
 		background-color: #2C55CC;
 		font-weight: normal;
