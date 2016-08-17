@@ -132,18 +132,25 @@ var DotsNavigator = (function () {
 		}
 		if (prepareClick('click', this.doneButton.selectAll('span').text()))
 		{
-			if (this.isForwardEnabled())
+			try
 			{
-				showClickFeedback(this.doneButton.node());
+				if (this.isForwardEnabled())
+				{
+					showClickFeedback(this.doneButton.node());
 			
-				var p = this.nthPanel(this.value);
-				if (p.onGoingForward)
-					p.onGoingForward(gotoNext);
+					var p = this.nthPanel(this.value);
+					if (p.onGoingForward)
+						p.onGoingForward(gotoNext);
+					else
+						gotoNext();
+				}
 				else
-					gotoNext();
+					unblockClick();
 			}
-			else
-				unblockClick();
+			catch (err)
+			{
+				syncFailFunction(err);
+			}
 		}
 	}
 	
