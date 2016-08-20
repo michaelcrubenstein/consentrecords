@@ -28,8 +28,16 @@ from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
+def logPage(request, name):
+    try:
+        userAgent = request.META['HTTP_USER_AGENT']
+    except Exception:
+        userAgent = 'Unspecified user agent'
+        
+    LogRecord.emit(request.user, name, userAgent)
+
 def home(request):
-    LogRecord.emit(request.user, 'pathAdvisor/home', '')
+    logPage(request, 'pathAdvisor/home')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -55,7 +63,7 @@ def home(request):
     return HttpResponse(template.render(context))
 
 def showLines(request):
-    LogRecord.emit(request.user, 'pathAdvisor/showLines', '')
+    logPage(request, 'pathAdvisor/showLines')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -79,7 +87,7 @@ def showLines(request):
     return HttpResponse(template.render(context))
 
 def orgHome(request):
-    LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
+    logPage(request, 'pathAdvisor/orgHome')
     
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
@@ -105,7 +113,7 @@ def orgHome(request):
     return HttpResponse(template.render(context))
 
 def find(request, serviceid, offeringid):
-    LogRecord.emit(request.user, 'pathAdvisor/find', '')
+    logPage(request, 'pathAdvisor/find')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
@@ -132,7 +140,7 @@ def find(request, serviceid, offeringid):
     return HttpResponse(template.render(context))
 
 def showInstances(request):
-    LogRecord.emit(request.user, 'pathAdvisor/list', '')
+    logPage(request, 'pathAdvisor/list')
     
     try:
         # The type of the root object.
@@ -167,7 +175,7 @@ def showInstances(request):
         return HttpResponse(str(e))
 
 def showPathway(request, email):
-    LogRecord.emit(request.user, 'pathAdvisor/showPathway', email)
+    logPage(request, 'pathAdvisor/showPathway')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
