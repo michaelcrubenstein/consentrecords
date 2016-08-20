@@ -529,6 +529,8 @@
 				{
 					var panel;
 					var service = experience.addService({text: serviceName });
+					experience.initPreviousDateRange();
+
 					panel = new NewExperiencePanel(experience, pathwayPanel.node());
 					showPanelUp(panel.node());
 				}

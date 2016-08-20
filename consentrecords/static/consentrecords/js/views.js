@@ -155,6 +155,9 @@ function asyncFailFunction(error)
 	bootstrap_alert.warning(error, ".alert-container");
 	/* Don't unblock here, because there was no block. */
 }
+
+cr.syncFail = syncFailFunction;
+cr.asyncFail = asyncFailFunction;
 		
 var clickBlockCount = 0;
 

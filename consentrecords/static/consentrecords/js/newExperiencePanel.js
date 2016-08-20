@@ -431,10 +431,33 @@ var Experience = (function() {
 		return this._getLabel("Offering Label", "Name");
 	}
 	
+	Experience.prototype.initPreviousDateRange = function()
+	{
+		var todayDate = getUTCTodayDate();
+		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() - 1, todayDate.getUTCMonth() + 1);
+		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear(), todayDate.getUTCMonth() + 1);
+	}
+	
+	Experience.prototype.initCurrentDateRange = function()
+	{
+		var todayDate = getUTCTodayDate();
+		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear(), todayDate.getUTCMonth() + 1);
+		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
+	}
+	
+	Experience.prototype.initGoalDateRange = function()
+	{
+		var todayDate = getUTCTodayDate();
+		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
+		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 2, todayDate.getUTCMonth() + 1);
+	}
+	
 	Experience.prototype.createFromData = function(organizationD, siteD, offeringD, services, previousNode, done)
 	{
 		var _this = this;
 		var panel;
+		
+		this.initPreviousDateRange();
 		
 		this.setOrganization(organizationD);
 		m = services.map(function(d) { return _this.addService(d); });
@@ -459,19 +482,10 @@ var Experience = (function() {
 		done(panel.node());
 	}
 	
-	Experience.prototype.createFromOrganization = function(d, services, previousNode, done)
-	{
-		this.setOrganization({instance: d});
-		
-		var _this = this;
-		m = services.map(function(serviceD) { return _this.addService(serviceD); });
-			
-		var panel = new NewExperiencePanel(this, previousNode);
-		done(panel.node());
-	}
-	
 	Experience.prototype.createFromSite = function(d, services, previousNode, done)
 	{
+		this.initPreviousDateRange();
+		
 		/* Call setOrganization, which recognizes this as a site and does the correct thing. */
 		this.setOrganization({instance: d});
 		
@@ -489,6 +503,8 @@ var Experience = (function() {
 		if (!d.getValue("Site"))
 			throw "Runtime Error: Site is not present in offering record."
 
+		this.initPreviousDateRange();
+		
 		this.setOffering({instance: d});
 		
 		/* Set the organization, then the site, because setting the organization may
@@ -506,6 +522,8 @@ var Experience = (function() {
 	
 	Experience.prototype.createFromService = function(d, previousNode, done)
 	{
+		this.initPreviousDateRange();
+		
 		var service = this.addService(d);
 		var panel = new NewExperiencePanel(this, previousNode);
 		done(panel.node());
@@ -1004,7 +1022,8 @@ var ExperienceDatumSearchView = (function() {
 		this.setupSearchTypes(val);
 		this.checkHelp(!this.typeName);
 		this.showSearch();
-		SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
+		if (this.typeName)
+			SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
 	}
 	
 	ExperienceDatumSearchView.prototype.isSearchVisible = function()
@@ -1054,7 +1073,16 @@ var ExperienceDatumSearchView = (function() {
 		{
 			this.inputBox = inputNode;
 			this.helpNode = helpNode;
-			$(this.inputBox).on("input", function() { _this.textChanged() });
+			$(this.inputBox).on("input", function() { 
+					try
+					{
+						_this.textChanged();
+					}
+					catch(err)
+					{
+						cr.asyncFail(err);
+					}
+				});
 			
 			this.reveal = new VerticalReveal(containerNode);
 			this.reveal.hide();
@@ -1988,6 +2016,13 @@ var VerticalReveal = (function() {
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new SitePanel();
 	NewExperiencePanel.prototype.allServices = null;
+	
+	NewExperiencePanel.prototype.organizationSearchView = null;
+	NewExperiencePanel.prototype.siteSearchView = null;
+	NewExperiencePanel.prototype.offeringSearchView = null;
+	NewExperiencePanel.prototype.tagSearchView = null;
+	NewExperiencePanel.prototype.startHidable = null;
+	NewExperiencePanel.prototype.endHidable = null;
 
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
@@ -2001,14 +2036,56 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
 		var _this = this;
-		var itemsDiv = dateContainer.append('ol');
+		var itemsDiv = dateContainer.append('ol')
+			.classed('item', true);
 		var itemDiv = itemsDiv.append('li');
-		var dateInput = new DateInput(itemDiv.node(), minDate, maxDate);
-		var hidableDiv = new HidableDiv(dateContainer.selectAll(".date-row").node());
+		var dateInput = itemDiv.append('span');
+		var hidableDiv = new HidableDiv(dateInput.node());
+		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
+			{
+				dateInput.text(getLocaleDateString(newDate));
+				$(dateInput.node()).width('auto');
+				hidableDiv.width = $(dateInput.node()).width();
+			}, minDate, maxDate);
 
+		var reveal = new VerticalReveal(dateWheel.node());
+		reveal.hide();
+		
+		dateInput.on('click', function()
+			{
+				if (!reveal.isVisible())
+				{
+					try
+					{
+						var done = function()
+						{
+							dateInput.classed('site-active-text', true);
+							reveal.show({}, 200, undefined, function()
+								{
+									dateWheel.restoreDate();
+								});
+						}
+						if (!_this.onFocusInOtherInput(reveal, done))
+						{
+							done();
+						}
+					}
+					catch (err)
+					{
+						cr.asyncFail(err);
+					}
+				}
+				else
+				{
+					hideWheel();
+				}
+			});
+		
 		var hidingChevron = new HidingChevron(itemDiv, 
 			function()
 			{
+				dateWheel.unclear();
+				dateWheel.showDate(dateWheel.value());
 				hidableDiv.show(function()
 					{
 						unblockClick();
@@ -2026,11 +2103,12 @@ var NewExperiencePanel = (function () {
 					{
 						if (prepareClick('click', "Not Sure"))
 						{
+							hideWheel();
 							hidableDiv.hide(function()
 								{
 									hidingChevron.show(function()
 										{
-											dateInput.clear();
+											dateWheel.clear();
 											unblockClick();
 										});
 								});
@@ -2045,7 +2123,7 @@ var NewExperiencePanel = (function () {
 		notSureSpan.append('div').text('Not Sure');
 		var notSureReveal = new VerticalReveal(notSureSpan.node());
 		
-		forceDateVisible = function(args)
+		var forceDateVisible = function(args)
 			{
 				var duration = (args && args.duration) ? args.duration : 0;
 				var before = (args && args.before) ? args.before : null;
@@ -2058,6 +2136,19 @@ var NewExperiencePanel = (function () {
 						hidableDiv.show();
 					});
 			}
+			
+		var hideWheel = function(done)
+		{
+			dateInput.classed('site-active-text', false);
+			reveal.hide({duration: 200,
+						 before: done});
+		}
+		
+		var showWheel = function(done)
+		{
+			dateInput.classed('site-active-text', true);
+			reveal.show({done: done});
+		}
 		
 		/* Calculate layout-based variables after css is complete. */
 		setTimeout(function()
@@ -2065,9 +2156,12 @@ var NewExperiencePanel = (function () {
 				hidingChevron.height(hidableDiv.height());
 			}, 0);
 		
-		return {dateInput: dateInput, hidableDiv: hidableDiv, 
+		return {dateInput: dateWheel, hidableDiv: hidableDiv, 
+		    wheelReveal: reveal,
 			notSureReveal: notSureReveal,
-			forceDateVisible: forceDateVisible
+			forceDateVisible: forceDateVisible,
+			hideWheel: hideWheel,
+			showWheel: showWheel,
 		};
 	}
 	
@@ -2285,6 +2379,53 @@ var NewExperiencePanel = (function () {
 			});
 	}
 	
+	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
+	NewExperiencePanel.prototype.onFocusInOtherInput = function(newReveal, done)
+	{
+		if (newReveal != this.organizationSearchView.reveal &&
+			this.organizationSearchView.reveal.isVisible())
+		{
+			this.checkOrganizationInput();
+			this.organizationSearchView.hideSearch(done);
+			return true;
+		}
+		else if (newReveal != this.siteSearchView.reveal &&
+			this.siteSearchView.reveal.isVisible())
+		{
+			this.checkSiteInput();
+			this.siteSearchView.hideSearch(done);
+			return true;
+		}
+		else if (newReveal != this.offeringSearchView.reveal &&
+			this.offeringSearchView.reveal.isVisible())
+		{
+			this.checkOfferingInput();
+			this.offeringSearchView.hideSearch(done);
+			return true;
+		}
+		else if (newReveal != this.tagSearchView.reveal &&
+			this.tagSearchView.reveal.isVisible())
+		{
+			this.checkTagInput();
+			this.tagSearchView.hideSearch(done);
+			return true;
+		}
+		else if (newReveal != this.startHidable.wheelReveal &&
+			this.startHidable.wheelReveal.isVisible())
+		{
+			this.startHidable.hideWheel(done);
+			return true;
+		}
+		else if (newReveal != this.endHidable.wheelReveal &&
+			this.endHidable.wheelReveal.isVisible())
+		{
+			this.endHidable.hideWheel(done);
+			return true;
+		}
+		else
+			return false;
+	}
+	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
@@ -2293,22 +2434,7 @@ var NewExperiencePanel = (function () {
 					_this.tagSearchView.constrainFoundObjects(inputNode);
 					_this.tagSearchView.showSearch(200);
 				};
-		if (this.organizationSearchView.reveal.isVisible())
-		{
-			this.checkOrganizationInput();
-			this.organizationSearchView.hideSearch(done);
-		}
-		else if (this.siteSearchView.reveal.isVisible())
-		{
-			this.checkSiteInput();
-			this.siteSearchView.hideSearch(done);
-		}
-		else if (this.offeringSearchView.reveal.isVisible())
-		{
-			this.checkOfferingInput();
-			this.offeringSearchView.hideSearch(done);
-		}
-		else 
+		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
 		{
 			this.checkTagInput(inputNode);
 			this.tagSearchView.constrainFoundObjects(inputNode);
@@ -2316,6 +2442,26 @@ var NewExperiencePanel = (function () {
 			{
 				this.tagSearchView.showSearch();
 			}
+		}
+	}
+	
+	NewExperiencePanel.prototype.resizeVisibleSearch = function(duration)
+	{
+		if (this.tagSearchView.reveal.isVisible())
+		{
+			this.tagSearchView.showSearch(duration);
+		}
+		else if (this.organizationSearchView.reveal.isVisible())
+		{
+			this.organizationSearchView.showSearch(duration);
+		}
+		else if (this.siteSearchView.reveal.isVisible())
+		{
+			this.siteSearchView.showSearch(duration);
+		}
+		else if (this.offeringSearchView.reveal.isVisible())
+		{
+			this.offeringSearchView.showSearch(duration);
 		}
 	}
 
@@ -2504,29 +2650,9 @@ var NewExperiencePanel = (function () {
 						},
 					fail: asyncFailFunction});
 		
-		function resizeVisibleSearch(duration)
-		{
-			if (_this.tagSearchView.reveal.isVisible())
-			{
-				_this.tagSearchView.showSearch(duration);
-			}
-			else if (_this.organizationSearchView.reveal.isVisible())
-			{
-				_this.organizationSearchView.showSearch(duration);
-			}
-			else if (_this.siteSearchView.reveal.isVisible())
-			{
-				_this.siteSearchView.showSearch(duration);
-			}
-			else if (_this.offeringSearchView.reveal.isVisible())
-			{
-				_this.offeringSearchView.showSearch(duration);
-			}
-		}
-		
 		$(panel2Div.node()).on('resize.cr', function()
 		{
-			resizeVisibleSearch(0);
+			_this.resizeVisibleSearch(0);
 		});
 
 		// var searchView = new NewExperienceSearchView(this, experience);
@@ -2535,6 +2661,7 @@ var NewExperiencePanel = (function () {
 		
 		var optionPanel = panel2Div.append('section')
 			.classed('date-range-options', true);
+
 		var previousExperienceButton = optionPanel.append('button')
 			.classed('previous', true)
 			.on('click', function()
@@ -2542,19 +2669,19 @@ var NewExperiencePanel = (function () {
 					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', true);
-					startHidable.forceDateVisible({duration: 200, before:
+					_this.startHidable.forceDateVisible({duration: 200, before:
 						function()
 							{
-								endHidable.forceDateVisible({duration: 200, before:
+								_this.endHidable.forceDateVisible({duration: 200, before:
 									function()
 									{
-										resizeVisibleSearch(200);
+										_this.resizeVisibleSearch(200);
 									}
 								});
 							}
 						});
 					
-					startDateInput.checkMinDate(new Date(birthday), new Date());
+					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateInput).trigger('change');
 				})
 			.text(this.previousExperienceLabel);
@@ -2566,16 +2693,16 @@ var NewExperiencePanel = (function () {
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', false);
 					currentExperienceButton.classed('pressed', true);
-					startHidable.forceDateVisible({duration: 200, before:
+					_this.startHidable.forceDateVisible({duration: 200, before:
 						function()
 						{
-							endHidable.notSureReveal.show({duration: 200, before: function()
+							_this.endHidable.notSureReveal.show({before: function()
 								{
-									resizeVisibleSearch(200);
-								}});
+									_this.resizeVisibleSearch(200);
+								}}, 200);
 						}});
 					
-					startDateInput.checkMinDate(new Date(birthday), new Date());
+					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateInput).trigger('change');
 				})
 			.text(this.currentExperienceLabel);
@@ -2587,20 +2714,21 @@ var NewExperiencePanel = (function () {
 					previousExperienceButton.classed('pressed', false);
 					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', true);
-					startHidable.notSureReveal.show({before: function()
+					_this.startHidable.notSureReveal.show({before: function()
 						{
-							if (endHidable.hidableDiv.isVisible())
-								endHidable.notSureReveal.show({before: function()
+							if (_this.endHidable.hidableDiv.isVisible())
+								_this.endHidable.notSureReveal.show({before: function()
 								{
-									resizeVisibleSearch(200);
+									_this.resizeVisibleSearch(200);
 								}}, 200, stepFunction);
 							else
-								resizeVisibleSearch(200);
+								_this.resizeVisibleSearch(200);
 						}}, 200, stepFunction);
 					
-					var startMaxDate = new Date();
+					var startMinDate = getUTCTodayDate();
+					var startMaxDate = new Date(startMinDate);
 					startMaxDate.setUTCFullYear(startMaxDate.getUTCFullYear() + 50);
-					startDateInput.checkMinDate(new Date(), startMaxDate);
+					startDateInput.checkMinDate(startMinDate, startMaxDate);
 					$(startDateInput).trigger('change');
 				})
 			.text(this.goalLabel);
@@ -2610,39 +2738,40 @@ var NewExperiencePanel = (function () {
 
 		startDateContainer.append('label')
 			.text("Start");
-		var startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
-		var startDateInput = startHidable.dateInput;
+		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
+		var startDateInput = this.startHidable.dateInput;
 		
 		$(startDateInput).on('change', function() {
 			var minEndDate, maxEndDate;
+			var dateWheelValue = this.value();
 			if (previousExperienceButton.classed('pressed'))
 			{
-				if (this.value() && this.value().length > 0)
-					minEndDate = new Date(this.value());
+				if (dateWheelValue && dateWheelValue.length > 0)
+					minEndDate = new Date(dateWheelValue);
 				else if (birthday)
 					minEndDate = new Date(birthday);
 				else
-					minEndDate = new Date();
+					minEndDate = getUTCTodayDate();
 			}
 			else if (currentExperienceButton.classed('pressed'))
 			{
-				minEndDate = new Date();
+				minEndDate = getUTCTodayDate();
 			}
 			else
 			{
-				if (this.value() && this.value().length > 0)
-					minEndDate = new Date(this.value());
+				if (dateWheelValue && dateWheelValue.length > 0)
+					minEndDate = new Date(dateWheelValue);
 				else
-					minEndDate = new Date();
+					minEndDate = getUTCTodayDate();
 			}
 			
 			if (previousExperienceButton.classed('pressed'))
 			{
-				maxEndDate = new Date();
+				maxEndDate = getUTCTodayDate();
 			}
 			else
 			{
-				maxEndDate = new Date();
+				maxEndDate = getUTCTodayDate();
 				maxEndDate.setUTCFullYear(maxEndDate.getUTCFullYear() + 50);
 			}
 				
@@ -2654,24 +2783,50 @@ var NewExperiencePanel = (function () {
 		var endLabel = endDateContainer.append('label')
 			.text("End");
 			
-		var endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
-		var endDateInput = endHidable.dateInput;
+		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
+		var endDateInput = this.endHidable.dateInput;
 		
-		startHidable.notSureReveal.hide();
-		endHidable.notSureReveal.hide();
+		if (phase == 'Current')
+		{
+			this.startHidable.notSureReveal.hide();
+			this.endHidable.notSureReveal.show();
+		}
+		else if (phase == 'Goal')
+		{
+			this.startHidable.notSureReveal.show();
+			this.endHidable.notSureReveal.show();
+		}
+		else
+		{
+			this.startHidable.notSureReveal.hide();
+			this.endHidable.notSureReveal.hide();
+		}
+		
+		if (experience.startDate)
+			startDateInput.value(experience.startDate);
+		
+		if (experience.endDate)
+			endDateInput.value(experience.endDate);
 		
 		this.showTags();
 		
 		setTimeout(function()
 			{
+				_this.organizationInput.node().focus();	
+
 				if (phase == 'Current')
+				{
+					startDateInput.onChange();
 					$(currentExperienceButton.node()).trigger('click');
+				}
 				else if (phase == 'Goal')
 					$(goalButton.node()).trigger('click')
 				else
+				{
+					startDateInput.onChange();
+					endDateInput.onChange();
 					$(previousExperienceButton.node()).trigger('click');
-				
-				_this.organizationInput.node().focus();	
+				}
 			});
 
 		$(this.organizationInput.node()).on('focusin', function()
@@ -2681,24 +2836,10 @@ var NewExperiencePanel = (function () {
 							_this.organizationSearchView.restartSearchTimeout();
 							_this.organizationSearchView.showSearch(200);
 						};
-				if (_this.siteSearchView.reveal.isVisible())
+				if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
 				{
-					_this.checkSiteInput();
-					_this.siteSearchView.hideSearch(done);
-				}
-				else if (_this.offeringSearchView.reveal.isVisible())
-				{
-					_this.checkOfferingInput();
-					_this.offeringSearchView.hideSearch(done);
-				}
-				else if (_this.tagSearchView.reveal.isVisible())
-				{
-					_this.checkTagInput();
-					_this.tagSearchView.hideSearch(done);
-				}
-				else if (!_this.organizationSearchView.reveal.isVisible())
-				{
-					done();
+					if (!_this.organizationSearchView.reveal.isVisible())
+						done();
 				}
 			});
 			
@@ -2709,24 +2850,10 @@ var NewExperiencePanel = (function () {
 							_this.siteSearchView.restartSearchTimeout();
 							_this.siteSearchView.showSearch(200);
 						}
-				if (_this.organizationSearchView.reveal.isVisible())
+				if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
 				{
-					_this.checkOrganizationInput();
-					_this.organizationSearchView.hideSearch(done);
-				}
-				else if (_this.offeringSearchView.reveal.isVisible())
-				{
-					_this.checkOfferingInput();
-					_this.offeringSearchView.hideSearch(done);
-				}
-				else if (_this.tagSearchView.reveal.isVisible())
-				{
-					_this.checkTagInput();
-					_this.tagSearchView.hideSearch(done);
-				}
-				else if (!_this.siteSearchView.reveal.isVisible())
-				{
-					done();
+					if (!_this.siteSearchView.reveal.isVisible())
+						done();
 				}
 			});
 		
@@ -2737,24 +2864,10 @@ var NewExperiencePanel = (function () {
 							_this.offeringSearchView.restartSearchTimeout();
 							_this.offeringSearchView.showSearch(200);
 						};
-				if (_this.organizationSearchView.reveal.isVisible())
+				if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
 				{
-					_this.checkOrganizationInput();
-					_this.organizationSearchView.hideSearch(done);
-				}
-				else if (_this.siteSearchView.reveal.isVisible())
-				{
-					_this.checkSiteInput();
-					_this.siteSearchView.hideSearch(done);
-				}
-				else if (_this.tagSearchView.reveal.isVisible())
-				{
-					_this.checkTagInput();
-					_this.tagSearchView.hideSearch(done);
-				}
-				else if (!_this.offeringSearchView.reveal.isVisible())
-				{
-					done();
+					if (!_this.offeringSearchView.reveal.isVisible())
+						done();
 				}
 			});
 	}

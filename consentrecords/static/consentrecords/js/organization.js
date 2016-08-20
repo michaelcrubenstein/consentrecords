@@ -42,6 +42,16 @@ function appendAddress(address)
 	}
 }
 
+/* Return a new date that will be a UTC date that represents the same date
+	as now in the currrent time zone. For example, 10:00 p.m. in Boston on Oct. 21, 2016 should
+	be a UTC date of Oct. 21, 2016 even though that time is actually a UTC Date of Oct. 22, 2016.
+ */ 
+function getUTCTodayDate()
+{
+	var startMinDate = new Date();
+	return new Date(Date.UTC(startMinDate.getFullYear(), startMinDate.getMonth(), startMinDate.getDate(), 0, 0, 0));
+}
+
 function getStartDate(d)
 {
 	return d.getDatum("Start");
@@ -52,27 +62,41 @@ function getEndDate(d) {
 		   (d.getDatum("Start") ? new Date().toISOString().substr(0, 10) : undefined);
 }	
 
+/* Given an ISO Date string, return a locale date string */
+function getLocaleDateString(s)
+{
+	if (s.length == 7)
+		return Date.CultureInfo.monthNames[parseInt(s.substr(5)) - 1] + " " + s.substr(0, 4);
+	else if (s.length == 10)
+	{
+		var a = new Date(s);
+		
+		/* Offset is set to set the time to 1:00 a.m. in the local time zone. Since creating
+			a new date sets the time to midnight UTC, we need to set it an hour later in case 
+			daylight saving's time is in effect. To account for different time zones, we 
+			add an hour if the offset is positive, or subtract an hour if the offset is negative.
+		 */
+		var offset = (a.getTimezoneOffset()) * 60 * 1000;
+		
+		if (offset >= 0)
+			offset += 60 * 60 * 1000;
+		else
+			offset -= 60 * 60 * 1000;
+			
+		a.setTime(a.getTime() + offset);
+		return a.toLocaleDateString();
+	}
+	else
+		return s;
+}
+
 function getDateRange(d)
 {
-	function getDateString(s)
-	{
-		if (s.length == 7)
-			return Date.CultureInfo.monthNames[parseInt(s.substr(5)) - 1] + " " + s.substr(0, 4);
-		else if (s.length == 10)
-		{
-			var a = new Date(s);
-			a.setTime(a.getTime() + a.getTimezoneOffset() * 60 * 1000);
-			return a.toLocaleDateString();
-		}
-		else
-			return s;
-	}
-	
 	var startDate = getStartDate(d);
-	startDate = startDate ? getDateString(startDate) : "";
+	startDate = startDate ? getLocaleDateString(startDate) : "";
 		
 	var endDate = d.getDatum("End");
-	endDate = endDate ? getDateString(endDate) : "";
+	endDate = endDate ? getLocaleDateString(endDate) : "";
 		
 	var connector;
 	if (startDate || endDate)

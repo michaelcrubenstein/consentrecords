@@ -590,9 +590,12 @@ section.date-container>div.in-cell-button {
 	display: block;
 	padding-left: 12px;
 	padding-right: 12px;
-	padding-bottom: 4px;
 	text-align: right;
 	position: relative;
+}
+
+section.date-container>div.in-cell-button>div {
+	padding-bottom: 4px;
 }
 
 section.date-container .right-vertical-chevron {
@@ -608,6 +611,7 @@ select::-ms-expand {
 div.wheel {
 	position: relative;
 	text-align: center;
+	background-color: 248;
 }
 
 div.wheel ol {
@@ -627,13 +631,25 @@ div.wheel ol>li {
 	height: 22px;
 }
 
+div.wheel ol>li.disabled {
+	color: #888;
+}
+
+div.wheel ol>li:first-child {
+	margin-top: 66px;	/* 3 times height */
+}
+
+div.wheel ol>li:last-child {
+	margin-bottom: 66px;	/* 3 times height */
+}
+
 div.wheel>div.topShade {
 	position: absolute;
 	top: 0;
 	height: 66px;
 	width: 100%;
 	border-bottom: 1px solid #e7e7e7;
-  background: linear-gradient(rgba(255, 255, 255, 0.9),rgba(255, 255, 255, 0.8),rgba(255, 255, 255, 0.6),rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.2)); 
+  background: linear-gradient(rgba(248, 248, 248, 0.9),rgba(248, 248, 248, 0.8),rgba(248, 248, 248, 0.6),rgba(248, 248, 248, 0.45), rgba(248, 248, 248, 0.2)); 
   pointer-events:none;  	
 }
 
@@ -643,7 +659,7 @@ div.wheel>div.bottomShade {
 	height: 69px;
 	width: 100%;
 	border-top: 1px solid #e7e7e7;
-  background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.9));  
+  background: linear-gradient(rgba(248, 248, 248, 0.2), rgba(248, 248, 248, 0.45), rgba(248, 248, 248, 0.6), rgba(248, 248, 248, 0.8), rgba(248, 248, 248, 0.9));  
   pointer-events:none;  	
 }
 

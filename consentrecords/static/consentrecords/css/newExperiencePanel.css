@@ -200,12 +200,17 @@
 		text-align: left;
 	}
 	
-	panel.new-experience-panel section.date-container ol {
+	panel.new-experience-panel section.date-container ol.item {
 		display: inline-block;
 		position: absolute;
 		right: 0px;
 		margin-top: 1px;	/* Don't use top. */
 		float: none;
+	}
+	
+	panel.new-experience-panel section.date-container ol.item span {
+		white-space: nowrap;
+		cursor: pointer;
 	}
 	
 	panel.new-experience-tags section p {
