@@ -1345,7 +1345,7 @@ var PathLines = (function() {
 					try
 					{
 						showClickFeedback(this);
-						_this.sitePanel.startNewExperience(undefined, asyncFailFunction);
+						_this.sitePanel.startNewExperience('Previous', asyncFailFunction);
 					}
 					catch (err)
 					{
@@ -1618,6 +1618,13 @@ var PathlinesPanel = (function () {
 		try
 		{
 			var experience = this.createExperience();
+			if (phase === 'Goal')
+				experience.initGoalDateRange();
+			else if (phase === 'Current')
+				experience.initCurrentDateRange();
+			else
+				experience.initPreviousDateRange();
+				
 			var panel = new NewExperiencePanel(experience, this.node(), phase);
 		
 			showPanelUp(panel.node(), done);
@@ -2160,6 +2167,7 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
+							experience.initPreviousDateRange();
 							var panel = new NewExperiencePanel(experience, panelNode, 'Previous',
 								function()
 								{

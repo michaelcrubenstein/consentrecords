@@ -42,6 +42,16 @@ function appendAddress(address)
 	}
 }
 
+/* Return a new date that will be a UTC date that represents the same date
+	as now in the currrent time zone. For example, 10:00 p.m. in Boston on Oct. 21, 2016 should
+	be a UTC date of Oct. 21, 2016 even though that time is actually a UTC Date of Oct. 22, 2016.
+ */ 
+function getUTCTodayDate()
+{
+	var startMinDate = new Date();
+	return new Date(Date.UTC(startMinDate.getFullYear(), startMinDate.getMonth(), startMinDate.getDate(), 0, 0, 0));
+}
+
 function getStartDate(d)
 {
 	return d.getDatum("Start");
