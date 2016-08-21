@@ -1247,8 +1247,19 @@ var TagSearchView = (function() {
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				this.experience.addService({instance: d});
-				this.onTagAdded();
+				var d3Focus = d3.select(this.focusNode);
+				if (d3Focus.datum())
+				{
+					d3Focus.datum().name = null;
+					d3Focus.datum().pickedObject = d;
+					this.focusNode.value = d.getDescription();
+					this.onTagAdded();
+				}
+				else
+				{
+					this.experience.addService({instance: d});
+					this.onTagAdded();
+				}
 			}
 		}
 		d3.event.preventDefault();
@@ -2208,6 +2219,7 @@ var NewExperiencePanel = (function () {
 		
 		$(input.node()).on('focusin', function()
 			{
+				_this.tagSearchView.focusNode = this;
 				_this.onFocusInTagInput(this);
 			});
 			
@@ -2533,9 +2545,9 @@ var NewExperiencePanel = (function () {
 					asyncFailFunction(_this.nameOrTagRequiredMessage);
 				else if (previousExperienceButton.classed('pressed'))
 				{
-					if (!startDateInput.year || !startDateInput.month)
+					if (!startDateInput.value())
 						asyncFailFunction(_this.previousStartYearAndMonthRequiredMessage);
-					else if (!endDateInput.year || !endDateInput.month)
+					else if (!endDateInput.value())
 						asyncFailFunction(_this.previousEndYearAndMonthRequiredMessage);
 					else
 					{
@@ -2544,7 +2556,7 @@ var NewExperiencePanel = (function () {
 				}
 				else if (currentExperienceButton.classed('pressed'))
 				{
-					if (!startDateInput.year || !startDateInput.month)
+					if (!startDateInput.value())
 						asyncFailFunction(_this.currentStartYearAndMonthRequiredMessage);
 					else
 					{
