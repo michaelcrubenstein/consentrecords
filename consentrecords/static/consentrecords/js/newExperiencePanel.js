@@ -2545,9 +2545,9 @@ var NewExperiencePanel = (function () {
 					asyncFailFunction(_this.nameOrTagRequiredMessage);
 				else if (previousExperienceButton.classed('pressed'))
 				{
-					if (!startDateInput.year || !startDateInput.month)
+					if (!startDateInput.value())
 						asyncFailFunction(_this.previousStartYearAndMonthRequiredMessage);
-					else if (!endDateInput.year || !endDateInput.month)
+					else if (!endDateInput.value())
 						asyncFailFunction(_this.previousEndYearAndMonthRequiredMessage);
 					else
 					{
@@ -2556,7 +2556,7 @@ var NewExperiencePanel = (function () {
 				}
 				else if (currentExperienceButton.classed('pressed'))
 				{
-					if (!startDateInput.year || !startDateInput.month)
+					if (!startDateInput.value())
 						asyncFailFunction(_this.currentStartYearAndMonthRequiredMessage);
 					else
 					{
