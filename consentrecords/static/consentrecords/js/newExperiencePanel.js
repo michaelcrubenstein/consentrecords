@@ -1247,8 +1247,19 @@ var TagSearchView = (function() {
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				this.experience.addService({instance: d});
-				this.onTagAdded();
+				var d3Focus = d3.select(this.focusNode);
+				if (d3Focus.datum())
+				{
+					d3Focus.datum().name = null;
+					d3Focus.datum().pickedObject = d;
+					this.focusNode.value = d.getDescription();
+					this.onTagAdded();
+				}
+				else
+				{
+					this.experience.addService({instance: d});
+					this.onTagAdded();
+				}
 			}
 		}
 		d3.event.preventDefault();
@@ -2208,6 +2219,7 @@ var NewExperiencePanel = (function () {
 		
 		$(input.node()).on('focusin', function()
 			{
+				_this.tagSearchView.focusNode = this;
 				_this.onFocusInTagInput(this);
 			});
 			
