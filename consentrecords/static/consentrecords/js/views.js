@@ -3015,8 +3015,8 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 					{
 						if (d.getValueID())
 						{
-							cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
 							/* Test case: Choose a different item as was previously selected for this item. */
+							cr.updateObjectValue(oldData, d, -1, successFunction, cr.syncFail);
 						}
 						else
 						{
@@ -3038,7 +3038,7 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 								 instanceID: d.getValueID(),
 								 description: d.getDescription()}
 								];
-							cr.updateValues(initialData, [oldData], successFunction, syncFailFunction);
+							cr.updateValues(initialData, [oldData], successFunction, cr.syncFail);
 						}
 						else 
 						{
