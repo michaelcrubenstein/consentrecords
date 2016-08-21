@@ -1186,13 +1186,14 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		});
 	
 	var clickFunction;
+	var _this = this;
 	if (_isPickCell(this) || this.isUnique())	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
 			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
 			{
-				showViewObjectPanel(cell, d, previousPanelNode, revealPanelLeft);
+				showViewObjectPanel(_this, d, previousPanelNode, revealPanelLeft);
 			}
 		}
 
@@ -3022,15 +3023,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 						 */
 						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 						{
-							var initialData;
-							/* The description value is used in updateFromChangeData. */
-							initialData = [
-								{containerUUID: cell.parent.getValueID(), 
-								 fieldID: cell.field.nameID, 
-								 instanceID: d.getValueID(),
-								 description: d.getDescription()}
-								];
-							cr.updateValues(initialData, [cell], successFunction, cr.syncFail);
+							cr.updateValues([cell.getAddCommand(d)], [cell], successFunction, cr.syncFail);
 						}
 						else 
 						{
@@ -3068,15 +3061,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 						 */
 						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 						{
-							var initialData;
-							/* The description value is used in updateFromChangeData. */
-							initialData = [
-								{containerUUID: cell.parent.getValueID(), 
-								 fieldID: cell.field.nameID, 
-								 instanceID: d.getValueID(),
-								 description: d.getDescription()}
-								];
-							cr.updateValues(initialData, [oldData], successFunction, cr.syncFail);
+							cr.updateValues([cell.getAddCommand(d)], [oldData], successFunction, cr.syncFail);
 						}
 						else 
 						{

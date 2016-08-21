@@ -466,19 +466,10 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 						if (c.length > 0)
 						{
 							var cell = c[0].getCell(cellName);
-							var newValue = cell.addNewValue();
 							
-							cr.updateValues([
-								{containerUUID: c[0].getValueID(), 
-								 fieldID: cell.field.nameID, 
-								 instanceID: target.getValueID(),
-								 description: target.getDescription()}
-								], [newValue], done, 
-								function(err)
-								{
-									newValue.triggerDeleteValue();
-									fail(err);
-								});
+							cr.updateValues([cell.getAddCommand(target)],
+							    [cell], done, 
+							    fail);
 						}
 						else
 						{
