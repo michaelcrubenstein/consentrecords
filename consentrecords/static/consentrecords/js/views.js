@@ -762,6 +762,7 @@ function appendConfirmDeleteControls(divs, onClick)
 	onClick = (onClick !== undefined ? onClick :
 		function(d)
 		{
+			/* Test case: Delete an existing value in a cell that has multiple values. */
 			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
 				d.deleteValue(unblockClick, syncFailFunction);
 		});
@@ -1723,6 +1724,7 @@ var SitePanel = (function () {
 							}
 						});
 					if (initialData.length > 0) {
+						/* Test case: Change the text of an existing string or translation field and click Done */
 						cr.updateValues(initialData, sourceObjects, 
 							function() {
 								if (done)
@@ -3014,15 +3016,19 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 						if (d.getValueID())
 						{
 							cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
+							/* Test case: Choose a different item as was previously selected for this item. */
 						}
 						else
 						{
 							oldData.deleteValue(successFunction, syncFailFunction);
+							/* Test case: Choose none for a unique item that was previously specified. */
 						}
 					}
 					else if (d.getValueID())
 					{
 						if (oldData.cell.parent && oldData.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						/* Test case: Set the value of a unique item in a cell where the current value is None.
+						 */
 						{
 							var initialData;
 							/* The description value is used in updateFromChangeData. */
