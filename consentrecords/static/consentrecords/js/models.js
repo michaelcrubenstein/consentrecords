@@ -1404,6 +1404,15 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 					d = sourceObjects[i];
 					newValueID = json.valueIDs[i];
 					newInstanceID = json.instanceIDs[i];
+
+					/* Check to see if d is a cell instead of a value. If so, then
+						change it to a newly created value. 
+					 */
+					if ("addNewValue" in d)
+					{
+						d = d.addNewValue();
+					}
+					
 					if (newValueID)
 					{
 						d.id = newValueID;
