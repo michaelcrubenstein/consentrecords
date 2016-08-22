@@ -809,6 +809,14 @@ var PathLines = (function() {
 		var dataChanged = function(eventObject)
 		{
 			_this.setFlagText(eventObject.data);
+			
+			/* Make sure that the rectangles match the widths. */
+			var g = d3.select(eventObject.data);
+			g.selectAll('rect')
+				.attr('width', function(fd)
+					{
+						return $(this.parentNode).children('text').outerWidth() + 5;
+					});	
 		}
 		
 		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
