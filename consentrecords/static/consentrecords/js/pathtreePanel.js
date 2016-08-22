@@ -916,7 +916,7 @@ var PathLines = (function() {
 		g.sort(this._compareExperiences);
 		this._setCoordinates(g);
 		g.transition()
-			.duration(1000)
+			.duration(700)
 			.ease("in-out")
 			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX);});
 		
@@ -925,7 +925,7 @@ var PathLines = (function() {
 		 */
 		g.selectAll('line.flag-pole')
 			.transition()
-			.duration(1000)
+			.duration(700)
 			.ease("in-out")
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 
