@@ -134,7 +134,10 @@ var CRP = (function() {
 				if (storedI && storedI.isDataLoaded)
 				{
 					if (i !== storedI)
+					{
 						i.importCells(storedI.cells);
+						i.isDataLoaded = true;
+					}
 					successFunction();
 					return true;
 				}
