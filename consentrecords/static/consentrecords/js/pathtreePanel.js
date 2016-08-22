@@ -29,7 +29,7 @@ var FlagData = (function() {
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
-	FlagData.prototype.getService = function()
+	FlagData.prototype._getService = function()
 	{
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getValueID())
@@ -41,9 +41,9 @@ var FlagData = (function() {
 		return this.experience.getValue("Service");
 	}
 	
-	FlagData.prototype.getServiceDomain = function()
+	FlagData.prototype._getServiceDomain = function()
 	{
-		var service = this.getService();
+		var service = this._getService();
 		if (!service || !service.getValueID())
 			return null;
 		var storedService = crp.getInstance(service.getValueID());
@@ -58,9 +58,9 @@ var FlagData = (function() {
 		return storedService.getValue("Service Domain");
 	}
 
-	FlagData.prototype.getStage = function()
+	FlagData.prototype._getStage = function()
 	{
-		var service = this.getService();
+		var service = this._getService();
 		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
 	}
 
@@ -79,11 +79,11 @@ var FlagData = (function() {
 	};
 	FlagData.prototype.getColumn = function()
 	{
-		var sd = this.getServiceDomain();
+		var sd = this._getServiceDomain();
 		if (sd && sd.getDescription() == "Housing")
 			return 0;
 
-		var stage = this.getStage();
+		var stage = this._getStage();
 		var stageDescription = stage && stage.getDescription();
 		if (stageDescription &&
 			stageDescription in this.stageColumns)
