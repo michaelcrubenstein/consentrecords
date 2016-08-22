@@ -470,7 +470,7 @@ var DateWheel = (function () {
     			});
     		if (this.oldMonth < minMonth + 1)
     		{
-    			this.oldMonth = minMonth;
+    			this.oldMonth = minMonth + 1;
     			this._setSelectedIndex(this.monthNode, minMonth);
     		}
     	}
