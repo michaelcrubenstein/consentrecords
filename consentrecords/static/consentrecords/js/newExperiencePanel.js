@@ -1,10 +1,3 @@
-var NewExperienceStrings = 
-	{
-		offeringFormat: "{0}",
-		organizationFormat: "{0}",
-		tagFormat: "{0}",
-	};
-
 var Experience = (function() {
 	Experience.prototype.organization = null;
 	Experience.prototype.organizationName = null;
@@ -939,7 +932,7 @@ var ExperienceDatumSearchView = (function() {
 					if (orgValue.getDescription() == d.getDescription() ||
 						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
 					{
-						leftText.text(NewExperienceStrings.organizationFormat.format(d.getDescription()));
+						leftText.text(d.getDescription());
 					}
 					else
 					{
@@ -952,11 +945,11 @@ var ExperienceDatumSearchView = (function() {
 				}
 				else if (d.typeName === "Organization")
 				{
-					leftText.text(NewExperienceStrings.organizationFormat.format(d.getDescription()));
+					leftText.text(d.getDescription());
 				}
 				else if (d.typeName === "Service")
 				{
-					leftText.text(NewExperienceStrings.tagFormat.format(d.getDescription()));
+					leftText.text(d.getDescription());
 				}
 				else
 				{
