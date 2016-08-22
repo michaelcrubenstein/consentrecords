@@ -209,7 +209,8 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype.hasShortResults = function()
 	{
 		return d3.select(this._containerNode).selectAll('li').size() < this._increment &&
-			   !this._inGetData;
+			   !this._inGetData &&
+			   !this._isSpinning;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()
