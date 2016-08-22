@@ -409,8 +409,11 @@ var PathView = (function() {
 				try
 				{
 					var panel = this.sitePanel.node();
-					var editPanel = new EditExperiencePanel(fd.experience, fd.experience.cell.parent, panel, revealPanelLeft);
-												  
+					var experience = new Experience(this.path, fd.experience);
+					experience.replaced(fd.experience);
+					
+					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase());
+					
 					revealPanelLeft(editPanel.node());
 				}
 				catch(err)
