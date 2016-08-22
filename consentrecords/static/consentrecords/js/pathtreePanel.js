@@ -34,6 +34,9 @@ var FlagData = (function() {
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getValueID())
 		{
+			if (!offering.isDataLoaded)
+				throw ("Runtime error: offering data is not loaded");
+				
 			var service = offering.getValue("Service");
 			if (service)
 				return service;
@@ -136,9 +139,18 @@ var FlagData = (function() {
 	
 	FlagData.prototype.colorElement = function(r)
 	{
-		var colorText = this.getColor();
-		r.setAttribute("fill", colorText);
-		r.setAttribute("stroke", colorText);
+		var _this = this;
+		var f = function()
+			{
+				var colorText = _this.getColor();
+				r.setAttribute("fill", colorText);
+				r.setAttribute("stroke", colorText);
+			}
+		var offering = this.experience.getValue("Offering");
+		if (offering && offering.getValueID() && !offering.isDataLoaded)
+			crp.pushCheckCells(offering, undefined, f, cr.asyncFail);
+		else
+			f();
 	}
 
 	function FlagData(experience)
@@ -253,12 +265,21 @@ var PathView = (function() {
 	 */	
 	PathView.prototype.setupColorWatchTriggers = function(r, fd)
 	{
-		var _this = this;
-		this.setupServiceTriggers(r, fd, function(eventObject)
-				{
-					var fd = d3.select(eventObject.data).datum();
-					fd.colorElement(eventObject.data);
-				});
+		var e = fd.experience;
+		var offeringCell = e.getCell("Offering");
+		
+		var f = function(eventObject)
+			{
+				var fd = d3.select(eventObject.data).datum();
+				fd.colorElement(eventObject.data);
+			}
+		
+		$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+		$(r).one("clearTriggers.cr remove", function()
+			{
+				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+			});
+		this.setupServiceTriggers(r, fd, f);
 	}
 	
 	PathView.prototype.checkOfferingCells = function(experience, done)
@@ -270,6 +291,7 @@ var PathView = (function() {
 			if (storedI != null)
 			{
 				offering.importCells(storedI.cells);
+				offering.isDataLoaded = true;
 				if (done) done();
 			}
 			else
