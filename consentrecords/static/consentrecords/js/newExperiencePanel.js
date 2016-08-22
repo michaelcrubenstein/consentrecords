@@ -3182,7 +3182,14 @@ var NewExperiencePanel = (function () {
 		setTimeout(function()
 			{
 				if (!experience.instance)
-					_this.organizationInput.node().focus();	
+				{
+					if (!experience.organizationName)
+						_this.organizationInput.node().focus();
+					else if (!experience.siteName)
+						_this.siteInput.node().focus();
+					else if (!experience.offeringName)
+						_this.offeringInput.node().focus();
+				}
 
 				if (phase == 'Current')
 				{
