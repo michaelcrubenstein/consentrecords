@@ -19,6 +19,9 @@ var Experience = (function() {
 	/* The path containing the object to which to add the experience. */
 	Experience.prototype.path = null;
 	
+	/* The instance is an instance to be replaced. */
+	Experience.prototype.instance = null;
+	
 	Experience.prototype.setOrganization = function(args) {
 		if ("instance" in args && args.instance)
 		{
@@ -354,36 +357,118 @@ var Experience = (function() {
 		this.appendTags(tagsDiv);
 	}
 	
-	Experience.prototype.add = function()
+	Experience.prototype.add = function(done)
 	{
-		bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
-
 		var _this = this;
-		
-		function onCreatedInstance(newData)
+	
+		if (this.instance)
 		{
-			crp.pushCheckCells(newData, ["type"], 
-				function() {
-					function addExperience() {
-						_this.path.getCell("More Experience").addValue(newData);
-						$(_this).trigger("experienceAdded.cr", newData);
-						unblockClick();
-					}
-					var offering = newData.getValue("Offering");
-					if (offering && offering.getValueID() && !offering.isDataLoaded)
-						crp.pushCheckCells(offering, undefined, addExperience, syncFailFunction);
-					else
-						addExperience();
-				},
-				syncFailFunction);
-		}
-		
-		field = {ofKind: "More Experience", name: "More Experience"};
-		var initialData = {};
+			var updateData = [];
+			var sourceObjects = [];
+			this.instance.getValue("Organization").appendUpdateCommands(0, this.organization, updateData, sourceObjects);
+			this.instance.getValue("User Entered Organization").appendUpdateCommands(
+					0, this.organization ? null : this.organizationName, updateData, sourceObjects);
+					
+			this.instance.getValue("Site").appendUpdateCommands(0, this.site, updateData, sourceObjects);
+			this.instance.getValue("User Entered Site").appendUpdateCommands(
+					0, this.site ? null : this.siteName, updateData, sourceObjects);
+					
+			this.instance.getValue("Offering").appendUpdateCommands(0, this.offering, updateData, sourceObjects);
+			this.instance.getValue("User Entered Offering").appendUpdateCommands(
+					0, this.offering ? null : this.offeringName, updateData, sourceObjects);
+					
+			this.instance.getValue("Start").appendUpdateCommands(0, this.startDate, updateData, sourceObjects);	
+			this.instance.getValue("End").appendUpdateCommands(0, this.endDate, updateData, sourceObjects);
+			
+			var i = 0;
+			var j = 0;
+			var oldServices = this.instance.getCell("Service");
+			
+			var existingServices = null;
+			if (this.offering && this.offering.getCell("Service"))
+				existingServices = this.offering.getCell("Service").data
+					.map(function(d) { return d.getValueID(); });
 
-		this.appendData(initialData);
+			var newServices = this.services.filter(function(s) {
+					return s.pickedObject &&
+						(!existingServices || 
+					     !existingServices.find(function(d) { 
+							return s.pickedObject.getValueID() == d;
+							}));
+				})
+				.map(function(d) { return d.pickedObject; });
+			var newUserEnteredServices = this.services.filter(function(d) { return !d.pickedObject; })
+				.map(function(d) { return d.name; });
+			
+			var collateValues = function(cell, newValues, updateData, sourceObjects)
+			{
+				var j = 0;
+				newValues.forEach(function(d)
+					{
+						if (j < cell.data.length)
+						{
+							var oldService = cell.data[j];
+							oldService.appendUpdateCommands(j, d, updateData, sourceObjects);
+							++j;
+						}
+						else
+						{
+							updateData.push(cell.getAddCommand(d));
+							sourceObjects.push(cell);
+						}
+					});
+				while (j < cell.data.length)
+				{
+					var oldService = cell.data[j];
+					oldService.appendUpdateCommands(j, null, updateData, sourceObjects);
+					++j;
+				}
+			}
+			
+			collateValues(this.instance.getCell("Service"), newServices, updateData, sourceObjects);
+			collateValues(this.instance.getCell("User Entered Service"), newUserEnteredServices, updateData, sourceObjects);
+			
+			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
+			
+			cr.updateValues(updateData, sourceObjects, function()
+				{
+					var offering = _this.instance.getValue("Offering");
+					if (offering && offering.getValueID() && !offering.isDataLoaded)
+						crp.pushCheckCells(offering, undefined, done, cr.syncFail);
+					else
+						done();
+				},
+				cr.syncFail);
+		}
+		else
+		{
+			bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
+
+			function onCreatedInstance(newData)
+			{
+				crp.pushCheckCells(newData, ["type"], 
+					function() {
+						function addExperience() {
+							_this.path.getCell("More Experience").addValue(newData);
+							if (done)
+								done();
+						}
+						var offering = newData.getValue("Offering");
+						if (offering && offering.getValueID() && !offering.isDataLoaded)
+							crp.pushCheckCells(offering, undefined, addExperience, cr.syncFail);
+						else
+							addExperience();
+					},
+					cr.syncFail);
+			}
 		
-		cr.createInstance(field, this.path.getValueID(), initialData, onCreatedInstance, syncFailFunction);
+			field = {ofKind: "More Experience", name: "More Experience"};
+			var initialData = {};
+
+			this.appendData(initialData);
+		
+			cr.createInstance(field, this.path.getValueID(), initialData, onCreatedInstance, syncFailFunction);
+		}
 	}
 	
 	Experience.prototype._getInstanceLabel = function(i, name)
@@ -556,6 +641,22 @@ var Experience = (function() {
 			return "";
 	}
 	
+	Experience.prototype.replaced = function(instance)
+	{
+		this.instance = instance;
+	}
+	
+	Experience.prototype.getPhase = function()
+	{
+		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
+		if (!this.startDate || this.startDate > todayDate)
+			return 'Goal';
+		else if (!this.endDate || this.endDate > todayDate)
+			return 'Current';
+		else
+			return 'Previous';
+	}
+	
 	function Experience(path, dataExperience)
 	{
 		if (!path)
@@ -612,6 +713,9 @@ var Experience = (function() {
 					if (!d.isEmpty())
 						_this.services.push(new ReportedObject({name: d.getDescription(), pickedObject: null}));
 				});
+				
+			this.startDate = dataExperience.getDatum("Start");
+			this.endDate = dataExperience.getDatum("End");
 		}
 	}
 	
@@ -1250,7 +1354,7 @@ var TagSearchView = (function() {
 				var d3Focus = d3.select(this.focusNode);
 				if (d3Focus.datum())
 				{
-					d3Focus.datum().name = null;
+					d3Focus.datum().name = d.getDescription();
 					d3Focus.datum().pickedObject = d;
 					this.focusNode.value = d.getDescription();
 					this.onTagAdded();
@@ -2024,6 +2128,163 @@ var VerticalReveal = (function() {
 /* This is the entry panel for the workflow. The experience contains no data on entry. 
 	This panel can specify a search domain or, with typing, pick a service, offering, organization or site.
 	One can also specify a custom service or a custom organization. */
+var ConfirmDeleteAlert = (function () {
+
+	function ConfirmDeleteAlert(panelNode, confirmText, done, cancel)
+	{
+		var dimmer = new Dimmer(panelNode);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		var confirmButton = div.append('button')
+			.text(confirmText)
+			.classed("text-danger", true)
+			.on("click", function()
+				{
+					if (prepareClick('click', confirmText))
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							done();
+						});
+						dimmer.hide();
+					}
+				});
+				
+		var onCancel = function()
+			{
+				if (prepareClick('click', 'Cancel'))
+				{
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						cancel();
+					});
+					dimmer.hide();
+				}
+			}
+			
+		div.append('button')
+			.text("Cancel")
+			.on("click", onCancel);
+		
+		dimmer.show();
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(confirmButton.node()).focus();
+				unblockClick();
+			}});
+		$(confirmButton.node()).on('blur', function()
+			{
+				if (prepareClick('blur', confirmText))
+				{
+					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+						panel.remove();
+						cancel();
+					});
+				}
+			});
+			
+		dimmer.mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ConfirmDeleteAlert;
+})();
+
+var ExperienceShareOptions = (function () {
+
+	function ExperienceShareOptions(panelNode, experience, path)
+	{
+		var dimmer = new Dimmer(panelNode);
+		var panel = d3.select(panelNode).append('panel')
+			.classed("confirm", true);
+		var div = panel.append('div');
+		function onCancel(e)
+		{
+			if (prepareClick('click', 'Cancel'))
+			{
+				$(emailAddExperienceButton.node()).off('blur');
+				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+					panel.remove();
+					unblockClick();
+				});
+				dimmer.hide();
+			}
+			e.preventDefault();
+		}
+		
+		if (cr.signedinUser)
+		{
+			var duplicateText = (path == cr.signedinUser.getValue("More Experiences")) ? "Duplicate Experience" : "Add to My Pathway";
+		
+			var addToMyPathwayButton = div.append('button')
+				.text(duplicateText)
+				.classed("site-active-text", true)
+				.on("click", function()
+					{
+						if (prepareClick('click', duplicateText))
+						{
+							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
+							var newPanel = new NewExperiencePanel(tempExperience, panel.node(), tempExperience.getPhase());
+							showPanelUp(newPanel.node(), function()
+								{
+									$(emailAddExperienceButton.node()).off('blur');
+									panel.remove();
+									dimmer.remove();
+									unblockClick();
+								});
+						}
+					});
+				
+			$(addToMyPathwayButton.node()).on('blur', onCancel);
+		}
+		
+		var emailAddExperienceButton = div.append('button')
+			.text("Email Add Experience Link")
+			.classed("site-active-text", true)
+			.on("click", function()
+				{
+					if (prepareClick('click', "Email Add Experience Link"))
+					{
+						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
+							panel.remove();
+							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}.'
+										.format(window.location.origin, experience.getValueID());
+							unblockClick();
+						});
+						dimmer.hide();
+					}
+				});
+				
+		$(emailAddExperienceButton.node()).on('blur', onCancel);
+		
+		var cancelButton = div.append('button')
+			.text("Cancel")
+			.classed("site-active-text", true);
+		
+		$(cancelButton.node()).click(onCancel);
+		
+		dimmer.show();
+		$(panel.node()).toggle("slide", {direction: "down", duration: 0});
+		$(panel.node()).effect("slide", {direction: "down", duration: 400, complete: 
+			function() {
+				$(emailAddExperienceButton.node()).focus();
+				unblockClick();
+			}});
+		dimmer.mousedown(onCancel);
+		$(panel.node()).mousedown(function(e)
+			{
+				e.preventDefault();
+			});
+	}
+	
+	return ExperienceShareOptions;
+})();
+
 var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype = new SitePanel();
 	NewExperiencePanel.prototype.allServices = null;
@@ -2036,6 +2297,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.endHidable = null;
 
 	NewExperiencePanel.prototype.title = "New Experience";
+	NewExperiencePanel.prototype.editTitle = "Edit Experience";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
@@ -2115,14 +2377,7 @@ var NewExperiencePanel = (function () {
 						if (prepareClick('click', "Not Sure"))
 						{
 							hideWheel();
-							hidableDiv.hide(function()
-								{
-									hidingChevron.show(function()
-										{
-											dateWheel.clear();
-											unblockClick();
-										});
-								});
+							hideValue(unblockClick);
 							notSureReveal.hide({duration: 200,
 											    step: function()
 													{
@@ -2147,6 +2402,19 @@ var NewExperiencePanel = (function () {
 						hidableDiv.show();
 					});
 			}
+		
+		var hideValue = function(done)
+		{
+			hidableDiv.hide(function()
+			{
+				hidingChevron.show(function()
+					{
+						dateWheel.clear();
+						if (done)
+							done();
+					});
+			});
+		}
 			
 		var hideWheel = function(done)
 		{
@@ -2171,6 +2439,7 @@ var NewExperiencePanel = (function () {
 		    wheelReveal: reveal,
 			notSureReveal: notSureReveal,
 			forceDateVisible: forceDateVisible,
+			hideValue: hideValue,
 			hideWheel: hideWheel,
 			showWheel: showWheel,
 		};
@@ -2305,8 +2574,17 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.checkOrganizationInput = function()
 	{
-		if (this.organizationSearchView.inputText())
-			this.experience.setOrganization({text: this.organizationSearchView.inputText()});
+		var newText = this.organizationSearchView.inputText();
+		if (newText)
+		{
+			/* If there is only an item that matches the input text, then use that item. */
+			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
+			if (newInstance && 
+				newInstance.getValueID() != (this.experience.organization && this.experience.organization.getValueID()))
+				this.experience.setOrganization({instance: newInstance});
+			else if (newText != this.experience.organizationName)
+				this.experience.setOrganization({text: newText});
+		}
 		else
 			this.organizationSearchView.clearFromOrganization();
 		this.showTags();
@@ -2314,8 +2592,17 @@ var NewExperiencePanel = (function () {
 		
 	NewExperiencePanel.prototype.checkSiteInput = function()
 	{
-		if (this.siteSearchView.inputText())
-			this.experience.setSite({text: this.siteSearchView.inputText()});
+		var newText = this.siteSearchView.inputText();
+		if (newText)
+		{
+			/* If there is only an item that matches the input text, then use that item. */
+			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
+			if (newInstance && 
+				newInstance.getValueID() != (this.experience.site && this.experience.site.getValueID()))
+				this.experience.setSite({instance: newInstance});
+			else if (newText != this.experience.siteName)
+				this.experience.setSite({text: newText});
+		}
 		else
 			this.siteSearchView.clearFromSite();
 		this.showTags();
@@ -2323,9 +2610,16 @@ var NewExperiencePanel = (function () {
 		
 	NewExperiencePanel.prototype.checkOfferingInput = function()
 	{
-		if (this.offeringSearchView.inputText())
+		var newText = this.offeringSearchView.inputText();
+		if (newText)
 		{
-			this.experience.setOffering({text: this.offeringSearchView.inputText()});
+			/* If there is only an item that matches the input text, then use that item. */
+			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
+			if (newInstance && 
+				newInstance.getValueID() != (this.experience.offering && this.experience.offering.getValueID()))
+				this.experience.setOffering({instance: newInstance});
+			else if (newText != this.experience.offeringName)
+				this.experience.setOffering({text: newText});
 		}
 		else
 		{
@@ -2459,7 +2753,8 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.resizeVisibleSearch = function(duration)
 	{
-		if (this.tagSearchView.reveal.isVisible())
+		/* This may be called before tagSearchView is initialized. */
+		if (this.tagSearchView && this.tagSearchView.reveal.isVisible())
 		{
 			this.tagSearchView.showSearch(duration);
 		}
@@ -2477,25 +2772,35 @@ var NewExperiencePanel = (function () {
 		}
 	}
 
-	function NewExperiencePanel(experience, previousPanelNode, phase, done) {
-
+	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
+	{
+		if (prepareClick('click', 'delete experience'))
+		{
+			var _this = this;
+			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
+				function() { 
+					_this.experience.instance.deleteValue(
+						function() { _this.hidePanelDown(unblockClick) },
+						cr.syncFail);
+				}, 
+				function() { 
+					unblockClick();
+				});
+		}
+	}
+	
+	function NewExperiencePanel(experience, previousPanelNode, phase) {
+		if (experience.instance)
+			this.title = this.editTitle;
+			
 		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
 	
 		var hidePanel = function() { 
-				asyncHidePanelDown(_this.node()); 
-				if (done) done();
+				_this.hide();
 			}
-		$(experience).on("experienceAdded.cr", hidePanel);
-		$(this.node()).on("remove", function () { $(experience).off("experienceAdded.cr", hidePanel); });
-		
 		var _this = this;
 		this.experience = experience;
 		
-		var stepFunction = function()
-			{
-				//_this.calculateHeight();
-			}
-			
 		var navContainer = this.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
@@ -2521,7 +2826,7 @@ var NewExperiencePanel = (function () {
 						experience.startDate = startDateInput.value();
 						experience.endDate = endDateInput.value();
 					
-						experience.add();
+						experience.add(hidePanel);
 					}
 				}
 				
@@ -2571,13 +2876,37 @@ var NewExperiencePanel = (function () {
 					asyncFailFunction('No timing button is pressed.');
 				d3.event.preventDefault();
 			});
-		nextButton.append("span").text("Add");
+		nextButton.append("span").text(experience.instance ? "Done" : "Add");
 		
 		navContainer.appendTitle(this.title);
 		
 		var panel2Div = this.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
+		
+		if (experience.instance)
+		{
+			var bottomNavContainer = this.appendBottomNavContainer();
+			bottomNavContainer.appendRightButton()
+				.on("click", 
+					function() {
+						_this.handleDeleteButtonClick();
+					})
+				.append("span").classed("text-danger", true).text("Delete");
+			
+			var shareButton = bottomNavContainer.appendLeftButton()
+				.classed("share", true)
+				.on('click', function()
+					{
+						if (prepareClick('click', 'share'))
+						{
+							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
+						}
+					});
+			shareButton.append("img")
+				.attr("src", shareImagePath);
+		}
+
 		var section;
 		var label;
 		var searchContainer;
@@ -2588,7 +2917,7 @@ var NewExperiencePanel = (function () {
 		this.organizationInput = section.append('input')
 			.classed('organization', true)
 			.attr('placeholder', 'Organization (Optional)')
-			.text(experience.organizationName);
+			.attr('value', experience.organizationName);
 		organizationHelp = section.append('div')
 			.classed('help', true);
 			
@@ -2605,7 +2934,7 @@ var NewExperiencePanel = (function () {
 		this.siteInput = section.append('input')
 			.classed('site', true)
 			.attr('placeholder', 'Location (Optional)')
-			.text(experience.siteName);
+			.attr('value', experience.siteName);
 		siteHelp = section.append('div').classed('help', true);
 		
 		searchContainer = section.append('div');
@@ -2621,7 +2950,7 @@ var NewExperiencePanel = (function () {
 		this.offeringInput = section.append('input')
 			.classed('offering', true)
 			.attr('placeholder', 'Title')
-			.text(experience.offeringName);
+			.attr('value', experience.offeringName);
 		offeringHelp = section.append('div').classed('help', true);
 			
 		searchContainer = section.append('div');
@@ -2732,15 +3061,12 @@ var NewExperiencePanel = (function () {
 								_this.endHidable.notSureReveal.show({before: function()
 								{
 									_this.resizeVisibleSearch(200);
-								}}, 200, stepFunction);
+								}}, 200);
 							else
 								_this.resizeVisibleSearch(200);
-						}}, 200, stepFunction);
+						}}, 200);
 					
-					var startMinDate = getUTCTodayDate();
-					var startMaxDate = new Date(startMinDate);
-					startMaxDate.setUTCFullYear(startMaxDate.getUTCFullYear() + 50);
-					startDateInput.checkMinDate(startMinDate, startMaxDate);
+					setGoalStartDateRange();
 					$(startDateInput).trigger('change');
 				})
 			.text(this.goalLabel);
@@ -2801,12 +3127,21 @@ var NewExperiencePanel = (function () {
 		if (phase == 'Current')
 		{
 			this.startHidable.notSureReveal.hide();
-			this.endHidable.notSureReveal.show();
+			if (experience.endDate)
+				this.endHidable.notSureReveal.show();
+			else
+				this.endHidable.notSureReveal.hide();
 		}
 		else if (phase == 'Goal')
 		{
-			this.startHidable.notSureReveal.show();
-			this.endHidable.notSureReveal.show();
+			if (experience.startDate)
+				this.startHidable.notSureReveal.show();
+			else
+				this.startHidable.notSureReveal.hide();
+			if (experience.endDate)
+				this.endHidable.notSureReveal.show();
+			else
+				this.endHidable.notSureReveal.hide();
 		}
 		else
 		{
@@ -2816,29 +3151,58 @@ var NewExperiencePanel = (function () {
 		
 		if (experience.startDate)
 			startDateInput.value(experience.startDate);
-		
+		else
+		{
+			setTimeout(function()
+				{
+					_this.startHidable.hideValue();
+				});
+		}
+			
 		if (experience.endDate)
 			endDateInput.value(experience.endDate);
+		else
+		{
+			setTimeout(function()
+				{
+					_this.endHidable.hideValue();
+				});
+		}
 		
 		this.showTags();
 		
+		function setGoalStartDateRange()
+		{
+			var startMinDate = getUTCTodayDate();
+			var startMaxDate = new Date(startMinDate);
+			startMaxDate.setUTCFullYear(startMaxDate.getUTCFullYear() + 50);
+			startDateInput.checkMinDate(startMinDate, startMaxDate);
+		}
+		
 		setTimeout(function()
 			{
-				_this.organizationInput.node().focus();	
+				if (!experience.instance)
+					_this.organizationInput.node().focus();	
 
 				if (phase == 'Current')
 				{
 					startDateInput.onChange();
-					$(currentExperienceButton.node()).trigger('click');
+					currentExperienceButton.classed('pressed', true);
+					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
 				else if (phase == 'Goal')
-					$(goalButton.node()).trigger('click')
+				{
+					goalButton.classed('pressed', true);
+					setGoalStartDateRange();
+				}
 				else
 				{
 					startDateInput.onChange();
 					endDateInput.onChange();
-					$(previousExperienceButton.node()).trigger('click');
+					previousExperienceButton.classed('pressed', true);
+					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
+				$(startDateInput).trigger('change');
 			});
 
 		$(this.organizationInput.node()).on('focusin', function()

@@ -451,8 +451,6 @@ def addToPathway(request):
     offeringName = request.GET.get('f', None)
     serviceName = request.GET.get('m', None)
     
-    print(organizationName, siteName, offeringName, serviceName)
-
     userInfo = UserInfo(request.user)
     
     if offeringName and terms.isUUID(offeringName):

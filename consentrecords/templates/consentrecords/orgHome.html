@@ -1430,7 +1430,7 @@
 											if (!experience.getValueID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
-											showEditObjectPanel(experience, previousPanel, revealPanelUp);
+											showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 										},
 										function()
 										{
@@ -1442,7 +1442,7 @@
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
-													showEditObjectPanel(experience, previousPanel, revealPanelUp);
+													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
 										},
@@ -1658,7 +1658,7 @@
 					else
 					{
 						var inquiries = inquiriesInstances[0];
-						showEditObjectPanel(inquiries, previousPanel, revealPanelLeft);
+						showEditObjectPanel(inquiriesCell, inquiries, previousPanel, revealPanelLeft);
 					}
 				});
 		}
@@ -1675,7 +1675,7 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, previousPanel, revealPanelLeft);
+						showEditObjectPanel(enrollmentsCell, enrollmentsInstance, previousPanel, revealPanelLeft);
 					}
 				}
 				);
@@ -1776,7 +1776,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, currentPanelNode, revealPanelLeft);
+						showEditObjectPanel(listCell, instance, currentPanelNode, revealPanelLeft);
 					}
 				});
 		}

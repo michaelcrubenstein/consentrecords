@@ -470,7 +470,7 @@ var DateWheel = (function () {
     			});
     		if (this.oldMonth < minMonth + 1)
     		{
-    			this.oldMonth = minMonth;
+    			this.oldMonth = minMonth + 1;
     			this._setSelectedIndex(this.monthNode, minMonth);
     		}
     	}
@@ -591,6 +591,10 @@ var DateWheel = (function () {
 					d = "0{0}".format(d);
 				return "{0}-{1}-{2}".format(y, m, d);
 			}
+		}
+		else if (typeof(newValue) != "string")
+		{
+			throw ("Runtime Error: unrecognized data for value: {0}".format(newValue));
 		}
 		else
 		{

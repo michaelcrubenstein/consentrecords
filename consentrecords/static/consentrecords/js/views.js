@@ -124,10 +124,8 @@ var crv = {
 			.on("click", function(cell) {
 				if (prepareClick('click', 'add ' + cell.field.name))
 				{
-					var newValue = cell.addNewValue();
-					
 					if (done)
-						done(newValue);
+						done();
 				}
 				d3.event.preventDefault();
 			})
@@ -516,7 +514,11 @@ function _showEditStringCell(obj, cell, inputType)
 			});
 		_setupItemsDivHandlers(itemsDiv, cell);
 			
-		crv.appendAddButton(sectionObj, unblockClick);
+		crv.appendAddButton(sectionObj, function()
+			{
+				var newValue = cell.addNewValue();
+				unblockClick();
+			});
 	}
 }
 
@@ -594,7 +596,11 @@ function _showEditDateStampDayOptionalCell(obj, panelDiv)
 			});
 		_setupItemsDivHandlers(itemsDiv, this);
 			
-		crv.appendAddButton(sectionObj, unblockClick);
+		crv.appendAddButton(sectionObj, function()
+			{
+				var newValue = cell.addNewValue();
+				unblockClick();
+			});
 	}
 }
 
@@ -687,15 +693,18 @@ function _showEditTranslationCell(obj, cell, inputType)
 			});
 		_setupItemsDivHandlers(itemsDiv, cell);
 			
-		crv.appendAddButton(sectionObj, unblockClick);
+		crv.appendAddButton(sectionObj, function()
+			{
+				var newValue = cell.addNewValue();
+				unblockClick();
+			});
 	}
 }
 
 /* Produces a function which adds new value view to a container view
 	when the new data is added.
-	the viewFunction is called when the item is clicked.
  */
-function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
+function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 {
 	return function(eventObject, newValue)
 	{
@@ -732,7 +741,14 @@ function getOnValueAddedFunction(canDelete, canShowDetails, viewFunction)
 		buttons.on("click", function(d) {
 			if (prepareClick('click', 'view added item: ' + d.getDescription()))
 			{
-				viewFunction(d, previousPanelNode, revealPanelLeft);
+				try
+				{
+					onClick(cell, d, previousPanelNode, revealPanelLeft);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 		});
 		if (canDelete && !cell.isUnique())
@@ -762,6 +778,7 @@ function appendConfirmDeleteControls(divs, onClick)
 	onClick = (onClick !== undefined ? onClick :
 		function(d)
 		{
+			/* Test case: Delete an existing value in a cell that has multiple values. */
 			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
 				d.deleteValue(unblockClick, syncFailFunction);
 		});
@@ -860,12 +877,12 @@ function _clickEditObjectValue(d, previousPanelNode)
 	if (_isPickCell(d.cell))
 	{
 		if (prepareClick('click', 'pick object: ' + d.getDescription()))
-			showPickObjectPanel(d, previousPanelNode);
+			showPickObjectPanel(d.cell, d, previousPanelNode);
 	}
 	else
 	{
 		if (prepareClick('click', 'edit object: ' + d.getDescription()))
-			showEditObjectPanel(d, previousPanelNode, revealPanelLeft);
+			showEditObjectPanel(d.cell, d, previousPanelNode, revealPanelLeft);
 	}
 }
 
@@ -1155,7 +1172,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 			          .on("click", function(cell) {
 				if (prepareClick('click', 'view unique ' + cell.field.name + ': ' + cell.data[0].getDescription()))
 				{
-					showViewObjectPanel(cell.data[0], previousPanelNode, revealPanelLeft);
+					showViewObjectPanel(cell, cell.data[0], previousPanelNode, revealPanelLeft);
 				}
 			});
 	}
@@ -1169,13 +1186,14 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		});
 	
 	var clickFunction;
+	var _this = this;
 	if (_isPickCell(this) || this.isUnique())	/* Unique value handles the click above */
 		clickFunction = null;
 	else
 		clickFunction = function(d) {
 			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
 			{
-				showViewObjectPanel(d, previousPanelNode, revealPanelLeft);
+				showViewObjectPanel(_this, d, previousPanelNode, revealPanelLeft);
 			}
 		}
 
@@ -1236,9 +1254,9 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 	
-	var viewFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
+	var editFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
 		
-	var addedFunction = getOnValueAddedFunction(true, true, viewFunction);
+	var addedFunction = getOnValueAddedFunction(true, true, editFunction);
 
 	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
 	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
@@ -1248,9 +1266,11 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	
 	if (!this.isUnique())
 	{
+		var _this = this;
 		function done(newValue)
 		{
-			viewFunction(newValue, previousPanelNode, revealPanelUp);
+			var newValue = _isPickCell(_this) ? null : _this.addNewValue();
+			editFunction(_this, newValue, previousPanelNode, revealPanelUp);
 		}
 		
 		crv.appendAddButton(sectionObj, done);
@@ -1723,6 +1743,7 @@ var SitePanel = (function () {
 							}
 						});
 					if (initialData.length > 0) {
+						/* Test case: Change the text of an existing string or translation field and click Done */
 						cr.updateValues(initialData, sourceObjects, 
 							function() {
 								if (done)
@@ -2411,6 +2432,43 @@ var CellToggleText = (function()
 	return CellToggleText;
 })();
 
+var Dimmer = (function () {
+	Dimmer.prototype.dimmerDiv = null;
+	function Dimmer(panelNode)
+	{
+		this.dimmerDiv = d3.select(panelNode).append('div')
+			.classed('dimmer', true);
+	}
+	
+	Dimmer.prototype.show = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
+		return this;
+	}
+	
+	Dimmer.prototype.hide = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0}, {duration: 400, complete:
+			function()
+			{
+				d3.select(this).remove();
+			}});
+		return this;
+	}
+	
+	Dimmer.prototype.remove = function()
+	{
+		this.dimmerDiv.remove();
+	}
+	
+	Dimmer.prototype.mousedown = function(f)
+	{
+		$(this.dimmerDiv.node()).mousedown(f);
+	}
+	
+	return Dimmer;
+})();
+
 /* Gets the text for the header of a view panel based on the specified data. */
 function getViewPanelHeader(objectData)
 {
@@ -2465,7 +2523,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 /* Displays a panel in which the specified object's contents appear.
  */
-function showViewObjectPanel(objectData, previousPanelNode, showFunction) {
+function showViewObjectPanel(cell, objectData, previousPanelNode, showFunction) {
 	var successFunction = function ()
 	{
 		var sitePanel = new SitePanel(previousPanelNode, 
@@ -2486,7 +2544,7 @@ function showViewObjectPanel(objectData, previousPanelNode, showFunction) {
 					{
 						showClickFeedback(this);
 				
-						showEditObjectPanel(objectData, sitePanel.node(), revealPanelUp);
+						showEditObjectPanel(cell, objectData, sitePanel.node(), revealPanelUp);
 					}
 					d3.event.preventDefault();
 				});
@@ -2526,19 +2584,17 @@ function _b64_to_utf8( str ) {
 /* 
 	Displays a panel for editing the specified object. 
  */
-function showEditObjectPanel(objectData, previousPanelNode, onShow) {
+function showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow) {
 	if (!objectData)
 		throw "objectData is not initialized";
-		
-	var containerCell = objectData.cell;
 		
 	var successFunction = function()
 	{
 		var header;
-		if (objectData.getValueID())
+		if (objectData && objectData.getValueID())
 			header = "Edit";
 		else
-			header = "New " + objectData.cell.field.name;
+			header = "New " + containerCell.field.name;
 			
 		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", onShow);
 
@@ -2768,7 +2824,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			function(d) {
 				if (prepareClick('click', 'view root object: ' + d.getDescription()))
 				{
-					showViewObjectPanel(d, sitePanel.node(), revealPanelLeft);
+					showViewObjectPanel(cell, d, sitePanel.node(), revealPanelLeft);
 				}
 			});
 
@@ -2799,7 +2855,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				showClickFeedback(this);
 			
 				var newValue = cell.addNewValue();
-				showEditObjectPanel(newValue, sitePanel.node(), revealPanelUp);
+				showEditObjectPanel(cell, newValue, sitePanel.node(), revealPanelUp);
 			}
 			d3.event.preventDefault();
 		});
@@ -2864,7 +2920,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		function(d) {
 			if (prepareClick('click', 'edit cell item: ' + d.getDescription()))
 			{
-				showEditObjectPanel(d, sitePanel.node(), revealPanelLeft);
+				showEditObjectPanel(cell, d, sitePanel.node(), revealPanelLeft);
 			}
 		});
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -2927,14 +2983,11 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 /* Displays a panel from which a user can select an object of the kind required 
 	for objects in the specified cell.
  */
-function showPickObjectPanel(oldData, previousPanelNode) {
-	if (!oldData)
-		throw "oldData is not defined";
-		
+function showPickObjectPanel(cell, oldData, previousPanelNode) {
 	var failFunction = syncFailFunction;
 	
 	function selectAllSuccessFunction(rootObjects) {
-		if (!("pickObjectPath" in oldData.cell.field && oldData.cell.field.pickObjectPath))
+		if (!("pickObjectPath" in cell.field && cell.field.pickObjectPath))
 		{
 			rootObjects.sort(function(a, b)
 				{
@@ -2943,11 +2996,11 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 		}
 	
 		var panelDatum;
-		if (oldData.id)
+		if (oldData && oldData.id)
 			panelDatum = oldData;	/* Replacing an existing object. */
 		else
-			panelDatum = oldData.cell;		/* Adding a new object. */
-		var sitePanel = new SitePanel(previousPanelNode, panelDatum, oldData.cell.field.name, "list");
+			panelDatum = cell;		/* Adding a new object. */
+		var sitePanel = new SitePanel(previousPanelNode, panelDatum, cell.field.name, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -2956,18 +3009,13 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					if (!oldData.getValueID() && !oldData.cell.isUnique())
-					{
-						// In this case, delete the item on cancel. 
-						oldData.cell.deleteValue(oldData);
-					}
 					sitePanel.hidePanelRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
 		backButton.append("span").text("Cancel");
 		
-		navContainer.appendTitle(oldData.cell.field.name);
+		navContainer.appendTitle(cell.field.name);
 
 		var textChanged = function(){
 			var val = this.value.toLocaleLowerCase();
@@ -3006,33 +3054,51 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			{
 				try
 				{
-					if (d.getValueID() === oldData.getValueID()) {
+					if (!oldData)
+					{
+						/* Test case: Add an item to a cell that can contain multiple items. 
+						 */
+						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						{
+							cr.updateValues([cell.getAddCommand(d)], [cell], successFunction, cr.syncFail);
+						}
+						else 
+						{
+							oldData = cell.addNewValue();
+							
+							/* In this case, we are replacing an old value for
+							   an item that was added to the cell but not saved;
+							   a placeholder or a previously picked value.
+							 */
+							oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
+							oldData.triggerDataChanged();
+							successFunction();
+						}
+					}
+					else if (d.getValueID() === oldData.getValueID()) {
+						/* Test case: Choose the same item as was previously selected for this item. */
 						successFunction();
 					}
 					else if (oldData.id)
 					{
 						if (d.getValueID())
 						{
-							cr.updateObjectValue(oldData, d, -1, successFunction, syncFailFunction);
+							/* Test case: Choose a different item as was previously selected for this item. */
+							cr.updateObjectValue(oldData, d, -1, successFunction, cr.syncFail);
 						}
 						else
 						{
-							oldData.deleteValue(successFunction, syncFailFunction);
+							/* Test case: Choose none for a unique item that was previously specified. */
+							oldData.deleteValue(successFunction, cr.syncFail);
 						}
 					}
 					else if (d.getValueID())
 					{
-						if (oldData.cell.parent && oldData.cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						/* Test case: Set the value of a unique item in a cell where the current value is None.
+						 */
+						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 						{
-							var initialData;
-							/* The description value is used in updateFromChangeData. */
-							initialData = [
-								{containerUUID: oldData.cell.parent.getValueID(), 
-								 fieldID: oldData.cell.field.nameID, 
-								 instanceID: d.getValueID(),
-								 description: d.getDescription()}
-								];
-							cr.updateValues(initialData, [oldData], successFunction, syncFailFunction);
+							cr.updateValues([cell.getAddCommand(d)], [oldData], successFunction, cr.syncFail);
 						}
 						else 
 						{
@@ -3056,26 +3122,29 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			d3.event.preventDefault();
 		}
 		
-		if (oldData.cell.isUnique())
+		if (cell.isUnique())
 		{
 			var nullObjectValue = new cr.ObjectValue();
 			rootObjects = [nullObjectValue].concat(rootObjects);
 		}
 		var buttons = appendButtons(panel2Div, rootObjects, buttonClicked);
 		
-		buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
-			function(d) { return d.getDescription() == oldData.getDescription(); });
+		if (oldData)
+		{
+			buttons.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", 
+				function(d) { return d.getDescription() == oldData.getDescription(); });
+		}
 	
 		showPanelLeft(sitePanel.node(), unblockClick);
 	}
 	
-	if (oldData.cell.field.pickObjectPath)
+	if (cell.field.pickObjectPath)
 	{
-		var pickObjectPath = oldData.cell.field.pickObjectPath;
+		var pickObjectPath = cell.field.pickObjectPath;
 		if (pickObjectPath.indexOf("parent") === 0 &&
 			">:=<".indexOf(pickObjectPath.charAt(6)) >= 0)
 		{
-			var currentObject = oldData.cell.parent;
+			var currentObject = cell.parent;
 			pickObjectPath = pickObjectPath.slice(6);
 			while (currentObject != null &&
 				   pickObjectPath.indexOf("::reference(") === 0 &&
@@ -3104,6 +3173,6 @@ function showPickObjectPanel(oldData, previousPanelNode) {
 			cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: syncFailFunction});
 	}
 	else
-		cr.selectAll({path: oldData.cell.field.ofKindID, done: selectAllSuccessFunction, fail: syncFailFunction});
+		cr.selectAll({path: cell.field.ofKindID, done: selectAllSuccessFunction, fail: syncFailFunction});
 }
 		

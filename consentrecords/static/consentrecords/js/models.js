@@ -134,7 +134,10 @@ var CRP = (function() {
 				if (storedI && storedI.isDataLoaded)
 				{
 					if (i !== storedI)
+					{
 						i.importCells(storedI.cells);
+						i.isDataLoaded = true;
+					}
 					successFunction();
 					return true;
 				}
@@ -382,6 +385,13 @@ cr.StringCell = (function() {
 			initialData[this.field.id] = newData;
 	}
 	
+	StringCell.prototype.getAddCommand = function(newValue)
+	{
+		return {containerUUID: this.parent.getValueID(), 
+				fieldID: this.field.nameID, 
+				text: newValue};
+	}
+	
 	function StringCell(field) {
 		cr.Cell.call(this, field);
 	}
@@ -417,6 +427,14 @@ cr.TranslationCell = (function() {
 			});
 		if (newData.length > 0)
 			initialData[this.field.id] = newData;
+	}
+	
+	TranslationCell.prototype.getAddCommand = function(newValue)
+	{
+		return {containerUUID: this.parent.getValueID(), 
+			    fieldID: this.field.nameID, 
+			    text: newValue.text, 
+			    languageCode: newValue.languageCode};
 	}
 
 	function TranslationCell(field) {
@@ -575,6 +593,15 @@ cr.ObjectCell = (function() {
 				return d2.getValueID() === value.getValueID();
 			});
 	}
+	
+	ObjectCell.prototype.getAddCommand = function(newValue)
+	{
+		/* The description value is used in updateFromChangeData. */
+		return {containerUUID: this.parent.getValueID(), 
+				fieldID: this.field.nameID, 
+				instanceID: newValue.getValueID(),
+				description: newValue.getDescription()};
+	}
 		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
@@ -710,10 +737,8 @@ cr.StringValue = (function() {
 			}
 			else
 			{
-				command = {containerUUID: this.cell.parent.getValueID(), 
-						   fieldID: this.cell.field.nameID, 
-						   text: newValue,
-						   index: i};
+				command = this.cell.getAddCommand(newValue);
+				command.index = i;
 			}
 			initialData.push(command);
 			sourceObjects.push(this);
@@ -759,11 +784,8 @@ cr.TranslationValue = (function() {
 			}
 			else
 			{
-				command = {containerUUID: this.cell.parent.getValueID(), 
-						   fieldID: this.cell.field.nameID, 
-						   text: newValue.text, 
-						   languageCode: newValue.languageCode,
-						   index: i};
+				command = this.cell.getAddCommand(newValue);
+				command.index = i;
 			}
 			initialData.push(command);
 			sourceObjects.push(this);
@@ -815,10 +837,7 @@ cr.ObjectValue = (function() {
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
 			else
 			{
-				command = {containerUUID: this.cell.parent.getValueID(), 
-						   fieldID: this.cell.field.nameID, 
-						   instanceID: newValueID,
-						   description: newDescription};
+				command = this.cell.getAddCommand(newValue);
 				if (i >= 0)
 					command.index = i;
 			}
@@ -1404,6 +1423,15 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 					d = sourceObjects[i];
 					newValueID = json.valueIDs[i];
 					newInstanceID = json.instanceIDs[i];
+
+					/* Check to see if d is a cell instead of a value. If so, then
+						change it to a newly created value. 
+					 */
+					if ("addNewValue" in d)
+					{
+						d = d.addNewValue();
+					}
+					
 					if (newValueID)
 					{
 						d.id = newValueID;

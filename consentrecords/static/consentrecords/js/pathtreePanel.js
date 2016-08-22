@@ -29,11 +29,14 @@ var FlagData = (function() {
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
-	FlagData.prototype.getService = function()
+	FlagData.prototype._getService = function()
 	{
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getValueID())
 		{
+			if (!offering.isDataLoaded)
+				throw ("Runtime error: offering data is not loaded");
+				
 			var service = offering.getValue("Service");
 			if (service)
 				return service;
@@ -41,9 +44,9 @@ var FlagData = (function() {
 		return this.experience.getValue("Service");
 	}
 	
-	FlagData.prototype.getServiceDomain = function()
+	FlagData.prototype._getServiceDomain = function()
 	{
-		var service = this.getService();
+		var service = this._getService();
 		if (!service || !service.getValueID())
 			return null;
 		var storedService = crp.getInstance(service.getValueID());
@@ -58,9 +61,9 @@ var FlagData = (function() {
 		return storedService.getValue("Service Domain");
 	}
 
-	FlagData.prototype.getStage = function()
+	FlagData.prototype._getStage = function()
 	{
-		var service = this.getService();
+		var service = this._getService();
 		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
 	}
 
@@ -79,11 +82,11 @@ var FlagData = (function() {
 	};
 	FlagData.prototype.getColumn = function()
 	{
-		var sd = this.getServiceDomain();
+		var sd = this._getServiceDomain();
 		if (sd && sd.getDescription() == "Housing")
 			return 0;
 
-		var stage = this.getStage();
+		var stage = this._getStage();
 		var stageDescription = stage && stage.getDescription();
 		if (stageDescription &&
 			stageDescription in this.stageColumns)
@@ -103,7 +106,7 @@ var FlagData = (function() {
 	FlagData.prototype.getEndDate = function()
 	{
 		return this.experience.getDatum("End") || 
-			(this.experience.getDatum("Start") ? new Date().toISOString().substr(0, 10) : "9999-12-31");
+			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : "9999-12-31");
 	}
 	
 	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
@@ -136,9 +139,18 @@ var FlagData = (function() {
 	
 	FlagData.prototype.colorElement = function(r)
 	{
-		var colorText = this.getColor();
-		r.setAttribute("fill", colorText);
-		r.setAttribute("stroke", colorText);
+		var _this = this;
+		var f = function()
+			{
+				var colorText = _this.getColor();
+				r.setAttribute("fill", colorText);
+				r.setAttribute("stroke", colorText);
+			}
+		var offering = this.experience.getValue("Offering");
+		if (offering && offering.getValueID() && !offering.isDataLoaded)
+			crp.pushCheckCells(offering, undefined, f, cr.asyncFail);
+		else
+			f();
 	}
 
 	function FlagData(experience)
@@ -209,11 +221,6 @@ var PathView = (function() {
 		}
 	}
 	
-	PathView.prototype.handleChangeServices = function(r, fd)
-	{
-		fd.colorElement(r);
-	}
-	
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
 		var _this = this;
@@ -258,12 +265,21 @@ var PathView = (function() {
 	 */	
 	PathView.prototype.setupColorWatchTriggers = function(r, fd)
 	{
-		var _this = this;
-		this.setupServiceTriggers(r, fd, function(eventObject)
-				{
-					var fd = d3.select(eventObject.data).datum();
-					fd.colorElement(eventObject.data);
-				});
+		var e = fd.experience;
+		var offeringCell = e.getCell("Offering");
+		
+		var f = function(eventObject)
+			{
+				var fd = d3.select(eventObject.data).datum();
+				fd.colorElement(eventObject.data);
+			}
+		
+		$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+		$(r).one("clearTriggers.cr remove", function()
+			{
+				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+			});
+		this.setupServiceTriggers(r, fd, f);
 	}
 	
 	PathView.prototype.checkOfferingCells = function(experience, done)
@@ -275,6 +291,7 @@ var PathView = (function() {
 			if (storedI != null)
 			{
 				offering.importCells(storedI.cells);
+				offering.isDataLoaded = true;
 				if (done) done();
 			}
 			else
@@ -392,8 +409,11 @@ var PathView = (function() {
 				try
 				{
 					var panel = this.sitePanel.node();
-					var editPanel = new EditExperiencePanel(fd.experience, fd.experience.cell.parent, panel, revealPanelLeft);
-												  
+					var experience = new Experience(this.path, fd.experience);
+					experience.replaced(fd.experience);
+					
+					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase());
+					
 					revealPanelLeft(editPanel.node());
 				}
 				catch(err)
@@ -792,6 +812,14 @@ var PathLines = (function() {
 		var dataChanged = function(eventObject)
 		{
 			_this.setFlagText(eventObject.data);
+			
+			/* Make sure that the rectangles match the widths. */
+			var g = d3.select(eventObject.data);
+			g.selectAll('rect')
+				.attr('width', function(fd)
+					{
+						return $(this.parentNode).children('text').outerWidth() + 5;
+					});	
 		}
 		
 		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
@@ -1087,8 +1115,7 @@ var PathLines = (function() {
 			 */
 			if (d)
 			{
-				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
+				$(d).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
 		serviceCells.forEach(function(d)
@@ -1111,8 +1138,7 @@ var PathLines = (function() {
 				 */
 			 	if (d)
 			 	{
-					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
-					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
+					$(d).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, handleChangeDetailGroup);
 				}
 			 });
 			serviceCells.forEach(function(d)
