@@ -106,7 +106,7 @@ var FlagData = (function() {
 	FlagData.prototype.getEndDate = function()
 	{
 		return this.experience.getDatum("End") || 
-			(this.experience.getDatum("Start") ? new Date().toISOString().substr(0, 10) : "9999-12-31");
+			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : "9999-12-31");
 	}
 	
 	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
