@@ -592,6 +592,10 @@ var DateWheel = (function () {
 				return "{0}-{1}-{2}".format(y, m, d);
 			}
 		}
+		else if (typeof(newValue) != "string")
+		{
+			throw ("Runtime Error: unrecognized data for value: {0}".format(newValue));
+		}
 		else
 		{
 			this.isClear = false;
