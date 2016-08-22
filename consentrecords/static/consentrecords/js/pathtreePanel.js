@@ -1112,8 +1112,7 @@ var PathLines = (function() {
 			 */
 			if (d)
 			{
-				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
+				$(d).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, _this, handleChangeDetailGroup);
 			}
 		 });
 		serviceCells.forEach(function(d)
@@ -1136,8 +1135,7 @@ var PathLines = (function() {
 				 */
 			 	if (d)
 			 	{
-					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
-					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
+					$(d).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, handleChangeDetailGroup);
 				}
 			 });
 			serviceCells.forEach(function(d)
