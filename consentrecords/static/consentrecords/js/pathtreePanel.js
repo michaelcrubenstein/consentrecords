@@ -209,11 +209,6 @@ var PathView = (function() {
 		}
 	}
 	
-	PathView.prototype.handleChangeServices = function(r, fd)
-	{
-		fd.colorElement(r);
-	}
-	
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
 		var _this = this;
