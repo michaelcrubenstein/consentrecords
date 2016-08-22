@@ -1515,6 +1515,44 @@ var OrganizationSearchView = (function() {
 		return true;
 	}
 	
+	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				if (d.typeName === "Site")
+				{
+					/* The organization name is either a value of d or, if d is a value
+					   of an Offering, then the organization name is the value of the offering.
+					 */
+					var orgValue;
+					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+						orgValue = d.cell.parent.getValue("Organization");
+					else
+						orgValue = d.getValue("Organization");
+						
+					if (orgValue.getDescription() == d.getDescription())
+					{
+						leftText.text(d.getDescription());
+					}
+					else
+					{
+						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getDescription());
+					}
+				}
+				else
+				{
+					leftText.text(d.getDescription());
+				}
+			});
+	}
+	
 	OrganizationSearchView.prototype.isDirtyText = function()
 	{
 		return this.inputText() != this.experience.organizationName;
@@ -1736,6 +1774,58 @@ var SiteSearchView = (function() {
 			helpDiv.style('display', 'none');
 		}
 		return true;
+	}
+	
+	SiteSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				if (d.typeName === "Offering")
+				{
+					leftText.append('div')
+						.classed('title', true).text(d.getDescription());
+
+					orgDiv = leftText.append('div').classed("organization", true);
+					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+					{
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getValue("Site").getDescription());
+					}
+				}
+				else if (d.typeName === "Site")
+				{
+					/* The organization name is either a value of d or, if d is a value
+					   of an Offering, then the organization name is the value of the offering.
+					 */
+					var orgValue;
+					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+						orgValue = d.cell.parent.getValue("Organization");
+					else
+						orgValue = d.getValue("Organization");
+						
+					if (orgValue.getDescription() == d.getDescription() ||
+						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
+					{
+						leftText.text(d.getDescription());
+					}
+					else
+					{
+						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getDescription());
+					}
+				}
+				else
+				{
+					leftText.text(d.getDescription());
+				}
+			});
 	}
 	
 	SiteSearchView.prototype.isDirtyText = function()
