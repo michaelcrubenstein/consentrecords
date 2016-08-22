@@ -2432,6 +2432,43 @@ var CellToggleText = (function()
 	return CellToggleText;
 })();
 
+var Dimmer = (function () {
+	Dimmer.prototype.dimmerDiv = null;
+	function Dimmer(panelNode)
+	{
+		this.dimmerDiv = d3.select(panelNode).append('div')
+			.classed('dimmer', true);
+	}
+	
+	Dimmer.prototype.show = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
+		return this;
+	}
+	
+	Dimmer.prototype.hide = function()
+	{
+		$(this.dimmerDiv.node()).animate({opacity: 0}, {duration: 400, complete:
+			function()
+			{
+				d3.select(this).remove();
+			}});
+		return this;
+	}
+	
+	Dimmer.prototype.remove = function()
+	{
+		this.dimmerDiv.remove();
+	}
+	
+	Dimmer.prototype.mousedown = function(f)
+	{
+		$(this.dimmerDiv.node()).mousedown(f);
+	}
+	
+	return Dimmer;
+})();
+
 /* Gets the text for the header of a view panel based on the specified data. */
 function getViewPanelHeader(objectData)
 {
