@@ -744,64 +744,55 @@
 					}
 					stateString = "";
 				}
-// 				else if (stateString.startsWith("addExperience"))
-// 				{
-//					// This is superseded by "addToPathway".
-// 					stateString = stateString.substring("addExperience".length);
-// 					if (stateString.length > 0)
-// 					{
-// 						var experienceID = stateString;
-// 						var handleState = function(pathwayPanel)
-// 						{
-// 							if (!pathwayPanel)
-// 							{
-// 								if (!firstPanel)
-// 								{
-// 									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-// 									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-// 									showPanelUp(firstPanel.node());
-// 								}
-// 								pathwayPanel = firstPanel;
-// 							}
-// 							var pathway = pathwayPanel.pathtree;
-// 							var experiencesPath = cr.signedinUser.getValue("More Experiences");
-// 							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
-// 								{
-// 									if (experiences.length > 0)
-// 									{
-// 										crp.pushCheckCells(cr.signedinUser, undefined, 
-// 											function() {
-// 												if (experiences[0].typeName == "Service")
-// 												{
-// 													var experience = new Experience(experiencesPath);
-// 													experience.addService({instance: experiences[0]});
-// 													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
-// 													showPanelUp(panel.node());
-// 												}
-// 												else if (experiences[0].typeName == "Organization")
-// 												{
-// 													var experience = new Experience(experiencesPath);
-// 													experience.setOrganization({instance: experiences[0]});
-// 													var panel = new NewExperiencePanel(experience, pathwayPanel.node());
-// 													showPanelUp(panel.node());
-// 												}
-// 											},
-// 											function(err)
-// 											{
-// 												asyncFailFunction(err);
-// 											});
-// 									}
-// 									else
-// 									{
-// 										asyncFailFunction("The specified experience does not exist or you do not have permission to view it.");
-// 									}
-// 								},
-// 								fail: asyncFailFunction});
-// 						}
-// 					}
-// 					needsSignin = true;
-// 					stateString = "";
-// 				}
+				else if (stateString.startsWith("addExperience"))
+				{
+					// Test case: respond to an sent email to add experience.
+					stateString = stateString.substring("addExperience".length);
+					if (stateString.length > 0)
+					{
+						var experienceID = stateString;
+						var handleState = function(pathwayPanel)
+						{
+							if (!pathwayPanel)
+							{
+								if (!firstPanel)
+								{
+									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+									showPanelUp(firstPanel.node());
+								}
+								pathwayPanel = firstPanel;
+							}
+							var pathway = pathwayPanel.pathtree;
+							var experiencesPath = cr.signedinUser.getValue("More Experiences");
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"], done: function(experiences)
+								{
+									if (experiences.length > 0)
+									{
+										crp.pushCheckCells(cr.signedinUser, undefined, 
+											function() {
+												if (experiences[0].typeName == "More Experience")
+												{
+													var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
+													var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+													showPanelUp(newPanel.node());
+												}
+												else
+													cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+											},
+											cr.asyncFail);
+									}
+									else
+									{
+										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
+									}
+								},
+								fail: cr.asyncFail});
+						}
+					}
+					needsSignin = true;
+					stateString = "";
+				}
 				else if (stateString.startsWith("addToPathway"))
 				{
 					/* Add an experience specified in the URL to this pathway. */
