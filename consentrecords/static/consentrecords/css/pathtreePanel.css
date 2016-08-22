@@ -209,3 +209,15 @@ panel.idea > button.close > span {
 	position: relative;
 	top: -.13em;
 }
+
+panel.settings span.badge {
+	background-color: #2C55CC;
+	font-weight: normal;
+	margin-left: 3px;
+	padding: 3px 5px;
+}
+
+panel.settings span.badge:hover {
+	background-color: #2222FF;
+}
+
