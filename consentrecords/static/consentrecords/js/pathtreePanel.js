@@ -137,6 +137,15 @@ var FlagData = (function() {
 		return PathGuides.data[column].color;
 	}
 	
+	FlagData.prototype.checkOfferingCells = function(done)
+	{
+		var offering = this.experience.getValue("Offering");
+		if (offering && offering.getValueID() && !offering.isDataLoaded)
+			crp.pushCheckCells(offering, undefined, done, cr.asyncFail);
+		else
+			done();
+	}
+	
 	FlagData.prototype.colorElement = function(r)
 	{
 		var _this = this;
@@ -146,11 +155,7 @@ var FlagData = (function() {
 				r.setAttribute("fill", colorText);
 				r.setAttribute("stroke", colorText);
 			}
-		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getValueID() && !offering.isDataLoaded)
-			crp.pushCheckCells(offering, undefined, f, cr.asyncFail);
-		else
-			f();
+		this.checkOfferingCells(f);
 	}
 
 	function FlagData(experience)
@@ -382,13 +387,20 @@ var PathView = (function() {
 			done();
 	}
 	
+	PathView.prototype.updateDetail = function(fd, duration)
+	{
+		var _this = this;
+		fd.checkOfferingCells(function()
+			{
+				_this.hideDetail(
+					function() { _this.showDetailGroup(fd, duration); },
+					duration);
+			});
+	}
+	
 	PathView.prototype.refreshDetail = function()
 	{
-		var oldFlagData = this.detailFlagData;
-		var _this = this;
-		this.hideDetail(
-			function() { _this.showDetailGroup(oldFlagData, 0); },
-			0);
+		this.updateDetail(this.detailFlagData, 0);
 	}
 	
 	PathView.prototype.clearLayout = function()
@@ -1189,7 +1201,11 @@ var PathLines = (function() {
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", showDetail)
+			.on("click.cr", function(fd)
+				{
+					if (!d3.event.defaultPrevented)
+						_this.updateDetail(fd);
+				})
 			.each(function(d) 
 					{ 
 						_this.setupServiceTriggers(this, d, function(eventObject)
@@ -1198,15 +1214,6 @@ var PathLines = (function() {
 								_this.transitionPositions(g);
 							});
 					});
-		
-		function showDetail(fd, i)
-		{
-			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			
-			_this.hideDetail(function() {
-					_this.showDetailGroup(fd); 
-				});
-		}
 		
 		g.append('line').classed('flag-pole', true)
 			.each(function(d)
