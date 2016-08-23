@@ -46,8 +46,8 @@
 	}
 	
 	panel.new-experience-panel section.cell.unique input {
-		-webkit-appearance: textfield;
-		-moz-appearance: textfield;
+		-webkit-appearance: none;
+		-moz-appearance: none;
 		background-color: white;
 		border: none;
 		outline: none;
