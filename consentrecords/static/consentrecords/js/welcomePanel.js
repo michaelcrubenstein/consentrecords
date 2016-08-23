@@ -412,7 +412,7 @@ var WelcomePanel = (function () {
 				}
 			});
 			
-		ol.selectAll('li:nth-child(1)')
+		ol.select('li:nth-child(1)')
 			.classed('active', true);
 			
 		var divs = li.append('div');
@@ -470,8 +470,9 @@ var WelcomePanel = (function () {
 						var subLI = d3Paragraph.append('ol').selectAll('li')
 							.data(d.panels)
 							.enter()
-							.append('li')
-						subLI.selectAll('p')
+							.append('li');
+						var subDivs = subLI.append('div');
+						subDivs.selectAll('p')
 							.data(function(d) { return d; })
 							.enter()
 							.append('p')
