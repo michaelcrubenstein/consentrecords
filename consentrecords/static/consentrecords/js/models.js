@@ -828,22 +828,49 @@ cr.ObjectValue = (function() {
 			if (!this.getValueID())
 				return;
 			else
+			{
 				command = {id: this.id};
+				sourceObjects.push(this);
+			}
 		}
 		else {
 			if (this.getValueID() == newValueID)
 				return;
 			if (this.id)
+			{
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
+				if (newValue.isDataLoaded)
+				{
+					var _this = this;
+					sourceObjects.push({target: this, update: function()
+						{
+							_this.importCells(newValue.cells);
+							_this.isDataLoaded = true;
+						}});
+				}
+				else
+					sourceObjects.push(this);
+			}
 			else
 			{
 				command = this.cell.getAddCommand(newValue);
 				if (i >= 0)
 					command.index = i;
+				if (newValue.isDataLoaded)
+				{
+					var _this = this;
+					sourceObjects.push({target: this, update: function()
+						{
+							_this.importCells(newValue.cells);
+							_this.isDataLoaded = true;
+						}});
+				}
+				else
+					sourceObjects.push(this);
 			}
 		}
 		initialData.push(command);
-		sourceObjects.push(this);
+		
 	}
 
 	ObjectValue.prototype.updateFromChangeData = function(changeData)
@@ -1421,9 +1448,20 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 				{
 					for (var i = 0; i < sourceObjects.length; ++i)
 					{
-						d = sourceObjects[i];
-						newValueID = json.valueIDs[i];
-						newInstanceID = json.instanceIDs[i];
+						var d;
+						var update;
+						if (sourceObjects[i].hasOwnProperty("target"))
+						{
+							d = sourceObjects[i].target;
+							update = sourceObjects[i].update;
+						}
+						else
+						{
+							d = sourceObjects[i];
+							update = null;
+						}
+						var newValueID = json.valueIDs[i];
+						var newInstanceID = json.instanceIDs[i];
 
 						/* Check to see if d is a cell instead of a value. If so, then
 							change it to a newly created value. 
@@ -1442,6 +1480,9 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 							/* Object Values have an instance ID as well. */
 							if (newInstanceID)
 								d.instanceID = newInstanceID;
+							
+							if (update)
+								update();
 						
 							d.triggerDataChanged();
 						}
