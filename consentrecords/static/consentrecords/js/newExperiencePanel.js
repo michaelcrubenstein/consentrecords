@@ -2344,7 +2344,7 @@ var ExperienceShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
-							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}.'
+							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
 										.format(window.location.origin, experience.getValueID());
 							unblockClick();
 						});
