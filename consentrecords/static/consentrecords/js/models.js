@@ -1015,7 +1015,6 @@ cr.ObjectValue = (function() {
 			function(newData)
 			{
 				_this.completeUpdate(newData);
-				_this.isDataLoaded = true;
 				done(newData);
 			}, 
 			fail);
