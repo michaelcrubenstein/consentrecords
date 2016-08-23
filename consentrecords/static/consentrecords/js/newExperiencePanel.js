@@ -439,18 +439,11 @@ var Experience = (function() {
 
 			function onCreatedInstance(newData)
 			{
-				crp.pushCheckCells(newData, ["type"], 
+				crp.pushCheckCells(newData, ["Offering"], 
 					function() {
-						function addExperience() {
-							_this.path.getCell("More Experience").addValue(newData);
-							if (done)
-								done();
-						}
-						var offering = newData.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, addExperience, cr.syncFail);
-						else
-							addExperience();
+						_this.path.getCell("More Experience").addValue(newData);
+						if (done)
+							done();
 					},
 					cr.syncFail);
 			}
