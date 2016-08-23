@@ -3087,13 +3087,14 @@ var NewExperiencePanel = (function () {
 			
 		searchContainer = section.append('div');
 		
+		this.tagSearchView = new TagSearchView(searchContainer.node(), 
+												this, experience, 
+												this.tagInput.node(), 
+												tagHelp.node());
+												
 		crp.getData({path: "Service", done: function(newInstances)
 						{
 							_this.allServices = newInstances;
-							_this.tagSearchView = new TagSearchView(searchContainer.node(), 
-																	_this, experience, 
-																	_this.tagInput.node(), 
-																	tagHelp.node());
 							_this.tagSearchView.showObjects(newInstances);
 						},
 					fail: asyncFailFunction});
