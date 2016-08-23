@@ -2484,6 +2484,8 @@ var NewExperiencePanel = (function () {
 		
 		var forceDateVisible = function(args)
 			{
+				dateWheel.unclear();
+				
 				var duration = (args && args.duration) ? args.duration : 0;
 				var before = (args && args.before) ? args.before : null;
 				notSureReveal.hide({duration: duration,
