@@ -1,10 +1,3 @@
-var NewExperienceStrings = 
-	{
-		offeringFormat: "{0}",
-		organizationFormat: "{0}",
-		tagFormat: "{0}",
-	};
-
 var Experience = (function() {
 	Experience.prototype.organization = null;
 	Experience.prototype.organizationName = null;
@@ -939,7 +932,7 @@ var ExperienceDatumSearchView = (function() {
 					if (orgValue.getDescription() == d.getDescription() ||
 						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
 					{
-						leftText.text(NewExperienceStrings.organizationFormat.format(d.getDescription()));
+						leftText.text(d.getDescription());
 					}
 					else
 					{
@@ -952,11 +945,11 @@ var ExperienceDatumSearchView = (function() {
 				}
 				else if (d.typeName === "Organization")
 				{
-					leftText.text(NewExperienceStrings.organizationFormat.format(d.getDescription()));
+					leftText.text(d.getDescription());
 				}
 				else if (d.typeName === "Service")
 				{
-					leftText.text(NewExperienceStrings.tagFormat.format(d.getDescription()));
+					leftText.text(d.getDescription());
 				}
 				else
 				{
@@ -1384,6 +1377,22 @@ var TagSearchView = (function() {
 					!(inputNode && d3.select(inputNode).datum() == d2) ; 
 			}))
 				return false;
+				
+			if (this.experience.domain &&
+				!d.getCell("Domain").find(this.experience.domain))
+				return false;
+			if (this.experience.stage &&
+				!d.getCell("Stage").find(this.experience.stage))
+				return false;
+				
+			var serviceDomain = this.experience.serviceDomain;
+			if (this.experience.serviceDomain &&
+				!d.getCell("Domain").data.find(function(domainValue)
+					{
+						var sd = domainValue.getValue("Service Domain");
+						return sd && sd.getValueID() == serviceDomain.getValueID();
+					}))
+				return false;
 		}
 			
 		if (this.isMatchingDatum(d, compareText))
@@ -1520,6 +1529,44 @@ var OrganizationSearchView = (function() {
 			helpDiv.style('display', 'none');
 		}
 		return true;
+	}
+	
+	OrganizationSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				if (d.typeName === "Site")
+				{
+					/* The organization name is either a value of d or, if d is a value
+					   of an Offering, then the organization name is the value of the offering.
+					 */
+					var orgValue;
+					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+						orgValue = d.cell.parent.getValue("Organization");
+					else
+						orgValue = d.getValue("Organization");
+						
+					if (orgValue.getDescription() == d.getDescription())
+					{
+						leftText.text(d.getDescription());
+					}
+					else
+					{
+						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getDescription());
+					}
+				}
+				else
+				{
+					leftText.text(d.getDescription());
+				}
+			});
 	}
 	
 	OrganizationSearchView.prototype.isDirtyText = function()
@@ -1743,6 +1790,58 @@ var SiteSearchView = (function() {
 			helpDiv.style('display', 'none');
 		}
 		return true;
+	}
+	
+	SiteSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				if (d.typeName === "Offering")
+				{
+					leftText.append('div')
+						.classed('title', true).text(d.getDescription());
+
+					orgDiv = leftText.append('div').classed("organization", true);
+					if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+					{
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getValue("Site").getDescription());
+					}
+				}
+				else if (d.typeName === "Site")
+				{
+					/* The organization name is either a value of d or, if d is a value
+					   of an Offering, then the organization name is the value of the offering.
+					 */
+					var orgValue;
+					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+						orgValue = d.cell.parent.getValue("Organization");
+					else
+						orgValue = d.getValue("Organization");
+						
+					if (orgValue.getDescription() == d.getDescription() ||
+						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
+					{
+						leftText.text(d.getDescription());
+					}
+					else
+					{
+						orgDiv = leftText.append('div').classed("organization", true);		
+						orgDiv.append('div').text(orgValue.getDescription());
+						orgDiv.append('div')
+							.classed('address-line', true)
+							.text(d.getDescription());
+					}
+				}
+				else
+				{
+					leftText.text(d.getDescription());
+				}
+			});
 	}
 	
 	SiteSearchView.prototype.isDirtyText = function()
@@ -2298,6 +2397,7 @@ var NewExperiencePanel = (function () {
 
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
+	NewExperiencePanel.prototype.newFromDomainTitle = "New {0} Experience";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
@@ -2792,6 +2892,13 @@ var NewExperiencePanel = (function () {
 	function NewExperiencePanel(experience, previousPanelNode, phase) {
 		if (experience.instance)
 			this.title = this.editTitle;
+		else if (experience.domain)
+			this.title = this.newFromDomainTitle.format(experience.domain.getDescription());
+		else if (experience.stage)
+			this.title = this.newFromDomainTitle.format(experience.stage.getDescription());
+		else if (experience.serviceDomain)
+			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
+			
 			
 		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
 	
@@ -2980,13 +3087,14 @@ var NewExperiencePanel = (function () {
 			
 		searchContainer = section.append('div');
 		
+		this.tagSearchView = new TagSearchView(searchContainer.node(), 
+												this, experience, 
+												this.tagInput.node(), 
+												tagHelp.node());
+												
 		crp.getData({path: "Service", done: function(newInstances)
 						{
 							_this.allServices = newInstances;
-							_this.tagSearchView = new TagSearchView(searchContainer.node(), 
-																	_this, experience, 
-																	_this.tagInput.node(), 
-																	tagHelp.node());
 							_this.tagSearchView.showObjects(newInstances);
 						},
 					fail: asyncFailFunction});
@@ -3182,7 +3290,14 @@ var NewExperiencePanel = (function () {
 		setTimeout(function()
 			{
 				if (!experience.instance)
-					_this.organizationInput.node().focus();	
+				{
+					if (!experience.organizationName)
+						_this.organizationInput.node().focus();
+					else if (!experience.siteName)
+						_this.siteInput.node().focus();
+					else if (!experience.offeringName)
+						_this.offeringInput.node().focus();
+				}
 
 				if (phase == 'Current')
 				{

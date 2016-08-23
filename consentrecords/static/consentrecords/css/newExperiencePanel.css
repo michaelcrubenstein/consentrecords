@@ -1,4 +1,4 @@
-/* showPathways.css */
+/* newExperiencePanel.css */
 	.dots {
 		overflow: hidden;
 		text-align: center;
@@ -302,3 +302,46 @@
 	panel.new-experience-panel section.list-container .address-line {
 		margin-left: 0px;
 	}
+
+	panel.confirm {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		z-index: 1000;
+	}
+	
+	panel.confirm >div {
+		padding: 12px;
+		padding-top: 0px;
+		background-color: transparent;
+		border: none;
+		text-align: center;
+	}
+	
+	panel.confirm >div>button {
+		position: relative;
+		display: block;
+		max-width: 21em;
+		width: 100%;
+		margin-top: 12px;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 10px;
+		background: #F8F8F8;
+		border: 1px solid #e7e7e7;
+		border-radius: 8px;
+		font-size: larger;
+	}
+	panel.confirm >div>button.butted-down {
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+	panel.confirm >div>button.butted-down+button {
+		margin-top: 0px;
+		border-top-left-radius: 0px;
+		border-top-right-radius: 0px;
+	}
+	panel.confirm > div>button:focus {
+		outline: none;
+	}
+	
