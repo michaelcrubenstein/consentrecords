@@ -828,22 +828,49 @@ cr.ObjectValue = (function() {
 			if (!this.getValueID())
 				return;
 			else
+			{
 				command = {id: this.id};
+				sourceObjects.push(this);
+			}
 		}
 		else {
 			if (this.getValueID() == newValueID)
 				return;
 			if (this.id)
+			{
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
+				if (newValue.isDataLoaded)
+				{
+					var _this = this;
+					sourceObjects.push({target: this, update: function()
+						{
+							_this.importCells(newValue.cells);
+							_this.isDataLoaded = true;
+						}});
+				}
+				else
+					sourceObjects.push(this);
+			}
 			else
 			{
 				command = this.cell.getAddCommand(newValue);
 				if (i >= 0)
 					command.index = i;
+				if (newValue.isDataLoaded)
+				{
+					var _this = this;
+					sourceObjects.push({target: this, update: function()
+						{
+							_this.importCells(newValue.cells);
+							_this.isDataLoaded = true;
+						}});
+				}
+				else
+					sourceObjects.push(this);
 			}
 		}
 		initialData.push(command);
-		sourceObjects.push(this);
+		
 	}
 
 	ObjectValue.prototype.updateFromChangeData = function(changeData)
@@ -1015,7 +1042,6 @@ cr.ObjectValue = (function() {
 			function(newData)
 			{
 				_this.completeUpdate(newData);
-				_this.isDataLoaded = true;
 				done(newData);
 			}, 
 			fail);
@@ -1418,38 +1444,59 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				for (var i = 0; i < sourceObjects.length; ++i)
+				try
 				{
-					d = sourceObjects[i];
-					newValueID = json.valueIDs[i];
-					newInstanceID = json.instanceIDs[i];
+					for (var i = 0; i < sourceObjects.length; ++i)
+					{
+						var d;
+						var update;
+						if (sourceObjects[i].hasOwnProperty("target"))
+						{
+							d = sourceObjects[i].target;
+							update = sourceObjects[i].update;
+						}
+						else
+						{
+							d = sourceObjects[i];
+							update = null;
+						}
+						var newValueID = json.valueIDs[i];
+						var newInstanceID = json.instanceIDs[i];
 
-					/* Check to see if d is a cell instead of a value. If so, then
-						change it to a newly created value. 
-					 */
-					if ("addNewValue" in d)
-					{
-						d = d.addNewValue();
-					}
+						/* Check to see if d is a cell instead of a value. If so, then
+							change it to a newly created value. 
+						 */
+						if ("addNewValue" in d)
+						{
+							d = d.addNewValue();
+						}
 					
-					if (newValueID)
-					{
-						d.id = newValueID;
+						if (newValueID)
+						{
+							d.id = newValueID;
 						
-						d.updateFromChangeData(initialData[i]);
+							d.updateFromChangeData(initialData[i]);
 						
-						/* Object Values have an instance ID as well. */
-						if (newInstanceID)
-							d.instanceID = newInstanceID;
+							/* Object Values have an instance ID as well. */
+							if (newInstanceID)
+								d.instanceID = newInstanceID;
+							
+							if (update)
+								update();
 						
-						d.triggerDataChanged();
+							d.triggerDataChanged();
+						}
+						else
+						{
+							d.triggerDeleteValue();
+						}
 					}
-					else
-					{
-						d.triggerDeleteValue();
-					}
+					successFunction();
 				}
-				successFunction();
+				catch(err)
+				{
+					failFunction(err);
+				}
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown)
 				{

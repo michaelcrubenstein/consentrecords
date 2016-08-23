@@ -439,18 +439,11 @@ var Experience = (function() {
 
 			function onCreatedInstance(newData)
 			{
-				crp.pushCheckCells(newData, ["type"], 
+				crp.pushCheckCells(newData, ["Offering"], 
 					function() {
-						function addExperience() {
-							_this.path.getCell("More Experience").addValue(newData);
-							if (done)
-								done();
-						}
-						var offering = newData.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, addExperience, cr.syncFail);
-						else
-							addExperience();
+						_this.path.getCell("More Experience").addValue(newData);
+						if (done)
+							done();
 					},
 					cr.syncFail);
 			}
@@ -2351,7 +2344,7 @@ var ExperienceShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
-							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}.'
+							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
 										.format(window.location.origin, experience.getValueID());
 							unblockClick();
 						});
@@ -2491,6 +2484,8 @@ var NewExperiencePanel = (function () {
 		
 		var forceDateVisible = function(args)
 			{
+				dateWheel.unclear();
+				
 				var duration = (args && args.duration) ? args.duration : 0;
 				var before = (args && args.before) ? args.before : null;
 				notSureReveal.hide({duration: duration,
@@ -2930,10 +2925,17 @@ var NewExperiencePanel = (function () {
 				{
 					if (prepareClick('click', 'NewExperiencePanel: Add'))
 					{
-						experience.startDate = startDateInput.value();
-						experience.endDate = endDateInput.value();
+						try
+						{
+							experience.startDate = startDateInput.value();
+							experience.endDate = endDateInput.value();
 					
-						experience.add(hidePanel);
+							experience.add(hidePanel);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
 					}
 				}
 				
