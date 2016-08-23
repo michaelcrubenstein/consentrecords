@@ -2930,10 +2930,17 @@ var NewExperiencePanel = (function () {
 				{
 					if (prepareClick('click', 'NewExperiencePanel: Add'))
 					{
-						experience.startDate = startDateInput.value();
-						experience.endDate = endDateInput.value();
+						try
+						{
+							experience.startDate = startDateInput.value();
+							experience.endDate = endDateInput.value();
 					
-						experience.add(hidePanel);
+							experience.add(hidePanel);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
 					}
 				}
 				

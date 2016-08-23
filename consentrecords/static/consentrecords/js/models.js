@@ -1418,38 +1418,45 @@ cr.updateValues = function(initialData, sourceObjects, successFunction, failFunc
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				for (var i = 0; i < sourceObjects.length; ++i)
+				try
 				{
-					d = sourceObjects[i];
-					newValueID = json.valueIDs[i];
-					newInstanceID = json.instanceIDs[i];
+					for (var i = 0; i < sourceObjects.length; ++i)
+					{
+						d = sourceObjects[i];
+						newValueID = json.valueIDs[i];
+						newInstanceID = json.instanceIDs[i];
 
-					/* Check to see if d is a cell instead of a value. If so, then
-						change it to a newly created value. 
-					 */
-					if ("addNewValue" in d)
-					{
-						d = d.addNewValue();
-					}
+						/* Check to see if d is a cell instead of a value. If so, then
+							change it to a newly created value. 
+						 */
+						if ("addNewValue" in d)
+						{
+							d = d.addNewValue();
+						}
 					
-					if (newValueID)
-					{
-						d.id = newValueID;
+						if (newValueID)
+						{
+							d.id = newValueID;
 						
-						d.updateFromChangeData(initialData[i]);
+							d.updateFromChangeData(initialData[i]);
 						
-						/* Object Values have an instance ID as well. */
-						if (newInstanceID)
-							d.instanceID = newInstanceID;
+							/* Object Values have an instance ID as well. */
+							if (newInstanceID)
+								d.instanceID = newInstanceID;
 						
-						d.triggerDataChanged();
+							d.triggerDataChanged();
+						}
+						else
+						{
+							d.triggerDeleteValue();
+						}
 					}
-					else
-					{
-						d.triggerDeleteValue();
-					}
+					successFunction();
 				}
-				successFunction();
+				catch(err)
+				{
+					failFunction(err);
+				}
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown)
 				{
