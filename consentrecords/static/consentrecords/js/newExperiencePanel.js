@@ -1377,6 +1377,22 @@ var TagSearchView = (function() {
 					!(inputNode && d3.select(inputNode).datum() == d2) ; 
 			}))
 				return false;
+				
+			if (this.experience.domain &&
+				!d.getCell("Domain").find(this.experience.domain))
+				return false;
+			if (this.experience.stage &&
+				!d.getCell("Stage").find(this.experience.stage))
+				return false;
+				
+			var serviceDomain = this.experience.serviceDomain;
+			if (this.experience.serviceDomain &&
+				!d.getCell("Domain").data.find(function(domainValue)
+					{
+						var sd = domainValue.getValue("Service Domain");
+						return sd && sd.getValueID() == serviceDomain.getValueID();
+					}))
+				return false;
 		}
 			
 		if (this.isMatchingDatum(d, compareText))
@@ -2381,6 +2397,7 @@ var NewExperiencePanel = (function () {
 
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
+	NewExperiencePanel.prototype.newFromDomainTitle = "New {0} Experience";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
@@ -2875,6 +2892,13 @@ var NewExperiencePanel = (function () {
 	function NewExperiencePanel(experience, previousPanelNode, phase) {
 		if (experience.instance)
 			this.title = this.editTitle;
+		else if (experience.domain)
+			this.title = this.newFromDomainTitle.format(experience.domain.getDescription());
+		else if (experience.stage)
+			this.title = this.newFromDomainTitle.format(experience.stage.getDescription());
+		else if (experience.serviceDomain)
+			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
+			
 			
 		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
 	

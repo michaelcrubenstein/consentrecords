@@ -1560,6 +1560,7 @@ var PathLines = (function() {
 						},
 						fail: asyncFailFunction});			
 		crp.getData({path: "Service", 
+					 fields: ["Domain", "Stage"],
 					 done: function(newInstances)
 						{
 						},
