@@ -505,7 +505,7 @@
 						},
 						fail: asyncFailFunction});
 				}
-				else if (organizationName)
+				else if (organizationName || siteName || offeringName)
 				{
 					experience.createFromData({text: organizationName },
 						siteName && {text : siteName},
