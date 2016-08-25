@@ -464,9 +464,9 @@ def addToPathway(request):
     siteName = request.GET.get('s', None)
     offeringName = request.GET.get('f', None)
     serviceName = request.GET.get('m', None)
-    
+
     userInfo = UserInfo(request.user)
-    
+
     if offeringName and terms.isUUID(offeringName):
         offering = terms[offeringName]
     elif siteName and terms.isUUID(siteName):
@@ -483,20 +483,22 @@ def addToPathway(request):
             site, offering = _getOrganizationChildren(organization, siteName, offeringName)
         else:
             site, offering = None, None
-    
+    else:
+        organization, site, offering = None, None, None
+
     if serviceName and terms.isUUID(serviceName):
         service = terms[serviceName]
     elif serviceName:
         service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
     else:
         service = None
-        
+    
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
         'backURL': '/',
     }
-    
+
     if settings.FACEBOOK_SHOW:
         args['fbURL'] = request.build_absolute_uri()
         args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
@@ -512,20 +514,20 @@ def addToPathway(request):
         args['offering'] = offering.id if offering else offeringName
     if serviceName:
         args['service'] = service.id if service else serviceName
-    
+
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
-        
+    
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
-    
+
     args['state'] = 'addToPathway'
 
     context = RequestContext(request, args)
-        
+    
     return HttpResponse(template.render(context))
 
 # Handle a POST event to create a new instance of an object with a set of properties.
