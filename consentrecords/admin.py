@@ -96,7 +96,7 @@ class TransactionAdmin(admin.ModelAdmin):
         (None, {'fields': ('id', 'user', 'creation_time')}),
     )
     readonly_fields = ('id', 'user', 'creation_time')
-    search_fields = ('id',)
+    search_fields = ('id', 'user__id', 'user__email')
     
     inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline]
 

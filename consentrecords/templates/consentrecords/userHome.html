@@ -505,7 +505,7 @@
 						},
 						fail: asyncFailFunction});
 				}
-				else if (organizationName)
+				else if (organizationName || siteName || offeringName)
 				{
 					experience.createFromData({text: organizationName },
 						siteName && {text : siteName},
@@ -529,7 +529,13 @@
 					var service = experience.addService({text: serviceName });
 					experience.initPreviousDateRange();
 
-					panel = new NewExperiencePanel(experience, pathwayPanel.node());
+					panel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+					showPanelUp(panel.node());
+				}
+				else
+				{
+					experience.initPreviousDateRange();
+					panel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
 					showPanelUp(panel.node());
 				}
 			}
