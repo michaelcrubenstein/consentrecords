@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.db import transaction, connection
 from django.db.models import F, Q, Prefetch
-from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
+from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token
 from django.core.exceptions import PermissionDenied
@@ -27,6 +27,20 @@ from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
+
+def handler404(request):
+    response = render_to_response('404.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 404
+    return response
+
+
+def handler500(request):
+    print('handler500')
+    response = render_to_response('500.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 500
+    return response
 
 def logPage(request, name):
     try:
