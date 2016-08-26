@@ -832,33 +832,20 @@ class api:
                               'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
-        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-
         # For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
         # values in that cell.
+        subInstances = map(lambda v: v.referenceValue, uuObject.values)
+        sDict = dict((s.id, s) for s in filter(lambda s: s, subInstances))
+        
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
                 typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
                 fieldsData = fieldsDataDictionary[typeID]
-                subInstances = Instance.objects.select_related('typeID').select_related('parent')\
-                                        .select_related('description')\
-                                        .prefetch_related(Prefetch('value_set',
-                                                            queryset=valueQueryset,
-                                                            to_attr='values'))\
-                                        .filter(referenceValues__deleteTransaction__isnull=True,
-                                                referenceValues__field=cell["field"]["nameID"],
-                                                referenceValues__instance=uuObject)
-                sDict = dict((s.id, s) for s in subInstances)
                     
                 for d in cell["data"]:
                     i = sDict[d["instanceID"]]
-                    d['cells'] = i.getData(i.values, fieldsData, userInfo, language)
+                    d['cells'] = i.getData(i.subValues, fieldsData, userInfo, language)
                     d['typeName'] = i.typeID.getDescription();
             
         return data;
@@ -887,11 +874,29 @@ class api:
             valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
                 .order_by('position')\
                 .select_related('field')\
-                .select_related('field__id')\
                 .select_related('referenceValue')\
                 .select_related('referenceValue__description')
+            
+            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
+            fieldNames = list(fieldNames)
+            if len(fieldNames):
+                fieldTermNames = Instance.objects.filter(typeID=terms.term,
+                        value__deleteTransaction__isnull=True,
+                        value__field = terms.name,
+                        value__stringValue__in=fieldNames)
+                subValueQueryset = userInfo.findValueFilter(\
+                     Value.objects.filter(deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__in=fieldTermNames))\
+                    .order_by('position')\
+                    .select_related('field')\
+                    .select_related('referenceValue')\
+                    .select_related('referenceValue__description')
+                valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                      queryset=subValueQueryset,
+                                      to_attr='subValues'))
 
-            uuObjects = uuObjects.select_related('typeID').select_related('parent')\
+            uuObjects = uuObjects.select_related('typeID')\
+                                 .select_related('parent')\
                                  .select_related('description')\
                                  .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
