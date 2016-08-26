@@ -1137,12 +1137,15 @@ var ExperienceDatumSearchView = (function() {
 		var newHeight = parent.getFillHeight() - 
 						parent.outerHeight(true);
 		$(this.reveal.node).height(oldHeight);
-		this.reveal.show(
-			/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
-				and subtract the parent's height and add back the reveal node's height. */
-			{newHeight: newHeight,
-			 children: $(this.listPanel.node())},
-			duration);
+		if (oldHeight != newHeight)
+		{
+			this.reveal.show(
+				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
+					and subtract the parent's height and add back the reveal node's height. */
+				{newHeight: newHeight,
+				 children: $(this.listPanel.node())},
+				duration);
+		}
 	}	
 
 	function ExperienceDatumSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
