@@ -423,7 +423,7 @@ class Instance(dbmodels.Model):
         return fieldData
     
     # Returns the fieldsData from the database for self, which is a term.
-    def _getFieldsData(self, language=None):
+    def getFieldsData(self, language=None):
         vs2 = Value.objects.filter(field=terms.name,
                             deleteTransaction__isnull=True)
 
@@ -439,17 +439,6 @@ class Instance(dbmodels.Model):
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
-
-    # Returns the fieldsData from the cache or database for self, which is a term.
-    def getFieldsData(self, fieldsDataDictionary, language=None):
-        if self in fieldsDataDictionary:
-            return fieldsDataDictionary[self]
-        else:
-            fieldsData = self._getFieldsData(language)
-            if not len(fieldsData):
-                raise RuntimeError("the specified item is not configured")
-            fieldsDataDictionary[self] = fieldsData
-            return fieldsData
 
     def _getCellValues(dataTypeID, values, userInfo, language=None):
         if dataTypeID == terms.objectEnum.id:
@@ -1424,6 +1413,18 @@ class Terms():
         return re.search('^[a-fA-F0-9]{32}$', s)
                 
 terms = Terms()
+
+class FieldsDataDictionary:
+    def __init__(self, typeInstances=[], language=None):
+        self.language = language
+        self._dict = dict((t, t.getFieldsData(language)) for t in typeInstances)
+    
+    def __getitem__(self, typeInstance):
+        if typeInstance in self._dict:
+            return self._dict[typeInstance]
+        else:
+            self._dict[typeInstance] = typeInstance.getFieldsData(self.language)
+            return self._dict[typeInstance]
 
 class UserInfo:
     def __init__(self, authUser):

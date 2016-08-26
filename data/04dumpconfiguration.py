@@ -22,7 +22,7 @@ from consentrecords import instancecreator
 def writeinstance(i, indent, fieldDataDictionary):
     sys.stdout.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
     sys.stderr.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
-    fieldsData = i.typeID.getFieldsData(fieldDataDictionary)
+    fieldsData = fieldDataDictionary[i.typeID]
 
     for fd in fieldsData:
         values = i.value_set.filter(field__id=fd['nameID'], deleteTransaction__isnull=True)\
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
         with transaction.atomic():
             userInfo = UserInfo(user)
-            fieldDataDictionary = {}
+            fieldDataDictionary = FieldDataDictionary()
         
             terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
                               .select_related('typeID')\

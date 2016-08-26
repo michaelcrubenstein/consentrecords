@@ -795,7 +795,7 @@ class api:
         return JsonResponse(results)
     
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
+        fieldsData = fieldsDataDictionary[uuObject.typeID]
         
         data = uuObject.getReferenceData(userInfo, language)
         data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
@@ -832,28 +832,20 @@ class api:
                               'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
-        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-
         # For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
         # values in that cell.
+        subInstances = map(lambda v: v.referenceValue, uuObject.values)
+        sDict = dict((s.id, s) for s in filter(lambda s: s, subInstances))
+        
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
                 typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
-                fieldsData = typeID.getFieldsData(fieldsDataDictionary, language)
+                fieldsData = fieldsDataDictionary[typeID]
+                    
                 for d in cell["data"]:
-                    i = Instance.objects.select_related('typeID').select_related('parent')\
-                                        .select_related('description')\
-                                        .prefetch_related(Prefetch('value_set',
-                                                            queryset=valueQueryset,
-                                                            to_attr='values'))\
-                                        .get(pk=d["instanceID"])
-                    d['cells'] = i.getData(i.values, fieldsData, userInfo, language)
+                    i = sDict[d["instanceID"]]
+                    d['cells'] = i.getData(i.subValues, fieldsData, userInfo, language)
                     d['typeName'] = i.typeID.getDescription();
             
         return data;
@@ -861,9 +853,6 @@ class api:
     def getData(user, path, data):
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
-            if path.startswith('::NewExperience:'):
-                return api.getNewExperienceChoices(user, data)
-            
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
         
@@ -882,11 +871,29 @@ class api:
             valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
                 .order_by('position')\
                 .select_related('field')\
-                .select_related('field__id')\
                 .select_related('referenceValue')\
                 .select_related('referenceValue__description')
+            
+            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
+            fieldNames = list(fieldNames)
+            if len(fieldNames):
+                fieldTermNames = Instance.objects.filter(typeID=terms.term,
+                        value__deleteTransaction__isnull=True,
+                        value__field = terms.name,
+                        value__stringValue__in=fieldNames)
+                subValueQueryset = userInfo.findValueFilter(\
+                     Value.objects.filter(deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__in=fieldTermNames))\
+                    .order_by('position')\
+                    .select_related('field')\
+                    .select_related('referenceValue')\
+                    .select_related('referenceValue__description')
+                valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                      queryset=subValueQueryset,
+                                      to_attr='subValues'))
 
-            uuObjects = uuObjects.select_related('typeID').select_related('parent')\
+            uuObjects = uuObjects.select_related('typeID')\
+                                 .select_related('parent')\
                                  .select_related('description')\
                                  .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
@@ -898,7 +905,9 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
-            fieldsDataDictionary = {}
+            typeset = frozenset([x.typeID for x in uuObjects])
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'data': p}
@@ -924,78 +933,6 @@ class api:
                                                    queryset=valueQueryset,
                                                    to_attr='values'))
 
-    
-    def getNewExperienceChoices(user, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
-        try:
-            path = data.get('path', None)
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-        
-            if not path:
-                raise ValueError("path was not specified in getNewExperienceChoices")
-            
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            language = data.get('language', None)
-
-            userInfo=UserInfo(user)
-            
-            testValue = path[len('::NewExperience:'):]
-            
-            if len(testValue) > 0:
-                a = ["Service Domain", "Stage", "Service", "Domain", "Offering", "Site", "Organization"]
-            else:
-                a = ["Service Domain", "Stage"]
-            results = []
-            for termName in a:
-                term = terms[termName]
-                uuObjects = Instance.objects.filter(typeID=term, 
-                                                    deleteTransaction__isnull=True)\
-                                            .select_related('typeID')\
-                                            .select_related('description')
-                
-                if len(testValue) >= 3:
-                    vFilter = Value.objects.filter(field=terms.name, 
-                                                   stringValue__icontains=testValue,referenceValue__isnull=True,
-                                                   deleteTransaction__isnull=True)
-                    uuObjects = uuObjects.filter(value__in=vFilter)
-                elif len(testValue) > 0:
-                    vFilter = Value.objects.filter(field=terms.name, 
-                                                   stringValue__istartswith=testValue,referenceValue__isnull=True,
-                                                   deleteTransaction__isnull=True)
-                    uuObjects = uuObjects.filter(value__in=vFilter)
-                uuObjects = userInfo.readFilter(uuObjects)
-                uuObjects = uuObjects.order_by('description__text', 'id');
-                c = uuObjects.count()
-                if c <= start:
-                    start -= c
-                    end -= c
-                elif c <= end:
-                    uuObjects = api._addPreloadData(uuObjects, userInfo)
-                    results += uuObjects[start:]
-                    end -= c
-                    start = 0
-                else:
-                    uuObjects = api._addPreloadData(uuObjects, userInfo)
-                    results += uuObjects[start:end]
-                    end = 0
-                    start = 0
-                    break
-            
-            fieldsDataDictionary = {}
-            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
-        
-            results = {'data': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-    
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
     def deleteInstances(user, path):
