@@ -167,16 +167,12 @@ var Experience = (function() {
 			initialData["Offering"] = [{instanceID: this.offering.getValueID()}];
 		else if (this.offeringName)
 			initialData["User Entered Offering"] = [{text: this.offeringName}];
-		else if (this.services.length > 0)
-			initialData["User Entered Offering"] = [{text: this.services[0].getDescription()}];
 		
 		var existingServices = null;
 		if (this.offering && this.offering.getCell("Service"))
 			existingServices = this.offering.getCell("Service").data;
 				
-		for (i = (this.offering || this.offeringName ||
-				  (this.services.length > 0 && this.services[0].pickedObject)) ? 0 : 1; 
-			i < this.services.length; ++i)
+		for (i = 0; i < this.services.length; ++i)
 		{
 			var s = this.services[i];
 			
@@ -1141,12 +1137,15 @@ var ExperienceDatumSearchView = (function() {
 		var newHeight = parent.getFillHeight() - 
 						parent.outerHeight(true);
 		$(this.reveal.node).height(oldHeight);
-		this.reveal.show(
-			/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
-				and subtract the parent's height and add back the reveal node's height. */
-			{newHeight: newHeight,
-			 children: $(this.listPanel.node())},
-			duration);
+		if (oldHeight != newHeight)
+		{
+			this.reveal.show(
+				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
+					and subtract the parent's height and add back the reveal node's height. */
+				{newHeight: newHeight,
+				 children: $(this.listPanel.node())},
+				duration);
+		}
 	}	
 
 	function ExperienceDatumSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
