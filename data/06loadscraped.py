@@ -148,7 +148,7 @@ if __name__ == "__main__":
             userInfo = UserInfo(user)
         
             nameList = NameList()
-            fieldsDataDictionary = {}
+            fieldsDataDictionary = FieldDataDictionary()
             language = None
             
             c = 1
@@ -173,7 +173,7 @@ if __name__ == "__main__":
                         s, indent = readIndentedLine(f); c += 1
                     else:
                         lastIndent, item = items[-1]
-                        fieldsData = item.typeID.getFieldsData(fieldsDataDictionary, language)
+                        fieldsData = fieldsDataDictionary[item.typeID]
                         field, text = parseProperty(s)
                     
                         fieldData = findFieldData(fieldsData, field)
@@ -190,7 +190,7 @@ if __name__ == "__main__":
                                 s, indent = readIndentedLine(f); c += 1
                                 nameField, value = parseProperty(s)
                                 if value:
-                                    fieldsData = type.getFieldsData(fieldsDataDictionary, language)
+                                    fieldsData = fieldsDataDictionary[type]
                                     fieldData = findFieldData(fieldsData, nameField)
                                     if isObjectField(fieldData):
                                         referenceValue = getReferenceValue(item, nameField, value, fieldData, nameList, userInfo)

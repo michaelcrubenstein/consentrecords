@@ -795,7 +795,7 @@ class api:
         return JsonResponse(results)
     
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
+        fieldsData = fieldsDataDictionary[uuObject.typeID]
         
         data = uuObject.getReferenceData(userInfo, language)
         data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
@@ -845,14 +845,19 @@ class api:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
                 typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
-                fieldsData = typeID.getFieldsData(fieldsDataDictionary, language)
-                for d in cell["data"]:
-                    i = Instance.objects.select_related('typeID').select_related('parent')\
+                fieldsData = fieldsDataDictionary[typeID]
+                subInstances = Instance.objects.select_related('typeID').select_related('parent')\
                                         .select_related('description')\
                                         .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
                                                             to_attr='values'))\
-                                        .get(pk=d["instanceID"])
+                                        .filter(referenceValues__deleteTransaction__isnull=True,
+                                                referenceValues__field=cell["field"]["nameID"],
+                                                referenceValues__instance=uuObject)
+                sDict = dict((s.id, s) for s in subInstances)
+                    
+                for d in cell["data"]:
+                    i = sDict[d["instanceID"]]
                     d['cells'] = i.getData(i.values, fieldsData, userInfo, language)
                     d['typeName'] = i.typeID.getDescription();
             
@@ -898,7 +903,9 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
-            fieldsDataDictionary = {}
+            typeset = frozenset([x.typeID for x in uuObjects])
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'data': p}
@@ -984,7 +991,9 @@ class api:
                     start = 0
                     break
             
-            fieldsDataDictionary = {}
+            typeset = frozenset([x.typeID for x in results])
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
         
             results = {'data': p}
