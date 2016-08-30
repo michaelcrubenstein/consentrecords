@@ -82,7 +82,11 @@
 			svg.pathway g.flag.flag4 {
 				animation: moveup4;
 				animation-duration: 1s;
-				animation-delay: 1.5s;
+				animation-delay: 0.5s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			@keyframes moveup5 {
     			from {transform: translate(30px, -0px);}
@@ -92,7 +96,11 @@
 			svg.pathway g.flag.flag5 {
 				animation: moveup5;
 				animation-duration: 1s;
-				animation-delay: 2.1s;
+				animation-delay: 1.1s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup6 {
@@ -103,7 +111,11 @@
 			svg.pathway g.flag.flag6 {
 				animation: moveup6;
 				animation-duration: 1s;
-				animation-delay: 2.7s;
+				animation-delay: 1.7s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup7 {
@@ -114,7 +126,11 @@
 			svg.pathway g.flag.flag7 {
 				animation: moveup7;
 				animation-duration: 1s;
-				animation-delay: 3.3s;
+				animation-delay: 2.3s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup8 {
@@ -125,7 +141,11 @@
 			svg.pathway g.flag.flag8 {
 				animation: moveup8;
 				animation-duration: 1s;
-				animation-delay: 3.9s;
+				animation-delay: 2.9s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup9 {
@@ -136,7 +156,11 @@
 			svg.pathway g.flag.flag9 {
 				animation: moveup9;
 				animation-duration: 1s;
-				animation-delay: 4.5s;
+				animation-delay: 3.5s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup10 {
@@ -147,7 +171,11 @@
 			svg.pathway g.flag.flag10 {
 				animation: moveup10;
 				animation-duration: 1s;
-				animation-delay: 5.1s;
+				animation-delay: 4.1s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup11 {
@@ -158,7 +186,11 @@
 			svg.pathway g.flag.flag11 {
 				animation: moveup11;
 				animation-duration: 1s;
-				animation-delay: 5.7s;
+				animation-delay: 4.7s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup12 {
@@ -169,7 +201,11 @@
 			svg.pathway g.flag.flag12 {
 				animation: moveup12;
 				animation-duration: 1s;
-				animation-delay: 6.3s;
+				animation-delay: 5.3s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
 			
 			@keyframes moveup13 {
@@ -180,7 +216,11 @@
 			svg.pathway g.flag.flag13 {
 				animation: moveup13;
 				animation-duration: 1s;
-				animation-delay: 6.9s;
+				animation-delay: 5.9s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
 			}
       ]]>
     </style>
