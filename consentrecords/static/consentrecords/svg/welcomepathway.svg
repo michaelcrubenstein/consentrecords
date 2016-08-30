@@ -74,44 +74,6 @@
 				font-weight: 500;
 			}
 
-			svg.pathway g.flag {
-				animation-fill-mode: both;
-				animation-iteration-count: 1;
-			}
-			
-			@keyframes reveal {
-				from {opacity: 0;}
-				to   {opacity: 1.0;}
-			}
-			
-			svg.pathway g.year text.goals {
-				animation: reveal;
-				animation-duration: 0.5s;
-				animation-delay: 1.0s;
-				animation-fill-mode: both;
-			}
-			
-			@keyframes reveal-line {
-				from {stroke-dashoffset: 30;}
-				to   {stroke-dashoffset: 0;}
-			}
-			
-			svg.pathway g.year line.goals {
-				animation: reveal-line;
-				animation-duration: 0.5s;
-				animation-delay: 0.5s;
-				animation-fill-mode: both;
-				stroke: #777;
-				stroke-width: 0.5px;
-				stroke-dasharray: 30 30;
-			}
-			
-			svg.pathway g.year line.birth {
-				stroke: #777;
-				stroke-width: 0.5px;
-				stroke-dasharray: 30 30;
-			}
-			
 			@keyframes moveup4 {
     			from {transform: translate(0px, -0px);}
     			to   {transform: translate(0px, 60px);}
