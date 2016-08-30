@@ -109,7 +109,7 @@ var Signup = (function () {
 		function getPickedItem(listNode)
 		{
 			var itemHeight = Math.round($(listNode).children('li:first-child').outerHeight());
-			var pickedItem = Math.round($(listNode).scrollTop() / itemHeight) + 3;
+			var pickedItem = Math.round($(listNode).scrollTop() / itemHeight);
 			return $(listNode).children('li:nth-child({0})'.format(pickedItem + 1)).text();
 		}
 		
@@ -177,10 +177,9 @@ var Signup = (function () {
 	
 			minYear = maxYear-100;
 		
-			var years = [' ', ' ', ' '];
+			var years = [];
 			for (var i = maxYear; i >= minYear; --i)
 				years.push(i);
-			years = years.concat([' ', ' ', ' ', ]);
 			
 			yearPickerList.selectAll('li')
 				.data(years)
@@ -188,8 +187,7 @@ var Signup = (function () {
 				.append('li')
 				.text(function(d) { return d; });
 					
-			var months = [' ', ' ', ' ', ].concat(Date.CultureInfo.monthNames)
-				.concat([' ', ' ', ' ', ]);
+			var months = Date.CultureInfo.monthNames;
 			
 			monthPickerList.selectAll('li')
 				.data(months)
