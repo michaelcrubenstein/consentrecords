@@ -704,39 +704,6 @@ var Experience = (function() {
 	return Experience;
 })();
 
-var NamedTypeSearchView = (function() {
-	NamedTypeSearchView.prototype = new PanelSearchView();
-
-	NamedTypeSearchView.prototype.hasNamedButton = function(compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-		var data = this.listPanel.selectAll("li").data();
-		return data.find(function(d) {
-				return d.getCell && d.getCell("_name").data.find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;});
-			});
-	}
-	
-	/* Returns true if the specified datum has a name that contains compareText. */
-	NamedTypeSearchView.prototype.isMatchingDatum = function(d, compareText)
-	{
-		if (compareText.length === 0)
-			return true;
-		
-		return d.getDescription && 
-			   d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
-	}
-	
-	function NamedTypeSearchView(sitePanel, placeholder, appendDescriptions, chunker)
-	{
-		PanelSearchView.call(this, sitePanel, placeholder, appendDescriptions, chunker)
-	}
-	
-	return NamedTypeSearchView;
-	
-})();
-
 var MultiTypeOptionView = (function() {
 	MultiTypeOptionView.prototype = new SearchOptionsView();
 	MultiTypeOptionView.prototype.containerNode = null;
