@@ -718,7 +718,8 @@ var MultiTypeOptionView = (function() {
 		var data = this.listPanel.selectAll("li").data();
 		return data.find(function(d) {
 				return d.getCell && d.getCell("_name").data.find(
-					function(d) { return d.text.toLocaleLowerCase() === compareText;});
+					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
+					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
 			});
 	}
 	
