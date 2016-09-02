@@ -1667,7 +1667,7 @@ var PathlinesPanel = (function () {
 				}
 				d3.event.preventDefault();
 			})
-			.classed('add-experience-button', true)
+			.classed('add-button', true)
 			.style("display", "none");
 		addExperienceButton.append("span")
 			.classed('site-active-text', true)

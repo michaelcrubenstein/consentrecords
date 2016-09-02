@@ -199,11 +199,8 @@ panel.view .panel-fill>header
 	background: white;
 }
 .add-button {
-	margin-top: 0px;
-	padding-top: 4px;
-	line-height: 22px;
-	font-size: x-large;
-	font-weight: 600;
+	font-size: 28px;
+	line-height: 18px;
 }
 .row-button-group {
 	margin-top: 12px;
