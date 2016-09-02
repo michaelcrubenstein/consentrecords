@@ -7,6 +7,15 @@ var FlagData = (function() {
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
 	
+	FlagData.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
+
+	/* Constants related to the detail text. */
+	FlagData.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	
 	FlagData.prototype.getDescription = function()
 	{
 		var _this = this;
@@ -157,6 +166,97 @@ var FlagData = (function() {
 			}
 		this.checkOfferingCells(f);
 	}
+	
+	FlagData.appendWrappedText = function(s, newSpan, maxWidth)
+	{
+		var words = s.split(/\s+/).reverse(),
+			word,
+			line = [];
+		tspan = newSpan(0);
+		var nextIndex = 1;
+		
+		while (word = words.pop()) {
+			line.push(word);
+			tspan.text(line.join(" "));
+			if (tspan.node().getComputedTextLength() > maxWidth) {
+				line.pop();
+				tspan.text(line.join(" "));
+				line = [word];
+				tspan = newSpan(nextIndex).text(word);
+				++nextIndex;
+			}
+		}
+	}
+	
+	FlagData.prototype.appendText = function(container)
+	{
+		var detailText = container.append('text');
+
+		var lines = [];
+		
+		var s;
+		var maxWidth = 0;
+		var tspan;
+		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('flag-label', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
+		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('detail-organization', true)
+				.text(orgString)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = this.pickedOrCreatedValue("Site", "User Entered Site");
+		if (s && s.length > 0 && s !== orgString)
+		{
+			tspan = detailText.append('tspan')
+				.classed('site', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = getDateRange(this.experience);
+		if (s && s.length > 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('detail-dates', true)
+				.text(s)
+				.attr("x", this.textDetailLeftMargin)
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		s = getTagList(this.experience);
+		if (s && s.length > 0)
+		{
+			var _this = this;
+			FlagData.appendWrappedText(s, function(spanIndex)
+				{
+					return detailText.append("tspan")
+						.classed('tags', true)
+						.attr("x", _this.textDetailLeftMargin)
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
+				},
+				maxWidth);
+		}
+		
+		return detailText;
+	}
 
 	function FlagData(experience)
 	{
@@ -176,14 +276,7 @@ var PathView = (function() {
 	PathView.prototype.containerDiv = null;
 
 	PathView.prototype.isLayoutDirty = true;
-	
-	/* Constants related to the detail text. */
-	PathView.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
-	PathView.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
-	
+		
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
@@ -205,27 +298,6 @@ var PathView = (function() {
 							  
 	PathView.prototype.emToPX = 11;
 							  
-	PathView.prototype.appendWrappedText = function(s, newSpan, maxWidth)
-	{
-		var words = s.split(/\s+/).reverse(),
-			word,
-			line = [];
-		tspan = newSpan(0);
-		var nextIndex = 1;
-		
-		while (word = words.pop()) {
-			line.push(word);
-			tspan.text(line.join(" "));
-			if (tspan.node().getComputedTextLength() > maxWidth) {
-				line.pop();
-				tspan.text(line.join(" "));
-				line = [word];
-				tspan = newSpan(nextIndex).text(word);
-				++nextIndex;
-			}
-		}
-	}
-	
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
 		var _this = this;
@@ -945,81 +1017,19 @@ var PathLines = (function() {
 		
 		this.detailGroup.datum(fd);
 		this.detailGroup.selectAll('rect').datum(fd);
-		var detailText = this.detailGroup.append('text')
-			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
+		var detailText = fd.appendText(this.detailGroup);
+		detailText.attr('clip-path', detailClipPath);
 			
 		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
-		var lines = [];
-		
-		var s;
-		var maxWidth = 0;
-		var tspan;
-		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('flag-label', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-		
-		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-organization', true)
-				.text(orgString)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-
-		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && s.length > 0 && s !== orgString)
-		{
-			tspan = detailText.append('tspan')
-				.classed('site', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-
-		s = getDateRange(fd.experience);
-		if (s && s.length > 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-dates', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
+		var textBox = detailText.node().getBBox();
 		
 		var x = fd.x;
 		var y = fd.y;
 
 		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = maxWidth + iconAreaWidth + (this.textDetailLeftMargin * 2);
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
 
-		s = getTagList(fd.experience);
-		if (s && s.length > 0)
-		{
-			this.appendWrappedText(s, function(spanIndex)
-				{
-					return detailText.append("tspan")
-						.classed('tags', true)
-						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
-				},
-				maxWidth);
-		}
-
-			
-		var textBox = detailText.node().getBBox();
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
 		this.detailGroup.attr("transform", 

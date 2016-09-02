@@ -252,7 +252,7 @@ var ComparePath = (function() {
 			.each(function(d, i)
 				{
 					var t = d3.select(this);
-					_this.appendWrappedText(d.name, function(i)
+					FlagData.appendWrappedText(d.name, function(i)
 							{
 								return t.append("tspan")
 									.attr("x", 0)
@@ -353,92 +353,19 @@ var ComparePath = (function() {
 		
 		this.detailGroup.datum(fd);
 		this.detailGroup.selectAll('rect').datum(fd);
-		var detailText = this.detailGroup.append('text')
-			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
+		var detailText = fd.appendText(this.detailGroup);
+		detailText.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
 			
 		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
-		var lines = [];
-		
-		var s;
-		var maxWidth = 0;
-		var tspan;
-		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('flag-label', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-		
-		function checkSpacing(dy)
-		{
-			if (maxWidth > 0)
-				detailText.append('tspan')
-						  .text(' ')
-						  .attr("x", this.textDetailLeftMargin)
-						  .attr("dy", dy);
-		}
-			
-		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-organization', true)
-				.text(orgString)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
+		var textBox = detailText.node().getBBox();
+		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
-		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && s.length > 0 && s !== orgString)
-		{
-			tspan = detailText.append('tspan')
-				.classed('site', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-
-		s = getDateRange(fd.experience);
-		if (s && s.length > 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-dates', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-		
 		var x = fd.x;
 		var y = fd.y;
 
 		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = maxWidth + iconAreaWidth + (this.textDetailLeftMargin * 2);
-
-		s = getTagList(fd.experience);
-		if (s && s.length > 0)
-		{
-			checkSpacing("4px");
-			this.appendWrappedText(s, function(spanIndex)
-				{
-					return detailText.append("tspan")
-						.classed('tags', true)
-						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
-				},
-				maxWidth);
-		}
-
-			
-		var textBox = detailText.node().getBBox();
-		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
 
 		this.detailGroup.attr("transform", 
 		                      "translate({0},{1})".format(x + this.experienceGroupDX, (y * this.emToPX) + this.experienceGroupDY));
