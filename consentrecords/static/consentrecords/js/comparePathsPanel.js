@@ -464,22 +464,17 @@ var ComparePath = (function() {
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', maxWidth); 
+			.attr('width', rectWidth); 
 		
 		var iconClipRect;
 		
 		if (hasEditChevron)
 		{	
-			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y)
-				.attr('width', this.showDetailIconWidth);
-				
 			var detailChevron = this.detailGroup.append('image')
 				.attr("width", this.showDetailIconWidth)
 				.attr("height", this.showDetailIconWidth)
 				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+				.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID))
 
 			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
 				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
@@ -495,19 +490,11 @@ var ComparePath = (function() {
 				.transition()
 				.duration(duration)
 				.attr("height", this.detailRectHeight);
-
-			if (hasEditChevron)
-				iconClipRect.attr('height', 0)
-					.transition()
-					.duration(duration)
-					.attr('height', this.detailRectHeight);
 		}
 		else
 		{
 			textClipRect.attr('height', this.detailRectHeight); 
 			detailText.attr("height", this.detailRectHeight);
-			if (hasEditChevron)
-				iconClipRect.attr('height', this.detailRectHeight);
 		}
 		
 		this.detailFlagData = fd;

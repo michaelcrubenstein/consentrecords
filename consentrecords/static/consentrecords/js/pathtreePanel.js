@@ -321,12 +321,9 @@ var PathView = (function() {
 	{
 		this.defs.selectAll('clipPath').remove();
 		
-		/* Add a clipPath for the text box size. */
+		/* Add a clipPath for the detail area. */
 		this.defs.append('clipPath')
 			.attr('id', 'id_detailClipPath{0}'.format(this.clipID))
-			.append('rect');
-		this.defs.append('clipPath')
-			.attr('id', 'id_detailIconClipPath{0}'.format(this.clipID))
 			.append('rect');
 	}
 	
@@ -339,7 +336,6 @@ var PathView = (function() {
 		 */
 		this.detailGroup.selectAll('image').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
-		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
 		$(this).trigger("clearTriggers.cr");
@@ -373,10 +369,6 @@ var PathView = (function() {
 						if (done)
 							done();
 					});
-				d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-					.transition()
-					.duration(duration)
-					.attr("height", 0);
 				this.detailGroup.selectAll('rect')
 					.transition()
 					.duration(duration)
@@ -949,6 +941,8 @@ var PathLines = (function() {
 		duration = (duration !== undefined ? duration : 700);
 		var _this = this;
 		
+		var detailClipPath = 'url(#id_detailClipPath{0})'.format(this.clipID);
+		
 		this.detailGroup.datum(fd);
 		this.detailGroup.selectAll('rect').datum(fd);
 		var detailText = this.detailGroup.append('text')
@@ -1052,22 +1046,15 @@ var PathLines = (function() {
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', maxWidth); 
-		
-		var iconClipRect;
+			.attr('width', rectWidth); 
 		
 		if (hasEditChevron)
 		{	
-			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y)
-				.attr('width', this.showDetailIconWidth);
-				
 			var detailChevron = this.detailGroup.append('image')
 				.attr("width", this.showDetailIconWidth)
 				.attr("height", this.showDetailIconWidth)
 				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+				.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID))
 
 			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
 				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
@@ -1084,18 +1071,11 @@ var PathLines = (function() {
 				.duration(duration)
 				.attr("height", this.detailRectHeight);
 
-			if (hasEditChevron)
-				iconClipRect.attr('height', 0)
-					.transition()
-					.duration(duration)
-					.attr('height', this.detailRectHeight);
 		}
 		else
 		{
 			textClipRect.attr('height', this.detailRectHeight); 
 			detailText.attr("height", this.detailRectHeight);
-			if (hasEditChevron)
-				iconClipRect.attr('height', this.detailRectHeight);
 		}
 		
 		this.detailFlagData = fd;
