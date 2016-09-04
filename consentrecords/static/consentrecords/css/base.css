@@ -137,6 +137,32 @@ nav .site-left-chevron {
 	text-overflow: ellipsis;
 	text-align: left;
 	margin-left: 18px;	/* Same as the width of the .site-left-chevron-span, above. */
+}
+
+.chevron-left-container.site-navbar-link {
+	overflow: visible;
+}
+
+.site-navbar-link>svg.chevron-left {
+	height: 18px;
+	width: 12px;
+	margin-top: 2px;
+	margin-left: -6px;
+	display: inline;
+	float: left;
+	fill: #2C55CC;
+} 
+
+.site-navbar-link>svg.chevron-left:hover {
+	fill: #2222FF;
+}
+
+.site-navbar-link>svg.chevron-left+div, .site-navbar-link>svg.chevron-left+span {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left;
+	margin-left: 10px;	/* Same as the width of the .site-left-chevron-span, above. */
 } 
 
 nav.transparentTop {
