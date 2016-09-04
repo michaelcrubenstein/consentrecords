@@ -795,7 +795,11 @@ function appendConfirmDeleteControls(divs, onClick)
 			var deleteButton = $(this.parentNode).find(".glyphicon-minus-sign");
 			deleteButton.animateRotate(180, 90, 400);
 			$(this).animate({width: "0px", "padding-left": "0px", "padding-right": "0px"},
-				400);
+				{duration: 400,
+				 step: function()
+				 {
+				 	$(this.parentNode).find('button.delete-dial~div').trigger('resize.cr');
+				 }});
 		})
 		.on('click', onClick);
 }
@@ -809,7 +813,7 @@ function appendDeleteControls(buttons)
 			if (prepareClick('click', 'delete button'))
 			{
 				$(this).animateRotate(90, 180, 600, 'swing');
-				var confirmButton = $($(this).parents("li")[0]).children("button");
+				var confirmButton = $($(this).parents('li')[0]).children("button");
 				autoWidth = confirmButton.css('width', 'auto')
 					.width();
 				confirmButton.width(0)
@@ -1919,17 +1923,24 @@ var SitePanel = (function () {
 				if ($(this).css("opacity") > 0 &&
 					prepareClick('click', 'delete button'))
 				{
+					var _this = this;
 					$(this).animateRotate(90, 180, 600, 'swing');
 					var confirmButton = $($(this).parents("li")[0]).children("button");
 					autoWidth = confirmButton.css('width', 'auto')
 						.width();
 					confirmButton.width(0)
-						.animate({width: autoWidth+24, "padding-left": "12px", "padding-right": "12px"}, 600, 'swing', 
-						function () 
-						{ 
-							unblockClick(); 
-							this.focus();
-						});
+						.animate({width: autoWidth+24, "padding-left": "12px", "padding-right": "12px"}, 
+							{duration: 600, 
+							 easing: 'swing', 
+							 step: function()
+							 {
+							 	$(_this).find("~ div").trigger('resize.cr');
+							 },
+							 done: function () 
+							{ 
+								unblockClick(); 
+								this.focus();
+							}});
 				};
 				d3.event.preventDefault();
 			});
@@ -1952,7 +1963,11 @@ var SitePanel = (function () {
 		if (adj.length > 0)
 		{
 			var newWidth = adj.width();
-			adj.animate({"margin-left": "24px"}, duration);
+			adj.animate({"margin-left": "24px"}, 
+				{duration: duration,
+				 step: function() {
+				 		$(this).trigger('resize.cr');
+				 	}});
 		}
 	}
 	
@@ -1969,7 +1984,11 @@ var SitePanel = (function () {
 		if (adj.length > 0)
 		{
 			var newWidth = adj.width();
-			adj.animate({"margin-left": "0px"}, duration);
+			adj.animate({"margin-left": "0px"}, 
+				{duration: duration,
+				 step: function() {
+				 		$(this).trigger('resize.cr');
+				 	}});
 		}
 	}
 
