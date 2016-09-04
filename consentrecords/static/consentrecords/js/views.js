@@ -1411,8 +1411,7 @@ var SiteNavContainer = (function() {
 	
 	SiteNavContainer.prototype.appendLeftButton = function()
 	{
-		return this.div.append("div").classed("left-link pull-left", true)
-				   .append("div") .classed("site-navbar-link site-active-text", true);
+		return this.div.append("div").classed("left-link pull-left site-navbar-link site-active-text", true);
 	}
 	
 	SiteNavContainer.prototype.appendRightButton = function()
