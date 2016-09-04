@@ -227,6 +227,21 @@ panel.view .panel-fill>header
 .cell.unique {
 	background: white;
 }
+
+button {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	padding: 0;
+	color: #2C55CC;
+}
+
+button:hover {
+	color: #2222FF;
+}
+
 .add-button {
 	font-size: 28px;
 	line-height: 18px;
@@ -497,6 +512,10 @@ div.add-value>button {
 	background-color: transparent;
 	padding: 0px;
 	padding-top: 1px;	/* A hack for Safari icon */
+	outline: none;
+}
+.glyphicon-minus-sign:hover {
+	color: red;
 }
 .glyphicon-minus-sign:focus {
 	outline: none;
@@ -518,6 +537,9 @@ div.add-value>button {
 	padding: 6px 12px;
 	width: auto;
 	float: right;
+}
+.delete-confirm-container>button:hover {
+	background: red;
 }
 .delete-confirm-container>button:focus {
 	outline: none;
