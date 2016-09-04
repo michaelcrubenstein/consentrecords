@@ -188,33 +188,32 @@ var FlagData = (function() {
 		}
 	}
 	
-	FlagData.prototype.appendText = function(container)
+	FlagData.prototype.appendTSpans = function(detailText, maxWidth, x)
 	{
-		var detailText = container.append('text');
-
-		var lines = [];
+		x = x !== undefined ? x : this.textDetailLeftMargin;
+		
+		detailText.selectAll('tspan').remove();
 		
 		var s;
-		var maxWidth = 0;
 		var tspan;
 		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
+		if (s && s.length > 0)
 		{
 			tspan = detailText.append('tspan')
 				.classed('flag-label', true)
 				.text(s)
-				.attr("x", this.textDetailLeftMargin)
+				.attr("x", x)
 				.attr("dy", this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
 		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
+		if (orgString && orgString.length > 0)
 		{
 			tspan = detailText.append('tspan')
 				.classed('detail-organization', true)
 				.text(orgString)
-				.attr("x", this.textDetailLeftMargin)
+				.attr("x", x)
 				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
@@ -225,7 +224,7 @@ var FlagData = (function() {
 			tspan = detailText.append('tspan')
 				.classed('site', true)
 				.text(s)
-				.attr("x", this.textDetailLeftMargin)
+				.attr("x", x)
 				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
@@ -236,7 +235,7 @@ var FlagData = (function() {
 			tspan = detailText.append('tspan')
 				.classed('detail-dates', true)
 				.text(s)
-				.attr("x", this.textDetailLeftMargin)
+				.attr("x", x)
 				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
@@ -249,11 +248,19 @@ var FlagData = (function() {
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
-						.attr("x", _this.textDetailLeftMargin)
+						.attr("x", x)
 						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
 				},
 				maxWidth);
 		}
+	}
+	
+	FlagData.prototype.appendText = function(container, maxWidth)
+	{
+		var detailText = container.append('text');
+		maxWidth = maxWidth !== undefined ? maxWidth : 0;
+		
+		this.appendTSpans(detailText, maxWidth);
 		
 		return detailText;
 	}
@@ -407,6 +414,7 @@ var PathView = (function() {
 			so that it is sure to be removed when the done method is called. 
 		 */
 		this.detailGroup.selectAll('image').remove();
+		this.detailGroup.selectAll('line').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
@@ -494,7 +502,32 @@ var PathView = (function() {
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
+				}
+				d3.event.stopPropagation();
+			}
+		}
+	}
+	
+	PathView.prototype.showCommentsPanel = function(fd, i)
+	{
+		if (fd.experience.typeName == "Experience") {
+			;	/* Nothing to edit */
+		}
+		else
+		{
+			if (prepareClick('click', 'show experience comments: ' + fd.getDescription()))
+			{
+				try
+				{
+					var panel = this.sitePanel.node();
+					var newPanel = new ExperienceCommentsPanel(fd, panel);
+					
+					revealPanelLeft(newPanel.node());
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
 				}
 				d3.event.stopPropagation();
 			}
@@ -1032,6 +1065,37 @@ var PathLines = (function() {
 
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
+		this.commentLineHeight = 7;
+		var commentLine = this.detailGroup.append('line')
+			.attr('x1', 0)
+			.attr('x2', rectWidth)
+			.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
+			.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
+			.attr('clip-path', detailClipPath);
+		
+		this.commentLabelTopMargin = 2;
+		this.commentLabelBottomMargin = 10;
+		this.commentLabelLeftMargin = 10;
+		var commentLabel = this.detailGroup.append('text')
+			.classed('comments', true)
+			.text('Comments')
+			.attr('x', this.commentLabelLeftMargin)
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", function(fd, i)
+				{
+					_this.showCommentsPanel(fd, i);
+				});
+;
+			
+		var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
+		commentLabel.attr('y', commentLabelY)
+			.attr('clip-path', detailClipPath);
+			
+		this.detailRectHeight = commentLabelY + this.commentLabelBottomMargin;
+			
 		this.detailGroup.attr("transform", 
 		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')

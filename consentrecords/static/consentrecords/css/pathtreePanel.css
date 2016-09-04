@@ -58,14 +58,36 @@ svg.pathway g.year text {
 	text-anchor: end;
 }
 
-svg.pathway g.detail rect.bg {
+g.detail rect.bg {
 	fill: white;
 }
 	
-svg.pathway g.detail rect.detail {
+g.detail rect.detail {
 	fill-opacity: 0.2;
 	stroke-width: 0;
 	stroke-opacity: 0.0;
+	text-decoration: none;
+	cursor: pointer;
+}
+	
+g.detail image {
+	text-decoration: none;
+	cursor: pointer;
+}
+	
+g.detail line {
+	text-decoration: none;
+	cursor: pointer;
+	stroke: #AAA;
+	stroke-width: 0.3px;
+}
+	
+g.detail text.comments {
+	fill: #2C55CC;
+}
+	
+g.detail text.comments:hover {
+	fill: #2222FF;
 }
 	
 svg.pathway g.guide line.column {

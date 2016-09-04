@@ -1,0 +1,75 @@
+panel.comments div.panel-fill {
+	background: white;
+}
+
+panel.comments svg {
+	width: 100%;
+}
+
+panel.comments svg {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+}
+
+panel.comments svg tspan.site {
+	font-size: smaller;
+	fill: #555;
+}
+
+panel.comments svg tspan.tags {
+	font-size: smaller;
+	fill: #555;
+}
+
+panel.comments svg .flag-label {	/* For both flags and detail panels */
+	fill: #222;
+	text-anchor: start;
+	font-weight: 500;
+}
+
+section.comments {
+	font-size: 0.8em;
+	border-bottom: 1px #eee solid;
+}
+
+section.comments > ol > li > div {
+	position: relative;
+	padding: 6px 12px;
+}
+
+section.comments textarea {
+	resize: none;
+	border: 0;
+	border-color: #ddd;
+	outline: none;
+	width: calc(100% - 24px);
+}
+
+section.comments textarea.question {
+	font-weight: bold;
+}
+
+section.comments textarea.answer {
+}
+
+section.new-comment {
+	position: relative;
+}
+
+section.new-comment textarea {
+	margin-left: 12px;
+	padding: 2px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-size: 0.8em;
+	resize: none;
+	border-color: #ddd;
+	outline: none;
+}
+
+section.new-comment button.post {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 6px 12px;
+}
