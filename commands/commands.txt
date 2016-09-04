@@ -270,6 +270,7 @@ for v in Value.objects.all():
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
 q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44%3A%3Areference(Offering)%3ESessions%3ESession%3Anot(%5B%22Registration+Deadline%22%3C%222016-02-02%22%5D)%3A%3Areference(Sessions)%3A%3Areference(Offering)&fields=%5B%22parents%22%5D')
+q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%5D')
 
 import django; django.setup()
 import profile
@@ -282,10 +283,11 @@ from parse import cssparser
 from consentrecords.views import api
 terms.initialize()
 
-user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
+user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
-q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%5D')
-profile.run('api.getData(user, q)')
+path='#107d7f83095d41efb0472a60f4816043'
+q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
+profile.run('api.getData(user, path, q)')
 
 userInfo = UserInfo(user)
 
