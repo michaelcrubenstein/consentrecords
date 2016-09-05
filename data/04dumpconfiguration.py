@@ -11,6 +11,7 @@ import tzlocal
 import getpass
 import sys
 import csv
+import traceback
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -19,10 +20,10 @@ from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
 
-def writeinstance(i, indent, fieldDataDictionary):
+def writeinstance(i, indent, fieldsDataDictionary):
     sys.stdout.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
     sys.stderr.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
-    fieldsData = fieldDataDictionary[i.typeID]
+    fieldsData = fieldsDataDictionary[i.typeID]
 
     for fd in fieldsData:
         values = i.value_set.filter(field__id=fd['nameID'], deleteTransaction__isnull=True)\
@@ -33,7 +34,7 @@ def writeinstance(i, indent, fieldDataDictionary):
                     sys.stdout.write('%s%s: %s\n' % (' ' * (indent + 4), fd['name'], v.referenceValue.getDescription()))
             else:
                 for v in values:
-                    writeinstance(v.referenceValue, indent+4, fieldDataDictionary)
+                    writeinstance(v.referenceValue, indent+4, fieldsDataDictionary)
         elif fd['dataType'] == '_translation':
             for v in values:
                 sys.stdout.write('%s%s: %s - %s\n' % (' ' * (indent + 4), fd['name'], v.languageCode if v.languageCode else '--', v.stringValue))
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 
         with transaction.atomic():
             userInfo = UserInfo(user)
-            fieldDataDictionary = FieldDataDictionary()
+            fieldsDataDictionary = FieldsDataDictionary()
         
             terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
                               .select_related('typeID')\
@@ -77,6 +78,6 @@ if __name__ == "__main__":
             sys.stderr.write('Count: %s\n'%len(terms))
             
             for term in terms:
-                writeinstance(term, 0, fieldDataDictionary)
+                writeinstance(term, 0, fieldsDataDictionary)
     except Exception as e:
         sys.stderr.write("%s\n" % traceback.format_exc())

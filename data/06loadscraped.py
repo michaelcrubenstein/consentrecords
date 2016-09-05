@@ -148,7 +148,7 @@ if __name__ == "__main__":
             userInfo = UserInfo(user)
         
             nameList = NameList()
-            fieldsDataDictionary = FieldDataDictionary()
+            fieldsDataDictionary = FieldsDataDictionary()
             language = None
             
             c = 1
