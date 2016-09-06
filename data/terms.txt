@@ -32,6 +32,29 @@ _term
 _term
     _name: Color
 _term
+    _name: Comment
+    _configuration
+        _name: Boston
+        _field
+            _name: _name
+            _data type: _string
+            _max capacity: _unique value
+        _field
+            _name: _text
+            _data type: _string
+            _max capacity: _unique value
+_term
+    _name: Comments
+    _configuration
+        _name: Boston
+        _field
+            _name: Comment
+            _data type: _object
+            _max capacity: _multiple values
+            _descriptor type: _by count
+            _object add rule: _create one
+            _of kind: Comment
+_term
     _name: Consent Form
     _configuration
         _name: Boston
@@ -330,6 +353,12 @@ _term
             _name: End
             _data type: _datestamp (day optional)
             _max capacity: _unique value
+        _field
+            _name: Comments
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _create one
+            _of kind: Comments
 _term
     _name: More Experiences
     _configuration

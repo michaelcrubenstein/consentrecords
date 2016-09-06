@@ -10,11 +10,15 @@ var ExperienceCommentsPanel = (function() {
 		var divs = buttons.append('div');
 		var questions = divs.append('textarea')
 			.classed('question', true)
-			.text(function(d) { return d.question; });
+			.text(function(d) { 
+					return d.getDatum("_name"); 
+				});
 		
 		var answers = divs.append('textarea')
 			.classed('answer', true)
-			.text(function(d) { return d.answer; });
+			.text(function(d) { 
+					return d.getDatum("_text"); 
+				});
 			
 		buttons.selectAll('textarea')
 			.attr('readonly', 'readonly')
@@ -22,11 +26,58 @@ var ExperienceCommentsPanel = (function() {
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;');
 					this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
-					$(this).on('input resize.cr', function() {
+					$(this).on('input', function() {
 						this.style.height = 0;
 						this.style.height = (this.scrollHeight) + 'px';
 					});
+					$(this).on('resize.cr', function(eventObject) {
+						this.style.height = 0;
+						this.style.height = (this.scrollHeight) + 'px';
+						eventObject.stopPropagation();
+					});
 				});
+	}
+	
+	ExperienceCommentsPanel.prototype.loadComments = function(data)
+	{
+		var commentList = this.mainDiv.select('section.comments>ol');
+		var items = appendItems(commentList, data);
+		
+		appendConfirmDeleteControls(items);
+		var buttons = items.append('div');
+
+		var deleteControls = this.appendDeleteControls(buttons);
+
+		this.appendDescriptions(buttons);
+		if (!this.inEditMode)
+			this.hideDeleteControlsNow($(deleteControls[0]));
+		else
+			this.showDeleteControls($(deleteControls[0]), 0);
+	}
+	
+	ExperienceCommentsPanel.prototype.postComment = function(newText, done)
+	{
+		var comments = this.fd.experience.getValue("Comments");
+		var initialData;
+		if (this.fd.experience.canWrite())
+		{
+			initialData = {_text: [{text: newText}]};
+		}
+		else
+		{
+			initialData = {_name: [{text: newText}]};
+		}
+		if (comments.getValueID())
+		{
+			var commentCell = comments.getCell("Comment");
+			cr.createInstance(commentCell.field, comments.getValueID(), initialData, done, cr.syncFail);
+		}
+		else
+		{
+			comments.saveNew({Comment: [{cells: initialData}]},
+				done,
+				cr.syncFail);
+		}
 	}
 
 	function ExperienceCommentsPanel(fd, previousPanelNode)
@@ -107,71 +158,101 @@ var ExperienceCommentsPanel = (function() {
 			_this.svg.attr('height', _this.detailRectHeight);
 		}
 		setTimeout(resizeDetail);
-			
-		setTimeout(function()
+		
+		var comments = fd.experience.getValue("Comments");
+		var commentsDiv = panel2Div.append('section')
+			.classed('comments', true);
+		var commentList = commentsDiv.append('ol');
+		
+		function onCommentAdded(eventObject, newData)
+		{
+			eventObject.data.loadComments([newData]);
+		}
+		
+		function onCommentsChecked(comments)
+		{
+			var commentCell = comments.getCell("Comment");
+			$(commentCell).on('valueAdded.cr', null, _this, onCommentAdded);
+			$(commentsDiv.node()).on('remove', null, commentCell, function(commentCellEventObject)
+				{
+					$(commentCellEventObject.data).off('valueAdded.cr', null, onCommentAdded);
+				});
+			_this.loadComments(commentCell.data);
+		}
+		
+		function onNewCommentsSaved(eventObject, newData)
 			{
-				var data = [{
-								question: 'How did you discover this experience?',
-								answer: 'I found about this from a teacher I had in 12th grade biology. I found about this from a teacher I had in 12th grade biology. I found about this from a teacher I had in.'
-							},
-							{
-								question: 'How did you discover this experience?',
-								answer: 'I found about this from a teacher I had in 12th grade biology'
-							},
-							{
-								question: 'How did you discover this experience?',
-								answer: 'I found about this from a teacher I had in 12th grade biology'
-							}]
-				var commentsDiv = panel2Div.append('section')
-					.classed('comments', true);
-				var commentList = commentsDiv.append('ol');
-				var items = appendItems(commentList, data);
-				
-				appendConfirmDeleteControls(items);
- 				var buttons = items.append('div');
-
-				var deleteControls = _this.appendDeleteControls(buttons);
-	
-				_this.appendDescriptions(buttons);
-				if (!_this.inEditMode)
-					_this.hideDeleteControlsNow($(deleteControls[0]));
-				else
-					_this.showDeleteControls($(deleteControls[0]), 0);
-
-				var newCommentDiv = panel2Div.append('section')
-					.classed('new-comment', true);
-				var newCommentInput = newCommentDiv.append('textarea')
-					.attr('rows', 3);
-				if (fd.experience.canWrite())
-				{
-					newCommentInput.attr('placeholder', 'New Comment');
-				}
-				else
-				{
-					newCommentInput.attr('placeholder', 'Ask a Question');
-				}
-				var postButton = newCommentDiv.append('button')
-					.classed('post site-active-div', true)
-					.text('Post');
-				var resizeFunction = function()
-				{
-					$(newCommentInput.node()).width(
-						$(newCommentDiv.node()).width() - 
-						$(postButton.node()).outerWidth(true) -
-						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
-				}
-				resizeFunction();
-				$(panel2Div.node()).on('resize.cr', resizeFunction);					
-				$(panel2Div.node()).on('resize.cr', resizeDetail);					
-				$(panel2Div.node()).on('resize.cr', function()
-					{
-						buttons.selectAll('textarea')
-							.each(function()
-								{
-									$(this).trigger('input');
-								});
-					});					
+				crp.pushCheckCells(newData, ["Comment"], onCommentsChecked, cr.asyncFail)
+			}
+		
+		/* This occurs the first time a comment is added */	
+		$(comments).on('dataChanged.cr', null, this, onNewCommentsSaved);
+		$(commentsDiv.node()).on('remove', null, comments.cell, function(eventObject)
+			{
+				$(eventObject.data).off('dataChanged.cr', null, onNewCommentsSaved);
 			});
+		
+		var newCommentDiv = panel2Div.append('section')
+			.classed('new-comment', true);
+		var newCommentInput = newCommentDiv.append('textarea')
+			.attr('rows', 3);
+		if (fd.experience.canWrite())
+		{
+			newCommentInput.attr('placeholder', 'New Comment');
+		}
+		else
+		{
+			newCommentInput.attr('placeholder', 'Ask a Question');
+		}
+		var postButton = newCommentDiv.append('button')
+			.classed('post site-active-div', true)
+			.text('Post')
+			.on('click', function()
+				{
+					var newComment = newCommentInput.node().value;
+					if (newComment)
+					{
+						if (prepareClick('click', 'Post Comment'))
+						{
+							try
+							{
+								_this.postComment(newComment, function()
+									{
+										newCommentInput.node().value = '';
+										unblockClick();
+									});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					}
+				});
+		var resizeFunction = function()
+		{
+			$(newCommentInput.node()).width(
+				$(newCommentDiv.node()).width() - 
+				$(postButton.node()).outerWidth(true) -
+				($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+		}
+		resizeFunction();
+		$(panel2Div.node()).on('resize.cr', resizeFunction);					
+		$(panel2Div.node()).on('resize.cr', resizeDetail);	
+						
+		$(panel2Div.node()).on('resize.cr', function()
+			{
+				commentList.selectAll('textarea')
+					.each(function()
+						{
+							$(this).trigger('resize.cr');
+						});
+			});					
+		
+		if (comments.getValueID())
+		{
+			crp.pushCheckCells(comments, ["Comment"], onCommentsChecked, cr.asyncFail);
+		}
 	}
 		
 	return ExperienceCommentsPanel;
