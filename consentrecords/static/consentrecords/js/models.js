@@ -114,12 +114,12 @@ var CRP = (function() {
 			});
 	};
 	
-	CRP.prototype.pushCheckCells = function(i, fields, successFunction, failFunction)
+	CRP.prototype.pushCheckCells = function(i, fields, done, fail)
 	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
+		if (typeof(done) != "function")
+			throw "done is not a function";
+		if (typeof(fail) != "function")
+			throw "fail is not a function";
 		if (!i)
 			throw "i is not defined";
 		if (!i.getValueID())
@@ -138,17 +138,17 @@ var CRP = (function() {
 						i.importCells(storedI.cells);
 						i.isDataLoaded = true;
 					}
-					successFunction();
+					done(i);
 					return true;
 				}
 				else
 				{
 					i.checkCells(fields,
 						function() {
-							successFunction();
+							done(i);
 							_this.queue.next();
 						},
-						failFunction);
+						fail);
 					return false;
 				}
 			});
