@@ -46,11 +46,13 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                 else:
                     raise RuntimeError("%s field of type %s contains neither instanceID nor path: %s" % (field, parent.typeID, str(d)))
             else:
-                if "cells" in d and "ofKindID" in fieldData:
+                if "ofKindID" not in fieldData:
+                    raise RuntimeError("%s field of type %s not configured with an object kind" % (field, parent.typeID))
+                elif "cells" in d:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
                     create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
                 else:
-                    raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+                    raise RuntimeError("%s field of type %s missing data: %s" % (field, parent.typeID, str(d)))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
