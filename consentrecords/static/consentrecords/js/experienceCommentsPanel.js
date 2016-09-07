@@ -170,7 +170,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		var comments = fd.experience.getValue("Comments");
 		var commentsDiv = panel2Div.append('section')
-			.classed('comments', true);
+			.classed('multiple comments', true);
 		var commentList = commentsDiv.append('ol');
 		
 		function onCommentAdded(eventObject, newData)
