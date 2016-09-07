@@ -721,11 +721,11 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 		var previousPanelNode = $(eventObject.data).parents(".site-panel")[0];
 		var item = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(eventObject.data);
-		
+	
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 
 				   (cell.isUnique() || !newValue.isEmpty()) ? null : "none");
-				   
+			   
 		if (!cell.isUnique())
 		{
 			function checkVisible(eventObject)
@@ -742,7 +742,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 
 		if (canDelete && !cell.isUnique())
 			appendConfirmDeleteControls(item);
-		
+	
 		var buttons = appendRowButtons(item);
 
 		buttons.on("click", function(d) {
@@ -1777,56 +1777,6 @@ var SitePanel = (function () {
 			d3.event.preventDefault();
 		}
 		
-		/* d represents the newly created object that is being added. */
-		this.mainDiv.handleDoneAddingButton = function(d) {
-			if (prepareClick('click', 'done adding'))
-			{
-				showClickFeedback(this);
-				
-				try
-				{
-					var sections = _this.mainDiv.selectAll("section");
-					if (d.cell.parent == null ||
-						d.cell.parent.getValueID() != null)
-					{
-						var initialData = {}
-						sections.each(
-							function(cell) {
-								cell.updateCell(this);
-								cell.appendData(initialData);
-							});
-		
-						d.saveNew(initialData, 
-							function() { 
-								_this.hide(); 
-							}, 
-							syncFailFunction);
-					}
-					else
-					{
-						/* In this case, we are editing an object that is contained in 
-							an object that is being edited. This object will be saved
-							as part of completing that edit operation. */
-						d.cells = [];
-						sections.each(
-							function(cell) {
-								cell.updateCell(this);
-								d.importCell(cell);
-							});
-	
-						d.calculateDescription();
-						d.triggerDataChanged();
-						_this.hide();
-					}
-				}
-				catch(err)
-				{
-					syncFailFunction(err);
-				}
-			}
-			d3.event.preventDefault();
-		}
-		
 		return this.mainDiv;
 	}
 	
@@ -2610,10 +2560,7 @@ function _b64_to_utf8( str ) {
 	Displays a panel for editing the specified object. 
  */
 function showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow) {
-	if (!objectData)
-		throw "objectData is not initialized";
-		
-	var successFunction = function()
+	var successFunction = function(cells)
 	{
 		var header;
 		if (objectData && objectData.getValueID())
@@ -2626,10 +2573,10 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 		var navContainer = sitePanel.appendNavContainer();
 
 		var panel2Div = sitePanel.appendScrollArea();
-		sitePanel.showEditCells(objectData.cells);
+		sitePanel.showEditCells(cells);
 
 		var doneButton;
-		if (objectData.getValueID())
+		if (objectData && objectData.getValueID())
 		{
 			if (onShow === revealPanelUp)
 				doneButton = navContainer.appendRightButton();
@@ -2644,18 +2591,79 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 		else
 		{
 			doneButton = navContainer.appendRightButton();
+			doneButton.on("click", function(d) {
+				if (prepareClick('click', 'done adding'))
+				{
+					showClickFeedback(this);
+				
+					try
+					{
+						var sections = panel2Div.selectAll("section");
+						if (containerCell.parent == null ||
+							containerCell.parent.getValueID() != null)
+						{
+							var initialData = {}
+							sections.each(
+								function(cell) {
+									cell.updateCell(this);
+									cell.appendData(initialData);
+								});
+		
+							if (objectData)
+							{
+								/* Test case: Set the address for a site where the site
+								   has been previously saved without an address. */
+								objectData.saveNew(initialData, 
+									function() { 
+										sitePanel.hide(); 
+									}, 
+									cr.syncFail);
+							}
+							else
+							{
+								/* Test case: add a new service to the services panel. */
+								cr.createInstance(containerCell.field, 
+												  containerCell.parent && containerCell.parent.getValueID(), 
+												  initialData, 
+												  function(newData)
+												  {
+												  	containerCell.addValue(newData);
+												  	sitePanel.hide();
+												  },
+												  cr.syncFail);
+							}
+						}
+						else
+						{
+							/* In this case, we are editing an object that is contained in 
+								an object that is being edited. This object will be saved
+								as part of completing that edit operation. */
+							d.cells = [];
+							sections.each(
+								function(cell) {
+									cell.updateCell(this);
+									d.importCell(cell);
+								});
+	
+							d.calculateDescription();
+							d.triggerDataChanged();
+							sitePanel.hide();
+						}
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+				}
+				d3.event.preventDefault();
+			});
 			doneButton.append("span").text("Add");
-			doneButton.on("click", panel2Div.handleDoneAddingButton);
+			
 			var backButton = navContainer.appendLeftButton()
 				.on("click", function()
 				{
 					if (prepareClick('click', 'edit object panel: Cancel'))
 					{
-						if (!objectData.cell.isUnique())
-						{
-							// In this case, delete the item on cancel. 
-							objectData.triggerDeleteValue();
-						}
 						sitePanel.hide();
 					}
 					d3.event.preventDefault();
@@ -2698,17 +2706,25 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 									 			var d = data[j];
 									 			for (var name in d)
 									 			{
-													for (var i = 0; i < objectData.cells.length; ++i)
+													for (var i = 0; i < cells.length; ++i)
 													{
-														var cell = objectData.cells[i];
+														var cell = cells[i];
 														if (cell.field.name === name)
 														{
-															cr.createInstance(cell.field, objectData.getValueID(), d[name], 
-																function(newData)
-																{
-																	cell.addValue(newData);
-																},
-																asyncFailFunction);
+															if (objectData && objectData.getValueID())
+															{
+																cr.createInstance(cell.field, objectData.getValueID(), d[name], 
+																	function(newData)
+																	{
+																		cell.addValue(newData);
+																	},
+																	asyncFailFunction);
+															}
+															else
+															{
+																/* In this case, we are dropping onto an item that hasn't been saved. */
+																throw new Error("drop not supported for new items");
+															}
 															break;
 														}
 													}
@@ -2730,10 +2746,13 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 		onShow(sitePanel.node());
 	}
 	
-	if (objectData.getValueID())
-		objectData.checkCells(undefined, successFunction, syncFailFunction);
+	if (objectData && objectData.getValueID())
+		objectData.checkCells(undefined, function()
+			{
+				successFunction(objectData.cells);
+			}, syncFailFunction);
 	else
-		objectData.checkConfiguration(successFunction, syncFailFunction);
+		containerCell.getConfiguration(successFunction, syncFailFunction);
 }
 
 function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)
@@ -2877,10 +2896,15 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		.on("click", function(d) {
 			if (prepareClick('click', 'edit root objects: add'))
 			{
-				showClickFeedback(this);
-			
-				var newValue = cell.addNewValue();
-				showEditObjectPanel(cell, newValue, sitePanel.node(), revealPanelUp);
+				try
+				{
+					showClickFeedback(this);
+					showEditObjectPanel(cell, null, sitePanel.node(), revealPanelUp);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 			d3.event.preventDefault();
 		});

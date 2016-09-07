@@ -1412,8 +1412,9 @@
 				{
 					var experiences = experiencesInstances[0];
 					experiences.checkConfiguration(
-						function()
+						function(cells)
 						{
+							experiences.cells = cells;
 							var experienceCell = experiences.getCell("Experience");
 							cr.getConfiguration(null, experienceCell.field.ofKindID,
 								function(cells)
@@ -1435,7 +1436,8 @@
 										{
 											var experience = experienceCell.addNewValue();
 											experience.checkConfiguration(
-												function() {
+												function(cells) {
+													experience.cells = cells;
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("_user");
 													var userValue = userCell.copyValue(user);

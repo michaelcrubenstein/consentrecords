@@ -602,6 +602,13 @@ cr.ObjectCell = (function() {
 				instanceID: newValue.getValueID(),
 				description: newValue.getDescription()};
 	}
+	
+	ObjectCell.prototype.getConfiguration = function(done, fail)
+	{
+		cr.getConfiguration(null, this.field.ofKindID, 
+			done,
+			fail);
+	}
 		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
@@ -1069,7 +1076,7 @@ cr.ObjectValue = (function() {
 	
 		if (this.cells && this.isDataLoaded)
 		{
-			done();
+			done(this.cells);
 		}
 		else if (this.getValueID())
 		{
@@ -1118,37 +1125,36 @@ cr.ObjectValue = (function() {
 			cr.getConfiguration(this, this.cell.field.ofKindID, 
 				function(newCells)
 				{
-					_this.cells = newCells;
-					done();
+					_this._setCells(newCells);
+					done(newCells);
 				},
 				fail);
 		}
 	}
 
-	ObjectValue.prototype.checkConfiguration = function(successFunction, failFunction)
+	ObjectValue.prototype.checkConfiguration = function(done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 		if (!this.cell)
 			throw "cell is not specified for this object";
 		
 		if (this.cells)
 		{
-			successFunction();
+			done(this.cells);
 		}
 		else
 		{
-			var _this = this;
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-			cr.getConfiguration(this, this.cell.field.ofKindID, 
-				function(newCells)
+			var _this = this;
+			this.cell.getConfiguration(function(newCells)
 				{
-					_this.cells = newCells;
-					successFunction();
+					_this._setCells(newCells);
+					done(newCells);
 				},
-				failFunction);
+				fail);
 		}
 	}
 	
