@@ -894,6 +894,10 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._completeUpdate = function(newData)
 	{
 		this.id = newData.id;
+		if (newData.typeName)
+			this.typeName = newData.typeName;
+		if (newData.privilege)
+			this.privilege = newData.privilege;
 		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
 		this.triggerDataChanged();
 	}
@@ -1426,6 +1430,8 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 							newData.id = json.object.id;
 						newData.instanceID = json.object.instanceID;
 						newData.setDescription(json.object.description);
+						newData.typeName = json.object.typeName;
+						newData.privilege = json.object.privilege;
 						successFunction(newData);
 					}
 					catch(err)
