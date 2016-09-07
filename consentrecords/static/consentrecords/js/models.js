@@ -641,9 +641,10 @@ cr.CellValue = (function() {
 		$(this).trigger("valueDeleted.cr", this);
 	}
 	
-	CellValue.prototype.triggerDataChanged = function()
+	CellValue.prototype.triggerDataChanged = function(changedValue)
 	{
-		$(this).trigger("dataChanged.cr", this);
+		changedValue = changedValue !== undefined ? changedValue : this;
+		$(this).trigger("dataChanged.cr", changedValue);
 	}
 	
 	CellValue.prototype.deleteValue = function(done, fail)
@@ -1000,7 +1001,7 @@ cr.ObjectValue = (function() {
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
 		if (this.getDescription() != oldDescription)
-			this.triggerDataChanged();
+			this.triggerDataChanged(changedValue);
 	}
 	
 	/* this method is attached to a cell when its contents are changed. */
