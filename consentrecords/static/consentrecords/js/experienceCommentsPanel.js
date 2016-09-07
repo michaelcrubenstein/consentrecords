@@ -55,7 +55,7 @@ var ExperienceCommentsPanel = (function() {
 			this.showDeleteControls($(deleteControls[0]), 0);
 	}
 	
-	ExperienceCommentsPanel.prototype.postComment = function(newText, done)
+	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
 	{
 		var comments = this.fd.experience.getValue("Comments");
 		var initialData;
@@ -70,13 +70,22 @@ var ExperienceCommentsPanel = (function() {
 		if (comments.getValueID())
 		{
 			var commentCell = comments.getCell("Comment");
-			cr.createInstance(commentCell.field, comments.getValueID(), initialData, done, cr.syncFail);
+			cr.createInstance(commentCell.field, comments.getValueID(), initialData, 
+				function(newData)
+				{
+					crp.pushCheckCells(newData, [], 
+						function() {
+							commentCell.addValue(newData);
+							done(newData);
+						},
+						fail);
+				}, fail);
 		}
 		else
 		{
 			comments.saveNew({Comment: [{cells: initialData}]},
 				done,
-				cr.syncFail);
+				fail);
 		}
 	}
 
@@ -180,12 +189,12 @@ var ExperienceCommentsPanel = (function() {
 			_this.loadComments(commentCell.data);
 		}
 		
-		function onNewCommentsSaved(eventObject, newData)
-			{
-				crp.pushCheckCells(newData, ["Comment"], onCommentsChecked, cr.asyncFail)
-			}
+		function onNewCommentsSaved(eventObject, changeTarget)
+		{
+			if (changeTarget.typeName == "Comments")
+				crp.pushCheckCells(changeTarget, ["Comment"], onCommentsChecked, cr.asyncFail)
+		}
 		
-		/* This occurs the first time a comment is added */	
 		$(comments).on('dataChanged.cr', null, this, onNewCommentsSaved);
 		$(commentsDiv.node()).on('remove', null, comments.cell, function(eventObject)
 			{
@@ -220,7 +229,8 @@ var ExperienceCommentsPanel = (function() {
 									{
 										newCommentInput.node().value = '';
 										unblockClick();
-									});
+									},
+									cr.syncFail);
 							}
 							catch(err)
 							{
