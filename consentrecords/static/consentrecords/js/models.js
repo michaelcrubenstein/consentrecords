@@ -268,7 +268,7 @@ cr.Cell = (function()
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
-				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent.checkDescription);
+				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent._checkDescription);
 			}
 		};
 
@@ -548,7 +548,7 @@ cr.ObjectCell = (function() {
 		{
 			var oldData = this.data[i];
 			if (!oldData.id && oldData.isEmpty()) {
-				oldData.completeUpdate(newValue);
+				oldData._completeUpdate(newValue);
 				return;
 			}
 		}
@@ -890,7 +890,7 @@ cr.ObjectValue = (function() {
 		this.isDataLoaded = false;
 	}
 	
-	ObjectValue.prototype.completeUpdate = function(newData)
+	ObjectValue.prototype._completeUpdate = function(newData)
 	{
 		this.id = newData.id;
 		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
@@ -995,7 +995,7 @@ cr.ObjectValue = (function() {
 			return undefined;
 	}
 		
-	ObjectValue.prototype.handleContentsChanged = function()
+	ObjectValue.prototype._handleContentsChanged = function(changedValue)
 	{
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
@@ -1004,9 +1004,9 @@ cr.ObjectValue = (function() {
 	}
 	
 	/* this method is attached to a cell when its contents are changed. */
-	ObjectValue.prototype.checkDescription = function(eventObject)
+	ObjectValue.prototype._checkDescription = function(eventObject, changedValue)
 	{
-		eventObject.data.handleContentsChanged();
+		eventObject.data._handleContentsChanged(changedValue);
 	}
 
 	ObjectValue.prototype.importCell = function(oldCell)
@@ -1048,7 +1048,7 @@ cr.ObjectValue = (function() {
 		cr.createInstance(containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{
-				_this.completeUpdate(newData);
+				_this._completeUpdate(newData);
 				done(newData);
 			}, 
 			fail);
