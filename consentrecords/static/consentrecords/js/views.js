@@ -124,8 +124,15 @@ var crv = {
 			.on("click", function(cell) {
 				if (prepareClick('click', 'add ' + cell.field.name))
 				{
-					if (done)
-						done();
+					try
+					{
+						if (done)
+							done();
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
 				}
 				d3.event.preventDefault();
 			})
