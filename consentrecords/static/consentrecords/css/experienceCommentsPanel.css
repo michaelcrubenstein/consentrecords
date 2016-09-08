@@ -34,15 +34,44 @@ section.comments {
 
 section.comments > ol > li > div {
 	position: relative;
-	padding: 6px 12px;
+	padding: 6px 12px 0px 12px;
+}
+
+@keyframes showBorder {
+	from {border-color: transparent;}
+	to   {border-color: #ddd;}
+}
+
+@keyframes hideBorder {
+	from {border-color: #ddd;}
+	to   {border-color: transparent;}
 }
 
 section.comments textarea {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
 	resize: none;
-	border: 0;
-	border-color: #ddd;
 	outline: none;
-	width: calc(100% - 24px);
+	width: 100%;
+	padding: 2px;
+	border: 1px transparent solid;
+}
+
+section.comments textarea.editable {
+	animation: showBorder;
+	animation-duration: 0.5s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
+}
+
+section.comments textarea.fixed {
+	animation: hideBorder;
+	animation-duration: 0.5s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
 }
 
 section.comments textarea.question {

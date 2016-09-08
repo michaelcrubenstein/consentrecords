@@ -21,22 +21,23 @@ var ExperienceCommentsPanel = (function() {
 			.text(function(d) { 
 					return d.text; 
 				});
+				
+		var checkSize = function(eventObject) {
+			this.style.height = 0;
+			this.style.height = (this.scrollHeight) + 'px';
+			this.style.display = this.value ? 'inline-block' : 'none';
+			eventObject.stopPropagation();
+		}
 			
 		buttons.selectAll('textarea')
 			.attr('readonly', 'readonly')
 			.each(function()
 				{
-					this.setAttribute('style', 'height:0px;overflow-y:hidden;');
-					this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
-					$(this).on('input', function() {
-						this.style.height = 0;
-						this.style.height = (this.scrollHeight) + 'px';
-					});
-					$(this).on('resize.cr', function(eventObject) {
-						this.style.height = 0;
-						this.style.height = (this.scrollHeight) + 'px';
-						eventObject.stopPropagation();
-					});
+					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
+					this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;display:inline-block;');
+					this.style.display = this.value ? 'inline-block' : 'none';
+					$(this).on('input', checkSize);
+					$(this).on('resize.cr', checkSize);
 				});
 	}
 	
@@ -149,80 +150,85 @@ var ExperienceCommentsPanel = (function() {
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
 		backButton.append("span").text("Back");
 
-		this.inEditMode = false;		
-		var editButton = navContainer.appendRightButton()
-			.on("click", function()
-			{
-				if (_this.inEditMode)
+		this.inEditMode = false;
+		if (fd.experience.canWrite())
+		{		
+			var editButton = navContainer.appendRightButton()
+				.on("click", function()
 				{
-					if (prepareClick('click', 'Done Editing'))
+					if (_this.inEditMode)
 					{
-						/* Store the new text in a button so that it is set properly
-							when an error occurs whether or not the callback to showClickFeedback is called. */
-						var newButtonText = "Edit";
-						var fail = function(err)
-							{
-								newButtonText = "Done";
-								editButton.selectAll('span').text(newButtonText);
-								cr.syncFail(err);
-							}
-						try
+						if (prepareClick('click', 'Done Editing'))
 						{
-							showClickFeedback(this, function()
+							/* Store the new text in a button so that it is set properly
+								when an error occurs whether or not the callback to showClickFeedback is called. */
+							var newButtonText = "Edit";
+							var fail = function(err)
 								{
+									newButtonText = "Done";
 									editButton.selectAll('span').text(newButtonText);
-								});
-							_this.checkTextAreas(function()
-								{
-									_this.hideDeleteControls();
-									_this.inEditMode = false;
-									commentList.selectAll('textarea')
-										.attr('readonly', 'readonly')
-										.classed('editable', false);
-									unblockClick();
-								},
-								fail);
-						}
-						catch(err)
-						{
-							fail(err);
+									cr.syncFail(err);
+								}
+							try
+							{
+								showClickFeedback(this, function()
+									{
+										editButton.selectAll('span').text(newButtonText);
+									});
+								_this.checkTextAreas(function()
+									{
+										_this.hideDeleteControls();
+										_this.inEditMode = false;
+										commentList.selectAll('textarea')
+											.attr('readonly', 'readonly')
+											.classed('editable', false)
+											.classed('fixed', true);
+										unblockClick();
+									},
+									fail);
+							}
+							catch(err)
+							{
+								fail(err);
+							}
 						}
 					}
-				}
-				else
-				{
-					if (prepareClick('click', 'Start Editing'))
+					else
 					{
-						/* Store the new text in a button so that it is set properly
-							when an error occurs whether or not the callback to showClickFeedback is called. */
-						var newButtonText = "Done";
-						var fail = function(err)
-							{
-								newButtonText = "Edit";
-								editButton.selectAll('span').text(newButtonText);
-								cr.syncFail(err);
-							}
-						try
+						if (prepareClick('click', 'Start Editing'))
 						{
-							showClickFeedback(this, function()
+							/* Store the new text in a button so that it is set properly
+								when an error occurs whether or not the callback to showClickFeedback is called. */
+							var newButtonText = "Done";
+							var fail = function(err)
 								{
+									newButtonText = "Edit";
 									editButton.selectAll('span').text(newButtonText);
-								});
-							_this.showDeleteControls();
-							_this.inEditMode = true;
-							commentList.selectAll('textarea')
-								.attr('readonly', null)
-								.classed('editable', true);
-							unblockClick();
-						}
-						catch(err)
-						{
-							fail(err);
+									cr.syncFail(err);
+								}
+							try
+							{
+								showClickFeedback(this, function()
+									{
+										editButton.selectAll('span').text(newButtonText);
+									});
+								_this.showDeleteControls();
+								_this.inEditMode = true;
+								commentList.selectAll('textarea')
+									.attr('readonly', null)
+									.classed('fixed', false)
+									.classed('editable', true);
+								unblockClick();
+							}
+							catch(err)
+							{
+								fail(err);
+							}
 						}
 					}
-				}
-			});
-		editButton.append('span').text("Edit");
+				});
+			editButton.append('span').text("Edit");
+		}
 
 		navContainer.appendTitle('Comments');
 		
@@ -282,53 +288,57 @@ var ExperienceCommentsPanel = (function() {
 				$(eventObject.data).off('dataChanged.cr', null, onNewCommentsSaved);
 			});
 		
-		var newCommentDiv = panel2Div.append('section')
-			.classed('new-comment', true);
-		var newCommentInput = newCommentDiv.append('textarea')
-			.attr('rows', 3);
 		if (fd.experience.canWrite())
 		{
-			newCommentInput.attr('placeholder', 'New Comment');
-		}
-		else
-		{
-			newCommentInput.attr('placeholder', 'Ask a Question');
-		}
-		var postButton = newCommentDiv.append('button')
-			.classed('post site-active-div', true)
-			.text('Post')
-			.on('click', function()
-				{
-					var newComment = newCommentInput.node().value;
-					if (newComment)
+			var newCommentDiv = panel2Div.append('section')
+				.classed('new-comment', true);
+			var newCommentInput = newCommentDiv.append('textarea')
+				.attr('rows', 3);
+			if (fd.experience.canWrite())
+			{
+				newCommentInput.attr('placeholder', 'New Comment');
+			}
+			else
+			{
+				newCommentInput.attr('placeholder', 'Ask a Question');
+			}
+			var postButton = newCommentDiv.append('button')
+				.classed('post site-active-div', true)
+				.text('Post')
+				.on('click', function()
 					{
-						if (prepareClick('click', 'Post Comment'))
+						var newComment = newCommentInput.node().value;
+						if (newComment)
 						{
-							try
+							if (prepareClick('click', 'Post Comment'))
 							{
-								_this.postComment(newComment, function()
-									{
-										newCommentInput.node().value = '';
-										unblockClick();
-									},
-									cr.syncFail);
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
+								try
+								{
+									_this.postComment(newComment, function()
+										{
+											newCommentInput.node().value = '';
+											unblockClick();
+										},
+										cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
 							}
 						}
-					}
-				});
-		var resizeFunction = function()
-		{
-			$(newCommentInput.node()).width(
-				$(newCommentDiv.node()).width() - 
-				$(postButton.node()).outerWidth(true) -
-				($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+					});
+			var resizeFunction = function()
+			{
+				$(newCommentInput.node()).width(
+					$(newCommentDiv.node()).width() - 
+					$(postButton.node()).outerWidth(true) -
+					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+			}
+			resizeFunction();
+			$(panel2Div.node()).on('resize.cr', resizeFunction);
 		}
-		resizeFunction();
-		$(panel2Div.node()).on('resize.cr', resizeFunction);					
+							
 		$(panel2Div.node()).on('resize.cr', resizeDetail);	
 						
 		$(panel2Div.node()).on('resize.cr', function()
