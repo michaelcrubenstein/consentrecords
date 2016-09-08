@@ -10,14 +10,16 @@ var ExperienceCommentsPanel = (function() {
 		var divs = buttons.append('div');
 		var questions = divs.append('textarea')
 			.classed('question', true)
+			.datum(function(d) { return d.getValue("_name"); })
 			.text(function(d) { 
-					return d.getDatum("_name"); 
+					return d.text; 
 				});
 		
 		var answers = divs.append('textarea')
 			.classed('answer', true)
+			.datum(function(d) { return d.getValue("_text"); })
 			.text(function(d) { 
-					return d.getDatum("_text"); 
+					return d.text; 
 				});
 			
 		buttons.selectAll('textarea')
@@ -88,6 +90,31 @@ var ExperienceCommentsPanel = (function() {
 				fail);
 		}
 	}
+	
+	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
+	{
+		var commentsDiv = this.mainDiv.select('section.comments');
+		var cell = commentsDiv.datum();
+		var initialData = [];
+		var sourceObjects = [];
+		
+		commentsDiv.selectAll('li textarea').each(function(d)
+			{
+				var newValue = this.value.trim();
+				d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+			});
+		if (initialData.length > 0)
+		{
+			cr.updateValues(initialData, sourceObjects, 
+				function() {
+					if (done)
+						done();
+				}, 
+				fail);
+		}
+		else
+			done();
+	}
 
 	function ExperienceCommentsPanel(fd, previousPanelNode)
 	{
@@ -103,7 +130,19 @@ var ExperienceCommentsPanel = (function() {
 			{
 				if (prepareClick('click', 'Experience Comments Done'))
 				{
-					_this.hide();
+					try
+					{
+						showClickFeedback(this);
+						_this.checkTextAreas(function()
+							{
+								_this.hide();
+							},
+							cr.syncFail);
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
 				}
 				d3.event.preventDefault();
 			});
@@ -118,26 +157,68 @@ var ExperienceCommentsPanel = (function() {
 				{
 					if (prepareClick('click', 'Done Editing'))
 					{
-						showClickFeedback(this, function()
+						/* Store the new text in a button so that it is set properly
+							when an error occurs whether or not the callback to showClickFeedback is called. */
+						var newButtonText = "Edit";
+						var fail = function(err)
 							{
-								editButton.selectAll('span').text("Edit");
-							});
-						_this.hideDeleteControls();
-						_this.inEditMode = false;
-						unblockClick();
+								newButtonText = "Done";
+								editButton.selectAll('span').text(newButtonText);
+								cr.syncFail(err);
+							}
+						try
+						{
+							showClickFeedback(this, function()
+								{
+									editButton.selectAll('span').text(newButtonText);
+								});
+							_this.checkTextAreas(function()
+								{
+									_this.hideDeleteControls();
+									_this.inEditMode = false;
+									commentList.selectAll('textarea')
+										.attr('readonly', 'readonly')
+										.classed('editable', false);
+									unblockClick();
+								},
+								fail);
+						}
+						catch(err)
+						{
+							fail(err);
+						}
 					}
 				}
 				else
 				{
 					if (prepareClick('click', 'Start Editing'))
 					{
-						showClickFeedback(this, function()
+						/* Store the new text in a button so that it is set properly
+							when an error occurs whether or not the callback to showClickFeedback is called. */
+						var newButtonText = "Done";
+						var fail = function(err)
 							{
-								editButton.selectAll('span').text("Done");
-							});
-						_this.showDeleteControls();
-						_this.inEditMode = true;
-						unblockClick();
+								newButtonText = "Edit";
+								editButton.selectAll('span').text(newButtonText);
+								cr.syncFail(err);
+							}
+						try
+						{
+							showClickFeedback(this, function()
+								{
+									editButton.selectAll('span').text(newButtonText);
+								});
+							_this.showDeleteControls();
+							_this.inEditMode = true;
+							commentList.selectAll('textarea')
+								.attr('readonly', null)
+								.classed('editable', true);
+							unblockClick();
+						}
+						catch(err)
+						{
+							fail(err);
+						}
 					}
 				}
 			});
