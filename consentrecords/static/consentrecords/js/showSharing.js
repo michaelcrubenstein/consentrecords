@@ -4,6 +4,10 @@ var SharingPanel = (function() {
 	SharingPanel.prototype.privileges = null;
 	SharingPanel.prototype.user = null;
 	
+	/* readPrivilegeIndex is the index into the privileges array that identifies
+		read privileges. */
+	SharingPanel.prototype.readPrivilegeIndex = 0;
+	
 	SharingPanel.prototype.appendUserControls = function(items)
 	{
 		appendConfirmDeleteControls(items);
@@ -51,16 +55,23 @@ var SharingPanel = (function() {
 		spans.on('click', function(d) {
 				if (prepareClick('click', 'accept access request {0}'.format(d.getDescription())))
 				{
-					var accessorLevel = _this.privileges[1];
-					function done()
+					try
 					{
-						/* Since this item was deleted as part of adding access,  
-							trigger a deleteValue event. */
-						d.triggerDeleteValue();
-						unblockClick();
-					};
+						var accessorLevel = _this.privileges[_this.readPrivilegeIndex];
+						function done()
+						{
+							/* Since this item was deleted as part of adding access,  
+								trigger a deleteValue event. */
+							d.triggerDeleteValue();
+							unblockClick();
+						};
 					
-					_this.addAccess(accessorLevel, "#{0}".format(d.getValueID()), done);
+						_this.addAccess(accessorLevel, "#{0}".format(d.getValueID()), done);
+					}
+					catch (err)
+					{
+						cr.syncFail(err);
+					}
 				}
 			});
 			
