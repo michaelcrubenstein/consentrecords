@@ -56,6 +56,7 @@ var Settings = (function () {
 
 		var userPublicAccessCell = user.getCell("_public access");
 		var pathPublicAccessCell = path.getCell("_public access");
+		var pathSpecialAccessCell = path.getCell("_special access");
 		
 		user.getCell("_first name").field.label = this.firstNameLabel;
 		user.getCell("_last name").field.label = this.lastNameLabel;
@@ -111,6 +112,7 @@ var Settings = (function () {
 		{
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];
+			var pathSpecialAccessValue = pathSpecialAccessCell.data[0];
 			
 			var divs = addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
 				function(cell) {
@@ -118,7 +120,7 @@ var Settings = (function () {
 					{
 						try
 						{
-							var panel = new PickUserAccessPanel(userPublicAccessValue, pathPublicAccessValue, _this.node());
+							var panel = new PickUserAccessPanel(userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue, _this.node());
 							showPanelLeft(panel.node(), unblockClick);
 						}
 						catch(err)
@@ -285,6 +287,11 @@ var PickFromListPanel = (function () {
 
 })();
 
+/* When the user picks an access that includes a special access for the path, 
+	the _special access value is set. Otherwise, it is cleared. Currently, there is 
+	no check for whether there are access records on the path because there is no such
+	functionality.
+ */ 
 var PickUserAccessPanel = (function () {
 	PickUserAccessPanel.prototype = new PickFromListPanel();
 	PickUserAccessPanel.prototype.title = Settings.prototype.userPublicAccessLabel;
@@ -296,15 +303,17 @@ var PickUserAccessPanel = (function () {
 						  },
 						  {description: Settings.prototype.pathVisibleLabel,
 						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]",
-						   pathInstancePath: "_term[_name=_privilege]>enumerator[_name=_read]",
-						   pathDescription: "_read"
+						   pathPrivilegePath: "_term[_name=_privilege]>enumerator[_name=_read]",
+						   pathPrivilegeDescription: "_read",
+						   pathSpecialAccessPath: '_term[_name="_special access"]>enumerator[_name=_custom]',
+						   pathSpecialAccessDescription: "_custom"
 						  },
 						  {description: Settings.prototype.allVisibleLabel,
 						   instancePath: "_term[_name=_privilege]>enumerator[_name=_read]"
 						  }
 						 ];
 	
-	function PickUserAccessPanel(oldUserAccessValue, oldPathAccessValue, previousPanel) {
+	function PickUserAccessPanel(oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, previousPanel) {
 		var _this = this;
 		PickFromListPanel.call(this, previousPanel, this.title, "list");
 
@@ -352,6 +361,11 @@ var PickUserAccessPanel = (function () {
 										sourceObjects.push(oldPathAccessValue);
 										initialData.push({ id: oldPathAccessValue.id });
 									}
+									if (oldPathSpecialAccessValue.id)
+									{
+										sourceObjects.push(oldPathSpecialAccessValue);
+										initialData.push({ id: oldPathSpecialAccessValue.id });
+									}
 								}
 								else if (d.description == Settings.prototype.emailVisibleLabel)
 								{
@@ -381,6 +395,11 @@ var PickUserAccessPanel = (function () {
 										sourceObjects.push(oldPathAccessValue);
 										initialData.push({ id: oldPathAccessValue.id });
 									}
+									if (oldPathSpecialAccessValue.id)
+									{
+										sourceObjects.push(oldPathSpecialAccessValue);
+										initialData.push({ id: oldPathSpecialAccessValue.id });
+									}
 								}
 								else if (d.description == Settings.prototype.pathVisibleLabel)
 								{
@@ -409,7 +428,7 @@ var PickUserAccessPanel = (function () {
 									{
 										sourceObjects.push(oldPathAccessValue);
 										initialData.push({ id: oldPathAccessValue.id,
-													 instance: d.pathInstancePath,
+													 instance: d.pathPrivilegePath,
 													 description: d.description });
 									}
 									else
@@ -419,8 +438,26 @@ var PickUserAccessPanel = (function () {
 												{
 													containerUUID: oldPathAccessValue.cell.parent.getValueID(),
 													fieldID: oldPathAccessValue.cell.field.nameID,
-													instance: d.pathInstancePath,
-													description: d.pathDescription
+													instance: d.pathPrivilegePath,
+													description: d.pathPrivilegeDescription
+												});
+									}
+									if (oldPathSpecialAccessValue.id)
+									{
+										sourceObjects.push(oldPathSpecialAccessValue);
+										initialData.push({ id: oldPathSpecialAccessValue.id,
+													 instance: d.pathSpecialAccessPath,
+													 description: d.pathSpecialAccessDescription });
+									}
+									else
+									{
+										sourceObjects.push(oldPathSpecialAccessValue);
+										initialData.push(
+												{
+													containerUUID: oldPathSpecialAccessValue.cell.parent.getValueID(),
+													fieldID: oldPathSpecialAccessValue.cell.field.nameID,
+													instance: d.pathSpecialAccessPath,
+													description: d.pathSpecialAccessDescription
 												});
 									}
 								}
@@ -448,6 +485,11 @@ var PickUserAccessPanel = (function () {
 									{
 										sourceObjects.push(oldPathAccessValue);
 										initialData.push({ id: oldPathAccessValue.id });
+									}
+									if (oldPathSpecialAccessValue.id)
+									{
+										sourceObjects.push(oldPathSpecialAccessValue);
+										initialData.push({ id: oldPathSpecialAccessValue.id });
 									}
 								}
 								
