@@ -1243,6 +1243,8 @@ cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 	{
 		if (textStatus == "timeout")
 			failFunction("This operation ran out of time. Try again.");
+		else if (jqXHR.status == 0)
+			failFunction("The server is not responding. Please try again.");
 		else
 			failFunction(jqXHR.statusText);
 	};
