@@ -7,6 +7,15 @@ var FlagData = (function() {
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
 	
+	FlagData.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
+
+	/* Constants related to the detail text. */
+	FlagData.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	
 	FlagData.prototype.getDescription = function()
 	{
 		var _this = this;
@@ -157,6 +166,104 @@ var FlagData = (function() {
 			}
 		this.checkOfferingCells(f);
 	}
+	
+	FlagData.appendWrappedText = function(s, newSpan, maxWidth)
+	{
+		var words = s.split(/\s+/).reverse(),
+			word,
+			line = [];
+		tspan = newSpan(0);
+		var nextIndex = 1;
+		
+		while (word = words.pop()) {
+			line.push(word);
+			tspan.text(line.join(" "));
+			if (tspan.node().getComputedTextLength() > maxWidth) {
+				line.pop();
+				tspan.text(line.join(" "));
+				line = [word];
+				tspan = newSpan(nextIndex).text(word);
+				++nextIndex;
+			}
+		}
+	}
+	
+	FlagData.prototype.appendTSpans = function(detailText, maxWidth, x)
+	{
+		x = x !== undefined ? x : this.textDetailLeftMargin;
+		
+		detailText.selectAll('tspan').remove();
+		
+		var s;
+		var tspan;
+		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (s && s.length > 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('flag-label', true)
+				.text(s)
+				.attr("x", x)
+				.attr("dy", this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
+		if (orgString && orgString.length > 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('detail-organization', true)
+				.text(orgString)
+				.attr("x", x)
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = this.pickedOrCreatedValue("Site", "User Entered Site");
+		if (s && s.length > 0 && s !== orgString)
+		{
+			tspan = detailText.append('tspan')
+				.classed('site', true)
+				.text(s)
+				.attr("x", x)
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+
+		s = getDateRange(this.experience);
+		if (s && s.length > 0)
+		{
+			tspan = detailText.append('tspan')
+				.classed('detail-dates', true)
+				.text(s)
+				.attr("x", x)
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
+			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+		}
+		
+		s = getTagList(this.experience);
+		if (s && s.length > 0)
+		{
+			var _this = this;
+			FlagData.appendWrappedText(s, function(spanIndex)
+				{
+					return detailText.append("tspan")
+						.classed('tags', true)
+						.attr("x", x)
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
+				},
+				maxWidth);
+		}
+	}
+	
+	FlagData.prototype.appendText = function(container, maxWidth)
+	{
+		var detailText = container.append('text');
+		maxWidth = maxWidth !== undefined ? maxWidth : 0;
+		
+		this.appendTSpans(detailText, maxWidth);
+		
+		return detailText;
+	}
 
 	function FlagData(experience)
 	{
@@ -176,14 +283,7 @@ var PathView = (function() {
 	PathView.prototype.containerDiv = null;
 
 	PathView.prototype.isLayoutDirty = true;
-	
-	/* Constants related to the detail text. */
-	PathView.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
-	PathView.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	PathView.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
-	
+		
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
@@ -205,27 +305,6 @@ var PathView = (function() {
 							  
 	PathView.prototype.emToPX = 11;
 							  
-	PathView.prototype.appendWrappedText = function(s, newSpan, maxWidth)
-	{
-		var words = s.split(/\s+/).reverse(),
-			word,
-			line = [];
-		tspan = newSpan(0);
-		var nextIndex = 1;
-		
-		while (word = words.pop()) {
-			line.push(word);
-			tspan.text(line.join(" "));
-			if (tspan.node().getComputedTextLength() > maxWidth) {
-				line.pop();
-				tspan.text(line.join(" "));
-				line = [word];
-				tspan = newSpan(nextIndex).text(word);
-				++nextIndex;
-			}
-		}
-	}
-	
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
 		var _this = this;
@@ -321,12 +400,9 @@ var PathView = (function() {
 	{
 		this.defs.selectAll('clipPath').remove();
 		
-		/* Add a clipPath for the text box size. */
+		/* Add a clipPath for the detail area. */
 		this.defs.append('clipPath')
 			.attr('id', 'id_detailClipPath{0}'.format(this.clipID))
-			.append('rect');
-		this.defs.append('clipPath')
-			.attr('id', 'id_detailIconClipPath{0}'.format(this.clipID))
 			.append('rect');
 	}
 	
@@ -338,8 +414,8 @@ var PathView = (function() {
 			so that it is sure to be removed when the done method is called. 
 		 */
 		this.detailGroup.selectAll('image').remove();
+		this.detailGroup.selectAll('line').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
-		d3.select("#id_detailIconClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
 		$(this).trigger("clearTriggers.cr");
@@ -373,10 +449,6 @@ var PathView = (function() {
 						if (done)
 							done();
 					});
-				d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-					.transition()
-					.duration(duration)
-					.attr("height", 0);
 				this.detailGroup.selectAll('rect')
 					.transition()
 					.duration(duration)
@@ -421,7 +493,7 @@ var PathView = (function() {
 				try
 				{
 					var panel = this.sitePanel.node();
-					var experience = new Experience(this.path, fd.experience);
+					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					
 					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase());
@@ -430,7 +502,32 @@ var PathView = (function() {
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
+				}
+				d3.event.stopPropagation();
+			}
+		}
+	}
+	
+	PathView.prototype.showCommentsPanel = function(fd, i)
+	{
+		if (fd.experience.typeName == "Experience") {
+			;	/* Nothing to edit */
+		}
+		else
+		{
+			if (prepareClick('click', 'show experience comments: ' + fd.getDescription()))
+			{
+				try
+				{
+					var panel = this.sitePanel.node();
+					var newPanel = new ExperienceCommentsPanel(fd, panel);
+					
+					revealPanelLeft(newPanel.node());
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
 				}
 				d3.event.stopPropagation();
 			}
@@ -949,85 +1046,56 @@ var PathLines = (function() {
 		duration = (duration !== undefined ? duration : 700);
 		var _this = this;
 		
+		var detailClipPath = 'url(#id_detailClipPath{0})'.format(this.clipID);
+		
 		this.detailGroup.datum(fd);
 		this.detailGroup.selectAll('rect').datum(fd);
-		var detailText = this.detailGroup.append('text')
-			.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
+		var detailText = fd.appendText(this.detailGroup);
+		detailText.attr('clip-path', detailClipPath);
 			
 		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
 
-		var lines = [];
-		
-		var s;
-		var maxWidth = 0;
-		var tspan;
-		s = fd.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (s && s.length > 0 && lines.indexOf(s) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('flag-label', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-		
-		var orgString = fd.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (orgString && orgString.length > 0 && lines.indexOf(orgString) < 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-organization', true)
-				.text(orgString)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-
-		s = fd.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && s.length > 0 && s !== orgString)
-		{
-			tspan = detailText.append('tspan')
-				.classed('site', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-
-		s = getDateRange(fd.experience);
-		if (s && s.length > 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('detail-dates', true)
-				.text(s)
-				.attr("x", this.textDetailLeftMargin)
-				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
+		var textBox = detailText.node().getBBox();
 		
 		var x = fd.x;
 		var y = fd.y;
 
 		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = maxWidth + iconAreaWidth + (this.textDetailLeftMargin * 2);
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
 
-		s = getTagList(fd.experience);
-		if (s && s.length > 0)
-		{
-			this.appendWrappedText(s, function(spanIndex)
-				{
-					return detailText.append("tspan")
-						.classed('tags', true)
-						.attr("x", _this.textDetailLeftMargin)
-						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
-				},
-				maxWidth);
-		}
-
-			
-		var textBox = detailText.node().getBBox();
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
+		this.commentLineHeight = 7;
+		var commentLine = this.detailGroup.append('line')
+			.attr('x1', 0)
+			.attr('x2', rectWidth)
+			.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
+			.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
+			.attr('clip-path', detailClipPath);
+		
+		this.commentLabelTopMargin = 2;
+		this.commentLabelBottomMargin = 10;
+		this.commentLabelLeftMargin = 10;
+		var commentLabel = this.detailGroup.append('text')
+			.classed('comments', true)
+			.text('Comments')
+			.attr('x', this.commentLabelLeftMargin)
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", function(fd, i)
+				{
+					_this.showCommentsPanel(fd, i);
+				});
+;
+			
+		var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
+		commentLabel.attr('y', commentLabelY)
+			.attr('clip-path', detailClipPath);
+			
+		this.detailRectHeight = commentLabelY + this.commentLabelBottomMargin;
+			
 		this.detailGroup.attr("transform", 
 		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
@@ -1052,22 +1120,15 @@ var PathLines = (function() {
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
 			.attr('y', textBox.y)
-			.attr('width', maxWidth); 
-		
-		var iconClipRect;
+			.attr('width', rectWidth); 
 		
 		if (hasEditChevron)
 		{	
-			iconClipRect = d3.select("#id_detailIconClipPath{0}".format(this.clipID)).selectAll('rect')
-				.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y)
-				.attr('width', this.showDetailIconWidth);
-				
 			var detailChevron = this.detailGroup.append('image')
 				.attr("width", this.showDetailIconWidth)
 				.attr("height", this.showDetailIconWidth)
 				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', 'url(#id_detailIconClipPath{0})'.format(this.clipID))
+				.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID))
 
 			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
 				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
@@ -1084,18 +1145,11 @@ var PathLines = (function() {
 				.duration(duration)
 				.attr("height", this.detailRectHeight);
 
-			if (hasEditChevron)
-				iconClipRect.attr('height', 0)
-					.transition()
-					.duration(duration)
-					.attr('height', this.detailRectHeight);
 		}
 		else
 		{
 			textClipRect.attr('height', this.detailRectHeight); 
 			detailText.attr("height", this.detailRectHeight);
-			if (hasEditChevron)
-				iconClipRect.attr('height', this.detailRectHeight);
 		}
 		
 		this.detailFlagData = fd;
@@ -1687,7 +1741,7 @@ var PathlinesPanel = (function () {
 				}
 				d3.event.preventDefault();
 			})
-			.classed('add-experience-button', true)
+			.classed('add-button', true)
 			.style("display", "none");
 		addExperienceButton.append("span")
 			.classed('site-active-text', true)

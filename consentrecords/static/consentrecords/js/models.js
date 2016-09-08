@@ -114,12 +114,12 @@ var CRP = (function() {
 			});
 	};
 	
-	CRP.prototype.pushCheckCells = function(i, fields, successFunction, failFunction)
+	CRP.prototype.pushCheckCells = function(i, fields, done, fail)
 	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
+		if (typeof(done) != "function")
+			throw "done is not a function";
+		if (typeof(fail) != "function")
+			throw "fail is not a function";
 		if (!i)
 			throw "i is not defined";
 		if (!i.getValueID())
@@ -138,17 +138,17 @@ var CRP = (function() {
 						i.importCells(storedI.cells);
 						i.isDataLoaded = true;
 					}
-					successFunction();
+					done(i);
 					return true;
 				}
 				else
 				{
 					i.checkCells(fields,
 						function() {
-							successFunction();
+							done(i);
 							_this.queue.next();
 						},
-						failFunction);
+						fail);
 					return false;
 				}
 			});
@@ -268,7 +268,7 @@ cr.Cell = (function()
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
-				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent.checkDescription);
+				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent._checkDescription);
 			}
 		};
 
@@ -548,7 +548,7 @@ cr.ObjectCell = (function() {
 		{
 			var oldData = this.data[i];
 			if (!oldData.id && oldData.isEmpty()) {
-				oldData.completeUpdate(newValue);
+				oldData._completeUpdate(newValue);
 				return;
 			}
 		}
@@ -602,6 +602,13 @@ cr.ObjectCell = (function() {
 				instanceID: newValue.getValueID(),
 				description: newValue.getDescription()};
 	}
+	
+	ObjectCell.prototype.getConfiguration = function(done, fail)
+	{
+		cr.getConfiguration(null, this.field.ofKindID, 
+			done,
+			fail);
+	}
 		
 	function ObjectCell(field) {
 		cr.Cell.call(this, field);
@@ -634,9 +641,10 @@ cr.CellValue = (function() {
 		$(this).trigger("valueDeleted.cr", this);
 	}
 	
-	CellValue.prototype.triggerDataChanged = function()
+	CellValue.prototype.triggerDataChanged = function(changedValue)
 	{
-		$(this).trigger("dataChanged.cr", this);
+		changedValue = changedValue !== undefined ? changedValue : this;
+		$(this).trigger("dataChanged.cr", changedValue);
 	}
 	
 	CellValue.prototype.deleteValue = function(done, fail)
@@ -883,9 +891,13 @@ cr.ObjectValue = (function() {
 		this.isDataLoaded = false;
 	}
 	
-	ObjectValue.prototype.completeUpdate = function(newData)
+	ObjectValue.prototype._completeUpdate = function(newData)
 	{
 		this.id = newData.id;
+		if (newData.typeName)
+			this.typeName = newData.typeName;
+		if (newData.privilege)
+			this.privilege = newData.privilege;
 		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
 		this.triggerDataChanged();
 	}
@@ -988,18 +1000,18 @@ cr.ObjectValue = (function() {
 			return undefined;
 	}
 		
-	ObjectValue.prototype.handleContentsChanged = function()
+	ObjectValue.prototype._handleContentsChanged = function(changedValue)
 	{
 		var oldDescription = this.getDescription();
 		this.calculateDescription();
 		if (this.getDescription() != oldDescription)
-			this.triggerDataChanged();
+			this.triggerDataChanged(changedValue);
 	}
 	
 	/* this method is attached to a cell when its contents are changed. */
-	ObjectValue.prototype.checkDescription = function(eventObject)
+	ObjectValue.prototype._checkDescription = function(eventObject, changedValue)
 	{
-		eventObject.data.handleContentsChanged();
+		eventObject.data._handleContentsChanged(changedValue);
 	}
 
 	ObjectValue.prototype.importCell = function(oldCell)
@@ -1041,7 +1053,7 @@ cr.ObjectValue = (function() {
 		cr.createInstance(containerCell.field, containerUUID, initialData, 
 			function(newData)
 			{
-				_this.completeUpdate(newData);
+				_this._completeUpdate(newData);
 				done(newData);
 			}, 
 			fail);
@@ -1069,7 +1081,7 @@ cr.ObjectValue = (function() {
 	
 		if (this.cells && this.isDataLoaded)
 		{
-			done();
+			done(this.cells);
 		}
 		else if (this.getValueID())
 		{
@@ -1118,37 +1130,36 @@ cr.ObjectValue = (function() {
 			cr.getConfiguration(this, this.cell.field.ofKindID, 
 				function(newCells)
 				{
-					_this.cells = newCells;
-					done();
+					_this._setCells(newCells);
+					done(newCells);
 				},
 				fail);
 		}
 	}
 
-	ObjectValue.prototype.checkConfiguration = function(successFunction, failFunction)
+	ObjectValue.prototype.checkConfiguration = function(done, fail)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
+		if (!fail)
+			throw ("fail is not specified");
+		if (!done)
+			throw ("done is not specified");
 		if (!this.cell)
 			throw "cell is not specified for this object";
 		
 		if (this.cells)
 		{
-			successFunction();
+			done(this.cells);
 		}
 		else
 		{
-			var _this = this;
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-			cr.getConfiguration(this, this.cell.field.ofKindID, 
-				function(newCells)
+			var _this = this;
+			this.cell.getConfiguration(function(newCells)
 				{
-					_this.cells = newCells;
-					successFunction();
+					_this._setCells(newCells);
+					done(newCells);
 				},
-				failFunction);
+				fail);
 		}
 	}
 	
@@ -1232,6 +1243,8 @@ cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 	{
 		if (textStatus == "timeout")
 			failFunction("This operation ran out of time. Try again.");
+		else if (jqXHR.status == 0)
+			failFunction("The server is not responding. Please try again.");
 		else
 			failFunction(jqXHR.statusText);
 	};
@@ -1419,6 +1432,8 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 							newData.id = json.object.id;
 						newData.instanceID = json.object.instanceID;
 						newData.setDescription(json.object.description);
+						newData.typeName = json.object.typeName;
+						newData.privilege = json.object.privilege;
 						successFunction(newData);
 					}
 					catch(err)
