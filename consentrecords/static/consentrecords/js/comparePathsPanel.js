@@ -107,7 +107,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.poleSpacing = 4;
 	
 	ComparePath.prototype.textLeftMargin = 3;
-	ComparePath.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	ComparePath.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	ComparePath.prototype.pathBackground = "white";
 	ComparePath.prototype.showDetailIconWidth = 18;
