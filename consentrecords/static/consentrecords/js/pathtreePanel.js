@@ -284,12 +284,20 @@ var PathView = (function() {
 
 	PathView.prototype.isLayoutDirty = true;
 		
+	PathView.prototype.topNavHeight = 0;		/* The height of the top nav container; set by container. */
+	PathView.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
+
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 2;
 	PathView.prototype.yearTextX = "3.0em";
 	PathView.prototype.flagHeightEM = 2.333;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
+
+	PathView.prototype.commentLineHeight = 7;
+	PathView.prototype.commentLabelTopMargin = 2;
+	PathView.prototype.commentLabelBottomMargin = 10;
+	PathView.prototype.commentLabelLeftMargin = 10;
 
 	/* Variables related to the detail rectangle. */
 	PathView.prototype.nextClipID = 1;
@@ -404,6 +412,219 @@ var PathView = (function() {
 		this.defs.append('clipPath')
 			.attr('id', 'id_detailClipPath{0}'.format(this.clipID))
 			.append('rect');
+	}
+	
+	PathView.prototype.showDetailGroup = function(fd, duration)
+	{
+		duration = (duration !== undefined ? duration : 700);
+		var _this = this;
+		
+		var detailClipPath = 'url(#id_detailClipPath{0})'.format(this.clipID);
+		
+		this.detailGroup.datum(fd);
+		this.detailGroup.selectAll('rect').datum(fd);
+		var detailText = fd.appendText(this.detailGroup);
+		detailText.attr('clip-path', detailClipPath);
+			
+		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
+
+		var textBox = detailText.node().getBBox();
+		
+		var x = fd.x;
+		var y = fd.y;
+
+		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
+		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
+
+		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
+
+		var commentsValue = fd.experience.getValue("Comments");
+		var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
+		if (fd.experience.canWrite() ||
+			commentsCount > 0)
+		{
+			var commentLine = this.detailGroup.append('line')
+				.attr('x1', 0)
+				.attr('x2', rectWidth)
+				.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
+				.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
+				.attr('clip-path', detailClipPath);
+		
+			var commentLabel = this.detailGroup.append('text')
+				.classed('comments', true)
+				.attr('x', this.commentLabelLeftMargin)
+				.on("click", function(d) 
+					{ 
+						d3.event.stopPropagation(); 
+					})
+				.on("click.cr", function(fd, i)
+					{
+						_this.showCommentsPanel(fd, i);
+					});
+			
+			function setCommentsText()
+			{
+				var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
+				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
+				
+				rectWidth = Math.max(textBox.width, commentLabel.node().getBBox().width) +
+									 iconAreaWidth + (this.textDetailLeftMargin * 2);
+				this.detailGroup.selectAll('rect').attr('width', rectWidth);
+			}
+			
+			var commentsCell = fd.experience.getCell("Comments");
+			setCommentsText();
+			$(commentsCell).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, commentLabel,
+				setCommentsText);
+			$(commentLabel.node()).on("remove", null, commentsCell, function(eventObject)
+				{
+					$(eventObject.data).off("dataChanged.cr valueAdded.cr valueDeleted.cr", null, setCommentsText);
+				});
+			
+			var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
+			commentLabel.attr('y', commentLabelY)
+				.attr('clip-path', detailClipPath);
+			
+			this.detailRectHeight = commentLabelY + this.commentLabelBottomMargin;
+		}
+			
+		this.detailGroup.attr("transform", 
+		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
+		this.detailGroup.selectAll('rect')
+			.attr("width", rectWidth)
+			.attr("x", this.detailRectX)	/* half the stroke width */;
+		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
+		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
+		if (duration > 0)
+		{
+			
+			this.detailGroup.selectAll('rect').attr("height", 0)
+					   .transition()
+					   .duration(duration)
+					   .attr("height", this.detailRectHeight);
+		}
+		else
+		{
+			this.detailGroup.selectAll('rect').attr("height", this.detailRectHeight);
+		}
+	   
+		/* Set the clip path of the text to grow so the text is revealed in parallel */
+		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
+			.attr('x', textBox.x)
+			.attr('y', textBox.y)
+			.attr('width', rectWidth); 
+		
+		if (hasEditChevron)
+		{	
+			var detailChevron = this.detailGroup.append('image')
+				.attr("width", this.showDetailIconWidth)
+				.attr("height", this.showDetailIconWidth)
+				.attr("xlink:href", rightChevronPath)
+				.attr('clip-path', detailClipPath)
+
+			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		}
+			
+		if (duration > 0)
+		{
+			textClipRect.attr('height', 0)
+				.transition()
+				.duration(duration)
+				.attr('height', this.detailRectHeight); 
+			detailText				
+				.transition()
+				.duration(duration)
+				.attr("height", this.detailRectHeight);
+
+		}
+		else
+		{
+			textClipRect.attr('height', this.detailRectHeight); 
+			detailText.attr("height", this.detailRectHeight);
+		}
+		
+		this.detailFlagData = fd;
+		
+		var experience = this.detailFlagData.experience;
+		
+		function handleChangeDetailGroup(eventObject, newValue)
+		{
+			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
+				_this.refreshDetail();
+		}
+		
+		var allCells = [experience.getCell("Organization"),
+		 experience.getCell("User Entered Organization"),
+		 experience.getCell("Site"),
+		 experience.getCell("User Entered Site"),
+		 experience.getCell("Start"),
+		 experience.getCell("End"),
+		 experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		var serviceCells = [experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		allCells.forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, _this, handleChangeDetailGroup);
+			}
+		 });
+		serviceCells.forEach(function(d)
+		 {
+			/* d will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (d)
+			{
+				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
+			}
+		 });
+		 
+		 $(this).one("clearTriggers.cr", function(eventObject)
+		 {
+			allCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+			 	if (d)
+			 	{
+					$(d).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, handleChangeDetailGroup);
+				}
+			 });
+			serviceCells.forEach(function(d)
+			 {
+				/* d will be null if the experience came from the organization for the 
+					User Entered Organization and User Entered Site.
+				 */
+				if (d)
+				{
+					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
+				}
+			 });
+		 });
+		
+		this.setupHeights();
+		this.setupWidths();
+		
+		if (duration > 0)
+		{
+			this.scrollToRectangle(this.containerDiv, 
+							   {y: (y * this.emToPX) + this.experienceGroupDY,
+							    x: x + this.experienceGroupDX,
+							    height: this.detailRectHeight,
+							    width: rectWidth},
+							   this.topNavHeight,
+							   this.bottomNavHeight,
+							   duration);
+		}
 	}
 	
 	PathView.prototype.clearDetail = function()
@@ -853,8 +1074,6 @@ var PathLines = (function() {
 	PathLines.prototype.showDetailIconWidth = 18;
 	PathLines.prototype.loadingMessageTop = "4.5em";
 	PathLines.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
-	PathLines.prototype.topNavHeight = 0;		/* The height of the top nav container; set by container. */
-	PathLines.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	PathLines.prototype.experienceGroupDX = 40;
@@ -1039,200 +1258,6 @@ var PathLines = (function() {
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 
 		this.layoutYears(g);
-	}
-	
-	PathLines.prototype.showDetailGroup = function(fd, duration)
-	{
-		duration = (duration !== undefined ? duration : 700);
-		var _this = this;
-		
-		var detailClipPath = 'url(#id_detailClipPath{0})'.format(this.clipID);
-		
-		this.detailGroup.datum(fd);
-		this.detailGroup.selectAll('rect').datum(fd);
-		var detailText = fd.appendText(this.detailGroup);
-		detailText.attr('clip-path', detailClipPath);
-			
-		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
-
-		var textBox = detailText.node().getBBox();
-		
-		var x = fd.x;
-		var y = fd.y;
-
-		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
-
-		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
-
-		this.commentLineHeight = 7;
-		var commentLine = this.detailGroup.append('line')
-			.attr('x1', 0)
-			.attr('x2', rectWidth)
-			.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
-			.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
-			.attr('clip-path', detailClipPath);
-		
-		this.commentLabelTopMargin = 2;
-		this.commentLabelBottomMargin = 10;
-		this.commentLabelLeftMargin = 10;
-		var commentLabel = this.detailGroup.append('text')
-			.classed('comments', true)
-			.text('Comments')
-			.attr('x', this.commentLabelLeftMargin)
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					_this.showCommentsPanel(fd, i);
-				});
-;
-			
-		var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
-		commentLabel.attr('y', commentLabelY)
-			.attr('clip-path', detailClipPath);
-			
-		this.detailRectHeight = commentLabelY + this.commentLabelBottomMargin;
-			
-		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
-		this.detailGroup.selectAll('rect')
-			.attr("width", rectWidth)
-			.attr("x", this.detailRectX)	/* half the stroke width */;
-		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
-		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
-		if (duration > 0)
-		{
-			
-			this.detailGroup.selectAll('rect').attr("height", 0)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", this.detailRectHeight);
-		}
-		else
-		{
-			this.detailGroup.selectAll('rect').attr("height", this.detailRectHeight);
-		}
-	   
-		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', textBox.x)
-			.attr('y', textBox.y)
-			.attr('width', rectWidth); 
-		
-		if (hasEditChevron)
-		{	
-			var detailChevron = this.detailGroup.append('image')
-				.attr("width", this.showDetailIconWidth)
-				.attr("height", this.showDetailIconWidth)
-				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID))
-
-			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
-		}
-			
-		if (duration > 0)
-		{
-			textClipRect.attr('height', 0)
-				.transition()
-				.duration(duration)
-				.attr('height', this.detailRectHeight); 
-			detailText				
-				.transition()
-				.duration(duration)
-				.attr("height", this.detailRectHeight);
-
-		}
-		else
-		{
-			textClipRect.attr('height', this.detailRectHeight); 
-			detailText.attr("height", this.detailRectHeight);
-		}
-		
-		this.detailFlagData = fd;
-		
-		var experience = this.detailFlagData.experience;
-		
-		function handleChangeDetailGroup(eventObject, newValue)
-		{
-			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
-				_this.refreshDetail();
-		}
-		
-		var allCells = [experience.getCell("Organization"),
-		 experience.getCell("User Entered Organization"),
-		 experience.getCell("Site"),
-		 experience.getCell("User Entered Site"),
-		 experience.getCell("Start"),
-		 experience.getCell("End"),
-		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		var serviceCells = [experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		allCells.forEach(function(d)
-		 {
-			/* d will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (d)
-			{
-				$(d).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, _this, handleChangeDetailGroup);
-			}
-		 });
-		serviceCells.forEach(function(d)
-		 {
-			/* d will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (d)
-			{
-				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
-			}
-		 });
-		 
-		 $(this).one("clearTriggers.cr", function(eventObject)
-		 {
-			allCells.forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-			 	if (d)
-			 	{
-					$(d).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, handleChangeDetailGroup);
-				}
-			 });
-			serviceCells.forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-				if (d)
-				{
-					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
-				}
-			 });
-		 });
-		
-		this.setupHeights();
-		this.setupWidths();
-		
-		if (duration > 0)
-		{
-			this.scrollToRectangle(this.containerDiv, 
-							   {y: (y * this.emToPX) + this.experienceGroupDY,
-							    x: x + this.experienceGroupDX,
-							    height: this.detailRectHeight,
-							    width: rectWidth},
-							   this.topNavHeight,
-							   this.bottomNavHeight,
-							   duration);
-		}
 	}
 	
 	PathLines.prototype.appendExperiences = function()
