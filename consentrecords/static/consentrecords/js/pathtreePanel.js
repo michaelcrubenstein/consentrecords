@@ -293,6 +293,7 @@ var PathView = (function() {
 	PathView.prototype.flagHeightEM = 2.333;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
+	PathView.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 
 	PathView.prototype.commentLineHeight = 7;
 	PathView.prototype.commentLabelTopMargin = 2;
@@ -468,7 +469,7 @@ var PathView = (function() {
 				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
 				
 				rectWidth = Math.max(textBox.width, commentLabel.node().getBBox().width) +
-									 iconAreaWidth + (this.textDetailLeftMargin * 2);
+									 iconAreaWidth + (_this.textDetailLeftMargin * 2);
 				_this.detailGroup.selectAll('rect').attr('width', rectWidth);
 			}
 			
@@ -1068,7 +1069,6 @@ var PathLines = (function() {
 	PathLines.prototype.poleSpacing = 4;
 		
 	PathLines.prototype.textLeftMargin = 3;
-	PathLines.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
