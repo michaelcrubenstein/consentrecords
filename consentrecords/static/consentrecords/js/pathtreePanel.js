@@ -439,8 +439,9 @@ var PathView = (function() {
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
 		var commentsValue = fd.experience.getValue("Comments");
+		var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
 		if (fd.experience.canWrite() ||
-			(commentsValue && parseInt(commentsValue.getDescription()) > 0))
+			commentsCount > 0)
 		{
 			var commentLine = this.detailGroup.append('line')
 				.attr('x1', 0)
@@ -451,7 +452,6 @@ var PathView = (function() {
 		
 			var commentLabel = this.detailGroup.append('text')
 				.classed('comments', true)
-				.text('Comments')
 				.attr('x', this.commentLabelLeftMargin)
 				.on("click", function(d) 
 					{ 
@@ -461,6 +461,25 @@ var PathView = (function() {
 					{
 						_this.showCommentsPanel(fd, i);
 					});
+			
+			function setCommentsText()
+			{
+				var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
+				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
+				
+				rectWidth = Math.max(textBox.width, commentLabel.node().getBBox().width) +
+									 iconAreaWidth + (this.textDetailLeftMargin * 2);
+				this.detailGroup.selectAll('rect').attr('width', rectWidth);
+			}
+			
+			var commentsCell = fd.experience.getCell("Comments");
+			setCommentsText();
+			$(commentsCell).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, commentLabel,
+				setCommentsText);
+			$(commentLabel.node()).on("remove", null, commentsCell, function(eventObject)
+				{
+					$(eventObject.data).off("dataChanged.cr valueAdded.cr valueDeleted.cr", null, setCommentsText);
+				});
 			
 			var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
 			commentLabel.attr('y', commentLabelY)
