@@ -469,7 +469,7 @@ var PathView = (function() {
 				
 				rectWidth = Math.max(textBox.width, commentLabel.node().getBBox().width) +
 									 iconAreaWidth + (this.textDetailLeftMargin * 2);
-				this.detailGroup.selectAll('rect').attr('width', rectWidth);
+				_this.detailGroup.selectAll('rect').attr('width', rectWidth);
 			}
 			
 			var commentsCell = fd.experience.getCell("Comments");
