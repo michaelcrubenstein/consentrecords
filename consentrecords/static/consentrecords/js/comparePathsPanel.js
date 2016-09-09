@@ -113,7 +113,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.showDetailIconWidth = 18;
 	ComparePath.prototype.loadingMessageTop = "4.5em";
 	ComparePath.prototype.promptRightMargin = 14;		/* The minimum space between the prompt and the right margin of the svg's container */
-	ComparePath.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 	
 	/* Translate coordinates for the elements of the experienceGroup within the svg */
 	ComparePath.prototype.experienceGroupDX = 40;
@@ -346,170 +345,7 @@ var ComparePath = (function() {
 		this.layoutYears(g);
 	}
 	
-	ComparePath.prototype.showDetailGroup = function(fd, duration)
-	{
-		duration = (duration !== undefined ? duration : 700);
-		var _this = this;
-		
-		this.detailGroup.datum(fd);
-		this.detailGroup.selectAll('rect').datum(fd);
-		var detailText = fd.appendText(this.detailGroup);
-		detailText.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID));
-			
-		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
-
-		var textBox = detailText.node().getBBox();
-		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
-
-		var x = fd.x;
-		var y = fd.y;
-
-		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
-
-		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.experienceGroupDX, (y * this.emToPX) + this.experienceGroupDY));
-		this.detailGroup.selectAll('rect')
-			.attr("width", rectWidth)
-			.attr("x", this.detailRectX)	/* half the stroke width */;
-		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
-		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
-		if (duration > 0)
-		{
-			
-			this.detailGroup.selectAll('rect').attr("height", 0)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", this.detailRectHeight);
-		}
-		else
-		{
-			this.detailGroup.selectAll('rect').attr("height", this.detailRectHeight);
-		}
-	   
-		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', textBox.x)
-			.attr('y', textBox.y)
-			.attr('width', rectWidth); 
-		
-		var iconClipRect;
-		
-		if (hasEditChevron)
-		{	
-			var detailChevron = this.detailGroup.append('image')
-				.attr("width", this.showDetailIconWidth)
-				.attr("height", this.showDetailIconWidth)
-				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', 'url(#id_detailClipPath{0})'.format(this.clipID))
-
-			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
-		}
-			
-		if (duration > 0)
-		{
-			textClipRect.attr('height', 0)
-				.transition()
-				.duration(duration)
-				.attr('height', this.detailRectHeight); 
-			detailText				
-				.transition()
-				.duration(duration)
-				.attr("height", this.detailRectHeight);
-		}
-		else
-		{
-			textClipRect.attr('height', this.detailRectHeight); 
-			detailText.attr("height", this.detailRectHeight);
-		}
-		
-		this.detailFlagData = fd;
-		
-		var experience = this.detailFlagData.experience;
-		
-		function handleChangeDetailGroup(eventObject, newValue)
-		{
-			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
-				_this.refreshDetail();
-		}
-		
-		var allCells = [experience.getCell("Organization"),
-		 experience.getCell("User Entered Organization"),
-		 experience.getCell("Site"),
-		 experience.getCell("User Entered Site"),
-		 experience.getCell("Start"),
-		 experience.getCell("End"),
-		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		var serviceCells = [experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		allCells.forEach(function(d)
-		 {
-			/* d will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (d)
-			{
-				$(d).on("dataChanged.cr", null, _this, handleChangeDetailGroup);
-				$(d).on("valueAdded.cr", null, _this, handleChangeDetailGroup);
-			}
-		 });
-		serviceCells.forEach(function(d)
-		 {
-			/* d will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (d)
-			{
-				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
-			}
-		 });
-		 
-		 $(this).one("clearTriggers.cr", function(eventObject)
-		 {
-			allCells.forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-			 	if (d)
-			 	{
-					$(d).off("dataChanged.cr", null, handleChangeDetailGroup);
-					$(d).off("valueAdded.cr", null, handleChangeDetailGroup);
-				}
-			 });
-			serviceCells.forEach(function(d)
-			 {
-				/* d will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-				if (d)
-				{
-					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
-				}
-			 });
-		 });
-		
-		this.setupHeights();
-		this.setupWidths();
-		
-		if (duration > 0)
-		{
-			this.scrollToRectangle(this.containerDiv, 
-							   {y: (y * this.emToPX) + this.experienceGroupDY,
-							    x: x + this.experienceGroupDX,
-							    height: this.detailRectHeight,
-							    width: rectWidth},
-							   parseFloat(this.pathwayContainer.style('top')),
-							   this.bottomNavHeight,
-							   duration);
-		}
-	}
-	
-	ComparePath.prototype.appendExperiences = function()
+	ComparePath.prototype.appendExperiences = function(compareFlags)
 	{
 		var _this = this;
 
@@ -517,9 +353,7 @@ var ComparePath = (function() {
 		
 		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var g = this.experienceGroup.selectAll('g')
-			.data(this.allExperiences.map(function(e) { 
-				return new CompareFlag(e, _this.ageCalculators[e.cell.parent.getValueID()]); 
-				}))
+			.data(compareFlags)
 			.enter()
 			.append('g')
 			.classed('flag', true)
@@ -584,7 +418,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.handleResize = function()
 	{
+		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
 		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
+		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 		if (this.isLayoutDirty)
 			this.checkLayout();
 		else
@@ -598,12 +434,11 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
-		this.ageCalculators = {};
-		this.ageCalculators[this.leftPath.getValueID()] = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
-		this.ageCalculators[this.rightPath.getValueID()] = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
-
-		this.columnData[0].name = this.getPathDescription(this.leftPath, this.ageCalculators[this.leftPath.getValueID()]);
-		this.columnData[1].name = this.getPathDescription(this.rightPath, this.ageCalculators[this.rightPath.getValueID()]);
+		var leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
+		var rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+		
+		this.columnData[0].name = this.getPathDescription(this.leftPath, leftAgeCalculator);
+		this.columnData[1].name = this.getPathDescription(this.rightPath, rightAgeCalculator);
 		
 		var guides = this.guideGroup.selectAll('g')
 			.data(this.columnData)
@@ -651,14 +486,23 @@ var ComparePath = (function() {
 		this.allExperiences = this.allExperiences.concat(experiences);
 		
 		this.allExperiences = this.allExperiences.concat(rightCell.data);
-		$(rightCell.data).each(function() { this.calculateDescription(); });
-	
+		$(rightCell.data).each(function()
+			{
+				this.calculateDescription();
+			});
+			
 		/* Ensure that all of the offerings have their associated cells. */
 		this.allExperiences.forEach(function(experience)
 			{
 				_this.checkOfferingCells(experience, null);
 			});
 			
+		var compareFlags = leftCell.data.map(function(e) { 
+				return new CompareFlag(e, leftAgeCalculator); 
+				}).concat(rightCell.data.map(function(e) {
+				return new CompareFlag(e, rightAgeCalculator);
+				}));
+	
 		var resizeFunction = function()
 		{
 			/* Wrap handleResize in a setTimeout call so that it happens after all of the
@@ -668,7 +512,7 @@ var ComparePath = (function() {
 				{
 					if (firstTime)
 					{
-						_this.appendExperiences();
+						_this.appendExperiences(compareFlags);
 						firstTime = false;
 					}
 					_this.handleResize();
