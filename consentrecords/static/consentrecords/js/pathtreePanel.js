@@ -1699,7 +1699,8 @@ var PathlinesPanel = (function () {
 						try
 						{
 							var panel = new Settings(user, _this.node());
-							showPanelUp(panel.node(), unblockClick);
+							showPanelUp(panel.node())
+								.always(unblockClick);
 						}
 						catch(err)
 						{
@@ -1735,8 +1736,8 @@ var PathlinesPanel = (function () {
 				experience.initPreviousDateRange();
 				
 			var panel = new NewExperiencePanel(experience, this.node(), phase);
-		
-			showPanelUp(panel.node(), done);
+			showPanelUp(panel.node())
+				.done(done);
 		}
 		catch(err)
 		{
@@ -1829,7 +1830,8 @@ var PathlinesPanel = (function () {
 							{
 								showClickFeedback(this);
 								var newPanel = new WelcomePanel(_this.node());
-								showPanelUp(newPanel.node(), unblockClick);
+								showPanelUp(newPanel.node())
+									.always(unblockClick);
 							}
 							catch(err)
 							{
@@ -2282,7 +2284,8 @@ var ExperienceIdeaPanel = (function() {
 								{
 									skipButton.on('click')();
 								});
-							showPanelUp(panel.node(), unblockClick);
+							showPanelUp(panel.node())
+								.always(unblockClick);
 						}
 						catch(err)
 						{
