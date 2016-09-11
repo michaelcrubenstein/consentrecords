@@ -193,6 +193,9 @@ var CRP = (function() {
 			return i;	/* This isn't an object. */
 	};
 	
+	/*
+		args has the following fields: path, fields
+	 */
 	CRP.prototype.promise = function(args)
 	{
 		if (args.path in this.promises)
@@ -219,39 +222,6 @@ var CRP = (function() {
 		return promise;
 	}
 	
-	/*
-		args has the following fields: path, fields, done, fail
-	 */
-	CRP.prototype.getData = function(args)
-	{
-		if (typeof(args.done) != "function")
-			throw "done is not a function";
-		if (typeof(args.fail) != "function")
-			throw "fail is not a function";
-		if (!args.path)
-			throw "path is not defined";
-		var _this = this;
-		this.queue.add(
-			function() {
-				if (args.path in _this.paths)
-					args.done(_this.paths[args.path]);
-				else
-				{
-					cr.getData({path: args.path, 
-								start: args.start,
-								end: args.end,
-								fields: args.fields,
-								done: function(newInstances) {
-											var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
-											_this.paths[args.path] = mappedInstances;
-											args.done(mappedInstances);
-											_this.queue.next();
-										}, 
-								fail: args.fail});
-					return false;
-				}
-			});
-	};
 	CRP.prototype.getConfiguration = function(ofKindID, successFunction, failFunction)
 	{
 		if (typeof(successFunction) != "function")

@@ -354,9 +354,9 @@ var SharingPanel = (function() {
 			{name: "_administer", id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
 		var privilegePath = "_term[_name=_privilege]>enumerator";
-		crp.getData({path: privilegePath, 
-					 done: function(enumerators) { _this.getPrivileges(panel2Div, enumerators); }, 
-					 fail: asyncFailFunction});
+		crp.promise({path: privilegePath})
+			.done(function(enumerators) { _this.getPrivileges(panel2Div, enumerators); })
+			.fail(cr.asyncFail);
 	}
 	
 	return SharingPanel;

@@ -471,22 +471,22 @@ var Signup = (function () {
 				return false;	/* Block moving forward until the following script completes. */
 			}
 			
-			crp.getData({path: '_term[_name=_privilege]', 
-						 done: function(newInstances)
-							{
-								var enumeratorCell = newInstances[0].getCell('enumerator');
-								for (var i = 0; i < enumeratorCell.data.length; ++i)
-								{
-									var d = enumeratorCell.data[i];
-									if (d.getDescription() === '_read')
-										readInput.property('value', d.getValueID());
-									else if (d.getDescription() === '_find')
-										findInput.property('value', d.getValueID());
-								}
-								p.node().onCheckForwardEnabled = undefined;
-								signup.dots.checkForwardEnabled();
-							},
-						fail: asyncFailFunction});
+			crp.promise({path: '_term[_name=_privilege]'})
+				.done(function(newInstances)
+					{
+						var enumeratorCell = newInstances[0].getCell('enumerator');
+						for (var i = 0; i < enumeratorCell.data.length; ++i)
+						{
+							var d = enumeratorCell.data[i];
+							if (d.getDescription() === '_read')
+								readInput.property('value', d.getValueID());
+							else if (d.getDescription() === '_find')
+								findInput.property('value', d.getValueID());
+						}
+						p.node().onCheckForwardEnabled = undefined;
+						signup.dots.checkForwardEnabled();
+					})
+				.fail(cr.asyncFail);
 			
 			this.onReveal = null;
 		}
