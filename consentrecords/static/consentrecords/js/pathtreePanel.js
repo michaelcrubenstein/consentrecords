@@ -389,7 +389,10 @@ var PathView = (function() {
 			}
 			else
 			{
-				offering.checkCells(undefined, function() { if (done) done(); }, asyncFailFunction);
+				var r1 = offering.promiseCells()
+					.fail(cr.asyncFail);
+				if (done)
+					r1.done(done);
 			}
 		}
 		else

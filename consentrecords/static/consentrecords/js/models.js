@@ -1064,6 +1064,83 @@ cr.ObjectValue = (function() {
 			cell.setParent(this);
 		});
 	}
+
+	ObjectValue.prototype.promiseCells = function(fields)
+	{
+		if (this.privilege == "_find")
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
+			return result.promise();
+		}
+	
+		if (this.cells && this.isDataLoaded)
+		{
+			var result = $.Deferred();
+			result.resolve(this.cells);
+			return result.promise();
+		}
+		else if (this.getValueID())
+		{
+			var _this = this;
+			var jsonArray = { "path" : "#" + this.getValueID() };
+			if (fields)
+				jsonArray["fields"] = JSON.stringify(fields);
+			return $.when($.getJSON(cr.urls.getData, jsonArray))
+				.then(function(json)
+					{
+						var r2 = $.Deferred();
+						try {
+							/* If the data length is 0, then this item can not be read. */
+							if (json.data.length > 0)
+							{
+								var src = json.data[0];
+								_this.importCells(src.cells);
+								_this.privilege = src.privilege;
+								if (src.typeName)
+									_this.typeName = src.typeName;
+							}
+							else
+							{
+								_this.importCells([]);
+								_this.privilege = null;
+							}
+							_this.isDataLoaded = true;
+							
+							r2.resolve(_this.cells);
+						}
+						catch (err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					function(jqXHR, textStatus, errorThrown)
+					{
+						var r2 = $.Deferred();
+						r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
+						return r2;
+					}
+				 );
+		}
+		else if (this.cell.field.ofKindID)
+		{
+			var _this = this;
+			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
+			var r2 = $.Deferred();
+			cr.getConfiguration(this, this.cell.field.ofKindID, 
+				function(newCells)
+				{
+					_this._setCells(newCells);
+					r2.resolve(newCells);
+				},
+				function(err)
+				{
+					r2.reject(err);
+				});
+			return r2;
+		}
+	}
 	
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
