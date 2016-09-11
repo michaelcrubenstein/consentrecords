@@ -489,7 +489,10 @@ def addToPathway(request):
         organization, site, offering = None, None, None
 
     if serviceName and terms.isUUID(serviceName):
-        service = terms[serviceName]
+        try:
+            service = terms[serviceName]
+        except Instance.DoesNotExist:
+            service = None
     elif serviceName:
         service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
     else:
