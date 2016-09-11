@@ -1623,48 +1623,44 @@ var PathLines = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		crp.getData({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
-				   fields: ["parents", "type"], 
-				   done: function(experiences)
+		return $.when(crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
+				   fields: ["parents", "type"]})
+				.done(function(experiences)
 					{
 						_this.allExperiences = experiences.slice();
 						$(experiences).each(function()
 						{
 							this.setDescription(this.getValue("Offering").getDescription());
 						});
-					}, 
-				   fail: asyncFailFunction});
-		crp.getData({path: "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
-							'::reference(Session)::reference(Sessions)::reference(Offering)',
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});
-		crp.getData({path: "#" + this.path.getValueID() + '>"More Experience">Offering',
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});			
-		crp.getData({path: "Service", 
-					 fields: ["Domain", "Stage"],
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});
-		crp.getData({path: "(Domain,Stage)", 
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});
-		crp.getData({path: '"Service Domain"', 
-					 done: function(newInstances)
-						{
-						},
-					fail: asyncFailFunction});
-							
-		crp.pushCheckCells(this.path, ["More Experience", "parents", "type"],
-					  successFunction2, 
-					  asyncFailFunction);
+					})
+				.fail(cr.asyncFail))
+		.then(function() {
+			return crp.promise({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+								'::reference(Session)::reference(Sessions)::reference(Offering)'})
+				.fail(cr.asyncFail);
+			})
+		.then(function() {
+				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'})
+					.fail(cr.asyncFail);
+			})
+		.then(function() {
+				return crp.promise({path: "Service", 
+					 fields: ["Domain", "Stage"]})
+					.fail(cr.asyncFail);
+			})
+		.then(function() {
+				return crp.promise({path: "(Domain,Stage)"})
+					.fail(cr.asyncFail);
+			})
+		.then(function() {
+				return crp.promise({path: '"Service Domain"'})
+					.fail(cr.asyncFail);
+			})
+		.then(function() {
+				crp.pushCheckCells(_this.path, ["More Experience", "parents", "type"],
+							  successFunction2, 
+							  cr.asyncFail);
+			});
 	}
 	
 	function PathLines(sitePanel, containerDiv) {
@@ -2145,57 +2141,57 @@ var ExperienceIdeas = (function() {
 		
 		var data;
 		
-		crp.getData({path: '"Experience Prompt"', 
-					 done: function(prompts)
-						{
-							try
+		crp.promise({path: '"Experience Prompt"'})
+			.done(function(prompts)
+				{
+					try
+					{
+						/* Remove prompts that have disqualifying tags */
+						var moreExperienceData = path.getCell("More Experience").data;
+						prompts = prompts.filter(function(d)
 							{
-								/* Remove prompts that have disqualifying tags */
-								var moreExperienceData = path.getCell("More Experience").data;
-								prompts = prompts.filter(function(d)
+								return !d.getCell("Disqualifying Tag").data.find(function(dt)
 									{
-										return !d.getCell("Disqualifying Tag").data.find(function(dt)
+										var dtID = dt.getValueID();
+										return moreExperienceData.find(function(experience)
 											{
-												var dtID = dt.getValueID();
-												return moreExperienceData.find(function(experience)
+												return experience.getCell("Service").data.find(function(service)
 													{
-														return experience.getCell("Service").data.find(function(service)
-															{
-																return service.getValueID() == dtID;
-															}) ||
-															experience.getCell("Offering").data.find(function(offering)
+														return service.getValueID() == dtID;
+													}) ||
+													experience.getCell("Offering").data.find(function(offering)
+														{
+															return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
 																{
-																	return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
-																		{
-																			return service.getValueID() == dtID;
-																		});
+																	return service.getValueID() == dtID;
 																});
-													});
+														});
 											});
 									});
-								data = prompts.map(function(d)
-									{
-										var datum = {name: d.getDatum('_name'),
-													 prompt: d.getDatum('_text'),
-													 experience: new Experience(path)};
-										var s = d.getNonNullValue('Service');
-										if (s) datum.experience.addService({instance: s});
-										datum.experience.domain = d.getNonNullValue('Domain');
-										datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
-										datum.experience.stage = d.getNonNullValue('Stage');
-										datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
-										datum.experience.setSite({instance: d.getNonNullValue('Site')});
-										datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
-										return datum;
-									});
-								getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
-							}
-							catch(err)
+							});
+						data = prompts.map(function(d)
 							{
-								fail(err)
-							}
-						},
-					fail: fail});
+								var datum = {name: d.getDatum('_name'),
+											 prompt: d.getDatum('_text'),
+											 experience: new Experience(path)};
+								var s = d.getNonNullValue('Service');
+								if (s) datum.experience.addService({instance: s});
+								datum.experience.domain = d.getNonNullValue('Domain');
+								datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
+								datum.experience.stage = d.getNonNullValue('Stage');
+								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
+								datum.experience.setSite({instance: d.getNonNullValue('Site')});
+								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
+								return datum;
+							});
+						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
+					}
+					catch(err)
+					{
+						fail(err)
+					}
+				})
+			.fail(fail);
 		
 		function getGetNext(nextIndex, title, done)
 		{

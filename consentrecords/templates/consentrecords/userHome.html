@@ -718,34 +718,35 @@
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.getData({path: "#"+pathwayID, done: function(users)
-								{
-									if (users.length > 0)
+							crp.promise({path: "#"+pathwayID})
+								.done(function(users)
 									{
-										var done;
-										var panel;
-										if (cr.signedinUser.getValueID())
+										if (users.length > 0)
 										{
-											panel = new PathlinesPanel(users[0], firstPanel.node(), true);
-										}	
+											var done;
+											var panel;
+											if (cr.signedinUser.getValueID())
+											{
+												panel = new PathlinesPanel(users[0], firstPanel.node(), true);
+											}	
+											else
+											{
+												done = function()
+													{
+														firstPanel = new WelcomePanel(previousPanel);
+														showPanelNow(firstPanel.node());
+													};
+												panel = new PathlinesPanel(users[0], previousPanel, done);
+											}
+											panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
+											showPanelLeft(panel.node());
+										}
 										else
 										{
-											done = function()
-												{
-													firstPanel = new WelcomePanel(previousPanel);
-													showPanelNow(firstPanel.node());
-												};
-											panel = new PathlinesPanel(users[0], previousPanel, done);
+											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
 										}
-										panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
-										showPanelLeft(panel.node());
-									}
-									else
-									{
-										asyncFailFunction("The specified user does not exist or you do not have permission to view them.");
-									}
-								},
-								fail: asyncFailFunction});
+									})
+								.fail(cr.asyncFail);
 						}
 					}
 					stateString = "";
@@ -943,9 +944,12 @@
 					{
 						firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 						showPanelNow(firstPanel.node());
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-						if (handleState)
-							handleState();
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
+						.then(function()
+							{
+								if (handleState)
+									handleState();
+							});
 					});
 			}
 			else if (!needsSignin)

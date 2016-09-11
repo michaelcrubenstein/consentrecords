@@ -57,6 +57,7 @@ var Queue = (function () {
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.paths = {};
+	CRP.prototype.promises = {};
 	CRP.prototype.configurations = {};
 	CRP.prototype.queue = null;
 	
@@ -70,6 +71,7 @@ var CRP = (function() {
     CRP.prototype.clear = function() {
     	this.instances = {};
     	this.paths = {};
+    	this.promises = {};
     	this.configurations = {};
         this.queue = new Queue(true); //initialize the queue
     };
@@ -190,6 +192,32 @@ var CRP = (function() {
 		else
 			return i;	/* This isn't an object. */
 	};
+	
+	CRP.prototype.promise = function(args)
+	{
+		if (args.path in this.promises)
+			return this.promises[args.path];
+
+		var _this = this;
+		var result = $.Deferred();
+		cr.getData({path: args.path, 
+					start: args.start,
+					end: args.end,
+					fields: args.fields})
+			.done(function(newInstances)
+				{
+					var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
+					result.resolve(mappedInstances);
+				})
+			.fail(function(err)
+				{
+					_this.promises[args.path] = undefined;
+					result.reject(err);
+				});
+		var promise = result.promise();
+		this.promises[args.path] = promise;
+		return promise;
+	}
 	
 	/*
 		args has the following fields: path, fields, done, fail
@@ -1239,15 +1267,21 @@ cr.accessToken = null;
 cr.refreshToken = null;
 cr.tokenType = null;
 	
-cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
+cr.postError = function(jqXHR, textStatus, errorThrown)
 	{
 		if (textStatus == "timeout")
-			failFunction("This operation ran out of time. Try again.");
+			return "This operation ran out of time. Try again.";
 		else if (jqXHR.status == 0)
-			failFunction("The server is not responding. Please try again.");
+			return "The server is not responding. Please try again.";
 		else
-			failFunction(jqXHR.statusText);
+			return jqXHR.statusText;
 	};
+
+cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
+	{
+		failFunction(cr.postError(jqXHR, textStatus, errorThrown));
+	};
+
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail */
 cr.selectAll = function(args)
@@ -1572,10 +1606,6 @@ cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
  */
 cr.getData = function(args)
 	{
-		if (!args.fail)
-			throw ("failFunction is not specified");
-		if (!args.done)
-			throw ("successFunction is not specified");
 		if (!args.path)
 			throw ("path is not specified to getData");
 			
@@ -1590,24 +1620,32 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
+		var result = $.Deferred();
 		$.getJSON(cr.urls.getData, data)
-		.done(function(json)
-			{
-				var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
-				try
+			.done(function(json)
 				{
-					args.done(instances);
-				}
-				catch(err)
-				{
-					args.fail(err);
-				}
-			})
-		.fail(function(jqXHR, textStatus, errorThrown)
+					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
+					try
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
+						result.resolve(instances);
+						if (args.done)
+							args.done(instances);
 					}
-				);
+					catch(err)
+					{
+						result.reject(err);
+						if (args.fail)
+							args.fail(err);
+					}
+				})
+			.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
+					result.reject(resultText);
+					if (args.fail)
+						args.fail(resultText);
+				});
+		return result.promise();
 	},
 cr.submitSignout = function(done, fail)
 	{

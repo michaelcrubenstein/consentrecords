@@ -701,32 +701,24 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		crp.getData({path:  "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)', 
-				   fields: ["parents"], 
-				   done: function(experiences)
-					{
-						_this.allExperiences = experiences.slice();
-						$(experiences).each(function()
-						{
-							this.setDescription(this.getValue("Offering").getDescription());
-						});
-					}, 
-				   fail: asyncFailFunction});
-		crp.getData({path: "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
-							'::reference(Session)::reference(Sessions)::reference(Offering)',
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});
-		crp.getData({path: "#" + this.rightPath.getValueID() + '>"More Experience">Offering',
-					 done: function(newInstances)
-						{
-						},
-						fail: asyncFailFunction});			
-							
-		crp.pushCheckCells(this.rightPath, ["More Experience", "parents"],
-					  successFunction2, 
-					  asyncFailFunction);
+		var p1 = crp.promise({path:  "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)', 
+				   fields: ["parents"]});
+		var p2 = crp.promise({path: "#" + _this.rightPath.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+						'::reference(Session)::reference(Sessions)::reference(Offering)'});
+		var p3 = crp.promise({path: "#" + _this.rightPath.getValueID() + '>"More Experience">Offering'});
+		$.when(p1, p2, p3)
+		.then(function(experiences, r2, r3)
+			{
+				_this.allExperiences = experiences.slice();
+				$(experiences).each(function()
+				{
+					this.setDescription(this.getValue("Offering").getDescription());
+				});
+				crp.pushCheckCells(_this.rightPath, ["More Experience", "parents"],
+							  successFunction2, 
+							  asyncFailFunction);
+			},
+		   cr.asyncFail);
 	}
 	
 	function ComparePath(sitePanel, containerDiv) {

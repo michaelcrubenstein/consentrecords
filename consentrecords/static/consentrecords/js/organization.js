@@ -428,65 +428,64 @@ function getValidPrivileges(enumerators, priv)
 		return [];
 }
 
+/* Adds a missing access record to the source user. */
 function addMissingAccess(source, privilege, target, cellName, done, fail)
 {
 	var privilegePath = "_term[_name=_privilege]>enumerator";
-	crp.getData({path: privilegePath, 
-		done: function getPrivileges(enumerators)
+	var p1 = crp.promise({path: privilegePath});
+	var p2 = cr.getData({path: "#" + source.getValueID() + '>"_access record"'});
+	$.when(p1, p2)
+	 .then(function(enumerators, accessRecords)
 		{
 			var priv = getNamedInstance(enumerators, privilege);
 			var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getValueID(); });
-			cr.getData({path: "#" + source.getValueID() + '>"_access record"', 
-				done: function(accessRecords)
-				{
-					var a = accessRecords.filter(
-						function(ar) {
-							var privCell = ar.getCell("_privilege");
-							return privCell.data.some(
-								function(d) { 
-									return validPrivs.indexOf(d.getValueID()) >= 0; 
-								});
+
+			var a = accessRecords.filter(
+				function(ar) {
+					var privCell = ar.getCell("_privilege");
+					return privCell.data.some(
+						function(d) { 
+							return validPrivs.indexOf(d.getValueID()) >= 0; 
 						});
-					var b = a.filter(
-						function(ar) {
-							var groupCell = ar.getCell(cellName);
-							function hasTargetValueID(d)
-							{
-								return d.getValueID() === target.getValueID();
-							}
-							return groupCell.data.some(hasTargetValueID);
-						});
-					if (b.length > 0)
-						done();
-					else
+				});
+			var b = a.filter(
+				function(ar) {
+					var groupCell = ar.getCell(cellName);
+					function hasTargetValueID(d)
 					{
-						var c = a.filter(
-							function(ar) {
-								var privCell = ar.getCell("_privilege");
-								return privCell.data.length === 1 &&
-									   privCell.data[0].getValueID() === priv.getValueID();
-							});
-						if (c.length > 0)
-						{
-							var cell = c[0].getCell(cellName);
-							
-							cr.updateValues([cell.getAddCommand(target)],
-							    [cell], done, 
-							    fail);
-						}
-						else
-						{
-							// Create an instance of an access record with this accessor level
-							// and this user.
-							var field = source.getCell("_access record").field;
-							var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
-							initialData[cellName] = [{instanceID: target.getValueID()}];
-							cr.createInstance(field, source.getValueID(), initialData, done, fail);
-						}
+						return d.getValueID() === target.getValueID();
 					}
-				},
-				fail: fail});
-		}, 
-		fail: fail});
+					return groupCell.data.some(hasTargetValueID);
+				});
+			if (b.length > 0)
+				done();
+			else
+			{
+				var c = a.filter(
+					function(ar) {
+						var privCell = ar.getCell("_privilege");
+						return privCell.data.length === 1 &&
+							   privCell.data[0].getValueID() === priv.getValueID();
+					});
+				if (c.length > 0)
+				{
+					var cell = c[0].getCell(cellName);
+					
+					cr.updateValues([cell.getAddCommand(target)],
+						[cell], done, 
+						fail);
+				}
+				else
+				{
+					// Create an instance of an access record with this accessor level
+					// and this user.
+					var field = source.getCell("_access record").field;
+					var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
+					initialData[cellName] = [{instanceID: target.getValueID()}];
+					cr.createInstance(field, source.getValueID(), initialData, done, fail);
+				}
+			}
+		},
+		fail);
 }
 

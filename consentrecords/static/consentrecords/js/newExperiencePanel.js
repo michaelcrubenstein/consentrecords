@@ -3061,12 +3061,13 @@ var NewExperiencePanel = (function () {
 												this.tagInput.node(), 
 												tagHelp.node());
 												
-		crp.getData({path: "Service", done: function(newInstances)
-						{
-							_this.allServices = newInstances;
-							_this.tagSearchView.showObjects(newInstances);
-						},
-					fail: asyncFailFunction});
+		crp.promise({path: "Service"})
+			.done(function(newInstances)
+				{
+					_this.allServices = newInstances;
+					_this.tagSearchView.showObjects(newInstances);
+				})
+			.fail(cr.syncFail);
 		
 		$(panel2Div.node()).on('resize.cr', function()
 		{
