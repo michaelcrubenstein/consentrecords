@@ -126,7 +126,7 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
-def find(request, serviceid, offeringid):
+def find(request):
     logPage(request, 'pathAdvisor/find')
     
     template = loader.get_template('consentrecords/userHome.html')
@@ -141,7 +141,9 @@ def find(request, serviceid, offeringid):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = "findNewExperience" + serviceid + offeringid
+    # Currently, findNewExperience can support a serviceID and an offeringID. ultimately,
+    # we want to pass a path to make this more RESTful.
+    args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
         offering = Instance.objects.get(pk=offeringid)
