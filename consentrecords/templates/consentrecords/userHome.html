@@ -902,19 +902,15 @@
 				}
 				else if (stateString.startsWith("me"))
 				{
-					var handleState = function(pathwayPanel)
+					var handleState = function()
 					{
 						crp.pushCheckCells(cr.signedinUser, undefined, 
 							function() {
-								if (!pathwayPanel)
+								if (!firstPanel)
 								{
-									if (!firstPanel)
-									{
-										firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-										showPanelUp(firstPanel.node());
-									}
-									pathwayPanel = firstPanel;
+									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+									showPanelUp(firstPanel.node());
 								}
 							},
 							asyncFailFunction);
