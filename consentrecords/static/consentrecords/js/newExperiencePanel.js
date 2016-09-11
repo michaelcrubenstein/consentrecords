@@ -2289,13 +2289,14 @@ var ExperienceShareOptions = (function () {
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
 							var newPanel = new NewExperiencePanel(tempExperience, panel.node(), tempExperience.getPhase());
-							showPanelUp(newPanel.node(), function()
-								{
-									$(emailAddExperienceButton.node()).off('blur');
-									panel.remove();
-									dimmer.remove();
-									unblockClick();
-								});
+							showPanelUp(newPanel.node())
+								.done(function()
+									{
+										$(emailAddExperienceButton.node()).off('blur');
+										panel.remove();
+										dimmer.remove();
+									})
+								.always(unblockClick);
 						}
 					});
 				
