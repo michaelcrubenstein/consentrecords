@@ -55,7 +55,6 @@ def home(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -81,7 +80,6 @@ def showLines(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -105,7 +103,6 @@ def orgHome(request):
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -131,7 +128,6 @@ def find(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -195,7 +191,6 @@ def showPathway(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -223,7 +218,6 @@ def accept(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -254,7 +248,6 @@ def ignore(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -428,7 +421,6 @@ def addExperience(request, experienceID):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -500,7 +492,6 @@ def addToPathway(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
 
     if settings.FACEBOOK_SHOW:
