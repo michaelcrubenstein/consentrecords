@@ -641,6 +641,8 @@
 				if (prepareClick('click', 'Signin sign up'))
 				{
 					var signUp = new Signup($(this).parents("panel")[0]);
+					showPanelUp(signUp.node())
+						.always(unblockClick);
 				}
 				e.preventDefault();
 			});

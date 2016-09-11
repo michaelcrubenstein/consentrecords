@@ -192,7 +192,8 @@ var Settings = (function () {
 					{
 						showClickFeedback(this);
 						var panel = new SharingPanel(user, _this.node());
-						showPanelUp(panel.node(), unblockClick);
+						showPanelUp(panel.node())
+								.always(unblockClick);
 					}
 				})
 				.classed('first', true);
@@ -213,7 +214,8 @@ var Settings = (function () {
 					{
 						showClickFeedback(this);
 						var panel = new FollowingPanel(user, _this.node());
-						showPanelUp(panel.node(), unblockClick);
+						showPanelUp(panel.node())
+							.always(unblockClick);
 					}
 				});
 		}
@@ -225,7 +227,8 @@ var Settings = (function () {
 					{
 						showClickFeedback(this);
 						var panel = new UpdateUsernamePanel(user, _this.node());
-						showPanelUp(panel.node(), unblockClick);
+						showPanelUp(panel.node())
+							.always(unblockClick);
 					}
 				});
 		
@@ -234,7 +237,8 @@ var Settings = (function () {
 					{
 						showClickFeedback(this);
 						var panel = new UpdatePasswordPanel(_this.node());
-						showPanelUp(panel.node(), unblockClick);
+						showPanelUp(panel.node())
+							.always(unblockClick);
 					}
 				});
 
