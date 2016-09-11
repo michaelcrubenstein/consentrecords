@@ -882,13 +882,15 @@ class api:
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
             if len(fieldNames):
-                fieldTermNames = Instance.objects.filter(typeID=terms.term,
-                        value__deleteTransaction__isnull=True,
-                        value__field = terms.name,
-                        value__stringValue__in=fieldNames)
-                subValueQueryset = userInfo.findValueFilter(\
-                     Value.objects.filter(deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__in=fieldTermNames))\
+            	# The distinct is required to eliminate duplicate subValues.
+                subValues = Value.objects.filter(deleteTransaction__isnull=True,
+                                          instance__deleteTransaction__isnull=True,
+                                          instance__referenceValues__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__field=terms.name,
+                                          instance__referenceValues__field__value__stringValue__in=fieldNames)\
+                    .distinct()
+                subValueQueryset = userInfo.findValueFilter(subValues)\
                     .order_by('position')\
                     .select_related('field')\
                     .select_related('referenceValue')\
