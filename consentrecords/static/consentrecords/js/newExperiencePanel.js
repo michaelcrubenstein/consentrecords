@@ -2289,13 +2289,14 @@ var ExperienceShareOptions = (function () {
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
 							var newPanel = new NewExperiencePanel(tempExperience, panel.node(), tempExperience.getPhase());
-							showPanelUp(newPanel.node(), function()
-								{
-									$(emailAddExperienceButton.node()).off('blur');
-									panel.remove();
-									dimmer.remove();
-									unblockClick();
-								});
+							showPanelUp(newPanel.node())
+								.done(function()
+									{
+										$(emailAddExperienceButton.node()).off('blur');
+										panel.remove();
+										dimmer.remove();
+									})
+								.always(unblockClick);
 						}
 					});
 				
@@ -3061,12 +3062,13 @@ var NewExperiencePanel = (function () {
 												this.tagInput.node(), 
 												tagHelp.node());
 												
-		crp.getData({path: "Service", done: function(newInstances)
-						{
-							_this.allServices = newInstances;
-							_this.tagSearchView.showObjects(newInstances);
-						},
-					fail: asyncFailFunction});
+		crp.promise({path: "Service"})
+			.done(function(newInstances)
+				{
+					_this.allServices = newInstances;
+					_this.tagSearchView.showObjects(newInstances);
+				})
+			.fail(cr.syncFail);
 		
 		$(panel2Div.node()).on('resize.cr', function()
 		{

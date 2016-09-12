@@ -29,6 +29,7 @@ urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^org/$', views.orgHome, name='orgHome'),
     url(r'^find/([A-Fa-f0-9]{32})/([A-Fa-f0-9]{32})/', views.find),
+    url(r'^find/', views.find),
     url(r'^list', views.showInstances, name='list'),
     url(r'^for/([^/@]+@[^/@]+\.[^/@]+)/', views.showPathway),
     url(r'^add/([A-Fa-f0-9]{32})/', views.addExperience),
@@ -37,6 +38,7 @@ urlpatterns = [
     url(r'^ignore/([^/@]+@[^/@]+\.[^/@]+)/', views.ignore),
     url(r'^accept/([A-Fa-f0-9]{32})/', views.accept),
     url(r'^ignore/([A-Fa-f0-9]{32})/', views.ignore),
+    url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
@@ -67,7 +69,7 @@ urlpatterns = [
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
-    url(r'^api/(.*)', views.handleURL),
+    url(r'^api/([^?]*)/', views.handleURL),
     
     url(r'^doc/features/', views.features),
 ]

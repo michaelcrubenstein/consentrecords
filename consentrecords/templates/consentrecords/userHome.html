@@ -433,79 +433,75 @@
 				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
-					crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
-						done: function(offerings)
-						{
-							if (offerings.length > 0)
+					crp.promise({path: "#"+offeringName, fields: ["parents", "type"]}) 
+						.done(function(offerings)
 							{
-								if (offerings[0].typeName == "Offering")
+								if (offerings.length > 0)
 								{
-									experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
-										{
-											showPanelUp(panelNode);
-										});
+									if (offerings[0].typeName == "Offering")
+									{
+										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												showPanelUp(panelNode);
+											});
+									}
+									else
+										cr.asyncFail("The specified offering does not appear to be an offering.");
 								}
 								else
-									asyncFailFunction("The specified offering does not appear to be an offering.");
-							}
-							else
-							{
-								asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+									cr.asyncFail("The specified offering does not exist or you do not have permission to view it.");
+							})
+						.fail(cr.asyncFail);
 				}
 				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 				{
-					crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
-						done: function(sites)
-						{
-							if (sites.length > 0)
+					crp.promise({path: "#"+siteName, fields: ["parents", "type"]})
+						.done(function(sites)
 							{
-								if (sites[0].typeName == "Site")
+								if (sites.length > 0)
 								{
-									experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
-										{
-											showPanelUp(panelNode);
-										});
+									if (sites[0].typeName == "Site")
+									{
+										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												showPanelUp(panelNode);
+											});
+									}
+									else
+										cr.asyncFail("The specified site does not appear to be a site.");
 								}
 								else
-									asyncFailFunction("The specified site does not appear to be an site.");
-							}
-							else
-							{
-								asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+								{
+									cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+								}
+							})
+						.fail(cr.asyncFail);
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
-					crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
-						done: function(organizations)
-						{
-							if (organizations.length > 0)
+					crp.promise({path: "#"+organizationName, fields: ["parents", "type"]})
+						.done(function(organizations)
 							{
-								if (organizations[0].typeName == "Organization")
+								if (organizations.length > 0)
 								{
-									experience.createFromData({instance: organizations[0] },
-										siteName && {text : siteName},
-										offeringName && {text : offeringName},
-										services,
-										pathwayPanel.node(),
-										function(panelNode) {
-											showPanelUp(panelNode);
-										});
+									if (organizations[0].typeName == "Organization")
+									{
+										experience.createFromData({instance: organizations[0] },
+											siteName && {text : siteName},
+											offeringName && {text : offeringName},
+											services,
+											pathwayPanel.node(),
+											function(panelNode) {
+												showPanelUp(panelNode);
+											});
+									}
+									else
+										cr.asyncFail("The specified organization does not appear to be an organization.");
 								}
 								else
-									asyncFailFunction("The specified organization does not appear to be an organization.");
-							}
-							else
-							{
-								asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
+							})
+					.fail(cr.asyncFail);
 				}
 				else if (organizationName || siteName || offeringName)
 				{
@@ -543,17 +539,17 @@
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 			{
-				crp.getData({path: "#"+serviceName, fields: ["parents", "type"], 
-					done: function(services)
-					{
-						if (services.length == 0)
-							asyncFailFunction("The specified tag does not exist or you do not have permission to view it.");
-						else if (services[0].typeName != "Service")
-							asyncFailFunction("The specified tag does not appear to be an tag.");
-						else
-							done([{instance: services[0]}]);
-					},
-					fail: asyncFailFunction});
+				crp.promise({path: "#"+serviceName, fields: ["parents", "type"]})
+					.done(function(services)
+						{
+							if (services.length == 0)
+								cr.asyncFail("The specified tag does not exist or you do not have permission to view it.");
+							else if (services[0].typeName != "Service")
+								cr.asyncFail("The specified tag does not appear to be a tag.");
+							else
+								done([{instance: services[0]}]);
+						})
+					.fail(cr.asyncFail);
 			}
 			else if (serviceName)
 				done([{text: serviceName}]);
@@ -645,6 +641,8 @@
 				if (prepareClick('click', 'Signin sign up'))
 				{
 					var signUp = new Signup($(this).parents("panel")[0]);
+					showPanelUp(signUp.node())
+						.always(unblockClick);
 				}
 				e.preventDefault();
 			});
@@ -718,34 +716,35 @@
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.getData({path: "#"+pathwayID, done: function(users)
-								{
-									if (users.length > 0)
+							crp.promise({path: "#"+pathwayID})
+								.done(function(users)
 									{
-										var done;
-										var panel;
-										if (cr.signedinUser.getValueID())
+										if (users.length > 0)
 										{
-											panel = new PathlinesPanel(users[0], firstPanel.node(), true);
-										}	
+											var done;
+											var panel;
+											if (cr.signedinUser.getValueID())
+											{
+												panel = new PathlinesPanel(users[0], firstPanel.node(), true);
+											}	
+											else
+											{
+												done = function()
+													{
+														firstPanel = new WelcomePanel(previousPanel);
+														showPanelNow(firstPanel.node());
+													};
+												panel = new PathlinesPanel(users[0], previousPanel, done);
+											}
+											panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
+											showPanelLeft(panel.node());
+										}
 										else
 										{
-											done = function()
-												{
-													firstPanel = new WelcomePanel(previousPanel);
-													showPanelNow(firstPanel.node());
-												};
-											panel = new PathlinesPanel(users[0], previousPanel, done);
+											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
 										}
-										panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
-										showPanelLeft(panel.node());
-									}
-									else
-									{
-										asyncFailFunction("The specified user does not exist or you do not have permission to view them.");
-									}
-								},
-								fail: asyncFailFunction});
+									})
+								.fail(cr.asyncFail);
 						}
 					}
 					stateString = "";
@@ -901,21 +900,30 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("signup/"))
+				{
+					stateString = stateString.substring("signup/".length);
+					
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel(previousPanel);
+						showPanelNow(firstPanel.node());
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						showPanelUp(signUp.node());
+					}
+					needsSignin = false;
+				}
 				else if (stateString.startsWith("me"))
 				{
-					var handleState = function(pathwayPanel)
+					var handleState = function()
 					{
 						crp.pushCheckCells(cr.signedinUser, undefined, 
 							function() {
-								if (!pathwayPanel)
+								if (!firstPanel)
 								{
-									if (!firstPanel)
-									{
-										firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-										showPanelUp(firstPanel.node());
-									}
-									pathwayPanel = firstPanel;
+									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+									showPanelUp(firstPanel.node());
 								}
 							},
 							asyncFailFunction);
@@ -943,9 +951,12 @@
 					{
 						firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
 						showPanelNow(firstPanel.node());
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-						if (handleState)
-							handleState();
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
+						.then(function()
+							{
+								if (handleState)
+									handleState();
+							});
 					});
 			}
 			else if (!needsSignin)

@@ -495,7 +495,8 @@ var WelcomePanel = (function () {
 					if (prepareClick('click', 'For Organizations'))
 					{
 						var panel = new WelcomeOrganizationPanel(_this.node());
-						showPanelUp(panel.node(), unblockClick);
+						showPanelUp(panel.node())
+							.always(unblockClick);
 					}
 				});
 		
@@ -526,6 +527,8 @@ var WelcomePanel = (function () {
 							if (prepareClick('click', 'Get Started'))
 							{
 								var signUp = new Signup(_this.node());
+								showPanelUp(signUp.node())
+									.always(unblockClick);
 								return;
 							}
 						}

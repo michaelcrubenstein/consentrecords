@@ -36,7 +36,6 @@ def handler404(request):
 
 
 def handler500(request):
-    print('handler500')
     response = render_to_response('500.html', {},
                                   context_instance=RequestContext(request))
     response.status_code = 500
@@ -56,7 +55,6 @@ def home(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -82,7 +80,6 @@ def showLines(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -106,7 +103,6 @@ def orgHome(request):
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -126,13 +122,12 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
-def find(request, serviceid, offeringid):
+def find(request):
     logPage(request, 'pathAdvisor/find')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -141,7 +136,9 @@ def find(request, serviceid, offeringid):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = "findNewExperience" + serviceid + offeringid
+    # Currently, findNewExperience can support a serviceID and an offeringID. ultimately,
+    # we want to pass a path to make this more RESTful.
+    args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
         offering = Instance.objects.get(pk=offeringid)
@@ -194,7 +191,6 @@ def showPathway(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -222,7 +218,6 @@ def accept(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -253,7 +248,6 @@ def ignore(request, email):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -272,6 +266,23 @@ def ignore(request, email):
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
         args['follower_description'] = objs[0].getDescription()
+        
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def signup(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'signup/%s' % email
         
     context = RequestContext(request, args)
         
@@ -427,7 +438,6 @@ def addExperience(request, experienceID):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -487,7 +497,10 @@ def addToPathway(request):
         organization, site, offering = None, None, None
 
     if serviceName and terms.isUUID(serviceName):
-        service = terms[serviceName]
+        try:
+            service = terms[serviceName]
+        except Instance.DoesNotExist:
+            service = None
     elif serviceName:
         service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
     else:
@@ -496,7 +509,6 @@ def addToPathway(request):
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
 
     if settings.FACEBOOK_SHOW:
@@ -877,13 +889,15 @@ class api:
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
             if len(fieldNames):
-                fieldTermNames = Instance.objects.filter(typeID=terms.term,
-                        value__deleteTransaction__isnull=True,
-                        value__field = terms.name,
-                        value__stringValue__in=fieldNames)
-                subValueQueryset = userInfo.findValueFilter(\
-                     Value.objects.filter(deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__in=fieldTermNames))\
+            	# The distinct is required to eliminate duplicate subValues.
+                subValues = Value.objects.filter(deleteTransaction__isnull=True,
+                                          instance__deleteTransaction__isnull=True,
+                                          instance__referenceValues__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__field=terms.name,
+                                          instance__referenceValues__field__value__stringValue__in=fieldNames)\
+                    .distinct()
+                subValueQueryset = userInfo.findValueFilter(subValues)\
                     .order_by('position')\
                     .select_related('field')\
                     .select_related('referenceValue')\

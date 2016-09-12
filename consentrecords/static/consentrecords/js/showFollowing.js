@@ -94,7 +94,8 @@ var RequestFollowPanel = (function() {
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
 			
-		showPanelUp(this.node(), unblockClick);
+		showPanelUp(this.node())
+			.always(unblockClick);
 	}
 	
 	return RequestFollowPanel;
@@ -186,18 +187,19 @@ var FollowingPanel = (function() {
 						if (prepareClick('click', 'compare to: ' + user.getDescription()))
 						{
 							user.checkCells([], function()
-							{
-								try
 								{
-									var panel = new ComparePathsPanel(_this.user, user, _this.node());
-									showPanelUp(panel.node(), unblockClick);
-								}
-								catch(err)
-								{
-									syncFailFunction(err);
-								}
-							},
-							syncFailFunction);
+									try
+									{
+										var panel = new ComparePathsPanel(_this.user, user, _this.node());
+										showPanelUp(panel.node())
+											.always(unblockClick);
+									}
+									catch(err)
+									{
+										cr.syncFail(err);
+									}
+								},
+								cr.syncFail);
 						}
 						d3.event.preventDefault();
 						d3.event.stopPropagation();

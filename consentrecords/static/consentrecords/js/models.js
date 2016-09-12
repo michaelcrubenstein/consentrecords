@@ -57,6 +57,7 @@ var Queue = (function () {
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.paths = {};
+	CRP.prototype.promises = {};
 	CRP.prototype.configurations = {};
 	CRP.prototype.queue = null;
 	
@@ -70,6 +71,7 @@ var CRP = (function() {
     CRP.prototype.clear = function() {
     	this.instances = {};
     	this.paths = {};
+    	this.promises = {};
     	this.configurations = {};
         this.queue = new Queue(true); //initialize the queue
     };
@@ -192,38 +194,34 @@ var CRP = (function() {
 	};
 	
 	/*
-		args has the following fields: path, fields, done, fail
+		args has the following fields: path, fields
 	 */
-	CRP.prototype.getData = function(args)
+	CRP.prototype.promise = function(args)
 	{
-		if (typeof(args.done) != "function")
-			throw "done is not a function";
-		if (typeof(args.fail) != "function")
-			throw "fail is not a function";
-		if (!args.path)
-			throw "path is not defined";
+		if (args.path in this.promises)
+			return this.promises[args.path];
+
 		var _this = this;
-		this.queue.add(
-			function() {
-				if (args.path in _this.paths)
-					args.done(_this.paths[args.path]);
-				else
+		var result = $.Deferred();
+		cr.getData({path: args.path, 
+					start: args.start,
+					end: args.end,
+					fields: args.fields})
+			.done(function(newInstances)
 				{
-					cr.getData({path: args.path, 
-								start: args.start,
-								end: args.end,
-								fields: args.fields,
-								done: function(newInstances) {
-											var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
-											_this.paths[args.path] = mappedInstances;
-											args.done(mappedInstances);
-											_this.queue.next();
-										}, 
-								fail: args.fail});
-					return false;
-				}
-			});
-	};
+					var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
+					result.resolve(mappedInstances);
+				})
+			.fail(function(err)
+				{
+					_this.promises[args.path] = undefined;
+					result.reject(err);
+				});
+		var promise = result.promise();
+		this.promises[args.path] = promise;
+		return promise;
+	}
+	
 	CRP.prototype.getConfiguration = function(ofKindID, successFunction, failFunction)
 	{
 		if (typeof(successFunction) != "function")
@@ -1066,6 +1064,83 @@ cr.ObjectValue = (function() {
 			cell.setParent(this);
 		});
 	}
+
+	ObjectValue.prototype.promiseCells = function(fields)
+	{
+		if (this.privilege == "_find")
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
+			return result.promise();
+		}
+	
+		if (this.cells && this.isDataLoaded)
+		{
+			var result = $.Deferred();
+			result.resolve(this.cells);
+			return result.promise();
+		}
+		else if (this.getValueID())
+		{
+			var _this = this;
+			var jsonArray = { "path" : "#" + this.getValueID() };
+			if (fields)
+				jsonArray["fields"] = JSON.stringify(fields);
+			return $.when($.getJSON(cr.urls.getData, jsonArray))
+				.then(function(json)
+					{
+						var r2 = $.Deferred();
+						try {
+							/* If the data length is 0, then this item can not be read. */
+							if (json.data.length > 0)
+							{
+								var src = json.data[0];
+								_this.importCells(src.cells);
+								_this.privilege = src.privilege;
+								if (src.typeName)
+									_this.typeName = src.typeName;
+							}
+							else
+							{
+								_this.importCells([]);
+								_this.privilege = null;
+							}
+							_this.isDataLoaded = true;
+							
+							r2.resolve(_this.cells);
+						}
+						catch (err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					function(jqXHR, textStatus, errorThrown)
+					{
+						var r2 = $.Deferred();
+						r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
+						return r2;
+					}
+				 );
+		}
+		else if (this.cell.field.ofKindID)
+		{
+			var _this = this;
+			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
+			var r2 = $.Deferred();
+			cr.getConfiguration(this, this.cell.field.ofKindID, 
+				function(newCells)
+				{
+					_this._setCells(newCells);
+					r2.resolve(newCells);
+				},
+				function(err)
+				{
+					r2.reject(err);
+				});
+			return r2;
+		}
+	}
 	
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
@@ -1239,15 +1314,21 @@ cr.accessToken = null;
 cr.refreshToken = null;
 cr.tokenType = null;
 	
-cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
+cr.postError = function(jqXHR, textStatus, errorThrown)
 	{
 		if (textStatus == "timeout")
-			failFunction("This operation ran out of time. Try again.");
+			return "This operation ran out of time. Try again.";
 		else if (jqXHR.status == 0)
-			failFunction("The server is not responding. Please try again.");
+			return "The server is not responding. Please try again.";
 		else
-			failFunction(jqXHR.statusText);
+			return jqXHR.statusText;
 	};
+
+cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
+	{
+		failFunction(cr.postError(jqXHR, textStatus, errorThrown));
+	};
+
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail */
 cr.selectAll = function(args)
@@ -1572,10 +1653,6 @@ cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
  */
 cr.getData = function(args)
 	{
-		if (!args.fail)
-			throw ("failFunction is not specified");
-		if (!args.done)
-			throw ("successFunction is not specified");
 		if (!args.path)
 			throw ("path is not specified to getData");
 			
@@ -1590,24 +1667,32 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
+		var result = $.Deferred();
 		$.getJSON(cr.urls.getData, data)
-		.done(function(json)
-			{
-				var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
-				try
+			.done(function(json)
 				{
-					args.done(instances);
-				}
-				catch(err)
-				{
-					args.fail(err);
-				}
-			})
-		.fail(function(jqXHR, textStatus, errorThrown)
+					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
+					try
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
+						result.resolve(instances);
+						if (args.done)
+							args.done(instances);
 					}
-				);
+					catch(err)
+					{
+						result.reject(err);
+						if (args.fail)
+							args.fail(err);
+					}
+				})
+			.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
+					result.reject(resultText);
+					if (args.fail)
+						args.fail(resultText);
+				});
+		return result.promise();
 	},
 cr.submitSignout = function(done, fail)
 	{

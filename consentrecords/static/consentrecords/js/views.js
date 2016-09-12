@@ -223,7 +223,7 @@ function showClickFeedback(obj, done)
 		   	});
 }
 
-function showPanelUp(panelNode, done)
+function showPanelUp(panelNode)
 {
 	window.scrollTo(0, 0);
 	$(panelNode).hide("slide", {direction: "down"}, 0);
@@ -231,10 +231,7 @@ function showPanelUp(panelNode, done)
 				.trigger("revealing.cr");
 	if (panelNode.sitePanel)
 		panelNode.sitePanel.calculateHeight();
-	$(panelNode).effect("slide", {direction: "down"}, 400, function() {
-							if (done)
-								done();
-						});
+	return $(panelNode).effect("slide", {direction: "down"}, 400).promise();
 }
 
 function showPanelNow(panelNode)
@@ -2465,7 +2462,8 @@ function revealPanelLeft(panelDiv)
 
 function revealPanelUp(panelDiv)
 {
-	showPanelUp(panelDiv, unblockClick);
+	return showPanelUp(panelDiv)
+		.always(unblockClick);
 }
 
 /* Displays a panel in which the specified object's contents appear without being able to edit.
@@ -3026,7 +3024,8 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		}  
 	});
 	
-	showPanelUp(sitePanel.node(), unblockClick);
+	showPanelUp(sitePanel.node())
+		.always(unblockClick);
 }
 
 /* Displays a panel from which a user can select an object of the kind required 
