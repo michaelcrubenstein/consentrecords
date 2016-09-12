@@ -900,6 +900,19 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("signup/"))
+				{
+					stateString = stateString.substring("signup/".length);
+					
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel(previousPanel);
+						showPanelNow(firstPanel.node());
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						showPanelUp(signUp.node());
+					}
+					needsSignin = false;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function()

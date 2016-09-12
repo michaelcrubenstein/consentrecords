@@ -38,6 +38,7 @@ urlpatterns = [
     url(r'^ignore/([^/@]+@[^/@]+\.[^/@]+)/', views.ignore),
     url(r'^accept/([A-Fa-f0-9]{32})/', views.accept),
     url(r'^ignore/([A-Fa-f0-9]{32})/', views.ignore),
+    url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
 
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),

@@ -1,4 +1,5 @@
 var Signup = (function () {
+	Signup.prototype = new SitePanel();
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
@@ -7,7 +8,7 @@ var Signup = (function () {
 		$.post(cr.urls.checkUnusedEmail, 
 			{ email: email,
 			})
-		  .done(function(json, textStatus, jqXHR)
+		  .done(function()
 			{
 				closealert();
 				if (successFunction)
@@ -36,14 +37,16 @@ var Signup = (function () {
 		  });
 	}
 
-	function Signup(previousPanel, editable) {
+	function Signup(previousPanel, initialData)
+	{
+		initialData = initialData !== undefined ? initialData : {};
 	
-		var _thisSignup = this;
-		var sitePanel = new SitePanel(previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
+		var _thisSignup = this
+		SitePanel.call(this, previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
 
-		var navContainer = sitePanel.appendNavContainer();
+		var navContainer = this.appendNavContainer();
 
-		var panel2Div = sitePanel.appendScrollArea()
+		var panel2Div = this.appendScrollArea()
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
@@ -69,7 +72,7 @@ var Signup = (function () {
 						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								sitePanel.hidePanelDown(
+								_thisSignup.hidePanelDown(
 									function()
 									{
 										$(cr.signedinUser).trigger("signin.cr");
@@ -82,7 +85,7 @@ var Signup = (function () {
 				
 			});
 		this.dots.appendBackButton(navContainer, function() {
-			sitePanel.hidePanelDown(unblockClick);
+			_thisSignup.hidePanelDown(unblockClick);
 		});
 		
 		navContainer.appendTitle('New Account');
@@ -169,9 +172,6 @@ var Signup = (function () {
 			p.append('p')
 				.text('Your birthday will be shared only with people you want. We collect your birth month and year to help match you to the right opportunities.');
 				
-// 			p.append('p')
-// 				.text('We may collect the day of your birthday later, depending on our partners who provide opportunities to you.');
-// 				
 			var minYear, maxYear;
 			maxYear = (new Date()).getUTCFullYear();
 	
@@ -250,6 +250,9 @@ var Signup = (function () {
 					{
 						signup.dots.checkForwardEnabled();
 					});
+					
+			if (initialData.email)
+				emailInput.attr('value', initialData.email);
 					
 			$(emailInput.node()).keypress(function(e) {
 				if (e.which == 13)
@@ -496,7 +499,10 @@ var Signup = (function () {
 		this.dots.nthPanel(2).onReveal = setupPanel3;
 		this.dots.nthPanel(3).onReveal = setupPanel4;
 		
-		this.dots.showDots();
+		setTimeout(function()
+			{
+				_thisSignup.dots.showDots();
+			});
 	}
 	
 	return Signup;
