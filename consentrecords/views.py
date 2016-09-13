@@ -271,7 +271,7 @@ def ignore(request, email):
         
     return HttpResponse(template.render(context))
 
-def signup(request, email):
+def signup(request, email=None):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
     template = loader.get_template('consentrecords/userHome.html')
@@ -282,7 +282,10 @@ def signup(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = 'signup/%s' % email
+    if email:
+        args['state'] = 'signup/%s' % email
+    else:
+        args['state'] = 'signup/'
         
     context = RequestContext(request, args)
         
