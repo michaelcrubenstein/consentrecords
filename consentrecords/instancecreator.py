@@ -40,7 +40,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                 elif "path" in d:
                     ids = pathparser.selectAllObjects(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
-                        parent.addReferenceValue(field, ids[-1], i, transactionState)
+                        parent.addReferenceValue(field, ids[len(ids)-1], i, transactionState)
                     else:
                         raise RuntimeError("Path does not parse to an object: %s" % d["path"])
                 else:
