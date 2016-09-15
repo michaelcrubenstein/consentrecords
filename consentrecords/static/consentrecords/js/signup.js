@@ -50,7 +50,7 @@ var Signup = (function () {
 			.classed("vertical-scrolling", false)
 			.classed("no-scrolling", true);
 		
-		this.dots = new DotsNavigator(panel2Div, 4);
+		this.dots = new DotsNavigator(panel2Div, 3);
 		this.dots.datum = this;	
 		this.dots.finalText = "Create";	
 
@@ -59,11 +59,11 @@ var Signup = (function () {
 				var birthDay = _thisSignup.getBirthday();
 				var birthMonth = birthDay.substr(0, 7);
 				var initialData = {"Birthday": [{text: birthDay}],
+								   "_public access":
+								   		[{path: "_term[_name=_privilege]enumerator[_name=_find]"}],
 				                   "More Experiences": 
 				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
 				                   		]};
-				if (_thisSignup.getPublicAccess())
-					initialData["_public access"] = [{instanceID: _thisSignup.getPublicAccess()}];
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData, 
 					function(userData)
@@ -494,10 +494,9 @@ var Signup = (function () {
 			this.onReveal = null;
 		}
 	
-		this.dots.nthPanel(0).onReveal = setupPanel0;
-		this.dots.nthPanel(1).onReveal = setupPanel2;
-		this.dots.nthPanel(2).onReveal = setupPanel3;
-		this.dots.nthPanel(3).onReveal = setupPanel4;
+		this.dots.nthPanel(0).onReveal = setupPanel2;
+		this.dots.nthPanel(1).onReveal = setupPanel3;
+		this.dots.nthPanel(2).onReveal = setupPanel0;
 		
 		setTimeout(function()
 			{
