@@ -848,7 +848,7 @@
 							}
 						}
 						
-						cr.share("{{follower}}", "{{cell}}", "{{privilege}}", function(newValue)
+						cr.share(null, "{{follower}}", "{{cell}}", "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
 								if (newValue.typeName == '_access record')
