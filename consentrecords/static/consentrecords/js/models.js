@@ -1039,22 +1039,15 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
-		if (!fail)
-			throw ("fail is not specified");
-		if (!done)
-			throw ("done is not specified");
-
 		var containerCell = this.cell;
 		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
 			
 		var _this = this;
-		cr.createInstance(containerCell.field, containerUUID, initialData, 
-			function(newData)
-			{
-				_this._completeUpdate(newData);
-				done(newData);
-			}, 
-			fail);
+		return $.when(cr.createInstance(containerCell.field, containerUUID, initialData))
+		        .then(function(newData)
+		        	{
+		        		_this._completeUpdate(newData);
+		        	});
 	}
 	
 	ObjectValue.prototype._setCells = function(oldCells)
@@ -1115,12 +1108,7 @@ cr.ObjectValue = (function() {
 						}
 						return r2;
 					},
-					function(jqXHR, textStatus, errorThrown)
-					{
-						var r2 = $.Deferred();
-						r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
-						return r2;
-					}
+					cr.thenFail
 				 );
 		}
 		else if (this.cell.field.ofKindID)
@@ -1329,6 +1317,12 @@ cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 		failFunction(cr.postError(jqXHR, textStatus, errorThrown));
 	};
 
+cr.thenFail = function(jqXHR, textStatus, errorThrown)
+	{
+		var r2 = $.Deferred();
+		r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
+		return r2;
+	};
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail */
 cr.selectAll = function(args)
@@ -1467,16 +1461,8 @@ cr.deleteValue = function(valueID, successFunction, failFunction)
 			});
 	};
 			
-cr.createInstance = function(field, containerUUID, initialData, successFunction, failFunction)
+cr.createInstance = function(field, containerUUID, initialData)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
 		var jsonArray = {
 					properties: JSON.stringify(initialData)
 				};
@@ -1497,36 +1483,34 @@ cr.createInstance = function(field, containerUUID, initialData, successFunction,
 		if (containerUUID)
 			jsonArray.containerUUID = containerUUID;
 	
-		$.post(cr.urls.createInstance, 
-				jsonArray)
-			  .done(function(json, textStatus, jqXHR)
-				{
-					try
+		return $.when($.post(cr.urls.createInstance, jsonArray))
+				.then(function(json)
 					{
-						/* Copy the data from json object into newData so that 
-							any functions are properly initialized.
-						 */
-						var newData = new cr.ObjectValue();
-						/* If there is a container, then the id in newData will contain
-							the id of the value object in the database. */
-						if (containerUUID)
-							newData.id = json.object.id;
-						newData.instanceID = json.object.instanceID;
-						newData.setDescription(json.object.description);
-						newData.typeName = json.object.typeName;
-						newData.privilege = json.object.privilege;
-						successFunction(newData);
-					}
-					catch(err)
-					{
-						failFunction(err);
-					}
-				})
-			  .fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					}
-				);
+						var r2 = $.Deferred();
+						try {
+							/* Copy the data from json object into newData so that 
+								any functions are properly initialized.
+							 */
+							var newData = new cr.ObjectValue();
+							/* If there is a container, then the id in newData will contain
+								the id of the value object in the database. */
+							if (containerUUID)
+								newData.id = json.object.id;
+							newData.instanceID = json.object.instanceID;
+							newData.setDescription(json.object.description);
+							newData.typeName = json.object.typeName;
+							newData.privilege = json.object.privilege;
+							
+							r2.resolve(newData);
+						}
+						catch (err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					cr.thenFail
+				 );
 	},
 	
 cr.updateValues = function(initialData, sourceObjects, successFunction, failFunction)
