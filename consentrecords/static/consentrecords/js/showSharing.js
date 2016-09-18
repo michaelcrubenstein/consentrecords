@@ -213,7 +213,8 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 
-		cr.share(path, accessorLevel.id, function(newData)
+		var userPath = "#{0}".format(this.user.getValueID());
+		cr.share(userPath, path, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell("_access record");
 				accessRecordCell.addValue(newData);
@@ -239,9 +240,10 @@ var SharingPanel = (function() {
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
+		var userPath = "#{0}".format(this.user.getValueID());
 		ar.checkCells(undefined, function()
 		{
-			cr.share(path, accessorLevel.id, function(newValue)
+			cr.share(userPath, path, accessorLevel.id, function(newValue)
 				{
 					var cellName = newValue.typeName == '_user' ? '_user' : '_group';
 					var cell = ar.getCell(cellName);

@@ -1737,11 +1737,14 @@ cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
 		});
 	}
 
-cr.share = function(path, privilegeID, done, fail)
+cr.share = function(userPath, path, privilegeID, done, fail)
 	{
-		$.post(cr.urls.acceptFollower, {follower: path,
-										privilege: privilegeID
-										})
+		var url = cr.urls.acceptFollower;
+		if (userPath)
+			url += encodeURIComponent(userPath + "/");
+		$.post(url, {follower: path,
+					 privilege: privilegeID
+					})
 		.done(function(json){
 				/* Copy the data from json object into newData so that 
 					any functions are properly initialized.
