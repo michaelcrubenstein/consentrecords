@@ -1365,18 +1365,18 @@
 								function()
 								{
 									var initialData = {"_user": [{instanceID: user.getValueID()}] };
-									cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
-													  initialData,
-													  function(newData)
-													   {
-															enrollmentCell.addValue(newData);
-															bootstrap_alert.success(user.getDescription() + 
-																  " enrolled in " + 
-																  offering.getDescription() + "/" + session.getDescription(),
-																  ".alert-container");
-															successFunction();
-													   },
-													   syncFailFunction);
+									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+													  initialData))
+									 .then(function(newData)
+										   {
+												enrollmentCell.addValue(newData);
+												bootstrap_alert.success(user.getDescription() + 
+													  " enrolled in " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+												successFunction();
+										   },
+										   cr.syncFail);
 								},
 								syncFailFunction);
 						}
