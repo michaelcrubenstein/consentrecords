@@ -291,7 +291,7 @@ def signup(request, email=None):
         
     return HttpResponse(template.render(context))
 
-def acceptFollower(request):
+def acceptFollower(request, userPath=None):
     if request.method != "POST":
         raise Http404("acceptFollower only responds to POST methods")
     
@@ -305,55 +305,65 @@ def acceptFollower(request):
         else:
             followerPath = followerID
         
-        if request.user.is_authenticated():
+        if not request.user.is_authenticated():
+            return HttpResponseBadRequest(reason="user is not authenticated")
+            
+        userInfo = UserInfo(request.user)
+        if userPath:
+            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            if len(users):
+                user = users[0]
+                if user.typeID != terms.user:
+                    return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
+            else:
+                return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
+        else:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
+
+        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        if len(objs) > 0:
+            follower = objs[0]
+            if follower.typeID == terms.user:
+                followerField = terms.user
             else:
-                userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                if len(objs) > 0:
-                    follower = objs[0]
-                    if follower.typeID == terms.user:
-                        followerField = terms.user
-                    else:
-                        followerField = terms.group
-                    ars = user.value_set.filter(field=terms['_access record'],
-                                          deleteTransaction__isnull=True) \
-                                  .filter(referenceValue__value__field=followerField,
+                followerField = terms.group
+            ars = user.value_set.filter(field=terms['_access record'],
+                                  deleteTransaction__isnull=True) \
+                          .filter(referenceValue__value__field=followerField,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__referenceValue_id=follower.id)
+            if ars.count():
+                return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
+            else:
+                with transaction.atomic():
+                    transactionState = TransactionState(request.user)
+                    nameLists = NameList()
+                    try:
+                        ar = user.value_set.filter(field=terms['_access record'],
+                                                   deleteTransaction__isnull=True) \
+                                     .get(referenceValue__value__field=terms['_privilege'],
                                           referenceValue__value__deleteTransaction__isnull=True,
-                                          referenceValue__value__referenceValue_id=follower.id)
-                    if ars.count():
-                        return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
-                    else:
-                        with transaction.atomic():
-                            transactionState = TransactionState(request.user)
-                            nameLists = NameList()
-                            try:
-                                ar = user.value_set.filter(field=terms['_access record'],
-                                                           deleteTransaction__isnull=True) \
-                                             .get(referenceValue__value__field=terms['_privilege'],
-                                                  referenceValue__value__deleteTransaction__isnull=True,
-                                                  referenceValue__value__referenceValue_id=privilegeID).referenceValue
-                                newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
-                            except Value.DoesNotExist:
-                                ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
-                                    {'_privilege': [{'instanceID': privilegeID}],
-                                     followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
-            
-                            # Remove any corresponding access requests.
-                            vs = user.value_set.filter(field=terms['_access request'],
-                                                   deleteTransaction__isnull=True,
-                                                   referenceValue_id=follower.id)
-                            for v in vs:
-                                v.deepDelete(transactionState)
-                        
-                            data = newValue.getReferenceData(userInfo, language)
-                            results = {'object': data} 
-                else:
-                    raise RuntimeError('the user or group to accept is unrecognized')
+                                          referenceValue__value__referenceValue_id=privilegeID).referenceValue
+                        newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
+                    except Value.DoesNotExist:
+                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
+                            {'_privilege': [{'instanceID': privilegeID}],
+                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
+    
+                    # Remove any corresponding access requests.
+                    vs = user.value_set.filter(field=terms['_access request'],
+                                           deleteTransaction__isnull=True,
+                                           referenceValue_id=follower.id)
+                    for v in vs:
+                        v.deepDelete(transactionState)
+                
+                    data = newValue.getReferenceData(userInfo, language)
+                    results = {'object': data} 
         else:
-            return HttpResponseBadRequest(reason="user is not authenticated")
+            raise RuntimeError('the user or group to accept is unrecognized')
+            
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
@@ -892,7 +902,7 @@ class api:
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
             if len(fieldNames):
-            	# The distinct is required to eliminate duplicate subValues.
+                # The distinct is required to eliminate duplicate subValues.
                 subValues = Value.objects.filter(deleteTransaction__isnull=True,
                                           instance__deleteTransaction__isnull=True,
                                           instance__referenceValues__deleteTransaction__isnull=True,

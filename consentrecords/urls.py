@@ -44,7 +44,8 @@ urlpatterns = [
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitnewuser/', views.submitNewUser, name='submitNewUser'),
     url(r'^user/updateusername/', views.updateUsername, name='updateUsername'),
-    url(r'^user/acceptFollower/', views.acceptFollower, name='acceptFollower'),
+    url(r'^user/acceptFollower/([^?]*)/', views.acceptFollower),
+    url(r'^user/acceptFollower/', views.acceptFollower),
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
 
     url(r'^local/getuserid/', views.getUserID),
