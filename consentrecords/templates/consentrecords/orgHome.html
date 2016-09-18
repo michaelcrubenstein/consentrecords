@@ -28,6 +28,7 @@
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showSharing.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/signup.css" %}" rel="stylesheet">
     
@@ -303,6 +304,7 @@
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}"></script>
 	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
 	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
@@ -1364,6 +1366,7 @@
 								},
 								function()
 								{
+									/* Test case: Enroll a user into a session from org page. */
 									var initialData = {"_user": [{instanceID: user.getValueID()}] };
 									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
 													  initialData))
