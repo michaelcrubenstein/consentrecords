@@ -1777,6 +1777,16 @@ var PathlinesPanel = (function () {
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
+	PathlinesPanel.prototype.checkShowIdeas = function()
+	{
+		var pathtree = this.pathtree;
+		if (pathtree.allExperiences.length == 0 && pathtree.editable &&
+			pathtree.path.canWrite())
+		{
+			var idea = new ExperienceIdeas(pathtree.sitePanel.node(), pathtree.path, undefined, asyncFailFunction);
+		}
+	}
+	
 	function PathlinesPanel(user, previousPanel, done) {
 		var _this = this;
 		this.user = user;
@@ -1916,7 +1926,7 @@ var PathlinesPanel = (function () {
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				_this.setupAddExperienceButton(user, addExperienceButton);
+				this.sitePanel.setupAddExperienceButton(user, addExperienceButton);
 				
 				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
 				
@@ -1930,16 +1940,8 @@ var PathlinesPanel = (function () {
 // 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
-				_this.calculateHeight();
+				this.sitePanel.calculateHeight();
 				
-				if (_this.pathtree.allExperiences.length == 0 && _this.pathtree.editable)
-				{
-					if (_this.pathtree.path.canWrite())
-					{
-						var idea = new ExperienceIdeas(_this.node(), _this.pathtree.path, undefined, asyncFailFunction);
-					}
-				}
-			
 			});
 	}
 	
