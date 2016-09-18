@@ -463,12 +463,14 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 			{
 				var c = a.filter(
 					function(ar) {
-						var privCell = ar.getCell("_privilege");
-						return privCell.data.length === 1 &&
-							   privCell.data[0].getValueID() === priv.getValueID();
+						var storedPrivilegeValue = ar.getValue("_privilege");
+						return storedPrivilegeValue &&
+							   storedPrivilegeValue.getValueID() === priv.getValueID();
 					});
 				if (c.length > 0)
 				{
+					/* Test case: When the user shares read access with some users but not the group that owns this session,
+					    sign up for this session. */
 					var cell = c[0].getCell(cellName);
 					
 					cr.updateValues([cell.getAddCommand(target)],
@@ -477,12 +479,13 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 				}
 				else
 				{
-					// Create an instance of an access record with this accessor level
-					// and this user.
+					/* Test case: When the user shares read access with no users or groups,
+					    sign up for this session. */
 					var field = source.getCell("_access record").field;
 					var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
 					initialData[cellName] = [{instanceID: target.getValueID()}];
-					cr.createInstance(field, source.getValueID(), initialData, done, fail);
+					$.when(cr.createInstance(field, source.getValueID(), initialData))
+					 .then(done, fail);
 				}
 			}
 		},

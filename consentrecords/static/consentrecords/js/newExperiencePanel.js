@@ -431,25 +431,26 @@ var Experience = (function() {
 		}
 		else
 		{
+			/* Test case: add an experience to a path. */
 			bootstrap_alert.show($('.alert-container'), "Adding Experience To Your Pathway...", "alert-info");
 
-			function onCreatedInstance(newData)
-			{
-				crp.pushCheckCells(newData, ["Offering"], 
-					function() {
-						_this.path.getCell("More Experience").addValue(newData);
-						if (done)
-							done();
-					},
-					cr.syncFail);
-			}
-		
 			field = {ofKind: "More Experience", name: "More Experience"};
 			var initialData = {};
 
 			this.appendData(initialData);
 		
-			cr.createInstance(field, this.path.getValueID(), initialData, onCreatedInstance, syncFailFunction);
+			$.when(cr.createInstance(field, this.path.getValueID(), initialData))
+			 .then(function(newData)
+					{
+						crp.pushCheckCells(newData, ["Offering"], 
+							function() {
+								_this.path.getCell("More Experience").addValue(newData);
+								if (done)
+									done();
+							},
+							cr.syncFail);
+					}, 
+				   cr.syncFail);
 		}
 	}
 	

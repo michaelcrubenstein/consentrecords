@@ -70,25 +70,28 @@ var ExperienceCommentsPanel = (function() {
 		{
 			initialData = {_name: [{text: newText}]};
 		}
+		
 		if (comments.getValueID())
 		{
+			/* Test case: add a comment to an experience that has had a comment */
 			var commentCell = comments.getCell("Comment");
-			cr.createInstance(commentCell.field, comments.getValueID(), initialData, 
-				function(newData)
-				{
-					crp.pushCheckCells(newData, [], 
-						function() {
-							commentCell.addValue(newData);
-							done(newData);
-						},
-						fail);
-				}, fail);
+			$.when(cr.createInstance(commentCell.field, comments.getValueID(), initialData))
+		     .then(function(newData)
+					{
+						crp.pushCheckCells(newData, [], 
+							function() {
+								commentCell.addValue(newData);
+								done(newData);
+							},
+							fail);
+					},
+					fail);
 		}
 		else
 		{
-			comments.saveNew({Comment: [{cells: initialData}]},
-				done,
-				fail);
+			/* Test case: add a comment to an experience that has not had a comment previously added. */
+			$.when(comments.saveNew({Comment: [{cells: initialData}]}))
+			 .then(done, fail);
 		}
 	}
 	

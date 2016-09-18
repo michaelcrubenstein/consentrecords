@@ -2597,13 +2597,19 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 					try
 					{
 						var sections = panel2Div.selectAll("section");
+						sections.each(
+							function(cell) {
+								cell.updateCell(this);
+							});
+							
+						var cells = sections.data();
+	
 						if (containerCell.parent == null ||
 							containerCell.parent.getValueID() != null)
 						{
 							var initialData = {}
-							sections.each(
+							cells.forEach(
 								function(cell) {
-									cell.updateCell(this);
 									cell.appendData(initialData);
 								});
 		
@@ -2611,35 +2617,35 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 							{
 								/* Test case: Set the address for a site where the site
 								   has been previously saved without an address. */
-								objectData.saveNew(initialData, 
-									function() { 
-										sitePanel.hide(); 
-									}, 
+								$.when(objectData.saveNew(initialData))
+								 .then(function() {
+								 		sitePanel.hide();
+								 	}, 
 									cr.syncFail);
 							}
 							else
 							{
 								/* Test case: add a new service to the services panel. */
-								cr.createInstance(containerCell.field, 
+								$.when(cr.createInstance(containerCell.field, 
 												  containerCell.parent && containerCell.parent.getValueID(), 
-												  initialData, 
-												  function(newData)
-												  {
-												  	containerCell.addValue(newData);
-												  	sitePanel.hide();
-												  },
-												  cr.syncFail);
+												  initialData))
+								 .then(function(newData)
+										  {
+											containerCell.addValue(newData);
+											sitePanel.hide();
+										  },
+									   cr.syncFail);
 							}
 						}
 						else
 						{
+							/* Test case: Create a new terms with enumerators and then add the whole thing. */
 							/* In this case, we are editing an object that is contained in 
 								an object that is being edited. This object will be saved
 								as part of completing that edit operation. */
 							d.cells = [];
-							sections.each(
+							cells.forEach(
 								function(cell) {
-									cell.updateCell(this);
 									d.importCell(cell);
 								});
 	
@@ -2711,12 +2717,12 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 														{
 															if (objectData && objectData.getValueID())
 															{
-																cr.createInstance(cell.field, objectData.getValueID(), d[name], 
-																	function(newData)
+																$.when(cr.createInstance(cell.field, objectData.getValueID(), d[name]))
+																 .then(function(newData)
 																	{
 																		cell.addValue(newData);
 																	},
-																	asyncFailFunction);
+																	cr.asyncFail);
 															}
 															else
 															{
@@ -3004,12 +3010,12 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 										for (var j = 0; j < data.length; ++j)
 										{
 											var d = data[j];
-											cr.createInstance(cell.field, null, d, 
-												function(newData)
+											$.when(cr.createInstance(cell.field, null, d))
+											 .then(function(newData)
 												{
 													cell.addValue(newData);
 												},
-												asyncFailFunction);
+												cr.asyncFail);
 										}
 									}
 									catch(err)
