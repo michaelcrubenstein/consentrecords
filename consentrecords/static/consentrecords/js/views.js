@@ -1262,9 +1262,31 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	appendButtonDescriptions(buttons)
 		.each(_pushTextChanged);
 	
-	var editFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
+	var promise, promise2;
+	if (!this.parent)
+	{
+		promise = promiseImportCells;
+		promise2 = promiseImportCells;
+	}
+	else if (this.isUnique())
+	{
+		promise = promiseSaveCells;
+		promise2 = null;	/* The added item will have an instance ID */
+	}
+	else
+	{
+		promise = promiseCreateObjectFromCells;
+		promise2 = null;	/* The added item will have an instance ID */
+	}
 		
-	var addedFunction = getOnValueAddedFunction(true, true, editFunction);
+	var editFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
+	var addedEditFunction = _isPickCell(this) ? showPickObjectPanel :
+		function(containerCell, objectData, previousPanelNode, onShow)
+		{
+			showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow, promise2);
+		}
+		
+	var addedFunction = getOnValueAddedFunction(true, true, addedEditFunction);
 
 	$(this).on("valueAdded.cr", null, itemsDiv.node(), addedFunction);
 	$(itemsDiv.node()).on("remove", null, this, function(eventObject)
@@ -1275,10 +1297,12 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	if (!this.isUnique())
 	{
 		var _this = this;
-		function done(newValue)
+		function done()
 		{
 			var newValue = _isPickCell(_this) ? null : _this.addNewValue();
-			editFunction(_this, newValue, previousPanelNode, revealPanelUp);
+				
+			editFunction(_this, newValue, previousPanelNode, revealPanelUp,
+						promise);
 		}
 		
 		crv.appendAddButton(sectionObj, done);
@@ -2554,141 +2578,125 @@ function _b64_to_utf8( str ) {
     return decodeURIComponent(escape(window.atob( str )));
 }
 
-/* 
-	Displays a panel for editing the specified object. 
- */
-function showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow) {
-	var successFunction = function(cells)
+function promiseImportCells(containerCell, d, cells)
+{
+	d.importCells(cells);
+	d.isDataLoaded = true;
+
+	d.calculateDescription();
+	d.triggerDataChanged();
+
+	var promise = $.Deferred();
+	promise.resolve(d);
+	return promise;
+}
+
+function promiseSaveCells(containerCell, d, cells)
+{
+	var initialData = {}
+	cells.forEach(
+		function(cell) {
+			cell.appendData(initialData);
+		});
+
+	return d.saveNew(initialData);
+}
+
+function promiseCreateObjectFromCells(containerCell, objectData, cells)
+{
+	var initialData = {}
+	cells.forEach(
+		function(cell) {
+			cell.appendData(initialData);
+		});
+
+	/* Test case: add a new service to the services panel. */
+	return $.when(cr.createInstance(containerCell.field, 
+						  containerCell.parent && containerCell.parent.getValueID(), 
+						  initialData))
+				   .then(function(newData)
+						  {
+							containerCell.addValue(newData);
+						  });
+}
+
+var EditPanel = (function() {
+	EditPanel.prototype = new SitePanel();
+	EditPanel.prototype.navContainer = null;
+	
+	EditPanel.prototype.appendBackButton = function()
 	{
-		var header;
-		if (objectData && objectData.getValueID())
-			header = "Edit";
-		else
-			header = "New " + containerCell.field.name;
-			
-		var sitePanel = new SitePanel(previousPanelNode, objectData, header, "edit", onShow);
-
-		var navContainer = sitePanel.appendNavContainer();
-
-		var panel2Div = sitePanel.appendScrollArea();
-		sitePanel.showEditCells(cells);
-
-		var doneButton;
-		if (objectData && objectData.getValueID())
-		{
-			if (onShow === revealPanelUp)
-				doneButton = navContainer.appendRightButton();
-			else
-				doneButton = navContainer.appendLeftButton();
-			doneButton.append("span").text("Done");
-			doneButton.on("click", function()
+		var _this = this;
+		var backButton = this.navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					panel2Div.handleDoneEditingButton.call(this);
-				});
-		}
-		else
-		{
-			doneButton = navContainer.appendRightButton();
-			doneButton.on("click", function(d) {
-				if (prepareClick('click', 'done adding'))
-				{
-					showClickFeedback(this);
-				
-					try
-					{
-						var sections = panel2Div.selectAll("section");
-						sections.each(
-							function(cell) {
-								cell.updateCell(this);
-							});
-							
-						var cells = sections.data();
-	
-						if (containerCell.parent == null ||
-							containerCell.parent.getValueID() != null)
-						{
-							var initialData = {}
-							cells.forEach(
-								function(cell) {
-									cell.appendData(initialData);
-								});
-		
-							if (objectData)
-							{
-								/* Test case: Set the address for a site where the site
-								   has been previously saved without an address. */
-								$.when(objectData.saveNew(initialData))
-								 .then(function() {
-								 		sitePanel.hide();
-								 	}, 
-									cr.syncFail);
-							}
-							else
-							{
-								/* Test case: add a new service to the services panel. */
-								$.when(cr.createInstance(containerCell.field, 
-												  containerCell.parent && containerCell.parent.getValueID(), 
-												  initialData))
-								 .then(function(newData)
-										  {
-											containerCell.addValue(newData);
-											sitePanel.hide();
-										  },
-									   cr.syncFail);
-							}
-						}
-						else
-						{
-							/* Test case: Create a new terms with enumerators and then add the whole thing. */
-							/* In this case, we are editing an object that is contained in 
-								an object that is being edited. This object will be saved
-								as part of completing that edit operation. */
-							d.cells = [];
-							cells.forEach(
-								function(cell) {
-									d.importCell(cell);
-								});
-	
-							d.calculateDescription();
-							d.triggerDataChanged();
-							sitePanel.hide();
-						}
-					}
-					catch(err)
-					{
-						cr.syncFail(err);
-					}
+					_this.hide();
 				}
 				d3.event.preventDefault();
 			});
-			doneButton.append("span").text("Add");
+		backButton.append("span").text("Cancel");
+	}
+	
+	EditPanel.prototype.appendAddButton = function(promise, containerCell, objectData, cells)
+	{
+		var doneButton;
+		var _this = this;
+		doneButton = this.navContainer.appendRightButton();
+		doneButton.on("click", function(d) {
+			if (prepareClick('click', 'EditPanel done'))
+			{
+				showClickFeedback(this);
 			
-			var backButton = navContainer.appendLeftButton()
-				.on("click", function()
+				try
 				{
-					if (prepareClick('click', 'edit object panel: Cancel'))
-					{
-						sitePanel.hide();
-					}
-					d3.event.preventDefault();
-				});
-			backButton.append("span").text("Cancel");
-		}
-		navContainer.appendTitle(header);
+					var sections = _this.mainDiv.selectAll("section");
+					sections.each(
+						function(cell) {
+							cell.updateCell(this);
+						});
+						
+					var cells = sections.data();
+					
+					$.when(promise(containerCell, objectData, cells))
+					 .then(function() {
+							_this.hide();
+						}, 
+						cr.syncFail);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
+			}
+			d3.event.preventDefault();
+		});
+		doneButton.append("span").text("Add");
+		return doneButton;
+	}
+	
+	function EditPanel(previousPanelNode, objectData, cells, header, onShow)
+	{
+		SitePanel.call(this, previousPanelNode, objectData, header, "edit", onShow);
+		this.navContainer = this.appendNavContainer();
 
-		$(sitePanel.node()).on('dragover',
+		var panel2Div = this.appendScrollArea();
+		this.showEditCells(cells);
+
+		$(this.node()).on('dragover',
 			function(e) {
 				e.preventDefault();
 				e.stopPropagation();
 			}
 		)
-		$(sitePanel.node()).on('dragenter',
+		$(this.node()).on('dragenter',
 			function(e) {
 				e.preventDefault();
 				e.stopPropagation();
 			}
 		)
-		$(sitePanel.node()).on('drop', function(e)
+		$(this.node()).on('drop', function(e)
 		{
 			if (e.originalEvent.dataTransfer) {
 				if (e.originalEvent.dataTransfer.files.length) {
@@ -2746,17 +2754,95 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 				} 
 			}  
 		});
+	}
+	
+	return EditPanel;
+})();
+
+/* 
+	Displays a panel for editing the specified object. 
+ */
+function showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow, getSavePromise) {
+	var successFunction = function(cells)
+	{
+		var header;
+		if (objectData && objectData.getValueID())
+			header = "Edit";
+		else
+			header = "New " + containerCell.field.name;
+		var sitePanel = new EditPanel(previousPanelNode, objectData, cells, header, onShow);
+
+		var doneButton;
+		if (objectData && objectData.getValueID())
+		{
+			if (onShow === revealPanelUp)
+				doneButton = sitePanel.navContainer.appendRightButton();
+			else
+				doneButton = sitePanel.navContainer.appendLeftButton();
+			doneButton.append("span").text("Done");
+			doneButton.on("click", function()
+				{
+					panel2Div.handleDoneEditingButton.call(this);
+				});
+		}
+		else
+		{
+			var sections = sitePanel.mainDiv.selectAll('section');
+			var cells = sections.data();
+			var f = null;
+			
+			if (getSavePromise)
+				f = getSavePromise;
+			else if (objectData)
+			{
+				/* Test case: Set the address for a site where the site
+				   has been previously saved without an address. */
+				f = promiseSaveCells;
+			}
+			else
+			{
+				/* Test case: add a new service to the services panel. */
+				f = promiseCreateObjectFromCells;
+			}
+			
+			var doneButton = sitePanel.appendAddButton(f, containerCell, objectData, cells);
+			
+			sitePanel.appendBackButton();
+		}
+		sitePanel.navContainer.appendTitle(header);
 		
 		onShow(sitePanel.node());
 	}
 	
-	if (objectData && objectData.getValueID())
+	if (objectData && (objectData.getValueID() || objectData.cells))
 		objectData.checkCells(undefined, function()
 			{
 				successFunction(objectData.cells);
 			}, syncFailFunction);
 	else
 		containerCell.getConfiguration(successFunction, syncFailFunction);
+}
+
+/* 
+	Displays a panel for adding a root object. 
+ */
+function showAddRootPanel(containerCell, previousPanelNode, onShow) {
+	var successFunction = function(cells)
+	{
+		var header = "New " + containerCell.field.name;
+			
+		var sitePanel = new EditPanel(previousPanelNode, null, cells, header, onShow);
+
+		var doneButton = sitePanel.appendAddButton(promiseCreateObjectFromCells, containerCell, null, cells);
+		
+		sitePanel.appendBackButton();
+
+		sitePanel.navContainer.appendTitle(header);
+		
+		onShow(sitePanel.node());
+	}
+	
+	containerCell.getConfiguration(successFunction, syncFailFunction);
 }
 
 function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)
@@ -2903,7 +2989,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				try
 				{
 					showClickFeedback(this);
-					showEditObjectPanel(cell, null, sitePanel.node(), revealPanelUp);
+					showAddRootPanel(cell, sitePanel.node(), revealPanelUp);
 				}
 				catch(err)
 				{
