@@ -1639,31 +1639,25 @@ var PathLines = (function() {
 				.fail(cr.asyncFail))
 		.then(function() {
 			return crp.promise({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
-								'::reference(Session)::reference(Sessions)::reference(Offering)'})
-				.fail(cr.asyncFail);
+								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
-				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'})
-					.fail(cr.asyncFail);
+				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
 				return crp.promise({path: "Service", 
-					 fields: ["Domain", "Stage"]})
-					.fail(cr.asyncFail);
+					 fields: ["Domain", "Stage"]});
 			})
 		.then(function() {
-				return crp.promise({path: "(Domain,Stage)"})
-					.fail(cr.asyncFail);
+				return crp.promise({path: "(Domain,Stage)"});
 			})
 		.then(function() {
-				return crp.promise({path: '"Service Domain"'})
-					.fail(cr.asyncFail);
+				return crp.promise({path: '"Service Domain"'});
 			})
 		.then(function() {
-				crp.pushCheckCells(_this.path, ["More Experience", "parents", "type"],
-							  successFunction2, 
-							  cr.asyncFail);
-			});
+				return _this.path.promiseCellsFromCache(["More Experience", "parents", "type"]);
+			})
+		.then(successFunction2, cr.asyncFail);
 	}
 	
 	function PathLines(sitePanel, containerDiv) {
