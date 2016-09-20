@@ -2782,7 +2782,7 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 			doneButton.append("span").text("Done");
 			doneButton.on("click", function()
 				{
-					panel2Div.handleDoneEditingButton.call(this);
+					sitePanel.mainDiv.handleDoneEditingButton.call(this);
 				});
 		}
 		else
