@@ -1130,6 +1130,24 @@ cr.ObjectValue = (function() {
 		}
 	}
 	
+	ObjectValue.prototype.promiseCellsFromCache = function(fields)
+	{
+		var storedI = crp.getInstance(this.getValueID());
+		if (storedI && storedI.isDataLoaded)
+		{
+			if (this !== storedI)
+			{
+				this.importCells(storedI.cells);
+				this.isDataLoaded = true;
+			}
+			var result = $.Deferred();
+			result.resolve(this.cells);
+			return result.promise();
+		}
+		else 
+			return this.promiseCells(fields);
+	}
+	
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
 		if (typeof(done) != "function")
