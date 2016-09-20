@@ -869,42 +869,35 @@ var PathView = (function() {
 					var fdj = fds[j];
 					if (fdj.y < fdi.y2 && fdj.y2 >= fdi.y2)	/* If this crosses the bottom,  */
 					{
-						if (j < fds.length - 1)
+						var isShortFlagpole = fdj.y + this.flagHeightEM == fdj.y2;
+						/* If the item after i's flag-pole has the same top year
+								then eliminate i's bottom (it is a duplicate year marker). 
+							or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
+								then if that item doesn't extend below i,
+									then eliminate i's bottom (two labels will overlap)
+								otherwise, if the lower item's top is the same as i's bottom,
+									then eliminate the lower item's top (it is a duplicate year marker and higher.)
+						 */
+						if (isShortFlagpole && j < fds.length - 1 && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
+							fdi.yearBounds.bottom = undefined;
+						else if (compareDates(fdj.yearBounds.bottom, fdi.yearBounds.bottom) < 0)
 						{
-							var isShortFlagpole = fdj.y + this.flagHeightEM == fdj.y2;
-							var fdk = fds[j+1];
-							/* If the item after i's flag-pole has the same top year
-									then eliminate i's bottom (it is a duplicate year marker). 
-								or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
-									then if that item doesn't extend below i,
-										then eliminate i's bottom (two labels will overlap)
-									otherwise, if the lower item's top is the same as i's bottom,
-										then eliminate the lower item's top (it is a duplicate year marker and higher.)
-								otherwise, eliminate j's top.
-							 */
-							if (isShortFlagpole && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
+							if (isShortFlagpole)
 								fdi.yearBounds.bottom = undefined;
-							else if (compareDates(fdj.yearBounds.bottom, fdi.yearBounds.bottom) < 0)
+							else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
+								fdj.yearBounds.top = undefined;
+						}
+						else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
+						{
+							if (fdj.y2 <= fdi.y2 + this.flagSpacing)
 							{
-								if (isShortFlagpole)
+								// The bottoms overlap.
+								if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
 									fdi.yearBounds.bottom = undefined;
-								else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
-									fdj.yearBounds.top = undefined;
-							}
-							else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
-							{
-								if (fdj.y2 <= fdi.y2 + this.flagSpacing)
-								{
-									// The bottoms overlap.
-									if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
-										fdi.yearBounds.bottom = undefined;
-									else
-										fdj.yearBounds.bottom = undefined;
-								}
+								else
+									fdj.yearBounds.bottom = undefined;
 							}
 						}
-						else
-							fdj.yearBounds.top = undefined;
 					}
 					else if (ybi.bottom == fdj.yearBounds.top ||
 						     ybi.bottom == fdj.yearBounds.bottom)
