@@ -1656,7 +1656,7 @@ cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
 cr.getData = function(args)
 	{
 		if (!args.path)
-			throw ("path is not specified to getData");
+			throw new Error("path is not specified to getData");
 			
 		var data = {path : args.path}
 		if (args.fields)
