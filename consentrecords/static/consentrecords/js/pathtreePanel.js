@@ -109,13 +109,29 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start") || "9999-12-31";
+		return this.experience.getDatum("Start") || this.getTimeframeText();
 	}
 	
 	FlagData.prototype.getEndDate = function()
 	{
-		return this.experience.getDatum("End") || 
+		return this.experience.getDatum("End") || this.getTimeframeText() ||
 			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : "9999-12-31");
+	}
+	
+	FlagData.prototype.getTimeframeText = function()
+	{
+		var timeframeValue = this.experience.getValue("Timeframe");
+		var text = timeframeValue && timeframeValue.getValueID() && timeframeValue.getDescription();
+		if (!text)
+			return text;
+		else if (text == "Previous")
+			return "0000-00";
+		else if (text == "Goal")
+			return "9999-12-31";
+		else if (text == "Previous")
+			return getUTCTodayDate().toISOString().substr(0, 10);
+		else
+			throw new Error("Unrecognized timeframe");
 	}
 	
 	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
@@ -127,15 +143,28 @@ var FlagData = (function() {
 	{
 		var e = this.experience.getDatum("End");
 		var s = this.experience.getDatum("Start");
-		var top;
+		var t = this.experience.getValue("Timeframe");
+		var top, bottom;
 		
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
 			top = "Now";
+		else if (t && t.getDescription() == "Previous")
+			top = "Done";
+		else if (t && t.getDescription() == "Current")
+			top = "Now";
 		else
 			top = "Goal";
-		var bottom = s ? new Date(s).getUTCFullYear() : "Goal";
+			
+		if (s)
+			bottom = new Date(s).getUTCFullYear();
+		else if (t && t.getDescription() == "Previous")
+			bottom = "Done";
+		else if (t && t.getDescription() == "Current")
+			bottom = "Now";
+		else
+			bottom = "Goal";
 		
 		return {top: top, bottom: bottom};
 	}
@@ -842,6 +871,11 @@ var PathView = (function() {
 			var thisYear = new Date().getUTCFullYear();
 			function compareDates(d1, d2)
 			{
+				if (d1 === "Done")
+					d1 = -10000;
+				if (d2 === "Done")
+					d2 = -10000;
+					
 				// negative numbers mean d1 is earlier than d2 chronologically
 				if (d1 === "Goal")
 					return d2 === "Goal" ? 0 : 1;
@@ -948,7 +982,7 @@ var PathView = (function() {
 				return d1 ? 1 : 0;
 			else if (!d1)
 				return -1;
-				
+							
 			return (d1 > d2) ? 1 :
 				   ((d2 > d1) ? -1 :
 				   0);
