@@ -226,6 +226,17 @@ var FlagData = (function() {
 		var s;
 		var tspan;
 		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (!s)
+		{
+			var serviceCell = this.experience.getCell("Service");
+			var userServiceCell = this.experience.getCell("User Entered Service");
+
+			if (serviceCell && serviceCell.data.length > 0)
+				s = serviceCell.data[0].getDescription();
+			else if (userServiceCell && userServiceCell.data.length > 0)
+				s = userServiceCell.data[0].getDescription();
+		}
+		
 		if (s && s.length > 0)
 		{
 			tspan = detailText.append('tspan')
