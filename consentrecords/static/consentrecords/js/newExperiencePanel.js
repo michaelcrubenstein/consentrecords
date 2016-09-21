@@ -2365,8 +2365,8 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
 	NewExperiencePanel.prototype.newFromDomainTitle = "New {0} Experience";
-	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
-	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
+	NewExperiencePanel.prototype.previousExperienceLabel = "Done";
+	NewExperiencePanel.prototype.currentExperienceLabel = "Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
 	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
 	
