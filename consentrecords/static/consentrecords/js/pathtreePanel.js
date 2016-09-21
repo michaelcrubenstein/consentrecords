@@ -910,6 +910,16 @@ var PathView = (function() {
 			}
 		}
 		
+		/* For the last FlagData, if the yearBounds are the same for the top and bottom, then 
+		    clear the top.
+		 */
+		if (fds.length > 0)
+		{
+			var ybi = fds[fds.length - 1].yearBounds;
+			if (ybi.top == ybi.bottom)
+				ybi.top = undefined;
+		}
+		
 		fds.forEach(function(fd)
 		{
 			if (fd.yearBounds.top)
