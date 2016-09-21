@@ -636,6 +636,10 @@ var Experience = (function() {
 	
 	Experience.prototype.getPhase = function()
 	{
+		var t = this.instance.getValue('Timeframe');
+		if (t)
+			return t.getDescription();
+			
 		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
 		if (!this.startDate || this.startDate > todayDate)
 			return 'Goal';

@@ -126,10 +126,10 @@ var FlagData = (function() {
 			return text;
 		else if (text == "Previous")
 			return "0000-00";
+		else if (text == "Current")
+			return getUTCTodayDate().toISOString().substr(0, 10);
 		else if (text == "Goal")
 			return "9999-12-31";
-		else if (text == "Previous")
-			return getUTCTodayDate().toISOString().substr(0, 10);
 		else
 			throw new Error("Unrecognized timeframe");
 	}
@@ -604,6 +604,7 @@ var PathView = (function() {
 		 experience.getCell("User Entered Site"),
 		 experience.getCell("Start"),
 		 experience.getCell("End"),
+		 experience.getCell("Timeframe"),
 		 experience.getCell("Service"),
 		 experience.getCell("User Entered Service")];
 		 
@@ -821,12 +822,14 @@ var PathView = (function() {
 		$(experience).on("dataChanged.cr", null, this, handleDataChanged);
 		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		$(experience.getCell("Timeframe")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, handleDataChanged);
 			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			$(eventObject.data.getCell("Timeframe")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
 	}
 	
