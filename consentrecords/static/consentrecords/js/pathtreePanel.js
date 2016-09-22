@@ -841,9 +841,11 @@ var PathView = (function() {
 		
 		this.setupExperienceTriggers(experience);
 		
-		this.appendExperiences();
+		this.appendExperiences(experience);
 
 		this.redoLayout();
+		
+		this.updateDetail(this.detailFlagData, 0);
 	}
 	
 	PathView.prototype.layoutYears = function(g)
@@ -1314,15 +1316,20 @@ var PathLines = (function() {
 		this.layoutYears(g);
 	}
 	
-	PathLines.prototype.appendExperiences = function()
+	PathLines.prototype.appendExperiences = function(experience)
 	{
 		var _this = this;
+		var data;
 
 		this.setupClipID();
 		
-		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
+		if (experience)
+			data = [new FlagData(experience)];
+		else
+			data = this.allExperiences.map(function(e) { return new FlagData(e); });
+		
 		var g = this.experienceGroup.selectAll('g')
-			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
+			.data(data)
 			.enter()
 			.append('g')
 			.classed('flag', true)
@@ -1371,6 +1378,8 @@ var PathLines = (function() {
 			.attr('dy', '1.1em');
 		
 		g.each(function() { _this.setFlagText(this); });
+		
+		return g;
 	}
 	
 	PathLines.prototype.handleResize = function()
@@ -1401,6 +1410,7 @@ var PathLines = (function() {
 				{
 					if (firstTime)
 					{
+						$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
 						_this.appendExperiences();
 						firstTime = false;
 					}
