@@ -841,11 +841,11 @@ var PathView = (function() {
 		
 		this.setupExperienceTriggers(experience);
 		
-		this.appendExperiences(experience);
+		var flags = this.appendExperiences(experience);
 
 		this.redoLayout();
 		
-		this.updateDetail(this.detailFlagData, 0);
+		this.updateDetail(flags.datum(), 700);
 	}
 	
 	PathView.prototype.layoutYears = function(g)
@@ -1319,20 +1319,23 @@ var PathLines = (function() {
 	PathLines.prototype.appendExperiences = function(experience)
 	{
 		var _this = this;
-		var data;
-
-		this.setupClipID();
 		
+		var g;
 		if (experience)
-			data = [new FlagData(experience)];
+		{
+			g = this.experienceGroup.append('g')
+				.datum(new FlagData(experience));
+		}
 		else
-			data = this.allExperiences.map(function(e) { return new FlagData(e); });
+		{
+			this.setupClipID();
+			g = this.experienceGroup.selectAll('g')
+				.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
+				.enter()
+				.append('g');
+		}
 		
-		var g = this.experienceGroup.selectAll('g')
-			.data(data)
-			.enter()
-			.append('g')
-			.classed('flag', true)
+		g.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
