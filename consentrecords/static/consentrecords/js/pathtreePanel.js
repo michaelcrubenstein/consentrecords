@@ -2089,7 +2089,10 @@ var ShareOptions = (function () {
 })();
 
 var AddOptions = (function () {
-
+	AddOptions.prototype.addPreviousExperienceLabel = "Add Experience You Have Done";
+	AddOptions.prototype.addCurrentExperienceLabel = "Add Experience You Are Doing";
+	AddOptions.prototype.addGoalLabel = "Add Goal";
+	
 	function AddOptions(pathlinesPanel)
 	{
 		var panelNode = pathlinesPanel.node();
@@ -2136,7 +2139,7 @@ var AddOptions = (function () {
 			return button;
 		}
 		
-		var confirmButton = addButton(div, "Add Previous Experience", 
+		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2147,7 +2150,7 @@ var AddOptions = (function () {
 			.classed('butted-down', true);
 		$(confirmButton.node()).on('blur', onCancel);
 		
-		addButton(div, "Add Current Experience", 
+		addButton(div, this.addCurrentExperienceLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2157,7 +2160,7 @@ var AddOptions = (function () {
 			})
 			.classed('butted-down', true);
 		
-		addButton(div, "Add Goal", 
+		addButton(div, this.addGoalLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
