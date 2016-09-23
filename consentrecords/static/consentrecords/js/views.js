@@ -890,7 +890,17 @@ function _clickEditObjectValue(d, previousPanelNode)
 	else
 	{
 		if (prepareClick('click', 'edit object: ' + d.getDescription()))
-			showEditObjectPanel(d.cell, d, previousPanelNode, revealPanelLeft);
+		{
+			var getSavePromise;
+			if (d.cell.parent)
+				getSavePromise = null;
+			else
+			{
+				/* Test case: Create an Organization, Site an Offering all in one operation. */
+				getSavePromise = promiseImportCells;
+			}
+			showEditObjectPanel(d.cell, d, previousPanelNode, revealPanelLeft, getSavePromise);
+		}
 	}
 }
 
