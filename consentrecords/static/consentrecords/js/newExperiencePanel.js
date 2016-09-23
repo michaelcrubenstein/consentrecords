@@ -148,9 +148,9 @@ var Experience = (function() {
 	
 	Experience.prototype.appendData = function(initialData)
 	{
-		if (this.startDate && this.startDate.length > 0)
+		if (this.startDate)
 			initialData["Start"] = [{text: this.startDate}];
-		if (this.endDate && this.endDate.length > 0)
+		if (this.endDate)
 			initialData["End"] = [{text: this.endDate}];
 		
 		if (this.organization)
@@ -171,6 +171,9 @@ var Experience = (function() {
 		var existingServices = null;
 		if (this.offering && this.offering.getCell("Service"))
 			existingServices = this.offering.getCell("Service").data;
+			
+		if (this.timeframe)
+			initialData["Timeframe"] = [{instanceID: this.timeframe.getValueID()}];
 				
 		for (i = 0; i < this.services.length; ++i)
 		{
@@ -368,6 +371,8 @@ var Experience = (function() {
 					
 			this.instance.getValue("Start").appendUpdateCommands(0, this.startDate, updateData, sourceObjects);	
 			this.instance.getValue("End").appendUpdateCommands(0, this.endDate, updateData, sourceObjects);
+			
+			this.instance.getValue("Timeframe").appendUpdateCommands(0, this.timeframe, updateData, sourceObjects);
 			
 			var i = 0;
 			var j = 0;
@@ -631,6 +636,10 @@ var Experience = (function() {
 	
 	Experience.prototype.getPhase = function()
 	{
+		var t = this.instance.getValue('Timeframe');
+		if (t)
+			return t.getDescription();
+			
 		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
 		if (!this.startDate || this.startDate > todayDate)
 			return 'Goal';
@@ -2360,13 +2369,10 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
 	NewExperiencePanel.prototype.newFromDomainTitle = "New {0} Experience";
-	NewExperiencePanel.prototype.previousExperienceLabel = "Previous";
-	NewExperiencePanel.prototype.currentExperienceLabel = "Current";
+	NewExperiencePanel.prototype.previousExperienceLabel = "Done";
+	NewExperiencePanel.prototype.currentExperienceLabel = "Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "Goal";
 	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
-	NewExperiencePanel.prototype.previousStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this previous experience.';
-	NewExperiencePanel.prototype.previousEndYearAndMonthRequiredMessage = 'You need to set the end year and month for this previous experience.';
-	NewExperiencePanel.prototype.currentStartYearAndMonthRequiredMessage = 'You need to set the start year and month for this current experience.';
 	
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
@@ -2451,22 +2457,6 @@ var NewExperiencePanel = (function () {
 		notSureSpan.append('div').text('Not Sure');
 		var notSureReveal = new VerticalReveal(notSureSpan.node());
 		
-		var forceDateVisible = function(args)
-			{
-				dateWheel.unclear();
-				
-				var duration = (args && args.duration) ? args.duration : 0;
-				var before = (args && args.before) ? args.before : null;
-				notSureReveal.hide({duration: duration,
-									before: before
-								   });
-				hidingChevron.hide(
-					function()
-					{
-						hidableDiv.show();
-					});
-			}
-		
 		var hideValue = function(done)
 		{
 			hidableDiv.hide(function()
@@ -2502,7 +2492,6 @@ var NewExperiencePanel = (function () {
 		return {dateInput: dateWheel, hidableDiv: hidableDiv, 
 		    wheelReveal: reveal,
 			notSureReveal: notSureReveal,
-			forceDateVisible: forceDateVisible,
 			hideValue: hideValue,
 			hideWheel: hideWheel,
 			showWheel: showWheel,
@@ -2896,10 +2885,38 @@ var NewExperiencePanel = (function () {
 					{
 						try
 						{
-							experience.startDate = startDateInput.value();
-							experience.endDate = endDateInput.value();
-					
-							experience.add(hidePanel);
+							experience.startDate = _this.startHidable.hidableDiv.isVisible() ? startDateInput.value() : null;
+							experience.endDate = _this.endHidable.hidableDiv.isVisible() ? endDateInput.value() : null;
+							if (experience.startDate && experience.endDate)
+							{
+								experience.timeframe = undefined;
+								experience.add(hidePanel);
+							}
+							else
+							{
+								$.when(crp.promise({path: "_term[_name=Timeframe]>enumerator"}))
+								 .then(function(enumerators)
+								     {
+								     	var timeframeName;
+								     	
+										if (previousExperienceButton.classed('pressed'))
+											timeframeName = "Previous";
+										else if (currentExperienceButton.classed('pressed'))
+											timeframeName = "Current";
+										else
+											timeframeName = "Goal";
+										experience.timeframe = enumerators.find(function(d)
+											{
+												return d.getDescription() == timeframeName;
+											});
+
+										experience.add(hidePanel);
+								     },
+								     function(err)
+								     {
+								     	throw err;
+								     });
+							}
 						}
 						catch(err)
 						{
@@ -2926,32 +2943,10 @@ var NewExperiencePanel = (function () {
 				if (!experience.offeringName &&
 					experience.services.length == 0)
 					asyncFailFunction(_this.nameOrTagRequiredMessage);
-				else if (previousExperienceButton.classed('pressed'))
-				{
-					if (!startDateInput.value())
-						asyncFailFunction(_this.previousStartYearAndMonthRequiredMessage);
-					else if (!endDateInput.value())
-						asyncFailFunction(_this.previousEndYearAndMonthRequiredMessage);
-					else
-					{
-						doAdd();
-					}
-				}
-				else if (currentExperienceButton.classed('pressed'))
-				{
-					if (!startDateInput.value())
-						asyncFailFunction(_this.currentStartYearAndMonthRequiredMessage);
-					else
-					{
-						doAdd();
-					}
-				}
-				else if (goalButton.classed('pressed'))
+				else
 				{
 					doAdd();
 				}
-				else
-					asyncFailFunction('No timing button is pressed.');
 				d3.event.preventDefault();
 			});
 		nextButton.append("span").text(experience.instance ? "Done" : "Add");
@@ -3090,17 +3085,6 @@ var NewExperiencePanel = (function () {
 					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', true);
-					_this.startHidable.forceDateVisible({duration: 200, before:
-						function()
-							{
-								_this.endHidable.forceDateVisible({duration: 200, before:
-									function()
-									{
-										_this.resizeVisibleSearch(200);
-									}
-								});
-							}
-						});
 					
 					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateInput).trigger('change');
@@ -3114,14 +3098,6 @@ var NewExperiencePanel = (function () {
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', false);
 					currentExperienceButton.classed('pressed', true);
-					_this.startHidable.forceDateVisible({duration: 200, before:
-						function()
-						{
-							_this.endHidable.notSureReveal.show({before: function()
-								{
-									_this.resizeVisibleSearch(200);
-								}}, 200);
-						}});
 					
 					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateInput).trigger('change');
@@ -3135,16 +3111,6 @@ var NewExperiencePanel = (function () {
 					previousExperienceButton.classed('pressed', false);
 					currentExperienceButton.classed('pressed', false);
 					goalButton.classed('pressed', true);
-					_this.startHidable.notSureReveal.show({before: function()
-						{
-							if (_this.endHidable.hidableDiv.isVisible())
-								_this.endHidable.notSureReveal.show({before: function()
-								{
-									_this.resizeVisibleSearch(200);
-								}}, 200);
-							else
-								_this.resizeVisibleSearch(200);
-						}}, 200);
 					
 					setGoalStartDateRange();
 					$(startDateInput).trigger('change');
@@ -3204,30 +3170,14 @@ var NewExperiencePanel = (function () {
 		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
 		var endDateInput = this.endHidable.dateInput;
 		
-		if (phase == 'Current')
-		{
-			this.startHidable.notSureReveal.hide();
-			if (experience.endDate)
-				this.endHidable.notSureReveal.show();
-			else
-				this.endHidable.notSureReveal.hide();
-		}
-		else if (phase == 'Goal')
-		{
-			if (experience.startDate)
-				this.startHidable.notSureReveal.show();
-			else
-				this.startHidable.notSureReveal.hide();
-			if (experience.endDate)
-				this.endHidable.notSureReveal.show();
-			else
-				this.endHidable.notSureReveal.hide();
-		}
+		if (experience.startDate)
+			this.startHidable.notSureReveal.show();
 		else
-		{
 			this.startHidable.notSureReveal.hide();
+		if (experience.endDate)
+			this.endHidable.notSureReveal.show();
+		else
 			this.endHidable.notSureReveal.hide();
-		}
 		
 		if (experience.startDate)
 			startDateInput.value(experience.startDate);

@@ -7,6 +7,9 @@ var FlagData = (function() {
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
 	
+	FlagData.prototype.previousDateString = "0000-00";
+	FlagData.prototype.goalDateString = "9999-12-31";
+	
 	FlagData.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 
 	/* Constants related to the detail text. */
@@ -109,13 +112,29 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start") || "9999-12-31";
+		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
 	}
 	
 	FlagData.prototype.getEndDate = function()
 	{
-		return this.experience.getDatum("End") || 
-			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : "9999-12-31");
+		return this.experience.getDatum("End") || this.getTimeframeText() ||
+			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : this.goalDateString);
+	}
+	
+	FlagData.prototype.getTimeframeText = function()
+	{
+		var timeframeValue = this.experience.getValue("Timeframe");
+		var text = timeframeValue && timeframeValue.getValueID() && timeframeValue.getDescription();
+		if (!text)
+			return text;
+		else if (text == "Previous")
+			return this.previousDateString;
+		else if (text == "Current")
+			return getUTCTodayDate().toISOString().substr(0, 10);
+		else if (text == "Goal")
+			return this.goalDateString;
+		else
+			throw new Error("Unrecognized timeframe");
 	}
 	
 	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
@@ -127,15 +146,28 @@ var FlagData = (function() {
 	{
 		var e = this.experience.getDatum("End");
 		var s = this.experience.getDatum("Start");
-		var top;
+		var t = this.experience.getValue("Timeframe");
+		var top, bottom;
 		
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
 			top = "Now";
+		else if (t && t.getDescription() == "Previous")
+			top = "Done";
+		else if (t && t.getDescription() == "Current")
+			top = "Now";
 		else
 			top = "Goal";
-		var bottom = s ? new Date(s).getUTCFullYear() : "Goal";
+			
+		if (s)
+			bottom = new Date(s).getUTCFullYear();
+		else if (t && t.getDescription() == "Previous")
+			bottom = "Done";
+		else if (t && t.getDescription() == "Current")
+			bottom = "Now";
+		else
+			bottom = "Goal";
 		
 		return {top: top, bottom: bottom};
 	}
@@ -197,6 +229,17 @@ var FlagData = (function() {
 		var s;
 		var tspan;
 		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (!s)
+		{
+			var serviceCell = this.experience.getCell("Service");
+			var userServiceCell = this.experience.getCell("User Entered Service");
+
+			if (serviceCell && serviceCell.data.length > 0)
+				s = serviceCell.data[0].getDescription();
+			else if (userServiceCell && userServiceCell.data.length > 0)
+				s = userServiceCell.data[0].getDescription();
+		}
+		
 		if (s && s.length > 0)
 		{
 			tspan = detailText.append('tspan')
@@ -564,6 +607,7 @@ var PathView = (function() {
 		 experience.getCell("User Entered Site"),
 		 experience.getCell("Start"),
 		 experience.getCell("End"),
+		 experience.getCell("Timeframe"),
 		 experience.getCell("Service"),
 		 experience.getCell("User Entered Service")];
 		 
@@ -781,12 +825,14 @@ var PathView = (function() {
 		$(experience).on("dataChanged.cr", null, this, handleDataChanged);
 		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		$(experience.getCell("Timeframe")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
 			$(eventObject.data).off("dataChanged.cr", null, handleDataChanged);
 			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			$(eventObject.data.getCell("Timeframe")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
 		});
 	}
 	
@@ -798,9 +844,11 @@ var PathView = (function() {
 		
 		this.setupExperienceTriggers(experience);
 		
-		this.appendExperiences();
+		var flags = this.appendExperiences(experience);
 
 		this.redoLayout();
+		
+		this.updateDetail(flags.datum(), 700);
 	}
 	
 	PathView.prototype.layoutYears = function(g)
@@ -842,6 +890,11 @@ var PathView = (function() {
 			var thisYear = new Date().getUTCFullYear();
 			function compareDates(d1, d2)
 			{
+				if (d1 === "Done")
+					d1 = -10000;
+				if (d2 === "Done")
+					d2 = -10000;
+					
 				// negative numbers mean d1 is earlier than d2 chronologically
 				if (d1 === "Goal")
 					return d2 === "Goal" ? 0 : 1;
@@ -910,6 +963,16 @@ var PathView = (function() {
 			}
 		}
 		
+		/* For the last FlagData, if the yearBounds are the same for the top and bottom, then 
+		    clear the top.
+		 */
+		if (fds.length > 0)
+		{
+			var ybi = fds[fds.length - 1].yearBounds;
+			if (ybi.top == ybi.bottom)
+				ybi.top = undefined;
+		}
+		
 		fds.forEach(function(fd)
 		{
 			if (fd.yearBounds.top)
@@ -938,7 +1001,7 @@ var PathView = (function() {
 				return d1 ? 1 : 0;
 			else if (!d1)
 				return -1;
-				
+							
 			return (d1 > d2) ? 1 :
 				   ((d2 > d1) ? -1 :
 				   0);
@@ -1256,18 +1319,26 @@ var PathLines = (function() {
 		this.layoutYears(g);
 	}
 	
-	PathLines.prototype.appendExperiences = function()
+	PathLines.prototype.appendExperiences = function(experience)
 	{
 		var _this = this;
-
-		this.setupClipID();
 		
-		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
-		var g = this.experienceGroup.selectAll('g')
-			.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
-			.enter()
-			.append('g')
-			.classed('flag', true)
+		var g;
+		if (experience)
+		{
+			g = this.experienceGroup.append('g')
+				.datum(new FlagData(experience));
+		}
+		else
+		{
+			this.setupClipID();
+			g = this.experienceGroup.selectAll('g')
+				.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
+				.enter()
+				.append('g');
+		}
+		
+		g.classed('flag', true)
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
@@ -1313,6 +1384,8 @@ var PathLines = (function() {
 			.attr('dy', '1.1em');
 		
 		g.each(function() { _this.setFlagText(this); });
+		
+		return g;
 	}
 	
 	PathLines.prototype.handleResize = function()
@@ -1343,6 +1416,7 @@ var PathLines = (function() {
 				{
 					if (firstTime)
 					{
+						$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
 						_this.appendExperiences();
 						firstTime = false;
 					}
@@ -2021,7 +2095,10 @@ var ShareOptions = (function () {
 })();
 
 var AddOptions = (function () {
-
+	AddOptions.prototype.addPreviousExperienceLabel = "Add Experience You Have Done";
+	AddOptions.prototype.addCurrentExperienceLabel = "Add Experience You Are Doing";
+	AddOptions.prototype.addGoalLabel = "Add Goal";
+	
 	function AddOptions(pathlinesPanel)
 	{
 		var panelNode = pathlinesPanel.node();
@@ -2068,7 +2145,7 @@ var AddOptions = (function () {
 			return button;
 		}
 		
-		var confirmButton = addButton(div, "Add Previous Experience", 
+		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2079,7 +2156,7 @@ var AddOptions = (function () {
 			.classed('butted-down', true);
 		$(confirmButton.node()).on('blur', onCancel);
 		
-		addButton(div, "Add Current Experience", 
+		addButton(div, this.addCurrentExperienceLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2089,7 +2166,7 @@ var AddOptions = (function () {
 			})
 			.classed('butted-down', true);
 		
-		addButton(div, "Add Goal", 
+		addButton(div, this.addGoalLabel, 
 			function(done, fail)
 			{
 				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {

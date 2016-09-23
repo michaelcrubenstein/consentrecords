@@ -78,15 +78,31 @@ var CompareFlag = (function() {
 	CompareFlag.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
-		var ed;
+		var s = this.experience.getDatum("Start");
+		var t = this.experience.getValue("Timeframe");
+		var top, bottom;
+		
 		if (e)
-			ed = new Date(e);
+			top = this.ageCalculator.getYears(e);
+		else if (s)
+			top = "Now";
+		else if (t && t.getDescription() == "Previous")
+			top = "Done";
+		else if (t && t.getDescription() == "Current")
+			top = "Now";
 		else
-			ed = new Date();
-		var sd = new Date(this.experience.getDatum("Start"));
+			top = "Goal";
+			
+		if (s)
+			bottom = this.ageCalculator.getYears(s);
+		else if (t && t.getDescription() == "Previous")
+			bottom = "Done";
+		else if (t && t.getDescription() == "Current")
+			bottom = "Now";
+		else
+			bottom = "Goal";
 		
-		
-		return {top: this.ageCalculator.getYears(ed), bottom: this.ageCalculator.getYears(sd)};
+		return {top: top, bottom: bottom};
 	}
 	
 	function CompareFlag(experience, ageCalculator)
