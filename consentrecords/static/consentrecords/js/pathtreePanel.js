@@ -7,6 +7,9 @@ var FlagData = (function() {
 	FlagData.prototype.height = null;
 	FlagData.prototype.width = null;
 	
+	FlagData.prototype.previousDateString = "0000-00";
+	FlagData.prototype.goalDateString = "9999-12-31";
+	
 	FlagData.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
 
 	/* Constants related to the detail text. */
@@ -109,13 +112,13 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getStartDate = function()
 	{
-		return this.experience.getDatum("Start") || this.getTimeframeText();
+		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
 	}
 	
 	FlagData.prototype.getEndDate = function()
 	{
 		return this.experience.getDatum("End") || this.getTimeframeText() ||
-			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : "9999-12-31");
+			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : this.goalDateString);
 	}
 	
 	FlagData.prototype.getTimeframeText = function()
@@ -125,11 +128,11 @@ var FlagData = (function() {
 		if (!text)
 			return text;
 		else if (text == "Previous")
-			return "0000-00";
+			return this.previousDateString;
 		else if (text == "Current")
 			return getUTCTodayDate().toISOString().substr(0, 10);
 		else if (text == "Goal")
-			return "9999-12-31";
+			return this.goalDateString;
 		else
 			throw new Error("Unrecognized timeframe");
 	}
