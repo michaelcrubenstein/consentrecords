@@ -1,4 +1,4 @@
-# python3 data/09listusers.py -path '"Experience Prompt"'
+# python3 data/10listusers.py -start 2016-05-08 -end 2016-05-08
 
 import datetime
 import django
@@ -13,12 +13,30 @@ from django.contrib.auth import authenticate
 
 from consentrecords.models import *
 
+def taggedArg(key):
+	try:
+		return sys.argv[sys.argv.index(key) + 1]
+	except ValueError:
+		return None
+	except IndexError:
+		return None
+    
 if __name__ == "__main__":
     django.setup()
 
     try:
+        startDate = taggedArg('-start')
+        endDate = taggedArg('-end')
+        
+        print (startDate, endDate)
+
         users = Instance.objects.filter(typeID=terms.user, deleteTransaction__isnull=True)\
         	.order_by('transaction__creation_time');
+        
+        if startDate:
+            users = users.filter(transaction__creation_time__gte=startDate)
+        if endDate:
+        	users = users.filter(transaction__creation_time__lte=endDate)
         	
         for u in users:
             sys.stdout.write("%s\t%s\n" % (u.getDescription(), u.transaction.creation_time))
