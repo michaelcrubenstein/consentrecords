@@ -4,7 +4,7 @@ panel#id_sign_in_panel {
 
 panel#id_sign_in_panel hr {
 	margin-top: 10px;
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 	border: 0;
 	border-top: 1px solid #ccc
 }
