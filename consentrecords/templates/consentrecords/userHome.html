@@ -900,6 +900,34 @@
 					}
 					needsSignin = true;
 				}
+				else if (stateString.startsWith("settings/"))
+				{
+					/* Ignore the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+								showPanelUp(firstPanel.node());
+							}
+							pathwayPanel = firstPanel;
+						}
+						
+						try
+						{
+							var panel = new Settings(cr.signedinUser, pathwayPanel.node());
+							showPanelUp(panel.node());
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("signup/"))
 				{
 					stateString = stateString.substring("signup/".length);

@@ -271,6 +271,34 @@ def ignore(request, email):
         
     return HttpResponse(template.render(context))
 
+def userSettings(request):
+    LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
+    
+    print ('1')
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    print ('2')
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    print ('3')
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'settings/'
+        
+    print ('4')
+    context = RequestContext(request, args)
+        
+    print ('5')
+    return HttpResponse(template.render(context))
+
 def signup(request, email=None):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
