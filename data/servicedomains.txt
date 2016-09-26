@@ -24,6 +24,8 @@ Service Domain
 Service Domain
     _name: en - Science, Technology, Engineering & Math
 Service Domain
+    _name: en - Service
+Service Domain
     _name: en - Sports
 Service Domain
     _name: en - Wellness
