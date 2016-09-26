@@ -121,7 +121,8 @@ panel>nav .right-link {
 	padding-left: 15px;
 	padding-right: 15px;
 }
-panel>nav .default-link {
+
+.default-link {
 	font-weight: 500
 }
 

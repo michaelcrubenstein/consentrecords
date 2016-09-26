@@ -40,7 +40,7 @@
 .site-title {
 	font-size: medium;
 	padding-top: 6px;
-	padding-bottom: 6px;
+	padding-bottom: 12px;
 	display: block;
     vertical-align: middle;
     width: 100%;
@@ -83,9 +83,19 @@
 	display: table-cell;
     vertical-align: middle;
     width: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 /* For text that responds to touches or clicks */
+.site-active-text, .site-disabled-text {
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+
 .site-active-text {
 	color: #2C55CC;
 }
@@ -98,6 +108,7 @@
 
 .site-disabled-text {
 	color: #117788;
+	cursor: default;
 }
 
 .site-disabled-text:hover {
