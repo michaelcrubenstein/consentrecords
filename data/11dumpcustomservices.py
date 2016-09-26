@@ -31,7 +31,7 @@ if __name__ == "__main__":
         print (startDate, endDate)
 
         values = Value.objects.filter(field=terms['User Entered Service'], deleteTransaction__isnull=True)\
-        	.order_by('transaction__creation_time');
+        	.order_by('transaction__creation_time')
         
         if startDate:
             values = values.filter(transaction__creation_time__gte=startDate)
@@ -39,7 +39,9 @@ if __name__ == "__main__":
         	values = values.filter(transaction__creation_time__lte=endDate)
         	
         for v in values:
-            sys.stdout.write("%s\t%s\n" % (v.stringValue, v.transaction.creation_time))
+            user = v.instance.parent.parent
+            i = v.instance
+            sys.stdout.write("%s\t%s\t%s\t%s\n" % (user.getDescription(), i.getDescription(), v.stringValue, v.transaction.creation_time))
             # raise RuntimeError("Done")
                                 
     except Exception as e:
