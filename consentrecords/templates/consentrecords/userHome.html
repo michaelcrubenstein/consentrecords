@@ -62,15 +62,6 @@
     		top: 0;
     		z-index: 4;
     	}
-    	panel#id_sign_in_panel hr {
-			margin-top: 20px;
-			margin-bottom: 20px;
-			border: 0;
-			border-top: 1px solid #ccc
-    	}
-    	panel#id_sign_in_panel {
-    		background: white;
-    	}
     	panel#id_forgot_password_panel {
     		background: white;
     	}
@@ -202,17 +193,17 @@
 			<div class="site-trio-container">
 				<span class="signin-cancel-button site-trio-clipped site-active-text">Cancel</span>
 				<div class="site-trio-fill"></div>
-				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
+				<span class="submit-button site-trio-clipped site-active-text default-link">Sign&nbsp;In</span>
 			</div>
 		  </form>
 	  
 		  <hr />
 
-		  <div class="div-create-new-account">
-			Don't have an account? <a id="id_signup_link" class="site-active-text">Create one now.</a>
+		  <div class="div-create-new-account other-action">
+			<span>Don't have an account?</span><a id="id_signup_link" class="site-active-text">Create one now.</a>
 		  </div>
-		  <div class="div-forgot-password">
-			Forgot your password? <a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
+		  <div class="div-forgot-password other-action">
+			<span>Forgot your password?</span><a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
 		  </div>
 		</panel> <!-- /container -->
 		
