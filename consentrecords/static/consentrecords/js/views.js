@@ -1470,8 +1470,7 @@ var SiteNavContainer = (function() {
 			firstChild.classed("pull-left", !this.div.selectAll('div.site-navbar-commands').empty());
 		}
 			
-		return rightChild.classed("right-link pull-right", true)
-				   .append("div") .classed("site-navbar-link site-active-text", true);
+		return rightChild.classed("right-link pull-right site-navbar-link site-active-text", true);
 	}
 	
 	SiteNavContainer.prototype.setTitle = function(title)
