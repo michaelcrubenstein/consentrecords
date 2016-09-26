@@ -1290,42 +1290,70 @@ var TagSearchView = (function() {
 		{
 			if (prepareClick('click', 'service domain: ' + d.getDescription()))
 			{
-				this.experience.serviceDomain = d;
-				this.onTagAdded();
+				try
+				{
+					this.experience.serviceDomain = d;
+					this.onTagAdded();
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 		}
 		else if (d.typeName === 'Domain')
 		{
 			if (prepareClick('click', 'domain: ' + d.getDescription()))
 			{
-				this.experience.domain = d;
-				this.onTagAdded();
+				try
+				{
+					this.experience.domain = d;
+					this.onTagAdded();
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 		}
 		else if (d.typeName === 'Stage')
 		{
 			if (prepareClick('click', 'stage: ' + d.getDescription()))
 			{
-				this.experience.stage = d;
-				this.onTagAdded();
+				try
+				{
+					this.experience.stage = d;
+					this.onTagAdded();
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 		}
 		else if (d.typeName === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
-				var d3Focus = d3.select(this.focusNode);
-				if (d3Focus.datum())
+				try
 				{
-					d3Focus.datum().name = d.getDescription();
-					d3Focus.datum().pickedObject = d;
-					this.focusNode.value = d.getDescription();
-					this.onTagAdded();
+					var d3Focus = d3.select(this.focusNode);
+					if (d3Focus.datum())
+					{
+						d3Focus.datum().name = d.getDescription();
+						d3Focus.datum().pickedObject = d;
+						this.focusNode.value = d.getDescription();
+						this.onTagAdded();
+					}
+					else
+					{
+						this.experience.addService({instance: d});
+						this.onTagAdded();
+					}
 				}
-				else
+				catch(err)
 				{
-					this.experience.addService({instance: d});
-					this.onTagAdded();
+					cr.syncFail(err);
 				}
 			}
 		}
