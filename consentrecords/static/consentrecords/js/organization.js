@@ -467,26 +467,26 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 						return storedPrivilegeValue &&
 							   storedPrivilegeValue.getValueID() === priv.getValueID();
 					});
+					
+				var promise;
 				if (c.length > 0)
 				{
-					/* Test case: When the user shares read access with some users but not the group that owns this session,
-					    sign up for this session. */
+					/* Test case: Sign up for a session (using the /find/ URL) when the 
+						user shares read access with some users but not the group that owns this session. */
 					var cell = c[0].getCell(cellName);
 					
-					cr.updateValues([cell.getAddCommand(target)],
-						[cell], done, 
-						fail);
+					promise = cr.updateValues([cell.getAddCommand(target)], [cell]);
 				}
 				else
 				{
-					/* Test case: When the user shares read access with no users or groups,
-					    sign up for this session. */
+					/* Test case: Sign up for a session (using the /find/ URL) when the 
+						user shares read access with no users or groups. */
 					var field = source.getCell("_access record").field;
 					var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
 					initialData[cellName] = [{instanceID: target.getValueID()}];
-					$.when(cr.createInstance(field, source.getValueID(), initialData))
-					 .then(done, fail);
+					promise = cr.createInstance(field, source.getValueID(), initialData);
 				}
+				promise.then(done, fail);
 			}
 		},
 		fail);

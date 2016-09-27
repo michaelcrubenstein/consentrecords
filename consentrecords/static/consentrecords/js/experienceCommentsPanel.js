@@ -109,8 +109,8 @@ var ExperienceCommentsPanel = (function() {
 			});
 		if (initialData.length > 0)
 		{
-			cr.updateValues(initialData, sourceObjects, 
-				function() {
+			cr.updateValues(initialData, sourceObjects)
+				.then(function() {
 					if (done)
 						done();
 				}, 

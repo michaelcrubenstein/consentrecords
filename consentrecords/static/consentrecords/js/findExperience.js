@@ -187,9 +187,10 @@ function showSessionDetails(user, session, service, previousPanelNode)
 								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
 							}
 						});
-					cr.updateValues(initialData, sourceObjects, function() {}, asyncFailFunction);
+					cr.updateValues(initialData, sourceObjects)
+						.fail(cr.asyncFail);
 				},
-			fail: asyncFailFunction 
+			fail: cr.asyncFail 
 			});
 	}
 	
@@ -298,14 +299,8 @@ var PickOfferingSearchView = (function () {
 	PickOfferingSearchView.prototype.tag = null;
 	PickOfferingSearchView.prototype.user = null;
 	
-	/* Overrides SearchView.prototype.onClickButton */
-	PickOfferingSearchView.prototype.onClickButton = function(d, i) {
-		if (prepareClick('click', 'pick ' + d.getDescription()))
-		{
-			this.sitePanel.updateValues(d, null);
-		}
-		d3.event.preventDefault();
-	}
+	/* SearchView.prototype.onClickButton 
+		onClickButton does not need to be overwritten because showObjects is overwritten. */
 	
 	/* Overrides SearchView.prototype.isButtonVisible */
 	PickOfferingSearchView.prototype.isButtonVisible = function(button, d, compareText)

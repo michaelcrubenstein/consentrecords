@@ -1782,26 +1782,25 @@ var SitePanel = (function () {
 									cell.appendUpdateCommands(this, initialData, sourceObjects);
 							}
 						});
-					if (initialData.length > 0) {
-						/* Test case: Change the text of an existing string or translation field and click Done */
-						cr.updateValues(initialData, sourceObjects, 
-							function() {
-								if (done)
-									done();
-								_this.hide();
-							}, 
-							syncFailFunction);
-					}
-					else
-					{
+						
+					var allDone = function() {
 						if (done)
 							done();
 						_this.hide();
 					}
+					if (initialData.length > 0) {
+						/* Test case: Change the text of an existing string or translation field and click Done */
+						cr.updateValues(initialData, sourceObjects)
+							.then(allDone, cr.syncFail);
+					}
+					else
+					{
+						allDone();
+					}
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
 				}
 			}
 			d3.event.preventDefault();
@@ -3209,7 +3208,10 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 						 */
 						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 						{
-							cr.updateValues([cell.getAddCommand(d)], [cell], successFunction, cr.syncFail);
+							/* Test case: Add a service to an offering that has been saved. 
+						 	 */
+							cr.updateValues([cell.getAddCommand(d)], [cell])
+								.then(successFunction, cr.syncFail);
 						}
 						else 
 						{
@@ -3247,7 +3249,10 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 						 */
 						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
 						{
-							cr.updateValues([cell.getAddCommand(d)], [oldData], successFunction, cr.syncFail);
+							/* Test case: Set the state of an address that was previously saved without a state. 
+						 	 */
+							cr.updateValues([cell.getAddCommand(d)], [oldData])
+								.then(successFunction, cr.syncFail);
 						}
 						else 
 						{
