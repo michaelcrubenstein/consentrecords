@@ -424,15 +424,16 @@ var Experience = (function() {
 			
 			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
 			
-			cr.updateValues(updateData, sourceObjects, function()
-				{
-					var offering = _this.instance.getValue("Offering");
-					if (offering && offering.getValueID() && !offering.isDataLoaded)
-						crp.pushCheckCells(offering, undefined, done, cr.syncFail);
-					else
-						done();
-				},
-				cr.syncFail);
+			cr.updateValues(updateData, sourceObjects)
+				.then(function()
+					{
+						var offering = _this.instance.getValue("Offering");
+						if (offering && offering.getValueID() && !offering.isDataLoaded)
+							crp.pushCheckCells(offering, undefined, done, cr.syncFail);
+						else
+							done();
+					},
+					cr.syncFail);
 		}
 		else
 		{

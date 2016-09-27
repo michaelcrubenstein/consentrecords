@@ -1569,8 +1569,8 @@
 																			fieldID: inquiryCell.field.nameID, 
 						   													instanceID: pickedUser.getValueID(),
 						   													description: pickedUser.getDescription()
-																		}], [newValue],
-																		function()
+																		}], [newValue])
+																		.then(function()
 																		   {
 																				bootstrap_alert.success(pickedUser.getDescription() + 
 																					  " inquiry added to " + 
@@ -1578,11 +1578,11 @@
 																					  ".alert-container");
 																				unblockClick();
 																		   },
-																		function(err)
-																		{
-																			newValue.triggerDeleteValue();
-																			syncFailFunction(err);
-																		});
+																			function(err)
+																			{
+																				newValue.triggerDeleteValue();
+																				cr.syncFail(err);
+																			});
 																},
 																syncFailFunction);
 														}

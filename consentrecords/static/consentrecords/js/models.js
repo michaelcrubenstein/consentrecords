@@ -1531,76 +1531,70 @@ cr.createInstance = function(field, containerUUID, initialData)
 				 );
 	},
 	
-cr.updateValues = function(initialData, sourceObjects, successFunction, failFunction)
+cr.updateValues = function(initialData, sourceObjects)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		$.post(cr.urls.updateValues, 
+		return $.post(cr.urls.updateValues, 
 			{ commands: JSON.stringify(initialData)
 			})
-		  .done(function(json, textStatus, jqXHR)
-			{
-				try
+			.then(function(json)
 				{
-					for (var i = 0; i < sourceObjects.length; ++i)
+					var r2 = $.Deferred();
+					try
 					{
-						var d;
-						var update;
-						if (sourceObjects[i].hasOwnProperty("target"))
+						for (var i = 0; i < sourceObjects.length; ++i)
 						{
-							d = sourceObjects[i].target;
-							update = sourceObjects[i].update;
-						}
-						else
-						{
-							d = sourceObjects[i];
-							update = null;
-						}
-						var newValueID = json.valueIDs[i];
-						var newInstanceID = json.instanceIDs[i];
+							var d;
+							var update;
+							if (sourceObjects[i].hasOwnProperty("target"))
+							{
+								d = sourceObjects[i].target;
+								update = sourceObjects[i].update;
+							}
+							else
+							{
+								d = sourceObjects[i];
+								update = null;
+							}
+							var newValueID = json.valueIDs[i];
+							var newInstanceID = json.instanceIDs[i];
 
-						/* Check to see if d is a cell instead of a value. If so, then
-							change it to a newly created value. 
-						 */
-						if ("addNewValue" in d)
-						{
-							d = d.addNewValue();
-						}
+							/* Check to see if d is a cell instead of a value. If so, then
+								change it to a newly created value. 
+							 */
+							if ("addNewValue" in d)
+							{
+								d = d.addNewValue();
+							}
 					
-						if (newValueID)
-						{
-							d.id = newValueID;
+							if (newValueID)
+							{
+								d.id = newValueID;
 						
-							d.updateFromChangeData(initialData[i]);
+								d.updateFromChangeData(initialData[i]);
 						
-							/* Object Values have an instance ID as well. */
-							if (newInstanceID)
-								d.instanceID = newInstanceID;
+								/* Object Values have an instance ID as well. */
+								if (newInstanceID)
+									d.instanceID = newInstanceID;
 							
-							if (update)
-								update();
+								if (update)
+									update();
 						
-							d.triggerDataChanged();
+								d.triggerDataChanged();
+							}
+							else
+							{
+								d.triggerDeleteValue();
+							}
 						}
-						else
-						{
-							d.triggerDeleteValue();
-						}
+						r2.resolve();
 					}
-					successFunction();
-				}
-				catch(err)
-				{
-					failFunction(err);
-				}
-			})
-		  .fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				}
-			);
+					catch (err)
+					{
+						r2.reject(err);
+					}
+					return r2;
+				},
+				cr.thenFail);
 	},
 	
 cr.getUserID = function(successFunction, failFunction)

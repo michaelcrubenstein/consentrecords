@@ -499,16 +499,18 @@ var PickUserAccessPanel = (function () {
 								
 								if (initialData.length > 0)
 								{
-									cr.updateValues(initialData, sourceObjects, function()
-										{
-											hidePanelRight(_this.node());
-										},
-										syncFailFunction);
+									/* Test case: Change the public accessibility for a user from Public Profile and Path to Public Path Only. */
+									cr.updateValues(initialData, sourceObjects)
+										.then(function()
+											{
+												hidePanelRight(_this.node());
+											},
+											cr.syncFail);
 								}
 							}
 							catch(err)
 							{
-								syncFailFunction(err);
+								cr.syncFail(err);
 							}
 						}
 					});
