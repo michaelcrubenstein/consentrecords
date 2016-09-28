@@ -761,29 +761,31 @@
 							}
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("More Experiences");
-							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"], done: function(experiences)
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"])
+								.then(function(experiences)
 								{
 									if (experiences.length > 0)
 									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
-												if (experiences[0].typeName == "More Experience")
+										cr.signedinUser.promiseCellsFromCache()
+											.then(function()
 												{
-													var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
-													var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
-													showPanelUp(newPanel.node());
-												}
-												else
-													cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
-											},
-											cr.asyncFail);
+													if (experiences[0].typeName == "More Experience")
+													{
+														var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
+														var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+														showPanelUp(newPanel.node());
+													}
+													else
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+												},
+												cr.asyncFail);
 									}
 									else
 									{
 										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
 									}
 								},
-								fail: cr.asyncFail});
+								cr.asyncFail);
 						}
 					}
 					needsSignin = true;
@@ -794,8 +796,8 @@
 					/* Add an experience specified in the URL to this pathway. */
 					var handleState = function(pathwayPanel)
 					{
-						crp.pushCheckCells(cr.signedinUser, undefined, 
-							function() {
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
 								if (!pathwayPanel)
 								{
 									if (!firstPanel)
@@ -808,7 +810,7 @@
 								}
 								addToPathway(pathwayPanel);
 							},
-							asyncFailFunction);
+							cr.asyncFail);
 					}
 					needsSignin = true;
 				}
@@ -936,8 +938,8 @@
 				{
 					var handleState = function()
 					{
-						crp.pushCheckCells(cr.signedinUser, undefined, 
-							function() {
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
 								if (!firstPanel)
 								{
 									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
@@ -945,7 +947,7 @@
 									showPanelUp(firstPanel.node());
 								}
 							},
-							asyncFailFunction);
+							cr.asyncFail);
 					}
 					needsSignin = true;
 				}

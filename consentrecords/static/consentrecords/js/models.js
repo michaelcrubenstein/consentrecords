@@ -116,46 +116,6 @@ var CRP = (function() {
 			});
 	};
 	
-	CRP.prototype.pushCheckCells = function(i, fields, done, fail)
-	{
-		if (typeof(done) != "function")
-			throw "done is not a function";
-		if (typeof(fail) != "function")
-			throw "fail is not a function";
-		if (!i)
-			throw "i is not defined";
-		if (!i.getValueID())
-			throw "i does not have an instanceID";
-		if (i.privilege === "_find")
-			throw "You do not have permission to see information about {0}".format(i.getDescription());
-
-		var _this = this;
-		this.queue.add(
-			function() {
-				var storedI = _this.getInstance(i.getValueID());
-				if (storedI && storedI.isDataLoaded)
-				{
-					if (i !== storedI)
-					{
-						i.importCells(storedI.cells);
-						i.isDataLoaded = true;
-					}
-					done(i);
-					return true;
-				}
-				else
-				{
-					i.checkCells(fields,
-						function() {
-							done(i);
-							_this.queue.next();
-						},
-						fail);
-					return false;
-				}
-			});
-	};
-	
 	CRP.prototype.pushInstance = function(i)
 	{
 		if (i.getValueID())
@@ -1270,11 +1230,13 @@ cr.createSignedinUser = function(instanceID, description)
 {
 	cr.signedinUser.instanceID = instanceID;
 	cr.signedinUser.setDescription(description);
-	crp.pushCheckCells(cr.signedinUser, ["_system access"], function()
-		{
-			cr.signedinUser = crp.pushInstance(cr.signedinUser);
-			$(cr.signedinUser).trigger("signin.cr");
-		}, asyncFailFunction);
+	cr.signedinUser.promiseCellsFromCache(["_system access"])
+		.then(function()
+			{
+				cr.signedinUser = crp.pushInstance(cr.signedinUser);
+				$(cr.signedinUser).trigger("signin.cr");
+			}, 
+			cr.asyncFail);
 }
 
 cr.cellFactory = {

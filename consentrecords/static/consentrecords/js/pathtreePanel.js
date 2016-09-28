@@ -182,7 +182,10 @@ var FlagData = (function() {
 	{
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getValueID() && !offering.isDataLoaded)
-			crp.pushCheckCells(offering, undefined, done, cr.asyncFail);
+		{
+			offering.promiseCellsFromCache()
+				.then(done, cr.asyncFail);
+		}
 		else
 			done();
 	}
