@@ -2824,9 +2824,11 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 		objectData.checkCells(undefined, function()
 			{
 				successFunction(objectData.cells);
-			}, syncFailFunction);
+			}, cr.syncFail);
 	else
-		containerCell.getConfiguration(successFunction, syncFailFunction);
+		/* Test case: Add a new site to an organization. */
+		containerCell.getConfiguration()
+			.then(successFunction, cr.syncFail);
 }
 
 /* 
@@ -2848,7 +2850,9 @@ function showAddRootPanel(containerCell, previousPanelNode, onShow) {
 		onShow(sitePanel.node());
 	}
 	
-	containerCell.getConfiguration(successFunction, syncFailFunction);
+	/* Test case: Display panel to add a new term. */
+	containerCell.getConfiguration()
+			.then(successFunction, cr.syncFail);
 }
 
 function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)

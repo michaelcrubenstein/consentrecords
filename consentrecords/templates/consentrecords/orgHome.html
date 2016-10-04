@@ -1368,13 +1368,14 @@
 						}
 						else
 						{
-							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID,
-								function(cells)
+							/* Test case: From a new session, add a user to the enrollment by using the Add An Enrollment button */
+							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID)
+								.then(function(cells)
 								{
 									enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
 									addUserToEnrollmentCell();
 								},
-								syncFailFunction);
+								cr.syncFail);
 						}
 					}
 				}
@@ -1399,8 +1400,8 @@
 						{
 							experiences.cells = cells;
 							var experienceCell = experiences.getCell("Experience");
-							cr.getConfiguration(null, experienceCell.field.ofKindID,
-								function(cells)
+							cr.getConfiguration(null, experienceCell.field.ofKindID)
+								.then(function(cells)
 								{
 									var userCell = cells_get_cell_by_name(cells, "_user");
 									check_single_field_instance(experiences, 
@@ -1552,7 +1553,8 @@
 														else
 														{
 															var inquiriesInstance = inquiriesInstances[0];
-															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID,
+															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID)
+																.then(
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
@@ -1578,7 +1580,7 @@
 																				cr.syncFail(err);
 																			});
 																},
-																syncFailFunction);
+																cr.syncFail);
 														}
 													}
 													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);

@@ -58,13 +58,11 @@ var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
 	CRP.prototype.paths = {};
 	CRP.prototype.promises = {};
-	CRP.prototype.configurations = {};
 	CRP.prototype.queue = null;
 	
     function CRP() {
     	this.instances = {};
     	this.paths = {};
-    	this.configurations = {};
         this.queue = new Queue(true); //initialize the queue
     };
     
@@ -72,7 +70,6 @@ var CRP = (function() {
     	this.instances = {};
     	this.paths = {};
     	this.promises = {};
-    	this.configurations = {};
         this.queue = new Queue(true); //initialize the queue
     };
     
@@ -181,33 +178,6 @@ var CRP = (function() {
 		this.promises[args.path] = promise;
 		return promise;
 	}
-	
-	CRP.prototype.getConfiguration = function(ofKindID, successFunction, failFunction)
-	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
-		var _this = this;
-		this.queue.add(
-			function() {
-				if (ofKindID in _this.configurations)
-				{
-					successFunction(_this.configurations[ofKindID]);
-					return true;
-				}
-				else
-				{
-					cr.getConfiguration(null, ofKindID,
-						function(cells) {
-							_this.configurations[ofKindID] = cells;
-							successFunction(cells);
-							_this.queue.next();
-						}, failFunction);
-					return false;
-				}
-			});
-	};
 	
 	return CRP;
 })();
@@ -561,11 +531,9 @@ cr.ObjectCell = (function() {
 				description: newValue.getDescription()};
 	}
 	
-	ObjectCell.prototype.getConfiguration = function(done, fail)
+	ObjectCell.prototype.getConfiguration = function()
 	{
-		cr.getConfiguration(null, this.field.ofKindID, 
-			done,
-			fail);
+		return cr.getConfiguration(null, this.field.ofKindID);
 	}
 		
 	function ObjectCell(field) {
@@ -1076,18 +1044,11 @@ cr.ObjectValue = (function() {
 		{
 			var _this = this;
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-			var r2 = $.Deferred();
-			cr.getConfiguration(this, this.cell.field.ofKindID, 
-				function(newCells)
-				{
-					_this._setCells(newCells);
-					r2.resolve(newCells);
-				},
-				function(err)
-				{
-					r2.reject(err);
-				});
-			return r2;
+			return cr.getConfiguration(this, this.cell.field.ofKindID)
+				.done(function(newCells)
+					{
+						_this._setCells(newCells);
+					});
 		}
 	}
 	
@@ -1169,13 +1130,13 @@ cr.ObjectValue = (function() {
 		{
 			var _this = this;
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-			cr.getConfiguration(this, this.cell.field.ofKindID, 
-				function(newCells)
-				{
-					_this._setCells(newCells);
-					done(newCells);
-				},
-				fail);
+			cr.getConfiguration(this, this.cell.field.ofKindID)
+				.then(function(newCells)
+					{
+						_this._setCells(newCells);
+						done(newCells);
+					},
+					fail);
 		}
 	}
 
@@ -1196,12 +1157,13 @@ cr.ObjectValue = (function() {
 		{
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
 			var _this = this;
-			this.cell.getConfiguration(function(newCells)
-				{
-					_this._setCells(newCells);
-					done(newCells);
-				},
-				fail);
+			this.cell.getConfiguration()
+				.then(function(newCells)
+					{
+						_this._setCells(newCells);
+						done(newCells);
+					},
+					fail);
 		}
 	}
 	
@@ -1579,31 +1541,22 @@ cr.getUserID = function(successFunction, failFunction)
 		);
 	},
 
-cr.getConfiguration = function(parent, typeID, successFunction, failFunction)
+cr.getConfiguration = function(parent, typeID)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-		$.getJSON(cr.urls.getConfiguration,
-			{ "typeID" : typeID })
-		.done(function(json)
+		return $.getJSON(cr.urls.getConfiguration,
+						 { "typeID" : typeID })
+		.then(function(json)
 			{
-					var cells = [];
-					json.cells.forEach(function(cell)
-					{
-						var newCell = cr.createCell(cell.field);
-						newCell.setup(parent);
-						cells.push(newCell);
-					});
-				
-					successFunction(cells);
-			})
-		.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-			}
-		);
+				var cells = [];
+				json.cells.forEach(function(cell)
+				{
+					var newCell = cr.createCell(cell.field);
+					newCell.setup(parent);
+					cells.push(newCell);
+				});
+				return cells;
+			},
+			cr.postError);
 	},
 	
 	
