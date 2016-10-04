@@ -1309,9 +1309,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 		var _this = this;
 		function done()
 		{
-			var newValue = _isPickCell(_this) ? null : _this.addNewValue();
-				
-			editFunction(_this, newValue, previousPanelNode, revealPanelUp,
+			editFunction(_this, null, previousPanelNode, revealPanelUp,
 						promise);
 		}
 		
