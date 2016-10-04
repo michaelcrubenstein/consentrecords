@@ -1570,18 +1570,14 @@ cr.getData = function(args)
 				});
 		return result.promise();
 	},
-cr.submitSignout = function(done, fail)
+cr.submitSignout = function()
 	{
-		$.post(cr.urls.submitSignout, { })
-		.done(function(json)
-			{
-				crp.clear();
-				done();
-			})
-		.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-			});
+		return $.post(cr.urls.submitSignout, { })
+			.then(function(json) {
+					crp.clear();
+				},
+				cr.postError)
+			.promise();
 	}
 
 cr.updateUsername = function(newUsername, password, done, fail)

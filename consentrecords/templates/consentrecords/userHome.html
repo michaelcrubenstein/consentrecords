@@ -1119,22 +1119,23 @@
 			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			var done = function()
-			{
-				cr.signedinUser.clearValue();
-				$(cr.signedinUser).trigger("signout.cr");
-				var sitePanels = $("panel.site-panel");
-				var panel = new WelcomePanel("panel.initial");
-				showPanelNow(panel.node());
-				sitePanels.trigger("hiding.cr");
-				$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
-					function() {
-						sitePanels.remove();
-						closealert();
-					});
-				unblockClick();
-			}
-			cr.submitSignout(done, syncFailFunction);
+			cr.submitSignout()
+				.then(function()
+					{
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
+						var sitePanels = $("panel.site-panel");
+						var panel = new WelcomePanel("panel.initial");
+						showPanelNow(panel.node());
+						sitePanels.trigger("hiding.cr");
+						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+							function() {
+								sitePanels.remove();
+								closealert();
+							});
+						unblockClick();
+					},
+					cr.syncFail);
 		}
 		
 		function show_consent_records(containerDiv) {

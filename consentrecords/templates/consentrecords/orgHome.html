@@ -388,14 +388,13 @@
 			{
 				if (cr.signedinUser.getValueID())
 				{
-					var successFunction = function()
-					{
-						cr.signedinUser.clearValue();
-						$(cr.signedinUser).trigger("signout.cr");
-						unblockClick();
-					};
-					
-					sign_out(successFunction, syncFailFunction);
+					sign_out(function()
+						{
+							cr.signedinUser.clearValue();
+							$(cr.signedinUser).trigger("signout.cr");
+							unblockClick();
+						}, 
+						cr.syncFail);
 				}
 				else
 				{
@@ -713,7 +712,8 @@
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout(successFunction, failFunction);
+			cr.submitSignout()
+				.then(successFunction, failFunction);
 		}
 		
 		function show_consent_records(containerDiv) {
