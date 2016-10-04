@@ -70,9 +70,6 @@
     	panel#id_forgot_password_panel {
     		background: white;
     	}
-    	.background-gradient-panel > nav {
-    		opacity: 0.8;
-    	}
     	.username-label {
     		padding-left: 15px;
     	}
@@ -91,14 +88,6 @@
 			margin-right: 24px;
 			text-align: right;
 	   	}
-	   	.background-gradient-panel .row-button {
-	   		position: relative;
-    		background: white;
-    		opacity: 0.6;
-	   	}
-		.background-gradient-panel .row-button:hover {
-			opacity: 0.8;
-		}
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -399,14 +388,13 @@
 			{
 				if (cr.signedinUser.getValueID())
 				{
-					var successFunction = function()
-					{
-						cr.signedinUser.clearValue();
-						$(cr.signedinUser).trigger("signout.cr");
-						unblockClick();
-					};
-					
-					sign_out(successFunction, syncFailFunction);
+					sign_out(function()
+						{
+							cr.signedinUser.clearValue();
+							$(cr.signedinUser).trigger("signout.cr");
+							unblockClick();
+						}, 
+						cr.syncFail);
 				}
 				else
 				{
@@ -724,7 +712,8 @@
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout(successFunction, failFunction);
+			cr.submitSignout()
+				.then(successFunction, failFunction);
 		}
 		
 		function show_consent_records(containerDiv) {
@@ -881,7 +870,8 @@
 			}
 			
 			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
-			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
+			cr.selectAll({path: path})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		/* Displays a panel in which the specified object's contents appear.
@@ -1222,7 +1212,8 @@
 						}
 					};
 		
-					cr.selectAll({path: "_user[_email="+email+"]", end: 50, done: selectAllSuccess, fail: syncFailFunction});
+					cr.selectAll({path: "_user[_email="+email+"]", end: 50})
+						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
 			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
@@ -1318,9 +1309,11 @@
 					}
 					
 					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
+						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+							.then(selectAllSuccess, cr.asyncFail);
 					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
+							.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
 		}
@@ -1379,13 +1372,14 @@
 						}
 						else
 						{
-							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID,
-								function(cells)
+							/* Test case: From a new session, add a user to the enrollment by using the Add An Enrollment button */
+							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID)
+								.then(function(cells)
 								{
 									enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
 									addUserToEnrollmentCell();
 								},
-								syncFailFunction);
+								cr.syncFail);
 						}
 					}
 				}
@@ -1410,8 +1404,8 @@
 						{
 							experiences.cells = cells;
 							var experienceCell = experiences.getCell("Experience");
-							cr.getConfiguration(null, experienceCell.field.ofKindID,
-								function(cells)
+							cr.getConfiguration(null, experienceCell.field.ofKindID)
+								.then(function(cells)
 								{
 									var userCell = cells_get_cell_by_name(cells, "_user");
 									check_single_field_instance(experiences, 
@@ -1437,6 +1431,11 @@
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
+													/* Mark the experience as having its data loaded so that checking
+														its cells doesn't replace them.
+													 */
+													experience.isDataLoaded = true;
+													
 													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
@@ -1459,18 +1458,18 @@
 			}
 			path += "[" + fieldName + "=" + dataValue + "]";
 			
-			var successFunction = function(newInstances)
-			{
-				if (newInstances.length > 0)
-				{
-					existsFunction(newInstances);
-				}
-				else
-				{
-					doesntExistFunction();
-				}
-			}
-			cr.selectAll({path: path, done: successFunction, fail: failFunction} );
+			cr.selectAll({path: path})
+				.then(function(newInstances)
+					{
+						if (newInstances.length > 0)
+						{
+							existsFunction(newInstances);
+						}
+						else
+						{
+							doesntExistFunction();
+						}
+					}, failFunction);
 		}
 		
 		function show_matching_descriptions(){
@@ -1558,7 +1557,8 @@
 														else
 														{
 															var inquiriesInstance = inquiriesInstances[0];
-															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID,
+															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID)
+																.then(
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
@@ -1584,7 +1584,7 @@
 																				cr.syncFail(err);
 																			});
 																},
-																syncFailFunction);
+																cr.syncFail);
 														}
 													}
 													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
@@ -1605,9 +1605,11 @@
 								}
 					
 								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
+									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+										.then(selectAllSuccess, cr.asyncFail);
 								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
+										.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
 						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);

@@ -429,11 +429,11 @@ var Experience = (function() {
 					{
 						var offering = _this.instance.getValue("Offering");
 						if (offering && offering.getValueID() && !offering.isDataLoaded)
-							crp.pushCheckCells(offering, undefined, done, cr.syncFail);
+							return offering.promiseCellsFromCache();
 						else
-							done();
-					},
-					cr.syncFail);
+							return undefined;
+					})
+				.then(done, cr.syncFail);
 		}
 		else
 		{
@@ -445,18 +445,28 @@ var Experience = (function() {
 
 			this.appendData(initialData);
 		
-			$.when(cr.createInstance(field, this.path.getValueID(), initialData))
+			cr.createInstance(field, this.path.getValueID(), initialData)
 			 .then(function(newData)
 					{
-						crp.pushCheckCells(newData, ["Offering"], 
-							function() {
-								_this.path.getCell("More Experience").addValue(newData);
-								if (done)
-									done();
-							},
-							cr.syncFail);
+						var r = $.Deferred();
+						newData.promiseCellsFromCache(["Offering"])
+							.then(function()
+								{
+									r.resolve(newData);
+									return r;
+								},
+								function(err)
+								{
+									r.reject(err);
+								})
+						return r;
 					}, 
-				   cr.syncFail);
+				   cr.syncFail)
+			 .then(function(newData)
+			 		{
+			 			_this.path.getCell("More Experience").addValue(newData);
+			 		})
+			 .then(done, cr.syncFail);
 		}
 	}
 	
@@ -982,23 +992,24 @@ var ExperienceDatumSearchView = (function() {
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
 				/* Need to check the cells in case this site was a value within an offering. */
-				crp.pushCheckCells(d, ["parents"], function()
-					{
-						_this.experience.setOrganization({instance: d});
-						if (_this.experience.offering &&
-							_this.experience.offering.getValue("Site").getValueID() != d.getValueID())
-							_this.experience.clearOffering();
-						_this.sitePanel.onExperienceUpdated();
-						_this.hideSearch(function()
-							{
-								_this.cancelSearch();
-								var newInputNode = _this.sitePanel.offeringInput.node();
-								newInputNode.focus();
-								newInputNode.setSelectionRange(0, newInputNode.value.length);
-								unblockClick();
-							});
-					},
-					syncFailFunction);
+				d.promiseCellsFromCache(["parents"])
+					.then(function()
+						{
+							_this.experience.setOrganization({instance: d});
+							if (_this.experience.offering &&
+								_this.experience.offering.getValue("Site").getValueID() != d.getValueID())
+								_this.experience.clearOffering();
+							_this.sitePanel.onExperienceUpdated();
+							_this.hideSearch(function()
+								{
+									_this.cancelSearch();
+									var newInputNode = _this.sitePanel.offeringInput.node();
+									newInputNode.focus();
+									newInputNode.setSelectionRange(0, newInputNode.value.length);
+									unblockClick();
+								});
+						},
+						cr.syncFail);
 			}
 		}
 		else if (d.typeName === 'Offering')

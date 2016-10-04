@@ -98,8 +98,8 @@ var GetDataChunker = (function() {
 		this._dataGetter()({path: this.path, 
 					start: this._start,
 					end: this._start + this._increment,
-					fields: this.fields, 
-					done: function(instances) 
+					fields: this.fields})
+			.then(function(instances) 
 						{ 
 							/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
 								this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
@@ -110,8 +110,8 @@ var GetDataChunker = (function() {
 								if (_this._onFoundInstances(instances, startVal))
 									_this._restart(instances, startVal);
 							}
-						}, 
-					fail: asyncFailFunction});
+						},
+					cr.asyncFail);
 		this._inGetData = true;
 	}
 	

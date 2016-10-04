@@ -78,7 +78,8 @@ var ExperienceCommentsPanel = (function() {
 			$.when(cr.createInstance(commentCell.field, comments.getValueID(), initialData))
 		     .then(function(newData)
 					{
-						crp.pushCheckCells(newData, [], 
+						newData.promiseCellsFromCache()
+							.then( 
 							function() {
 								commentCell.addValue(newData);
 								done(newData);
@@ -268,9 +269,12 @@ var ExperienceCommentsPanel = (function() {
 			eventObject.data.loadComments([newData]);
 		}
 		
-		function onCommentsChecked(comments)
+		function onCommentsChecked(commentsCells)
 		{
-			var commentCell = comments.getCell("Comment");
+			var commentCell = commentsCells.find(function(cell)
+				{
+					return cell.field.name == "Comment";
+				});
 			$(commentCell).on('valueAdded.cr', null, _this, onCommentAdded);
 			$(commentsDiv.node()).on('remove', null, commentCell, function(commentCellEventObject)
 				{
@@ -282,7 +286,8 @@ var ExperienceCommentsPanel = (function() {
 		function onNewCommentsSaved(eventObject, changeTarget)
 		{
 			if (changeTarget.typeName == "Comments")
-				crp.pushCheckCells(changeTarget, ["Comment"], onCommentsChecked, cr.asyncFail)
+				changeTarget.promiseCellsFromCache(["Comment"])
+					.then(onCommentsChecked, cr.asyncFail)
 		}
 		
 		$(comments).on('dataChanged.cr', null, this, onNewCommentsSaved);
@@ -355,7 +360,8 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (comments.getValueID())
 		{
-			crp.pushCheckCells(comments, ["Comment"], onCommentsChecked, cr.asyncFail);
+			comments.promiseCellsFromCache(["Comment"])
+				.then(onCommentsChecked, cr.asyncFail);
 		}
 	}
 		

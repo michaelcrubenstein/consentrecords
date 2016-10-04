@@ -1309,9 +1309,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 		var _this = this;
 		function done()
 		{
-			var newValue = _isPickCell(_this) ? null : _this.addNewValue();
-				
-			editFunction(_this, newValue, previousPanelNode, revealPanelUp,
+			editFunction(_this, null, previousPanelNode, revealPanelUp,
 						promise);
 		}
 		
@@ -2826,9 +2824,11 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 		objectData.checkCells(undefined, function()
 			{
 				successFunction(objectData.cells);
-			}, syncFailFunction);
+			}, cr.syncFail);
 	else
-		containerCell.getConfiguration(successFunction, syncFailFunction);
+		/* Test case: Add a new site to an organization. */
+		containerCell.getConfiguration()
+			.then(successFunction, cr.syncFail);
 }
 
 /* 
@@ -2850,7 +2850,9 @@ function showAddRootPanel(containerCell, previousPanelNode, onShow) {
 		onShow(sitePanel.node());
 	}
 	
-	containerCell.getConfiguration(successFunction, syncFailFunction);
+	/* Test case: Display panel to add a new term. */
+	containerCell.getConfiguration()
+			.then(successFunction, cr.syncFail);
 }
 
 function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)
@@ -3317,16 +3319,22 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			}
 			if (currentObject != null && currentObject.getValueID())
 			{
+				/* Test case: edit the inquiry access group of an organization */
 				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
-				cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: syncFailFunction});
+				cr.selectAll({path: pickObjectPath})
+					.then(selectAllSuccessFunction, cr.syncFail);
 			}
 			else
-				syncFailFunction("The container has not yet been saved.");
+				cr.syncFail("The container has not yet been saved.");
 		}
-		else	
-			cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: syncFailFunction});
+		else
+			/* Test case: edit the public access of an organization. */
+			cr.selectAll({path: pickObjectPath})
+				.then(selectAllSuccessFunction, cr.syncFail);
 	}
 	else
-		cr.selectAll({path: cell.field.ofKindID, done: selectAllSuccessFunction, fail: syncFailFunction});
+		/* Test case: edit the name of a field of a configuration of a term. */
+		cr.selectAll({path: cell.field.ofKindID})
+			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		

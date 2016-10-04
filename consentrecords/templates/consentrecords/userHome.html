@@ -65,9 +65,6 @@
     	panel#id_forgot_password_panel {
     		background: white;
     	}
-    	.background-gradient-panel > nav {
-    		opacity: 1.0;
-    	}
     	.centered-right-glyph {
 			position: absolute;
 			top: 50%;
@@ -83,14 +80,6 @@
 			margin-right: 24px;
 			text-align: right;
 	   	}
-	   	.background-gradient-panel .row-button {
-	   		position: relative;
-    		background: white;
-    		opacity: 0.6;
-	   	}
-		.background-gradient-panel .row-button:hover {
-			opacity: 0.8;
-		}
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -761,29 +750,31 @@
 							}
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("More Experiences");
-							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"], done: function(experiences)
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
+								.then(function(experiences)
 								{
 									if (experiences.length > 0)
 									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
-												if (experiences[0].typeName == "More Experience")
+										cr.signedinUser.promiseCellsFromCache()
+											.then(function()
 												{
-													var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
-													var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
-													showPanelUp(newPanel.node());
-												}
-												else
-													cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
-											},
-											cr.asyncFail);
+													if (experiences[0].typeName == "More Experience")
+													{
+														var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
+														var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+														showPanelUp(newPanel.node());
+													}
+													else
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+												},
+												cr.asyncFail);
 									}
 									else
 									{
 										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
 									}
 								},
-								fail: cr.asyncFail});
+								cr.asyncFail);
 						}
 					}
 					needsSignin = true;
@@ -794,8 +785,8 @@
 					/* Add an experience specified in the URL to this pathway. */
 					var handleState = function(pathwayPanel)
 					{
-						crp.pushCheckCells(cr.signedinUser, undefined, 
-							function() {
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
 								if (!pathwayPanel)
 								{
 									if (!firstPanel)
@@ -808,7 +799,7 @@
 								}
 								addToPathway(pathwayPanel);
 							},
-							asyncFailFunction);
+							cr.asyncFail);
 					}
 					needsSignin = true;
 				}
@@ -936,8 +927,8 @@
 				{
 					var handleState = function()
 					{
-						crp.pushCheckCells(cr.signedinUser, undefined, 
-							function() {
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
 								if (!firstPanel)
 								{
 									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
@@ -945,7 +936,7 @@
 									showPanelUp(firstPanel.node());
 								}
 							},
-							asyncFailFunction);
+							cr.asyncFail);
 					}
 					needsSignin = true;
 				}
@@ -1128,22 +1119,23 @@
 			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			var done = function()
-			{
-				cr.signedinUser.clearValue();
-				$(cr.signedinUser).trigger("signout.cr");
-				var sitePanels = $("panel.site-panel");
-				var panel = new WelcomePanel("panel.initial");
-				showPanelNow(panel.node());
-				sitePanels.trigger("hiding.cr");
-				$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
-					function() {
-						sitePanels.remove();
-						closealert();
-					});
-				unblockClick();
-			}
-			cr.submitSignout(done, syncFailFunction);
+			cr.submitSignout()
+				.then(function()
+					{
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
+						var sitePanels = $("panel.site-panel");
+						var panel = new WelcomePanel("panel.initial");
+						showPanelNow(panel.node());
+						sitePanels.trigger("hiding.cr");
+						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+							function() {
+								sitePanels.remove();
+								closealert();
+							});
+						unblockClick();
+					},
+					cr.syncFail);
 		}
 		
 		function show_consent_records(containerDiv) {

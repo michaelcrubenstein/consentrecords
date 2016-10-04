@@ -123,9 +123,9 @@
 			{
 				showPanelNow(panelDiv);
 			}
-			cr.selectAll({path: "{{path}}", 
-				done: getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
-				fail: asyncFailFunction});
+			cr.selectAll({path: "{{path}}"})
+				.then(getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
+					  cr.asyncFail);
 		});
 	</script>
 

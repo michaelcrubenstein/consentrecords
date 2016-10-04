@@ -38,13 +38,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				.text(site.getDescription());
 		}
 		
-		crp.pushCheckCells(site, undefined, function()
-		{
-			var address = site.getValue("Address");
-			appendAddress.call(orgDiv.node(), address);
-		},
-		function() { }
-		);
+		site.promiseCellsFromCache()
+			.then(function()
+				{
+					var address = site.getValue("Address");
+					appendAddress.call(orgDiv.node(), address);
+				});
 	}
 	
 	function appendStringDatum(cellName)
@@ -75,34 +74,35 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var cellDiv = panel2Div.append("section")
 		.classed("cell", true);
 	
-	crp.pushCheckCells(offering, undefined, function()
-		{
-			var serviceCell = offering.getCell("Service");
-			serviceCell.field.label = "Tags";
-			if (!service && serviceCell.data.length > 0)
-				service = serviceCell.data[0];
+	offering.promiseCellsFromCache()
+		.then(function()
+			{
+				var serviceCell = offering.getCell("Service");
+				serviceCell.field.label = "Tags";
+				if (!service && serviceCell.data.length > 0)
+					service = serviceCell.data[0];
 				
-			if (service)
-			{
-				shareDiv = sitePanel.appendBottomNavContainer();
+				if (service)
+				{
+					shareDiv = sitePanel.appendBottomNavContainer();
 
-				shareDiv.div.classed("share-container border-above", true);
+					shareDiv.div.classed("share-container border-above", true);
 
-				appendFacebookButton(shareDiv, service, session);
-			}
+					appendFacebookButton(shareDiv, service, session);
+				}
 
-			if (serviceCell.data.length > 0)
-			{
-				serviceCell.appendLabel(cellDiv.node());
-				var itemsDiv = cellDiv.append("ol");
+				if (serviceCell.data.length > 0)
+				{
+					serviceCell.appendLabel(cellDiv.node());
+					var itemsDiv = cellDiv.append("ol");
 
-				var divs = appendItems(itemsDiv, serviceCell.data);
-				var buttons = divs.append("div").classed("multi-line-item", true);
-				appendButtonDescriptions(buttons);
-				cellDiv.append("div").classed("cell-border-below", true);
-			}
-		},
-		asyncFailFunction);
+					var divs = appendItems(itemsDiv, serviceCell.data);
+					var buttons = divs.append("div").classed("multi-line-item", true);
+					appendButtonDescriptions(buttons);
+					cellDiv.append("div").classed("cell-border-below", true);
+				}
+			},
+			cr.asyncFail);
 	
 	var agesDiv = panel2Div.append("section");
 	showAgeRange(offering, function(newText)
@@ -157,8 +157,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var addInquiry = function(user)
 	{
 		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath,
-			done: function(groupPaths)
+		cr.selectAll({path: groupPath})
+			.done(function(groupPaths)
 				{
 					var initialData = [{
 							container: '#{0}>Inquiries'.format(session.getValueID()),
@@ -187,11 +187,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
 							}
 						});
-					cr.updateValues(initialData, sourceObjects)
-						.fail(cr.asyncFail);
-				},
-			fail: cr.asyncFail 
-			});
+					return cr.updateValues(initialData, sourceObjects);
+				})
+			.fail(cr.asyncFail);
 	}
 	
 	var tryAddInquiry = function(user)
