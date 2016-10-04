@@ -870,7 +870,8 @@
 			}
 			
 			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
-			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
+			cr.selectAll({path: path})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		/* Displays a panel in which the specified object's contents appear.
@@ -1211,7 +1212,8 @@
 						}
 					};
 		
-					cr.selectAll({path: "_user[_email="+email+"]", end: 50, done: selectAllSuccess, fail: syncFailFunction});
+					cr.selectAll({path: "_user[_email="+email+"]", end: 50})
+						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
 			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
@@ -1307,9 +1309,11 @@
 					}
 					
 					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
+						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+							.then(selectAllSuccess, cr.asyncFail);
 					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
+							.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
 		}
@@ -1454,18 +1458,18 @@
 			}
 			path += "[" + fieldName + "=" + dataValue + "]";
 			
-			var successFunction = function(newInstances)
-			{
-				if (newInstances.length > 0)
-				{
-					existsFunction(newInstances);
-				}
-				else
-				{
-					doesntExistFunction();
-				}
-			}
-			cr.selectAll({path: path, done: successFunction, fail: failFunction} );
+			cr.selectAll({path: path})
+				.then(function(newInstances)
+					{
+						if (newInstances.length > 0)
+						{
+							existsFunction(newInstances);
+						}
+						else
+						{
+							doesntExistFunction();
+						}
+					}, failFunction);
 		}
 		
 		function show_matching_descriptions(){
@@ -1601,9 +1605,11 @@
 								}
 					
 								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
+									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+										.then(selectAllSuccess, cr.asyncFail);
 								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
+										.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
 						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);

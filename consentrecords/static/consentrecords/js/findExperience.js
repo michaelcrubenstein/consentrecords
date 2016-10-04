@@ -157,8 +157,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var addInquiry = function(user)
 	{
 		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath,
-			done: function(groupPaths)
+		cr.selectAll({path: groupPath})
+			.done(function(groupPaths)
 				{
 					var initialData = [{
 							container: '#{0}>Inquiries'.format(session.getValueID()),
@@ -187,11 +187,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
 							}
 						});
-					cr.updateValues(initialData, sourceObjects)
-						.fail(cr.asyncFail);
-				},
-			fail: cr.asyncFail 
-			});
+					return cr.updateValues(initialData, sourceObjects);
+				})
+			.fail(cr.asyncFail);
 	}
 	
 	var tryAddInquiry = function(user)

@@ -84,35 +84,6 @@ var CRP = (function() {
     		return undefined;
     }
 
-	CRP.prototype.pushID = function(id, successFunction, failFunction)
-	{
-		if (typeof(successFunction) != "function")
-			throw "successFunction is not a function";
-		if (typeof(failFunction) != "function")
-			throw "failFunction is not a function";
-    	if (!id)
-    		throw("id is not defined");
-		var _this = this;
-		this.queue.add(
-			function() {
-				if (id in _this.instances) {
-					successFunction(_this.instances[id]);
-				}
-				else
-				{
-					cr.selectAll({path: "#"+id, 
-						done: function(newInstances)
-						{
-							_this.instances[id] = newInstances[0];
-							successFunction(newInstances[0]);
-							_this.queue.next();
-						}, 
-						fail: failFunction} );
-					return false;
-				}
-			});
-	};
-	
 	CRP.prototype.pushInstance = function(i)
 	{
 		if (i.getValueID())
@@ -1270,10 +1241,6 @@ cr.thenFail = function(jqXHR, textStatus, errorThrown)
 	/* args is an object with up to five parameters: path, start, end, done, fail */
 cr.selectAll = function(args)
 	{
-		if (!args.fail)
-			throw ("failFunction is not specified");
-		if (!args.done)
-			throw ("done function is not specified");
 		if (!args.path)
 			throw "path was not specified to selectAll";
 
@@ -1286,25 +1253,22 @@ cr.selectAll = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		$.getJSON(cr.urls.selectAll, data,
-			function(json)
-			{
-				try
+		return $.getJSON(cr.urls.selectAll, data)
+			.then(
+				function(json)
 				{
-					var instances = json.objects.map(cr.ObjectCell.prototype.copyValue);
-					args.done(instances);
-				}
-				catch(err)
-				{
-					args.fail(err);
-				}
-			}
-		)
-		.fail(function(jqXHR, textStatus, errorThrown)
+					try
 					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, args.fail);
+						return json.objects.map(cr.ObjectCell.prototype.copyValue);
 					}
-				);
+					catch(err)
+					{
+						var r = $.Deferred();
+						r.reject(err);
+						return r.promise();
+					}
+				},
+				cr.postError);
 	};
 	
 	/* args is an object with up to five parameters: path, start, end, done, fail.

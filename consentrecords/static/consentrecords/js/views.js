@@ -3319,16 +3319,22 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			}
 			if (currentObject != null && currentObject.getValueID())
 			{
+				/* Test case: edit the inquiry access group of an organization */
 				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
-				cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: syncFailFunction});
+				cr.selectAll({path: pickObjectPath})
+					.then(selectAllSuccessFunction, cr.syncFail);
 			}
 			else
-				syncFailFunction("The container has not yet been saved.");
+				cr.syncFail("The container has not yet been saved.");
 		}
-		else	
-			cr.selectAll({path: pickObjectPath, done: selectAllSuccessFunction, fail: syncFailFunction});
+		else
+			/* Test case: edit the public access of an organization. */
+			cr.selectAll({path: pickObjectPath})
+				.then(selectAllSuccessFunction, cr.syncFail);
 	}
 	else
-		cr.selectAll({path: cell.field.ofKindID, done: selectAllSuccessFunction, fail: syncFailFunction});
+		/* Test case: edit the name of a field of a configuration of a term. */
+		cr.selectAll({path: cell.field.ofKindID})
+			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		

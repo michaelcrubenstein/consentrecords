@@ -86,13 +86,13 @@ var CRP = (function() {
 				}
 				else
 				{
-					cr.selectAll({path: "#"+id, 
-						done: function(newInstances)
+					cr.selectAll({path: "#"+id,})
+						.then(function(newInstances)
 						{
 							_this.instances[id] = newInstances[0];
 							successFunction(newInstances[0]);
 						}, 
-						fail: failFunction);
+						failFunction);
 				}
 				return true;
 			});
