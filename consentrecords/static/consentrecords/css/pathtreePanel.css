@@ -107,21 +107,21 @@ svg.pathway g.guide rect.column-icon {
 	fill-opacity: 0.0;
 }
 
-svg.pathway g.experiences g.flag rect.opaque {
+g.flag rect.opaque {
 	fill-opacity: 1.0;
 	fill: white;
 	stroke-opacity: 0.0;
 }
-svg.pathway g.experiences rect.bg {
+g.flag rect.bg {
 	fill-opacity: 0.2;
 	stroke-width: 0;
 	stroke-opacity: 0.0;
 }
-svg.pathway g.experiences line.flag-pole {
+g.flag line.flag-pole {
 	stroke-opacity: 0.6;
 	stroke-width: 3;
 }
-svg.pathway .flag-label {	/* For both flags and detail panels */
+g.flag .flag-label {	/* For both flags and detail panels */
 	fill: #222;
 	text-anchor: start;
 	font-weight: 500;
