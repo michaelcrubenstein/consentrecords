@@ -1013,8 +1013,9 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._setCells = function(oldCells)
 	{
 		this.cells = oldCells;
+		var _this = this;
 		oldCells.forEach(function(cell) {
-			cell.setParent(this);
+			cell.setParent(_this);
 		});
 	}
 
