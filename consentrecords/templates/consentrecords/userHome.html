@@ -750,7 +750,7 @@
 							}
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("More Experiences");
-							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"])
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
 								.then(function(experiences)
 								{
 									if (experiences.length > 0)
