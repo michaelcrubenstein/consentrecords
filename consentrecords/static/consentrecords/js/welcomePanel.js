@@ -76,10 +76,10 @@ var WelcomePanel = (function () {
 		if (subPanels)
 		{
 			var curSubPanel = subPanels.children('li.active');
-			if (curSubPanel.size())
+			if (curSubPanel.length)
 			{
 				var prevSubPanel = curSubPanel.prev('li');
-				if (prevSubPanel.size())
+				if (prevSubPanel.length)
 				{
 					if (prepareClick('click', 'prev welcome subpanel'))
 					{
@@ -100,14 +100,14 @@ var WelcomePanel = (function () {
 									 });
 									 
 						var svg = curPanel.find('svg.experience-detail');
-						if (svg.size() > 0)
+						if (svg.length > 0)
 						{
 							var subPanelIndex = prevSubPanel.index();
 							this.highlightLabels(svg, prevSubPanel.index());
 						}			 
 
-						if (curPanel.next().size() == 0 &&
-							curSubPanel.next().size() == 0)
+						if (curPanel.next().length == 0 &&
+							curSubPanel.next().length == 0)
 						{
 							this.hideLastRightButton();
 						}
@@ -119,7 +119,7 @@ var WelcomePanel = (function () {
 		
 		var prevPanel = curPanel.prev('li');
 		var activeIndex = curPanel.index();
-		if (curPanel.size())
+		if (curPanel.length)
 		{
 			if (prepareClick('click', 'prev welcome panel {0}'.format(activeIndex)))
 			{
@@ -167,10 +167,10 @@ var WelcomePanel = (function () {
 		if (subPanels)
 		{
 			var curSubPanel = subPanels.children('li.active');
-			if (curSubPanel.size())
+			if (curSubPanel.length)
 			{
 				var nextSubPanel = curSubPanel.next('li');
-				if (nextSubPanel.size())
+				if (nextSubPanel.length)
 				{
 					if (prepareClick('click', 'next welcome subpanel'))
 					{
@@ -193,14 +193,14 @@ var WelcomePanel = (function () {
 									 });
 						
 						var svg = curPanel.find('svg.experience-detail');
-						if (svg.size() > 0)
+						if (svg.length > 0)
 						{
 							var subPanelIndex = nextSubPanel.index();
 							this.highlightLabels(svg, nextSubPanel.index());
 						}			 
 
-						if (curPanel.next().size() == 0 &&
-							nextSubPanel.next().size() == 0)
+						if (curPanel.next().length == 0 &&
+							nextSubPanel.next().length == 0)
 						{
 							this.showLastRightButton();
 						}
@@ -212,7 +212,7 @@ var WelcomePanel = (function () {
 		
 		var nextPanel = curPanel.next('li');
 		var activeIndex = curPanel.index();
-		if (nextPanel.size())
+		if (nextPanel.length)
 		{
 			if (prepareClick('click', 'next welcome panel {0}'.format(activeIndex)))
 			{
@@ -240,9 +240,9 @@ var WelcomePanel = (function () {
 					var offset = div1.children(':first-child').outerWidth(true);
 					div1.children().animate({left: "{0}px".format(-offset)});
 				}
-				else if (nextPanel.next().size() == 0)
+				else if (nextPanel.next().length == 0)
 				{
-					if (nextPanel.find('ol').size() == 0)
+					if (nextPanel.find('ol').length == 0)
 						this.showLastRightButton();
 				}
 			}
@@ -514,12 +514,12 @@ var WelcomePanel = (function () {
 			.attr('role', 'button')
 			.on("click", function() {
 				var curPanel = $(ol.selectAll('li.active:last-child').node());
-				if (curPanel.size() > 0)
+				if (curPanel.length > 0)
 				{
 					subOL = curPanel.find('ol');
-					if (subOL.size() > 0)
+					if (subOL.length > 0)
 					{
-						if (subOL.children('li.active').next().size() == 0)
+						if (subOL.children('li.active').next().length == 0)
 						{
 							if (cr.signedinUser.getValueID())
 								return;

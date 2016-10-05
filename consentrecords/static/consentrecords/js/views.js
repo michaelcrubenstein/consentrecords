@@ -410,7 +410,7 @@ function _setupItemHandlers(d, done)
 			removeItem(eventObject.data, done);
 		}
 		$(d).one("valueDeleted.cr", null, this, f);
-		$(this).on("remove", this, d, function(eventObject)
+		$(this).on("remove", null, d, function(eventObject)
 		{
 			$(eventObject.data).off("valueDeleted.cr", null, f);
 		});

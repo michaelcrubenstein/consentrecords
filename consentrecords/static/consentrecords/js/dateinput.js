@@ -405,7 +405,7 @@ var DateWheel = (function () {
 						var newIndex = Math.round(newScrollTop / itemHeight);
 						if (_this._getIsIndexDisabled(node, newIndex))
 						{
-							var numItems = $(node).children('li').size();
+							var numItems = $(node).children('li').length;
 							while (newIndex < numItems)
 							{
 								if (!_this._getIsIndexDisabled(node, newIndex))
