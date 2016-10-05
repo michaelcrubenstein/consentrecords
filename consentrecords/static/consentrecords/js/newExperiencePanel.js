@@ -1118,7 +1118,7 @@ var ExperienceDatumSearchView = (function() {
 						  before: done});
 	}
 	
-	ExperienceDatumSearchView.prototype.showSearch = function(duration)
+	ExperienceDatumSearchView.prototype.showSearch = function(duration, step, done)
 	{
 		duration = duration !== undefined ? duration : 400;
 		var parent = $(this.reveal.node).parent();
@@ -1134,7 +1134,7 @@ var ExperienceDatumSearchView = (function() {
 					and subtract the parent's height and add back the reveal node's height. */
 				{newHeight: newHeight,
 				 children: $(this.listPanel.node())},
-				duration);
+				duration, step, done);
 		}
 	}	
 
@@ -2402,6 +2402,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.organizationSearchView = null;
 	NewExperiencePanel.prototype.siteSearchView = null;
 	NewExperiencePanel.prototype.offeringSearchView = null;
+	NewExperiencePanel.prototype.tagsSection = null;
 	NewExperiencePanel.prototype.tagSearchView = null;
 	NewExperiencePanel.prototype.startHidable = null;
 	NewExperiencePanel.prototype.endHidable = null;
@@ -2831,7 +2832,15 @@ var NewExperiencePanel = (function () {
 		var done = function()
 				{
 					_this.tagSearchView.constrainFoundObjects(inputNode);
-					_this.tagSearchView.showSearch(200);
+					_this.tagSearchView.showSearch(200, undefined, function()
+						{
+							var oldTop = $(_this.tagsSection.node()).offset().top;
+							if (oldTop < $(window).scrollTop())
+							{
+								var body = $("html, body");
+								body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+							}
+						});
 				};
 		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
 		{
@@ -3073,9 +3082,9 @@ var NewExperiencePanel = (function () {
 														 this.offeringInput.node(), 
 														 offeringHelp.node());
 		
-		section = panel2Div.append('section')
+		this.tagsSection = panel2Div.append('section')
 			.classed('cell tags', true);
-		label = section.append('label')
+		label = this.tagsSection.append('label')
 			.text('Tags:');
 		
 		/* Put the officeTagsContains and the tagsContainer within the label so that,
@@ -3091,7 +3100,7 @@ var NewExperiencePanel = (function () {
 		
 		tagHelp = tagsContainer.append('div').classed('help', true);
 			
-		searchContainer = section.append('div');
+		searchContainer = this.tagsSection.append('div');
 		
 		this.tagSearchView = new TagSearchView(searchContainer.node(), 
 												this, experience, 
@@ -3287,7 +3296,15 @@ var NewExperiencePanel = (function () {
 				var done = function()
 						{
 							_this.organizationSearchView.restartSearchTimeout();
-							_this.organizationSearchView.showSearch(200);
+							_this.organizationSearchView.showSearch(200, undefined, function()
+								{
+									var oldTop = $(_this.organizationInput.node()).offset().top;
+									if (oldTop < $(window).scrollTop())
+									{
+										var body = $("html, body");
+										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+									}
+								});
 						};
 				if (!_this.onFocusInOtherInput(_this.organizationSearchView.reveal, done))
 				{
@@ -3301,7 +3318,15 @@ var NewExperiencePanel = (function () {
 				var done = function()
 						{
 							_this.siteSearchView.restartSearchTimeout();
-							_this.siteSearchView.showSearch(200);
+							_this.siteSearchView.showSearch(200, undefined, function()
+								{
+									var oldTop = $(_this.siteInput.node()).offset().top;
+									if (oldTop < $(window).scrollTop())
+									{
+										var body = $("html, body");
+										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+									}
+								});
 						}
 				if (!_this.onFocusInOtherInput(_this.siteSearchView.reveal, done))
 				{
@@ -3315,7 +3340,15 @@ var NewExperiencePanel = (function () {
 				var done = function()
 						{
 							_this.offeringSearchView.restartSearchTimeout();
-							_this.offeringSearchView.showSearch(200);
+							_this.offeringSearchView.showSearch(200, undefined, function()
+								{
+									var oldTop = $(_this.offeringInput.node()).offset().top;
+									if (oldTop < $(window).scrollTop())
+									{
+										var body = $("html, body");
+										body.animate({scrollTop: "{0}px".format(oldTop)}, {duration: 200});
+									}
+								});
 						};
 				if (!_this.onFocusInOtherInput(_this.offeringSearchView.reveal, done))
 				{
