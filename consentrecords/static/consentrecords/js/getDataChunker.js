@@ -133,7 +133,7 @@ var GetDataChunker = (function() {
 		else
 			scrollingNode = $(this._containerNode).scrollParent();
 		
-		if (scrollingNode.size() == 0)
+		if (scrollingNode.length == 0)
 			throw "scrollParent not specified; containerNode is not displayed"
 			
 		scrollingNode.scroll(startVal, this._check);
