@@ -300,6 +300,12 @@ terms.initialize()
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
+path='Service'
+q = QueryDict('fields=%5B%22Domain%22%2C%22Stage%22%5D')
+profile.run('api.getData(user, path, q)')
+
+user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
+from django.http import QueryDict
 path='#107d7f83095d41efb0472a60f4816043'
 q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
 profile.run('api.getData(user, path, q)')

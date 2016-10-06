@@ -893,13 +893,12 @@ class api:
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"]:
-                typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
-                fieldsData = fieldsDataDictionary[typeID]
+                fieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
                     
                 for d in cell["data"]:
                     i = sDict[d["instanceID"]]
                     d['cells'] = i.getData(i.subValues, fieldsData, userInfo, language)
-                    d['typeName'] = i.typeID.getDescription();
+                    d['typeName'] = cell["field"]["ofKind"]
             
         return data;
         
@@ -948,6 +947,7 @@ class api:
                                       to_attr='subValues'))
 
             uuObjects = uuObjects.select_related('typeID')\
+                                 .select_related('typeID__description')\
                                  .select_related('parent')\
                                  .select_related('description')\
                                  .prefetch_related(Prefetch('value_set',
