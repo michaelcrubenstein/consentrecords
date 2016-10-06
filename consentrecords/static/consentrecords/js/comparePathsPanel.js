@@ -730,11 +730,10 @@ var ComparePath = (function() {
 				{
 					this.setDescription(this.getValue("Offering").getDescription());
 				});
-				crp.pushCheckCells(_this.rightPath, ["More Experience", "parents"],
-							  successFunction2, 
-							  asyncFailFunction);
-			},
-		   cr.asyncFail);
+				
+				return _this.rightPath.promiseCellsFromCache(["More Experience", "parents"]);
+			})
+		.then(successFunction2, cr.asyncFail);
 	}
 	
 	function ComparePath(sitePanel, containerDiv) {
