@@ -1,0 +1,166 @@
+/* signup.css */
+	panel.sign-up {
+		background: white;
+		font-family: 'SF-UI', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	}
+	
+	panel.sign-up h1 {
+		width: 100%;
+		text-align: center;
+		margin-top: 1em;
+		margin-bottom: 1em;
+		font-size: 2em;
+		font-weight: normal;
+	}
+	
+	panel.sign-up input[type=text],
+	panel.sign-up input[type=password],
+	panel.sign-up input[type=number],
+	panel.sign-up input[type=month],
+	panel.sign-up input[type=email],
+	panel.sign-up input[type=url],
+	panel.sign-up input[type=date] {
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		appearance:none;
+		border: none;
+		border-color: transparent;
+		padding: 6px 20px;
+		width: 100%;
+	}
+	
+	panel.sign-up div.select-container {
+		margin-top: 6px;
+		margin-bottom: 6px;
+	}
+	
+	panel.sign-up div.select-container:first-child {
+		margin-left:20px;
+	}
+	
+	panel.sign-up div.select-container:last-child {
+		margin-left:12px;
+	}
+	
+	panel.sign-up table {
+		border-top: 1px solid #eee;
+		cellspacing: 0;
+		width: 100%;
+	}
+
+	panel.sign-up table td {
+		border-bottom: 1px solid #eee;
+	}
+
+	panel.sign-up table td:first-child {
+		padding-left: 12px;
+		white-space: nowrap;
+	}
+	
+	table.labeled td:first-child {
+		text-align: right;
+		margin-right: 12px;
+	}
+	
+	td .alert {
+		margin-bottom: 0px;
+	}
+
+	panel.birthday span {
+		position: absolute;
+		right: 0px;
+		top: 4px;
+		font-size: 14px;
+		color: #AAA;
+	}
+
+	panel.birthday select {
+		display: inline-block;
+		position: relative;
+		background-color: white;
+		margin-top: 6px;
+		margin-bottom: 6px;
+		margin-left: 3px;
+		padding-right: 1em;
+		border: none;
+		outline: none;
+		-webkit-appearance:none;
+		-moz-appearance:none;
+		appearance:none;
+		padding-left: 0px;
+	}
+
+	table.option td:first-child {
+		text-align: left;
+	}
+
+	table.option td:first-child span {
+		padding-left: 6px;
+		padding-right: 12px;
+		text-align: left;
+	}
+	
+	td:last-child {
+		padding-right: 12px;
+	}
+
+	td.full-width {
+		width: 100%;
+		min-width: 100%;
+	}
+	
+	panel.sign-up panel.birthday td.full-width {
+		text-align: right;
+	}
+
+	panel.sign-up td p {
+		padding: 0;
+		margin-top: 0.2em;
+		margin-bottom: 0.2em;
+	}
+	
+	panel.sign-up input:focus {
+		outline-style: none;
+	}
+	
+	panel.sign-up p {
+		width: 100%;
+		margin: 0;
+		padding: .4em 1.5em;
+		color: #777;
+		font-size: 0.9em;
+		font-weight: normal;
+	}
+	
+	panel.sign-up .alert p {
+		width: 100%;
+		padding: 0;
+		color: #777;
+		font-size: 14px;
+		text-align: left;
+		font-weight: normal;
+	}
+	
+	panel.sign-up #id_termsAlert {
+		position: absolute;
+		top: fixed;
+	}
+	
+    panel.sign-up .dots ol li {
+        background: #888;
+    }
+    
+    panel.sign-up .dots ol .active {
+    	background: #CCC;
+    }
+    
+    panel.sign-up .dots ~ panel > div {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+    }
+    
+    panel.sign-up .dots ~ panel > div > select {
+    	display: inline-block;
+    }
+    

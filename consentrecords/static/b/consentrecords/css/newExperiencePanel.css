@@ -1,0 +1,322 @@
+/* newExperiencePanel.css */
+	.dots {
+		overflow: hidden;
+		text-align: center;
+		width: 100%;
+		position: fixed;
+		bottom: 0px;
+	}
+    .dots ol {
+		display: inline-block;
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .dots ol li {
+        display: inline-block;
+        background: #888;
+        border-radius: 50%;
+        width:20px;
+        height:20px;
+        cursor: pointer;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    
+    .dots ol .active {
+    	background: white;
+    }
+    
+	panel.new-experience-panel .address-line {
+		margin-left: 0px;
+		font-size: smaller;
+		color: #999;
+	}
+	
+	panel.new-experience-panel div.searchbar {
+		background: #F8F8F8;
+		border-bottom-color: #ddd;
+		border-bottom-style: solid;
+		border-bottom-width: 1px;
+	}
+	
+	panel.new-experience-panel section {
+		background-color: white;
+	}
+	
+	panel.new-experience-panel section.cell.unique input {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		background-color: white;
+		border: none;
+		outline: none;
+		font-size: 0.9em;
+		width: calc(100% - 12px);
+		border-top-style: solid;
+		border-top-width: 1px;
+		border-top-color: #ddd;
+		margin-left: 12px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+	
+	panel.new-experience-panel section div.help {
+		padding: 6px 12px;
+		display: none;
+	}
+	
+	panel.new-experience-panel section div.help p {
+		font-size: 0.8em;
+		color: #666;
+	}
+	
+	panel.new-experience-panel section div.help p.list {
+		margin-bottom: 0;
+	}
+	
+	panel.new-experience-panel section.tags {
+		margin-top: 12px;
+	}
+	
+	panel.new-experience-panel section.tags span.offering-tags-container {
+		margin-left: 12px;
+	}
+	
+	panel.new-experience-panel section.tags input.tag {
+		display: inline-block;
+		background-color: white;
+		color: #2C55CC;
+		border-style: solid;
+		border-width: 1px;
+		border-color: transparent;
+		outline: none;
+		padding-left: 3px;
+	}
+	
+	/* draw any selected text yellow on red background */
+	panel.new-experience-panel section.tags input.tag::-moz-selection {
+	  color: white; background: #2C55CC;
+	}
+
+	panel.new-experience-panel section.tags input.tag::selection {
+	  color: white; background: #2C55CC;
+	}
+	
+	panel.new-experience-panel section.tags span.textWidth {
+		display: inline-block;
+		border-style: solid;
+		border-width: 1px;
+		font-size: 0.9em;
+		padding-left: 3px;
+	}
+	
+	panel.new-experience-panel section.tags input.tag:focus {
+		border-color: #ddd;
+	}
+	
+	panel.new-experience-panel input.offering {
+		display: block;
+	}
+	
+	panel.new-experience-panel section.cell.unique input.organization {
+		display: block;
+		border-top-style: none;
+	}
+	
+	panel.new-experience-panel input.site {
+		display: block;
+	}
+	
+	/* The following overrides settings that make the list too tall. */
+	panel.new-experience-panel section ol.search {
+		height: 100%;
+		overflow-y: scroll;
+		position: relative;
+	}
+	
+	panel.new-experience-panel div.tags input {
+		margin-left: 0.5em;
+	}
+	
+	section.date-range-options {
+		margin-top: 24px;
+		background: white;
+		width: 100%;
+		text-align: center;
+	}
+	
+	section.date-range-options button {
+		border-bottom-style : solid;
+		border-bottom-width:  1px;
+		border-bottom-color: #2C55CC;
+		border-left-style : solid;
+		border-left-width:  1px;
+		border-left-color: #2C55CC;
+		border-top-style : solid;
+		border-top-width:  1px;
+		border-top-color: #2C55CC;
+		border-right-style: none;
+		color: #2C55CC;
+		margin-top: 6px;
+		margin-bottom: 6px;
+		background: transparent;
+		font-size: 0.85em;
+		padding-left: .5em;
+		padding-right: .5em;
+	}
+	
+	section.date-range-options button.pressed {
+		background: #2C55CC;
+		color: #F8F8F8;
+	}
+	
+	section.date-range-options button:first-child {
+		border-top-left-radius: 3px;
+		border-bottom-left-radius: 3px;
+	}
+	
+	section.date-range-options button:last-child {
+		border-top-right-radius: 3px;
+		border-bottom-right-radius: 3px;
+		border-right-style : solid;
+		border-right-width:  1px;
+		border-right-color: #2C55CC;
+	}
+	
+	panel.new-experience-panel section.date-container {
+		margin-top: 0px;
+	}
+	
+	panel.new-experience-panel section.date-container label {
+		display: inline-block;
+		float: none;
+		width: calc(100% - 12px);
+		border-top-style: solid;
+		border-top-width: 1px;
+		border-top-color: #ddd;
+		margin-left: 12px;
+		padding-left: 0px;
+		text-align: left;
+	}
+	
+	panel.new-experience-panel section.date-container ol.item {
+		display: inline-block;
+		position: absolute;
+		right: 0px;
+		margin-top: 1px;	/* Don't use top. */
+		float: none;
+	}
+	
+	panel.new-experience-panel section.date-container ol.item span {
+		white-space: nowrap;
+		cursor: pointer;
+	}
+	
+	panel.new-experience-tags section p {
+		margin: 10px;
+	}
+
+    .dots ~ panel {
+    	height: calc(100% - 50px);
+    	width: 100%;
+    	background: transparent;
+    	position: absolute;
+    	top: 0;
+    	left: 0;
+    }
+    
+	.dots ~ panel p {
+		margin: 10px;
+	}
+	
+	panel.experience nav
+	{
+		border-bottom-color: #f8f8f8;
+	}
+	
+	panel.experience header
+	{
+		padding-left: 12px;
+		padding-right: 12px;
+		padding-bottom: 5px;
+		border-bottom: 1px solid #eee;
+		background-color: #F8F8F8;
+	}
+	
+	panel.experience .title>.title
+	{
+		display: inline-block;
+		padding: .2em;
+		color: #333;
+		text-align: left;
+		font-size: 15px;
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		cursor: pointer;
+	}
+	
+	panel.experience li .organization>div {
+		display: block;
+		margin-left: 0px;
+		color: #444;
+		font-size: smaller;
+		cursor: pointer;
+	}
+
+	panel.experience header .tags {
+		font-size: smaller;
+		color: #666;
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
+		cursor: pointer;
+	}
+	
+	panel.experience span.tag {
+		margin-right: 1em;
+	}
+
+	panel.confirm {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		z-index: 1000;
+	}
+	
+	panel.confirm >div {
+		padding: 12px;
+		padding-top: 0px;
+		background-color: transparent;
+		border: none;
+		text-align: center;
+	}
+	
+	panel.confirm >div>button {
+		position: relative;
+		display: block;
+		max-width: 21em;
+		width: 100%;
+		margin-top: 12px;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 10px;
+		background: #F8F8F8;
+		border: 1px solid #e7e7e7;
+		border-radius: 8px;
+		font-size: larger;
+	}
+	panel.confirm >div>button.butted-down {
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+	panel.confirm >div>button.butted-down+button {
+		margin-top: 0px;
+		border-top-left-radius: 0px;
+		border-top-right-radius: 0px;
+	}
+	panel.confirm > div>button:focus {
+		outline: none;
+	}
+	

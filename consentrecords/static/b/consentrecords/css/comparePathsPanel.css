@@ -1,0 +1,24 @@
+/* comparePathsPanel.css */
+	panel.compare-paths {
+		background: white;
+	}
+	
+	panel.compare-paths .alert-container {
+		top: 45px;
+		z-index: 9999;
+		position: absolute;
+	}
+	
+	panel.compare-paths text {
+		text-decoration: none;
+		cursor: pointer;
+	}
+	
+	div.compare-paths {
+		position: relative;
+		top: 45px;
+	}
+	
+	svg.compare-paths g.guide text.column-label {
+		text-anchor: start;
+	}

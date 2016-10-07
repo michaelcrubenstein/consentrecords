@@ -1,0 +1,737 @@
+* {
+	margin: 0;
+	padding: 0;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+body {
+  font-size: medium;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+body>panel {
+	height: 100%;
+	width: 100%;
+	display: block;
+	position: absolute;	/* So that z-index's are maintained properly. */
+	overflow-y: hidden;
+}
+panel.site-panel>nav {
+	background: #F8F8F8; /* #D1E1FF; */
+	border: 1px solid #eeeeee;
+	border-color: #e7e7e7;
+	border-radius:0px;
+	margin-bottom: 0px;
+}
+panel.site-panel>nav>div {
+	width: 100%;
+	min-height: 40px;
+}
+
+panel.initial {
+	width: 100%;
+	height: 100%;
+	max-height: 100%;
+	z-index: 1;
+}
+panel.reveal	/* This sets up a panel for subsequent revealing using animation. */
+{
+	display: none;
+}
+
+/* This is associated with the variable height div. */
+.body {
+	height: 100%;
+}
+
+.body > div {
+	height: 100%;
+}
+
+.body > div > div {
+	height: 100%;	/* Must set height to 100% so that this element doesn't expand to more than 
+						the height of its container. */
+	position: relative;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+.panel-fill {
+	position: relative;
+}
+.vertical-scrolling {
+	position: relative;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+.all-scrolling {
+	position: relative;
+	overflow-y: scroll;
+	overflow-x: scroll;
+	-webkit-overflow-scrolling: touch;
+}
+.no-scrolling {
+	overflow-y: hidden;
+	overflow-x: hidden;
+}
+
+/* This makes alert fall on top and over other items. */
+div.alert-container {
+	width: 100%;
+}
+
+/* This corrects a problem caused by bootstrap that introduces a gap below alerts when they are visible.
+	The problem is that it leads to an invalid outerHeight for the .alert container.
+ */
+.alert {
+	margin-bottom: 0px;
+}
+
+panel.list {
+	background: #eee;
+}
+panel.view {
+	background: white;
+}
+panel.edit {
+	background: #eee;
+}
+panel>nav .left-link {
+	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left;
+	white-space: nowrap;
+	display: inline-block;
+	min-height: 40px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+panel>nav .right-link {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: right;
+	white-space: nowrap;
+	display: inline-block;
+	min-height: 40px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.default-link {
+	font-weight: 500
+}
+
+nav .site-left-chevron {
+	height: 18px;
+}
+.site-left-chevron-span {
+	float: left;
+	width: 18px;
+	margin-top: -2px;
+}
+.site-left-chevron-span+div, .site-left-chevron-span+span {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left;
+	margin-left: 18px;	/* Same as the width of the .site-left-chevron-span, above. */
+}
+
+.chevron-left-container.site-navbar-link {
+	overflow: visible;
+}
+
+.site-navbar-link>svg.chevron-left {
+	height: 18px;
+	width: 12px;
+	margin-top: 2px;
+	margin-left: -6px;
+	display: inline;
+	float: left;
+	fill: #2C55CC;
+} 
+
+.site-navbar-link>svg.chevron-left:hover {
+	fill: #2222FF;
+}
+
+.site-navbar-link>svg.chevron-left+div, .site-navbar-link>svg.chevron-left+span {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left;
+	margin-left: 10px;	/* Same as the width of the .site-left-chevron-span, above. */
+} 
+
+nav.transparentTop {
+	width: 100%;
+	position: absolute;
+	top: 0px;
+	opacity: 0.85;
+}
+
+nav.bottom {
+	width: 100%;
+	border-top: 1px solid #eee;
+}
+
+nav.transparentBottom {
+	position: absolute;
+	bottom: 0px;
+	opacity: 0.85;
+}
+
+.panel-fill > p
+{
+	padding: 6px 12px;
+	color: #777;
+}
+panel.view .panel-fill>header
+{
+	width: 100%;
+	padding: 6px 12px;
+	text-align: left;
+	font-weight: bold;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.loading
+{
+	position: relative;
+	padding: 6px 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.loading>span
+{
+	position: relative;
+	display: inline-block;
+}
+.loading>span:first-child
+{
+	height: 20px;
+}
+.loading>span:last-child
+{
+	padding-left: 32px;
+}
+
+.no-results
+{
+	padding: 6px 12px;
+}
+
+.cell.unique {
+	background: white;
+}
+
+button {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	padding: 0;
+	color: #2C55CC;
+}
+
+button:hover {
+	color: #2222FF;
+}
+
+.add-button {
+	font-size: 28px;
+	line-height: 18px;
+}
+.row-button-group {
+	margin-top: 12px;
+	border-bottom: 1px solid #eee;
+}
+.row-button {
+	position: relative;
+	font-size: 15px;	/* To override the smaller button. */
+	background: white;
+	display: block;		/* To override inline-block from btn */
+	width: 100%;
+	border: 0;
+	border-radius: 0;
+}
+.row-button:hover {
+	background: #f8f8f8;
+	opacity: 1.0;
+}
+.cell.btn {
+	padding: 0px 0px;		/* To override btn style. */
+}
+.cell>ol {
+	margin: 0;				/* To override bootstrap ol style */
+	font-size: 15px;
+}
+.multi-row-content {
+	padding: 6px 12px;
+}
+.border-above {
+	border-top: 1px solid #eee;
+}
+.border-below {
+	border-bottom: 1px solid #eee;
+}
+section.cell {
+	width: 100%;
+	padding-left: 0px;	/* 0 px so that the edges of buttons go to the screen edge. */
+	padding-right: 0px;
+}
+.cell-border-below {
+	margin-left: 12px;
+	border-bottom: 1px solid #eee;
+}
+.multi-line-item {
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 0;
+	font-weight: 400;
+	white-space: nowrap;
+	vertical-align: middle;
+	width: 100%;
+}
+.cell.edit {
+	margin-top: 12px;
+}
+.cell.unique.edit {
+	border-bottom: 1px solid #eee;
+}
+.cell.unique.edit>label {
+	line-height: 1.5em;	/* The same as .cell.unique.view>label and .right-label */
+}
+
+.cell>label {
+    color: #222;
+	font-size: 13px;
+	font-weight: normal;
+	margin: 0;
+	padding: 6px 12px;
+	padding-right: 0px;	/* Since the ol to the right has 12 px of left padding */
+}
+
+.cell.action {
+	font-size: medium;
+	text-align: left;
+}
+
+.panel-fill>section.cell.action.first {
+	margin-top: 12px;
+}
+
+.string-value-view {
+	position: relative;
+	overflow: hidden;
+	width: auto;
+}
+.cell.unique>label {
+	width: auto;
+	float: left;
+}
+.cell.unique.view>label {
+	margin-left: 0px;
+	margin-right: auto;
+	padding-left: 12px;
+	line-height: 1.5em; 
+	vertical-align: middle;
+}
+.cell.unique>ol {
+	overflow: hidden;
+	width:auto;
+	padding: 6px 12px;
+}
+
+.right-label {
+	padding: 6px 12px;
+	line-height: 1.5em; 
+	vertical-align: middle;
+	text-align: right;
+}
+.cell.multiple.edit>label {
+	padding-top: 0px;	/* Set to 0px because there is already a margin of 12 pixels for each section. */
+	font-size: 13px;
+	font-weight: 500;
+	padding-bottom: 2px;
+}
+.cell.multiple.edit > ol {
+	background: white;
+	border-top: 1px solid #eee;
+	/* The bottom border is provided by the add-value button, below */
+}
+.description-text {
+	color: #777;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+panel.list .description-text {
+	text-align: left;
+}
+.site-chevron-right {
+	color: #777;
+}
+.site-chevron-right+.description-text {
+	margin-right: 18px;
+}
+.string-input-container {
+	overflow: hidden;	/* This causes the input container to expand. */
+}
+.string-input-container > input:only-child {
+	width: 100%;
+}
+.cell.edit.translation li select:first-child {
+	float: right;
+	width: 80px;
+	outline: none;
+}
+.cell.edit.translation li select:first-child+*:last-child {
+	margin-right: 83px;
+	display: block;
+}
+li > .row-button {
+	text-align: left;
+}
+
+li > .row-button > .glyphicon-ok {
+	margin-right: 0.3em;
+}
+
+/* If there is a label for a unique string item, right-align the input and its container. */
+.cell.unique.edit.string label+ol .string-input-container {
+	text-align: right;
+}
+.cell.unique.edit.string label+ol input {
+	text-align: right;
+}
+.cell.edit input[type=text],
+.cell.edit input[type=number],
+.cell.edit input[type=month],
+.cell.edit input[type=email],
+.cell.edit input[type=url],
+.cell.edit input[type=date] {
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	border: none;
+	border-color: transparent;
+}
+.cell.edit input[type=text]:focus,
+.cell.edit input[type=number]:focus,
+.cell.edit input[type=month]:focus,
+.cell.edit input[type=email]:focus,
+.cell.edit input[type=url]:focus,
+.cell.edit input[type=date]:focus {
+	outline: none;
+}
+.cell.edit input[type=month] {
+	margin-right: 3px;
+}
+
+.expanding-div {
+	overflow: hidden;
+	width: auto;
+	display: block;
+}
+.left-expanding-div {
+	overflow: hidden;
+	width: auto;
+	text-align: left;
+}
+.right-fixed-width-div {
+	width: auto;
+	float: right;
+}
+div.add-value {
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
+}
+div.add-value>button {
+	overflow: hidden;
+	display: block;
+	width: 100%;
+	padding: 6px 12px;
+	text-align: left;
+}
+
+.searchbar {
+	background: #D3D3D3;
+}
+.search-input-container {
+	display: block;
+	overflow: hidden;
+	width: auto;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-left: 12px;
+	padding-right: 6px;
+}
+.search-input {
+	display: block;
+	background: white;
+	width: 100%;
+	border: none;
+	border-radius: 5px;
+	padding: 2px 6px;
+	font-size: 0.9em;
+}
+.search-cancel-button {
+	padding-left: 6px;
+	padding-right: 12px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+	width: auto;
+	float: right;
+}
+.info-button {
+	display: flex;
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	background-color: transparent;
+}
+.info-button:focus {
+	outline: none;
+}
+
+.glyphicon-minus-sign {
+	position: relative;
+	margin-right: 12px;
+	color: red;
+	-ms-transform: rotate(90deg); /* IE 9 */
+	-webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+	transform: rotate(90deg);
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	background-color: transparent;
+	padding: 0px;
+	padding-top: 1px;	/* A hack for Safari icon */
+	outline: none;
+}
+.glyphicon-minus-sign:hover {
+	color: red;
+}
+.glyphicon-minus-sign:focus {
+	outline: none;
+}
+
+.delete-dial
+{
+	left: -12px;
+	top: 9px;
+	opacity: 0;
+	position: absolute;
+}
+
+.delete-confirm-container>button {
+	background: red;
+	color: white;
+	border: none;
+	border-radius: 0;
+	padding: 6px 12px;
+	width: auto;
+	float: right;
+}
+.delete-confirm-container>button:hover {
+	background: red;
+}
+.delete-confirm-container>button:focus {
+	outline: none;
+}
+.delete-confirm-container>button+div {
+	overflow: hidden;	/* So that the area next to the button shrinks as the button is expanded. */
+	width: auto;
+	display: block;
+}
+.right-vertical-chevron {	/* A hack to get the chevrons in the correct vertical alignment in 
+								conjunction with right-fixed-width-div. */
+	line-height: 1.3em;
+	vertical-align: middle;
+/* 
+	margin-top: 3px;
+	margin-bottom: 3px;
+ */
+}
+ol, ul {
+	list-style-type: none;
+	-webkit-padding-start: 0px;
+}
+li {
+	display: block;
+	list-style-type: none;
+}
+input[type="date"]
+{
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+	height: 34px;
+	border: 0px;
+}
+input[type="date"]:focus {
+	color: #2C55CC;
+}
+
+.sub-text {
+	font-size: smaller;
+}
+.sub-paragraph {
+	margin-top: 4px;
+}
+.date-row {
+	overflow: hidden;
+}
+
+.date-row > span {
+	display: inline-block;
+	position: relative;
+}
+
+.date-row > span:first-child {
+	margin-right: 4px;
+}
+.date-row > span:last-child {
+	margin-left: 4px;
+}
+
+.date-row > span > span {
+	position: absolute;
+	right: 0px;
+	top: 4px;
+	font-size: 14px;
+	color: #AAA;
+}
+
+/* select.year, select.month and select.day are used for dateInput */
+.date-row select {
+	margin-left: 3px;
+	padding-left: 1em;
+	padding-right: 0px;
+	position: relative;
+	background-color: transparent;
+	border: none;
+	outline: none;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+}
+
+section.date-container ol {
+	text-align: right;
+}
+
+section.date-container div.date-row {
+	display: inline-block;
+	overflow-x: hidden;
+	position: relative;
+	white-space: nowrap;	/* To prevent wrapping during animation. */
+}
+
+/* section.date-container is in the new-experience panel and the edit experience panel. */
+section.date-container>div.in-cell-button {
+	font-size: .9em;
+	display: block;
+	padding-left: 12px;
+	padding-right: 12px;
+	text-align: right;
+	position: relative;
+}
+
+section.date-container>div.in-cell-button>div {
+	padding-bottom: 4px;
+}
+
+section.date-container .right-vertical-chevron {
+	display: inline-block;
+	overflow-x: hidden;
+	position: relative;
+}
+
+select::-ms-expand {
+    display: none;
+}
+
+div.wheel {
+	position: relative;
+	text-align: center;
+	background-color: 248;
+}
+
+div.wheel ol {
+	overflow-y: scroll;
+	height: 154px;
+	display: inline-block;
+	margin-left: 1em;
+	margin-bottom: 0px;
+	-webkit-overflow-scrolling: touch;
+}
+
+div.wheel ol:first-child {
+	text-align: right;
+}
+
+div.wheel ol>li {
+	height: 22px;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+}
+
+div.wheel ol>li.disabled {
+	color: #888;
+}
+
+div.wheel ol>li:first-child {
+	margin-top: 66px;	/* 3 times height */
+}
+
+div.wheel ol>li:last-child {
+	margin-bottom: 66px;	/* 3 times height */
+}
+
+div.wheel>div.topShade {
+	position: absolute;
+	top: 0;
+	height: 66px;
+	width: 100%;
+	border-bottom: 1px solid #e7e7e7;
+  background: linear-gradient(rgba(248, 248, 248, 0.9),rgba(248, 248, 248, 0.8),rgba(248, 248, 248, 0.6),rgba(248, 248, 248, 0.45), rgba(248, 248, 248, 0.2)); 
+  pointer-events:none;  	
+}
+
+div.wheel>div.bottomShade {
+	position: absolute;
+	bottom: 0;
+	height: 69px;
+	width: 100%;
+	border-top: 1px solid #e7e7e7;
+  background: linear-gradient(rgba(248, 248, 248, 0.2), rgba(248, 248, 248, 0.45), rgba(248, 248, 248, 0.6), rgba(248, 248, 248, 0.8), rgba(248, 248, 248, 0.9));  
+  pointer-events:none;  	
+}
+
+::-webkit-scrollbar { 
+	display: none; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+panel.site-panel > div.dimmer {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	background-color: black;
+}

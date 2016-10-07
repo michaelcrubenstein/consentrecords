@@ -1,0 +1,125 @@
+panel.welcome ol li {
+	display: block;
+	position: absolute;
+	width: 100%;
+}
+
+panel.welcome div.panel-fill > ol > li {
+	height: 100%;
+	background: white;
+}
+
+/* Center a div to be a maximum width of 400 pixels so that it
+	looks OK on a large screen.
+ */
+panel.welcome ol li > div {
+	max-width: 400px;
+	margin: auto;
+}
+
+panel.welcome p.body {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+panel.welcome ol li p.path-description-link {
+	text-decoration: underline;
+}
+
+panel.welcome ol li span.about-organizations {
+	position: absolute;
+	bottom: 0px;
+	vertical-align: middle;
+	line-height: 40px;
+	font-size: 0.9em;
+	left: 1.0417em;
+	text-decoration: underline;
+}
+
+panel.welcome div.left {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	padding: 12px;
+}
+
+panel.welcome div.right {
+	position: absolute;
+	bottom: 0px;
+	right: 0px;
+	padding: 12px;
+	padding-left: 0px;
+}
+
+panel.welcome svg.chevron {
+	height: 20px;
+	width: 12px;
+	fill: #2c55CC;
+}
+
+panel.welcome div.right div {
+	overflow-x: hidden;
+	white-space: nowrap;
+}
+
+panel.welcome div.right div > * {
+	position: relative;
+	white-space: nowrap;
+	padding-left: 12px;
+}
+
+panel.welcome div svg.chevron path {
+	fill: transparent;
+	stroke-width: 3px;
+}
+
+panel.welcome-info {
+	background: white;
+}
+
+panel.welcome p {
+	margin-top: 10px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+panel.welcome p.heading1 {
+	font-weight: bold;
+}
+
+panel.welcome p.title {
+	font-weight: bold;
+	font-size: 1.4em;
+	text-align: center;
+	padding-top: 0.5em;
+	padding-bottom: 0.2em;
+}
+
+panel.welcome p.center {
+	text-align: center;
+}
+
+panel.welcome p.indent1 {
+	margin-left: 30px;
+}
+
+panel.welcome p.indent2 {
+	margin-left: 40px;
+	font-size: 0.9em;
+}
+
+panel.welcome p.indent3 {
+	margin-left: 50px;
+}
+
+panel.welcome p.indent4 {
+	margin-left: 60px;
+}
+
+panel.welcome p.indent5 {
+	margin-left: 70px;
+}
+
