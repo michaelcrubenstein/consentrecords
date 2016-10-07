@@ -1,0 +1,104 @@
+panel.comments div.panel-fill {
+	background: white;
+}
+
+panel.comments svg {
+	width: 100%;
+}
+
+panel.comments svg {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+}
+
+panel.comments svg tspan.site {
+	font-size: smaller;
+	fill: #555;
+}
+
+panel.comments svg tspan.tags {
+	font-size: smaller;
+	fill: #555;
+}
+
+panel.comments svg .flag-label {	/* For both flags and detail panels */
+	fill: #222;
+	text-anchor: start;
+	font-weight: 500;
+}
+
+section.comments {
+	font-size: 0.8em;
+	border-bottom: 1px #eee solid;
+}
+
+section.comments > ol > li > div {
+	position: relative;
+	padding: 6px 12px 0px 12px;
+}
+
+@keyframes showBorder {
+	from {border-color: transparent;}
+	to   {border-color: #ddd;}
+}
+
+@keyframes hideBorder {
+	from {border-color: #ddd;}
+	to   {border-color: transparent;}
+}
+
+section.comments textarea {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	resize: none;
+	outline: none;
+	width: 100%;
+	padding: 2px;
+	border: 1px transparent solid;
+}
+
+section.comments textarea.editable {
+	animation: showBorder;
+	animation-duration: 0.5s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
+}
+
+section.comments textarea.fixed {
+	animation: hideBorder;
+	animation-duration: 0.5s;
+	-webkit-animation-fill-mode: both;
+	-webkit-animation-iteration-count: 1;
+	animation-fill-mode: both;
+	animation-iteration-count: 1;
+}
+
+section.comments textarea.question {
+	font-weight: bold;
+}
+
+section.comments textarea.answer {
+}
+
+section.new-comment {
+	position: relative;
+}
+
+section.new-comment textarea {
+	margin-left: 12px;
+	padding: 2px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-size: 0.8em;
+	resize: none;
+	border-color: #ddd;
+	outline: none;
+}
+
+section.new-comment button.post {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 6px 12px;
+}

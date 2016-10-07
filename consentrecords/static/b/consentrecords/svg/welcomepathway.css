@@ -1,0 +1,67 @@
+svg.pathway {
+	font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+	font-size: 11px;
+}
+
+svg.pathway tspan.site {
+	font-size: smaller;
+	fill: #555;
+}
+
+svg.pathway tspan.tags {
+	font-size: smaller;
+	fill: #555;
+}
+
+svg.pathway g.year text {
+	fill: #777;
+	text-anchor: end;
+}
+
+svg.pathway g.detail rect.bg {
+	fill: white;
+}
+	
+svg.pathway g.detail rect.detail {
+	fill-opacity: 0.2;
+	stroke-width: 0;
+	stroke-opacity: 0.0;
+}
+	
+svg.pathway g.guide line.column {
+	stroke-width: 2;
+	stroke-opacity: 0.1;
+}
+svg.pathway g.guide text.column-label {
+	fill: #777;
+	stroke-width: .3
+}
+svg.pathlines g.guide text.column-label {
+	text-anchor: middle;
+}
+svg.pathway g.guide rect.column-icon {
+	stroke-width: 2;
+	stroke-opacity: 0.0;
+	fill-opacity: 0.0;
+}
+
+svg.pathway g.experiences g.flag rect.opaque {
+	fill-opacity: 1.0;
+	fill: white;
+	stroke-opacity: 0.0;
+}
+svg.pathway g.experiences rect.bg {
+	fill-opacity: 0.2;
+	stroke-width: 0;
+	stroke-opacity: 0.0;
+}
+svg.pathway g.experiences line.flag-pole {
+	stroke-opacity: 0.6;
+	stroke-width: 3;
+}
+svg.pathway .flag-label {	/* For both flags and detail panels */
+	fill: #222;
+	text-anchor: start;
+	font-weight: 500;
+}
+
