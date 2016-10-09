@@ -169,7 +169,7 @@ var Settings = (function () {
 					documentation = _this.allVisibleDocumentation;
 				docDiv.text(documentation);
 			}
-	
+			
 			$(userPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
 			$(pathPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
 			$(docDiv).on("remove", null, null, function(eventObjects) {
@@ -187,6 +187,46 @@ var Settings = (function () {
 				sharingButton.selectAll("span.badge").text(badgeCount);
 			}
 			
+			var urlSection = panel2Div.append('section')
+				.classed('cell edit unique', true)
+				.datum(user.getCell("_email"));
+				
+			urlSection.append('label')
+				.text("Your Path");
+					
+			var urlList = urlSection.append("ol")
+				.classed('right-label', true);
+						
+			var urlItem = urlList.append('li')
+				.classed('site-active-text', true)
+				.text("{0}/for/{1}"
+					.format(window.location.origin, user.getDatum("_email")))
+				.on('click', function()
+					{
+						if (prepareClick('click', 'share'))
+						{
+							try
+							{
+								new ShareOptions(_this.node(), user);
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
+					});
+					
+			function updateURL()
+			{
+				urlItem.text("{0}/for/{1}"
+					.format(window.location.origin, user.getDatum("_email")));
+			}
+			$(user.getCell("_email")).on('dataChanged.cr', null, urlItem.node(), updateURL);
+			$(urlItem.node()).on('remove', null, user.getCell("_email"), function(eventObject)
+				{
+					$(eventObject.data).off('dataChanged.cr', urlItem.node(), updateURL);
+				});
+	
 			var sharingDiv = this.appendActionButton('Sharing', function() {
 					if (prepareClick('click', 'Sharing'))
 					{
