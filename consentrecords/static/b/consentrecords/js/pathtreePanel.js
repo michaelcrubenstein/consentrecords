@@ -1394,7 +1394,7 @@ var PathLines = (function() {
 	PathLines.prototype.handleResize = function()
 	{
 		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
-		this.bottomNavHeight = $(this.sitePanel.bottomNavContainer.nav.node()).outerHeight();
+		this.bottomNavHeight = this.topNavHeight;
 		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 		if (this.isLayoutDirty)
 			this.checkLayout();
@@ -1744,7 +1744,6 @@ var PathlinesPanel = (function () {
 	PathlinesPanel.prototype.user = null;
 	PathlinesPanel.prototype.pathtree = null;
 	PathlinesPanel.prototype.navContainer = null;
-	PathlinesPanel.prototype.bottomNavContainer = null;
 	
 	PathlinesPanel.prototype.userSettingsBadgeCount = function(user)
 	{
@@ -1892,34 +1891,7 @@ var PathlinesPanel = (function () {
 		
 		this.navContainer.appendTitle(getUserDescription(user));
 		
-		this.bottomNavContainer = this.appendBottomNavContainer();
-		this.bottomNavContainer.nav
-			.classed("transparentBottom", true);
 		
-		if (!done)
-		{	
-			var infoButton = this.bottomNavContainer.appendRightButton()
-				.on('click',
-					function() {
-						if (prepareClick('click', 'show welcome'))
-						{
-							try
-							{
-								showClickFeedback(this);
-								var newPanel = new WelcomePanel(_this.node());
-								showPanelUp(newPanel.node())
-									.always(unblockClick);
-							}
-							catch(err)
-							{
-								syncFailFunction(err);
-							}
-						}
-						d3.event.preventDefault();
-					});
-			drawInfoButtons(infoButton);
-		}
-
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
 // 					function() {
@@ -1940,25 +1912,6 @@ var PathlinesPanel = (function () {
 // 					});
 // 		findButton.append("i").classed("site-active-text fa fa-lg fa-search", true);
 // 		findButton.style("display", "none");
-		
-		var shareButton = this.bottomNavContainer.appendLeftButton()
-			.classed("share", true)
-			.on('click', function()
-				{
-					if (prepareClick('click', 'share'))
-					{
-						try
-						{
-							new ShareOptions(_this.node());
-						}
-						catch(err)
-						{
-							syncFailFunction(err);
-						}
-					}
-				});
-		shareButton.append("img")
-			.attr("src", shareImagePath);
 		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
@@ -2014,7 +1967,7 @@ var PathlinesPanel = (function () {
 
 var ShareOptions = (function () {
 
-	function ShareOptions(panelNode)
+	function ShareOptions(panelNode, user)
 	{
 		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
@@ -2031,6 +1984,7 @@ var ShareOptions = (function () {
 						panel.remove();
 						unblockClick();
 					});
+					clipboard.destroy();
 					dimmer.hide();
 				}
 				catch(err)
@@ -2041,8 +1995,23 @@ var ShareOptions = (function () {
 			e.preventDefault();
 		}
 		
+		var copyButton = div.append('button')
+			.text("Copy Path")
+			.classed("site-active-text copy", true)
+			.attr('data-clipboard-action', 'copy')
+			.attr('data-clipboard-target', 'input.copy');
+		
+		var clipboard = new Clipboard('button.copy', {
+			text: function(trigger) {
+				return '{0}/for/{1}.'.format(window.location.origin, user.getDatum("_email"));
+			}});
+			
+		clipboard.on('error', function(e) {
+			cr.asyncFail('Press Ctrl+C to copy');
+		});
+			
 		var confirmButton = div.append('button')
-			.text("Email Pathway Link")
+			.text("Share Via Mail")
 			.classed("site-active-text", true)
 			.on("click", function()
 				{
@@ -2050,24 +2019,17 @@ var ShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
-							var user = panelNode.sitePanel.pathtree.getUser();
-							if (user)
+							if (user.getValueID() == cr.signedinUser.getValueID())
 							{
-								user = crp.getInstance(user.getValueID());
-								if (user.getValueID() == cr.signedinUser.getValueID())
-								{
-									window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-												.format(window.location.origin, user.getDatum("_email"));
-								}
-								else
-								{
-									window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-												.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
-								}
-								unblockClick();
+								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
+											.format(window.location.origin, user.getDatum("_email"));
 							}
 							else
-								syncFailFunction('the specified user is not available');
+							{
+								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
+											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
+							}
+							unblockClick();
 						});
 						dimmer.hide();
 					}
