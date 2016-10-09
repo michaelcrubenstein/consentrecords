@@ -1,0 +1,52 @@
+panel.search-paths {
+	background: #EEE;
+}
+
+panel.search-paths > div.panel-fill > div {	/* top box */
+	width: 100%;
+	background: #EEE;
+	position: relative;
+	overflow-x: hidden;	/* So the cancel button slides in from the right. */
+}
+
+panel.search-paths div.handle {
+	display: block;
+	background: #C0C0C0;
+	border-radius: 2px;
+	height: 5px;
+	width: 30px;
+	margin: 4px auto;
+}
+
+panel.search-paths input {
+	display: inline-block;
+	background: #D3D3D3;
+	width: calc(100% - 12px);
+	border: none;
+	padding: 3px 6px;
+	font-size: 0.9em;
+	margin: 0px 6px 6px 6px;
+	border-radius: 4px;
+}
+
+panel.search-paths input:focus {
+	outline: none;
+}
+
+panel.search-paths input::-webkit-input-placeholder { /* WebKit browsers */
+    color:    #777;
+}
+panel.search-paths input:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+    color:    #777;
+}
+panel.search-paths input::-moz-placeholder { /* Mozilla Firefox 19+ */
+    color:    #777;
+}
+panel.search-paths input:-ms-input-placeholder { /* Internet Explorer 10+ */
+    color:    #777;
+}
+
+panel.search-paths button.cancel {
+	padding: 2px 9px;
+	position: absolute;
+}

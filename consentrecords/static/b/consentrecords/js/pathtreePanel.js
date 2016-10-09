@@ -1891,6 +1891,7 @@ var PathlinesPanel = (function () {
 		
 		this.navContainer.appendTitle(getUserDescription(user));
 		
+		var searchPanel = new SearchPathsPanel(this.node());
 		
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
