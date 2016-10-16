@@ -121,7 +121,7 @@ g.flag line.flag-pole {
 	stroke-opacity: 0.6;
 	stroke-width: 3;
 }
-g.flag .flag-label {	/* For both flags and detail panels */
+g.flag .flag-label, g.detail .flag-label {	/* For both flags and detail panels */
 	fill: #222;
 	text-anchor: start;
 	font-weight: 500;
