@@ -212,10 +212,14 @@ export DJANGO_SETTINGS_MODULE=consentrecords.settings
 cd consentrecords
 python3 manage.py runserver --insecure
 
+##################################################################
 # Command to launch the mySQL server with the production database.
+##################################################################
 mysql -uadmin -p -hbtcdbproduction.cgbhphj40gae.us-east-1.rds.amazonaws.com --database=btcdb
 
+##################################################################
 # Command to initialize the bootstrap facts in the database:
+##################################################################
 python3 consentrecords/bootstrap.py
 
 ##################################################################
