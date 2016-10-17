@@ -162,9 +162,9 @@ function getUserName(user)
 
 function getPathDescription(path)
 {
-	return (path.cell.parent && getUserName(path.cell.parent)) ||
+	return (path.cell && path.cell.parent && getUserName(path.cell.parent)) ||
 			path.getDatum("_name") ||
-		   (path.cell.parent && path.cell.parent.getDescription()) ||
+		   (path.cell && path.cell.parent && path.cell.parent.getDescription()) ||
 		   null;
 }
 
