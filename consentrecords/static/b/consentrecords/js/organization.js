@@ -173,15 +173,28 @@ function getUserDescription(user)
 	return getUserName(user) || user.getDescription();
 }
 				
+function showPath(path, previousPanelNode)
+{
+	path.promiseCells(["More Experience"])
+	.then(function()
+		{
+			var panel = new OtherPathPanel(path, previousPanelNode, true);
+			panel.pathtree.setUser(path, true);
+			showPanelLeft(panel.node(), unblockClick);
+		},
+		cr.syncFail);
+}
+
 function showUser(user, previousPanelNode)
 {
-	user.checkCells([], function()
+	user.promiseCells([])
+	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, previousPanelNode, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
 			showPanelLeft(panel.node(), unblockClick);
 		},
-		syncFailFunction);
+		cr.syncFail);
 }
 
 function drawInfoButtons(infoButtons)

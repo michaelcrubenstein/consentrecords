@@ -2372,3 +2372,57 @@ var ExperienceIdeaPanel = (function() {
 	return ExperienceIdeaPanel;
 })();
 
+var OtherPathPanel = (function () {
+	OtherPathPanel.prototype = new SitePanel();
+	OtherPathPanel.prototype.path = null;
+	OtherPathPanel.prototype.pathtree = null;
+	OtherPathPanel.prototype.navContainer = null;
+	
+	function OtherPathPanel(path, previousPanel, done) {
+		var _this = this;
+		this.path = path;
+		
+		SitePanel.call(this, previousPanel, null, "Other Pathway", "pathway");
+
+		var panel2Div = this.appendScrollArea();
+
+		this.navContainer = this.appendNavContainer();
+		this.navContainer.nav
+			.classed("transparentTop", true);
+
+		if (done)
+		{
+			var backButton = this.navContainer.appendLeftButton();
+			if (done === true)
+				backButton.on('click', handleCloseRightEvent);
+			else
+				backButton.on("click", function()
+					{
+						if (prepareClick('click', 'Close Right'))
+						{
+							hidePanelRight(_this.node(), true, done);
+						}
+						d3.event.preventDefault();
+					});
+			backButton.append("span").text("Done");
+		}
+
+		this.navContainer.appendTitle(getPathDescription(path));
+		
+		var searchPanel = new SearchPathsPanel(this.node());
+		
+		if (this.pathtree)
+			throw "pathtree already assigned to pathtree panel";
+			
+		this.pathtree = new PathLines(this, panel2Div.node());
+		
+		$(this.pathtree).on("userSet.cr", function()
+			{
+				this.isMinHeight = true;
+				this.sitePanel.calculateHeight();
+			});
+	}
+	
+	return OtherPathPanel;
+})();
+
