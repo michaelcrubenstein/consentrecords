@@ -1,5 +1,88 @@
 /* pathtreePanel.js */
 
+var Service = (function() {
+	Service.prototype.service = null;
+	
+	Service.prototype._getServiceDomain = function()
+	{
+		var service = this.service;
+		if (!service || !service.getValueID())
+			return null;
+		var storedService = crp.getInstance(service.getValueID());
+		if (!storedService)
+			throw 'the "{0}" tag is obsolete'.format(service.getDescription());
+			
+		var domain = storedService.getValue("Domain");
+		if (domain)
+			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
+			if (sd)
+				return sd;
+		return storedService.getValue("Service Domain");
+	}
+
+	Service.prototype._getStage = function()
+	{
+		var service = this.service;
+		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
+	}
+
+	Service.prototype.stageColumns = {
+		Studying: 1,
+		Certificate: 1,
+		Training: 2,
+		Whatever: 2,
+		Working: 3,
+		Teaching: 3,
+		Expert: 3,
+		Skills: 4,
+		Mentoring: 5,
+		Tutoring: 5,
+		Coaching: 5,
+		Volunteering: 5
+	};
+	Service.prototype.getColumn = function()
+	{
+		var sd = this._getServiceDomain();
+		if (sd && sd.getDescription() == "Housing")
+			return 0;
+
+		var stage = this._getStage();
+		var stageDescription = stage && stage.getDescription();
+		if (stageDescription &&
+			stageDescription in this.stageColumns)
+			return this.stageColumns[stageDescription];
+
+		if (sd && sd.getDescription() == "Wellness")
+			return 6;
+		/* Other */
+		return 7;
+	}
+	
+	Service.prototype.getColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].color;
+	}
+	
+	Service.prototype.colorElement = function(r)
+	{
+		var colorText = this.getColor();
+		r.setAttribute("fill", colorText);
+		r.setAttribute("stroke", colorText);
+	}
+	
+	Service.prototype.getDescription = function()
+	{
+		return this.service.getDescription();
+	}
+	
+	function Service(dataObject) {
+		this.service = dataObject;
+	}
+	
+	return Service;
+})();
+
 var FlagData = (function() {
 	FlagData.prototype.experience = null;
 	FlagData.prototype.x = null;
@@ -56,58 +139,9 @@ var FlagData = (function() {
 		return this.experience.getValue("Service");
 	}
 	
-	FlagData.prototype._getServiceDomain = function()
-	{
-		var service = this._getService();
-		if (!service || !service.getValueID())
-			return null;
-		var storedService = crp.getInstance(service.getValueID());
-		if (!storedService)
-			throw 'the "{0}" tag is obsolete'.format(service.getDescription());
-			
-		var domain = storedService.getValue("Domain");
-		if (domain)
-			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
-			if (sd)
-				return sd;
-		return storedService.getValue("Service Domain");
-	}
-
-	FlagData.prototype._getStage = function()
-	{
-		var service = this._getService();
-		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
-	}
-
-	FlagData.prototype.stageColumns = {
-		Studying: 1,
-		Certificate: 1,
-		Training: 2,
-		Whatever: 2,
-		Working: 3,
-		Teaching: 3,
-		Expert: 3,
-		Mentoring: 4,
-		Tutoring: 4,
-		Coaching: 4,
-		Volunteering: 4
-	};
 	FlagData.prototype.getColumn = function()
 	{
-		var sd = this._getServiceDomain();
-		if (sd && sd.getDescription() == "Housing")
-			return 0;
-
-		var stage = this._getStage();
-		var stageDescription = stage && stage.getDescription();
-		if (stageDescription &&
-			stageDescription in this.stageColumns)
-			return this.stageColumns[stageDescription];
-
-		if (sd && sd.getDescription() == "Wellness")
-			return 5;
-		/* Other */
-		return 6;
+		return new Service(this._getService()).getColumn();
 	}
 	
 	FlagData.prototype.getStartDate = function()
@@ -174,8 +208,7 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getColor = function()
 	{
-		var column = this.getColumn();
-		return PathGuides.data[column].color;
+		return new Service(this._getService()).getColor();
 	}
 	
 	FlagData.prototype.checkOfferingCells = function(done)
@@ -195,9 +228,7 @@ var FlagData = (function() {
 		var _this = this;
 		var f = function()
 			{
-				var colorText = _this.getColor();
-				r.setAttribute("fill", colorText);
-				r.setAttribute("stroke", colorText);
+				new Service(_this._getService()).colorElement(r);
 			}
 		this.checkOfferingCells(f);
 	}
@@ -1234,7 +1265,7 @@ var PathLines = (function() {
 		{
 			fd.column = fd.getColumn();
 		});
-		numColumns = 7;
+		numColumns = PathGuides.length;
 		
 		g.selectAll('rect')
 			.attr('height', "{0}em".format(this.flagHeightEM))
@@ -2340,3 +2371,4 @@ var ExperienceIdeaPanel = (function() {
 	}
 	return ExperienceIdeaPanel;
 })();
+
