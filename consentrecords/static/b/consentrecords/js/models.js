@@ -1041,6 +1041,7 @@ cr.ObjectValue = (function() {
 			return this.promiseCells(fields);
 	}
 	
+	/* This should be replaced by ObjectValue.prototype.promiseCells. */
 	ObjectValue.prototype.checkCells = function(fields, done, fail)
 	{
 		if (typeof(done) != "function")
