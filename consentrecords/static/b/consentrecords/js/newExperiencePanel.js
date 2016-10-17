@@ -1133,7 +1133,7 @@ var ExperienceDatumSearchView = (function() {
 				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
 					and subtract the parent's height and add back the reveal node's height. */
 				{newHeight: newHeight,
-				 children: $(this.listPanel.node())},
+				 children: $(this.listElement.node())},
 				duration, step, done);
 		}
 	}	
@@ -1408,7 +1408,7 @@ var TagSearchView = (function() {
 	TagSearchView.prototype.constrainFoundObjects = function(inputNode)
 	{
 		var constrainText = inputNode ? inputNode.value.trim().toLocaleLowerCase() : this.sitePanel.getTagConstrainText();
-		var buttons = this.listPanel.selectAll(".btn");
+		var buttons = this.listElement.selectAll(".btn");
 		var _this = this;
 		buttons.style("display", function(d) 
 			{ 
