@@ -1151,12 +1151,13 @@ var ExperienceDatumSearchView = (function() {
 		if (containerNode)
 		{
 			this.inputBox = inputNode;
-			this.helpNode = helpNode;
 			$(this.inputBox).on("input", function() { 
 					try { _this.textChanged(); }
 					catch(err) { cr.asyncFail(err); }
 				});
 			
+			this.helpNode = helpNode;
+
 			this.reveal = new VerticalReveal(containerNode);
 			this.reveal.hide();
 
