@@ -125,6 +125,11 @@ g.flag .flag-label, g.detail .flag-label {	/* For both flags and detail panels *
 	fill: #222;
 	text-anchor: start;
 	font-weight: 500;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+	cursor: default;
 }
 
 panel.idea {
