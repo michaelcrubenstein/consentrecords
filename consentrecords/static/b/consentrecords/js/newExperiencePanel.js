@@ -736,7 +736,7 @@ var MultiTypeOptionView = (function() {
 	{
 		if (compareText.length === 0)
 			return true;
-		var data = this.listPanel.selectAll("li").data();
+		var data = this.buttons().data();
 		return data.find(function(d) {
 				return d.getCell && d.getCell("_name").data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
@@ -1037,7 +1037,7 @@ var ExperienceDatumSearchView = (function() {
 	{
 		var compareText = d.getDescription();
 	
-		var data = this.listPanel.selectAll("li").data();
+		var data = this.buttons().data();
 		return data.find(function(d) {
 				return d.typeName === "Site" &&
 					   d.getDescription() === compareText &&
