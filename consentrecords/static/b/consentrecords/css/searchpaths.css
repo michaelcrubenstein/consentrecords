@@ -98,6 +98,14 @@ rect.hole {
 	fill: #666;
 }
 
+div.pool-container {
+	width: 100%;
+	padding: 10px;
+	height: 140px;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+}
+
 div.query-container {
 	border: #777 dotted;
 	border-width: 1px;

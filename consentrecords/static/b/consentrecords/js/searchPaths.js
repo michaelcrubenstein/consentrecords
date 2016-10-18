@@ -53,23 +53,17 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.textCleared = function()
 	{
-		SearchOptionsView.prototype.textCleared.call(this);
-		
-		this.startSearchTimeout("");
+		/* Do nothing */
+	}
+	
+	SearchPathsResultsView.prototype.textChanged = function()
+	{
+		/* Do nothing */
 	}
 	
 	SearchPathsResultsView.prototype.searchPath = function(val)
 	{
 		var path;
-		if (val)
-		{
-			/* TODO: */
-			path = '"More Experiences"["Screen Name"{0}"{1}"]';
-			var symbol = val.length < 3 ? "^=" : "*=";
-		
-			return path.format(symbol, val);
-		}
-		else
 		{
 			/* TODO: */
 			path = '"More Experiences"';
@@ -80,7 +74,8 @@ var SearchPathsResultsView = (function () {
 			
 			qf.forEach(function(sf)
 				{
-					path += '["More Experience"[Service="{0}"]]'.format(sf.service.getValueID());
+					if (sf.service)
+						path += '["More Experience"[Service="{0}"]]'.format(sf.service.getValueID());
 				});
 			return path;
 		}
@@ -112,12 +107,6 @@ var SearchPathsResultsView = (function () {
 			function(buttons) { _this.appendDescriptions(buttons); });
 
 		this.inputBox = searchPathsPanel.searchInput;
-		$(this.inputBox).on("input", function() { 
-				try { 
-					_this.textChanged(); 
-				}
-				catch(err) { cr.asyncFail(err); }
-			});
 	}
 	
 	return SearchPathsResultsView;
@@ -126,6 +115,14 @@ var SearchPathsResultsView = (function () {
 var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype = new SitePanel();
 	SearchPathsPanel.prototype.previousPanel = null;
+	SearchPathsPanel.prototype.selectedPool = null;
+	
+	SearchPathsPanel.prototype.topBox = null;
+	SearchPathsPanel.prototype.searchInput = null;
+	SearchPathsPanel.prototype.cancelButton = null;
+	SearchPathsPanel.prototype.topHandle = null;
+	SearchPathsPanel.prototype.poolFlags = null;
+	SearchPathsPanel.prototype.queryFlags = null;
 	
 	SearchPathsPanel.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
@@ -210,30 +207,34 @@ var SearchPathsPanel = (function () {
 	}
 		
 	/* Sets the x, y and y2 coordinates of each flag. */
-	SearchPathsPanel.prototype._setPoolFlagCoordinates = function(g)
+	SearchPathsPanel.prototype._setFlagCoordinates = function(g, maxX)
 	{
 		var _this = this;
 
-		var maxX = $(_this.poolFlags.node()).width() - 10;
 		var deltaY = _this.flagHeightEM + _this.searchFlagVSpacing;
-		var startX = 10;
-		var nextY = _this.searchFlagVSpacing;
-		var nextX = startX;
+		var startX = 0;
+		var nextY = 0;
+		var nextX = 0;
 		g.each(function(fd, i)
 			{
 				fd.x = nextX;
-				nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
-				if (nextX >= maxX && fd.x > startX)
+				if (fd.visible === undefined || fd.visible)
 				{
-					nextY += deltaY;
-					nextX = startX;
-					fd.x = nextX;
 					nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+					if (nextX >= maxX && fd.x > startX)
+					{
+						nextY += deltaY;
+						nextX = startX;
+						fd.x = nextX;
+						nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+					}
 				}
 				
 				fd.y = nextY;
 				fd.y2 = fd.y + _this.flagHeightEM;
 			});
+		
+		return (nextY + _this.flagHeightEM) * this.emToPX;
 	}
 	
 	/* Lay out all of the contents within the svg object. */
@@ -243,9 +244,27 @@ var SearchPathsPanel = (function () {
 		
 		var _this = this;
 		
-		this._setPoolFlagCoordinates(g);
+		var height = this._setFlagCoordinates(g, $(this.poolFlags.node()).width());
 		
-		// g.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
+		this.poolFlags
+			.style('height', height)
+		
+		g.interrupt().transition()
+			.duration(1000)
+			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
+			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
+		
+	}
+	
+	/* Lay out all of the contents within the svg object. */
+	SearchPathsPanel.prototype.layoutQueryFlags = function()
+	{
+		var g = this.queryFlags.selectAll('g.flag');
+		
+		var _this = this;
+		
+		this._setFlagCoordinates(g, $(this.queryFlags.node()).width());
+		
 		g.transition()
 			.duration(1000)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
@@ -273,6 +292,48 @@ var SearchPathsPanel = (function () {
 						left: nextRight};
 			}
 		}
+	}
+	
+	SearchPathsPanel.prototype.comparePoolFlags = function(a, b)
+	{		
+		var _this = this;
+		function inQueryFlags(a)
+		{
+			return _this.queryFlags.selectAll('g.flag').data()
+				.some(function(fd) { return fd.service == a.service; });
+		}
+		
+		if (inQueryFlags(a))
+		{
+			if (!inQueryFlags(b))
+				return 1;
+		}
+		else if (inQueryFlags(b))
+			return -1;
+		else
+		{
+			aDesc = a.service.getDescription();
+			bDesc = b.service.getDescription();
+			return aDesc.localeCompare(bDesc);
+		}
+	}
+	
+	SearchPathsPanel.prototype.onQueryFlagClicked = function(queryFlag, service)
+	{
+		var _this = this;
+		
+		$(queryFlag).animate({opacity: 0.0},
+			{done: function()
+				{
+					$(this).remove();
+					_this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
+					
+					_this.layoutPoolFlags();
+					_this.layoutQueryFlags();
+		
+					/* Run a new search based on the query. */
+					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+				}});
 	}
 	
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
@@ -319,8 +380,10 @@ var SearchPathsPanel = (function () {
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
 					var queryFlag = _this.queryFlags.append('g')
-						.datum(newS);
-					queryFlag.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
+						.datum(newS)
+						.on('click', function(fd) { _this.onQueryFlagClicked(this, fd); })
+						.attr('transform', 
+						      function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 	
 					_this.appendFlag(queryFlag);
 					
@@ -347,6 +410,32 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.getQueryFlags = function()
 	{
 		return this.queryFlags.selectAll('g.flag').data();
+	}
+	
+	SearchPathsPanel.prototype.filterPool = function()
+	{
+		var g = this.poolFlags.selectAll('g.flag');
+		
+		var inputTexts = this.searchInput.value.toLocaleUpperCase().split(' ');
+		
+		if (inputTexts.length > 0)
+		{
+			g.data().forEach(function(fs)
+				{
+					fs.visible = false;
+					fs.visible = inputTexts.reduce(function(a, b)
+						{
+							return a && fs.contains(b);
+						}, true);
+				});
+		}
+		else
+		{
+			g.data().forEach(function(fs)
+				{
+					fs.visible = undefined;
+				});
+		}
 	}
 	
 	SearchPathsPanel.prototype.appendFlag = function(g)
@@ -408,8 +497,24 @@ var SearchPathsPanel = (function () {
 
 		g.on('click', function(s)
 			{
-				_this.addFlagToQuery(this, s);
+				if (s.visible === undefined || s.visible)
+					_this.addFlagToQuery(this, s);
 			});
+	}
+	
+	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
+	{
+		var s = services.map(function(e) { return new Service(e); })
+					.filter(function(d)
+						{
+							return d.getColumn() == column;
+						});
+
+		$(this.searchInput).val('');
+		$(this.searchInput).focus();
+		this.appendPoolFlags(s);
+		this.filterPool();
+		this.layoutPoolFlags();
 	}
 
 	SearchPathsPanel.prototype.handleSchoolClick = function()
@@ -418,15 +523,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 1;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 1);
 				});
 	}
 	
@@ -436,15 +533,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 2;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 2);
 				});
 	}
 	
@@ -454,15 +543,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 3;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 3);
 				});
 	}
 	
@@ -472,15 +553,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 4;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 4);
 				});
 	}
 	
@@ -490,15 +563,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 5;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 5);
 				});
 	}
 	
@@ -508,15 +573,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 0;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 0);
 				});
 	}
 	
@@ -526,15 +583,7 @@ var SearchPathsPanel = (function () {
 		crp.promise({path: "Service"})
 			.done(function(services)
 				{
-					var s = services.map(function(e) { return new Service(e); })
-								.filter(function(d)
-									{
-										return d.getColumn() == 6;
-									});
-
-					_this.appendPoolFlags(s);
-					
-					_this.layoutPoolFlags();
+					_this.handleColumnClick(services, 6);
 				});
 	}
 	
@@ -542,7 +591,17 @@ var SearchPathsPanel = (function () {
 	{
 		var _this = this;
 		
-		this.poolFlags.selectAll('g.flag').remove();
+		crp.promise({path: "Service"})
+			.done(function(services)
+				{
+					var s = services.map(function(e) { return new Service(e); });
+					
+					$(_this.searchInput).val('');
+					$(_this.searchInput).focus();
+					_this.appendPoolFlags(s);
+					_this.filterPool();
+					_this.layoutPoolFlags();
+				});
 	}
 	
 	function SearchPathsPanel(previousPanel)
@@ -582,6 +641,16 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).focusin(function(event)
 			{
 				_this.revealPanel();
+				event.stopPropagation();
+			})
+			.click(function(event)
+			{
+				event.stopPropagation();
+			})
+			.on('input', function(event)
+			{
+				_this.filterPool();
+				_this.layoutPoolFlags();
 				event.stopPropagation();
 			});
 			
@@ -628,6 +697,7 @@ var SearchPathsPanel = (function () {
 					.style('fill', d.color);
 				if (d.click)
 				{
+					_this.selectedPool = d;
 					d.click.call(_this);
 				}
 			});
@@ -638,8 +708,12 @@ var SearchPathsPanel = (function () {
 		div.select('svg:first-child')
 			.selectAll('text')
 			.style('fill', function(d) { return d.color; });
-			
-		this.poolFlags = this.mainDiv.append('svg')
+		this.selectedPool = svgData[0];
+		
+		this.poolContainer = this.mainDiv.append('div')
+			.classed('pool-container', true);
+				
+		this.poolFlags = this.poolContainer.append('svg')
 			.classed('flags', true)
 			.style('height', 120);
 			

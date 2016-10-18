@@ -76,6 +76,21 @@ var Service = (function() {
 		return this.service.getDescription();
 	}
 	
+	/* Returns True if the service contains the specified text. */
+	Service.prototype.contains = function(s)
+	{
+		if (this.service)
+		{
+			if (this.service.getDescription().toLocaleUpperCase().indexOf(s) >= 0)
+				return true;
+				
+			var d = this.service.getValue("Domain");
+			if (d && d.getDescription().toLocaleUpperCase().indexOf(s) == 0)
+				return true;
+		}
+		return false;
+	}
+	
 	function Service(dataObject) {
 		this.service = dataObject;
 	}
