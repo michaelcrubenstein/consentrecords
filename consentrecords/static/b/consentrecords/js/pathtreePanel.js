@@ -149,16 +149,33 @@ var FlagData = (function() {
 		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
 	}
 	
+	FlagData.prototype.getTimeframe = function()
+	{
+		var timeframeValue = this.experience.getValue("Timeframe");
+		return timeframeValue && timeframeValue.getValueID() && timeframeValue.getDescription();
+	}
+	
 	FlagData.prototype.getEndDate = function()
 	{
-		return this.experience.getDatum("End") || this.getTimeframeText() ||
-			(this.experience.getDatum("Start") ? getUTCTodayDate().toISOString().substr(0, 10) : this.goalDateString);
+		var s = this.experience.getDatum("End");
+		if (s) return s;
+		
+		var timeframe = this.getTimeframe();
+		s = this.experience.getDatum("Start");
+		if (s)
+		{
+			if (timeframe == "Previous" || timeframe == "Current" ||
+				s < getUTCTodayDate().toISOString().substr(0, 10))
+			{
+				return getUTCTodayDate().toISOString().substr(0, 10);
+			}
+		}
+		return this.goalDateString;
 	}
 	
 	FlagData.prototype.getTimeframeText = function()
 	{
-		var timeframeValue = this.experience.getValue("Timeframe");
-		var text = timeframeValue && timeframeValue.getValueID() && timeframeValue.getDescription();
+		var text = this.getTimeframe();
 		if (!text)
 			return text;
 		else if (text == "Previous")
