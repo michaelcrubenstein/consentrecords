@@ -1441,8 +1441,9 @@ var PathLines = (function() {
 	
 	PathLines.prototype.handleResize = function()
 	{
-		this.topNavHeight = $(this.sitePanel.navContainer.nav.node()).outerHeight();
-		this.bottomNavHeight = this.topNavHeight;
+		var navs = $(this.sitePanel.node()).children('nav');
+		this.topNavHeight = $(navs[0]).outerHeight(false);
+		this.bottomNavHeight = navs.length >= 1 ? $(navs[0]).outerHeight(false) : 0;
 		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 		if (this.isLayoutDirty)
 			this.checkLayout();
