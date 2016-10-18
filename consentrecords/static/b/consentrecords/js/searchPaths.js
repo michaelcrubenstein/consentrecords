@@ -596,8 +596,11 @@ var SearchPathsPanel = (function () {
 				{
 					var s = services.map(function(e) { return new Service(e); });
 					
-					$(_this.searchInput).val('');
-					$(_this.searchInput).focus();
+					if ($(_this.node()).position().top == 0)
+					{
+						$(_this.searchInput).val('');
+						$(_this.searchInput).focus();
+					}
 					_this.appendPoolFlags(s);
 					_this.filterPool();
 					_this.layoutPoolFlags();
@@ -760,8 +763,14 @@ var SearchPathsPanel = (function () {
 				_this.revealInput();
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
-			});
+				
+				$(_this.previousPanel.sitePanel.pathtree).on('userSet.cr', function()
+					{
+						_this.handleAllClick();
+					});
 		
+			});
+			
 		this.resultContainerNode = this.mainDiv.append('div')
 			.classed('results-container', true)
 			.node();
