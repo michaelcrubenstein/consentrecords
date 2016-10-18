@@ -647,8 +647,8 @@ var Experience = (function() {
 	
 	Experience.prototype.getPhase = function()
 	{
-		var t = this.instance.getValue('Timeframe');
-		if (t)
+		var t = this.instance && this.instance.getValue('Timeframe');
+		if (t && t.getValueID())
 			return t.getDescription();
 			
 		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
