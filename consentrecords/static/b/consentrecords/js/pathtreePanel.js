@@ -1574,61 +1574,11 @@ var PathLines = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
-
-		/* Position the promptAddText based on the width. */
-		if (this.promptAddText)
-		{
-			this.loadingText
-				.attr("y", this.experienceGroupDY + this.loadingText.node().getBBox().height);
-	
-			var bbox = this.loadingText.node().getBBox();
-			var newBBox = this.promptAddText.node().getBBox();
-			if (bbox.x + bbox.width + this.textLeftMargin + newBBox.width >
-				newWidth - this.experienceGroupDX - this.promptRightMargin)
-			{
-				this.promptAddText.attr("x", this.loadingText.attr("x"))
-					.attr("y", parseFloat(this.loadingText.attr("y")) + bbox.height);
-			}
-			else
-			{
-				this.promptAddText.attr("x", bbox.x + bbox.width + this.textLeftMargin)
-					.attr("y", this.loadingText.attr("y"));
-			}
-		}
 	}
 	
 	PathLines.prototype.getUser = function()
 	{
 		return this.path.getValue("_user");
-	}
-	
-	PathLines.prototype.showInitialPrompt = function()
-	{
-		var _this = this;
-		this.loadingText = this.svg.append('text')
-			.attr("x", this.experienceGroupDX).attr("y", this.experienceGroupDY)
-			.attr("fill", "#777")
-			.text('Ready to record an experience?');
-		
-		this.promptAddText = this.svg.append('text')
-			.attr("fill", "#2C55CC")
-			.text(" Record one now.")
-			.on("click", function(d) {
-				if (prepareClick('click', 'Record one now prompt'))
-				{
-					try
-					{
-						showClickFeedback(this);
-						_this.sitePanel.startNewExperience('Previous', asyncFailFunction);
-					}
-					catch (err)
-					{
-						syncFailFunction(err);
-					}
-				}
-				d3.event.preventDefault();
-			})
-			.attr("cursor", "pointer");
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
