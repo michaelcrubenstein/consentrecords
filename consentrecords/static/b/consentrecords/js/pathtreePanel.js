@@ -1482,7 +1482,7 @@ var PathLines = (function() {
 	{
 		var navs = $(this.sitePanel.node()).children('nav');
 		this.topNavHeight = $(navs[0]).outerHeight(false);
-		this.bottomNavHeight = navs.length >= 1 ? $(navs[0]).outerHeight(false) : 0;
+		this.bottomNavHeight = this.sitePanel.getBottomNavHeight();
 		this.pathwayContainer.style('top', "{0}px".format(this.topNavHeight));
 		if (this.isLayoutDirty)
 			this.checkLayout();
@@ -1668,7 +1668,8 @@ var PathLines = (function() {
 				})
 			.on("click.cr", function(fd, i)
 				{
-					_this.showDetailPanel(fd, i);
+					if (_this.canEditExperience(fd))
+						_this.showDetailPanel(fd, i);
 				});
 		this.detailBackRect = this.detailGroup.append('rect')
 			.classed('bg', true);
@@ -1771,8 +1772,11 @@ var PathLines = (function() {
 	
 	function PathLines(sitePanel, containerDiv) {
 		PathView.call(this, sitePanel, containerDiv);
-		d3.select(containerDiv).classed('vertical-scrolling', false)
-			.classed('all-scrolling', true);
+		if (sitePanel)
+		{
+			d3.select(containerDiv).classed('vertical-scrolling', false)
+				.classed('all-scrolling', true);
+		}
 	}
 	
 	return PathLines;
@@ -1889,6 +1893,11 @@ var PathlinesPanel = (function () {
 		}
 	}
 	
+	PathlinesPanel.prototype.getBottomNavHeight = function()
+	{
+		return $(this.searchPanel.topBox).outerHeight(false);
+	}
+	
 	function PathlinesPanel(user, previousPanel, done) {
 		var _this = this;
 		this.user = user;
@@ -1930,7 +1939,7 @@ var PathlinesPanel = (function () {
 		
 		this.navContainer.appendTitle(getUserDescription(user));
 		
-		var searchPanel = new SearchPathsPanel(this.node());
+		this.searchPanel = new SearchPathsPanel(this.node());
 		
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
@@ -2380,11 +2389,32 @@ var ExperienceIdeaPanel = (function() {
 	return ExperienceIdeaPanel;
 })();
 
+var OtherPathlines = (function() {
+	OtherPathlines.prototype = new PathLines();
+	
+	OtherPathlines.prototype.canEditExperience = function(fd, i)
+	{
+		return false;
+	}
+	
+	function OtherPathlines(sitePanel, containerDiv)
+	{
+		PathLines.call(this, sitePanel, containerDiv);
+	}
+	
+	return OtherPathlines;
+})();
+
 var OtherPathPanel = (function () {
 	OtherPathPanel.prototype = new SitePanel();
 	OtherPathPanel.prototype.path = null;
 	OtherPathPanel.prototype.pathtree = null;
 	OtherPathPanel.prototype.navContainer = null;
+	
+	OtherPathPanel.prototype.getBottomNavHeight = function()
+	{
+		return 0;
+	}
 	
 	function OtherPathPanel(path, previousPanel, done) {
 		var _this = this;
@@ -2415,12 +2445,14 @@ var OtherPathPanel = (function () {
 			backButton.append("span").text("Done");
 		}
 
-		this.navContainer.appendTitle(getPathDescription(path));
+		var ageCalculator = new AgeCalculator(path.getValue("Birthday").getDescription());
+		this.navContainer.appendTitle(getPathDescription(path) ||
+			"{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10))));
 		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			
-		this.pathtree = new PathLines(this, panel2Div.node());
+		this.pathtree = new OtherPathlines(this, panel2Div.node());
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{
