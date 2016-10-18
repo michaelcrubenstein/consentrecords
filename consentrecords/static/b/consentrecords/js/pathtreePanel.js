@@ -184,8 +184,12 @@ var FlagData = (function() {
 			{
 				return getUTCTodayDate().toISOString().substr(0, 10);
 			}
+			return this.goalDateString;
 		}
-		return this.goalDateString;
+		else
+		{
+			return this.getTimeframeText() || this.goalDateString;
+		}
 	}
 	
 	FlagData.prototype.getTimeframeText = function()
