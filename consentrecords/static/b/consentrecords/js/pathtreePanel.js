@@ -2427,8 +2427,6 @@ var OtherPathPanel = (function () {
 
 		this.navContainer.appendTitle(getPathDescription(path));
 		
-		var searchPanel = new SearchPathsPanel(this.node());
-		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
 			
