@@ -531,6 +531,30 @@ var PathView = (function() {
 			.append('rect');
 	}
 	
+	PathView.prototype.canEditExperience = function(fd)
+	{
+		return fd.experience.typeName == "More Experience" && fd.experience.canWrite();
+	}
+	
+	PathView.prototype.changedContent = function()
+	{
+		var hasEditChevron = this.canEditExperience(this.detailGroup.datum());
+		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
+		var rectWidth = $(this.detailGroup.node()).children('text')
+							.map(function() { return this.getBBox().width; })
+							.toArray()
+							.reduce(function(a, b) { return Math.max(a, b); }, 0) +
+						iconAreaWidth + (this.textDetailLeftMargin * 2);
+							
+		this.detailGroup.select('line').attr('x2', rectWidth);
+		this.detailGroup.selectAll('rect').attr('width', rectWidth);
+		d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
+			.attr('width', rectWidth);
+			
+		this.detailGroup.select('image.edit-chevron')
+			.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
+	}
+	
 	PathView.prototype.showDetailGroup = function(fd, duration)
 	{
 		duration = (duration !== undefined ? duration : 700);
@@ -543,7 +567,7 @@ var PathView = (function() {
 		var detailText = fd.appendText(this.detailGroup);
 		detailText.attr('clip-path', detailClipPath);
 			
-		var hasEditChevron = fd.experience.typeName == "More Experience" && fd.experience.canWrite();
+		var hasEditChevron = this.canEditExperience(fd);
 
 		var textBox = detailText.node().getBBox();
 		
@@ -562,7 +586,6 @@ var PathView = (function() {
 		{
 			var commentLine = this.detailGroup.append('line')
 				.attr('x1', 0)
-				.attr('x2', rectWidth)
 				.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
 				.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
 				.attr('clip-path', detailClipPath);
@@ -584,9 +607,7 @@ var PathView = (function() {
 				var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
 				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
 				
-				rectWidth = Math.max(textBox.width, commentLabel.node().getBBox().width) +
-									 iconAreaWidth + (_this.textDetailLeftMargin * 2);
-				_this.detailGroup.selectAll('rect').attr('width', rectWidth);
+				_this.changedContent();
 			}
 			
 			var commentsCell = fd.experience.getCell("Comments");
@@ -608,7 +629,6 @@ var PathView = (function() {
 		this.detailGroup.attr("transform", 
 		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
-			.attr("width", rectWidth)
 			.attr("x", this.detailRectX)	/* half the stroke width */;
 		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
 		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
@@ -628,19 +648,18 @@ var PathView = (function() {
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('x', textBox.x)
-			.attr('y', textBox.y)
-			.attr('width', rectWidth); 
+			.attr('y', textBox.y); 
 		
 		if (hasEditChevron)
 		{	
 			var detailChevron = this.detailGroup.append('image')
+				.classed('edit-chevron', true)
 				.attr("width", this.showDetailIconWidth)
 				.attr("height", this.showDetailIconWidth)
 				.attr("xlink:href", rightChevronPath)
 				.attr('clip-path', detailClipPath)
 
-			detailChevron.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+			detailChevron.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
 		}
 			
 		if (duration > 0)
@@ -729,6 +748,7 @@ var PathView = (function() {
 			 });
 		 });
 		
+		this.changedContent();
 		this.setupHeights();
 		this.setupWidths();
 		
@@ -738,7 +758,7 @@ var PathView = (function() {
 							   {y: (y * this.emToPX) + this.experienceGroupDY,
 							    x: x + this.experienceGroupDX,
 							    height: this.detailRectHeight,
-							    width: rectWidth},
+							    width: parseFloat(this.detailFrontRect.attr('width'))},
 							   this.topNavHeight,
 							   this.bottomNavHeight,
 							   duration);
@@ -1533,6 +1553,7 @@ var PathLines = (function() {
 			.attr('y2', svgHeight - this.bottomNavHeight);
 	}
 	
+	/* Set up the widths of the objects based on the data. */
 	PathLines.prototype.setupWidths = function()
 	{
 		var newWidth = this.sitePanel.scrollAreaWidth();
