@@ -647,8 +647,8 @@ var Experience = (function() {
 	
 	Experience.prototype.getPhase = function()
 	{
-		var t = this.instance.getValue('Timeframe');
-		if (t)
+		var t = this.instance && this.instance.getValue('Timeframe');
+		if (t && t.getValueID())
 			return t.getDescription();
 			
 		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
@@ -736,7 +736,7 @@ var MultiTypeOptionView = (function() {
 	{
 		if (compareText.length === 0)
 			return true;
-		var data = this.listPanel.selectAll("li").data();
+		var data = this.buttons().data();
 		return data.find(function(d) {
 				return d.getCell && d.getCell("_name").data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
@@ -1037,7 +1037,7 @@ var ExperienceDatumSearchView = (function() {
 	{
 		var compareText = d.getDescription();
 	
-		var data = this.listPanel.selectAll("li").data();
+		var data = this.buttons().data();
 		return data.find(function(d) {
 				return d.typeName === "Site" &&
 					   d.getDescription() === compareText &&
@@ -1133,7 +1133,7 @@ var ExperienceDatumSearchView = (function() {
 				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
 					and subtract the parent's height and add back the reveal node's height. */
 				{newHeight: newHeight,
-				 children: $(this.listPanel.node())},
+				 children: $(this.listElement.node())},
 				duration, step, done);
 		}
 	}	
@@ -1151,18 +1151,13 @@ var ExperienceDatumSearchView = (function() {
 		if (containerNode)
 		{
 			this.inputBox = inputNode;
-			this.helpNode = helpNode;
 			$(this.inputBox).on("input", function() { 
-					try
-					{
-						_this.textChanged();
-					}
-					catch(err)
-					{
-						cr.asyncFail(err);
-					}
+					try { _this.textChanged(); }
+					catch(err) { cr.asyncFail(err); }
 				});
 			
+			this.helpNode = helpNode;
+
 			this.reveal = new VerticalReveal(containerNode);
 			this.reveal.hide();
 
@@ -1414,7 +1409,7 @@ var TagSearchView = (function() {
 	TagSearchView.prototype.constrainFoundObjects = function(inputNode)
 	{
 		var constrainText = inputNode ? inputNode.value.trim().toLocaleLowerCase() : this.sitePanel.getTagConstrainText();
-		var buttons = this.listPanel.selectAll(".btn");
+		var buttons = this.listElement.selectAll(".btn");
 		var _this = this;
 		buttons.style("display", function(d) 
 			{ 
