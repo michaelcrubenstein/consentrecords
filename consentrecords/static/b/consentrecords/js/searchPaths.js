@@ -32,7 +32,6 @@ var SearchPathsResultsView = (function () {
 	SearchPathsResultsView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		
-		/* TODO: */
 		if (prepareClick('click', 'other path'))
 		{
 			showPath(d, this.searchPathsPanel.node());
@@ -42,7 +41,6 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.isButtonVisible = function(button, d, compareText)
 	{
-		/* TODO: */
 		return true;
 	}
 	
