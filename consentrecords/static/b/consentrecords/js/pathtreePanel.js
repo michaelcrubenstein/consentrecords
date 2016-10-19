@@ -401,7 +401,7 @@ var PathView = (function() {
 	PathView.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 
 	/* Constants related to the detail rectangle. */
-	PathView.prototype.textBottomMargin = 2;
+	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
 	PathView.prototype.flagHeightEM = 2.333;
 	PathView.prototype.flagSpacing = 2;
@@ -409,8 +409,8 @@ var PathView = (function() {
 	PathView.prototype.textDetailTopLineHeight = "1.5em";
 	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 
-	PathView.prototype.commentLineHeight = 7;
-	PathView.prototype.commentLabelTopMargin = 2;
+	PathView.prototype.commentLineHeight = 0;
+	PathView.prototype.commentLabelTopMargin = 5;
 	PathView.prototype.commentLabelBottomMargin = 10;
 	PathView.prototype.commentLabelLeftMargin = 10;
 
@@ -547,7 +547,7 @@ var PathView = (function() {
 							.reduce(function(a, b) { return Math.max(a, b); }, 0) +
 						iconAreaWidth + (this.textDetailLeftMargin * 2);
 							
-		this.detailGroup.select('line').attr('x2', rectWidth);
+		this.detailGroup.selectAll('line').attr('x2', rectWidth);
 		this.detailGroup.selectAll('rect').attr('width', rectWidth);
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
 			.attr('width', rectWidth);
@@ -658,21 +658,8 @@ var PathView = (function() {
 			.attr('x', this.detailRectX)	/* half the stroke width */;
 		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
 		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
-		var fullRects = this.detailGroup.selectAll('rect.full');
-/* 
-		if (duration > 0)
-		{
-			
-			fullRects.attr("height", 0)
-					   .transition()
-					   .duration(duration)
-					   .attr("height", this.detailRectHeight);
-		}
-		else
- */
-		{
-			fullRects.attr('height', this.detailRectHeight);
-		}
+		this.detailGroup.selectAll('rect.full')
+			.attr('height', this.detailRectHeight);
 	   
 		this.detailFlagData = fd;
 		
@@ -2410,10 +2397,82 @@ var ExperienceIdeaPanel = (function() {
 
 var OtherPathlines = (function() {
 	OtherPathlines.prototype = new PathLines();
+	OtherPathlines.prototype.detailAddToPathRect = null;
 	
 	OtherPathlines.prototype.canEditExperience = function(fd, i)
 	{
 		return false;
+	}
+	
+	OtherPathlines.prototype.handleAddToPathway = function(fd)
+	{
+		if (prepareClick('click', "Add to My Pathway"))
+		{
+			try
+			{
+				var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), fd.experience);
+				var newPanel = new NewExperiencePanel(tempExperience, this.sitePanel.node(), tempExperience.getPhase());
+				showPanelUp(newPanel.node())
+					.always(unblockClick);
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+	}
+	
+	OtherPathlines.prototype.appendDetailGroupElements = function(fd)
+	{
+		PathView.prototype.appendDetailGroupElements.call(this, fd);
+		
+		var _this = this;
+		
+		this.detailRectHeight += (this.commentLineHeight / 2);
+		this.detailAddToPathRect.attr('x', 1.5)
+			.attr('y', this.detailRectHeight)
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", function(fd, i)
+				{
+					_this.handleAddToPathway(fd, i);
+				});
+			
+		var commentLine = this.detailGroup.append('line')
+			.attr('x1', this.commentLabelLeftMargin)
+			.attr('y1', this.detailRectHeight)
+			.attr('y2', this.detailRectHeight);
+	
+		var commentLabel = this.detailGroup.append('text')
+			.classed('comments', true)
+			.attr('x', this.commentLabelLeftMargin)
+			.on("click", function(d) 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", function(fd, i)
+				{
+					_this.handleAddToPathway(fd, i);
+				})
+			.text("Add to My Path");
+		
+		var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
+		commentLabel
+			.attr('y', this.detailRectHeight + commentLabelY);
+		
+		this.detailAddToPathRect.attr('height', commentLabelY + this.commentLabelBottomMargin);
+
+		this.detailRectHeight += commentLabelY + this.commentLabelBottomMargin;
+	}
+	
+	OtherPathlines.prototype.appendDetailContents = function()
+	{
+		PathLines.prototype.appendDetailContents.call(this);
+		
+		this.detailAddToPathRect = this.detailGroup.append('rect')
+			.classed('comments', true);
 	}
 	
 	function OtherPathlines(sitePanel, containerDiv)

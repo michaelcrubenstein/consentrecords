@@ -79,7 +79,7 @@ g.detail line {
 	text-decoration: none;
 	cursor: pointer;
 	stroke: #AAA;
-	stroke-width: 0.3px;
+	stroke-width: 0.5px;
 }
 
 g.detail rect.comments {
