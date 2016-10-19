@@ -145,7 +145,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.defs = null;
 	ComparePath.prototype.bg = null;
 	ComparePath.prototype.loadingText = null;
-	ComparePath.prototype.promptAddText = null;
 	ComparePath.prototype.yearGroup = null;
 	ComparePath.prototype.guideGroup = null;
 	ComparePath.prototype.experienceGroup = null;
@@ -643,27 +642,6 @@ var ComparePath = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
-
-		/* Position the promptAddText based on the width. */
-		if (this.promptAddText)
-		{
-			this.loadingText
-				.attr("y", this.experienceGroupDY + this.loadingText.node().getBBox().height);
-	
-			var bbox = this.loadingText.node().getBBox();
-			var newBBox = this.promptAddText.node().getBBox();
-			if (bbox.x + bbox.width + this.textLeftMargin + newBBox.width >
-				newWidth - this.experienceGroupDX - this.promptRightMargin)
-			{
-				this.promptAddText.attr("x", this.loadingText.attr("x"))
-					.attr("y", parseFloat(this.loadingText.attr("y")) + bbox.height);
-			}
-			else
-			{
-				this.promptAddText.attr("x", bbox.x + bbox.width + this.textLeftMargin)
-					.attr("y", this.loadingText.attr("y"));
-			}
-		}
 	}
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
