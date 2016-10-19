@@ -81,6 +81,11 @@ g.detail line {
 	stroke: #AAA;
 	stroke-width: 0.3px;
 }
+
+g.detail rect.comments {
+	fill: transparent;
+	cursor: pointer;
+}
 	
 g.detail text.comments {
 	fill: #2C55CC;

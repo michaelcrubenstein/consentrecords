@@ -659,6 +659,8 @@ var ComparePath = (function() {
 		this.rightPath = rightPath;
 		this.editable = (editable !== undefined ? editable : true);
 
+		this.setupClipID();
+
 		var container = d3.select(this.containerDiv);
 		
 		this.pathwayContainer = container.append('div')
@@ -693,6 +695,7 @@ var ComparePath = (function() {
 			
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
+			.attr('clip-path', this.getDetailClipPath())
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
@@ -702,10 +705,8 @@ var ComparePath = (function() {
 					if (fd.experience.canWrite())
 						_this.showDetailPanel(fd, i);
 				});
-		this.detailBackRect = this.detailGroup.append('rect')
-			.classed('bg', true);
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail', true);
+
+		this.appendDetailContents();
 			
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 

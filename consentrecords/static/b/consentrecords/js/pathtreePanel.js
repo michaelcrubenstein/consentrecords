@@ -108,10 +108,10 @@ var FlagData = (function() {
 	FlagData.prototype.previousDateString = "0000-00";
 	FlagData.prototype.goalDateString = "9999-12-31";
 	
-	FlagData.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
+	FlagData.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 
 	/* Constants related to the detail text. */
-	FlagData.prototype.detailTextSpacing = "1.1em";		/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailTopSpacing = "1.5em";		/* The space between lines of text in the detail box. */
 	FlagData.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
 	FlagData.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
 	FlagData.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
@@ -316,7 +316,7 @@ var FlagData = (function() {
 				.classed('flag-label', true)
 				.text(s)
 				.attr("x", x)
-				.attr("dy", this.detailTextSpacing);
+				.attr("dy", this.detailTopSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
@@ -327,7 +327,7 @@ var FlagData = (function() {
 				.classed('detail-organization', true)
 				.text(orgString)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTopSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
@@ -338,7 +338,7 @@ var FlagData = (function() {
 				.classed('site', true)
 				.text(s)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTopSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 
@@ -349,7 +349,7 @@ var FlagData = (function() {
 				.classed('detail-dates', true)
 				.text(s)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTextSpacing);
+				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTopSpacing);
 			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
 		}
 		
@@ -362,7 +362,7 @@ var FlagData = (function() {
 					return detailText.append("tspan")
 						.classed('tags', true)
 						.attr("x", x)
-						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTextSpacing : _this.detailTagSpacing);
+						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTopSpacing : _this.detailTagSpacing);
 				},
 				maxWidth);
 		}
@@ -406,7 +406,8 @@ var PathView = (function() {
 	PathView.prototype.flagHeightEM = 2.333;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
-	PathView.prototype.textDetailLeftMargin = 3; /* textLeftMargin; */
+	PathView.prototype.textDetailTopLineHeight = "1.5em";
+	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 
 	PathView.prototype.commentLineHeight = 7;
 	PathView.prototype.commentLabelTopMargin = 2;
@@ -555,40 +556,52 @@ var PathView = (function() {
 			.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
 	}
 	
-	PathView.prototype.showDetailGroup = function(fd, duration)
+	PathView.prototype.getDetailClipPath = function()
 	{
-		duration = (duration !== undefined ? duration : 700);
+		return 'url(#id_detailClipPath{0})'.format(this.clipID);
+	}
+	
+	PathView.prototype.appendDetailGroupElements = function(fd)
+	{
 		var _this = this;
 		
-		var detailClipPath = 'url(#id_detailClipPath{0})'.format(this.clipID);
-		
-		this.detailGroup.datum(fd);
-		this.detailGroup.selectAll('rect').datum(fd);
 		var detailText = fd.appendText(this.detailGroup);
-		detailText.attr('clip-path', detailClipPath);
-			
-		var hasEditChevron = this.canEditExperience(fd);
-
+		
 		var textBox = detailText.node().getBBox();
 		
-		var x = fd.x;
-		var y = fd.y;
-
-		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = textBox.width + iconAreaWidth + (this.textDetailLeftMargin * 2);
-
 		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
 
+		if (this.canEditExperience(fd))
+		{	
+			this.detailGroup.append('image')
+				.classed('edit-chevron', true)
+				.attr("width", this.showDetailIconWidth)
+				.attr("height", this.showDetailIconWidth)
+				.attr("xlink:href", rightChevronPath)
+				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
+		}
+			
 		var commentsValue = fd.experience.getValue("Comments");
 		var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
 		if (fd.experience.canWrite() ||
 			commentsCount > 0)
 		{
+			this.detailRectHeight += (this.commentLineHeight / 2);
+			this.detailCommentRect.attr('x', 1.5)
+				.attr('y', this.detailRectHeight)
+				.on("click", function(d) 
+					{ 
+						d3.event.stopPropagation(); 
+					})
+				.on("click.cr", function(fd, i)
+					{
+						_this.showCommentsPanel(fd, i);
+					});
+				
 			var commentLine = this.detailGroup.append('line')
-				.attr('x1', 0)
-				.attr('y1', this.detailRectHeight + (this.commentLineHeight / 2))
-				.attr('y2', this.detailRectHeight + (this.commentLineHeight / 2))
-				.attr('clip-path', detailClipPath);
+				.attr('x1', this.commentLabelLeftMargin)
+				.attr('y1', this.detailRectHeight)
+				.attr('y2', this.detailRectHeight);
 		
 			var commentLabel = this.detailGroup.append('text')
 				.classed('comments', true)
@@ -619,68 +632,66 @@ var PathView = (function() {
 					$(eventObject.data).off("dataChanged.cr valueAdded.cr valueDeleted.cr", null, setCommentsText);
 				});
 			
-			var commentLabelY = this.detailRectHeight + this.commentLineHeight + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
-			commentLabel.attr('y', commentLabelY)
-				.attr('clip-path', detailClipPath);
+			var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
+			commentLabel
+				.attr('y', this.detailRectHeight + commentLabelY);
 			
-			this.detailRectHeight = commentLabelY + this.commentLabelBottomMargin;
+			this.detailCommentRect.attr('height', commentLabelY + this.commentLabelBottomMargin);
+
+			this.detailRectHeight += commentLabelY + this.commentLabelBottomMargin;
 		}
-			
+	}
+	
+	PathView.prototype.showDetailGroup = function(fd, duration)
+	{
+		duration = (duration !== undefined ? duration : 700);
+		var _this = this;
+				
+		this.detailGroup.datum(fd);
+		this.detailGroup.selectAll('rect').datum(fd);
+		
+		this.appendDetailGroupElements(fd);
+		
 		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
+		                      "translate({0},{1})".format(fd.x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
 		this.detailGroup.selectAll('rect')
-			.attr("x", this.detailRectX)	/* half the stroke width */;
+			.attr('x', this.detailRectX)	/* half the stroke width */;
 		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
 		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
+		var fullRects = this.detailGroup.selectAll('rect.full');
+/* 
 		if (duration > 0)
 		{
 			
-			this.detailGroup.selectAll('rect').attr("height", 0)
+			fullRects.attr("height", 0)
 					   .transition()
 					   .duration(duration)
 					   .attr("height", this.detailRectHeight);
 		}
 		else
+ */
 		{
-			this.detailGroup.selectAll('rect').attr("height", this.detailRectHeight);
+			fullRects.attr('height', this.detailRectHeight);
 		}
 	   
+		this.detailFlagData = fd;
+		
 		/* Set the clip path of the text to grow so the text is revealed in parallel */
 		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', textBox.x)
-			.attr('y', textBox.y); 
+			.attr('x', 1.5)
+			.attr('y', 0); 
 		
-		if (hasEditChevron)
-		{	
-			var detailChevron = this.detailGroup.append('image')
-				.classed('edit-chevron', true)
-				.attr("width", this.showDetailIconWidth)
-				.attr("height", this.showDetailIconWidth)
-				.attr("xlink:href", rightChevronPath)
-				.attr('clip-path', detailClipPath)
-
-			detailChevron.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
-		}
-			
 		if (duration > 0)
 		{
 			textClipRect.attr('height', 0)
 				.transition()
 				.duration(duration)
 				.attr('height', this.detailRectHeight); 
-			detailText				
-				.transition()
-				.duration(duration)
-				.attr("height", this.detailRectHeight);
-
 		}
 		else
 		{
 			textClipRect.attr('height', this.detailRectHeight); 
-			detailText.attr("height", this.detailRectHeight);
 		}
-		
-		this.detailFlagData = fd;
 		
 		var experience = this.detailFlagData.experience;
 		
@@ -755,8 +766,8 @@ var PathView = (function() {
 		if (duration > 0)
 		{
 			this.scrollToRectangle(this.containerDiv, 
-							   {y: (y * this.emToPX) + this.experienceGroupDY,
-							    x: x + this.experienceGroupDX,
+							   {y: (fd.y * this.emToPX) + this.experienceGroupDY,
+							    x: fd.x + this.experienceGroupDX,
 							    height: this.detailRectHeight,
 							    width: parseFloat(this.detailFrontRect.attr('width'))},
 							   this.topNavHeight,
@@ -768,7 +779,6 @@ var PathView = (function() {
 	PathView.prototype.clearDetail = function()
 	{
 		this.detailGroup.selectAll('text').remove();
-		this.detailGroup.selectAll('rect').attr('height', 0);
 		/* Remove the image here instead of when the other clipPath ends
 			so that it is sure to be removed when the done method is called. 
 		 */
@@ -808,10 +818,6 @@ var PathView = (function() {
 						if (done)
 							done();
 					});
-				this.detailGroup.selectAll('rect')
-					.transition()
-					.duration(duration)
-					.attr("height", 0);
 			}
 		}
 		else if (done)
@@ -832,6 +838,17 @@ var PathView = (function() {
 	PathView.prototype.refreshDetail = function()
 	{
 		this.updateDetail(this.detailFlagData, 0);
+	}
+	
+	/* Append the detail contents that are static. */
+	PathView.prototype.appendDetailContents = function()
+	{
+		this.detailBackRect = this.detailGroup.append('rect')
+			.classed('bg full', true);
+		this.detailFrontRect = this.detailGroup.append('rect')
+			.classed('detail full', true);
+		this.detailCommentRect = this.detailGroup.append('rect')
+			.classed('comments', true);
 	}
 	
 	PathView.prototype.clearLayout = function()
@@ -1069,14 +1086,14 @@ var PathView = (function() {
 			{
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.top)
-					.attr("x", _this.yearTextX)
+					.attr('x', _this.yearTextX)
 					.attr('y', _this.experienceGroupDY + (fd.y + yearHeight) * _this.emToPX);
 			}
 			if (fd.yearBounds.bottom)
 			{
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.bottom)
-					.attr("x", _this.yearTextX)
+					.attr('x', _this.yearTextX)
 					.attr('y', _this.experienceGroupDY + (fd.y2 * _this.emToPX));
 			}
 		});
@@ -1217,7 +1234,7 @@ var PathLines = (function() {
 	PathLines.prototype = new PathView();
 	PathLines.prototype.poleSpacing = 4;
 		
-	PathLines.prototype.textLeftMargin = 3;
+	PathLines.prototype.textLeftMargin = 10;
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
 	PathLines.prototype.pathBackground = "white";
 	PathLines.prototype.showDetailIconWidth = 18;
@@ -1295,7 +1312,8 @@ var PathLines = (function() {
 			g.selectAll('rect')
 				.attr('width', function(fd)
 					{
-						return $(this.parentNode).children('text').outerWidth() + 5;
+						return $(this.parentNode).children('text').outerWidth() + 
+							(2 * _this.textDetailLeftMargin);
 					});	
 		}
 		
@@ -1327,7 +1345,8 @@ var PathLines = (function() {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
+					return $(this.parentNode).children('text').outerWidth() + 
+						(2 * _this.textDetailLeftMargin);
 				});	
 		
 		/* Restore the sort order to startDate/endDate */
@@ -1421,7 +1440,6 @@ var PathLines = (function() {
 		}
 		else
 		{
-			this.setupClipID();
 			g = this.experienceGroup.selectAll('g')
 				.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
 				.enter()
@@ -1471,7 +1489,7 @@ var PathLines = (function() {
 		var text = g.append('text').classed('flag-label', true)
 			.attr('x', this.textDetailLeftMargin);
 		text.append('tspan')
-			.attr('dy', '1.1em');
+			.attr('dy', this.textDetailTopLineHeight);
 		
 		g.each(function() { _this.setFlagText(this); });
 		
@@ -1593,6 +1611,8 @@ var PathLines = (function() {
 		this.path = path;
 		this.editable = (editable !== undefined ? editable : true);
 		
+		this.setupClipID();
+
 		var container = d3.select(this.containerDiv);
 		
 		this.pathwayContainer = container.append('div')
@@ -1662,6 +1682,7 @@ var PathLines = (function() {
 			
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
+			.attr('clip-path', this.getDetailClipPath())
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
@@ -1671,10 +1692,8 @@ var PathLines = (function() {
 					if (_this.canEditExperience(fd))
 						_this.showDetailPanel(fd, i);
 				});
-		this.detailBackRect = this.detailGroup.append('rect')
-			.classed('bg', true);
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail', true);
+				
+		this.appendDetailContents();
 			
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 
