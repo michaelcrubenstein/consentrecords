@@ -246,11 +246,13 @@ var SearchPathsPanel = (function () {
 		
 		var height = this._setFlagCoordinates(g, $(this.poolFlags.node()).width());
 		
-		this.poolFlags
+		/* Set the height of the svg to match the total height of all of the flags. */
+		this.poolFlags.transition()
+			.duration(700)
 			.style('height', height)
 		
 		g.interrupt().transition()
-			.duration(1000)
+			.duration(700)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
 			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
@@ -416,24 +418,33 @@ var SearchPathsPanel = (function () {
 	{
 		var g = this.poolFlags.selectAll('g.flag');
 		
+		var f;
+		var _this = this;
+		if (this.filterColumn !== undefined)
+		{
+			f = function(fs)
+				{
+					fs.visible = (fs.getColumn() == _this.filterColumn);
+				}
+		}
+		else
+		{
+			f = function(fs) { fs.visible = undefined; }
+		}
+		
+		g.each(f);
+			
 		var inputTexts = this.searchInput.value.toLocaleUpperCase().split(' ');
 		
 		if (inputTexts.length > 0)
 		{
-			g.data().forEach(function(fs)
+			g.each(function(fs)
 				{
-					fs.visible = false;
-					fs.visible = inputTexts.reduce(function(a, b)
+					if (!inputTexts.reduce(function(a, b)
 						{
 							return a && fs.contains(b);
-						}, true);
-				});
-		}
-		else
-		{
-			g.data().forEach(function(fs)
-				{
-					fs.visible = undefined;
+						}, true))
+						fs.visible = false;
 				});
 		}
 	}
@@ -504,15 +515,9 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
 	{
-		var s = services.map(function(e) { return new Service(e); })
-					.filter(function(d)
-						{
-							return d.getColumn() == column;
-						});
-
 		$(this.searchInput).val('');
 		$(this.searchInput).focus();
-		this.appendPoolFlags(s);
+		this.filterColumn = column;
 		this.filterPool();
 		this.layoutPoolFlags();
 	}
@@ -589,22 +594,11 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleAllClick = function()
 	{
-		var _this = this;
-		
-		crp.promise({path: "Service"})
-			.done(function(services)
-				{
-					var s = services.map(function(e) { return new Service(e); });
-					
-					if ($(_this.node()).position().top == 0)
-					{
-						$(_this.searchInput).val('');
-						$(_this.searchInput).focus();
-					}
-					_this.appendPoolFlags(s);
-					_this.filterPool();
-					_this.layoutPoolFlags();
-				});
+		$(this.searchInput).val('');
+		$(this.searchInput).focus();
+		this.filterColumn = undefined;
+		this.filterPool();
+		this.layoutPoolFlags();
 	}
 	
 	function SearchPathsPanel(previousPanel)
@@ -766,7 +760,16 @@ var SearchPathsPanel = (function () {
 				
 				$(_this.previousPanel.sitePanel.pathtree).on('userSet.cr', function()
 					{
-						_this.handleAllClick();
+						crp.promise({path: "Service"})
+							.done(function(services)
+								{
+									var s = services.map(function(e) { return new Service(e); });
+					
+									_this.appendPoolFlags(s);
+									_this.filterColumn = undefined;
+									_this.filterPool();
+									_this.layoutPoolFlags();
+								});
 					});
 		
 			});
