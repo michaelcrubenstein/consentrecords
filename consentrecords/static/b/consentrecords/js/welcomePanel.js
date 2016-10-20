@@ -576,6 +576,7 @@ var WelcomePanel = (function () {
 			
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			pathwayPanel.setupSearchPanel();
 			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 				.then(function()
 					{
