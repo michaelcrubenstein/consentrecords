@@ -539,6 +539,15 @@
 				done([]);
 		}
 		
+		function loadPathlinesPanel(previousPanel)
+		{
+			var firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			firstPanel.setupSearchPanel();
+			firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+			showPanelUp(firstPanel.node());
+			return firstPanel;
+		}
+		
 		$(document).ready (function(e) {
 			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
 			{
@@ -744,9 +753,7 @@
 							{
 								if (!firstPanel)
 								{
-									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-									showPanelUp(firstPanel.node());
+									firstPanel = loadPathlinesPanel(previousPanel);
 								}
 								pathwayPanel = firstPanel;
 							}
@@ -793,9 +800,7 @@
 								{
 									if (!firstPanel)
 									{
-										firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-										firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-										showPanelUp(firstPanel.node());
+										firstPanel = loadPathlinesPanel(previousPanel);
 									}
 									pathwayPanel = firstPanel;
 								}
@@ -814,9 +819,7 @@
 						{
 							if (!firstPanel)
 							{
-								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-								showPanelUp(firstPanel.node());
+								firstPanel = loadPathlinesPanel(previousPanel);
 							}
 							pathwayPanel = firstPanel;
 						}
@@ -863,9 +866,7 @@
 						{
 							if (!firstPanel)
 							{
-								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-								showPanelUp(firstPanel.node());
+								firstPanel = loadPathlinesPanel(previousPanel);
 							}
 							pathwayPanel = firstPanel;
 						}
@@ -893,9 +894,7 @@
 						{
 							if (!firstPanel)
 							{
-								firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-								firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-								showPanelUp(firstPanel.node());
+								firstPanel = loadPathlinesPanel(previousPanel);
 							}
 							pathwayPanel = firstPanel;
 						}
@@ -933,9 +932,7 @@
 							.then(function() {
 								if (!firstPanel)
 								{
-									firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-									showPanelUp(firstPanel.node());
+									firstPanel = loadPathlinesPanel(previousPanel);
 								}
 							},
 							cr.asyncFail);
@@ -962,6 +959,7 @@
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
 					{
 						firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+						firstPanel.setupSearchPanel();
 						showPanelNow(firstPanel.node());
 						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 						.then(function()

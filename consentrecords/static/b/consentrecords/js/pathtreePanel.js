@@ -1901,7 +1901,12 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.getBottomNavHeight = function()
 	{
-		return $(this.searchPanel.topBox).outerHeight(false);
+		return this.searchPanel ? $(this.searchPanel.topBox).outerHeight(false) : 0;
+	}
+	
+	PathlinesPanel.prototype.setupSearchPanel = function()
+	{
+		this.searchPanel = new SearchPathsPanel(this.node());
 	}
 	
 	function PathlinesPanel(user, previousPanel, done) {
@@ -1944,8 +1949,6 @@ var PathlinesPanel = (function () {
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
 		this.navContainer.appendTitle(getUserDescription(user));
-		
-		this.searchPanel = new SearchPathsPanel(this.node());
 		
 // 		var findButton = this.bottomNavContainer.appendRightButton()
 // 				.on("click",
