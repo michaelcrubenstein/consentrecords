@@ -1,6 +1,5 @@
 # python3 data/06loadscraped.py data/terms.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/servicedomains.txt michaelcrubenstein@gmail.com
-# python3 data/06loadscraped.py data/domains.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/stages.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/services.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/experienceprompts.txt michaelcrubenstein@gmail.com
@@ -62,6 +61,10 @@ def loadRoot(type, field, value, nameList, transactionState):
             root = objs[0]
             value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
+            if input('Create anyway? (y/n): ') == 'y':
+                propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
+                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
+                print("+ %s: %s" % (text, root.id))
         else:
             propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
             root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
