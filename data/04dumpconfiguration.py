@@ -1,9 +1,9 @@
-# python3 data/04dumpconfiguration.py -path _term -user michaelcrubenstein@gmail.com > data/terms.txt 
-# python3 data/04dumpconfiguration.py -path '"Service Domain"' -user michaelcrubenstein@gmail.com > data/servicedomains.txt 
-# python3 data/04dumpconfiguration.py -path Domain -user michaelcrubenstein@gmail.com > data/domains.txt 
-# python3 data/04dumpconfiguration.py -path Stage -user michaelcrubenstein@gmail.com > data/stages.txt 
-# python3 data/04dumpconfiguration.py -path Service -user michaelcrubenstein@gmail.com > data/services.txt 
-# python3 data/04dumpconfiguration.py -path '"Experience Prompt"' -user michaelcrubenstein@gmail.com > data/experienceprompts.txt 
+# python3 data/04dumpconfiguration.py -path _term -q > data/terms.txt 
+# python3 data/04dumpconfiguration.py -path '"Service Domain"' -q > data/servicedomains.txt 
+# python3 data/04dumpconfiguration.py -path Domain -q > data/domains.txt 
+# python3 data/04dumpconfiguration.py -path Stage -q > data/stages.txt 
+# python3 data/04dumpconfiguration.py -path Service -q > data/services.txt 
+# python3 data/04dumpconfiguration.py -path '"Experience Prompt"' -q > data/experienceprompts.txt 
 
 import datetime
 import django
@@ -15,6 +15,7 @@ import traceback
 
 from django.db import transaction
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import AnonymousUser
 
 from consentrecords.models import *
 from consentrecords import pathparser
@@ -48,12 +49,6 @@ if __name__ == "__main__":
     
     try:
         timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
-        try:
-            username = sys.argv[sys.argv.index('-user') + 1]
-        except ValueError:
-            username = input('Email Address: ')
-        except IndexError:
-            username = input('Email Address: ')
     
         try:
             path = sys.argv[sys.argv.index('-path') + 1]
@@ -62,9 +57,18 @@ if __name__ == "__main__":
         except IndexError:
             path = input('Path: ')
     
-        password = getpass.getpass("Password: ")
-
-        user = authenticate(username=username, password=password)
+        if '-q' in sys.argv:
+            user = AnonymousUser()
+        else:
+            try:
+                username = sys.argv[sys.argv.index('-user') + 1]
+            except ValueError:
+                username = input('Email Address: ')
+            except IndexError:
+                username = input('Email Address: ')
+    
+            password = getpass.getpass("Password: ")
+            user = authenticate(username=username, password=password)
 
         with transaction.atomic():
             userInfo = UserInfo(user)
