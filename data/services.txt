@@ -36,6 +36,7 @@ Service
     _name: en - Bass Lessons
     Service Domain: Arts
     Domain: Music Performance
+    Stage: Training
 Service
     _name: en - Be a Coach
 Service
@@ -86,6 +87,10 @@ Service
     Domain: School
     Stage: Studying
 Service
+    _name: en - Community Organizing
+    Domain: Community Organizing
+    Stage: Volunteering
+Service
     _name: en - Community Organizing Internship
     Domain: Community Organizing
     Stage: Training
@@ -93,14 +98,6 @@ Service
     _name: en - Community Organizing Job
     Domain: Community Organizing
     Stage: Working
-Service
-    _name: en - Community Organizing Training
-    Domain: Community Organizing
-    Stage: Training
-Service
-    _name: en - Community Organizing Volunteer
-    Domain: Community Organizing
-    Stage: Volunteering
 Service
     _name: en - Computer Applications Training
     Domain: Computer Applications
@@ -144,6 +141,10 @@ Service
 Service
     _name: en - Education
     Service Domain: Education
+Service
+    _name: en - engineer
+    Domain: Engineering
+    Stage: Working
 Service
     _name: en - English Class
     Domain: English
@@ -352,10 +353,6 @@ Service
 Service
     _name: en - Lacrosse
     Domain: Lacrosse
-    Stage: Training
-Service
-    _name: en - Lacrosse
-    Domain: Lacrosse
     Stage: Whatever
 Service
     _name: en - Lacrosse Coach
@@ -401,9 +398,17 @@ Service
     Domain: Music Performance
     Stage: Training
 Service
+    _name: en - Pharmacist
+    Domain: Pharmacy
+    Stage: Working
+Service
     _name: en - Physical Conditioning
     Domain: Physical Conditioning
     Stage: Training
+Service
+    _name: en - Piano
+    Domain: Music Performance
+    Stage: Whatever
 Service
     _name: en - Piano Lessons
     Service Domain: Arts
@@ -431,6 +436,9 @@ Service
     Service Domain: Education
     Domain: School
     Stage: Studying
+Service
+    _name: en - Professional Group Participation
+    Stage: Training
 Service
     _name: en - Provide a Summer Job
 Service
@@ -468,6 +476,10 @@ Service
     Domain: Softball
     Stage: Coaching
 Service
+    _name: en - Software Developer
+    Domain: Computer Software & Programming
+    Stage: Working
+Service
     _name: en - Somali Culture Class
     Domain: Somali Culture
     Stage: Studying
@@ -495,7 +507,7 @@ Service
 Service
     _name: en - Swimming
     Domain: Swimming
-    Stage: Whatever
+    Stage: Training
 Service
     _name: en - Teen Programming
 Service
@@ -511,6 +523,14 @@ Service
     Service Domain: Arts
     Offering Label: en - Title of Show & Role
     Domain: Acting
+    Stage: Whatever
+Service
+    _name: en - Tour Guide
+    Domain: Hospitality
+    Stage: Working
+Service
+    _name: en - Track & Field
+    Domain: Track & Field
     Stage: Whatever
 Service
     _name: en - Trumpet Lessons

@@ -236,6 +236,25 @@ lcd data
 put XXXXXX
 exit
 
+##################################################################
+# How to export a data script to the server
+##################################################################
+
+export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
+sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
+cd eb_django_app/prod/consentrecords
+lcd ~/GitHub/consentrecords
+cd data
+lcd data
+
+get data/terms.txt
+get data/terms.txt
+get data/terms.txt
+get data/terms.txt
+get data/terms.txt
+get data/terms.txt
+exit
+
 
 ##################################################################
 # How to initialize a python session to work with objects.
