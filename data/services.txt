@@ -5,11 +5,21 @@ Service
     Domain: Animals
     Stage: Volunteering
 Service
-    _name: en - Ballet Training
+    _name: en - Art Class
+    Stage: Studying
+Service
+    _name: en - Art Teaching
+    Stage: Teaching
+Service
+    _name: en - Ballet
     Service Domain: Arts
     Domain: Ballet
     Domain: Dance
     Stage: Training
+Service
+    _name: en - Baseball
+    Domain: Baseball
+    Stage: Whatever
 Service
     _name: en - Baseball Coaching
     Domain: Baseball
@@ -19,21 +29,9 @@ Service
     Domain: Baseball
     Stage: Working
 Service
-    _name: en - Baseball Playing
-    Domain: Baseball
-    Stage: Whatever
-Service
-    _name: en - Baseball Training
-    Domain: Baseball
-    Stage: Training
-Service
-    _name: en - Basketball Playing
+    _name: en - Basketball
     Domain: Basketball
     Stage: Whatever
-Service
-    _name: en - Basketball Training
-    Domain: Basketball
-    Stage: Training
 Service
     _name: en - Bass Lessons
     Service Domain: Arts
@@ -54,13 +52,17 @@ Service
     Domain: Entrepreneurship
     Stage: Working
 Service
+    _name: en - C++ Programming Skills
+    Domain: Computer Software & Programming
+    Stage: Skills
+Service
     _name: en - Career Guidance
 Service
     _name: en - Cello Lessons
     Service Domain: Arts
     Domain: Music Performance
 Service
-    _name: en - Chess Playing
+    _name: en - Chess
     Domain: Basketball
     Stage: Whatever
 Service
@@ -114,9 +116,13 @@ Service
 Service
     _name: en - Construction Skills
     Domain: Construction
+    Stage: Skills
+Service
+    _name: en - Construction Training
+    Domain: Construction
     Stage: Training
 Service
-    _name: en - Cycling for Fun
+    _name: en - Cycling
     Domain: Cycling
     Stage: Whatever
 Service
@@ -162,7 +168,7 @@ Service
 Service
     _name: en - Extra-Curricular Activity
 Service
-    _name: en - Floor Hockey For Fun
+    _name: en - Field Hockey
     Domain: Floor Hockey
     Stage: Whatever
 Service
@@ -171,13 +177,17 @@ Service
     Domain: Music Performance
     Stage: Training
 Service
+    _name: en - Football
+    Domain: Football
+    Stage: Whatever
+Service
     _name: en - Football Coaching
     Domain: Football
     Stage: Coaching
 Service
-    _name: en - Football Playing
-    Domain: Football
-    Stage: Whatever
+    _name: en - French Class
+    Domain: French
+    Stage: Studying
 Service
     _name: en - Get a Mentor
     Domain: Life Skills
@@ -292,13 +302,9 @@ Service
     Domain: Physical Conditioning
     Stage: Whatever
 Service
-    _name: en - Gymnastics For Fun
+    _name: en - Gymnastics
     Domain: Gymnastics
     Stage: Whatever
-Service
-    _name: en - Gymnastics Lessons
-    Domain: Gymnastics
-    Stage: Training
 Service
     _name: en - High School Post Graduate
     Service Domain: Education
@@ -306,6 +312,9 @@ Service
     Site Label: en - School
     Offering Label: en - Grade Level
     Domain: School
+    Stage: Studying
+Service
+    _name: en - History Class
     Stage: Studying
 Service
     _name: en - Housing
@@ -332,7 +341,7 @@ Service
     Site Label: en - School
     Offering Label: en - Class
 Service
-    _name: en - Karate Training
+    _name: en - Karate
     Domain: Martial Arts
     Stage: Training
 Service
@@ -341,17 +350,17 @@ Service
     Domain: School
     Stage: Studying
 Service
-    _name: en - Lacrosse Coach
+    _name: en - Lacrosse
     Domain: Lacrosse
-    Stage: Coaching
+    Stage: Training
 Service
-    _name: en - Lacrosse Playing
+    _name: en - Lacrosse
     Domain: Lacrosse
     Stage: Whatever
 Service
-    _name: en - Lacrosse Training
+    _name: en - Lacrosse Coach
     Domain: Lacrosse
-    Stage: Training
+    Stage: Coaching
 Service
     _name: en - Leadership Class
     Domain: Leadership
@@ -361,11 +370,11 @@ Service
     Domain: Leadership
     Stage: Training
 Service
-    _name: en - Literacy Training
+    _name: en - Literacy Skills
     Domain: Literacy
     Stage: Training
 Service
-    _name: en - Martial Arts Training
+    _name: en - Martial Arts
     Domain: Martial Arts
     Stage: Training
 Service
@@ -378,6 +387,10 @@ Service
     Domain: Math
     Stage: Tutoring
 Service
+    _name: en - Microsoft Office Skills
+    Domain: Computer Applications
+    Stage: Skills
+Service
     _name: en - Music Lessons
     Service Domain: Arts
     Domain: Music Performance
@@ -388,7 +401,7 @@ Service
     Domain: Music Performance
     Stage: Training
 Service
-    _name: en - Physical Conditioning Training
+    _name: en - Physical Conditioning
     Domain: Physical Conditioning
     Stage: Training
 Service
@@ -402,6 +415,10 @@ Service
     Domain: Music Performance
     Stage: Teaching
 Service
+    _name: en - Political Organizing
+    Domain: Political Organizing
+    Stage: Volunteering
+Service
     _name: en - Political Organizing Internship
     Domain: Political Organizing
     Stage: Training
@@ -410,10 +427,6 @@ Service
     Domain: Political Organizing
     Stage: Working
 Service
-    _name: en - Political Organizing Volunteer
-    Domain: Political Organizing
-    Stage: Volunteering
-Service
     _name: en - Preschool
     Service Domain: Education
     Domain: School
@@ -421,7 +434,11 @@ Service
 Service
     _name: en - Provide a Summer Job
 Service
-    _name: en - Running Training
+    _name: en - Python Coding Skills
+    Domain: Computer Software & Programming
+    Stage: Skills
+Service
+    _name: en - Running
     Domain: Running
     Stage: Training
 Service
@@ -434,27 +451,22 @@ Service
     Domain: School
     Stage: Studying
 Service
+    _name: en - Soccer
+    Domain: Soccer
+    Stage: Whatever
+Service
     _name: en - Soccer Coaching
     Domain: Soccer
     Stage: Coaching
 Service
-    _name: en - Soccer Playing
-    Domain: Soccer
-    Stage: Whatever
+    _name: en - Softball
+    Domain: Softball
+    Stage: Training
 Service
     _name: en - Softball Coaching
     Service Domain: Sports
     Domain: Softball
     Stage: Coaching
-Service
-    _name: en - Softball For Fun
-    Service Domain: Sports
-    Domain: Softball
-    Stage: Whatever
-Service
-    _name: en - Softball Training
-    Domain: Softball
-    Stage: Training
 Service
     _name: en - Somali Culture Class
     Domain: Somali Culture
@@ -468,7 +480,7 @@ Service
     Domain: Spanish
     Stage: Teaching
 Service
-    _name: en - Squash Playing
+    _name: en - Squash
     Domain: Squash
     Stage: Whatever
 Service
@@ -481,40 +493,25 @@ Service
     Offering Label: en - Job Title
     Stage: Working
 Service
-    _name: en - Swimming For Fun
+    _name: en - Swimming
     Domain: Swimming
     Stage: Whatever
 Service
-    _name: en - Swimming Lessons
-    Service Domain: Sports
-    Domain: Swimming
-    Stage: Training
-Service
     _name: en - Teen Programming
+Service
+    _name: en - Tennis
+    Domain: Tennis
+    Stage: Whatever
 Service
     _name: en - Tennis Coaching
     Domain: Tennis
     Stage: Coaching
-Service
-    _name: en - Tennis Lessons
-    Domain: Tennis
-    Stage: Training
-Service
-    _name: en - Tennis Playing
-    Domain: Tennis
-    Stage: Whatever
 Service
     _name: en - Theater Role
     Service Domain: Arts
     Offering Label: en - Title of Show & Role
     Domain: Acting
     Stage: Whatever
-Service
-    _name: en - Theater Role with Training
-    Service Domain: Arts
-    Offering Label: en - Title of Show & Role
-    Domain: Acting
-    Stage: Training
 Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
@@ -536,7 +533,7 @@ Service
     Domain: Music Performance
     Stage: Training
 Service
-    _name: en - Volleyball Playing
+    _name: en - Volleyball
     Domain: Volleyball
     Stage: Whatever
 Service

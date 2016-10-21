@@ -11,6 +11,8 @@ Stage
     _name: en - Mentoring
     Color: #D55900
 Stage
+    _name: en - Skills
+Stage
     _name: en - Studying
     Color: #2828E7
 Stage
