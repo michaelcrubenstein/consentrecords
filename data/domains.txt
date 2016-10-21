@@ -5,6 +5,9 @@ Domain
     _name: en - Animals
     Service Domain: Science, Technology, Engineering & Math
 Domain
+    _name: en - Art History
+    Service Domain: Humanities
+Domain
     _name: en - Ballet
     Service Domain: Arts
 Domain
@@ -46,11 +49,19 @@ Domain
     _name: en - Dance
     Service Domain: Arts
 Domain
+    _name: en - Doctor
+    Service Domain: Human, Social, Public Services
+Domain
     _name: en - Drawing
     Service Domain: Arts
 Domain
     _name: en - Drums
     Service Domain: Arts
+Domain
+    _name: en - Emergency Services
+Domain
+    _name: en - Engineering
+    Service Domain: Science, Technology, Engineering & Math
 Domain
     _name: en - English
     Service Domain: Humanities
@@ -60,6 +71,9 @@ Domain
 Domain
     _name: en - Floor Hockey
     Service Domain: Sports
+Domain
+    _name: en - Food Service Job
+    Service Domain: Service
 Domain
     _name: en - Football
     Service Domain: Sports
@@ -80,6 +94,9 @@ Domain
     _name: en - Gymnastics
     Service Domain: Sports
 Domain
+    _name: en - Hospitality
+    Service Domain: Service
+Domain
     _name: en - Housing
     Service Domain: Housing
 Domain
@@ -89,11 +106,17 @@ Domain
     _name: en - Japanese
     Service Domain: Humanities
 Domain
+    _name: en - Journalism
+    Service Domain: Mass Communication, Media & Entertainment
+Domain
     _name: en - Korean
     Service Domain: Humanities
 Domain
     _name: en - Lacrosse
     Service Domain: Sports
+Domain
+    _name: en - Lawyer
+    Service Domain: Human, Social, Public Services
 Domain
     _name: en - Leadership
     Service Domain: Leadership
@@ -113,8 +136,14 @@ Domain
     _name: en - Music Performance
     Service Domain: Arts
 Domain
+    _name: en - Nutrition
+    Service Domain: Human, Social, Public Services
+Domain
     _name: en - Painting
     Service Domain: Arts
+Domain
+    _name: en - Pharmacy
+    Service Domain: Science, Technology, Engineering & Math
 Domain
     _name: en - Physical Conditioning
     Service Domain: Wellness
@@ -140,6 +169,9 @@ Domain
     _name: en - Soccer
     Service Domain: Sports
 Domain
+    _name: en - Social Work
+    Service Domain: Human, Social, Public Services
+Domain
     _name: en - Softball
     Service Domain: Sports
 Domain
@@ -160,6 +192,9 @@ Domain
 Domain
     _name: en - Track & Field
     Service Domain: Sports
+Domain
+    _name: en - Visual Arts
+    Service Domain: Arts
 Domain
     _name: en - Volleyball
     Service Domain: Sports
