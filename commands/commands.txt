@@ -247,12 +247,12 @@ lcd ~/GitHub/consentrecords
 cd data
 lcd data
 
-get data/terms.txt
-get data/terms.txt
-get data/terms.txt
-get data/terms.txt
-get data/terms.txt
-get data/terms.txt
+get terms.txt
+get servicedomains.txt
+get domains.txt
+get stages.txt
+get services.txt
+get experienceprompts.txt
 exit
 
 
