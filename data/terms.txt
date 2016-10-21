@@ -359,6 +359,13 @@ _term
             _max capacity: _unique value
             _object add rule: _create one
             _of kind: Comments
+        _field
+            _name: Timeframe
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name=Timeframe]>enumerator
 _term
     _name: More Experiences
     _configuration
@@ -814,6 +821,14 @@ _term
         _name: WY
 _term
     _name: Street
+_term
+    _name: Timeframe
+    enumerator
+        _name: Previous
+    enumerator
+        _name: Current
+    enumerator
+        _name: Goal
 _term
     _name: User Entered Offering
 _term
