@@ -579,6 +579,12 @@ _term
             _max capacity: _multiple values
             _object add rule: _pick one
             _of kind: Stage
+        _field
+            _name: Service
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _pick one
+            _of kind: Service
 _term
     _name: Service Domain
     _configuration
