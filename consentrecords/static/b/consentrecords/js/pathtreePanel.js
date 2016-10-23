@@ -2106,7 +2106,8 @@ var AddOptions = (function () {
 		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
-		var div = panel.append('div');
+		var div = panel.append('div')
+			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
 		
 		function handleCancel(done, fail)
 		{
