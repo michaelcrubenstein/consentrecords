@@ -447,6 +447,7 @@ Service
 Service
     _name: en - Camping
     Service Domain: Wellness
+    Stage: Wellness
     Service: Camping
 Service
     _name: en - Career Guidance
@@ -856,7 +857,7 @@ Service
 Service
     _name: en - Housing
     Service Domain: Housing
-    Stage: Whatever
+    Stage: Housing
     Service: Housing
 Service
     _name: en - Ice Hockey
@@ -937,6 +938,7 @@ Service
 Service
     _name: en - Life Skills
     Service Domain: Wellness
+    Stage: Wellness
     Service: Life Skills
 Service
     _name: en - Literacy
@@ -1004,7 +1006,7 @@ Service
 Service
     _name: en - Physical Conditioning
     Service Domain: Wellness
-    Stage: Training
+    Stage: Wellness
     Service: Physical Conditioning
 Service
     _name: en - Piano
