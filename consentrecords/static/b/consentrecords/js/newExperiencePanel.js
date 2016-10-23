@@ -617,25 +617,11 @@ var Experience = (function() {
 	{
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
-			return '[Service={0}]'.format(this.services[0].pickedObject.getValueID());
+			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.getValueID());
 		else if (this.domain)
-			return '[Service[Domain={0}]]'.format(this.domain.getValueID());
-		else if (this.serviceDomain)
-			return '[Service>Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
+			return '[Service[Service={0}]]'.format(this.domain.getValueID());
 		else if (this.stage)
 			return '[Service[Stage={0}]]'.format(this.stage.getValueID());
-		else
-			return "";
-	}
-	
-	Experience.prototype.getServiceConstraint = function()
-	{
-		if (this.domain)
-			return '[Domain={0}]'.format(this.domain.getValueID());
-		else if (this.serviceDomain)
-			return '[Domain["Service Domain"={0}]]'.format(this.serviceDomain.getValueID());
-		else if (this.stage)
-			return '[Stage={0}]'.format(this.stage.getValueID());
 		else
 			return "";
 	}
@@ -1187,71 +1173,20 @@ var ExperienceDatumSearchView = (function() {
 	return ExperienceDatumSearchView;
 })();
 
-/* Displays Service Domain, Domain, Stage or Service */
+/* Displays Services. Since the services are taken from the global Services list, this
+	search view should never need to interact with the server.
+ */
 var TagSearchView = (function() {
 	TagSearchView.prototype = new ExperienceDatumSearchView();
 	
 	TagSearchView.prototype.searchPath = function(val)
 	{
-		var path;
-		if (val)
-		{
-			if (this.typeName === "Service Domain")
-			{
-				path = '"Service Domain"[_name{0}"{1}"]';
-			}
-			else if (this.typeName === "Domain")
-			{
-				path = 'Domain[_name{0}"{1}"]';
-			}
-			else if (this.typeName === "Stage")
-			{
-				path = 'Stage[_name{0}"{1}"]';
-			}
-			else if (this.typeName === "Service")
-			{
-				path = 'Service[_name{0}"{1}"]';
-				path += this.experience.getServiceConstraint();
-			}
-			var symbol = val.length < 3 ? "^=" : "*=";
-		
-			return path.format(symbol, val);
-		}
-		else
-		{
-			if (this.typeName === "Service Domain")
-			{
-				path = '"Service Domain"';
-			}
-			else if (this.typeName === "Domain")
-			{
-				path = 'Domain';
-			}
-			else if (this.typeName === "Stage")
-			{
-				path = 'Stage';
-			}
-			else if (this.typeName === 'Service')
-			{
-				var constraint = this.experience.getServiceConstraint();
-				path = 'Service' + constraint;
-			}
-			return path;
-		}
+		throw new Error("TagSearchView.prototype.searchPath should never be called");
 	}
 	
 	TagSearchView.prototype.setupSearchTypes = function(searchText)
 	{
-// 		if (!this.experience.serviceDomain && !this.experience.domain && !this.experience.stage)
-// 		{
-// 			this.typeNames = ["Service Domain", "Stage", "Domain"];
-// 			if (searchText)
-// 				this.typeNames.push("Service");
-// 		}
-// 		else
-			this.typeNames = ["Service"];
-		this.initialTypeName = this.typeNames[0];
-		this.typeName = this.typeNames[0];
+		throw new Error("TagSearchView.prototype.setupSearchTypes should never be called");
 	}
 	
 	TagSearchView.prototype.onTagAdded = function()
@@ -1293,52 +1228,7 @@ var TagSearchView = (function() {
 	
 	TagSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service Domain')
-		{
-			if (prepareClick('click', 'service domain: ' + d.getDescription()))
-			{
-				try
-				{
-					this.experience.serviceDomain = d;
-					this.onTagAdded();
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-		}
-		else if (d.typeName === 'Domain')
-		{
-			if (prepareClick('click', 'domain: ' + d.getDescription()))
-			{
-				try
-				{
-					this.experience.domain = d;
-					this.onTagAdded();
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-		}
-		else if (d.typeName === 'Stage')
-		{
-			if (prepareClick('click', 'stage: ' + d.getDescription()))
-			{
-				try
-				{
-					this.experience.stage = d;
-					this.onTagAdded();
-				}
-				catch(err)
-				{
-					cr.syncFail(err);
-				}
-			}
-		}
-		else if (d.typeName === 'Service')
+		if (d.typeName === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
@@ -1382,21 +1272,17 @@ var TagSearchView = (function() {
 					!(inputNode && d3.select(inputNode).datum() == d2) ; 
 			}))
 				return false;
-				
-			if (this.experience.domain &&
-				!d.getCell("Domain").find(this.experience.domain))
+			
+			/* TODO: After moving this to the main line, look for a Service instead of comparing domain names. */
+			var domain = this.experience.domain;
+			if (domain &&
+				!d.getCell("Service").data.find(function(d)
+					{
+						return d.getDescription() == domain.getDescription();
+					}))
 				return false;
 			if (this.experience.stage &&
 				!d.getCell("Stage").find(this.experience.stage))
-				return false;
-				
-			var serviceDomain = this.experience.serviceDomain;
-			if (this.experience.serviceDomain &&
-				!d.getCell("Domain").data.find(function(domainValue)
-					{
-						var sd = domainValue.getValue("Service Domain");
-						return sd && sd.getValueID() == serviceDomain.getValueID();
-					}))
 				return false;
 		}
 			
@@ -1862,6 +1748,7 @@ var SiteSearchView = (function() {
 	return SiteSearchView;
 })();
 
+/* Typenames can be "Offering" or "Offering from Site". The return types can be Offerings. */
 var OfferingSearchView = (function() {
 	OfferingSearchView.prototype = new ExperienceDatumSearchView();
 	
@@ -1885,14 +1772,8 @@ var OfferingSearchView = (function() {
 						path = "#{0}>Offerings>Offering".format(this.experience.site.getValueID());
 						return path;
 					}
-					else if (this.typeName === "Service")
-					{
-						path = "#{0}>Offerings>Offering>Service".format(this.experience.site.getValueID());
-						path += this.experience.getServiceConstraint();
-						return path;
-					}
 					else
-						throw ('unrecognized typeName');
+						throw new Error('unrecognized typeName');
 				}
 				else
 				{
@@ -1900,13 +1781,8 @@ var OfferingSearchView = (function() {
 					{
 						path = "#{0}>Offerings>Offering".format(this.experience.site.getValueID()) + '[_name{0}"{1}"]';
 					}
-					else if (this.typeName === "Service")
-					{
-						path = 'Service[_name{0}"{1}"]';
-						path += this.experience.getServiceConstraint();
-					}
 					else
-						throw ('unrecognized typeName');
+						throw new Error('unrecognized typeName');
 			
 					var symbol = val.length < 3 ? "^=" : "*=";
 			
@@ -1915,9 +1791,7 @@ var OfferingSearchView = (function() {
 			}
 			else if (val)
 			{
-				path = 'Service[_name{0}"{1}"]' + this.experience.getServiceConstraint();
-				var symbol = val.length < 3 ? "^=" : "*=";
-				return path.format(symbol, val);
+				throw new Error("Unreachable code");
 			}
 			else
 				return '';
@@ -1933,17 +1807,6 @@ var OfferingSearchView = (function() {
 						path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
 						path += this.experience.getOfferingConstraint();
 						return path;
-					}
-					else if (this.typeName === "Service")
-					{
-						if (this.experience.services.length == 0)
-						{
-							path = "#{0}>Sites>Site>Offerings>Offering>Service".format(this.experience.organization.getValueID());
-							path += this.experience.getServiceConstraint();
-							return path;
-						}
-						else
-							return "";
 					}
 					else
 						return "Service";
@@ -1962,14 +1825,6 @@ var OfferingSearchView = (function() {
 						path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
-					else if (this.typeName === "Service")
-					{
-						if (this.experience.services.length > 0)
-							return "";
-
-						path = 'Service[_name{0}"{1}"]';
-						path += this.experience.getServiceConstraint();
-					}
 			
 					var symbol = val.length < 3 ? "^=" : "*=";
 			
@@ -1978,14 +1833,7 @@ var OfferingSearchView = (function() {
 			}
 			else
 			{
-				if (this.experience.services.length == 0)
-				{
-					path = "Service";	/* Can't look up offerings for a custom organization name. */
-					path += this.experience.getServiceConstraint();
-					return path;
-				}
-				else
-					return "";
+				throw new Error("Unreachable code");
 			}
 		}
 		else if (this.experience.services.length > 0)
@@ -2001,11 +1849,6 @@ var OfferingSearchView = (function() {
 				{
 					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
 					path += this.experience.getOfferingConstraint();
-				}
-				else if (this.typeName === "Service")
-				{
-					/* In this case, the first service is a custom service. */
-					path = 'Service[_name{0}"{1}"]' + this.experience.getServiceConstraint();
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -2029,13 +1872,8 @@ var OfferingSearchView = (function() {
 				path = 'Offering[_name{0}"{1}"]' +
 						this.experience.getOfferingConstraint();
 			}
-			else if (this.typeName === "Service")
-			{
-				path = 'Service[_name{0}"{1}"]' +
-						this.experience.getServiceConstraint();;
-			}
 			else
-				throw "Unrecognized typeName: {0}".format(this.typeName);
+				throw new Error("Unrecognized typeName: {0}".format(this.typeName));
 				
 			var symbol = val.length < 3 ? "^=" : "*=";
 		

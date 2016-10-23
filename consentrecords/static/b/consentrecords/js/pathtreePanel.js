@@ -1740,13 +1740,10 @@ var PathLines = (function() {
 			})
 		.then(function() {
 				return crp.promise({path: "Service", 
-					 fields: ["Domain", "Stage"]});
+					 fields: ["Stage"]});
 			})
 		.then(function() {
-				return crp.promise({path: "(Domain,Stage)"});
-			})
-		.then(function() {
-				return crp.promise({path: '"Service Domain"'});
+				return crp.promise({path: "Stage"});
 			})
 		.then(function() {
 				return _this.path.promiseCellsFromCache(["More Experience", "parents", "type"]);
@@ -2250,7 +2247,6 @@ var ExperienceIdeas = (function() {
 								var s = d.getNonNullValue('Service');
 								if (s) datum.experience.addService({instance: s});
 								datum.experience.domain = d.getNonNullValue('Domain');
-								datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
 								datum.experience.stage = d.getNonNullValue('Stage');
 								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
 								datum.experience.setSite({instance: d.getNonNullValue('Site')});
