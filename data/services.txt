@@ -391,6 +391,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Baseball
+    Service: Exercise
 Service
     _name: en - Baseball Coaching
     Stage: Coaching
@@ -406,6 +407,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Basketball
+    Service: Exercise
 Service
     _name: en - Basketball Coach
     Stage: Coaching
@@ -868,7 +870,6 @@ Service
     _name: en - Independent School Prep
     Service Domain: Education
     Stage: Studying
-    Service: School
     Service: Independent School Prep
 Service
     _name: en - Internship
@@ -900,6 +901,8 @@ Service
     _name: en - Karate
     Stage: Training
     Service: Karate
+    Service: Exercise
+    Service: Martial Arts
 Service
     _name: en - Kindergarten
     Service Domain: Education
@@ -953,6 +956,7 @@ Service
     Service Domain: Wellness
     Stage: Training
     Service: Martial Arts
+    Service: Exercise
 Service
     _name: en - Math
     Service Domain: Science, Technology, Engineering & Math
@@ -1058,10 +1062,12 @@ Service
     _name: en - Racquetball
     Service Domain: Sports
     Service: Racquetball
+    Service: Exercise
 Service
     _name: en - Rugby
     Service Domain: Sports
     Service: Rugby
+    Service: Exercise
 Service
     _name: en - Running
     Service Domain: Sports
@@ -1080,11 +1086,13 @@ Service
     _name: en - Skiing
     Service Domain: Sports
     Service: Skiing
+    Service: Exercise
 Service
     _name: en - Soccer
     Service Domain: Sports
     Stage: Whatever
     Service: Soccer
+    Service: Exercise
 Service
     _name: en - Soccer Coaching
     Stage: Coaching
@@ -1098,6 +1106,7 @@ Service
     Service Domain: Sports
     Stage: Training
     Service: Softball
+    Service: Exercise
 Service
     _name: en - Softball Coaching
     Service Domain: Sports
@@ -1132,6 +1141,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Squash
+    Service: Exercise
 Service
     _name: en - Summer Camp
     Stage: Whatever
@@ -1158,6 +1168,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Tennis
+    Service: Exercise
 Service
     _name: en - Tennis Coaching
     Stage: Coaching
@@ -1177,6 +1188,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Track & Field
+    Service: Exercise
 Service
     _name: en - Trumpet Lessons
     Service Domain: Arts
@@ -1214,6 +1226,7 @@ Service
     Service Domain: Sports
     Stage: Whatever
     Service: Volleyball
+    Service: Exercise
 Service
     _name: en - Volunteer
     Stage: Volunteering
@@ -1222,3 +1235,4 @@ Service
     _name: en - Wrestling
     Service Domain: Sports
     Service: Wrestling
+    Service: Exercise
