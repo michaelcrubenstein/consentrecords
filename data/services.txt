@@ -929,7 +929,7 @@ Service
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
-    Service: Job Employment
+    Service: Job
 Service
     _name: en - Journalism
     Service Domain: Mass Communication, Media & Entertainment
