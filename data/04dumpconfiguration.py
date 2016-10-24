@@ -1,8 +1,7 @@
 # python3 data/04dumpconfiguration.py -path _term -q > data/terms.txt 
 # python3 data/04dumpconfiguration.py -path '"Service Domain"' -q > data/servicedomains.txt 
-# python3 data/04dumpconfiguration.py -path Domain -q > data/domains.txt 
 # python3 data/04dumpconfiguration.py -path Stage -q > data/stages.txt 
-# python3 data/04dumpconfiguration.py -path Service -q > data/services.txt 
+# python3 data/04dumpconfiguration.py -path Service -r -q > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Experience Prompt"' -q > data/experienceprompts.txt 
 
 import datetime
@@ -27,6 +26,28 @@ def writeinstance(i, indent, fieldsDataDictionary):
     fieldsData = fieldsDataDictionary[i.typeID]
 
     for fd in fieldsData:
+        values = i.value_set.filter(field__id=fd['nameID'], deleteTransaction__isnull=True)\
+                            .order_by('position')
+        if fd['dataType'] == '_object':
+            if 'objectAddRule' in fd and fd['objectAddRule'] == '_pick one':
+                for v in values:
+                    sys.stdout.write('%s%s: %s\n' % (' ' * (indent + 4), fd['name'], v.referenceValue.getDescription()))
+            else:
+                for v in values:
+                    writeinstance(v.referenceValue, indent+4, fieldsDataDictionary)
+        elif fd['dataType'] == '_translation':
+            for v in values:
+                sys.stdout.write('%s%s: %s - %s\n' % (' ' * (indent + 4), fd['name'], v.languageCode if v.languageCode else '--', v.stringValue))
+        else:
+            for v in values:
+                sys.stdout.write('%s%s: %s\n' % (' ' * (indent + 4), fd['name'], v.stringValue))
+
+def writedescription(i, indent, fieldsDataDictionary):
+    sys.stdout.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
+    sys.stderr.write('%s%s\n' % (' ' * indent, i.typeID.getDescription()))
+    fieldsData = fieldsDataDictionary[i.typeID]
+
+    for fd in filter(lambda fd: "descriptorType" in fd, fieldsData):
         values = i.value_set.filter(field__id=fd['nameID'], deleteTransaction__isnull=True)\
                             .order_by('position')
         if fd['dataType'] == '_object':
@@ -80,6 +101,10 @@ if __name__ == "__main__":
                               .order_by('description__text', 'id')
 
             sys.stderr.write('Count: %s\n'%len(terms))
+            
+            if '-r' in sys.argv:
+                for term in terms:
+                    writedescription(term, 0, fieldsDataDictionary)
             
             for term in terms:
                 writeinstance(term, 0, fieldsDataDictionary)

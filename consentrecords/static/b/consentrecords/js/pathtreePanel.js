@@ -3,23 +3,6 @@
 var Service = (function() {
 	Service.prototype.service = null;
 	
-	Service.prototype._getServiceDomain = function()
-	{
-		var service = this.service;
-		if (!service || !service.getValueID())
-			return null;
-		var storedService = crp.getInstance(service.getValueID());
-		if (!storedService)
-			throw 'the "{0}" tag is obsolete'.format(service.getDescription());
-			
-		var domain = storedService.getValue("Domain");
-		if (domain)
-			var sd = crp.getInstance(domain.getValueID()).getValue("Service Domain");
-			if (sd)
-				return sd;
-		return storedService.getValue("Service Domain");
-	}
-
 	Service.prototype._getStage = function()
 	{
 		var service = this.service;
@@ -27,6 +10,7 @@ var Service = (function() {
 	}
 
 	Service.prototype.stageColumns = {
+		Housing: 0,
 		Studying: 1,
 		Certificate: 1,
 		Training: 2,
@@ -38,22 +22,17 @@ var Service = (function() {
 		Mentoring: 5,
 		Tutoring: 5,
 		Coaching: 5,
-		Volunteering: 5
+		Volunteering: 5,
+		Wellness: 6,
 	};
 	Service.prototype.getColumn = function()
 	{
-		var sd = this._getServiceDomain();
-		if (sd && sd.getDescription() == "Housing")
-			return 0;
-
 		var stage = this._getStage();
 		var stageDescription = stage && stage.getDescription();
 		if (stageDescription &&
 			stageDescription in this.stageColumns)
 			return this.stageColumns[stageDescription];
 
-		if (sd && sd.getDescription() == "Wellness")
-			return 6;
 		/* Other */
 		return 7;
 	}
@@ -83,10 +62,9 @@ var Service = (function() {
 		{
 			if (this.service.getDescription().toLocaleUpperCase().indexOf(s) >= 0)
 				return true;
-				
-			var d = this.service.getValue("Domain");
-			if (d && d.getDescription().toLocaleUpperCase().indexOf(s) == 0)
-				return true;
+			
+			var cell = this.service.getCell("Service");
+			return cell.data.find(function(d) { return d.getDescription().toLocaleUpperCase() == s; });	
 		}
 		return false;
 	}
@@ -1761,14 +1739,7 @@ var PathLines = (function() {
 				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
-				return crp.promise({path: "Service", 
-					 fields: ["Domain", "Stage"]});
-			})
-		.then(function() {
-				return crp.promise({path: "(Domain,Stage)"});
-			})
-		.then(function() {
-				return crp.promise({path: '"Service Domain"'});
+				return crp.promise({path: "Service"});
 			})
 		.then(function() {
 				return _this.path.promiseCellsFromCache(["More Experience", "parents", "type"]);
@@ -2128,7 +2099,8 @@ var AddOptions = (function () {
 		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
-		var div = panel.append('div');
+		var div = panel.append('div')
+			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
 		
 		function handleCancel(done, fail)
 		{
@@ -2271,7 +2243,6 @@ var ExperienceIdeas = (function() {
 								var s = d.getNonNullValue('Service');
 								if (s) datum.experience.addService({instance: s});
 								datum.experience.domain = d.getNonNullValue('Domain');
-								datum.experience.serviceDomain = d.getNonNullValue('Service Domain');
 								datum.experience.stage = d.getNonNullValue('Stage');
 								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
 								datum.experience.setSite({instance: d.getNonNullValue('Site')});
