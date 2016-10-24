@@ -13,13 +13,13 @@ Service
 Service
     _name: en - Art History
 Service
-    _name: en - Art Teaching
+    _name: en - Art Teacher
 Service
     _name: en - Ballet
 Service
     _name: en - Baseball
 Service
-    _name: en - Baseball Coaching
+    _name: en - Baseball Coach
 Service
     _name: en - Baseball Job
 Service
@@ -54,6 +54,8 @@ Service
     _name: en - Chess
 Service
     _name: en - Chinese
+Service
+    _name: en - Chinese Class
 Service
     _name: en - Civic Group Participation
 Service
@@ -137,13 +139,15 @@ Service
 Service
     _name: en - Football
 Service
-    _name: en - Football Coaching
+    _name: en - Football Coach
 Service
     _name: en - French
 Service
     _name: en - French Class
 Service
     _name: en - German
+Service
+    _name: en - German Class
 Service
     _name: en - Get a Mentor
 Service
@@ -185,7 +189,11 @@ Service
 Service
     _name: en - High School Post Graduate
 Service
+    _name: en - History
+Service
     _name: en - History Class
+Service
+    _name: en - History Teacher
 Service
     _name: en - Hospitality
 Service
@@ -290,13 +298,13 @@ Service
 Service
     _name: en - Soccer
 Service
-    _name: en - Soccer Coaching
+    _name: en - Soccer Coach
 Service
     _name: en - Social Work
 Service
     _name: en - Softball
 Service
-    _name: en - Softball Coaching
+    _name: en - Softball Coach
 Service
     _name: en - Software Developer
 Service
@@ -308,7 +316,7 @@ Service
 Service
     _name: en - Spanish Class
 Service
-    _name: en - Spanish Teaching
+    _name: en - Spanish Teacher
 Service
     _name: en - Squash
 Service
@@ -324,7 +332,7 @@ Service
 Service
     _name: en - Tennis
 Service
-    _name: en - Tennis Coaching
+    _name: en - Tennis Coach
 Service
     _name: en - Theater Role
 Service
@@ -350,6 +358,7 @@ Service
 Service
     _name: en - Acting
     Service Domain: Arts
+    Stage: Whatever
 Service
     _name: en - After School Program
     Service: After School Program
@@ -375,9 +384,9 @@ Service
     Service Domain: Humanities
     Service: Art History
 Service
-    _name: en - Art Teaching
+    _name: en - Art Teacher
     Stage: Teaching
-    Service: Art Teaching
+    Service: Art Teacher
     Service: Teacher
 Service
     _name: en - Ballet
@@ -393,9 +402,9 @@ Service
     Service: Baseball
     Service: Exercise
 Service
-    _name: en - Baseball Coaching
+    _name: en - Baseball Coach
     Stage: Coaching
-    Service: Baseball Coaching
+    Service: Baseball Coach
     Service: Baseball
 Service
     _name: en - Baseball Job
@@ -422,15 +431,19 @@ Service
     Service: Music Performance
 Service
     _name: en - Be a Coach
+    Stage: Coaching
     Service: Be a Coach
 Service
     _name: en - Be a Foster Parent
+    Stage: Volunteering
     Service: Be a Foster Parent
 Service
     _name: en - Be a Mentor
+    Stage: Mentoring
     Service: Be a Mentor
 Service
     _name: en - Be a Tutor
+    Stage: Tutoring
     Service: Be a Tutor
 Service
     _name: en - Boys
@@ -457,6 +470,7 @@ Service
 Service
     _name: en - Cello Lessons
     Service Domain: Arts
+    Stage: Training
     Service: Music Performance
     Service: Cello Lessons
     Service: Music Lessons
@@ -471,6 +485,13 @@ Service
 Service
     _name: en - Chinese
     Service Domain: Humanities
+    Stage: Skills
+    Service: Chinese
+Service
+    _name: en - Chinese Class
+    Service Domain: Humanities
+    Stage: Studying
+    Service: Chinese Class
     Service: Chinese
 Service
     _name: en - Civic Group Participation
@@ -562,6 +583,7 @@ Service
 Service
     _name: en - Dance
     Service Domain: Arts
+    Stage: Skills
     Service: Dance
     Service: Exercise
 Service
@@ -578,6 +600,7 @@ Service
 Service
     _name: en - Drawing
     Service Domain: Arts
+    Stage: Skills
     Service: Drawing
 Service
     _name: en - Drawing Lessons
@@ -601,6 +624,7 @@ Service
 Service
     _name: en - Education
     Service Domain: Education
+    Stage: Studying
     Service: Education
 Service
     _name: en - Emergency Services
@@ -648,6 +672,7 @@ Service
 Service
     _name: en - Exercise
     Service Domain: Wellness
+    Stage: Wellness
     Service: Exercise
 Service
     _name: en - Extra-Curricular Activity
@@ -677,13 +702,14 @@ Service
     Stage: Whatever
     Service: Football
 Service
-    _name: en - Football Coaching
+    _name: en - Football Coach
     Stage: Coaching
     Service: Football
-    Service: Football Coaching
+    Service: Football Coach
 Service
     _name: en - French
     Service Domain: Humanities
+    Stage: Skills
     Service: French
 Service
     _name: en - French Class
@@ -693,6 +719,13 @@ Service
 Service
     _name: en - German
     Service Domain: Humanities
+    Stage: Skills
+    Service: German
+Service
+    _name: en - German Class
+    Service Domain: Humanities
+    Stage: Studying
+    Service: German Class
     Service: German
 Service
     _name: en - Get a Mentor
@@ -849,9 +882,20 @@ Service
     Stage: Studying
     Service: High School Post Graduate
 Service
+    _name: en - History
+    Service Domain: Humanities
+    Stage: Skills
+Service
     _name: en - History Class
     Stage: Studying
     Service: History Class
+    Service: History
+Service
+    _name: en - History Teacher
+    Service Domain: Humanities
+    Stage: Teaching
+    Service: History Teacher
+    Service: History
 Service
     _name: en - Hospitality
     Service Domain: Service
@@ -885,7 +929,7 @@ Service
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
-    Service: Job
+    Service: Job Employment
 Service
     _name: en - Journalism
     Service Domain: Mass Communication, Media & Entertainment
@@ -1094,9 +1138,9 @@ Service
     Service: Soccer
     Service: Exercise
 Service
-    _name: en - Soccer Coaching
+    _name: en - Soccer Coach
     Stage: Coaching
-    Service: Soccer Coaching
+    Service: Soccer Coach
 Service
     _name: en - Social Work
     Service Domain: Human, Social, Public Services
@@ -1108,10 +1152,10 @@ Service
     Service: Softball
     Service: Exercise
 Service
-    _name: en - Softball Coaching
+    _name: en - Softball Coach
     Service Domain: Sports
     Stage: Coaching
-    Service: Softball Coaching
+    Service: Softball Coach
 Service
     _name: en - Software Developer
     Stage: Working
@@ -1127,15 +1171,16 @@ Service
 Service
     _name: en - Spanish
     Service Domain: Humanities
+    Stage: Skills
     Service: Spanish
 Service
     _name: en - Spanish Class
     Stage: Studying
     Service: Spanish Class
 Service
-    _name: en - Spanish Teaching
+    _name: en - Spanish Teacher
     Stage: Teaching
-    Service: Spanish Teaching
+    Service: Spanish Teacher
 Service
     _name: en - Squash
     Service Domain: Sports
@@ -1159,6 +1204,7 @@ Service
     Service: Swimming
 Service
     _name: en - Teacher
+    Stage: Working
     Service: Teacher
 Service
     _name: en - Teen Programming
@@ -1170,9 +1216,9 @@ Service
     Service: Tennis
     Service: Exercise
 Service
-    _name: en - Tennis Coaching
+    _name: en - Tennis Coach
     Stage: Coaching
-    Service: Tennis Coaching
+    Service: Tennis Coach
 Service
     _name: en - Theater Role
     Service Domain: Arts
@@ -1234,5 +1280,6 @@ Service
 Service
     _name: en - Wrestling
     Service Domain: Sports
+    Stage: Whatever
     Service: Wrestling
     Service: Exercise
