@@ -1748,13 +1748,49 @@ var SiteSearchView = (function() {
 	return SiteSearchView;
 })();
 
-/* Typenames can be "Offering" or "Offering from Site". The return types can be Offerings. */
+/* Typenames can be "Offering" or "Offering from Site" or "Service". The return types can be Offerings. */
 var OfferingSearchView = (function() {
 	OfferingSearchView.prototype = new ExperienceDatumSearchView();
 	
 	OfferingSearchView.prototype.clearFromOffering = function()
 	{
 		this.experience.clearOffering();
+	}
+	
+	OfferingSearchView.prototype.onClickButton = function(d, i) {
+		var _this = this;
+		if (d.typeName === 'Service')
+		{
+			if (prepareClick('click', 'service for offering: ' + d.getDescription()))
+			{
+				this.experience.setOffering({text: d.getDescription() });
+				this.sitePanel.onExperienceUpdated();
+				this.hideSearch(function()
+					{
+						_this.cancelSearch();
+						unblockClick();
+					});
+			}
+		}
+		else if (d.typeName === 'Offering')
+		{
+			if (prepareClick('click', 'offering: ' + d.getDescription()))
+			{
+				this.experience.setOffering({instance: d});
+				/* Set the organization, then the site, because setting the organization may
+					also set the site.
+				 */
+				this.experience.setOrganization({instance: d.getValue("Organization")});
+				this.experience.setSite({instance: d.getValue("Site")});
+				this.sitePanel.onExperienceUpdated();
+				_this.hideSearch(function()
+					{
+						_this.cancelSearch();
+						unblockClick();
+					});
+			}
+		}
+		d3.event.preventDefault();
 	}
 	
 	OfferingSearchView.prototype.searchPath = function(val)
@@ -1903,8 +1939,10 @@ var OfferingSearchView = (function() {
 			{
 				if (searchText)
 					this.typeNames = ["Offering from Site", "Offering"];
+				else if (this.experience.getOfferingConstraint())
+					this.typeNames = ["Offering"];
 				else
-					this.typeNames = ["Offering from Site"];
+					this.typeNames = ["Service"];
 			}
 			else
 			{
