@@ -339,6 +339,16 @@ var ComparePath = (function() {
 		this.checkLayout();
 	}
 	
+	ComparePath.prototype.deepClone = function(fromElement)
+	{
+		var toElement = fromElement.cloneNode(false);
+		for (var i = 0; i < fromElement.childNodes.length; ++i)
+		{
+			toElement.appendChild(this.deepClone(fromElement.childNodes[i]));
+		}
+		return toElement;
+	}
+	
 	ComparePath.prototype.transitionPositions = function(g)
 	{
 		g.sort(this._compareExperiences);
@@ -367,20 +377,56 @@ var ComparePath = (function() {
 		this.setupClipID();
 		
 		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
+		var offsetX;
+		var offsetY;
+		var ghostGroup;
+		var didDrag;
 		var g = this.experienceGroup.selectAll('g')
 			.data(compareFlags)
 			.enter()
 			.append('g')
 			.classed('flag', true)
+			.attr('draggable', 'true')
 			.each(function(d)
 				{
 					_this.setupDelete(d, this);
 				})
+			.call(
+				d3.behavior.drag()
+					.on("dragstart", function(){
+						try
+						{
+							var offset = d3.mouse(this);
+							offsetX = offset[0];
+							offsetY = offset[1];
+							ghostGroup = _this.deepClone(this);
+							_this.experienceGroup.node().appendChild(ghostGroup);
+							didDrag = false;
+						}
+						catch(err)
+						{
+							console.log(err);
+						}
+					})
+					.on("drag", function(){
+						didDrag = true;
+						ghostGroup.setAttributeNS(null, "transform", "translate({0},{1})".format(d3.event.x - offsetX, d3.event.y - offsetY));
+					})
+					.on("dragend", function(fd, i){
+						d3.select(ghostGroup).remove();
+						if (!didDrag)
+							showDetail(fd, i);
+					})
+				)
 			.on("click", function() 
 				{ 
 					d3.event.stopPropagation(); 
 				})
-			.on("click.cr", showDetail)
+			.on("click.cr", function(fd, i)
+				{
+					if (!d3.event.defaultPrevented)
+						_this.updateDetail(fd);
+				})
 			.each(function(d) 
 					{ 
 						_this.setupServiceTriggers(this, d, function(eventObject)
