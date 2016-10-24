@@ -1739,11 +1739,7 @@ var PathLines = (function() {
 				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
-				return crp.promise({path: "Service", 
-					 fields: ["Stage"]});
-			})
-		.then(function() {
-				return crp.promise({path: "Stage"});
+				return crp.promise({path: "Service"});
 			})
 		.then(function() {
 				return _this.path.promiseCellsFromCache(["More Experience", "parents", "type"]);
