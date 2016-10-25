@@ -629,7 +629,7 @@ var SearchPathsPanel = (function () {
 			.node();
 			
 		this.searchInput = topBox.append('input')
-			.attr('placeholder', 'Search for another path')
+			.attr('placeholder', 'Search for a path')
 			.node();
 			
 		this.cancelButton = topBox.append('button')
