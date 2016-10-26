@@ -966,8 +966,25 @@ cr.ObjectValue = (function() {
 			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
 			return result.promise();
 		}
+		
+		var _this = this;
+		function fieldsLoaded(fields)
+		{
+			if (_this.cells.find(function(cell)
+				{
+					if (fields.indexOf(cell.field.name) < 0)
+						return false;
+					if (cell.data.find(function(d)
+						{
+							return d.getValueID() && !d.isDataLoaded;
+						}))
+						return true;
+				}))
+				return false;
+			return true;
+		}
 	
-		if (this.cells && this.isDataLoaded)
+		if (this.cells && this.isDataLoaded && fieldsLoaded(fields))
 		{
 			var result = $.Deferred();
 			result.resolve(this.cells);
@@ -975,7 +992,6 @@ cr.ObjectValue = (function() {
 		}
 		else if (this.getValueID())
 		{
-			var _this = this;
 			var jsonArray = { "path" : "#" + this.getValueID() };
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields);

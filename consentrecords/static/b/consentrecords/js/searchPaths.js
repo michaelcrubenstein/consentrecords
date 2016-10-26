@@ -90,7 +90,7 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["More Experience", "parents"];
+		return ["parents"];
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)
