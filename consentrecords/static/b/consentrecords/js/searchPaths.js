@@ -233,7 +233,7 @@ var SearchPathsPanel = (function () {
 				 left: (parentWidth / 2),
 				 top: poolTop},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth / 2 - poolHPadding);
+			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
 			resultsTop = poolTop + $(this.queryContainer.node()).outerHeight(true);
 		}
 		else
@@ -248,7 +248,7 @@ var SearchPathsPanel = (function () {
 				 left: 0,
 				 top: poolTop + poolHeight},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth - poolHPadding);
+			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
 			resultsTop = poolTop + poolHeight + $(this.queryContainer.node()).outerHeight(true);
 		}
 		
@@ -259,7 +259,8 @@ var SearchPathsPanel = (function () {
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
 			This is important on iPhones where the soft keyboard appears and forces scrolling. */
-		$(this.node().parentNode).animate({scrollTop: 0});
+		$(this.node().parentNode).animate({scrollTop: 0},
+			{duration: duration});
 		
 		queryFlagsWidth = $(this.queryFlags.node()).width();
 		
@@ -305,9 +306,10 @@ var SearchPathsPanel = (function () {
 	}
 	
 	/* Lay out all of the contents within the svg object. */
-	SearchPathsPanel.prototype.layoutPoolFlags = function(maxX)
+	SearchPathsPanel.prototype.layoutPoolFlags = function(maxX, duration)
 	{
 		maxX = maxX !== undefined ? maxX : $(this.poolFlags.node()).width();
+		duration = duration !== undefined ? duration : 700;
 		
 		var g = this.poolFlags.selectAll('g.flag');
 		
@@ -317,11 +319,11 @@ var SearchPathsPanel = (function () {
 		
 		/* Set the height of the svg to match the total height of all of the flags. */
 		this.poolFlags.transition()
-			.duration(700)
+			.duration(duration)
 			.style('height', height)
 		
 		g.interrupt().transition()
-			.duration(700)
+			.duration(duration)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
 			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
