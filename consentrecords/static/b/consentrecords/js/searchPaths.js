@@ -144,25 +144,43 @@ var SearchPathsPanel = (function () {
 						 - inputMarginLeft + inputMarginRight
 						 - $(this.searchInput).outerWidth(true) + $(this.searchInput).outerWidth(false);
 
+		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
+								  + parseInt(this.poolContainer.style('padding-right'));					   
+		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
+								  + parseInt(this.poolContainer.style('padding-bottom'));					   
+		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
+		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
+
 		var _this = this;
-		$(this.node()).animate({top: newTop,
-								height: $(this.topBox).outerHeight(true)},
-							   {duration: duration});
-		$(this.searchInput).animate({width: inputWidth,
-									 "margin-right": inputMarginLeft},
-								    {duration: duration,
-									 done: function()
-										{
-											$(_this.searchInput).val('');
+		return $.when(
+			$(this.node()).animate({top: newTop,
+									height: $(this.topBox).outerHeight(true)},
+								   {duration: duration}),
+			$(this.searchInput).animate({width: inputWidth,
+										 "margin-right": inputMarginLeft},
+										{duration: duration,
+										 done: function()
+											{
+												$(_this.searchInput).val('');
 											
-											/* Hide and show the input so that the placeholder
-												re-appears properly in safari 10 and earlier. */
-											$(_this.searchInput).hide(0).show(0);
-										}
-									 });
-		$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
-									  opacity: 0.0},
-							   {duration: duration});
+												/* Hide and show the input so that the placeholder
+													re-appears properly in safari 10 and earlier. */
+												$(_this.searchInput).hide(0).show(0);
+											}
+										 }),
+			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
+										  opacity: 0.0},
+								   {duration: duration}),
+			$(this.stagesDiv).animate({top: $(this.topBox).height()},
+								   {duration: duration}),
+			$(this.poolContainer.node()).stop().animate(
+				{top: poolTop},
+				{duration: duration}),
+			$(this.queryContainer.node()).stop().animate(
+				{left: 0,
+				 top: poolTop + poolHeight},
+				{duration: duration}),
+			);
 	}
 	
 	SearchPathsPanel.prototype.revealPanel = function(duration)
@@ -192,9 +210,57 @@ var SearchPathsPanel = (function () {
 									  opacity: 1.0},
 							   {duration: duration});
 							   
+		$(this.stagesDiv).animate({top: $(this.topBox).height()},
+							   {duration: duration});
+		
+		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
+								  + parseInt(this.poolContainer.style('padding-right'));					   
+		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
+								  + parseInt(this.poolContainer.style('padding-bottom'));					   
+		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
+		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
+		
+		var resultsTop;
+		if (parentHeight < parentWidth)
+		{
+			$(this.poolContainer.node()).stop().animate(
+				{top: poolTop, width: parentWidth / 2, height: poolHeight},
+				{duration: duration});
+			$(this.queryContainer.node()).stop().animate(
+				{width: parentWidth / 2 - 
+						(parseInt(this.queryContainer.style('margin-left'))
+						 + parseInt(this.queryContainer.style('margin-right'))),
+				 left: (parentWidth / 2),
+				 top: poolTop},
+				{duration: duration});
+			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
+			resultsTop = poolTop + $(this.queryContainer.node()).outerHeight(true);
+		}
+		else
+		{
+			$(this.poolContainer.node()).stop().animate(
+				{top: poolTop, width: parentWidth, height: poolHeight},
+				{duration: duration});
+			$(this.queryContainer.node()).stop().animate(
+				{width: parentWidth - 
+						(parseInt(this.queryContainer.style('margin-left'))
+						 + parseInt(this.queryContainer.style('margin-right'))),
+				 left: 0,
+				 top: poolTop + poolHeight},
+				{duration: duration});
+			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
+			resultsTop = poolTop + poolHeight + $(this.queryContainer.node()).outerHeight(true);
+		}
+		
+		$(this.resultContainerNode).stop().animate(
+			{"margin-top": resultsTop,
+			 height: $(this.node().parentNode).height()},
+			{duration: duration});
+							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
 			This is important on iPhones where the soft keyboard appears and forces scrolling. */
-		$(this.node().parentNode).animate({scrollTop: 0});
+		$(this.node().parentNode).animate({scrollTop: 0},
+			{duration: duration});
 		
 		queryFlagsWidth = $(this.queryFlags.node()).width();
 		
@@ -240,21 +306,24 @@ var SearchPathsPanel = (function () {
 	}
 	
 	/* Lay out all of the contents within the svg object. */
-	SearchPathsPanel.prototype.layoutPoolFlags = function()
+	SearchPathsPanel.prototype.layoutPoolFlags = function(maxX, duration)
 	{
+		maxX = maxX !== undefined ? maxX : $(this.poolFlags.node()).width();
+		duration = duration !== undefined ? duration : 700;
+		
 		var g = this.poolFlags.selectAll('g.flag');
 		
 		var _this = this;
 		
-		var height = this._setFlagCoordinates(g, $(this.poolFlags.node()).width());
+		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* Set the height of the svg to match the total height of all of the flags. */
 		this.poolFlags.transition()
-			.duration(700)
+			.duration(duration)
 			.style('height', height)
 		
 		g.interrupt().transition()
-			.duration(700)
+			.duration(duration)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
 			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
@@ -340,6 +409,18 @@ var SearchPathsPanel = (function () {
 				}});
 	}
 	
+	SearchPathsPanel.prototype.clearQuery = function()
+	{
+		var _this = this;
+		$(this.queryFlags.node()).children().remove();
+		this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
+		
+		this.layoutPoolFlags();
+
+		/* Run a new search based on the query. */
+		this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+	}
+	
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
 	{
 		/* Make an svg whose position is identical to poolFlag relative to mainDiv. */
@@ -367,17 +448,15 @@ var SearchPathsPanel = (function () {
 			.attr('height', poolFlagRect.height);
  		
  		/* Figure out where travelSVG is going to end up relative to queryFlags. */
- 		var newPosition = $(this.queryFlags.node()).position();
+ 		var newPosition = this.queryFlags.node().getBoundingClientRect();
  		var flagPosition = this.getNextQueryFlagPosition(poolFlag);
- 		newPosition.top += flagPosition.top;
- 		newPosition.left += flagPosition.left;
  		
  		var _this = this;
  		/* Animate the movement of the svg to its new location. */
  		travelSVG.transition()
  			.duration(400)
- 			.style('top', newPosition.top)
- 			.style('left', newPosition.left)
+ 			.style('top', newPosition.top + flagPosition.top)
+ 			.style('left', newPosition.left + flagPosition.left)
  			.each("end", function() {
 					/* Add a query flag that is the same as the svg flag in the same position. */
 					var newS = new Service(s.service);
@@ -629,7 +708,7 @@ var SearchPathsPanel = (function () {
 			.node();
 			
 		this.searchInput = topBox.append('input')
-			.attr('placeholder', 'Search for another path')
+			.attr('placeholder', 'Search for a path')
 			.node();
 			
 		this.cancelButton = topBox.append('button')
@@ -653,10 +732,11 @@ var SearchPathsPanel = (function () {
 				event.stopPropagation();
 			});
 			
-		var horizontalDiv = mainDiv.append('div')
+		stagesDiv = mainDiv.append('div')
 			.classed('horizontal-overflow', true);
+		this.stagesDiv = stagesDiv.node();
 			
-		var div = horizontalDiv.append('div');
+		var div = stagesDiv.append('div');
 		
 		var svgData = [{name: "All", color: "#222", click: this.handleAllClick},
 				   {name: "School", color: "#2828E7", click: this.handleSchoolClick},
@@ -735,7 +815,12 @@ var SearchPathsPanel = (function () {
 			
 		$(this.cancelButton).click(function(event)
 			{
-				_this.revealInput();
+				_this.revealInput()
+					.then(function()
+						{
+							_this.clearQuery();
+						});
+				
 				event.stopPropagation();
 			});
 			
@@ -744,7 +829,6 @@ var SearchPathsPanel = (function () {
 			if ($(_this.node()).position().top == 0)
 			{
 				_this.revealPanel(0);
-				_this.layoutPoolFlags();
 			}
 			else
 				_this.revealInput(0);
