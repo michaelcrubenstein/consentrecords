@@ -2027,12 +2027,11 @@ var ShareOptions = (function () {
 		var copyButton = div.append('button')
 			.text("Copy Path")
 			.classed("site-active-text copy", true)
-			.attr('data-clipboard-action', 'copy')
-			.attr('data-clipboard-target', 'input.copy');
+			.attr('data-clipboard-action', 'copy');
 		
 		var clipboard = new Clipboard('button.copy', {
 			text: function(trigger) {
-				return '{0}/for/{1}.'.format(window.location.origin, user.getDatum("_email"));
+				return '{0}/for/{1}'.format(window.location.origin, user.getDatum("_email"));
 			}});
 			
 		clipboard.on('error', function(e) {
