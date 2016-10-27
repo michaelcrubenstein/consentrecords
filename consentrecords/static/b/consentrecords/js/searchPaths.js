@@ -73,7 +73,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '["More Experience"[Service="{0}"]]'.format(sf.service.getValueID());
+						path += '["More Experience"[Service="{0}"|Offering[Service="{0}"]]]'.format(sf.service.getValueID());
 				});
 			return path;
 		}
