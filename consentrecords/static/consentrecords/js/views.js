@@ -2586,6 +2586,9 @@ function _b64_to_utf8( str ) {
 
 function promiseImportCells(containerCell, d, cells)
 {
+	if (d == null)
+		d = containerCell.addNewValue();
+		
 	d.importCells(cells);
 	d.isDataLoaded = true;
 
