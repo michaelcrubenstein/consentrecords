@@ -327,6 +327,13 @@ profile.run('api.getData(user, path, q)')
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
+path='"More Experiences"["More Experience"[Service="4576591a2f104927896b93e191bbf374"|Offering>Service="4576591a2f104927896b93e191bbf374"]]'
+q = QueryDict('fields=%5B%5D')
+api.getData(user, path, q)
+profile.run('api.getData(user, path, q)')
+
+user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
+from django.http import QueryDict
 path='#107d7f83095d41efb0472a60f4816043'
 q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
 profile.run('api.getData(user, path, q)')
