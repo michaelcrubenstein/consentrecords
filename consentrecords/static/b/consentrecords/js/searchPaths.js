@@ -179,7 +179,7 @@ var SearchPathsPanel = (function () {
 			$(this.queryContainer.node()).stop().animate(
 				{left: 0,
 				 top: poolTop + poolHeight},
-				{duration: duration}),
+				{duration: duration})
 			);
 	}
 	
