@@ -730,6 +730,11 @@ var MultiTypeOptionView = (function() {
 			});
 	}
 	
+	MultiTypeOptionView.prototype.stringContains = function(source, target)
+	{
+		return source.toLocaleLowerCase().search(new RegExp("\\b{0}".format(target))) >= 0;
+	}
+	
 	/* Returns true if the specified datum has a name that contains compareText. */
 	MultiTypeOptionView.prototype.isMatchingDatum = function(d, compareText)
 	{
@@ -737,7 +742,7 @@ var MultiTypeOptionView = (function() {
 			return true;
 		
 		return d.getDescription && 
-			   d.getDescription().toLocaleLowerCase().indexOf(compareText) >= 0;
+			   this.stringContains(d.getDescription(), compareText);
 	}
 	
 	MultiTypeOptionView.prototype.canConstrain = function(searchText, constrainText)
@@ -1044,14 +1049,14 @@ var ExperienceDatumSearchView = (function() {
 
 		if (d.typeName === "Offering")
 		{
-			if (d.getValue("Site").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			if (this.stringContains(d.getValue("Site").getDescription(), compareText))
 				return true;
-			if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
 		}
 		else if (d.typeName === "Site")
 		{
-			if (d.getValue("Organization").getDescription().toLocaleLowerCase().indexOf(compareText) >= 0)
+			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
 		}
 		return false;
@@ -1373,7 +1378,7 @@ var OrganizationSearchView = (function() {
 			{
 				path = 'Organization[_name{0}"{1}"]';
 			}
-			var symbol = val.length < 3 ? "^=" : "*=";
+			var symbol = "*=";
 		
 			return path.format(symbol, val);
 		}
@@ -1537,7 +1542,7 @@ var SiteSearchView = (function() {
 					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
 				}
 			
-				var symbol = val.length < 3 ? "^=" : "*=";
+				var symbol = "*=";
 			
 				return path.format(symbol, val);
 			}
@@ -1582,7 +1587,7 @@ var SiteSearchView = (function() {
 					throw "Unrecognized typeName: {0}".format(this.typeName);
 			
 
-				var symbol = val.length < 3 ? "^=" : "*=";
+				var symbol = "*=";
 			
 				return path.format(symbol, val);
 			}
@@ -1602,7 +1607,7 @@ var SiteSearchView = (function() {
 			{
 				path = 'Organization[_name{0}"{1}"]';
 			}
-			var symbol = val.length < 3 ? "^=" : "*=";
+			var symbol = "*=";
 		
 			return path.format(symbol, val);
 		}
@@ -1820,7 +1825,7 @@ var OfferingSearchView = (function() {
 					else
 						throw new Error('unrecognized typeName');
 			
-					var symbol = val.length < 3 ? "^=" : "*=";
+					var symbol = "*=";
 			
 					return path.format(symbol, val);
 				}
@@ -1862,7 +1867,7 @@ var OfferingSearchView = (function() {
 						path += this.experience.getOfferingConstraint();
 					}
 			
-					var symbol = val.length < 3 ? "^=" : "*=";
+					var symbol = "*=";
 			
 					return path.format(symbol, val);
 				}
@@ -1890,7 +1895,7 @@ var OfferingSearchView = (function() {
 					throw "Unrecognized typeName: {0}".format(this.typeName);
 			
 
-				var symbol = val.length < 3 ? "^=" : "*=";
+				var symbol = "*=";
 			
 				return path.format(symbol, val);
 			}
@@ -1911,7 +1916,7 @@ var OfferingSearchView = (function() {
 			else
 				throw new Error("Unrecognized typeName: {0}".format(this.typeName));
 				
-			var symbol = val.length < 3 ? "^=" : "*=";
+			var symbol = "*=";
 		
 			return path.format(symbol, val);
 		}
