@@ -1308,12 +1308,8 @@
 						}
 					}
 					
-					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
-							.then(selectAllSuccess, cr.asyncFail);
-					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
-							.then(selectAllSuccess, cr.asyncFail);
+					cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+						.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
 		}
@@ -1604,12 +1600,8 @@
 									}
 								}
 					
-								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
-										.then(selectAllSuccess, cr.asyncFail);
-								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
-										.then(selectAllSuccess, cr.asyncFail);
+								cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
 						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);

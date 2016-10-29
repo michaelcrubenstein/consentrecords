@@ -23,8 +23,8 @@ def _getValueFilter(field, symbol, testValue):
             vFilter = Value.objects.filter(Q(stringValue__iexact=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__iexact=testValue))
         elif symbol == '*=':
-            vFilter = Value.objects.filter(Q(stringValue__icontains=testValue,referenceValue__isnull=True)|
-                                           Q(referenceValue__description__text__icontains=testValue))
+            vFilter = Value.objects.filter(Q(stringValue__iregex='[[:<:]]' + testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__iregex='[[:<:]]' + testValue))
         elif symbol == '<':
             vFilter = Value.objects.filter(Q(stringValue__lt=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__lt=testValue))

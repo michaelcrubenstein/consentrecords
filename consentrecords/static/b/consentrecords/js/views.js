@@ -2202,8 +2202,7 @@ var SearchOptionsView = (function () {
 	 */
 	SearchOptionsView.prototype.canConstrain = function(searchText, constrainText)
 	{
-		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
-			   (searchText.length >= 3 || constrainText.length < 3);
+		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0);
 	}
 	
 	SearchOptionsView.prototype.clearSearchTimeout = function()

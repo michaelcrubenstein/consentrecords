@@ -59,7 +59,7 @@ var PickOrCreateSearchView = (function () {
 			return this.pickDatum.cell.field.ofKindID;
 		else
 		{
-			var symbol = (val.length < 3) ? "^=" : "*=";
+			var symbol = "*=";
 			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
 		}
 	}
