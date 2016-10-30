@@ -175,7 +175,7 @@ function getUserDescription(user)
 				
 function showPath(path, previousPanelNode)
 {
-	path.promiseCells(["More Experience"])
+	path.promiseCells(["More Experience", "parents", "_user"])
 	.then(function()
 		{
 			var panel = new OtherPathPanel(path, previousPanelNode, true);

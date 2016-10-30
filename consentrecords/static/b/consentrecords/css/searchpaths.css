@@ -123,3 +123,23 @@ div.results-container {
 	margin-top: 100px;
 	-webkit-overflow-scrolling: touch;
 }
+
+div.results-container li div>div {
+	display: block;
+	color: #444;
+	font-size: smaller;
+	line-height: 1.2em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	cursor: pointer;
+}
+
+div.results-container li div>div:first-child
+{
+	color: #333;
+	text-align: left;
+	font-size: inherit;	/* Not smaller */
+	line-height: inherit;
+	font-weight: 500;
+}

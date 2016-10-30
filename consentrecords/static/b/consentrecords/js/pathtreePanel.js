@@ -2496,9 +2496,18 @@ var OtherPathPanel = (function () {
 			backButton.append("span").text("Done");
 		}
 
-		var ageCalculator = new AgeCalculator(path.getValue("Birthday").getDescription());
-		this.navContainer.appendTitle(getPathDescription(path) ||
-			"{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10))));
+		var title;
+		var screenName = path.getDatum("_name");
+		var user = path.getValue("_user");
+		
+		if (screenName)
+			title = screenName;
+		else if (user)
+			title = getUserName(user) || user.getDescription();
+		else
+			title = (new AgeCalculator(path.getValue("Birthday").getDescription())).toString();
+		
+		this.navContainer.appendTitle(title);
 		
 		if (this.pathtree)
 			throw "pathtree already assigned to pathtree panel";
