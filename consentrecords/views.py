@@ -847,6 +847,13 @@ class api:
             
         return JsonResponse(results)
     
+    def _getValueQuerySet(vs, userInfo):
+        return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
+                .order_by('position')\
+                .select_related('field')\
+                .select_related('referenceValue')\
+                .select_related('referenceValue__description')
+    
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = fieldsDataDictionary[uuObject.typeID]
         
@@ -867,6 +874,10 @@ class api:
             
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
+                if fieldData["name"] in fields:
+                    vs = api._getValueQuerySet(p.value_set, userInfo)
+                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID], userInfo, language)
+                    
                 data["cells"].append({"field": fieldData, "data": [parentData]})
         
         if TermNames.systemAccess in fields:
@@ -885,19 +896,24 @@ class api:
                               'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
-        # For each of the cells, if the cell is in the field list explicitly, then get the subdata for all of the 
-        # values in that cell.
-        subInstances = map(lambda v: v.referenceValue, uuObject.values)
-        sDict = dict((s.id, s) for s in filter(lambda s: s, subInstances))
-        
+        # For each of the cells, if the cell is in the field list explicitly, 
+        # and the cell is in the fieldsData (and not the name of a parent type)
+        # then get the subdata for all of the values in that cell.
+        subValuesDict = None
+        for field in fieldsData: 
+            if 'nameID' not in field:
+                print(field)
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
-                and "ofKindID" in cell["field"]:
-                fieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
-                    
+                and "ofKindID" in cell["field"] \
+                and next((field for field in fieldsData if field["nameID"] == cell["field"]["nameID"]), None):
+                
+                subFieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
+                subValuesDict = subValuesDict or \
+                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
                 for d in cell["data"]:
-                    i = sDict[d["instanceID"]]
-                    d['cells'] = i.getData(i.subValues, fieldsData, userInfo, language)
+                    i = subValuesDict[d["instanceID"]]
+                    d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
                     d['typeName'] = cell["field"]["ofKind"]
             
         return data;
@@ -920,28 +936,20 @@ class api:
             uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
             # preload the typeID, parent, value_set and description to improve performance.
-            valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-                .order_by('position')\
-                .select_related('field')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
+            # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+            valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
             
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
             if len(fieldNames):
                 # The distinct is required to eliminate duplicate subValues.
-                subValues = Value.objects.filter(deleteTransaction__isnull=True,
-                                          instance__deleteTransaction__isnull=True,
+                subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
                                           instance__referenceValues__deleteTransaction__isnull=True,
                                           instance__referenceValues__field__value__deleteTransaction__isnull=True,
                                           instance__referenceValues__field__value__field=terms.name,
                                           instance__referenceValues__field__value__stringValue__in=fieldNames)\
                     .distinct()
-                subValueQueryset = userInfo.findValueFilter(subValues)\
-                    .order_by('position')\
-                    .select_related('field')\
-                    .select_related('referenceValue')\
-                    .select_related('referenceValue__description')
+                subValueQueryset = api._getValueQuerySet(subValues, userInfo)
                 valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
                                       queryset=subValueQueryset,
                                       to_attr='subValues'))
@@ -974,20 +982,6 @@ class api:
         
         return JsonResponse(results)
         
-    def _addPreloadData(uuObjects, userInfo):
-        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-
-        return uuObjects.select_related('typeID').select_related('parent')\
-                        .select_related('description')\
-                        .prefetch_related(Prefetch('value_set',
-                                                   queryset=valueQueryset,
-                                                   to_attr='values'))
-
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
     def deleteInstances(user, path):
