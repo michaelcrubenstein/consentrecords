@@ -1796,7 +1796,7 @@ var PathlinesPanel = (function () {
 					d3.event.preventDefault();
 				})
 			.classed("settings", true)
-			.style("display", "none")
+			.style("display", user.privilege == "_administer" ? null : "none")
 			.append("img")
 			.attr("src", settingsImagePath);
 		settingsButton.append("span")
@@ -1915,8 +1915,6 @@ var PathlinesPanel = (function () {
 		else
 			settingsButton = this.navContainer.appendLeftButton();
 
-		this.setupSettingsButton(settingsButton, user);
-
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
 		this.navContainer.appendTitle(getUserDescription(user));
@@ -1974,8 +1972,8 @@ var PathlinesPanel = (function () {
 			{
 				this.sitePanel.setupAddExperienceButton(user, addExperienceButton);
 				
-				settingsButton.style("display", user.privilege === "_administer" ? null : "none");
-				
+				this.sitePanel.setupSettingsButton(settingsButton, user);
+
 				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);
 				checkSettingsBadge();
 				
