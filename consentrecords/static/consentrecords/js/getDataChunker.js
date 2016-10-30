@@ -134,7 +134,7 @@ var GetDataChunker = (function() {
 			scrollingNode = $(this._containerNode).scrollParent();
 		
 		if (scrollingNode.length == 0)
-			throw "scrollParent not specified; containerNode is not displayed"
+			throw new Error("scrollParent not specified; containerNode is not displayed");
 			
 		scrollingNode.scroll(startVal, this._check);
 		scrollingNode.on("resize.cr", this._check);
@@ -208,14 +208,14 @@ var GetDataChunker = (function() {
 	
 	GetDataChunker.prototype.hasShortResults = function()
 	{
-		return d3.select(this._containerNode).selectAll('li').size() < this._increment &&
+		return this.buttons().size() < this._increment &&
 			   !this._inGetData &&
 			   !this._isSpinning;
 	}
 	
 	GetDataChunker.prototype.hasButtons = function()
 	{
-		return d3.select(this._containerNode).selectAll('li').size() > 0;
+		return this.buttons().size() > 0;
 	}
 	
 	GetDataChunker.prototype.buttons = function()

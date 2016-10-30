@@ -26,7 +26,7 @@ var PickOrCreateSearchView = (function () {
 		{
 			if (compareText.length === 0)
 				return false;
-			var data = this.listPanel.selectAll("li").data();
+			var data = this.buttons().data();
 			return !data.find(function(d) {
 				if (typeof(d) !== "object")
 					return false;
@@ -59,14 +59,14 @@ var PickOrCreateSearchView = (function () {
 			return this.pickDatum.cell.field.ofKindID;
 		else
 		{
-			var symbol = (val.length < 3) ? "^=" : "*=";
+			var symbol = "*=";
 			return this.pickDatum.cell.field.ofKindID+'[?'+symbol+'"'+val+'"]';
 		}
 	}
 	
 	PickOrCreateSearchView.prototype.clearListPanel = function()
 	{
-		var buttons = this.listPanel.selectAll("li");
+		var buttons = this.buttons();
 		buttons = buttons.filter(function(d, i) { return i > 0; });
 			
 		buttons.remove();

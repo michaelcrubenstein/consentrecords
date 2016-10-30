@@ -236,9 +236,13 @@ button {
 	-webkit-appearance: none;
 	background: transparent;
 	border: 0;
-	cursor: pointer;
 	padding: 0;
 	color: #2C55CC;
+	cursor: pointer;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
 }
 
 button:hover {

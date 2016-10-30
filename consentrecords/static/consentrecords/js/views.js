@@ -1986,26 +1986,33 @@ var SitePanel = (function () {
 	return SitePanel;
 })();
 
+/* A view that displays the results of a search as a list of results.
+	The list appears in a list element.
+   Each result appears in an li element.
+ */
 var SearchOptionsView = (function () {
-	SearchOptionsView.prototype.listPanel = null;
+	SearchOptionsView.prototype.listElement = null;
 	SearchOptionsView.prototype.getDataChunker = null;
 	SearchOptionsView.prototype._fill = null;
 	SearchOptionsView.prototype._foundCompareText = null;
 	SearchOptionsView.prototype._constrainCompareText = null;
 	SearchOptionsView.prototype._searchTimeout = null;
 
+	/* containerNode is the node that contains the noResults Div and the list 
+		containing the results.
+	 */
 	function SearchOptionsView(containerNode, fill, chunkerType)
 	{
+		this._fill = fill;
 		if (containerNode)
 		{
 			var _this = this;
-			this._fill = fill;
 			
 			this.noResultsDiv = d3.select(containerNode).append('div')
 				.classed('no-results', true)
 				.style('display', 'none');
 
-			this.listPanel = this.appendSearchArea(containerNode);
+			this.listElement = this.appendSearchArea();
 
 			var done = function(foundObjects, startVal)
 			{
@@ -2014,17 +2021,27 @@ var SearchOptionsView = (function () {
 					_this.canConstrain(startVal, currentVal))
 				{
 					_this.showObjects(foundObjects);
-					var text = _this.noResultString();
-					_this.noResultsDiv.text(text);
-					_this.noResultsDiv.style('display', (_this.getDataChunker.hasButtons() || text.length === 0) ? 'none' : null);
+					_this.checkNoResults();
 					return true;
 				}
 				else
 					return false;
 			}
 			chunkerType = chunkerType !== undefined ? chunkerType : GetDataChunker;
-			this.getDataChunker = new chunkerType(this.listPanel.node(), done);
+			this.getDataChunker = new chunkerType(this.listElement.node(), done);
 		}
+	}
+	
+	SearchOptionsView.prototype.buttons = function()
+	{
+		return this.listElement.selectAll('li');
+	}
+	
+	SearchOptionsView.prototype.checkNoResults = function()
+	{
+		var text = this.noResultString();
+		this.noResultsDiv.text(text);
+		this.noResultsDiv.style('display', (this.getDataChunker.hasButtons() || text.length === 0) ? 'none' : null);
 	}
 	
 	SearchOptionsView.prototype.onClickButton = function(d, i) {
@@ -2048,7 +2065,7 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.clearListPanel = function()
 	{
-		this.listPanel.selectAll("li").remove();
+		this.listElement.selectAll("li").remove();
 	}
 	
 	SearchOptionsView.prototype.sortFoundObjects = function(foundObjects)
@@ -2067,7 +2084,7 @@ var SearchOptionsView = (function () {
 	
 	SearchOptionsView.prototype.constrainFoundObjects = function()
 	{
-		var buttons = this.listPanel.selectAll(".btn");
+		var buttons = this.listElement.selectAll(".btn");
 		var _this = this;
 		buttons.style("display", function(d) 
 			{ 
@@ -2078,6 +2095,7 @@ var SearchOptionsView = (function () {
 			});
 	}
 	
+	/* Show the objects that have been found. In this implementation, the objects appear as a list of buttons. */
 	SearchOptionsView.prototype.showObjects = function(foundObjects)
 	{
 		var _this = this;
@@ -2184,8 +2202,7 @@ var SearchOptionsView = (function () {
 	 */
 	SearchOptionsView.prototype.canConstrain = function(searchText, constrainText)
 	{
-		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0) &&
-			   (searchText.length >= 3 || constrainText.length < 3);
+		return (searchText.length == 0 || constrainText.indexOf(searchText) == 0);
 	}
 	
 	SearchOptionsView.prototype.clearSearchTimeout = function()
@@ -2229,6 +2246,7 @@ var SearchOptionsView = (function () {
 			this.restartSearchTimeout(val);
 	}
 	
+	/* Returns an 'ol' element that contains the results of the search. */
 	SearchOptionsView.prototype.appendSearchArea = function()
 	{
 		throw ("SearchOptionsView.appendSearchArea must be overridden");
@@ -2237,10 +2255,9 @@ var SearchOptionsView = (function () {
 	return SearchOptionsView;
 })();
 
-
+/* A SearchView is a SearchOptionsView with its own input box. */
 var SearchView = (function () {
 	SearchView.prototype = new SearchOptionsView;
-	SearchView.prototype.optionsView = null;
 	SearchView.prototype.inputBox = null;
 	
 	function SearchView(containerNode, placeHolder, fill, chunkerType) {
@@ -2293,6 +2310,7 @@ var SearchView = (function () {
 	return SearchView;
 })();
 
+/* A PanelSearchView is a SearchView that appears in an entire sitePanel. */
 var PanelSearchView = (function() {
 	PanelSearchView.prototype = new SearchView();
 	PanelSearchView.prototype.sitePanel = undefined

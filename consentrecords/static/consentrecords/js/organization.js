@@ -162,9 +162,9 @@ function getUserName(user)
 
 function getPathDescription(path)
 {
-	return (path.cell.parent && getUserName(path.cell.parent)) ||
+	return (path.cell && path.cell.parent && getUserName(path.cell.parent)) ||
 			path.getDatum("_name") ||
-		   (path.cell.parent && path.cell.parent.getDescription()) ||
+		   (path.cell && path.cell.parent && path.cell.parent.getDescription()) ||
 		   null;
 }
 
@@ -173,15 +173,28 @@ function getUserDescription(user)
 	return getUserName(user) || user.getDescription();
 }
 				
+function showPath(path, previousPanelNode)
+{
+	path.promiseCells(["More Experience", "parents", "_user"])
+	.then(function()
+		{
+			var panel = new OtherPathPanel(path, previousPanelNode, true);
+			panel.pathtree.setUser(path, true);
+			showPanelLeft(panel.node(), unblockClick);
+		},
+		cr.syncFail);
+}
+
 function showUser(user, previousPanelNode)
 {
-	user.checkCells([], function()
+	user.promiseCells([])
+	 .then(function()
 		{
 			var panel = new PathlinesPanel(user, previousPanelNode, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
 			showPanelLeft(panel.node(), unblockClick);
 		},
-		syncFailFunction);
+		cr.syncFail);
 }
 
 function drawInfoButtons(infoButtons)

@@ -27,10 +27,10 @@
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/showSharing.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/signup.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
@@ -273,30 +273,30 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
 	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
-	<script src="{% static "consentrecords/js/models.js" %}"></script>
-	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
-	<script src="{% static "consentrecords/js/views.js" %}"></script>
-	<script src="{% static "consentrecords/js/getDataChunker.js" %}"></script>
-	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
-	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
-	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
-	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
-	<script src="{% static "consentrecords/js/organization.js" %}"></script>
-	<script src="{% static "consentrecords/js/pathGuides.js" %}"></script>
-	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
-	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
-	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
-	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
-	<script src="{% static "consentrecords/js/signup.js" %}"></script>
-	<script src="{% static "consentrecords/js/settings.js" %}"></script>
-	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showPathway.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
-		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
-		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
-		settingsImagePath = '{% static "consentrecords/png/settings.png" %}'
-		shareImagePath = '{% static "consentrecords/png/share.svg" %}'
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
@@ -785,7 +785,7 @@
 				.attr("data-href", targetHRef)
 				.attr("data-layout", "button_count");
 			var fbImage = fbDiv.append("img")
-				.attr("src", "{% static "consentrecords/png/fb.png" %}")
+				.attr("src", "{% static "b/consentrecords/png/fb.png" %}")
 				.style("height", "22px")
 				.style("weight", "22px");
 			{% if facebookIntegration %}
@@ -1308,12 +1308,8 @@
 						}
 					}
 					
-					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
-							.then(selectAllSuccess, cr.asyncFail);
-					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
-							.then(selectAllSuccess, cr.asyncFail);
+					cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+						.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
 		}
@@ -1604,12 +1600,8 @@
 									}
 								}
 					
-								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
-										.then(selectAllSuccess, cr.asyncFail);
-								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50})
-										.then(selectAllSuccess, cr.asyncFail);
+								cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
 						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);
