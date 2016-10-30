@@ -1721,7 +1721,7 @@ var PathLines = (function() {
 		}
 		
 		return $.when(crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
-				   fields: ["parents", "type"]})
+				   fields: ["parents"]})
 				.done(function(experiences)
 					{
 						_this.allExperiences = experiences.slice();
@@ -1742,7 +1742,7 @@ var PathLines = (function() {
 				return crp.promise({path: "Service"});
 			})
 		.then(function() {
-				return _this.path.promiseCellsFromCache(["More Experience", "parents", "type"]);
+				return _this.path.promiseCellsFromCache(["More Experience", "parents"]);
 			})
 		.then(successFunction2, cr.asyncFail);
 	}
