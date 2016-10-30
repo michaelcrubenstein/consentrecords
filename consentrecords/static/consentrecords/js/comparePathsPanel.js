@@ -46,6 +46,11 @@ var AgeCalculator = (function() {
 		}
 	}
 	
+	AgeCalculator.prototype.toString = function()
+	{
+		return "{0}-year-old".format(this.getYears(new Date().toISOString().substr(0, 10)));
+	}
+	
 	function AgeCalculator(s)
 	{
 		var d = new Date(s);
@@ -145,7 +150,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.defs = null;
 	ComparePath.prototype.bg = null;
 	ComparePath.prototype.loadingText = null;
-	ComparePath.prototype.promptAddText = null;
 	ComparePath.prototype.yearGroup = null;
 	ComparePath.prototype.guideGroup = null;
 	ComparePath.prototype.experienceGroup = null;
@@ -474,7 +478,7 @@ var ComparePath = (function() {
 	{
 		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
 			getPathDescription(path) ||
-			"{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10)));
+			ageCalculator.toString();
 	}
 	
 	ComparePath.prototype.handleResize = function()
@@ -643,27 +647,6 @@ var ComparePath = (function() {
 			});
 		$(this.svg.node()).width(newWidth);
 		$(this.bg.node()).width(newWidth);
-
-		/* Position the promptAddText based on the width. */
-		if (this.promptAddText)
-		{
-			this.loadingText
-				.attr("y", this.experienceGroupDY + this.loadingText.node().getBBox().height);
-	
-			var bbox = this.loadingText.node().getBBox();
-			var newBBox = this.promptAddText.node().getBBox();
-			if (bbox.x + bbox.width + this.textLeftMargin + newBBox.width >
-				newWidth - this.experienceGroupDX - this.promptRightMargin)
-			{
-				this.promptAddText.attr("x", this.loadingText.attr("x"))
-					.attr("y", parseFloat(this.loadingText.attr("y")) + bbox.height);
-			}
-			else
-			{
-				this.promptAddText.attr("x", bbox.x + bbox.width + this.textLeftMargin)
-					.attr("y", this.loadingText.attr("y"));
-			}
-		}
 	}
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
@@ -680,6 +663,8 @@ var ComparePath = (function() {
 		this.leftPath = leftPath;
 		this.rightPath = rightPath;
 		this.editable = (editable !== undefined ? editable : true);
+
+		this.setupClipID();
 
 		var container = d3.select(this.containerDiv);
 		
@@ -715,6 +700,7 @@ var ComparePath = (function() {
 			
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
+			.attr('clip-path', this.getDetailClipPath())
 			.on("click", function(d) 
 				{ 
 					d3.event.stopPropagation(); 
@@ -724,10 +710,8 @@ var ComparePath = (function() {
 					if (fd.experience.canWrite())
 						_this.showDetailPanel(fd, i);
 				});
-		this.detailBackRect = this.detailGroup.append('rect')
-			.classed('bg', true);
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail', true);
+
+		this.appendDetailContents();
 			
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 
