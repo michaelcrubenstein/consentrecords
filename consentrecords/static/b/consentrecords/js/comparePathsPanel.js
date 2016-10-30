@@ -46,6 +46,11 @@ var AgeCalculator = (function() {
 		}
 	}
 	
+	AgeCalculator.prototype.toString = function()
+	{
+		return "{0}-year-old".format(this.getYears(new Date().toISOString().substr(0, 10)));
+	}
+	
 	function AgeCalculator(s)
 	{
 		var d = new Date(s);
@@ -473,7 +478,7 @@ var ComparePath = (function() {
 	{
 		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
 			getPathDescription(path) ||
-			"{0}-year-old".format(ageCalculator.getYears(new Date().toISOString().substr(0, 10)));
+			ageCalculator.toString();
 	}
 	
 	ComparePath.prototype.handleResize = function()

@@ -21,11 +21,19 @@ var SearchPathsResultsView = (function () {
 		buttons.each(function(d)
 			{
 				/* TODO: */
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this);
+				
 				var screenName = d.getDatum("_name");
 				var user = d.getValue("_user");
+				var userName = user && (getUserName(user));
+				var userDescription = user && user.getDescription();
+				var ageCalculator = new AgeCalculator(d.getValue("Birthday").getDescription());
+				var ageDescription = ageCalculator.toString();			
 				
-				leftText.text(screenName || (user && user.getDescription()) || d.getDescription());
+				if (screenName) leftText.append('div').text(screenName);
+				if (userName) leftText.append('div').text(userName);
+				if (userDescription) leftText.append('div').text(userDescription);
+				leftText.append('div').text(ageDescription);
 			});
 	}
 	
@@ -90,7 +98,7 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["parents"];
+		return ["parents", "_user"];
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)

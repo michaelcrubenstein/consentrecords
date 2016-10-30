@@ -93,7 +93,7 @@ def _getAncestorClause(symbol, testValue):
         return _getSimpleAncestorClause(symbol, testValue)
 
 def _getReferenceValues(params, userInfo):
-    print('_getReferenceValues: %s'%params)
+#     print('_getReferenceValues: %s'%params)
     
     if len(params) > 2 and params[1] == '>':
         subF = Instance.objects.filter(_clauseByReferenceValues(params[2], _getReferenceValues(params[2:], userInfo)))
@@ -128,7 +128,7 @@ def _clauseByReferenceValues(fieldNames, referenceValues):
 # If the parameter list is three values, interpret the three values as a query clause and
 #     filter the resultSet on that clause.  
 def _filterClause(params, userInfo):
-    print('_filterClause params: %s'% (params))
+#     print('_filterClause params: %s'% (params))
     
     if len(params) == 1:
         if isinstance(params[0], list):
