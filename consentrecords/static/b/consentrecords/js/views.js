@@ -2347,7 +2347,7 @@ var PanelSearchView = (function() {
 /* A div that can be shown or hidden to the right. */
 var HidableDiv = (function()
 {
-	HidableDiv.prototype.width = 0;
+	HidableDiv.prototype._width = null;
 	HidableDiv.prototype.duration = 400;
 	HidableDiv.prototype.$div = null;
 	
@@ -2356,12 +2356,12 @@ var HidableDiv = (function()
 		duration = duration !== undefined ? duration : this.duration;
 		
 		this.$div.css('display', '');
-		this.$div.animate({left: 0, width: this.width}, duration, done);
+		this.$div.animate({left: 0, width: this._width}, duration, done);
 	}
 	
 	HidableDiv.prototype.hide = function(done)
 	{
-		this.$div.animate({left: this.width, width: 0}, this.duration, function()
+		this.$div.animate({left: this._width, width: 0}, this.duration, function()
 			{
 				$(this).css('display', 'none');
 				done();
@@ -2392,7 +2392,8 @@ var HidableDiv = (function()
 		
 			setTimeout(function()
 				{
-					_this.width = _this.$div.width();
+					if (_this.$div.width())
+						_this._width = _this.$div.width();
 					if (startDisplay === 'none')
 						_this.$div.width(0);
 				}, 0);
@@ -2412,6 +2413,7 @@ var HidingChevron = (function () {
 		var endDateChevron = appendRightChevrons(itemDiv);
 		
 		HidableDiv.call(this, endDateChevron.node(), 'none', 200);
+		this._width = this.$div.height();
 		
 		endDateChevron.on('click', function()
 			{
