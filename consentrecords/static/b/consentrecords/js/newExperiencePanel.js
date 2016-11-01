@@ -948,9 +948,10 @@ var ExperienceDatumSearchView = (function() {
 			{
 				try
 				{
-					this.experience.setOrganization({instance: d});
+					/* Clear the site and offering if they aren't within the new organization. */
 					if (_this.experience.site &&
-						_this.experience.site.getValue("Organization").getValueID() != d.getValueID())
+						_this.experience.organization &&
+						_this.experience.organization.getValueID() != d.getValueID())
 					{
 						if (this.experience.offering)
 						{
@@ -962,6 +963,12 @@ var ExperienceDatumSearchView = (function() {
 							this.experience.clearSite();
 						}
 					}
+					/* Set the organization and organizationName explicitly so that the site
+						isn't cleared inappropriately.
+					 */
+					this.experience.organization = d;
+					this.experience.organizationName = d.getDescription();
+					
 					this.sitePanel.onExperienceUpdated();
 					this.hideSearch(function()
 						{
@@ -988,10 +995,11 @@ var ExperienceDatumSearchView = (function() {
 						{
 							try
 							{
-								_this.experience.setOrganization({instance: d});
 								if (_this.experience.offering &&
-									_this.experience.offering.getValue("Site").getValueID() != d.getValueID())
+									_this.experience.site &&
+									_this.experience.site.getValueID() != d.getValueID())
 									_this.experience.clearOffering();
+								_this.experience.setOrganization({instance: d});
 								_this.sitePanel.onExperienceUpdated();
 								_this.hideSearch(function()
 									{
