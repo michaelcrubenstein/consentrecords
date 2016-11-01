@@ -2538,15 +2538,18 @@ var NewExperiencePanel = (function () {
 			}
 		}
 	}
-
-	NewExperiencePanel.prototype.onExperienceUpdated = function()
+	
+	NewExperiencePanel.prototype.updateInputs = function()
 	{
 		this.organizationInput.node().value = this.experience.organizationName;
 		this.siteInput.node().value = this.experience.siteName;
 		this.offeringInput.node().value = this.experience.offeringName;
-		var tagsContainer = this.mainDiv.select('.tags-container');
-		var _this = this;
 		this.showTags();
+	}
+
+	NewExperiencePanel.prototype.onExperienceUpdated = function()
+	{
+		this.updateInputs();
 		this.calculateHeight();
 	}
 	
@@ -2575,7 +2578,7 @@ var NewExperiencePanel = (function () {
 		}
 		else
 			this.organizationSearchView.clearFromOrganization();
-		this.showTags();
+		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkSiteInput = function()
@@ -2593,7 +2596,7 @@ var NewExperiencePanel = (function () {
 		}
 		else
 			this.siteSearchView.clearFromSite();
-		this.showTags();
+		this.updateInputs();
 	}
 		
 	NewExperiencePanel.prototype.checkOfferingInput = function()
@@ -2613,7 +2616,7 @@ var NewExperiencePanel = (function () {
 		{
 			this.offeringSearchView.clearFromOffering();
 		}
-		this.showTags();
+		this.updateInputs();
 	}
 	
 	NewExperiencePanel.prototype.checkTagInput = function(exceptNode)
