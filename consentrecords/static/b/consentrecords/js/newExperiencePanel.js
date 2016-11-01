@@ -953,29 +953,36 @@ var ExperienceDatumSearchView = (function() {
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
-				this.experience.setOrganization({instance: d});
-				if (_this.experience.site &&
-					_this.experience.site.getValue("Organization").getValueID() != d.getValueID())
+				try
 				{
-					if (this.experience.offering)
+					this.experience.setOrganization({instance: d});
+					if (_this.experience.site &&
+						_this.experience.site.getValue("Organization").getValueID() != d.getValueID())
 					{
-						this.experience.clearOffering();
-						this.experience.clearSite();
+						if (this.experience.offering)
+						{
+							this.experience.clearOffering();
+							this.experience.clearSite();
+						}
+						else
+						{
+							this.experience.clearSite();
+						}
 					}
-					else
-					{
-						this.experience.clearSite();
-					}
+					this.sitePanel.onExperienceUpdated();
+					this.hideSearch(function()
+						{
+							_this.cancelSearch();
+							var newInputNode = _this.sitePanel.siteInput.node();
+							newInputNode.focus();
+							newInputNode.setSelectionRange(0, newInputNode.value.length);
+							unblockClick();
+						});
 				}
-				this.sitePanel.onExperienceUpdated();
-				this.hideSearch(function()
-					{
-						_this.cancelSearch();
-						var newInputNode = _this.sitePanel.siteInput.node();
-						newInputNode.focus();
-						newInputNode.setSelectionRange(0, newInputNode.value.length);
-						unblockClick();
-					});
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
 			}
 		}
 		else if (d.typeName === 'Site')
@@ -986,19 +993,26 @@ var ExperienceDatumSearchView = (function() {
 				d.promiseCellsFromCache(["parents"])
 					.then(function()
 						{
-							_this.experience.setOrganization({instance: d});
-							if (_this.experience.offering &&
-								_this.experience.offering.getValue("Site").getValueID() != d.getValueID())
-								_this.experience.clearOffering();
-							_this.sitePanel.onExperienceUpdated();
-							_this.hideSearch(function()
-								{
-									_this.cancelSearch();
-									var newInputNode = _this.sitePanel.offeringInput.node();
-									newInputNode.focus();
-									newInputNode.setSelectionRange(0, newInputNode.value.length);
-									unblockClick();
-								});
+							try
+							{
+								_this.experience.setOrganization({instance: d});
+								if (_this.experience.offering &&
+									_this.experience.offering.getValue("Site").getValueID() != d.getValueID())
+									_this.experience.clearOffering();
+								_this.sitePanel.onExperienceUpdated();
+								_this.hideSearch(function()
+									{
+										_this.cancelSearch();
+										var newInputNode = _this.sitePanel.offeringInput.node();
+										newInputNode.focus();
+										newInputNode.setSelectionRange(0, newInputNode.value.length);
+										unblockClick();
+									});
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
 						},
 						cr.syncFail);
 			}
