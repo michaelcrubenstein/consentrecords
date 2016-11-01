@@ -766,13 +766,6 @@ var MultiTypeOptionView = (function() {
 		SearchOptionsView.prototype.startSearchTimeout.call(this, val);
 	}
 				
-	MultiTypeOptionView.prototype.fields = function()
-	{
-		var fields = SearchView.prototype.fields.call(this);
-		fields.push('type');
-		return fields;
-	}
-	
 	MultiTypeOptionView.prototype.search = function(val)
 	{
 		if (!this.initialTypeName || !this.initialTypeName.length)
