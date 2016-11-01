@@ -1238,6 +1238,17 @@ var TagSearchView = (function() {
 		return true;
 	}
 	
+	TagSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				leftText.text(d.getDescription());
+			});
+	}
+	
 	TagSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		if (d.typeName === 'Service')
