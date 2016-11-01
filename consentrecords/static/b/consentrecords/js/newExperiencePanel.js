@@ -852,74 +852,6 @@ var ExperienceDatumSearchView = (function() {
 		}
 	}
 	
-	ExperienceDatumSearchView.prototype.appendDescriptions = function(buttons)
-	{
-		var _this = this;
-		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Offering")
-				{
-					if (_this.experience.site && _this.experience.site.getValueID() == d.getValue("Site").getValueID())
-						leftText.text(d.getDescription());
-					else
-					{
-						leftText.append('div')
-							.classed('title', true).text(d.getDescription());
-	
-						orgDiv = leftText.append('div').classed("organization", true);
-						if (d.getValue("Organization").getValueID() !=
-							(_this.experience.organization && _this.experience.organization.getValueID()))
-							orgDiv.append('div').text(d.getValue("Organization").getDescription());
-						if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
-						{
-							orgDiv.append('div')
-								.classed('address-line', true)
-								.text(d.getValue("Site").getDescription());
-						}
-					}
-				}
-				else if (d.typeName === "Site")
-				{
-					/* The organization name is either a value of d or, if d is a value
-					   of an Offering, then the organization name is the value of the offering.
-					 */
-					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
-						orgValue = d.cell.parent.getValue("Organization");
-					else
-						orgValue = d.getValue("Organization");
-						
-					if (orgValue.getDescription() == d.getDescription() ||
-						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
-					{
-						leftText.text(d.getDescription());
-					}
-					else
-					{
-						orgDiv = leftText.append('div').classed("organization", true);		
-						orgDiv.append('div').text(orgValue.getDescription());
-						orgDiv.append('div')
-							.classed('address-line', true)
-							.text(d.getDescription());
-					}
-				}
-				else if (d.typeName === "Organization")
-				{
-					leftText.text(d.getDescription());
-				}
-				else if (d.typeName === "Service")
-				{
-					leftText.text(d.getDescription());
-				}
-				else
-				{
-					leftText.text(d.getDescription());
-				}
-			});
-	}
-	
 	ExperienceDatumSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		if (d.typeName === 'Service')
@@ -1150,7 +1082,10 @@ var ExperienceDatumSearchView = (function() {
 		this.initialTypeName = this.typeNames[0];
 		this.typeName = this.initialTypeName;
 		this.sitePanel = sitePanel;
-		MultiTypeOptionView.call(this, containerNode, experience, function(buttons) { _this.appendDescriptions(buttons); });
+		MultiTypeOptionView.call(this, containerNode, experience, 
+			function(buttons) { 
+				_this.appendDescriptions(buttons); 
+			});
 		
 		var _this = this;
 
@@ -2029,6 +1964,45 @@ var OfferingSearchView = (function() {
 			helpDiv.style('display', 'none');
 		}
 		return true;
+	}
+	
+	OfferingSearchView.prototype.appendDescriptions = function(buttons)
+	{
+		var _this = this;
+		
+		buttons.each(function(d)
+			{
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				if (d.typeName === "Offering")
+				{
+					if (_this.experience.site && _this.experience.site.getValueID() == d.getValue("Site").getValueID())
+						leftText.text(d.getDescription());
+					else
+					{
+						leftText.append('div')
+							.classed('title', true).text(d.getDescription());
+	
+						orgDiv = leftText.append('div').classed("organization", true);
+						if (d.getValue("Organization").getValueID() !=
+							(_this.experience.organization && _this.experience.organization.getValueID()))
+							orgDiv.append('div').text(d.getValue("Organization").getDescription());
+						if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
+						{
+							orgDiv.append('div')
+								.classed('address-line', true)
+								.text(d.getValue("Site").getDescription());
+						}
+					}
+				}
+				else if (d.typeName === "Service")
+				{
+					leftText.text(d.getDescription());
+				}
+				else
+				{
+					leftText.text(d.getDescription());
+				}
+			});
 	}
 	
 	OfferingSearchView.prototype.isDirtyText = function()
