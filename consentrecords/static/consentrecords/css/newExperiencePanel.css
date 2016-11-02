@@ -132,6 +132,7 @@
 	panel.new-experience-panel section ol.search {
 		height: 100%;
 		overflow-y: scroll;
+		-webkit-overflow-scrolling: touch;
 		position: relative;
 	}
 	
