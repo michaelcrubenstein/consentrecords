@@ -296,13 +296,14 @@ var SearchPathsPanel = (function () {
 				fd.x = nextX;
 				if (fd.visible === undefined || fd.visible)
 				{
-					nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width + _this.searchFlagHSpacing;
+					nextX += thisSpacing;
 					if (nextX >= maxX && fd.x > startX)
 					{
 						nextY += deltaY;
 						nextX = startX;
 						fd.x = nextX;
-						nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+						nextX += thisSpacing;
 					}
 				}
 				
@@ -575,7 +576,7 @@ var SearchPathsPanel = (function () {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
+					return $(this.parentNode).children('text')[0].getBBox().width + 5;
 				});	
 		
 		g.selectAll('line.flag-pole')
