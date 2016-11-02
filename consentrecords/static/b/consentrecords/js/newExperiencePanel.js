@@ -2999,9 +2999,12 @@ var NewExperiencePanel = (function () {
 			_this.resizeVisibleSearch(0);
 		});
 
-		// var searchView = new NewExperienceSearchView(this, experience);
-		
-		var birthday = experience.path.getDatum("Birthday");
+		var birthday = experience.path.getDatum("Birthday") ||
+			(function()
+			 {
+				var todayDate = getUTCTodayDate();
+				return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, todayDate.getUTCMonth() + 1);
+			 })();
 		
 		var optionPanel = panel2Div.append('section')
 			.classed('date-range-options', true);
