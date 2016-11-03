@@ -2770,7 +2770,7 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase) {
+	function NewExperiencePanel(experience, previousPanelNode, phase, showFunction) {
 		if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
@@ -2780,8 +2780,9 @@ var NewExperiencePanel = (function () {
 		else if (experience.serviceDomain)
 			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
 			
+		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
-		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
+		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", showFunction);
 	
 		var hidePanel = function() { 
 				_this.hide();
