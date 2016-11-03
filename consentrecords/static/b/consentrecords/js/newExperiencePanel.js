@@ -2301,9 +2301,7 @@ var NewExperiencePanel = (function () {
 		var hidableDiv = new HidableDiv(dateInput.node());
 		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
 			{
-				dateInput.text(getLocaleDateString(newDate));
-				$(dateInput.node()).width('auto');
-				hidableDiv.width = $(dateInput.node()).width();
+				hidableDiv.value(getLocaleDateString(newDate));
 			}, minDate, maxDate);
 
 		var reveal = new VerticalReveal(dateWheel.node());

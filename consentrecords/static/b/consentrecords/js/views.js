@@ -2378,6 +2378,21 @@ var HidableDiv = (function()
 		return this.$div.css('display') != 'none';
 	}
 	
+	HidableDiv.prototype.value = function(newValue)
+	{
+		if (newValue === undefined)
+		{
+			return this.$div.text();
+		}
+		else
+		{
+			this.$div.text(newValue);
+			this.$div.width('auto');
+			this._width = this.$div.width();
+			return this;
+		}
+	}
+	
 	function HidableDiv(div, startDisplay, duration)
 	{
 		if (div)
