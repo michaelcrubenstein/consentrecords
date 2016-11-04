@@ -47,6 +47,11 @@
 	text-align: center;
 	margin: 0 auto;
 	font-weight: 600;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
 }
 /* Links go on the right or left over titles. */
 .site-navbar-link {

@@ -837,7 +837,7 @@ var PathView = (function() {
 					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase());
+					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase(), revealPanelLeft);
 					
 					revealPanelLeft(editPanel.node());
 				}
@@ -1539,7 +1539,8 @@ var PathLines = (function() {
 	/* Set up the widths of the objects based on the data. */
 	PathLines.prototype.setupWidths = function()
 	{
-		var newWidth = this.sitePanel.scrollAreaWidth();
+		var guideGroupBounds = this.guideGroup.node().getBBox();
+		var newWidth = guideGroupBounds.x + guideGroupBounds.width + this.experienceGroupDX;
 		var _this = this;
 		
 		if (this.detailFlagData != null)
@@ -1660,7 +1661,7 @@ var PathLines = (function() {
 				
 		this.appendDetailContents();
 			
-		d3.select(this.containerDiv).selectAll('svg')
+		d3.select(this.containerDiv)
 			.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 

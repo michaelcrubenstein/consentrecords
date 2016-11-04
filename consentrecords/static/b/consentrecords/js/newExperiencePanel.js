@@ -2230,11 +2230,11 @@ var ExperienceShareOptions = (function () {
 		}
 		
 		var emailAddExperienceButton = div.append('button')
-			.text("Email Add Experience Link")
+			.text("Mail Add Experience Link")
 			.classed("site-active-text", true)
 			.on("click", function()
 				{
-					if (prepareClick('click', "Email Add Experience Link"))
+					if (prepareClick('click', "Mail Add Experience Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2301,9 +2301,7 @@ var NewExperiencePanel = (function () {
 		var hidableDiv = new HidableDiv(dateInput.node());
 		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
 			{
-				dateInput.text(getLocaleDateString(newDate));
-				$(dateInput.node()).width('auto');
-				hidableDiv.width = $(dateInput.node()).width();
+				hidableDiv.value(getLocaleDateString(newDate));
 			}, minDate, maxDate);
 
 		var reveal = new VerticalReveal(dateWheel.node());
@@ -2770,7 +2768,7 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase) {
+	function NewExperiencePanel(experience, previousPanelNode, phase, showFunction) {
 		if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
@@ -2780,8 +2778,9 @@ var NewExperiencePanel = (function () {
 		else if (experience.serviceDomain)
 			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
 			
+		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
-		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
+		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", showFunction);
 	
 		var hidePanel = function() { 
 				_this.hide();
