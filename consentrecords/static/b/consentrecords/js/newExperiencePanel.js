@@ -2230,11 +2230,11 @@ var ExperienceShareOptions = (function () {
 		}
 		
 		var emailAddExperienceButton = div.append('button')
-			.text("Email Add Experience Link")
+			.text("Mail Add Experience Link")
 			.classed("site-active-text", true)
 			.on("click", function()
 				{
-					if (prepareClick('click', "Email Add Experience Link"))
+					if (prepareClick('click', "Mail Add Experience Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
