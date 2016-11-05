@@ -61,9 +61,6 @@
     		top: 0;
     		z-index: 4;
     	}
-    	panel#id_forgot_password_panel {
-    		background: white;
-    	}
     	.centered-right-glyph {
 			position: absolute;
 			top: 50%;
@@ -146,23 +143,6 @@
 		{% endif %}
 		
   		<panel id="id_user_home_panel" class="initial" >
-			<div class="alert-container"></div>
-			<section class="button-section">
-				<section class="row-button-group">
-<!-- 
-					<button panelID = "id_your_plans_panel"
-						class="check-signin-button btn row-button site-active-text">
-						<span class="pull-left">My Plans</span>
-						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
-					</button>
-					<button panelID = "id_consent_forms_panel"
-						class="check-signin-button btn row-button site-active-text">
-						<span class="pull-left">Consent Forms</span>
-						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
-					</button>
- -->
-				</section>
-			</section>
 		</panel>
 		
 		<panel id="id_sign_in_panel" class="level-2-panel reveal">
@@ -195,65 +175,6 @@
 		  </div>
 		</panel> <!-- /container -->
 		
-		<panel id="id_forgot_password_panel" class="level-2-panel reveal">
-			<form class="form-simple">
-				<div class="site-title">Forgot your Password?</div>
-				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
-
-				<div class="row">
-					<div class="alert-container col-xs-12"></div>
-				</div>
-
-			  <div class="row">
-					<style>
-						.feedback-control {
-							width: calc(100% - 30px);
-						}
-					</style>
-					<div class="col-xs-12">
-						<div id="id_email_group" class="form-group has-feedback">
-							<label for="id_email"  class="control-label sr-only">Email Address</label>
-							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
-							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
-						</div>
-					</div> 
-			  </div>
-				<div class="form-group site-trio-container">
-					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
-					<div class="site-trio-fill"></div>
-					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
-				</div>
-				<div class="row">
-					<div id="id_alert_success" class="col-xs-12 div-success"></div>
-				</div>
-			</form>
-		</panel>
-
-	    <panel id="id_your_plans_panel" class="level-2-panel reveal list">
-			<nav role="navigation">
-				<div>
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Plans</span></div>
-					</div>
-				</div>
-			</nav>
-			<div class="alert-container"></div>
-			<div class="body">
-				<div>
-					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
-						<div id="id_searchArea" class="searchbar">
-						</div>
-						<div id="id_plans">
-						</div>
-					</div>
-				</div>
-			</div>
-	    </panel>
-
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
   	</body>
@@ -547,15 +468,6 @@
 		}
 		
 		$(document).ready (function(e) {
-			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
-			{
-				show_plans(cr.signedinUser, "#id_plans");
-			});
-			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
-				{
-					show_consent_records("#id_openConsentForms");
-				});	
-			
 			var signInSuccess = function(userData)
 			{
 				cr.signedinUser.updateFromChangeData(userData);
@@ -639,36 +551,13 @@
 			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
 				if (prepareClick('click', 'Signin forgot password'))
 				{
-					showFixedPanel($(this).parents("panel")[0], "#id_forgot_password_panel");
+					var panel = new ForgotPasswordPanel(document.getElement("#id_sign_in_panel"));
+					showPanelUp(panel.node())
+						.always(unblockClick);
 				}
 				e.preventDefault();
 			});
 
-			$("#id_forgot_password_panel .submit-button").click(function(e) {
-				if (forgotPassword.canSubmit())
-				{
-					if (prepareClick('click', 'forgot password submit'))
-					{
-						var successFunction = function()
-						{
-							$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-							hidePanelRight($("#id_forgot_password_panel")[0], false)
-						}
-						forgotPassword.submit(successFunction, syncFailFunction);
-					}
-				}
-			   //stop form submission
-			   e.preventDefault();
-			});
-
-			$("#id_forgot_password_panel #id_email").bind("keyup input paste", forgotPassword.checkenabled);
-			$("#id_forgot_password_panel").on("revealing.cr", function()
-			{
-				$("#id_forgot_password_panel #id_email").val("");
-				$("#id_forgot_password_panel #id_email").focus();
-				forgotPassword.checkenabled();
-			});
-			
 			var previousPanel = $("#id_user_home_panel")[0];
 			var firstPanel;
 			
@@ -1036,50 +925,6 @@
 			}
 		};
 
-		forgotPassword = {
-			canSubmit: function() {
-				var testusername = $("#id_email").val();
-				return validateEmail(testusername);
-			},
-		
-			checkenabled: function() {			
-				if (!forgotPassword.canSubmit())
-				{
-					$(".submit-button").addClass("site-disabled-text")
-									   .removeClass("site-active-text")
-									   .prop( "disabled", true );
-					$( "#id_email_group" ).removeClass( "has-success");
-					$( "#id_emailOK" ).removeClass( "glyphicon-ok" );
-				}
-				else
-				{
-					$(".submit-button").removeClass("site-disabled-text")
-									   .addClass("site-active-text")
-									   .prop( "disabled", false );
-					$( "#id_email_group" ).addClass( "has-success");
-					$( "#id_emailOK" ).addClass( "glyphicon-ok" );
-				}
-			},
-			
-			submit: function(successFunction, failFunction) {
-				bootstrap_alert.success('Sending email (this may take a few minutes)...', '#id_alert_success');
-				
-				$.post("{% url 'resetPassword' %}", 
-					{ "email": $("#id_email").val()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						closealert();
-						bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
-						successFunction();
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown) {
-				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				  });
-			},
-			
-		};
-				
 		function getFilter(node)
 		{
 			return function()

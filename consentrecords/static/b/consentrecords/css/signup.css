@@ -164,3 +164,6 @@
     	display: inline-block;
     }
     
+	.feedback-control {
+		width: calc(100% - 30px);
+	}

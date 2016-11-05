@@ -506,3 +506,182 @@ var Signup = (function () {
 	
 	return Signup;
 })();
+
+var ForgotPasswordPanel = (function()
+{
+	ForgotPasswordPanel.prototype = new SitePanel();
+	ForgotPasswordPanel.prototype.submitButton = null;
+	ForgotPasswordPanel.prototype.emailGroup = null;
+	ForgotPasswordPanel.prototype.emailInput = null;
+	ForgotPasswordPanel.prototype.emailOK = null;
+	
+	ForgotPasswordPanel.prototype.canSubmit = function() {
+		var testusername = $(this.emailInput).val();
+		return validateEmail(testusername);
+	}
+
+	ForgotPasswordPanel.prototype.checkenabled = function() {			
+		if (!this.canSubmit())
+		{
+			$(this.submitButton).addClass("site-disabled-text")
+							   .removeClass("site-active-text")
+							   .prop( "disabled", true );
+			$(this.emailGroup).removeClass( "has-success");
+			$(this.emailOK).removeClass( "glyphicon-ok" );
+		}
+		else
+		{
+			$(this.submitButton).removeClass("site-disabled-text")
+							   .addClass("site-active-text")
+							   .prop( "disabled", false );
+			$(this.emailGroup).addClass( "has-success");
+			$(this.emailOK).addClass( "glyphicon-ok" );
+		}
+	}
+			
+	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
+		var _this = this;
+		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
+		
+		$.post("{% url 'resetPassword' %}", 
+			{ "email": $(this.emailInput).val()
+			})
+		  .done(function(json, textStatus, jqXHR)
+			{
+				closealert();
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
+				successFunction();
+			})
+		  .fail(function(jqXHR, textStatus, errorThrown) {
+			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+		  });
+	}
+				
+	function ForgotPasswordPanel(previousPanel)
+	{
+		SitePanel.call(this, previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
+		var _this = this;
+		
+		var form = this.panelDiv.append('form')
+			.classed('form-simple', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Forgot your Password?");
+		
+		form.append('div')
+			.classed('help-block', true)
+			.text("Enter your email address to receive an email with a link you can click to reset your password.");
+			
+		form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('alert-container col-xs-12');
+			
+		var emailGroup = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12', true)
+			.append('div')
+			.classed('form-group has-feedback', true);
+		this.emailGroup = emailGroup.node();
+		
+		var emailLabel = emailGroup.append('label')
+			.classed('control-label sr-only', true)
+			.text("Email Address");
+			
+		this.emailInput = emailLabel.append('input')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email")
+			.on("input", function() { _this.checkenabled(); })
+			.node();
+			
+		this.emailOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback")
+			.node();
+		
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('done-button site-trio-clipped site-active-text', true)
+			.text("Cancel")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						showClickFeedback(this);
+						hidePanelRight(_this.node(), false);
+					}
+				});
+		};
+			
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text', true)
+			.text("Send Email")
+			.on('click', function()
+				{
+					if (this.canSubmit())
+					{
+						if (prepareClick('click', 'forgot password submit'))
+						{
+							var successFunction = function()
+							{
+								$(previousPanel).hide("slide", {direction: "right"}, 0);
+								hidePanelRight(_this.node(), false)
+							}
+							this.submit(successFunction, cr.syncFail);
+						}
+					}
+				   //stop form submission
+				   d3.event.preventDefault();
+				});
+				
+		this.alertSuccess = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12 div-success', true)
+			.node();
+			
+		$(this.node()).on("revealing.cr", function()
+		{
+			$(_this.emailInput).val("")
+				.focus();
+			_this.checkenabled();
+		});
+		
+/* 
+			<form class="form-simple">
+				<div class="site-title">Forgot your Password?</div>
+				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
+
+				<div class="row">
+					<div class="alert-container col-xs-12"></div>
+				</div>
+
+			  <div class="row">
+					<div class="col-xs-12">
+						<div id="id_email_group" class="form-group has-feedback">
+							<label for="id_email"  class="control-label sr-only">Email Address</label>
+							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
+							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
+						</div>
+					</div> 
+			  </div>
+				<div class="form-group site-trio-container">
+					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+					<div class="site-trio-fill"></div>
+					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
+				</div>
+				<div class="row">
+					<div id="id_alert_success" class="col-xs-12 div-success"></div>
+				</div>
+			</form>
+ */
+	}
+	return ForgotPasswordPanel;
+})();
