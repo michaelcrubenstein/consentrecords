@@ -145,36 +145,6 @@
   		<panel id="id_user_home_panel" class="initial" >
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel reveal">
-		  <form class="form-simple form-signin">
-			<div class="site-title">Sign In to PathAdvisor</div>
-			<div class="alert-container"></div>
-			<label for="id_username" class="sr-only">Email address</label>
-			<input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
-			<label for="id_password" class="sr-only">Password</label>
-			<input type="password" id="id_password" name="password" class="form-control" placeholder="Password" required>
-			<div class="checkbox">
-			  <label>
-				<input id="id_rememberme" type="checkbox" value="remember-me"> Remember me
-			  </label>
-			</div>
-			<div class="site-trio-container">
-				<span class="signin-cancel-button site-trio-clipped site-active-text">Cancel</span>
-				<div class="site-trio-fill"></div>
-				<span class="submit-button site-trio-clipped site-active-text default-link">Sign&nbsp;In</span>
-			</div>
-		  </form>
-	  
-		  <hr />
-
-		  <div class="div-create-new-account other-action">
-			<span>Don't have an account?</span><a id="id_signup_link" class="site-active-text">Create one now.</a>
-		  </div>
-		  <div class="div-forgot-password other-action">
-			<span>Forgot your password?</span><a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
-		  </div>
-		</panel> <!-- /container -->
-		
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
   	</body>
@@ -248,35 +218,6 @@
 		var userFirstName = null;
 		var userLastName = null;
 
-		/* Show a pre-defined panel associated with this button. */
-		function showPanel()
-		{
-			var panelID = d3.select(this).attr("panelID");
-			var panelDiv = d3.select("#" + panelID);
-			if (prepareClick('click show panel button', panelID))
-			{
-				showClickFeedback(this);
-				showPanelLeft(panelDiv.node(), unblockClick);
-			}
-		}
-		
-		/* Hide the currently displaying panel with no further action. */		
-		function hidePanel()
-		{
-			var sitePanelNode = $(this).parents("panel")[0];
-			if (prepareClick('click', 'hide panel button'))
-			{
-				showClickFeedback(this);
-				hidePanelRight(sitePanelNode, false);
-			}
-		}
-		
-		/* Initialize the buttons that show a pre-defined panel. */
-		$(".show-panel-button").click(showPanel);
-		
-		/* Initialize the buttons that hide the currently displaying panel with no further action. */
-		$(".done-button").click(hidePanel);
-		
 		function checkSignin(previousPanel, done)
 		{
 			if (cr.signedinUser.getValueID())
@@ -301,7 +242,12 @@
 					$(cr.signedinUser).one("signin.cr", null, previousPanel, onSignin);
 					$(cr.signedinUser).one("signinCanceled.cr", null, previousPanel, onSigninCanceled);
 				
-					showFixedPanel(previousPanel, "#id_sign_in_panel");
+					var panel = new SigninPanel(previousPanel);
+					firstPanel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
 				}
 			}
 		}
@@ -467,97 +413,7 @@
 			return firstPanel;
 		}
 		
-		$(document).ready (function(e) {
-			var signInSuccess = function(userData)
-			{
-				cr.signedinUser.updateFromChangeData(userData);
-				cr.signedinUser.checkCells(["_system access"], function()
-					{
-						hidePanelRight($("#id_sign_in_panel")[0], false,
-							function()
-							{
-								crp.pushInstance(cr.signedinUser);
-								$(cr.signedinUser).trigger("signin.cr");
-							});
-						
-					},
-					syncFailFunction);
-			}
-				
-			/* Items for the sign-in panel. */
-			$("#id_sign_in_panel .submit-button").click(function(e) {
-				if (prepareClick('click', 'Signin Sign in'))
-				{
-					signIn.submit(signInSuccess, syncFailFunction);
-				}
-				
-			   //stop form submission
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel .signin-cancel-button").click(function(e) {
-				if (prepareClick('click', 'Signin Cancel'))
-				{
-					showClickFeedback(this);
-					hidePanelRight($("#id_sign_in_panel")[0], false,
-						function()
-						{
-							$(cr.signedinUser).trigger("signinCanceled.cr");
-						});
-				}
-				
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
-				if (e.which == 13)
-				{
-					if (prepareClick('return key', 'Signin sign in'))
-					{
-						signIn.submit(signInSuccess, syncFailFunction);
-					}
-					e.preventDefault();
-				}
-			});
-	
-			$("#id_sign_in_panel input[type='text']").bind("keyup input paste", signIn.checkenabled);
-			$("#id_sign_in_panel input[type='password']").bind("keyup input paste", signIn.checkenabled);
-
-			$("#id_sign_in_panel").on("revealing.cr", function()
-			{
-				$("#id_sign_in_panel #id_username").val($.cookie("email"));
-				$("#id_sign_in_panel #id_password").val("");
-				if ($("#id_sign_in_panel #id_username").val() !== "")
-				{
-					$("#id_sign_in_panel #id_rememberme").prop("checked", true);
-					$("#id_sign_in_panel #id_password").focus();
-				}
-				else
-					$("#id_sign_in_panel #id_username").focus();
-				
-				signIn.checkenabled();
-			});	
-			
-			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepareClick('click', 'Signin sign up'))
-				{
-					var signUp = new Signup($(this).parents("panel")[0]);
-					showPanelUp(signUp.node())
-						.always(unblockClick);
-				}
-				e.preventDefault();
-			});
-
-			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
-				if (prepareClick('click', 'Signin forgot password'))
-				{
-					var panel = new ForgotPasswordPanel(document.getElement("#id_sign_in_panel"));
-					showPanelUp(panel.node())
-						.always(unblockClick);
-				}
-				e.preventDefault();
-			});
-
+		$(document).ready (function(e) {						
 			var previousPanel = $("#id_user_home_panel")[0];
 			var firstPanel;
 			
@@ -875,56 +731,6 @@
 			}
 		});
 		
-		signIn = {
-			canSubmit: function() {
-			return $("#id_sign_in_panel #id_password").val() !== "" &&
-				$("#id_sign_in_panel #id_username").val() !== "";
-			},
-		
-			checkenabled: function() {			
-				if (!signIn.canSubmit())
-				{
-					$("#id_sign_in_panel .submit-button").addClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").removeClass("site-active-text");
-				}
-				else
-				{
-					$("#id_sign_in_panel .submit-button").removeClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").addClass("site-active-text");
-				}
-			},
-		
-			submit: function(successFunction, failFunction) {
-				if (!signIn.canSubmit())
-					return;
-				
-				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
-				
-				$.post("{% url 'submitSignin' %}", { username : $("#id_username").val(),
-											  password : $("#id_password").val() })
-				.done(function(json)
-					{
-						if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
-							$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
-						else
-							$.removeCookie("email");
-						
-						$("#id_sign_in_panel #id_username").val("")
-						$("#id_sign_in_panel #id_password").val("")
-						
-						$.cookie("authenticator", "email", { path: "/"});
-						if (successFunction)
-						{
-							successFunction(json.user);
-						}
-					})
-				.fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-					});
-			}
-		};
-
 		function getFilter(node)
 		{
 			return function()
@@ -951,15 +757,6 @@
 			}
 		}
 		
-		function showFixedPanel(previousPanel, newNode)
-		{
-			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
-			var panel = d3.select(newNode);
-			panel.style("z-index", zIndex);
-			
-			showPanelLeft(panel.node(), unblockClick);
-		}
-			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
 			cr.submitSignout()
