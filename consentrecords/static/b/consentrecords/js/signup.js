@@ -507,6 +507,232 @@ var Signup = (function () {
 	return Signup;
 })();
 
+var SigninPanel = (function()
+{
+	SigninPanel.prototype = new SitePanel();
+	
+	SigninPanel.prototype.canSubmit = function() {
+	return $(this.passwordInput).val() !== "" &&
+		$(this.emailInput).val() !== "";
+	},
+
+	SigninPanel.prototype.checkenabled = function() {			
+		if (!this.canSubmit())
+		{
+			this.signinButton.classed("site-disabled-text", true)
+				.classed("site-active-text", false);
+		}
+		else
+		{
+			this.signinButton.classed("site-disabled-text", false)
+				.classed("site-active-text", true);
+		}
+	},
+
+	SigninPanel.prototype.submit = function(successFunction, failFunction) {
+		if (!this.canSubmit())
+			return;
+		
+		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
+		
+		var _this = this;
+		$.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
+									  password : $(this.passwordInput).val() })
+			.done(function(json)
+				{
+					if ($(_this.rememberMeCheckbox).prop("checked"))
+						$.cookie("email", $(_this.emailInput).val(), { expires : 10 });
+					else
+						$.removeCookie("email");
+				
+					$(_this.emailInput).val("")
+					$(_this.passwordInput).val("")
+				
+					$.cookie("authenticator", "email", { path: "/"});
+					if (successFunction)
+						successFunction(json.user);
+				})
+			.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				});
+	}
+
+	SigninPanel.prototype.initializeFocus = function()
+	{
+		if ($(this.emailInput).val() !== "")
+		{
+			$(this.rememberMeCheckbox).prop("checked", true);
+			$(this.passwordInput).focus();
+		}
+		else
+			$(this.emailInput).focus();
+	}
+
+	function SigninPanel(previousPanel)
+	{
+		SitePanel.call(this, previousPanel, null, "Sign In", "sign-in", revealPanelUp);
+		var _this = this;
+
+		var form = this.panelDiv.append('form')
+			.classed('form-simple form-signin', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Sign In to PathAdvisor");
+		
+		form.append('div')
+			.classed('alert-container', true);
+			
+		this.emailInput = form.append('input')
+				.attr('type', 'email')
+				.attr('maxlength', '254')
+				.classed('form-control', true)
+				.attr('placeholder', 'Email address')
+				.attr('required', '')
+				.attr('autofocus', '')
+				.on('input', function() { _this.checkenabled(); })
+				.node();
+		
+		var signInSuccess = function(userData)
+		{
+			cr.signedinUser.updateFromChangeData(userData);
+			cr.signedinUser.promiseCells(["_system access"])
+				.then(function()
+					{
+						_this.hideRight(function()
+							{
+								crp.pushInstance(cr.signedinUser);
+								$(cr.signedinUser).trigger("signin.cr");
+								unblockClick();
+							});
+					
+					},
+					cr.syncFail);
+		}
+		
+		this.passwordInput = form.append('input')
+				.attr('type', 'password')
+				.attr('maxlength', '254')
+				.classed('form-control', true)
+				.attr('placeholder', 'Password')
+				.attr('required', '')
+				.on('input', function() { _this.checkenabled(); })
+				.on('keypress', function() {
+						if (d3.event.which == 13)
+						{
+							if (prepareClick('return key', 'Signin sign in'))
+							{
+								_this.submit(signInSuccess, cr.syncFail);
+							}
+							d3.event.preventDefault();
+						}
+					})
+				.node();
+				
+		var rememberMeCheckboxLabel = form.append('div')
+			.classed('checkbox', true)
+			.append('label');
+			
+		this.rememberMeCheckbox = rememberMeCheckboxLabel.append('input')
+			.attr('type', 'checkbox')
+			.node();
+	
+		rememberMeCheckboxLabel.append('text').text(" Remember me");
+			
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
+			.text("Cancel")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						showClickFeedback(this);
+						_this.hideRight(function()
+							{
+								$(cr.signedinUser).trigger("signinCanceled.cr");
+								unblockClick();
+							});
+					}
+					d3.event.preventDefault();
+				});
+							
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		this.signinButton = buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text default-link', true)
+			.text("Sign In")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'Signin Sign in'))
+					{
+						_this.submit(signInSuccess, cr.syncFail);
+					}
+
+				   //stop form submission
+				   d3.event.preventDefault();
+				});
+
+		this.panelDiv.append('hr');
+		
+		var newAccountDiv = this.panelDiv.append('div')
+			.classed('div-create-new-account other-action', true);
+		newAccountDiv.append('span')
+			.text("Don't have an account?");
+		newAccountDiv.append('a')
+			.classed('site-active-text', true)
+			.text('Create one now.')
+			.on('click', function() {
+				if (prepareClick('click', 'Signin sign up'))
+				{
+					var signUp = new Signup(_this.node());
+					showPanelUp(signUp.node())
+						.always(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+		
+		var forgotPasswordDiv = this.panelDiv.append('div')
+			.classed('div-forgot-password other-action', true);
+		forgotPasswordDiv.append('span')
+			.text("Forgot your password?");
+		forgotPasswordDiv.append('a')
+			.classed('site-active-text', true)
+			.text('Reset it now.')
+			.on('click', function() {
+				if (prepareClick('click', 'Signin forgot password'))
+				{
+					var panel = new ForgotPasswordPanel(_this.node());
+					showPanelUp(panel.node())
+						.always(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+
+		$(this.node()).on("revealing.cr", function()
+			{
+				$(_this.emailInput).val($.cookie("email"));
+				$(_this.passwordInput).val("");
+		
+				if ($(_this.emailInput).val() !== "")
+				{
+					$(_this.rememberMeCheckbox).prop("checked", true);
+					$(_this.passwordInput).focus();
+				}
+				else
+					$(_this.emailInput).focus();
+		
+				_this.checkenabled();
+			});
+	}
+
+	return SigninPanel;
+})();
+
 var ForgotPasswordPanel = (function()
 {
 	ForgotPasswordPanel.prototype = new SitePanel();
@@ -559,7 +785,7 @@ var ForgotPasswordPanel = (function()
 				
 	function ForgotPasswordPanel(previousPanel)
 	{
-		SitePanel.call(this, previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
+		SitePanel.call(this, previousPanel, null, "Forgot Password", "sign-up", revealPanelUp);
 		var _this = this;
 		
 		var form = this.panelDiv.append('form')
@@ -615,7 +841,6 @@ var ForgotPasswordPanel = (function()
 						hidePanelRight(_this.node(), false);
 					}
 				});
-		};
 			
 		buttonContainer.append('div')
 			.classed('site-trio-fill', true);
