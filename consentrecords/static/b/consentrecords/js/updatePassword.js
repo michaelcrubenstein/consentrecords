@@ -52,7 +52,7 @@ var UpdatePasswordPanel = (function () {
 										  currentPasswordInput.property('value'),
 										  newPasswordInput.property('value'),
 										  function() {
-										  	_this.hidePanelRight(
+										  	_this.hideRight(
 										  		function()
 										  		{
 										  			bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
@@ -159,7 +159,7 @@ var UpdateUsernamePanel = (function () {
 						cr.updateUsername(newUsernameInput.property('value'),
 										  currentPasswordInput.property('value'),
 										  function() {
-										  	_this.hidePanelRight(function()
+										  	_this.hideRight(function()
 										  		{
 										  			bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
 										  			unblockClick();

@@ -318,7 +318,7 @@
 			e.preventDefault();
 		});
 
-		function checkSignin(panel, done, message)
+		function checkSignin(previousPanel, done, message)
 		{
 			if (prepareClick('click', message))
 			{
@@ -384,7 +384,7 @@
 			var panel = d3.select(newNode);
 			panel.style("z-index", zIndex);
 			
-			showPanelLeft(panel.node(), unblockClick);
+			panel.showLeft().then(unblockClick);
 		}
 			
 		function sign_out(successFunction, failFunction) {
@@ -575,7 +575,7 @@
 				var navContainer = sitePanel.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
-					.on("click", handleCloseRightEvent);
+					.on("click", function() { sitePanel.hideRightEvent(); });
 				backButton.append("span").text("Done");
 	
 				var panel2Div = sitePanel.appendScrollArea();
@@ -591,7 +591,7 @@
 					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
 				});
 
-				showPanelLeft(sitePanel.node(), unblockClick);
+				sitePanel.showLeft().then(unblockClick);
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
@@ -712,7 +712,7 @@
 			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+				.on("click", function() { sitePanel.hideRightEvent(); });
 			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
@@ -736,7 +736,7 @@
 					d3.event.preventDefault();
 				});
 
-			showPanelLeft(sitePanel.node(), unblockClick);
+			sitePanel.showLeft().then(unblockClick);
 		}
 		/*
 			Displays a panel from which the user can pick a session from
@@ -828,7 +828,7 @@
 								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
-									.on("click", handleCloseRightEvent);
+									.on("click", function() { sitePanel.hideRightEvent(); });
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 						
@@ -836,7 +836,7 @@
 
 								var panel2Div = sitePanel.appendScrollArea();
 
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
@@ -916,7 +916,7 @@
 			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+				.on("click", function() { sitePanel.hideRightEvent(); });
 			backButton.append("span").text("Done");
 	
 			var centerButton = navContainer.appendTitle("Pick User");
@@ -925,7 +925,7 @@
 
 			var panel2Div = sitePanel.appendScrollArea();
 	
-			showPanelLeft(sitePanel.node(), unblockClick);
+			sitePanel.showLeft().then(unblockClick);
 			
 			function show_users()
 			{
@@ -1186,7 +1186,7 @@
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
 						var backButton = navContainer.appendLeftButton()
-							.on("click", handleCloseRightEvent);
+							.on("click", function() { addInquiryPanelDiv.hideRightEvent(); });
 						backButton.append("span").text("Done");
 				
 						var centerButton = navContainer.appendTitle("Record Inquiry");
@@ -1281,7 +1281,7 @@
 									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
-						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);
+						addInquiryPanelDiv.showLeft().then(unblockClick);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -1368,7 +1368,7 @@
 								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
-									.on("click", handleCloseRightEvent);
+									.on("click", function() { sitePanel.hideRightEvent(); });
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Record Participation");
 						
@@ -1408,7 +1408,7 @@
 									});
 								drawInfoButtons(infoButtons);
 								
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 							},
 							syncFailFunction);
 					}

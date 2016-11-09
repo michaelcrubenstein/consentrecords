@@ -799,7 +799,7 @@ var ComparePathsPanel = (function () {
 		var settingsButton;
 		
 		var backButton = this.navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { _this.hideRightEvent(); });
 		backButton.append("span").text("Done");
 
 		var addExperienceButton = this.navContainer.appendRightButton();

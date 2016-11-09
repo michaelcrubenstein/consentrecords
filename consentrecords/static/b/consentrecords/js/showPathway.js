@@ -341,7 +341,7 @@ var PickOrCreatePanel = (function () {
 			
 			this.searchView = this.createSearchView();
 
-			showPanelLeft(this.node(), unblockClick);
+			this.showLeft().then(unblockClick);
 		}
 	}
 	return PickOrCreatePanel;

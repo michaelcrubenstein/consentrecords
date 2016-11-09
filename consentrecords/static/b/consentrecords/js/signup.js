@@ -838,7 +838,7 @@ var ForgotPasswordPanel = (function()
 					if (prepareClick('click', 'hide panel button'))
 					{
 						showClickFeedback(this);
-						hidePanelRight(_this.node(), false);
+						_this.hideRight(unblockClick);
 					}
 				});
 			
@@ -857,7 +857,7 @@ var ForgotPasswordPanel = (function()
 							var successFunction = function()
 							{
 								$(previousPanel).hide("slide", {direction: "right"}, 0);
-								hidePanelRight(_this.node(), false)
+								_this.hideRight(unblockClick);
 							}
 							this.submit(successFunction, cr.syncFail);
 						}

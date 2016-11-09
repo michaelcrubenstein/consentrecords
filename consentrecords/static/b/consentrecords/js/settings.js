@@ -121,7 +121,7 @@ var Settings = (function () {
 						try
 						{
 							var panel = new PickUserAccessPanel(userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue, _this.node());
-							showPanelLeft(panel.node(), unblockClick);
+							panel.showLeft().then(unblockClick);
 						}
 						catch(err)
 						{
@@ -312,7 +312,7 @@ var PickFromListPanel = (function () {
 				{
 					if (prepareClick('click', 'pick path access panel: Cancel'))
 					{
-						_this.hidePanelRight(unblockClick);
+						_this.hideRight(unblockClick);
 					}
 					d3.event.preventDefault();
 				});
@@ -543,7 +543,7 @@ var PickUserAccessPanel = (function () {
 									cr.updateValues(initialData, sourceObjects)
 										.then(function()
 											{
-												hidePanelRight(_this.node());
+												_this.hideRight(unblockClick);
 											},
 											cr.syncFail);
 								}

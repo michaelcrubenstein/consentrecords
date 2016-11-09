@@ -1899,13 +1899,18 @@ var PathlinesPanel = (function () {
 		{
 			var backButton = this.navContainer.appendLeftButton();
 			if (done === true)
-				backButton.on('click', handleCloseRightEvent);
+				backButton.on('click', function() { _this.hideRightEvent(); });
 			else
 				backButton.on("click", function()
 					{
 						if (prepareClick('click', 'Close Right'))
 						{
-							hidePanelRight(_this.node(), true, done);
+							_this.hideRight(function()
+								{
+									unblockClick();
+									if (done)
+										done();
+								});
 						}
 						d3.event.preventDefault();
 					});
@@ -1929,11 +1934,11 @@ var PathlinesPanel = (function () {
 // 							{
 // 								showClickFeedback(this);
 // 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
-// 								showPanelLeft(newPanel.node(), unblockClick);
+//								newPanel.showLeft().then(unblockClick);
 // 							}
 // 							catch(err)
 // 							{
-// 								syncFailFunction(err);
+// 								cr.syncFail(err);
 // 							}
 // 						}
 // 						d3.event.preventDefault();
@@ -2482,13 +2487,18 @@ var OtherPathPanel = (function () {
 		{
 			var backButton = this.navContainer.appendLeftButton();
 			if (done === true)
-				backButton.on('click', handleCloseRightEvent);
+				backButton.on('click', function() { _this.hideRightEvent(); });
 			else
 				backButton.on("click", function()
 					{
 						if (prepareClick('click', 'Close Right'))
 						{
-							hidePanelRight(_this.node(), true, done);
+							_this.hideRight(function()
+								{
+									unblockClick();
+									if (done)
+										done();
+								});
 						}
 						d3.event.preventDefault();
 					});

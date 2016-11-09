@@ -280,16 +280,16 @@ var SharingPanel = (function() {
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
 			var accessRecordCell = user.getCell("_access record");
-			function onPick(path, currentPanelNode)
+			function onPick(path)
 			{
 				function done()
 				{
-					hidePanelRight(currentPanelNode);
+					panel.hideRight(unblockClick);
 				}
 				
 				_this.addAccess(accessorLevel, path, done);
 			}
-			new PickSharingUserPanel("Add User Or Group", this.node(), onPick);
+			var panel = new PickSharingUserPanel("Add User Or Group", this.node(), onPick);
 		}
 	}
 
@@ -413,7 +413,7 @@ var PickSharingUserPanel = (function() {
 						}
 						else
 						{
-							done('_user[_email="{0}"]'.format(email), _this.node());
+							done('_user[_email="{0}"]'.format(email), _this);
 						}
 					}
 					catch(err)
@@ -447,7 +447,7 @@ var PickSharingUserPanel = (function() {
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
 			
-		showPanelLeft(this.node(), unblockClick);
+		this.showLeft().then(unblockClick);
 	}
 	
 	return PickSharingUserPanel;

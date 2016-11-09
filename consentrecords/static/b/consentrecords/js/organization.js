@@ -180,7 +180,7 @@ function showPath(path, previousPanelNode)
 		{
 			var panel = new OtherPathPanel(path, previousPanelNode, true);
 			panel.pathtree.setUser(path, true);
-			showPanelLeft(panel.node(), unblockClick);
+			panel.showLeft().then(unblockClick);
 		},
 		cr.syncFail);
 }
@@ -192,7 +192,7 @@ function showUser(user, previousPanelNode)
 		{
 			var panel = new PathlinesPanel(user, previousPanelNode, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
-			showPanelLeft(panel.node(), unblockClick);
+			panel.showLeft().then(unblockClick);
 		},
 		cr.syncFail);
 }

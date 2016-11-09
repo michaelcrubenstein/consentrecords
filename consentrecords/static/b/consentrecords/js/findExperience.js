@@ -1,6 +1,8 @@
 /* Create a panel to show the details of the session and allow the user to sign up. */
 function showSessionDetails(user, session, service, previousPanelNode)
 {
+	var _this = this;
+	
 	var organization = session.getValue("Organization");
 	var offering = session.getValue("Offering");
 	var site = session.getValue("Site");
@@ -13,7 +15,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", handleCloseRightEvent);
+		.on("click", function() { _this.hideRightEvent(); });
 	backButton.append("span").text("Done");
 	
 	var buttonDiv = navContainer.appendRightButton();
@@ -225,17 +227,11 @@ function showSessionDetails(user, session, service, previousPanelNode)
 					},
 					fail: asyncFailFunction});
 			};
-			var onSigninCanceled = function(eventObject)
-			{
-			};
-			
 			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
-			$(cr.signedinUser).on("signinCanceled.cr", null, panel, onSigninCanceled);
 			
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
 				$(eventObject.data).off("signin.cr", null, onSignin);
-				$(eventObject.data).off("signinCanceled.cr", null, onSigninCanceled);
 			});
 			
 			showFixedPanel(panel, "#id_sign_in_panel");
@@ -341,7 +337,8 @@ var PickOfferingSearchView = (function () {
 
 						var sitePanel = showSessionDetails(_this.user, session, _this.tag, _this.sitePanel.node());
 	
-						showPanelLeft(sitePanel.node(), unblockClick);
+						sitePanel.showLeft()
+							.then(unblockClick);
 					}
 				});
 
@@ -378,12 +375,14 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype.offeringID = null;
 	
 	function PickOfferingPanel(user, tag, offeringID, previousPanel) {
+		var _this = this;
+		
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent)
+			.on("click", function() { _this.hideRightEvent(); })
 		    .append("span").text("Done");
 			
 		navContainer.appendTitle(header);
@@ -394,7 +393,7 @@ var PickOfferingPanel = (function() {
 				searchView.inputBox.focus();
 			});
 
-		showPanelLeft(this.node(), unblockClick);
+		this.showLeft().then(unblockClick);
 	}
 	
 	return PickOfferingPanel;
@@ -468,12 +467,14 @@ var FindExperiencePanel = (function () {
 	FindExperiencePanel.prototype = new SitePanel();
 	
 	function FindExperiencePanel(user, serviceValueID, offeringID, previousPanel) {
+		var _this = this;
+
 		var header = "Find a New Experience";
 		SitePanel.call(this, previousPanel, null, header, "list");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent)
+			.on("click", function() { _this.hideRightEvent(); })
 		    .append("span").text("Done");
 			
 		navContainer.appendTitle(header);

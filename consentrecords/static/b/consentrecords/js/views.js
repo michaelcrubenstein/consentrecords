@@ -229,8 +229,6 @@ function showPanelUp(panelNode)
 	$(panelNode).hide("slide", {direction: "down"}, 0);
 	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
 	return $(panelNode).effect("slide", {direction: "down"}, 400).promise();
 }
 
@@ -239,23 +237,6 @@ function showPanelNow(panelNode)
 	$(panelNode).offset({top: 0, left: 0})
 				.css("display", "block")
 				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
-}
-
-function showPanelLeft(panelNode, done)
-{
-	window.scrollTo(0, 0);
-	$(panelNode).css("top", 0)
-				.hide("slide", {direction: "right"}, 0)
-				.css("display", "block")
-				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
-	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
-							if (done)
-								done();
-						});
 }
 
 function asyncHidePanelRight(panelNode, doRemove, completeFunction)
@@ -286,30 +267,6 @@ function asyncHidePanelDown(panelNode, doRemove, completeFunction)
 			if (completeFunction)
 				completeFunction();
 		});
-}
-
-function hidePanelRight(panelNode, doRemove, done)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "right"}, 400, 
-		function() {
-			if (doRemove)
-				$(this).remove();
-			unblockClick();
-			if (done)
-				done();
-		});
-}
-		
-function handleCloseRightEvent() {
-	if (prepareClick('click', 'Close Right'))
-		hidePanelRight($(this).parents(".site-panel")[0]);
-	else
-		cr.logRecord('click', 'Close Right blocked');
-	d3.event.preventDefault();
 }
 
 function _isPickCell(cell)
@@ -1529,7 +1486,7 @@ var SitePanel = (function () {
 			this.panelDiv = rootPanel
 							.append("panel")
 							.classed("site-panel reveal", true)
-							.style("z-index", zindex)
+							.style('z-index', zindex)
 							.datum(datum)
 							.attr("headerText", headerText);
 			this.node().sitePanel = this;
@@ -1550,7 +1507,7 @@ var SitePanel = (function () {
 			{
 				this.hide = function()
 					{
-						hidePanelRight(_this.node());
+						_this.hideRight(unblockClick);
 					};
 			}
 		}
@@ -1861,6 +1818,26 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
+	SitePanel.prototype.showLeft = function()
+	{
+		var _this = this;
+		var $panelNode = $(this.node());
+
+		window.scrollTo(0, 0);
+		$panelNode.css("display", "none");
+		var promise = $.Deferred();
+		
+		setTimeout(function()
+			{
+				$panelNode.trigger("revealing.cr");
+				$panelNode.show({effect: "slide", direction: "right", duration: 400,
+					complete: function() {
+						promise.resolve();
+							}});
+			}, 0);
+		return promise;
+	}
+
 	SitePanel.prototype.hidePanelDown = function(done)
 	{
 		closealert();
@@ -1886,7 +1863,7 @@ var SitePanel = (function () {
 			
 	}
 	
-	SitePanel.prototype.hidePanelRight = function(done)
+	SitePanel.prototype.hideRight = function(done)
 	{
 		closealert();
 		$(this.node()).trigger("hiding.cr");
@@ -1896,6 +1873,15 @@ var SitePanel = (function () {
 				if (done)
 					done();
 			});
+	}
+	
+	SitePanel.prototype.hideRightEvent = function()
+	{
+		if (prepareClick('click', 'Close Right'))
+			this.hideRight(unblockClick);
+		else
+			cr.logRecord('click', 'Close Right blocked');
+		d3.event.preventDefault();
 	}
 	
 	SitePanel.prototype.appendDeleteControls = function(buttons)
@@ -2522,7 +2508,7 @@ function getViewPanelHeader(objectData)
 
 function revealPanelLeft(panelDiv)
 {
-	showPanelLeft(panelDiv, unblockClick);
+	panelDiv.sitePanel.showLeft().then(unblockClick);
 }
 
 function revealPanelUp(panelDiv)
@@ -2542,7 +2528,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
@@ -2550,7 +2536,7 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 		var headerDiv = panel2Div.appendHeader();
 
-		showPanelLeft(sitePanel.node(), unblockClick);
+		sitePanel.showLeft().then(unblockClick);
 	
 		panel2Div.append("div").classed("cell-border-below", true);
 		sitePanel.showViewCells(objectData.cells);
@@ -2570,7 +2556,7 @@ function showViewObjectPanel(cell, objectData, previousPanelNode, showFunction) 
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		appendLeftChevrons(backButton).classed("site-active-text", true);
 		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
@@ -2908,7 +2894,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		backButton.append("span").text("Done");
 		
 		var checkEdit = function()
@@ -3197,7 +3183,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					sitePanel.hidePanelRight(unblockClick);
+					sitePanel.hideRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -3235,7 +3221,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			/* d is the ObjectValue that the user clicked. */
 			var successFunction = function()
 			{
-				sitePanel.hidePanelRight(unblockClick);
+				sitePanel.hideRight(unblockClick);
 			}
 			
 			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
@@ -3329,7 +3315,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 				function(d) { return d.getDescription() == oldData.getDescription(); });
 		}
 	
-		showPanelLeft(sitePanel.node(), unblockClick);
+		sitePanel.showLeft().then(unblockClick);
 	}
 	
 	if (cell.field.pickObjectPath)

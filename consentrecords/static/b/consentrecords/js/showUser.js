@@ -13,7 +13,7 @@ var UserPanel = (function() {
 			var navContainer = this.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+				.on("click", function() { _this.hideRightEvent(); });
 			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
@@ -40,7 +40,7 @@ var UserPanel = (function() {
 							{
 								var panel = new PathlinesPanel(user, _this.node(), true);
 								panel.pathtree.setUser(user.getValue("More Experiences"), true);
-								showPanelLeft(panel.node(), unblockClick);
+								panel.showLeft().then(unblockClick);
 							}
 						});		
 				},

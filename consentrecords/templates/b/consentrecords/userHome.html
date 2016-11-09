@@ -236,7 +236,7 @@
 					{
 						$(this).off("signin.cr", null, onSignin);
 						var firstPanel = new WelcomePanel(previousPanel);
-						showPanelLeft(firstPanel.node());
+						firstPanel.showLeft();
 					}
 				
 					$(cr.signedinUser).one("signin.cr", null, previousPanel, onSignin);
@@ -438,7 +438,7 @@
 					handleState = function()
 					{
 						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, previousPanel);
-						showPanelLeft(panel.node());
+						panel.showLeft();
 					}
 					stateString = "";	/* So it only happens once. */
 				}
@@ -471,7 +471,7 @@
 												panel = new PathlinesPanel(users[0], previousPanel, done);
 											}
 											panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
-											showPanelLeft(panel.node());
+											panel.showLeft();
 										}
 										else
 										{
@@ -915,7 +915,7 @@
 
 								var sitePanel = showSessionDetails(user, session, null, $(container).parents("panel")[0]);
 			
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 							}
 						});
 	

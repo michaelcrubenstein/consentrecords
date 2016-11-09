@@ -588,7 +588,7 @@ var WelcomePanel = (function () {
 					{
 						pathwayPanel.checkShowIdeas();
 					});
-			showPanelLeft(pathwayPanel.node(),
+			pathwayPanel.showLeft().then(
 				function()
 				{
 					if (onPathwayCreated)
