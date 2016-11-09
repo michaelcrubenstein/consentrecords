@@ -343,7 +343,6 @@ var ExperienceCommentsPanel = (function() {
 					$(postButton.node()).outerWidth(true) -
 					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
 			}
-			resizeFunction();
 			$(panel2Div.node()).on('resize.cr', resizeFunction);
 		}
 							
