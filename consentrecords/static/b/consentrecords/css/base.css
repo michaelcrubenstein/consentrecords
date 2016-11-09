@@ -14,7 +14,7 @@ body>panel {
 	height: 100%;
 	width: 100%;
 	display: block;
-	position: absolute;	/* So that z-index's are maintained properly. */
+	position: absolute;
 	overflow-y: hidden;
 }
 panel.site-panel>nav {
@@ -60,6 +60,7 @@ panel.reveal	/* This sets up a panel for subsequent revealing using animation. *
 
 .panel-fill {
 	position: relative;
+	width: 100%;
 }
 .vertical-scrolling {
 	position: relative;
