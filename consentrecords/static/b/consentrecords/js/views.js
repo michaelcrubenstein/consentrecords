@@ -40,16 +40,6 @@ $.fn.getFillHeight = function()
 	return newHeight;
 }
 
-$.fn.calculateFillHeight = function()
-{
-	this.css("height", "{0}px".format(this.getFillHeight()));
-	this.one("resize.cr", function(eventObject)
-		{
-			eventObject.stopPropagation();
-		});
-	this.trigger("resize.cr");
-};
-
 /* A utility function for formatting strings like printf */
 String.prototype.format = function () {
   var args = arguments;
@@ -1646,8 +1636,20 @@ var SitePanel = (function () {
 	{
 		if (this.mainDiv)
 		{
-			var varNode = this.mainDiv.node();
-			$(varNode).calculateFillHeight();
+			var mainNode = $(this.mainDiv.node());
+			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
+				.one("resize.cr", function(eventObject)
+				{
+					eventObject.stopPropagation();
+				});
+				
+			/* Trigger the resize in the next event to ensure that css widths and
+				heights have been applied.
+			 */
+			setTimeout(function()
+				{
+					mainNode.trigger("resize.cr");
+				});
 		}
 	}
 	
@@ -1932,7 +1934,6 @@ var SitePanel = (function () {
 		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
-			var newWidth = adj.width();
 			adj.animate({"margin-left": "24px"}, 
 				{duration: duration,
 				 step: function() {
@@ -1953,7 +1954,6 @@ var SitePanel = (function () {
 		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
-			var newWidth = adj.width();
 			adj.animate({"margin-left": "0px"}, 
 				{duration: duration,
 				 step: function() {
