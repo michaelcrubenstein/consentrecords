@@ -17,7 +17,7 @@ var Settings = (function () {
 	Settings.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
 	Settings.prototype.allVisibleDocumentation = "Others can look at your profile and path (except for information you hide from view).";
 
-	function Settings(user, previousPanel) {
+	function Settings(user) {
 		var _this = this;
 		this.createRoot(null, "Settings", "edit settings", revealPanelUp);
 

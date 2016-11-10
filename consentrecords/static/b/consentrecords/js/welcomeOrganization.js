@@ -5,7 +5,7 @@ var WelcomeOrganizationPanel = (function () {
 	{
 	}
 	
-	function WelcomeOrganizationPanel(previousPanel, onPathwayCreated) {
+	function WelcomeOrganizationPanel(onPathwayCreated) {
 		var _this = this;
 		this.createRoot(null, "Welcome", "welcome-info");
 		var navContainer = this.appendNavContainer();

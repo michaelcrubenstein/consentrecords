@@ -250,7 +250,7 @@ var WelcomePanel = (function () {
 	}
 	
 	
-	function WelcomePanel(previousPanel, onPathwayCreated) {
+	function WelcomePanel(onPathwayCreated) {
 		var _this = this;
 		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
@@ -500,7 +500,7 @@ var WelcomePanel = (function () {
 				{
 					if (prepareClick('click', 'For Organizations'))
 					{
-						var panel = new WelcomeOrganizationPanel(_this.node());
+						var panel = new WelcomeOrganizationPanel();
 						showPanelUp(panel.node())
 							.always(unblockClick);
 					}
@@ -581,7 +581,7 @@ var WelcomePanel = (function () {
 			});
 			
 		var signedIn = function(eventObject) {
-			var pathwayPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
 			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 				.then(function()

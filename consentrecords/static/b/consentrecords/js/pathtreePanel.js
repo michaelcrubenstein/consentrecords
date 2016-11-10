@@ -1784,7 +1784,7 @@ var PathlinesPanel = (function () {
 					{
 						try
 						{
-							var panel = new Settings(user, _this.node());
+							var panel = new Settings(user);
 							showPanelUp(panel.node())
 								.always(unblockClick);
 						}
@@ -1877,10 +1877,10 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.setupSearchPanel = function()
 	{
-		this.searchPanel = new SearchPathsPanel(this.node());
+		this.searchPanel = new SearchPathsPanel();
 	}
 	
-	function PathlinesPanel(user, previousPanel, done) {
+	function PathlinesPanel(user, done) {
 		var _this = this;
 		this.user = user;
 		
@@ -2470,7 +2470,7 @@ var OtherPathPanel = (function () {
 		return 0;
 	}
 	
-	function OtherPathPanel(path, previousPanel, done) {
+	function OtherPathPanel(path, done) {
 		var _this = this;
 		this.path = path;
 		

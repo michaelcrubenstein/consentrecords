@@ -235,7 +235,7 @@
 					var onSigninCanceled = function(eventObject)
 					{
 						$(this).off("signin.cr", null, onSignin);
-						var firstPanel = new WelcomePanel(previousPanel);
+						var firstPanel = new WelcomePanel();
 						firstPanel.showLeft();
 					}
 				
@@ -406,7 +406,7 @@
 		
 		function loadPathlinesPanel(previousPanel)
 		{
-			var firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 			firstPanel.setupSearchPanel();
 			firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
 			showPanelUp(firstPanel.node());
@@ -459,16 +459,16 @@
 											var panel;
 											if (cr.signedinUser.getValueID())
 											{
-												panel = new PathlinesPanel(users[0], firstPanel.node(), true);
+												panel = new PathlinesPanel(users[0], true);
 											}	
 											else
 											{
 												done = function()
 													{
-														firstPanel = new WelcomePanel(previousPanel);
+														firstPanel = new WelcomePanel();
 														showPanelNow(firstPanel.node());
 													};
-												panel = new PathlinesPanel(users[0], previousPanel, done);
+												panel = new PathlinesPanel(users[0], done);
 											}
 											panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
 											panel.showLeft();
@@ -660,7 +660,7 @@
 					
 					var handleState = function()
 					{
-						firstPanel = new WelcomePanel(previousPanel);
+						firstPanel = new WelcomePanel();
 						showPanelNow(firstPanel.node());
 						var signUp = new Signup(firstPanel.node(), {email: stateString});
 						showPanelUp(signUp.node());
@@ -701,7 +701,7 @@
 			{
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
 					{
-						firstPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+						firstPanel = new PathlinesPanel(cr.signedinUser, false);
 						firstPanel.setupSearchPanel();
 						showPanelNow(firstPanel.node());
 						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
@@ -720,7 +720,7 @@
 					handleState();
 				else
 				{
-					firstPanel = new WelcomePanel(previousPanel);
+					firstPanel = new WelcomePanel();
 					showPanelNow(firstPanel.node());
 				}
 			}
@@ -765,7 +765,7 @@
 						cr.signedinUser.clearValue();
 						$(cr.signedinUser).trigger("signout.cr");
 						var sitePanels = $("panel.site-panel");
-						var panel = new WelcomePanel("panel.initial");
+						var panel = new WelcomePanel();
 						showPanelNow(panel.node());
 						sitePanels.trigger("hiding.cr");
 						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,

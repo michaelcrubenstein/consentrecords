@@ -178,7 +178,7 @@ function showPath(path, previousPanelNode)
 	path.promiseCells(["More Experience", "parents", "_user"])
 	.then(function()
 		{
-			var panel = new OtherPathPanel(path, previousPanelNode, true);
+			var panel = new OtherPathPanel(path, true);
 			panel.pathtree.setUser(path, true);
 			panel.showLeft().then(unblockClick);
 		},
@@ -190,7 +190,7 @@ function showUser(user, previousPanelNode)
 	user.promiseCells([])
 	 .then(function()
 		{
-			var panel = new PathlinesPanel(user, previousPanelNode, true);
+			var panel = new PathlinesPanel(user, true);
 			panel.pathtree.setUser(user.getValue("More Experiences"), true);
 			panel.showLeft().then(unblockClick);
 		},

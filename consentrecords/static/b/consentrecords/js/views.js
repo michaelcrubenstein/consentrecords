@@ -2504,8 +2504,8 @@ function revealPanelUp(panelDiv)
 function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 	successFunction = function ()
 	{
-		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData), "view");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -2532,8 +2532,8 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 function showViewObjectPanel(cell, objectData, previousPanelNode, showFunction) {
 	var successFunction = function ()
 	{
-		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData), "view", showFunction);
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view", showFunction);
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -2782,7 +2782,7 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 			header = "Edit";
 		else
 			header = "New " + containerCell.field.name;
-		var sitePanel = new EditPanel(previousPanelNode, objectData, cells, header, onShow);
+		var sitePanel = new EditPanel(objectData, cells, header, onShow);
 
 		var doneButton;
 		if (objectData && objectData.getValueID())
@@ -2840,12 +2840,12 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 /* 
 	Displays a panel for adding a root object. 
  */
-function showAddRootPanel(containerCell, previousPanelNode, onShow) {
+function showAddRootPanel(containerCell, onShow) {
 	var successFunction = function(cells)
 	{
 		var header = "New " + containerCell.field.name;
 			
-		var sitePanel = new EditPanel(previousPanelNode, null, cells, header, onShow);
+		var sitePanel = new EditPanel(null, cells, header, onShow);
 
 		var doneButton = sitePanel.appendAddButton(promiseCreateObjectFromCells, containerCell, null, cells);
 		
@@ -2861,7 +2861,7 @@ function showAddRootPanel(containerCell, previousPanelNode, onShow) {
 			.then(successFunction, cr.syncFail);
 }
 
-function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)
+function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 {
 	return function(rootObjects)
 	{
@@ -2871,7 +2871,8 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		for (var i = 0; i < rootObjects.length; i++)
 			cell.pushValue(rootObjects[i]);
 		
-		var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(cell, header, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -2889,7 +2890,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 						{
 							showClickFeedback(this);
 				
-							showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
+							showEditRootObjectsPanel(cell, "Edit " + header, sortFunction);
 						}
 						d3.event.preventDefault();
 					});
@@ -2984,9 +2985,10 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 	}
 }
 
-function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
+function showEditRootObjectsPanel(cell, header, sortFunction)
 {
-	var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
+	var sitePanel = new SitePanel();
+	sitePanel.createRoot(cell, header, "list");
 
 	var navContainer = sitePanel.appendNavContainer();
 
@@ -3005,7 +3007,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				try
 				{
 					showClickFeedback(this);
-					showAddRootPanel(cell, sitePanel.node(), revealPanelUp);
+					showAddRootPanel(cell, revealPanelUp);
 				}
 				catch(err)
 				{
@@ -3156,7 +3158,8 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			panelDatum = oldData;	/* Replacing an existing object. */
 		else
 			panelDatum = cell;		/* Adding a new object. */
-		var sitePanel = new SitePanel(previousPanelNode, panelDatum, cell.field.name, "list");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(panelDatum, cell.field.name, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
