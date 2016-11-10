@@ -313,15 +313,15 @@ var PickOrCreatePanel = (function () {
 		return new PickOrCreateSearchView(this, this.pickDatum, this.createDatum);
 	}
 	
-	function PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done)
+	function PickOrCreatePanel(pickDatum, createDatum, done)
 	{
-		if (previousPanelNode === undefined)
+		if (pickDatum === undefined)
 		{
 			SitePanel.call(this);
 		}
 		else
 		{
-			SitePanel.call(this, previousPanelNode, pickDatum, pickDatum.cell.field.name, "list");
+			this.createRoot(pickDatum, pickDatum.cell.field.name, "list");
 			this.pickDatum = pickDatum;
 			this.createDatum = createDatum;
 			this.done = done;
@@ -391,9 +391,9 @@ var PickOrCreateSitePanel = (function () {
 		return new PickOrCreateSiteSearchView(this, this.pickDatum, this.createDatum);
 	}
 	
-	function PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done)
+	function PickOrCreateSitePanel(pickDatum, createDatum, done)
 	{
-		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		PickOrCreatePanel.call(this, pickDatum, createDatum, done);
 		var organization = this.pickDatum.cell.parent.getCell("Organization").data[0];
 		
 		if (organization.getValueID() && this.createDatum.text == null)
@@ -449,9 +449,9 @@ var PickOrCreateOfferingPanel = (function () {
 		return new PickOrCreateOfferingSearchView(this, this.pickDatum, this.createDatum);
 	}
 	
-	function PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done)
+	function PickOrCreateOfferingPanel(pickDatum, createDatum, done)
 	{
-		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		PickOrCreatePanel.call(this, pickDatum, createDatum, done);
 		var site = this.pickDatum.cell.parent.getCell("Site").data[0];
 		
 		if (site.getValueID() && this.createDatum.text == null)
@@ -466,9 +466,9 @@ var PickOrCreateOfferingPanel = (function () {
 var PickOrCreateTagPanel = (function () {
 	PickOrCreateTagPanel.prototype = new PickOrCreatePanel();
 	
-	function PickOrCreateTagPanel(previousPanelNode, pickDatum, createDatum, done)
+	function PickOrCreateTagPanel(pickDatum, createDatum, done)
 	{
-		PickOrCreatePanel.call(this, previousPanelNode, pickDatum, createDatum, done);
+		PickOrCreatePanel.call(this, pickDatum, createDatum, done);
 		
 		if (this.createDatum.text == null)
 		{
@@ -611,7 +611,7 @@ var PickOrCreateCell = (function () {
 		{
 			_this.pickedObject(d);
 		}
-		this.editPanel = new PickOrCreatePanel(previousPanelNode, pickDatum, createDatum, done);
+		this.editPanel = new PickOrCreatePanel(pickDatum, createDatum, done);
 	}
 	
 	PickOrCreateCell.prototype.showValueAdded = function()
@@ -793,7 +793,7 @@ var PickOrCreateSiteCell = (function () {
 		{
 			_this.pickedObject(d);
 		}
-		this.editPanel = new PickOrCreateSitePanel(previousPanelNode, pickDatum, createDatum, done);
+		this.editPanel = new PickOrCreateSitePanel(pickDatum, createDatum, done);
 	}
 	
 	function PickOrCreateSiteCell(experience)
@@ -818,7 +818,7 @@ var PickOrCreateOfferingCell = (function () {
 		{
 			_this.pickedObject(d);
 		}
-		this.editPanel = new PickOrCreateOfferingPanel(previousPanelNode, pickDatum, createDatum, done);
+		this.editPanel = new PickOrCreateOfferingPanel(pickDatum, createDatum, done);
 	}
 	
 	function PickOrCreateOfferingCell(experience)
@@ -918,7 +918,7 @@ var MyTagsCell = (function () {
 		{
 			_this.pickedObject(d);
 		}
-		this.editPanel = new PickOrCreateTagPanel(previousPanelNode, pickDatum, createDatum, done);
+		this.editPanel = new PickOrCreateTagPanel(pickDatum, createDatum, done);
 	}
 	
 	function MyTagsCell(pickCell, createCell) {
@@ -1070,7 +1070,7 @@ var EditExperiencePanel = (function () {
 	}
 	
 	function EditExperiencePanel(experience, path, previousPanel, showFunction) {
-		SitePanel.call(this, previousPanel, experience, "Edit Experience", "edit new-experience-panel", showFunction);
+		this.createRoot(experience, "Edit Experience", "edit new-experience-panel", showFunction);
 		var navContainer = this.appendNavContainer();
 		var panel2Div = this.appendScrollArea();
 		var bottomNavContainer = this.appendBottomNavContainer();

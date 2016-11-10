@@ -374,11 +374,11 @@ var PickOfferingPanel = (function() {
 	PickOfferingPanel.prototype = new SitePanel();
 	PickOfferingPanel.prototype.offeringID = null;
 	
-	function PickOfferingPanel(user, tag, offeringID, previousPanel) {
+	function PickOfferingPanel(user, tag, offeringID) {
 		var _this = this;
 		
 		var header = "Find a New Experience";
-		SitePanel.call(this, previousPanel, null, header, "list");
+		this.createRoot(null, header, "list");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
@@ -410,7 +410,7 @@ var FindExperienceSearchView = (function () {
 		{
 			showClickFeedback(button);
 			
-			var panel = new PickOfferingPanel(this.user, d, this.offeringID, this.sitePanel.node());
+			var panel = new PickOfferingPanel(this.user, d, this.offeringID);
 		}
 		d3.event.preventDefault();
 	}
@@ -466,11 +466,11 @@ var FindExperienceSearchView = (function () {
 var FindExperiencePanel = (function () {
 	FindExperiencePanel.prototype = new SitePanel();
 	
-	function FindExperiencePanel(user, serviceValueID, offeringID, previousPanel) {
+	function FindExperiencePanel(user, serviceValueID, offeringID) {
 		var _this = this;
 
 		var header = "Find a New Experience";
-		SitePanel.call(this, previousPanel, null, header, "list");
+		this.createRoot(null, header, "list");
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()

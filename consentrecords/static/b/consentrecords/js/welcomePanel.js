@@ -252,7 +252,7 @@ var WelcomePanel = (function () {
 	
 	function WelcomePanel(previousPanel, onPathwayCreated) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Welcome", "welcome");
+		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
 
 		if (!cr.signedinUser.getValueID())

@@ -7,7 +7,7 @@ var WelcomeOrganizationPanel = (function () {
 	
 	function WelcomeOrganizationPanel(previousPanel, onPathwayCreated) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Welcome", "welcome-info");
+		this.createRoot(null, "Welcome", "welcome-info");
 		var navContainer = this.appendNavContainer();
 		
 		var doneButton = navContainer.appendLeftButton()

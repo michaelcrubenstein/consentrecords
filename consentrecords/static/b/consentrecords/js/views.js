@@ -1452,49 +1452,38 @@ var SitePanel = (function () {
 	SitePanel.prototype.headerText = null;
 	SitePanel.prototype.hide = null;
 	
-    function SitePanel(containerPanel, datum, headerText, panelClass, showFunction) {
-    	if (containerPanel === undefined)
-    	{
-    		/* In this case, we just want the prototype. The rest will get
-    			initialized from the sub-class.
-    		 */
-    		this.panelDiv = undefined;
-    		this.navContainer = undefined;
-    		this.panel2Div = undefined;
-    		this.headerText = null;
-			this.hide = null;
-    	}
-    	else
-    	{
-			var rootPanel = d3.select("body");
-			this.panelDiv = rootPanel
-							.append("panel")
-							.classed("site-panel reveal", true)
-							.datum(datum)
-							.attr("headerText", headerText);
-			this.node().sitePanel = this;
-							
-			if (panelClass && panelClass.length > 0)
-				this.panelDiv.classed(panelClass, true);
-				
-			this.headerText = headerText;
-			var _this = this;
-			if (showFunction === revealPanelUp)
-			{
-				this.hide = function()
-					{
-						_this.hidePanelDown(unblockClick);
-					};
-			}
-			else
-			{
-				this.hide = function()
-					{
-						_this.hideRight(unblockClick);
-					};
-			}
+	function SitePanel() {
+	}
+	
+	SitePanel.prototype.createRoot = function(datum, headerText, panelClass, showFunction) {
+		var rootPanel = d3.select("body");
+		this.panelDiv = rootPanel
+						.append("panel")
+						.classed("site-panel reveal", true)
+						.datum(datum)
+						.attr("headerText", headerText);
+		this.node().sitePanel = this;
+						
+		if (panelClass && panelClass.length > 0)
+			this.panelDiv.classed(panelClass, true);
+			
+		this.headerText = headerText;
+		var _this = this;
+		if (showFunction === revealPanelUp)
+		{
+			this.hide = function()
+				{
+					_this.hidePanelDown(unblockClick);
+				};
 		}
-    }
+		else
+		{
+			this.hide = function()
+				{
+					_this.hideRight(unblockClick);
+				};
+		}
+	}
     
     SitePanel.prototype.node = function()
     {
@@ -2701,7 +2690,7 @@ var EditPanel = (function() {
 	
 	function EditPanel(previousPanelNode, objectData, cells, header, onShow)
 	{
-		SitePanel.call(this, previousPanelNode, objectData, header, "edit", onShow);
+		this.createRoot(objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
 
 		var panel2Div = this.appendScrollArea();

@@ -374,13 +374,13 @@
 					var service = experience.addService({text: serviceName });
 					experience.initPreviousDateRange();
 
-					panel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+					panel = new NewExperiencePanel(experience, experience.getPhase());
 					showPanelUp(panel.node());
 				}
 				else
 				{
 					experience.initPreviousDateRange();
-					panel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+					panel = new NewExperiencePanel(experience, experience.getPhase());
 					showPanelUp(panel.node());
 				}
 			}
@@ -437,7 +437,7 @@
 					}
 					handleState = function()
 					{
-						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, previousPanel);
+						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString);
 						panel.showLeft();
 					}
 					stateString = "";	/* So it only happens once. */
@@ -513,7 +513,7 @@
 													if (experiences[0].typeName == "More Experience")
 													{
 														var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
-														var newPanel = new NewExperiencePanel(experience, pathwayPanel.node(), experience.getPhase());
+														var newPanel = new NewExperiencePanel(experience, experience.getPhase());
 														showPanelUp(newPanel.node());
 													}
 													else

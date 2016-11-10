@@ -42,7 +42,7 @@ var Signup = (function () {
 		initialData = initialData !== undefined ? initialData : {};
 	
 		var _thisSignup = this
-		SitePanel.call(this, previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
+		this.createRoot(null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
 
@@ -571,7 +571,7 @@ var SigninPanel = (function()
 
 	function SigninPanel(previousPanel)
 	{
-		SitePanel.call(this, previousPanel, null, "Sign In", "sign-in", revealPanelUp);
+		this.createRoot(null, "Sign In", "sign-in", revealPanelUp);
 		var _this = this;
 
 		var form = this.panelDiv.append('form')
@@ -785,7 +785,7 @@ var ForgotPasswordPanel = (function()
 				
 	function ForgotPasswordPanel(previousPanel)
 	{
-		SitePanel.call(this, previousPanel, null, "Forgot Password", "sign-up", revealPanelUp);
+		this.createRoot(null, "Forgot Password", "sign-up", revealPanelUp);
 		var _this = this;
 		
 		var form = this.panelDiv.append('form')

@@ -705,7 +705,7 @@ var SearchPathsPanel = (function () {
 				}
 			});
 			
-		SitePanel.call(this, previousPanel, null, "Search Paths", "search-paths");
+		this.createRoot(null, "Search Paths", "search-paths");
 		
 		var mainDiv = this.appendScrollArea();
 		

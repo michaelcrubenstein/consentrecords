@@ -19,7 +19,7 @@ var Settings = (function () {
 
 	function Settings(user, previousPanel) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Settings", "edit settings", revealPanelUp);
+		this.createRoot(null, "Settings", "edit settings", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
 
@@ -301,7 +301,7 @@ var PickFromListPanel = (function () {
 
 	function PickFromListPanel(previousPanel, title, panelClass) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, title, "list " + panelClass, revealPanelLeft);
+		this.createRoot(null, title, "list " + panelClass, revealPanelLeft);
 
 		if (previousPanel)
 		{

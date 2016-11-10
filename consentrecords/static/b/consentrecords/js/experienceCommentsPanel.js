@@ -121,9 +121,9 @@ var ExperienceCommentsPanel = (function() {
 			done();
 	}
 
-	function ExperienceCommentsPanel(fd, previousPanelNode)
+	function ExperienceCommentsPanel(fd)
 	{
-		SitePanel.call(this, previousPanelNode, fd, "Comments", "comments", revealPanelLeft);
+		this.createRoot(fd, "Comments", "comments", revealPanelLeft);
 		this.fd = fd;
 		var _this = this;
 		

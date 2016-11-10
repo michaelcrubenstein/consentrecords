@@ -295,7 +295,7 @@ var SharingPanel = (function() {
 
 	function SharingPanel(user, previousPanelNode)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit sharing", revealPanelUp);
+		this.createRoot(null, "Sharing", "edit sharing", revealPanelUp);
 		this.user = user;
 		var _this = this;
 		
@@ -380,7 +380,7 @@ var PickSharingUserPanel = (function() {
 	function PickSharingUserPanel(header, previousPanelNode, done)
 	{
 		var _this = this;
-		SitePanel.call(this, previousPanelNode, null, this.title, "list");
+		this.createRoot(null, this.title, "list");
 
 		var navContainer = this.appendNavContainer();
 

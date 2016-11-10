@@ -837,7 +837,7 @@ var PathView = (function() {
 					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase(), revealPanelLeft);
+					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
 					
 					revealPanelLeft(editPanel.node());
 				}
@@ -861,8 +861,7 @@ var PathView = (function() {
 			{
 				try
 				{
-					var panel = this.sitePanel.node();
-					var newPanel = new ExperienceCommentsPanel(fd, panel);
+					var newPanel = new ExperienceCommentsPanel(fd);
 					
 					revealPanelLeft(newPanel.node());
 				}
@@ -1822,7 +1821,7 @@ var PathlinesPanel = (function () {
 			else
 				experience.initPreviousDateRange();
 				
-			var panel = new NewExperiencePanel(experience, this.node(), phase);
+			var panel = new NewExperiencePanel(experience, phase);
 			showPanelUp(panel.node())
 				.done(done);
 		}
@@ -1885,7 +1884,7 @@ var PathlinesPanel = (function () {
 		var _this = this;
 		this.user = user;
 		
-		SitePanel.call(this, previousPanel, null, "My Pathway", "pathway");
+		this.createRoot(null, "My Pathway", "pathway");
 
 		var panel2Div = this.appendScrollArea();
 
@@ -1933,7 +1932,7 @@ var PathlinesPanel = (function () {
 // 							try
 // 							{
 // 								showClickFeedback(this);
-// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
+// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null);
 //								newPanel.showLeft().then(unblockClick);
 // 							}
 // 							catch(err)
@@ -2345,7 +2344,7 @@ var ExperienceIdeaPanel = (function() {
 						try
 						{
 							experience.initPreviousDateRange();
-							var panel = new NewExperiencePanel(experience, panelNode, 'Previous',
+							var panel = new NewExperiencePanel(experience, 'Previous',
 								function()
 								{
 									skipButton.on('click')();
@@ -2388,7 +2387,7 @@ var OtherPathlines = (function() {
 			try
 			{
 				var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), fd.experience);
-				var newPanel = new NewExperiencePanel(tempExperience, this.sitePanel.node(), tempExperience.getPhase());
+				var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 				showPanelUp(newPanel.node())
 					.always(unblockClick);
 			}
@@ -2475,7 +2474,7 @@ var OtherPathPanel = (function () {
 		var _this = this;
 		this.path = path;
 		
-		SitePanel.call(this, previousPanel, null, "Other Pathway", "pathway");
+		this.createRoot(null, "Other Pathway", "pathway");
 
 		var panel2Div = this.appendScrollArea();
 

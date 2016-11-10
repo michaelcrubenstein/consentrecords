@@ -783,12 +783,12 @@ var ComparePathsPanel = (function () {
 	ComparePathsPanel.prototype.navContainer = null;
 	ComparePathsPanel.prototype.bottomNavContainer = null;
 	
-	function ComparePathsPanel(leftUser, rightUser, previousPanel) {
+	function ComparePathsPanel(leftUser, rightUser) {
 		var _this = this;
 		this.leftUser = leftUser;
 		this.rightUser = rightUser;
 		
-		SitePanel.call(this, previousPanel, null, "Compare Pathways", "compare-paths");
+		this.createRoot(null, "Compare Pathways", "compare-paths");
 
 		var panel2Div = this.appendScrollArea();
 

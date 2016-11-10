@@ -552,16 +552,16 @@ var Experience = (function() {
 			if (offeringD)
 			{
 				this.setOffering(offeringD);
-				panel = new NewExperiencePanel(this, previousNode);
+				panel = new NewExperiencePanel(this);
 			}
 			else
 			{
-				panel = new NewExperiencePanel(this, previousNode);
+				panel = new NewExperiencePanel(this);
 			}
 		}
 		else
 		{
-			panel = new NewExperiencePanel(this, previousNode);
+			panel = new NewExperiencePanel(this);
 		}
 		done(panel.node());
 	}
@@ -576,7 +576,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 
@@ -600,7 +600,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 	
@@ -609,7 +609,7 @@ var Experience = (function() {
 		this.initPreviousDateRange();
 		
 		var service = this.addService(d);
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 	
@@ -2214,7 +2214,7 @@ var ExperienceShareOptions = (function () {
 						if (prepareClick('click', duplicateText))
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
-							var newPanel = new NewExperiencePanel(tempExperience, panel.node(), tempExperience.getPhase());
+							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 							showPanelUp(newPanel.node())
 								.done(function()
 									{
@@ -2768,7 +2768,7 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase, showFunction) {
+	function NewExperiencePanel(experience, phase, showFunction) {
 		if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
@@ -2780,7 +2780,7 @@ var NewExperiencePanel = (function () {
 			
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
-		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", showFunction);
+		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
 	
 		var hidePanel = function() { 
 				_this.hide();

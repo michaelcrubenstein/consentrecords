@@ -3,7 +3,7 @@ var UserPanel = (function() {
 	
 	function UserPanel(user, previousPanelNode)
 	{
-		SitePanel.call(this, previousPanelNode, user, user.getDescription(), "view", revealPanelLeft);
+		this.createRoot(user, user.getDescription(), "view", revealPanelLeft);
 		this.user = user;
 
 		var _this = this;
