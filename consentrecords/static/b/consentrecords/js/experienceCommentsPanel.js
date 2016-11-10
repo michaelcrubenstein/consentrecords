@@ -359,8 +359,14 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (comments.getValueID())
 		{
-			comments.promiseCellsFromCache(["Comment"])
-				.then(onCommentsChecked, cr.asyncFail);
+			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
+				comments are loaded. This won't happen if the comments are already loaded.
+			 */
+			setTimeout(function()
+				{
+					comments.promiseCellsFromCache(["Comment"])
+						.then(onCommentsChecked, cr.asyncFail);
+				}, 0);
 		}
 	}
 		
