@@ -120,7 +120,6 @@ var SearchPathsResultsView = (function () {
 
 var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype = new SitePanel();
-	SearchPathsPanel.prototype.previousPanel = null;
 	SearchPathsPanel.prototype.selectedPool = null;
 	
 	SearchPathsPanel.prototype.topBox = null;
@@ -691,10 +690,8 @@ var SearchPathsPanel = (function () {
 		this.layoutPoolFlags();
 	}
 	
-	function SearchPathsPanel(previousPanel)
+	function SearchPathsPanel()
 	{
-		this.previousPanel = previousPanel;
-		
 		var _this = this;
 		
 		$(window).resize(function()
