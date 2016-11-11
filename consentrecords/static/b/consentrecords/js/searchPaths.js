@@ -267,7 +267,7 @@ var SearchPathsPanel = (function () {
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
 			This is important on iPhones where the soft keyboard appears and forces scrolling. */
-		$(this.node()).scrollParent().animate({scrollTop: 0},
+		$(this.node().parentNode).animate({scrollTop: 0},
 			{duration: duration});
 		
 		queryFlagsWidth = $(this.queryFlags.node()).width();
