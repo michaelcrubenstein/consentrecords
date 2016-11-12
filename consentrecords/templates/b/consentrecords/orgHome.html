@@ -307,7 +307,7 @@
 				}
 				else
 				{
-					var panel = new SigninPanel($(this).parents("panel")[0]);
+					var panel = new SigninPanel();
 					panel.showLeft().then(function()
 								{
 									panel.initializeFocus();
@@ -342,7 +342,7 @@
 					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
 					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
 					
-					var panel = new SigninPanel($(this).parents("panel")[0]);
+					var panel = new SigninPanel();
 					panel.showLeft().then(function()
 								{
 									panel.initializeFocus();

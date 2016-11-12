@@ -232,7 +232,7 @@ var FollowingPanel = (function() {
 		return true;
 	}
 	
-	function FollowingPanel(user, previousPanel) {
+	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
 		this.createRoot(null, header, "edit following", revealPanelUp);

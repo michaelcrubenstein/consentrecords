@@ -263,7 +263,7 @@ var WelcomePanel = (function () {
 						showClickFeedback(this);
 						if (prepareClick('click',  'Sign In button'))
 						{
-							var signinPanel = new SigninPanel(_this.node());
+							var signinPanel = new SigninPanel();
 							signinPanel.showLeft().then(
 								function()
 								{
@@ -532,7 +532,7 @@ var WelcomePanel = (function () {
 								
 							if (prepareClick('click', 'Get Started'))
 							{
-								var signUp = new Signup(_this.node());
+								var signUp = new Signup();
 								showPanelUp(signUp.node())
 									.always(unblockClick);
 								return;

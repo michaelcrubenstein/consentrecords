@@ -120,12 +120,13 @@ var Settings = (function () {
 					{
 						try
 						{
-							var panel = new PickUserAccessPanel(userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue, _this.node());
-							panel.showLeft().then(unblockClick);
+							new PickUserAccessPanel()
+								.createRoot(userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue)
+								.showLeft().then(unblockClick);
 						}
 						catch(err)
 						{
-							syncFailFunction(err);
+							cr.syncFail(err);
 						}
 					}
 				});
@@ -253,7 +254,7 @@ var Settings = (function () {
 					if (prepareClick('click', 'Following'))
 					{
 						showClickFeedback(this);
-						var panel = new FollowingPanel(user, _this.node());
+						var panel = new FollowingPanel(user);
 						showPanelUp(panel.node())
 							.always(unblockClick);
 					}
@@ -266,7 +267,7 @@ var Settings = (function () {
 					if (prepareClick('click', 'Change Email'))
 					{
 						showClickFeedback(this);
-						var panel = new UpdateUsernamePanel(user, _this.node());
+						var panel = new UpdateUsernamePanel(user);
 						showPanelUp(panel.node())
 							.always(unblockClick);
 					}
@@ -276,7 +277,7 @@ var Settings = (function () {
 					if (prepareClick('click', 'Change Password'))
 					{
 						showClickFeedback(this);
-						var panel = new UpdatePasswordPanel(_this.node());
+						var panel = new UpdatePasswordPanel();
 						showPanelUp(panel.node())
 							.always(unblockClick);
 					}
@@ -298,33 +299,37 @@ var Settings = (function () {
 
 var PickFromListPanel = (function () {
 	PickFromListPanel.prototype = new SitePanel();
-
-	function PickFromListPanel(previousPanel, title, panelClass) {
+	
+	PickFromListPanel.prototype.createRoot = function(datum, headerText, panelClass)
+	{
+		SitePanel.prototype.createRoot.call(this, datum, headerText, "list " + panelClass, revealPanelLeft);
 		var _this = this;
-		this.createRoot(null, title, "list " + panelClass, revealPanelLeft);
-
-		if (previousPanel)
-		{
-			var navContainer = this.appendNavContainer();
-
-			var backButton = navContainer.appendLeftButton()
-				.on("click", function()
-				{
-					if (prepareClick('click', 'pick path access panel: Cancel'))
-					{
-						_this.hideRight(unblockClick);
-					}
-					d3.event.preventDefault();
-				});
-			backButton.append("span").text("Cancel");
 		
-			navContainer.appendTitle(this.title);
+		var navContainer = this.appendNavContainer();
 
-			var panel2Div = this.appendScrollArea();
-			var itemsDiv = panel2Div.append("section")
-				.classed("multiple", true)
-				.append("ol");
-		}
+		var backButton = navContainer.appendLeftButton()
+			.on("click", function()
+			{
+				if (prepareClick('click', 'pick path access panel: Cancel'))
+				{
+					_this.hideRight(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+		backButton.append("span").text("Cancel");
+	
+		navContainer.appendTitle(this.title);
+
+		var panel2Div = this.appendScrollArea();
+		var itemsDiv = panel2Div.append("section")
+			.classed("multiple", true)
+			.append("ol");
+			
+		return this;
+	}
+
+	function PickFromListPanel() {
+		SitePanel.call(this);
 	}
 	
 	return PickFromListPanel;
@@ -357,204 +362,207 @@ var PickUserAccessPanel = (function () {
 						  }
 						 ];
 	
-	function PickUserAccessPanel(oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, previousPanel) {
+	PickUserAccessPanel.prototype.createRoot = function(oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue)
+	{
+		PickFromListPanel.prototype.createRoot(null, this.title, "");
 		var _this = this;
-		PickFromListPanel.call(this, previousPanel, this.title, "list");
 
-		if (previousPanel)
-		{
-			var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
+	
+		var buttons = itemsDiv.selectAll('li')
+			.data(this.buttonData)
+			.enter()
+			.append('li');
 		
-			var buttons = itemsDiv.selectAll('li')
-				.data(this.buttonData)
-				.enter()
-				.append('li');
-			
-			buttons.append("div").classed("btn row-button multi-row-content expanding-div", true)
-				.append("div")
-						.classed("description-text", true)
-						.text(function(d) { return d.description; });
-					
-			buttons.selectAll('div.btn').filter(function(d, i)
+		buttons.append("div").classed("btn row-button multi-row-content expanding-div", true)
+			.append("div")
+					.classed("description-text", true)
+					.text(function(d) { return d.description; });
+				
+		buttons.selectAll('div.btn').filter(function(d, i)
+			{
+				return d.description === oldUserAccessValue.getDescription();
+			})
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
+				
+		buttons.selectAll('div.btn')
+			.on('click', function(d, i)
 				{
-					return d.description === oldUserAccessValue.getDescription();
-				})
-				.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
+					if (d.description === oldUserAccessValue.getDescription())
+						return;
 					
-			buttons.selectAll('div.btn')
-				.on('click', function(d, i)
+					if (prepareClick('click', d.description))
 					{
-						if (d.description === oldUserAccessValue.getDescription())
-							return;
-						
-						if (prepareClick('click', d.description))
+						try
 						{
-							try
+							var sourceObjects = [];
+							var initialData = [];
+							if (d.description == Settings.prototype.profileHiddenLabel)
 							{
-								var sourceObjects = [];
-								var initialData = [];
-								if (d.description == Settings.prototype.profileHiddenLabel)
+								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.id)
-									{
-										sourceObjects.push(oldUserAccessValue);
-										initialData.push({ id: oldUserAccessValue.id });
-									}
-									if (oldPathAccessValue.id)
-									{
-										sourceObjects.push(oldPathAccessValue);
-										initialData.push({ id: oldPathAccessValue.id });
-									}
-									if (oldPathSpecialAccessValue.id)
-									{
-										sourceObjects.push(oldPathSpecialAccessValue);
-										initialData.push({ id: oldPathSpecialAccessValue.id });
-									}
+									sourceObjects.push(oldUserAccessValue);
+									initialData.push({ id: oldUserAccessValue.id });
 								}
-								else if (d.description == Settings.prototype.emailVisibleLabel)
+								if (oldPathAccessValue.id)
 								{
-									if (oldUserAccessValue.id)
-									{
-										if (oldUserAccessValue.description != "_find")
-										{
-											sourceObjects.push(oldUserAccessValue);
-											initialData.push({ id: oldUserAccessValue.id,
-														 instance: d.instancePath,
-														 description: d.description });
-										}
-									}
-									else
-									{
-										sourceObjects.push(oldUserAccessValue);
-										initialData.push(
-												{
-													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
-													fieldID: oldUserAccessValue.cell.field.nameID,
-													instance: d.instancePath,
-													description: d.description
-												});
-									}
-									if (oldPathAccessValue.id)
-									{
-										sourceObjects.push(oldPathAccessValue);
-										initialData.push({ id: oldPathAccessValue.id });
-									}
-									if (oldPathSpecialAccessValue.id)
-									{
-										sourceObjects.push(oldPathSpecialAccessValue);
-										initialData.push({ id: oldPathSpecialAccessValue.id });
-									}
+									sourceObjects.push(oldPathAccessValue);
+									initialData.push({ id: oldPathAccessValue.id });
 								}
-								else if (d.description == Settings.prototype.pathVisibleLabel)
+								if (oldPathSpecialAccessValue.id)
 								{
-									if (oldUserAccessValue.id)
-									{
-										if (oldUserAccessValue.description != "_find")
-										{
-											sourceObjects.push(oldUserAccessValue);
-											initialData.push({ id: oldUserAccessValue.id,
-														 instance: d.instancePath,
-														 description: d.description });
-										}
-									}
-									else
-									{
-										sourceObjects.push(oldUserAccessValue);
-										initialData.push(
-												{
-													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
-													fieldID: oldUserAccessValue.cell.field.nameID,
-													instance: d.instancePath,
-													description: d.description
-												});
-									}
-									if (oldPathAccessValue.id)
-									{
-										sourceObjects.push(oldPathAccessValue);
-										initialData.push({ id: oldPathAccessValue.id,
-													 instance: d.pathPrivilegePath,
-													 description: d.description });
-									}
-									else
-									{
-										sourceObjects.push(oldPathAccessValue);
-										initialData.push(
-												{
-													containerUUID: oldPathAccessValue.cell.parent.getValueID(),
-													fieldID: oldPathAccessValue.cell.field.nameID,
-													instance: d.pathPrivilegePath,
-													description: d.pathPrivilegeDescription
-												});
-									}
-									if (oldPathSpecialAccessValue.id)
-									{
-										sourceObjects.push(oldPathSpecialAccessValue);
-										initialData.push({ id: oldPathSpecialAccessValue.id,
-													 instance: d.pathSpecialAccessPath,
-													 description: d.pathSpecialAccessDescription });
-									}
-									else
-									{
-										sourceObjects.push(oldPathSpecialAccessValue);
-										initialData.push(
-												{
-													containerUUID: oldPathSpecialAccessValue.cell.parent.getValueID(),
-													fieldID: oldPathSpecialAccessValue.cell.field.nameID,
-													instance: d.pathSpecialAccessPath,
-													description: d.pathSpecialAccessDescription
-												});
-									}
+									sourceObjects.push(oldPathSpecialAccessValue);
+									initialData.push({ id: oldPathSpecialAccessValue.id });
 								}
-								else
+							}
+							else if (d.description == Settings.prototype.emailVisibleLabel)
+							{
+								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.id)
+									if (oldUserAccessValue.description != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
 													 instance: d.instancePath,
 													 description: d.description });
 									}
-									else
+								}
+								else
+								{
+									sourceObjects.push(oldUserAccessValue);
+									initialData.push(
+											{
+												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												fieldID: oldUserAccessValue.cell.field.nameID,
+												instance: d.instancePath,
+												description: d.description
+											});
+								}
+								if (oldPathAccessValue.id)
+								{
+									sourceObjects.push(oldPathAccessValue);
+									initialData.push({ id: oldPathAccessValue.id });
+								}
+								if (oldPathSpecialAccessValue.id)
+								{
+									sourceObjects.push(oldPathSpecialAccessValue);
+									initialData.push({ id: oldPathSpecialAccessValue.id });
+								}
+							}
+							else if (d.description == Settings.prototype.pathVisibleLabel)
+							{
+								if (oldUserAccessValue.id)
+								{
+									if (oldUserAccessValue.description != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
-										initialData.push(
-												{
-													containerUUID: oldUserAccessValue.cell.parent.getValueID(),
-													fieldID: oldUserAccessValue.cell.field.nameID,
-													instance: d.instancePath,
-													description: d.description
-												});
-									}
-									if (oldPathAccessValue.id)
-									{
-										sourceObjects.push(oldPathAccessValue);
-										initialData.push({ id: oldPathAccessValue.id });
-									}
-									if (oldPathSpecialAccessValue.id)
-									{
-										sourceObjects.push(oldPathSpecialAccessValue);
-										initialData.push({ id: oldPathSpecialAccessValue.id });
+										initialData.push({ id: oldUserAccessValue.id,
+													 instance: d.instancePath,
+													 description: d.description });
 									}
 								}
-								
-								if (initialData.length > 0)
+								else
 								{
-									/* Test case: Change the public accessibility for a user from Public Profile and Path to Public Path Only. */
-									cr.updateValues(initialData, sourceObjects)
-										.then(function()
+									sourceObjects.push(oldUserAccessValue);
+									initialData.push(
 											{
-												_this.hideRight(unblockClick);
-											},
-											cr.syncFail);
+												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												fieldID: oldUserAccessValue.cell.field.nameID,
+												instance: d.instancePath,
+												description: d.description
+											});
+								}
+								if (oldPathAccessValue.id)
+								{
+									sourceObjects.push(oldPathAccessValue);
+									initialData.push({ id: oldPathAccessValue.id,
+												 instance: d.pathPrivilegePath,
+												 description: d.description });
+								}
+								else
+								{
+									sourceObjects.push(oldPathAccessValue);
+									initialData.push(
+											{
+												containerUUID: oldPathAccessValue.cell.parent.getValueID(),
+												fieldID: oldPathAccessValue.cell.field.nameID,
+												instance: d.pathPrivilegePath,
+												description: d.pathPrivilegeDescription
+											});
+								}
+								if (oldPathSpecialAccessValue.id)
+								{
+									sourceObjects.push(oldPathSpecialAccessValue);
+									initialData.push({ id: oldPathSpecialAccessValue.id,
+												 instance: d.pathSpecialAccessPath,
+												 description: d.pathSpecialAccessDescription });
+								}
+								else
+								{
+									sourceObjects.push(oldPathSpecialAccessValue);
+									initialData.push(
+											{
+												containerUUID: oldPathSpecialAccessValue.cell.parent.getValueID(),
+												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
+												instance: d.pathSpecialAccessPath,
+												description: d.pathSpecialAccessDescription
+											});
 								}
 							}
-							catch(err)
+							else
 							{
-								cr.syncFail(err);
+								if (oldUserAccessValue.id)
+								{
+									sourceObjects.push(oldUserAccessValue);
+									initialData.push({ id: oldUserAccessValue.id,
+												 instance: d.instancePath,
+												 description: d.description });
+								}
+								else
+								{
+									sourceObjects.push(oldUserAccessValue);
+									initialData.push(
+											{
+												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												fieldID: oldUserAccessValue.cell.field.nameID,
+												instance: d.instancePath,
+												description: d.description
+											});
+								}
+								if (oldPathAccessValue.id)
+								{
+									sourceObjects.push(oldPathAccessValue);
+									initialData.push({ id: oldPathAccessValue.id });
+								}
+								if (oldPathSpecialAccessValue.id)
+								{
+									sourceObjects.push(oldPathSpecialAccessValue);
+									initialData.push({ id: oldPathSpecialAccessValue.id });
+								}
+							}
+							
+							if (initialData.length > 0)
+							{
+								/* Test case: Change the public accessibility for a user from Public Profile and Path to Public Path Only. */
+								cr.updateValues(initialData, sourceObjects)
+									.then(function()
+										{
+											_this.hideRight(unblockClick);
+										},
+										cr.syncFail);
 							}
 						}
-					});
-		}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
+					}
+				});
+		return this;
+	}
+	
+	function PickUserAccessPanel() {
+		PickFromListPanel.call(this);
 	}
 	
 	return PickUserAccessPanel;

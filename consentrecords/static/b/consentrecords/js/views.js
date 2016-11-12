@@ -2688,7 +2688,7 @@ var EditPanel = (function() {
 		return doneButton;
 	}
 	
-	function EditPanel(previousPanelNode, objectData, cells, header, onShow)
+	function EditPanel(objectData, cells, header, onShow)
 	{
 		this.createRoot(objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();

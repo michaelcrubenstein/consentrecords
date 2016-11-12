@@ -19,7 +19,7 @@ var UpdatePasswordPanel = (function () {
 		  });
 	}
 
-	function UpdatePasswordPanel(previousPanelNode) {
+	function UpdatePasswordPanel() {
 		this.createRoot(null, "Password", "view", revealPanelUp);
 		var _this = this;
 		
@@ -129,7 +129,7 @@ var UpdateUsernamePanel = (function () {
 		  });
 	}
 
-	function UpdateUsernamePanel(user, previousPanelNode) {
+	function UpdateUsernamePanel(user) {
 		this.createRoot(null, "Username", "view", revealPanelUp);
 		var _this = this;
 		

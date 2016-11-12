@@ -218,7 +218,7 @@
 		var userFirstName = null;
 		var userLastName = null;
 
-		function checkSignin(previousPanel, done)
+		function checkSignin(done)
 		{
 			if (cr.signedinUser.getValueID())
 				done();
@@ -239,11 +239,11 @@
 						firstPanel.showLeft();
 					}
 				
-					$(cr.signedinUser).one("signin.cr", null, previousPanel, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, previousPanel, onSigninCanceled);
+					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
 				
-					var panel = new SigninPanel(previousPanel);
-					firstPanel.showLeft().then(function()
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
 								{
 									panel.initializeFocus();
 									unblockClick();
@@ -727,7 +727,7 @@
 			else
 			{
 				firstPanel = null;
-				checkSignin(previousPanel, handleState);
+				checkSignin(handleState);
 			}
 		});
 		

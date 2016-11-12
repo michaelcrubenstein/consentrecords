@@ -37,7 +37,7 @@ var Signup = (function () {
 		  });
 	}
 
-	function Signup(previousPanel, initialData)
+	function Signup(initialData)
 	{
 		initialData = initialData !== undefined ? initialData : {};
 	
@@ -569,7 +569,7 @@ var SigninPanel = (function()
 			$(this.emailInput).focus();
 	}
 
-	function SigninPanel(previousPanel)
+	function SigninPanel()
 	{
 		this.createRoot(null, "Sign In", "sign-in", revealPanelUp);
 		var _this = this;
@@ -689,7 +689,7 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin sign up'))
 				{
-					var signUp = new Signup(_this.node());
+					var signUp = new Signup();
 					showPanelUp(signUp.node())
 						.always(unblockClick);
 				}
@@ -783,7 +783,7 @@ var ForgotPasswordPanel = (function()
 		  });
 	}
 				
-	function ForgotPasswordPanel(previousPanel)
+	function ForgotPasswordPanel(signinPanel)
 	{
 		this.createRoot(null, "Forgot Password", "sign-up", revealPanelUp);
 		var _this = this;
@@ -856,7 +856,7 @@ var ForgotPasswordPanel = (function()
 						{
 							var successFunction = function()
 							{
-								$(previousPanel).hide("slide", {direction: "right"}, 0);
+								$(signinPanel).hide("slide", {direction: "right"}, 0);
 								_this.hideRight(unblockClick);
 							}
 							this.submit(successFunction, cr.syncFail);
