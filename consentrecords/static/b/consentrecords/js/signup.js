@@ -72,7 +72,7 @@ var Signup = (function () {
 						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								_thisSignup.hidePanelDown(
+								_thisSignup.hideDown(
 									function()
 									{
 										$(cr.signedinUser).trigger("signin.cr");
@@ -85,7 +85,7 @@ var Signup = (function () {
 				
 			});
 		this.dots.appendBackButton(navContainer, function() {
-			_thisSignup.hidePanelDown(unblockClick);
+			_thisSignup.hideDown(unblockClick);
 		});
 		
 		navContainer.appendTitle('New Account');

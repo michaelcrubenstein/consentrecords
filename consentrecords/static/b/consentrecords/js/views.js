@@ -1473,7 +1473,7 @@ var SitePanel = (function () {
 		{
 			this.hide = function()
 				{
-					_this.hidePanelDown(unblockClick);
+					_this.hideDown(unblockClick);
 				};
 		}
 		else
@@ -1828,7 +1828,7 @@ var SitePanel = (function () {
 		return promise;
 	}
 
-	SitePanel.prototype.hidePanelDown = function(done)
+	SitePanel.prototype.hideDown = function(done)
 	{
 		closealert();
 		$(this.node()).trigger("hiding.cr");
@@ -1846,7 +1846,7 @@ var SitePanel = (function () {
 		{
 			cr.logRecord('click', 'Close Down');
 			_blockClick();
-			this.hidePanelDown(unblockClick);
+			this.hideDown(unblockClick);
 		}
 		else
 			cr.logRecord('click', 'Close Down blocked');
