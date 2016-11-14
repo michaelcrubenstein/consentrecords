@@ -289,11 +289,11 @@ var SharingPanel = (function() {
 				
 				_this.addAccess(accessorLevel, path, done);
 			}
-			var panel = new PickSharingUserPanel("Add User Or Group", this.node(), onPick);
+			var panel = new PickSharingUserPanel("Add User Or Group", onPick);
 		}
 	}
 
-	function SharingPanel(user, previousPanelNode)
+	function SharingPanel(user)
 	{
 		this.createRoot(null, "Sharing", "edit sharing", revealPanelUp);
 		this.user = user;
@@ -377,7 +377,7 @@ var PickSharingUserPanel = (function() {
 	PickSharingUserPanel.prototype.emailDocumentation = 
 		'Type the email address of someone you want to give access to your profile.';
 	
-	function PickSharingUserPanel(header, previousPanelNode, done)
+	function PickSharingUserPanel(header, done)
 	{
 		var _this = this;
 		this.createRoot(null, this.title, "list");

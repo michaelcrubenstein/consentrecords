@@ -232,7 +232,7 @@ var Settings = (function () {
 					if (prepareClick('click', 'Sharing'))
 					{
 						showClickFeedback(this);
-						var panel = new SharingPanel(user, _this.node());
+						var panel = new SharingPanel(user);
 						showPanelUp(panel.node())
 								.always(unblockClick);
 					}
