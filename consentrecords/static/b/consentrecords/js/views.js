@@ -1564,26 +1564,32 @@ var SitePanel = (function () {
 	
 		function resizeSearchCancelHeight()
 		{
-			/* Calculate the width of the cancel button. */	
-			if (searchCancelButtonWidth == 0 &&
-				$(searchCancelButton.node()).width() > 0)
-			{
-				var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
-				var h = searchInputContainer.node().getBoundingClientRect().height
-					- cancelBoundingRect.height
-					+ parseInt(searchCancelButton.style("padding-top"))
-					+ parseInt(searchCancelButton.style("padding-bottom"));
-				searchCancelButton.style("padding-top",(h/2).toString()+"px")
-					.style("padding-bottom", (h/2).toString()+"px");
+			/* Trigger the resize in the next event to ensure that css widths and
+				heights have been applied.
+			 */
+			setTimeout(function()
+				{
+					/* Calculate the width of the cancel button. */	
+					if (searchCancelButtonWidth == 0 &&
+						$(searchCancelButton.node()).width() > 0)
+					{
+						var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
+						var h = searchInputContainer.node().getBoundingClientRect().height
+							- cancelBoundingRect.height
+							+ parseInt(searchCancelButton.style("padding-top"))
+							+ parseInt(searchCancelButton.style("padding-bottom"));
+						searchCancelButton.style("padding-top",(h/2).toString()+"px")
+							.style("padding-bottom", (h/2).toString()+"px");
 		
-				var oldWidth = searchCancelButton.style("width");
-				searchCancelButton.style("width", null);
-				searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
-										  parseInt(oldPaddingRight) +
-										  parseInt(oldPaddingLeft);
-				$(searchCancelButton.node()).outerWidth(0);
-				searchCancelButton.select('span').text(null);
-			}
+						var oldWidth = searchCancelButton.style("width");
+						searchCancelButton.style("width", null);
+						searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
+												  parseInt(oldPaddingRight) +
+												  parseInt(oldPaddingLeft);
+						$(searchCancelButton.node()).outerWidth(0);
+						searchCancelButton.select('span').text(null);
+					}
+				}, 0);
 		}
 	
 		$(this.node()).one("revealing.cr", resizeSearchCancelHeight);
