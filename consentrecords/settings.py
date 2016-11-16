@@ -136,8 +136,8 @@ EMAIL_HOST_USER = 'consentrecordsinfo@gmail.com'
 EMAIL_HOST_PASSWORD = 'Hu7RHmjvNw7f'
 
 EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
-EMAIL_HOST_USER = 'AKIAIZXPWRNRBG7CTMRQ'
-EMAIL_HOST_PASSWORD = 'Am/dXeuOJ6ZiUYDZdZuqrqWRYHzV0EZEGaqe5XDb0Qs8'
+EMAIL_HOST_USER = 'AKIAJ54SH5JVAJ73Y7VQ'
+EMAIL_HOST_PASSWORD = '1/SPSGAaIIUxrSMMBM7MvnFTKhFh+b0WLdqfrRXV'
 
 # Email address of the sender of emails.
 PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
