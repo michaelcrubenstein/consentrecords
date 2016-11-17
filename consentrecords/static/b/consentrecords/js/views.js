@@ -1808,6 +1808,26 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
+	SitePanel.prototype.showUp = function()
+	{
+		var $panelNode = $(this.node());
+		window.scrollTo(0, 0);
+		$(panelNode).hide("slide", {direction: "down"}, 0);
+		var promise = $.Deferred();
+		
+		setTimeout(function()
+			{
+				$(panelNode).css("display", "block")
+							.trigger("revealing.cr");
+				$(panelNode).effect("slide", {direction: "down", duration: 400, 
+					complete: function() {
+							promise.resolve();
+						}}, 400);
+			}, 0);
+			
+		return promise;
+	}
+	
 	SitePanel.prototype.showLeft = function()
 	{
 		var _this = this;
@@ -1820,10 +1840,10 @@ var SitePanel = (function () {
 		setTimeout(function()
 			{
 				$panelNode.trigger("revealing.cr");
-				$panelNode.show({effect: "slide", direction: "right", duration: 400,
+				$panelNode.show({effect: "slide", direction: "right",
 					complete: function() {
-						promise.resolve();
-							}});
+							promise.resolve();
+						}});
 			}, 0);
 		return promise;
 	}
