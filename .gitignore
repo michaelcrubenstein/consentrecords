@@ -10,5 +10,6 @@ static/*
 
 consentrecords/production_settings.py
 consentrecords/development_settings.py
+consentrecords/email_settings.py
 
 .DS_Store
