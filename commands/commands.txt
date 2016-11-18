@@ -124,10 +124,10 @@ aws iam upload-server-certificate \
 aws elb create-load-balancer --load-balancer-name btc-load-balancer --listeners "Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=80" "Protocol=HTTPS,LoadBalancerPort=443,InstanceProtocol=HTTPS,InstancePort=443,SSLCertificateId=arn:aws:iam::047227712223:server-certificate/BeTheChangeInc-org-ss-cert" --subnets subnet-58097273 subnet-db9a76e6 subnet-db9a76e6 subnet-db9a76e6 --security-groups sg-eda5398a
 
 ##################################################################
-# Create a virtual environment
+# Create a virtual environment on AWS
 ##################################################################
 
-virtualenv ~/eb_django_app/prod
+virtualenv -p python3 ~/eb_django_app/prod
 
 ##################################################################
 # Create the requirements file for elb
@@ -159,7 +159,7 @@ http://dev.mysql.com/downloads/
 ln -s -i /usr/local/mysql/bin/mysql /usr/local/bin/mysql
 
 ##################################################################
-# Command to launch mysql 
+# Command to launch mysql on development machine
 ##################################################################
 mysql -u root -h 127.0.0.1 -p
 
@@ -181,7 +181,7 @@ SET GLOBAL range_optimizer_max_mem_size=(1536000*3), SESSION range_optimizer_max
 use consentrecordsdev;
 
 ##################################################################
-# Update to .bashrc and .bash_profile packages
+# Update to .bashrc and .bash_profile packages on development machine
 ##################################################################
 export PATH=/Library/Frameworks/Python.framework/Versions/3.4/bin:$PATH
 
