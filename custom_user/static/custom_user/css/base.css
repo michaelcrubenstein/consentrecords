@@ -90,6 +90,7 @@
     width: auto;
     padding-top: 10px;
     padding-bottom: 10px;
+    white-space: nowrap;
 }
 
 /* For text that responds to touches or clicks */

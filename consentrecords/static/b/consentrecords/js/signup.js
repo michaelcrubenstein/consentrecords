@@ -37,12 +37,12 @@ var Signup = (function () {
 		  });
 	}
 
-	function Signup(previousPanel, initialData)
+	function Signup(initialData)
 	{
 		initialData = initialData !== undefined ? initialData : {};
 	
 		var _thisSignup = this
-		SitePanel.call(this, previousPanel, null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
+		this.createRoot(null, "Sign Up for Consent Records", "sign-up", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
 
@@ -72,7 +72,7 @@ var Signup = (function () {
 						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-								_thisSignup.hidePanelDown(
+								_thisSignup.hideDown(
 									function()
 									{
 										$(cr.signedinUser).trigger("signin.cr");
@@ -85,7 +85,7 @@ var Signup = (function () {
 				
 			});
 		this.dots.appendBackButton(navContainer, function() {
-			_thisSignup.hidePanelDown(unblockClick);
+			_thisSignup.hideDown(unblockClick);
 		});
 		
 		navContainer.appendTitle('New Account');
@@ -505,4 +505,408 @@ var Signup = (function () {
 	}
 	
 	return Signup;
+})();
+
+var SigninPanel = (function()
+{
+	SigninPanel.prototype = new SitePanel();
+	
+	SigninPanel.prototype.canSubmit = function() {
+	return $(this.passwordInput).val() !== "" &&
+		$(this.emailInput).val() !== "";
+	},
+
+	SigninPanel.prototype.checkenabled = function() {			
+		if (!this.canSubmit())
+		{
+			this.signinButton.classed("site-disabled-text", true)
+				.classed("site-active-text", false);
+		}
+		else
+		{
+			this.signinButton.classed("site-disabled-text", false)
+				.classed("site-active-text", true);
+		}
+	},
+
+	SigninPanel.prototype.submit = function(successFunction, failFunction) {
+		if (!this.canSubmit())
+			return;
+		
+		bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
+		
+		var _this = this;
+		$.post(cr.urls.submitSignin, { username : $(this.emailInput).val(),
+									  password : $(this.passwordInput).val() })
+			.done(function(json)
+				{
+					if ($(_this.rememberMeCheckbox).prop("checked"))
+						$.cookie("email", $(_this.emailInput).val(), { expires : 10 });
+					else
+						$.removeCookie("email");
+				
+					$(_this.emailInput).val("")
+					$(_this.passwordInput).val("")
+				
+					$.cookie("authenticator", "email", { path: "/"});
+					if (successFunction)
+						successFunction(json.user);
+				})
+			.fail(function(jqXHR, textStatus, errorThrown)
+				{
+					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+				});
+	}
+
+	SigninPanel.prototype.initializeFocus = function()
+	{
+		if ($(this.emailInput).val() !== "")
+		{
+			$(this.rememberMeCheckbox).prop("checked", true);
+			$(this.passwordInput).focus();
+		}
+		else
+			$(this.emailInput).focus();
+	}
+
+	function SigninPanel()
+	{
+		this.createRoot(null, "Sign In", "sign-in", revealPanelUp);
+		var _this = this;
+
+		var form = this.panelDiv.append('form')
+			.classed('form-simple form-signin', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Sign In to PathAdvisor");
+		
+		form.append('div')
+			.classed('alert-container', true);
+			
+		this.emailInput = form.append('input')
+				.attr('type', 'email')
+				.attr('maxlength', '254')
+				.classed('form-control', true)
+				.attr('placeholder', 'Email address')
+				.attr('required', '')
+				.attr('autofocus', '')
+				.on('input', function() { _this.checkenabled(); })
+				.node();
+		
+		var signInSuccess = function(userData)
+		{
+			cr.signedinUser.updateFromChangeData(userData);
+			cr.signedinUser.promiseCells(["_system access"])
+				.then(function()
+					{
+						_this.hideRight(function()
+							{
+								crp.pushInstance(cr.signedinUser);
+								$(cr.signedinUser).trigger("signin.cr");
+								unblockClick();
+							});
+					
+					},
+					cr.syncFail);
+		}
+		
+		this.passwordInput = form.append('input')
+				.attr('type', 'password')
+				.attr('maxlength', '254')
+				.classed('form-control', true)
+				.attr('placeholder', 'Password')
+				.attr('required', '')
+				.on('input', function() { _this.checkenabled(); })
+				.on('keypress', function() {
+						if (d3.event.which == 13)
+						{
+							if (prepareClick('return key', 'Signin sign in'))
+							{
+								_this.submit(signInSuccess, cr.syncFail);
+							}
+							d3.event.preventDefault();
+						}
+					})
+				.node();
+				
+		var rememberMeCheckboxLabel = form.append('div')
+			.classed('checkbox', true)
+			.append('label');
+			
+		this.rememberMeCheckbox = rememberMeCheckboxLabel.append('input')
+			.attr('type', 'checkbox')
+			.node();
+	
+		rememberMeCheckboxLabel.append('text').text(" Remember me");
+			
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('signin-cancel-button site-trio-clipped site-active-text', true)
+			.text("Cancel")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						showClickFeedback(this);
+						_this.hideRight(function()
+							{
+								$(cr.signedinUser).trigger("signinCanceled.cr");
+								unblockClick();
+							});
+					}
+					d3.event.preventDefault();
+				});
+							
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		this.signinButton = buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text default-link', true)
+			.text("Sign In")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'Signin Sign in'))
+					{
+						_this.submit(signInSuccess, cr.syncFail);
+					}
+
+				   //stop form submission
+				   d3.event.preventDefault();
+				});
+
+		this.panelDiv.append('hr');
+		
+		var newAccountDiv = this.panelDiv.append('div')
+			.classed('div-create-new-account other-action', true);
+		newAccountDiv.append('span')
+			.text("Don't have an account?");
+		newAccountDiv.append('a')
+			.classed('site-active-text', true)
+			.text('Create one now.')
+			.on('click', function() {
+				if (prepareClick('click', 'Signin sign up'))
+				{
+					var signUp = new Signup();
+					showPanelUp(signUp.node())
+						.always(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+		
+		var forgotPasswordDiv = this.panelDiv.append('div')
+			.classed('div-forgot-password other-action', true);
+		forgotPasswordDiv.append('span')
+			.text("Forgot your password?");
+		forgotPasswordDiv.append('a')
+			.classed('site-active-text', true)
+			.text('Reset it now.')
+			.on('click', function() {
+				if (prepareClick('click', 'Signin forgot password'))
+				{
+					var panel = new ForgotPasswordPanel(_this.node());
+					showPanelUp(panel.node())
+						.always(unblockClick);
+				}
+				d3.event.preventDefault();
+			});
+
+		$(this.node()).on("revealing.cr", function()
+			{
+				$(_this.emailInput).val($.cookie("email"));
+				$(_this.passwordInput).val("");
+		
+				if ($(_this.emailInput).val() !== "")
+				{
+					$(_this.rememberMeCheckbox).prop("checked", true);
+					$(_this.passwordInput).focus();
+				}
+				else
+					$(_this.emailInput).focus();
+		
+				_this.checkenabled();
+			});
+	}
+
+	return SigninPanel;
+})();
+
+var ForgotPasswordPanel = (function()
+{
+	ForgotPasswordPanel.prototype = new SitePanel();
+	ForgotPasswordPanel.prototype.submitButton = null;
+	ForgotPasswordPanel.prototype.emailGroup = null;
+	ForgotPasswordPanel.prototype.emailInput = null;
+	ForgotPasswordPanel.prototype.emailOK = null;
+	
+	ForgotPasswordPanel.prototype.canSubmit = function() {
+		var testusername = $(this.emailInput).val();
+		return validateEmail(testusername);
+	}
+
+	ForgotPasswordPanel.prototype.checkenabled = function() {			
+		if (!this.canSubmit())
+		{
+			$(this.submitButton).addClass("site-disabled-text")
+							   .removeClass("site-active-text")
+							   .prop( "disabled", true );
+			$(this.emailGroup).removeClass( "has-success");
+			$(this.emailOK).removeClass( "glyphicon-ok" );
+		}
+		else
+		{
+			$(this.submitButton).removeClass("site-disabled-text")
+							   .addClass("site-active-text")
+							   .prop( "disabled", false );
+			$(this.emailGroup).addClass( "has-success");
+			$(this.emailOK).addClass( "glyphicon-ok" );
+		}
+	}
+			
+	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
+		var _this = this;
+		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
+		
+		$.post("{% url 'resetPassword' %}", 
+			{ "email": $(this.emailInput).val()
+			})
+		  .done(function(json, textStatus, jqXHR)
+			{
+				closealert();
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
+				successFunction();
+			})
+		  .fail(function(jqXHR, textStatus, errorThrown) {
+			cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
+		  });
+	}
+				
+	function ForgotPasswordPanel(signinPanel)
+	{
+		this.createRoot(null, "Forgot Password", "sign-up", revealPanelUp);
+		var _this = this;
+		
+		var form = this.panelDiv.append('form')
+			.classed('form-simple', true);
+		
+		form.append('div')
+			.classed('site-title', true)
+			.text("Forgot your Password?");
+		
+		form.append('div')
+			.classed('help-block', true)
+			.text("Enter your email address to receive an email with a link you can click to reset your password.");
+			
+		form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('alert-container col-xs-12');
+			
+		var emailGroup = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12', true)
+			.append('div')
+			.classed('form-group has-feedback', true);
+		this.emailGroup = emailGroup.node();
+		
+		var emailLabel = emailGroup.append('label')
+			.classed('control-label sr-only', true)
+			.text("Email Address");
+			
+		this.emailInput = emailLabel.append('input')
+			.classed('form-control feedback-control', true)
+			.attr('type', 'email')
+			.attr('placeholder', "Email")
+			.on("input", function() { _this.checkenabled(); })
+			.node();
+			
+		this.emailOK = emailGroup.append('span')
+			.classed("glyphicon form-control-feedback")
+			.node();
+		
+		var buttonContainer = form.append('div')
+			.classed('form-group site-trio-container', true);
+			
+		buttonContainer.append('span')
+			.classed('done-button site-trio-clipped site-active-text', true)
+			.text("Cancel")
+			.on('click', function()
+				{
+					if (prepareClick('click', 'hide panel button'))
+					{
+						showClickFeedback(this);
+						_this.hideRight(unblockClick);
+					}
+				});
+			
+		buttonContainer.append('div')
+			.classed('site-trio-fill', true);
+		
+		buttonContainer.append('span')
+			.classed('submit-button site-trio-clipped site-active-text', true)
+			.text("Send Email")
+			.on('click', function()
+				{
+					if (this.canSubmit())
+					{
+						if (prepareClick('click', 'forgot password submit'))
+						{
+							var successFunction = function()
+							{
+								$(signinPanel).hide("slide", {direction: "right"}, 0);
+								_this.hideRight(unblockClick);
+							}
+							this.submit(successFunction, cr.syncFail);
+						}
+					}
+				   //stop form submission
+				   d3.event.preventDefault();
+				});
+				
+		this.alertSuccess = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12 div-success', true)
+			.node();
+			
+		$(this.node()).on("revealing.cr", function()
+		{
+			$(_this.emailInput).val("")
+				.focus();
+			_this.checkenabled();
+		});
+		
+/* 
+			<form class="form-simple">
+				<div class="site-title">Forgot your Password?</div>
+				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
+
+				<div class="row">
+					<div class="alert-container col-xs-12"></div>
+				</div>
+
+			  <div class="row">
+					<div class="col-xs-12">
+						<div id="id_email_group" class="form-group has-feedback">
+							<label for="id_email"  class="control-label sr-only">Email Address</label>
+							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
+							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
+						</div>
+					</div> 
+			  </div>
+				<div class="form-group site-trio-container">
+					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
+					<div class="site-trio-fill"></div>
+					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
+				</div>
+				<div class="row">
+					<div id="id_alert_success" class="col-xs-12 div-success"></div>
+				</div>
+			</form>
+ */
+	}
+	return ForgotPasswordPanel;
 })();

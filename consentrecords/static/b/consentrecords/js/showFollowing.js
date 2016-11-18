@@ -12,7 +12,7 @@ var RequestFollowPanel = (function() {
 	function RequestFollowPanel(user, followingPanel) {
 		var _this = this;
 		this.followingPanel = followingPanel;
-		SitePanel.call(this, followingPanel.node(), null, this.title, "list", revealPanelUp);
+		this.createRoot(null, this.title, "list", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
@@ -232,10 +232,10 @@ var FollowingPanel = (function() {
 		return true;
 	}
 	
-	function FollowingPanel(user, previousPanel) {
+	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
-		SitePanel.call(this, previousPanel, null, header, "edit following", revealPanelUp);
+		this.createRoot(null, header, "edit following", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()

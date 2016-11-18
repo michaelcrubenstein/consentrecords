@@ -250,9 +250,9 @@ var WelcomePanel = (function () {
 	}
 	
 	
-	function WelcomePanel(previousPanel, onPathwayCreated) {
+	function WelcomePanel(onPathwayCreated) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Welcome", "welcome");
+		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
 
 		if (!cr.signedinUser.getValueID())
@@ -263,7 +263,13 @@ var WelcomePanel = (function () {
 						showClickFeedback(this);
 						if (prepareClick('click',  'Sign In button'))
 						{
-							showFixedPanel(_this.node(), "#id_sign_in_panel");
+							var signinPanel = new SigninPanel();
+							signinPanel.showLeft().then(
+								function()
+								{
+									signinPanel.initializeFocus();
+									unblockClick();
+								});
 						}
 						d3.event.preventDefault();
 					})
@@ -494,7 +500,7 @@ var WelcomePanel = (function () {
 				{
 					if (prepareClick('click', 'For Organizations'))
 					{
-						var panel = new WelcomeOrganizationPanel(_this.node());
+						var panel = new WelcomeOrganizationPanel();
 						showPanelUp(panel.node())
 							.always(unblockClick);
 					}
@@ -526,7 +532,7 @@ var WelcomePanel = (function () {
 								
 							if (prepareClick('click', 'Get Started'))
 							{
-								var signUp = new Signup(_this.node());
+								var signUp = new Signup();
 								showPanelUp(signUp.node())
 									.always(unblockClick);
 								return;
@@ -575,14 +581,14 @@ var WelcomePanel = (function () {
 			});
 			
 		var signedIn = function(eventObject) {
-			var pathwayPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
 			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 				.then(function()
 					{
 						pathwayPanel.checkShowIdeas();
 					});
-			showPanelLeft(pathwayPanel.node(),
+			pathwayPanel.showLeft().then(
 				function()
 				{
 					if (onPathwayCreated)

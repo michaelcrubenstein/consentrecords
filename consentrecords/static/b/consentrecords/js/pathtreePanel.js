@@ -837,7 +837,7 @@ var PathView = (function() {
 					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, panel, experience.getPhase(), revealPanelLeft);
+					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
 					
 					revealPanelLeft(editPanel.node());
 				}
@@ -861,8 +861,7 @@ var PathView = (function() {
 			{
 				try
 				{
-					var panel = this.sitePanel.node();
-					var newPanel = new ExperienceCommentsPanel(fd, panel);
+					var newPanel = new ExperienceCommentsPanel(fd);
 					
 					revealPanelLeft(newPanel.node());
 				}
@@ -1785,7 +1784,7 @@ var PathlinesPanel = (function () {
 					{
 						try
 						{
-							var panel = new Settings(user, _this.node());
+							var panel = new Settings(user);
 							showPanelUp(panel.node())
 								.always(unblockClick);
 						}
@@ -1822,7 +1821,7 @@ var PathlinesPanel = (function () {
 			else
 				experience.initPreviousDateRange();
 				
-			var panel = new NewExperiencePanel(experience, this.node(), phase);
+			var panel = new NewExperiencePanel(experience, phase);
 			showPanelUp(panel.node())
 				.done(done);
 		}
@@ -1878,14 +1877,14 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.setupSearchPanel = function()
 	{
-		this.searchPanel = new SearchPathsPanel(this.node());
+		this.searchPanel = new SearchPathsPanel();
 	}
 	
-	function PathlinesPanel(user, previousPanel, done) {
+	function PathlinesPanel(user, done) {
 		var _this = this;
 		this.user = user;
 		
-		SitePanel.call(this, previousPanel, null, "My Pathway", "pathway");
+		this.createRoot(null, "My Pathway", "pathway");
 
 		var panel2Div = this.appendScrollArea();
 
@@ -1899,13 +1898,18 @@ var PathlinesPanel = (function () {
 		{
 			var backButton = this.navContainer.appendLeftButton();
 			if (done === true)
-				backButton.on('click', handleCloseRightEvent);
+				backButton.on('click', function() { _this.hideRightEvent(); });
 			else
 				backButton.on("click", function()
 					{
 						if (prepareClick('click', 'Close Right'))
 						{
-							hidePanelRight(_this.node(), true, done);
+							_this.hideRight(function()
+								{
+									unblockClick();
+									if (done)
+										done();
+								});
 						}
 						d3.event.preventDefault();
 					});
@@ -1928,12 +1932,12 @@ var PathlinesPanel = (function () {
 // 							try
 // 							{
 // 								showClickFeedback(this);
-// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null, _this.node());
-// 								showPanelLeft(newPanel.node(), unblockClick);
+// 								var newPanel = new FindExperiencePanel(cr.signedinUser, null, null);
+//								newPanel.showLeft().then(unblockClick);
 // 							}
 // 							catch(err)
 // 							{
-// 								syncFailFunction(err);
+// 								cr.syncFail(err);
 // 							}
 // 						}
 // 						d3.event.preventDefault();
@@ -2340,7 +2344,7 @@ var ExperienceIdeaPanel = (function() {
 						try
 						{
 							experience.initPreviousDateRange();
-							var panel = new NewExperiencePanel(experience, panelNode, 'Previous',
+							var panel = new NewExperiencePanel(experience, 'Previous',
 								function()
 								{
 									skipButton.on('click')();
@@ -2383,7 +2387,7 @@ var OtherPathlines = (function() {
 			try
 			{
 				var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), fd.experience);
-				var newPanel = new NewExperiencePanel(tempExperience, this.sitePanel.node(), tempExperience.getPhase());
+				var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 				showPanelUp(newPanel.node())
 					.always(unblockClick);
 			}
@@ -2466,11 +2470,11 @@ var OtherPathPanel = (function () {
 		return 0;
 	}
 	
-	function OtherPathPanel(path, previousPanel, done) {
+	function OtherPathPanel(path, done) {
 		var _this = this;
 		this.path = path;
 		
-		SitePanel.call(this, previousPanel, null, "Other Pathway", "pathway");
+		this.createRoot(null, "Other Pathway", "pathway");
 
 		var panel2Div = this.appendScrollArea();
 
@@ -2482,13 +2486,18 @@ var OtherPathPanel = (function () {
 		{
 			var backButton = this.navContainer.appendLeftButton();
 			if (done === true)
-				backButton.on('click', handleCloseRightEvent);
+				backButton.on('click', function() { _this.hideRightEvent(); });
 			else
 				backButton.on("click", function()
 					{
 						if (prepareClick('click', 'Close Right'))
 						{
-							hidePanelRight(_this.node(), true, done);
+							_this.hideRight(function()
+								{
+									unblockClick();
+									if (done)
+										done();
+								});
 						}
 						d3.event.preventDefault();
 					});

@@ -40,16 +40,6 @@ $.fn.getFillHeight = function()
 	return newHeight;
 }
 
-$.fn.calculateFillHeight = function()
-{
-	this.css("height", "{0}px".format(this.getFillHeight()));
-	this.one("resize.cr", function(eventObject)
-		{
-			eventObject.stopPropagation();
-		});
-	this.trigger("resize.cr");
-};
-
 /* A utility function for formatting strings like printf */
 String.prototype.format = function () {
   var args = arguments;
@@ -229,8 +219,6 @@ function showPanelUp(panelNode)
 	$(panelNode).hide("slide", {direction: "down"}, 0);
 	$(panelNode).css("display", "block")
 				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
 	return $(panelNode).effect("slide", {direction: "down"}, 400).promise();
 }
 
@@ -239,23 +227,6 @@ function showPanelNow(panelNode)
 	$(panelNode).offset({top: 0, left: 0})
 				.css("display", "block")
 				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
-}
-
-function showPanelLeft(panelNode, done)
-{
-	window.scrollTo(0, 0);
-	$(panelNode).css("top", 0)
-				.hide("slide", {direction: "right"}, 0)
-				.css("display", "block")
-				.trigger("revealing.cr");
-	if (panelNode.sitePanel)
-		panelNode.sitePanel.calculateHeight();
-	$(panelNode).effect("slide", {direction: "right"}, 400, function() {
-							if (done)
-								done();
-						});
 }
 
 function asyncHidePanelRight(panelNode, doRemove, completeFunction)
@@ -286,30 +257,6 @@ function asyncHidePanelDown(panelNode, doRemove, completeFunction)
 			if (completeFunction)
 				completeFunction();
 		});
-}
-
-function hidePanelRight(panelNode, doRemove, done)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "right"}, 400, 
-		function() {
-			if (doRemove)
-				$(this).remove();
-			unblockClick();
-			if (done)
-				done();
-		});
-}
-		
-function handleCloseRightEvent() {
-	if (prepareClick('click', 'Close Right'))
-		hidePanelRight($(this).parents(".site-panel")[0]);
-	else
-		cr.logRecord('click', 'Close Right blocked');
-	d3.event.preventDefault();
 }
 
 function _isPickCell(cell)
@@ -526,7 +473,7 @@ function _showEditStringCell(obj, cell, inputType)
 	}
 }
 
-function _showEditDateStampDayOptionalCell(obj, panelDiv)
+function _showEditDateStampDayOptionalCell(obj)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
 	
@@ -715,7 +662,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 		var cell = this;
 		var itemsDiv = d3.select(eventObject.data);
 		
-		var previousPanelNode = $(eventObject.data).parents(".site-panel")[0];
+		var headerText = $(eventObject.data).parents(".site-panel").attr('headerText');
 		var item = appendItem(itemsDiv, newValue);
 		_checkItemsDivDisplay(eventObject.data);
 	
@@ -747,7 +694,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 			{
 				try
 				{
-					onClick(cell, d, previousPanelNode, revealPanelLeft);
+					onClick(cell, d, headerText, revealPanelLeft);
 				}
 				catch(err)
 				{
@@ -880,12 +827,12 @@ function appendButtonDescriptions(buttons)
 		.text(_getDataDescription);
 }
 
-function _clickEditObjectValue(d, previousPanelNode)
+function _clickEditObjectValue(d, backText)
 {
 	if (_isPickCell(d.cell))
 	{
 		if (prepareClick('click', 'pick object: ' + d.getDescription()))
-			showPickObjectPanel(d.cell, d, previousPanelNode);
+			showPickObjectPanel(d.cell, d);
 	}
 	else
 	{
@@ -899,7 +846,7 @@ function _clickEditObjectValue(d, previousPanelNode)
 				/* Test case: Create an Organization, Site an Offering all in one operation. */
 				getSavePromise = promiseImportCells;
 			}
-			showEditObjectPanel(d.cell, d, previousPanelNode, revealPanelLeft, getSavePromise);
+			showEditObjectPanel(d.cell, d, backText, revealPanelLeft, getSavePromise);
 		}
 	}
 }
@@ -1087,38 +1034,38 @@ cr.Cell.prototype.appendLabel = function(obj)
 
 cr.StringCell.prototype.appendUpdateCommands = _appendUpdateStringCommands;
 cr.StringCell.prototype.updateCell = _updateStringCell;
-cr.StringCell.prototype.show = function(obj, containerPanel)
+cr.StringCell.prototype.show = function(obj)
 {
 	_showViewStringCell(obj, this);
 }
-cr.StringCell.prototype.showEdit = function(obj, containerPanel)
+cr.StringCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "text");
 }
 
-cr.NumberCell.prototype.showEdit = function(obj, containerPanel)
+cr.NumberCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "number");
 }
 
-cr.EmailCell.prototype.showEdit = function(obj, containerPanel)
+cr.EmailCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "email");
 }
 
-cr.UrlCell.prototype.showEdit = function(obj, containerPanel)
+cr.UrlCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "url");
 }
 
-cr.TelephoneCell.prototype.showEdit = function(obj, containerPanel)
+cr.TelephoneCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "tel");
 }
 
 cr.DatestampCell.prototype.appendUpdateCommands = _appendUpdateDatestampCommands;
 cr.DatestampCell.prototype.updateCell = _updateDatestampCell;
-cr.DatestampCell.prototype.showEdit = function(obj, containerPanel)
+cr.DatestampCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "date");
 }
@@ -1129,14 +1076,14 @@ cr.DatestampDayOptionalCell.prototype.showEdit = _showEditDateStampDayOptionalCe
 
 cr.TimeCell.prototype.appendUpdateCommands = _appendUpdateTimeCommands;
 cr.TimeCell.prototype.updateCell = _updateTimeCell;
-cr.TimeCell.prototype.showEdit = function(obj, containerPanel)
+cr.TimeCell.prototype.showEdit = function(obj)
 {
 	_showEditStringCell(obj, this, "time");
 }
 
 cr.TranslationCell.prototype.appendUpdateCommands = _appendUpdateTranslationCommands;
 cr.TranslationCell.prototype.updateCell = _updateTranslationCell;
-cr.TranslationCell.prototype.showEdit = function(obj, containerPanel)
+cr.TranslationCell.prototype.showEdit = function(obj)
 {
 	_showEditTranslationCell(obj, this, "text");
 }
@@ -1177,7 +1124,7 @@ cr.ObjectCell.prototype.updateCell = function(sectionObj)
 	/* Do nothing at the moment. */
 }
 
-cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
+cr.ObjectCell.prototype.show = function(obj, backText)
 {
 	var sectionObj = d3.select(obj);
 	var itemsDiv = sectionObj.selectAll("ol");
@@ -1190,7 +1137,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 			          .on("click", function(cell) {
 				if (prepareClick('click', 'view unique ' + cell.field.name + ': ' + cell.data[0].getDescription()))
 				{
-					showViewObjectPanel(cell, cell.data[0], previousPanelNode, revealPanelLeft);
+					showViewObjectPanel(cell, cell.data[0], backText, revealPanelLeft);
 				}
 			});
 	}
@@ -1211,7 +1158,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		clickFunction = function(d) {
 			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
 			{
-				showViewObjectPanel(_this, d, previousPanelNode, revealPanelLeft);
+				showViewObjectPanel(_this, d, backText, revealPanelLeft);
 			}
 		}
 
@@ -1235,7 +1182,7 @@ cr.ObjectCell.prototype.show = function(obj, previousPanelNode)
 		.each(_pushTextChanged);
 }
 
-cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
+cr.ObjectCell.prototype.showEdit = function(obj, backText)
 {
 	var sectionObj = d3.select(obj);
 	
@@ -1247,7 +1194,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 		sectionObj.classed("btn row-button", true);
 		itemsDiv.classed("right-label", true);
 		sectionObj.on("click", function(cell) {
-			_clickEditObjectValue(cell.data[0], previousPanelNode);
+			_clickEditObjectValue(cell.data[0], backText);
 		});
 	}
 
@@ -1262,7 +1209,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 	if (!this.isUnique())
 	{
 		buttons.on("click", function(d) {
-				_clickEditObjectValue(d, previousPanelNode);
+				_clickEditObjectValue(d, backText);
 			});
 		appendDeleteControls(buttons);
 	}
@@ -1291,9 +1238,9 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 		
 	var editFunction = _isPickCell(this) ? showPickObjectPanel : showEditObjectPanel;
 	var addedEditFunction = _isPickCell(this) ? showPickObjectPanel :
-		function(containerCell, objectData, previousPanelNode, onShow)
+		function(containerCell, objectData, backText, onShow)
 		{
-			showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow, promise2);
+			showEditObjectPanel(containerCell, objectData, backText, onShow, promise2);
 		}
 		
 	var addedFunction = getOnValueAddedFunction(true, true, addedEditFunction);
@@ -1309,7 +1256,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, previousPanelNode)
 		var _this = this;
 		function done()
 		{
-			editFunction(_this, null, previousPanelNode, revealPanelUp,
+			editFunction(_this, null, backText, revealPanelUp,
 						promise);
 		}
 		
@@ -1505,56 +1452,38 @@ var SitePanel = (function () {
 	SitePanel.prototype.headerText = null;
 	SitePanel.prototype.hide = null;
 	
-    function SitePanel(containerPanel, datum, headerText, panelClass, showFunction) {
-    	if (containerPanel === undefined)
-    	{
-    		/* In this case, we just want the prototype. The rest will get
-    			initialized from the sub-class.
-    		 */
-    		this.panelDiv = undefined;
-    		this.navContainer = undefined;
-    		this.panel2Div = undefined;
-    		this.headerText = null;
-			this.hide = null;
-    	}
-    	else
-    	{
-    		var previousZIndex = parseInt($(containerPanel).css("z-index"));
-			if (isNaN(previousZIndex))
-				previousIndex = 0;
-				//throw "containerPanel's z-index is not specified";
-		
-			var rootPanel = d3.select("body");
-			var zindex = previousZIndex+1;
-			this.panelDiv = rootPanel
-							.append("panel")
-							.classed("site-panel reveal", true)
-							.style("z-index", zindex)
-							.datum(datum)
-							.attr("headerText", headerText);
-			this.node().sitePanel = this;
-							
-			if (panelClass && panelClass.length > 0)
-				this.panelDiv.classed(panelClass, true);
-				
-			this.headerText = headerText;
-			var _this = this;
-			if (showFunction === revealPanelUp)
-			{
-				this.hide = function()
-					{
-						_this.hidePanelDown(unblockClick);
-					};
-			}
-			else
-			{
-				this.hide = function()
-					{
-						hidePanelRight(_this.node());
-					};
-			}
+	function SitePanel() {
+	}
+	
+	SitePanel.prototype.createRoot = function(datum, headerText, panelClass, showFunction) {
+		var rootPanel = d3.select("body");
+		this.panelDiv = rootPanel
+						.append("panel")
+						.classed("site-panel reveal", true)
+						.datum(datum)
+						.attr("headerText", headerText);
+		this.node().sitePanel = this;
+						
+		if (panelClass && panelClass.length > 0)
+			this.panelDiv.classed(panelClass, true);
+			
+		this.headerText = headerText;
+		var _this = this;
+		if (showFunction === revealPanelUp)
+		{
+			this.hide = function()
+				{
+					_this.hideDown(unblockClick);
+				};
 		}
-    }
+		else
+		{
+			this.hide = function()
+				{
+					_this.hideRight(unblockClick);
+				};
+		}
+	}
     
     SitePanel.prototype.node = function()
     {
@@ -1635,26 +1564,32 @@ var SitePanel = (function () {
 	
 		function resizeSearchCancelHeight()
 		{
-			/* Calculate the width of the cancel button. */	
-			if (searchCancelButtonWidth == 0 &&
-				$(searchCancelButton.node()).width() > 0)
-			{
-				var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
-				var h = searchInputContainer.node().getBoundingClientRect().height
-					- cancelBoundingRect.height
-					+ parseInt(searchCancelButton.style("padding-top"))
-					+ parseInt(searchCancelButton.style("padding-bottom"));
-				searchCancelButton.style("padding-top",(h/2).toString()+"px")
-					.style("padding-bottom", (h/2).toString()+"px");
+			/* Trigger the resize in the next event to ensure that css widths and
+				heights have been applied.
+			 */
+			setTimeout(function()
+				{
+					/* Calculate the width of the cancel button. */	
+					if (searchCancelButtonWidth == 0 &&
+						$(searchCancelButton.node()).width() > 0)
+					{
+						var cancelBoundingRect = searchCancelButton.node().getBoundingClientRect();
+						var h = searchInputContainer.node().getBoundingClientRect().height
+							- cancelBoundingRect.height
+							+ parseInt(searchCancelButton.style("padding-top"))
+							+ parseInt(searchCancelButton.style("padding-bottom"));
+						searchCancelButton.style("padding-top",(h/2).toString()+"px")
+							.style("padding-bottom", (h/2).toString()+"px");
 		
-				var oldWidth = searchCancelButton.style("width");
-				searchCancelButton.style("width", null);
-				searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
-										  parseInt(oldPaddingRight) +
-										  parseInt(oldPaddingLeft);
-				$(searchCancelButton.node()).outerWidth(0);
-				searchCancelButton.select('span').text(null);
-			}
+						var oldWidth = searchCancelButton.style("width");
+						searchCancelButton.style("width", null);
+						searchCancelButtonWidth = $(searchCancelButton.node()).width() + 
+												  parseInt(oldPaddingRight) +
+												  parseInt(oldPaddingLeft);
+						$(searchCancelButton.node()).outerWidth(0);
+						searchCancelButton.select('span').text(null);
+					}
+				}, 0);
 		}
 	
 		$(this.node()).one("revealing.cr", resizeSearchCancelHeight);
@@ -1689,8 +1624,20 @@ var SitePanel = (function () {
 	{
 		if (this.mainDiv)
 		{
-			var varNode = this.mainDiv.node();
-			$(varNode).calculateFillHeight();
+			var mainNode = $(this.mainDiv.node());
+			mainNode.css('height', "{0}px".format(mainNode.getFillHeight()))
+				.one("resize.cr", function(eventObject)
+				{
+					eventObject.stopPropagation();
+				});
+				
+			/* Trigger the resize in the next event to ensure that css widths and
+				heights have been applied.
+			 */
+			setTimeout(function()
+				{
+					mainNode.trigger("resize.cr");
+				});
 		}
 	}
 	
@@ -1744,7 +1691,7 @@ var SitePanel = (function () {
 			var _thisPanel2Div = this;
 			var section = d3.select(sectionNode);
 			var itemsDiv = section.select("ol");
-			cell.show(sectionNode, _this.node());
+			cell.show(sectionNode, _this.headerText);
 			$(sectionNode).css("display", _thisPanel2Div.isEmptyItems(itemsDiv) ? "none" : "");
 			
 			/* Make sure the section gets shown if a value is added to it. */
@@ -1836,7 +1783,7 @@ var SitePanel = (function () {
 			.classed("unique", function(cell) { return cell.isUnique(); })
 			.classed("multiple", function(cell) { return !cell.isUnique(); })
 			.each(function(cell) {
-					cell.showEdit(this, _this.node());
+					cell.showEdit(this, _this.headerText);
 				});
 	}
 	
@@ -1861,7 +1808,47 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
-	SitePanel.prototype.hidePanelDown = function(done)
+	SitePanel.prototype.showUp = function()
+	{
+		var $panelNode = $(this.node());
+		window.scrollTo(0, 0);
+		$(panelNode).hide("slide", {direction: "down"}, 0);
+		var promise = $.Deferred();
+		
+		setTimeout(function()
+			{
+				$(panelNode).css("display", "block")
+							.trigger("revealing.cr");
+				$(panelNode).effect("slide", {direction: "down", duration: 400, 
+					complete: function() {
+							promise.resolve();
+						}}, 400);
+			}, 0);
+			
+		return promise;
+	}
+	
+	SitePanel.prototype.showLeft = function()
+	{
+		var _this = this;
+		var $panelNode = $(this.node());
+
+		window.scrollTo(0, 0);
+		$panelNode.css("display", "none");
+		var promise = $.Deferred();
+		
+		setTimeout(function()
+			{
+				$panelNode.trigger("revealing.cr");
+				$panelNode.show({effect: "slide", direction: "right",
+					complete: function() {
+							promise.resolve();
+						}});
+			}, 0);
+		return promise;
+	}
+
+	SitePanel.prototype.hideDown = function(done)
 	{
 		closealert();
 		$(this.node()).trigger("hiding.cr");
@@ -1879,14 +1866,14 @@ var SitePanel = (function () {
 		{
 			cr.logRecord('click', 'Close Down');
 			_blockClick();
-			this.hidePanelDown(unblockClick);
+			this.hideDown(unblockClick);
 		}
 		else
 			cr.logRecord('click', 'Close Down blocked');
 			
 	}
 	
-	SitePanel.prototype.hidePanelRight = function(done)
+	SitePanel.prototype.hideRight = function(done)
 	{
 		closealert();
 		$(this.node()).trigger("hiding.cr");
@@ -1896,6 +1883,15 @@ var SitePanel = (function () {
 				if (done)
 					done();
 			});
+	}
+	
+	SitePanel.prototype.hideRightEvent = function()
+	{
+		if (prepareClick('click', 'Close Right'))
+			this.hideRight(unblockClick);
+		else
+			cr.logRecord('click', 'Close Right blocked');
+		d3.event.preventDefault();
 	}
 	
 	SitePanel.prototype.appendDeleteControls = function(buttons)
@@ -1946,7 +1942,6 @@ var SitePanel = (function () {
 		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
-			var newWidth = adj.width();
 			adj.animate({"margin-left": "24px"}, 
 				{duration: duration,
 				 step: function() {
@@ -1967,7 +1962,6 @@ var SitePanel = (function () {
 		var adj = dials.find("~ div");
 		if (adj.length > 0)
 		{
-			var newWidth = adj.width();
 			adj.animate({"margin-left": "0px"}, 
 				{duration: duration,
 				 step: function() {
@@ -2522,7 +2516,7 @@ function getViewPanelHeader(objectData)
 
 function revealPanelLeft(panelDiv)
 {
-	showPanelLeft(panelDiv, unblockClick);
+	panelDiv.sitePanel.showLeft().then(unblockClick);
 }
 
 function revealPanelUp(panelDiv)
@@ -2533,24 +2527,24 @@ function revealPanelUp(panelDiv)
 
 /* Displays a panel in which the specified object's contents appear without being able to edit.
  */
-function showViewOnlyObjectPanel(objectData, previousPanelNode) {
+function showViewOnlyObjectPanel(objectData, backText) {
 	successFunction = function ()
 	{
-		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData), "view");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
 
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
+		backButton.append("div").text(" " + backText);
 	
 		var panel2Div = sitePanel.appendScrollArea();
 
 		var headerDiv = panel2Div.appendHeader();
 
-		showPanelLeft(sitePanel.node(), unblockClick);
+		sitePanel.showLeft().then(unblockClick);
 	
 		panel2Div.append("div").classed("cell-border-below", true);
 		sitePanel.showViewCells(objectData.cells);
@@ -2561,18 +2555,19 @@ function showViewOnlyObjectPanel(objectData, previousPanelNode) {
 
 /* Displays a panel in which the specified object's contents appear.
  */
-function showViewObjectPanel(cell, objectData, previousPanelNode, showFunction) {
+function showViewObjectPanel(cell, objectData, backText, showFunction) {
 	var successFunction = function ()
 	{
-		var sitePanel = new SitePanel(previousPanelNode, 
-									objectData, getViewPanelHeader(objectData), "view", showFunction);
+		var sitePanel = new SitePanel();
+		var header = getViewPanelHeader(objectData);
+		sitePanel.createRoot(objectData, header, "view", showFunction);
 
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
+		backButton.append("div").text(" " + backText);
 	
 		if (objectData.canWrite())
 		{
@@ -2582,7 +2577,7 @@ function showViewObjectPanel(cell, objectData, previousPanelNode, showFunction) 
 					{
 						showClickFeedback(this);
 				
-						showEditObjectPanel(cell, objectData, sitePanel.node(), revealPanelUp);
+						showEditObjectPanel(cell, objectData, header, revealPanelUp);
 					}
 					d3.event.preventDefault();
 				});
@@ -2720,9 +2715,9 @@ var EditPanel = (function() {
 		return doneButton;
 	}
 	
-	function EditPanel(previousPanelNode, objectData, cells, header, onShow)
+	function EditPanel(objectData, cells, header, onShow)
 	{
-		SitePanel.call(this, previousPanelNode, objectData, header, "edit", onShow);
+		this.createRoot(objectData, header, "edit", onShow);
 		this.navContainer = this.appendNavContainer();
 
 		var panel2Div = this.appendScrollArea();
@@ -2806,7 +2801,7 @@ var EditPanel = (function() {
 /* 
 	Displays a panel for editing the specified object. 
  */
-function showEditObjectPanel(containerCell, objectData, previousPanelNode, onShow, getSavePromise) {
+function showEditObjectPanel(containerCell, objectData, backText, onShow, getSavePromise) {
 	var successFunction = function(cells)
 	{
 		var header;
@@ -2814,7 +2809,7 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 			header = "Edit";
 		else
 			header = "New " + containerCell.field.name;
-		var sitePanel = new EditPanel(previousPanelNode, objectData, cells, header, onShow);
+		var sitePanel = new EditPanel(objectData, cells, header, onShow);
 
 		var doneButton;
 		if (objectData && objectData.getValueID())
@@ -2872,12 +2867,12 @@ function showEditObjectPanel(containerCell, objectData, previousPanelNode, onSho
 /* 
 	Displays a panel for adding a root object. 
  */
-function showAddRootPanel(containerCell, previousPanelNode, onShow) {
+function showAddRootPanel(containerCell, onShow) {
 	var successFunction = function(cells)
 	{
 		var header = "New " + containerCell.field.name;
 			
-		var sitePanel = new EditPanel(previousPanelNode, null, cells, header, onShow);
+		var sitePanel = new EditPanel(null, cells, header, onShow);
 
 		var doneButton = sitePanel.appendAddButton(promiseCreateObjectFromCells, containerCell, null, cells);
 		
@@ -2893,7 +2888,7 @@ function showAddRootPanel(containerCell, previousPanelNode, onShow) {
 			.then(successFunction, cr.syncFail);
 }
 
-function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunction, successFunction)
+function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 {
 	return function(rootObjects)
 	{
@@ -2903,12 +2898,13 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 		for (var i = 0; i < rootObjects.length; i++)
 			cell.pushValue(rootObjects[i]);
 		
-		var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(cell, header, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
 		var backButton = navContainer.appendLeftButton()
-			.on("click", handleCloseRightEvent);
+			.on("click", function() { sitePanel.hideRightEvent(); });
 		backButton.append("span").text("Done");
 		
 		var checkEdit = function()
@@ -2921,7 +2917,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 						{
 							showClickFeedback(this);
 				
-							showEditRootObjectsPanel(cell, sitePanel.node(), "Edit " + header, sortFunction);
+							showEditRootObjectsPanel(cell, "Edit " + header, sortFunction);
 						}
 						d3.event.preventDefault();
 					});
@@ -3006,7 +3002,7 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 			function(d) {
 				if (prepareClick('click', 'view root object: ' + d.getDescription()))
 				{
-					showViewObjectPanel(cell, d, sitePanel.node(), revealPanelLeft);
+					showViewObjectPanel(cell, d, sitePanel.node().getAttribute("headerText"), revealPanelLeft);
 				}
 			});
 
@@ -3016,9 +3012,10 @@ function getViewRootObjectsFunction(cell, previousPanelNode, header, sortFunctio
 	}
 }
 
-function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
+function showEditRootObjectsPanel(cell, header, sortFunction)
 {
-	var sitePanel = new SitePanel(previousPanelNode, cell, header, "list");
+	var sitePanel = new SitePanel();
+	sitePanel.createRoot(cell, header, "list");
 
 	var navContainer = sitePanel.appendNavContainer();
 
@@ -3037,7 +3034,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 				try
 				{
 					showClickFeedback(this);
-					showAddRootPanel(cell, sitePanel.node(), revealPanelUp);
+					showAddRootPanel(cell, revealPanelUp);
 				}
 				catch(err)
 				{
@@ -3107,7 +3104,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 		function(d) {
 			if (prepareClick('click', 'edit cell item: ' + d.getDescription()))
 			{
-				showEditObjectPanel(cell, d, sitePanel.node(), revealPanelLeft);
+				showEditObjectPanel(cell, d, header, revealPanelLeft);
 			}
 		});
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -3171,7 +3168,7 @@ function showEditRootObjectsPanel(cell, previousPanelNode, header, sortFunction)
 /* Displays a panel from which a user can select an object of the kind required 
 	for objects in the specified cell.
  */
-function showPickObjectPanel(cell, oldData, previousPanelNode) {
+function showPickObjectPanel(cell, oldData) {
 	var failFunction = syncFailFunction;
 	
 	function selectAllSuccessFunction(rootObjects) {
@@ -3188,7 +3185,8 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			panelDatum = oldData;	/* Replacing an existing object. */
 		else
 			panelDatum = cell;		/* Adding a new object. */
-		var sitePanel = new SitePanel(previousPanelNode, panelDatum, cell.field.name, "list");
+		var sitePanel = new SitePanel();
+		sitePanel.createRoot(panelDatum, cell.field.name, "list");
 
 		var navContainer = sitePanel.appendNavContainer();
 
@@ -3197,7 +3195,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					sitePanel.hidePanelRight(unblockClick);
+					sitePanel.hideRight(unblockClick);
 				}
 				d3.event.preventDefault();
 			});
@@ -3235,7 +3233,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 			/* d is the ObjectValue that the user clicked. */
 			var successFunction = function()
 			{
-				sitePanel.hidePanelRight(unblockClick);
+				sitePanel.hideRight(unblockClick);
 			}
 			
 			if (prepareClick('click', 'pick object panel: ' + d.getDescription()))
@@ -3310,7 +3308,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
 				}
 			}
 			d3.event.preventDefault();
@@ -3329,7 +3327,7 @@ function showPickObjectPanel(cell, oldData, previousPanelNode) {
 				function(d) { return d.getDescription() == oldData.getDescription(); });
 		}
 	
-		showPanelLeft(sitePanel.node(), unblockClick);
+		sitePanel.showLeft().then(unblockClick);
 	}
 	
 	if (cell.field.pickObjectPath)
