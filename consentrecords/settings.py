@@ -129,16 +129,6 @@ STATIC_ROOT= os.path.join(BASE_DIR, 'static')
 # Auth User Model
 AUTH_USER_MODEL = 'custom_user.AuthUser'
 
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'consentrecordsinfo@gmail.com'
-EMAIL_HOST_PASSWORD = 'Hu7RHmjvNw7f'
-
-EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
-EMAIL_HOST_USER = 'AKIAIZXPWRNRBG7CTMRQ'
-EMAIL_HOST_PASSWORD = 'Am/dXeuOJ6ZiUYDZdZuqrqWRYHzV0EZEGaqe5XDb0Qs8'
-
 # Email address of the sender of emails.
 PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
 
@@ -161,3 +151,4 @@ CR_SECRET_ID = b'vX9uEtloHxt0c2YeIU1ayQyxBAcvCYzzONr8NIILwssX62HIBof37dTURtPJIEi
 FACEBOOK_SHOW = False
 
 from consentrecords.local_settings import *
+from consentrecords.email_settings import *
