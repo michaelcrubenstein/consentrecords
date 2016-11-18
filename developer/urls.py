@@ -1,10 +1,9 @@
 from __future__ import absolute_import
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from developer import views
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^$', views.index),
     url(r'^data/$', views.data.index),
     url(r'^business/$', views.business.index),
@@ -20,5 +19,5 @@ urlpatterns = patterns(
     url(r'^configuration/', views.configuration.index),
     url(r'^configuration/configuration/', views.configuration.configuration),
     url(r'^configuration/organization/', views.configuration.organization),
-)
+]
 
