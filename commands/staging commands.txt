@@ -42,11 +42,19 @@ virtualenv -p python3 ~/eb_django_app/prod
 ##################################################################
 # Install awscli
 ##################################################################
-pip3 install awscli
+sudo -H pip3 install awscli
 
-pip3 install django
-pip3 install django-cors-headers
-pip3 install django-oauth-toolkit
-pip3 install django-oauth2-provider
-pip3 install pytz
+sudo -H pip3 install django
+sudo -H pip3 install django-cors-headers
+sudo -H pip3 install django-oauth-toolkit
+sudo -H pip3 install django-oauth2-provider
+sudo -H pip3 install pytz
+sudo -H pip3 install tzlocal
 
+##################################################################
+# The following files need to be set up 
+##################################################################
+# .elasticbeanstalk/config.yml
+# .elasticbeanstalk/consentrecords-prod.env.yml
+# .ebextensions/01-django_eb.config  
+# .ebextensions/securelistener.config
