@@ -6,8 +6,6 @@
 # mysql> SET PASSWORD = PASSWORD('XXXXXXXX');
 # > exit
 
-DEBUG = True
-
 DATABASES = {
     'default': {
         'ENGINE': 'consentrecords.mysql.connector.django',
