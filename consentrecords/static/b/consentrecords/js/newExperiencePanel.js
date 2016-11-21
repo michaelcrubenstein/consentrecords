@@ -2215,7 +2215,7 @@ var ExperienceShareOptions = (function () {
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
 							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
-							showPanelUp(newPanel.node())
+							newPanel.showUp()
 								.done(function()
 									{
 										$(emailAddExperienceButton.node()).off('blur');
@@ -2399,7 +2399,7 @@ var NewExperiencePanel = (function () {
 		}
 		
 		/* Calculate layout-based variables after css is complete. */
-		setTimeout(function()
+		$(this.node()).one("revealing.cr", function()
 			{
 				hidingChevron.height(hidableDiv.height());
 			}, 0);
@@ -2424,6 +2424,12 @@ var NewExperiencePanel = (function () {
 		return width;
 	}
 	
+	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
+	{
+		var newWidth = this.getInputTextWidth(inputNode) + 18;
+		$(inputNode).outerWidth(newWidth);
+	}
+	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
 	{
 		var input = container.insert('input', 'input:last-of-type')
@@ -2439,19 +2445,13 @@ var NewExperiencePanel = (function () {
 			});
 		
 		var _this = this;	
-		setTimeout(function()
-			{
-				var newWidth = _this.getInputTextWidth(input.node()) + 18;
-				$(input.node()).outerWidth(newWidth);
-			});
 		
 		$(input.node()).on('input', function()
 			{
-				/* Check for text changes for all input boxes. The primary input box is handled
-					in the constructor of the ExperienceDatumSearchView class. */
+				/* Check for text changes for all input boxes.  */
 				if (this != _this.tagInput.node())
 					_this.tagSearchView.constrainFoundObjects(this);
-				$(this).outerWidth(_this.getInputTextWidth(this) + 18);
+				_this.setTagInputWidth(this);
 			});
 		
 		$(input.node()).on('focusin', function()
@@ -2514,7 +2514,11 @@ var NewExperiencePanel = (function () {
 		{
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				this.appendTag(container, tags[i]);
+				var input = _this.appendTag(container, tags[i]);
+				setTimeout(function()
+					{
+						_this.setTagInputWidth(input.node());
+					});
 			}
 		}
 	}
@@ -3113,7 +3117,7 @@ var NewExperiencePanel = (function () {
 			startDateInput.value(experience.startDate);
 		else
 		{
-			setTimeout(function()
+			$(this.node()).one("revealing.cr", function()
 				{
 					_this.startHidable.hideValue();
 				});
@@ -3123,14 +3127,12 @@ var NewExperiencePanel = (function () {
 			endDateInput.value(experience.endDate);
 		else
 		{
-			setTimeout(function()
+			$(this.node()).one("revealing.cr", function()
 				{
 					_this.endHidable.hideValue();
 				});
 		}
-		
-		this.showTags();
-		
+				
 		function setGoalStartDateRange()
 		{
 			var startMinDate = getUTCTodayDate();
@@ -3139,8 +3141,12 @@ var NewExperiencePanel = (function () {
 			startDateInput.checkMinDate(startMinDate, startMaxDate);
 		}
 		
-		setTimeout(function()
+		$(this.node()).one("revealing.cr", function()
 			{
+				_this.setTagInputWidth(_this.tagInput.node());
+
+				_this.showTags();
+				
 				if (!experience.instance)
 				{
 					if (!experience.organizationName)

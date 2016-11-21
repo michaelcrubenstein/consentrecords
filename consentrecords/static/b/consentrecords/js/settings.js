@@ -232,9 +232,9 @@ var Settings = (function () {
 					if (prepareClick('click', 'Sharing'))
 					{
 						showClickFeedback(this);
-						var panel = new SharingPanel(user);
-						showPanelUp(panel.node())
-								.always(unblockClick);
+						new SharingPanel(user)
+							.showUp()
+							.always(unblockClick);
 					}
 				})
 				.classed('first', true);
@@ -254,8 +254,8 @@ var Settings = (function () {
 					if (prepareClick('click', 'Following'))
 					{
 						showClickFeedback(this);
-						var panel = new FollowingPanel(user);
-						showPanelUp(panel.node())
+						new FollowingPanel(user)
+							.showUp()
 							.always(unblockClick);
 					}
 				});
@@ -267,8 +267,8 @@ var Settings = (function () {
 					if (prepareClick('click', 'Change Email'))
 					{
 						showClickFeedback(this);
-						var panel = new UpdateUsernamePanel(user);
-						showPanelUp(panel.node())
+						new UpdateUsernamePanel(user)
+							.showUp()
 							.always(unblockClick);
 					}
 				});
@@ -277,8 +277,8 @@ var Settings = (function () {
 					if (prepareClick('click', 'Change Password'))
 					{
 						showClickFeedback(this);
-						var panel = new UpdatePasswordPanel();
-						showPanelUp(panel.node())
+						new UpdatePasswordPanel()
+							.showUp()
 							.always(unblockClick);
 					}
 				});

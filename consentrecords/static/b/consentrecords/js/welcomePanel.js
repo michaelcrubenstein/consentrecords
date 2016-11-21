@@ -500,8 +500,8 @@ var WelcomePanel = (function () {
 				{
 					if (prepareClick('click', 'For Organizations'))
 					{
-						var panel = new WelcomeOrganizationPanel();
-						showPanelUp(panel.node())
+						new WelcomeOrganizationPanel()
+							.showUp()
 							.always(unblockClick);
 					}
 				});
@@ -532,8 +532,8 @@ var WelcomePanel = (function () {
 								
 							if (prepareClick('click', 'Get Started'))
 							{
-								var signUp = new Signup();
-								showPanelUp(signUp.node())
+								new Signup()
+									.showUp()
 									.always(unblockClick);
 								return;
 							}

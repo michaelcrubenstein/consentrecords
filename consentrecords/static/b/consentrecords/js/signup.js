@@ -689,8 +689,8 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin sign up'))
 				{
-					var signUp = new Signup();
-					showPanelUp(signUp.node())
+					new Signup()
+						.showUp()
 						.always(unblockClick);
 				}
 				d3.event.preventDefault();
@@ -706,8 +706,8 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin forgot password'))
 				{
-					var panel = new ForgotPasswordPanel(_this.node());
-					showPanelUp(panel.node())
+					new ForgotPasswordPanel(_this.node())
+						.showUp()
 						.always(unblockClick);
 				}
 				d3.event.preventDefault();
