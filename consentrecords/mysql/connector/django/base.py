@@ -475,9 +475,18 @@ class DatabaseOperations(BaseDatabaseOperations):
     def max_name_length(self):
         return 64
 
-    def bulk_insert_sql(self, fields, num_values):
-        items_sql = "({0})".format(", ".join(["%s"] * len(fields)))
-        return "VALUES " + ", ".join([items_sql] * num_values)
+    if django.VERSION >= (1, 9, 0):
+        def bulk_insert_sql(self, fields, placeholder_rows):
+            placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
+            values_sql = ", ".join("(%s)" % sql for sql in placeholder_rows_sql)
+            return "VALUES " + values_sql
+    else:
+        def bulk_insert_sql(self, fields, num_values):
+            """
+            Format the SQL for bulk insert
+            """
+            items_sql = "(%s)" % ", ".join(["%s"] * len(fields))
+            return "VALUES " + ", ".join([items_sql] * num_values)
 
     def savepoint_create_sql(self, sid):
         return "SAVEPOINT {0}".format(sid)
