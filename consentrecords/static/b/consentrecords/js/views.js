@@ -213,42 +213,6 @@ function showClickFeedback(obj, done)
 		   	});
 }
 
-function showPanelNow(panelNode)
-{
-	$(panelNode).offset({top: 0, left: 0})
-				.trigger("revealing.cr");
-}
-
-function asyncHidePanelRight(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "right"}, 400, 
-		function() {
-			if (doRemove)
-				$(this).remove();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
-function asyncHidePanelDown(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "down"}, 400,
-		function() {
-			if (doRemove)
-				$(this).remove();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
 function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
@@ -1800,6 +1764,13 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
+	SitePanel.prototype.showNow = function()
+	{
+		var $panelNode = $(this.node());
+		$panelNode.offset({top: 0, left: 0})
+				.trigger("revealing.cr");
+	}
+	
 	SitePanel.prototype.showUp = function()
 	{
 		var $panelNode = $(this.node());
@@ -1820,7 +1791,8 @@ var SitePanel = (function () {
 				  .css('left', "{0}px".format(window.innerWidth));
 		
 		return $panelNode.animate({left: 0},
-			{start: function() {
+			{duration: 400, 
+			 start: function() {
 					$panelNode.trigger("revealing.cr");
 			    },
 			}).promise();
