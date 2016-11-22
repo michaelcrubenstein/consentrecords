@@ -93,9 +93,6 @@ var RequestFollowPanel = (function() {
 			
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
-			
-		showPanelUp(this.node())
-			.always(unblockClick);
 	}
 	
 	return RequestFollowPanel;
@@ -190,8 +187,8 @@ var FollowingPanel = (function() {
 								{
 									try
 									{
-										var panel = new ComparePathsPanel(_this.user, user, _this.node());
-										showPanelUp(panel.node())
+										new ComparePathsPanel(_this.user, user, _this.node())
+											.showUp()
 											.always(unblockClick);
 									}
 									catch(err)
@@ -309,7 +306,9 @@ var FollowingPanel = (function() {
 				{
 					showClickFeedback(this);
 	
-					var newPanel = new RequestFollowPanel(user, _this);
+					new RequestFollowPanel(user, _this)
+						.showUp()
+						.always(unblockClick);
 				}
 				d3.event.preventDefault();
 			});

@@ -119,7 +119,7 @@
 			}
 			function showFunction(panelDiv)
 			{
-				showPanelNow(panelDiv);
+				panelDiv.sitePanel.showNow();
 			}
 			cr.selectAll({path: "{{path}}"})
 				.then(getViewRootObjectsFunction(cell, headerText, sortByDescription, showFunction), 

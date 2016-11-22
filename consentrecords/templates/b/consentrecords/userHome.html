@@ -466,7 +466,7 @@
 												done = function()
 													{
 														firstPanel = new WelcomePanel();
-														showPanelNow(firstPanel.node());
+														firstPanel.showNow();
 													};
 												panel = new PathlinesPanel(users[0], done);
 											}
@@ -661,7 +661,7 @@
 					var handleState = function()
 					{
 						firstPanel = new WelcomePanel();
-						showPanelNow(firstPanel.node());
+						firstPanel.showNow();
 						var signUp = new Signup(firstPanel.node(), {email: stateString});
 						showPanelUp(signUp.node());
 					}
@@ -703,7 +703,7 @@
 					{
 						firstPanel = new PathlinesPanel(cr.signedinUser, false);
 						firstPanel.setupSearchPanel();
-						showPanelNow(firstPanel.node());
+						firstPanel.showNow();
 						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 						.then(function()
 							{
@@ -721,7 +721,7 @@
 				else
 				{
 					firstPanel = new WelcomePanel();
-					showPanelNow(firstPanel.node());
+					firstPanel.showNow();
 				}
 			}
 			else
@@ -766,7 +766,7 @@
 						$(cr.signedinUser).trigger("signout.cr");
 						var sitePanels = $("panel.site-panel");
 						var panel = new WelcomePanel();
-						showPanelNow(panel.node());
+						panel.showNow();
 						sitePanels.trigger("hiding.cr");
 						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
 							function() {

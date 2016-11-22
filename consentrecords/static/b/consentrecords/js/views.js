@@ -213,52 +213,6 @@ function showClickFeedback(obj, done)
 		   	});
 }
 
-function showPanelUp(panelNode)
-{
-	window.scrollTo(0, 0);
-	$(panelNode).hide("slide", {direction: "down"}, 0);
-	$(panelNode).css("display", "block")
-				.trigger("revealing.cr");
-	return $(panelNode).effect("slide", {direction: "down"}, 400).promise();
-}
-
-function showPanelNow(panelNode)
-{
-	$(panelNode).offset({top: 0, left: 0})
-				.css("display", "block")
-				.trigger("revealing.cr");
-}
-
-function asyncHidePanelRight(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "right"}, 400, 
-		function() {
-			if (doRemove)
-				$(this).remove();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
-function asyncHidePanelDown(panelNode, doRemove, completeFunction)
-{
-	doRemove = typeof doRemove !== 'undefined' ? doRemove : true;
-	
-	closealert();
-	$(panelNode).trigger("hiding.cr");
-	$(panelNode).hide("slide", {direction: "down"}, 400,
-		function() {
-			if (doRemove)
-				$(this).remove();
-			if (completeFunction)
-				completeFunction();
-		});
-}
-
 function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
@@ -1459,9 +1413,11 @@ var SitePanel = (function () {
 		var rootPanel = d3.select("body");
 		this.panelDiv = rootPanel
 						.append("panel")
-						.classed("site-panel reveal", true)
+						.classed("site-panel", true)
 						.datum(datum)
-						.attr("headerText", headerText);
+						.attr("headerText", headerText)
+						.style('top', "{0}px".format($(window).height()))
+						.style('left', "{0}px".format(0));
 		this.node().sitePanel = this;
 						
 		if (panelClass && panelClass.length > 0)
@@ -1808,24 +1764,21 @@ var SitePanel = (function () {
 		return this.panelDiv.datum();
 	}
 	
+	SitePanel.prototype.showNow = function()
+	{
+		var $panelNode = $(this.node());
+		$panelNode.offset({top: 0, left: 0})
+				.trigger("revealing.cr");
+	}
+	
 	SitePanel.prototype.showUp = function()
 	{
 		var $panelNode = $(this.node());
 		window.scrollTo(0, 0);
-		$(panelNode).hide("slide", {direction: "down"}, 0);
-		var promise = $.Deferred();
 		
-		setTimeout(function()
-			{
-				$(panelNode).css("display", "block")
-							.trigger("revealing.cr");
-				$(panelNode).effect("slide", {direction: "down", duration: 400, 
-					complete: function() {
-							promise.resolve();
-						}}, 400);
-			}, 0);
-			
-		return promise;
+		$panelNode.trigger("revealing.cr");
+		return $panelNode.animate({'top': 0})
+			.promise();
 	}
 	
 	SitePanel.prototype.showLeft = function()
@@ -1834,26 +1787,25 @@ var SitePanel = (function () {
 		var $panelNode = $(this.node());
 
 		window.scrollTo(0, 0);
-		$panelNode.css("display", "none");
-		var promise = $.Deferred();
-		
-		setTimeout(function()
-			{
-				$panelNode.trigger("revealing.cr");
-				$panelNode.show({effect: "slide", direction: "right",
-					complete: function() {
-							promise.resolve();
-						}});
-			}, 0);
-		return promise;
+		$panelNode.css({top: 0,
+						left: "{0}px".format(window.innerWidth),
+						position: 'fixed'});
+		$panelNode.trigger("revealing.cr");
+		return $panelNode.animate({left: 0})
+			.promise()
+			.done(function()
+				{
+					$panelNode.css('position', '');
+				});
 	}
 
 	SitePanel.prototype.hideDown = function(done)
 	{
 		closealert();
 		$(this.node()).trigger("hiding.cr");
-		$(this.node()).hide("slide", {direction: "down"}, 400,
-			function() {
+		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
+			.promise()
+			.done(function() {
 				$(this).remove();
 				if (done)
 					done();
@@ -1876,19 +1828,21 @@ var SitePanel = (function () {
 	SitePanel.prototype.hideRight = function(done)
 	{
 		closealert();
-		$(this.node()).trigger("hiding.cr");
-		$(this.node()).hide("slide", {direction: "right"}, 400, 
-			function() {
-				$(this).remove();
-				if (done)
-					done();
-			});
+		return $(this.node()).trigger("hiding.cr")
+			.animate({left: "{0}px".format(window.innerWidth)})
+			.promise()
+			.done(function()
+				{
+					$(this).remove();
+					if (done)
+						done();
+				});
 	}
 	
 	SitePanel.prototype.hideRightEvent = function()
 	{
 		if (prepareClick('click', 'Close Right'))
-			this.hideRight(unblockClick);
+			this.hideRight().then(unblockClick);
 		else
 			cr.logRecord('click', 'Close Right blocked');
 		d3.event.preventDefault();
@@ -2355,11 +2309,12 @@ var HidableDiv = (function()
 	
 	HidableDiv.prototype.hide = function(done)
 	{
-		this.$div.animate({left: this._width, width: 0}, this.duration, function()
+		return this.$div.animate({left: this._width, width: 0}, this.duration, function()
 			{
 				$(this).css('display', 'none');
 				done();
-			});
+			})
+			.promise();
 	}
 	
 	HidableDiv.prototype.height = function(newHeight)
@@ -2473,18 +2428,18 @@ var Dimmer = (function () {
 	
 	Dimmer.prototype.show = function()
 	{
-		$(this.dimmerDiv.node()).animate({opacity: 0.3}, 400);
-		return this;
+		return $(this.dimmerDiv.node()).animate({opacity: 0.3}, 200)
+			.promise();
 	}
 	
 	Dimmer.prototype.hide = function()
 	{
-		$(this.dimmerDiv.node()).animate({opacity: 0}, {duration: 400, complete:
+		return $(this.dimmerDiv.node()).animate({opacity: 0}, {duration: 200, complete:
 			function()
 			{
 				d3.select(this).remove();
-			}});
-		return this;
+			}})
+			.promise();
 	}
 	
 	Dimmer.prototype.remove = function()
@@ -2516,12 +2471,12 @@ function getViewPanelHeader(objectData)
 
 function revealPanelLeft(panelDiv)
 {
-	panelDiv.sitePanel.showLeft().then(unblockClick);
+	panelDiv.sitePanel.showLeft().always(unblockClick);
 }
 
 function revealPanelUp(panelDiv)
 {
-	return showPanelUp(panelDiv)
+	return panelDiv.sitePanel.showUp()
 		.always(unblockClick);
 }
 
@@ -3161,8 +3116,7 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 		}  
 	});
 	
-	showPanelUp(sitePanel.node())
-		.always(unblockClick);
+	sitePanel.showUp().always(unblockClick);
 }
 
 /* Displays a panel from which a user can select an object of the kind required 

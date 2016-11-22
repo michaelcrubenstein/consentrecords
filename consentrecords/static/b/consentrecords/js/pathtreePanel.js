@@ -839,7 +839,7 @@ var PathView = (function() {
 					
 					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
 					
-					revealPanelLeft(editPanel.node());
+					editPanel.showLeft().then(unblockClick);
 				}
 				catch(err)
 				{
@@ -1478,25 +1478,7 @@ var PathLines = (function() {
 	PathLines.prototype.showAllExperiences = function()
 	{
 		var _this = this;
-		var firstTime = true;
 		
-		var resizeFunction = function()
-		{
-			/* Wrap handleResize in a setTimeout call so that it happens after all of the
-				css positioning.
-			 */
-			setTimeout(function()
-				{
-					if (firstTime)
-					{
-						$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
-						_this.appendExperiences();
-						firstTime = false;
-					}
-					_this.handleResize();
-				}, 0);
-		}
-	
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
@@ -1506,8 +1488,6 @@ var PathLines = (function() {
 			{
 				_this.setupExperienceTriggers(d);
 			});
-
-		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	}
 	
 	PathLines.prototype.setupHeights = function()
@@ -1523,7 +1503,6 @@ var PathLines = (function() {
 				svgHeight = h;
 		}
 		
-		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
@@ -1681,6 +1660,11 @@ var PathLines = (function() {
 			consume the entire container. */
 		this.setupHeights();
 		
+		$(this.sitePanel.mainDiv.node()).on("resize.cr", function()
+			{
+				_this.handleResize();
+			});
+
 		var successFunction2 = function()
 		{
 			if (_this.path == null)
@@ -1713,6 +1697,10 @@ var PathLines = (function() {
 				});
 		
 			_this.showAllExperiences();
+			
+			$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
+			_this.appendExperiences();
+			_this.clearLayout();
 			
 			crv.stopLoadingMessage(_this.loadingMessage);
 			_this.loadingMessage.remove();
@@ -1785,12 +1773,11 @@ var PathlinesPanel = (function () {
 						try
 						{
 							var panel = new Settings(user);
-							showPanelUp(panel.node())
-								.always(unblockClick);
+							panel.showUp().always(unblockClick);
 						}
 						catch(err)
 						{
-							syncFailFunction(err);
+							cr.syncFail(err);
 						}
 					}
 					d3.event.preventDefault();
@@ -1821,8 +1808,8 @@ var PathlinesPanel = (function () {
 			else
 				experience.initPreviousDateRange();
 				
-			var panel = new NewExperiencePanel(experience, phase);
-			showPanelUp(panel.node())
+			new NewExperiencePanel(experience, phase)
+				.showUp()
 				.done(done);
 		}
 		catch(err)
@@ -1989,8 +1976,7 @@ var PathlinesPanel = (function () {
 // 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
-				this.sitePanel.calculateHeight();
-				
+				this.handleResize();
 			});
 	}
 	
@@ -2098,7 +2084,7 @@ var AddOptions = (function () {
 	function AddOptions(pathlinesPanel)
 	{
 		var panelNode = pathlinesPanel.node();
-		var dimmer = new Dimmer(panelNode);
+		var dimmer = new Dimmer(panelNode, 200);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
 		var div = panel.append('div')
@@ -2135,50 +2121,43 @@ var AddOptions = (function () {
 					{
 						if (prepareClick('click', name))
 						{
-							dimmer.hide();
-							clickFunction(unblockClick, syncFailFunction);
+							$.when(dimmer.hide(), 
+								   $(panel.node()).hide("slide", {direction: "down"}, 200))
+							 .then(function()
+								{
+									panel.remove();
+									clickFunction();
+								});
 						}
 					});
 			return button;
 		}
 		
 		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
-			function(done, fail)
+			function()
 			{
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					pathlinesPanel.startNewExperience('Previous', done, fail);
-				});
+				pathlinesPanel.startNewExperience('Previous', unblockClick, cr.syncFail);
 			})
 			.classed('butted-down', true);
 		$(confirmButton.node()).on('blur', onCancel);
 		
 		addButton(div, this.addCurrentExperienceLabel, 
-			function(done, fail)
+			function()
 			{
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					pathlinesPanel.startNewExperience('Current', done, fail);
-				});
+				pathlinesPanel.startNewExperience('Current', unblockClick, cr.syncFail);
 			})
 			.classed('butted-down', true);
 		
 		addButton(div, this.addGoalLabel, 
-			function(done, fail)
+			function()
 			{
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					pathlinesPanel.startNewExperience('Goal', done, fail);
-				});
+				pathlinesPanel.startNewExperience('Goal', unblockClick, cr.syncFail);
 			});
 			
 		addButton(div, 'More Ideas',
-			function(done, fail)
+			function()
 			{
-				$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-					panel.remove();
-					new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, done, fail);
-				});
+				new ExperienceIdeas(panelNode, pathlinesPanel.pathtree.path, unblockClick, cr.syncFail);
 			});
 		
 		var cancelButton = addButton(div, 'Cancel', handleCancel);
@@ -2265,7 +2244,15 @@ var ExperienceIdeas = (function() {
 			return function(oldExperiencePanel)
 			{
 				var getNext = getGetNext(nextIndex < data.length - 1 ? nextIndex + 1 : 0, "", undefined);
-				var dimmer = oldExperiencePanel ? oldExperiencePanel.dimmer : new Dimmer(_this.panelNode).show();
+				var dimmer;
+				if (oldExperiencePanel)
+					dimmer = oldExperiencePanel.dimmer;
+				else
+				{
+					dimmer = new Dimmer(_this.panelNode);
+					dimmer.show();
+				}
+
 				new ExperienceIdeaPanel(_this.panelNode, 
 					dimmer,
 					title,
@@ -2349,7 +2336,7 @@ var ExperienceIdeaPanel = (function() {
 								{
 									skipButton.on('click')();
 								});
-							showPanelUp(panel.node())
+							panel.showUp()
 								.always(unblockClick);
 						}
 						catch(err)
@@ -2387,8 +2374,8 @@ var OtherPathlines = (function() {
 			try
 			{
 				var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), fd.experience);
-				var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
-				showPanelUp(newPanel.node())
+				new NewExperiencePanel(tempExperience, tempExperience.getPhase())
+					.showUp()
 					.always(unblockClick);
 			}
 			catch(err)
@@ -2525,7 +2512,7 @@ var OtherPathPanel = (function () {
 		$(this.pathtree).on("userSet.cr", function()
 			{
 				this.isMinHeight = true;
-				this.sitePanel.calculateHeight();
+				this.handleResize();
 			});
 	}
 	

@@ -500,8 +500,8 @@ var WelcomePanel = (function () {
 				{
 					if (prepareClick('click', 'For Organizations'))
 					{
-						var panel = new WelcomeOrganizationPanel();
-						showPanelUp(panel.node())
+						new WelcomeOrganizationPanel()
+							.showUp()
 							.always(unblockClick);
 					}
 				});
@@ -532,8 +532,8 @@ var WelcomePanel = (function () {
 								
 							if (prepareClick('click', 'Get Started'))
 							{
-								var signUp = new Signup();
-								showPanelUp(signUp.node())
+								new Signup()
+									.showUp()
 									.always(unblockClick);
 								return;
 							}
@@ -563,23 +563,22 @@ var WelcomePanel = (function () {
 			.text(cr.signedinUser.getValueID() ? '' : 'Get Started')
 			.style('display', 'none');
 		
-		setTimeout(function()
-			{
-				var jNode = $(div1.node());
-				jNode.width(
-					Math.max($(learnMoreSpan.node()).outerWidth(false), 
-							 $(rightChevronSpan.node()).outerWidth(false),
-							 $(getStartedSpan.node()).outerWidth(false)));
+		var jNode = $(div1.node());
+		jNode.width(
+			Math.max($(learnMoreSpan.node()).outerWidth(false), 
+					 $(rightChevronSpan.node()).outerWidth(false),
+					 $(getStartedSpan.node()).outerWidth(false)));
 
-				jNode.children().each(function()
-					{
-						$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
-					});
-				var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
-				jNode.children().css('left', "{0}px".format(offset))
-					.css('display', '');
+		jNode.children().each(function()
+			{
+				$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
 			});
-			
+		var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
+		jNode.children().css('left', "{0}px".format(offset))
+			.css('display', '');
+		
+		this.handleResize();
+		
 		var signedIn = function(eventObject) {
 			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();

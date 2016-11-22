@@ -689,8 +689,8 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin sign up'))
 				{
-					var signUp = new Signup();
-					showPanelUp(signUp.node())
+					new Signup()
+						.showUp()
 						.always(unblockClick);
 				}
 				d3.event.preventDefault();
@@ -706,8 +706,8 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin forgot password'))
 				{
-					var panel = new ForgotPasswordPanel(_this.node());
-					showPanelUp(panel.node())
+					new ForgotPasswordPanel(_this.node())
+						.showUp()
 						.always(unblockClick);
 				}
 				d3.event.preventDefault();
@@ -785,7 +785,7 @@ var ForgotPasswordPanel = (function()
 				
 	function ForgotPasswordPanel(signinPanel)
 	{
-		this.createRoot(null, "Forgot Password", "sign-up", revealPanelUp);
+		this.createRoot(null, "Forgot Password", "sign-in", revealPanelUp);
 		var _this = this;
 		
 		var form = this.panelDiv.append('form')
@@ -799,10 +799,10 @@ var ForgotPasswordPanel = (function()
 			.classed('help-block', true)
 			.text("Enter your email address to receive an email with a link you can click to reset your password.");
 			
-		form.append('div')
+		var alertContainer = form.append('div')
 			.classed('row', true)
 			.append('div')
-			.classed('alert-container col-xs-12');
+			.classed('alert-container col-xs-12', true);
 			
 		var emailGroup = form.append('div')
 			.classed('row', true)
@@ -812,19 +812,15 @@ var ForgotPasswordPanel = (function()
 			.classed('form-group has-feedback', true);
 		this.emailGroup = emailGroup.node();
 		
-		var emailLabel = emailGroup.append('label')
-			.classed('control-label sr-only', true)
-			.text("Email Address");
-			
-		this.emailInput = emailLabel.append('input')
+		this.emailInput = emailGroup.append('input')
 			.classed('form-control feedback-control', true)
 			.attr('type', 'email')
-			.attr('placeholder', "Email")
+			.attr('placeholder', "Email Address")
 			.on("input", function() { _this.checkenabled(); })
 			.node();
 			
 		this.emailOK = emailGroup.append('span')
-			.classed("glyphicon form-control-feedback")
+			.classed("glyphicon form-control-feedback", true)
 			.node();
 		
 		var buttonContainer = form.append('div')
@@ -850,8 +846,9 @@ var ForgotPasswordPanel = (function()
 			.text("Send Email")
 			.on('click', function()
 				{
-					if (this.canSubmit())
+					if (_this.canSubmit())
 					{
+						closealert();
 						if (prepareClick('click', 'forgot password submit'))
 						{
 							var successFunction = function()
@@ -861,6 +858,10 @@ var ForgotPasswordPanel = (function()
 							}
 							this.submit(successFunction, cr.syncFail);
 						}
+					}
+					else
+					{
+						bootstrap_alert.warning('The email address is invalid.', alertContainer.node());
 					}
 				   //stop form submission
 				   d3.event.preventDefault();
