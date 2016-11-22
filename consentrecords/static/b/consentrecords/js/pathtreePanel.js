@@ -1478,25 +1478,7 @@ var PathLines = (function() {
 	PathLines.prototype.showAllExperiences = function()
 	{
 		var _this = this;
-		var firstTime = true;
 		
-		var resizeFunction = function()
-		{
-			/* Wrap handleResize in a setTimeout call so that it happens after all of the
-				css positioning.
-			 */
-			setTimeout(function()
-				{
-					if (firstTime)
-					{
-						$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
-						_this.appendExperiences();
-						firstTime = false;
-					}
-					_this.handleResize();
-				}, 0);
-		}
-	
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
@@ -1506,8 +1488,6 @@ var PathLines = (function() {
 			{
 				_this.setupExperienceTriggers(d);
 			});
-
-		$(this.sitePanel.mainDiv.node()).on("resize.cr", resizeFunction);
 	}
 	
 	PathLines.prototype.setupHeights = function()
@@ -1523,7 +1503,6 @@ var PathLines = (function() {
 				svgHeight = h;
 		}
 		
-		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
@@ -1681,6 +1660,11 @@ var PathLines = (function() {
 			consume the entire container. */
 		this.setupHeights();
 		
+		$(this.sitePanel.mainDiv.node()).on("resize.cr", function()
+			{
+				_this.handleResize();
+			});
+
 		var successFunction2 = function()
 		{
 			if (_this.path == null)
@@ -1713,6 +1697,10 @@ var PathLines = (function() {
 				});
 		
 			_this.showAllExperiences();
+			
+			$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
+			_this.appendExperiences();
+			_this.clearLayout();
 			
 			crv.stopLoadingMessage(_this.loadingMessage);
 			_this.loadingMessage.remove();
@@ -1988,8 +1976,7 @@ var PathlinesPanel = (function () {
 // 				findButton.style("display", user.privilege === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
-				this.sitePanel.calculateHeight();
-				
+				this.handleResize();
 			});
 	}
 	
@@ -2525,7 +2512,7 @@ var OtherPathPanel = (function () {
 		$(this.pathtree).on("userSet.cr", function()
 			{
 				this.isMinHeight = true;
-				this.sitePanel.calculateHeight();
+				this.handleResize();
 			});
 	}
 	
