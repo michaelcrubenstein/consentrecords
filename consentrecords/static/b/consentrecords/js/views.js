@@ -1787,15 +1787,16 @@ var SitePanel = (function () {
 		var $panelNode = $(this.node());
 
 		window.scrollTo(0, 0);
-		$panelNode.css('top', 0)
-				  .css('left', "{0}px".format(window.innerWidth));
-		
-		return $panelNode.animate({left: 0},
-			{duration: 400, 
-			 start: function() {
-					$panelNode.trigger("revealing.cr");
-			    },
-			}).promise();
+		$panelNode.css({top: 0,
+						left: "{0}px".format(window.innerWidth),
+						position: 'fixed'});
+		$panelNode.trigger("revealing.cr");
+		return $panelNode.animate({left: 0})
+			.promise()
+			.done(function()
+				{
+					$panelNode.css('position', '');
+				});
 	}
 
 	SitePanel.prototype.hideDown = function(done)
