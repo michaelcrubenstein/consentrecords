@@ -4,11 +4,11 @@ import django
 import sys
 
 from django.db import transaction
+django.setup()
+
 from consentrecords.models import *
 
 if __name__ == "__main__":
-    django.setup()
-
     with transaction.atomic():
         t = Transaction.objects.order_by('-creation_time')[0]
 
