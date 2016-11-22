@@ -2514,11 +2514,8 @@ var NewExperiencePanel = (function () {
 		{
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				var input = _this.appendTag(container, tags[i]);
-				setTimeout(function()
-					{
-						_this.setTagInputWidth(input.node());
-					});
+				var input = this.appendTag(container, tags[i]);
+				this.setTagInputWidth(input.node());
 			}
 		}
 	}
