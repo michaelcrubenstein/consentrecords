@@ -1038,6 +1038,9 @@ var ExperienceDatumSearchView = (function() {
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
+		else
+			/* Clear away any previously found items. */
+			this.cancelSearch();
 	}
 	
 	ExperienceDatumSearchView.prototype.isSearchVisible = function()
