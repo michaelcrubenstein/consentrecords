@@ -1431,7 +1431,8 @@ var OrganizationSearchView = (function() {
 	
 	OrganizationSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.organizationName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.organizationName || "");
 	}
 	
 	function OrganizationSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -1706,7 +1707,8 @@ var SiteSearchView = (function() {
 	
 	SiteSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.siteName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.siteName || "");
 	}
 	
 	function SiteSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -2010,7 +2012,8 @@ var OfferingSearchView = (function() {
 	
 	OfferingSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.offeringName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.offeringName || "");
 	}
 	
 	function OfferingSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
