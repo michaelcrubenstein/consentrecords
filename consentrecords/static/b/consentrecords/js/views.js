@@ -50,6 +50,10 @@ String.prototype.format = function () {
   });
 };
 
+RegExp.escape= function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
 	defaultLanguageCode: "en",
