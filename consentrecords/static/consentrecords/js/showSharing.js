@@ -280,22 +280,22 @@ var SharingPanel = (function() {
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
 			var accessRecordCell = user.getCell("_access record");
-			function onPick(path, currentPanelNode)
+			function onPick(path)
 			{
 				function done()
 				{
-					hidePanelRight(currentPanelNode);
+					panel.hideRight(unblockClick);
 				}
 				
 				_this.addAccess(accessorLevel, path, done);
 			}
-			new PickSharingUserPanel("Add User Or Group", this.node(), onPick);
+			var panel = new PickSharingUserPanel("Add User Or Group", onPick);
 		}
 	}
 
-	function SharingPanel(user, previousPanelNode)
+	function SharingPanel(user)
 	{
-		SitePanel.call(this, previousPanelNode, null, "Sharing", "edit sharing", revealPanelUp);
+		this.createRoot(null, "Sharing", "edit sharing", revealPanelUp);
 		this.user = user;
 		var _this = this;
 		
@@ -377,10 +377,10 @@ var PickSharingUserPanel = (function() {
 	PickSharingUserPanel.prototype.emailDocumentation = 
 		'Type the email address of someone you want to give access to your profile.';
 	
-	function PickSharingUserPanel(header, previousPanelNode, done)
+	function PickSharingUserPanel(header, done)
 	{
 		var _this = this;
-		SitePanel.call(this, previousPanelNode, null, this.title, "list");
+		this.createRoot(null, this.title, "list");
 
 		var navContainer = this.appendNavContainer();
 
@@ -413,7 +413,7 @@ var PickSharingUserPanel = (function() {
 						}
 						else
 						{
-							done('_user[_email="{0}"]'.format(email), _this.node());
+							done('_user[_email="{0}"]'.format(email), _this);
 						}
 					}
 					catch(err)
@@ -447,7 +447,7 @@ var PickSharingUserPanel = (function() {
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
 			
-		showPanelLeft(this.node(), unblockClick);
+		this.showLeft().then(unblockClick);
 	}
 	
 	return PickSharingUserPanel;

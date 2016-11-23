@@ -164,3 +164,84 @@
     	display: inline-block;
     }
     
+	.feedback-control {
+		width: calc(100% - 30px);
+	}
+	
+	panel.sign-in {
+		background-color: white;
+	}
+	
+	panel.sign-in hr {
+		margin-top: 10px;
+		margin-bottom: 10px;
+		border: 0;
+		border-top: 1px solid #ccc
+	}
+
+	panel.sign-in .form-signin-heading {
+	  margin-bottom: 10px;
+	}
+	panel.sign-in .checkbox {
+		margin: 0;
+		font-weight: normal;
+	}
+	panel.sign-in .checkbox label {
+		min-height: 20px;
+		padding-left: 20px;
+		padding-bottom: 10px;
+		padding-top: 10px;
+		margin: 0;
+		font-weight: normal;
+		cursor: pointer;
+	}
+
+	panel.sign-in .form-control {
+	  position: relative;
+	  height: auto;
+	  -webkit-box-sizing: border-box;
+		 -moz-box-sizing: border-box;
+			  box-sizing: border-box;
+	  padding: 10px;
+	  font-size: 16px;
+	}
+	panel.sign-in .form-control:focus {
+	  z-index: 2;
+	}
+	panel.sign-in input[type="email"] {
+	  margin-bottom: -1px;
+	  border-bottom-right-radius: 0;
+	  border-bottom-left-radius: 0;
+	  margin-bottom: 10px;
+	}
+	panel.sign-in input[type="password"] {
+	  margin-bottom: 10px;
+	  border-top-left-radius: 0;
+	  border-top-right-radius: 0;
+	}
+
+	panel.sign-in .other-action {
+	  max-width: 330px;
+	  padding-left: 15px;
+	  padding-top: 0px;
+	  padding-right: 15px;
+	  padding-bottom: 0px;
+	  margin: 0 auto;
+	}
+	panel.sign-in .other-action span {
+		padding-top: 10px;
+		padding-bottom: 10px;
+		cursor: default;
+		user-select: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		-o-user-select: none;
+	}
+	panel.sign-in .other-action a {
+		display: inline-block;
+		padding-left: 10px;
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+

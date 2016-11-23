@@ -12,7 +12,7 @@ var RequestFollowPanel = (function() {
 	function RequestFollowPanel(user, followingPanel) {
 		var _this = this;
 		this.followingPanel = followingPanel;
-		SitePanel.call(this, followingPanel.node(), null, this.title, "list", revealPanelUp);
+		this.createRoot(null, this.title, "list", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
 		navContainer.appendLeftButton()
@@ -93,9 +93,6 @@ var RequestFollowPanel = (function() {
 			
 		var docDiv = docSection.append('div')
 			.text(this.emailDocumentation);
-			
-		showPanelUp(this.node())
-			.always(unblockClick);
 	}
 	
 	return RequestFollowPanel;
@@ -190,8 +187,8 @@ var FollowingPanel = (function() {
 								{
 									try
 									{
-										var panel = new ComparePathsPanel(_this.user, user, _this.node());
-										showPanelUp(panel.node())
+										new ComparePathsPanel(_this.user, user, _this.node())
+											.showUp()
 											.always(unblockClick);
 									}
 									catch(err)
@@ -232,10 +229,10 @@ var FollowingPanel = (function() {
 		return true;
 	}
 	
-	function FollowingPanel(user, previousPanel) {
+	function FollowingPanel(user) {
 		var header = "Following";
 		this.user = user;
-		SitePanel.call(this, previousPanel, null, header, "edit following", revealPanelUp);
+		this.createRoot(null, header, "edit following", revealPanelUp);
 		var navContainer = this.appendNavContainer();
 		
 		var backButton = navContainer.appendLeftButton()
@@ -309,7 +306,9 @@ var FollowingPanel = (function() {
 				{
 					showClickFeedback(this);
 	
-					var newPanel = new RequestFollowPanel(user, _this);
+					new RequestFollowPanel(user, _this)
+						.showUp()
+						.always(unblockClick);
 				}
 				d3.event.preventDefault();
 			});

@@ -121,9 +121,9 @@ var ExperienceCommentsPanel = (function() {
 			done();
 	}
 
-	function ExperienceCommentsPanel(fd, previousPanelNode)
+	function ExperienceCommentsPanel(fd)
 	{
-		SitePanel.call(this, previousPanelNode, fd, "Comments", "comments", revealPanelLeft);
+		this.createRoot(fd, "Comments", "comments", revealPanelLeft);
 		this.fd = fd;
 		var _this = this;
 		
@@ -343,7 +343,6 @@ var ExperienceCommentsPanel = (function() {
 					$(postButton.node()).outerWidth(true) -
 					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
 			}
-			resizeFunction();
 			$(panel2Div.node()).on('resize.cr', resizeFunction);
 		}
 							
@@ -360,8 +359,14 @@ var ExperienceCommentsPanel = (function() {
 		
 		if (comments.getValueID())
 		{
-			comments.promiseCellsFromCache(["Comment"])
-				.then(onCommentsChecked, cr.asyncFail);
+			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
+				comments are loaded. This won't happen if the comments are already loaded.
+			 */
+			setTimeout(function()
+				{
+					comments.promiseCellsFromCache(["Comment"])
+						.then(onCommentsChecked, cr.asyncFail);
+				}, 0);
 		}
 	}
 		

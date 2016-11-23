@@ -552,16 +552,16 @@ var Experience = (function() {
 			if (offeringD)
 			{
 				this.setOffering(offeringD);
-				panel = new NewExperiencePanel(this, previousNode);
+				panel = new NewExperiencePanel(this);
 			}
 			else
 			{
-				panel = new NewExperiencePanel(this, previousNode);
+				panel = new NewExperiencePanel(this);
 			}
 		}
 		else
 		{
-			panel = new NewExperiencePanel(this, previousNode);
+			panel = new NewExperiencePanel(this);
 		}
 		done(panel.node());
 	}
@@ -576,7 +576,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 
@@ -600,7 +600,7 @@ var Experience = (function() {
 		var _this = this;
 		m = services.map(function(serviceD) { return _this.addService(serviceD); });
 			
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 	
@@ -609,7 +609,7 @@ var Experience = (function() {
 		this.initPreviousDateRange();
 		
 		var service = this.addService(d);
-		var panel = new NewExperiencePanel(this, previousNode);
+		var panel = new NewExperiencePanel(this);
 		done(panel.node());
 	}
 	
@@ -732,7 +732,7 @@ var MultiTypeOptionView = (function() {
 	
 	MultiTypeOptionView.prototype.stringContains = function(source, target)
 	{
-		return source.toLocaleLowerCase().search(new RegExp("\\b{0}".format(target))) >= 0;
+		return source.toLocaleLowerCase().search(new RegExp("\\b{0}".format(RegExp.escape(target)))) >= 0;
 	}
 	
 	/* Returns true if the specified datum has a name that contains compareText. */
@@ -1038,6 +1038,9 @@ var ExperienceDatumSearchView = (function() {
 		this.showSearch();
 		if (this.typeName)
 			SearchOptionsView.prototype.restartSearchTimeout.call(this, val);
+		else
+			/* Clear away any previously found items. */
+			this.cancelSearch();
 	}
 	
 	ExperienceDatumSearchView.prototype.isSearchVisible = function()
@@ -1428,7 +1431,8 @@ var OrganizationSearchView = (function() {
 	
 	OrganizationSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.organizationName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.organizationName || "");
 	}
 	
 	function OrganizationSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -1703,7 +1707,8 @@ var SiteSearchView = (function() {
 	
 	SiteSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.siteName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.siteName || "");
 	}
 	
 	function SiteSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -2007,7 +2012,8 @@ var OfferingSearchView = (function() {
 	
 	OfferingSearchView.prototype.isDirtyText = function()
 	{
-		return this.inputText() != this.experience.offeringName;
+		/* inputText returns an empty string. Make sure test is not 'null' */
+		return this.inputText() != (this.experience.offeringName || "");
 	}
 	
 	function OfferingSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
@@ -2214,8 +2220,8 @@ var ExperienceShareOptions = (function () {
 						if (prepareClick('click', duplicateText))
 						{
 							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
-							var newPanel = new NewExperiencePanel(tempExperience, panel.node(), tempExperience.getPhase());
-							showPanelUp(newPanel.node())
+							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
+							newPanel.showUp()
 								.done(function()
 									{
 										$(emailAddExperienceButton.node()).off('blur');
@@ -2230,11 +2236,11 @@ var ExperienceShareOptions = (function () {
 		}
 		
 		var emailAddExperienceButton = div.append('button')
-			.text("Email Add Experience Link")
+			.text("Mail Add Experience Link")
 			.classed("site-active-text", true)
 			.on("click", function()
 				{
-					if (prepareClick('click', "Email Add Experience Link"))
+					if (prepareClick('click', "Mail Add Experience Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
@@ -2301,9 +2307,7 @@ var NewExperiencePanel = (function () {
 		var hidableDiv = new HidableDiv(dateInput.node());
 		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
 			{
-				dateInput.text(getLocaleDateString(newDate));
-				$(dateInput.node()).width('auto');
-				hidableDiv.width = $(dateInput.node()).width();
+				hidableDiv.value(getLocaleDateString(newDate));
 			}, minDate, maxDate);
 
 		var reveal = new VerticalReveal(dateWheel.node());
@@ -2401,7 +2405,7 @@ var NewExperiencePanel = (function () {
 		}
 		
 		/* Calculate layout-based variables after css is complete. */
-		setTimeout(function()
+		$(this.node()).one("revealing.cr", function()
 			{
 				hidingChevron.height(hidableDiv.height());
 			}, 0);
@@ -2426,6 +2430,12 @@ var NewExperiencePanel = (function () {
 		return width;
 	}
 	
+	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
+	{
+		var newWidth = this.getInputTextWidth(inputNode) + 18;
+		$(inputNode).outerWidth(newWidth);
+	}
+	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
 	{
 		var input = container.insert('input', 'input:last-of-type')
@@ -2441,19 +2451,13 @@ var NewExperiencePanel = (function () {
 			});
 		
 		var _this = this;	
-		setTimeout(function()
-			{
-				var newWidth = _this.getInputTextWidth(input.node()) + 18;
-				$(input.node()).outerWidth(newWidth);
-			});
 		
 		$(input.node()).on('input', function()
 			{
-				/* Check for text changes for all input boxes. The primary input box is handled
-					in the constructor of the ExperienceDatumSearchView class. */
+				/* Check for text changes for all input boxes.  */
 				if (this != _this.tagInput.node())
 					_this.tagSearchView.constrainFoundObjects(this);
-				$(this).outerWidth(_this.getInputTextWidth(this) + 18);
+				_this.setTagInputWidth(this);
 			});
 		
 		$(input.node()).on('focusin', function()
@@ -2516,7 +2520,8 @@ var NewExperiencePanel = (function () {
 		{
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				this.appendTag(container, tags[i]);
+				var input = this.appendTag(container, tags[i]);
+				this.setTagInputWidth(input.node());
 			}
 		}
 	}
@@ -2761,7 +2766,7 @@ var NewExperiencePanel = (function () {
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
 					_this.experience.instance.deleteValue(
-						function() { _this.hidePanelDown(unblockClick) },
+						function() { _this.hideDown(unblockClick) },
 						cr.syncFail);
 				}, 
 				function() { 
@@ -2770,7 +2775,7 @@ var NewExperiencePanel = (function () {
 		}
 	}
 	
-	function NewExperiencePanel(experience, previousPanelNode, phase) {
+	function NewExperiencePanel(experience, phase, showFunction) {
 		if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
@@ -2780,8 +2785,9 @@ var NewExperiencePanel = (function () {
 		else if (experience.serviceDomain)
 			this.title = this.newFromDomainTitle.format(experience.serviceDomain.getDescription());
 			
+		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
-		SitePanel.call(this, previousPanelNode, null, this.title, "edit experience new-experience-panel", revealPanelUp);
+		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
 	
 		var hidePanel = function() { 
 				_this.hide();
@@ -3114,7 +3120,7 @@ var NewExperiencePanel = (function () {
 			startDateInput.value(experience.startDate);
 		else
 		{
-			setTimeout(function()
+			$(this.node()).one("revealing.cr", function()
 				{
 					_this.startHidable.hideValue();
 				});
@@ -3124,14 +3130,12 @@ var NewExperiencePanel = (function () {
 			endDateInput.value(experience.endDate);
 		else
 		{
-			setTimeout(function()
+			$(this.node()).one("revealing.cr", function()
 				{
 					_this.endHidable.hideValue();
 				});
 		}
-		
-		this.showTags();
-		
+				
 		function setGoalStartDateRange()
 		{
 			var startMinDate = getUTCTodayDate();
@@ -3140,8 +3144,12 @@ var NewExperiencePanel = (function () {
 			startDateInput.checkMinDate(startMinDate, startMaxDate);
 		}
 		
-		setTimeout(function()
+		$(this.node()).one("revealing.cr", function()
 			{
+				_this.setTagInputWidth(_this.tagInput.node());
+
+				_this.showTags();
+				
 				if (!experience.instance)
 				{
 					if (!experience.organizationName)

@@ -250,9 +250,9 @@ var WelcomePanel = (function () {
 	}
 	
 	
-	function WelcomePanel(previousPanel, onPathwayCreated) {
+	function WelcomePanel(onPathwayCreated) {
 		var _this = this;
-		SitePanel.call(this, previousPanel, null, "Welcome", "welcome");
+		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
 
 		if (!cr.signedinUser.getValueID())
@@ -263,7 +263,13 @@ var WelcomePanel = (function () {
 						showClickFeedback(this);
 						if (prepareClick('click',  'Sign In button'))
 						{
-							showFixedPanel(_this.node(), "#id_sign_in_panel");
+							var signinPanel = new SigninPanel();
+							signinPanel.showLeft().then(
+								function()
+								{
+									signinPanel.initializeFocus();
+									unblockClick();
+								});
 						}
 						d3.event.preventDefault();
 					})
@@ -494,8 +500,8 @@ var WelcomePanel = (function () {
 				{
 					if (prepareClick('click', 'For Organizations'))
 					{
-						var panel = new WelcomeOrganizationPanel(_this.node());
-						showPanelUp(panel.node())
+						new WelcomeOrganizationPanel()
+							.showUp()
 							.always(unblockClick);
 					}
 				});
@@ -526,8 +532,8 @@ var WelcomePanel = (function () {
 								
 							if (prepareClick('click', 'Get Started'))
 							{
-								var signUp = new Signup(_this.node());
-								showPanelUp(signUp.node())
+								new Signup()
+									.showUp()
 									.always(unblockClick);
 								return;
 							}
@@ -557,32 +563,31 @@ var WelcomePanel = (function () {
 			.text(cr.signedinUser.getValueID() ? '' : 'Get Started')
 			.style('display', 'none');
 		
-		setTimeout(function()
-			{
-				var jNode = $(div1.node());
-				jNode.width(
-					Math.max($(learnMoreSpan.node()).outerWidth(false), 
-							 $(rightChevronSpan.node()).outerWidth(false),
-							 $(getStartedSpan.node()).outerWidth(false)));
+		var jNode = $(div1.node());
+		jNode.width(
+			Math.max($(learnMoreSpan.node()).outerWidth(false), 
+					 $(rightChevronSpan.node()).outerWidth(false),
+					 $(getStartedSpan.node()).outerWidth(false)));
 
-				jNode.children().each(function()
-					{
-						$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
-					});
-				var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
-				jNode.children().css('left', "{0}px".format(offset))
-					.css('display', '');
+		jNode.children().each(function()
+			{
+				$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
 			});
-			
+		var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
+		jNode.children().css('left', "{0}px".format(offset))
+			.css('display', '');
+		
+		this.handleResize();
+		
 		var signedIn = function(eventObject) {
-			var pathwayPanel = new PathlinesPanel(cr.signedinUser, previousPanel, false);
+			var pathwayPanel = new PathlinesPanel(cr.signedinUser, false);
 			pathwayPanel.setupSearchPanel();
 			pathwayPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
 				.then(function()
 					{
 						pathwayPanel.checkShowIdeas();
 					});
-			showPanelLeft(pathwayPanel.node(),
+			pathwayPanel.showLeft().then(
 				function()
 				{
 					if (onPathwayCreated)
