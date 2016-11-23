@@ -732,7 +732,7 @@ var MultiTypeOptionView = (function() {
 	
 	MultiTypeOptionView.prototype.stringContains = function(source, target)
 	{
-		return source.toLocaleLowerCase().search(new RegExp("\\b{0}".format(target))) >= 0;
+		return source.toLocaleLowerCase().search(new RegExp("\\b{0}".format(RegExp.escape(target)))) >= 0;
 	}
 	
 	/* Returns true if the specified datum has a name that contains compareText. */
