@@ -120,7 +120,6 @@ var SearchPathsResultsView = (function () {
 
 var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype = new SitePanel();
-	SearchPathsPanel.prototype.previousPanel = null;
 	SearchPathsPanel.prototype.selectedPool = null;
 	
 	SearchPathsPanel.prototype.topBox = null;
@@ -140,7 +139,7 @@ var SearchPathsPanel = (function () {
 
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
-		var newTop = $(this.previousPanel).height() 
+		var newTop = $(window).height() 
 					 - $(this.searchInput).outerHeight(true)
 					 - $(this.topHandle).outerHeight(true);
 		
@@ -194,7 +193,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.revealPanel = function(duration)
 	{
 		/* Ensure the height of the node and the mainNode are correct. */
-		var parentHeight = $(this.node().parentNode).height();
+		var parentHeight = $(window).height();
 		$(this.node()).height(parentHeight);
 		$(this.mainDiv.node()).height(parentHeight);
 
@@ -209,7 +208,7 @@ var SearchPathsPanel = (function () {
 						 - $(this.cancelButton).outerWidth(true);
 						 
 		$(this.node()).animate({top: 0,
-								height: $(this.node().parentNode).height()},
+								height: parentHeight},
 							   {duration: duration});
 		$(this.searchInput).animate({width: inputWidth,
 									 "margin-right": 0},
@@ -262,7 +261,7 @@ var SearchPathsPanel = (function () {
 		
 		$(this.resultContainerNode).stop().animate(
 			{"margin-top": resultsTop,
-			 height: $(this.node().parentNode).height()},
+			 height: $(window).height()},
 			{duration: duration});
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
@@ -296,13 +295,14 @@ var SearchPathsPanel = (function () {
 				fd.x = nextX;
 				if (fd.visible === undefined || fd.visible)
 				{
-					nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width + _this.searchFlagHSpacing;
+					nextX += thisSpacing;
 					if (nextX >= maxX && fd.x > startX)
 					{
 						nextY += deltaY;
 						nextX = startX;
 						fd.x = nextX;
-						nextX += $(this).children('rect').width() + _this.searchFlagHSpacing;
+						nextX += thisSpacing;
 					}
 				}
 				
@@ -575,7 +575,7 @@ var SearchPathsPanel = (function () {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
+					return $(this.parentNode).children('text')[0].getBBox().width + 5;
 				});	
 		
 		g.selectAll('line.flag-pole')
@@ -690,10 +690,8 @@ var SearchPathsPanel = (function () {
 		this.layoutPoolFlags();
 	}
 	
-	function SearchPathsPanel(previousPanel)
+	function SearchPathsPanel()
 	{
-		this.previousPanel = previousPanel;
-		
 		var _this = this;
 		
 		$(window).resize(function()
@@ -704,7 +702,7 @@ var SearchPathsPanel = (function () {
 				}
 			});
 			
-		SitePanel.call(this, previousPanel, null, "Search Paths", "search-paths");
+		this.createRoot(null, "Search Paths", "search-paths");
 		
 		var mainDiv = this.appendScrollArea();
 		
@@ -846,26 +844,22 @@ var SearchPathsPanel = (function () {
 		
 		setTimeout(function()
 			{
-				_this.panelDiv.style('top', "{0}px".format($(previousPanel).height()));
+				_this.panelDiv.style('top', "{0}px".format($(window).height()));
 				_this.panelDiv.style('display', 'block');
 				_this.revealInput();
 
 				_this.searchPathsResultsView = new SearchPathsResultsView(_this);
 				
-				$(_this.previousPanel.sitePanel.pathtree).on('userSet.cr', function()
-					{
-						crp.promise({path: "Service"})
-							.done(function(services)
-								{
-									var s = services.map(function(e) { return new Service(e); });
-					
-									_this.appendPoolFlags(s);
-									_this.filterColumn = undefined;
-									_this.filterPool();
-									_this.layoutPoolFlags();
-								});
-					});
-		
+				crp.promise({path: "Service"})
+					.done(function(services)
+						{
+							var s = services.map(function(e) { return new Service(e); });
+			
+							_this.appendPoolFlags(s);
+							_this.filterColumn = undefined;
+							_this.filterPool();
+							_this.layoutPoolFlags();
+						});
 			});
 			
 		this.resultContainerNode = this.mainDiv.append('div')

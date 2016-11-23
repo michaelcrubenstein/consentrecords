@@ -19,8 +19,8 @@ var UpdatePasswordPanel = (function () {
 		  });
 	}
 
-	function UpdatePasswordPanel(previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Password", "view", revealPanelUp);
+	function UpdatePasswordPanel() {
+		this.createRoot(null, "Password", "view", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -52,7 +52,7 @@ var UpdatePasswordPanel = (function () {
 										  currentPasswordInput.property('value'),
 										  newPasswordInput.property('value'),
 										  function() {
-										  	_this.hidePanelRight(
+										  	_this.hideRight(
 										  		function()
 										  		{
 										  			bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
@@ -129,8 +129,8 @@ var UpdateUsernamePanel = (function () {
 		  });
 	}
 
-	function UpdateUsernamePanel(user, previousPanelNode) {
-		SitePanel.call(this, previousPanelNode, null, "Username", "view", revealPanelUp);
+	function UpdateUsernamePanel(user) {
+		this.createRoot(null, "Username", "view", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();
@@ -159,7 +159,7 @@ var UpdateUsernamePanel = (function () {
 						cr.updateUsername(newUsernameInput.property('value'),
 										  currentPasswordInput.property('value'),
 										  function() {
-										  	_this.hidePanelRight(function()
+										  	_this.hideRight(function()
 										  		{
 										  			bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
 										  			unblockClick();
