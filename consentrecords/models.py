@@ -458,7 +458,7 @@ class Instance(dbmodels.Model):
             .order_by('position')\
             .select_related('referenceValue')\
             .select_related('referenceValue__typeID')\
-            .select_related('referenceValue__typeID__description__text')
+            .select_related('referenceValue__typeID__description')
     
     
     def _getCellData(self, fieldData, values, userInfo, language=None):
@@ -610,7 +610,7 @@ class Instance(dbmodels.Model):
             
         minPrivilege = None
         minPrivilegeFilter = source.value_set.filter(field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                   .select_related('referenceValue__description__text')
+                                   .select_related('referenceValue__description')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
         
@@ -629,7 +629,7 @@ class Instance(dbmodels.Model):
                        value__referenceValue__value__deleteTransaction__isnull=True)))
                       
         p = map(lambda i: i.value_set.filter(field=terms.privilege, deleteTransaction__isnull=True)\
-                           .select_related('referenceValue__description__text')[0].referenceValue, f)
+                           .select_related('referenceValue__description')[0].referenceValue, f)
         
         return reduce(Instance.comparePrivileges, p, minPrivilege)
     
