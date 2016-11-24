@@ -54,6 +54,89 @@ RegExp.escape= function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
+<!-- Block of code for an alert area at the top of the window -->
+bootstrap_alert = function() {}
+bootstrap_alert.panel = null;
+bootstrap_alert.timeout = null;
+bootstrap_alert.closeOnTimeout = false;
+bootstrap_alert.show = function(parentDiv, message, alertClass) {
+	bootstrap_alert.closeOnTimeout = false;
+	if (bootstrap_alert.timeout)
+		clearTimeout(bootstrap_alert.timeout);
+	bootstrap_alert.timeout = setTimeout(function()
+		{
+			bootstrap_alert.timeout = null;
+			if (bootstrap_alert.closeOnTimeout)
+				bootstrap_alert.close();
+		}, 1500);
+		
+	if (bootstrap_alert.panel == null)
+	{
+		bootstrap_alert.alertClass = alertClass;
+		var panel = d3.select('body').append('div')
+			.classed('alert', true)
+			.classed(alertClass, true)
+			.style('z-index', 1000);
+		bootstrap_alert.panel = panel.node();
+		
+		var closeButton = panel.append('button')
+			.classed('close', true)
+			.attr('aria-hidden', 'true')
+			.text('\u00D7');
+		$(closeButton.node()).focus();
+		panel.append('span')
+			.text(message);
+		panel.on('click', bootstrap_alert.close);
+		$(closeButton.node()).on('focusout', bootstrap_alert.close);
+		
+		$(bootstrap_alert.panel).offset({top: $(window).innerHeight(), 
+										 left: $(bootstrap_alert.panel).css('margin-left')})
+			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
+	}
+	else
+	{
+		var panel = d3.select(bootstrap_alert.panel);
+		
+		panel.classed(bootstrap_alert.alertClass, false);
+		bootstrap_alert.alertClass = alertClass;
+		panel.classed(bootstrap_alert.alertClass, true);
+		panel.select('span').text(message);
+		$(bootstrap_alert.panel)
+			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
+	}
+}
+bootstrap_alert.warning = function(message) {
+	bootstrap_alert.show(null, message, "alert-danger");
+}
+bootstrap_alert.success = function(message) {
+	bootstrap_alert.show(null, message, "alert-success");
+}
+bootstrap_alert.close = function()
+{
+	if (bootstrap_alert.timeout)
+	{
+		bootstrap_alert.closeOnTimeout = true;
+	}
+	else
+	{
+		if (bootstrap_alert.panel)
+		{
+			bootstrap_alert.closeOnTimeout = false;
+			$(bootstrap_alert.panel)
+				.animate({'left': -$(window).innerWidth()})
+				.promise()
+				.done(function()
+					{
+						$(bootstrap_alert.panel).remove();
+						bootstrap_alert.panel = null;
+					
+					});
+		}
+	}
+}
+
+closealert = bootstrap_alert.close;
+
 var crv = {
 	/* Reference https://www.loc.gov/standards/iso639-2/php/code_list.php */
 	defaultLanguageCode: "en",
@@ -184,17 +267,14 @@ function unblockClick()
 	clickBlockCount -= 1;
 }
 
-function prepareClick(name, message, forceCloseAlert)
+function prepareClick(name, message)
 {
-	forceCloseAlert = (forceCloseAlert !== undefined ? forceCloseAlert : true);
 	if (_isClickBlocked())
 	{
 		if (name)
 			cr.logRecord(name + ' blocked', message);
 		return false;
 	}
-	if (forceCloseAlert)
-		closealert();
 		
 	_blockClick();
 	if (name)
@@ -1604,7 +1684,6 @@ var SitePanel = (function () {
 	SitePanel.prototype.appendScrollArea = function()
 	{
 		var _this = this;
-		var alertContainer = this.panelDiv.append('div').classed('alert-container', true);
 		this.mainDiv = this.panelDiv
 			.append("div").classed("panel-fill vertical-scrolling", true);
 		
@@ -1805,7 +1884,7 @@ var SitePanel = (function () {
 
 	SitePanel.prototype.hideDown = function(done)
 	{
-		closealert();
+		bootstrap_alert.close();
 		$(this.node()).trigger("hiding.cr");
 		return $(this.node()).animate({'top': "{0}px".format(window.innerHeight)})
 			.promise()
@@ -1831,7 +1910,7 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.hideRight = function(done)
 	{
-		closealert();
+		bootstrap_alert.close();
 		return $(this.node()).trigger("hiding.cr")
 			.animate({left: "{0}px".format(window.innerWidth)})
 			.promise()

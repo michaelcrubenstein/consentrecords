@@ -10,7 +10,7 @@ var Signup = (function () {
 			})
 		  .done(function()
 			{
-				closealert();
+				bootstrap_alert.close();
 				if (successFunction)
 					successFunction();
 			})
@@ -767,15 +767,14 @@ var ForgotPasswordPanel = (function()
 			
 	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
 		var _this = this;
-		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
+		bootstrap_alert.success('Sending email (this may take a few minutes)...');
 		
 		$.post("{% url 'resetPassword' %}", 
 			{ "email": $(this.emailInput).val()
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				closealert();
-				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>');
 				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
@@ -848,7 +847,6 @@ var ForgotPasswordPanel = (function()
 				{
 					if (_this.canSubmit())
 					{
-						closealert();
 						if (prepareClick('click', 'forgot password submit'))
 						{
 							var successFunction = function()
@@ -867,12 +865,6 @@ var ForgotPasswordPanel = (function()
 				   d3.event.preventDefault();
 				});
 				
-		this.alertSuccess = form.append('div')
-			.classed('row', true)
-			.append('div')
-			.classed('col-xs-12 div-success', true)
-			.node();
-			
 		$(this.node()).on("revealing.cr", function()
 		{
 			$(_this.emailInput).val("")

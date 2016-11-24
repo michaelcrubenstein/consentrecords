@@ -1,4 +1,3 @@
-$(document).ready(function(){
 	<!-- Block of code for an alert area at the top of the window -->
 	bootstrap_alert = function() {}
 	bootstrap_alert.show = function(parentDiv, message, alertClass) {
@@ -25,4 +24,3 @@ $(document).ready(function(){
 			$(window).trigger("resize");
 		}
 	}
-});

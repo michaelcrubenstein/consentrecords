@@ -10,7 +10,7 @@ var Signup = (function () {
 			})
 		  .done(function()
 			{
-				closealert();
+				bootstrap_alert.close();
 				if (successFunction)
 					successFunction();
 			})
@@ -769,12 +769,12 @@ var ForgotPasswordPanel = (function()
 		var _this = this;
 		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
 		
-		$.post("{% url 'resetPassword' %}", 
+		$.post(cr.urls.resetPassword, 
 			{ "email": $(this.emailInput).val()
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				closealert();
+				bootstrap_alert.close();
 				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
 				successFunction();
 			})
@@ -798,11 +798,6 @@ var ForgotPasswordPanel = (function()
 		form.append('div')
 			.classed('help-block', true)
 			.text("Enter your email address to receive an email with a link you can click to reset your password.");
-			
-		var alertContainer = form.append('div')
-			.classed('row', true)
-			.append('div')
-			.classed('alert-container col-xs-12', true);
 			
 		var emailGroup = form.append('div')
 			.classed('row', true)
@@ -848,7 +843,6 @@ var ForgotPasswordPanel = (function()
 				{
 					if (_this.canSubmit())
 					{
-						closealert();
 						if (prepareClick('click', 'forgot password submit'))
 						{
 							var successFunction = function()
@@ -856,12 +850,12 @@ var ForgotPasswordPanel = (function()
 								$(signinPanel).hide("slide", {direction: "right"}, 0);
 								_this.hideRight(unblockClick);
 							}
-							this.submit(successFunction, cr.syncFail);
+							_this.submit(successFunction, cr.syncFail);
 						}
 					}
 					else
 					{
-						bootstrap_alert.warning('The email address is invalid.', alertContainer.node());
+						bootstrap_alert.warning('The email address is invalid.');
 					}
 				   //stop form submission
 				   d3.event.preventDefault();
