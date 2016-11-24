@@ -1226,6 +1226,7 @@ cr.urls = {
 		updatePassword: '/user/updatepassword/',
 		acceptFollower: '/user/acceptFollower/',
 		requestAccess: '/user/requestAccess/',
+		resetPassword: '/user/resetpassword/',
 		log: '/monitor/log/',
 	};
 	

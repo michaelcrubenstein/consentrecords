@@ -769,7 +769,7 @@ var ForgotPasswordPanel = (function()
 		var _this = this;
 		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
 		
-		$.post("{% url 'resetPassword' %}", 
+		$.post(cr.urls.resetPassword, 
 			{ "email": $(this.emailInput).val()
 			})
 		  .done(function(json, textStatus, jqXHR)
