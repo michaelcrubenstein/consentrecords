@@ -4,7 +4,7 @@ from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 
 from oauth2_provider.views.generic import ProtectedResourceView
@@ -39,6 +39,7 @@ def logPage(request, name):
         
     LogRecord.emit(request.user, logPrefix + name, userAgent)
 
+@ensure_csrf_cookie
 def home(request):
     logPage(request, 'pathAdvisor/home')
     
@@ -65,6 +66,7 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showLines(request):
     logPage(request, 'pathAdvisor/showLines')
     
@@ -89,6 +91,7 @@ def showLines(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def orgHome(request):
     logPage(request, 'pathAdvisor/orgHome')
     
@@ -114,6 +117,7 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def find(request):
     logPage(request, 'pathAdvisor/find')
     
@@ -143,6 +147,7 @@ def find(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showInstances(request):
     logPage(request, 'pathAdvisor/list')
     
@@ -178,6 +183,7 @@ def showInstances(request):
     except Exception as e:
         return HttpResponse(str(e))
 
+@ensure_csrf_cookie
 def showPathway(request, email):
     logPage(request, 'pathAdvisor/showPathway')
     
@@ -206,6 +212,7 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def accept(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/accept', email)
     
@@ -237,6 +244,7 @@ def accept(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def ignore(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
@@ -267,6 +275,7 @@ def ignore(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
@@ -296,6 +305,7 @@ def userSettings(request):
     print ('5')
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def signup(request, email=None):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
@@ -471,6 +481,7 @@ def requestAccess(request):
         
     return JsonResponse(results)
 
+@ensure_csrf_cookie
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
@@ -507,6 +518,7 @@ def _getOrganizationChildren(organization, siteName, offeringName):
             
     return site, offering
 
+@ensure_csrf_cookie
 def addToPathway(request):
     LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
     

@@ -70,7 +70,8 @@ rm developer/__pycache__/*
 # Make sure that the database is set properly in consentrecords/settings.py
 # Add the following line of text.
 # echo "from consentrecords.production_settings import *" >> consentrecords/settings.py
-echo "from consentrecords.development_settings import *" >> consentrecords/settings.py
+echo "from consentrecords.development_settings import *" > consentrecords/settings.py
+echo "from consentrecords.default_settings import *" >> consentrecords/settings.py
 
 rm -r static/*
 django-admin collectstatic --noinput

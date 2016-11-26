@@ -5,7 +5,7 @@ from django.db.utils import IntegrityError
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.template import RequestContext, loader
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 
 import logging
 import traceback
@@ -18,6 +18,7 @@ from monitor.models import LogRecord
 __author__ = 'mrubenstein'
 
 # Displays the html page for signing in.
+@ensure_csrf_cookie
 def signin(request):
     template = loader.get_template('custom_user/signin.html')
     
@@ -30,6 +31,7 @@ def signin(request):
 
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
+@ensure_csrf_cookie
 def forgotPassword(request):
     if not request.user.is_authenticated():
         return signin(request)
@@ -45,6 +47,7 @@ def forgotPassword(request):
     return HttpResponse(template.render(context))
 
 # Displays a web page in which a user can change their password.
+@ensure_csrf_cookie
 def password(request):
     if not request.user.is_authenticated():
         return signin(request)
@@ -59,6 +62,7 @@ def password(request):
     return HttpResponse(template.render(context))
 
 # Displays a web page in which a user can specify a new password based on a key.
+@ensure_csrf_cookie
 def passwordReset(request):
     # Don't rely on authentication.
     
@@ -138,6 +142,7 @@ def setResetPassword(request):
     return JsonResponse(results)
 
 # Displays a URL so that the user can sign up for the system.
+@ensure_csrf_cookie
 def signup(request):
     template = loader.get_template('custom_user/signup.html')
 
