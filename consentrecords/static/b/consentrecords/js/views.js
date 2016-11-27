@@ -1516,14 +1516,16 @@ var SitePanel = (function () {
 		{
 			this.hide = function()
 				{
-					_this.hideDown(unblockClick);
+					return _this.hideDown()
+						.then(unblockClick);
 				};
 		}
 		else
 		{
 			this.hide = function()
 				{
-					_this.hideRight(unblockClick);
+					return _this.hideRight()
+						.then(unblockClick);
 				};
 		}
 	}
