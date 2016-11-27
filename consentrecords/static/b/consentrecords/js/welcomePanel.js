@@ -146,8 +146,7 @@ var WelcomePanel = (function () {
 				if (prevPanel.get(0) == ol.children('li:nth-child(1)').get(0))
 				{
 					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					var offset = div1.width() - div1.children(':first-child').outerWidth(false);
-					div1.children().animate({left: "{0}px".format(offset)});
+					div1.children().animate({left: "{0}px".format(0)});
 				}
 				else if (curPanel.get(0) == ol.children('li:last-child').get(0))
 				{
@@ -573,8 +572,7 @@ var WelcomePanel = (function () {
 			{
 				$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
 			});
-		var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
-		jNode.children().css('left', "{0}px".format(offset))
+		jNode.children().css('left', "{0}px".format(0))
 			.css('display', '');
 		
 		this.handleResize();
