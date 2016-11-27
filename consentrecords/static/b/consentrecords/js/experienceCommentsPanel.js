@@ -30,7 +30,9 @@ var ExperienceCommentsPanel = (function() {
 		}
 			
 		buttons.selectAll('textarea')
-			.attr('readonly', 'readonly')
+			.attr('readonly', this.inEditMode ? '' : 'readonly')
+			.classed('editable', this.inEditMode)
+			.classed('fixed', !this.inEditMode)
 			.each(function()
 				{
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
