@@ -2335,11 +2335,11 @@ var ExperienceIdeaPanel = (function() {
 						try
 						{
 							experience.initPreviousDateRange();
-							var panel = new NewExperiencePanel(experience, 'Previous',
-								function()
+							var panel = new NewExperiencePanel(experience, 'Previous');
+							panel.done = function()
 								{
 									skipButton.on('click')();
-								});
+								};
 							panel.showUp()
 								.always(unblockClick);
 						}
