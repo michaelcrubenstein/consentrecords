@@ -289,7 +289,7 @@
 									{
 										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
 											{
-												showPanelUp(panelNode);
+												panelNode.sitePanel.showUp();
 											});
 									}
 									else
@@ -311,7 +311,7 @@
 									{
 										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
 											{
-												showPanelUp(panelNode);
+												panelNode.sitePanel.showUp();
 											});
 									}
 									else
@@ -339,7 +339,7 @@
 											services,
 											pathwayPanel.node(),
 											function(panelNode) {
-												showPanelUp(panelNode);
+												panelNode.sitePanel.showUp();
 											});
 									}
 									else
@@ -358,30 +358,29 @@
 						services,
 						pathwayPanel.node(),
 						function(panelNode) {
-							showPanelUp(panelNode);
+							panelNode.sitePanel.showUp();
 						});
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{
 					experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
 						{
-							showPanelUp(panelNode);
+							panelNode.sitePanel.showUp();
 						});
 				}
 				else if (serviceName)
 				{
-					var panel;
 					var service = experience.addService({text: serviceName });
 					experience.initPreviousDateRange();
 
-					panel = new NewExperiencePanel(experience, experience.getPhase());
-					showPanelUp(panel.node());
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
 				}
 				else
 				{
 					experience.initPreviousDateRange();
-					panel = new NewExperiencePanel(experience, experience.getPhase());
-					showPanelUp(panel.node());
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
 				}
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
@@ -409,7 +408,7 @@
 			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 			firstPanel.setupSearchPanel();
 			firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
-			showPanelUp(firstPanel.node());
+			firstPanel.showUp();
 			return firstPanel;
 		}
 		
@@ -437,8 +436,8 @@
 					}
 					handleState = function()
 					{
-						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString);
-						panel.showLeft();
+						new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
+							.showLeft();
 					}
 					stateString = "";	/* So it only happens once. */
 				}
@@ -513,8 +512,8 @@
 													if (experiences[0].typeName == "More Experience")
 													{
 														var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
-														var newPanel = new NewExperiencePanel(experience, experience.getPhase());
-														showPanelUp(newPanel.node());
+														new NewExperiencePanel(experience, experience.getPhase())
+															.showUp();
 													}
 													else
 														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
@@ -578,7 +577,7 @@
 							}
 						}
 						
-						cr.share(null, "{{follower}}", "{{cell}}", "{{privilege}}", function(newValue)
+						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
 								if (newValue.typeName == '_access record')
@@ -644,8 +643,8 @@
 						
 						try
 						{
-							var panel = new Settings(cr.signedinUser, pathwayPanel.node());
-							showPanelUp(panel.node());
+							new Settings(cr.signedinUser, pathwayPanel.node())
+								.showUp();
 						}
 						catch(err)
 						{
@@ -663,7 +662,7 @@
 						firstPanel = new WelcomePanel();
 						firstPanel.showNow();
 						var signUp = new Signup(firstPanel.node(), {email: stateString});
-						showPanelUp(signUp.node());
+						signUp.showUp();
 					}
 					needsSignin = false;
 				}
