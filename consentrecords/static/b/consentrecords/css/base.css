@@ -76,6 +76,10 @@ body > div.alert > button:focus {
 	margin-bottom: 0px;
 }
 
+body > div.alert > span {
+	display: block;
+}
+
 panel.list {
 	background: #eee;
 }

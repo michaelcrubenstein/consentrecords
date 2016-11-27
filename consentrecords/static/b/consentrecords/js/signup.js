@@ -3,7 +3,7 @@ var Signup = (function () {
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
-		bootstrap_alert.show($('.alert-container'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Checking Email Address...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.checkUnusedEmail, 
 			{ email: email,
@@ -21,7 +21,7 @@ var Signup = (function () {
 			
 	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Signing up...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
 			{ username: username,

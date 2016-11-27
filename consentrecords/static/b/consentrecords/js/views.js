@@ -84,8 +84,11 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 			.attr('aria-hidden', 'true')
 			.text('\u00D7');
 		$(closeButton.node()).focus();
-		panel.append('span')
-			.text(message);
+		panel.selectAll('span')
+			.data(message.split('\n'))
+			.enter()
+			.append('span')
+			.text(function(d) { return d; });
 		panel.on('click', bootstrap_alert.close);
 		$(closeButton.node()).on('focusout', bootstrap_alert.close);
 		
