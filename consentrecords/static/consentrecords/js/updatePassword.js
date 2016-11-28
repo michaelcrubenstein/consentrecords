@@ -3,7 +3,7 @@ var UpdatePasswordPanel = (function () {
 
 	UpdatePasswordPanel.prototype.submit = function(username, oldPassword, newPassword, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('.alert-container'), "Updating Password...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Updating Password...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.updatePassword, 
 			{ username: username,
@@ -114,7 +114,7 @@ var UpdateUsernamePanel = (function () {
 
 	UpdateUsernamePanel.prototype.submit = function(newUsername, password, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('.alert-container'), "Updating Email...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Updating Email...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.updateUsername, 
 			{ newUsername: newUsername,

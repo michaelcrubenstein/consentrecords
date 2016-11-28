@@ -3,7 +3,7 @@ var Signup = (function () {
 	Signup.prototype.dots = null;
 
 	Signup.prototype.checkUnusedEmail = function(email, successFunction, failFunction) {
-		bootstrap_alert.show($('.alert-container'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Checking Email Address...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.checkUnusedEmail, 
 			{ email: email,
@@ -21,7 +21,7 @@ var Signup = (function () {
 			
 	Signup.prototype.submit = function(username, password, initialData, successFunction, failFunction)
 	{
-		bootstrap_alert.show($('.alert-container'), "Signing up...<br>(this may take a minute)", "alert-info");
+		bootstrap_alert.show($('.alert-container'), "Signing up...\n(this may take a minute)", "alert-info");
 
 		$.post(cr.urls.submitNewUser, 
 			{ username: username,
@@ -767,14 +767,15 @@ var ForgotPasswordPanel = (function()
 			
 	ForgotPasswordPanel.prototype.submit = function(successFunction, failFunction) {
 		var _this = this;
-		bootstrap_alert.success('Sending email (this may take a few minutes)...');
+		bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
 		
-		$.post("{% url 'resetPassword' %}", 
+		$.post(cr.urls.resetPassword, 
 			{ "email": $(this.emailInput).val()
 			})
 		  .done(function(json, textStatus, jqXHR)
 			{
-				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>');
+				bootstrap_alert.close();
+				bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', _this.alertSuccess);
 				successFunction();
 			})
 		  .fail(function(jqXHR, textStatus, errorThrown) {
@@ -797,11 +798,6 @@ var ForgotPasswordPanel = (function()
 		form.append('div')
 			.classed('help-block', true)
 			.text("Enter your email address to receive an email with a link you can click to reset your password.");
-			
-		var alertContainer = form.append('div')
-			.classed('row', true)
-			.append('div')
-			.classed('alert-container col-xs-12', true);
 			
 		var emailGroup = form.append('div')
 			.classed('row', true)
@@ -854,17 +850,23 @@ var ForgotPasswordPanel = (function()
 								$(signinPanel).hide("slide", {direction: "right"}, 0);
 								_this.hideRight(unblockClick);
 							}
-							this.submit(successFunction, cr.syncFail);
+							_this.submit(successFunction, cr.syncFail);
 						}
 					}
 					else
 					{
-						bootstrap_alert.warning('The email address is invalid.', alertContainer.node());
+						bootstrap_alert.warning('The email address is invalid.');
 					}
 				   //stop form submission
 				   d3.event.preventDefault();
 				});
 				
+		this.alertSuccess = form.append('div')
+			.classed('row', true)
+			.append('div')
+			.classed('col-xs-12 div-success', true)
+			.node();
+			
 		$(this.node()).on("revealing.cr", function()
 		{
 			$(_this.emailInput).val("")

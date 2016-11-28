@@ -35,24 +35,6 @@ panel.initial {
 	max-height: 100%;
 }
 
-/* This is associated with the variable height div. */
-.body {
-	height: 100%;
-}
-
-.body > div {
-	height: 100%;
-}
-
-.body > div > div {
-	height: 100%;	/* Must set height to 100% so that this element doesn't expand to more than 
-						the height of its container. */
-	position: relative;
-	overflow-y: scroll;
-	overflow-x: hidden;
-	-webkit-overflow-scrolling: touch;
-}
-
 .panel-fill {
 	position: relative;
 	width: 100%;
@@ -75,8 +57,16 @@ panel.initial {
 }
 
 /* This makes alert fall on top and over other items. */
-div.alert-container {
-	width: 100%;
+body > div.alert {
+	width: calc(100% - 30px);
+	position: fixed;
+	border-radius: 0px;
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+body > div.alert > button:focus {
+	outline: none;
 }
 
 /* This corrects a problem caused by bootstrap that introduces a gap below alerts when they are visible.
@@ -84,6 +74,10 @@ div.alert-container {
  */
 .alert {
 	margin-bottom: 0px;
+}
+
+body > div.alert > span {
+	display: block;
 }
 
 panel.list {

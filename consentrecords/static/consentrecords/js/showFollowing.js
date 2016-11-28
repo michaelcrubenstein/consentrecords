@@ -28,7 +28,7 @@ var RequestFollowPanel = (function() {
 		navContainer.appendRightButton()
 			.on("click", function()
 			{
-				if (prepareClick('click', 'request to follow user', false))
+				if (prepareClick('click', 'request to follow user'))
 				{
 					var done = function()
 					{
