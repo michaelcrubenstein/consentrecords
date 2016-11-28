@@ -397,7 +397,7 @@ var PickSharingUserPanel = (function() {
 		navContainer.appendRightButton()
 			.on("click", function()
 			{
-				if (prepareClick('click', 'Add', false))
+				if (prepareClick('click', 'Add'))
 				{
 					try
 					{

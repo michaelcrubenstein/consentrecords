@@ -2288,6 +2288,9 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.tagSearchView = null;
 	NewExperiencePanel.prototype.startHidable = null;
 	NewExperiencePanel.prototype.endHidable = null;
+	
+	/* A function called when the panel is dismissed successfully. */
+	NewExperiencePanel.prototype.done = null;
 
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
@@ -2790,7 +2793,11 @@ var NewExperiencePanel = (function () {
 		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
 	
 		var hidePanel = function() { 
-				_this.hide();
+				_this.hide()
+					.then(function() {					
+						if (_this.done)
+							_this.done();
+					});
 			}
 		var _this = this;
 		this.experience = experience;
@@ -2808,7 +2815,7 @@ var NewExperiencePanel = (function () {
 			});
 		backButton.append("span").text("Cancel");
 		
-		var nextButton = navContainer.appendRightButton()
+		var doneButton = navContainer.appendRightButton()
 			.classed("site-active-text", true)
 			.classed("default-link", true)
 			.on("click", function()
@@ -2883,7 +2890,7 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		nextButton.append("span").text(experience.instance ? "Done" : "Add");
+		doneButton.append("span").text(experience.instance ? "Done" : "Add");
 		
 		navContainer.appendTitle(this.title);
 		

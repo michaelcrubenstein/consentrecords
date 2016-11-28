@@ -12,6 +12,7 @@ var WelcomePanel = (function () {
 				return "{0}px".format(i < activeIndex ? -width :
 					   				  i == activeIndex ? 0 : width);
 			});
+		li.height($(this.mainDiv.node()).height() - this.getBottomNavHeight());
 			
 		var _this = this;
 		var subOLs = li.find('ol');
@@ -29,7 +30,19 @@ var WelcomePanel = (function () {
 			});
 		this.mainDiv.selectAll('li svg.pathway')
 			.attr('height', function() { 
-				return _this.scrollAreaHeight() - $(this).position().top - 45;
+				var height = _this.scrollAreaHeight() - $(this).position().top - _this.getBottomNavHeight() - 45;
+				if (height < 10)
+					height = 10;
+				return height;
+			});
+			
+		this.mainDiv.selectAll('div.left')
+			.style('bottom', function() {
+				return "{0}px".format(_this.getBottomNavHeight());
+			});
+		this.mainDiv.selectAll('div.right')
+			.style('bottom', function() {
+				return "{0}px".format(_this.getBottomNavHeight());
 			});
 	}
 	
@@ -146,8 +159,7 @@ var WelcomePanel = (function () {
 				if (prevPanel.get(0) == ol.children('li:nth-child(1)').get(0))
 				{
 					var div1 = $(_this.mainDiv.node()).find('div.right>div');
-					var offset = div1.width() - div1.children(':first-child').outerWidth(false);
-					div1.children().animate({left: "{0}px".format(offset)});
+					div1.children().animate({left: "{0}px".format(0)});
 				}
 				else if (curPanel.get(0) == ol.children('li:last-child').get(0))
 				{
@@ -249,7 +261,11 @@ var WelcomePanel = (function () {
 		}
 	}
 	
-	
+	WelcomePanel.prototype.getBottomNavHeight = function()
+	{
+		return this.searchPanel ? $(this.searchPanel.topBox).outerHeight(false) : 0;
+	}
+		
 	function WelcomePanel(onPathwayCreated) {
 		var _this = this;
 		this.createRoot(null, "Welcome", "welcome");
@@ -295,7 +311,7 @@ var WelcomePanel = (function () {
 					{text: "What Is Your Path?",
 					 cssClass: "title",
 					},
-					{url: "/static/consentrecords/svg/welcomepathway.svg",
+					{url: staticPath + "consentrecords/svg/welcomepathway.svg",
 					 cssClass: "center max-height",
 					},
 				],
@@ -324,13 +340,13 @@ var WelcomePanel = (function () {
 					{text: "Types of Experiences",
 					 cssClass: "heading1",
 					},
-					{url: "/static/consentrecords/svg/experiencetypes.svg",
+					{url: staticPath + "consentrecords/svg/experiencetypes.svg",
 					},
 				],
 				[
 					{text: "Let's take a look at an experience:",
 					},
-					{url: "/static/consentrecords/svg/experiencedetail.svg",
+					{url: staticPath + "consentrecords/svg/experiencedetail.svg",
 					 cssClass: "center",
 					},
 					{panels:
@@ -573,9 +589,10 @@ var WelcomePanel = (function () {
 			{
 				$(this).css('margin-left', "{0}px".format(jNode.width() - $(this).outerWidth(false)));
 			});
-		var offset = jNode.width() - jNode.children(':first-child').outerWidth(false);
-		jNode.children().css('left', "{0}px".format(offset))
+		jNode.children().css('left', "{0}px".format(0))
 			.css('display', '');
+		
+		this.searchPanel = new SearchPathsPanel();
 		
 		this.handleResize();
 		

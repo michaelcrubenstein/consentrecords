@@ -1226,6 +1226,7 @@ cr.urls = {
 		updatePassword: '/user/updatepassword/',
 		acceptFollower: '/user/acceptFollower/',
 		requestAccess: '/user/requestAccess/',
+		resetPassword: '/user/resetpassword/',
 		log: '/monitor/log/',
 	};
 	
@@ -1630,7 +1631,7 @@ cr.share = function(userPath, path, privilegeID, done, fail)
 	{
 		var url = cr.urls.acceptFollower;
 		if (userPath)
-			url += encodeURIComponent(userPath + "/");
+			url += userPath + "/";
 		$.post(url, {follower: path,
 					 privilege: privilegeID
 					})
