@@ -814,6 +814,16 @@ class Instance(dbmodels.Model):
         return (Q(accessrecord__isnull=True)|
                         Q(accessrecord__source__in=sources))
         
+    def anonymousReadFilter():
+        sources=Instance.objects.filter(\
+                          Q(value__field=terms.publicAccess.id)&
+                          Q(value__referenceValue=terms.readPrivilegeEnum)&\
+                          Q(value__deleteTransaction__isnull=True)\
+                        )
+        
+        return (Q(accessrecord__isnull=True)|
+                        Q(accessrecord__source__in=sources))
+        
     def securityValueFilter(self, privilegeIDs):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
@@ -1481,7 +1491,7 @@ class UserInfo:
 
     def readFilter(self, resultSet):
         if not self.is_authenticated:
-            return resultSet.filter(Instance.anonymousFindFilter())
+            return resultSet.filter(Instance.anonymousReadFilter())
         elif self.is_administrator:
             return resultSet
         else:

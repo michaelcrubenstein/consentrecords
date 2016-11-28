@@ -12,6 +12,7 @@ var WelcomePanel = (function () {
 				return "{0}px".format(i < activeIndex ? -width :
 					   				  i == activeIndex ? 0 : width);
 			});
+		li.height($(this.mainDiv.node()).height() - this.getBottomNavHeight());
 			
 		var _this = this;
 		var subOLs = li.find('ol');
@@ -29,7 +30,19 @@ var WelcomePanel = (function () {
 			});
 		this.mainDiv.selectAll('li svg.pathway')
 			.attr('height', function() { 
-				return _this.scrollAreaHeight() - $(this).position().top - 45;
+				var height = _this.scrollAreaHeight() - $(this).position().top - _this.getBottomNavHeight() - 45;
+				if (height < 10)
+					height = 10;
+				return height;
+			});
+			
+		this.mainDiv.selectAll('div.left')
+			.style('bottom', function() {
+				return "{0}px".format(_this.getBottomNavHeight());
+			});
+		this.mainDiv.selectAll('div.right')
+			.style('bottom', function() {
+				return "{0}px".format(_this.getBottomNavHeight());
 			});
 	}
 	
@@ -248,7 +261,11 @@ var WelcomePanel = (function () {
 		}
 	}
 	
-	
+	WelcomePanel.prototype.getBottomNavHeight = function()
+	{
+		return this.searchPanel ? $(this.searchPanel.topBox).outerHeight(false) : 0;
+	}
+		
 	function WelcomePanel(onPathwayCreated) {
 		var _this = this;
 		this.createRoot(null, "Welcome", "welcome");
@@ -574,6 +591,8 @@ var WelcomePanel = (function () {
 			});
 		jNode.children().css('left', "{0}px".format(0))
 			.css('display', '');
+		
+		this.searchPanel = new SearchPathsPanel();
 		
 		this.handleResize();
 		
