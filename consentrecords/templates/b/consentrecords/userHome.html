@@ -474,6 +474,11 @@
 										}
 										else
 										{
+											if (!cr.signedinUser.getValueID())
+											{
+												firstPanel = new WelcomePanel();
+												firstPanel.showNow();
+											}
 											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
 										}
 									})
