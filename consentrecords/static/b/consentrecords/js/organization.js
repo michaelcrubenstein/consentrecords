@@ -202,6 +202,8 @@ function drawInfoButtons(infoButtons)
 	var activeColor = "#2C55CC"
 
 	var svg = infoButtons.append("svg")
+		.attr('xmlns', "http://www.w3.org/2000/svg")
+		.attr('version', "1.1")
 		.attr("width", "24px")
 		.attr("height", "24px");
 	var circles = svg.append("circle")
