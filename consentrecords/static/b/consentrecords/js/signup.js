@@ -623,7 +623,14 @@ var SigninPanel = (function()
 						{
 							if (prepareClick('return key', 'Signin sign in'))
 							{
-								_this.submit(signInSuccess, cr.syncFail);
+								try
+								{
+									_this.submit(signInSuccess, cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
 							}
 							d3.event.preventDefault();
 						}
@@ -650,12 +657,19 @@ var SigninPanel = (function()
 				{
 					if (prepareClick('click', 'hide panel button'))
 					{
-						showClickFeedback(this);
-						_this.hideRight(function()
-							{
-								$(cr.signedinUser).trigger("signinCanceled.cr");
-								unblockClick();
-							});
+						try
+						{
+							showClickFeedback(this);
+							_this.hideRight(function()
+								{
+									$(cr.signedinUser).trigger("signinCanceled.cr");
+									unblockClick();
+								});
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
 					}
 					d3.event.preventDefault();
 				});
@@ -670,7 +684,14 @@ var SigninPanel = (function()
 				{
 					if (prepareClick('click', 'Signin Sign in'))
 					{
-						_this.submit(signInSuccess, cr.syncFail);
+						try
+						{
+							_this.submit(signInSuccess, cr.syncFail);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
 					}
 
 				   //stop form submission
@@ -689,9 +710,16 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin sign up'))
 				{
-					new Signup()
-						.showUp()
-						.always(unblockClick);
+					try
+					{
+						new Signup()
+							.showUp()
+							.always(unblockClick);
+					}
+					catch (err)
+					{
+						cr.syncFail(err);
+					}
 				}
 				d3.event.preventDefault();
 			});
@@ -706,9 +734,16 @@ var SigninPanel = (function()
 			.on('click', function() {
 				if (prepareClick('click', 'Signin forgot password'))
 				{
-					new ForgotPasswordPanel(_this.node())
-						.showUp()
-						.always(unblockClick);
+					try
+					{
+						new ForgotPasswordPanel(_this.node())
+							.showUp()
+							.always(unblockClick);
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
 				}
 				d3.event.preventDefault();
 			});
@@ -828,8 +863,15 @@ var ForgotPasswordPanel = (function()
 				{
 					if (prepareClick('click', 'hide panel button'))
 					{
-						showClickFeedback(this);
-						_this.hideRight(unblockClick);
+						try
+						{
+							showClickFeedback(this);
+							_this.hideRight(unblockClick);
+						}
+						catch(err)
+						{
+							cr.syncFail(err);
+						}
 					}
 				});
 			
@@ -845,12 +887,19 @@ var ForgotPasswordPanel = (function()
 					{
 						if (prepareClick('click', 'forgot password submit'))
 						{
-							var successFunction = function()
+							try
 							{
-								$(signinPanel).hide("slide", {direction: "right"}, 0);
-								_this.hideRight(unblockClick);
+								var successFunction = function()
+								{
+									$(signinPanel).hide("slide", {direction: "right"}, 0);
+									_this.hideRight(unblockClick);
+								}
+								_this.submit(successFunction, cr.syncFail);
 							}
-							_this.submit(successFunction, cr.syncFail);
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
 						}
 					}
 					else
