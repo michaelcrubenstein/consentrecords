@@ -843,6 +843,8 @@ function appendLeftChevrons(buttons)
 function appendLeftChevronSVG(container)
 {
 	var svg = container.append('svg')
+		.attr('xmlns', "http://www.w3.org/2000/svg")
+		.attr('version', "1.1")
 		.attr('viewBox', '160 96 192 320')
 		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')
@@ -853,6 +855,8 @@ function appendLeftChevronSVG(container)
 function appendRightChevronSVG(container)
 {
 	var svg = container.append('svg')
+		.attr('xmlns', "http://www.w3.org/2000/svg")
+		.attr('version', "1.1")
 		.attr('viewBox', '0 96 192 320')
 		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')

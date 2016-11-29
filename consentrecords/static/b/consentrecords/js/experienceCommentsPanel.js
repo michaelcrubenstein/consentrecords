@@ -240,7 +240,9 @@ var ExperienceCommentsPanel = (function() {
 		
 		var panel2Div = this.appendScrollArea();
 
-		this.svg = panel2Div.append('svg');
+		this.svg = panel2Div.append('svg')
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
 			.datum(fd);

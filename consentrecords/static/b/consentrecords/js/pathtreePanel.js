@@ -1567,7 +1567,9 @@ var PathLines = (function() {
 			.classed("pathlines", true);
 			
 		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway pathlines", true);
+			.classed("pathway pathlines", true)
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		
 		this.defs = this.svg.append('defs');
 	
