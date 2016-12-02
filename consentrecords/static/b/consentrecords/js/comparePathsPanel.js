@@ -672,7 +672,9 @@ var ComparePath = (function() {
 			.classed("compare-paths", true);
 			
 		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway compare-paths", true);
+			.classed("pathway compare-paths", true)
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		
 		this.defs = this.svg.append('defs');
 	
