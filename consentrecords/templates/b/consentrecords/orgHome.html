@@ -27,8 +27,11 @@
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/showSharing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}" rel="stylesheet">
     <link href="{% static "b/consentrecords/css/signup.css" %}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
@@ -187,13 +190,13 @@
 	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/organization.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/pathGuides.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/showFollowing.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "b/consentrecords/js/settings.js" %}"></script>
@@ -568,8 +571,8 @@
 					b.on("click", clickFunction);
 				}
 				
-				var sitePanel = new SitePanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData), "organization view");
+				var sitePanel = new SitePanel();
+				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "organization view");
 
 				var navContainer = sitePanel.appendNavContainer();
 
@@ -706,7 +709,8 @@
 					return a.getDescription().localeCompare(b.getDescription());
 				});
 
-			var sitePanel = new SitePanel(previousPanelNode, parent, header, "list");
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(parent, header, "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
@@ -822,7 +826,8 @@
 							{
 								inquiryCell = inquiriesInstance.getCell("_user");
 						
-								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list");
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Pick User", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 
@@ -910,7 +915,8 @@
 		 */
 		function add_enrollment(organization, previousPanel)
 		{
-			var sitePanel = new SitePanel(previousPanel, organization, "Pick User", "list");
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(organization, "Pick User", "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
@@ -1180,7 +1186,8 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						var addInquiryPanelDiv = new SitePanel(previousPanel, session, "Add Inquiry", "list");
+						var addInquiryPanelDiv = new SitePanel();
+						sitePanel.createRoot(session, "Add Inquiry", "list");
 
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
@@ -1362,7 +1369,8 @@
 							{
 								var enrollments = instance.getCell("Enrollment").data;
 								
-								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 

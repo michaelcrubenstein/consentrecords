@@ -7,7 +7,7 @@ class Emailer():
 <p>There has been a request to reset your password at pathadvisor.com.</p>
 <p>Click <a href="%s">here</a> to reset your password.</p>
 
-<b>The PathAdvisor Team</b>
+<p><b>The PathAdvisor Team</b></p>
 """ % resetURL
 
         message = """\
@@ -34,16 +34,34 @@ The PathAdvisor Team
         return p.sub(f, html)
         
     # Sends a reset password message to the specified email recipient.
-    def sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL):
-        htmlMessage = """\
+    def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
+        htmlMessage = """<body><style>
+    p > span {
+    	margin-left: 20px;
+    	margin-right: 20px;
+    	text-decoration: none;
+        cursor: pointer;
+        color: #2222FF;
+        font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 15px;
+    }
+    p>span>a {
+    	text-decoration: none;
+        cursor: pointer;
+        color: #2222FF;
+        font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 15px;
+    }
+</style><p>Hi%s!</p>
 <p>You have received a request to follow your path at pathadvisor.com from %s.</p>
-<p>Click <a href="%s">here</a> to accept this follower.</p>
-<p>Click <a href="%s">here</a> to ignore this follower.</p>
+<p><span><a href="%s">Accept Request</a></span>
+<span><a href="%s">Reject Request</a></span></p>
 
-We hope you enjoy inspiring others by sharing your path.
+<p>We hope you discover new opportunities and enjoy inspiring others by sharing your path.</p>
 
-<b>The PathAdvisor Team</b>
-""" % (follower, acceptURL, ignoreURL)
+<p><b>The PathAdvisor Team</b></p>
+</body>
+""" % (" " + salutation if salutation else "", follower, acceptURL, ignoreURL)
 
         message = """\
 You have received a request to follow your path at pathadvisor.com from %s.
@@ -56,7 +74,7 @@ Open the following link in your web browser to ignore this follower:
 
 %s
 
-We hope you enjoy inspiring others by sharing your path.
+We hope you discover new opportunities and enjoy inspiring others by sharing your path.
 
 The PathAdvisor Team
 """ % (follower, acceptURL, ignoreURL)

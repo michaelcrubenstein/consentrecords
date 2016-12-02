@@ -454,7 +454,18 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, recipientEMail, 
+                                firstNames = following.value_set.filter(field=terms['_first Name'],
+                                								   deleteTransaction__isnull=True)
+                                firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                                
+                                moreExperiences = following.getSubInstance(terms['More Experiences'])
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
+                                																	deleteTransaction__isnull=True)
+                                screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                                
+                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
+                                    screenName or firstName,
+                                    recipientEMail, 
                                     follower.getDescription(),
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
