@@ -16,7 +16,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var navContainer = sitePanel.appendNavContainer();
 
 	var backButton = navContainer.appendLeftButton()
-		.on("click", function() { _this.hideRightEvent(); });
+		.on("click", function() { sitePanel.hideRightEvent(); });
 	backButton.append("span").text("Done");
 	
 	var buttonDiv = navContainer.appendRightButton();
