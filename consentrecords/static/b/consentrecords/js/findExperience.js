@@ -9,7 +9,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	session.calculateDescription();
 	
-	var sitePanel = new SitePanel(previousPanelNode, session, offering.getDescription(), "session");
+	var sitePanel = new SitePanel();
+	sitePanel.createRoot(session, offering.getDescription(), "session");
 	var panel = sitePanel.node();
 	
 	var navContainer = sitePanel.appendNavContainer();
