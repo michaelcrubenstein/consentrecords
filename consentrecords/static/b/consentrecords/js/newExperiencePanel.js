@@ -2469,14 +2469,29 @@ var NewExperiencePanel = (function () {
 				_this.onFocusInTagInput(this);
 			});
 			
-		if (!instance)
-		{
-			$(input.node()).keydown( function(event) {
-				if(event.keyCode == 9) {
+		$(input.node()).keypress(function(e) {
+			if (e.which == 13)
+			{
+				_this.checkTagInput();
+				e.preventDefault();
+			}
+		});
+				
+		$(input.node()).keydown( function(event) {
+			if (event.keyCode == 9) {
+				/* If this is an empty node with no instance to remove, then don't handle here. */
+				if (!input.node().value && !instance)
+					return;
+				/* If this is a node whose value matches the previous value, then don't handle here. */
+				else if (instance && input.node().value == instance.getDescription())
+					return;
+				else
+				{
+					_this.checkTagInput();
 					event.preventDefault();
 				}
-  			});
-		}
+			}
+		});
 
 		return input;
 	}
