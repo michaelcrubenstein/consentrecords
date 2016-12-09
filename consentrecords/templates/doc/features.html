@@ -5,60 +5,158 @@
 	<body>
 		<h1>Features</h1>
 		<h2>Version 1.0</h2>
-		<p>Release date: ?</p>
+		<p>Last modified : December 6, 2016</p>
 		<h3>Features</h3>
 
 		<h4>Stakeholder UIs</h4>
 		<ol>
-			<li>public: <a href="https://www.consentrecords.org" target="home">https://www.consentrecords.org</a>
+			<li>public: <a href="https://www.pathadvisor.com" target="home">https://www.pathadvisor.com</a>
 				<h5>Workflows</h5>
 				<ol>
 					<li>Sign Up</li>
+						<p>Signing up requires the following data:</p>
+						<ol>
+							<li>Email address</li>
+							<li>Password</li>
+							<li>Birth Month and Year</li>
+						</ol>
 					<li>Sign In</li>
 					<li>Retrieve a forgotten password</li>
 					<li>Sign Out</li>
-					<li>Find a new experience offered by an organization
-						<ol>
-							<li>Register an inquiry for the new experience.</li>
-							<li>Remove an inquiry for the new experience.</li>
-						</ol>
-					</li>
 					<li>View your pathway of previous experiences.
-						<p>A pathway is composed of experiences participated in as well as user-entered experiences.</li>
+						<p>A pathway is composed of user-entered experiences as well as experiences offered by an organization.</li>
+						<p>A user-entered experience has the following data:</p>
+						<ol>
+							<li>Organization
+								<p>The name of the organization is optional.</p>
+							</li>
+							<li>Location
+								<p>For organizations that have multiple locations, the name of the location at which
+									this experience occurred. The name of the location is optional.</p></li>
+							<li>Offering
+								<p>The name of the experience. For a program within an organization, it may be the
+									name of the program. For a job, it could be the job title.</p>
+							</li>
+							<li>Tags</li>
+							<li>Experience Phase:
+								<ol>
+									<li>Done</li>
+									<li>Doing Now</li>
+									<li>Goal</li>
+								</ol>
+							</li>
+							<li>Start Date
+								<p>Specifying the start date is optional. When dates are specified,
+									they are specified by a year, a month and an optional day.
+								</p>
+								<p>When the Experience Phase is Done, a specified start date is between
+									the user's birthday and the current day (inclusive). If the user's birthday
+									date is not specified, the minimum start date is the first day of the month
+									of the user's birthday.</p>
+								<p>When the Experience Phase is Done, the default start date for an 
+									experience is one year before the current date
+								   with only the year and month specified, but no date specified.</p>
+								<p>When the Experience Phase is Doing Now, a specified start date is between
+									the user's birthday and the current day (inclusive). If the user's birthday
+									date is not specified, the minimum start date is the first day of the month
+									of the user's birthday.</p>
+								<p>When the Experience Phase is Doing Now, the default start date for an 
+									experience is the current date
+								   with only the year and month specified, but no day specified.</p>
+								<p>When the Experience Phase is Goal, a specified start date is between the 
+									current date and the last day of the year 50 years in the future (inclusive).</p>
+								<p>When the Experience Phase is Goal, the default start date for an experience is 
+								   one year after the current date with only the year and month specified, but no date specified.</p>
+								   
+							</li>	
+							<li>End Date
+								<p>Specifying the end date is optional. When dates are specified,
+									they are specified by a year, a month and an optional day.
+								</p>
+								<p>When the Experience Phase is Done or Doing Now, a specified end date is between
+									the experience start date (if specified) and the current day (inclusive). 
+									the experience start date is not specified, then the end date is between
+									the user's birthday and the current day (inclusive). If the user's birthday
+									date is not specified, the minimum end date is the first day of the month
+									of the user's birthday.</p>
+								<p>When the Experience Phase is Done, the default end date for an 
+									experience is the current date
+								   with only the year and month specified, but no day specified.</p>
+								<p>When the Experience Phase is Done, the default end date for an 
+									experience is one year after the current date
+								   with only the year and month specified, but no day specified.</p>
+								<p>When the Experience Phase is Goal, a specified end date is between the 
+									current date and the last day of the year 50 years in the future (inclusive).</p>
+								<p>When the Experience Phase is Goal, the default end date for an experience is 
+								   two years after the current date with only the year and month specified, but no day specified.</p>
+								   
+							</li>	
+						</ol>
+						<p>Experience Operations:</p>
 						<ol>
 							<li>Add an experience to your pathway</li>
-							<li>INCOMPLETE: Edit an experience in your pathway</li>
-							<li>INCOMPLETE: Delete an experience in your pathway</li>
+							<li>Add an experience to your pathway from one of several prompts that 
+							    automatically fill in a tag and the phase "Done"</li>
+							<li>Edit an experience in your pathway</li>
+							<li>Delete an experience in your pathway</li>
 						</ol>
 					</li>
-					<li>View opportunities you have signed up for.</li>
 					<li>Manage your account
 						<ol>
 							<li>Specify your first name.</li>
 							<li>Change your first name.</li>
 							<li>Specify your last name.</li>
 							<li>Change your last name.</li>
-							<li>Change your email address</li>
-							<li>Add an email address</li>
-							<li>Remove an email address</li>
-							<li>Change public accessibility of your account to None, Find or Read</li>
-							<li>Give someone else Find, Read, Write Administer access to your account</li>
-							<li>Take away Find, Read, Write Administer access to your account</li>
+							<li>Specify your screen name.</li>
+							<li>Change your screen name.</li>
+							<li>Change your email address.</li>
+							<li>Change your password.</li>
+							<li>TO DO: Add an email address</li>
+							<li>TO DO: Remove an email address</li>
+							<li>Change public visibility of your account to Hidden, By Request, Public Path Only or Public Profile and Path.</li>
+							<li>Give someone else Read, Administer access to your account.</li>
+							<li>Take away Read, Administer access to your account.</li>
+							<li>Enumerate users followed by the currently logged-in user.</li>
+							<li>Display side-by-side paths for currently logged-in user and a user following.</li>
+							<li>Request Read access for another account by email address.</li>
+						</ol>
+					</li>
+					<li>Search for a path
+						<ol>
+							<li>Filter the tags to pick from by category.</li>
+							<li>Filter the tags to pick from by letters starting a word in each tag.</li>
+							<li>Add a tag to search criteria.</li>
+							<li>Remove a tag from search criteria.</li>
+							<li>Enumerate users whose paths you have permission to see that match search criteria.</li>
+							<li>Display the path of a user found via search.</li>
+							<li>Display the profile of a user found via search.</li>
 						</ol>
 					</li>
 				</ol>
 			</li>
-			<li>organization: <a href="/" target="home">https://www.consentrecords.org</a></li>
+			<li>public: <a href="https://www.pathadvisor.com/find/" target="find">https://www.pathadvisor.com/find/</a>
+				<ol>
+					<li>Find a new experience offered by an organization
+						<ol>
+							<li>Register an inquiry for the new experience.</li>
+							<li>Remove an inquiry for the new experience.</li>
+						</ol>
+					</li>
+					<li>View opportunities you have signed up for.</li>
+				</ol>
+			</li>
+			<li>organization: <a href="https://www.pathadvisor.com/org/" target="home">https://www.pathadvisor.com/org/</a></li>
 			<li>administration:
 				<ol>
 					<li><a href="/list/?path=_term&type=_term&header=Terms" target="terms">Terms</a></li>
 					<li><a href="/list/?path=_user&type=_user&header=Users" target="users">Users</a></li>
-					<li><a href='/list/?path=%22Service%20Domain%22&type=Service%20Domain&header=Service%20Domains' target="service domains">Service Domains</a></li>
-					<li><a href="/list/?path=Service&type=Service&header=Services" target="services">Services</a></li>
+					<li><a href="/list/?path=Stage&type=Stage&header=Stages" target="stages">Stages</a></li>
+					<li><a href="/list/?path=Service&type=Service&header=Services" target="services">Services (Tags)</a></li>
+					<li><a href='/list/?path=Service&type=Service&header="Experience Prompts"' target="xprompts">Experience Prompts</a></li>
 					<li><a href="/list/?path=Organization&type=Organization&header=Organizations" target="organizations">Organizations</a></li>
 					<li><a href="/admin/" target="admin">Database Admin</a>
-					<li>INCOMPLETE: Security constraints to prevent modifying data without permission</li>
-					<li>INCOMPLETE: Activity Monitor</li>
+					<li>Security constraints to prevent modifying data without permission</li>
+					<li>Activity Monitor</li>
 				</ol>
 			</li>
 		</ol>
