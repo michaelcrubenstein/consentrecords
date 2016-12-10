@@ -2127,13 +2127,20 @@ var AddOptions = (function () {
 					{
 						if (prepareClick('click', name))
 						{
-							$.when(dimmer.hide(), 
-								   $(panel.node()).hide("slide", {direction: "down"}, 200))
-							 .then(function()
-								{
-									panel.remove();
-									clickFunction();
-								});
+							try
+							{
+								$.when(dimmer.hide(), 
+									   $(panel.node()).hide("slide", {direction: "down"}, 200))
+								 .then(function()
+									{
+										panel.remove();
+										clickFunction();
+									});
+							}
+							catch (err)
+							{
+								cr.syncFail(err);
+							}
 						}
 					});
 			return button;
