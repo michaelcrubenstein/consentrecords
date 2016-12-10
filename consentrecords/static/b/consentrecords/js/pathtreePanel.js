@@ -2133,7 +2133,7 @@ var AddOptions = (function () {
 									   $(panel.node()).hide("slide", {direction: "down"}, 200))
 								 .then(function()
 									{
-										panel.remove();
+										$(panel.node()).remove();
 										clickFunction();
 									});
 							}
