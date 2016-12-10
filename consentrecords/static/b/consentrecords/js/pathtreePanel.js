@@ -2005,7 +2005,7 @@ var ShareOptions = (function () {
 				{
 					$(confirmButton.node()).off('blur');
 					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						panel.remove();
+						$(panel.node()).remove();
 						unblockClick();
 					});
 					clipboard.destroy();
@@ -2041,7 +2041,7 @@ var ShareOptions = (function () {
 					if (prepareClick('click', "Email Pathway Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							panel.remove();
+							$(panel.node()).remove();
 							if (user.getValueID() == cr.signedinUser.getValueID())
 							{
 								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
@@ -2100,7 +2100,7 @@ var AddOptions = (function () {
 		{
 			$(confirmButton.node()).off('blur');
 			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-				panel.remove();
+				$(panel.node()).remove();
 				if (done) done();
 			});
 		}

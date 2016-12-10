@@ -433,7 +433,9 @@ var SearchPathsPanel = (function () {
 	{
 		/* Make an svg whose position is identical to poolFlag relative to mainDiv. */
 		var travelSVG = this.mainDiv.append('svg')
-			.classed('travel flags', true);
+			.classed('travel flags', true)
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		
 		/* Set the svg dimensions to the same as the flag. */
 		var poolFlagRect = poolFlag.getBBox();
@@ -757,7 +759,9 @@ var SearchPathsPanel = (function () {
 		var svgs = div.selectAll('svg')
 			.data(svgData)
 			.enter()
-			.append('svg');
+			.append('svg')
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		svgs.append('circle')
 			.attr('r', 16).attr('cx', 30).attr('cy', 23)
 			.attr('fill', 'white');

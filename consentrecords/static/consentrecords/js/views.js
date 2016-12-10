@@ -843,6 +843,8 @@ function appendLeftChevrons(buttons)
 function appendLeftChevronSVG(container)
 {
 	var svg = container.append('svg')
+		.attr('xmlns', "http://www.w3.org/2000/svg")
+		.attr('version', "1.1")
 		.attr('viewBox', '160 96 192 320')
 		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')
@@ -853,6 +855,8 @@ function appendLeftChevronSVG(container)
 function appendRightChevronSVG(container)
 {
 	var svg = container.append('svg')
+		.attr('xmlns', "http://www.w3.org/2000/svg")
+		.attr('version', "1.1")
 		.attr('viewBox', '0 96 192 320')
 		.attr('preserveAspectRatio', 'none');
 	svg.append('polygon')
@@ -1498,12 +1502,18 @@ var SitePanel = (function () {
 	
 	SitePanel.prototype.createRoot = function(datum, headerText, panelClass, showFunction) {
 		var rootPanel = d3.select("body");
+		
+		/* Set the top & left so that the panel appears below the screen during its setup.
+			The height must be set explicitly to work around problems that appear in iOS 7 under
+			certain conditions. 
+		 */
 		this.panelDiv = rootPanel
 						.append("panel")
 						.classed("site-panel", true)
 						.datum(datum)
 						.attr("headerText", headerText)
-						.style('top', "{0}px".format($(window).height()))
+						.style('top', "{0}px".format($(window).innerHeight()))
+						.style('height', "{0}px".format($(window).innerHeight()))
 						.style('left', "{0}px".format(0));
 		this.node().sitePanel = this;
 						

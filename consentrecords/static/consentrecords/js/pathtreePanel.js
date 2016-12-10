@@ -1567,7 +1567,9 @@ var PathLines = (function() {
 			.classed("pathlines", true);
 			
 		this.svg = this.pathwayContainer.append('svg')
-			.classed("pathway pathlines", true);
+			.classed("pathway pathlines", true)
+			.attr('xmlns', "http://www.w3.org/2000/svg")
+			.attr('version', "1.1");
 		
 		this.defs = this.svg.append('defs');
 	
@@ -2003,7 +2005,7 @@ var ShareOptions = (function () {
 				{
 					$(confirmButton.node()).off('blur');
 					$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-						panel.remove();
+						$(panel.node()).remove();
 						unblockClick();
 					});
 					clipboard.destroy();
@@ -2039,7 +2041,7 @@ var ShareOptions = (function () {
 					if (prepareClick('click', "Email Pathway Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-							panel.remove();
+							$(panel.node()).remove();
 							if (user.getValueID() == cr.signedinUser.getValueID())
 							{
 								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
@@ -2098,7 +2100,7 @@ var AddOptions = (function () {
 		{
 			$(confirmButton.node()).off('blur');
 			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
-				panel.remove();
+				$(panel.node()).remove();
 				if (done) done();
 			});
 		}
@@ -2125,13 +2127,20 @@ var AddOptions = (function () {
 					{
 						if (prepareClick('click', name))
 						{
-							$.when(dimmer.hide(), 
-								   $(panel.node()).hide("slide", {direction: "down"}, 200))
-							 .then(function()
-								{
-									panel.remove();
-									clickFunction();
-								});
+							try
+							{
+								$.when(dimmer.hide(), 
+									   $(panel.node()).hide("slide", {direction: "down"}, 200))
+								 .then(function()
+									{
+										$(panel.node()).remove();
+										clickFunction();
+									});
+							}
+							catch (err)
+							{
+								cr.syncFail(err);
+							}
 						}
 					});
 			return button;
