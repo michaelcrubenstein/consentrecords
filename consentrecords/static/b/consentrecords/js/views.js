@@ -85,7 +85,7 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 			.text('\u00D7');
 		$(closeButton.node()).focus();
 		panel.selectAll('span')
-			.data(message.split('\n'))
+			.data(message.toString().split('\n'))
 			.enter()
 			.append('span')
 			.text(function(d) { return d; });

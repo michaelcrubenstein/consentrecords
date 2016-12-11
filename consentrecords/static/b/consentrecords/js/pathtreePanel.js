@@ -25,13 +25,36 @@ var Service = (function() {
 		Volunteering: 5,
 		Wellness: 6,
 	};
+	
+	Service.prototype.columnPriorities = [0, 2, 4, 1, 3, 5, 6, 7];
+	
+	Service.prototype.getStageDescription = function(stage)
+	{
+		var stageDescription = stage && stage.getDescription();
+		return stageDescription in this.stageColumns && stageDescription;
+	}
+	
 	Service.prototype.getColumn = function()
 	{
 		var stage = this._getStage();
-		var stageDescription = stage && stage.getDescription();
-		if (stageDescription &&
-			stageDescription in this.stageColumns)
+		var stageDescription = this.getStageDescription(stage);
+		if (stageDescription)
 			return this.stageColumns[stageDescription];
+		var _this = this;
+			
+		if (this.service && this.service.getValueID())
+		{
+			var services = crp.getInstance(this.service.getValueID()).getCell("Service");
+			var s = services.data.find(function(s)
+				{
+					var stage =  s.getValueID() && crp.getInstance(s.getValueID()).getValue("Stage");
+					return _this.getStageDescription(stage);
+				});
+			if (s)
+				return this.stageColumns[
+					this.getStageDescription(crp.getInstance(s.getValueID()).getValue("Stage"))
+				];
+		}
 
 		/* Other */
 		return 7;
@@ -41,13 +64,6 @@ var Service = (function() {
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].color;
-	}
-	
-	Service.prototype.colorElement = function(r)
-	{
-		var colorText = this.getColor();
-		r.setAttribute("fill", colorText);
-		r.setAttribute("stroke", colorText);
 	}
 	
 	Service.prototype.getDescription = function()
@@ -117,24 +133,34 @@ var FlagData = (function() {
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
-	FlagData.prototype._getService = function()
+	FlagData.prototype.getColumn = function()
 	{
+		var minColumn = Service.prototype.columnPriorities[Service.prototype.columnPriorities.length - 1];
+		
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getValueID())
 		{
 			if (!offering.isDataLoaded)
 				throw ("Runtime error: offering data is not loaded");
 				
-			var service = offering.getValue("Service");
-			if (service)
-				return service;
+			var services = offering.getCell("Service");
+			minColumn = services.data.map(function(s) {
+					return new Service(s).getColumn();
+				})
+				.reduce(function(a, b) {
+					return a < b ? a : b; }, minColumn);
 		}
-		return this.experience.getValue("Service");
-	}
-	
-	FlagData.prototype.getColumn = function()
-	{
-		return new Service(this._getService()).getColumn();
+		
+		var service = this.experience.getCell("Service");
+		if (service)
+		{
+			minColumn = service.data.map(function(s) {
+						return new Service(s).getColumn();
+					})
+					.reduce(function(a, b) {
+						return a < b ? a : b; }, minColumn);
+		}
+		return minColumn;
 	}
 	
 	FlagData.prototype.getStartDate = function()
@@ -222,7 +248,8 @@ var FlagData = (function() {
 	
 	FlagData.prototype.getColor = function()
 	{
-		return new Service(this._getService()).getColor();
+		var column = this.getColumn();
+		return PathGuides.data[column].color;
 	}
 	
 	FlagData.prototype.checkOfferingCells = function(done)
@@ -242,7 +269,10 @@ var FlagData = (function() {
 		var _this = this;
 		var f = function()
 			{
-				new Service(_this._getService()).colorElement(r);
+				var column = _this.getColumn();
+				var colorText = PathGuides.data[column].color;
+				r.setAttribute("fill", colorText);
+				r.setAttribute("stroke", colorText);
 			}
 		this.checkOfferingCells(f);
 	}
@@ -1675,56 +1705,64 @@ var PathLines = (function() {
 		{
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
+			
+			try
+			{	
+				var cell = _this.path.getCell("More Experience");
+				var addedFunction = function(eventObject, newData)
+					{
+						eventObject.data.addMoreExperience(newData);
+					}
+				$(cell).on("valueAdded.cr", null, _this, addedFunction);
+				$(_this.pathwayContainer.node()).on("remove", function()
+					{
+						$(cell).off("valueAdded.cr", null, addedFunction);
+					});
 				
-			var cell = _this.path.getCell("More Experience");
-			var addedFunction = function(eventObject, newData)
+				var experiences = cell.data;
+			
+				_this.allExperiences = _this.allExperiences.concat(experiences);
+			
+				$(experiences).each(function()
 				{
-					eventObject.data.addMoreExperience(newData);
-				}
-			$(cell).on("valueAdded.cr", null, _this, addedFunction);
-			$(_this.pathwayContainer.node()).on("remove", function()
-				{
-					$(cell).off("valueAdded.cr", null, addedFunction);
+					this.calculateDescription();
 				});
-				
-			var experiences = cell.data;
 			
-			_this.allExperiences = _this.allExperiences.concat(experiences);
-			
-			$(experiences).each(function()
-			{
-				this.calculateDescription();
-			});
-			
-			/* Ensure that all of the offerings have their associated cells. */
-			_this.allExperiences.forEach(function(experience)
-				{
-					_this.checkOfferingCells(experience, null);
-				});
+				/* Ensure that all of the offerings have their associated cells. */
+				_this.allExperiences.forEach(function(experience)
+					{
+						_this.checkOfferingCells(experience, null);
+					});
 		
-			_this.showAllExperiences();
+				_this.showAllExperiences();
 			
-			$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
-			_this.appendExperiences();
-			_this.clearLayout();
+				$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
+				_this.appendExperiences();
+				_this.clearLayout();
 			
-			crv.stopLoadingMessage(_this.loadingMessage);
-			_this.loadingMessage.remove();
+				crv.stopLoadingMessage(_this.loadingMessage);
+				_this.loadingMessage.remove();
 			
-			$(_this).trigger("userSet.cr");
+				$(_this).trigger("userSet.cr");
+			}
+			catch(err)
+			{
+				crv.stopLoadingMessage(_this.loadingMessage);
+				_this.loadingMessage.remove();
+				cr.asyncFail(err);
+			}
 		}
 		
-		return $.when(crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
+		return crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents"]})
-				.done(function(experiences)
-					{
-						_this.allExperiences = experiences.slice();
-						$(experiences).each(function()
-						{
-							this.setDescription(this.getValue("Offering").getDescription());
-						});
-					})
-				.fail(cr.asyncFail))
+		.then(function(experiences)
+			{
+				_this.allExperiences = experiences.slice();
+				$(experiences).each(function()
+				{
+					this.setDescription(this.getValue("Offering").getDescription());
+				});
+			})
 		.then(function() {
 			return crp.promise({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
