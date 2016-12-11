@@ -283,7 +283,8 @@ var ComparePath = (function() {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
+					return $(this.parentNode).children('text').outerWidth() + 
+						(2 * _this.textDetailLeftMargin);
 				});	
 		
 		/* Restore the sort order to startDate/endDate */
