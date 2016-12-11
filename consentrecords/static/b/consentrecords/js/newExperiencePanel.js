@@ -3015,12 +3015,12 @@ var NewExperiencePanel = (function () {
 												tagHelp.node());
 												
 		crp.promise({path: "Service"})
-			.done(function(newInstances)
+			.then(function(newInstances)
 				{
 					_this.allServices = newInstances;
 					_this.tagSearchView.showObjects(newInstances);
-				})
-			.fail(cr.syncFail);
+				},
+				cr.syncFail);
 		
 		$(panel2Div.node()).on('resize.cr', function()
 		{
