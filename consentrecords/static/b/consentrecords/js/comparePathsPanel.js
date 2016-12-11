@@ -378,8 +378,6 @@ var ComparePath = (function() {
 	{
 		var _this = this;
 
-		this.setupClipID();
-		
 		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var offsetX;
 		var offsetY;
