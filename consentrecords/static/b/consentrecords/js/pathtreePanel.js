@@ -1675,43 +1675,52 @@ var PathLines = (function() {
 		{
 			if (_this.path == null)
 				return;	/* The panel has been closed before this asynchronous action occured. */
+			
+			try
+			{	
+				var cell = _this.path.getCell("More Experience");
+				var addedFunction = function(eventObject, newData)
+					{
+						eventObject.data.addMoreExperience(newData);
+					}
+				$(cell).on("valueAdded.cr", null, _this, addedFunction);
+				$(_this.pathwayContainer.node()).on("remove", function()
+					{
+						$(cell).off("valueAdded.cr", null, addedFunction);
+					});
 				
-			var cell = _this.path.getCell("More Experience");
-			var addedFunction = function(eventObject, newData)
+				var experiences = cell.data;
+			
+				_this.allExperiences = _this.allExperiences.concat(experiences);
+			
+				$(experiences).each(function()
 				{
-					eventObject.data.addMoreExperience(newData);
-				}
-			$(cell).on("valueAdded.cr", null, _this, addedFunction);
-			$(_this.pathwayContainer.node()).on("remove", function()
-				{
-					$(cell).off("valueAdded.cr", null, addedFunction);
+					this.calculateDescription();
 				});
-				
-			var experiences = cell.data;
 			
-			_this.allExperiences = _this.allExperiences.concat(experiences);
-			
-			$(experiences).each(function()
-			{
-				this.calculateDescription();
-			});
-			
-			/* Ensure that all of the offerings have their associated cells. */
-			_this.allExperiences.forEach(function(experience)
-				{
-					_this.checkOfferingCells(experience, null);
-				});
+				/* Ensure that all of the offerings have their associated cells. */
+				_this.allExperiences.forEach(function(experience)
+					{
+						_this.checkOfferingCells(experience, null);
+					});
 		
-			_this.showAllExperiences();
+				_this.showAllExperiences();
 			
-			$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
-			_this.appendExperiences();
-			_this.clearLayout();
+				$(_this.experienceGroup.selectAll('g.flag')[0]).remove();
+				_this.appendExperiences();
+				_this.clearLayout();
 			
-			crv.stopLoadingMessage(_this.loadingMessage);
-			_this.loadingMessage.remove();
+				crv.stopLoadingMessage(_this.loadingMessage);
+				_this.loadingMessage.remove();
 			
-			$(_this).trigger("userSet.cr");
+				$(_this).trigger("userSet.cr");
+			}
+			catch(err)
+			{
+				crv.stopLoadingMessage(_this.loadingMessage);
+				_this.loadingMessage.remove();
+				cr.asyncFail(err);
+			}
 		}
 		
 		return crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
