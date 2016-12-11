@@ -1714,17 +1714,16 @@ var PathLines = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		return $.when(crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
+		return crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents"]})
-				.done(function(experiences)
-					{
-						_this.allExperiences = experiences.slice();
-						$(experiences).each(function()
-						{
-							this.setDescription(this.getValue("Offering").getDescription());
-						});
-					})
-				.fail(cr.asyncFail))
+		.then(function(experiences)
+			{
+				_this.allExperiences = experiences.slice();
+				$(experiences).each(function()
+				{
+					this.setDescription(this.getValue("Offering").getDescription());
+				});
+			})
 		.then(function() {
 			return crp.promise({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
