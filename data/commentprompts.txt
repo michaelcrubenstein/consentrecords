@@ -1,0 +1,8 @@
+Comment Prompt
+    _text: How did this experience prepare you for other experiences?
+Comment Prompt
+    _text: How did you discover this experience?
+Comment Prompt
+    _text: What made this experience meaningful for you?
+Comment Prompt
+    _text: Why did you decide to act on this experience?

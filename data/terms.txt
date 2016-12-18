@@ -44,6 +44,15 @@ _term
             _data type: _string
             _max capacity: _unique value
 _term
+    _name: Comment Prompt
+    _configuration
+        _name: Boston
+        _field
+            _name: _text
+            _data type: _string
+            _max capacity: _unique value
+            _descriptor type: _by text
+_term
     _name: Comments
     _configuration
         _name: Boston
