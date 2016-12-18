@@ -58,43 +58,6 @@ svg.pathway g.year text {
 	text-anchor: end;
 }
 
-g.detail rect.bg {
-	fill: white;
-}
-	
-g.detail rect.detail {
-	fill-opacity: 0.2;
-	stroke-width: 0;
-	stroke-opacity: 0.0;
-	text-decoration: none;
-	cursor: pointer;
-}
-	
-g.detail image {
-	text-decoration: none;
-	cursor: pointer;
-}
-	
-g.detail line {
-	text-decoration: none;
-	cursor: pointer;
-	stroke: #AAA;
-	stroke-width: 0.5px;
-}
-
-g.detail rect.comments {
-	fill: transparent;
-	cursor: pointer;
-}
-	
-g.detail text.comments {
-	fill: #2C55CC;
-}
-	
-g.detail text.comments:hover {
-	fill: #2222FF;
-}
-	
 svg.pathway g.guide line.column {
 	stroke-width: 2;
 	stroke-opacity: 0.1;
@@ -137,6 +100,43 @@ g.flag .flag-label, g.detail .flag-label {	/* For both flags and detail panels *
 	cursor: default;
 }
 
+g.detail rect.bg {
+	fill: white;
+}
+	
+g.detail rect.detail {
+	fill-opacity: 0.2;
+	stroke-width: 0;
+	stroke-opacity: 0.0;
+	text-decoration: none;
+	cursor: pointer;
+}
+	
+g.detail image {
+	text-decoration: none;
+	cursor: pointer;
+}
+	
+g.detail line {
+	text-decoration: none;
+	cursor: pointer;
+	stroke: #AAA;
+	stroke-width: 0.5px;
+}
+
+g.detail rect.comments {
+	fill: transparent;
+	cursor: pointer;
+}
+	
+g.detail text.comments {
+	fill: #2C55CC;
+}
+	
+g.detail text.comments:hover {
+	fill: #2222FF;
+}
+	
 panel.idea {
 	position: absolute;
 	background-color: #96AAd6;
