@@ -2024,7 +2024,8 @@ var SitePanel = (function () {
 
 	$(window).resize(function()
 		{
-			$(".site-panel").each(function()
+			$(".site-panel").css('height', "{0}px".format($(window).innerHeight()))
+				.each(function()
 				{
 					this.sitePanel.calculateHeight();
 				});
