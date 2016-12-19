@@ -858,7 +858,8 @@ cr.ObjectValue = (function() {
 		for (var i = 0; i < this.cells.length; ++i)
 		{
 			var cell = this.cells[i];
-			if (cell.field.descriptorType == "_by text" &&
+			if ((cell.field.descriptorType == "_by text" ||
+			     cell.field.descriptorType == "_by first text") &&
 				cell.data.length > 0)
 				return true;
 		}
