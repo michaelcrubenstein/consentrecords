@@ -1886,7 +1886,7 @@ var PathlinesPanel = (function () {
 			.classed('site-active-text', true)
 			.text("+");
 			
-		var moreExperiences = user.getValue("More Experiences");
+		var moreExperiences = user.getValue("Path");
 		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
@@ -2424,7 +2424,7 @@ var OtherPathlines = (function() {
 		{
 			try
 			{
-				var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), fd.experience);
+				var tempExperience = new Experience(cr.signedinUser.getValue("Path"), fd.experience);
 				new NewExperiencePanel(tempExperience, tempExperience.getPhase())
 					.showUp()
 					.always(unblockClick);

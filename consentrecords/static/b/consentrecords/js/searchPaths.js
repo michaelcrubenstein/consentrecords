@@ -72,7 +72,7 @@ var SearchPathsResultsView = (function () {
 		var path;
 		{
 			/* TODO: */
-			path = '"More Experiences"';
+			path = '"Path"';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
 			if (!qf.length)

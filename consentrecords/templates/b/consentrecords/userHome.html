@@ -407,7 +407,7 @@
 		{
 			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 			firstPanel.setupSearchPanel();
-			firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true);
+			firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true);
 			firstPanel.showUp();
 			return firstPanel;
 		}
@@ -469,7 +469,7 @@
 													};
 												panel = new PathlinesPanel(users[0], done);
 											}
-											panel.pathtree.setUser(users[0].getValue("More Experiences"), true);
+											panel.pathtree.setUser(users[0].getValue("Path"), true);
 											panel.showLeft();
 										}
 										else
@@ -505,7 +505,7 @@
 								pathwayPanel = firstPanel;
 							}
 							var pathway = pathwayPanel.pathtree;
-							var experiencesPath = cr.signedinUser.getValue("More Experiences");
+							var experiencesPath = cr.signedinUser.getValue("Path");
 							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
 								.then(function(experiences)
 								{
@@ -516,7 +516,7 @@
 												{
 													if (experiences[0].typeName == "More Experience")
 													{
-														var experience = new Experience(cr.signedinUser.getValue("More Experiences"), experiences[0]);
+														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
 														new NewExperiencePanel(experience, experience.getPhase())
 															.showUp();
 													}
@@ -708,7 +708,7 @@
 						firstPanel = new PathlinesPanel(cr.signedinUser, false);
 						firstPanel.setupSearchPanel();
 						firstPanel.showNow();
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("More Experiences"), true)
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
 						.then(function()
 							{
 								if (handleState)

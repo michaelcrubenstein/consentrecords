@@ -376,51 +376,6 @@ _term
             _of kind: enumerator
             _pick object path: _term[_name=Timeframe]>enumerator
 _term
-    _name: More Experiences
-    _configuration
-        _name: Boston
-        _field
-            _name: More Experience
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: More Experience
-        _field
-            _name: Birthday
-            _data type: _datestamp (day optional)
-            _max capacity: _unique value
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: _special access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name="_special access"]>enumerator
-        _field
-            _name: _public access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_read]
-        _field
-            _name: _primary administrator
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: _access record
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _access record
-_term
     _name: Offering
     _configuration
         _name: Boston
@@ -524,6 +479,51 @@ _term
     _default access: _custom
 _term
     _name: Organization Label
+_term
+    _name: Path
+    _configuration
+        _name: Boston
+        _field
+            _name: More Experience
+            _data type: _object
+            _max capacity: _multiple values
+            _descriptor type: _by count
+            _object add rule: _create one
+            _of kind: More Experience
+        _field
+            _name: Birthday
+            _data type: _datestamp (day optional)
+            _max capacity: _unique value
+        _field
+            _name: _name
+            _data type: _string
+            _max capacity: _unique value
+        _field
+            _name: _special access
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name="_special access"]>enumerator
+        _field
+            _name: _public access
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name=_privilege]>enumerator[_name=_read]
+        _field
+            _name: _primary administrator
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: _user
+        _field
+            _name: _access record
+            _data type: _object
+            _max capacity: _multiple values
+            _object add rule: _create one
+            _of kind: _access record
 _term
     _name: Period
     _configuration
@@ -1077,8 +1077,8 @@ _term
         _field
             _name: _name
             _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
+            _max capacity: _multiple values
+            _descriptor type: _by first text
         _field
             _name: _configuration
             _data type: _object
@@ -1122,11 +1122,11 @@ _term
             _data type: _datestamp (day optional)
             _max capacity: _unique value
         _field
-            _name: More Experiences
+            _name: Path
             _data type: _object
             _max capacity: _unique value
             _object add rule: _create one
-            _of kind: More Experiences
+            _of kind: Path
         _field
             _name: _access record
             _data type: _object
