@@ -815,8 +815,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.getValue("More Experiences"),
-							  this.rightUser.getValue("More Experiences"));
+		this.pathtree.setUser(this.leftUser.getValue("Path"),
+							  this.rightUser.getValue("Path"));
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

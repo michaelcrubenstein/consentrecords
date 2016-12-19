@@ -283,7 +283,8 @@ var ComparePath = (function() {
 			.attr('height', "{0}em".format(this.flagHeightEM))
 			.attr('width', function(fd)
 				{
-					return $(this.parentNode).children('text').outerWidth() + 5;
+					return $(this.parentNode).children('text').outerWidth() + 
+						(2 * _this.textDetailLeftMargin);
 				});	
 		
 		/* Restore the sort order to startDate/endDate */
@@ -378,8 +379,6 @@ var ComparePath = (function() {
 	{
 		var _this = this;
 
-		this.setupClipID();
-		
 		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var offsetX;
 		var offsetY;
@@ -816,8 +815,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.getValue("More Experiences"),
-							  this.rightUser.getValue("More Experiences"));
+		this.pathtree.setUser(this.leftUser.getValue("Path"),
+							  this.rightUser.getValue("Path"));
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

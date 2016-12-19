@@ -85,7 +85,7 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 			.text('\u00D7');
 		$(closeButton.node()).focus();
 		panel.selectAll('span')
-			.data(message.split('\n'))
+			.data(message.toString().split('\n'))
 			.enter()
 			.append('span')
 			.text(function(d) { return d; });
@@ -2024,7 +2024,8 @@ var SitePanel = (function () {
 
 	$(window).resize(function()
 		{
-			$(".site-panel").each(function()
+			$(".site-panel").css('height', "{0}px".format($(window).innerHeight()))
+				.each(function()
 				{
 					this.sitePanel.calculateHeight();
 				});

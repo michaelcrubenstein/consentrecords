@@ -3,6 +3,8 @@
 # python3 data/06loadscraped.py data/stages.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/services.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/experienceprompts.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/commentprompts.txt michaelcrubenstein@gmail.com
+
 # python3 data/06loadscraped.py data/bps.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
@@ -22,6 +24,8 @@ import traceback
 import sys
 import csv
 import re
+
+django.setup()
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -136,8 +140,6 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), value))
     
 if __name__ == "__main__":
-    django.setup()
-
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 

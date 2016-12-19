@@ -29,12 +29,12 @@ var Settings = (function () {
 		
 		var panel2Div = this.appendScrollArea();
 		
-		var path = user.getValue("More Experiences");
+		var path = user.getValue("Path");
 		var birthdayCell = user.getCell("Birthday");
 		var oldAppendUpdateBirthdayCommands = birthdayCell.data[0].appendUpdateCommands;
 		
 		/* Change the birthdayCell's data command to validate the birthday and update the
-			corresponding birthday in the More Experiences object.
+			corresponding birthday in the Path object.
 		 */
 		birthdayCell.data[0].appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 		{

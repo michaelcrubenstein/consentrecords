@@ -458,7 +458,7 @@ def requestAccess(request):
                                 								   deleteTransaction__isnull=True)
                                 firstName = firstNames.count() > 0 and firstNames[0].stringValue
                                 
-                                moreExperiences = following.getSubInstance(terms['More Experiences'])
+                                moreExperiences = following.getSubInstance(terms['Path'])
                                 screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
                                 																	deleteTransaction__isnull=True)
                                 screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue

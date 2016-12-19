@@ -3,6 +3,7 @@
 # python3 data/04dumpconfiguration.py -path Stage -q > data/stages.txt 
 # python3 data/04dumpconfiguration.py -path Service -r -q > data/services.txt 
 # python3 data/04dumpconfiguration.py -path '"Experience Prompt"' -q > data/experienceprompts.txt 
+# python3 data/04dumpconfiguration.py -path '"Comment Prompt"' -q > data/commentprompts.txt 
 
 import datetime
 import django
@@ -11,6 +12,8 @@ import getpass
 import sys
 import csv
 import traceback
+
+django.setup()
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -65,9 +68,7 @@ def writedescription(i, indent, fieldsDataDictionary):
                 sys.stdout.write('%s%s: %s\n' % (' ' * (indent + 4), fd['name'], v.stringValue))
             
 
-if __name__ == "__main__":
-    django.setup()
-    
+if __name__ == "__main__":    
     try:
         timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     
