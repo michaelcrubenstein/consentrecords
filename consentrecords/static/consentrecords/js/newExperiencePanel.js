@@ -2210,7 +2210,7 @@ var ExperienceShareOptions = (function () {
 		
 		if (cr.signedinUser)
 		{
-			var duplicateText = (path == cr.signedinUser.getValue("More Experiences")) ? "Duplicate Experience" : "Add to My Pathway";
+			var duplicateText = (path == cr.signedinUser.getValue("Path")) ? "Duplicate Experience" : "Add to My Pathway";
 		
 			var addToMyPathwayButton = div.append('button')
 				.text(duplicateText)
@@ -2219,7 +2219,7 @@ var ExperienceShareOptions = (function () {
 					{
 						if (prepareClick('click', duplicateText))
 						{
-							var tempExperience = new Experience(cr.signedinUser.getValue("More Experiences"), experience);
+							var tempExperience = new Experience(cr.signedinUser.getValue("Path"), experience);
 							var newPanel = new NewExperiencePanel(tempExperience, tempExperience.getPhase());
 							newPanel.showUp()
 								.done(function()
@@ -3015,12 +3015,12 @@ var NewExperiencePanel = (function () {
 												tagHelp.node());
 												
 		crp.promise({path: "Service"})
-			.done(function(newInstances)
+			.then(function(newInstances)
 				{
 					_this.allServices = newInstances;
 					_this.tagSearchView.showObjects(newInstances);
-				})
-			.fail(cr.syncFail);
+				},
+				cr.syncFail);
 		
 		$(panel2Div.node()).on('resize.cr', function()
 		{

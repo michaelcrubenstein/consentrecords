@@ -61,7 +61,7 @@ var Signup = (function () {
 				var initialData = {"Birthday": [{text: birthDay}],
 								   "_public access":
 								   		[{path: "_term[_name=_privilege]enumerator[_name=_find]"}],
-				                   "More Experiences": 
+				                   "Path": 
 				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
 				                   		]};
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
