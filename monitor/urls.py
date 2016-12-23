@@ -1,8 +1,7 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import url
 
 from monitor import views
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^log/', views.log, name='log'),
-)
+]

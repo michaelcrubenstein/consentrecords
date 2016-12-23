@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="https://www.facebook.com/2008/fbml">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor">
+
+	{% if fbURL %}
+    <meta property="og:url" content="{{fbURL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{fbTitle}}">
+    <meta property="og:description" content="{{fbDescription}}">
+    {% endif %}
+
+    <title>PathAdvisor</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- Custom styles for this page -->
+    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/searchpaths.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/welcomePanel.css" %}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
+
+    <style>
+    	.consent-record {
+    		margin-top: 3px;
+    	}
+    	.consent-form-title {
+    	}
+    	.consent-record-accept-button {
+    	}
+    	.button-section {
+    		float: bottom;
+    	}
+    	.level-2-panel {
+    		top: 0;
+    		z-index: 2;
+    	}
+    	.level-3-panel {
+    		top: 0;
+    		z-index: 3;
+    	}
+    	.level-4-panel {
+    		top: 0;
+    		z-index: 4;
+    	}
+    	.centered-right-glyph {
+			position: absolute;
+			top: 50%;
+			-moz-transform: translateY(-50%);
+			-webkit-transform: translateY(-50%);
+			transform: translateY(-50%);
+			float: right;
+			right: 12px;
+	   	}
+	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
+			width: auto;
+			float: right;
+			margin-right: 24px;
+			text-align: right;
+	   	}
+    	.option-label {
+    		margin-top: 15px;
+    		margin-left: 15px;
+    	}
+    	.option-item {
+    		margin-top: 15px;
+    		margin-left: 45px;
+    	}
+    	panel.session {
+    		background: white;
+    	}
+    	panel.session header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
+    	panel.session .organization {
+    		margin-left: 12px;
+    		padding-bottom: 5px;
+    		border-bottom: 1px solid #eee;
+    	}
+    	panel.session .organization>label {
+    		font-weight: normal;
+    	}
+    	panel.session .address-line {
+    		margin-left: 0px;
+    		font-size: smaller;
+    	}
+    	panel.session .more-info {
+			overflow: hidden;
+			width: auto;
+			display: block;
+    		font-size: smaller;
+    		padding: 6px 12px;
+    	}
+    </style>
+	</head>
+	
+  	<body class="site-body">
+		<!-- Following is required so that the csrf token cookie is included in the document cookies. -->
+  		{% csrf_token %}
+  	
+		{% if facebookIntegration %}
+  		<div id="fb-root"></div>
+		<script>
+		  window.fbAsyncInit = function() {
+			FB.init({
+			  appId      : '1503871976607590',
+			  status     : true,
+			  cookie     : true,
+			  xfbml      : true,
+			  version    : 'v2.5'
+			});
+		  };
+
+		  (function(d, s, id){
+			 var js, fjs = d.getElementsByTagName(s)[0];
+			 if (d.getElementById(id)) {return;}
+			 js = d.createElement(s); js.id = id;
+			 js.src = "//connect.facebook.net/en_US/sdk.js";
+			 fjs.parentNode.insertBefore(js, fjs);
+		   }(document, 'script', 'facebook-jssdk'));
+		</script>
+		{% endif %}
+		
+  		<panel id="id_user_home_panel" class="initial" >
+		</panel>
+		
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+  	</body>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
+	<script src="{% static "datejs/time.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/searchPaths.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/comparePathsPanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/welcomeOrganization.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/welcomePanel.js" %}"></script>
+
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+		staticPath = '{% static "b/" %}';
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
+		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}'
+		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}'
+		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}'
+		
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
+				}
+			}
+		});
+
+		window.onbeforeunload = function(event) {
+			event = event || window.event;
+			
+			if (event)
+				event.returnValue = "Leaving this page will leave the PathAdvisor web application.";
+			
+			// For Safari
+			return "Leaving this page will leave the PathAdvisor web application.";
+		};
+
+		/* The global object used to identify the current user. */
+		var userFirstName = null;
+		var userLastName = null;
+
+		function checkSignin(done)
+		{
+			if (cr.signedinUser.getValueID())
+				done();
+			else
+			{
+				if (prepareClick('checkSignin'))
+				{
+					var onSignin = function(eventObject)
+					{
+						$(this).off("signinCanceled.cr", null, onSigninCanceled);
+						done();
+					};
+				
+					var onSigninCanceled = function(eventObject)
+					{
+						$(this).off("signin.cr", null, onSignin);
+						var firstPanel = new WelcomePanel();
+						firstPanel.showLeft();
+					}
+				
+					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+				
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
+				}
+			}
+		}
+		
+		function decodeEntities(encodedString) {
+			var textArea = document.createElement('textarea');
+			textArea.innerHTML = encodedString;
+			return textArea.value;
+		}
+
+		function addToPathway(pathwayPanel)
+		{
+			var pathway = pathwayPanel.pathtree;
+			{% if organization %}var organizationName = decodeEntities("{{organization}}");
+			{% else %}var organizationName = null;
+			{% endif %}
+			{% if site %}var siteName = decodeEntities("{{site}}");
+			{% else %}var siteName = null;
+			{% endif %}
+			{% if offering %}var offeringName = decodeEntities("{{offering}}");
+			{% else %}var offeringName = null;
+			{% endif %}
+			{% if service %}var serviceName = decodeEntities("{{service}}");
+			{% else %}var serviceName = null;
+			{% endif %}
+	
+			var experience = pathwayPanel.createExperience();
+			var done = function(services)
+			{
+				var panel;
+				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
+				{
+					crp.promise({path: "#"+offeringName, fields: ["parents", "type"]}) 
+						.done(function(offerings)
+							{
+								if (offerings.length > 0)
+								{
+									if (offerings[0].typeName == "Offering")
+									{
+										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified offering does not appear to be an offering.");
+								}
+								else
+									cr.asyncFail("The specified offering does not exist or you do not have permission to view it.");
+							})
+						.fail(cr.asyncFail);
+				}
+				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
+				{
+					crp.promise({path: "#"+siteName, fields: ["parents", "type"]})
+						.done(function(sites)
+							{
+								if (sites.length > 0)
+								{
+									if (sites[0].typeName == "Site")
+									{
+										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified site does not appear to be a site.");
+								}
+								else
+								{
+									cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+								}
+							})
+						.fail(cr.asyncFail);
+				}
+				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
+				{
+					crp.promise({path: "#"+organizationName, fields: ["parents", "type"]})
+						.done(function(organizations)
+							{
+								if (organizations.length > 0)
+								{
+									if (organizations[0].typeName == "Organization")
+									{
+										experience.createFromData({instance: organizations[0] },
+											siteName && {text : siteName},
+											offeringName && {text : offeringName},
+											services,
+											pathwayPanel.node(),
+											function(panelNode) {
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified organization does not appear to be an organization.");
+								}
+								else
+									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
+							})
+					.fail(cr.asyncFail);
+				}
+				else if (organizationName || siteName || offeringName)
+				{
+					experience.createFromData({text: organizationName },
+						siteName && {text : siteName},
+						offeringName && {text : offeringName},
+						services,
+						pathwayPanel.node(),
+						function(panelNode) {
+							panelNode.sitePanel.showUp();
+						});
+				}
+				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+				{
+					experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
+						{
+							panelNode.sitePanel.showUp();
+						});
+				}
+				else if (serviceName)
+				{
+					var service = experience.addService({text: serviceName });
+					experience.initPreviousDateRange();
+
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
+				}
+				else
+				{
+					experience.initPreviousDateRange();
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
+				}
+			}
+			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
+			{
+				crp.promise({path: "#"+serviceName, fields: ["parents", "type"]})
+					.done(function(services)
+						{
+							if (services.length == 0)
+								cr.asyncFail("The specified tag does not exist or you do not have permission to view it.");
+							else if (services[0].typeName != "Service")
+								cr.asyncFail("The specified tag does not appear to be a tag.");
+							else
+								done([{instance: services[0]}]);
+						})
+					.fail(cr.asyncFail);
+			}
+			else if (serviceName)
+				done([{text: serviceName}]);
+			else
+				done([]);
+		}
+		
+		function loadPathlinesPanel(previousPanel)
+		{
+			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
+			firstPanel.setupSearchPanel();
+			firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true);
+			firstPanel.showUp();
+			return firstPanel;
+		}
+		
+		$(document).ready (function(e) {						
+			var previousPanel = $("#id_user_home_panel")[0];
+			var firstPanel;
+			
+			/* handleState is an asynchronous function called when the setup is ready to process it. */
+			/* needsSignin is a flag that determines if handling the state requires signin. */
+			var handleState = null;
+			var needsSignin = false;
+			{% if state %}
+				var stateString = "{{state}}"
+				if (stateString.startsWith("findNewExperience"))
+				{
+					stateString = stateString.substring("findNewExperience".length);
+					var serviceValueID = null;
+					var offeringString = null;
+					if (stateString.length > 0)
+					{
+						serviceValueID = stateString.substring(0, 32);
+						stateString = stateString.substring(32);
+						offeringString = stateString.substring(0, 32);
+						stateString = stateString.substring(32);
+					}
+					handleState = function()
+					{
+						new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
+							.showLeft();
+					}
+					stateString = "";	/* So it only happens once. */
+				}
+				else if (stateString.startsWith("pathway"))
+				{
+					stateString = stateString.substring("pathway".length);
+					if (stateString.length > 0)
+					{
+						var pathwayID = stateString;
+						handleState = function()
+						{
+							crp.promise({path: "#"+pathwayID})
+								.done(function(users)
+									{
+										if (users.length > 0)
+										{
+											var done;
+											var panel;
+											if (cr.signedinUser.getValueID())
+											{
+												panel = new PathlinesPanel(users[0], true);
+											}	
+											else
+											{
+												done = function()
+													{
+														firstPanel = new WelcomePanel();
+														firstPanel.showNow();
+													};
+												panel = new PathlinesPanel(users[0], done);
+											}
+											panel.pathtree.setUser(users[0].getValue("Path"), true);
+											panel.showLeft();
+										}
+										else
+										{
+											if (!cr.signedinUser.getValueID())
+											{
+												firstPanel = new WelcomePanel();
+												firstPanel.showNow();
+											}
+											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
+										}
+									})
+								.fail(cr.asyncFail);
+						}
+					}
+					stateString = "";
+				}
+				else if (stateString.startsWith("addExperience"))
+				{
+					// Test case: respond to an sent email to add experience.
+					stateString = stateString.substring("addExperience".length);
+					if (stateString.length > 0)
+					{
+						var experienceID = stateString;
+						var handleState = function(pathwayPanel)
+						{
+							if (!pathwayPanel)
+							{
+								if (!firstPanel)
+								{
+									firstPanel = loadPathlinesPanel(previousPanel);
+								}
+								pathwayPanel = firstPanel;
+							}
+							var pathway = pathwayPanel.pathtree;
+							var experiencesPath = cr.signedinUser.getValue("Path");
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
+								.then(function(experiences)
+								{
+									if (experiences.length > 0)
+									{
+										cr.signedinUser.promiseCellsFromCache()
+											.then(function()
+												{
+													if (experiences[0].typeName == "More Experience")
+													{
+														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
+														new NewExperiencePanel(experience, experience.getPhase())
+															.showUp();
+													}
+													else
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+												},
+												cr.asyncFail);
+									}
+									else
+									{
+										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
+									}
+								},
+								cr.asyncFail);
+						}
+					}
+					needsSignin = true;
+					stateString = "";
+				}
+				else if (stateString.startsWith("addToPathway"))
+				{
+					/* Add an experience specified in the URL to this pathway. */
+					var handleState = function(pathwayPanel)
+					{
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
+								if (!pathwayPanel)
+								{
+									if (!firstPanel)
+									{
+										firstPanel = loadPathlinesPanel(previousPanel);
+									}
+									pathwayPanel = firstPanel;
+								}
+								addToPathway(pathwayPanel);
+							},
+							cr.asyncFail);
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("accept"))
+				{
+					/* Accept the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+
+						function clearAccessRequests(newValue)
+						{
+							var cell = cr.signedinUser.getCell("_access request");
+							for (var i = 0; i < cell.data.length; ++i)
+							{
+								var d = cell.data[i];
+								if (d.getValueID() == newValue.getValueID())
+									d.triggerDeleteValue();
+							}
+						}
+						
+						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
+							{
+								// Remove any access request with this name.
+								if (newValue.typeName == '_access record')
+								{
+									newValue.checkCells(["typeName"], function()
+										{
+											newValue = newValue.getCell("{{cell}}").data[0];
+											clearAccessRequests(newValue);
+											bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+										},
+										asyncFailFunction);
+								}
+								else
+								{
+									clearAccessRequests(newValue);
+									bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+								}
+							}, asyncFailFunction);
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("ignore"))
+				{
+					/* Ignore the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+						var cell = cr.signedinUser.getCell("_access request");
+						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						if (v)
+						{
+							v.deleteValue(function()
+								{
+									bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
+								},
+								asyncFailFunction);
+						}
+						else
+							bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("settings/"))
+				{
+					/* Ignore the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+						
+						try
+						{
+							new Settings(cr.signedinUser, pathwayPanel.node())
+								.showUp();
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("signup/"))
+				{
+					stateString = stateString.substring("signup/".length);
+					
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						signUp.showUp();
+					}
+					needsSignin = false;
+				}
+				else if (stateString.startsWith("me"))
+				{
+					var handleState = function()
+					{
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
+								if (!firstPanel)
+								{
+									firstPanel = loadPathlinesPanel(previousPanel);
+								}
+							},
+							cr.asyncFail);
+					}
+					needsSignin = true;
+				}
+			{% endif %}
+
+			{% if userID %}
+			cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+			{% endif %}
+		
+			/* Initialize all of the objects that are dependent on whether or not the user is
+				signed in.
+			 */
+			if (!cr.signedinUser.getValueID())
+			{
+				$(cr.signedinUser).trigger("signout.cr");
+			}
+			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
+			if (cr.signedinUser.getValueID())
+			{
+				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+					{
+						firstPanel = new PathlinesPanel(cr.signedinUser, false);
+						firstPanel.setupSearchPanel();
+						firstPanel.showNow();
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+						.then(function()
+							{
+								if (handleState)
+									handleState();
+								else
+									firstPanel.checkShowIdeas();
+							});
+					});
+			}
+			else if (!needsSignin)
+			{
+				if (handleState)
+					handleState();
+				else
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+				}
+			}
+			else
+			{
+				firstPanel = null;
+				checkSignin(handleState);
+			}
+		});
+		
+		function getFilter(node)
+		{
+			return function()
+			{
+				var val = this.value.toLocaleLowerCase();
+				if (val.length == 0)
+				{
+					/* Show all of the items. */
+					d3.select(node).selectAll("div")
+						.style("display", null);
+				}
+				else
+				{
+					/* Show the items whose description is this.value */
+					d3.select(node).selectAll("div")
+						.style("display", function(d)
+							{
+								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+									return null;
+								else
+									return "none";
+							});
+				}
+			}
+		}
+		
+		function sign_out() {
+			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
+			cr.submitSignout()
+				.then(function()
+					{
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
+						var sitePanels = $("panel.site-panel");
+						var panel = new WelcomePanel();
+						panel.showNow();
+						sitePanels.trigger("hiding.cr");
+						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+							function() {
+								sitePanels.remove();
+								closealert();
+							});
+						unblockClick();
+					},
+					cr.syncFail);
+		}
+		
+		function show_consent_records(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				var divs = d3.select(containerDiv).selectAll('section')
+					.data(newInstances)
+					.enter()
+					.append('section').classed("consent-record cell", true);
+				
+				divs.append('div').classed("consent-record-accept-button right-label right-fixed-width-div right-label site-active-text", true)
+					.text("I Accept");
+				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
+					.text(function(d) { 
+						return d.cells[0].data[0].getDescription();
+					});
+			}
+			
+			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
+		}
+		
+		function cells_get_cell_by_name(cells, name)
+		{
+			for (var i = 0; i < cells.length; ++i)
+			{
+				var cell = cells[i];
+				if (cell.field.name == name)
+					return cell;
+			}
+			return undefined;
+		}
+		
+		function setMetaProperties(session, targetHRef)
+		{
+			var headDiv = d3.select("head");
+			headDiv.selectAll("meta").each(function()
+			{
+				var metaObj = d3.select(this);
+				if (metaObj.attr("property") &&
+					metaObj.attr("property").startsWith("og:"))
+					metaObj.remove();
+			});
+			var offering = session.getValue("Offering");
+			var organization = session.getValue("Organization");
+			var a = [{property: "og:url", content: targetHRef},
+					 {property: "og:type", content: "website" },
+					 {property: "og:title", content: offering.getDescription()},
+					 {property: "og:description", content: session.getDescription() + "\n" + organization.getDescription()}];
+			for (var i = 0; i < a.length; i++)
+			{
+				if (a[i].content)
+					headDiv.append("meta")
+						.attr("property", a[i].property)
+						.attr("content", a[i].content);
+			}
+		}
+		
+		function appendFacebookButton(shareDiv, service, session)
+		{
+			var targetHRef = window.location.origin+"/find/"+service.instanceID+"/"+session.instanceID;
+
+			setMetaProperties(session, targetHRef);
+			var fbDiv = shareDiv.div.append("div")
+				.classed("fb-share-button", true)
+				.attr("data-href", targetHRef)
+				.attr("data-layout", "button_count");
+			var fbImage = fbDiv.append("img")
+				.attr("src", "{% static "b/consentrecords/png/fb.png" %}")
+				.style("height", "22px")
+				.style("weight", "22px");
+			{% if facebookIntegration %}
+			fbDiv.on("click", function() {
+				FB.ui({
+					  method     : 'share',
+					  href       : targetHRef
+					  }, function(response){});
+				d3.event.preventDefault();
+			});
+			{% endif %}
+		}
+		
+		function compareSessions(a, b)
+		{
+			var aDate = a.getDatum("Start");
+			var bDate = b.getDatum("Start");
+			if (aDate)
+			{
+				if (bDate)
+				{
+					result = aDate.localeCompare(bDate);
+					if (result == 0)
+						return a.getDescription().localeCompare(b.getDescription());
+					else
+						return result;
+				}
+				else
+					return -1;
+			}
+			else
+			{
+				if (bDate)
+					return 1;
+				else
+					return a.getDescription().localeCompare(b.getDescription());
+			}
+		}
+		
+		function show_plans(user, container) {
+			var successFunction = function(sessions)
+			{
+				var containerPanel = d3.select(container);
+				containerPanel.selectAll('section').remove();
+				containerPanel.selectAll('p').remove();
+				
+				if (sessions.length > 0)
+				{
+					$(sessions).each(function() { this.calculateDescription(); });
+					sessions.sort(compareSessions);
+				
+					var section = containerPanel.append("section")
+						.classed("cell", true);
+					var divs = section.selectAll("li")
+						.data(sessions)
+						.enter()
+						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
+	
+					var buttons = divs.append("button").classed("btn row-button", true)
+						.on("click", function(session)
+						{
+							if (prepareClick('click', 'session ' + session.getDescription()))
+							{
+								showClickFeedback(this);
+
+								var sitePanel = showSessionDetails(user, session, null, $(container).parents("panel")[0]);
+			
+								sitePanel.showLeft().then(unblockClick);
+							}
+						});
+	
+					appendSessionDescriptions(buttons);
+				}
+				else
+				{
+					containerPanel.append("p")
+						.append("p")
+						.text('Sorry, there are no experiences for which you are enrolled.');
+				}
+			}
+			
+			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
+		}
+		
+		function validateEmail(email) 
+		{
+			var re = /\S+@\S+\.\S\S+/;
+			return re.test(email);
+		}
+		
+	</script>
+		
+</html>
+

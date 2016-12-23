@@ -17,7 +17,7 @@
     <title>PathAdvisor - {{header}}</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
@@ -46,17 +46,14 @@
 	</panel>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
-	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
-	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
-<!-- 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
- -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
-	<script src="{% static "d3/d3.v3.min.js" %}"></script>
-	<script src="{% static "datejs/date.js" %}"></script>
-	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
@@ -121,11 +118,11 @@
 			}
 			function showFunction(panelDiv)
 			{
-				showPanelNow(panelDiv);
+				panelDiv.sitePanel.showNow();
 			}
-			cr.selectAll({path: "{{path}}", 
-				done: getViewRootObjectsFunction(cell, containerPanel, headerText, sortByDescription, showFunction), 
-				fail: asyncFailFunction});
+			cr.selectAll({path: "{{path}}"})
+				.then(getViewRootObjectsFunction(cell, headerText, sortByDescription, showFunction), 
+					  cr.asyncFail);
 		});
 	</script>
 

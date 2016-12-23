@@ -20,16 +20,18 @@
     <title>PathAdvisor - Organization</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
-	<link href="{% static "font-awesome/css/font-awesome.min.css" %}" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 	
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/showPathways.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showSharing.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/showFollowing.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/signup.css" %}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
@@ -67,8 +69,8 @@
     		top: 0;
     		z-index: 4;
     	}
-    	.background-gradient-panel > nav {
-    		opacity: 0.8;
+    	panel#id_forgot_password_panel {
+    		background: white;
     	}
     	.username-label {
     		padding-left: 15px;
@@ -88,14 +90,6 @@
 			margin-right: 24px;
 			text-align: right;
 	   	}
-	   	.background-gradient-panel .row-button {
-	   		position: relative;
-    		background: white;
-    		opacity: 0.6;
-	   	}
-		.background-gradient-panel .row-button:hover {
-			opacity: 0.8;
-		}
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -162,13 +156,11 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial background-gradient-panel" >
+  		<panel id="id_user_home_panel" class="initial" >
 			<nav role="navigation">
 				<div>
-					<div class="pull-right">
-						<div class="sign-in-button site-navbar-link site-active-text">
-							<span id="sign-in-span">Sign&nbsp;In</span>
-						</div>
+					<div class="right-link pull-right site-navbar-link site-active-text default-link sign-in-button">
+						<span id="sign-in-span">Sign&nbsp;In</span>
 					</div>
 				</div>
 			</nav>
@@ -180,145 +172,31 @@
 			</section>
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel reveal background-gradient-panel">
-		  <form class="form-simple form-signin">
-			<div class="site-title">Sign In to PathAdvisor</div>
-			<div class="alert-container"></div>
-			<label for="id_username" class="sr-only">Email address</label>
-			<input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
-			<label for="id_password" class="sr-only">Password</label>
-			<input type="password" id="id_password" name="password" class="form-control" placeholder="Password" required>
-			<div class="checkbox">
-			  <label>
-				<input id="id_rememberme" type="checkbox" value="remember-me"> Remember me
-			  </label>
-			</div>
-			<div class="site-trio-container">
-				<span class="signin-cancel-button site-trio-clipped site-active-text">Cancel</span>
-				<div class="site-trio-fill"></div>
-				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
-			</div>
-		  </form>
-	  
-		  <hr />
-
-		  <div class="div-create-new-account">
-			Don't have an account? <a id="id_signup_link" class="site-active-text">Create one now.</a>
-		  </div>
-		  <div class="div-forgot-password">
-			Forgot your password? <a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
-		  </div>
-		</panel> <!-- /container -->
-		
-		<panel id="id_forgot_password_panel" class="level-2-panel reveal background-gradient-panel">
-			<form class="form-simple">
-				<div class="site-title">Forgot your Password?</div>
-				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
-
-				<div class="row">
-					<div class="alert-container col-xs-12"></div>
-				</div>
-
-			  <div class="row">
-					<style>
-						.feedback-control {
-							width: calc(100% - 30px);
-						}
-					</style>
-					<div class="col-xs-12">
-						<div id="id_email_group" class="form-group has-feedback">
-							<label for="id_email"  class="control-label sr-only">Email Address</label>
-							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
-							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
-						</div>
-					</div> 
-			  </div>
-				<div class="form-group site-trio-container">
-					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
-					<div class="site-trio-fill"></div>
-					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
-				</div>
-				<div class="row">
-					<div id="id_alert_success" class="col-xs-12 div-success"></div>
-				</div>
-			</form>
-		</panel>
-
-	    <panel id="id_your_plans_panel" class="level-2-panel reveal list">
-			<nav role="navigation">
-				<div>
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Plans</span></div>
-					</div>
-				</div>
-			</nav>
-			<div class="alert-container"></div>
-			<div class="body">
-				<div>
-					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
-						<div id="id_searchArea" class="searchbar">
-						</div>
-						<div id="id_plans">
-						</div>
-					</div>
-				</div>
-			</div>
-	    </panel>
-	    <panel id="id_consent_forms_panel" class="level-2-panel reveal list">
-			<nav role="navigation">
-				<div>
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>Consent Forms</span></div>
-					</div>
-				</div>
-			</nav>
-			<div class="alert-container"></div>
-			<div class="body">
-				<div>
-					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
-						<div id="id_searchArea" class="searchbar">
-						</div>
-						<div id="id_openConsentForms">
-						</div>
-					</div>
-				</div>
-			</div>
-	    </panel>
-
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
   	</body>
 
-	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
-	<script src="{% static "jquery/js/spin.min.js" %}"></script>
-	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
-	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
-	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
-	<script src="{% static "d3/d3.v3.min.js" %}"></script>
-	<script src="{% static "datejs/date.js" %}"></script>
-	<script src="{% static "datejs/time.js" %}"></script>
-	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
-	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 	<script src="{% static "consentrecords/js/getDataChunker.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}"></script>
 	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
-	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
@@ -421,53 +299,28 @@
 			{
 				if (cr.signedinUser.getValueID())
 				{
-					var successFunction = function()
-					{
-						cr.signedinUser.clearValue();
-						$(cr.signedinUser).trigger("signout.cr");
-						unblockClick();
-					};
-					
-					sign_out(successFunction, syncFailFunction);
+					sign_out(function()
+						{
+							cr.signedinUser.clearValue();
+							$(cr.signedinUser).trigger("signout.cr");
+							unblockClick();
+						}, 
+						cr.syncFail);
 				}
 				else
 				{
-					showFixedPanel($(this).parents("panel")[0], "#id_sign_in_panel");
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
 				}
 			}
 			e.preventDefault();
 		});
 
-		/* Show a pre-defined panel associated with this button. */
-		function showPanel()
-		{
-			var panelID = d3.select(this).attr("panelID");
-			var panelDiv = d3.select("#" + panelID);
-			if (prepareClick('click show panel button', panelID))
-			{
-				showClickFeedback(this);
-				showPanelLeft(panelDiv.node(), unblockClick);
-			}
-		}
-		
-		/* Hide the currently displaying panel with no further action. */		
-		function hidePanel()
-		{
-			var sitePanelNode = $(this).parents("panel")[0];
-			if (prepareClick('click', 'hide panel button'))
-			{
-				showClickFeedback(this);
-				hidePanelRight(sitePanelNode, false);
-			}
-		}
-		
-		/* Initialize the buttons that show a pre-defined panel. */
-		$(".show-panel-button").click(showPanel);
-		
-		/* Initialize the buttons that hide the currently displaying panel with no further action. */
-		$(".done-button").click(hidePanel);
-		
-		function checkSignin(panel, done, message)
+		function checkSignin(previousPanel, done, message)
 		{
 			if (prepareClick('click', message))
 			{
@@ -488,239 +341,19 @@
 						$(this).off("signin.cr", null, onSignin);
 					}
 					
-					$(cr.signedinUser).one("signin.cr", null, panel, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, panel, onSigninCanceled);
+					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
 					
-					showFixedPanel(panel, "#id_sign_in_panel");
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
 				}
 			}
 		}
 		
-		$(document).ready (function(e) {
-			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
-			{
-				show_plans("#id_plans");
-			});
-			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
-				{
-					show_consent_records("#id_openConsentForms");
-				});	
-			
-			var signInSuccess = function(userData)
-			{
-				cr.signedinUser.updateFromChangeData(userData);
-				cr.signedinUser.checkCells(["_system access"], function()
-					{
-						hidePanelRight($("#id_sign_in_panel")[0], false,
-							function()
-							{
-								$(cr.signedinUser).trigger("signin.cr");
-							});
-						
-					},
-					syncFailFunction);
-			}
-				
-			/* Items for the sign-in panel. */
-			$("#id_sign_in_panel .submit-button").click(function(e) {
-				if (prepareClick('click', 'Signin Sign in'))
-				{
-					signIn.submit(signInSuccess, syncFailFunction);
-				}
-				
-			   //stop form submission
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel .signin-cancel-button").click(function(e) {
-				if (prepareClick('click', 'Signin Cancel'))
-				{
-					showClickFeedback(this);
-					hidePanelRight($("#id_sign_in_panel")[0], false,
-						function()
-						{
-							$(cr.signedinUser).trigger("signinCanceled.cr");
-						});
-				}
-				
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
-				if (e.which == 13)
-				{
-					if (prepareClick('return key', 'Signin sign in'))
-					{
-						signIn.submit(signInSuccess, syncFailFunction);
-					}
-					e.preventDefault();
-				}
-			});
-	
-			$("#id_sign_in_panel input[type='text']").bind("keyup input paste", signIn.checkenabled);
-			$("#id_sign_in_panel input[type='password']").bind("keyup input paste", signIn.checkenabled);
-
-			$("#id_sign_in_panel").on("revealing.cr", function()
-			{
-				$("#id_sign_in_panel #id_username").val($.cookie("email"));
-				$("#id_sign_in_panel #id_password").val("");
-				if ($("#id_sign_in_panel #id_username").val() !== "")
-				{
-					$("#id_sign_in_panel #id_rememberme").prop("checked", true);
-					$("#id_sign_in_panel #id_password").focus();
-				}
-				else
-					$("#id_sign_in_panel #id_username").focus();
-				
-				signIn.checkenabled();
-			});	
-			
-			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepareClick('click', 'Signin sign up'))
-				{
-					var signUp = new Signup($(this).parents("panel")[0]);
-				}
-				e.preventDefault();
-			});
-
-			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
-				if (prepareClick('click', 'Signin forgot password'))
-				{
-					showFixedPanel($(this).parents("panel")[0], "#id_forgot_password_panel");
-				}
-				e.preventDefault();
-			});
-
-			$("#id_forgot_password_panel .submit-button").click(function(e) {
-				if (forgotPassword.canSubmit())
-				{
-					if (prepareClick('click', 'forgot password submit'))
-					{
-						var successFunction = function()
-						{
-							$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-							hidePanelRight($("#id_forgot_password_panel")[0], false)
-						}
-						forgotPassword.submit(successFunction, syncFailFunction);
-					}
-				}
-			   //stop form submission
-			   e.preventDefault();
-			});
-
-			$("#id_forgot_password_panel #id_email").bind("keyup input paste", forgotPassword.checkenabled);
-			$("#id_forgot_password_panel").on("revealing.cr", function()
-			{
-				$("#id_forgot_password_panel #id_email").val("");
-				$("#id_forgot_password_panel #id_email").focus();
-				forgotPassword.checkenabled();
-			});
-		});
-		
-		signIn = {
-			canSubmit: function() {
-			return $("#id_sign_in_panel #id_password").val() !== "" &&
-				$("#id_sign_in_panel #id_username").val() !== "";
-			},
-		
-			checkenabled: function() {			
-				if (!signIn.canSubmit())
-				{
-					$("#id_sign_in_panel .submit-button").addClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").removeClass("site-active-text");
-				}
-				else
-				{
-					$("#id_sign_in_panel .submit-button").removeClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").addClass("site-active-text");
-				}
-			},
-		
-			submit: function(successFunction, failFunction) {
-				if (!signIn.canSubmit())
-					return;
-				
-				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
-				
-				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
-											  username : $("#id_username").val(),
-											  password : $("#id_password").val(),
-											  timezoneoffset : new Date().getTimezoneOffset() }, 
-					function(json){
-				if (json.success) {
-					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
-						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
-					else
-						$.removeCookie("email");
-						
-					$("#id_sign_in_panel #id_username").val("")
-					$("#id_sign_in_panel #id_password").val("")
-						
-					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
-					{
-						successFunction(json.user);
-					}
-				}
-				else
-					failFunction(json.error);
-			  })
-				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
-			}
-		};
-
-		forgotPassword = {
-			canSubmit: function() {
-				var testusername = $("#id_email").val();
-				return validateEmail(testusername);
-			},
-		
-			checkenabled: function() {			
-				if (!forgotPassword.canSubmit())
-				{
-					$(".submit-button").addClass("site-disabled-text")
-									   .removeClass("site-active-text")
-									   .prop( "disabled", true );
-					$( "#id_email_group" ).removeClass( "has-success");
-					$( "#id_emailOK" ).removeClass( "glyphicon-ok" );
-				}
-				else
-				{
-					$(".submit-button").removeClass("site-disabled-text")
-									   .addClass("site-active-text")
-									   .prop( "disabled", false );
-					$( "#id_email_group" ).addClass( "has-success");
-					$( "#id_emailOK" ).addClass( "glyphicon-ok" );
-				}
-			},
-			
-			submit: function(successFunction, failFunction) {
-				bootstrap_alert.success('Sending email (this may take a few minutes)...', '#id_alert_success');
-				
-				$.post("{% url 'resetPassword' %}", 
-					{ "email": $("#id_email").val()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						closealert();
-						if (json.success) {
-							bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
-							successFunction();
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown) {
-				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				  });
-			},
-			
-		};
-				
 		function getFilter(node)
 		{
 			return function()
@@ -753,12 +386,13 @@
 			var panel = d3.select(newNode);
 			panel.style("z-index", zIndex);
 			
-			showPanelLeft(panel.node(), unblockClick);
+			panel.showLeft().then(unblockClick);
 		}
 			
 		function sign_out(successFunction, failFunction) {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			cr.submitSignout(successFunction, failFunction);
+			cr.submitSignout()
+				.then(successFunction, failFunction);
 		}
 		
 		function show_consent_records(containerDiv) {
@@ -870,55 +504,6 @@
 			}
 		}
 		
-		function show_plans(container) {
-			var successFunction = function(sessions)
-			{
-				var containerPanel = d3.select(container);
-				containerPanel.selectAll('section').remove();
-				containerPanel.selectAll('p').remove();
-				
-				if (sessions.length > 0)
-				{
-					$(sessions).each(function() { this.calculateDescription(); });
-					sessions.sort(compareSessions);
-				
-					var section = containerPanel.append("section")
-						.classed("cell", true);
-					var divs = section.selectAll("li")
-						.data(sessions)
-						.enter()
-						.append("li").classed("consent-record", true);	// So that each button appears on its own row.
-	
-					var buttons = divs.append("button").classed("btn row-button", true)
-						.on("click", function(session)
-						{
-							if (prepareClick('click', 'session ' + session.getDescription()))
-							{
-								showClickFeedback(this);
-
-								var sitePanel = showSessionDetails(session, null, $(container).parents("panel")[0]);
-			
-								showPanelLeft(sitePanel.node(), unblockClick);
-							}
-						});
-	
-					appendSessionDescriptions(buttons);
-				}
-				else
-				{
-					containerPanel.append("p")
-						.append("p")
-						.text('Sorry, there are no experiences for which you are enrolled.');
-				}
-			}
-			
-			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
-			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
-		}
-		
 		function hide_organizations()
 		{
 			var orgSection = d3.select(this);
@@ -964,7 +549,8 @@
 			}
 			
 			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
-			cr.selectAll({path: path, done: successFunction, fail: asyncFailFunction});
+			cr.selectAll({path: path})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		/* Displays a panel in which the specified object's contents appear.
@@ -985,13 +571,13 @@
 					b.on("click", clickFunction);
 				}
 				
-				var sitePanel = new SitePanel(containerPanel, 
-											objectData, getViewPanelHeader(objectData), "organization background-gradient-panel");
+				var sitePanel = new SitePanel();
+				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "organization view");
 
 				var navContainer = sitePanel.appendNavContainer();
 
 				var backButton = navContainer.appendLeftButton()
-					.on("click", handleCloseRightEvent);
+					.on("click", function() { sitePanel.hideRightEvent(); });
 				backButton.append("span").text("Done");
 	
 				var panel2Div = sitePanel.appendScrollArea();
@@ -1007,7 +593,7 @@
 					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
 				});
 
-				showPanelLeft(sitePanel.node(), unblockClick);
+				sitePanel.showLeft().then(unblockClick);
 
 				var sectionObj = panel2Div.append("section")
 					.classed("row-button-group", true);
@@ -1123,12 +709,13 @@
 					return a.getDescription().localeCompare(b.getDescription());
 				});
 
-			var sitePanel = new SitePanel(previousPanelNode, parent, header, "list");
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(parent, header, "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+				.on("click", function() { sitePanel.hideRightEvent(); });
 			appendLeftChevrons(backButton).classed("site-active-text", true);
 			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
 	
@@ -1152,7 +739,7 @@
 					d3.event.preventDefault();
 				});
 
-			showPanelLeft(sitePanel.node(), unblockClick);
+			sitePanel.showLeft().then(unblockClick);
 		}
 		/*
 			Displays a panel from which the user can pick a session from
@@ -1239,12 +826,13 @@
 							{
 								inquiryCell = inquiriesInstance.getCell("_user");
 						
-								var sitePanel = new SitePanel(currentPanelNode, session, "Pick User", "list");
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Pick User", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
-									.on("click", handleCloseRightEvent);
+									.on("click", function() { sitePanel.hideRightEvent(); });
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 						
@@ -1252,7 +840,7 @@
 
 								var panel2Div = sitePanel.appendScrollArea();
 
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 						
 								panel2Div.selectAll("section").remove();
 								var sections = panel2Div.appendSections(inquiryCell.data);
@@ -1305,7 +893,8 @@
 						}
 					};
 		
-					cr.selectAll({path: "_user[_email="+email+"]", end: 50, done: selectAllSuccess, fail: syncFailFunction});
+					cr.selectAll({path: "_user[_email="+email+"]", end: 50})
+						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
 			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
@@ -1326,12 +915,13 @@
 		 */
 		function add_enrollment(organization, previousPanel)
 		{
-			var sitePanel = new SitePanel(previousPanel, organization, "Pick User", "list");
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(organization, "Pick User", "list");
 
 			var navContainer = sitePanel.appendNavContainer();
 
 			var backButton = navContainer.appendLeftButton()
-				.on("click", handleCloseRightEvent);
+				.on("click", function() { sitePanel.hideRightEvent(); });
 			backButton.append("span").text("Done");
 	
 			var centerButton = navContainer.appendTitle("Pick User");
@@ -1340,7 +930,7 @@
 
 			var panel2Div = sitePanel.appendScrollArea();
 	
-			showPanelLeft(sitePanel.node(), unblockClick);
+			sitePanel.showLeft().then(unblockClick);
 			
 			function show_users()
 			{
@@ -1400,10 +990,8 @@
 						}
 					}
 					
-					if (val.length < 3)
-						cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
-					else
-						cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+					cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+						.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
 		}
@@ -1438,19 +1026,20 @@
 								},
 								function()
 								{
+									/* Test case: Enroll a user into a session from org page. */
 									var initialData = {"_user": [{instanceID: user.getValueID()}] };
-									cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
-													  initialData,
-													  function(newData)
-													   {
-															enrollmentCell.addValue(newData);
-															bootstrap_alert.success(user.getDescription() + 
-																  " enrolled in " + 
-																  offering.getDescription() + "/" + session.getDescription(),
-																  ".alert-container");
-															successFunction();
-													   },
-													   syncFailFunction);
+									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+													  initialData))
+									 .then(function(newData)
+										   {
+												enrollmentCell.addValue(newData);
+												bootstrap_alert.success(user.getDescription() + 
+													  " enrolled in " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+												successFunction();
+										   },
+										   cr.syncFail);
 								},
 								syncFailFunction);
 						}
@@ -1461,13 +1050,14 @@
 						}
 						else
 						{
-							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID,
-								function(cells)
+							/* Test case: From a new session, add a user to the enrollment by using the Add An Enrollment button */
+							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID)
+								.then(function(cells)
 								{
 									enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
 									addUserToEnrollmentCell();
 								},
-								syncFailFunction);
+								cr.syncFail);
 						}
 					}
 				}
@@ -1488,11 +1078,12 @@
 				{
 					var experiences = experiencesInstances[0];
 					experiences.checkConfiguration(
-						function()
+						function(cells)
 						{
+							experiences.cells = cells;
 							var experienceCell = experiences.getCell("Experience");
-							cr.getConfiguration(null, experienceCell.field.ofKindID,
-								function(cells)
+							cr.getConfiguration(null, experienceCell.field.ofKindID)
+								.then(function(cells)
 								{
 									var userCell = cells_get_cell_by_name(cells, "_user");
 									check_single_field_instance(experiences, 
@@ -1505,19 +1096,25 @@
 											if (!experience.getValueID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
-											showEditObjectPanel(experience, previousPanel, revealPanelUp);
+											showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 										},
 										function()
 										{
 											var experience = experienceCell.addNewValue();
 											experience.checkConfiguration(
-												function() {
+												function(cells) {
+													experience.cells = cells;
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("_user");
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
-													showEditObjectPanel(experience, previousPanel, revealPanelUp);
+													/* Mark the experience as having its data loaded so that checking
+														its cells doesn't replace them.
+													 */
+													experience.isDataLoaded = true;
+													
+													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
 										},
@@ -1539,18 +1136,18 @@
 			}
 			path += "[" + fieldName + "=" + dataValue + "]";
 			
-			var successFunction = function(newInstances)
-			{
-				if (newInstances.length > 0)
-				{
-					existsFunction(newInstances);
-				}
-				else
-				{
-					doesntExistFunction();
-				}
-			}
-			cr.selectAll({path: path, done: successFunction, fail: failFunction} );
+			cr.selectAll({path: path})
+				.then(function(newInstances)
+					{
+						if (newInstances.length > 0)
+						{
+							existsFunction(newInstances);
+						}
+						else
+						{
+							doesntExistFunction();
+						}
+					}, failFunction);
 		}
 		
 		function show_matching_descriptions(){
@@ -1589,12 +1186,13 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						var addInquiryPanelDiv = new SitePanel(previousPanel, session, "Add Inquiry", "list");
+						var addInquiryPanelDiv = new SitePanel();
+						sitePanel.createRoot(session, "Add Inquiry", "list");
 
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
 						var backButton = navContainer.appendLeftButton()
-							.on("click", handleCloseRightEvent);
+							.on("click", function() { addInquiryPanelDiv.hideRightEvent(); });
 						backButton.append("span").text("Done");
 				
 						var centerButton = navContainer.appendTitle("Record Inquiry");
@@ -1638,23 +1236,34 @@
 														else
 														{
 															var inquiriesInstance = inquiriesInstances[0];
-															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID,
+															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID)
+																.then(
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
-												
-																	inquiryCell.addObjectValue(pickedUser,
-																						   function(newData)
-																						   {
-																								bootstrap_alert.success(pickedUser.getDescription() + 
-																									  " inquiry added to " + 
-																									  session.getDescription(),
-																									  ".alert-container");
-																								unblockClick();
-																						   },
-																						   syncFailFunction);
+																	
+																	var newValue = inquiryCell.addNewValue();
+																	cr.updateValues([{
+																			containerUUID: inquiriesInstance.getValueID(),
+																			fieldID: inquiryCell.field.nameID, 
+						   													instanceID: pickedUser.getValueID(),
+						   													description: pickedUser.getDescription()
+																		}], [newValue])
+																		.then(function()
+																		   {
+																				bootstrap_alert.success(pickedUser.getDescription() + 
+																					  " inquiry added to " + 
+																					  session.getDescription(),
+																					  ".alert-container");
+																				unblockClick();
+																		   },
+																			function(err)
+																			{
+																				newValue.triggerDeleteValue();
+																				cr.syncFail(err);
+																			});
 																},
-																syncFailFunction);
+																cr.syncFail);
 														}
 													}
 													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
@@ -1674,13 +1283,11 @@
 									}
 								}
 					
-								if (val.length < 3)
-									cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction});
-								else
-									cr.selectAll({path: '_user[_email*="'+val+'"]', end: 50, done: selectAllSuccess, fail: asyncFailFunction} );
+								cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
-						showPanelLeft(addInquiryPanelDiv.node(), unblockClick);
+						addInquiryPanelDiv.showLeft().then(unblockClick);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -1723,7 +1330,7 @@
 					else
 					{
 						var inquiries = inquiriesInstances[0];
-						showEditObjectPanel(inquiries, previousPanel, revealPanelLeft);
+						showEditObjectPanel(inquiriesCell, inquiries, previousPanel, revealPanelLeft);
 					}
 				});
 		}
@@ -1740,7 +1347,7 @@
 					else
 					{
 						var enrollmentsInstance = enrollmentsInstances[0];
-						showEditObjectPanel(enrollmentsInstance, previousPanel, revealPanelLeft);
+						showEditObjectPanel(enrollmentsCell, enrollmentsInstance, previousPanel, revealPanelLeft);
 					}
 				}
 				);
@@ -1758,14 +1365,17 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.getCellData("Enrollment", function(enrollments)
+						instance.checkCells(["Enrollment"], function()
 							{
-								var sitePanel = new SitePanel(previousPanel, session, "Record Participation", "list");
+								var enrollments = instance.getCell("Enrollment").data;
+								
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Record Participation", "list");
 
 								var navContainer = sitePanel.appendNavContainer();
 
 								var backButton = navContainer.appendLeftButton()
-									.on("click", handleCloseRightEvent);
+									.on("click", function() { sitePanel.hideRightEvent(); });
 								backButton.append("span").text("Done");
 								var centerButton = navContainer.appendTitle("Record Participation");
 						
@@ -1805,7 +1415,7 @@
 									});
 								drawInfoButtons(infoButtons);
 								
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 							},
 							syncFailFunction);
 					}
@@ -1839,7 +1449,7 @@
 					else
 					{
 						var instance = listInstances[0];
-						showEditObjectPanel(instance, currentPanelNode, revealPanelLeft);
+						showEditObjectPanel(listCell, instance, currentPanelNode, revealPanelLeft);
 					}
 				});
 		}

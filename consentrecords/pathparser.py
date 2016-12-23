@@ -23,8 +23,8 @@ def _getValueFilter(field, symbol, testValue):
             vFilter = Value.objects.filter(Q(stringValue__iexact=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__iexact=testValue))
         elif symbol == '*=':
-            vFilter = Value.objects.filter(Q(stringValue__icontains=testValue,referenceValue__isnull=True)|
-                                           Q(referenceValue__description__text__icontains=testValue))
+            vFilter = Value.objects.filter(Q(stringValue__iregex='[[:<:]]' + testValue,referenceValue__isnull=True)|
+                                           Q(referenceValue__description__text__iregex='[[:<:]]' + testValue))
         elif symbol == '<':
             vFilter = Value.objects.filter(Q(stringValue__lt=testValue,referenceValue__isnull=True)|
                                            Q(referenceValue__description__text__lt=testValue))
@@ -93,52 +93,93 @@ def _getAncestorClause(symbol, testValue):
         return _getSimpleAncestorClause(symbol, testValue)
 
 def _getReferenceValues(params, userInfo):
+#     print('_getReferenceValues: %s'%params)
+    
     if len(params) > 2 and params[1] == '>':
-        subF = _filterByReferenceValues(Instance.objects, params[2:], userInfo)
+        subF = Instance.objects.filter(_clauseByReferenceValues(params[2], _getReferenceValues(params[2:], userInfo)))
     else:
         # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
         subF = _parse([], ['*'] + params[1:], userInfo)
     return userInfo.findFilter(subF)
-    
-def _filterByReferenceValues(resultSet, params, userInfo):
-    if isinstance(params[0], list):
-        return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]),
-                                value__deleteTransaction__isnull=True,
-                                value__referenceValue__in=_getReferenceValues(params, userInfo))
-    else:
-        return resultSet.filter(value__field=terms[params[0]],
-                                value__deleteTransaction__isnull=True,
-                                value__referenceValue__in=_getReferenceValues(params, userInfo))
 
-def _filter(resultSet, params, userInfo):
+def _clauseByReferenceValues(fieldNames, referenceValues):
+    if isinstance(fieldNames, list):
+        return Q(value__field__in=map(terms.__getitem__, fieldNames),
+                 value__deleteTransaction__isnull=True,
+                 value__referenceValue__in=referenceValues)
+    else:
+        return Q(value__field=terms[fieldNames],
+                 value__deleteTransaction__isnull=True,
+                 value__referenceValue__in=referenceValues)
+
+# Filter the resultSet according to the specified params.
+# If the parameter list is a single item:
+#     If there is a list, then the object must contain a value with the specified field type.
+#     If there is a question mark, then this is a no-op.
+#     If there is a single term name, then each instance must contain a value of that term.
+# If the parameter list is three or more items and the second item is a '>',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match params[2:]. For example:
+#     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+# If the parameter list is three or more items and the second item is a '[',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match the clause in params[2] and any following clauses. For example: 
+#     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+# If the parameter list is three values, interpret the three values as a query clause and
+#     filter the resultSet on that clause.  
+def _filterClause(params, userInfo):
+#     print('_filterClause params: %s'% (params))
+    
     if len(params) == 1:
         if isinstance(params[0], list):
-            return resultSet.filter(value__field__in=map(terms.__getitem__, params[0]), 
+            return Q(value__field__in=map(terms.__getitem__, params[0]), 
                                     value__deleteTransaction__isnull=True)
         elif params[0] == '?':
-            return resultSet #degenerate case
+            return Q(value__deleteTransaction__isnull=True) #degenerate case
         else:
-            return resultSet.filter(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
+            return Q(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
     elif len(params) > 2 and params[1]=='>':
-        return _filterByReferenceValues(resultSet, params, userInfo)
+        return Q(_clauseByReferenceValues(params[0], _getReferenceValues(params, userInfo)))
+    elif len(params) > 2 and params[1]=='[':
+        subF = userInfo.findFilter(_parse([], ['*'] + params[1:3], userInfo))
+        if len(params) > 3:
+            subF = _parse(subF, params[3:], userInfo)
+        return Q(_clauseByReferenceValues(params[0], subF))
     elif len(params) == 3:
         i = None if params[0] == '?' else \
             map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
             terms[params[0]]
-        # Get a Q clause that compares either a single test value or a comma-separated list of test values
+        
+        # Return a Q clause that compares either a single test value or a comma-separated list of test values
         # according to the specified symbol to a list of fields or a single field.
         if isinstance(i, map):
-            stringText = reduce(lambda q1, q2: q1 | q2, \
+            return reduce(lambda q1, q2: q1 | q2, \
                                 map(lambda field: _getQClause(field, params[1], params[2]), i))
         else:
-            stringText = _getQClause(i, symbol=params[1], testValue=params[2])
-    
-        # Need to add distinct after the tests to prevent duplicates if there is
-        # more than one value of the instance that matches.
-        return resultSet.filter(stringText).distinct()
+            return _getQClause(i, symbol=params[1], testValue=params[2])
     else:
-        print(params)
         raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+
+# Return the filtering test based on all of the elements within a []
+# This function factors out '|' operations within the clause into simple tests.
+def _clause(params, userInfo):
+    paramClauses = []
+    paramClause = []
+    for s in params:
+        if s == '|':
+            if len(paramClause):
+                paramClauses.append(paramClause)
+                paramClause = []
+        else:
+            paramClause.append(s)
+    if len(paramClause):
+        paramClauses.append(paramClause)
+        
+    if len(paramClauses) == 1:
+        return _filterClause(paramClauses[0], userInfo)
+    else: 
+        return reduce(lambda q1, q2: q1 | q2, \
+                      map(lambda p: _filterClause(p, userInfo), paramClauses))
 
 def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
@@ -157,25 +198,26 @@ def _refineResults(resultSet, path, userInfo):
             else:
                 i = None
             if len(params) == 3:
-                f = resultSet.filter(value__field=i, value__deleteTransaction__isnull=True)
+                q = Q(value__field=i, value__deleteTransaction__isnull=True)
             elif len(params) == 5:
                 # Get a Q clause that compares either a single test value or a comma-separated list of test values
                 # according to the specified symbol.
                 stringText = _getAncestorClause(symbol=params[3], testValue=params[-1])
             
-                # Need to add distinct after the tests to prevent duplicates if there is
-                # more than one value of the instance that matches.
                 if i:
-                    f = resultSet.filter(stringText, ancestors__ancestor__value__field=i,
-                                         ancestors__ancestor__value__deleteTransaction__isnull=True).distinct()
+                    q = stringText & Q(ancestors__ancestor__value__field=i,
+                                       ancestors__ancestor__value__deleteTransaction__isnull=True)
                 else:
-                    f = resultSet.filter(stringText,
-                                         ancestors__ancestor__value__deleteTransaction__isnull=True).distinct()
+                    q = stringText & Q(ancestors__ancestor__value__deleteTransaction__isnull=True)
             else:
                 raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             return f, path[2:]
         else:
-            return _filter(resultSet, params, userInfo), path[2:]
+            q = _clause(params, userInfo)
+            
+        # Need to add distinct after the tests to prevent duplicates if there is
+        # more than one value of the instance that matches.
+        return resultSet.filter(q).distinct(), path[2:]
     elif path[0] == '>':
         i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
@@ -210,6 +252,7 @@ def _refineResults(resultSet, path, userInfo):
         else:
             raise ValueError("unrecognized function: %s" % function)
     elif path[0] == '|':
+        # 'or' case.
         return Instance.objects.filter(Q(pk__in=resultSet)|Q(pk__in=_parse([], path[1:], userInfo))), []
     elif len(path) >= 3 and path[0] == ':' and path[1] == 'not':
         if isinstance(path[2], list):

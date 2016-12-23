@@ -20,19 +20,20 @@
     <title>PathAdvisor</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
-	<link href="{% static "font-awesome/css/font-awesome.min.css" %}" rel="stylesheet">
-	
     <!-- Custom styles for this page -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/comparePathsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/searchpaths.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showFollowing.css" %}" rel="stylesheet">
-    <link href="{% static "consentrecords/css/showPathways.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/showSharing.css" %}" rel="stylesheet">
     <link href="{% static "consentrecords/css/signup.css" %}" rel="stylesheet">
+    <link href="{% static "consentrecords/css/welcomePanel.css" %}" rel="stylesheet">
     
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
@@ -48,12 +49,6 @@
     	.button-section {
     		float: bottom;
     	}
-    	panel.organization header {
-			width: 100%;
-			padding: 6px 12px;
-			text-align: left;
-			font-weight: bold;
-    	}
     	.level-2-panel {
     		top: 0;
     		z-index: 2;
@@ -65,9 +60,6 @@
     	.level-4-panel {
     		top: 0;
     		z-index: 4;
-    	}
-    	.background-gradient-panel > nav {
-    		opacity: 1.0;
     	}
     	.centered-right-glyph {
 			position: absolute;
@@ -84,14 +76,6 @@
 			margin-right: 24px;
 			text-align: right;
 	   	}
-	   	.background-gradient-panel .row-button {
-	   		position: relative;
-    		background: white;
-    		opacity: 0.6;
-	   	}
-		.background-gradient-panel .row-button:hover {
-			opacity: 0.8;
-		}
     	.option-label {
     		margin-top: 15px;
     		margin-left: 15px;
@@ -158,153 +142,55 @@
 		</script>
 		{% endif %}
 		
-  		<panel id="id_user_home_panel" class="initial background-gradient-panel" >
-			<div class="alert-container"></div>
-			<section class="button-section">
-				<section class="row-button-group">
-<!-- 
-					<button panelID = "id_your_plans_panel"
-						class="check-signin-button btn row-button site-active-text">
-						<span class="pull-left">My Plans</span>
-						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
-					</button>
-					<button panelID = "id_consent_forms_panel"
-						class="check-signin-button btn row-button site-active-text">
-						<span class="pull-left">Consent Forms</span>
-						<span class="glyphicon glyphicon-chevron-right site-chevron-right pull-right"></span>
-					</button>
- -->
-				</section>
-			</section>
+  		<panel id="id_user_home_panel" class="initial" >
 		</panel>
 		
-		<panel id="id_sign_in_panel" class="level-2-panel reveal background-gradient-panel">
-		  <form class="form-simple form-signin">
-			<div class="site-title">Sign In to PathAdvisor</div>
-			<div class="alert-container"></div>
-			<label for="id_username" class="sr-only">Email address</label>
-			<input type="email" id="id_username" maxlength="254" name="username" class="form-control" placeholder="Email address" required autofocus>
-			<label for="id_password" class="sr-only">Password</label>
-			<input type="password" id="id_password" name="password" class="form-control" placeholder="Password" required>
-			<div class="checkbox">
-			  <label>
-				<input id="id_rememberme" type="checkbox" value="remember-me"> Remember me
-			  </label>
-			</div>
-			<div class="site-trio-container">
-				<span class="signin-cancel-button site-trio-clipped site-active-text">Cancel</span>
-				<div class="site-trio-fill"></div>
-				<span class="submit-button site-trio-clipped site-active-text">Sign&nbsp;In</span>
-			</div>
-		  </form>
-	  
-		  <hr />
-
-		  <div class="div-create-new-account">
-			Don't have an account? <a id="id_signup_link" class="site-active-text">Create one now.</a>
-		  </div>
-		  <div class="div-forgot-password">
-			Forgot your password? <a id="id_forgot_password_link" class="site-active-text">Reset it now.</a>
-		  </div>
-		</panel> <!-- /container -->
-		
-		<panel id="id_forgot_password_panel" class="level-2-panel reveal background-gradient-panel">
-			<form class="form-simple">
-				<div class="site-title">Forgot your Password?</div>
-				<div class="help-block">Enter your email address to receive an email with a link you can click to reset your password.</div>
-
-				<div class="row">
-					<div class="alert-container col-xs-12"></div>
-				</div>
-
-			  <div class="row">
-					<style>
-						.feedback-control {
-							width: calc(100% - 30px);
-						}
-					</style>
-					<div class="col-xs-12">
-						<div id="id_email_group" class="form-group has-feedback">
-							<label for="id_email"  class="control-label sr-only">Email Address</label>
-							<input id="id_email" class="form-control feedback-control" type="email" placeholder="Email"/>
-							<span id="id_emailOK" class="glyphicon form-control-feedback"></span>
-						</div>
-					</div> 
-			  </div>
-				<div class="form-group site-trio-container">
-					<span class="done-button site-trio-clipped site-active-text">Cancel</span>
-					<div class="site-trio-fill"></div>
-					<span class="submit-button site-trio-clipped site-active-text">Send&nbsp;Email</span>
-				</div>
-				<div class="row">
-					<div id="id_alert_success" class="col-xs-12 div-success"></div>
-				</div>
-			</form>
-		</panel>
-
-	    <panel id="id_your_plans_panel" class="level-2-panel reveal list">
-			<nav role="navigation">
-				<div>
-					<!-- Collect the nav links, forms, and other content for toggling -->
-					<div class="pull-left">
-						<div id="id_cancelButton" class="done-button site-navbar-link site-active-text">Done</div>
-					</div>
-					<div class="site-navbar-commands">
-						<div class="site-title"><span>My Plans</span></div>
-					</div>
-				</div>
-			</nav>
-			<div class="alert-container"></div>
-			<div class="body">
-				<div>
-					<div id="id_scrollableArea" class="panel-fill vertical-scrolling">
-						<div id="id_searchArea" class="searchbar">
-						</div>
-						<div id="id_plans">
-						</div>
-					</div>
-				</div>
-			</div>
-	    </panel>
-
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
     	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
   	</body>
 
-	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
-	<script src="{% static "jquery/js/spin.min.js" %}"></script>
-	<script src="{% static "jqueryui/js/jquery-ui.min.js" %}"></script>
-	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
-	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
-	<script src="{% static "d3/d3.v3.min.js" %}"></script>
-	<script src="{% static "datejs/date.js" %}"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
 	<script src="{% static "datejs/time.js" %}"></script>
-	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
-	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 	<script src="{% static "consentrecords/js/models.js" %}"></script>
 	<script src="{% static "consentrecords/js/domainmodels.js" %}"></script>
 	<script src="{% static "consentrecords/js/views.js" %}"></script>
 	<script src="{% static "consentrecords/js/getDataChunker.js" %}"></script>
 	<script src="{% static "consentrecords/js/dateinput.js" %}"></script>
 	<script src="{% static "consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "consentrecords/js/experienceCommentsPanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/findExperience.js" %}"></script>
 	<script src="{% static "consentrecords/js/newExperiencePanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "consentrecords/js/pathGuides.js" %}"></script>
 	<script src="{% static "consentrecords/js/pathtreePanel.js" %}"></script>
+	<script src="{% static "consentrecords/js/searchPaths.js" %}"></script>
+	<script src="{% static "consentrecords/js/comparePathsPanel.js" %}"></script>
 	<script src="{% static "consentrecords/js/showFollowing.js" %}"></script>
-	<script src="{% static "consentrecords/js/showPathway.js" %}"></script>
 	<script src="{% static "consentrecords/js/showSharing.js" %}"></script>
 	<script src="{% static "consentrecords/js/signup.js" %}"></script>
 	<script src="{% static "consentrecords/js/settings.js" %}"></script>
 	<script src="{% static "consentrecords/js/updatePassword.js" %}"></script>
+	<script src="{% static "consentrecords/js/welcomeOrganization.js" %}"></script>
 	<script src="{% static "consentrecords/js/welcomePanel.js" %}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
+		staticPath = '{% static "" %}';
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
 		settingsImagePath = '{% static "consentrecords/png/settings.png" %}'
 		shareImagePath = '{% static "consentrecords/png/share.svg" %}'
+		myPathwayImagePath = '{% static "consentrecords/png/mypathway.svg" %}'
+		compareImagePath = '{% static "consentrecords/png/compare.svg" %}'
+		inquiryImagePath = '{% static "consentrecords/png/signup.svg" %}'
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection
@@ -331,49 +217,8 @@
 		/* The global object used to identify the current user. */
 		var userFirstName = null;
 		var userLastName = null;
-		{% if userID %}
-		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
-		{% endif %}
-		
-		/* Initialize all of the objects that are dependent on whether or not the user is
-			signed in.
-		 */
-		if (!cr.signedinUser.getValueID())
-		{
-			$(cr.signedinUser).trigger("signout.cr");
-		}
-		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 
-		/* Show a pre-defined panel associated with this button. */
-		function showPanel()
-		{
-			var panelID = d3.select(this).attr("panelID");
-			var panelDiv = d3.select("#" + panelID);
-			if (prepareClick('click show panel button', panelID))
-			{
-				showClickFeedback(this);
-				showPanelLeft(panelDiv.node(), unblockClick);
-			}
-		}
-		
-		/* Hide the currently displaying panel with no further action. */		
-		function hidePanel()
-		{
-			var sitePanelNode = $(this).parents("panel")[0];
-			if (prepareClick('click', 'hide panel button'))
-			{
-				showClickFeedback(this);
-				hidePanelRight(sitePanelNode, false);
-			}
-		}
-		
-		/* Initialize the buttons that show a pre-defined panel. */
-		$(".show-panel-button").click(showPanel);
-		
-		/* Initialize the buttons that hide the currently displaying panel with no further action. */
-		$(".done-button").click(hidePanel);
-		
-		function checkSignin(previousPanel, done)
+		function checkSignin(done)
 		{
 			if (cr.signedinUser.getValueID())
 				done();
@@ -390,181 +235,167 @@
 					var onSigninCanceled = function(eventObject)
 					{
 						$(this).off("signin.cr", null, onSignin);
-						var firstPanel = new WelcomePanel(previousPanel);
-						showPanelLeft(firstPanel.node());
+						var firstPanel = new WelcomePanel();
+						firstPanel.showLeft();
 					}
 				
-					$(cr.signedinUser).one("signin.cr", null, previousPanel, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, previousPanel, onSigninCanceled);
+					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
 				
-					showFixedPanel(previousPanel, "#id_sign_in_panel");
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
 				}
 			}
 		}
 		
+		function decodeEntities(encodedString) {
+			var textArea = document.createElement('textarea');
+			textArea.innerHTML = encodedString;
+			return textArea.value;
+		}
+
 		function addToPathway(pathwayPanel)
 		{
 			var pathway = pathwayPanel.pathtree;
-			{% if organization %}var organizationName = "{{organization}}";
+			{% if organization %}var organizationName = decodeEntities("{{organization}}");
 			{% else %}var organizationName = null;
 			{% endif %}
-			{% if site %}var siteName = "{{site}}";
+			{% if site %}var siteName = decodeEntities("{{site}}");
 			{% else %}var siteName = null;
 			{% endif %}
-			{% if offering %}var offeringName = "{{offering}}";
+			{% if offering %}var offeringName = decodeEntities("{{offering}}");
 			{% else %}var offeringName = null;
 			{% endif %}
-			{% if service %}var serviceName = "{{service}}";
+			{% if service %}var serviceName = decodeEntities("{{service}}");
 			{% else %}var serviceName = null;
 			{% endif %}
 	
-			var experience = pathway.createExperience();
+			var experience = pathwayPanel.createExperience();
 			var done = function(services)
 			{
+				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
-					crp.getData({path: "#"+offeringName, fields: ["parents", "type"], 
-						done: function(offerings)
-						{
-							if (offerings.length > 0)
+					crp.promise({path: "#"+offeringName, fields: ["parents", "type"]}) 
+						.done(function(offerings)
 							{
-								if (offerings[0].typeName == "Offering")
+								if (offerings.length > 0)
 								{
-									experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
-										{
-											showPanelUp(panelNode);
-										});
+									if (offerings[0].typeName == "Offering")
+									{
+										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified offering does not appear to be an offering.");
 								}
 								else
-									asyncFailFunction("The specified offering does not appear to be an offering.");
-							}
-							else
-							{
-								asyncFailFunction("The specified offering does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+									cr.asyncFail("The specified offering does not exist or you do not have permission to view it.");
+							})
+						.fail(cr.asyncFail);
 				}
 				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 				{
-					crp.getData({path: "#"+siteName, fields: ["parents", "type"], 
-						done: function(sites)
-						{
-							if (sites.length > 0)
+					crp.promise({path: "#"+siteName, fields: ["parents", "type"]})
+						.done(function(sites)
 							{
-								if (sites[0].typeName == "Site")
+								if (sites.length > 0)
 								{
-									experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
-										{
-											showPanelUp(panelNode);
-										});
+									if (sites[0].typeName == "Site")
+									{
+										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
+											{
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified site does not appear to be a site.");
 								}
 								else
-									asyncFailFunction("The specified site does not appear to be an site.");
-							}
-							else
-							{
-								asyncFailFunction("The specified site does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+								{
+									cr.asyncFail("The specified site does not exist or you do not have permission to view it.");
+								}
+							})
+						.fail(cr.asyncFail);
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
-					crp.getData({path: "#"+organizationName, fields: ["parents", "type"], 
-						done: function(organizations)
-						{
-							if (organizations.length > 0)
+					crp.promise({path: "#"+organizationName, fields: ["parents", "type"]})
+						.done(function(organizations)
 							{
-								if (organizations[0].typeName == "Organization")
+								if (organizations.length > 0)
 								{
-									experience.createFromOrganization(organizations[0], services, pathwayPanel.node(), function(panelNode)
-										{
-											showPanelUp(panelNode);
-										});
+									if (organizations[0].typeName == "Organization")
+									{
+										experience.createFromData({instance: organizations[0] },
+											siteName && {text : siteName},
+											offeringName && {text : offeringName},
+											services,
+											pathwayPanel.node(),
+											function(panelNode) {
+												panelNode.sitePanel.showUp();
+											});
+									}
+									else
+										cr.asyncFail("The specified organization does not appear to be an organization.");
 								}
 								else
-									asyncFailFunction("The specified organization does not appear to be an organization.");
-							}
-							else
-							{
-								asyncFailFunction("The specified organization does not exist or you do not have permission to view it.");
-							}
-						},
-						fail: asyncFailFunction});
+									cr.asyncFail("The specified organization does not exist or you do not have permission to view it.");
+							})
+					.fail(cr.asyncFail);
 				}
-				else if (organizationName)
+				else if (organizationName || siteName || offeringName)
 				{
-					var panel;
-					var m = services.map(function(serviceD) { return experience.addService(serviceD); });
-					
-					experience.setOrganization({text: organizationName });
-		
-					if (siteName)
-					{
-						experience.setSite({text: siteName });
-						if (offeringName)
-						{
-							experience.setOffering({text: offeringName});
-							panel = new NewExperienceFinishPanel(pathwayPanel.node(), experience, function()
-								{
-									m.forEach(function(sd) { experience.removeService(service); })
-									experience.clearOffering(newService);
-									experience.clearOrganization();
-									experience.clearSite();
-								});
-						}
-						else
-						{
-							panel = new NewExperienceFromSitePanel(pathwayPanel.node(), experience, function()
-								{
-									experience.clearOrganization();
-									experience.clearSite();
-								});
-						}
-					}
-					else
-					{
-						panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience,
-							function()
-							{
-								experience.clearOrganization();
-							});
-					}
-					showPanelUp(panel.node());
+					experience.createFromData({text: organizationName },
+						siteName && {text : siteName},
+						offeringName && {text : offeringName},
+						services,
+						pathwayPanel.node(),
+						function(panelNode) {
+							panelNode.sitePanel.showUp();
+						});
 				}
 				else if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 				{
 					experience.createFromService(services[0], pathwayPanel.node(), function(panelNode)
 						{
-							showPanelUp(panelNode);
+							panelNode.sitePanel.showUp();
 						});
 				}
 				else if (serviceName)
 				{
-					var panel;
 					var service = experience.addService({text: serviceName });
-					panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience,
-						function()
-						{
-							experience.clearService();
-						});
-					showPanelUp(panel.node());
+					experience.initPreviousDateRange();
+
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
+				}
+				else
+				{
+					experience.initPreviousDateRange();
+					new NewExperiencePanel(experience, experience.getPhase())
+						.showUp();
 				}
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 			{
-				crp.getData({path: "#"+serviceName, fields: ["parents", "type"], 
-					done: function(services)
-					{
-						if (services.length == 0)
-							asyncFailFunction("The specified marker does not exist or you do not have permission to view it.");
-						else if (services[0].typeName != "Service")
-							asyncFailFunction("The specified marker does not appear to be an marker.");
-						else
-							done([{instance: services[0]}]);
-					},
-					fail: asyncFailFunction});
+				crp.promise({path: "#"+serviceName, fields: ["parents", "type"]})
+					.done(function(services)
+						{
+							if (services.length == 0)
+								cr.asyncFail("The specified tag does not exist or you do not have permission to view it.");
+							else if (services[0].typeName != "Service")
+								cr.asyncFail("The specified tag does not appear to be a tag.");
+							else
+								done([{instance: services[0]}]);
+						})
+					.fail(cr.asyncFail);
 			}
 			else if (serviceName)
 				done([{text: serviceName}]);
@@ -572,128 +403,17 @@
 				done([]);
 		}
 		
-		$(document).ready (function(e) {
-			$("#id_your_plans_panel").on("revealing.cr", function(e, eventInfo)
-			{
-				show_plans("#id_plans");
-			});
-			$("#id_consent_forms_panel").on("revealing.cr", function(e, eventInfo)
-				{
-					show_consent_records("#id_openConsentForms");
-				});	
-			
-			var signInSuccess = function(userData)
-			{
-				cr.signedinUser.updateFromChangeData(userData);
-				cr.signedinUser.checkCells(["_system access"], function()
-					{
-						hidePanelRight($("#id_sign_in_panel")[0], false,
-							function()
-							{
-								crp.pushInstance(cr.signedinUser);
-								$(cr.signedinUser).trigger("signin.cr");
-							});
-						
-					},
-					syncFailFunction);
-			}
-				
-			/* Items for the sign-in panel. */
-			$("#id_sign_in_panel .submit-button").click(function(e) {
-				if (prepareClick('click', 'Signin Sign in'))
-				{
-					signIn.submit(signInSuccess, syncFailFunction);
-				}
-				
-			   //stop form submission
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel .signin-cancel-button").click(function(e) {
-				if (prepareClick('click', 'Signin Cancel'))
-				{
-					showClickFeedback(this);
-					hidePanelRight($("#id_sign_in_panel")[0], false,
-						function()
-						{
-							$(cr.signedinUser).trigger("signinCanceled.cr");
-						});
-				}
-				
-			   e.preventDefault();
-			});
-			
-			$("#id_sign_in_panel input[type='password']").keypress(function(e) {
-				if (e.which == 13)
-				{
-					if (prepareClick('return key', 'Signin sign in'))
-					{
-						signIn.submit(signInSuccess, syncFailFunction);
-					}
-					e.preventDefault();
-				}
-			});
-	
-			$("#id_sign_in_panel input[type='text']").bind("keyup input paste", signIn.checkenabled);
-			$("#id_sign_in_panel input[type='password']").bind("keyup input paste", signIn.checkenabled);
-
-			$("#id_sign_in_panel").on("revealing.cr", function()
-			{
-				$("#id_sign_in_panel #id_username").val($.cookie("email"));
-				$("#id_sign_in_panel #id_password").val("");
-				if ($("#id_sign_in_panel #id_username").val() !== "")
-				{
-					$("#id_sign_in_panel #id_rememberme").prop("checked", true);
-					$("#id_sign_in_panel #id_password").focus();
-				}
-				else
-					$("#id_sign_in_panel #id_username").focus();
-				
-				signIn.checkenabled();
-			});	
-			
-			$("#id_sign_in_panel #id_signup_link").click(function(e) {
-				if (prepareClick('click', 'Signin sign up'))
-				{
-					var signUp = new Signup($(this).parents("panel")[0]);
-				}
-				e.preventDefault();
-			});
-
-			$("#id_sign_in_panel #id_forgot_password_link").click(function(e) {
-				if (prepareClick('click', 'Signin forgot password'))
-				{
-					showFixedPanel($(this).parents("panel")[0], "#id_forgot_password_panel");
-				}
-				e.preventDefault();
-			});
-
-			$("#id_forgot_password_panel .submit-button").click(function(e) {
-				if (forgotPassword.canSubmit())
-				{
-					if (prepareClick('click', 'forgot password submit'))
-					{
-						var successFunction = function()
-						{
-							$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
-							hidePanelRight($("#id_forgot_password_panel")[0], false)
-						}
-						forgotPassword.submit(successFunction, syncFailFunction);
-					}
-				}
-			   //stop form submission
-			   e.preventDefault();
-			});
-
-			$("#id_forgot_password_panel #id_email").bind("keyup input paste", forgotPassword.checkenabled);
-			$("#id_forgot_password_panel").on("revealing.cr", function()
-			{
-				$("#id_forgot_password_panel #id_email").val("");
-				$("#id_forgot_password_panel #id_email").focus();
-				forgotPassword.checkenabled();
-			});
-			
-			var previousPanel = $("body>panel")[0];
+		function loadPathlinesPanel(previousPanel)
+		{
+			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
+			firstPanel.setupSearchPanel();
+			firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true);
+			firstPanel.showUp();
+			return firstPanel;
+		}
+		
+		$(document).ready (function(e) {						
+			var previousPanel = $("#id_user_home_panel")[0];
 			var firstPanel;
 			
 			/* handleState is an asynchronous function called when the setup is ready to process it. */
@@ -716,8 +436,8 @@
 					}
 					handleState = function()
 					{
-						var panel = new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString, firstPanel.node());
-						showPanelLeft(panel.node());
+						new FindExperiencePanel(cr.signedinUser, serviceValueID, offeringString)
+							.showLeft();
 					}
 					stateString = "";	/* So it only happens once. */
 				}
@@ -729,26 +449,47 @@
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.getData({path: "#"+pathwayID, done: function(users)
-								{
-									if (users.length > 0)
+							crp.promise({path: "#"+pathwayID})
+								.done(function(users)
 									{
-										var panel = new PathtreePanel(users[0], firstPanel.node(), true);
-										panel.pathtree.setUser(users[0], true);
-										showPanelLeft(panel.node());
-									}
-									else
-									{
-										asyncFailFunction("The specified user does not exist or you do not have permission to view them.");
-									}
-								},
-								fail: asyncFailFunction});
+										if (users.length > 0)
+										{
+											var done;
+											var panel;
+											if (cr.signedinUser.getValueID())
+											{
+												panel = new PathlinesPanel(users[0], true);
+											}	
+											else
+											{
+												done = function()
+													{
+														firstPanel = new WelcomePanel();
+														firstPanel.showNow();
+													};
+												panel = new PathlinesPanel(users[0], done);
+											}
+											panel.pathtree.setUser(users[0].getValue("Path"), true);
+											panel.showLeft();
+										}
+										else
+										{
+											if (!cr.signedinUser.getValueID())
+											{
+												firstPanel = new WelcomePanel();
+												firstPanel.showNow();
+											}
+											cr.asyncFail("The specified user does not exist or you do not have permission to view them.");
+										}
+									})
+								.fail(cr.asyncFail);
 						}
 					}
 					stateString = "";
 				}
 				else if (stateString.startsWith("addExperience"))
 				{
+					// Test case: respond to an sent email to add experience.
 					stateString = stateString.substring("addExperience".length);
 					if (stateString.length > 0)
 					{
@@ -759,203 +500,241 @@
 							{
 								if (!firstPanel)
 								{
-									firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-									firstPanel.pathtree.setUser(cr.signedinUser, false);
-									showPanelUp(firstPanel.node());
+									firstPanel = loadPathlinesPanel(previousPanel);
 								}
 								pathwayPanel = firstPanel;
 							}
 							var pathway = pathwayPanel.pathtree;
-							cr.getData({path: "#"+experienceID, fields: ["type"], done: function(experiences)
+							var experiencesPath = cr.signedinUser.getValue("Path");
+							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
+								.then(function(experiences)
 								{
 									if (experiences.length > 0)
 									{
-										crp.pushCheckCells(cr.signedinUser, undefined, 
-											function() {
-												var m = cr.signedinUser.getValue("More Experiences");
-												if (experiences[0].typeName == "Service")
+										cr.signedinUser.promiseCellsFromCache()
+											.then(function()
 												{
-													var experience = new Experience();
-													experience.addService({instance: experiences[0]});
-													var panel = new NewExperienceFromServicePanel(pathwayPanel.node(), experience, 
-														function() {});
-													showPanelUp(panel.node());
-												}
-												else if (experiences[0].typeName == "Organization")
-												{
-													var experience = new Experience();
-													experience.setOrganization({instance: experiences[0]});
-													var panel = new NewExperienceFromOrganizationPanel(pathwayPanel.node(), experience, 
-														function() {});
-													showPanelUp(panel.node());
-												}
-											},
-											function(err)
-											{
-												asyncFailFunction(err);
-											});
+													if (experiences[0].typeName == "More Experience")
+													{
+														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
+														new NewExperiencePanel(experience, experience.getPhase())
+															.showUp();
+													}
+													else
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+												},
+												cr.asyncFail);
 									}
 									else
 									{
-										asyncFailFunction("The specified experience does not exist or you do not have permission to view it.");
+										cr.asyncFail("The specified experience does not exist or you do not have permission to view it.");
 									}
 								},
-								fail: asyncFailFunction});
+								cr.asyncFail);
 						}
-						needsSignin = true;
 					}
+					needsSignin = true;
 					stateString = "";
 				}
 				else if (stateString.startsWith("addToPathway"))
 				{
+					/* Add an experience specified in the URL to this pathway. */
 					var handleState = function(pathwayPanel)
 					{
-						crp.pushCheckCells(cr.signedinUser, undefined, 
-							function() {
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
 								if (!pathwayPanel)
 								{
 									if (!firstPanel)
 									{
-										firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-										firstPanel.pathtree.setUser(cr.signedinUser, false);
-										showPanelUp(firstPanel.node());
+										firstPanel = loadPathlinesPanel(previousPanel);
 									}
 									pathwayPanel = firstPanel;
 								}
 								addToPathway(pathwayPanel);
 							},
-							asyncFailFunction);
+							cr.asyncFail);
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("accept"))
+				{
+					/* Accept the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+
+						function clearAccessRequests(newValue)
+						{
+							var cell = cr.signedinUser.getCell("_access request");
+							for (var i = 0; i < cell.data.length; ++i)
+							{
+								var d = cell.data[i];
+								if (d.getValueID() == newValue.getValueID())
+									d.triggerDeleteValue();
+							}
+						}
+						
+						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
+							{
+								// Remove any access request with this name.
+								if (newValue.typeName == '_access record')
+								{
+									newValue.checkCells(["typeName"], function()
+										{
+											newValue = newValue.getCell("{{cell}}").data[0];
+											clearAccessRequests(newValue);
+											bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+										},
+										asyncFailFunction);
+								}
+								else
+								{
+									clearAccessRequests(newValue);
+									bootstrap_alert.success("{0} is now following you.".format(newValue.getDescription()), '.alert-container');
+								}
+							}, asyncFailFunction);
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("ignore"))
+				{
+					/* Ignore the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+						var cell = cr.signedinUser.getCell("_access request");
+						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						if (v)
+						{
+							v.deleteValue(function()
+								{
+									bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
+								},
+								asyncFailFunction);
+						}
+						else
+							bootstrap_alert.warning("Access for {0} is not currently requested.".format("{{follower_description}}"), '.alert-container');
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("settings/"))
+				{
+					/* Ignore the specified follower */
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+						
+						try
+						{
+							new Settings(cr.signedinUser, pathwayPanel.node())
+								.showUp();
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					}
+					needsSignin = true;
+				}
+				else if (stateString.startsWith("signup/"))
+				{
+					stateString = stateString.substring("signup/".length);
+					
+					var handleState = function()
+					{
+						firstPanel = new WelcomePanel();
+						firstPanel.showNow();
+						var signUp = new Signup(firstPanel.node(), {email: stateString});
+						signUp.showUp();
+					}
+					needsSignin = false;
+				}
+				else if (stateString.startsWith("me"))
+				{
+					var handleState = function()
+					{
+						cr.signedinUser.promiseCellsFromCache()
+							.then(function() {
+								if (!firstPanel)
+								{
+									firstPanel = loadPathlinesPanel(previousPanel);
+								}
+							},
+							cr.asyncFail);
 					}
 					needsSignin = true;
 				}
 			{% endif %}
 
+			{% if userID %}
+			cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+			{% endif %}
+		
+			/* Initialize all of the objects that are dependent on whether or not the user is
+				signed in.
+			 */
+			if (!cr.signedinUser.getValueID())
+			{
+				$(cr.signedinUser).trigger("signout.cr");
+			}
+			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
 			if (cr.signedinUser.getValueID())
 			{
-				firstPanel = new PathtreePanel(cr.signedinUser, previousPanel, false);
-				firstPanel.pathtree.setUser(cr.signedinUser, false);
-				showPanelNow(firstPanel.node());
-				if (handleState)
-					handleState();
+				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+					{
+						firstPanel = new PathlinesPanel(cr.signedinUser, false);
+						firstPanel.setupSearchPanel();
+						firstPanel.showNow();
+						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+						.then(function()
+							{
+								if (handleState)
+									handleState();
+								else
+									firstPanel.checkShowIdeas();
+							});
+					});
 			}
 			else if (!needsSignin)
 			{
-				firstPanel = new WelcomePanel(previousPanel);
-				showPanelNow(firstPanel.node());
 				if (handleState)
 					handleState();
+				else
+				{
+					firstPanel = new WelcomePanel();
+					firstPanel.showNow();
+				}
 			}
 			else
 			{
 				firstPanel = null;
-				checkSignin(previousPanel, handleState);
+				checkSignin(handleState);
 			}
 		});
 		
-		signIn = {
-			canSubmit: function() {
-			return $("#id_sign_in_panel #id_password").val() !== "" &&
-				$("#id_sign_in_panel #id_username").val() !== "";
-			},
-		
-			checkenabled: function() {			
-				if (!signIn.canSubmit())
-				{
-					$("#id_sign_in_panel .submit-button").addClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").removeClass("site-active-text");
-				}
-				else
-				{
-					$("#id_sign_in_panel .submit-button").removeClass("site-disabled-text");
-					$("#id_sign_in_panel .submit-button").addClass("site-active-text");
-				}
-			},
-		
-			submit: function(successFunction, failFunction) {
-				if (!signIn.canSubmit())
-					return;
-				
-				bootstrap_alert.show($('.alert-container'), "Signing In...", "alert-info");
-				
-				$.post("{% url 'submitSignin' %}", { csrfmiddlewaretoken: $.cookie("csrftoken"), 
-											  username : $("#id_username").val(),
-											  password : $("#id_password").val(),
-											  timezoneoffset : new Date().getTimezoneOffset() }, 
-					function(json){
-				if (json.success) {
-					if ($("#id_sign_in_panel #id_rememberme").prop("checked"))
-						$.cookie("email", $("#id_sign_in_panel #id_username").val(), { expires : 10 });
-					else
-						$.removeCookie("email");
-						
-					$("#id_sign_in_panel #id_username").val("")
-					$("#id_sign_in_panel #id_password").val("")
-						
-					$.cookie("authenticator", "email", { path: "/"});
-					if (successFunction)
-					{
-						successFunction(json.user);
-					}
-				}
-				else
-					failFunction(json.error);
-			  })
-				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				});
-			}
-		};
-
-		forgotPassword = {
-			canSubmit: function() {
-				var testusername = $("#id_email").val();
-				return validateEmail(testusername);
-			},
-		
-			checkenabled: function() {			
-				if (!forgotPassword.canSubmit())
-				{
-					$(".submit-button").addClass("site-disabled-text")
-									   .removeClass("site-active-text")
-									   .prop( "disabled", true );
-					$( "#id_email_group" ).removeClass( "has-success");
-					$( "#id_emailOK" ).removeClass( "glyphicon-ok" );
-				}
-				else
-				{
-					$(".submit-button").removeClass("site-disabled-text")
-									   .addClass("site-active-text")
-									   .prop( "disabled", false );
-					$( "#id_email_group" ).addClass( "has-success");
-					$( "#id_emailOK" ).addClass( "glyphicon-ok" );
-				}
-			},
-			
-			submit: function(successFunction, failFunction) {
-				bootstrap_alert.success('Sending email (this may take a few minutes)...', '#id_alert_success');
-				
-				$.post("{% url 'resetPassword' %}", 
-					{ "email": $("#id_email").val()
-					})
-				  .done(function(json, textStatus, jqXHR)
-					{
-						closealert();
-						if (json.success) {
-							bootstrap_alert.success('Your email has been sent. <a href="{{nextURL}}">Continue</a>', '#id_alert_success');
-							successFunction();
-						}
-						else {
-							failFunction(json.error);
-						}
-					})
-				  .fail(function(jqXHR, textStatus, errorThrown) {
-				  	cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-				  });
-			},
-			
-		};
-				
 		function getFilter(node)
 		{
 			return function()
@@ -982,33 +761,25 @@
 			}
 		}
 		
-		function showFixedPanel(previousPanel, newNode)
-		{
-			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
-			var panel = d3.select(newNode);
-			panel.style("z-index", zIndex);
-			
-			showPanelLeft(panel.node(), unblockClick);
-		}
-			
 		function sign_out() {
 			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
-			var done = function()
-			{
-				cr.signedinUser.clearValue();
-				$(cr.signedinUser).trigger("signout.cr");
-				var sitePanels = $("panel.site-panel");
-				var panel = new WelcomePanel("panel.initial");
-				showPanelNow(panel.node());
-				sitePanels.trigger("hiding.cr");
-				$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
-					function() {
-						sitePanels.remove();
-						closealert();
-					});
-				unblockClick();
-			}
-			cr.submitSignout(done, syncFailFunction);
+			cr.submitSignout()
+				.then(function()
+					{
+						cr.signedinUser.clearValue();
+						$(cr.signedinUser).trigger("signout.cr");
+						var sitePanels = $("panel.site-panel");
+						var panel = new WelcomePanel();
+						panel.showNow();
+						sitePanels.trigger("hiding.cr");
+						$(sitePanels[sitePanels.length - 1]).hide("slide", {direction: "down"}, 400,
+							function() {
+								sitePanels.remove();
+								closealert();
+							});
+						unblockClick();
+					},
+					cr.syncFail);
 		}
 		
 		function show_consent_records(containerDiv) {
@@ -1120,7 +891,7 @@
 			}
 		}
 		
-		function show_plans(container) {
+		function show_plans(user, container) {
 			var successFunction = function(sessions)
 			{
 				var containerPanel = d3.select(container);
@@ -1146,9 +917,9 @@
 							{
 								showClickFeedback(this);
 
-								var sitePanel = showSessionDetails(session, null, $(container).parents("panel")[0]);
+								var sitePanel = showSessionDetails(user, session, null, $(container).parents("panel")[0]);
 			
-								showPanelLeft(sitePanel.node(), unblockClick);
+								sitePanel.showLeft().then(unblockClick);
 							}
 						});
 	

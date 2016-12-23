@@ -19,12 +19,15 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
     userInfo=UserInfo(transactionState.user)
     for d in data:
         if not isinstance(d, dict):
-            raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+            raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
         if fieldData["dataTypeID"] == terms.objectEnum.id:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
                 if "instanceID" in d:
                     # This is a reference to an object.
+                    if not terms.isUUID(d["instanceID"]):
+                        raise RuntimeError("value(%s) for %s field is not an instance ID" % (d["instanceID"], field))
+                        
                     values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
@@ -37,17 +40,19 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                 elif "path" in d:
                     ids = pathparser.selectAllObjects(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
-                        parent.addReferenceValue(field, ids[-1], i, transactionState)
+                        parent.addReferenceValue(field, ids[len(ids)-1], i, transactionState)
                     else:
                         raise RuntimeError("Path does not parse to an object: %s" % d["path"])
                 else:
                     raise RuntimeError("%s field of type %s contains neither instanceID nor path: %s" % (field, parent.typeID, str(d)))
             else:
-                if "cells" in d and "ofKindID" in fieldData:
+                if "ofKindID" not in fieldData:
+                    raise RuntimeError("%s field of type %s not configured with an object kind" % (field, parent.typeID))
+                elif "cells" in d:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
                     create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
                 else:
-                    raise RuntimeError("%s field of type %s not configured to contain data: %s" % (field, parent.typeID, str(d)))
+                    raise RuntimeError("%s field of type %s missing data: %s" % (field, parent.typeID, str(d)))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
@@ -75,6 +80,11 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     if typeInstance==terms.user:
         if TermNames.primaryAdministrator not in propertyList:
             propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
+        # Add userID explicitly in case it isn't part of the configuration.
+        userID = transactionState.user.id
+        if isinstance(userID, uuid.UUID):
+            userID = userID.hex    # SQLite
+        item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
@@ -94,33 +104,40 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # Process the access records for this new item.
     if typeInstance.defaultCustomAccess:
         AccessRecord.objects.create(id=item, source=item)
-    else:
+    elif parent:
         try:
-            parentAccessRecord = AccessRecord.objects.get(id=parent)
+            parentAccessRecord = parent.accessrecord
             AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
         except AccessRecord.DoesNotExist:
             pass
 
+    # propertyList should be either null or a dictionary of properties.
+    # The key of each element in the dictionary is the name of a term which is the fieldID.
+    #    If the key is not a field in the configuration, then it is ignored.
+    # The value is an array.
+    #    Each element of the value array is a dictionary that has one item in the field.
+    #    The dictionary can have the following elements:
+    #        "instanceID": The value should be a hex string for a GUID.
+    #        "path": The value should be a path to an object.
+    #        "cells": A dictionary which matches a dictionary of properties passed to a recursive call to instancecreator.create.
+    #        "text" and "languageCode": the text and language code for a translation.
+    #        "text": the text of a string element.
     if propertyList:
-        configuration = None
         if isinstance(propertyList, dict):
-            for key in propertyList:
-                data = propertyList[key]
-                if not configuration:
-                    configuration = typeInstance.getSubInstance(terms.configuration)
-                if terms.isUUID(key):
-                    # The key may be the key of a field object or the key of a term that is 
-                    # the name of a field object in the configuration.
-                    fieldObject = Instance.objects.get(pk=key)
-                    if fieldObject.typeID != terms.field:
-                        fieldObject = configuration.getFieldByReferenceValue(key)
-                    elif fieldObject.parent != configuration:
-                        raise RuntimeError("the specified field is not contained within the configuration of this type")
-                else:
-                    fieldObject = configuration.getFieldByName(key)
-                fieldData = fieldObject.getFieldData()
-                if fieldData:
-                    _addElementData(item, data, fieldData, nameLists, transactionState)
+            if len(propertyList) > 0:
+                configuration = typeInstance.getSubInstance(terms.configuration)
+            
+                # Handle security fields before all other fields so that children have the
+                # correct security.
+                for key in filter(lambda key: terms[key] in terms.securityFields, propertyList):
+                    fieldData = configuration.getFieldDataByName(key) 
+                    if fieldData:
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                
+                for key in filter(lambda key: terms[key] not in terms.securityFields, propertyList):
+                    fieldData = configuration.getFieldDataByName(key) 
+                    if fieldData:
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
     

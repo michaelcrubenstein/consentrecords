@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en"
+	xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="https://www.facebook.com/2008/fbml">
+{% load staticfiles %}
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="PathAdvisor Organization">
+	
+	{% if fbURL %}
+    <meta property="og:url" content="{{fbURL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{fbTitle}}">
+    <meta property="og:description" content="{{fbDescription}}">
+    {% endif %}
+    
+    <title>PathAdvisor - Organization</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
+	
+    <!-- Custom styles for this page -->
+    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}" rel="stylesheet">
+    
+    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
+
+    <style>
+    	.consent-record {
+    		margin-top: 3px;
+    	}
+    	.consent-form-title {
+    	}
+    	.consent-record-accept-button {
+    	}
+    	.button-section {
+    		float: bottom;
+    	}
+    	panel.organization header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
+    	.organization-section {
+    		display: none;
+    	}
+    	.level-2-panel {
+    		top: 0;
+    		z-index: 2;
+    	}
+    	.level-3-panel {
+    		top: 0;
+    		z-index: 3;
+    	}
+    	.level-4-panel {
+    		top: 0;
+    		z-index: 4;
+    	}
+    	panel#id_forgot_password_panel {
+    		background: white;
+    	}
+    	.username-label {
+    		padding-left: 15px;
+    	}
+    	.centered-right-glyph {
+			position: absolute;
+			top: 50%;
+			-moz-transform: translateY(-50%);
+			-webkit-transform: translateY(-50%);
+			transform: translateY(-50%);
+			float: right;
+			right: 12px;
+	   	}
+	   	.centered-right-2 {	/* To the left of a centered-right-glyph */
+			width: auto;
+			float: right;
+			margin-right: 24px;
+			text-align: right;
+	   	}
+    	.option-label {
+    		margin-top: 15px;
+    		margin-left: 15px;
+    	}
+    	.option-item {
+    		margin-top: 15px;
+    		margin-left: 45px;
+    	}
+    	panel.session {
+    		background: white;
+    	}
+    	panel.session header {
+			width: 100%;
+			padding: 6px 12px;
+			text-align: left;
+			font-weight: bold;
+    	}
+    	panel.session .organization {
+    		margin-left: 12px;
+    		padding-bottom: 5px;
+    		border-bottom: 1px solid #eee;
+    	}
+    	panel.session .organization>label {
+    		font-weight: normal;
+    	}
+    	panel.session .address-line {
+    		margin-left: 0px;
+    		font-size: smaller;
+    	}
+    	panel.session .more-info {
+			overflow: hidden;
+			width: auto;
+			display: block;
+    		font-size: smaller;
+    		padding: 6px 12px;
+    	}
+    </style>
+	</head>
+	
+  	<body class="site-body">
+		<!-- Following is required so that the csrf token cookie is included in the document cookies. -->
+  		{% csrf_token %}
+  	
+		{% if facebookIntegration %}
+  		<div id="fb-root"></div>
+		<script>
+		  window.fbAsyncInit = function() {
+			FB.init({
+			  appId      : '1503871976607590',
+			  status     : true,
+			  cookie     : true,
+			  xfbml      : true,
+			  version    : 'v2.5'
+			});
+		  };
+
+		  (function(d, s, id){
+			 var js, fjs = d.getElementsByTagName(s)[0];
+			 if (d.getElementById(id)) {return;}
+			 js = d.createElement(s); js.id = id;
+			 js.src = "//connect.facebook.net/en_US/sdk.js";
+			 fjs.parentNode.insertBefore(js, fjs);
+		   }(document, 'script', 'facebook-jssdk'));
+		</script>
+		{% endif %}
+		
+  		<panel id="id_user_home_panel" class="initial" >
+			<nav role="navigation">
+				<div>
+					<div class="right-link pull-right site-navbar-link site-active-text default-link sign-in-button">
+						<span id="sign-in-span">Sign&nbsp;In</span>
+					</div>
+				</div>
+			</nav>
+			<h3 class="username-label"> </h3>
+			<div class="alert-container"></div>
+			<section class="button-section">
+				<section class="organization-section row-button-group">
+				</section>
+			</section>
+		</panel>
+		
+<!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+  	</body>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}"></script>
+
+	<!-- Scripts for this web page -->
+	<script type="text/JavaScript">
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
+		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
+		
+		function csrfSafeMethod(method) {
+			// these HTTP methods do not require CSRF protection
+			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+		}
+		$.ajaxSetup({
+			beforeSend: function(xhr, settings) {
+				if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+					xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
+				}
+			}
+		});
+
+		/* The global object used to identify the current user. */
+		var userFirstName = null;
+		var userLastName = null;
+		{% if userID %}
+		cr.createSignedinUser("{{userID}}", "{{ user.get_full_name }}")
+		{% endif %}
+		
+		/* Update the username label when a user signs in or out. */	
+		var usernameLabel = $(".username-label");
+		
+		function setName(eventObject)
+		{
+			s = getUserDescription(cr.signedinUser);
+			$(eventObject.data).text(s);
+		}
+		
+		$(cr.signedinUser).on("dataChanged.cr", null, usernameLabel[0], setName);
+		$(cr.signedinUser).on("signin.cr", null, usernameLabel[0], function(eventObject)
+		{
+			userFirstName = this.getValue("_first name");
+			userLastName = this.getValue("_last name");
+			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			setName.call(this, eventObject);
+		});
+		
+		$(cr.signedinUser).on("signout.cr", null, usernameLabel[0], function(eventObject)
+		{
+			if (userFirstName)
+			{
+				$(userFirstName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				$(userLastName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				userFirstName = null;
+				userLastName = null;
+			}
+			$(eventObject.data).text("");
+		});
+		
+		/* Update the text of the signin button when a user signs in or out. */
+		var signinSpan = $("#sign-in-span")
+		$(cr.signedinUser).on("signin.cr", null, signinSpan[0], function(eventObject)
+		{
+			$(eventObject.data).text("Sign Out");
+		});
+		$(cr.signedinUser).on("signout.cr", null, signinSpan[0], function(eventObject)
+		{
+			$(eventObject.data).text("Sign In");
+		});
+		
+		/* Update the list of organizations associated with the user when a user signs in or out. */
+		var orgSection = $(".organization-section");
+		
+		$(cr.signedinUser).on("signin.cr", 0, orgSection[0], function(eventObject)
+		{
+			load_organizations.call(eventObject.data);
+		});
+		$(cr.signedinUser).on("signout.cr", 0, orgSection[0], function(eventObject)
+		{
+			hide_organizations.call(eventObject.data);
+		});
+		
+		/* Initialize all of the objects that are dependent on whether or not the user is
+			signed in.
+		 */
+		if (!cr.signedinUser.getValueID())
+		{
+			$(cr.signedinUser).trigger("signout.cr");
+		}
+		/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
+
+		/* Handle a click event on the sign-in button to either sign in or sign out
+			the current user.
+		 */
+		$(".sign-in-button").click(function(e) {
+			if (prepareClick('click',  'Sign In/Out button'))
+			{
+				if (cr.signedinUser.getValueID())
+				{
+					sign_out(function()
+						{
+							cr.signedinUser.clearValue();
+							$(cr.signedinUser).trigger("signout.cr");
+							unblockClick();
+						}, 
+						cr.syncFail);
+				}
+				else
+				{
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
+				}
+			}
+			e.preventDefault();
+		});
+
+		function checkSignin(previousPanel, done, message)
+		{
+			if (prepareClick('click', message))
+			{
+				showClickFeedback(this);
+				if (cr.signedinUser.getValueID())
+					done();
+				else
+				{
+					var onSignin = function(eventObject)
+					{
+						$(this).off("signinCanceled.cr", null, onSigninCanceled);
+						if (prepareClick('onSignin'))
+							done();
+					};
+					
+					var onSigninCanceled = function(eventObject)
+					{
+						$(this).off("signin.cr", null, onSignin);
+					}
+					
+					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+					
+					var panel = new SigninPanel();
+					panel.showLeft().then(function()
+								{
+									panel.initializeFocus();
+									unblockClick();
+								});
+				}
+			}
+		}
+		
+		function getFilter(node)
+		{
+			return function()
+			{
+				var val = this.value.toLocaleLowerCase();
+				if (val.length == 0)
+				{
+					/* Show all of the items. */
+					d3.select(node).selectAll("div")
+						.style("display", null);
+				}
+				else
+				{
+					/* Show the items whose description is this.value */
+					d3.select(node).selectAll("div")
+						.style("display", function(d)
+							{
+								if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+									return null;
+								else
+									return "none";
+							});
+				}
+			}
+		}
+		
+		function showFixedPanel(previousPanel, newNode)
+		{
+			var zIndex = parseInt($(previousPanel).css("z-index"))+1;
+			var panel = d3.select(newNode);
+			panel.style("z-index", zIndex);
+			
+			panel.showLeft().then(unblockClick);
+		}
+			
+		function sign_out(successFunction, failFunction) {
+			bootstrap_alert.show($('#myAlert'), "Signing Out...", "alert-info");
+			cr.submitSignout()
+				.then(successFunction, failFunction);
+		}
+		
+		function show_consent_records(containerDiv) {
+			var successFunction = function(newInstances)
+			{
+				var divs = d3.select(containerDiv).selectAll('section')
+					.data(newInstances)
+					.enter()
+					.append('section').classed("consent-record cell", true);
+				
+				divs.append('div').classed("consent-record-accept-button right-label right-fixed-width-div right-label site-active-text", true)
+					.text("I Accept");
+				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
+					.text(function(d) { 
+						return d.cells[0].data[0].getDescription();
+					});
+			}
+			
+			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			cr.getData({path: path, 
+						fields: ["parents"], 
+						done: successFunction, 
+						fail: asyncFailFunction});
+		}
+		
+		function cells_get_cell_by_name(cells, name)
+		{
+			for (var i = 0; i < cells.length; ++i)
+			{
+				var cell = cells[i];
+				if (cell.field.name == name)
+					return cell;
+			}
+			return undefined;
+		}
+		
+		function setMetaProperties(session, targetHRef)
+		{
+			var headDiv = d3.select("head");
+			headDiv.selectAll("meta").each(function()
+			{
+				var metaObj = d3.select(this);
+				if (metaObj.attr("property") &&
+					metaObj.attr("property").startsWith("og:"))
+					metaObj.remove();
+			});
+			var offering = session.getValue("Offering");
+			var organization = session.getValue("Organization");
+			var a = [{property: "og:url", content: targetHRef},
+					 {property: "og:type", content: "website" },
+					 {property: "og:title", content: offering.getDescription()},
+					 {property: "og:description", content: session.getDescription() + "\n" + organization.getDescription()}];
+			for (var i = 0; i < a.length; i++)
+			{
+				if (a[i].content)
+					headDiv.append("meta")
+						.attr("property", a[i].property)
+						.attr("content", a[i].content);
+			}
+		}
+		
+		function appendFacebookButton(shareDiv, service, session)
+		{
+			var targetHRef = window.location.origin+"/find/"+service.instanceID+"/"+session.instanceID;
+
+			setMetaProperties(session, targetHRef);
+			var fbDiv = shareDiv.div.append("div")
+				.classed("fb-share-button", true)
+				.attr("data-href", targetHRef)
+				.attr("data-layout", "button_count");
+			var fbImage = fbDiv.append("img")
+				.attr("src", "{% static "b/consentrecords/png/fb.png" %}")
+				.style("height", "22px")
+				.style("weight", "22px");
+			{% if facebookIntegration %}
+			fbDiv.on("click", function() {
+				FB.ui({
+					  method     : 'share',
+					  href       : targetHRef
+					  }, function(response){});
+				d3.event.preventDefault();
+			});
+			{% endif %}
+		}
+		
+		function compareSessions(a, b)
+		{
+			var aDate = a.getDatum("Start");
+			var bDate = b.getDatum("Start");
+			if (aDate)
+			{
+				if (bDate)
+				{
+					result = aDate.localeCompare(bDate);
+					if (result == 0)
+						return a.getDescription().localeCompare(b.getDescription());
+					else
+						return result;
+				}
+				else
+					return -1;
+			}
+			else
+			{
+				if (bDate)
+					return 1;
+				else
+					return a.getDescription().localeCompare(b.getDescription());
+			}
+		}
+		
+		function hide_organizations()
+		{
+			var orgSection = d3.select(this);
+			orgSection.style("display", "none");
+			orgSection.selectAll("li").remove();
+		}
+		
+		function load_organizations()
+		{
+			var orgSection = d3.select(this);
+			var successFunction = function(newInstances)
+			{
+				var field = {name: "Organization",
+							  dataType: "_object",
+							  capacity: "_multiple values",
+							  };
+				var cell = cr.createCell(field);
+				cell.setup(null);
+				
+				/* Default orgSection style is "none", so override it if there are organizations to show. */
+				orgSection.style("display", newInstances.length > 0 ? "block" : null);
+				
+				var divs = orgSection.selectAll("li")
+					.data(newInstances)
+					.enter()
+					.append("li");
+				
+				var buttons = divs.append("button")
+					.classed("btn row-button site-active-text show-panel-button", true);
+				
+				buttons.append("span")
+					.classed("pull-left", true)
+					.text(function(d) { return d.getDescription(); });
+				
+				appendRightChevrons(buttons);
+					
+				buttons.on("click", function(d) {
+					if (prepareClick('click', 'show organization ' + d.getDescription()))
+					{
+						show_organization_panel(d, cell, null, d3.select("body>panel").node());
+					}
+				});
+			}
+			
+			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
+			cr.selectAll({path: path})
+				.then(successFunction, cr.asyncFail);
+		}
+		
+		/* Displays a panel in which the specified object's contents appear.
+		 */
+		function show_organization_panel(objectData, containerCell, containerUUID, containerPanel) {
+			successFunction = function ()
+			{
+				var b;
+				
+				var addButton = function(sectionObj, title, clickFunction)
+				{
+					var b = sectionObj.append("button")
+						.classed("btn row-button site-active-text show-panel-button", true);
+					b.append("span")
+						.classed("pull-left", true)
+						.text(title);
+					appendRightChevrons(b);
+					b.on("click", clickFunction);
+				}
+				
+				var sitePanel = new SitePanel();
+				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "organization view");
+
+				var navContainer = sitePanel.appendNavContainer();
+
+				var backButton = navContainer.appendLeftButton()
+					.on("click", function() { sitePanel.hideRightEvent(); });
+				backButton.append("span").text("Done");
+	
+				var panel2Div = sitePanel.appendScrollArea();
+
+				var headerDiv = panel2Div.appendHeader();
+				function updatePanelHeader(eventObject)
+				{
+					d3.select(eventObject.data).text(getViewPanelheader(this));
+				}
+				$(objectData).on("dataChanged.cr", null, headerDiv.node(), updatePanelHeader);
+				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+				{
+					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
+				});
+
+				sitePanel.showLeft().then(unblockClick);
+
+				var sectionObj = panel2Div.append("section")
+					.classed("row-button-group", true);
+					
+				addButton(sectionObj, "Record an Inquiry",
+					function(organization)
+					{
+						if (prepareClick('click', 'Record an Inquiry'))
+						{
+							pick_inquiry_site(organization, sitePanel.node());
+						}
+					});
+					
+				addButton(sectionObj, "Manage Inquiries",
+					function(organization)
+					{
+						if (prepareClick('click', 'Manage Inquiries'))
+						{
+							manage_inquiry(organization, sitePanel.node());
+						}
+					});
+					
+				sectionObj = panel2Div.append("section")
+					.classed("row-button-group", true);
+					
+				addButton(sectionObj, "Enroll an Inquiry",
+					function(d)
+					{
+						if (prepareClick('click', 'Enroll an Inquiry'))
+						{
+							enroll_inquiry(d, sitePanel.node());
+						}
+					});
+					
+				addButton(sectionObj, "Add an Enrollment",
+					function(d)
+					{
+						if (prepareClick('click', 'Add an Enrollment'))
+						{
+							add_enrollment(d, sitePanel.node());
+						}
+					});
+					
+				addButton(sectionObj, "Manage Enrollment",
+					function(d)
+					{
+						if (prepareClick('click', 'Manage Enrollment'))
+						{
+							manage_enrollment(d, sitePanel.node());
+						}
+					});
+					
+				sectionObj = panel2Div.append("section")
+					.classed("row-button-group", true);
+					
+				addButton(sectionObj, "Record Participation",
+					function(d)
+					{
+						if (prepareClick('click', 'record participation'))
+						{
+							record_participation(d, sitePanel.node());
+						}
+					});
+					
+				addButton(sectionObj, "Manage Participation",
+					function(d)
+					{
+						if (prepareClick('click', 'manage participation'))
+						{
+							manage_participation(d, sitePanel.node());
+						}
+					});
+			}
+	
+			objectData.checkCells(undefined, successFunction, asyncFailFunction)
+		}
+		
+		function compareUsers(a, b)
+		{
+			var aDatum = a.getDatum("_email");
+			var bDatum = b.getDatum("_email");
+			if (aDatum)
+			{
+				if (bDatum)
+				{
+					result = aDate.localeCompare(bDatum);
+					if (result == 0)
+						return a.getDescription().localeCompare(b.getDescription());
+					else
+						return result;
+				}
+				else
+					return -1;
+			}
+			else
+			{
+				if (bDatum)
+					return 1;
+				else
+					return a.getDescription().localeCompare(b.getDescription());
+			}
+		}
+		
+		function compareEnrollments(a, b)
+		{
+			return a.getDescription().localeCompare(b.getDescription());
+		}
+		
+		function pickChild(parent, data, previousPanelNode, header, successFunction)
+		{
+			data.sort(function(a, b)
+				{
+					return a.getDescription().localeCompare(b.getDescription());
+				});
+
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(parent, header, "list");
+
+			var navContainer = sitePanel.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", function() { sitePanel.hideRightEvent(); });
+			appendLeftChevrons(backButton).classed("site-active-text", true);
+			backButton.append("div").text(" " + previousPanelNode.getAttribute("headerText"));
+	
+			var centerButton = navContainer.appendTitle(header);
+
+			sitePanel.appendSearchBar(show_matching_descriptions);
+
+			var panel2Div = sitePanel.appendScrollArea();
+			var itemsDiv = panel2Div.append('section')
+				.classed('cell multiple', true)
+				.append('ol');
+				
+			var items = appendItems(itemsDiv, data);
+
+			var buttons = appendViewButtons(items)
+				.on("click", function(d) {
+					if (prepareClick('click', 'header: ' + d.getDescription()))
+					{
+						successFunction(d, sitePanel.node());
+					}
+					d3.event.preventDefault();
+				});
+
+			sitePanel.showLeft().then(unblockClick);
+		}
+		/*
+			Displays a panel from which the user can pick a session from
+			the specified offering.
+			
+			This function should be called within a prepareClick block.
+		 */
+		function pick_session(offering, previousPanelNode, successFunction)
+		{
+			offering.checkCells(undefined, function()
+				{
+					var sessions = offering.getValue("Sessions");
+					if (!sessions)
+						syncFailFunction("the sessions are not set up");
+					else
+						sessions.checkCells(undefined, function()
+							{
+								var sessionCell = sessions.getCell("Session");
+								pickChild(offering, sessionCell.data, previousPanelNode, "Pick Session", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
+		}
+		
+		/*
+			Displays a panel from which the user can pick an offering from
+			the specified site.
+			
+			This function should be called within a prepareClick block.
+		 */
+		function pick_offering(site, previousPanelNode, successFunction)
+		{
+			site.checkCells(undefined, function()
+				{
+					var offerings = site.getValue("Offerings");
+					if (!offerings)
+						syncFailFunction("the offerings are not set up");
+					else
+						offerings.checkCells(undefined, function()
+							{
+								var offeringCell = offerings.getCell("Offering");
+								pickChild(site, offeringCell.data, previousPanelNode, "Pick Offering", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
+		}
+		
+		/*
+			This function should be called within a prepareClick block.
+		 */
+		function pick_site(organization, previousPanelNode, successFunction)
+		{
+			organization.checkCells(undefined, function()
+				{
+					var sites = organization.getValue("Sites");
+					if (!sites || !sites.id)
+						syncFailFunction("the sites are not set up");
+					else
+						sites.checkCells(undefined, function()
+							{
+								var siteCell = sites.getCell("Site");
+								pickChild(organization, siteCell.data, previousPanelNode, "Pick Site", successFunction);
+							},
+							syncFailFunction);
+				},
+				syncFailFunction);
+		}
+		
+		function enroll_inquiry(organization, previousPanelNode)
+		{
+			pickSessionFromOrganization(organization, previousPanelNode,
+				function(session, currentPanelNode)
+				{
+					var inquiriesCell = session.getCell("Inquiries");
+					var inquiriesInstances = inquiriesCell.data;
+					if (inquiriesInstances.length == 0)
+						syncFailFunction("Session Inquiries are not set up");
+					else
+					{
+						var inquiriesInstance = inquiriesInstances[0];
+						inquiriesInstance.checkCells(undefined, function()
+							{
+								inquiryCell = inquiriesInstance.getCell("_user");
+						
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Pick User", "list");
+
+								var navContainer = sitePanel.appendNavContainer();
+
+								var backButton = navContainer.appendLeftButton()
+									.on("click", function() { sitePanel.hideRightEvent(); });
+								backButton.append("span").text("Done");
+								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
+						
+								sitePanel.appendSearchBar(show_matching_descriptions);
+
+								var panel2Div = sitePanel.appendScrollArea();
+
+								sitePanel.showLeft().then(unblockClick);
+						
+								panel2Div.selectAll("section").remove();
+								var sections = panel2Div.appendSections(inquiryCell.data);
+								sections.sort(compareUsers);
+								var buttons = appendViewButtons(sections)
+									.on("click", function(user)
+									{
+										if (prepareClick('click', 'add enrollment'))
+										{
+											getAddEnrollmentFunction(session, user, unblockClick)();
+										}
+									});
+							
+								var infoButtons =  buttons.insert("div", ":first-child")
+									.classed("info-button right-fixed-width-div", true)
+									.on("click", function(inquiry) {
+										if (prepareClick('click', 'show user info'))
+										{
+											checkUserByInquiry(inquiry,
+												function(user) {
+													showUser(user, sitePanel.node());
+												},
+												syncFailFunction);
+										}
+										d3.event.preventDefault();
+									});
+								drawInfoButtons(infoButtons);
+							},
+							syncFailFunction);
+					}
+				});
+		}
+		
+		function checkUserByInquiry(inquiry, successFunction, failFunction)
+		{
+			var checkSuccessFunction = function() 
+			{
+				var email = inquiry.getDatum("_email");
+				if (!email)
+					failFunction("The email is not set up.");
+				else
+				{
+					var selectAllSuccess = function(userObjects)
+					{
+						if (userObjects.length == 0)
+							failFunction('There is no user set up with the email "' + email + '".');
+						else
+						{
+							successFunction(userObjects[0]);
+						}
+					};
+		
+					cr.selectAll({path: "_user[_email="+email+"]", end: 50})
+						.then(selectAllSuccess, cr.syncFail);
+				}
+			}
+			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+		}
+		
+		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
+		{
+			checkUserByEnrollment(enrollment,
+				function(user)
+				{
+					getAddExperienceFunction(session, user, previousPanelNode)();
+				},
+				syncFailFunction);
+		}
+		
+		/*
+			This function should be called within a prepareClick block. 
+		 */
+		function add_enrollment(organization, previousPanel)
+		{
+			var sitePanel = new SitePanel();
+			sitePanel.createRoot(organization, "Pick User", "list");
+
+			var navContainer = sitePanel.appendNavContainer();
+
+			var backButton = navContainer.appendLeftButton()
+				.on("click", function() { sitePanel.hideRightEvent(); });
+			backButton.append("span").text("Done");
+	
+			var centerButton = navContainer.appendTitle("Pick User");
+
+			sitePanel.appendSearchBar(show_users);
+
+			var panel2Div = sitePanel.appendScrollArea();
+	
+			sitePanel.showLeft().then(unblockClick);
+			
+			function show_users()
+			{
+				var val = this.value.toLocaleLowerCase();
+				var inputBox = this;
+				
+				if (val.length == 0)
+				{
+					panel2Div.selectAll("section").remove();
+				}
+				else
+				{
+					var startVal = val;
+					var pickedUser = null;
+					
+					var pickSessionSuccess = function(session, sessionPanelDiv)
+					{
+						var checkCellsSuccess = getAddEnrollmentFunction(session, pickedUser, unblockClick);
+						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+					};
+					
+					var pickOfferingSuccess = function(offering, offeringPanelDiv)
+					{
+						pick_session(offering, offeringPanelDiv, pickSessionSuccess);
+					}
+					
+					var pickSiteSuccess = function(site, sitePanelDiv)
+					{
+						pick_offering(site, sitePanelDiv, pickOfferingSuccess);
+					}
+					
+					var selectAllSuccess = function(userObjects)
+					{
+						if (inputBox.value.toLocaleLowerCase() == startVal)
+						{
+							panel2Div.selectAll("section").remove();
+							var sections = panel2Div.appendSections(userObjects);
+							var buttons = appendViewButtons(sections)
+								.on("click", function(user) {
+									pickedUser = user;
+									if (prepareClick('click', 'organization: ' + organization.getDescription()))
+									{
+										pick_site(organization, sitePanel.node(), pickSiteSuccess);
+									}
+									d3.event.preventDefault();
+								});
+							var infoButtons =  buttons.insert("div", ":first-child")
+								.classed("info-button right-fixed-width-div", true)
+								.on("click", function(user) {
+									if (prepareClick('click', 'user: ' + user.getDescription()))
+									{
+										showUser(user, sitePanel.node());
+									}
+									d3.event.preventDefault();
+								});
+							drawInfoButtons(infoButtons);
+						}
+					}
+					
+					cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+						.then(selectAllSuccess, cr.asyncFail);
+				}
+			}
+		}
+		
+		function getAddEnrollmentFunction(session, user, successFunction)
+		{
+			return function()
+			{
+				var checkCellsSuccessFunction = function()
+				{
+					var offering = session.cell.parent.cell.parent;
+					var enrollmentsCell = session.getCell("Enrollments");
+					var enrollmentsInstances = enrollmentsCell.data;
+					if (enrollmentsInstances.length == 0)
+						syncFailFunction("Session enrollments are not set up");
+					else
+					{
+						var enrollmentsInstance = enrollmentsInstances[0];
+						var enrollmentCell = enrollmentsInstance.getCell("Enrollment");
+						
+						function addUserToEnrollmentCell()
+						{
+							check_single_field_instance(enrollmentsInstance, 
+								["Enrollment"],
+								"_user",
+								user.getValueID(), 
+								function(newData)
+								{
+									syncFailFunction(user.getDescription() + 
+										  " already enrolled in " + 
+										  offering.getDescription() + "/" + session.getDescription());
+								},
+								function()
+								{
+									/* Test case: Enroll a user into a session from org page. */
+									var initialData = {"_user": [{instanceID: user.getValueID()}] };
+									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+													  initialData))
+									 .then(function(newData)
+										   {
+												enrollmentCell.addValue(newData);
+												bootstrap_alert.success(user.getDescription() + 
+													  " enrolled in " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+												successFunction();
+										   },
+										   cr.syncFail);
+								},
+								syncFailFunction);
+						}
+						
+						if (enrollmentCell)
+						{
+							addUserToEnrollmentCell();
+						}
+						else
+						{
+							/* Test case: From a new session, add a user to the enrollment by using the Add An Enrollment button */
+							cr.getConfiguration(enrollmentsInstance, enrollmentsCell.field.ofKindID)
+								.then(function(cells)
+								{
+									enrollmentCell = cells_get_cell_by_name(cells, "Enrollment");
+									addUserToEnrollmentCell();
+								},
+								cr.syncFail);
+						}
+					}
+				}
+				session.checkCells(["parents"], checkCellsSuccessFunction, syncFailFunction);
+			}
+		}
+		
+		function getAddExperienceFunction(session, user, previousPanel)
+		{
+			return function()
+			{
+				var offering = session.cell.parent.cell.parent;
+				var experiencesCell = session.getCell("Experiences");
+				var experiencesInstances = experiencesCell.data;
+				if (experiencesInstances.length == 0)
+					syncFailFunction("Session experiences are not set up");
+				else
+				{
+					var experiences = experiencesInstances[0];
+					experiences.checkConfiguration(
+						function(cells)
+						{
+							experiences.cells = cells;
+							var experienceCell = experiences.getCell("Experience");
+							cr.getConfiguration(null, experienceCell.field.ofKindID)
+								.then(function(cells)
+								{
+									var userCell = cells_get_cell_by_name(cells, "_user");
+									check_single_field_instance(experiences, 
+										["Experience"],
+										"_user",
+										user.getValueID(), 
+										function(data)
+										{
+											var experience = data[0];
+											if (!experience.getValueID())
+												throw "experience value ID not specified"
+											experienceCell.pushValue(experience);
+											showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
+										},
+										function()
+										{
+											var experience = experienceCell.addNewValue();
+											experience.checkConfiguration(
+												function(cells) {
+													experience.cells = cells;
+													/* Copy the user into the data set. */
+													userCell = experience.getCell("_user");
+													var userValue = userCell.copyValue(user);
+													userCell.addValue(userValue);
+													
+													/* Mark the experience as having its data loaded so that checking
+														its cells doesn't replace them.
+													 */
+													experience.isDataLoaded = true;
+													
+													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
+												},
+												syncFailFunction);
+										},
+										syncFailFunction);
+								},
+								syncFailFunction);
+						},
+						syncFailFunction);
+				}
+			}
+		}
+		
+		function check_single_field_instance(container, childFields, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
+		{
+			var path = "#"+container.getValueID();
+			for (i = 0; i < childFields.length; ++i)
+			{
+				path += ">" + childFields[i];
+			}
+			path += "[" + fieldName + "=" + dataValue + "]";
+			
+			cr.selectAll({path: path})
+				.then(function(newInstances)
+					{
+						if (newInstances.length > 0)
+						{
+							existsFunction(newInstances);
+						}
+						else
+						{
+							doesntExistFunction();
+						}
+					}, failFunction);
+		}
+		
+		function show_matching_descriptions(){
+			var rows = $(this).parents("panel").find(".row-button");
+			var val = this.value.toLocaleLowerCase();
+			if (val.length == 0)
+			{
+				/* Show all of the items. */
+				d3.selectAll(rows).style("display", null);
+			}
+			else
+			{
+				/* Show the items whose description is this.value */
+				d3.selectAll(rows)
+					.style("display", function(d)
+						{
+							if (d.getDescription().toLocaleLowerCase().indexOf(val) >= 0)
+								return null;
+							else
+								return "none";
+						});
+			}
+		}
+		
+		function validateEmail(email) 
+		{
+			var re = /\S+@\S+\.\S\S+/;
+			return re.test(email);
+		}
+		
+		function pick_inquiry_site(organization, panelDiv)
+		{
+			function pickSiteSuccess(site, pickSitePanel)
+			{
+				var pickOfferingSuccess = function(offering, pickOfferingPanel)
+				{
+					function pickSessionSuccess(session, previousPanel)
+					{
+						var addInquiryPanelDiv = new SitePanel();
+						sitePanel.createRoot(session, "Add Inquiry", "list");
+
+						var navContainer = addInquiryPanelDiv.appendNavContainer();
+
+						var backButton = navContainer.appendLeftButton()
+							.on("click", function() { addInquiryPanelDiv.hideRightEvent(); });
+						backButton.append("span").text("Done");
+				
+						var centerButton = navContainer.appendTitle("Record Inquiry");
+
+						addInquiryPanelDiv.appendSearchBar(show_users);
+
+						var panel2Div = addInquiryPanelDiv.appendScrollArea();
+				
+						function show_users()
+						{
+							var val = this.value.toLocaleLowerCase();
+							var inputBox = this;
+				
+							if (val.length == 0)
+							{
+								panel2Div.selectAll("section").remove();
+							}
+							else
+							{
+								var startVal = val;
+								var pickedUser = null;
+					
+								var selectAllSuccess = function(userObjects)
+								{
+									if (inputBox.value.toLocaleLowerCase() == startVal)
+									{
+										panel2Div.selectAll("section").remove();
+										var sections = panel2Div.appendSections(userObjects);
+										var buttons = appendViewButtons(sections)
+											.on("click", function(user) {
+												pickedUser = user;
+												var _thisButton = this;
+												if (prepareClick('click', 'user: ' + user.getDescription()))
+												{
+													var checkCellsSuccess = function() 
+													{
+														var inquiriesCell = session.getCell("Inquiries");
+														var inquiriesInstances = inquiriesCell.data;
+														if (inquiriesInstances.length == 0)
+															syncFailFunction("Session Inquiries are not set up");
+														else
+														{
+															var inquiriesInstance = inquiriesInstances[0];
+															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID)
+																.then(
+																function(cells)
+																{
+																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
+																	
+																	var newValue = inquiryCell.addNewValue();
+																	cr.updateValues([{
+																			containerUUID: inquiriesInstance.getValueID(),
+																			fieldID: inquiryCell.field.nameID, 
+						   													instanceID: pickedUser.getValueID(),
+						   													description: pickedUser.getDescription()
+																		}], [newValue])
+																		.then(function()
+																		   {
+																				bootstrap_alert.success(pickedUser.getDescription() + 
+																					  " inquiry added to " + 
+																					  session.getDescription(),
+																					  ".alert-container");
+																				unblockClick();
+																		   },
+																			function(err)
+																			{
+																				newValue.triggerDeleteValue();
+																				cr.syncFail(err);
+																			});
+																},
+																cr.syncFail);
+														}
+													}
+													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+												}
+												d3.event.preventDefault();
+											});
+										var infoButtons =  buttons.insert("div", ":first-child")
+											.classed("info-button right-fixed-width-div", true)
+											.on("click", function(user) {
+												if (prepareClick('click', 'show user info: ' + user.getDescription()))
+												{
+													showUser(user, addInquiryPanelDiv.node());
+												}
+												d3.event.preventDefault();
+											});
+										drawInfoButtons(infoButtons);
+									}
+								}
+					
+								cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+									.then(selectAllSuccess, cr.asyncFail);
+							}
+						}
+						addInquiryPanelDiv.showLeft().then(unblockClick);
+					}
+					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+				}
+				pick_offering(site, pickSitePanel, pickOfferingSuccess);
+			}
+			pick_site(organization, panelDiv, pickSiteSuccess);
+		}
+		
+		function pickSessionFromOrganization(organization, previousPanelNode, sessionSuccess)
+		{
+			function pickSiteSuccess(site, pickSitePanel)
+			{
+				var pickOfferingSuccess = function(offering, pickOfferingPanel)
+				{
+					function pickSessionSuccess(session, previousPanel)
+					{
+						/* Since d.getValueID() is not null, containerUUID is not needed. */
+						var checkCellsSuccess = function()
+						{
+							sessionSuccess(session, previousPanel);
+						}
+						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+					}
+					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
+				}
+				pick_offering(site, pickSitePanel, pickOfferingSuccess);
+			}
+			pick_site(organization, previousPanelNode, pickSiteSuccess);
+		}
+		
+		function manage_inquiry(organization, panelDiv)
+		{
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, previousPanel)
+				{
+					var inquiriesCell = session.getCell("Inquiries");
+					var inquiriesInstances = inquiriesCell.data;
+					if (inquiriesInstances.length == 0)
+						syncFailFunction("Inquiries are not set up");
+					else
+					{
+						var inquiries = inquiriesInstances[0];
+						showEditObjectPanel(inquiriesCell, inquiries, previousPanel, revealPanelLeft);
+					}
+				});
+		}
+		
+		function manage_enrollment(organization, panelDiv)
+		{
+			pickSessionFromOrganization(organization, panelDiv, 
+				function(session, previousPanel)
+				{
+					var enrollmentsCell = session.getCell("Enrollments");
+					var enrollmentsInstances = enrollmentsCell.data;
+					if (enrollmentsInstances.length == 0)
+						syncFailFunction("Session Enrollments are not set up");
+					else
+					{
+						var enrollmentsInstance = enrollmentsInstances[0];
+						showEditObjectPanel(enrollmentsCell, enrollmentsInstance, previousPanel, revealPanelLeft);
+					}
+				}
+				);
+		}
+		
+		function record_participation(organization, previousNode)
+		{
+			pickSessionFromOrganization(organization, previousNode, 
+				function(session, previousPanel)
+				{
+					var listCell = session.getCell("Enrollments");
+					var listInstances = listCell.data;
+					if (listInstances.length == 0)
+						syncFailFunction("Session Enrollments are not set up");
+					else
+					{
+						var instance = listInstances[0];
+						instance.checkCells(["Enrollment"], function()
+							{
+								var enrollments = instance.getCell("Enrollment").data;
+								
+								var sitePanel = new SitePanel();
+								sitePanel.createRoot(session, "Record Participation", "list");
+
+								var navContainer = sitePanel.appendNavContainer();
+
+								var backButton = navContainer.appendLeftButton()
+									.on("click", function() { sitePanel.hideRightEvent(); });
+								backButton.append("span").text("Done");
+								var centerButton = navContainer.appendTitle("Record Participation");
+						
+								sitePanel.appendSearchBar(show_matching_descriptions);
+
+								var panel2Div = sitePanel.appendScrollArea();
+
+								panel2Div.selectAll("section").remove();
+								var sections = panel2Div.appendSections(enrollments);
+								sections.sort(compareEnrollments);
+								var buttons = appendViewButtons(sections)
+									.on("click", function(enrollment)
+									{
+										if (prepareClick('click', 'add Experience by enrollment'))
+										{
+											enrollment.checkCells(undefined, 
+												function()
+												{
+													addExperienceByEnrollment(session, enrollment, sitePanel.node());
+												}, 
+												syncFailFunction);
+										}
+									});
+							
+								var infoButtons =  buttons.insert("div", ":first-child")
+									.classed("info-button right-fixed-width-div", true)
+									.on("click", function(enrollment) {
+										if (prepareClick('click', 'show enrollment info: ' + enrollment.getDescription()))
+										{
+											checkUserByEnrollment(enrollment,
+												function(user) {
+													showUser(user, sitePanel.node());
+												},
+												syncFailFunction);
+										}
+										d3.event.preventDefault();
+									});
+								drawInfoButtons(infoButtons);
+								
+								sitePanel.showLeft().then(unblockClick);
+							},
+							syncFailFunction);
+					}
+				});
+		}
+		
+		function checkUserByEnrollment(enrollment, successFunction, failFunction)
+		{
+			var checkSuccessFunction = function() 
+			{
+				var user = enrollment.getValue("_user");
+				if (!user)
+					failFunction("The user is not set up.");
+				else
+				{
+					successFunction(user);
+				}
+			}
+			enrollment.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+		}
+		
+		function manage_participation(organization, previousPanelNode)
+		{
+			pickSessionFromOrganization(organization, previousPanelNode, 
+				function(session, currentPanelNode)
+				{
+					var listCell = session.getCell("Experiences");
+					var listInstances = listCell.data;
+					if (listInstances.length == 0)
+						syncFailFunction("Session Experiences are not set up");
+					else
+					{
+						var instance = listInstances[0];
+						showEditObjectPanel(listCell, instance, currentPanelNode, revealPanelLeft);
+					}
+				});
+		}
+		
+	</script>
+		
+</html>
+

@@ -13,11 +13,10 @@
     <title>Sign Up</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
     <!-- Custom styles for this template -->
     <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "custom_user/css/bodybackground.css" %}" rel="stylesheet">
     <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -83,10 +82,9 @@
     <script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
   </body>
 
-	<script src="{% static "jquery/js/jquery.min.js" %}"></script>
-	<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
-	<script src="{% static "jquerycookie/jquery.cookie.js" %}"></script>
-	<script src="{% static "custom_user/js/bodybackground.js" %}"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 	<script src="{% static "custom_user/js/bootstrapalert.js" %}"></script>
 
 	<script type="text/javascript">
@@ -121,7 +119,7 @@
 		
 			function submitForm()
 			{
-				bootstrap_alert.show($('#myAlert'), "Signing up...<br>(this may take a minute)", "alert-info");
+				bootstrap_alert.show($('#myAlert'), "Signing up...\n(this may take a minute)", "alert-info");
 		
 				deferredObject = $.post("{% url 'submitNewUser' %}", 
 					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
@@ -145,7 +143,7 @@
 					console.log( "error: " + textStatus + "; " + errorThrown + ";");
 					console.log( jqXHR.status + "; " + jqXHR.statusText);
 					var s = jqXHR.status + "; " + jqXHR.statusText +
-						"<br>error: " + textStatus + "; " + errorThrown + ";"
+						"\nerror: " + textStatus + "; " + errorThrown + ";"
 					if (jqXHR.status == 403) {
 						var csrftoken = $.cookie('csrftoken');
 						if (csrfToken == '{{ csrf_token }}')
@@ -175,7 +173,7 @@
 			});
 		
 			function checkUnusedEmail(successFunction) {
-				bootstrap_alert.show($('#myAlert'), "Checking Email Address...<br>(this may take a minute)", "alert-info");
+				bootstrap_alert.show($('#myAlert'), "Checking Email Address...\n(this may take a minute)", "alert-info");
 		
 				deferredObject = $.post("{% url 'checkUnusedEmail' %}", 
 					{ csrfmiddlewaretoken: '{{ csrf_token }}', 
@@ -196,7 +194,7 @@
 					console.log( "error: " + textStatus + "; " + errorThrown + ";");
 					console.log( jqXHR.status + "; " + jqXHR.statusText);
 					var s = jqXHR.status + "; " + jqXHR.statusText +
-						"<br>error: " + textStatus + "; " + errorThrown + ";"
+						"\nerror: " + textStatus + "; " + errorThrown + ";"
 					if (jqXHR.status == 403) {
 						var csrftoken = $.cookie('csrftoken');
 						if (csrfToken == '{{ csrf_token }}')

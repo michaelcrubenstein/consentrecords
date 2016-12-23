@@ -19,30 +19,28 @@ class Transaction(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False)
     creation_time = dbmodels.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)
-    time_zone_offset = dbmodels.SmallIntegerField(editable=False)
     
     def __str__(self):
         return str(self.creation_time)
     
-    def createTransaction(user, timeZoneOffset):
+    def createTransaction(user):
         if not user.is_authenticated():
             raise RuntimeError('current user is not authenticated')
         if not user.is_active:
             raise RuntimeError('current user is not active')
-        return Transaction.objects.create(user=user, time_zone_offset=timeZoneOffset)
+        return Transaction.objects.create(user=user)
         
 class TransactionState:
     mutex = Lock()
     
-    def __init__(self, user, timeZoneOffset):
+    def __init__(self, user):
         self.currentTransaction = None
         self.user = user
-        self.timeZoneOffset = timeZoneOffset
             
     @property    
     def transaction(self):
         if self.currentTransaction == None:
-            self.currentTransaction = Transaction.createTransaction(self.user, self.timeZoneOffset)
+            self.currentTransaction = Transaction.createTransaction(self.user)
 
         return self.currentTransaction
 
@@ -64,8 +62,8 @@ class Instance(dbmodels.Model):
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False)
     parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False)
     parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True)
-    transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
-    deleteTransaction = dbmodels.ForeignKey('consentrecords.Transaction', related_name='deletedInstance', db_index=True, null=True, editable=True)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True)
         
     def __str__(self):
         try:
@@ -92,13 +90,16 @@ class Instance(dbmodels.Model):
         return i
     
     def getDataType(self, field):
-        configuration = self.typeID.children.filter(typeID=terms.configuration,deleteTransaction__isnull=True)[0]
-        fields = configuration.children.filter(typeID=terms.field,deleteTransaction__isnull=True)
-        f = fields.get(value__field=terms.name,
-                          value__referenceValue=field,
-                          value__deleteTransaction__isnull=True)
-        v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
-        return v.referenceValue
+        try:
+            configuration = self.typeID.children.filter(typeID=terms.configuration,deleteTransaction__isnull=True)[0]
+            fields = configuration.children.filter(typeID=terms.field,deleteTransaction__isnull=True)
+            f = fields.get(value__field=terms.name,
+                              value__referenceValue=field,
+                              value__deleteTransaction__isnull=True)
+            v = f.value_set.filter(field=terms.dataType,deleteTransaction__isnull=True)[0]
+            return v.referenceValue
+        except Instance.DoesNotExist:
+            raise Instance.DoesNotExist('field "%s" does not exist in configuration of %s'%(field, self.typeID))
     
     # addValue ensures that the value can be found for object values. 
     # addValue does not validate that self is writable.           
@@ -108,16 +109,19 @@ class Instance(dbmodels.Model):
         
         dt = self.getDataType(field)
         if dt==terms.objectEnum:
-            if "instanceID" in value:
+            if isinstance(value, Instance):
+                if value._canFind(transactionState.user):
+                    return self.addReferenceValue(field, value, position, transactionState)
+                else:
+                    raise Instance.DoesNotExist()
+            elif isinstance(value, dict) and "instanceID" in value:
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
                 if len(f) == 0:
                     raise Value.DoesNotExist("specified primary key for instance does not exist")
                 value = f[0]
-            elif not isinstance(value, Instance):
-                raise RuntimeError("specified value is not an Instance or an instanceID")
-            elif not value._canFind(transactionState.user):
-                raise Instance.DoesNotExist()
-            return self.addReferenceValue(field, value, position, transactionState)
+                return self.addReferenceValue(field, value, position, transactionState)
+            else:
+                raise RuntimeError("specified value is not an Instance or a dictionary with an instanceID")
         elif dt==terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
@@ -145,19 +149,20 @@ class Instance(dbmodels.Model):
             i += 1
         return d
 
-    def addReferenceValue(self, field, value, position, transactionState):
+    # Returns a newly created value contained by self with the specified referenceValue
+    def addReferenceValue(self, field, instance, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid" % position)
-        if not value:
-            raise ValueError("the value is null")
+        if not instance:
+            raise ValueError("the instance is null")
             
         # If the field is special access, then make this and all of its children sourced to self.
-        if field == terms.specialAccess and value == terms.customAccessEnum:
+        if field == terms.specialAccess and instance == terms.customAccessEnum:
             descendents = self._descendents()
             n = AccessRecord.objects.filter(id__in=descendents).delete()
             AccessRecord.objects.bulk_create(map(lambda i: AccessRecord(id=i,source=self), descendents))
             
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=value, position=position, transaction=transactionState.transaction)
+        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
@@ -263,6 +268,20 @@ class Instance(dbmodels.Model):
                             r.append(v.referenceValue._description)
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
+            elif descriptorType == terms.firstTextEnum:
+                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
+                if vs.count() > 0:
+                    v = vs[0]
+                    if dataType == terms.objectEnum:
+                        try:
+                            if not v.referenceValue:
+                                raise ValueError("no reference value for %s in %s: %s(%s)" % (str(v.instance), str(self), str(v.field), v.stringValue))
+                            r.append(v.referenceValue.description.text)
+                        except Description.DoesNotExist:
+                            r.append(v.referenceValue._description)
+                    else:
+                        if v.stringValue:
+                            r.append(v.stringValue)
             elif descriptorType == terms.countEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
@@ -306,7 +325,8 @@ class Instance(dbmodels.Model):
         d = {'id': None, 
              'instanceID': self.id, 
              'description': self.getDescription(language),
-             'parentID': self.parent and self.parent.id}
+             'parentID': self.parent and self.parent.id,
+             'typeName': self.typeID.getDescription()}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             d["privilege"] = privilege.getDescription()
@@ -351,6 +371,20 @@ class Instance(dbmodels.Model):
                      "ofKindID" : self.id}
         return fieldData
     
+    # Returns a dictionary of information about a field with this configuration.
+    def getFieldDataByName(self, name, language=None):
+        if terms.isUUID(name):
+            # The key may be the key of a field object or the key of a term that is 
+            # the name of a field object in the configuration.
+            fieldObject = Instance.objects.get(pk=name)
+            if fieldObject.typeID != terms.field:
+                fieldObject = self.getFieldByReferenceValue(name)
+            elif fieldObject.parent != self:
+                raise RuntimeError("the specified field is not contained within the configuration of this type")
+        else:
+            fieldObject = self._getValueByName(name)
+        return fieldObject.getFieldData(language)
+
     # Returns a dictionary of information about a field instance.                 
     def getFieldData(self, language=None):
         return self._getFieldDataFromValues(self._getSubValueReferences(), language)
@@ -389,7 +423,7 @@ class Instance(dbmodels.Model):
         return fieldData
     
     # Returns the fieldsData from the database for self, which is a term.
-    def _getFieldsData(self, language=None):
+    def getFieldsData(self, language=None):
         vs2 = Value.objects.filter(field=terms.name,
                             deleteTransaction__isnull=True)
 
@@ -405,17 +439,6 @@ class Instance(dbmodels.Model):
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
-
-    # Returns the fieldsData from the cache or database for self, which is a term.
-    def getFieldsData(self, fieldsDataDictionary, language=None):
-        if self in fieldsDataDictionary:
-            return fieldsDataDictionary[self]
-        else:
-            fieldsData = self._getFieldsData(language)
-            if not len(fieldsData):
-                raise RuntimeError("the specified item is not configured")
-            fieldsDataDictionary[self] = fieldsData
-            return fieldsData
 
     def _getCellValues(dataTypeID, values, userInfo, language=None):
         if dataTypeID == terms.objectEnum.id:
@@ -435,7 +458,7 @@ class Instance(dbmodels.Model):
             .order_by('position')\
             .select_related('referenceValue')\
             .select_related('referenceValue__typeID')\
-            .select_related('referenceValue__typeID__description__text')
+            .select_related('referenceValue__typeID__description')
     
     
     def _getCellData(self, fieldData, values, userInfo, language=None):
@@ -533,17 +556,20 @@ class Instance(dbmodels.Model):
                                             
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
-    def getFieldByName(self, name):
-        return self.value_set.select_related('referenceValue')\
-                             .get(deleteTransaction__isnull=True,
-                                  field=terms.field,
-                                  referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__field=terms.name,
-                                  referenceValue__value__referenceValue__typeID=terms.term,
-                                  referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
-                                  referenceValue__value__referenceValue__value__field=terms.name,
-                                  referenceValue__value__referenceValue__value__stringValue=name)\
-                             .referenceValue
+    def _getValueByName(self, name):
+        try:
+            return self.value_set.select_related('referenceValue')\
+                                 .get(deleteTransaction__isnull=True,
+                                      field=terms.field,
+                                      referenceValue__value__deleteTransaction__isnull=True,
+                                      referenceValue__value__field=terms.name,
+                                      referenceValue__value__referenceValue__typeID=terms.term,
+                                      referenceValue__value__referenceValue__value__deleteTransaction__isnull=True,
+                                      referenceValue__value__referenceValue__value__field=terms.name,
+                                      referenceValue__value__referenceValue__value__stringValue=name)\
+                                 .referenceValue
+        except Value.DoesNotExist:
+            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration' % (name, self))
 
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
@@ -584,7 +610,7 @@ class Instance(dbmodels.Model):
             
         minPrivilege = None
         minPrivilegeFilter = source.value_set.filter(field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                   .select_related('referenceValue__description__text')
+                                   .select_related('referenceValue__description')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
         
@@ -603,7 +629,7 @@ class Instance(dbmodels.Model):
                        value__referenceValue__value__deleteTransaction__isnull=True)))
                       
         p = map(lambda i: i.value_set.filter(field=terms.privilege, deleteTransaction__isnull=True)\
-                           .select_related('referenceValue__description__text')[0].referenceValue, f)
+                           .select_related('referenceValue__description')[0].referenceValue, f)
         
         return reduce(Instance.comparePrivileges, p, minPrivilege)
     
@@ -788,6 +814,16 @@ class Instance(dbmodels.Model):
         return (Q(accessrecord__isnull=True)|
                         Q(accessrecord__source__in=sources))
         
+    def anonymousReadFilter():
+        sources=Instance.objects.filter(\
+                          Q(value__field=terms.publicAccess.id)&
+                          Q(value__referenceValue=terms.readPrivilegeEnum)&\
+                          Q(value__deleteTransaction__isnull=True)\
+                        )
+        
+        return (Q(accessrecord__isnull=True)|
+                        Q(accessrecord__source__in=sources))
+        
     def securityValueFilter(self, privilegeIDs):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
@@ -880,13 +916,19 @@ class Instance(dbmodels.Model):
                     
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
-    def getOrCreateReferenceValue(self, field, referenceValue, transactionState):
+    def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
         if children.count():
             return children[0]
         else:
+            if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
+                children = self.value_set.filter(field=field,
+                                                 deleteTransaction__isnull=True)
+                if len(children):
+                    return children[0].updateValue(referenceValue, transactionState)
+                    
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
     # returns the querySet of values within self that are in the specified object field and named using
@@ -927,14 +969,14 @@ class NameList():
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey('consentrecords.Instance', db_index=True, editable=False)
-    field = dbmodels.ForeignKey('consentrecords.Instance', related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
+    instance = dbmodels.ForeignKey(Instance, db_index=True, editable=False)
+    field = dbmodels.ForeignKey(Instance, related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
     stringValue = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-    referenceValue = dbmodels.ForeignKey('consentrecords.Instance', related_name='referenceValues', db_index=True, null=True, editable=False)
+    referenceValue = dbmodels.ForeignKey(Instance, related_name='referenceValues', db_index=True, null=True, editable=False)
     position = dbmodels.IntegerField(editable=False)
-    transaction = dbmodels.ForeignKey('consentrecords.Transaction', db_index=True, editable=False)
-    deleteTransaction = dbmodels.ForeignKey('consentrecords.Transaction', related_name='deletedValue', db_index=True, null=True, editable=True)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedValue', db_index=True, null=True, editable=True)
     
     def __str__(self):
         d = str(self.referenceValue) if self.referenceValue else self.stringValue
@@ -966,13 +1008,14 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, userInfo, language=None):
-        d = { "id": self.id,
-              "instanceID" : self.referenceValue.id, 
-              "description": self.referenceValue.getDescription(language),
-              "position": self.position }
+        d = { 'id': self.id,
+              'instanceID' : self.referenceValue.id, 
+              'description': self.referenceValue.getDescription(language),
+              'position': self.position,
+              'typeName': self.referenceValue.typeID.getDescription() }
         privilege = self.referenceValue.getPrivilege(userInfo)
         if privilege:
-            d["privilege"] = privilege.getDescription()
+            d['privilege'] = privilege.getDescription()
         return d
             
     # Updates the value of the specified object
@@ -1116,6 +1159,7 @@ class TermNames():
     lastName = '_last name'
     text = '_text'
     textEnum = '_by text'
+    firstTextEnum = '_by first text'
     countEnum = '_by count'
     accessRecord = '_access record'
     accessRequest = '_access request'
@@ -1255,6 +1299,8 @@ class Terms():
     
         try: self.textEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.textEnum)
         except Value.DoesNotExist: pass
+        try: self.firstTextEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.firstTextEnum)
+        except Value.DoesNotExist: pass
         try: self.countEnum = Terms.getNamedEnumerator(self.descriptorType, TermNames.countEnum);
         except Value.DoesNotExist: pass
     
@@ -1308,7 +1354,7 @@ class Terms():
     def __getitem__(self, name):
         try:
             if terms.isUUID(name):
-                return Instance.objects.get(pk=name);
+                return Instance.objects.get(pk=name, deleteTransaction__isnull=True);
             else:
                 return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
@@ -1324,7 +1370,7 @@ class Terms():
             x = Terms.getName()
         elif name == 'securityFields': 
             x = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
-        elif name in ['textEnum', 'countEnum']:
+        elif name in ['textEnum', 'firstTextEnum', 'countEnum']:
             x = Terms.getNamedEnumerator(self.descriptorType, type.__getattribute__(TermNames, name))
         elif name in ['objectEnum', 'stringEnum', 'translationEnum']:
             x = Terms.getNamedEnumerator(self.dataType, type.__getattribute__(TermNames, name))
@@ -1378,6 +1424,22 @@ class Terms():
                 
 terms = Terms()
 
+class FieldsDataDictionary:
+    def __init__(self, typeInstances=[], language=None):
+        self.language = language
+        self._dict = dict((t, t.getFieldsData(language)) for t in typeInstances)
+    
+    def __getitem__(self, typeInstance):
+        if isinstance(typeInstance, str):
+            typeInstance = next((key for key in self._dict.keys() if key.id == typeInstance),
+            					Instance.objects.get(pk=typeInstance))
+                            
+        if typeInstance in self._dict:
+            return self._dict[typeInstance]
+        else:
+            self._dict[typeInstance] = typeInstance.getFieldsData(self.language)
+            return self._dict[typeInstance]
+
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
@@ -1429,7 +1491,7 @@ class UserInfo:
 
     def readFilter(self, resultSet):
         if not self.is_authenticated:
-            return resultSet.filter(Instance.anonymousFindFilter())
+            return resultSet.filter(Instance.anonymousReadFilter())
         elif self.is_administrator:
             return resultSet
         else:

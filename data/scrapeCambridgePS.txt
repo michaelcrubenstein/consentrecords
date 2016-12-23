@@ -1,0 +1,363 @@
+Organization
+    _name: Cambridge Public Schools
+    Sites
+    	Site
+	    	_name: Maria L. Baldwin School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Amigos School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+	    	    Offering
+	    	        _name: Grade 6
+	    	        Service: Grade 6
+	    	    Offering
+	    	        _name: Grade 7
+	    	        Service: Grade 7
+	    	    Offering
+	    	        _name: Grade 8
+	    	        Service: Grade 8
+    	Site
+	    	_name: Cambridgeport School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Haggerty School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Martin Luther King, Jr. School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: King Open
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Kennedy-Longfellow School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Morse School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Peabody School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: John M Tobin School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Graham & Parks School
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Fletcher/Maynard Academy
+	    	Offerings
+	    	    Offering
+	    	        _name: Junior Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Kindergarten
+	    	        Service: Kindergarten
+	    	    Offering
+	    	        _name: Grade 1
+	    	        Service: Grade 1
+	    	    Offering
+	    	        _name: Grade 2
+	    	        Service: Grade 2
+	    	    Offering
+	    	        _name: Grade 3
+	    	        Service: Grade 3
+	    	    Offering
+	    	        _name: Grade 4
+	    	        Service: Grade 4
+	    	    Offering
+	    	        _name: Grade 5
+	    	        Service: Grade 5
+    	Site
+	    	_name: Cambridge Street Upper School
+	    	Offerings
+	    	    Offering
+	    	        _name: Grade 6
+	    	        Service: Grade 6
+	    	    Offering
+	    	        _name: Grade 7
+	    	        Service: Grade 7
+	    	    Offering
+	    	        _name: Grade 8
+	    	        Service: Grade 8
+    	Site
+	    	_name: Putnam Avenue Upper School
+	    	Offerings
+	    	    Offering
+	    	        _name: Grade 6
+	    	        Service: Grade 6
+	    	    Offering
+	    	        _name: Grade 7
+	    	        Service: Grade 7
+	    	    Offering
+	    	        _name: Grade 8
+	    	        Service: Grade 8
+    	Site
+	    	_name: Rindge Avenue Upper School
+	    	Offerings
+	    	    Offering
+	    	        _name: Grade 6
+	    	        Service: Grade 6
+	    	    Offering
+	    	        _name: Grade 7
+	    	        Service: Grade 7
+	    	    Offering
+	    	        _name: Grade 8
+	    	        Service: Grade 8
+    	Site
+	    	_name: Vassal Lane Upper School
+	    	Offerings
+	    	    Offering
+	    	        _name: Grade 6
+	    	        Service: Grade 6
+	    	    Offering
+	    	        _name: Grade 7
+	    	        Service: Grade 7
+	    	    Offering
+	    	        _name: Grade 8
+	    	        Service: Grade 8
+    	Site
+	    	_name: Cambridge Rindge and Latin School
+	    	Offerings
+	    	    Offering
+	    	        _name: Grade 9
+	    	        Service: Grade 9
+	    	    Offering
+	    	        _name: Grade 10
+	    	        Service: Grade 10
+	    	    Offering
+	    	        _name: Grade 11
+	    	        Service: Grade 11
+	    	    Offering
+	    	        _name: Grade 12
+	    	        Service: Grade 12

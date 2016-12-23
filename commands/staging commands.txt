@@ -1,0 +1,60 @@
+##################################################################
+# Connecting to the ec2 instance (ubuntu server)
+##################################################################
+
+ssh -i "~/Development/keys/PathAdvisorProduction.pem" ubuntu@ec2-54-197-34-115.compute-1.amazonaws.com
+
+##################################################################
+# Installing pip
+##################################################################
+
+-- Displays the current version of python installed.
+-- It must by 2.7 or later to install awscli
+python3 --version
+
+-- Displays the path to the pip application if it is already installed.
+which pip
+
+-- Installs pip if it isn't already installed.
+curl -O https://bootstrap.pypa.io/get-pip.py
+sudo python3 get-pip.py
+
+##################################################################
+# Installing virtualenv
+##################################################################
+
+sudo apt install virtualenv
+
+##################################################################
+# Create a virtual environment
+##################################################################
+
+mkdir ~/eb_django_app
+virtualenv -p python3 ~/eb_django_app/prod
+
+##################################################################
+# Use the virtual environment
+##################################################################
+
+. prod/bin/activate
+
+
+##################################################################
+# Install awscli
+##################################################################
+sudo -H pip3 install awscli
+
+sudo -H pip3 install django
+sudo -H pip3 install django-cors-headers
+sudo -H pip3 install django-oauth-toolkit
+sudo -H pip3 install django-oauth2-provider
+sudo -H pip3 install pytz
+sudo -H pip3 install tzlocal
+
+##################################################################
+# The following files need to be set up 
+##################################################################
+# .elasticbeanstalk/config.yml
+# .elasticbeanstalk/consentrecords-prod.env.yml
+# .ebextensions/01-django_eb.config  
+# .ebextensions/securelistener.config

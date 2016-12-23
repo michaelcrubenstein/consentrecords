@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.db import transaction, connection
 from django.db.models import F, Q, Prefetch
-from django.http import HttpResponse, JsonResponse, Http404
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
+from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token
+from django.core.exceptions import PermissionDenied
 
 from oauth2_provider.views.generic import ProtectedResourceView
 from oauth2_provider.models import AccessToken
@@ -21,18 +22,39 @@ import itertools
 
 from monitor.models import LogRecord
 from custom_user import views as userviews
+from custom_user.emailer import Emailer
 from consentrecords.models import *
 from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
+def handler404(request):
+    response = render_to_response('404.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 404
+    return response
+
+
+def handler500(request):
+    response = render_to_response('500.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 500
+    return response
+
+def logPage(request, name):
+    try:
+        userAgent = request.META['HTTP_USER_AGENT']
+    except Exception:
+        userAgent = 'Unspecified user agent'
+        
+    LogRecord.emit(request.user, name, userAgent)
+
 def home(request):
-    LogRecord.emit(request.user, 'pathAdvisor/home', '')
+    logPage(request, 'pathAdvisor/home')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -47,18 +69,40 @@ def home(request):
     state = request.GET.get('state', None)
     if state:
         args['state'] = state
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def showLines(request):
+    logPage(request, 'pathAdvisor/showLines')
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = "me"
 
     context = RequestContext(request, args)
         
     return HttpResponse(template.render(context))
 
 def orgHome(request):
-    LogRecord.emit(request.user, 'pathAdvisor/orgHome', '')
+    logPage(request, 'pathAdvisor/orgHome')
     
     template = loader.get_template('consentrecords/orgHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -78,13 +122,12 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
-def find(request, serviceid, offeringid):
-    LogRecord.emit(request.user, 'pathAdvisor/find', '')
+def find(request):
+    logPage(request, 'pathAdvisor/find')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -93,7 +136,9 @@ def find(request, serviceid, offeringid):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    args['state'] = "findNewExperience" + serviceid + offeringid
+    # Currently, findNewExperience can support a serviceID and an offeringID. ultimately,
+    # we want to pass a path to make this more RESTful.
+    args['state'] = "findNewExperience"
     
     if settings.FACEBOOK_SHOW:
         offering = Instance.objects.get(pk=offeringid)
@@ -105,8 +150,8 @@ def find(request, serviceid, offeringid):
         
     return HttpResponse(template.render(context))
 
-def list(request):
-    LogRecord.emit(request.user, 'pathAdvisor/list', '')
+def showInstances(request):
+    logPage(request, 'pathAdvisor/list')
     
     try:
         # The type of the root object.
@@ -141,12 +186,11 @@ def list(request):
         return HttpResponse(str(e))
 
 def showPathway(request, email):
-    LogRecord.emit(request.user, 'pathAdvisor/showPathway', email)
+    logPage(request, 'pathAdvisor/showPathway')
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -168,13 +212,284 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+def accept(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/accept', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'accept'
+        args['follower'] = objs[0].id
+        args['cell'] = '_user'
+        args['privilege'] = terms.readPrivilegeEnum.id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def ignore(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    userInfo = UserInfo(request.user)
+    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(objs) > 0:
+        args['state'] = 'ignore'
+        args['follower'] = objs[0].id
+        args['follower_description'] = objs[0].getDescription()
+        
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def userSettings(request):
+    LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
+    
+    print ('1')
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    print ('2')
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    print ('3')
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'settings/'
+        
+    print ('4')
+    context = RequestContext(request, args)
+        
+    print ('5')
+    return HttpResponse(template.render(context))
+
+def signup(request, email=None):
+    LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
+    
+    template = loader.get_template('consentrecords/userHome.html')
+    args = {
+        'user': request.user,
+    }
+    
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    if email:
+        args['state'] = 'signup/%s' % email
+    else:
+        args['state'] = 'signup/'
+        
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def acceptFollower(request, userPath=None):
+    if request.method != "POST":
+        raise Http404("acceptFollower only responds to POST methods")
+    
+    try:    
+        language = None
+        followerID = request.POST["follower"]
+        privilegeID = request.POST["privilege"]
+        
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
+        
+        if not request.user.is_authenticated():
+            return HttpResponseBadRequest(reason="user is not authenticated")
+            
+        userInfo = UserInfo(request.user)
+        if userPath:
+            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            if len(users):
+                user = users[0]
+                if user.typeID != terms.user:
+                    return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
+            else:
+                return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
+        else:
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
+
+        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        if len(objs) > 0:
+            follower = objs[0]
+            if follower.typeID == terms.user:
+                followerField = terms.user
+            else:
+                followerField = terms.group
+            ars = user.value_set.filter(field=terms['_access record'],
+                                  deleteTransaction__isnull=True) \
+                          .filter(referenceValue__value__field=followerField,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__referenceValue_id=follower.id)
+            if ars.count():
+                return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
+            else:
+                with transaction.atomic():
+                    transactionState = TransactionState(request.user)
+                    nameLists = NameList()
+                    try:
+                        ar = user.value_set.filter(field=terms['_access record'],
+                                                   deleteTransaction__isnull=True) \
+                                     .get(referenceValue__value__field=terms['_privilege'],
+                                          referenceValue__value__deleteTransaction__isnull=True,
+                                          referenceValue__value__referenceValue_id=privilegeID).referenceValue
+                        newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
+                    except Value.DoesNotExist:
+                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
+                            {'_privilege': [{'instanceID': privilegeID}],
+                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
+    
+                    # Remove any corresponding access requests.
+                    vs = user.value_set.filter(field=terms['_access request'],
+                                           deleteTransaction__isnull=True,
+                                           referenceValue_id=follower.id)
+                    for v in vs:
+                        v.deepDelete(transactionState)
+                
+                    data = newValue.getReferenceData(userInfo, language)
+                    results = {'object': data} 
+        else:
+            raise RuntimeError('the user or group to accept is unrecognized')
+            
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
+        
+    return JsonResponse(results)
+
+def requestAccess(request):
+    if request.method != "POST":
+        raise Http404("requestAccess only responds to POST methods")
+    
+    try:    
+        language = None
+        followingID = request.POST["following"]
+        if terms.isUUID(followingID):
+            followingPath = '#%s' % followingID
+        else:
+            followingPath = followingID
+            
+        followerID = request.POST["follower"]
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
+        
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
+            else:
+                userInfo = UserInfo(request.user)
+                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                if len(objs) > 0 and objs[0].typeID == terms.user:
+                    following = objs[0]
+                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(objs) > 0 and objs[0].typeID == terms.user:
+                        follower = objs[0]
+                        fieldTerm = terms['_access request']
+                        ars = following.value_set.filter(field=fieldTerm,
+                                                         deleteTransaction__isnull=True,
+                                                         referenceValue_id=follower.id)
+                        if ars.count():
+                            if follower == user:
+                                error = 'You have already requested to follow %s.' % following.description.text
+                            else:
+                                error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
+                            raise RuntimeError(error)
+                        else:
+                            with transaction.atomic():
+                                transactionState = TransactionState(request.user)
+                                nameLists = NameList()
+                            
+                                v = following.addReferenceValue(fieldTerm, follower, following.getNextElementIndex(fieldTerm), transactionState)
+            
+                                data = v.getReferenceData(userInfo, language)
+                            
+                                # Send an email to the following user.
+                                protocol = "https://" if request.is_secure() else "http://"
+
+                                # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
+                                recipientEMail = following.value_set.filter(field=terms.email,
+                                                                            deleteTransaction__isnull=True)[0].stringValue
+                                firstNames = following.value_set.filter(field=terms['_first Name'],
+                                								   deleteTransaction__isnull=True)
+                                firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                                
+                                moreExperiences = following.getSubInstance(terms['Path'])
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
+                                																	deleteTransaction__isnull=True)
+                                screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                                
+                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
+                                    screenName or firstName,
+                                    recipientEMail, 
+                                    follower.getDescription(),
+                                    protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
+                                    protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
+                            
+                                results = {'object': data}
+                    else:
+                        raise RuntimeError('the requestor is unrecognized')
+                else:
+                    raise RuntimeError('the user to follow is unrecognized')
+        else:
+            return HttpResponseBadRequest(reason="user is not authenticated")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
+        
+    return JsonResponse(results)
+
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
     
     if request.user.is_authenticated():
@@ -211,11 +526,9 @@ def addToPathway(request):
     siteName = request.GET.get('s', None)
     offeringName = request.GET.get('f', None)
     serviceName = request.GET.get('m', None)
-    
-    print(organizationName, siteName, offeringName, serviceName)
 
     userInfo = UserInfo(request.user)
-    
+
     if offeringName and terms.isUUID(offeringName):
         offering = terms[offeringName]
     elif siteName and terms.isUUID(siteName):
@@ -232,20 +545,24 @@ def addToPathway(request):
             site, offering = _getOrganizationChildren(organization, siteName, offeringName)
         else:
             site, offering = None, None
-    
+    else:
+        organization, site, offering = None, None, None
+
     if serviceName and terms.isUUID(serviceName):
-        service = terms[serviceName]
+        try:
+            service = terms[serviceName]
+        except Instance.DoesNotExist:
+            service = None
     elif serviceName:
         service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
     else:
         service = None
-        
+    
     template = loader.get_template('consentrecords/userHome.html')
     args = {
         'user': request.user,
-        'backURL': '/',
     }
-    
+
     if settings.FACEBOOK_SHOW:
         args['fbURL'] = request.build_absolute_uri()
         args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
@@ -261,20 +578,20 @@ def addToPathway(request):
         args['offering'] = offering.id if offering else offeringName
     if serviceName:
         args['service'] = service.id if service else serviceName
-    
+
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
-        
+    
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
-    
+
     args['state'] = 'addToPathway'
 
     context = RequestContext(request, args)
-        
+    
     return HttpResponse(template.render(context))
 
 # Handle a POST event to create a new instance of an object with a set of properties.
@@ -287,10 +604,10 @@ class api:
             if instanceUUID:
                 ofKindObject = Instance.objects.get(pk=instanceUUID)
             elif not instanceType:
-                return JsonResponse({'success':False, 'error': "type was not specified in createInstance"})
+                return HttpResponseBadRequest(reason="Type was not specified in createInstance")
             else:
                 ofKindObject = terms[instanceType]
-        
+         
             # An optional container for the new object.
             containerUUID = data.get('containerUUID', None)
         
@@ -314,14 +631,13 @@ class api:
             index = int(indexString)
         
             # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
             languageID = None
             language = None
             
             userInfo = UserInfo(user)
             
             with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
+                transactionState = TransactionState(user)
                 if containerUUID:
                     containerObject = Instance.objects.get(pk=containerUUID)
                 else:
@@ -334,24 +650,30 @@ class api:
                     Instance.updateDescriptions([item], nameLists)
     
                 if containerObject:
-                    results = {'success':True, 'object': newValue.getReferenceData(userInfo, language)}
+                    results = {'object': newValue.getReferenceData(userInfo, language)}
                 else:    
-                    results = {'success':True, 'object': item.getReferenceData(userInfo, language)}
+                    results = {'object': item.getReferenceData(userInfo, language)}
             
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
-        
+    
+    def checkForPath(c, user, pathKey, idKey):
+        if pathKey in c:
+            userInfo = UserInfo(user)
+            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            if len(instances) > 0:
+                c[idKey] = instances[0].id
+            else:
+                raise RuntimeError("%s is not recognized" % pathKey)
+           
     def updateValues(user, data):
         try:
             commandString = data.get('commands', "[]")
             commands = json.loads(commandString)
-        
-            # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
         
             valueIDs = []
             instanceIDs = []
@@ -359,15 +681,17 @@ class api:
             descriptionQueue = []
             
             with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
+                transactionState = TransactionState(user)
                 for c in commands:
-                    newInstance = None
+                    instanceID = None
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
                         oldValue.checkWriteAccess(user)
 
                         container = oldValue.instance
 
+                        api.checkForPath(c, user, "instance", "instanceID")
+                        
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
                         if oldValue.hasNewValue(c):
@@ -376,19 +700,28 @@ class api:
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
-                    elif "containerUUID" in c:
+                    elif "containerUUID" in c or "container" in c:
+                        api.checkForPath(c, user, "container", "containerUUID")
                         container = Instance.objects.get(pk=c["containerUUID"],deleteTransaction__isnull=True)
 
-                        field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
-                        newIndex = c["index"]
+                        if "field" in c:
+                            field = terms[c["field"]]
+                        else:
+                            field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
+                        if "index" in c:
+                            newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
+                        else:
+                            newIndex = container.getNextElementIndex(field)
+                        
+                        api.checkForPath(c, user, "instance", "instanceID")
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
                         container.checkWriteValueAccess(user, field, instanceID)
 
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
-                            propertyList = newValue
                             newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
+                            instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
                         if item.isDescriptor:
@@ -396,79 +729,19 @@ class api:
                     else:
                         raise ValueError("subject id was not specified")
                     valueIDs.append(item.id if item else None)
-                    instanceIDs.append(newInstance.id if newInstance else None)
+                    instanceIDs.append(instanceID)
                                 
                 Instance.updateDescriptions(descriptionQueue, nameLists)
                 
-                results = {'success':True, 'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
+                results = {'valueIDs': valueIDs, 'instanceIDs': instanceIDs}
             
+            return JsonResponse(results)
+        
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-               
-        return JsonResponse(results)
+            return HttpResponseBadRequest(reason=str(e))
 
-    def addValue(user, data):
-        try:
-            # The path to the container object.
-            containerPath = data.get('path', None)
-        
-            # The field name for the new value within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # A value added to the container.
-            valueUUID = data.get('valueUUID', None)
-        
-            if valueUUID is None:
-                return JsonResponse({'success':False, 'error': 'the value was not specified'})
-            
-            referenceValue = Instance.objects.get(pk=valueUUID)
-            
-            # The index of the value within the container.
-            indexString = data.get('index', None)
-        
-            # The client time zone offset, stored with the transaction.
-            timezoneoffset = data['timezoneoffset']
-        
-            with transaction.atomic():
-                transactionState = TransactionState(user, timezoneoffset)
-                
-                if containerPath:
-                    userInfo = UserInfo(user)
-                    containers = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(containers) > 0:
-                        container = containers[0]
-                    else:
-                        raise RuntimeError("Specified path is not recognized")
-                else:
-                    raise RuntimeError("the container path was not specified")
-                container.checkWriteValueAccess(user, field, valueUUID)
-    
-                if indexString:
-                    newIndex = container.updateElementIndexes(field, int(indexString), transactionState)
-                else:
-                    newIndex = container.getNextElementIndex(field)
-    
-                item = container.addReferenceValue(field, referenceValue, newIndex, transactionState)
-                if item.isDescriptor:
-                    Instance.updateDescriptions([container], NameList())
-                    
-            results = {'success':True, 'id': item.id}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
-            
-        return JsonResponse(results)
-        
     def selectAll(user, data):
         try:
             path = data.get("path", None)
@@ -490,11 +763,11 @@ class api:
                 uuObjects = uuObjects[start:]
             
             p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
-            results = {'success':True, 'objects': p}
+            results = {'objects': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
     
@@ -504,7 +777,7 @@ class api:
         try:
             path = data.get("path", None)
             if not path:
-                return JsonResponse({'success':False, 'error': 'the path was not specified'})
+                raise ValueError('the path was not specified')
                 
             userInfo = UserInfo(user)
             language=None
@@ -513,7 +786,7 @@ class api:
             fieldName = data.get('fieldName', None)
         
             if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
+                raise ValueError('the fieldName was not specified')
             elif terms.isUUID(fieldName):
                 field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
             else:
@@ -523,17 +796,17 @@ class api:
             value = data.get('value', None)
         
             if value is None:
-                return JsonResponse({'success':False, 'error': 'the value was not specified'})
+                raise ValueError('the value was not specified')
             
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: i.findValues(field, value), containers)
             p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
                             
-            results = {'success':True, 'objects': [i for i in p]}
+            results = {'objects': [i for i in p]}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
         
@@ -547,24 +820,24 @@ class api:
             elif typeName:
                 kindObject = terms[typeName]
             else:
-                return JsonResponse({'success':False, 'error': "typeName was not specified in getAddConfiguration"})
+                raise ValueError("typeName was not specified in getAddConfiguration")
         
             configurationObject = kindObject.getSubInstance(terms.configuration)
         
             if not configurationObject:
-                return JsonResponse({'success':False, 'error': "objects of this kind have no configuration object"})
+                raise ValueError("objects of this kind have no configuration object")
                 
             p = configurationObject.getConfiguration()
         
-            results = {'success':True, 'cells': p}
+            results = {'cells': p}
         except Instance.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            return JsonResponse({'success':False, 'error': "the specified instanceType was not recognized"})
+            return HttpResponseBadRequest(reason="the specified instanceType was not recognized")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
 
@@ -577,16 +850,23 @@ class api:
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
             userID = Instance.getUserInstance(accessToken.user).id
-            results = {'success':True, 'userID': userID}
+            results = {'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
     
+    def _getValueQuerySet(vs, userInfo):
+        return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
+                .order_by('position')\
+                .select_related('field')\
+                .select_related('referenceValue')\
+                .select_related('referenceValue__description')
+    
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = uuObject.typeID.getFieldsData(fieldsDataDictionary, language)
+        fieldsData = fieldsDataDictionary[uuObject.typeID]
         
         data = uuObject.getReferenceData(userInfo, language)
         data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
@@ -605,6 +885,10 @@ class api:
             
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
+                if fieldData["name"] in fields:
+                    vs = api._getValueQuerySet(p.value_set, userInfo)
+                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID], userInfo, language)
+                    
                 data["cells"].append({"field": fieldData, "data": [parentData]})
         
         if TermNames.systemAccess in fields:
@@ -623,44 +907,36 @@ class api:
                               'privilege': saObject.description.text}]
                 data["cells"].append({"field": fieldData, "data": parentData})
                 
-        if 'type' in fields:
-            data['typeName'] = uuObject.typeID.getDescription();
-                
-        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-
+        # For each of the cells, if the cell is in the field list explicitly, 
+        # and the cell is in the fieldsData (and not the name of a parent type)
+        # then get the subdata for all of the values in that cell.
+        subValuesDict = None
+        for field in fieldsData: 
+            if 'nameID' not in field:
+                print(field)
         for cell in data["cells"]:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
-                and "ofKindID" in cell["field"]:
-                typeID = Instance.objects.get(pk=cell["field"]["ofKindID"])
-                fieldsData = typeID.getFieldsData(fieldsDataDictionary, language)
+                and "ofKindID" in cell["field"] \
+                and next((field for field in fieldsData if field["nameID"] == cell["field"]["nameID"]), None):
+                
+                subFieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
+                subValuesDict = subValuesDict or \
+                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
                 for d in cell["data"]:
-                    i = Instance.objects.select_related('typeID').select_related('parent')\
-                                        .select_related('description')\
-                                        .prefetch_related(Prefetch('value_set',
-                                                            queryset=valueQueryset,
-                                                            to_attr='values'))\
-                                        .get(pk=d["instanceID"])
-                    d["cells"] = i.getData(i.values, fieldsData, userInfo, language)
+                    i = subValuesDict[d["instanceID"]]
+                    d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
+                    d['typeName'] = cell["field"]["ofKind"]
             
         return data;
         
-    def getData(user, data):
+    def getData(user, path, data):
         pathparser.currentTimestamp = datetime.datetime.now()
         try:
-            path = data.get('path', None)
-            if path.startswith('::NewExperience:'):
-                return api.getNewExperienceChoices(user, data)
-            
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
         
             if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
+                raise ValueError("path was not specified in getData")
             
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
@@ -671,14 +947,27 @@ class api:
             uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
             # preload the typeID, parent, value_set and description to improve performance.
-            valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-                .order_by('position')\
-                .select_related('field')\
-                .select_related('field__id')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
+            # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+            valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
+            
+            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
+            fieldNames = list(fieldNames)
+            if len(fieldNames):
+                # The distinct is required to eliminate duplicate subValues.
+                subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
+                                          instance__referenceValues__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__deleteTransaction__isnull=True,
+                                          instance__referenceValues__field__value__field=terms.name,
+                                          instance__referenceValues__field__value__stringValue__in=fieldNames)\
+                    .distinct()
+                subValueQueryset = api._getValueQuerySet(subValues, userInfo)
+                valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                      queryset=subValueQueryset,
+                                      to_attr='subValues'))
 
-            uuObjects = uuObjects.select_related('typeID').select_related('parent')\
+            uuObjects = uuObjects.select_related('typeID')\
+                                 .select_related('typeID__description')\
+                                 .select_related('parent')\
                                  .select_related('description')\
                                  .prefetch_related(Prefetch('value_set',
                                                             queryset=valueQueryset,
@@ -690,164 +979,27 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
-            fieldsDataDictionary = {}
+            typeset = frozenset([x.typeID for x in uuObjects])
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            
             p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
-            results = {'success':True, 'data': p}
+            results = {'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
             logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
         
-    def _addPreloadData(uuObjects, userInfo):
-        valueQueryset = userInfo.findValueFilter(Value.objects.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-
-        return uuObjects.select_related('typeID').select_related('parent')\
-                        .select_related('description')\
-                        .prefetch_related(Prefetch('value_set',
-                                                   queryset=valueQueryset,
-                                                   to_attr='values'))
-
-    
-    def getNewExperienceChoices(user, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
-        try:
-            path = data.get('path', None)
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-        
-            if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
-            
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            language = data.get('language', None)
-
-            userInfo=UserInfo(user)
-            
-            testValue = path[len('::NewExperience:'):]
-            
-            if len(testValue) > 0:
-                a = ["Service Domain", "Service", "Offering", "Site", "Organization"]
-            else:
-                a = ["Service Domain"]
-            results = []
-            for termName in a:
-                term = terms[termName]
-                uuObjects = Instance.objects.filter(typeID=term)
-                
-                if len(testValue) >= 3:
-                    vFilter = Value.objects.filter(field=terms.name, 
-                                                   stringValue__icontains=testValue,referenceValue__isnull=True,
-                                                   deleteTransaction__isnull=True)
-                    uuObjects = uuObjects.filter(value__in=vFilter)
-                elif len(testValue) > 0:
-                    vFilter = Value.objects.filter(field=terms.name, 
-                                                   stringValue__istartswith=testValue,referenceValue__isnull=True,
-                                                   deleteTransaction__isnull=True)
-                    uuObjects = uuObjects.filter(value__in=vFilter)
-                uuObjects = userInfo.readFilter(uuObjects)
-                uuObjects = uuObjects.order_by('description__text', 'id');
-                c = uuObjects.count()
-                if c <= start:
-                    start -= c
-                    end -= c
-                elif c <= end:
-                    uuObjects = api._addPreloadData(uuObjects, userInfo)
-                    results += uuObjects[start:]
-                    end -= c
-                    start = 0
-                else:
-                    uuObjects = api._addPreloadData(uuObjects, userInfo)
-                    results += uuObjects[start:end]
-                    end = 0
-                    start = 0
-                    break
-            
-            fieldsDataDictionary = {}
-            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in results]        
-        
-            results = {'success':True, 'data': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
-        
-        return JsonResponse(results)
-    
-    def _getValueData(v, fieldsDataDictionary, language, userInfo):
-        fieldsData = v.referenceValue.typeID.getFieldsData(fieldsDataDictionary, language)
-        data = v.getReferenceData(userInfo, language)
-        vs = userInfo.findValueFilter(v.referenceValue.value_set.filter(deleteTransaction__isnull=True))\
-            .order_by('position')\
-            .select_related('field')\
-            .select_related('field__id')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__description')
-        data["cells"] = v.referenceValue.getData(vs, fieldsData, userInfo, language)
-        data['typeName'] = v.referenceValue.typeID.getDescription();
-        return data;
-    
-    def getCellData(user, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
-        try:
-            path = data.get('path', None)
-        
-            if not path:
-                return JsonResponse({'success':False, 'error': "path was not specified in getData"})
-            
-            # The field name for the values to find within the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                return JsonResponse({'success':False, 'error': 'the fieldName was not specified'})
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-                
-            language = data.get('language', None)
-
-            userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            values = uuObjects[0].getReadableSubValues(field, userInfo)
-            fieldsDataDictionary = {}
-            p = [api._getValueData(v, fieldsDataDictionary, language, userInfo) for v in values]        
-        
-            results = {'success':True, 'objects': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            
-            results = {'success':False, 'error': str(e)}
-        
-        return JsonResponse(results)
-    
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def deleteInstances(user, data):
+    def deleteInstances(user, path):
         try:
-            path = data.get('path', None)
-        
             if path:
-                # The client time zone offset, stored with the transaction.
-                timezoneoffset = data['timezoneoffset']
-        
                 with transaction.atomic():
-                    transactionState = TransactionState(user, timezoneoffset)
+                    transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
@@ -857,12 +1009,12 @@ class api:
                         uuObject.deleteOriginalReference(transactionState)
                         uuObject.deepDelete(transactionState)
             else:   
-                return JsonResponse({'success':False, 'error': "path was not specified in delete"})
-            results = {'success':True}
+                raise ValueError("path was not specified in delete")
+            results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
         
@@ -873,27 +1025,24 @@ class api:
             if valueID:
                 v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
 
-                # The client time zone offset, stored with the transaction.
-                timezoneoffset = data['timezoneoffset']
-
                 with transaction.atomic():
                     v.checkWriteAccess(user)
                     
-                    transactionState = TransactionState(user, timezoneoffset)
+                    transactionState = TransactionState(user)
                     v.deepDelete(transactionState)
                     
                     if v.isDescriptor:
                         nameLists = NameList()
                         Instance.updateDescriptions([v.instance], nameLists)
             else:   
-                return JsonResponse({'success':False, 'error': "valueID was not specified in delete"})
-            results = {'success':True}
+                raise ValueError("valueID was not specified in delete")
+            results = {}
         except Value.DoesNotExist:
-            return JsonResponse({'success':False, 'error': "the specified value ID was not recognized"})
+            return HttpResponseBadRequest(reason="the specified value ID was not recognized")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
-            results = {'success':False, 'error': str(e)}
+            return HttpResponseBadRequest(reason=str(e))
             
         return JsonResponse(results)
 
@@ -902,7 +1051,7 @@ def createInstance(request):
         raise Http404("createInstance only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.createInstance(request.user, request.POST)
     
@@ -911,35 +1060,25 @@ def updateValues(request):
         raise Http404("updateValues only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.updateValues(request.user, request.POST)
     
-# Handle a POST event to add a value to an object that references another other or data.
-def addValue(request):
-    if request.method != "POST":
-        raise Http404("addValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
-    
-    return api.addValue(request.user, request.POST)
-        
 def deleteInstances(request):
     if request.method != "POST":
         raise Http404("deleteInstances only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
         
-    return api.deleteInstances(request.user, request.POST)
+    return api.deleteInstances(request.user, request.POST.get('path', None))
     
 def deleteValue(request):
     if request.method != "POST":
         raise Http404("deleteValue only responds to POST methods")
     
     if not request.user.is_authenticated():
-        return JsonResponse({'success':False, 'error': 'the current user is not authenticated'})
+        raise PermissionDenied
     
     return api.deleteValue(request.user, request.POST)
     
@@ -968,43 +1107,43 @@ def getUserID(request):
     return api.getUserID(request.user, request.GET)
 
 def getData(request):
-    if request.method != "GET":
+    if request.method == 'GET':
+        return api.getData(request.user, request.GET.get('path', None), request.GET)
+    else:
         raise Http404("getData only responds to GET methods")
-    
-    return api.getData(request.user, request.GET)
 
-def getCellData(request):
-    if request.method != "GET":
-        raise Http404("getCellData only responds to GET methods")
-    
-    return api.getCellData(request.user, request.GET)
+def handleURL(request, urlPath):
+    if request.method == 'GET':
+        return api.getData(request.user, urlPath, request.GET)
+    elif request.method == 'DELETE':
+        if not request.user.is_authenticated():
+            raise PermissionDenied
+        return api.deleteInstances(request.user, urlPath)
+    else:
+        raise Http404("api only responds to GET methods")
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/getdata/':
             return getData(request)
-        if request.path_info == '/api/getcelldata/':
-            return getCellData(request)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
         elif request.path_info == '/api/selectall/':
             return selectAll(request)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
-        return JsonResponse({'success':False, 'error': 'unrecognized url'})
+        return HttpResponseNotFound(reason='unrecognized url')
         
     def post(self, request, *args, **kwargs):
         if request.path_info == '/api/createinstance/':
             return createInstance(request)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/addvalue/':
-            return addValue(request)
         elif request.path_info == '/api/deleteinstances/':
             return deleteInstances(request)
         elif request.path_info == '/api/deletevalues/':
             return deleteValues(request)
-        return JsonResponse({'success':False, 'error': 'unrecognized url'})
+        return HttpResponseNotFound(reason='unrecognized url')
     
 class ApiGetUserIDEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
@@ -1016,16 +1155,13 @@ def submitsignin(request):
         raise Http404("submitsignin only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         results = userviews.signinResults(request)
-        if results["success"]:
-            user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None, timezoneOffset)
-            results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
+        user = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, None)
+        results["user"] = { "instanceID": user.id, "description" : user.getDescription(None) }        
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -1034,21 +1170,18 @@ def submitNewUser(request):
         raise Http404("submitNewUser only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         # An optional set of properties associated with the object.
         propertyString = request.POST.get('properties', "")
         propertyList = json.loads(propertyString)
     
         with transaction.atomic():
             results = userviews.newUserResults(request)
-            if results["success"]:
-                userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList, timezoneOffset)
-                results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
+            userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
+            results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 
@@ -1057,21 +1190,18 @@ def updateUsername(request):
         raise Http404("updateUsername only responds to POST methods")
     
     try:
-        timezoneOffset = request.POST["timezoneoffset"]
-    
         with transaction.atomic():
             results = userviews.updateUsernameResults(request)
-            if results["success"]:
-                userInstance = Instance.getUserInstance(request.user)
-                transactionState = TransactionState(request.user, timezoneOffset)
-                v = userInstance.getSubValue(terms.email)
-                v.updateValue(request.user.email, transactionState)
-                nameLists = NameList()
-                userInstance.cacheDescription(nameLists);
+            userInstance = Instance.getUserInstance(request.user)
+            transactionState = TransactionState(request.user)
+            v = userInstance.getSubValue(terms.email)
+            v.updateValue({"text": request.user.email}, transactionState)
+            nameLists = NameList()
+            userInstance.cacheDescription(nameLists);
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())
-        results = {'success':False, 'error': str(e)}
+        return HttpResponseBadRequest(reason=str(e))
         
     return JsonResponse(results)
 

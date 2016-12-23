@@ -1,9 +1,8 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import url
 
 from custom_user import views
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^checkunusedemail/', views.checkUnusedEmail, name='checkUnusedEmail'),
     url(r'^forgotpassword/', views.forgotPassword, name='forgotPassword'),
     url(r'^newuser/', views.newUser, name='newUser'),
@@ -16,4 +15,4 @@ urlpatterns = patterns(
     url(r'^submitsignin/', views.submitsignin, name='submitSignin'),
     url(r'^submitsignout/', views.submitSignout, name='submitSignout'),
     url(r'^updatepassword/', views.updatePassword, name='updatePassword'),
-)
+]

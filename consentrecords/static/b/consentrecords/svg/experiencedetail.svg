@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- 
+svg.pathway g.experiences g.flag rect.opaque {
+	fill-opacity="1.0" fill="white" stroke-opacity="0.0"
+}
+svg.pathway g.experiences rect.bg {
+	fill-opacity="0.2" stroke-width="0"
+}
+svg.pathway .flag-label {	/* For both flags and detail panels */
+	fill="#222" text-anchor="start" font-weight="500"
+}
+ -->
+
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     font-family="SF-UI, Helvetica Neue, Arial, Helvetica, sans-serif"
+     class="experience-detail"
+     font-size="11px" height="75.40625">
+	<g class="flag" transform="translate(123,0)">
+		<line class="flag-pole" fill="#0BBB0B" stroke="#0BBB0B" y2="75.40625px" stroke-opacity="0.6" stroke-width="3"></line>
+		<rect class="opaque" x="1.5" height="75.40625" width="170" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
+		<rect class="bg" x="1.5" fill="#0BBB0B" stroke="#0BBB0B" height="75.40625" width="170" fill-opacity="0.2" stroke-width="0"></rect>
+		<text>
+			<tspan x="3" dy="1.1em" fill="#222" text-anchor="start" font-weight="500">Math Tutor</tspan>
+			<tspan x="3" dy="1.5em" fill="#222">Beacon Academy</tspan>
+			<tspan x="3" dy="1.3em" font-size="smaller" fill="#555">Boston, MA</tspan>
+			<tspan x="3" dy="1.5em" fill="#222">September 1, 2013 - June 2016</tspan>
+			<tspan x="3" dy="1.5em" font-size="smaller" fill="#555">Math Tutor, Volunteer</tspan>
+		</text>
+	</g>
+	<g class="labels" transform="translate(110,0)">
+		<text fill="#999">
+			<tspan text-anchor="end" x="0" dy="1.1em">Name</tspan>
+			<tspan text-anchor="end" x="0" dy="1.5em">Organization</tspan>
+			<tspan text-anchor="end" x="0" dy="1.3em" font-size="smaller" >Location</tspan>
+			<tspan text-anchor="end" x="0" dy="1.5em">Start and End Dates</tspan>
+			<tspan text-anchor="end" x="0" dy="1.5em" font-size="smaller" >Tags</tspan>
+		</text>
+	</g>
+	<g transform="translate(111,0)">
+		<line x1="0" x2="9" y1="9" y2="9" stroke="#999"></line>
+		<line x1="0" x2="9" y1="25.5" y2="25.5" stroke="#999"></line>
+		<line x1="0" x2="9" y1="37.5" y2="37.5" stroke="#999"></line>
+		<line x1="0" x2="9" y1="54" y2="54" stroke="#999"></line>
+		<line x1="0" x2="9" y1="68" y2="68" stroke="#999"></line>
+	</g>
+</svg>

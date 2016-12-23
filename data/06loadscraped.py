@@ -1,5 +1,10 @@
 # python3 data/06loadscraped.py data/terms.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/servicedomains.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/stages.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/services.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/experienceprompts.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/commentprompts.txt michaelcrubenstein@gmail.com
+
 # python3 data/06loadscraped.py data/bps.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBCYF.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeBeaconAcademy.txt michaelcrubenstein@gmail.com
@@ -9,6 +14,7 @@
 # python3 data/06loadscraped.py data/scrapeCitizenSchools.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeStates.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/scrapeAISNE.txt michaelcrubenstein@gmail.com
+# python3 data/06loadscraped.py data/scrapeCambridgePS.txt michaelcrubenstein@gmail.com
 
 import datetime
 import django
@@ -18,6 +24,8 @@ import traceback
 import sys
 import csv
 import re
+
+django.setup()
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -57,6 +65,10 @@ def loadRoot(type, field, value, nameList, transactionState):
             root = objs[0]
             value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
+            if input('Create anyway? (y/n): ') == 'y':
+                propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
+                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
+                print("+ %s: %s" % (text, root.id))
         else:
             propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
             root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
@@ -112,7 +124,7 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         type = l[0].typeID
         
-    verbs = list(filter(lambda verb: verb[2] == terms.textEnum, nameLists.getNameUUIDs(type)))
+    verbs = list(filter(lambda verb: verb[2] == terms.textEnum or verb[2] == terms.firstTextEnum, nameLists.getNameUUIDs(type)))
     
     field, dataType, descriptorType = verbs[0]
     if isTranslationField(fd):
@@ -128,9 +140,6 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), value))
     
 if __name__ == "__main__":
-    django.setup()
-
-    timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
 
@@ -140,11 +149,11 @@ if __name__ == "__main__":
 
     try:
         with transaction.atomic():
-            transactionState = None if check else TransactionState(user, timezoneoffset)
+            transactionState = None if check else TransactionState(user)
             userInfo = UserInfo(user)
         
             nameList = NameList()
-            fieldsDataDictionary = {}
+            fieldsDataDictionary = FieldsDataDictionary()
             language = None
             
             c = 1
@@ -169,7 +178,7 @@ if __name__ == "__main__":
                         s, indent = readIndentedLine(f); c += 1
                     else:
                         lastIndent, item = items[-1]
-                        fieldsData = item.typeID.getFieldsData(fieldsDataDictionary, language)
+                        fieldsData = fieldsDataDictionary[item.typeID]
                         field, text = parseProperty(s)
                     
                         fieldData = findFieldData(fieldsData, field)
@@ -186,7 +195,7 @@ if __name__ == "__main__":
                                 s, indent = readIndentedLine(f); c += 1
                                 nameField, value = parseProperty(s)
                                 if value:
-                                    fieldsData = type.getFieldsData(fieldsDataDictionary, language)
+                                    fieldsData = fieldsDataDictionary[type]
                                     fieldData = findFieldData(fieldsData, nameField)
                                     if isObjectField(fieldData):
                                         referenceValue = getReferenceValue(item, nameField, value, fieldData, nameList, userInfo)
@@ -214,7 +223,7 @@ if __name__ == "__main__":
                                 item.getOrCreateTranslationValue(field, value, languageCode, fieldData, transactionState)
                             else:
                                 referenceValue = getReferenceValue(item, field, text, fieldData, nameList, userInfo)
-                                item.getOrCreateReferenceValue(field, referenceValue, transactionState)
+                                item.getOrCreateReferenceValue(field, referenceValue, fieldData, transactionState)
                             
                             if 'descriptorType' in fieldData:
                                 Instance.updateDescriptions([item], nameList)

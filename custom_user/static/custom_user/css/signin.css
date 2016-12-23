@@ -1,10 +1,31 @@
-.form-signin .form-signin-heading,
-.form-signin .checkbox {
+panel#id_sign_in_panel {
+	background: white;
+}
+
+panel#id_sign_in_panel hr {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	border: 0;
+	border-top: 1px solid #ccc
+}
+
+.form-signin .form-signin-heading {
   margin-bottom: 10px;
 }
 .form-signin .checkbox {
-  font-weight: normal;
+	margin: 0;
+	font-weight: normal;
 }
+.form-signin .checkbox label {
+	min-height: 20px;
+	padding-left: 20px;
+	padding-bottom: 10px;
+	padding-top: 10px;
+	margin: 0;
+	font-weight: normal;
+	cursor: pointer;
+}
+
 .form-signin .form-control {
   position: relative;
   height: auto;
@@ -29,7 +50,7 @@
   border-top-right-radius: 0;
 }
 
-.div-create-new-account {
+panel#id_sign_in_panel .other-action {
   max-width: 330px;
   padding-left: 15px;
   padding-top: 0px;
@@ -37,11 +58,19 @@
   padding-bottom: 0px;
   margin: 0 auto;
 }
-.div-forgot-password {
-  max-width: 330px;
-  padding-left: 15px;
-  padding-top: 5px;
-  padding-right: 15px;
-  padding-bottom: 5px;
-  margin: 0 auto;
+panel#id_sign_in_panel .other-action span {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+panel#id_sign_in_panel .other-action a {
+	display: inline-block;
+	padding-left: 10px;
+	padding-top: 10px;
+	padding-bottom: 10px;
 }

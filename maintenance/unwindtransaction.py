@@ -4,11 +4,11 @@ import django
 import sys
 
 from django.db import transaction
+django.setup()
+
 from consentrecords.models import *
 
 if __name__ == "__main__":
-    django.setup()
-
     with transaction.atomic():
         t = Transaction.objects.order_by('-creation_time')[0]
 
@@ -21,10 +21,10 @@ if __name__ == "__main__":
             i.save()
         
         if t.value_set.count():
-            sys.stderr.write('Deleting %s values'%t.value_set.count())
+            sys.stderr.write('Deleting %s values\n'%t.value_set.count())
     
         if t.instance_set.count():
-            sys.stderr.write('Deleting %s instances'%t.instance_set.count())
+            sys.stderr.write('Deleting %s instances\n'%t.instance_set.count())
     
         t.delete()
     

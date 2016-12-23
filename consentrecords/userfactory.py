@@ -7,13 +7,9 @@ from consentrecords.models import TransactionState, Terms, terms, TermNames, Ins
 from consentrecords import instancecreator
 
 class UserFactory:
-    def createUserInstance(user, propertyList, timezoneOffset):
+    def createUserInstance(user, propertyList):
         with transaction.atomic():
-            transactionState = TransactionState(user, timezoneOffset)
-            if isinstance(user.id, uuid.UUID):
-                userID = user.id.hex    # SQLite
-            else:
-                userID = user.id        # MySQL
+            transactionState = TransactionState(user)
 
             ofKindObject = terms[TermNames.user]
             if not propertyList: propertyList = {}
@@ -23,9 +19,6 @@ class UserFactory:
             if user.last_name:
                 propertyList[TermNames.lastName] = {"text": user.last_name}
             item, newValue = instancecreator.create(ofKindObject, None, None, 0, propertyList, NameList(), transactionState)
-            
-            # Add userID explicitly in case it isn't part of the configuration.
-            item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
-            
+                        
             return item
 
