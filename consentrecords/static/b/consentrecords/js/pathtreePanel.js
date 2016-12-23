@@ -85,6 +85,13 @@ var Service = (function() {
 		return false;
 	}
 	
+	Service.prototype.colorElement = function(r)
+	{
+		var colorText = this.getColor();
+		r.setAttribute("fill", colorText);
+		r.setAttribute("stroke", colorText);
+	}
+	
 	function Service(dataObject) {
 		this.service = dataObject;
 	}
