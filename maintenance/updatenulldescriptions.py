@@ -8,6 +8,8 @@ import getpass
 import logging
 import sys
 
+django.setup()
+
 from django.db import transaction
 from django.db.models import Q
 from django.contrib.auth import authenticate
@@ -15,8 +17,6 @@ from django.contrib.auth import authenticate
 from consentrecords.models import *
 
 if __name__ == "__main__":
-    django.setup()
-
     if len(sys.argv) > 1:
         username = sys.argv[1]
     else:
