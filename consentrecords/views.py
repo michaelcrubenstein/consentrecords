@@ -455,12 +455,12 @@ def requestAccess(request):
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
                                 firstNames = following.value_set.filter(field=terms['_first Name'],
-                                								   deleteTransaction__isnull=True)
+                                                                   deleteTransaction__isnull=True)
                                 firstName = firstNames.count() > 0 and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
                                 screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
-                                																	deleteTransaction__isnull=True)
+                                                                                                    deleteTransaction__isnull=True)
                                 screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
@@ -770,6 +770,18 @@ class api:
             return HttpResponseBadRequest(reason=str(e))
         
         return JsonResponse(results)
+
+    # Returns an iterable of the values within self associated with the specified field.
+    # If value is specified, then filter the returned values according to the value. Otherwise,
+    # return all of the values.       
+    def _findValues(instance, field, value, fieldNames, userInfo):
+        f = instance.value_set.filter(deleteTransaction__isnull=True, field=field)
+        if value:
+            return f.filter(Q(stringValue=value)|Q(referenceValue_id=value))
+        else:
+            return api._selectInstanceData(f, fieldNames, 'referenceValue__', userInfo)\
+                      .order_by('position');
+        
     
     # getValues is used to test whether or not a particular value exists in a field of any
     # instance with the specified path.    
@@ -779,8 +791,12 @@ class api:
             if not path:
                 raise ValueError('the path was not specified')
                 
+            fieldString = data.get('fields', "[]")
+            fields = json.loads(fieldString)
+            
+            language = data.get('language', None)
+
             userInfo = UserInfo(user)
-            language=None
         
             # The element name for the type of element that the new value is to the container object
             fieldName = data.get('fieldName', None)
@@ -792,17 +808,22 @@ class api:
             else:
                 field = terms[fieldName]
             
-            # A value with the container.
+            # An optional value within the container on which to filter.
             value = data.get('value', None)
         
-            if value is None:
-                raise ValueError('the value was not specified')
-            
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            m = map(lambda i: i.findValues(field, value), containers)
-            p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
+            m = map(lambda i: api._findValues(i, field, value, fields, userInfo), containers)
+
+            if len(fields) == 0:
+                p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
+            else:
+                m = list(itertools.chain.from_iterable(m))
+                print(m)
+                typeset = frozenset([v.referenceValue.typeID for v in m])
+                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                p = map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m)
                             
-            results = {'objects': [i for i in p]}
+            results = {'values': list(p)}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -867,9 +888,7 @@ class api:
     
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
         fieldsData = fieldsDataDictionary[uuObject.typeID]
-        
-        data = uuObject.getReferenceData(userInfo, language)
-        data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
+        cells = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
     
         if 'parents' in fields:
             p = uuObject
@@ -889,7 +908,7 @@ class api:
                     vs = api._getValueQuerySet(p.value_set, userInfo)
                     parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID], userInfo, language)
                     
-                data["cells"].append({"field": fieldData, "data": [parentData]})
+                cells.append({"field": fieldData, "data": [parentData]})
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
@@ -905,16 +924,13 @@ class api:
                               'description': saObject.getDescription(language),
                               'position': 0,
                               'privilege': saObject.description.text}]
-                data["cells"].append({"field": fieldData, "data": parentData})
+                cells.append({"field": fieldData, "data": parentData})
                 
         # For each of the cells, if the cell is in the field list explicitly, 
         # and the cell is in the fieldsData (and not the name of a parent type)
         # then get the subdata for all of the values in that cell.
         subValuesDict = None
-        for field in fieldsData: 
-            if 'nameID' not in field:
-                print(field)
-        for cell in data["cells"]:
+        for cell in cells:
             if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
                 and "ofKindID" in cell["field"] \
                 and next((field for field in fieldsData if field["nameID"] == cell["field"]["nameID"]), None):
@@ -926,8 +942,46 @@ class api:
                     i = subValuesDict[d["instanceID"]]
                     d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
                     d['typeName'] = cell["field"]["ofKind"]
-            
+        return cells
+
+    def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
+        data = uuObject.getReferenceData(userInfo, language)
+        data['cells'] = api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo)
         return data;
+    
+    def _getValueData(v, fields, fieldsDataDictionary, language, userInfo):
+        data = v.getReferenceData(userInfo, language=language)
+        data['cells'] = api._getCells(v.referenceValue, fields, fieldsDataDictionary, language, userInfo)
+        return data
+    
+    # instanceDataPath is the django query path from the sourceFilter objects to the 
+    # data to be selected.
+    def _selectInstanceData(sourceFilter, fieldNames, instanceDataPath, userInfo):
+        # preload the typeID, parent, value_set and description to improve performance.
+        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+        valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
+
+        if len(fieldNames):
+            # The distinct is required to eliminate duplicate subValues.
+            subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
+                                      instance__referenceValues__deleteTransaction__isnull=True,
+                                      instance__referenceValues__field__value__deleteTransaction__isnull=True,
+                                      instance__referenceValues__field__value__field=terms.name,
+                                      instance__referenceValues__field__value__stringValue__in=fieldNames)\
+                .distinct()
+            subValueQueryset = api._getValueQuerySet(subValues, userInfo)
+            valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                  queryset=subValueQueryset,
+                                  to_attr='subValues'))
+
+        return sourceFilter.select_related(instanceDataPath + 'typeID')\
+                           .select_related(instanceDataPath + 'typeID__description')\
+                           .select_related(instanceDataPath + 'parent')\
+                           .select_related(instanceDataPath + 'description')\
+                           .prefetch_related(Prefetch(instanceDataPath + 'value_set',
+                                                        queryset=valueQueryset,
+                                                        to_attr='values'))
+            
         
     def getData(user, path, data):
         pathparser.currentTimestamp = datetime.datetime.now()
@@ -944,35 +998,12 @@ class api:
             language = data.get('language', None)
 
             userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            
-            # preload the typeID, parent, value_set and description to improve performance.
-            # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-            valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
             
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
-            if len(fieldNames):
-                # The distinct is required to eliminate duplicate subValues.
-                subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
-                                          instance__referenceValues__deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__value__deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__value__field=terms.name,
-                                          instance__referenceValues__field__value__stringValue__in=fieldNames)\
-                    .distinct()
-                subValueQueryset = api._getValueQuerySet(subValues, userInfo)
-                valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
-                                      queryset=subValueQueryset,
-                                      to_attr='subValues'))
-
-            uuObjects = uuObjects.select_related('typeID')\
-                                 .select_related('typeID__description')\
-                                 .select_related('parent')\
-                                 .select_related('description')\
-                                 .prefetch_related(Prefetch('value_set',
-                                                            queryset=valueQueryset,
-                                                            to_attr='values'))
             
+            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
+            uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
             uuObjects = uuObjects.order_by('description__text', 'id');
             if end > 0:
                 uuObjects = uuObjects[start:end]
@@ -982,7 +1013,7 @@ class api:
             typeset = frozenset([x.typeID for x in uuObjects])
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             
-            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+            p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
             results = {'data': p}
         except Exception as e:
