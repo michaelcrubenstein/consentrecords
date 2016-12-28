@@ -610,7 +610,8 @@ var PathView = (function() {
 					})
 				.on("click.cr", function(fd, i)
 					{
-						_this.showCommentsPanel(fd, i);
+						_this.showCommentsPanel(fd);
+						d3.event.stopPropagation();
 					});
 				
 			var commentLine = this.detailGroup.append('line')
@@ -628,6 +629,7 @@ var PathView = (function() {
 				.on("click.cr", function(fd, i)
 					{
 						_this.showCommentsPanel(fd, i);
+						d3.event.stopPropagation();
 					});
 			
 			function setCommentsText()
@@ -906,7 +908,6 @@ var PathView = (function() {
 				{
 					cr.syncFail(err);
 				}
-				d3.event.stopPropagation();
 			}
 		}
 	}
@@ -1918,16 +1919,28 @@ var PathlinesPanel = (function () {
 		this.searchPanel = new SearchPathsPanel();
 	}
 	
-	/* id is the id of the value that contains the experience instance, not
-		the id of the instance itself.
-	 */
-	PathlinesPanel.prototype.showExperience = function(id)
+	PathlinesPanel.prototype.getFlagData = function(id)
 	{
 		var $group = $(this.panelDiv.node()).find(".experiences>g")
 			.filter(function() { 
 				return d3.select(this).datum().experience.id == id; 
 				});
-		this.pathtree.showDetailGroup(d3.select($group.get(0)).datum());
+		return d3.select($group.get(0)).datum();
+	}
+	
+	/* id is the id of the value that contains the experience instance, not
+		the id of the instance itself.
+	 */
+	PathlinesPanel.prototype.showExperience = function(id)
+	{
+		this.pathtree.showDetailGroup(this.getFlagData(id));
+	}
+	
+	PathlinesPanel.prototype.showCommentsPanel = function(id)
+	{
+		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id));
+		newPanel.showLeft();
+		return newPanel;
 	}
 	
 	function PathlinesPanel(user, done) {
