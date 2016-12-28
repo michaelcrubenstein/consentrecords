@@ -226,10 +226,6 @@ class Instance(dbmodels.Model):
         v = self.getSubValue(field)
         return v and v.referenceValue
      
-    # Returns an iterable of the values within self associated with the specified field.       
-    def findValues(self, field, value):
-        return self.value_set.filter(Q(stringValue=value)|Q(referenceValue_id=value),deleteTransaction__isnull=True, field=field)
-        
     # Returns a list of pairs of text that are used to generate the description of objects 
     # of this kind.
     # The first of the pair is the hex UUID of the name, the second is the hex UUID of the dataType
