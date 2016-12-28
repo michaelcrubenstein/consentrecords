@@ -1918,6 +1918,18 @@ var PathlinesPanel = (function () {
 		this.searchPanel = new SearchPathsPanel();
 	}
 	
+	/* id is the id of the value that contains the experience instance, not
+		the id of the instance itself.
+	 */
+	PathlinesPanel.prototype.showExperience = function(id)
+	{
+		var $group = $(this.panelDiv.node()).find(".experiences>g")
+			.filter(function() { 
+				return d3.select(this).datum().experience.id == id; 
+				});
+		this.pathtree.showDetailGroup(d3.select($group.get(0)).datum());
+	}
+	
 	function PathlinesPanel(user, done) {
 		var _this = this;
 		this.user = user;

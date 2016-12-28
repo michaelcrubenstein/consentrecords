@@ -671,6 +671,36 @@
 					}
 					needsSignin = false;
 				}
+				else if (stateString.startsWith("experience/"))
+				{
+					stateString = stateString.substring("experience/".length);
+					
+					handleState = function(pathwayPanel)
+					{
+						if (!pathwayPanel)
+						{
+							if (!firstPanel)
+							{
+								firstPanel = loadPathlinesPanel(previousPanel);
+							}
+							pathwayPanel = firstPanel;
+						}
+						
+						/* Show the specified experience. */
+						id = stateString.substring(0, stateString.indexOf("/"));
+						stateString = stateString.substring(stateString.indexOf("/")+1);
+						
+						try
+						{
+							var experience = pathwayPanel.showExperience(id);
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("me"))
 				{
 					var handleState = function()
