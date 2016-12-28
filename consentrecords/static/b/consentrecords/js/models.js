@@ -995,8 +995,8 @@ cr.ObjectValue = (function() {
 		{
 			var jsonArray = { "path" : "#" + this.getValueID() };
 			if (fields)
-				jsonArray["fields"] = JSON.stringify(fields);
-			return $.when($.getJSON(cr.urls.getData, jsonArray))
+				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
+			return $.getJSON(cr.urls.getData, jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -1024,9 +1024,52 @@ cr.ObjectValue = (function() {
 							r2.reject(err);
 						}
 						return r2;
+					}
+				 )
+				.then(function(cells)
+					{
+						subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
+						if (subFields.length == 0)
+							return;
+						try
+						{
+							return $.when.apply(null, subFields.map(
+									function(s) {
+										var cellName = s.substring(0, s.indexOf("/"));
+										var fieldNames = s.substring(s.indexOf("/") + 1).split(",");
+										try
+										{
+											return cr.getCellValues(_this, cellName, fieldNames); 
+										}
+										catch(err)
+										{
+											var r3 = $.Deferred();
+											r3.reject(err);
+											return r3;
+										}
+									}))
+								.then(function()
+									{
+										var r3 = $.Deferred();
+										r3.resolve(cells);
+										return r3;
+									},
+									function(err)
+									{
+										var r3 = $.Deferred();
+										r3.reject(err);
+										return r3;
+									});
+						}
+						catch(err)
+						{
+							var r3 = $.Deferred();
+							r3.reject(err);
+							return r3;
+						}
 					},
 					cr.thenFail
-				 );
+				);
 		}
 		else if (this.cell.field.ofKindID)
 		{
@@ -1290,54 +1333,63 @@ cr.selectAll = function(args)
 				cr.postError);
 	};
 	
-	/* args is an object with up to five parameters: path, start, end, done, fail.
+	/* args is an object with up to seven parameters: path, field, value, start, end, done, fail.
 		The done method takes a single argument, which is an array of value objects. */
 cr.getValues = function (args)
 	{
-		if (!args.fail)
-			throw ("fail is not specified");
-		if (!args.done)
-			throw ("done is not specified");
-		var argList = {};
+		var data = {};
 		if (args.path)
-			argList.path = args.path;
+			data.path = args.path;
 		else
 			throw "path was not specified to getValues"
 			
 		if (args.field)
-			argList.fieldName = args.field;
+			data.fieldName = args.field;
 		else
 			throw "field was not specified to getValues"
 			
 		if (args.value)
-			argList.value = args.value;
-		else
-			throw "value was not specified to getValues"
+			data.value = args.value;
+		if (args.fields)
+			data.fields = JSON.stringify(args.fields); 
+		if (cr.accessToken)
+			data.access_token = cr.accessToken;
 			
 		if (args.start !== undefined)
-			argList.start = args.start;
+			data.start = args.start;
 		if (args.end !== undefined)
-			argList.end = args.end;
+			data.end = args.end;
 		
-		$.getJSON(cr.urls.getValues, 
-			argList,
-			function(json)
-			{
-				try
+		return $.getJSON(cr.urls.getValues, data)
+			.then(function(json)
 				{
-					var newObjects = json.objects.map(function(v)
+					var newObjects = json.values.map(cr.ObjectCell.prototype.copyValue);
+					try
 					{
-						return cr.ObjectCell.prototype.copyValue(v);
-					});
-				
-					args.done(newObjects);
-				}
-				catch(err)
+						if (args.done)
+							args.done(newObjects);
+						var result = $.Deferred();
+						result.resolve(newObjects);
+						return result;
+					}
+					catch(err)
+					{
+						if (args.fail)
+							args.fail(err);
+						var result = $.Deferred();
+						result.reject(err);
+						return result;
+					}
+				},
+				function(jqXHR, textStatus, errorThrown)
 				{
-					args.fail(err);
-				}
-			}
-		);
+					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
+					if (args.fail)
+						args.fail(resultText);
+					var result = $.Deferred();
+					result.reject(resultText);
+					return result;
+				});
 	};
 	
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
@@ -1562,33 +1614,68 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		var result = $.Deferred();
-		$.getJSON(cr.urls.getData, data)
-			.done(function(json)
+		return $.getJSON(cr.urls.getData, data)
+			.then(function(json)
 				{
 					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
+						var result = $.Deferred();
 						result.resolve(instances);
 						if (args.done)
 							args.done(instances);
+						return result;
 					}
 					catch(err)
 					{
+						var result = $.Deferred();
 						result.reject(err);
 						if (args.fail)
 							args.fail(err);
+						return result;
 					}
-				})
-			.fail(function(jqXHR, textStatus, errorThrown)
+				},
+				function(jqXHR, textStatus, errorThrown)
 				{
 					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
-					result.reject(resultText);
+					var result = $.Deferred();
+						result.reject(resultText);
 					if (args.fail)
 						args.fail(resultText);
+					return result;
 				});
-		return result.promise();
-	},
+	}
+
+/* Loads all of the elements of the specified cell within the specified object.
+	If the cellName is the name of an objectCell, fieldNames determines the sub-cells that
+	are also loaded at the same time.
+ */
+cr.getCellValues = function(object, cellName, fieldNames)
+	{
+		var path = '#{0}'.format(object.getValueID());
+		return cr.getValues({path: path, field: cellName, fields: fieldNames})
+			.then(function(instances)
+				{
+					var cell = object.getCell(cellName);
+					cell.data.forEach(function(i)
+						{
+							i.cell = undefined;
+						});
+					
+					cell.data = [];
+					instances.forEach(function(i)
+						{
+							cell.pushValue(i);
+						});
+				},
+				function(err)
+				{
+					r3 = $.Deferred();
+					r3.reject(err);
+					return r3;
+				});
+	}
+
 cr.submitSignout = function()
 	{
 		return $.post(cr.urls.submitSignout, { })
