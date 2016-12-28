@@ -212,6 +212,40 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+def showExperience(request, id):
+    logPage(request, 'pathAdvisor/showExperience')
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    if terms.isUUID(id):
+        containerPath = '_user[_email=%s]>Path' % (request.user.email)
+        userInfo = UserInfo(request.user)
+        objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.readFilter)
+        if len(objs) > 0:
+            pathInstance = objs[0]
+            experiences = pathInstance.value_set.filter(field=terms['More Experience'], 
+                deleteTransaction__isnull=True,
+                id=id)
+            if len(experiences) > 0:
+                args['state'] = 'experience/%s/' % experiences[0].id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
 @ensure_csrf_cookie
 def accept(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/accept', email)
@@ -463,12 +497,12 @@ def requestAccess(request):
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
                                 firstNames = following.value_set.filter(field=terms['First Name'],
-                                								   deleteTransaction__isnull=True)
+                                                                   deleteTransaction__isnull=True)
                                 firstName = firstNames.count() > 0 and firstNames[0]
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
                                 screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['Screen Name'],
-                                																	deleteTransaction__isnull=True)
+                                                                                                    deleteTransaction__isnull=True)
                                 screenName = screenNames and screenNames.count() > 0 and screenNames[0]
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
