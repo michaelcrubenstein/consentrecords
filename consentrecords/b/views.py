@@ -230,7 +230,6 @@ def showExperience(request, id):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    print(request.path)
     if terms.isUUID(id):
         containerPath = '_user[_email=%s]>Path' % (request.user.email)
         userInfo = UserInfo(request.user)
@@ -244,7 +243,7 @@ def showExperience(request, id):
                 args['state'] = 'experience/%s/' % experiences[0].id
                 pathend = re.search(r'experience/%s/' % experiences[0].id, request.path).end()
                 path = request.path[pathend:]
-                print(path)
+
                 if re.match(r'comments/*', path, re.I):
                     args['state'] += 'comments/'
                 elif re.match(r'comment/.*', path, re.I):
