@@ -610,7 +610,8 @@ var PathView = (function() {
 					})
 				.on("click.cr", function(fd, i)
 					{
-						_this.showCommentsPanel(fd, i);
+						_this.showCommentsPanel(fd);
+						d3.event.stopPropagation();
 					});
 				
 			var commentLine = this.detailGroup.append('line')
@@ -628,6 +629,7 @@ var PathView = (function() {
 				.on("click.cr", function(fd, i)
 					{
 						_this.showCommentsPanel(fd, i);
+						d3.event.stopPropagation();
 					});
 			
 			function setCommentsText()
@@ -899,14 +901,13 @@ var PathView = (function() {
 				try
 				{
 					var newPanel = new ExperienceCommentsPanel(fd);
-					
 					revealPanelLeft(newPanel.node());
+					return newPanel;
 				}
 				catch(err)
 				{
 					cr.syncFail(err);
 				}
-				d3.event.stopPropagation();
 			}
 		}
 	}
@@ -1262,6 +1263,9 @@ var PathLines = (function() {
 	PathLines.prototype.flagWidth = 0;
 	
 	PathLines.prototype.columnData = PathGuides.data;
+	
+	/* A flag indicating whether or not the userSet event has been triggered. */
+	PathLines.prototype.isUserSet = false;
 
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
@@ -1750,6 +1754,7 @@ var PathLines = (function() {
 				crv.stopLoadingMessage(_this.loadingMessage);
 				_this.loadingMessage.remove();
 			
+				_this.isUserSet = true;
 				$(_this).trigger("userSet.cr");
 			}
 			catch(err)
@@ -1916,6 +1921,30 @@ var PathlinesPanel = (function () {
 	PathlinesPanel.prototype.setupSearchPanel = function()
 	{
 		this.searchPanel = new SearchPathsPanel();
+	}
+	
+	PathlinesPanel.prototype.getFlagData = function(id)
+	{
+		var $group = $(this.panelDiv.node()).find(".experiences>g")
+			.filter(function() { 
+				return d3.select(this).datum().experience.id == id; 
+				});
+		return d3.select($group.get(0)).datum();
+	}
+	
+	/* id is the id of the value that contains the experience instance, not
+		the id of the instance itself.
+	 */
+	PathlinesPanel.prototype.showExperience = function(id)
+	{
+		this.pathtree.showDetailGroup(this.getFlagData(id));
+	}
+	
+	PathlinesPanel.prototype.showCommentsPanel = function(id)
+	{
+		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id));
+		newPanel.showLeft();
+		return newPanel;
 	}
 	
 	function PathlinesPanel(user, done) {

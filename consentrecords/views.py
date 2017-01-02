@@ -4,7 +4,7 @@ from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 
 from oauth2_provider.views.generic import ProtectedResourceView
@@ -28,6 +28,10 @@ from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
+templateDirectory = 'consentrecords/'
+logPrefix = ''
+urlPrefix = ''
+
 def handler404(request):
     response = render_to_response('404.html', {},
                                   context_instance=RequestContext(request))
@@ -47,14 +51,16 @@ def logPage(request, name):
     except Exception:
         userAgent = 'Unspecified user agent'
         
-    LogRecord.emit(request.user, name, userAgent)
+    LogRecord.emit(request.user, logPrefix + name, userAgent)
 
+@ensure_csrf_cookie
 def home(request):
     logPage(request, 'pathAdvisor/home')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -74,12 +80,14 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showLines(request):
     logPage(request, 'pathAdvisor/showLines')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -97,10 +105,11 @@ def showLines(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def orgHome(request):
     logPage(request, 'pathAdvisor/orgHome')
     
-    template = loader.get_template('consentrecords/orgHome.html')
+    template = loader.get_template(templateDirectory + 'orgHome.html')
     args = {
         'user': request.user,
     }
@@ -122,12 +131,14 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def find(request):
     logPage(request, 'pathAdvisor/find')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -150,6 +161,7 @@ def find(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showInstances(request):
     logPage(request, 'pathAdvisor/list')
     
@@ -160,7 +172,7 @@ def showInstances(request):
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
-        template = loader.get_template('consentrecords/configuration.html')
+        template = loader.get_template(templateDirectory + 'configuration.html')
     
         argList = {
             'user': request.user,
@@ -185,12 +197,14 @@ def showInstances(request):
     except Exception as e:
         return HttpResponse(str(e))
 
+@ensure_csrf_cookie
 def showPathway(request, email):
     logPage(request, 'pathAdvisor/showPathway')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -206,18 +220,57 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'pathway%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].id
 
     context = RequestContext(request, args)
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
+def showExperience(request, id):
+    logPage(request, 'pathAdvisor/experience')
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    if terms.isUUID(id):
+        args['state'] = 'experience/%s/' % id
+        pathend = re.search(r'experience/%s/' % id, request.path).end()
+        path = request.path[pathend:]
+
+        if re.match(r'comments/*', path, re.I):
+            args['state'] += 'comments/'
+        elif re.match(r'comment/.*', path, re.I):
+            args['state'] += 'comment/'
+            path = path[len('comment/'):]
+            if re.match(r'[A-Fa-f0-9]{32}/', path):
+                args['state'] += path[:33]
+                path = path[33:]
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+@ensure_csrf_cookie
 def accept(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/accept', email)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -242,12 +295,14 @@ def accept(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def ignore(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if request.user.is_authenticated():
@@ -271,13 +326,15 @@ def ignore(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
     print ('1')
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     print ('2')
@@ -299,12 +356,14 @@ def userSettings(request):
     print ('5')
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def signup(request, email=None):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -484,6 +543,120 @@ def requestAccess(request):
         
     return JsonResponse(results)
 
+@ensure_csrf_cookie
+def addExperience(request, experienceID):
+    LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    args['state'] = 'addExperience%s' % experienceID
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+def _getOrganizationChildren(organization, siteName, offeringName):
+    site = None
+    offering = None
+    if siteName:
+        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
+        site = sites[0].referenceValue if len(sites) else None
+        if site and offeringName:
+            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0].referenceValue if len(offerings) else None
+            
+    return site, offering
+
+@ensure_csrf_cookie
+def addToPathway(request):
+    LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
+    
+    organizationName = request.GET.get('o', None)
+    siteName = request.GET.get('s', None)
+    offeringName = request.GET.get('f', None)
+    serviceName = request.GET.get('m', None)
+
+    userInfo = UserInfo(request.user)
+
+    if offeringName and terms.isUUID(offeringName):
+        offering = terms[offeringName]
+    elif siteName and terms.isUUID(siteName):
+        site = terms[siteName]
+        if offeringName:
+            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
+            offering = offerings[0] if len(offerings) else None
+    elif organizationName and terms.isUUID(organizationName):
+        organization = terms[organizationName]
+        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+    elif organizationName:
+        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
+        if organization:
+            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
+        else:
+            site, offering = None, None
+    else:
+        organization, site, offering = None, None, None
+
+    if serviceName and terms.isUUID(serviceName):
+        try:
+            service = terms[serviceName]
+        except Instance.DoesNotExist:
+            service = None
+    elif serviceName:
+        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
+    else:
+        service = None
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+    }
+
+    if settings.FACEBOOK_SHOW:
+        args['fbURL'] = request.build_absolute_uri()
+        args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
+        atText = (organizationName if organizationName == siteName else \
+                ('%s//%s' % (organizationName, siteName)) if siteName else organizationName)
+        args['fbDescription'] = atText
+
+    if organizationName:
+        args['organization'] = organization.id if organization else organizationName
+    if siteName:
+        args['site'] = site.id if site else siteName
+    if offeringName:
+        args['offering'] = offering.id if offering else offeringName
+    if serviceName:
+        args['service'] = service.id if service else serviceName
+
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+    
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+
+    args['state'] = 'addToPathway'
+
+    context = RequestContext(request, args)
+    
+    return HttpResponse(template.render(context))
+
 def requestExperienceComment(request):
     if request.method != "POST":
         raise Http404("requestExperienceComment only responds to POST methods")
@@ -583,118 +756,8 @@ def requestExperienceComment(request):
         
     return JsonResponse(results)
 
-def addExperience(request, experienceID):
-    LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
-    
-    template = loader.get_template('consentrecords/userHome.html')
-    args = {
-        'user': request.user,
-    }
-    
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
-        if not user:
-            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
-        
-    if settings.FACEBOOK_SHOW:
-        args['facebookIntegration'] = True
-    
-    args['state'] = 'addExperience%s' % experienceID
-
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
-
-def _getOrganizationChildren(organization, siteName, offeringName):
-    site = None
-    offering = None
-    if siteName:
-        sites = organization.getSubInstance(terms['Sites']).getChildrenByName(terms['Site'], terms.name, siteName)
-        site = sites[0].referenceValue if len(sites) else None
-        if site and offeringName:
-            offerings = site.getSubInstance(terms['Offerings']).getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0].referenceValue if len(offerings) else None
-            
-    return site, offering
-
-def addToPathway(request):
-    LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
-    
-    organizationName = request.GET.get('o', None)
-    siteName = request.GET.get('s', None)
-    offeringName = request.GET.get('f', None)
-    serviceName = request.GET.get('m', None)
-
-    userInfo = UserInfo(request.user)
-
-    if offeringName and terms.isUUID(offeringName):
-        offering = terms[offeringName]
-    elif siteName and terms.isUUID(siteName):
-        site = terms[siteName]
-        if offeringName:
-            offerings = site.getChildrenByName(terms['Offering'], terms.name, offeringName)
-            offering = offerings[0] if len(offerings) else None
-    elif organizationName and terms.isUUID(organizationName):
-        organization = terms[organizationName]
-        site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-    elif organizationName:
-        organization = terms['Organization'].getInstanceByName(terms.name, organizationName, userInfo)
-        if organization:
-            site, offering = _getOrganizationChildren(organization, siteName, offeringName)
-        else:
-            site, offering = None, None
-    else:
-        organization, site, offering = None, None, None
-
-    if serviceName and terms.isUUID(serviceName):
-        try:
-            service = terms[serviceName]
-        except Instance.DoesNotExist:
-            service = None
-    elif serviceName:
-        service = terms['Service'].getInstanceByName(terms.name, serviceName, userInfo)
-    else:
-        service = None
-    
-    template = loader.get_template('consentrecords/userHome.html')
-    args = {
-        'user': request.user,
-    }
-
-    if settings.FACEBOOK_SHOW:
-        args['fbURL'] = request.build_absolute_uri()
-        args['fbTitle'] = 'Add %s'%(offeringName if offeringName else serviceName if serviceName else 'Experience')
-        atText = (organizationName if organizationName == siteName else \
-                ('%s//%s' % (organizationName, siteName)) if siteName else organizationName)
-        args['fbDescription'] = atText
-
-    if organizationName:
-        args['organization'] = organization.id if organization else organizationName
-    if siteName:
-        args['site'] = site.id if site else siteName
-    if offeringName:
-        args['offering'] = offering.id if offering else offeringName
-    if serviceName:
-        args['service'] = service.id if service else serviceName
-
-    if request.user.is_authenticated():
-        user = Instance.getUserInstance(request.user)
-        if not user:
-            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
-    
-    if settings.FACEBOOK_SHOW:
-        args['facebookIntegration'] = True
-
-    args['state'] = 'addToPathway'
-
-    context = RequestContext(request, args)
-    
-    return HttpResponse(template.render(context))
-
-# Handle a POST event to create a new instance of an object with a set of properties.
 class api:
+    # Handle a POST event to create a new instance of an object with a set of properties.
     def createInstance(user, data):
         try:
             # The type of the new object.

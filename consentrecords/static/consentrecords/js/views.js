@@ -125,14 +125,14 @@ bootstrap_alert.close = function()
 		if (bootstrap_alert.panel)
 		{
 			bootstrap_alert.closeOnTimeout = false;
-			$(bootstrap_alert.panel)
+			var panel = bootstrap_alert.panel;
+			bootstrap_alert.panel = null;
+			$(panel)
 				.animate({'left': -$(window).innerWidth()})
 				.promise()
 				.done(function()
 					{
-						$(bootstrap_alert.panel).remove();
-						bootstrap_alert.panel = null;
-					
+						$(panel).remove();
 					});
 		}
 	}
