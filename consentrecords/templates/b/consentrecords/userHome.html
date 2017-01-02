@@ -433,9 +433,9 @@
 					}
 					stateString = "";	/* So it only happens once. */
 				}
-				else if (stateString.startsWith("pathway"))
+				else if (stateString.startsWith("user/"))
 				{
-					stateString = stateString.substring("pathway".length);
+					stateString = stateString.substring("user/".length);
 					if (stateString.length > 0)
 					{
 						var pathwayID = stateString;

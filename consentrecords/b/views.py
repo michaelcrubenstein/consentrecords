@@ -206,7 +206,7 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'pathway%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].id
 
     context = RequestContext(request, args)
         
