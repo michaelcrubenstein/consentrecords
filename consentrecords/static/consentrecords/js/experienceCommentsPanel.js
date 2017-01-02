@@ -8,29 +8,42 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
 	{
 		var divs = buttons.append('div');
+		
+		var askers = divs.append('div')
+			.classed('asker', true)
+			.datum(function(d) { 
+				var cp = d.getValue("Comment Request"); 
+				return cp && cp.getValueID() && cp.getValue("Path"); })
+			.text(function(d) { 
+					return d && d.getValueID() && "{0} asked".format(d.getDescription()); 
+				});
+
 		var questions = divs.append('textarea')
 			.classed('question', true)
-			.datum(function(d) { return d.getValue("_name"); })
+			.datum(function(d) { 
+				var cp = d.getValue("Comment Request");
+				return cp && cp.getValueID() && cp.getValue("_text"); })
 			.text(function(d) { 
-					return d.text; 
+					return d && d.text; 
 				});
-		
+				
 		var answers = divs.append('textarea')
 			.classed('answer', true)
 			.datum(function(d) { return d.getValue("_text"); })
 			.text(function(d) { 
-					return d.text; 
-				});
+					return (d && d.text); 
+				})
+			.attr('placeholder', 'No Answer');
 				
 		var checkSize = function(eventObject) {
 			this.style.height = 0;
 			this.style.height = (this.scrollHeight) + 'px';
-			this.style.display = this.value ? 'inline-block' : 'none';
+			this.style.display = (this.value || this.getAttribute('placeholder')) ? 'inline-block' : 'none';
 			eventObject.stopPropagation();
 		}
 			
-		buttons.selectAll('textarea')
-			.attr('readonly', this.inEditMode ? '' : 'readonly')
+		buttons.selectAll('textarea.question')
+			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
 			.classed('fixed', !this.inEditMode)
 			.each(function()
@@ -38,6 +51,19 @@ var ExperienceCommentsPanel = (function() {
 					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
 					this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;display:inline-block;');
 					this.style.display = this.value ? 'inline-block' : 'none';
+					$(this).on('input', checkSize);
+					$(this).on('resize.cr', checkSize);
+				});
+				
+		buttons.selectAll('textarea.answer')
+			.attr('readonly', this.inEditMode ? null : 'readonly')
+			.classed('editable', this.inEditMode)
+			.classed('fixed', !this.inEditMode)
+			.each(function()
+				{
+					this.setAttribute('style', 'height:0px;overflow-y:hidden;display:inline-block;');
+					this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;display:inline-block;');
+					this.style.display = 'inline-block';
 					$(this).on('input', checkSize);
 					$(this).on('resize.cr', checkSize);
 				});
@@ -63,15 +89,7 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
 	{
 		var comments = this.fd.experience.getValue("Comments");
-		var initialData;
-		if (this.fd.experience.canWrite())
-		{
-			initialData = {_text: [{text: newText}]};
-		}
-		else
-		{
-			initialData = {_name: [{text: newText}]};
-		}
+		var initialData = {_text: [{text: newText}]};
 		
 		if (comments.getValueID())
 		{
@@ -98,6 +116,22 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
+	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
+	{
+		var comments = this.fd.experience.getValue("Comments");
+		
+		if (comments.getValueID())
+		{
+			/* Test case: add a comment to an experience that has had a comment */
+			var commentCell = comments.getCell("Comment");
+			return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText)
+		     	.done(function(newData)
+					{
+						commentCell.addValue(newData);
+					});
+		}
+	}
+	
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
 	{
 		var commentsDiv = this.mainDiv.select('section.comments');
@@ -108,7 +142,8 @@ var ExperienceCommentsPanel = (function() {
 		commentsDiv.selectAll('li textarea').each(function(d)
 			{
 				var newValue = this.value.trim();
-				d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
+				if (d)
+					d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
 			});
 		if (initialData.length > 0)
 		{
@@ -121,6 +156,62 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 			done();
+	}
+	
+	ExperienceCommentsPanel.prototype.startEditing = function()
+	{
+		if (prepareClick('click', 'Start Editing'))
+		{
+			try
+			{
+				var _this = this;
+				var commentList = this.mainDiv.select('section.comments>ol');
+				showClickFeedback(this.editButton.node(), function()
+					{
+						_this.editButton.selectAll('span').text("Done");
+					});
+				this.showDeleteControls();
+				this.inEditMode = true;
+				commentList.selectAll('textarea')
+					.attr('readonly', null)
+					.classed('fixed', false)
+					.classed('editable', true);
+				unblockClick();
+			}
+			catch(err)
+			{
+				this.editButton.selectAll('span').text("Edit");
+				cr.syncFail(err);
+			}
+		}
+	}
+	
+	ExperienceCommentsPanel.prototype.focusOnComment = function(id)
+	{
+		var commentList = this.mainDiv.select('section.comments>ol');
+		var textAreas = $(commentList.node()).children('li')
+			.filter(function() {
+					return d3.select(this).datum().id == id;
+				});
+		if (textAreas.length == 0)
+			throw new Error('The specified comment is not recognized.');
+			
+		var answerTextArea = textAreas
+			.find('textarea.answer');
+			
+		answerTextArea.one('focus', function()
+			{
+				this.select();
+
+				// Work around Chrome's little problem
+				var _this = this;
+				this.onmouseup = function() {
+					// Prevent further mouseup intervention
+					_this.onmouseup = null;
+					return false;
+				};
+			});
+		answerTextArea.focus();
 	}
 
 	function ExperienceCommentsPanel(fd)
@@ -159,7 +250,7 @@ var ExperienceCommentsPanel = (function() {
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
 		{		
-			var editButton = navContainer.appendRightButton()
+			this.editButton = navContainer.appendRightButton()
 				.on("click", function()
 				{
 					if (_this.inEditMode)
@@ -172,14 +263,14 @@ var ExperienceCommentsPanel = (function() {
 							var fail = function(err)
 								{
 									newButtonText = "Done";
-									editButton.selectAll('span').text(newButtonText);
+									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}
 							try
 							{
 								showClickFeedback(this, function()
 									{
-										editButton.selectAll('span').text(newButtonText);
+										_this.editButton.selectAll('span').text(newButtonText);
 									});
 								_this.checkTextAreas(function()
 									{
@@ -201,39 +292,10 @@ var ExperienceCommentsPanel = (function() {
 					}
 					else
 					{
-						if (prepareClick('click', 'Start Editing'))
-						{
-							/* Store the new text in a button so that it is set properly
-								when an error occurs whether or not the callback to showClickFeedback is called. */
-							var newButtonText = "Done";
-							var fail = function(err)
-								{
-									newButtonText = "Edit";
-									editButton.selectAll('span').text(newButtonText);
-									cr.syncFail(err);
-								}
-							try
-							{
-								showClickFeedback(this, function()
-									{
-										editButton.selectAll('span').text(newButtonText);
-									});
-								_this.showDeleteControls();
-								_this.inEditMode = true;
-								commentList.selectAll('textarea')
-									.attr('readonly', null)
-									.classed('fixed', false)
-									.classed('editable', true);
-								unblockClick();
-							}
-							catch(err)
-							{
-								fail(err);
-							}
-						}
+						_this.startEditing();
 					}
 				});
-			editButton.append('span').text("Edit");
+			this.editButton.append('span').text("Edit");
 		}
 
 		navContainer.appendTitle('Comments');
@@ -306,14 +368,8 @@ var ExperienceCommentsPanel = (function() {
 				.classed('new-comment', true);
 			var newCommentInput = newCommentDiv.append('textarea')
 				.attr('rows', 3);
-			if (fd.experience.canWrite())
-			{
-				newCommentInput.attr('placeholder', 'New Comment');
-			}
-			else
-			{
-				newCommentInput.attr('placeholder', 'Ask a Question');
-			}
+			newCommentInput.attr('placeholder', 'New Comment');
+
 			var postButton = newCommentDiv.append('button')
 				.classed('post site-active-div', true)
 				.text('Post')
@@ -340,12 +396,51 @@ var ExperienceCommentsPanel = (function() {
 							}
 						}
 					});
+			
+			var newQuestionDiv = panel2Div.append('section')
+				.classed('new-comment', true);
+			var newQuestionInput = newQuestionDiv.append('textarea')
+				.attr('rows', 3);
+			newQuestionInput.attr('placeholder', 'New Question');
+
+			var askButton = newQuestionDiv.append('button')
+				.classed('post site-active-div', true)
+				.text('Ask')
+				.on('click', function()
+					{
+						var newQuestion = newQuestionInput.node().value;
+						if (newQuestion)
+						{
+							if (prepareClick('click', 'Ask Question'))
+							{
+								try
+								{
+									_this.askQuestion(newQuestion)
+										.then(function()
+											{
+												newQuestionInput.node().value = '';
+												unblockClick();
+											},
+											cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+						}
+					});
+			
 			var resizeFunction = function()
 			{
 				$(newCommentInput.node()).width(
 					$(newCommentDiv.node()).width() - 
 					$(postButton.node()).outerWidth(true) -
 					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+				$(newQuestionInput.node()).width(
+					$(newQuestionDiv.node()).width() - 
+					$(postButton.node()).outerWidth(true) -
+					($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width()));
 			}
 			$(panel2Div.node()).on('resize.cr', resizeFunction);
 		}
@@ -366,11 +461,22 @@ var ExperienceCommentsPanel = (function() {
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.
 			 */
-			setTimeout(function()
-				{
-					comments.promiseCellsFromCache(["Comment"])
-						.then(onCommentsChecked, cr.asyncFail);
-				}, 0);
+			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
+				.then(function(comments)
+					{
+						var r = $.Deferred();
+						setTimeout(function()
+							{
+								onCommentsChecked(comments);
+								r.resolve();
+							});
+						return r;
+					}, cr.asyncFail);
+		}
+		else
+		{
+			this.promise = $.Deferred();
+			this.promise.resolve();
 		}
 	}
 		

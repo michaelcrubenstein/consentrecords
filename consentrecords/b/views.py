@@ -206,7 +206,44 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'pathway%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+@ensure_csrf_cookie
+def showExperience(request, id):
+    logPage(request, 'pathAdvisor/experience')
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    if terms.isUUID(id):
+        args['state'] = 'experience/%s/' % id
+        pathend = re.search(r'experience/%s/' % id, request.path).end()
+        path = request.path[pathend:]
+
+        if re.match(r'comments/*', path, re.I):
+            args['state'] += 'comments/'
+        elif re.match(r'comment/.*', path, re.I):
+            args['state'] += 'comment/'
+            path = path[len('comment/'):]
+            if re.match(r'[A-Fa-f0-9]{32}/', path):
+                args['state'] += path[:33]
+                path = path[33:]
 
     context = RequestContext(request, args)
         
@@ -462,14 +499,14 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms['First Name'],
-                                								   deleteTransaction__isnull=True)
-                                firstName = firstNames.count() > 0 and firstNames[0]
+                                firstNames = following.value_set.filter(field=terms['_first Name'],
+                                                                   deleteTransaction__isnull=True)
+                                firstName = firstNames.count() > 0 and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['Screen Name'],
-                                																	deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.count() > 0 and screenNames[0]
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
+                                                                                                    deleteTransaction__isnull=True)
+                                screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
                                     screenName or firstName,

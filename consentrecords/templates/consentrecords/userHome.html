@@ -218,37 +218,39 @@
 		var userFirstName = null;
 		var userLastName = null;
 
-		function checkSignin(done)
+		function checkSignin(handleState)
 		{
-			if (cr.signedinUser.getValueID())
-				done();
-			else
+			if (prepareClick('checkSignin'))
 			{
-				if (prepareClick('checkSignin'))
+				var onSignin = function(eventObject)
 				{
-					var onSignin = function(eventObject)
-					{
-						$(this).off("signinCanceled.cr", null, onSigninCanceled);
-						done();
-					};
-				
-					var onSigninCanceled = function(eventObject)
-					{
-						$(this).off("signin.cr", null, onSignin);
-						var firstPanel = new WelcomePanel();
-						firstPanel.showLeft();
-					}
-				
-					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
-				
-					var panel = new SigninPanel();
-					panel.showLeft().then(function()
-								{
-									panel.initializeFocus();
-									unblockClick();
-								});
+					$(this).off("signinCanceled.cr", null, onSigninCanceled);
+					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
+					firstPanel.setupSearchPanel();
+					firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+						.then(function()
+							{
+								handleState(firstPanel)
+							});
+					firstPanel.showUp();
+				};
+			
+				var onSigninCanceled = function(eventObject)
+				{
+					$(this).off("signin.cr", null, onSignin);
+					var firstPanel = new WelcomePanel();
+					firstPanel.showLeft();
 				}
+			
+				$(cr.signedinUser).one("signin.cr", null, null, onSignin);
+				$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+			
+				var panel = new SigninPanel();
+				panel.showLeft().then(function()
+							{
+								panel.initializeFocus();
+								unblockClick();
+							});
 			}
 		}
 		
@@ -403,17 +405,7 @@
 				done([]);
 		}
 		
-		function loadPathlinesPanel(previousPanel)
-		{
-			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
-			firstPanel.setupSearchPanel();
-			firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true);
-			firstPanel.showUp();
-			return firstPanel;
-		}
-		
 		$(document).ready (function(e) {						
-			var previousPanel = $("#id_user_home_panel")[0];
 			var firstPanel;
 			
 			/* handleState is an asynchronous function called when the setup is ready to process it. */
@@ -441,9 +433,9 @@
 					}
 					stateString = "";	/* So it only happens once. */
 				}
-				else if (stateString.startsWith("pathway"))
+				else if (stateString.startsWith("user/"))
 				{
-					stateString = stateString.substring("pathway".length);
+					stateString = stateString.substring("user/".length);
 					if (stateString.length > 0)
 					{
 						var pathwayID = stateString;
@@ -496,14 +488,6 @@
 						var experienceID = stateString;
 						var handleState = function(pathwayPanel)
 						{
-							if (!pathwayPanel)
-							{
-								if (!firstPanel)
-								{
-									firstPanel = loadPathlinesPanel(previousPanel);
-								}
-								pathwayPanel = firstPanel;
-							}
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("Path");
 							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
@@ -543,14 +527,6 @@
 					{
 						cr.signedinUser.promiseCellsFromCache()
 							.then(function() {
-								if (!pathwayPanel)
-								{
-									if (!firstPanel)
-									{
-										firstPanel = loadPathlinesPanel(previousPanel);
-									}
-									pathwayPanel = firstPanel;
-								}
 								addToPathway(pathwayPanel);
 							},
 							cr.asyncFail);
@@ -562,15 +538,6 @@
 					/* Accept the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
-
 						function clearAccessRequests(newValue)
 						{
 							var cell = cr.signedinUser.getCell("_access request");
@@ -609,14 +576,6 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
 						var cell = cr.signedinUser.getCell("_access request");
 						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
 						if (v)
@@ -637,15 +596,6 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
-						
 						try
 						{
 							new Settings(cr.signedinUser, pathwayPanel.node())
@@ -671,17 +621,63 @@
 					}
 					needsSignin = false;
 				}
+				else if (stateString.startsWith("experience/"))
+				{
+					stateString = stateString.substring("experience/".length);
+					
+					handleState = function(pathwayPanel)
+					{
+						f = function()
+							{
+								/* Show the specified experience. */
+								var id = stateString.substring(0, stateString.indexOf("/"));
+								stateString = stateString.substring(stateString.indexOf("/")+1);
+						
+								try
+								{
+									var experience = pathwayPanel.showExperience(id);
+									if (stateString.startsWith("comments/"))
+									{
+										pathwayPanel.showCommentsPanel(id);
+									}
+									else if (stateString.startsWith("comment/"))
+									{
+										var commentsPanel = pathwayPanel.showCommentsPanel(id);
+										stateString = stateString.substring("comment/".length);
+										id = stateString.substring(0, stateString.indexOf("/"));
+										stateString = stateString.substring(stateString.indexOf("/")+1);
+										if (commentsPanel)
+										{
+											/* Turn on editing */
+											commentsPanel.startEditing();
+											/* Edit the comment with the specified id. */
+											commentsPanel.promise = commentsPanel.promise
+												.then(function()
+													{
+														commentsPanel.focusOnComment(id);
+													});									
+										}
+									}
+								}
+								catch(err)
+								{
+									cr.asyncFail(err);
+								}
+							}
+						if (pathwayPanel.pathtree.isUserSet)
+							f();
+						else
+							$(pathwayPanel.pathtree).on('userSet.cr', f);
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("me"))
 				{
-					var handleState = function()
+					var handleState = function(pathwayPanel)
 					{
 						cr.signedinUser.promiseCellsFromCache()
 							.then(function() {
-								if (!firstPanel)
-								{
-									firstPanel = loadPathlinesPanel(previousPanel);
-								}
-							},
+								},
 							cr.asyncFail);
 					}
 					needsSignin = true;
@@ -699,8 +695,8 @@
 			{
 				$(cr.signedinUser).trigger("signout.cr");
 			}
+			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-
 			if (cr.signedinUser.getValueID())
 			{
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
@@ -712,7 +708,7 @@
 						.then(function()
 							{
 								if (handleState)
-									handleState();
+									handleState(firstPanel);
 								else
 									firstPanel.checkShowIdeas();
 							});
