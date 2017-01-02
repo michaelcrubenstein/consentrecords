@@ -33,6 +33,41 @@ The PathAdvisor Team
                 return s
         return p.sub(f, html)
         
+    # Sends a message saying that the specified experiement has a new question to the specified email recipient.
+    def sendNewExperienceQuestionEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, question, commentValue, hostURL):
+        answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.id, commentValue.id)
+        htmlMessage = """<body><style>
+</style><p>Hi%s!</p>
+<p>You have received a question at pathadvisor.com from %s.</p>
+<blockquote>Regarding: %s<br><br>%s</b><br><br>
+            <a href="%s">Reply</a></blockquote>
+
+<p>We hope you appreciate their question and enjoy inspiring others by sharing your answer.</p>
+
+<p><b>The PathAdvisor Team</b></p>
+</body>
+""" % (" " + salutation if salutation else "", follower.getDescription(), experienceValue.referenceValue.getDescription(), question, answerURL)
+
+        message = """\
+Hi%s!
+
+You have received a question at pathadvisor.com from %s.
+
+     Regarding: %s
+     %s
+
+Open the following link in your web browser to answer this question:
+
+%s
+
+We hope you appreciate their question and enjoy inspiring others by sharing your answer.
+
+The PathAdvisor Team
+""" % (" " + salutation if salutation else "", follower.getDescription(), experienceValue.referenceValue.getDescription(), question, answerURL)
+        
+        send_mail('Path Question From Another User', message, senderEMail,
+            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+    
     # Sends a reset password message to the specified email recipient.
     def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>

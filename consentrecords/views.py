@@ -484,6 +484,105 @@ def requestAccess(request):
         
     return JsonResponse(results)
 
+def requestExperienceComment(request):
+    if request.method != "POST":
+        raise Http404("requestExperienceComment only responds to POST methods")
+    
+    try:    
+        language = None
+        experienceID = request.POST["experience"]
+        if terms.isUUID(experienceID):
+            experiencePath = '#%s' % experienceID
+        else:
+            experiencePath = experienceID
+            
+        followerID = request.POST["path"]
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
+            
+        question = request.POST["question"]
+        if len(question) == 0:
+            return HttpResponseBadRequest(reason="question text is not specified")
+        
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
+            else:
+                userInfo = UserInfo(request.user)
+                objs = pathparser.selectAllObjects(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
+                if len(objs) > 0 and objs[0].typeID == terms['More Experience']:
+                    experience = objs[0]
+                    sourcePath = experience.parent
+                    experienceValue = sourcePath.value_set.get(referenceValue=experience)
+                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(objs) > 0 and objs[0].typeID == terms['Path']:
+                        follower = objs[0]
+                        fieldTerm = terms['Comment']
+                        with transaction.atomic():
+                            transactionState = TransactionState(request.user)
+                            nameLists = NameList()
+                        
+                            containerObject = experience.getSubInstance(terms['Comments'])
+                            propertyList = {\
+                                    'Comment Request': [{'cells': {\
+                                        'Path': [{'instanceID': follower.id}],
+                                        '_text': [{'text': question}],
+                                       }}],
+                                }
+                            
+                            item, v = instancecreator.create(terms['Comment'], 
+                                containerObject, terms['Comment'], -1, 
+                                propertyList, nameLists, transactionState)
+        
+                            Instance.updateDescriptions([item], nameLists)
+                            
+                            typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
+                            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                            vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                            data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                        
+                            # Send an email to the following user.
+                            protocol = "https://" if request.is_secure() else "http://"
+
+                            # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
+                            experienceUser = experience.parent.parent
+                            recipientEMail = experienceUser.value_set.filter(field=terms.email,
+                                                                        deleteTransaction__isnull=True)[0].stringValue
+                            firstNames = experienceUser.value_set.filter(field=terms['_first Name'],
+                                                               deleteTransaction__isnull=True)
+                            firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                            
+                            path = experienceUser.parent
+                            screenNames = path and path.value_set.filter(field=terms['_name'],
+                                                                         deleteTransaction__isnull=True)
+                            screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                            
+                            Emailer.sendNewExperienceQuestionEmail(settings.PASSWORD_RESET_SENDER, 
+                                screenName or firstName,
+                                recipientEMail,
+                                experienceValue,
+                                follower,
+                                question,
+                                v,
+                                protocol + request.get_host())
+                        
+                            results = {'object': data}
+                    else:
+                        raise RuntimeError('the requestor is unrecognized')
+                else:
+                    raise RuntimeError('the user to follow is unrecognized')
+        else:
+            return HttpResponseBadRequest(reason="user is not authenticated")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
+        
+    return JsonResponse(results)
+
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
@@ -818,7 +917,6 @@ class api:
                 p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
             else:
                 m = list(itertools.chain.from_iterable(m))
-                print(m)
                 typeset = frozenset([v.referenceValue.typeID for v in m])
                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                 p = map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m)

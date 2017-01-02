@@ -43,7 +43,7 @@ var ExperienceCommentsPanel = (function() {
 		}
 			
 		buttons.selectAll('textarea.question')
-			.attr('readonly', this.inEditMode ? '' : 'readonly')
+			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
 			.classed('fixed', !this.inEditMode)
 			.each(function()
@@ -56,7 +56,7 @@ var ExperienceCommentsPanel = (function() {
 				});
 				
 		buttons.selectAll('textarea.answer')
-			.attr('readonly', this.inEditMode ? '' : 'readonly')
+			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
 			.classed('fixed', !this.inEditMode)
 			.each(function()
@@ -116,36 +116,19 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
-	ExperienceCommentsPanel.prototype.askQuestion = function(newText, done, fail)
+	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
 		var comments = this.fd.experience.getValue("Comments");
-		var initialData = {"Comment Request":
-								[{cells: {"Path": [{instanceID: cr.signedinUser.getValue("Path").getValueID()}],
-										  "_text": [{text: newText}] }}
-				                ]};
 		
 		if (comments.getValueID())
 		{
 			/* Test case: add a comment to an experience that has had a comment */
 			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getValueID(), initialData))
-		     .then(function(newData)
+			return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText)
+		     	.done(function(newData)
 					{
-						newData.promiseCellsFromCache()
-							.then( 
-							function() {
-								commentCell.addValue(newData);
-								done(newData);
-							},
-							fail);
-					},
-					fail);
-		}
-		else
-		{
-			/* Test case: add a comment to an experience that has not had a comment previously added. */
-			$.when(comments.saveNew({Comment: [{cells: initialData}]}))
-			 .then(done, fail);
+						commentCell.addValue(newData);
+					});
 		}
 	}
 	
@@ -173,6 +156,62 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 			done();
+	}
+	
+	ExperienceCommentsPanel.prototype.startEditing = function()
+	{
+		if (prepareClick('click', 'Start Editing'))
+		{
+			try
+			{
+				var _this = this;
+				var commentList = this.mainDiv.select('section.comments>ol');
+				showClickFeedback(this.editButton.node(), function()
+					{
+						_this.editButton.selectAll('span').text("Done");
+					});
+				this.showDeleteControls();
+				this.inEditMode = true;
+				commentList.selectAll('textarea')
+					.attr('readonly', null)
+					.classed('fixed', false)
+					.classed('editable', true);
+				unblockClick();
+			}
+			catch(err)
+			{
+				this.editButton.selectAll('span').text("Edit");
+				cr.syncFail(err);
+			}
+		}
+	}
+	
+	ExperienceCommentsPanel.prototype.focusOnComment = function(id)
+	{
+		var commentList = this.mainDiv.select('section.comments>ol');
+		var textAreas = $(commentList.node()).children('li')
+			.filter(function() {
+					return d3.select(this).datum().id == id;
+				});
+		if (textAreas.length == 0)
+			throw new Error('The specified comment is not recognized.');
+			
+		var answerTextArea = textAreas
+			.find('textarea.answer');
+			
+		answerTextArea.one('focus', function()
+			{
+				this.select();
+
+				// Work around Chrome's little problem
+				var _this = this;
+				this.onmouseup = function() {
+					// Prevent further mouseup intervention
+					_this.onmouseup = null;
+					return false;
+				};
+			});
+		answerTextArea.focus();
 	}
 
 	function ExperienceCommentsPanel(fd)
@@ -211,7 +250,7 @@ var ExperienceCommentsPanel = (function() {
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
 		{		
-			var editButton = navContainer.appendRightButton()
+			this.editButton = navContainer.appendRightButton()
 				.on("click", function()
 				{
 					if (_this.inEditMode)
@@ -224,14 +263,14 @@ var ExperienceCommentsPanel = (function() {
 							var fail = function(err)
 								{
 									newButtonText = "Done";
-									editButton.selectAll('span').text(newButtonText);
+									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}
 							try
 							{
 								showClickFeedback(this, function()
 									{
-										editButton.selectAll('span').text(newButtonText);
+										_this.editButton.selectAll('span').text(newButtonText);
 									});
 								_this.checkTextAreas(function()
 									{
@@ -253,39 +292,10 @@ var ExperienceCommentsPanel = (function() {
 					}
 					else
 					{
-						if (prepareClick('click', 'Start Editing'))
-						{
-							/* Store the new text in a button so that it is set properly
-								when an error occurs whether or not the callback to showClickFeedback is called. */
-							var newButtonText = "Done";
-							var fail = function(err)
-								{
-									newButtonText = "Edit";
-									editButton.selectAll('span').text(newButtonText);
-									cr.syncFail(err);
-								}
-							try
-							{
-								showClickFeedback(this, function()
-									{
-										editButton.selectAll('span').text(newButtonText);
-									});
-								_this.showDeleteControls();
-								_this.inEditMode = true;
-								commentList.selectAll('textarea')
-									.attr('readonly', null)
-									.classed('fixed', false)
-									.classed('editable', true);
-								unblockClick();
-							}
-							catch(err)
-							{
-								fail(err);
-							}
-						}
+						_this.startEditing();
 					}
 				});
-			editButton.append('span').text("Edit");
+			this.editButton.append('span').text("Edit");
 		}
 
 		navContainer.appendTitle('Comments');
@@ -405,12 +415,13 @@ var ExperienceCommentsPanel = (function() {
 							{
 								try
 								{
-									_this.askQuestion(newQuestion, function()
-										{
-											newQuestionInput.node().value = '';
-											unblockClick();
-										},
-										cr.syncFail);
+									_this.askQuestion(newQuestion)
+										.then(function()
+											{
+												newQuestionInput.node().value = '';
+												unblockClick();
+											},
+											cr.syncFail);
 								}
 								catch(err)
 								{
@@ -450,11 +461,22 @@ var ExperienceCommentsPanel = (function() {
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.
 			 */
-			setTimeout(function()
-				{
-					comments.promiseCellsFromCache(["Comment/Comment Request"])
-						.then(onCommentsChecked, cr.asyncFail);
-				}, 0);
+			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
+				.then(function(comments)
+					{
+						var r = $.Deferred();
+						setTimeout(function()
+							{
+								onCommentsChecked(comments);
+								r.resolve();
+							});
+						return r;
+					}, cr.asyncFail);
+		}
+		else
+		{
+			this.promise = $.Deferred();
+			this.promise.resolve();
 		}
 	}
 		

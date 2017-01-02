@@ -212,6 +212,7 @@ def showPathway(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showExperience(request, id):
     logPage(request, 'pathAdvisor/experience')
     
@@ -231,27 +232,18 @@ def showExperience(request, id):
         args['facebookIntegration'] = True
     
     if terms.isUUID(id):
-        containerPath = '_user[_email=%s]>Path' % (request.user.email)
-        userInfo = UserInfo(request.user)
-        objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.readFilter)
-        if len(objs) > 0:
-            pathInstance = objs[0]
-            experiences = pathInstance.value_set.filter(field=terms['More Experience'], 
-                deleteTransaction__isnull=True,
-                id=id)
-            if len(experiences) > 0:
-                args['state'] = 'experience/%s/' % experiences[0].id
-                pathend = re.search(r'experience/%s/' % experiences[0].id, request.path).end()
-                path = request.path[pathend:]
+        args['state'] = 'experience/%s/' % id
+        pathend = re.search(r'experience/%s/' % id, request.path).end()
+        path = request.path[pathend:]
 
-                if re.match(r'comments/*', path, re.I):
-                    args['state'] += 'comments/'
-                elif re.match(r'comment/.*', path, re.I):
-                    args['state'] += 'comment/'
-                    path = path[len('comment/'):]
-                    if re.match(r'[A-Fa-f0-9]{32}/', path):
-                        args['state'] += path[:33]
-                        path = path[33:]
+        if re.match(r'comments/*', path, re.I):
+            args['state'] += 'comments/'
+        elif re.match(r'comment/.*', path, re.I):
+            args['state'] += 'comment/'
+            path = path[len('comment/'):]
+            if re.match(r'[A-Fa-f0-9]{32}/', path):
+                args['state'] += path[:33]
+                path = path[33:]
 
     context = RequestContext(request, args)
         

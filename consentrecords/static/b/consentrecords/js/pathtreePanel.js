@@ -901,8 +901,8 @@ var PathView = (function() {
 				try
 				{
 					var newPanel = new ExperienceCommentsPanel(fd);
-					
 					revealPanelLeft(newPanel.node());
+					return newPanel;
 				}
 				catch(err)
 				{
@@ -1263,6 +1263,9 @@ var PathLines = (function() {
 	PathLines.prototype.flagWidth = 0;
 	
 	PathLines.prototype.columnData = PathGuides.data;
+	
+	/* A flag indicating whether or not the userSet event has been triggered. */
+	PathLines.prototype.isUserSet = false;
 
 	PathLines.prototype.handleValueDeleted = function(experience)
 	{
@@ -1751,6 +1754,7 @@ var PathLines = (function() {
 				crv.stopLoadingMessage(_this.loadingMessage);
 				_this.loadingMessage.remove();
 			
+				_this.isUserSet = true;
 				$(_this).trigger("userSet.cr");
 			}
 			catch(err)

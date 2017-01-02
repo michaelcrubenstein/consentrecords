@@ -1271,6 +1271,7 @@ cr.urls = {
 		acceptFollower: '/user/acceptFollower/',
 		requestAccess: '/user/requestAccess/',
 		resetPassword: '/user/resetpassword/',
+		requestExperienceComment: '/user/requestExperienceComment/',
 		log: '/monitor/log/',
 	};
 	
@@ -1753,6 +1754,34 @@ cr.requestAccess = function(follower, followingPath, done, fail)
 		});
 }
 
+cr.requestExperienceComment = function(experience, followerPath, question)
+	{
+		var jsonArray = {experience: experience.getValueID(),
+			path: followerPath.getValueID(),
+			question: question};
+	
+		return $.when($.post(cr.urls.requestExperienceComment, jsonArray))
+				.then(function(json)
+					{
+						var r2 = $.Deferred();
+						try {
+							/* Copy the data from json object into newData so that 
+								any functions are properly initialized.
+							 */
+							var newData = cr.ObjectCell.prototype.copyValue(json.object);
+														
+							r2.resolve(newData);
+						}
+						catch (err)
+						{
+							r2.reject(err);
+						}
+						return r2;
+					},
+					cr.thenFail
+				 );
+	},
+	
 cr._logQueue = new Queue(true)
 cr.logRecord = function(name, message)
 	{
