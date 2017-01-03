@@ -245,6 +245,21 @@ cr.Cell = (function()
 		Cell.prototype.newValue = function() {
 			throw "newValue must be overwritten by a subclass";
 		}
+		
+		Cell.prototype.replaceValues = function(instances)
+		{
+			this.data.forEach(function(i)
+				{
+					i.cell = undefined;
+				});
+			
+			this.data = [];
+			var _this = this;
+			instances.forEach(function(i)
+				{
+					_this.pushValue(i);
+				});
+		}
 	
 		function Cell(field) {
 			this.data = [];
@@ -790,6 +805,8 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype._completeUpdate = function(newData)
 	{
+		var oldID = this.getValueID();
+		
 		this.id = newData.id;
 		if (newData.typeName)
 			this.typeName = newData.typeName;
@@ -797,6 +814,9 @@ cr.ObjectValue = (function() {
 			this.privilege = newData.privilege;
 		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
 		this.triggerDataChanged();
+		
+		if (!oldID)
+			$(this.cell).trigger('valueAdded.cr', this);
 	}
 
 	ObjectValue.prototype.isEmpty = function()
@@ -1028,7 +1048,10 @@ cr.ObjectValue = (function() {
 				 )
 				.then(function(cells)
 					{
-						subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
+						if (!fields)
+							return;
+							
+						var subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
 						if (subFields.length == 0)
 							return;
 						try
@@ -1658,16 +1681,7 @@ cr.getCellValues = function(object, cellName, fieldNames)
 			.then(function(instances)
 				{
 					var cell = object.getCell(cellName);
-					cell.data.forEach(function(i)
-						{
-							i.cell = undefined;
-						});
-					
-					cell.data = [];
-					instances.forEach(function(i)
-						{
-							cell.pushValue(i);
-						});
+					cell.replaceValues(instances);
 				},
 				function(err)
 				{
@@ -1768,7 +1782,22 @@ cr.requestExperienceComment = function(experience, followerPath, question)
 							/* Copy the data from json object into newData so that 
 								any functions are properly initialized.
 							 */
-							var newData = cr.ObjectCell.prototype.copyValue(json.object);
+							var newData;
+							if (json.Comments)
+							{
+								var newComments = cr.ObjectCell.prototype.copyValue(json.Comments);
+								var commentsCell = experience.getCell('Comments');
+								commentsCell.replaceValues([newComments]);
+								$(commentsCell).trigger('valueAdded.cr', newComments);
+								newData = newComments.getValue('Comment');
+							}
+							else
+							{
+								newData = cr.ObjectCell.prototype.copyValue(json.Comment);
+								var comments = experience.getValue('Comments');
+								commentCell = comments.getCell('Comment');
+								commentCell.addValue(newData);
+							}
 														
 							r2.resolve(newData);
 						}

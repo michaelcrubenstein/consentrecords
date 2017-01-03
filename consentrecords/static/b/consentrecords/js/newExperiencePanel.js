@@ -201,6 +201,12 @@ var Experience = (function() {
 					initialData["User Entered Service"].push({text: s.name});
 			}
 		}
+		
+		initialData["Comments"] = [{cells:
+				{
+					"Comment": []
+				}}
+			];
 	}
 	
 	Experience.prototype.getServiceByName = function(name)
