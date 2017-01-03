@@ -768,7 +768,6 @@ def requestExperienceComment(request):
                                 commentData = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 data['cells'][0]['data'] = [commentData]
-                                print(data)
                                 results = {'Comments': data}
                             else:
                                 typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
