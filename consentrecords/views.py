@@ -693,30 +693,42 @@ def requestExperienceComment(request):
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID == terms['Path']:
                         follower = objs[0]
-                        fieldTerm = terms['Comment']
                         with transaction.atomic():
                             transactionState = TransactionState(request.user)
                             nameLists = NameList()
                         
-                            containerObject = experience.getSubInstance(terms['Comments'])
-                            propertyList = {\
-                                    'Comment Request': [{'cells': {\
-                                        'Path': [{'instanceID': follower.id}],
-                                        '_text': [{'text': question}],
-                                       }}],
-                                }
-                            
-                            item, v = instancecreator.create(terms['Comment'], 
-                                containerObject, terms['Comment'], -1, 
-                                propertyList, nameLists, transactionState)
+                            commentsTerm = terms['Comments']
+                            containerObject = experience.getSubInstance(commentsTerm)
+                            if containerObject:
+                                commentsValue = None
+                                propertyList = {\
+                                        'Comment Request': [{'cells': {\
+                                            'Path': [{'instanceID': follower.id}],
+                                            '_text': [{'text': question}],
+                                           }}],
+                                    }
+                                item, v = instancecreator.create(terms['Comment'], 
+                                    containerObject, terms['Comment'], -1, 
+                                    propertyList, nameLists, transactionState)
         
+                            else:
+                                propertyList = {\
+                                        'Comment': [{'cells': {\
+                                            'Comment Request': [{'cells': {\
+                                                'Path': [{'instanceID': follower.id}],
+                                                '_text': [{'text': question}],
+                                               }}],
+                                            }}],
+                                    }
+                                item, commentsValue = instancecreator.create(commentsTerm, 
+                                    experience, commentsTerm, -1, 
+                                    propertyList, nameLists, transactionState)
+                                containerObject = experience.getSubInstance(commentsTerm)
+                                v = containerObject.getSubValue(terms['Comment'])
+                                item = v.referenceValue
+                            
                             Instance.updateDescriptions([item], nameLists)
                             
-                            typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
-                            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-                            vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                            data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
-                        
                             # Send an email to the following user.
                             protocol = "https://" if request.is_secure() else "http://"
 
@@ -742,7 +754,29 @@ def requestExperienceComment(request):
                                 v,
                                 protocol + request.get_host())
                         
-                            results = {'object': data}
+                            
+                            if commentsValue:
+                                typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
+                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                                vFilter = api._selectInstanceData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
+                                data = api._getValueData(vFilter[0], ['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
+                                
+                                typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
+                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                                # Get the new value along with its subdata (v, above, only has the value)
+                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                commentData = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                
+                                data['cells'][0]['data'] = [commentData]
+                                print(data)
+                                results = {'Comments': data}
+                            else:
+                                typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
+                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                                # Get the new value along with its subdata (v, above, only has the value)
+                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                results = {'Comment': data}
                     else:
                         raise RuntimeError('the requestor is unrecognized')
                 else:

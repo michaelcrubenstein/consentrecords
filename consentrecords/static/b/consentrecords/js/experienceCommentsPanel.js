@@ -118,18 +118,9 @@ var ExperienceCommentsPanel = (function() {
 	
 	ExperienceCommentsPanel.prototype.askQuestion = function(newText)
 	{
-		var comments = this.fd.experience.getValue("Comments");
 		
-		if (comments.getValueID())
-		{
-			/* Test case: add a comment to an experience that has had a comment */
-			var commentCell = comments.getCell("Comment");
-			return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText)
-		     	.done(function(newData)
-					{
-						commentCell.addValue(newData);
-					});
-		}
+		/* Test case: add a comment to an experience that has had a comment */
+		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText);
 	}
 	
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
@@ -382,6 +373,7 @@ var ExperienceCommentsPanel = (function() {
 							{
 								try
 								{
+									showClickFeedback(this);
 									_this.postComment(newComment, function()
 										{
 											newCommentInput.node().value = '';
@@ -415,6 +407,7 @@ var ExperienceCommentsPanel = (function() {
 							{
 								try
 								{
+									showClickFeedback(this);
 									_this.askQuestion(newQuestion)
 										.then(function()
 											{
@@ -475,6 +468,15 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 		{
+			var commentsAdded = function(eventObject, newData)
+				{
+					onCommentsChecked(newData.cells);
+				}
+			$(fd.experience.getCell('Comments')).one('valueAdded.cr', null, this, commentsAdded);
+			$(panel2Div.node()).on('remove', function()
+				{
+					$(fd.experience.getCell('Comments')).off('valueAdded.cr', null, commentsAdded);
+				});
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
