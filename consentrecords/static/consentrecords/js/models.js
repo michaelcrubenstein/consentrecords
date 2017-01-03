@@ -1043,7 +1043,10 @@ cr.ObjectValue = (function() {
 				 )
 				.then(function(cells)
 					{
-						subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
+						if (!fields)
+							return;
+							
+						var subFields = fields.filter(function(s) { return s.indexOf("/") >= 0; });
 						if (subFields.length == 0)
 							return;
 						try
