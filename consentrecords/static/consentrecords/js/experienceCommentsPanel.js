@@ -470,7 +470,14 @@ var ExperienceCommentsPanel = (function() {
 		{
 			var commentsAdded = function(eventObject, newData)
 				{
-					onCommentsChecked(newData.cells);
+					/* Have to promiseCells here in case the comments have just been added
+						due to a post operation. */
+					newData.promiseCellsFromCache(["Comment/Comment Request"])
+						.then(function()
+							{
+								onCommentsChecked(newData.cells);
+							},
+							cr.asyncFail);
 				}
 			$(fd.experience.getCell('Comments')).one('valueAdded.cr', null, this, commentsAdded);
 			$(panel2Div.node()).on('remove', function()

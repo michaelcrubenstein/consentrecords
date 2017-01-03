@@ -805,6 +805,8 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype._completeUpdate = function(newData)
 	{
+		var oldID = this.getValueID();
+		
 		this.id = newData.id;
 		if (newData.typeName)
 			this.typeName = newData.typeName;
@@ -812,6 +814,9 @@ cr.ObjectValue = (function() {
 			this.privilege = newData.privilege;
 		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
 		this.triggerDataChanged();
+		
+		if (!oldID)
+			$(this.cell).trigger('valueAdded.cr', this);
 	}
 
 	ObjectValue.prototype.isEmpty = function()
