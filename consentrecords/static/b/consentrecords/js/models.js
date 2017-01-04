@@ -719,7 +719,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype._instanceID = null;
 	ObjectValue.prototype._description = "None";
-	ObjectValue.prototype.typeName = null;
+	ObjectValue.prototype._typeName = null;
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -734,12 +734,12 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getTypeName = function()
 	{
-		return this.typeName;
+		return this._typeName;
 	}
 	
 	ObjectValue.prototype.setTypeName = function(typeName)
 	{
-		this.typeName = typeName;
+		this._typeName = typeName;
 		return this;
 	}
 
