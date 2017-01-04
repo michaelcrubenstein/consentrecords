@@ -96,13 +96,13 @@ var ExperienceCommentsPanel = (function() {
 			/* Test case: add a comment to an experience that has had a comment */
 			var commentCell = comments.getCell("Comment");
 			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
-		     .then(function(newData)
+		     .then(function(newValue)
 					{
-						newData.promiseCellsFromCache()
+						newValue.promiseCellsFromCache()
 							.then( 
 							function() {
-								commentCell.addValue(newData);
-								done(newData);
+								commentCell.addValue(newValue);
+								done(newValue);
 							},
 							fail);
 					},
@@ -468,14 +468,14 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 		{
-			var commentsAdded = function(eventObject, newData)
+			var commentsAdded = function(eventObject, newValue)
 				{
 					/* Have to promiseCells here in case the comments have just been added
 						due to a post operation. */
-					newData.promiseCellsFromCache(["Comment/Comment Request"])
+					newValue.promiseCellsFromCache(["Comment/Comment Request"])
 						.then(function()
 							{
-								onCommentsChecked(newData.cells);
+								onCommentsChecked(newValue.getCells());
 							},
 							cr.asyncFail);
 				}
