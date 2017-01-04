@@ -436,23 +436,10 @@ cr.ObjectCell = (function() {
 		return new cr.ObjectValue();
 	}
 	
-	ObjectCell.prototype.copyValue = function(oldValue) {
+	ObjectCell.prototype.copyValue = function(data) {
 		var newValue = new cr.ObjectValue();
 		
-		if (oldValue.id)
-			newValue.id = oldValue.id;
-		newValue.instanceID = oldValue.instanceID;
-		newValue.description = oldValue.description;
-		if ("privilege" in oldValue)
-			newValue.privilege = oldValue.privilege;
-		if ("typeName" in oldValue)
-			newValue.typeName = oldValue.typeName;
-		if (oldValue.cells)
-		{
-			newValue.importCells(oldValue.cells);
-			newValue.isDataLoaded = true;
-		}
-
+		newValue.loadData(data);
 		return newValue;
 	}
 	
@@ -958,6 +945,24 @@ cr.ObjectValue = (function() {
 		}
 	}
 
+	/* loadData loads the data from the middle tier. */
+	ObjectValue.prototype.loadData = function(data)
+	{
+		if (data.id)
+			this.id = data.id;
+		this.instanceID = data.instanceID;
+		this.description = data.description;
+		if ("privilege" in data)
+			this.privilege = data.privilege;
+		if ("typeName" in data)
+			this.typeName = data.typeName;
+		if (data.cells)
+		{
+			this.importCells(data.cells);
+			this.isDataLoaded = true;
+		}
+	}
+
 	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
 		var containerCell = this.cell;
@@ -978,6 +983,15 @@ cr.ObjectValue = (function() {
 		oldCells.forEach(function(cell) {
 			cell.setParent(_this);
 		});
+	}
+	
+	/* Import the data associated with this object from the middle tier. */
+	ObjectValue.prototype.importData = function(data)
+	{
+		this.importCells(data.cells);
+		this.privilege = data.privilege;
+		if (data.typeName)
+			this.typeName = data.typeName;
 	}
 
 	ObjectValue.prototype.promiseCells = function(fields)
@@ -1025,11 +1039,7 @@ cr.ObjectValue = (function() {
 							/* If the data length is 0, then this item can not be read. */
 							if (json.data.length > 0)
 							{
-								var src = json.data[0];
-								_this.importCells(src.cells);
-								_this.privilege = src.privilege;
-								if (src.typeName)
-									_this.typeName = src.typeName;
+								_this.importData(json.data[0]);
 							}
 							else
 							{
@@ -1273,7 +1283,7 @@ cr.cellFactory = {
 	
 cr.createCell = function(field) {
 	var f = cr.cellFactory[field.dataType];
-	return new f(field)
+	return new f(field);
 };
 	
 cr.urls = {
