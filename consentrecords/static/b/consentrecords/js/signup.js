@@ -66,9 +66,9 @@ var Signup = (function () {
 				                   		]};
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData, 
-					function(userData)
+					function(data)
 					{
-						cr.signedinUser.updateFromChangeData(userData);
+						cr.signedinUser.updateFromChangeData(data);
 						cr.signedinUser.checkCells(["_system access"], function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
@@ -594,9 +594,9 @@ var SigninPanel = (function()
 				.on('input', function() { _this.checkenabled(); })
 				.node();
 		
-		var signInSuccess = function(userData)
+		var signInSuccess = function(data)
 		{
-			cr.signedinUser.updateFromChangeData(userData);
+			cr.signedinUser.updateFromChangeData(data);
 			cr.signedinUser.promiseCells(["_system access"])
 				.then(function()
 					{
