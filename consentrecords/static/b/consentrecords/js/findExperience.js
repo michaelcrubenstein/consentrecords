@@ -314,7 +314,7 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.instanceID);
+		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.getValueID());
 		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
 		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)

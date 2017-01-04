@@ -809,7 +809,7 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return !this.instanceID && !this.cells;
+		return !this.getValueID() && !this.cells;
 	}
 
 	ObjectValue.prototype.clearValue = function()
