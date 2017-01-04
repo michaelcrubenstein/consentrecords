@@ -586,7 +586,7 @@ var ComparePath = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.typeName === "More Experience";
+				return d.getTypeName() === "More Experience";
 			})
 			.forEach(function(d)
 			{

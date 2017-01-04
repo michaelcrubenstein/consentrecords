@@ -342,7 +342,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		function onNewCommentsSaved(eventObject, changeTarget)
 		{
-			if (changeTarget.typeName == "Comments")
+			if (changeTarget.getTypeName() == "Comments")
 				changeTarget.promiseCellsFromCache(["Comment"])
 					.then(onCommentsChecked, cr.asyncFail)
 		}

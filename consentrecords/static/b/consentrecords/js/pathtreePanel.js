@@ -549,7 +549,7 @@ var PathView = (function() {
 	
 	PathView.prototype.canEditExperience = function(fd)
 	{
-		return fd.experience.typeName == "More Experience" && fd.experience.canWrite();
+		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
 	}
 	
 	PathView.prototype.changedContent = function()
@@ -863,7 +863,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showDetailPanel = function(fd, i)
 	{
-		if (fd.experience.typeName == "Experience") {
+		if (fd.experience.getTypeName() == "Experience") {
 			;	/* Nothing to edit */
 		}
 		else
@@ -891,7 +891,7 @@ var PathView = (function() {
 	
 	PathView.prototype.showCommentsPanel = function(fd, i)
 	{
-		if (fd.experience.typeName == "Experience") {
+		if (fd.experience.getTypeName() == "Experience") {
 			;	/* Nothing to edit */
 		}
 		else
@@ -1527,7 +1527,7 @@ var PathLines = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.typeName === "More Experience";
+				return d.getTypeName() === "More Experience";
 			})
 			.forEach(function(d)
 			{

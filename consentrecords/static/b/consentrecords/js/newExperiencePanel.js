@@ -860,7 +860,7 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
@@ -880,7 +880,7 @@ var ExperienceDatumSearchView = (function() {
 					});
 			}
 		}
-		else if (d.typeName === 'Organization')
+		else if (d.getTypeName() === 'Organization')
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
@@ -923,7 +923,7 @@ var ExperienceDatumSearchView = (function() {
 				}
 			}
 		}
-		else if (d.typeName === 'Site')
+		else if (d.getTypeName() === 'Site')
 		{
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
@@ -956,7 +956,7 @@ var ExperienceDatumSearchView = (function() {
 						cr.syncFail);
 			}
 		}
-		else if (d.typeName === 'Offering')
+		else if (d.getTypeName() === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
@@ -983,7 +983,7 @@ var ExperienceDatumSearchView = (function() {
 	
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.typeName === "Site" &&
+				return d.getTypeName() === "Site" &&
 					   d.getDescription() === compareText &&
 					   d.getValue("Organization").getDescription() === compareText;
 			});
@@ -993,21 +993,21 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		/* Do not display organizations if there is a site with the same name. */
-		if (d.typeName === "Organization" &&
+		if (d.getTypeName() === "Organization" &&
 			this.hasUniqueSite(d))
 			return false;
 		
 		if (this.isMatchingDatum(d, compareText))
 			return true;
 
-		if (d.typeName === "Offering")
+		if (d.getTypeName() === "Offering")
 		{
 			if (this.stringContains(d.getValue("Site").getDescription(), compareText))
 				return true;
 			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
 		}
-		else if (d.typeName === "Site")
+		else if (d.getTypeName() === "Site")
 		{
 			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
@@ -1203,7 +1203,7 @@ var TagSearchView = (function() {
 	
 	TagSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
@@ -1237,7 +1237,7 @@ var TagSearchView = (function() {
 		if (d.getDescription().toLocaleLowerCase() == compareText)
 			return true;
 			
-		if (d.typeName === "Service")
+		if (d.getTypeName() === "Service")
 		{
 			if (this.experience.offering && 
 				this.experience.offering.getCell("Service").find(d))
@@ -1404,13 +1404,13 @@ var OrganizationSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Site")
+				if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
 						orgValue = d.cell.parent.getValue("Organization");
 					else
 						orgValue = d.getValue("Organization");
@@ -1666,7 +1666,7 @@ var SiteSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Offering")
+				if (d.getTypeName() === "Offering")
 				{
 					leftText.append('div')
 						.classed('title', true).text(d.getDescription());
@@ -1679,13 +1679,13 @@ var SiteSearchView = (function() {
 							.text(d.getValue("Site").getDescription());
 					}
 				}
-				else if (d.typeName === "Site")
+				else if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
 						orgValue = d.cell.parent.getValue("Organization");
 					else
 						orgValue = d.getValue("Organization");
@@ -1736,7 +1736,7 @@ var OfferingSearchView = (function() {
 	
 	OfferingSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service for offering: ' + d.getDescription()))
 			{
@@ -1749,7 +1749,7 @@ var OfferingSearchView = (function() {
 					});
 			}
 		}
-		else if (d.typeName === 'Offering')
+		else if (d.getTypeName() === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
@@ -1984,7 +1984,7 @@ var OfferingSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Offering")
+				if (d.getTypeName() === "Offering")
 				{
 					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
 						leftText.text(d.getDescription());
@@ -2005,7 +2005,7 @@ var OfferingSearchView = (function() {
 						}
 					}
 				}
-				else if (d.typeName === "Service")
+				else if (d.getTypeName() === "Service")
 				{
 					leftText.text(d.getDescription());
 				}

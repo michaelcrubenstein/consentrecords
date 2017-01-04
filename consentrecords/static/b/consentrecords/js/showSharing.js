@@ -245,7 +245,7 @@ var SharingPanel = (function() {
 		{
 			cr.share(userPath, path, accessorLevel.id, function(newValue)
 				{
-					var cellName = newValue.typeName == '_user' ? '_user' : '_group';
+					var cellName = newValue.getTypeName() == '_user' ? '_user' : '_group';
 					var cell = ar.getCell(cellName);
 					cell.addValue(newValue);
 					_this.onUserAdded(accessorLevel.itemsDiv, newValue);

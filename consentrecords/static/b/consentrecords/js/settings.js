@@ -62,16 +62,19 @@ var Settings = (function () {
 		user.getCell("_last name").field.label = this.lastNameLabel;
 		path.getCell("_name").field.label = this.screenNameLabel;
 		userPublicAccessCell.field.label = this.userPublicAccessLabel;
+		
+		var oldGetDescription = userPublicAccessCell.data[0].getDescription;
 		userPublicAccessCell.data[0].getDescription = function() 
 			{
-				if (this.getDescription() == "_read" ||
-					this.getDescription() == _this.allVisibleLabel)
+				var oldDescription = oldGetDescription.call(this);
+				if (oldDescription == "_read" ||
+					oldDescription == _this.allVisibleLabel)
 					return _this.allVisibleLabel;
 				else if (pathPublicAccessCell.data[0].getDescription() == "_read" ||
-				         this.getDescription() == _this.pathVisibleLabel)
+				         oldDescription == _this.pathVisibleLabel)
 				    return _this.pathVisibleLabel;
-				else if (this.getDescription() == "_find" ||
-						 this.getDescription() == _this.emailVisibleLabel)
+				else if (oldDescription == "_find" ||
+						 oldDescription == _this.emailVisibleLabel)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;

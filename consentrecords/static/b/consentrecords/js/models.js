@@ -112,8 +112,8 @@ var CRP = (function() {
 								}
 							});
 				}
-				if (!oldInstance.typeName && i.typeName)
-					oldInstance.typeName = i.typeName;
+				if (!oldInstance.getTypeName() && i.getTypeName())
+					oldInstance.setTypeName(i.getTypeName());
 				return oldInstance;
 			}
 		}
@@ -719,6 +719,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype._instanceID = null;
 	ObjectValue.prototype._description = "None";
+	ObjectValue.prototype.typeName = null;
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -730,6 +731,17 @@ cr.ObjectValue = (function() {
 	{
 		return this._instanceID;
 	};
+	
+	ObjectValue.prototype.getTypeName = function()
+	{
+		return this.typeName;
+	}
+	
+	ObjectValue.prototype.setTypeName = function(typeName)
+	{
+		this.typeName = typeName;
+		return this;
+	}
 
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
@@ -803,16 +815,16 @@ cr.ObjectValue = (function() {
 		this.isDataLoaded = false;
 	}
 	
-	ObjectValue.prototype._completeUpdate = function(newData)
+	ObjectValue.prototype._completeUpdate = function(newValue)
 	{
 		var oldID = this.getInstanceID();
 		
-		this.id = newData.id;
-		if (newData.typeName)
-			this.typeName = newData.typeName;
-		if (newData.privilege)
-			this.privilege = newData.privilege;
-		this.updateFromChangeData({instanceID: newData.getInstanceID(), description: newData.getDescription()});
+		this.id = newValue.id;
+		if (newValue.getTypeName())
+			this.setTypeName(newValue.getTypeName());
+		if (newValue.privilege)
+			this.privilege = newValue.privilege;
+		this.updateFromChangeData({instanceID: newValue.getInstanceID(), description: newValue.getDescription()});
 		this.triggerDataChanged();
 		
 		if (!oldID)
@@ -974,10 +986,15 @@ cr.ObjectValue = (function() {
 			this._description = data.getDescription();
 		else
 			this._description = data.description;
+		
 		if ("privilege" in data)
 			this.privilege = data.privilege;
-		if ("typeName" in data)
-			this.typeName = data.typeName;
+			
+		if (data.getTypeName)
+			this.setTypeName(data.getTypeName());
+		else if ("typeName" in data)
+			this.setTypeName(data.typeName);
+			
 		if (data.cells)
 		{
 			this.importCells(data.cells);
@@ -992,9 +1009,9 @@ cr.ObjectValue = (function() {
 			
 		var _this = this;
 		return $.when(cr.createInstance(containerCell.field, containerUUID, initialData))
-		        .then(function(newData)
+		        .then(function(newValue)
 		        	{
-		        		_this._completeUpdate(newData);
+		        		_this._completeUpdate(newValue);
 		        	});
 	}
 	
@@ -1013,7 +1030,7 @@ cr.ObjectValue = (function() {
 		this.importCells(data.cells);
 		this.privilege = data.privilege;
 		if (data.typeName)
-			this.typeName = data.typeName;
+			this.setTypeName(data.typeName);
 	}
 
 	ObjectValue.prototype.promiseCells = function(fields)
@@ -1188,11 +1205,7 @@ cr.ObjectValue = (function() {
 						/* If the data length is 0, then this item can not be read. */
 						if (json.data.length > 0)
 						{
-							var src = json.data[0];
-							_this.importCells(src.cells);
-							_this.privilege = src.privilege;
-							if (src.typeName)
-								_this.typeName = src.typeName;
+							_this.importData(json.data[0]);
 						}
 						else
 						{
