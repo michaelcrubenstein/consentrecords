@@ -111,7 +111,7 @@ var Settings = (function () {
 				.each(_pushTextChanged);
 		}
 		
-		if (user.privilege === "_administer")
+		if (user.getPrivilege() === "_administer")
 		{
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];

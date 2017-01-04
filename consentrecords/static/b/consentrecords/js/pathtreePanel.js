@@ -1590,7 +1590,7 @@ var PathLines = (function() {
 	
 	PathLines.prototype.setUser = function(path, editable)
 	{
-		if (path.privilege === '_find')
+		if (path.getPrivilege() === '_find')
 			throw "You do not have permission to see information about {0}".format(path.getDescription());
 		if (this.path)
 			throw "path has already been set for this pathtree";
@@ -1839,7 +1839,7 @@ var PathlinesPanel = (function () {
 					d3.event.preventDefault();
 				})
 			.classed("settings", true)
-			.style("display", user.privilege == "_administer" ? null : "none")
+			.style("display", user.getPrivilege() == "_administer" ? null : "none")
 			.append("img")
 			.attr("src", settingsImagePath);
 		settingsButton.append("span")
@@ -2053,7 +2053,7 @@ var PathlinesPanel = (function () {
 				$(user.getCell("_last name")).on("dataChanged.cr", checkTitle);
 				$(user.getCell("_email")).on("dataChanged.cr", checkTitle);
 				
-// 				findButton.style("display", user.privilege === "_administer" ? null : "none");
+// 				findButton.style("display", user.getPrivilege() === "_administer" ? null : "none");
 				
 				this.isMinHeight = true;
 				this.handleResize();

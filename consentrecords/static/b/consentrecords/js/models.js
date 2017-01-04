@@ -720,6 +720,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._instanceID = null;
 	ObjectValue.prototype._description = "None";
 	ObjectValue.prototype._typeName = null;
+	ObjectValue.prototype._privilege = null;
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -740,6 +741,17 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.setTypeName = function(typeName)
 	{
 		this._typeName = typeName;
+		return this;
+	}
+	
+	ObjectValue.prototype.getPrivilege = function()
+	{
+		return this._privilege;
+	}
+	
+	ObjectValue.prototype.setPrivilege = function(privilege)
+	{
+		this._privilege = privilege;
 		return this;
 	}
 
@@ -822,8 +834,8 @@ cr.ObjectValue = (function() {
 		this.id = newValue.id;
 		if (newValue.getTypeName())
 			this.setTypeName(newValue.getTypeName());
-		if (newValue.privilege)
-			this.privilege = newValue.privilege;
+		if (newValue.getPrivilege())
+			this.setPrivilege(newValue.getPrivilege());
 		this.updateFromChangeData({instanceID: newValue.getInstanceID(), description: newValue.getDescription()});
 		this.triggerDataChanged();
 		
@@ -840,8 +852,8 @@ cr.ObjectValue = (function() {
 	{
 		this._instanceID = null; 
 		this._description="None";
+		this._privilege = null;
 		this.cells = null;
-		this.privilege = null;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
@@ -987,8 +999,10 @@ cr.ObjectValue = (function() {
 		else
 			this._description = data.description;
 		
-		if ("privilege" in data)
-			this.privilege = data.privilege;
+		if (data.getPrivilege)
+			this.setPrivilege(data.getPrivilege());
+		else if ("privilege" in data)
+			this.setPrivilege(data.privilege);
 			
 		if (data.getTypeName)
 			this.setTypeName(data.getTypeName());
@@ -1028,14 +1042,14 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.importData = function(data)
 	{
 		this.importCells(data.cells);
-		this.privilege = data.privilege;
+		this.setPrivilege(data.privilege);
 		if (data.typeName)
 			this.setTypeName(data.typeName);
 	}
 
 	ObjectValue.prototype.promiseCells = function(fields)
 	{
-		if (this.privilege == "_find")
+		if (this.getPrivilege() == "_find")
 		{
 			var result = $.Deferred();
 			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
@@ -1083,7 +1097,7 @@ cr.ObjectValue = (function() {
 							else
 							{
 								_this.importCells([]);
-								_this.privilege = null;
+								_this.setPrivilege(null);
 							}
 							_this.isDataLoaded = true;
 							
@@ -1181,7 +1195,7 @@ cr.ObjectValue = (function() {
 			throw "done is not a function";
 		if (typeof(fail) != "function")
 			throw "fail is not a function";
-		if (this.privilege == "_find")
+		if (this.getPrivilege() == "_find")
 		{
 			fail("You do not have permission to see information about {0}".format(this.getDescription()));
 			return;
@@ -1210,7 +1224,7 @@ cr.ObjectValue = (function() {
 						else
 						{
 							_this.importCells([]);
-							_this.privilege = null;
+							_this.setPrivilege(null);
 						}
 						_this.isDataLoaded = true;
 						done();
@@ -1272,10 +1286,8 @@ cr.ObjectValue = (function() {
 	{
 		if (this.getInstanceID() === null)
 			throw(this.getDescription() + " has not been saved");
-		if (this.privilege === undefined)
-			throw(this.getDescription() + " privilege is not specified");
 			
-		return ["_write", "_administer"].indexOf(this.privilege) >= 0;
+		return ["_write", "_administer"].indexOf(this.getPrivilege()) >= 0;
 	}
 	
 	function ObjectValue() {
