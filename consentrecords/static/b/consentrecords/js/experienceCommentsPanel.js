@@ -13,16 +13,16 @@ var ExperienceCommentsPanel = (function() {
 			.classed('asker', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request"); 
-				return cp && cp.getValueID() && cp.getValue("Path"); })
+				return cp && cp.getInstanceID() && cp.getValue("Path"); })
 			.text(function(d) { 
-					return d && d.getValueID() && "{0} asked".format(d.getDescription()); 
+					return d && d.getInstanceID() && "{0} asked".format(d.getDescription()); 
 				});
 
 		var questions = divs.append('textarea')
 			.classed('question', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request");
-				return cp && cp.getValueID() && cp.getValue("_text"); })
+				return cp && cp.getInstanceID() && cp.getValue("_text"); })
 			.text(function(d) { 
 					return d && d.text; 
 				});
@@ -91,11 +91,11 @@ var ExperienceCommentsPanel = (function() {
 		var comments = this.fd.experience.getValue("Comments");
 		var initialData = {_text: [{text: newText}]};
 		
-		if (comments.getValueID())
+		if (comments.getInstanceID())
 		{
 			/* Test case: add a comment to an experience that has had a comment */
 			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getValueID(), initialData))
+			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
 		     .then(function(newData)
 					{
 						newData.promiseCellsFromCache()
@@ -449,7 +449,7 @@ var ExperienceCommentsPanel = (function() {
 						});
 			});					
 		
-		if (comments.getValueID())
+		if (comments.getInstanceID())
 		{
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.

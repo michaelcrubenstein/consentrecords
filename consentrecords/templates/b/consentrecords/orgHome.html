@@ -285,7 +285,7 @@
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
-		if (!cr.signedinUser.getValueID())
+		if (!cr.signedinUser.getInstanceID())
 		{
 			$(cr.signedinUser).trigger("signout.cr");
 		}
@@ -297,7 +297,7 @@
 		$(".sign-in-button").click(function(e) {
 			if (prepareClick('click',  'Sign In/Out button'))
 			{
-				if (cr.signedinUser.getValueID())
+				if (cr.signedinUser.getInstanceID())
 				{
 					sign_out(function()
 						{
@@ -325,7 +325,7 @@
 			if (prepareClick('click', message))
 			{
 				showClickFeedback(this);
-				if (cr.signedinUser.getValueID())
+				if (cr.signedinUser.getInstanceID())
 					done();
 				else
 				{
@@ -411,7 +411,7 @@
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			var path = "#" + cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -548,7 +548,7 @@
 				});
 			}
 			
-			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
+			var path = '#'+cr.signedinUser.getInstanceID()+'::reference(_group)::reference(Organization)';
 			cr.selectAll({path: path})
 				.then(successFunction, cr.asyncFail);
 		}
@@ -1017,7 +1017,7 @@
 							check_single_field_instance(enrollmentsInstance, 
 								["Enrollment"],
 								"_user",
-								user.getValueID(), 
+								user.getInstanceID(), 
 								function(newData)
 								{
 									syncFailFunction(user.getDescription() + 
@@ -1027,8 +1027,8 @@
 								function()
 								{
 									/* Test case: Enroll a user into a session from org page. */
-									var initialData = {"_user": [{instanceID: user.getValueID()}] };
-									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+									var initialData = {"_user": [{instanceID: user.getInstanceID()}] };
+									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getInstanceID(),
 													  initialData))
 									 .then(function(newData)
 										   {
@@ -1089,11 +1089,11 @@
 									check_single_field_instance(experiences, 
 										["Experience"],
 										"_user",
-										user.getValueID(), 
+										user.getInstanceID(), 
 										function(data)
 										{
 											var experience = data[0];
-											if (!experience.getValueID())
+											if (!experience.getInstanceID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
 											showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
@@ -1129,7 +1129,7 @@
 		
 		function check_single_field_instance(container, childFields, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
 		{
-			var path = "#"+container.getValueID();
+			var path = "#"+container.getInstanceID();
 			for (i = 0; i < childFields.length; ++i)
 			{
 				path += ">" + childFields[i];
@@ -1244,9 +1244,9 @@
 																	
 																	var newValue = inquiryCell.addNewValue();
 																	cr.updateValues([{
-																			containerUUID: inquiriesInstance.getValueID(),
+																			containerUUID: inquiriesInstance.getInstanceID(),
 																			fieldID: inquiryCell.field.nameID, 
-						   													instanceID: pickedUser.getValueID(),
+						   													instanceID: pickedUser.getInstanceID(),
 						   													description: pickedUser.getDescription()
 																		}], [newValue])
 																		.then(function()
@@ -1304,7 +1304,7 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						/* Since d.getValueID() is not null, containerUUID is not needed. */
+						/* Since d.getInstanceID() is not null, containerUUID is not needed. */
 						var checkCellsSuccess = function()
 						{
 							sessionSuccess(session, previousPanel);

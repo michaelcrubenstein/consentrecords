@@ -1151,7 +1151,7 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 				});
 				{
 					var command;
-					command = {containerUUID: d.cell.parent.getValueID(), 
+					command = {containerUUID: d.cell.parent.getInstanceID(), 
 							   fieldID: d.cell.field.nameID, 
 							   ofKindID: d.cell.field.ofKindID,
 							   value: subData,
@@ -2705,7 +2705,7 @@ function promiseCreateObjectFromCells(containerCell, objectData, cells)
 
 	/* Test case: add a new service to the services panel. */
 	return $.when(cr.createInstance(containerCell.field, 
-						  containerCell.parent && containerCell.parent.getValueID(), 
+						  containerCell.parent && containerCell.parent.getInstanceID(), 
 						  initialData))
 				   .then(function(newData)
 						  {
@@ -2816,9 +2816,9 @@ var EditPanel = (function() {
 														var cell = cells[i];
 														if (cell.field.name === name)
 														{
-															if (objectData && objectData.getValueID())
+															if (objectData && objectData.getInstanceID())
 															{
-																$.when(cr.createInstance(cell.field, objectData.getValueID(), d[name]))
+																$.when(cr.createInstance(cell.field, objectData.getInstanceID(), d[name]))
 																 .then(function(newData)
 																	{
 																		cell.addValue(newData);
@@ -2859,14 +2859,14 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 	var successFunction = function(cells)
 	{
 		var header;
-		if (objectData && objectData.getValueID())
+		if (objectData && objectData.getInstanceID())
 			header = "Edit";
 		else
 			header = "New " + containerCell.field.name;
 		var sitePanel = new EditPanel(objectData, cells, header, onShow);
 
 		var doneButton;
-		if (objectData && objectData.getValueID())
+		if (objectData && objectData.getInstanceID())
 		{
 			if (onShow === revealPanelUp)
 				doneButton = sitePanel.navContainer.appendRightButton();
@@ -2907,7 +2907,7 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 		onShow(sitePanel.node());
 	}
 	
-	if (objectData && (objectData.getValueID() || objectData.cells))
+	if (objectData && (objectData.getInstanceID() || objectData.cells))
 		objectData.checkCells(undefined, function()
 			{
 				successFunction(objectData.cells);
@@ -3297,7 +3297,7 @@ function showPickObjectPanel(cell, oldData) {
 					{
 						/* Test case: Add an item to a cell that can contain multiple items. 
 						 */
-						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						if (cell.parent && cell.parent.getInstanceID())	/* In this case, we are adding an object to an existing object. */
 						{
 							/* Test case: Add a service to an offering that has been saved. 
 						 	 */
@@ -3312,18 +3312,18 @@ function showPickObjectPanel(cell, oldData) {
 							   an item that was added to the cell but not saved;
 							   a placeholder or a previously picked value.
 							 */
-							oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
+							oldData.updateFromChangeData({instanceID: d.getInstanceID(), description: d.getDescription()});
 							oldData.triggerDataChanged();
 							successFunction();
 						}
 					}
-					else if (d.getValueID() === oldData.getValueID()) {
+					else if (d.getInstanceID() === oldData.getInstanceID()) {
 						/* Test case: Choose the same item as was previously selected for this item. */
 						successFunction();
 					}
 					else if (oldData.id)
 					{
-						if (d.getValueID())
+						if (d.getInstanceID())
 						{
 							/* Test case: Choose a different item as was previously selected for this item. */
 							cr.updateObjectValue(oldData, d, -1, successFunction, cr.syncFail);
@@ -3334,11 +3334,11 @@ function showPickObjectPanel(cell, oldData) {
 							oldData.deleteValue(successFunction, cr.syncFail);
 						}
 					}
-					else if (d.getValueID())
+					else if (d.getInstanceID())
 					{
 						/* Test case: Set the value of a unique item in a cell where the current value is None.
 						 */
-						if (cell.parent && cell.parent.getValueID())	/* In this case, we are adding an object to an existing object. */
+						if (cell.parent && cell.parent.getInstanceID())	/* In this case, we are adding an object to an existing object. */
 						{
 							/* Test case: Set the state of an address that was previously saved without a state. 
 						 	 */
@@ -3351,7 +3351,7 @@ function showPickObjectPanel(cell, oldData) {
 							   an item that was added to the cell but not saved;
 							   a placeholder or a previously picked value.
 							 */
-							oldData.updateFromChangeData({instanceID: d.getValueID(), description: d.getDescription()});
+							oldData.updateFromChangeData({instanceID: d.getInstanceID(), description: d.getDescription()});
 							oldData.triggerDataChanged();
 							successFunction();
 						}
@@ -3393,7 +3393,7 @@ function showPickObjectPanel(cell, oldData) {
 			pickObjectPath = pickObjectPath.slice(6);
 			while (currentObject != null &&
 				   pickObjectPath.indexOf("::reference(") === 0 &&
-				   !currentObject.getValueID())
+				   !currentObject.getInstanceID())
 			{
 				currentObject = currentObject.cell.parent;
 				pickObjectPath = pickObjectPath.slice("::reference(".length);
@@ -3406,10 +3406,10 @@ function showPickObjectPanel(cell, oldData) {
 				/* Skip over the next close parenthesis */
 				pickObjectPath = pickObjectPath.slice(pickObjectPath.indexOf(')')+1);
 			}
-			if (currentObject != null && currentObject.getValueID())
+			if (currentObject != null && currentObject.getInstanceID())
 			{
 				/* Test case: edit the inquiry access group of an organization */
-				pickObjectPath = "#"+currentObject.getValueID()+pickObjectPath;
+				pickObjectPath = "#"+currentObject.getInstanceID()+pickObjectPath;
 				cr.selectAll({path: pickObjectPath})
 					.then(selectAllSuccessFunction, cr.syncFail);
 			}

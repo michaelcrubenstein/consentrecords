@@ -448,7 +448,7 @@
 										{
 											var done;
 											var panel;
-											if (cr.signedinUser.getValueID())
+											if (cr.signedinUser.getInstanceID())
 											{
 												panel = new PathlinesPanel(users[0], true);
 											}	
@@ -466,7 +466,7 @@
 										}
 										else
 										{
-											if (!cr.signedinUser.getValueID())
+											if (!cr.signedinUser.getInstanceID())
 											{
 												firstPanel = new WelcomePanel();
 												firstPanel.showNow();
@@ -544,7 +544,7 @@
 							for (var i = 0; i < cell.data.length; ++i)
 							{
 								var d = cell.data[i];
-								if (d.getValueID() == newValue.getValueID())
+								if (d.getInstanceID() == newValue.getInstanceID())
 									d.triggerDeleteValue();
 							}
 						}
@@ -577,7 +577,7 @@
 					handleState = function(pathwayPanel)
 					{
 						var cell = cr.signedinUser.getCell("_access request");
-						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
 						if (v)
 						{
 							v.deleteValue(function()
@@ -691,13 +691,13 @@
 			/* Initialize all of the objects that are dependent on whether or not the user is
 				signed in.
 			 */
-			if (!cr.signedinUser.getValueID())
+			if (!cr.signedinUser.getInstanceID())
 			{
 				$(cr.signedinUser).trigger("signout.cr");
 			}
 			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-			if (cr.signedinUser.getValueID())
+			if (cr.signedinUser.getInstanceID())
 			{
 				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
 					{
@@ -794,7 +794,7 @@
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			var path = "#" + cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -929,7 +929,7 @@
 				}
 			}
 			
-			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			var path = "#"+cr.signedinUser.getInstanceID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 

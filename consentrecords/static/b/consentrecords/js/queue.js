@@ -123,14 +123,14 @@ var CRP = (function() {
 	{
 		if ("value" in i && "id" in i.value)
 		{
-			if (!(i.getValueID() in this.instances))
+			if (!(i.getInstanceID() in this.instances))
 			{
-				this.instances[i.getValueID()] = i;
+				this.instances[i.getInstanceID()] = i;
 				return i;
 			}
 			else
 			{
-				oldInstance = this.instances[i.getValueID()];
+				oldInstance = this.instances[i.getInstanceID()];
 				if (!oldInstance.value.cells && i.isDataLoaded)
 				{
 					oldInstance.value.setCells(i.value.cells);

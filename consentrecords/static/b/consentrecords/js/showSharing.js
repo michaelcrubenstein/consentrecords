@@ -66,7 +66,7 @@ var SharingPanel = (function() {
 							unblockClick();
 						};
 					
-						_this.addAccess(accessorLevel, "#{0}".format(d.getValueID()), done);
+						_this.addAccess(accessorLevel, "#{0}".format(d.getInstanceID()), done);
 					}
 					catch (err)
 					{
@@ -135,9 +135,9 @@ var SharingPanel = (function() {
 			if (cell && cell.data.length > 0)
 			{
 				var d = cell.data[0];
-				if (d.getValueID() in this.privilegesByID)
+				if (d.getInstanceID() in this.privilegesByID)
 				{
-					var sa = this.privilegesByID[d.getValueID()];
+					var sa = this.privilegesByID[d.getInstanceID()];
 					sa.accessRecords.push(a);
 					var userCell = a.getCell("_user");
 					var groupCell = a.getCell("_group");
@@ -197,13 +197,13 @@ var SharingPanel = (function() {
 				var p = this.privileges[j];
 				if (p.name == e.getDescription())
 				{
-					p.id = e.getValueID();
+					p.id = e.getInstanceID();
 					this.privilegesByID[p.id] = p;
 					break;
 				}
 			}
 		}
-		cr.getData({path: "#" + this.user.getValueID() + '>"_access record"', 
+		cr.getData({path: "#" + this.user.getInstanceID() + '>"_access record"', 
 					fields: ["parents"], 
 					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
 					fail: asyncFailFunction});
@@ -213,7 +213,7 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 
-		var userPath = "#{0}".format(this.user.getValueID());
+		var userPath = "#{0}".format(this.user.getInstanceID());
 		cr.share(userPath, path, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell("_access record");
@@ -240,7 +240,7 @@ var SharingPanel = (function() {
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
-		var userPath = "#{0}".format(this.user.getValueID());
+		var userPath = "#{0}".format(this.user.getInstanceID());
 		ar.checkCells(undefined, function()
 		{
 			cr.share(userPath, path, accessorLevel.id, function(newValue)

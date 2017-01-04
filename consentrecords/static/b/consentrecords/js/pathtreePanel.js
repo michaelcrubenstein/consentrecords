@@ -6,7 +6,7 @@ var Service = (function() {
 	Service.prototype._getStage = function()
 	{
 		var service = this.service;
-		return service && service.getValueID() && crp.getInstance(service.getValueID()).getValue("Stage")
+		return service && service.getInstanceID() && crp.getInstance(service.getInstanceID()).getValue("Stage")
 	}
 
 	Service.prototype.stageColumns = {
@@ -42,17 +42,17 @@ var Service = (function() {
 			return this.stageColumns[stageDescription];
 		var _this = this;
 			
-		if (this.service && this.service.getValueID())
+		if (this.service && this.service.getInstanceID())
 		{
-			var services = crp.getInstance(this.service.getValueID()).getCell("Service");
+			var services = crp.getInstance(this.service.getInstanceID()).getCell("Service");
 			var s = services.data.find(function(s)
 				{
-					var stage =  s.getValueID() && crp.getInstance(s.getValueID()).getValue("Stage");
+					var stage =  s.getInstanceID() && crp.getInstance(s.getInstanceID()).getValue("Stage");
 					return _this.getStageDescription(stage);
 				});
 			if (s)
 				return this.stageColumns[
-					this.getStageDescription(crp.getInstance(s.getValueID()).getValue("Stage"))
+					this.getStageDescription(crp.getInstance(s.getInstanceID()).getValue("Stage"))
 				];
 		}
 
@@ -124,7 +124,7 @@ var FlagData = (function() {
 		var f = function(name)
 		{
 			var d = _this.experience.getValue(name);
-			return d && d.getValueID() && d.getDescription();
+			return d && d.getInstanceID() && d.getDescription();
 		}
 		return f("Offering") ||
 			this.experience.getDatum("User Entered Offering") ||
@@ -145,7 +145,7 @@ var FlagData = (function() {
 		var minColumn = Service.prototype.columnPriorities[Service.prototype.columnPriorities.length - 1];
 		
 		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getValueID())
+		if (offering && offering.getInstanceID())
 		{
 			if (!offering.isDataLoaded)
 				throw ("Runtime error: offering data is not loaded");
@@ -178,7 +178,7 @@ var FlagData = (function() {
 	FlagData.prototype.getTimeframe = function()
 	{
 		var timeframeValue = this.experience.getValue("Timeframe");
-		return timeframeValue && timeframeValue.getValueID() && timeframeValue.getDescription();
+		return timeframeValue && timeframeValue.getInstanceID() && timeframeValue.getDescription();
 	}
 	
 	FlagData.prototype.getEndDate = function()
@@ -262,7 +262,7 @@ var FlagData = (function() {
 	FlagData.prototype.checkOfferingCells = function(done)
 	{
 		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getValueID() && !offering.isDataLoaded)
+		if (offering && offering.getInstanceID() && !offering.isDataLoaded)
 		{
 			offering.promiseCellsFromCache()
 				.then(done, cr.asyncFail);
@@ -507,9 +507,9 @@ var PathView = (function() {
 	PathView.prototype.checkOfferingCells = function(experience, done)
 	{
 		offering = experience.getValue("Offering");
-		if (offering && offering.getValueID() && !offering.isDataLoaded)
+		if (offering && offering.getInstanceID() && !offering.isDataLoaded)
 		{
-			var storedI = crp.getInstance(offering.getValueID());
+			var storedI = crp.getInstance(offering.getInstanceID());
 			if (storedI != null)
 			{
 				offering.importCells(storedI.cells);
@@ -597,7 +597,7 @@ var PathView = (function() {
 		}
 			
 		var commentsValue = fd.experience.getValue("Comments");
-		var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
+		var commentsCount = (commentsValue && commentsValue.getInstanceID()) ? parseInt(commentsValue.getDescription()) : 0;
 		if (fd.experience.canWrite() ||
 			commentsCount > 0)
 		{
@@ -634,7 +634,7 @@ var PathView = (function() {
 			
 			function setCommentsText()
 			{
-				var commentsCount = (commentsValue && commentsValue.getValueID()) ? parseInt(commentsValue.getDescription()) : 0;
+				var commentsCount = (commentsValue && commentsValue.getInstanceID()) ? parseInt(commentsValue.getDescription()) : 0;
 				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
 				
 				_this.changedContent();
@@ -1765,7 +1765,7 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  "#" + this.path.getValueID() + '::reference(_user)::reference(Experience)', 
+		return crp.promise({path:  "#" + this.path.getInstanceID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents"]})
 		.then(function(experiences)
 			{
@@ -1776,11 +1776,11 @@ var PathLines = (function() {
 				});
 			})
 		.then(function() {
-			return crp.promise({path: "#" + _this.path.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+			return crp.promise({path: "#" + _this.path.getInstanceID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
-				return crp.promise({path: "#" + _this.path.getValueID() + '>"More Experience">Offering'});
+				return crp.promise({path: "#" + _this.path.getInstanceID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
 				return crp.promise({path: "Service"});
@@ -1899,7 +1899,7 @@ var PathlinesPanel = (function () {
 			.text("+");
 			
 		var moreExperiences = user.getValue("Path");
-		var canAddExperience = (moreExperiences.getValueID() === null ? user.canWrite() : moreExperiences.canWrite());
+		var canAddExperience = (moreExperiences.getInstanceID() === null ? user.canWrite() : moreExperiences.canWrite());
 		addExperienceButton.style("display", canAddExperience ? null : "none");
 	}
 	
@@ -2116,7 +2116,7 @@ var ShareOptions = (function () {
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							$(panel.node()).remove();
-							if (user.getValueID() == cr.signedinUser.getValueID())
+							if (user.getInstanceID() == cr.signedinUser.getInstanceID())
 							{
 								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
 											.format(window.location.origin, user.getDatum("_email"));
@@ -2286,18 +2286,18 @@ var ExperienceIdeas = (function() {
 							{
 								return !d.getCell("Disqualifying Tag").data.find(function(dt)
 									{
-										var dtID = dt.getValueID();
+										var dtID = dt.getInstanceID();
 										return moreExperienceData.find(function(experience)
 											{
 												return experience.getCell("Service").data.find(function(service)
 													{
-														return service.getValueID() == dtID;
+														return service.getInstanceID() == dtID;
 													}) ||
 													experience.getCell("Offering").data.find(function(offering)
 														{
 															return !offering.isEmpty() && offering.getCell("Service").data.find(function(service)
 																{
-																	return service.getValueID() == dtID;
+																	return service.getInstanceID() == dtID;
 																});
 														});
 											});

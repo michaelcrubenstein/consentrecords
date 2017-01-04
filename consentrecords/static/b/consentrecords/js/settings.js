@@ -432,7 +432,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -466,7 +466,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -484,7 +484,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathAccessValue.cell.parent.getValueID(),
+												containerUUID: oldPathAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldPathAccessValue.cell.field.nameID,
 												instance: d.pathPrivilegePath,
 												description: d.pathPrivilegeDescription
@@ -502,7 +502,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathSpecialAccessValue.cell.parent.getValueID(),
+												containerUUID: oldPathSpecialAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
 												instance: d.pathSpecialAccessPath,
 												description: d.pathSpecialAccessDescription
@@ -523,7 +523,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description

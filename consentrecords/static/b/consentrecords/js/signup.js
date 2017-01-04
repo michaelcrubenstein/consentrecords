@@ -482,9 +482,9 @@ var Signup = (function () {
 						{
 							var d = enumeratorCell.data[i];
 							if (d.getDescription() === '_read')
-								readInput.property('value', d.getValueID());
+								readInput.property('value', d.getInstanceID());
 							else if (d.getDescription() === '_find')
-								findInput.property('value', d.getValueID());
+								findInput.property('value', d.getInstanceID());
 						}
 						p.node().onCheckForwardEnabled = undefined;
 						signup.dots.checkForwardEnabled();

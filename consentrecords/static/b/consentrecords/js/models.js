@@ -86,16 +86,16 @@ var CRP = (function() {
 
 	CRP.prototype.pushInstance = function(i)
 	{
-		if (i.getValueID())
+		if (i.getInstanceID())
 		{
-			if (!(i.getValueID() in this.instances))
+			if (!(i.getInstanceID() in this.instances))
 			{
-				this.instances[i.getValueID()] = i;
+				this.instances[i.getInstanceID()] = i;
 				return i;
 			}
 			else
 			{
-				var oldInstance = this.instances[i.getValueID()];
+				var oldInstance = this.instances[i.getInstanceID()];
 				if (i.isDataLoaded)
 				{
 					if (!oldInstance.cells)
@@ -302,7 +302,7 @@ cr.StringCell = (function() {
 	
 	StringCell.prototype.getAddCommand = function(newValue)
 	{
-		return {containerUUID: this.parent.getValueID(), 
+		return {containerUUID: this.parent.getInstanceID(), 
 				fieldID: this.field.nameID, 
 				text: newValue};
 	}
@@ -346,7 +346,7 @@ cr.TranslationCell = (function() {
 	
 	TranslationCell.prototype.getAddCommand = function(newValue)
 	{
-		return {containerUUID: this.parent.getValueID(), 
+		return {containerUUID: this.parent.getInstanceID(), 
 			    fieldID: this.field.nameID, 
 			    text: newValue.text, 
 			    languageCode: newValue.languageCode};
@@ -466,10 +466,10 @@ cr.ObjectCell = (function() {
 			for (var i = 0; i < this.data.length; ++i)
 			{
 				var d = this.data[i];
-				if (d.getValueID())
+				if (d.getInstanceID())
 				{
 					/* This case is true if we are picking an object. */
-					newData.push({instanceID: d.getValueID()});
+					newData.push({instanceID: d.getInstanceID()});
 				}
 				else if ("cells" in d)
 				{
@@ -492,16 +492,16 @@ cr.ObjectCell = (function() {
 	{
 		return this.data.find(function(d2)
 			{
-				return d2.getValueID() === value.getValueID();
+				return d2.getInstanceID() === value.getInstanceID();
 			});
 	}
 	
 	ObjectCell.prototype.getAddCommand = function(newValue)
 	{
 		/* The description value is used in updateFromChangeData. */
-		return {containerUUID: this.parent.getValueID(), 
+		return {containerUUID: this.parent.getInstanceID(), 
 				fieldID: this.field.nameID, 
-				instanceID: newValue.getValueID(),
+				instanceID: newValue.getInstanceID(),
 				description: newValue.getDescription()};
 	}
 	
@@ -559,11 +559,11 @@ cr.CellValue = (function() {
 		{
 			if (this.cell != null && 
 				this.cell.parent == null &&
-				this.getValueID() != null)
+				this.getInstanceID() != null)
 			{
 				/* In this case, this is a root object, so we just need to 
 					delete the instance. */
-				var jsonArray = { path: "#" + this.getValueID()
+				var jsonArray = { path: "#" + this.getInstanceID()
 						};
 				$.post(cr.urls.deleteInstances, jsonArray)
 					.done(function(json, textStatus, jqXHR)
@@ -722,22 +722,25 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() { return this.description; };
-	ObjectValue.prototype.getValueID = function()
-		{ return this.instanceID; };
+	
+	ObjectValue.prototype.getInstanceID = function()
+	{
+		return this._instanceID;
+	};
 
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
-		var newValueID = (newValue ? newValue.getValueID() : null);
+		var newValueID = (newValue ? newValue.getInstanceID() : null);
 		var newDescription = (newValue ? newValue.getDescription() : null);
 
 		/* If both are null, then they are equal. */
-		if (!newValueID && !this.getValueID())
+		if (!newValueID && !this.getInstanceID())
 			return;
 		
 		var command;
 		if (!newValueID)
 		{
-			if (!this.getValueID())
+			if (!this.getInstanceID())
 				return;
 			else
 			{
@@ -746,7 +749,7 @@ cr.ObjectValue = (function() {
 			}
 		}
 		else {
-			if (this.getValueID() == newValueID)
+			if (this.getInstanceID() == newValueID)
 				return;
 			if (this.id)
 			{
@@ -799,14 +802,14 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype._completeUpdate = function(newData)
 	{
-		var oldID = this.getValueID();
+		var oldID = this.getInstanceID();
 		
 		this.id = newData.id;
 		if (newData.typeName)
 			this.typeName = newData.typeName;
 		if (newData.privilege)
 			this.privilege = newData.privilege;
-		this.updateFromChangeData({instanceID: newData.getValueID(), description: newData.getDescription()});
+		this.updateFromChangeData({instanceID: newData.getInstanceID(), description: newData.getDescription()});
 		this.triggerDataChanged();
 		
 		if (!oldID)
@@ -815,7 +818,7 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return !this.getValueID() && !this.cells;
+		return !this.getInstanceID() && !this.cells;
 	}
 
 	ObjectValue.prototype.clearValue = function()
@@ -906,7 +909,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.getNonNullValue = function(name)
 	{
 		var d = this.getValue(name);
-		if (d && d.getValueID())
+		if (d && d.getInstanceID())
 			return d;
 		else
 			return undefined;
@@ -979,7 +982,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
 		var containerCell = this.cell;
-		var containerUUID = containerCell.parent ? containerCell.parent.getValueID() : null;
+		var containerUUID = containerCell.parent ? containerCell.parent.getInstanceID() : null;
 			
 		var _this = this;
 		return $.when(cr.createInstance(containerCell.field, containerUUID, initialData))
@@ -1025,7 +1028,7 @@ cr.ObjectValue = (function() {
 						return false;
 					if (cell.data.find(function(d)
 						{
-							return d.getValueID() && !d.isDataLoaded;
+							return d.getInstanceID() && !d.isDataLoaded;
 						}))
 						return true;
 				}))
@@ -1039,9 +1042,9 @@ cr.ObjectValue = (function() {
 			result.resolve(this.cells);
 			return result.promise();
 		}
-		else if (this.getValueID())
+		else if (this.getInstanceID())
 		{
-			var jsonArray = { "path" : "#" + this.getValueID() };
+			var jsonArray = { "path" : "#" + this.getInstanceID() };
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
 			return $.getJSON(cr.urls.getData, jsonArray)
@@ -1132,7 +1135,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.promiseCellsFromCache = function(fields)
 	{
-		var storedI = crp.getInstance(this.getValueID());
+		var storedI = crp.getInstance(this.getInstanceID());
 		if (storedI && storedI.isDataLoaded)
 		{
 			if (this !== storedI)
@@ -1165,10 +1168,10 @@ cr.ObjectValue = (function() {
 		{
 			done(this.cells);
 		}
-		else if (this.getValueID())
+		else if (this.getInstanceID())
 		{
 			var _this = this;
-			var jsonArray = { "path" : "#" + this.getValueID() };
+			var jsonArray = { "path" : "#" + this.getInstanceID() };
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields);
 			$.getJSON(cr.urls.getData,
@@ -1248,7 +1251,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.canWrite = function()
 	{
-		if (this.getValueID() === null)
+		if (this.getInstanceID() === null)
 			throw(this.getDescription() + " has not been saved");
 		if (this.privilege === undefined)
 			throw(this.getDescription() + " privilege is not specified");
@@ -1697,7 +1700,7 @@ cr.getData = function(args)
  */
 cr.getCellValues = function(object, cellName, fieldNames)
 	{
-		var path = '#{0}'.format(object.getValueID());
+		var path = '#{0}'.format(object.getInstanceID());
 		return cr.getValues({path: path, field: cellName, fields: fieldNames})
 			.then(function(instances)
 				{
@@ -1779,7 +1782,7 @@ cr.share = function(userPath, path, privilegeID, done, fail)
 
 cr.requestAccess = function(follower, followingPath, done, fail)
 {
-		$.post(cr.urls.requestAccess, {follower: follower.getValueID(),
+		$.post(cr.urls.requestAccess, {follower: follower.getInstanceID(),
 									   following: followingPath
 					  				  })
 		.done(done)
@@ -1791,8 +1794,8 @@ cr.requestAccess = function(follower, followingPath, done, fail)
 
 cr.requestExperienceComment = function(experience, followerPath, question)
 	{
-		var jsonArray = {experience: experience.getValueID(),
-			path: followerPath.getValueID(),
+		var jsonArray = {experience: experience.getInstanceID(),
+			path: followerPath.getInstanceID(),
 			question: question};
 	
 		return $.when($.post(cr.urls.requestExperienceComment, jsonArray))
