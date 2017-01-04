@@ -718,12 +718,12 @@ cr.TranslationValue = (function() {
 cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
 	ObjectValue.prototype._instanceID = null;
-	ObjectValue.prototype.description = "None";
+	ObjectValue.prototype._description = "None";
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
 	{ 
-		return this.description;
+		return this._description;
 	};
 	
 	ObjectValue.prototype.getInstanceID = function()
@@ -798,7 +798,7 @@ cr.ObjectValue = (function() {
 		if (!changeData.instanceID)
 			throw new Error("instanceID is not specified.");
 		this._instanceID = changeData.instanceID;
-		this.description = changeData.description;
+		this.setDescription(changeData.description);
 		this.cells = null;
 		this.isDataLoaded = false;
 	}
@@ -827,21 +827,21 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.clearValue = function()
 	{
 		this._instanceID = null; 
-		this.description="None";
+		this._description="None";
 		this.cells = null;
 		this.privilege = null;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
 	{
-		this.description = newDescription.length > 0 ? newDescription : "None";
+		this._description = newDescription.length > 0 ? newDescription : "None";
 	}
 	
 	ObjectValue.prototype.calculateDescription = function()
 	{
 		if (!("cells" in this))
 		{
-			if (this.description.length == 0)
+			if (this._description.length == 0)
 				this.setDescription("None");
 		}
 		else
@@ -970,7 +970,10 @@ cr.ObjectValue = (function() {
 		else
 			this._instanceID = null;
 
-		this.description = data.description;
+		if (data.getDescription)
+			this._description = data.getDescription();
+		else
+			this._description = data.description;
 		if ("privilege" in data)
 			this.privilege = data.privilege;
 		if ("typeName" in data)
