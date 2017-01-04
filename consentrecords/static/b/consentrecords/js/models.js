@@ -1574,12 +1574,12 @@ cr.updateValues = function(initialData, sourceObjects)
 							{
 								d.id = newValueID;
 						
-								d.updateFromChangeData(initialData[i]);
-						
 								/* Object Values have an instance ID as well. */
 								if (newInstanceID)
-									d._instanceID = newInstanceID;
+									initialData[i].instanceID = newInstanceID;
 							
+								d.updateFromChangeData(initialData[i]);
+						
 								if (update)
 									update();
 						
