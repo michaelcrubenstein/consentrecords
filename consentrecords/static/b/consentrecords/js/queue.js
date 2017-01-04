@@ -133,7 +133,7 @@ var CRP = (function() {
 				oldInstance = this.instances[i.getInstanceID()];
 				if (!oldInstance.value.getCells() && i.isDataLoaded)
 				{
-					oldInstance.value.setCells(i.value.cells);
+					oldInstance.value.setCells(i.value.getCells());
 					oldInstance.isDataLoaded = true;
 				}
 				return oldInstance;

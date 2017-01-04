@@ -100,7 +100,7 @@ var SharingPanel = (function() {
 	SharingPanel.prototype.loadAccessRecords = function(panel2Div, accessRecords)
 	{
 		var _this = this;
-		var cells, itemCells, items;
+		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
 		accessRequestSection = panel2Div.append("section")
@@ -154,7 +154,7 @@ var SharingPanel = (function() {
 		}
 	
 		var key = 0;
-		cells = panel2Div.selectAll("section")
+		sections = panel2Div.selectAll("section")
 			.data(this.privileges, function(d) {
 				/* Ensure that this operation appends without replacing any items. */
 				key += 1;
@@ -163,10 +163,10 @@ var SharingPanel = (function() {
 			.enter()
 			.append("section")
 			.classed("cell multiple edit", true);
-		cells.append("label")
+		sections.append("label")
 			.text(function(d) { return d.label });
 			
-		itemCells = cells.append("ol")
+		itemCells = sections.append("ol")
 			.classed("cell-items", true);
 	
 		// Reference the views back to the privileges objects.
@@ -177,7 +177,7 @@ var SharingPanel = (function() {
 		this.appendUserControls(items);
 		
 		/* Add one more button for the add Button item. */
-		var buttonDiv = cells.append("div")
+		var buttonDiv = sections.append("div")
 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 			.on("click", function(d) {
 				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);

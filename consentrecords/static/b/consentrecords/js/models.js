@@ -98,7 +98,7 @@ var CRP = (function() {
 				var oldInstance = this.instances[i.getInstanceID()];
 				if (i.isDataLoaded)
 				{
-					if (!oldInstance.cells)
+					if (!oldInstance.getCells())
 					{
 						oldInstance.setCells(i.getCells());
 					}
@@ -720,7 +720,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._description = "None";
 	ObjectValue.prototype._typeName = null;
 	ObjectValue.prototype._privilege = null;
-	ObjectValue.prototype.cells = null;
+	ObjectValue.prototype._cells = null;
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -757,7 +757,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getCells = function()
 	{
-		return this.cells;
+		return this._cells;
 	}
 
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
@@ -826,7 +826,7 @@ cr.ObjectValue = (function() {
 			throw new Error("instanceID is not specified.");
 		this._instanceID = changeData.instanceID;
 		this.setDescription(changeData.description);
-		this.cells = null;
+		this._cells = null;
 		this.isDataLoaded = false;
 	}
 	
@@ -856,7 +856,7 @@ cr.ObjectValue = (function() {
 		this._instanceID = null; 
 		this._description="None";
 		this._privilege = null;
-		this.cells = null;
+		this._cells = null;
 		this.isDataLoaded = false;
 	}
 	
@@ -978,7 +978,7 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.importCells = function(oldCells)
 	{
-		this.cells = [];
+		this._cells = [];
 		for (var j = 0; j < oldCells.length; ++j)
 		{
 			this.importCell(oldCells[j]);
@@ -1042,7 +1042,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.setCells = function(oldCells)
 	{
-		this.cells = oldCells;
+		this._cells = oldCells;
 		var _this = this;
 		oldCells.forEach(function(cell) {
 			cell.setParent(_this);
