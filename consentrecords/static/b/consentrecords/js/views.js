@@ -1141,11 +1141,11 @@ cr.ObjectCell.prototype.appendUpdateCommands = function(sectionObj, initialData,
 			{
 				/* Do nothing. */ ;
 			}
-			else if ("cells" in d && d.cells)
+			else if (d.getCells())
 			{
 				/* This case is true if we are creating an object */
 				var subData = {}
-				$(d.cells).each(function()
+				$(d.getCells()).each(function()
 				{
 					this.appendData(subData);
 				});
@@ -2601,7 +2601,7 @@ function showViewOnlyObjectPanel(objectData, backText) {
 		sitePanel.showLeft().then(unblockClick);
 	
 		panel2Div.append("div").classed("cell-border-below", true);
-		sitePanel.showViewCells(objectData.cells);
+		sitePanel.showViewCells(objectData.getCells());
 	}
 	
 	objectData.checkCells(undefined, successFunction, syncFailFunction)
@@ -2655,7 +2655,7 @@ function showViewObjectPanel(cell, objectData, backText, showFunction) {
 		});
 
 		panel2Div.append("div").classed("cell-border-below", true);
-		sitePanel.showViewCells(objectData.cells);
+		sitePanel.showViewCells(objectData.getCells());
 		
 		showFunction(sitePanel.node());
 	}
@@ -2674,7 +2674,6 @@ function promiseImportCells(containerCell, d, cells)
 		d = containerCell.addNewValue();
 		
 	d.importCells(cells);
-	d.isDataLoaded = true;
 
 	d.calculateDescription();
 	d.triggerDataChanged();
@@ -2750,9 +2749,7 @@ var EditPanel = (function() {
 							cell.updateCell(this);
 						});
 						
-					var cells = sections.data();
-					
-					$.when(promise(containerCell, objectData, cells))
+					$.when(promise(containerCell, objectData, sections.data()))
 					 .then(function() {
 							_this.hide();
 						}, 
@@ -2881,7 +2878,6 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 		else
 		{
 			var sections = sitePanel.mainDiv.selectAll('section');
-			var cells = sections.data();
 			var f = null;
 			
 			if (getSavePromise)
@@ -2898,7 +2894,7 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 				f = promiseCreateObjectFromCells;
 			}
 			
-			var doneButton = sitePanel.appendAddButton(f, containerCell, objectData, cells);
+			var doneButton = sitePanel.appendAddButton(f, containerCell, objectData, sections.data());
 			
 			sitePanel.appendBackButton();
 		}
@@ -2907,10 +2903,10 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 		onShow(sitePanel.node());
 	}
 	
-	if (objectData && (objectData.getInstanceID() || objectData.cells))
+	if (objectData && (objectData.getInstanceID() || objectData.getCells()))
 		objectData.checkCells(undefined, function()
 			{
-				successFunction(objectData.cells);
+				successFunction(objectData.getCells());
 			}, cr.syncFail);
 	else
 		/* Test case: Add a new site to an organization. */
@@ -2980,7 +2976,7 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 			navContainer.appendTitle(header);
 		}
 		
-		if (cr.signedinUser.cells)
+		if (cr.signedinUser.getCells())
 			checkEdit();
 		else
 		{

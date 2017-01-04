@@ -407,7 +407,7 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.cells[0].data[0].getDescription();
+						return d.getCells()[0].data[0].getDescription();
 					});
 			}
 			
@@ -1080,7 +1080,7 @@
 					experiences.checkConfiguration(
 						function(cells)
 						{
-							experiences.cells = cells;
+							experiences.setCells(cells)
 							var experienceCell = experiences.getCell("Experience");
 							cr.getConfiguration(null, experienceCell.field.ofKindID)
 								.then(function(cells)
@@ -1103,7 +1103,7 @@
 											var experience = experienceCell.addNewValue();
 											experience.checkConfiguration(
 												function(cells) {
-													experience.cells = cells;
+													experience.setCells(cells);
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("_user");
 													var userValue = userCell.copyValue(user);

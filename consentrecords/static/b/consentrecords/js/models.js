@@ -100,11 +100,10 @@ var CRP = (function() {
 				{
 					if (!oldInstance.cells)
 					{
-						oldInstance._setCells(i.cells);
-						oldInstance.isDataLoaded = true;
+						oldInstance.setCells(i.getCells());
 					}
 					else 
-						i.cells.forEach(function(cell)
+						i.getCells().forEach(function(cell)
 							{
 								if (!oldInstance.getCell(cell.field.name))
 								{
@@ -471,11 +470,11 @@ cr.ObjectCell = (function() {
 					/* This case is true if we are picking an object. */
 					newData.push({instanceID: d.getInstanceID()});
 				}
-				else if ("cells" in d)
+				else if (d.getCells())
 				{
 					/* This case is true if we are creating an object */
 					var newDatum = {};
-					d.cells.forEach(function(cell)
+					d.getCells().forEach(function(cell)
 					{
 						cell.appendData(newDatum);
 					});
@@ -721,6 +720,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._description = "None";
 	ObjectValue.prototype._typeName = null;
 	ObjectValue.prototype._privilege = null;
+	ObjectValue.prototype.cells = null;
 	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -754,6 +754,11 @@ cr.ObjectValue = (function() {
 		this._privilege = privilege;
 		return this;
 	}
+	
+	ObjectValue.prototype.getCells = function()
+	{
+		return this.cells;
+	}
 
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
@@ -786,8 +791,7 @@ cr.ObjectValue = (function() {
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
 						{
-							_this.importCells(newValue.cells);
-							_this.isDataLoaded = true;
+							_this.importCells(newValue.getCells());
 						}});
 				}
 				else
@@ -803,8 +807,7 @@ cr.ObjectValue = (function() {
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
 						{
-							_this.importCells(newValue.cells);
-							_this.isDataLoaded = true;
+							_this.importCells(newValue.getCells());
 						}});
 				}
 				else
@@ -845,7 +848,7 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return !this.getInstanceID() && !this.cells;
+		return !this.getInstanceID() && !this.getCells();
 	}
 
 	ObjectValue.prototype.clearValue = function()
@@ -854,6 +857,7 @@ cr.ObjectValue = (function() {
 		this._description="None";
 		this._privilege = null;
 		this.cells = null;
+		this.isDataLoaded = false;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
@@ -863,7 +867,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.calculateDescription = function()
 	{
-		if (!("cells" in this))
+		if (!this.getCells())
 		{
 			if (this._description.length == 0)
 				this.setDescription("None");
@@ -871,9 +875,8 @@ cr.ObjectValue = (function() {
 		else
 		{
 			var nameArray = [];
-			for (var i = 0; i < this.cells.length; ++i)
+			this.getCells().forEach(function(cell)
 			{
-				var cell = this.cells[i];
 				if (cell.field.descriptorType == "_by text")
 				{
 					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
@@ -899,9 +902,10 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.hasTextDescription = function()
 	{
-		for (var i = 0; i < this.cells.length; ++i)
+		var cells = this.getCells();
+		for (var i = 0; i < cells; ++i)
 		{
-			var cell = this.cells[i];
+			var cell = cells[i];
 			if ((cell.field.descriptorType == "_by text" ||
 			     cell.field.descriptorType == "_by first text") &&
 				cell.data.length > 0)
@@ -912,8 +916,8 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		if (this.cells)
-			return this.cells.find(function(cell)
+		if (this.getCells())
+			return this.getCells().find(function(cell)
 				{
 					return cell.field.name == name;
 				});
@@ -968,7 +972,7 @@ cr.ObjectValue = (function() {
 			});
 		}
 		newCell.setup(this);
-		this.cells.push(newCell);
+		this.getCells().push(newCell);
 		return newCell;
 	}
 
@@ -979,9 +983,10 @@ cr.ObjectValue = (function() {
 		{
 			this.importCell(oldCells[j]);
 		}
+		this.isDataLoaded = true;
 	}
 
-	/* loadData loads the data from the middle tier. */
+	/* loadData loads the data from the middle tier or another ObjectValue. */
 	ObjectValue.prototype.loadData = function(data)
 	{
 		if (data.id)
@@ -1008,11 +1013,17 @@ cr.ObjectValue = (function() {
 			this.setTypeName(data.getTypeName());
 		else if ("typeName" in data)
 			this.setTypeName(data.typeName);
-			
-		if (data.cells)
+		
+		if (data.getCells)
+		{
+			if (data.getCells())
+			{
+				this.importCells(data.getCells());
+			}
+		}	
+		else if (data.cells)
 		{
 			this.importCells(data.cells);
-			this.isDataLoaded = true;
 		}
 	}
 
@@ -1029,13 +1040,14 @@ cr.ObjectValue = (function() {
 		        	});
 	}
 	
-	ObjectValue.prototype._setCells = function(oldCells)
+	ObjectValue.prototype.setCells = function(oldCells)
 	{
 		this.cells = oldCells;
 		var _this = this;
 		oldCells.forEach(function(cell) {
 			cell.setParent(_this);
 		});
+		this.isDataLoaded = true;
 	}
 	
 	/* Import the data associated with this object from the middle tier. */
@@ -1059,7 +1071,7 @@ cr.ObjectValue = (function() {
 		var _this = this;
 		function fieldsLoaded(fields)
 		{
-			if (_this.cells.find(function(cell)
+			if (_this.getCells().find(function(cell)
 				{
 					if (fields.indexOf(cell.field.name) < 0)
 						return false;
@@ -1073,10 +1085,10 @@ cr.ObjectValue = (function() {
 			return true;
 		}
 	
-		if (this.cells && this.isDataLoaded && fieldsLoaded(fields))
+		if (this.getCells() && this.isDataLoaded && fieldsLoaded(fields))
 		{
 			var result = $.Deferred();
-			result.resolve(this.cells);
+			result.resolve(this.getCells());
 			return result.promise();
 		}
 		else if (this.getInstanceID())
@@ -1099,9 +1111,8 @@ cr.ObjectValue = (function() {
 								_this.importCells([]);
 								_this.setPrivilege(null);
 							}
-							_this.isDataLoaded = true;
 							
-							r2.resolve(_this.cells);
+							r2.resolve(_this.getCells());
 						}
 						catch (err)
 						{
@@ -1165,7 +1176,7 @@ cr.ObjectValue = (function() {
 			return cr.getConfiguration(this, this.cell.field.ofKindID)
 				.done(function(newCells)
 					{
-						_this._setCells(newCells);
+						_this.setCells(newCells);
 					});
 		}
 	}
@@ -1177,11 +1188,10 @@ cr.ObjectValue = (function() {
 		{
 			if (this !== storedI)
 			{
-				this.importCells(storedI.cells);
-				this.isDataLoaded = true;
+				this.importCells(storedI.getCells());
 			}
 			var result = $.Deferred();
-			result.resolve(this.cells);
+			result.resolve(this.getCells());
 			return result.promise();
 		}
 		else 
@@ -1201,9 +1211,9 @@ cr.ObjectValue = (function() {
 			return;
 		}
 	
-		if (this.cells && this.isDataLoaded)
+		if (this.getCells() && this.isDataLoaded)
 		{
-			done(this.cells);
+			done(this.getCells());
 		}
 		else if (this.getInstanceID())
 		{
@@ -1226,7 +1236,6 @@ cr.ObjectValue = (function() {
 							_this.importCells([]);
 							_this.setPrivilege(null);
 						}
-						_this.isDataLoaded = true;
 						done();
 					}
 					catch (err)
@@ -1248,7 +1257,7 @@ cr.ObjectValue = (function() {
 			cr.getConfiguration(this, this.cell.field.ofKindID)
 				.then(function(newCells)
 					{
-						_this._setCells(newCells);
+						_this.setCells(newCells);
 						done(newCells);
 					},
 					fail);
@@ -1264,9 +1273,9 @@ cr.ObjectValue = (function() {
 		if (!this.cell)
 			throw "cell is not specified for this object";
 		
-		if (this.cells)
+		if (this.getCells())
 		{
-			done(this.cells);
+			done(this.getCells());
 		}
 		else
 		{
@@ -1275,7 +1284,7 @@ cr.ObjectValue = (function() {
 			this.cell.getConfiguration()
 				.then(function(newCells)
 					{
-						_this._setCells(newCells);
+						_this.setCells(newCells);
 						done(newCells);
 					},
 					fail);

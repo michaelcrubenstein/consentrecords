@@ -512,8 +512,7 @@ var PathView = (function() {
 			var storedI = crp.getInstance(offering.getInstanceID());
 			if (storedI != null)
 			{
-				offering.importCells(storedI.cells);
-				offering.isDataLoaded = true;
+				offering.importCells(storedI.getCells());
 				if (done) done();
 			}
 			else

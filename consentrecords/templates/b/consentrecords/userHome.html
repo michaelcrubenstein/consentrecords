@@ -790,7 +790,7 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.cells[0].data[0].getDescription();
+						return d.getCells()[0].data[0].getDescription();
 					});
 			}
 			
