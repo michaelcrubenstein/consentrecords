@@ -64,14 +64,14 @@ var Settings = (function () {
 		userPublicAccessCell.field.label = this.userPublicAccessLabel;
 		userPublicAccessCell.data[0].getDescription = function() 
 			{
-				if (this.description == "_read" ||
-					this.description == _this.allVisibleLabel)
+				if (this.getDescription() == "_read" ||
+					this.getDescription() == _this.allVisibleLabel)
 					return _this.allVisibleLabel;
-				else if (pathPublicAccessCell.data[0].description == "_read" ||
-				         this.description == _this.pathVisibleLabel)
+				else if (pathPublicAccessCell.data[0].getDescription() == "_read" ||
+				         this.getDescription() == _this.pathVisibleLabel)
 				    return _this.pathVisibleLabel;
-				else if (this.description == "_find" ||
-						 this.description == _this.emailVisibleLabel)
+				else if (this.getDescription() == "_find" ||
+						 this.getDescription() == _this.emailVisibleLabel)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;
@@ -419,7 +419,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.description != "_find")
+									if (oldUserAccessValue.getDescription() != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -453,7 +453,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.description != "_find")
+									if (oldUserAccessValue.getDescription() != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,

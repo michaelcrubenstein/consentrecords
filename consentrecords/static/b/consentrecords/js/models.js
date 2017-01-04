@@ -721,7 +721,10 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.description = "None";
 	ObjectValue.prototype.isDataLoaded = false;
 	
-	ObjectValue.prototype.getDescription = function() { return this.description; };
+	ObjectValue.prototype.getDescription = function() 
+	{ 
+		return this.description;
+	};
 	
 	ObjectValue.prototype.getInstanceID = function()
 	{
@@ -839,7 +842,7 @@ cr.ObjectValue = (function() {
 		if (!("cells" in this))
 		{
 			if (this.description.length == 0)
-				this.description = "None";
+				this.setDescription("None");
 		}
 		else
 		{
@@ -1514,20 +1517,10 @@ cr.createInstance = function(field, containerUUID, initialData)
 					{
 						var r2 = $.Deferred();
 						try {
-							/* Copy the data from json object into newData so that 
-								any functions are properly initialized.
-							 */
-							var newData = new cr.ObjectValue();
-							/* If there is a container, then the id in newData will contain
-								the id of the value object in the database. */
-							if (containerUUID)
-								newData.id = json.object.id;
-							newData._instanceID = json.object.instanceID;
-							newData.setDescription(json.object.description);
-							newData.typeName = json.object.typeName;
-							newData.privilege = json.object.privilege;
+							var newValue = new cr.ObjectValue();
+							newValue.loadData(json.object);
 							
-							r2.resolve(newData);
+							r2.resolve(newValue);
 						}
 						catch (err)
 						{
@@ -1767,11 +1760,7 @@ cr.share = function(userPath, path, privilegeID, done, fail)
 					any functions are properly initialized.
 				 */
 				var newValue = new cr.ObjectValue();
-				newValue.id = json.object.id;
-				newValue._instanceID = json.object.instanceID;
-				newValue.setDescription(json.object.description);
-				newValue.privilege = json.object.privilege;
-				newValue.typeName = json.object.typeName;
+				newValue.loadData(json.object);
 				done(newValue);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown)
