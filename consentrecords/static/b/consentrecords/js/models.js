@@ -242,6 +242,7 @@ cr.Cell = (function()
 			}
 		};
 
+		/* This method is used to create a new value on the client that has no data. */
 		Cell.prototype.newValue = function() {
 			throw "newValue must be overwritten by a subclass";
 		}
