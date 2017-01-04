@@ -717,6 +717,10 @@ cr.TranslationValue = (function() {
 	
 cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.CellValue();
+	ObjectValue.prototype._instanceID = null;
+	ObjectValue.prototype.description = "None";
+	ObjectValue.prototype.isDataLoaded = false;
+	
 	ObjectValue.prototype.getDescription = function() { return this.description; };
 	ObjectValue.prototype.getValueID = function()
 		{ return this.instanceID; };
@@ -785,7 +789,9 @@ cr.ObjectValue = (function() {
 	{
 		/* Replace the value completely so that its cells are eliminated and will be
 			re-accessed from the server. This handles the case where a value has been added. */
-		this.instanceID = changeData.instanceID;
+		if (!changeData.instanceID)
+			throw new Error("instanceID is not specified.");
+		this._instanceID = changeData.instanceID;
 		this.description = changeData.description;
 		this.cells = null;
 		this.isDataLoaded = false;
@@ -814,7 +820,7 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.clearValue = function()
 	{
-		this.instanceID = null; 
+		this._instanceID = null; 
 		this.description="None";
 		this.cells = null;
 		this.privilege = null;
@@ -950,7 +956,14 @@ cr.ObjectValue = (function() {
 	{
 		if (data.id)
 			this.id = data.id;
-		this.instanceID = data.instanceID;
+			
+		if (data.getInstanceID)
+			this._instanceID = data.getInstanceID();
+		else if (data.instanceID)
+			this._instanceID = data.instanceID;
+		else
+			this._instanceID = null;
+
 		this.description = data.description;
 		if ("privilege" in data)
 			this.privilege = data.privilege;
@@ -1245,9 +1258,6 @@ cr.ObjectValue = (function() {
 	
 	function ObjectValue() {
 		cr.CellValue.call(this);
-		this.instanceID = null;
-		this.description = "None";
-		this.isDataLoaded = false;
 	};
 	
 	return ObjectValue;
@@ -1257,7 +1267,7 @@ cr.signedinUser = new cr.ObjectValue();
 
 cr.createSignedinUser = function(instanceID, description)
 {
-	cr.signedinUser.instanceID = instanceID;
+	cr.signedinUser._instanceID = instanceID;
 	cr.signedinUser.setDescription(description);
 	cr.signedinUser.promiseCellsFromCache(["_system access"])
 		.then(function()
@@ -1509,7 +1519,7 @@ cr.createInstance = function(field, containerUUID, initialData)
 								the id of the value object in the database. */
 							if (containerUUID)
 								newData.id = json.object.id;
-							newData.instanceID = json.object.instanceID;
+							newData._instanceID = json.object.instanceID;
 							newData.setDescription(json.object.description);
 							newData.typeName = json.object.typeName;
 							newData.privilege = json.object.privilege;
@@ -1569,7 +1579,7 @@ cr.updateValues = function(initialData, sourceObjects)
 						
 								/* Object Values have an instance ID as well. */
 								if (newInstanceID)
-									d.instanceID = newInstanceID;
+									d._instanceID = newInstanceID;
 							
 								if (update)
 									update();
@@ -1750,16 +1760,16 @@ cr.share = function(userPath, path, privilegeID, done, fail)
 					 privilege: privilegeID
 					})
 		.done(function(json){
-				/* Copy the data from json object into newData so that 
+				/* Copy the data from json object into a new value so that 
 					any functions are properly initialized.
 				 */
-				var newData = new cr.ObjectValue();
-				newData.id = json.object.id;
-				newData.instanceID = json.object.instanceID;
-				newData.setDescription(json.object.description);
-				newData.privilege = json.object.privilege;
-				newData.typeName = json.object.typeName;
-				done(newData);
+				var newValue = new cr.ObjectValue();
+				newValue.id = json.object.id;
+				newValue._instanceID = json.object.instanceID;
+				newValue.setDescription(json.object.description);
+				newValue.privilege = json.object.privilege;
+				newValue.typeName = json.object.typeName;
+				done(newValue);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown)
 		{
