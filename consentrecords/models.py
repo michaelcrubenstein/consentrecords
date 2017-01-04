@@ -438,11 +438,7 @@ class Instance(dbmodels.Model):
 
     def _getCellValues(dataTypeID, values, userInfo, language=None):
         if dataTypeID == terms.objectEnum.id:
-            return [{ "id": v.id,
-                      "instanceID" : v.referenceValue.id, 
-                      "description": v.referenceValue._description,
-                      'privilege': v.referenceValue.getPrivilege(userInfo).getDescription(),
-                      "position": v.position } for v in values]
+            return [v.getReferenceData(userInfo, language) for v in values]
         elif dataTypeID == terms.translationEnum.id:
             return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
         else:
