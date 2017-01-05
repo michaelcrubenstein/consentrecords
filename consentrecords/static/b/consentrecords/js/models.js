@@ -895,7 +895,7 @@ cr.ObjectValue = (function() {
 				{
 					nameArray.push(cell.data.length.toString());
 				}
-			}
+			});
 			this.setDescription(nameArray.length ? nameArray.join(separator = ' ') : "None");
 		}
 	}
