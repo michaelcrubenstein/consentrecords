@@ -727,10 +727,21 @@ cr.ObjectValue = (function() {
 		return this._description;
 	};
 	
+	ObjectValue.prototype.setDescription = function(newDescription)
+	{
+		this._description = newDescription.length > 0 ? newDescription : "None";
+	}
+	
 	ObjectValue.prototype.getInstanceID = function()
 	{
 		return this._instanceID;
 	};
+	
+	ObjectValue.prototype.setInstanceID = function(instanceID)
+	{
+		this._instanceID = instanceID;
+		return this;
+	}
 	
 	ObjectValue.prototype.getTypeName = function()
 	{
@@ -771,6 +782,7 @@ cr.ObjectValue = (function() {
 		oldCells.forEach(function(cell) {
 			cell.setParent(_this);
 		});
+		return this;
 	}
 	
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
@@ -869,11 +881,6 @@ cr.ObjectValue = (function() {
 		this._description="None";
 		this._privilege = null;
 		this._cells = null;
-	}
-	
-	ObjectValue.prototype.setDescription = function(newDescription)
-	{
-		this._description = newDescription.length > 0 ? newDescription : "None";
 	}
 	
 	ObjectValue.prototype.calculateDescription = function()
@@ -1003,11 +1010,11 @@ cr.ObjectValue = (function() {
 			this.id = data.id;
 			
 		if (data.getInstanceID)
-			this._instanceID = data.getInstanceID();
+			this.setInstanceID(data.getInstanceID());
 		else if (data.instanceID)
-			this._instanceID = data.instanceID;
+			this.setInstanceID(data.instanceID);
 		else
-			this._instanceID = null;
+			this.setInstanceID(null);
 
 		if (data.getDescription)
 			this.setDescription(data.getDescription());
