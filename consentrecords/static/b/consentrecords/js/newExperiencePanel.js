@@ -434,7 +434,7 @@ var Experience = (function() {
 				.then(function()
 					{
 						var offering = _this.instance.getValue("Offering");
-						if (offering && offering.getInstanceID() && !offering.isDataLoaded)
+						if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
 							return offering.promiseCellsFromCache();
 						else
 							return undefined;

@@ -1109,11 +1109,6 @@
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
-													/* Mark the experience as having its data loaded so that checking
-														its cells doesn't replace them.
-													 */
-													experience.isDataLoaded = true;
-													
 													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);

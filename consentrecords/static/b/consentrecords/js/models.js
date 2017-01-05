@@ -96,7 +96,7 @@ var CRP = (function() {
 			else
 			{
 				var oldInstance = this.instances[i.getInstanceID()];
-				if (i.isDataLoaded)
+				if (i.areCellsLoaded())
 				{
 					if (!oldInstance.getCells())
 					{
@@ -721,7 +721,6 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._typeName = null;
 	ObjectValue.prototype._privilege = null;
 	ObjectValue.prototype._cells = null;
-	ObjectValue.prototype.isDataLoaded = false;
 	
 	ObjectValue.prototype.getDescription = function() 
 	{ 
@@ -759,7 +758,21 @@ cr.ObjectValue = (function() {
 	{
 		return this._cells;
 	}
+	
+	ObjectValue.prototype.areCellsLoaded = function()
+	{
+		return this._cells !== null;
+	}
 
+	ObjectValue.prototype.setCells = function(oldCells)
+	{
+		this._cells = oldCells;
+		var _this = this;
+		oldCells.forEach(function(cell) {
+			cell.setParent(_this);
+		});
+	}
+	
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
 		var newValueID = (newValue ? newValue.getInstanceID() : null);
@@ -786,7 +799,7 @@ cr.ObjectValue = (function() {
 			if (this.id)
 			{
 				command = {id: this.id, instanceID: newValueID, description: newDescription};
-				if (newValue.isDataLoaded)
+				if (newValue.areCellsLoaded())
 				{
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
@@ -802,7 +815,7 @@ cr.ObjectValue = (function() {
 				command = this.cell.getAddCommand(newValue);
 				if (i >= 0)
 					command.index = i;
-				if (newValue.isDataLoaded)
+				if (newValue.areCellsLoaded())
 				{
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
@@ -827,7 +840,6 @@ cr.ObjectValue = (function() {
 		this._instanceID = changeData.instanceID;
 		this.setDescription(changeData.description);
 		this._cells = null;
-		this.isDataLoaded = false;
 	}
 	
 	ObjectValue.prototype._completeUpdate = function(newValue)
@@ -857,7 +869,6 @@ cr.ObjectValue = (function() {
 		this._description="None";
 		this._privilege = null;
 		this._cells = null;
-		this.isDataLoaded = false;
 	}
 	
 	ObjectValue.prototype.setDescription = function(newDescription)
@@ -869,7 +880,7 @@ cr.ObjectValue = (function() {
 	{
 		if (!this.getCells())
 		{
-			if (this._description.length == 0)
+			if (!this.getDescription())
 				this.setDescription("None");
 		}
 		else
@@ -983,7 +994,6 @@ cr.ObjectValue = (function() {
 		{
 			this.importCell(oldCells[j]);
 		}
-		this.isDataLoaded = true;
 	}
 
 	/* loadData loads the data from the middle tier or another ObjectValue. */
@@ -1000,9 +1010,9 @@ cr.ObjectValue = (function() {
 			this._instanceID = null;
 
 		if (data.getDescription)
-			this._description = data.getDescription();
+			this.setDescription(data.getDescription());
 		else
-			this._description = data.description;
+			this.setDescription(data.description);
 		
 		if (data.getPrivilege)
 			this.setPrivilege(data.getPrivilege());
@@ -1040,16 +1050,6 @@ cr.ObjectValue = (function() {
 		        	});
 	}
 	
-	ObjectValue.prototype.setCells = function(oldCells)
-	{
-		this._cells = oldCells;
-		var _this = this;
-		oldCells.forEach(function(cell) {
-			cell.setParent(_this);
-		});
-		this.isDataLoaded = true;
-	}
-	
 	/* Import the data associated with this object from the middle tier. */
 	ObjectValue.prototype.importData = function(data)
 	{
@@ -1077,7 +1077,7 @@ cr.ObjectValue = (function() {
 						return false;
 					if (cell.data.find(function(d)
 						{
-							return d.getInstanceID() && !d.isDataLoaded;
+							return d.getInstanceID() && !d.areCellsLoaded();
 						}))
 						return true;
 				}))
@@ -1085,7 +1085,7 @@ cr.ObjectValue = (function() {
 			return true;
 		}
 	
-		if (this.getCells() && this.isDataLoaded && fieldsLoaded(fields))
+		if (this.getCells() && this.areCellsLoaded() && fieldsLoaded(fields))
 		{
 			var result = $.Deferred();
 			result.resolve(this.getCells());
@@ -1184,7 +1184,7 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.promiseCellsFromCache = function(fields)
 	{
 		var storedI = crp.getInstance(this.getInstanceID());
-		if (storedI && storedI.isDataLoaded)
+		if (storedI && storedI.areCellsLoaded())
 		{
 			if (this !== storedI)
 			{
@@ -1211,7 +1211,7 @@ cr.ObjectValue = (function() {
 			return;
 		}
 	
-		if (this.getCells() && this.isDataLoaded)
+		if (this.getCells() && this.areCellsLoaded())
 		{
 			done(this.getCells());
 		}

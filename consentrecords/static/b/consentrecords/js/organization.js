@@ -367,7 +367,7 @@ function getTagList(experience)
 	var offering = experience.getValue("Offering");
 	if (offering && offering.getInstanceID())
 	{
-		if (!offering.isDataLoaded)
+		if (!offering.areCellsLoaded())
 			throw ("Runtime error: offering data is not loaded");
 			
 		names = offering.getCell("Service").data

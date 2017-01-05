@@ -147,7 +147,7 @@ var FlagData = (function() {
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getInstanceID())
 		{
-			if (!offering.isDataLoaded)
+			if (!offering.areCellsLoaded())
 				throw ("Runtime error: offering data is not loaded");
 				
 			var services = offering.getCell("Service");
@@ -262,7 +262,7 @@ var FlagData = (function() {
 	FlagData.prototype.checkOfferingCells = function(done)
 	{
 		var offering = this.experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.isDataLoaded)
+		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
 		{
 			offering.promiseCellsFromCache()
 				.then(done, cr.asyncFail);
@@ -507,7 +507,7 @@ var PathView = (function() {
 	PathView.prototype.checkOfferingCells = function(experience, done)
 	{
 		offering = experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.isDataLoaded)
+		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
 		{
 			var storedI = crp.getInstance(offering.getInstanceID());
 			if (storedI != null)
