@@ -529,15 +529,10 @@ var ComparePath = (function() {
 		var rightCell = this.rightPath.getCell("More Experience");
 		var addedFunction = function(eventObject, newData)
 			{
-				eventObject.data.addMoreExperience(newData);
+				_this.addMoreExperience(newData);
 			}
-		$(leftCell).on("valueAdded.cr", null, this, addedFunction);
-		$(rightCell).on("valueAdded.cr", null, this, addedFunction);
-		$(this.pathwayContainer.node()).on("remove", function()
-			{
-				$(leftCell).off("valueAdded.cr", null, addedFunction);
-				$(rightCell).off("valueAdded.cr", null, addedFunction);
-			});
+		setupOnViewEventHandler(leftCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(rightCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
 			
 		var experiences = leftCell.data;
 		
