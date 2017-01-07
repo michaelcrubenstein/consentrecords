@@ -155,9 +155,51 @@ var CRP = (function() {
 var crp = new CRP();
 
 var cr = {}
+
+cr.ModelObject = (function()
+{
+	ModelObject.prototype.on = function(events, data, handler)
+	{
+	if (typeof(events) != "string")
+		throw new Error("events is not a string");
+	if (typeof(data) != "object")
+		throw new Error("data is not an object");
+	if (typeof(handler) != "function")
+		throw new Error("handler is not a function");
+		$(this).on(events, data, handler);
+	}
+
+	ModelObject.prototype.one = function(events, data, handler)
+	{
+		if (typeof(events) != "string")
+			throw new Error("events is not a string");
+		if (typeof(data) != "object")
+			throw new Error("data is not an object");
+		if (typeof(handler) != "function")
+			throw new Error("handler is not a function");
+		$(this).one(events, data, handler);
+	}
+
+	ModelObject.prototype.off = function(events, handler)
+	{
+		$(this).off(events, handler);
+	}
+
+	ModelObject.prototype.triggerDataChanged = function(changedValue)
+	{
+		changedValue = changedValue !== undefined ? changedValue : this;
+		$(this).trigger("dataChanged.cr", changedValue);
+	}
+	
+	function ModelObject() {
+	};
+	
+	return ModelObject;
+})();
 	
 cr.Cell = (function() 
 	{
+		Cell.prototype = new cr.ModelObject();
 		Cell.prototype.data = [];
 		Cell.prototype.field = null;
 		
@@ -516,8 +558,10 @@ cr.ObjectCell = (function() {
 	return ObjectCell;
 })();
 
-	CellValue.prototype.getDescription = function()
 cr.Value = (function() {
+	Value.prototype = new cr.ModelObject();
+	
+	Value.prototype.getDescription = function()
 	{ 
 		throw "getDescription must be overwritten";
 	};
@@ -538,12 +582,6 @@ cr.Value = (function() {
 		if (this.cell)
 		    this.cell.deleteValue(this);
 		$(this).trigger("valueDeleted.cr", this);
-	}
-	
-	CellValue.prototype.triggerDataChanged = function(changedValue)
-	{
-		changedValue = changedValue !== undefined ? changedValue : this;
-		$(this).trigger("dataChanged.cr", changedValue);
 	}
 	
 	Value.prototype.deleteValue = function(done, fail)
