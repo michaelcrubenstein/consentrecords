@@ -2216,7 +2216,7 @@ var ExperienceShareOptions = (function () {
 		
 		if (cr.signedinUser)
 		{
-			var duplicateText = (path == cr.signedinUser.getValue("Path")) ? "Duplicate Experience" : "Add to My Pathway";
+			var duplicateText = (path == cr.signedinUser.subInstance("Path")) ? "Duplicate Experience" : "Add to My Pathway";
 		
 			var addToMyPathwayButton = div.append('button')
 				.text(duplicateText)
