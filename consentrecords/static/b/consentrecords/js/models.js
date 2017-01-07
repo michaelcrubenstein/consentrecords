@@ -1084,7 +1084,8 @@ cr.Instance = (function() {
 							r2.reject(err);
 						}
 						return r2;
-					}
+					},
+					cr.thenFail
 				 )
 				.then(function(cells)
 					{
@@ -1130,8 +1131,7 @@ cr.Instance = (function() {
 							r3.reject(err);
 							return r3;
 						}
-					},
-					cr.thenFail
+					}
 				);
 		}
 		else if (this.cell.field.ofKindID)
