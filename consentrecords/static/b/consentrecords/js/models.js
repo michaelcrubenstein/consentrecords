@@ -1755,7 +1755,7 @@ cr.createInstance = function(field, containerUUID, initialData)
 					{
 						var r2 = $.Deferred();
 						try {
-							var newValue = ObjectCell.prototype.copyValue(json.object);							
+							var newValue = cr.ObjectCell.prototype.copyValue(json.object);							
 							r2.resolve(newValue);
 						}
 						catch (err)
