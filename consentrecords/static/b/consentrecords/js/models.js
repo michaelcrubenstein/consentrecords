@@ -767,7 +767,7 @@ cr.Instance = (function() {
 	
 	Instance.prototype.setDescription = function(newDescription)
 	{
-		this._description = newDescription.length > 0 ? newDescription : "None";
+		this._description = newDescription || "None";
 		return this;
 	}
 	
