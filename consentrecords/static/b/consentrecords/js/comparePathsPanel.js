@@ -469,7 +469,7 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
+		return (cr.signedinUser && path == cr.signedinUser.subInstance("Path") && this.youName) ||
 			getPathDescription(path) ||
 			ageCalculator.toString();
 	}
@@ -804,8 +804,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.getValue("Path"),
-							  this.rightUser.getValue("Path"));
+		this.pathtree.setUser(this.leftUser.subInstance("Path"),
+							  this.rightUser.subInstance("Path"));
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

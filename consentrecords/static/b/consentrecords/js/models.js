@@ -910,6 +910,9 @@ cr.Instance = (function() {
 
 	Instance.prototype.getCell = function(name)
 	{
+		if (!name)
+			throw new Error("name argument of getCell unspecified");
+			
 		if (this.getCells())
 			return this.getCells().find(function(cell)
 				{
@@ -942,7 +945,7 @@ cr.Instance = (function() {
 	
 	Instance.prototype.subInstance = function(name)
 	{
-		var value = this.getValue();
+		var value = this.getValue(name);
 		return value && value.instance();
 	}
 	
@@ -1409,7 +1412,7 @@ cr.ObjectValue = (function() {
 		
 	ObjectValue.prototype.subInstance = function(name)
 	{
-		return this._instance.subInstance();
+		return this._instance.subInstance(name);
 	}
 	
 	ObjectValue.prototype.importCell = function(oldCell)
