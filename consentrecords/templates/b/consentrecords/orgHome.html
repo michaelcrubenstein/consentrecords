@@ -668,7 +668,7 @@
 					});
 			}
 	
-			objectData.checkCells(undefined, successFunction, asyncFailFunction)
+			objectData.promiseCells().then(successFunction, cr.asyncFail)
 		}
 		
 		function compareUsers(a, b)
@@ -749,13 +749,13 @@
 		 */
 		function pick_session(offering, previousPanelNode, successFunction)
 		{
-			offering.checkCells(undefined, function()
+			offering.promiseCells().then(function()
 				{
 					var sessions = offering.getValue("Sessions");
 					if (!sessions)
 						syncFailFunction("the sessions are not set up");
 					else
-						sessions.checkCells(undefined, function()
+						sessions.promiseCells().then(function()
 							{
 								var sessionCell = sessions.getCell("Session");
 								pickChild(offering, sessionCell.data, previousPanelNode, "Pick Session", successFunction);
@@ -773,13 +773,13 @@
 		 */
 		function pick_offering(site, previousPanelNode, successFunction)
 		{
-			site.checkCells(undefined, function()
+			site.promiseCells().then(function()
 				{
 					var offerings = site.getValue("Offerings");
 					if (!offerings)
 						syncFailFunction("the offerings are not set up");
 					else
-						offerings.checkCells(undefined, function()
+						offerings.promiseCells().then(function()
 							{
 								var offeringCell = offerings.getCell("Offering");
 								pickChild(site, offeringCell.data, previousPanelNode, "Pick Offering", successFunction);
@@ -794,13 +794,13 @@
 		 */
 		function pick_site(organization, previousPanelNode, successFunction)
 		{
-			organization.checkCells(undefined, function()
+			organization.promiseCells().then(function()
 				{
 					var sites = organization.getValue("Sites");
 					if (!sites || !sites.id)
 						syncFailFunction("the sites are not set up");
 					else
-						sites.checkCells(undefined, function()
+						sites.promiseCells().then(function()
 							{
 								var siteCell = sites.getCell("Site");
 								pickChild(organization, siteCell.data, previousPanelNode, "Pick Site", successFunction);
@@ -822,7 +822,7 @@
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						inquiriesInstance.checkCells(undefined, function()
+						inquiriesInstance.promiseCells().then(function()
 							{
 								inquiryCell = inquiriesInstance.getCell("_user");
 						
@@ -897,7 +897,7 @@
 						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
-			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+			inquiry.promiseCells().then(checkSuccessFunction, syncFailFunction);
 		}
 		
 		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
@@ -949,7 +949,7 @@
 					var pickSessionSuccess = function(session, sessionPanelDiv)
 					{
 						var checkCellsSuccess = getAddEnrollmentFunction(session, pickedUser, unblockClick);
-						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+						session.promiseCells().then(checkCellsSuccess, syncFailFunction);
 					};
 					
 					var pickOfferingSuccess = function(offering, offeringPanelDiv)
@@ -1061,7 +1061,8 @@
 						}
 					}
 				}
-				session.checkCells(["parents"], checkCellsSuccessFunction, syncFailFunction);
+				session.promiseCells(["parents"])
+					.then(checkCellsSuccessFunction, syncFailFunction);
 			}
 		}
 		
@@ -1080,7 +1081,7 @@
 					experiences.checkConfiguration(
 						function(cells)
 						{
-							experiences.setCells(cells)
+							experiences.setCells(cells);
 							var experienceCell = experiences.getCell("Experience");
 							cr.getConfiguration(null, experienceCell.field.ofKindID)
 								.then(function(cells)
@@ -1261,7 +1262,7 @@
 																cr.syncFail);
 														}
 													}
-													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+													session.promiseCells().then(checkCellsSuccess, syncFailFunction);
 												}
 												d3.event.preventDefault();
 											});
@@ -1300,11 +1301,13 @@
 					function pickSessionSuccess(session, previousPanel)
 					{
 						/* Since d.getInstanceID() is not null, containerUUID is not needed. */
-						var checkCellsSuccess = function()
-						{
-							sessionSuccess(session, previousPanel);
-						}
-						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+						var checkCellsSuccess = 
+						session.promiseCells()
+							.then(function()
+								{
+									sessionSuccess(session, previousPanel);
+								}, 
+								cr.syncFail);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -1360,7 +1363,8 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.checkCells(["Enrollment"], function()
+						instance.promiseCells(["Enrollment"])
+							.then(function()
 							{
 								var enrollments = instance.getCell("Enrollment").data;
 								
@@ -1386,8 +1390,8 @@
 									{
 										if (prepareClick('click', 'add Experience by enrollment'))
 										{
-											enrollment.checkCells(undefined, 
-												function()
+											enrollment.promiseCells()
+												.then(function()
 												{
 													addExperienceByEnrollment(session, enrollment, sitePanel.node());
 												}, 
@@ -1429,7 +1433,7 @@
 					successFunction(user);
 				}
 			}
-			enrollment.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+			enrollment.promiseCells().then(checkSuccessFunction, syncFailFunction);
 		}
 		
 		function manage_participation(organization, previousPanelNode)

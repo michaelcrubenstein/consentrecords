@@ -219,7 +219,8 @@ var SharingPanel = (function() {
 				var accessRecordCell = _this.user.getCell("_access record");
 				accessRecordCell.addValue(newData);
 				accessorLevel.accessRecords.push(newData);
-				newData.checkCells(undefined, function()
+				newData.promiseCells(undefined)
+					.then(function()
 					{
 						try
 						{
@@ -241,17 +242,19 @@ var SharingPanel = (function() {
 
 		var ar = accessorLevel.accessRecords[0]
 		var userPath = "#{0}".format(this.user.getInstanceID());
-		ar.checkCells(undefined, function()
-		{
-			cr.share(userPath, path, accessorLevel.id, function(newValue)
+		ar.promiseCells()
+			.then(function()
 				{
-					var cellName = newValue.getTypeName() == '_user' ? '_user' : '_group';
-					var cell = ar.getCell(cellName);
-					cell.addValue(newValue);
-					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
-					done();
-				}, syncFailFunction);
-		}, syncFailFunction);
+					cr.share(userPath, path, accessorLevel.id, function(newValue)
+						{
+							var cellName = newValue.getTypeName() == '_user' ? '_user' : '_group';
+							var cell = ar.getCell(cellName);
+							cell.addValue(newValue);
+							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
+							done();
+						}, cr.syncFail);
+				}, 
+				cr.syncFail);
 	}
 	
 	SharingPanel.prototype.addAccess = function(accessorLevel, path, done)

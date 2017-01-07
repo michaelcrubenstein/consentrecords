@@ -2578,85 +2578,85 @@ function revealPanelUp(panelDiv)
 /* Displays a panel in which the specified object's contents appear without being able to edit.
  */
 function showViewOnlyObjectPanel(objectData, backText) {
-	successFunction = function ()
-	{
-		var sitePanel = new SitePanel();
-		sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
+	objectData.promiseCells()
+		.then(function ()
+			{
+				var sitePanel = new SitePanel();
+				sitePanel.createRoot(objectData, getViewPanelHeader(objectData), "view");
 
-		var navContainer = sitePanel.appendNavContainer();
+				var navContainer = sitePanel.appendNavContainer();
 
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function() { sitePanel.hideRightEvent(); });
-		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("div").text(" " + backText);
+				var backButton = navContainer.appendLeftButton()
+					.on("click", function() { sitePanel.hideRightEvent(); });
+				appendLeftChevrons(backButton).classed("site-active-text", true);
+				backButton.append("div").text(" " + backText);
 	
-		var panel2Div = sitePanel.appendScrollArea();
+				var panel2Div = sitePanel.appendScrollArea();
 
-		var headerDiv = panel2Div.appendHeader();
+				var headerDiv = panel2Div.appendHeader();
 
-		sitePanel.showLeft().then(unblockClick);
+				sitePanel.showLeft().then(unblockClick);
 	
-		panel2Div.append("div").classed("cell-border-below", true);
-		sitePanel.showViewCells(objectData.getCells());
-	}
-	
-	objectData.checkCells(undefined, successFunction, syncFailFunction)
+				panel2Div.append("div").classed("cell-border-below", true);
+				sitePanel.showViewCells(objectData.getCells());
+			}, 
+			cr.syncFail)
 }
 
 /* Displays a panel in which the specified object's contents appear.
  */
 function showViewObjectPanel(cell, objectData, backText, showFunction) {
-	var successFunction = function ()
-	{
-		var sitePanel = new SitePanel();
-		var header = getViewPanelHeader(objectData);
-		sitePanel.createRoot(objectData, header, "view", showFunction);
+	objectData.promiseCells()
+		.then(function ()
+			{
+				var sitePanel = new SitePanel();
+				var header = getViewPanelHeader(objectData);
+				sitePanel.createRoot(objectData, header, "view", showFunction);
 
-		var navContainer = sitePanel.appendNavContainer();
+				var navContainer = sitePanel.appendNavContainer();
 
-		var backButton = navContainer.appendLeftButton()
-			.on("click", function() { sitePanel.hideRightEvent(); });
-		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("div").text(" " + backText);
+				var backButton = navContainer.appendLeftButton()
+					.on("click", function() { sitePanel.hideRightEvent(); });
+				appendLeftChevrons(backButton).classed("site-active-text", true);
+				backButton.append("div").text(" " + backText);
 	
-		if (objectData.canWrite())
-		{
-			var editButton = navContainer.appendRightButton()
-				.on("click", function(d) {
-					if (prepareClick('click', 'view object panel: Edit'))
-					{
-						showClickFeedback(this);
+				if (objectData.canWrite())
+				{
+					var editButton = navContainer.appendRightButton()
+						.on("click", function(d) {
+							if (prepareClick('click', 'view object panel: Edit'))
+							{
+								showClickFeedback(this);
 				
-						showEditObjectPanel(cell, objectData, header, revealPanelUp);
-					}
-					d3.event.preventDefault();
+								showEditObjectPanel(cell, objectData, header, revealPanelUp);
+							}
+							d3.event.preventDefault();
+						});
+					editButton.append("span").text("Edit");
+				}
+	
+				var panel2Div = sitePanel.appendScrollArea();
+
+				var headerDiv = panel2Div.appendHeader();
+		
+				var updateHeader = function(eventObject)
+				{
+					var newText = getViewPanelHeader(this);
+					sitePanel.panelDiv.attr("headerText", newText);
+					d3.select(eventObject.data).text(newText);
+				}
+				objectData.on("dataChanged.cr", headerDiv.node(), updateHeader);
+				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
+				{
+					eventObject.data.off("dataChanged.cr", updateHeader);
 				});
-			editButton.append("span").text("Edit");
-		}
-	
-		var panel2Div = sitePanel.appendScrollArea();
 
-		var headerDiv = panel2Div.appendHeader();
+				panel2Div.append("div").classed("cell-border-below", true);
+				sitePanel.showViewCells(objectData.getCells());
 		
-		var updateHeader = function(eventObject)
-		{
-			var newText = getViewPanelHeader(this);
-			sitePanel.panelDiv.attr("headerText", newText);
-			d3.select(eventObject.data).text(newText);
-		}
-		$(objectData).on("dataChanged.cr", null, headerDiv.node(), updateHeader);
-		$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
-		{
-			$(eventObject.data).off("dataChanged.cr", null, updateHeader);
-		});
-
-		panel2Div.append("div").classed("cell-border-below", true);
-		sitePanel.showViewCells(objectData.getCells());
-		
-		showFunction(sitePanel.node());
-	}
-	
-	objectData.checkCells(undefined, successFunction, syncFailFunction)
+				showFunction(sitePanel.node());
+			}, 
+			cr.syncFail)
 }
 
 function _b64_to_utf8( str ) {
@@ -2900,10 +2900,11 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 	}
 	
 	if (objectData && (objectData.getInstanceID() || objectData.getCells()))
-		objectData.checkCells(undefined, function()
-			{
-				successFunction(objectData.getCells());
-			}, cr.syncFail);
+		objectData.promiseCells()
+			.then(function()
+				{
+					successFunction(objectData.getCells());
+				}, cr.syncFail);
 	else
 		/* Test case: Add a new site to an organization. */
 		containerCell.getConfiguration()

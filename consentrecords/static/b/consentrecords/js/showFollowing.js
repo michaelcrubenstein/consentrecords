@@ -183,7 +183,8 @@ var FollowingPanel = (function() {
 					.on("click", function(user) {
 						if (prepareClick('click', 'compare to: ' + user.getDescription()))
 						{
-							user.checkCells([], function()
+							user.promiseCells([])
+								.then(function()
 								{
 									try
 									{

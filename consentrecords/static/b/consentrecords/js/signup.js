@@ -69,7 +69,8 @@ var Signup = (function () {
 					function(data)
 					{
 						cr.signedinUser.updateFromChangeData(data);
-						cr.signedinUser.checkCells(["_system access"], function()
+						cr.signedinUser.promiseCells(["_system access"])
+							.then(function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
 								_thisSignup.hideDown(
@@ -79,9 +80,9 @@ var Signup = (function () {
 										unblockClick();
 									});
 							},
-						syncFailFunction);
+						cr.syncFail);
 					},
-					syncFailFunction)
+					cr.syncFail)
 				
 			});
 		this.dots.appendBackButton(navContainer, function() {

@@ -554,7 +554,7 @@
 								// Remove any access request with this name.
 								if (newValue.typeName == '_access record')
 								{
-									newValue.checkCells(["typeName"], function()
+									newValue.promiseCells().then(function()
 										{
 											newValue = newValue.getCell("{{cell}}").data[0];
 											clearAccessRequests(newValue);
