@@ -758,6 +758,7 @@ cr.Instance = (function() {
 	Instance.prototype._typeName = null;
 	Instance.prototype._privilege = null;
 	Instance.prototype._cells = null;
+	Instance.prototype._parentID = null;
 	
 	Instance.prototype.getDescription = function() 
 	{ 
@@ -821,6 +822,17 @@ cr.Instance = (function() {
 			cell.setParent(_this);
 		});
 		return this;
+	}
+	
+	Instance.prototype.parent = function(parentID)
+	{
+		if (parentID === undefined)
+			return this._parentID && crp.getInstance(this._parentID);
+		else
+		{
+			this._parentID = parentID;
+			return this;
+		}
 	}
 	
 	Instance.prototype.updateFromChangeData = function(changeData)
@@ -962,30 +974,11 @@ cr.Instance = (function() {
 	/* loadData loads the data from the middle tier or another ObjectValue. */
 	Instance.prototype.loadData = function(data)
 	{
-		if (data.id)
-			this.id = data.id;
-			
-		if (data.getInstanceID)
-			this.setInstanceID(data.getInstanceID());
-		else if (data.instanceID)
-			this.setInstanceID(data.instanceID);
-		else
-			this.setInstanceID(null);
-
-		if (data.getDescription)
-			this.setDescription(data.getDescription());
-		else
-			this.setDescription(data.description);
-		
-		if (data.getPrivilege)
-			this.setPrivilege(data.getPrivilege());
-		else if ("privilege" in data)
-			this.setPrivilege(data.privilege);
-			
-		if (data.getTypeName)
-			this.setTypeName(data.getTypeName());
-		else if ("typeName" in data)
-			this.setTypeName(data.typeName);
+		this.setInstanceID(data._instanceID || data.instanceID || null);
+		this._parentID = data._parentID || data.parentID || null;
+		this.setDescription(data._description || data.description || null);
+		this.setPrivilege(data._privilege || data.privilege || null);
+		this.setTypeName(data._typeName || data.typeName || null);
 		
 		if (data.getCells)
 		{
@@ -1021,6 +1014,39 @@ cr.Instance = (function() {
 	Instance.prototype._checkDescription = function(eventObject, changedValue)
 	{
 		eventObject.data._handleContentsChanged(changedValue);
+	}
+	
+	Instance.prototype.promiseParent = function()
+	{
+		if (this.getPrivilege() == "_find")
+		{
+			var result = $.Deferred();
+			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
+			return result.promise();
+		}
+		
+		var _this = this;
+		
+		if (!this._parentID)
+		{
+			var result = $.Deferred();
+			result.resolve(null);
+			return result.promise();
+		}
+		if (this.parent())
+		{
+			var result = $.Deferred();
+			result.resolve(this.parent());
+			return result.promise();
+		}
+		
+		return cr.getData({ "path" : "#" + this.getInstanceID() })
+			.done(function(values)
+				{
+					var result = $.Deferred();
+					result.resolve(values[0].instance());
+					return result.promise();
+				});
 	}
 
 	Instance.prototype.promiseCells = function(fields)
