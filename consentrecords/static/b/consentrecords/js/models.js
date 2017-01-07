@@ -77,7 +77,7 @@ var CRP = (function() {
     CRP.prototype.getInstance = function(id)
     {
     	if (!id)
-    		throw("id is not defined");
+    		throw new Error("id is not defined");
     	if (id in this.instances)
     		return this.instances[id];
     	else
