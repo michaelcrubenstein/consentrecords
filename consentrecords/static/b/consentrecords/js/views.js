@@ -326,7 +326,7 @@ function _pushTextChanged(d) {
 function _getDataValue(d) { return d.text; }
 function _getDataDescription(d) { return d.getDescription() }
 
-function _checkItemsDivDisplay(node)
+function checkItemsDisplay(node)
 {
 	var classList = node.parentNode.classList;
 	var isUnique = classList.contains("unique");
@@ -350,7 +350,7 @@ function _checkItemsDivDisplay(node)
 		
 	itemsDiv.style("display", (isUnique || isVisible) ? null : "none");
 	/* In addition to the itemsDiv, hide the section if we are in view mode. */
-	d3.select(itemsDiv.node().parentNode).style("display", (isEdit || isVisible) ? null : "none");
+	d3.select(node.parentNode).style("display", (isEdit || isVisible) ? null : "none");
 }
 
 function setupOnViewEventHandler(source, events, data, handler)
@@ -388,10 +388,10 @@ function _setupItemsDivHandlers(itemsDiv, cell)
 	node = itemsDiv.node();
 	function checkVisible(eventObject)
 	{
-		_checkItemsDivDisplay(eventObject.data, this);
+		checkItemsDisplay(eventObject.data);
 	}
 	setupOnViewEventHandler(cell, "dataChanged.cr", node, checkVisible);
-	_checkItemsDivDisplay(node, cell);
+	checkItemsDisplay(node);
 }
 
 function removeItem(itemNode, done)
@@ -401,7 +401,7 @@ function removeItem(itemNode, done)
 		var parentNode = this.parentNode;
 		$(this).remove();
 		/* Now that the item is removed, check whether its container should be visible. */
-		_checkItemsDivDisplay(parentNode);
+		checkItemsDisplay(parentNode);
 		if (done) done();
 	});
 }
@@ -705,7 +705,7 @@ function getOnValueAddedFunction(canDelete, canShowDetails, onClick)
 		
 		var headerText = $(eventObject.data).parents(".site-panel").attr('headerText');
 		var item = appendItem(itemsDiv, newValue);
-		_checkItemsDivDisplay(eventObject.data);
+		checkItemsDisplay(eventObject.data);
 	
 		/* Hide the new button if it is blank, and then show it if the data changes. */
 		item.style("display", 

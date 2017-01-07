@@ -84,6 +84,11 @@ var ExperienceCommentsPanel = (function() {
 			this.hideDeleteControlsNow($(deleteControls[0]));
 		else
 			this.showDeleteControls($(deleteControls[0]), 0);
+			
+		checkItemsDisplay(commentList.node());
+		
+		/* Force each item to resize in case the commentList was previously empty and hidden. */
+		items.each(function(d) { $(this).trigger("resize.cr"); });
 	}
 	
 	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
@@ -163,6 +168,7 @@ var ExperienceCommentsPanel = (function() {
 					});
 				this.showDeleteControls();
 				this.inEditMode = true;
+				commentList.classed('edit', true);
 				commentList.selectAll('textarea')
 					.attr('readonly', null)
 					.classed('fixed', false)
@@ -267,6 +273,7 @@ var ExperienceCommentsPanel = (function() {
 									{
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
+										commentList.classed('edit', false);
 										commentList.selectAll('textarea')
 											.attr('readonly', 'readonly')
 											.classed('editable', false)
@@ -320,6 +327,7 @@ var ExperienceCommentsPanel = (function() {
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
 		var commentList = commentsDiv.append('ol');
+		commentList.classed('edit', this.inEditMode);
 		
 		function onCommentAdded(eventObject, newData)
 		{
