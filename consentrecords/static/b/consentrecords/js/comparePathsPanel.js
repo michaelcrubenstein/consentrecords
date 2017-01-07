@@ -205,14 +205,8 @@ var ComparePath = (function() {
 			_this.setFlagText(eventObject.data);
 		}
 		
-		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
-		
-		$(node).on("remove", null, fd.experience, function(eventObject)
-		{
-			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
-			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
-		});
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, dataChanged);
+		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
 	}
 	
 	ComparePath.prototype.getColumn = function(fd)

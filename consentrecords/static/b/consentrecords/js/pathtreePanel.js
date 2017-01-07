@@ -452,10 +452,10 @@ var PathView = (function() {
 			fd.colorElement(eventObject.data);
 		}
 		
-		$(fd.experience).on("dataChanged.cr", null, r, expChanged);
+		fd.experience.on("dataChanged.cr", r, expChanged);
 		$(this).on("remove", null, fd.experience, function(eventObject)
 		{
-			$(eventObject.data).off("dataChanged.cr", null, expChanged);
+			eventObject.data.off("dataChanged.cr", expChanged);
 		});
 	}
 
@@ -473,12 +473,14 @@ var PathView = (function() {
 					handler(eventObject, v);
 			}
 			
-			$(serviceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
-			$(userServiceCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+			if (serviceCell)
+				setupOnViewEventHandler(serviceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+			if (userServiceCell)
+				setupOnViewEventHandler(userServiceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 			$(r).one("clearTriggers.cr remove", function()
 				{
-					$(serviceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
-					$(userServiceCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+					serviceCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
+					userServiceCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
 				});
 		}
 	
@@ -496,10 +498,10 @@ var PathView = (function() {
 				fd.colorElement(eventObject.data);
 			}
 		
-		$(offeringCell).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, r, f);
+		offeringCell.on("valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		$(r).one("clearTriggers.cr remove", function()
 			{
-				$(offeringCell).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, f);
+				offeringCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
 			});
 		this.setupServiceTriggers(r, fd, f);
 	}
@@ -641,11 +643,11 @@ var PathView = (function() {
 			
 			var commentsCell = fd.experience.getCell("Comments");
 			setCommentsText();
-			$(commentsCell).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, commentLabel,
+			commentsCell.on("dataChanged.cr valueAdded.cr valueDeleted.cr", commentLabel,
 				setCommentsText);
 			$(commentLabel.node()).on("remove", null, commentsCell, function(eventObject)
 				{
-					$(eventObject.data).off("dataChanged.cr valueAdded.cr valueDeleted.cr", null, setCommentsText);
+					eventObject.data.off("dataChanged.cr valueAdded.cr valueDeleted.cr", setCommentsText);
 				});
 			
 			var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
@@ -724,7 +726,7 @@ var PathView = (function() {
 			 */
 			if (d)
 			{
-				$(d).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, _this, handleChangeDetailGroup);
+				d.on("valueAdded.cr valueDeleted.cr dataChanged.cr", _this, handleChangeDetailGroup);
 			}
 		 });
 		serviceCells.forEach(function(d)
@@ -734,7 +736,7 @@ var PathView = (function() {
 			 */
 			if (d)
 			{
-				$(d).on("valueDeleted.cr", null, _this, handleChangeDetailGroup);
+				d.on("valueDeleted.cr", _this, handleChangeDetailGroup);
 			}
 		 });
 		 
@@ -747,7 +749,7 @@ var PathView = (function() {
 				 */
 			 	if (d)
 			 	{
-					$(d).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, handleChangeDetailGroup);
+					d.off("valueAdded.cr valueDeleted.cr dataChanged.cr", handleChangeDetailGroup);
 				}
 			 });
 			serviceCells.forEach(function(d)
@@ -757,7 +759,7 @@ var PathView = (function() {
 				 */
 				if (d)
 				{
-					$(d).off("valueDeleted.cr", null, handleChangeDetailGroup);
+					d.off("valueDeleted.cr", handleChangeDetailGroup);
 				}
 			 });
 		 });
@@ -930,17 +932,17 @@ var PathView = (function() {
 				});
 		}
 	
-		$(experience).on("dataChanged.cr", null, this, handleDataChanged);
-		$(experience.getCell("Start")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
-		$(experience.getCell("End")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
-		$(experience.getCell("Timeframe")).on("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this, this.handleExperienceDateChanged);
+		experience.on("dataChanged.cr", this, handleDataChanged);
+		experience.getCell("Start").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
+		experience.getCell("End").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
+		experience.getCell("Timeframe").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
 		
 		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
 		{
-			$(eventObject.data).off("dataChanged.cr", null, handleDataChanged);
-			$(eventObject.data.getCell("Start")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
-			$(eventObject.data.getCell("End")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
-			$(eventObject.data.getCell("Timeframe")).off("valueAdded.cr valueDeleted.cr dataChanged.cr", null, this.handleExperienceDateChanged);
+			eventObject.data.off("dataChanged.cr", handleDataChanged);
+			eventObject.data.getCell("Start").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
+			eventObject.data.getCell("End").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
+			eventObject.data.getCell("Timeframe").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
 		});
 	}
 	
@@ -1321,18 +1323,14 @@ var PathLines = (function() {
 					});	
 		}
 		
-		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
-		$(fd.experience.getCell("Service")).on("dataChanged.cr", null, node, dataChanged);
-		$(fd.experience.getCell("User Entered Service")).on("dataChanged.cr", null, node, dataChanged);
-		
-		$(node).on("remove", null, fd.experience, function(eventObject)
-		{
-			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
-			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
-			$(eventObject.data.getCell("Service")).off("dataChanged.cr", null, dataChanged);
-			$(eventObject.data.getCell("User Entered Service")).off("dataChanged.cr", null, dataChanged);
-		});
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, valueDeleted);
+		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
+		var cell = fd.experience.getCell("Service");
+		if (cell)
+			setupOnViewEventHandler(cell, "dataChanged.cr", node, dataChanged);
+		cell = fd.experience.getCell("User Entered Service");
+		if (cell)
+			setupOnViewEventHandler(cell, "dataChanged.cr", node, dataChanged);
 	}
 	
 	/* Lay out all of the contents within the svg object. */
@@ -1723,10 +1721,10 @@ var PathLines = (function() {
 					{
 						eventObject.data.addMoreExperience(newData);
 					}
-				$(cell).on("valueAdded.cr", null, _this, addedFunction);
+				cell.on("valueAdded.cr", _this, addedFunction);
 				$(_this.pathwayContainer.node()).on("remove", function()
 					{
-						$(cell).off("valueAdded.cr", null, addedFunction);
+						cell.off("valueAdded.cr", addedFunction);
 					});
 				
 				var experiences = cell.data;
@@ -2026,31 +2024,19 @@ var PathlinesPanel = (function () {
 			_this.navContainer.setTitle(getUserDescription(user));
 		}
 				
-		$(this.node()).on("remove", function()
-		{
-			$(user.getCell("_access request"))
-				.off("valueDeleted.cr", checkSettingsBadge)
-				.off("valueAdded.cr", checkSettingsBadge);
-			$(user.getCell("_first name"))
-				.off("dataChanged.cr", checkTitle);
-			$(user.getCell("_last name"))
-				.off("dataChanged.cr", checkTitle);
-			$(user.getCell("_email"))
-				.off("dataChanged.cr", checkTitle);
-		});
-		
 		$(this.pathtree).on("userSet.cr", function()
 			{
-				this.sitePanel.setupAddExperienceButton(user, addExperienceButton);
+				_this.setupAddExperienceButton(user, addExperienceButton);
 				
-				this.sitePanel.setupSettingsButton(settingsButton, user);
+				_this.setupSettingsButton(settingsButton, user);
 
-				$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSettingsBadge);
+				setupOnViewEventHandler(user.getCell("_access request"), "valueDeleted.cr valueAdded.cr", 
+					_this.node(), checkSettingsBadge);
 				checkSettingsBadge();
 				
-				$(user.getCell("_first name")).on("dataChanged.cr", checkTitle);
-				$(user.getCell("_last name")).on("dataChanged.cr", checkTitle);
-				$(user.getCell("_email")).on("dataChanged.cr", checkTitle);
+				setupOnViewEventHandler(user.getCell("_first name"), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user.getCell("_last name"), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user.getCell("_email"), "dataChanged.cr", _this.node(), checkTitle);
 				
 // 				findButton.style("display", user.getPrivilege() === "_administer" ? null : "none");
 				

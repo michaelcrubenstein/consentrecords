@@ -137,20 +137,11 @@ var Settings = (function () {
 			/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
 			divs.each(function()
 				{
-					var d = pathPublicAccessValue;
-					var f = function(eventObject) {
-						d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
-					}
-	
-					$(d).on("dataChanged.cr", null, this, f);
-					$(this).on("remove", null, d, function(eventObjects) {
-						$(this.eventObject).off("dataChanged.cr", null, f);
-					});
-	
-					$(d).on("valueDeleted.cr", null, this, f);
-					$(this).on("remove", null, d, function(eventObjects) {
-						$(this.eventObject).off("valueDeleted.cr", null, f);
-					});
+					setupOnViewEventHandler(pathPublicAccessValue, "dataChanged.cr valueDeleted.cr", this, 
+						function(eventObject)
+						{
+							d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
+						});
 				});
 			
 			var docSection = panel2Div.append('section')
@@ -174,12 +165,10 @@ var Settings = (function () {
 				docDiv.text(documentation);
 			}
 			
-			$(userPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
-			$(pathPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
-			$(docDiv).on("remove", null, null, function(eventObjects) {
-				$(userPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
-				$(pathPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
-			});
+			setupOnViewEventHandler(userPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+				updateVisibilityDocumentation);
+			setupOnViewEventHandler(pathPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+				updateVisibilityDocumentation);
 			updateVisibilityDocumentation();
 	
 			function checkSharingBadge()
@@ -225,10 +214,11 @@ var Settings = (function () {
 				urlItem.text("{0}/for/{1}"
 					.format(window.location.origin, user.getDatum("_email")));
 			}
-			$(user.getCell("_email")).on('dataChanged.cr', null, urlItem.node(), updateURL);
-			$(urlItem.node()).on('remove', null, user.getCell("_email"), function(eventObject)
+			setupOnViewEventHandler(user.getCell("_email"), 'dataChanged.cr', urlItem.node(), 
+				function()
 				{
-					$(eventObject.data).off('dataChanged.cr', urlItem.node(), updateURL);
+					urlItem.text("{0}/for/{1}"
+						.format(window.location.origin, user.getDatum("_email")));
 				});
 	
 			var sharingDiv = this.appendActionButton('Sharing', function() {
@@ -246,12 +236,8 @@ var Settings = (function () {
 				.classed('badge', true);
 			checkSharingBadge();
 			
-			$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSharingBadge);
-			$(sharingButton.node()).on("remove", function()
-			{
-				$(user.getCell("_access request")).off("valueDeleted.cr", checkSharingBadge)
-					.off("valueAdded.cr", checkSharingBadge);
-			});
+			setupOnViewEventHandler(user.getCell("_access request"), "valueDeleted.cr valueAdded.cr", 
+				sharingButton.node(), checkSharingBadge);
 				
 			this.appendActionButton('Following', function() {
 					if (prepareClick('click', 'Following'))

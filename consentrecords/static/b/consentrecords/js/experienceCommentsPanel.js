@@ -332,10 +332,10 @@ var ExperienceCommentsPanel = (function() {
 				{
 					return cell.field.name == "Comment";
 				});
-			$(commentCell).on('valueAdded.cr', null, _this, onCommentAdded);
+			commentCell.on('valueAdded.cr', _this, onCommentAdded);
 			$(commentsDiv.node()).on('remove', null, commentCell, function(commentCellEventObject)
 				{
-					$(commentCellEventObject.data).off('valueAdded.cr', null, onCommentAdded);
+					commentCellEventObject.data.off('valueAdded.cr', onCommentAdded);
 				});
 			_this.loadComments(commentCell.data);
 		}
@@ -347,10 +347,10 @@ var ExperienceCommentsPanel = (function() {
 					.then(onCommentsChecked, cr.asyncFail)
 		}
 		
-		$(comments).on('dataChanged.cr', null, this, onNewCommentsSaved);
+		comments.on('dataChanged.cr', this, onNewCommentsSaved);
 		$(commentsDiv.node()).on('remove', null, comments.cell, function(eventObject)
 			{
-				$(eventObject.data).off('dataChanged.cr', null, onNewCommentsSaved);
+				eventObject.data.off('dataChanged.cr', onNewCommentsSaved);
 			});
 		
 		if (fd.experience.canWrite())
@@ -479,10 +479,10 @@ var ExperienceCommentsPanel = (function() {
 							},
 							cr.asyncFail);
 				}
-			$(fd.experience.getCell('Comments')).one('valueAdded.cr', null, this, commentsAdded);
+			fd.experience.getCell('Comments').one('valueAdded.cr', this, commentsAdded);
 			$(panel2Div.node()).on('remove', function()
 				{
-					$(fd.experience.getCell('Comments')).off('valueAdded.cr', null, commentsAdded);
+					fd.experience.getCell('Comments').off('valueAdded.cr', commentsAdded);
 				});
 			this.promise = $.Deferred();
 			this.promise.resolve();

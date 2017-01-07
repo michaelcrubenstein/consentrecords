@@ -224,7 +224,7 @@
 			{
 				var onSignin = function(eventObject)
 				{
-					$(this).off("signinCanceled.cr", null, onSigninCanceled);
+					this.off("signinCanceled.cr", onSigninCanceled);
 					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 					firstPanel.setupSearchPanel();
 					firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
@@ -237,13 +237,13 @@
 			
 				var onSigninCanceled = function(eventObject)
 				{
-					$(this).off("signin.cr", null, onSignin);
+					this.off("signin.cr", onSignin);
 					var firstPanel = new WelcomePanel();
 					firstPanel.showLeft();
 				}
 			
-				$(cr.signedinUser).one("signin.cr", null, null, onSignin);
-				$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+				cr.signedinUser.one("signin.cr", null, onSignin);
+				cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
 			
 				var panel = new SigninPanel();
 				panel.showLeft().then(function()
@@ -699,7 +699,7 @@
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
 			if (cr.signedinUser.getInstanceID())
 			{
-				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
 						firstPanel = new PathlinesPanel(cr.signedinUser, false);
 						firstPanel.setupSearchPanel();
@@ -712,6 +712,8 @@
 								else
 									firstPanel.checkShowIdeas();
 							});
+							cr.asyncFail(err);
+						}
 					});
 			}
 			else if (!needsSignin)

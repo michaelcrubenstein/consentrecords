@@ -208,7 +208,7 @@ cr.Cell = (function()
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
-				$(this).on("dataChanged.cr valueAdded.cr valueDeleted.cr", null, parent, parent._checkDescription);
+				this.on("dataChanged.cr valueAdded.cr valueDeleted.cr", parent, parent._checkDescription);
 			}
 		};
 
@@ -242,10 +242,10 @@ cr.Cell = (function()
 		{
 			newValue.cell = this;		
 			this.data.push(newValue);
-			$(newValue).on("dataChanged.cr", null, this, function(eventObject) {
-				$(eventObject.data).trigger("dataChanged.cr", eventObject.data);
+			newValue.on("dataChanged.cr", this, function(eventObject) {
+				eventObject.data.triggerDataChanged();
 			});
-			$(newValue).on("valueDeleted.cr", null, this, function(eventObject) {
+			newValue.on("valueDeleted.cr", this, function(eventObject) {
 				$(eventObject.data).trigger("valueDeleted.cr", newValue);
 			});
 		};

@@ -619,10 +619,10 @@ var WelcomePanel = (function () {
 				_this.handleResize();
 			});
 		
-		$(cr.signedinUser).on("signin.cr", null, this.node(), signedIn);
+		cr.signedinUser.on("signin.cr", this.node(), signedIn);
 		$(this.node()).on("remove", null, function()
 			{
-				$(cr.signedinUser).off("signin.cr", null, signedIn);
+				cr.signedinUser.off("signin.cr", signedIn);
 			});
 	}
 	

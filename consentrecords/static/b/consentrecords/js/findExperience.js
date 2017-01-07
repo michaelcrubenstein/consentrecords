@@ -170,7 +170,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							description: getUserDescription(user)
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
-					$(sourceObjects[0]).on('dataChanged.cr', null, user, function(eventObject)
+					sourceObjects[0].on('dataChanged.cr', user, function(eventObject)
 						{
 							var newInquiryID = this.id;
 							function done()
@@ -228,11 +228,10 @@ function showSessionDetails(user, session, service, previousPanelNode)
 					},
 					fail: asyncFailFunction});
 			};
-			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
-			
+			cr.signedinUser.on("signin.cr", panel, onSignin);
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
-				$(eventObject.data).off("signin.cr", null, onSignin);
+				eventObject.data.off("signin.cr", onSignin);
 			});
 			
 			showFixedPanel(panel, "#id_sign_in_panel");
