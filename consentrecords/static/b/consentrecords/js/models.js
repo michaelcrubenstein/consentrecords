@@ -516,23 +516,23 @@ cr.ObjectCell = (function() {
 	return ObjectCell;
 })();
 
-cr.CellValue = (function() {
 	CellValue.prototype.getDescription = function()
+cr.Value = (function() {
 	{ 
 		throw "getDescription must be overwritten";
 	};
 	
-	CellValue.prototype.isEmpty = function()
+	Value.prototype.isEmpty = function()
 	{
 		throw "isEmpty must be overwritten";
 	}
 	
-	CellValue.prototype.clearValue = function()
+	Value.prototype.clearValue = function()
 	{
 		throw "clearValue must be overwritten";
 	};
 	
-	CellValue.prototype.triggerDeleteValue = function()
+	Value.prototype.triggerDeleteValue = function()
 	{
 		/* Delete from the cell first, so that other objects know the cell may be empty. */
 		if (this.cell)
@@ -546,7 +546,7 @@ cr.CellValue = (function() {
 		$(this).trigger("dataChanged.cr", changedValue);
 	}
 	
-	CellValue.prototype.deleteValue = function(done, fail)
+	Value.prototype.deleteValue = function(done, fail)
 	{
 		if (!fail)
 			throw ("fail is not specified");
@@ -604,16 +604,16 @@ cr.CellValue = (function() {
 		}
 	};
 			
-	function CellValue() {
+	function Value() {
 		this.id = null; 
 		this.cell = null;	/* Initialize the container cell to empty. */
 	};
 	
-	return CellValue;
+	return Value;
 })();
 	
 cr.StringValue = (function() {
-	StringValue.prototype = new cr.CellValue();
+	StringValue.prototype = new cr.Value();
 
 	StringValue.prototype.getDescription = function() { return this.text; };
 	
@@ -658,7 +658,7 @@ cr.StringValue = (function() {
 	}
 
 	function StringValue() {
-		cr.CellValue.call(this);
+		cr.Value.call(this);
 	}
 	
 	return StringValue;
@@ -1307,7 +1307,7 @@ cr.ObjectValue = (function() {
 	}
 	
 	function ObjectValue() {
-		cr.CellValue.call(this);
+		cr.Value.call(this);
 	};
 	
 	return ObjectValue;
