@@ -1415,14 +1415,14 @@ cr.ObjectValue = (function() {
 		return this._instance.subInstance(name);
 	}
 	
-	ObjectValue.prototype.importCell = function(oldCell)
+	ObjectValue.prototype.importCell = function(cell)
 	{
-		this._instance.importCell(oldCell);
+		this._instance.importCell(cell);
 	}
 
-	ObjectValue.prototype.importCells = function(oldCells)
+	ObjectValue.prototype.importCells = function(cells)
 	{
-		this._instance.importCells(oldCells);
+		this._instance.importCells(cells);
 	}
 
 	/* loadData loads the data from the middle tier or another ObjectValue. */
