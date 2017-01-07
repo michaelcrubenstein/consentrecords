@@ -814,11 +814,11 @@ cr.Instance = (function() {
 		return this._cells !== null;
 	}
 
-	Instance.prototype.setCells = function(oldCells)
+	Instance.prototype.setCells = function(cells)
 	{
-		this._cells = oldCells;
+		this._cells = cells;
 		var _this = this;
-		oldCells.forEach(function(cell) {
+		cells.forEach(function(cell) {
 			cell.setParent(_this);
 		});
 		return this;
