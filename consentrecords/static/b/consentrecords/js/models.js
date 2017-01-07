@@ -134,12 +134,11 @@ var CRP = (function() {
 					start: args.start,
 					end: args.end,
 					fields: args.fields})
-			.done(function(newInstances)
+			.then(function(values)
 				{
-					var mappedInstances = newInstances.map(function(i) { return crp.pushInstance(i); });
-					result.resolve(mappedInstances);
-				})
-			.fail(function(err)
+					result.resolve(values);
+				},
+				function(err)
 				{
 					_this.promises[args.path] = undefined;
 					result.reject(err);
@@ -479,8 +478,8 @@ cr.ObjectCell = (function() {
 	
 	ObjectCell.prototype.copyValue = function(data) {
 		var newValue = new cr.ObjectValue();
-		
 		newValue.loadData(data);
+		newValue.instance(crp.pushInstance(newValue.instance()))
 		return newValue;
 	}
 	
@@ -1174,9 +1173,15 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.Value();
 	ObjectValue.prototype._instance = null;
 	
-	ObjectValue.prototype.instance = function()
+	ObjectValue.prototype.instance = function(instance)
 	{
-		return this._instance;
+		if (instance === undefined)
+			return this._instance;
+		else
+		{
+			this._instance = instance;
+			return this;
+		}
 	}
 	
 	ObjectValue.prototype.getDescription = function() 
@@ -1555,7 +1560,7 @@ cr.thenFail = function(jqXHR, textStatus, errorThrown)
 		return r2;
 	};
 	
-	/* args is an object with up to five parameters: path, start, end, done, fail */
+	/* args is an object with up to five parameters: path, access_token, start, end */
 cr.selectAll = function(args)
 	{
 		if (!args.path)
@@ -1721,9 +1726,7 @@ cr.createInstance = function(field, containerUUID, initialData)
 					{
 						var r2 = $.Deferred();
 						try {
-							var newValue = new cr.ObjectValue();
-							newValue.loadData(json.object);
-							
+							var newValue = ObjectCell.prototype.copyValue(json.object);							
 							r2.resolve(newValue);
 						}
 						catch (err)
@@ -1866,13 +1869,13 @@ cr.getData = function(args)
 		return $.getJSON(cr.urls.getData, data)
 			.then(function(json)
 				{
-					var instances = json.data.map(cr.ObjectCell.prototype.copyValue);
+					var values = json.data.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
 						var result = $.Deferred();
-						result.resolve(instances);
+						result.resolve(values);
 						if (args.done)
-							args.done(instances);
+							args.done(values);
 						return result;
 					}
 					catch(err)
