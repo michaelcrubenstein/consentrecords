@@ -1138,7 +1138,7 @@ cr.Instance = (function() {
 		{
 			var _this = this;
 			/* This is a blank item. This can be a unique item that hasn't yet been initialized. */
-			return cr.getConfiguration(this, this.cell.field.ofKindID)
+			return cr.getConfiguration(this, this.getTypeName())
 				.done(function(newCells)
 					{
 						_this.setCells(newCells);
@@ -1823,8 +1823,12 @@ cr.getUserID = function(successFunction, failFunction)
 
 cr.getConfiguration = function(parent, typeID)
 	{
-		return $.getJSON(cr.urls.getConfiguration,
-						 { "typeID" : typeID })
+		var data;
+		if (/^[A-Za-z0-9]{32}$/.test(typeID))
+			data = {"typeID" : typeID};
+		else
+			data = {"typeName" : typeID};
+		return $.getJSON(cr.urls.getConfiguration, data)
 		.then(function(json)
 			{
 				var cells = [];
