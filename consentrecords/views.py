@@ -1040,7 +1040,7 @@ class api:
             elif typeName:
                 kindObject = terms[typeName]
             else:
-                raise ValueError("typeName was not specified in getAddConfiguration")
+                raise ValueError("typeName was not specified in getConfiguration")
         
             configurationObject = kindObject.getSubInstance(terms.configuration)
         
