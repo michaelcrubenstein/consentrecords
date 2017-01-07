@@ -1000,14 +1000,9 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, userInfo, language=None):
-        d = { 'id': self.id,
-              'instanceID' : self.referenceValue.id, 
-              'description': self.referenceValue.getDescription(language),
-              'position': self.position,
-              'typeName': self.referenceValue.typeID.getDescription() }
-        privilege = self.referenceValue.getPrivilege(userInfo)
-        if privilege:
-            d['privilege'] = privilege.getDescription()
+        d = self.referenceValue.getReferenceData(userInfo, language)
+        d['id'] = self.id
+        d['position'] = self.position
         return d
             
     # Updates the value of the specified object
@@ -1424,7 +1419,7 @@ class FieldsDataDictionary:
     def __getitem__(self, typeInstance):
         if isinstance(typeInstance, str):
             typeInstance = next((key for key in self._dict.keys() if key.id == typeInstance),
-            					Instance.objects.get(pk=typeInstance))
+                                Instance.objects.get(pk=typeInstance))
                             
         if typeInstance in self._dict:
             return self._dict[typeInstance]
