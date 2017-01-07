@@ -701,17 +701,22 @@
 			{
 				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
-						firstPanel = new PathlinesPanel(cr.signedinUser, false);
-						firstPanel.setupSearchPanel();
-						firstPanel.showNow();
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
-						.then(function()
-							{
-								if (handleState)
-									handleState(firstPanel);
-								else
-									firstPanel.checkShowIdeas();
-							});
+						try
+						{
+							firstPanel = new PathlinesPanel(cr.signedinUser, false);
+							firstPanel.setupSearchPanel();
+							firstPanel.showNow();
+							firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+							.then(function()
+								{
+									if (handleState)
+										handleState(firstPanel);
+									else
+										firstPanel.checkShowIdeas();
+								});
+						}
+						catch(err)
+						{
 							cr.asyncFail(err);
 						}
 					});
