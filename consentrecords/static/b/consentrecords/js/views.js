@@ -768,7 +768,11 @@ function appendConfirmDeleteControls(divs, onClick)
 		{
 			/* Test case: Delete an existing value in a cell that has multiple values. */
 			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
-				d.deleteValue(unblockClick, syncFailFunction);
+			{
+				try {
+					d.deleteValue(unblockClick, cr.syncFail);
+				} catch(err) { cr.syncFail(err); }
+			}
 		});
 		
 	divs.classed("delete-confirm-container", true);						
@@ -873,21 +877,27 @@ function _clickEditObjectValue(d, backText)
 	if (_isPickCell(d.cell))
 	{
 		if (prepareClick('click', 'pick object: ' + d.getDescription()))
-			showPickObjectPanel(d.cell, d);
+		{
+			try {
+				showPickObjectPanel(d.cell, d);
+			} catch(err) { cr.syncFail(err); }
+		}
 	}
 	else
 	{
 		if (prepareClick('click', 'edit object: ' + d.getDescription()))
 		{
-			var getSavePromise;
-			if (d.cell.parent)
-				getSavePromise = null;
-			else
-			{
-				/* Test case: Create an Organization, Site an Offering all in one operation. */
-				getSavePromise = promiseImportCells;
-			}
-			showEditObjectPanel(d.cell, d, backText, revealPanelLeft, getSavePromise);
+			try {
+				var getSavePromise;
+				if (d.cell.parent)
+					getSavePromise = null;
+				else
+				{
+					/* Test case: Create an Organization, Site an Offering all in one operation. */
+					getSavePromise = promiseImportCells;
+				}
+				showEditObjectPanel(d.cell, d, backText, revealPanelLeft, getSavePromise);
+			} catch(err) { cr.syncFail(err); }
 		}
 	}
 }
@@ -1178,7 +1188,9 @@ cr.ObjectCell.prototype.show = function(obj, backText)
 			          .on("click", function(cell) {
 				if (prepareClick('click', 'view unique ' + cell.field.name + ': ' + cell.data[0].getDescription()))
 				{
-					showViewObjectPanel(cell, cell.data[0], backText, revealPanelLeft);
+					try {
+						showViewObjectPanel(cell, cell.data[0], backText, revealPanelLeft);
+					} catch(err) { cr.syncFail(err); }
 				}
 			});
 	}
@@ -1199,7 +1211,9 @@ cr.ObjectCell.prototype.show = function(obj, backText)
 		clickFunction = function(d) {
 			if (prepareClick('click', 'view multiple ' + d.cell.field.name + ': ' + d.getDescription()))
 			{
-				showViewObjectPanel(_this, d, backText, revealPanelLeft);
+				try {
+					showViewObjectPanel(_this, d, backText, revealPanelLeft);
+				} catch(err) { cr.syncFail(err); }
 			}
 		}
 
@@ -1936,7 +1950,11 @@ var SitePanel = (function () {
 	SitePanel.prototype.hideRightEvent = function()
 	{
 		if (prepareClick('click', 'Close Right'))
-			this.hideRight().then(unblockClick);
+		{
+			try {
+				this.hideRight().then(unblockClick);
+			} catch(err) { cr.syncFail(err); }
+		}
 		else
 			cr.logRecord('click', 'Close Right blocked');
 		d3.event.preventDefault();
@@ -2626,9 +2644,16 @@ function showViewObjectPanel(cell, objectData, backText, showFunction) {
 						.on("click", function(d) {
 							if (prepareClick('click', 'view object panel: Edit'))
 							{
-								showClickFeedback(this);
+								try
+								{
+									showClickFeedback(this);
 				
-								showEditObjectPanel(cell, objectData, header, revealPanelUp);
+									showEditObjectPanel(cell, objectData, header, revealPanelUp);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
 							}
 							d3.event.preventDefault();
 						});
@@ -2720,7 +2745,9 @@ var EditPanel = (function() {
 			{
 				if (prepareClick('click', 'edit object panel: Cancel'))
 				{
-					_this.hide();
+					try {
+						_this.hide();
+					} catch(err) { cr.syncFail(err); }
 				}
 				d3.event.preventDefault();
 			});
@@ -2962,9 +2989,11 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 					.on("click", function(d) {
 						if (prepareClick('click', 'view roots object panel: Edit'))
 						{
-							showClickFeedback(this);
-				
-							showEditRootObjectsPanel(cell, "Edit " + header, sortFunction);
+							try
+							{
+								showClickFeedback(this);
+								showEditRootObjectsPanel(cell, "Edit " + header, sortFunction);
+							} catch(err) { cr.syncFail(err); }
 						}
 						d3.event.preventDefault();
 					});
@@ -3049,7 +3078,9 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 			function(d) {
 				if (prepareClick('click', 'view root object: ' + d.getDescription()))
 				{
-					showViewObjectPanel(cell, d, sitePanel.node().getAttribute("headerText"), revealPanelLeft);
+					try {
+						showViewObjectPanel(cell, d, sitePanel.node().getAttribute("headerText"), revealPanelLeft);
+					} catch(err) { cr.syncFail(err); }
 				}
 			});
 
@@ -3151,7 +3182,9 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 		function(d) {
 			if (prepareClick('click', 'edit cell item: ' + d.getDescription()))
 			{
-				showEditObjectPanel(cell, d, header, revealPanelLeft);
+				try {
+					showEditObjectPanel(cell, d, header, revealPanelLeft);
+				} catch(err) { cr.syncFail(err); }
 			}
 		});
 	_setupItemsDivHandlers(itemsDiv, cell);
@@ -3241,7 +3274,9 @@ function showPickObjectPanel(cell, oldData) {
 			{
 				if (prepareClick('click', 'pick object panel: Cancel'))
 				{
-					sitePanel.hideRight(unblockClick);
+					try {
+						sitePanel.hideRight(unblockClick);
+					} catch(err) { cr.syncFail(err); }
 				}
 				d3.event.preventDefault();
 			});
