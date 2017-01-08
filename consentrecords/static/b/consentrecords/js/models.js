@@ -1356,8 +1356,6 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype._completeUpdate = function(newValue)
 	{
-		var oldID = this.getInstanceID();
-		
 		this.id = newValue.id;
 		if (newValue.getTypeName())
 			this.setTypeName(newValue.getTypeName());
@@ -1365,9 +1363,6 @@ cr.ObjectValue = (function() {
 			this.setPrivilege(newValue.getPrivilege());
 		this.updateFromChangeData({instanceID: newValue.getInstanceID(), description: newValue.getDescription()});
 		this.triggerDataChanged();
-		
-		if (!oldID)
-			$(this.cell).trigger('valueAdded.cr', this);
 	}
 
 	ObjectValue.prototype.isEmpty = function()
@@ -1434,6 +1429,10 @@ cr.ObjectValue = (function() {
 		this._instance.loadData(data);
 	}
 
+	/* Save a new version of this object.
+		This is called when a object is instantiated on the client as an empty object
+		and its data is being filled here.
+	 */
 	ObjectValue.prototype.saveNew = function(initialData, done, fail)
 	{
 		var containerCell = this.cell;
