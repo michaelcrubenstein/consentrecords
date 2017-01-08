@@ -31,8 +31,9 @@ var SearchPathsResultsView = (function () {
 				var ageDescription = ageCalculator.toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
-				if (userName) leftText.append('div').text(userName);
-				if (userDescription) leftText.append('div').text(userDescription);
+				if (userName && userName != screenName) leftText.append('div').text(userName);
+				/* Only include the email address if there is no userName or screenName */
+				if (userDescription && !userName && !screenName) leftText.append('div').text(userDescription);
 				leftText.append('div').text(ageDescription);
 			});
 	}
