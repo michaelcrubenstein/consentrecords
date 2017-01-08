@@ -71,7 +71,6 @@ var SearchPathsResultsView = (function () {
 	{
 		var path;
 		{
-			/* TODO: */
 			path = '"Path"';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
@@ -159,6 +158,10 @@ var SearchPathsPanel = (function () {
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
 		var _this = this;
+		
+		this.mainDiv.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
+			
 		return $.when(
 			$(this.node()).animate({top: newTop,
 									height: $(this.topBox).outerHeight(true)},
@@ -227,6 +230,9 @@ var SearchPathsPanel = (function () {
 		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 		
+		this.mainDiv.classed('vertical-scrolling', true)
+			.classed('no-scrolling', false);
+			
 		var resultsTop;
 		if (parentHeight < parentWidth)
 		{
