@@ -889,9 +889,11 @@ class api:
                         
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
+                        
                         if oldValue.hasNewValue(c):
                             container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
                             item = oldValue.updateValue(c, transactionState)
+                            instanceID = item.referenceValue and item.referenceValue.id
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -903,6 +905,7 @@ class api:
                             field = terms[c["field"]]
                         else:
                             field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
+                        
                         if "index" in c:
                             newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
                         else:
@@ -919,6 +922,8 @@ class api:
                             instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
+                            instanceID = item.referenceValue and item.referenceValue.id
+                            
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -1035,7 +1040,7 @@ class api:
             elif typeName:
                 kindObject = terms[typeName]
             else:
-                raise ValueError("typeName was not specified in getAddConfiguration")
+                raise ValueError("typeName was not specified in getConfiguration")
         
             configurationObject = kindObject.getSubInstance(terms.configuration)
         

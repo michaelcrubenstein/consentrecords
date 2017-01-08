@@ -224,7 +224,7 @@
 			{
 				var onSignin = function(eventObject)
 				{
-					$(this).off("signinCanceled.cr", null, onSigninCanceled);
+					this.off("signinCanceled.cr", onSigninCanceled);
 					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
 					firstPanel.setupSearchPanel();
 					firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
@@ -237,13 +237,13 @@
 			
 				var onSigninCanceled = function(eventObject)
 				{
-					$(this).off("signin.cr", null, onSignin);
+					this.off("signin.cr", onSignin);
 					var firstPanel = new WelcomePanel();
 					firstPanel.showLeft();
 				}
 			
-				$(cr.signedinUser).one("signin.cr", null, null, onSignin);
-				$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+				cr.signedinUser.one("signin.cr", null, onSignin);
+				cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
 			
 				var panel = new SigninPanel();
 				panel.showLeft().then(function()
@@ -448,7 +448,7 @@
 										{
 											var done;
 											var panel;
-											if (cr.signedinUser.getValueID())
+											if (cr.signedinUser.getInstanceID())
 											{
 												panel = new PathlinesPanel(users[0], true);
 											}	
@@ -466,7 +466,7 @@
 										}
 										else
 										{
-											if (!cr.signedinUser.getValueID())
+											if (!cr.signedinUser.getInstanceID())
 											{
 												firstPanel = new WelcomePanel();
 												firstPanel.showNow();
@@ -544,7 +544,7 @@
 							for (var i = 0; i < cell.data.length; ++i)
 							{
 								var d = cell.data[i];
-								if (d.getValueID() == newValue.getValueID())
+								if (d.getInstanceID() == newValue.getInstanceID())
 									d.triggerDeleteValue();
 							}
 						}
@@ -552,9 +552,9 @@
 						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
-								if (newValue.typeName == '_access record')
+								if (newValue.getTypeName() == '_access record')
 								{
-									newValue.checkCells(["typeName"], function()
+									newValue.promiseCells().then(function()
 										{
 											newValue = newValue.getCell("{{cell}}").data[0];
 											clearAccessRequests(newValue);
@@ -577,7 +577,7 @@
 					handleState = function(pathwayPanel)
 					{
 						var cell = cr.signedinUser.getCell("_access request");
-						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
 						if (v)
 						{
 							v.deleteValue(function()
@@ -691,27 +691,34 @@
 			/* Initialize all of the objects that are dependent on whether or not the user is
 				signed in.
 			 */
-			if (!cr.signedinUser.getValueID())
+			if (!cr.signedinUser.getInstanceID())
 			{
 				$(cr.signedinUser).trigger("signout.cr");
 			}
 			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-			if (cr.signedinUser.getValueID())
+			if (cr.signedinUser.getInstanceID())
 			{
-				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
-						firstPanel = new PathlinesPanel(cr.signedinUser, false);
-						firstPanel.setupSearchPanel();
-						firstPanel.showNow();
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
-						.then(function()
-							{
-								if (handleState)
-									handleState(firstPanel);
-								else
-									firstPanel.checkShowIdeas();
-							});
+						try
+						{
+							firstPanel = new PathlinesPanel(cr.signedinUser, false);
+							firstPanel.setupSearchPanel();
+							firstPanel.showNow();
+							firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+							.then(function()
+								{
+									if (handleState)
+										handleState(firstPanel);
+									else
+										firstPanel.checkShowIdeas();
+								});
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
 					});
 			}
 			else if (!needsSignin)
@@ -790,11 +797,11 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.cells[0].data[0].getDescription();
+						return d.getCells()[0].data[0].getDescription();
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			var path = "#" + cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -929,7 +936,7 @@
 				}
 			}
 			
-			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			var path = "#"+cr.signedinUser.getInstanceID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 

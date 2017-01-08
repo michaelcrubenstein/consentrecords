@@ -205,14 +205,8 @@ var ComparePath = (function() {
 			_this.setFlagText(eventObject.data);
 		}
 		
-		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
-		
-		$(node).on("remove", null, fd.experience, function(eventObject)
-		{
-			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
-			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
-		});
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, dataChanged);
+		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
 	}
 	
 	ComparePath.prototype.getColumn = function(fd)
@@ -475,7 +469,7 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
+		return (cr.signedinUser && path == cr.signedinUser.subInstance("Path") && this.youName) ||
 			getPathDescription(path) ||
 			ageCalculator.toString();
 	}
@@ -535,15 +529,10 @@ var ComparePath = (function() {
 		var rightCell = this.rightPath.getCell("More Experience");
 		var addedFunction = function(eventObject, newData)
 			{
-				eventObject.data.addMoreExperience(newData);
+				_this.addMoreExperience(newData);
 			}
-		$(leftCell).on("valueAdded.cr", null, this, addedFunction);
-		$(rightCell).on("valueAdded.cr", null, this, addedFunction);
-		$(this.pathwayContainer.node()).on("remove", function()
-			{
-				$(leftCell).off("valueAdded.cr", null, addedFunction);
-				$(rightCell).off("valueAdded.cr", null, addedFunction);
-			});
+		setupOnViewEventHandler(leftCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(rightCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
 			
 		var experiences = leftCell.data;
 		
@@ -586,7 +575,7 @@ var ComparePath = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.typeName === "More Experience";
+				return d.getTypeName() === "More Experience";
 			})
 			.forEach(function(d)
 			{
@@ -650,9 +639,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
-		if (leftPath.privilege === '_find')
+		if (leftPath.getPrivilege() === '_find')
 			throw "You do not have permission to see information about {0}".format(leftPath.getDescription());
-		if (rightPath.privilege === '_find')
+		if (rightPath.getPrivilege() === '_find')
 			throw "You do not have permission to see information about {0}".format(rightPath.getDescription());
 		if (this.leftPath)
 			throw "paths have already been set for this pathtree";
@@ -748,11 +737,11 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path:  "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)', 
+		var p1 = crp.promise({path:  "#" + this.rightPath.getInstanceID() + '::reference(_user)::reference(Experience)', 
 				   fields: ["parents"]});
-		var p2 = crp.promise({path: "#" + _this.rightPath.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+		var p2 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
 						'::reference(Session)::reference(Sessions)::reference(Offering)'});
-		var p3 = crp.promise({path: "#" + _this.rightPath.getValueID() + '>"More Experience">Offering'});
+		var p3 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '>"More Experience">Offering'});
 		$.when(p1, p2, p3)
 		.then(function(experiences, r2, r3)
 			{
@@ -815,8 +804,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.getValue("Path"),
-							  this.rightUser.getValue("Path"));
+		this.pathtree.setUser(this.leftUser.subInstance("Path"),
+							  this.rightUser.subInstance("Path"));
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

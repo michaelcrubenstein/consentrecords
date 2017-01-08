@@ -154,17 +154,17 @@ var Experience = (function() {
 			initialData["End"] = [{text: this.endDate}];
 		
 		if (this.organization)
-			initialData["Organization"] = [{instanceID: this.organization.getValueID()}];
+			initialData["Organization"] = [{instanceID: this.organization.getInstanceID()}];
 		else if (this.organizationName)
 			initialData["User Entered Organization"] = [{text: this.organizationName}];
 			
 		if (this.site)
-			initialData["Site"] = [{instanceID: this.site.getValueID()}];
+			initialData["Site"] = [{instanceID: this.site.getInstanceID()}];
 		else if (this.siteName)
 			initialData["User Entered Site"] = [{text: this.siteName}];
 			
 		if (this.offering)
-			initialData["Offering"] = [{instanceID: this.offering.getValueID()}];
+			initialData["Offering"] = [{instanceID: this.offering.getInstanceID()}];
 		else if (this.offeringName)
 			initialData["User Entered Offering"] = [{text: this.offeringName}];
 		
@@ -173,7 +173,7 @@ var Experience = (function() {
 			existingServices = this.offering.getCell("Service").data;
 			
 		if (this.timeframe)
-			initialData["Timeframe"] = [{instanceID: this.timeframe.getValueID()}];
+			initialData["Timeframe"] = [{instanceID: this.timeframe.getInstanceID()}];
 				
 		for (i = 0; i < this.services.length; ++i)
 		{
@@ -184,13 +184,13 @@ var Experience = (function() {
 			{
 				if (!existingServices || 
 					!existingServices.find(function(d) { 
-						return s.pickedObject.getValueID() == d.getValueID(); 
+						return s.pickedObject.getInstanceID() == d.getInstanceID(); 
 					}))
 				{
 					if (!initialData["Service"])
-						initialData["Service"] = [{instanceID: s.pickedObject.getValueID()}];
+						initialData["Service"] = [{instanceID: s.pickedObject.getInstanceID()}];
 					else
-						initialData["Service"].push({instanceID: s.pickedObject.getValueID()});
+						initialData["Service"].push({instanceID: s.pickedObject.getInstanceID()});
 				}
 			}
 			else if (s.name)
@@ -224,7 +224,7 @@ var Experience = (function() {
 		var names = [];
 	
 		var offering = this.offering;
-		if (offering && offering.getValueID())
+		if (offering && offering.getInstanceID())
 		{
 			names = offering.getCell("Service").data
 				.filter(function(v) { return !v.isEmpty(); })
@@ -271,7 +271,7 @@ var Experience = (function() {
 		var tags = [];
 		
 		var offering = this.offering;
-		if (offering && offering.getValueID())
+		if (offering && offering.getInstanceID())
 		{
 			names = offering.getCell("Service").data
 				.filter(function(v) { return !v.isEmpty(); });
@@ -387,13 +387,13 @@ var Experience = (function() {
 			var existingServices = null;
 			if (this.offering && this.offering.getCell("Service"))
 				existingServices = this.offering.getCell("Service").data
-					.map(function(d) { return d.getValueID(); });
+					.map(function(d) { return d.getInstanceID(); });
 
 			var newServices = this.services.filter(function(s) {
 					return s.pickedObject &&
 						(!existingServices || 
 					     !existingServices.find(function(d) { 
-							return s.pickedObject.getValueID() == d;
+							return s.pickedObject.getInstanceID() == d;
 							}));
 				})
 				.map(function(d) { return d.pickedObject; });
@@ -434,7 +434,7 @@ var Experience = (function() {
 				.then(function()
 					{
 						var offering = _this.instance.getValue("Offering");
-						if (offering && offering.getValueID() && !offering.isDataLoaded)
+						if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
 							return offering.promiseCellsFromCache();
 						else
 							return undefined;
@@ -451,7 +451,7 @@ var Experience = (function() {
 
 			this.appendData(initialData);
 		
-			cr.createInstance(field, this.path.getValueID(), initialData)
+			cr.createInstance(field, this.path.getInstanceID(), initialData)
 			 .then(function(newData)
 					{
 						var r = $.Deferred();
@@ -623,11 +623,11 @@ var Experience = (function() {
 	{
 		if (this.services.length > 0 &&
 			this.services[0].pickedObject)
-			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.getValueID());
+			return '[Service[Service={0}]]'.format(this.services[0].pickedObject.getInstanceID());
 		else if (this.domain)
-			return '[Service[Service={0}]]'.format(this.domain.getValueID());
+			return '[Service[Service={0}]]'.format(this.domain.getInstanceID());
 		else if (this.stage)
-			return '[Service[Stage={0}]]'.format(this.stage.getValueID());
+			return '[Service[Stage={0}]]'.format(this.stage.getInstanceID());
 		else
 			return "";
 	}
@@ -640,7 +640,7 @@ var Experience = (function() {
 	Experience.prototype.getPhase = function()
 	{
 		var t = this.instance && this.instance.getValue('Timeframe');
-		if (t && t.getValueID())
+		if (t && t.getInstanceID())
 			return t.getDescription();
 			
 		var todayDate = getUTCTodayDate().toISOString().substr(0, 10);
@@ -829,7 +829,7 @@ var ReportedObject = function () {
     ReportedObject.prototype.equal = function(v2)
     {
     	if (this.pickedObject)
-    		return v2.pickedObject && v2.pickedObject.getValueID() == this.pickedObject.getValueID();
+    		return v2.pickedObject && v2.pickedObject.getInstanceID() == this.pickedObject.getInstanceID();
     	else
     		return !v2.pickedObject && this.name == v2.name;
     }
@@ -860,14 +860,14 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
 				if (!this.experience.offeringName &&
 					this.experience.services.find(function(d2)
 						{
-							return d2.pickedObject && d2.pickedObject.getValueID() == d.getValueID();
+							return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID();
 						}))
 					this.experience.setOffering({text: d.getDescription() });
 				else
@@ -880,7 +880,7 @@ var ExperienceDatumSearchView = (function() {
 					});
 			}
 		}
-		else if (d.typeName === 'Organization')
+		else if (d.getTypeName() === 'Organization')
 		{
 			if (prepareClick('click', 'organization: ' + d.getDescription()))
 			{
@@ -889,7 +889,7 @@ var ExperienceDatumSearchView = (function() {
 					/* Clear the site and offering if they aren't within the new organization. */
 					if (_this.experience.site &&
 						_this.experience.organization &&
-						_this.experience.organization.getValueID() != d.getValueID())
+						_this.experience.organization.getInstanceID() != d.getInstanceID())
 					{
 						if (this.experience.offering)
 						{
@@ -923,7 +923,7 @@ var ExperienceDatumSearchView = (function() {
 				}
 			}
 		}
-		else if (d.typeName === 'Site')
+		else if (d.getTypeName() === 'Site')
 		{
 			if (prepareClick('click', 'site: ' + d.getDescription()))
 			{
@@ -935,7 +935,7 @@ var ExperienceDatumSearchView = (function() {
 							{
 								if (_this.experience.offering &&
 									_this.experience.site &&
-									_this.experience.site.getValueID() != d.getValueID())
+									_this.experience.site.getInstanceID() != d.getInstanceID())
 									_this.experience.clearOffering();
 								_this.experience.setOrganization({instance: d});
 								_this.sitePanel.onExperienceUpdated();
@@ -956,7 +956,7 @@ var ExperienceDatumSearchView = (function() {
 						cr.syncFail);
 			}
 		}
-		else if (d.typeName === 'Offering')
+		else if (d.getTypeName() === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
@@ -983,7 +983,7 @@ var ExperienceDatumSearchView = (function() {
 	
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.typeName === "Site" &&
+				return d.getTypeName() === "Site" &&
 					   d.getDescription() === compareText &&
 					   d.getValue("Organization").getDescription() === compareText;
 			});
@@ -993,21 +993,21 @@ var ExperienceDatumSearchView = (function() {
 	ExperienceDatumSearchView.prototype.isButtonVisible = function(button, d, compareText)
 	{
 		/* Do not display organizations if there is a site with the same name. */
-		if (d.typeName === "Organization" &&
+		if (d.getTypeName() === "Organization" &&
 			this.hasUniqueSite(d))
 			return false;
 		
 		if (this.isMatchingDatum(d, compareText))
 			return true;
 
-		if (d.typeName === "Offering")
+		if (d.getTypeName() === "Offering")
 		{
 			if (this.stringContains(d.getValue("Site").getDescription(), compareText))
 				return true;
 			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
 		}
-		else if (d.typeName === "Site")
+		else if (d.getTypeName() === "Site")
 		{
 			if (this.stringContains(d.getValue("Organization").getDescription(), compareText))
 				return true;
@@ -1203,7 +1203,7 @@ var TagSearchView = (function() {
 	
 	TagSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service: ' + d.getDescription()))
 			{
@@ -1237,13 +1237,13 @@ var TagSearchView = (function() {
 		if (d.getDescription().toLocaleLowerCase() == compareText)
 			return true;
 			
-		if (d.typeName === "Service")
+		if (d.getTypeName() === "Service")
 		{
 			if (this.experience.offering && 
 				this.experience.offering.getCell("Service").find(d))
 				return false;
 			if (this.experience.services.find(function(d2) { 
-				return d2.pickedObject && d2.pickedObject.getValueID() == d.getValueID() &&
+				return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID() &&
 					!(inputNode && d3.select(inputNode).datum() == d2) ; 
 			}))
 				return false;
@@ -1404,13 +1404,13 @@ var OrganizationSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Site")
+				if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
 						orgValue = d.cell.parent.getValue("Organization");
 					else
 						orgValue = d.getValue("Organization");
@@ -1485,10 +1485,10 @@ var SiteSearchView = (function() {
 			else if (!val)
 			{
 				if (this.typeName === "Site")
-					return "#{0}>Sites>Site".format(this.experience.organization.getValueID());
+					return "#{0}>Sites>Site".format(this.experience.organization.getInstanceID());
 				else if (this.typeName === "Offering from Site")
 				{
-					path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
+					path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
 					path += this.experience.getOfferingConstraint();
 					return path;
 				}
@@ -1498,19 +1498,19 @@ var SiteSearchView = (function() {
 				if (this.typeName === "Offering")
 				{
 					path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
-					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Offering from Site")
 				{
 					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
-					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
 					path = 'Site[_name{0}"{1}"]';
-					path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 				}
 			
 				var symbol = "*=";
@@ -1541,7 +1541,7 @@ var SiteSearchView = (function() {
 					if (this.experience.services[0].pickedObject)
 					{
 						path = 'Organization[_name{0}"{1}"]>Sites>Site::not(Site[_name{0}"{1}"])';
-						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getValueID());
+						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
 					}
 					else
 						return ""
@@ -1666,7 +1666,7 @@ var SiteSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Offering")
+				if (d.getTypeName() === "Offering")
 				{
 					leftText.append('div')
 						.classed('title', true).text(d.getDescription());
@@ -1679,19 +1679,19 @@ var SiteSearchView = (function() {
 							.text(d.getValue("Site").getDescription());
 					}
 				}
-				else if (d.typeName === "Site")
+				else if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
 					   of an Offering, then the organization name is the value of the offering.
 					 */
 					var orgValue;
-					if (d.cell && d.cell.parent && d.cell.parent.typeName === "Offering")
+					if (d.cell && d.cell.parent && d.cell.parent.getTypeName() === "Offering")
 						orgValue = d.cell.parent.getValue("Organization");
 					else
 						orgValue = d.getValue("Organization");
 						
 					if (orgValue.getDescription() == d.getDescription() ||
-						orgValue.getValueID() == (_this.experience.organization && _this.experience.organization.getValueID()))
+						orgValue.getInstanceID() == (_this.experience.organization && _this.experience.organization.getInstanceID()))
 					{
 						leftText.text(d.getDescription());
 					}
@@ -1736,7 +1736,7 @@ var OfferingSearchView = (function() {
 	
 	OfferingSearchView.prototype.onClickButton = function(d, i) {
 		var _this = this;
-		if (d.typeName === 'Service')
+		if (d.getTypeName() === 'Service')
 		{
 			if (prepareClick('click', 'service for offering: ' + d.getDescription()))
 			{
@@ -1749,7 +1749,7 @@ var OfferingSearchView = (function() {
 					});
 			}
 		}
-		else if (d.typeName === 'Offering')
+		else if (d.getTypeName() === 'Offering')
 		{
 			if (prepareClick('click', 'offering: ' + d.getDescription()))
 			{
@@ -1782,7 +1782,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Offerings>Offering".format(this.experience.site.getValueID());
+						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID());
 						return path;
 					}
 					else
@@ -1792,7 +1792,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Offerings>Offering".format(this.experience.site.getValueID()) + '[_name{0}"{1}"]';
+						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[_name{0}"{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1817,7 +1817,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getValueID());
+						path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
 						path += this.experience.getOfferingConstraint();
 						return path;
 					}
@@ -1829,13 +1829,13 @@ var OfferingSearchView = (function() {
 					if (this.typeName === "Offering")
 					{
 						path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
-						path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getValueID()) + path;
+						path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 					else if (this.typeName === "Offering from Site")
 					{
 						path = 'Site[_name{0}"{1}"]>Offerings>Offering';
-						path = "#{0}>Sites>".format(this.experience.organization.getValueID()) + path;
+						path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 			
@@ -1984,9 +1984,9 @@ var OfferingSearchView = (function() {
 		buttons.each(function(d)
 			{
 				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				if (d.typeName === "Offering")
+				if (d.getTypeName() === "Offering")
 				{
-					if (_this.experience.site && _this.experience.site.getValueID() == d.getValue("Site").getValueID())
+					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
 						leftText.text(d.getDescription());
 					else
 					{
@@ -1994,8 +1994,8 @@ var OfferingSearchView = (function() {
 							.classed('title', true).text(d.getDescription());
 	
 						orgDiv = leftText.append('div').classed("organization", true);
-						if (d.getValue("Organization").getValueID() !=
-							(_this.experience.organization && _this.experience.organization.getValueID()))
+						if (d.getValue("Organization").getInstanceID() !=
+							(_this.experience.organization && _this.experience.organization.getInstanceID()))
 							orgDiv.append('div').text(d.getValue("Organization").getDescription());
 						if (d.getValue("Site").getDescription() != d.getValue("Organization").getDescription())
 						{
@@ -2005,7 +2005,7 @@ var OfferingSearchView = (function() {
 						}
 					}
 				}
-				else if (d.typeName === "Service")
+				else if (d.getTypeName() === "Service")
 				{
 					leftText.text(d.getDescription());
 				}
@@ -2216,7 +2216,7 @@ var ExperienceShareOptions = (function () {
 		
 		if (cr.signedinUser)
 		{
-			var duplicateText = (path == cr.signedinUser.getValue("Path")) ? "Duplicate Experience" : "Add to My Pathway";
+			var duplicateText = (path == cr.signedinUser.subInstance("Path")) ? "Duplicate Experience" : "Add to My Pathway";
 		
 			var addToMyPathwayButton = div.append('button')
 				.text(duplicateText)
@@ -2251,7 +2251,7 @@ var ExperienceShareOptions = (function () {
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
 							panel.remove();
 							window.location = 'mailto:?subject=Add%20Pathway%20Experience&body=Here is a link to add an experience to your pathway: {0}/add/{1}/.'
-										.format(window.location.origin, experience.getValueID());
+										.format(window.location.origin, experience.getInstanceID());
 							unblockClick();
 						});
 						dimmer.hide();
@@ -2508,7 +2508,7 @@ var NewExperiencePanel = (function () {
 		var tags = [];
 		
 		var offering = this.experience.offering;
-		if (offering && offering.getValueID())
+		if (offering && offering.getInstanceID())
 		{
 			offeringTags = offering.getCell("Service").data
 				.filter(function(v) { return !v.isEmpty(); });
@@ -2582,7 +2582,7 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.organizationSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getValueID() != (this.experience.organization && this.experience.organization.getValueID()))
+				newInstance.getInstanceID() != (this.experience.organization && this.experience.organization.getInstanceID()))
 				this.experience.setOrganization({instance: newInstance});
 			else if (newText != this.experience.organizationName)
 				this.experience.setOrganization({text: newText});
@@ -2600,7 +2600,7 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.siteSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getValueID() != (this.experience.site && this.experience.site.getValueID()))
+				newInstance.getInstanceID() != (this.experience.site && this.experience.site.getInstanceID()))
 				this.experience.setSite({instance: newInstance});
 			else if (newText != this.experience.siteName)
 				this.experience.setSite({text: newText});
@@ -2618,7 +2618,7 @@ var NewExperiencePanel = (function () {
 			/* If there is only an item that matches the input text, then use that item. */
 			var newInstance = this.offeringSearchView.hasNamedButton(newText.toLocaleLowerCase());
 			if (newInstance && 
-				newInstance.getValueID() != (this.experience.offering && this.experience.offering.getValueID()))
+				newInstance.getInstanceID() != (this.experience.offering && this.experience.offering.getInstanceID()))
 				this.experience.setOffering({instance: newInstance});
 			else if (newText != this.experience.offeringName)
 				this.experience.setOffering({text: newText});
@@ -2784,6 +2784,7 @@ var NewExperiencePanel = (function () {
 
 	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
 	{
+		/* Test case: Delete an experience. */
 		if (prepareClick('click', 'delete experience'))
 		{
 			var _this = this;

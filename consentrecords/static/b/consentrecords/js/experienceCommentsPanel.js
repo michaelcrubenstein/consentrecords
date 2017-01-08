@@ -13,16 +13,16 @@ var ExperienceCommentsPanel = (function() {
 			.classed('asker', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request"); 
-				return cp && cp.getValueID() && cp.getValue("Path"); })
+				return cp && cp.getInstanceID() && cp.getValue("Path"); })
 			.text(function(d) { 
-					return d && d.getValueID() && "{0} asked".format(d.getDescription()); 
+					return d && d.getInstanceID() && "{0} asked".format(d.getDescription()); 
 				});
 
 		var questions = divs.append('textarea')
 			.classed('question', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request");
-				return cp && cp.getValueID() && cp.getValue("_text"); })
+				return cp && cp.getInstanceID() && cp.getValue("_text"); })
 			.text(function(d) { 
 					return d && d.text; 
 				});
@@ -84,6 +84,11 @@ var ExperienceCommentsPanel = (function() {
 			this.hideDeleteControlsNow($(deleteControls[0]));
 		else
 			this.showDeleteControls($(deleteControls[0]), 0);
+			
+		checkItemsDisplay(commentList.node());
+		
+		/* Force each item to resize in case the commentList was previously empty and hidden. */
+		items.each(function(d) { $(this).trigger("resize.cr"); });
 	}
 	
 	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
@@ -91,18 +96,18 @@ var ExperienceCommentsPanel = (function() {
 		var comments = this.fd.experience.getValue("Comments");
 		var initialData = {_text: [{text: newText}]};
 		
-		if (comments.getValueID())
+		if (comments.getInstanceID())
 		{
 			/* Test case: add a comment to an experience that has had a comment */
 			var commentCell = comments.getCell("Comment");
-			$.when(cr.createInstance(commentCell.field, comments.getValueID(), initialData))
-		     .then(function(newData)
+			$.when(cr.createInstance(commentCell.field, comments.getInstanceID(), initialData))
+		     .then(function(newValue)
 					{
-						newData.promiseCellsFromCache()
+						newValue.promiseCellsFromCache()
 							.then( 
 							function() {
-								commentCell.addValue(newData);
-								done(newData);
+								commentCell.addValue(newValue);
+								done(newValue);
 							},
 							fail);
 					},
@@ -163,6 +168,7 @@ var ExperienceCommentsPanel = (function() {
 					});
 				this.showDeleteControls();
 				this.inEditMode = true;
+				commentList.classed('edit', true);
 				commentList.selectAll('textarea')
 					.attr('readonly', null)
 					.classed('fixed', false)
@@ -267,6 +273,7 @@ var ExperienceCommentsPanel = (function() {
 									{
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
+										commentList.classed('edit', false);
 										commentList.selectAll('textarea')
 											.attr('readonly', 'readonly')
 											.classed('editable', false)
@@ -320,6 +327,7 @@ var ExperienceCommentsPanel = (function() {
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
 		var commentList = commentsDiv.append('ol');
+		commentList.classed('edit', this.inEditMode);
 		
 		function onCommentAdded(eventObject, newData)
 		{
@@ -332,25 +340,25 @@ var ExperienceCommentsPanel = (function() {
 				{
 					return cell.field.name == "Comment";
 				});
-			$(commentCell).on('valueAdded.cr', null, _this, onCommentAdded);
+			commentCell.on('valueAdded.cr', _this, onCommentAdded);
 			$(commentsDiv.node()).on('remove', null, commentCell, function(commentCellEventObject)
 				{
-					$(commentCellEventObject.data).off('valueAdded.cr', null, onCommentAdded);
+					commentCellEventObject.data.off('valueAdded.cr', onCommentAdded);
 				});
 			_this.loadComments(commentCell.data);
 		}
 		
 		function onNewCommentsSaved(eventObject, changeTarget)
 		{
-			if (changeTarget.typeName == "Comments")
+			if (changeTarget.getTypeName() == "Comments")
 				changeTarget.promiseCellsFromCache(["Comment"])
 					.then(onCommentsChecked, cr.asyncFail)
 		}
 		
-		$(comments).on('dataChanged.cr', null, this, onNewCommentsSaved);
+		comments.on('dataChanged.cr', this, onNewCommentsSaved);
 		$(commentsDiv.node()).on('remove', null, comments.cell, function(eventObject)
 			{
-				$(eventObject.data).off('dataChanged.cr', null, onNewCommentsSaved);
+				eventObject.data.off('dataChanged.cr', onNewCommentsSaved);
 			});
 		
 		if (fd.experience.canWrite())
@@ -449,7 +457,7 @@ var ExperienceCommentsPanel = (function() {
 						});
 			});					
 		
-		if (comments.getValueID())
+		if (comments.getInstanceID())
 		{
 			/* Put this in a setTimeout to ensure that the panel's css is set up before the 
 				comments are loaded. This won't happen if the comments are already loaded.
@@ -468,21 +476,21 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 		{
-			var commentsAdded = function(eventObject, newData)
+			var commentsAdded = function(eventObject, newValue)
 				{
 					/* Have to promiseCells here in case the comments have just been added
 						due to a post operation. */
-					newData.promiseCellsFromCache(["Comment/Comment Request"])
+					newValue.promiseCellsFromCache(["Comment/Comment Request"])
 						.then(function()
 							{
-								onCommentsChecked(newData.cells);
+								onCommentsChecked(newValue.getCells());
 							},
 							cr.asyncFail);
 				}
-			$(fd.experience.getCell('Comments')).one('valueAdded.cr', null, this, commentsAdded);
+			fd.experience.getCell('Comments').one('valueAdded.cr', this, commentsAdded);
 			$(panel2Div.node()).on('remove', function()
 				{
-					$(fd.experience.getCell('Comments')).off('valueAdded.cr', null, commentsAdded);
+					fd.experience.getCell('Comments').off('valueAdded.cr', commentsAdded);
 				});
 			this.promise = $.Deferred();
 			this.promise.resolve();
