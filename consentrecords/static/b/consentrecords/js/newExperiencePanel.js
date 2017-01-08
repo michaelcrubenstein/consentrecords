@@ -2784,6 +2784,7 @@ var NewExperiencePanel = (function () {
 
 	NewExperiencePanel.prototype.handleDeleteButtonClick = function()
 	{
+		/* Test case: Delete an experience. */
 		if (prepareClick('click', 'delete experience'))
 		{
 			var _this = this;

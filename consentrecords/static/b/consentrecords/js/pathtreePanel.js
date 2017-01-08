@@ -1274,13 +1274,14 @@ var PathLines = (function() {
 		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
+		var f = function() {
+					_this.clearLayout();
+					_this.checkLayout();
+				}
 		if (this.detailFlagData && experience == this.detailFlagData.experience)
-			this.hideDetail(function() {
-					_this.setupHeights();
-					_this.setupWidths();
-				}, 0);
-		this.clearLayout();
-		this.checkLayout();
+			this.hideDetail(f, 0);
+		else
+			f();
 	};
 
 	PathLines.prototype.handleExperienceDateChanged = function(eventObject)
@@ -1303,12 +1304,6 @@ var PathLines = (function() {
 	PathLines.prototype.setupDelete = function(fd, node) 
 	{
 		var _this = this;
-		var valueDeleted = function(eventObject)
-		{
-			$(eventObject.data).remove();
-			_this.handleValueDeleted(this);
-		};
-		
 		var dataChanged = function(eventObject)
 		{
 			_this.setFlagText(eventObject.data);
@@ -1323,7 +1318,11 @@ var PathLines = (function() {
 					});	
 		}
 		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, valueDeleted);
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
+			{
+				$(eventObject.data).remove();
+				_this.handleValueDeleted(this);
+			});
 		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
 		var cell = fd.experience.getCell("Service");
 		if (cell)
@@ -1536,7 +1535,8 @@ var PathLines = (function() {
 	{
 		var containerBounds = this.containerDiv.getBoundingClientRect();
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
-		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
+		//var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
+		var svgHeight = containerBounds.height;
 		
 		if (this.detailFlagData != null)
 		{
