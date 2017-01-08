@@ -355,7 +355,7 @@ var Experience = (function() {
 		this.appendTags(tagsDiv);
 	}
 	
-	Experience.prototype.add = function(done)
+	Experience.prototype.add = function()
 	{
 		var _this = this;
 	
@@ -430,7 +430,7 @@ var Experience = (function() {
 			
 			bootstrap_alert.show($('.alert-container'), "Saving Experience...", "alert-info");
 			
-			cr.updateValues(updateData, sourceObjects)
+			return cr.updateValues(updateData, sourceObjects)
 				.then(function()
 					{
 						var offering = _this.instance.getValue("Offering");
@@ -438,8 +438,7 @@ var Experience = (function() {
 							return offering.promiseCellsFromCache();
 						else
 							return undefined;
-					})
-				.then(done, cr.syncFail);
+					});
 		}
 		else
 		{
@@ -451,7 +450,7 @@ var Experience = (function() {
 
 			this.appendData(initialData);
 		
-			cr.createInstance(field, this.path.getInstanceID(), initialData)
+			return cr.createInstance(field, this.path.getInstanceID(), initialData)
 			 .then(function(newData)
 					{
 						var r = $.Deferred();
@@ -466,13 +465,11 @@ var Experience = (function() {
 									r.reject(err);
 								})
 						return r;
-					}, 
-				   cr.syncFail)
+					})
 			 .then(function(newData)
 			 		{
 			 			_this.path.getCell("More Experience").addValue(newData);
-			 		})
-			 .then(done, cr.syncFail);
+			 		});
 		}
 	}
 	
@@ -2853,7 +2850,8 @@ var NewExperiencePanel = (function () {
 							if (experience.startDate && experience.endDate)
 							{
 								experience.timeframe = undefined;
-								experience.add(hidePanel);
+								experience.add()
+									.then(hidePanel, cr.syncFail);
 							}
 							else
 							{
@@ -2873,7 +2871,8 @@ var NewExperiencePanel = (function () {
 												return d.getDescription() == timeframeName;
 											});
 
-										experience.add(hidePanel);
+										experience.add()
+											.then(hidePanel, cr.syncFail);
 								     },
 								     function(err)
 								     {
