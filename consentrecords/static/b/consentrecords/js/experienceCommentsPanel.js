@@ -334,6 +334,7 @@ var ExperienceCommentsPanel = (function() {
 			eventObject.data.loadComments([newData]);
 		}
 		
+		/* commentsCells is an array of cells contained within a Comments instance. */
 		function onCommentsChecked(commentsCells)
 		{
 			var commentCell = commentsCells.find(function(cell)
@@ -351,15 +352,14 @@ var ExperienceCommentsPanel = (function() {
 		function onNewCommentsSaved(eventObject, changeTarget)
 		{
 			if (changeTarget.getTypeName() == "Comments")
-				changeTarget.promiseCellsFromCache(["Comment"])
-					.then(onCommentsChecked, cr.asyncFail)
+				changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
+					.then(function()
+						{
+							onCommentsChecked(comments.getCells());
+						}, cr.asyncFail)
 		}
 		
-		comments.on('dataChanged.cr', this, onNewCommentsSaved);
-		$(commentsDiv.node()).on('remove', null, comments.cell, function(eventObject)
-			{
-				eventObject.data.off('dataChanged.cr', onNewCommentsSaved);
-			});
+		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), onNewCommentsSaved);
 		
 		if (fd.experience.canWrite())
 		{
@@ -463,12 +463,12 @@ var ExperienceCommentsPanel = (function() {
 				comments are loaded. This won't happen if the comments are already loaded.
 			 */
 			this.promise = comments.promiseCellsFromCache(["Comment/Comment Request"])
-				.then(function(comments)
+				.then(function(commentsCells)
 					{
 						var r = $.Deferred();
 						setTimeout(function()
 							{
-								onCommentsChecked(comments);
+								onCommentsChecked(commentsCells);
 								r.resolve();
 							});
 						return r;
@@ -476,22 +476,6 @@ var ExperienceCommentsPanel = (function() {
 		}
 		else
 		{
-			var commentsAdded = function(eventObject, newValue)
-				{
-					/* Have to promiseCells here in case the comments have just been added
-						due to a post operation. */
-					newValue.promiseCellsFromCache(["Comment/Comment Request"])
-						.then(function()
-							{
-								onCommentsChecked(newValue.getCells());
-							},
-							cr.asyncFail);
-				}
-			fd.experience.getCell('Comments').one('valueAdded.cr', this, commentsAdded);
-			$(panel2Div.node()).on('remove', function()
-				{
-					fd.experience.getCell('Comments').off('valueAdded.cr', commentsAdded);
-				});
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
