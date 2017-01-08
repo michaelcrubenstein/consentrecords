@@ -2097,6 +2097,7 @@ var ShareOptions = (function () {
 			.classed("site-active-text", true)
 			.on("click", function()
 				{
+					/* Test case: Email Pathway Link. */
 					if (prepareClick('click', "Email Pathway Link"))
 					{
 						$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2184,6 +2185,9 @@ var AddOptions = (function () {
 				.classed('site-active-text', true)
 				.on('click', function()
 					{
+						/* Test case: Add Experience You Have Done. */
+						/* Test case: Add Experience You Are Doing. */
+						/* Test case: Add Experience Goal. */
 						if (prepareClick('click', name))
 						{
 							try
