@@ -1066,7 +1066,7 @@ cr.Instance = (function() {
 		{
 			if (_this.getCells().find(function(cell)
 				{
-					if (fields.indexOf(cell.field.name) < 0)
+					if (!fields || fields.indexOf(cell.field.name) < 0)
 						return false;
 					if (cell.data.find(function(d)
 						{
