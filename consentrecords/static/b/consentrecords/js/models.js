@@ -1201,6 +1201,7 @@ cr.Instance = (function() {
 cr.ObjectValue = (function() {
 	ObjectValue.prototype = new cr.Value();
 	ObjectValue.prototype._instance = null;
+	ObjectValue.prototype._instanceDataChanged = null;
 	
 	ObjectValue.prototype.instance = function(instance)
 	{
@@ -1209,6 +1210,12 @@ cr.ObjectValue = (function() {
 		else
 		{
 			this._instance = instance;
+			var _this = this;
+			this._instanceDataChanged = function(eventObject, newValue)
+			{
+				$(_this).trigger("dataChanged.cr", newValue == this ? _this : newValue);
+			}
+			this._instance.on("dataChanged.cr", this, this._instanceDataChanged);
 			return this;
 		}
 	}
@@ -1273,24 +1280,6 @@ cr.ObjectValue = (function() {
 		return this;
 	}
 	
-	ObjectValue.prototype.on = function(events, data, handler)
-	{
-		cr.Value.prototype.on.call(this, events, data, handler);
-		this._instance.on(events, data, handler);
-	}
-	
-	ObjectValue.prototype.one = function(events, data, handler)
-	{
-		cr.Value.prototype.one.call(this, events, data, handler);
-		this._instance.one(events, data, handler);
-	}
-	
-	ObjectValue.prototype.off = function(events, handler)
-	{
-		cr.Value.prototype.off.call(this, events, handler);
-		this._instance.off(events, data, handler);
-	}
-		
 	ObjectValue.prototype.appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 	{
 		var newInstanceID = (newValue ? newValue.getInstanceID() : null);
@@ -1372,7 +1361,13 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.clearValue = function()
 	{
-		this._instance.clearValue();
+		if (this._instance)
+		{
+			this._instance.off("dataChanged.cr", this._instanceDataChanged);
+			this._instanceDataChanged = null;
+			this._instance = null;
+		}
+		this.instance(new cr.Instance());
 	}
 	
 	ObjectValue.prototype.calculateDescription = function()
