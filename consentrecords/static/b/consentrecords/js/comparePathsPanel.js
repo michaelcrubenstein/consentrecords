@@ -174,41 +174,6 @@ var ComparePath = (function() {
 		this.checkLayout();
 	};
 
-	ComparePath.prototype.handleExperienceDateChanged = function(eventObject)
-	{
-		var _this = eventObject.data;
-		var g = _this.experienceGroup.selectAll('g.flag');
-		_this.transitionPositions(g);
-	}
-	
-	ComparePath.prototype.setFlagText = function(node)
-	{
-		var g = d3.select(node);
-		g.selectAll('text').selectAll('tspan:nth-child(1)')
-			.text(function(d) { return d.getDescription(); })
-	}
-		
-	/* Sets up each group (this) that displays an experience to delete itself if
-		the experience is deleted.
-	 */
-	ComparePath.prototype.setupDelete = function(fd, node) 
-	{
-		var _this = this;
-		var valueDeleted = function(eventObject)
-		{
-			$(eventObject.data).remove();
-			_this.handleValueDeleted(this);
-		};
-		
-		var dataChanged = function(eventObject)
-		{
-			_this.setFlagText(eventObject.data);
-		}
-		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, dataChanged);
-		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
-	}
-	
 	ComparePath.prototype.getColumn = function(fd)
 	{
 		if (fd.experience.cell.parent == this.rightPath)
@@ -369,25 +334,40 @@ var ComparePath = (function() {
 		this.layoutYears(g);
 	}
 	
-	ComparePath.prototype.appendExperiences = function(compareFlags)
+	ComparePath.prototype.appendExperiences = function(experience)
 	{
 		var _this = this;
 
-		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var offsetX;
 		var offsetY;
 		var ghostGroup;
 		var didDrag;
-		var g = this.experienceGroup.selectAll('g')
-			.data(compareFlags)
-			.enter()
-			.append('g')
-			.classed('flag', true)
-			.attr('draggable', 'true')
-			.each(function(d)
-				{
-					_this.setupDelete(d, this);
-				})
+		var g;
+		
+		function getCompareFlag(experience)
+			{
+				if (experience.cell.parent == _this.leftFlag)
+					return new CompareFlag(experience, _this.leftAgeCalculator);
+				else
+					return new CompareFlag(experience, _this.rightAgeCalculator);
+			}
+		if (experience)
+		{
+			g = this.experienceGroup.append('g')
+				.datum(getCompareFlag(experience));
+		}
+		else
+		{
+			g = this.experienceGroup.selectAll('g')
+				.data(this.allExperiences.map(function(e) { 
+					return getCompareFlag(e); }))
+				.enter()
+				.append('g');
+		}
+		
+		this.setupFlags(g);
+
+		g.attr('draggable', 'true')
 			.call(
 				d3.behavior.drag()
 					.on("dragstart", function(){
@@ -414,24 +394,7 @@ var ComparePath = (function() {
 						if (!didDrag)
 							showDetail(fd, i);
 					})
-				)
-			.on("click", function() 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					if (!d3.event.defaultPrevented)
-						_this.updateDetail(fd);
-				})
-			.each(function(d) 
-					{ 
-						_this.setupServiceTriggers(this, d, function(eventObject)
-							{
-								d.column = _this.getColumn(d);
-								_this.transitionPositions(g);
-							});
-					});
+				);
 		
 		function showDetail(fd, i)
 		{
@@ -442,29 +405,7 @@ var ComparePath = (function() {
 				});
 		}
 		
-		g.append('line').classed('flag-pole', true)
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		g.append('rect').classed('opaque', true)
-			.attr('x', '1.5');
-		g.append('rect').classed('bg', true)
-			.attr('x', '1.5')
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', this.textDetailLeftMargin);
-		text.append('tspan')
-			.attr('dy', '1.1em');
-		
-		g.each(function() { _this.setFlagText(this); });
+		return g;
 	}
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
@@ -492,11 +433,11 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
-		var leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
-		var rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+		this.leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
+		this.rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
 		
-		this.columnData[0].name = this.getPathDescription(this.leftPath, leftAgeCalculator);
-		this.columnData[1].name = this.getPathDescription(this.rightPath, rightAgeCalculator);
+		this.columnData[0].name = this.getPathDescription(this.leftPath, this.leftAgeCalculator);
+		this.columnData[1].name = this.getPathDescription(this.rightPath, this.rightAgeCalculator);
 		
 		var guides = this.guideGroup.selectAll('g')
 			.data(this.columnData)
@@ -550,12 +491,6 @@ var ComparePath = (function() {
 				_this.checkOfferingCells(experience, null);
 			});
 			
-		var compareFlags = leftCell.data.map(function(e) { 
-				return new CompareFlag(e, leftAgeCalculator); 
-				}).concat(rightCell.data.map(function(e) {
-				return new CompareFlag(e, rightAgeCalculator);
-				}));
-	
 		var resizeFunction = function()
 		{
 			/* Wrap handleResize in a setTimeout call so that it happens after all of the
@@ -565,7 +500,7 @@ var ComparePath = (function() {
 				{
 					if (firstTime)
 					{
-						_this.appendExperiences(compareFlags);
+						_this.appendExperiences();
 						firstTime = false;
 					}
 					_this.handleResize();
