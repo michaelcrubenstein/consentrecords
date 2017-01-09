@@ -708,47 +708,47 @@ var PathView = (function() {
 		var serviceCells = [experience.getCell("Service"),
 		 experience.getCell("User Entered Service")];
 		 
-		allCells.forEach(function(d)
+		allCells.forEach(function(cell)
 		 {
-			/* d will be null if the experience came from the organization for the 
+			/* cell will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
 			 */
-			if (d)
+			if (cell)
 			{
-				d.on("valueAdded.cr valueDeleted.cr dataChanged.cr", _this, handleChangeDetailGroup);
+				cell.on("valueAdded.cr valueDeleted.cr dataChanged.cr", _this, handleChangeDetailGroup);
 			}
 		 });
-		serviceCells.forEach(function(d)
+		serviceCells.forEach(function(cell)
 		 {
-			/* d will be null if the experience came from the organization for the 
+			/* cell will be null if the experience came from the organization for the 
 				User Entered Organization and User Entered Site.
 			 */
-			if (d)
+			if (cell)
 			{
-				d.on("valueDeleted.cr", _this, handleChangeDetailGroup);
+				cell.on("valueDeleted.cr", _this, handleChangeDetailGroup);
 			}
 		 });
 		 
 		 $(this).one("clearTriggers.cr", function(eventObject)
 		 {
-			allCells.forEach(function(d)
+			allCells.forEach(function(cell)
 			 {
-				/* d will be null if the experience came from the organization for the 
+				/* cell will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
 				 */
-			 	if (d)
+			 	if (cell)
 			 	{
-					d.off("valueAdded.cr valueDeleted.cr dataChanged.cr", handleChangeDetailGroup);
+					cell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", handleChangeDetailGroup);
 				}
 			 });
-			serviceCells.forEach(function(d)
+			serviceCells.forEach(function(cell)
 			 {
-				/* d will be null if the experience came from the organization for the 
+				/* cell will be null if the experience came from the organization for the 
 					User Entered Organization and User Entered Site.
 				 */
-				if (d)
+				if (cell)
 				{
-					d.off("valueDeleted.cr", handleChangeDetailGroup);
+					cell.off("valueDeleted.cr", handleChangeDetailGroup);
 				}
 			 });
 		 });
