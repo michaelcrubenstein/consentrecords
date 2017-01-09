@@ -159,18 +159,18 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
+		groupPath = '#'+organization.getInstanceID() + '>"Inquiry Access Group"';
 		cr.selectAll({path: groupPath})
 			.done(function(groupPaths)
 				{
 					var initialData = [{
-							container: '#{0}>Inquiries'.format(session.getValueID()),
+							container: '#{0}>Inquiries'.format(session.getInstanceID()),
 							field: '_user',
-							instanceID: user.getValueID(),
+							instanceID: user.getInstanceID(),
 							description: getUserDescription(user)
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
-					$(sourceObjects[0]).on('dataChanged.cr', null, user, function(eventObject)
+					sourceObjects[0].on('dataChanged.cr', user, function(eventObject)
 						{
 							var newInquiryID = this.id;
 							function done()
@@ -197,7 +197,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var tryAddInquiry = function(user)
 	{
-		if (user.getValueID())
+		if (user.getInstanceID())
 		{
 			addInquiry(user);
 			unblockClick();
@@ -208,9 +208,9 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: '#'+session.getValueID()+">Inquiries",
+				cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
 					field: "_user",
-					value: this.getValueID(),
+					value: this.getInstanceID(),
 					done: function(valueIDs)
 					{
 						if (valueIDs.length > 0)
@@ -228,11 +228,10 @@ function showSessionDetails(user, session, service, previousPanelNode)
 					},
 					fail: asyncFailFunction});
 			};
-			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
-			
+			cr.signedinUser.on("signin.cr", panel, onSignin);
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
-				$(eventObject.data).off("signin.cr", null, onSignin);
+				eventObject.data.off("signin.cr", onSignin);
 			});
 			
 			showFixedPanel(panel, "#id_sign_in_panel");
@@ -271,15 +270,15 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		d3.event.preventDefault();
 	};
 	
-	if (user.getValueID())
+	if (user.getInstanceID())
 	{
 		function done(values)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: '#'+session.getValueID()+">Inquiries",
+		cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
 			field: "_user",
-			value: user.getValueID(),
+			value: user.getInstanceID(),
 			done: done,
 			fail: asyncFailFunction});
 	}
@@ -314,7 +313,7 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.instanceID);
+		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.getInstanceID());
 		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
 		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)
@@ -407,7 +406,7 @@ var FindExperienceSearchView = (function () {
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
-		if (prepareClick('click', 'pick ' + d.typeName + ': ' + d.getDescription()))
+		if (prepareClick('click', 'pick ' + d.getTypeName() + ': ' + d.getDescription()))
 		{
 			showClickFeedback(button);
 			

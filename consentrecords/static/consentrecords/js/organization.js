@@ -8,7 +8,7 @@
 function appendAddress(address)
 {
 	var div = d3.select(this);
-	if (address && address.getValueID())
+	if (address && address.getInstanceID())
 	{
 		address.promiseCellsFromCache()
 			.then(function()
@@ -162,9 +162,9 @@ function getUserName(user)
 
 function getPathDescription(path)
 {
-	return (path.cell && path.cell.parent && getUserName(path.cell.parent)) ||
+	return (path.parent() && getUserName(path.parent())) ||
 			path.getDatum("_name") ||
-		   (path.cell && path.cell.parent && path.cell.parent.getDescription()) ||
+		   (path.parent() && path.parent().getDescription()) ||
 		   null;
 }
 
@@ -349,7 +349,7 @@ function showWebSite(offering, successFunction)
 function getPickedOrCreatedValue(i, pickedName, createdName)
 {
 	var v = i.getValue(pickedName);
-	if (v && v.getValueID())
+	if (v && v.getInstanceID())
 		return v.getDescription();
 	else {
 		v = i.getValue(createdName);
@@ -365,9 +365,9 @@ function getTagList(experience)
 	var names = [];
 	
 	var offering = experience.getValue("Offering");
-	if (offering && offering.getValueID())
+	if (offering && offering.getInstanceID())
 	{
-		if (!offering.isDataLoaded)
+		if (!offering.areCellsLoaded())
 			throw ("Runtime error: offering data is not loaded");
 			
 		names = offering.getCell("Service").data
@@ -432,19 +432,19 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 {
 	var privilegePath = "_term[_name=_privilege]>enumerator";
 	var p1 = crp.promise({path: privilegePath});
-	var p2 = cr.getData({path: "#" + source.getValueID() + '>"_access record"'});
+	var p2 = cr.getData({path: "#" + source.getInstanceID() + '>"_access record"'});
 	$.when(p1, p2)
 	 .then(function(enumerators, accessRecords)
 		{
 			var priv = getNamedInstance(enumerators, privilege);
-			var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getValueID(); });
+			var validPrivs = getValidPrivileges(enumerators, priv).map(function(d) { return d.getInstanceID(); });
 
 			var a = accessRecords.filter(
 				function(ar) {
 					var privCell = ar.getCell("_privilege");
 					return privCell.data.some(
 						function(d) { 
-							return validPrivs.indexOf(d.getValueID()) >= 0; 
+							return validPrivs.indexOf(d.getInstanceID()) >= 0; 
 						});
 				});
 			var b = a.filter(
@@ -452,7 +452,7 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 					var groupCell = ar.getCell(cellName);
 					function hasTargetValueID(d)
 					{
-						return d.getValueID() === target.getValueID();
+						return d.getInstanceID() === target.getInstanceID();
 					}
 					return groupCell.data.some(hasTargetValueID);
 				});
@@ -464,7 +464,7 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 					function(ar) {
 						var storedPrivilegeValue = ar.getValue("_privilege");
 						return storedPrivilegeValue &&
-							   storedPrivilegeValue.getValueID() === priv.getValueID();
+							   storedPrivilegeValue.getInstanceID() === priv.getInstanceID();
 					});
 					
 				var promise;
@@ -481,9 +481,9 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 					/* Test case: Sign up for a session (using the /find/ URL) when the 
 						user shares read access with no users or groups. */
 					var field = source.getCell("_access record").field;
-					var initialData = {"_privilege": [{instanceID: priv.getValueID()}] };
-					initialData[cellName] = [{instanceID: target.getValueID()}];
-					promise = cr.createInstance(field, source.getValueID(), initialData);
+					var initialData = {"_privilege": [{instanceID: priv.getInstanceID()}] };
+					initialData[cellName] = [{instanceID: target.getInstanceID()}];
+					promise = cr.createInstance(field, source.getInstanceID(), initialData);
 				}
 				promise.then(done, fail);
 			}
