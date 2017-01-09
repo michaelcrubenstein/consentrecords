@@ -1510,7 +1510,6 @@ cr.createSignedinUser = function(instanceID, description)
 	cr.signedinUser.promiseCellsFromCache(["_system access"])
 		.then(function()
 			{
-				cr.signedinUser = crp.pushInstance(cr.signedinUser);
 				$(cr.signedinUser).trigger("signin.cr");
 			}, 
 			cr.asyncFail);
