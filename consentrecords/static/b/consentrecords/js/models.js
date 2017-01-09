@@ -1501,7 +1501,7 @@ cr.ObjectValue = (function() {
 	return ObjectValue;
 })();
 
-cr.signedinUser = new cr.Instance();
+cr.signedinUser = new cr.ObjectValue();
 
 cr.createSignedinUser = function(instanceID, description)
 {
