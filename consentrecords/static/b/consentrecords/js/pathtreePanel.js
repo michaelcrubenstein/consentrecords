@@ -473,15 +473,8 @@ var PathView = (function() {
 					handler(eventObject, v);
 			}
 			
-			if (serviceCell)
-				setupOnViewEventHandler(serviceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-			if (userServiceCell)
-				setupOnViewEventHandler(userServiceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-			$(r).one("clearTriggers.cr remove", function()
-				{
-					serviceCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
-					userServiceCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
-				});
+			setupOnViewEventHandler(serviceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
+			setupOnViewEventHandler(userServiceCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		}
 	
 	/* Sets up a trigger when a service changes, or a non-empty service is added or deleted.
@@ -643,12 +636,8 @@ var PathView = (function() {
 			
 			var commentsCell = fd.experience.getCell("Comments");
 			setCommentsText();
-			commentsCell.on("dataChanged.cr valueAdded.cr valueDeleted.cr", commentLabel,
+			setupOnViewEventHandler(commentsCell, "dataChanged.cr valueAdded.cr valueDeleted.cr", commentLabel.node(),
 				setCommentsText);
-			$(commentLabel.node()).on("remove", null, commentsCell, function(eventObject)
-				{
-					eventObject.data.off("dataChanged.cr valueAdded.cr valueDeleted.cr", setCommentsText);
-				});
 			
 			var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
 			commentLabel
@@ -932,18 +921,17 @@ var PathView = (function() {
 				});
 		}
 	
-		experience.on("dataChanged.cr", this, handleDataChanged);
-		experience.getCell("Start").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
-		experience.getCell("End").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
-		experience.getCell("Timeframe").on("valueAdded.cr valueDeleted.cr dataChanged.cr", this, this.handleExperienceDateChanged);
-		
-		$(this.sitePanel.node()).on("remove", null, experience, function(eventObject)
+		var handleExperienceDateChanged = function(eventObject)
 		{
-			eventObject.data.off("dataChanged.cr", handleDataChanged);
-			eventObject.data.getCell("Start").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
-			eventObject.data.getCell("End").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
-			eventObject.data.getCell("Timeframe").off("valueAdded.cr valueDeleted.cr dataChanged.cr", this.handleExperienceDateChanged);
-		});
+			var g = _this.experienceGroup.selectAll('g.flag');
+			_this.transitionPositions(g);
+		}
+	
+		var node = this.sitePanel.node();
+		setupOnViewEventHandler(experience, "dataChanged.cr", node, handleDataChanged);
+		setupOnViewEventHandler(experience.getCell("Start"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience.getCell("End"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
+		setupOnViewEventHandler(experience.getCell("Timeframe"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
 	}
 	
 	PathView.prototype.addMoreExperience = function(experience)
@@ -1284,13 +1272,6 @@ var PathLines = (function() {
 			f();
 	};
 
-	PathLines.prototype.handleExperienceDateChanged = function(eventObject)
-	{
-		var _this = eventObject.data;
-		var g = _this.experienceGroup.selectAll('g.flag');
-		_this.transitionPositions(g);
-	}
-	
 	PathLines.prototype.setFlagText = function(node)
 	{
 		var g = d3.select(node);
