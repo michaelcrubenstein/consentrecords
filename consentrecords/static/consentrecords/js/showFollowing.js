@@ -120,13 +120,13 @@ var FollowingPanel = (function() {
 				if (prepareClick('click', 'delete access request'))
 				{
 					var path;
-					if (d.getValueID)
-						path = '#{0}'.format(d.getValueID())
+					if (d.getInstanceID)
+						path = '#{0}'.format(d.getInstanceID())
 					else
 						path = '_user[_email={0}]'.format(d.getDescription())
 					cr.getValues({path: path,
 						field: "_access request",
-						value: _this.user.getValueID(),
+						value: _this.user.getInstanceID(),
 						done: function(values)
 						{
 							if (values.length > 0)
@@ -183,7 +183,8 @@ var FollowingPanel = (function() {
 					.on("click", function(user) {
 						if (prepareClick('click', 'compare to: ' + user.getDescription()))
 						{
-							user.checkCells([], function()
+							user.promiseCells([])
+								.then(function()
 								{
 									try
 									{
@@ -297,7 +298,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
-		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getValueID());
+		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getInstanceID());
 		this._pendingChunker.fields = [];
 		
 		this.appendActionButton("Ask To Follow", function()
@@ -324,7 +325,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user)'.format(this.user.getValueID());
+		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user)'.format(this.user.getInstanceID());
 		this._followingChunker.fields = [];
 		
 		$(this.node()).one("revealing.cr", function()

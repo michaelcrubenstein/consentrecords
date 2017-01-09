@@ -237,22 +237,22 @@
 			$(eventObject.data).text(s);
 		}
 		
-		$(cr.signedinUser).on("dataChanged.cr", null, usernameLabel[0], setName);
-		$(cr.signedinUser).on("signin.cr", null, usernameLabel[0], function(eventObject)
+		cr.signedinUser.on("dataChanged.cr", usernameLabel[0], setName);
+		cr.signedinUser.on("signin.cr", usernameLabel[0], function(eventObject)
 		{
 			userFirstName = this.getValue("_first name");
 			userLastName = this.getValue("_last name");
-			$(userFirstName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
-			$(userLastName).on("valueDeleted.cr dataChanged.cr", null, eventObject.data, setName);
+			userFirstName.on("valueDeleted.cr dataChanged.cr", eventObject.data, setName);
+			userLastName.on("valueDeleted.cr dataChanged.cr", eventObject.data, setName);
 			setName.call(this, eventObject);
 		});
 		
-		$(cr.signedinUser).on("signout.cr", null, usernameLabel[0], function(eventObject)
+		cr.signedinUser.on("signout.cr", usernameLabel[0], function(eventObject)
 		{
 			if (userFirstName)
 			{
-				$(userFirstName).off("valueDeleted.cr dataChanged.cr", null, setName);
-				$(userLastName).off("valueDeleted.cr dataChanged.cr", null, setName);
+				userFirstName.off("valueDeleted.cr dataChanged.cr", setName);
+				userLastName.off("valueDeleted.cr dataChanged.cr", setName);
 				userFirstName = null;
 				userLastName = null;
 			}
@@ -261,11 +261,11 @@
 		
 		/* Update the text of the signin button when a user signs in or out. */
 		var signinSpan = $("#sign-in-span")
-		$(cr.signedinUser).on("signin.cr", null, signinSpan[0], function(eventObject)
+		cr.signedinUser.on("signin.cr", signinSpan[0], function(eventObject)
 		{
 			$(eventObject.data).text("Sign Out");
 		});
-		$(cr.signedinUser).on("signout.cr", null, signinSpan[0], function(eventObject)
+		cr.signedinUser.on("signout.cr", signinSpan[0], function(eventObject)
 		{
 			$(eventObject.data).text("Sign In");
 		});
@@ -273,11 +273,11 @@
 		/* Update the list of organizations associated with the user when a user signs in or out. */
 		var orgSection = $(".organization-section");
 		
-		$(cr.signedinUser).on("signin.cr", 0, orgSection[0], function(eventObject)
+		cr.signedinUser.on("signin.cr", orgSection[0], function(eventObject)
 		{
 			load_organizations.call(eventObject.data);
 		});
-		$(cr.signedinUser).on("signout.cr", 0, orgSection[0], function(eventObject)
+		cr.signedinUser.on("signout.cr", orgSection[0], function(eventObject)
 		{
 			hide_organizations.call(eventObject.data);
 		});
@@ -285,7 +285,7 @@
 		/* Initialize all of the objects that are dependent on whether or not the user is
 			signed in.
 		 */
-		if (!cr.signedinUser.getValueID())
+		if (!cr.signedinUser.getInstanceID())
 		{
 			$(cr.signedinUser).trigger("signout.cr");
 		}
@@ -297,7 +297,7 @@
 		$(".sign-in-button").click(function(e) {
 			if (prepareClick('click',  'Sign In/Out button'))
 			{
-				if (cr.signedinUser.getValueID())
+				if (cr.signedinUser.getInstanceID())
 				{
 					sign_out(function()
 						{
@@ -325,24 +325,24 @@
 			if (prepareClick('click', message))
 			{
 				showClickFeedback(this);
-				if (cr.signedinUser.getValueID())
+				if (cr.signedinUser.getInstanceID())
 					done();
 				else
 				{
 					var onSignin = function(eventObject)
 					{
-						$(this).off("signinCanceled.cr", null, onSigninCanceled);
+						this.off("signinCanceled.cr", onSigninCanceled);
 						if (prepareClick('onSignin'))
 							done();
 					};
 					
 					var onSigninCanceled = function(eventObject)
 					{
-						$(this).off("signin.cr", null, onSignin);
+						this.off("signin.cr", onSignin);
 					}
 					
-					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
+					cr.signedinUser.one("signin.cr", null, onSignin);
+					cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
 					
 					var panel = new SigninPanel();
 					panel.showLeft().then(function()
@@ -407,11 +407,11 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.cells[0].data[0].getDescription();
+						return d.getCells()[0].data[0].getDescription();
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			var path = "#" + cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -548,7 +548,7 @@
 				});
 			}
 			
-			var path = '#'+cr.signedinUser.getValueID()+'::reference(_group)::reference(Organization)';
+			var path = '#'+cr.signedinUser.getInstanceID()+'::reference(_group)::reference(Organization)';
 			cr.selectAll({path: path})
 				.then(successFunction, cr.asyncFail);
 		}
@@ -587,10 +587,10 @@
 				{
 					d3.select(eventObject.data).text(getViewPanelheader(this));
 				}
-				$(objectData).on("dataChanged.cr", null, headerDiv.node(), updatePanelHeader);
+				objectData.on("dataChanged.cr", headerDiv.node(), updatePanelHeader);
 				$(headerDiv.node()).on("remove", null, objectData, function(eventObject)
 				{
-					$(eventObject.data).off("dataChanged.cr", null, updatePanelHeader);
+					eventObject.data.off("dataChanged.cr", updatePanelHeader);
 				});
 
 				sitePanel.showLeft().then(unblockClick);
@@ -668,7 +668,7 @@
 					});
 			}
 	
-			objectData.checkCells(undefined, successFunction, asyncFailFunction)
+			objectData.promiseCells().then(successFunction, cr.asyncFail)
 		}
 		
 		function compareUsers(a, b)
@@ -749,13 +749,13 @@
 		 */
 		function pick_session(offering, previousPanelNode, successFunction)
 		{
-			offering.checkCells(undefined, function()
+			offering.promiseCells().then(function()
 				{
 					var sessions = offering.getValue("Sessions");
 					if (!sessions)
 						syncFailFunction("the sessions are not set up");
 					else
-						sessions.checkCells(undefined, function()
+						sessions.promiseCells().then(function()
 							{
 								var sessionCell = sessions.getCell("Session");
 								pickChild(offering, sessionCell.data, previousPanelNode, "Pick Session", successFunction);
@@ -773,13 +773,13 @@
 		 */
 		function pick_offering(site, previousPanelNode, successFunction)
 		{
-			site.checkCells(undefined, function()
+			site.promiseCells().then(function()
 				{
 					var offerings = site.getValue("Offerings");
 					if (!offerings)
 						syncFailFunction("the offerings are not set up");
 					else
-						offerings.checkCells(undefined, function()
+						offerings.promiseCells().then(function()
 							{
 								var offeringCell = offerings.getCell("Offering");
 								pickChild(site, offeringCell.data, previousPanelNode, "Pick Offering", successFunction);
@@ -794,13 +794,13 @@
 		 */
 		function pick_site(organization, previousPanelNode, successFunction)
 		{
-			organization.checkCells(undefined, function()
+			organization.promiseCells().then(function()
 				{
 					var sites = organization.getValue("Sites");
 					if (!sites || !sites.id)
 						syncFailFunction("the sites are not set up");
 					else
-						sites.checkCells(undefined, function()
+						sites.promiseCells().then(function()
 							{
 								var siteCell = sites.getCell("Site");
 								pickChild(organization, siteCell.data, previousPanelNode, "Pick Site", successFunction);
@@ -822,7 +822,7 @@
 					else
 					{
 						var inquiriesInstance = inquiriesInstances[0];
-						inquiriesInstance.checkCells(undefined, function()
+						inquiriesInstance.promiseCells().then(function()
 							{
 								inquiryCell = inquiriesInstance.getCell("_user");
 						
@@ -897,7 +897,7 @@
 						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
-			inquiry.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+			inquiry.promiseCells().then(checkSuccessFunction, syncFailFunction);
 		}
 		
 		function addExperienceByEnrollment(session, enrollment, previousPanelNode)
@@ -949,7 +949,7 @@
 					var pickSessionSuccess = function(session, sessionPanelDiv)
 					{
 						var checkCellsSuccess = getAddEnrollmentFunction(session, pickedUser, unblockClick);
-						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+						session.promiseCells().then(checkCellsSuccess, syncFailFunction);
 					};
 					
 					var pickOfferingSuccess = function(offering, offeringPanelDiv)
@@ -1017,7 +1017,7 @@
 							check_single_field_instance(enrollmentsInstance, 
 								["Enrollment"],
 								"_user",
-								user.getValueID(), 
+								user.getInstanceID(), 
 								function(newData)
 								{
 									syncFailFunction(user.getDescription() + 
@@ -1027,8 +1027,8 @@
 								function()
 								{
 									/* Test case: Enroll a user into a session from org page. */
-									var initialData = {"_user": [{instanceID: user.getValueID()}] };
-									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getValueID(),
+									var initialData = {"_user": [{instanceID: user.getInstanceID()}] };
+									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getInstanceID(),
 													  initialData))
 									 .then(function(newData)
 										   {
@@ -1061,7 +1061,8 @@
 						}
 					}
 				}
-				session.checkCells(["parents"], checkCellsSuccessFunction, syncFailFunction);
+				session.promiseCells(["parents"])
+					.then(checkCellsSuccessFunction, syncFailFunction);
 			}
 		}
 		
@@ -1080,7 +1081,7 @@
 					experiences.checkConfiguration(
 						function(cells)
 						{
-							experiences.cells = cells;
+							experiences.setCells(cells);
 							var experienceCell = experiences.getCell("Experience");
 							cr.getConfiguration(null, experienceCell.field.ofKindID)
 								.then(function(cells)
@@ -1089,11 +1090,11 @@
 									check_single_field_instance(experiences, 
 										["Experience"],
 										"_user",
-										user.getValueID(), 
+										user.getInstanceID(), 
 										function(data)
 										{
 											var experience = data[0];
-											if (!experience.getValueID())
+											if (!experience.getInstanceID())
 												throw "experience value ID not specified"
 											experienceCell.pushValue(experience);
 											showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
@@ -1103,16 +1104,11 @@
 											var experience = experienceCell.addNewValue();
 											experience.checkConfiguration(
 												function(cells) {
-													experience.cells = cells;
+													experience.setCells(cells);
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("_user");
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
-													
-													/* Mark the experience as having its data loaded so that checking
-														its cells doesn't replace them.
-													 */
-													experience.isDataLoaded = true;
 													
 													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
@@ -1129,7 +1125,7 @@
 		
 		function check_single_field_instance(container, childFields, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
 		{
-			var path = "#"+container.getValueID();
+			var path = "#"+container.getInstanceID();
 			for (i = 0; i < childFields.length; ++i)
 			{
 				path += ">" + childFields[i];
@@ -1244,9 +1240,9 @@
 																	
 																	var newValue = inquiryCell.addNewValue();
 																	cr.updateValues([{
-																			containerUUID: inquiriesInstance.getValueID(),
+																			containerUUID: inquiriesInstance.getInstanceID(),
 																			fieldID: inquiryCell.field.nameID, 
-						   													instanceID: pickedUser.getValueID(),
+						   													instanceID: pickedUser.getInstanceID(),
 						   													description: pickedUser.getDescription()
 																		}], [newValue])
 																		.then(function()
@@ -1266,7 +1262,7 @@
 																cr.syncFail);
 														}
 													}
-													session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+													session.promiseCells().then(checkCellsSuccess, syncFailFunction);
 												}
 												d3.event.preventDefault();
 											});
@@ -1304,12 +1300,14 @@
 				{
 					function pickSessionSuccess(session, previousPanel)
 					{
-						/* Since d.getValueID() is not null, containerUUID is not needed. */
-						var checkCellsSuccess = function()
-						{
-							sessionSuccess(session, previousPanel);
-						}
-						session.checkCells(undefined, checkCellsSuccess, syncFailFunction);
+						/* Since d.getInstanceID() is not null, containerUUID is not needed. */
+						var checkCellsSuccess = 
+						session.promiseCells()
+							.then(function()
+								{
+									sessionSuccess(session, previousPanel);
+								}, 
+								cr.syncFail);
 					}
 					pick_session(offering, pickOfferingPanel, pickSessionSuccess);
 				}
@@ -1365,7 +1363,8 @@
 					else
 					{
 						var instance = listInstances[0];
-						instance.checkCells(["Enrollment"], function()
+						instance.promiseCells(["Enrollment"])
+							.then(function()
 							{
 								var enrollments = instance.getCell("Enrollment").data;
 								
@@ -1391,8 +1390,8 @@
 									{
 										if (prepareClick('click', 'add Experience by enrollment'))
 										{
-											enrollment.checkCells(undefined, 
-												function()
+											enrollment.promiseCells()
+												.then(function()
 												{
 													addExperienceByEnrollment(session, enrollment, sitePanel.node());
 												}, 
@@ -1434,7 +1433,7 @@
 					successFunction(user);
 				}
 			}
-			enrollment.checkCells(undefined, checkSuccessFunction, syncFailFunction);
+			enrollment.promiseCells().then(checkSuccessFunction, syncFailFunction);
 		}
 		
 		function manage_participation(organization, previousPanelNode)

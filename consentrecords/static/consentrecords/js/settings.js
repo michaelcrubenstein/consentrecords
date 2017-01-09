@@ -62,16 +62,19 @@ var Settings = (function () {
 		user.getCell("_last name").field.label = this.lastNameLabel;
 		path.getCell("_name").field.label = this.screenNameLabel;
 		userPublicAccessCell.field.label = this.userPublicAccessLabel;
+		
+		var oldGetDescription = userPublicAccessCell.data[0].getDescription;
 		userPublicAccessCell.data[0].getDescription = function() 
 			{
-				if (this.description == "_read" ||
-					this.description == _this.allVisibleLabel)
+				var oldDescription = oldGetDescription.call(this);
+				if (oldDescription == "_read" ||
+					oldDescription == _this.allVisibleLabel)
 					return _this.allVisibleLabel;
-				else if (pathPublicAccessCell.data[0].description == "_read" ||
-				         this.description == _this.pathVisibleLabel)
+				else if (pathPublicAccessCell.data[0].getDescription() == "_read" ||
+				         oldDescription == _this.pathVisibleLabel)
 				    return _this.pathVisibleLabel;
-				else if (this.description == "_find" ||
-						 this.description == _this.emailVisibleLabel)
+				else if (oldDescription == "_find" ||
+						 oldDescription == _this.emailVisibleLabel)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;
@@ -108,7 +111,7 @@ var Settings = (function () {
 				.each(_pushTextChanged);
 		}
 		
-		if (user.privilege === "_administer")
+		if (user.getPrivilege() === "_administer")
 		{
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];
@@ -134,20 +137,11 @@ var Settings = (function () {
 			/* Change the contents of the div when the pathPublicAccessValue changes as well. */	
 			divs.each(function()
 				{
-					var d = pathPublicAccessValue;
-					var f = function(eventObject) {
-						d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
-					}
-	
-					$(d).on("dataChanged.cr", null, this, f);
-					$(this).on("remove", null, d, function(eventObjects) {
-						$(this.eventObject).off("dataChanged.cr", null, f);
-					});
-	
-					$(d).on("valueDeleted.cr", null, this, f);
-					$(this).on("remove", null, d, function(eventObjects) {
-						$(this.eventObject).off("valueDeleted.cr", null, f);
-					});
+					setupOnViewEventHandler(pathPublicAccessValue, "dataChanged.cr valueDeleted.cr", this, 
+						function(eventObject)
+						{
+							d3.select(eventObject.data).text(userPublicAccessValue.getDescription());
+						});
 				});
 			
 			var docSection = panel2Div.append('section')
@@ -171,12 +165,10 @@ var Settings = (function () {
 				docDiv.text(documentation);
 			}
 			
-			$(userPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
-			$(pathPublicAccessValue).on("valueDeleted.cr dataChanged.cr", null, docDiv, updateVisibilityDocumentation);
-			$(docDiv).on("remove", null, null, function(eventObjects) {
-				$(userPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
-				$(pathPublicAccessValue).off("valueDeleted.cr dataChanged.cr", null, updateVisibilityDocumentation);
-			});
+			setupOnViewEventHandler(userPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+				updateVisibilityDocumentation);
+			setupOnViewEventHandler(pathPublicAccessValue, "valueDeleted.cr dataChanged.cr", docDiv.node(), 
+				updateVisibilityDocumentation);
 			updateVisibilityDocumentation();
 	
 			function checkSharingBadge()
@@ -222,10 +214,11 @@ var Settings = (function () {
 				urlItem.text("{0}/for/{1}"
 					.format(window.location.origin, user.getDatum("_email")));
 			}
-			$(user.getCell("_email")).on('dataChanged.cr', null, urlItem.node(), updateURL);
-			$(urlItem.node()).on('remove', null, user.getCell("_email"), function(eventObject)
+			setupOnViewEventHandler(user.getCell("_email"), 'dataChanged.cr', urlItem.node(), 
+				function()
 				{
-					$(eventObject.data).off('dataChanged.cr', urlItem.node(), updateURL);
+					urlItem.text("{0}/for/{1}"
+						.format(window.location.origin, user.getDatum("_email")));
 				});
 	
 			var sharingDiv = this.appendActionButton('Sharing', function() {
@@ -243,12 +236,8 @@ var Settings = (function () {
 				.classed('badge', true);
 			checkSharingBadge();
 			
-			$(user.getCell("_access request")).on("valueDeleted.cr valueAdded.cr", checkSharingBadge);
-			$(sharingButton.node()).on("remove", function()
-			{
-				$(user.getCell("_access request")).off("valueDeleted.cr", checkSharingBadge)
-					.off("valueAdded.cr", checkSharingBadge);
-			});
+			setupOnViewEventHandler(user.getCell("_access request"), "valueDeleted.cr valueAdded.cr", 
+				sharingButton.node(), checkSharingBadge);
 				
 			this.appendActionButton('Following', function() {
 					if (prepareClick('click', 'Following'))
@@ -419,7 +408,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.description != "_find")
+									if (oldUserAccessValue.getDescription() != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -432,7 +421,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -453,7 +442,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.description != "_find")
+									if (oldUserAccessValue.getDescription() != "_find")
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -466,7 +455,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -484,7 +473,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathAccessValue.cell.parent.getValueID(),
+												containerUUID: oldPathAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldPathAccessValue.cell.field.nameID,
 												instance: d.pathPrivilegePath,
 												description: d.pathPrivilegeDescription
@@ -502,7 +491,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathSpecialAccessValue.cell.parent.getValueID(),
+												containerUUID: oldPathSpecialAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
 												instance: d.pathSpecialAccessPath,
 												description: d.pathSpecialAccessDescription
@@ -523,7 +512,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getValueID(),
+												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description

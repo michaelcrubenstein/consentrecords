@@ -66,7 +66,7 @@ var SharingPanel = (function() {
 							unblockClick();
 						};
 					
-						_this.addAccess(accessorLevel, "#{0}".format(d.getValueID()), done);
+						_this.addAccess(accessorLevel, "#{0}".format(d.getInstanceID()), done);
 					}
 					catch (err)
 					{
@@ -100,7 +100,7 @@ var SharingPanel = (function() {
 	SharingPanel.prototype.loadAccessRecords = function(panel2Div, accessRecords)
 	{
 		var _this = this;
-		var cells, itemCells, items;
+		var sections, itemCells, items;
 		var accessRequestSection, accessRequestList;
 		
 		accessRequestSection = panel2Div.append("section")
@@ -135,9 +135,9 @@ var SharingPanel = (function() {
 			if (cell && cell.data.length > 0)
 			{
 				var d = cell.data[0];
-				if (d.getValueID() in this.privilegesByID)
+				if (d.getInstanceID() in this.privilegesByID)
 				{
-					var sa = this.privilegesByID[d.getValueID()];
+					var sa = this.privilegesByID[d.getInstanceID()];
 					sa.accessRecords.push(a);
 					var userCell = a.getCell("_user");
 					var groupCell = a.getCell("_group");
@@ -154,7 +154,7 @@ var SharingPanel = (function() {
 		}
 	
 		var key = 0;
-		cells = panel2Div.selectAll("section")
+		sections = panel2Div.selectAll("section")
 			.data(this.privileges, function(d) {
 				/* Ensure that this operation appends without replacing any items. */
 				key += 1;
@@ -163,10 +163,10 @@ var SharingPanel = (function() {
 			.enter()
 			.append("section")
 			.classed("cell multiple edit", true);
-		cells.append("label")
+		sections.append("label")
 			.text(function(d) { return d.label });
 			
-		itemCells = cells.append("ol")
+		itemCells = sections.append("ol")
 			.classed("cell-items", true);
 	
 		// Reference the views back to the privileges objects.
@@ -177,7 +177,7 @@ var SharingPanel = (function() {
 		this.appendUserControls(items);
 		
 		/* Add one more button for the add Button item. */
-		var buttonDiv = cells.append("div")
+		var buttonDiv = sections.append("div")
 			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
 			.on("click", function(d) {
 				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);
@@ -197,13 +197,13 @@ var SharingPanel = (function() {
 				var p = this.privileges[j];
 				if (p.name == e.getDescription())
 				{
-					p.id = e.getValueID();
+					p.id = e.getInstanceID();
 					this.privilegesByID[p.id] = p;
 					break;
 				}
 			}
 		}
-		cr.getData({path: "#" + this.user.getValueID() + '>"_access record"', 
+		cr.getData({path: "#" + this.user.getInstanceID() + '>"_access record"', 
 					fields: ["parents"], 
 					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
 					fail: asyncFailFunction});
@@ -213,13 +213,14 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 
-		var userPath = "#{0}".format(this.user.getValueID());
+		var userPath = "#{0}".format(this.user.getInstanceID());
 		cr.share(userPath, path, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell("_access record");
 				accessRecordCell.addValue(newData);
 				accessorLevel.accessRecords.push(newData);
-				newData.checkCells(undefined, function()
+				newData.promiseCells(undefined)
+					.then(function()
 					{
 						try
 						{
@@ -240,18 +241,20 @@ var SharingPanel = (function() {
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
-		var userPath = "#{0}".format(this.user.getValueID());
-		ar.checkCells(undefined, function()
-		{
-			cr.share(userPath, path, accessorLevel.id, function(newValue)
+		var userPath = "#{0}".format(this.user.getInstanceID());
+		ar.promiseCells()
+			.then(function()
 				{
-					var cellName = newValue.typeName == '_user' ? '_user' : '_group';
-					var cell = ar.getCell(cellName);
-					cell.addValue(newValue);
-					_this.onUserAdded(accessorLevel.itemsDiv, newValue);
-					done();
-				}, syncFailFunction);
-		}, syncFailFunction);
+					cr.share(userPath, path, accessorLevel.id, function(newValue)
+						{
+							var cellName = newValue.getTypeName() == '_user' ? '_user' : '_group';
+							var cell = ar.getCell(cellName);
+							cell.addValue(newValue);
+							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
+							done();
+						}, cr.syncFail);
+				}, 
+				cr.syncFail);
 	}
 	
 	SharingPanel.prototype.addAccess = function(accessorLevel, path, done)
