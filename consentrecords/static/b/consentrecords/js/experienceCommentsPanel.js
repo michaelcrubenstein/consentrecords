@@ -331,7 +331,7 @@ var ExperienceCommentsPanel = (function() {
 		
 		function onCommentAdded(eventObject, newData)
 		{
-			eventObject.data.loadComments([newData]);
+			_this.loadComments([newData]);
 		}
 		
 		/* commentsCells is an array of cells contained within a Comments instance. */
@@ -341,11 +341,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					return cell.field.name == "Comment";
 				});
-			commentCell.on('valueAdded.cr', _this, onCommentAdded);
-			$(commentsDiv.node()).on('remove', null, commentCell, function(commentCellEventObject)
-				{
-					commentCellEventObject.data.off('valueAdded.cr', onCommentAdded);
-				});
+			setupOnViewEventHandler(commentCell, 'valueAdded.cr', commentsDiv.node(), onCommentAdded);
 			_this.loadComments(commentCell.data);
 		}
 		
