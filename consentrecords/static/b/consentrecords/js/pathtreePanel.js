@@ -491,11 +491,7 @@ var PathView = (function() {
 				fd.colorElement(eventObject.data);
 			}
 		
-		offeringCell.on("valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
-		$(r).one("clearTriggers.cr remove", function()
-			{
-				offeringCell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", f);
-			});
+		setupOneViewEventHandler(offeringCell, "valueAdded.cr valueDeleted.cr dataChanged.cr", r, f);
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
@@ -934,6 +930,97 @@ var PathView = (function() {
 		setupOnViewEventHandler(experience.getCell("Timeframe"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
 	}
 	
+	PathView.prototype.setFlagText = function(node)
+	{
+		var g = d3.select(node);
+		g.selectAll('text').selectAll('tspan:nth-child(1)')
+			.text(function(d) { return d.getDescription(); })
+	}
+		
+	/* Sets up each group (this) that displays an experience to delete itself if
+		the experience is deleted.
+	 */
+	PathView.prototype.setupDelete = function(fd, node) 
+	{
+		var _this = this;
+		var dataChanged = function(eventObject)
+		{
+			_this.setFlagText(eventObject.data);
+			
+			/* Make sure that the rectangles match the widths. */
+			var g = d3.select(eventObject.data);
+			g.selectAll('rect')
+				.attr('width', function(fd)
+					{
+						return $(this.parentNode).children('text').outerWidth() + 
+							(2 * _this.textDetailLeftMargin);
+					});	
+		}
+		
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
+			{
+				$(eventObject.data).remove();
+				_this.handleValueDeleted(this);
+			});
+		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
+		setupOnViewEventHandler(fd.experience.getCell("Service"), "dataChanged.cr", node, dataChanged);
+		setupOnViewEventHandler(fd.experience.getCell("User Entered Service"), "dataChanged.cr", node, dataChanged);
+	}
+	
+	PathView.prototype.setupFlags = function(g)
+	{
+		var _this = this;
+
+		g.classed('flag', true)
+			.each(function(d)
+				{
+					_this.setupDelete(d, this);
+				})
+			.on("click", function() 
+				{ 
+					d3.event.stopPropagation(); 
+				})
+			.on("click.cr", function(fd)
+				{
+					if (!d3.event.defaultPrevented)
+						_this.updateDetail(fd);
+				})
+			.each(function(d) 
+				{ 
+					_this.setupServiceTriggers(this, d, function(eventObject)
+						{
+							d.column = _this.getColumn(d);
+							_this.transitionPositions(g);
+						});
+				});
+					
+		g.append('line').classed('flag-pole', true)
+			.each(function(d)
+				{
+					d.colorElement(this);
+					_this.handleChangedExperience(this, d);
+					_this.setupColorWatchTriggers(this, d);
+				});
+		g.append('rect').classed('opaque', true)
+			.attr('x', '1.5');
+		g.append('rect').classed('bg', true)
+			.attr('x', '1.5')
+			.each(function(d)
+				{
+					d.colorElement(this);
+					_this.handleChangedExperience(this, d);
+					_this.setupColorWatchTriggers(this, d);
+				});
+		var text = g.append('text').classed('flag-label', true)
+			.attr('x', this.textDetailLeftMargin);
+		text.append('tspan')
+			.attr('dy', '1.1em');
+		
+		g.each(function() { _this.setFlagText(this); });
+		
+		return g;
+	}
+	
 	PathView.prototype.addMoreExperience = function(experience)
 	{
 		this.checkOfferingCells(experience);
@@ -1272,47 +1359,6 @@ var PathLines = (function() {
 			f();
 	};
 
-	PathLines.prototype.setFlagText = function(node)
-	{
-		var g = d3.select(node);
-		g.selectAll('text').selectAll('tspan:nth-child(1)')
-			.text(function(d) { return d.getDescription(); })
-	}
-		
-	/* Sets up each group (this) that displays an experience to delete itself if
-		the experience is deleted.
-	 */
-	PathLines.prototype.setupDelete = function(fd, node) 
-	{
-		var _this = this;
-		var dataChanged = function(eventObject)
-		{
-			_this.setFlagText(eventObject.data);
-			
-			/* Make sure that the rectangles match the widths. */
-			var g = d3.select(eventObject.data);
-			g.selectAll('rect')
-				.attr('width', function(fd)
-					{
-						return $(this.parentNode).children('text').outerWidth() + 
-							(2 * _this.textDetailLeftMargin);
-					});	
-		}
-		
-		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
-			{
-				$(eventObject.data).remove();
-				_this.handleValueDeleted(this);
-			});
-		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
-		var cell = fd.experience.getCell("Service");
-		if (cell)
-			setupOnViewEventHandler(cell, "dataChanged.cr", node, dataChanged);
-		cell = fd.experience.getCell("User Entered Service");
-		if (cell)
-			setupOnViewEventHandler(cell, "dataChanged.cr", node, dataChanged);
-	}
-	
 	/* Lay out all of the contents within the svg object. */
 	PathLines.prototype.layout = function()
 	{
@@ -1432,52 +1478,7 @@ var PathLines = (function() {
 				.append('g');
 		}
 		
-		g.classed('flag', true)
-			.each(function(d)
-				{
-					_this.setupDelete(d, this);
-				})
-			.on("click", function() 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd)
-				{
-					if (!d3.event.defaultPrevented)
-						_this.updateDetail(fd);
-				})
-			.each(function(d) 
-					{ 
-						_this.setupServiceTriggers(this, d, function(eventObject)
-							{
-								d.column = d.getColumn();
-								_this.transitionPositions(g);
-							});
-					});
-		
-		g.append('line').classed('flag-pole', true)
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		g.append('rect').classed('opaque', true)
-			.attr('x', '1.5');
-		g.append('rect').classed('bg', true)
-			.attr('x', '1.5')
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', this.textDetailLeftMargin);
-		text.append('tspan')
-			.attr('dy', this.textDetailTopLineHeight);
-		
-		g.each(function() { _this.setFlagText(this); });
+		g = this.setupFlags(g);
 		
 		return g;
 	}
