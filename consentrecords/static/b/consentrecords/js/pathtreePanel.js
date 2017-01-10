@@ -2138,7 +2138,7 @@ var AddOptions = (function () {
 		var div = panel.append('div')
 			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
 		
-		function handleCancel(done, fail)
+		function handleCancel(done)
 		{
 			$(confirmButton.node()).off('blur');
 			$(panel.node()).hide("slide", {direction: "down"}, 400, function() {
@@ -2150,7 +2150,7 @@ var AddOptions = (function () {
 		{
 			try
 			{
-				handleCancel(undefined);
+				handleCancel();
 				dimmer.hide();
 			}
 			catch(err)
@@ -2179,7 +2179,7 @@ var AddOptions = (function () {
 								 .then(function()
 									{
 										$(panel.node()).remove();
-										clickFunction();
+										clickFunction(unblockClick);
 									});
 							}
 							catch (err)
@@ -2192,17 +2192,17 @@ var AddOptions = (function () {
 		}
 		
 		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
-			function()
+			function(done)
 			{
-				pathlinesPanel.startNewExperience('Previous', unblockClick, cr.syncFail);
+				pathlinesPanel.startNewExperience('Previous', done, cr.syncFail);
 			})
 			.classed('butted-down', true);
 		$(confirmButton.node()).on('blur', onCancel);
 		
 		addButton(div, this.addCurrentExperienceLabel, 
-			function()
+			function(done)
 			{
-				pathlinesPanel.startNewExperience('Current', unblockClick, cr.syncFail);
+				pathlinesPanel.startNewExperience('Current', done, cr.syncFail);
 			})
 			.classed('butted-down', true);
 		
