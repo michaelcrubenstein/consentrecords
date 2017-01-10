@@ -345,17 +345,16 @@ var ExperienceCommentsPanel = (function() {
 			_this.loadComments(commentCell.data);
 		}
 		
-		function onNewCommentsSaved(eventObject, changeTarget)
-		{
-			if (changeTarget.getTypeName() == "Comments")
-				changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
-					.then(function()
-						{
-							onCommentsChecked(comments.getCells());
-						}, cr.asyncFail)
-		}
-		
-		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), onNewCommentsSaved);
+		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), 
+			function (eventObject, changeTarget)
+			{
+				if (changeTarget.getTypeName() == "Comments")
+					changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
+						.then(function()
+							{
+								onCommentsChecked(comments.getCells());
+							}, cr.asyncFail)
+			});
 		
 		if (fd.experience.canWrite())
 		{
@@ -392,56 +391,93 @@ var ExperienceCommentsPanel = (function() {
 							}
 						}
 					});
-			
-			var newQuestionDiv = panel2Div.append('section')
-				.classed('new-comment', true);
-			var newQuestionInput = newQuestionDiv.append('textarea')
-				.attr('rows', 3);
-			newQuestionInput.attr('placeholder', 'New Question');
 
-			var askButton = newQuestionDiv.append('button')
-				.classed('post site-active-div', true)
-				.text('Ask')
-				.on('click', function()
+			$(panel2Div.node()).on('resize.cr', function()
+				{
+					$(newCommentInput.node()).width(
+						$(newCommentDiv.node()).width() - 
+						$(postButton.node()).outerWidth(true) -
+						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+				});
+		}
+			
+		var newQuestionDiv = panel2Div.append('section')
+			.classed('new-comment', true);
+		var newQuestionInput = newQuestionDiv.append('textarea')
+			.attr('rows', 3);
+		newQuestionInput.attr('placeholder', 'New Question');
+
+		var askButton = newQuestionDiv.append('button')
+			.classed('post site-active-div', true)
+			.text('Ask')
+			.on('click', function()
+				{
+					var newQuestion = newQuestionInput.node().value;
+					if (newQuestion)
 					{
-						var newQuestion = newQuestionInput.node().value;
-						if (newQuestion)
+						if (prepareClick('click', 'Ask Question'))
 						{
-							if (prepareClick('click', 'Ask Question'))
+							try
 							{
-								try
-								{
-									showClickFeedback(this);
-									_this.askQuestion(newQuestion)
-										.then(function()
-											{
-												newQuestionInput.node().value = '';
-												unblockClick();
-											},
-											cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
+								showClickFeedback(this);
+								_this.askQuestion(newQuestion)
+									.then(function()
+										{
+											newQuestionInput.node().value = '';
+											unblockClick();
+										},
+										cr.syncFail);
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
 							}
 						}
-					});
+					}
+				});
 			
-			var resizeFunction = function()
+		var commentPromptsDiv = panel2Div.append('section')
+			.classed('comment-prompts', true);
+			
+		var resizeQuestionBoxes = function()
 			{
-				$(newCommentInput.node()).width(
-					$(newCommentDiv.node()).width() - 
+				var newQuestionWidth = $(newQuestionDiv.node()).width() - 
 					$(postButton.node()).outerWidth(true) -
-					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
-				$(newQuestionInput.node()).width(
-					$(newQuestionDiv.node()).width() - 
-					$(postButton.node()).outerWidth(true) -
-					($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width()));
+					($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
+				$(newQuestionInput.node()).width(newQuestionWidth);
+				commentPromptsDiv.selectAll('div')
+					.style("width", function(d)
+						{
+							/* extra width is left-padding + right-padding + 1 */
+							var extraWidth = 17;
+							return (getTextWidth(d.getDatum("_text"), 
+												 d3.select(this).style("font"))+extraWidth).toString() + "px";
+						});
 			}
-			$(panel2Div.node()).on('resize.cr', resizeFunction);
-		}
+			
+		crp.promise({path:  '"Comment Prompt"'})
+		.then(function(prompts)
+			{
+				commentPromptsDiv.selectAll('div')
+					.data(prompts)
+					.enter()
+					.append('div')
+					.classed('site-active-text', true)
+					.text(function(d) 
+						{ return d.getDatum("_text"); })
+					.on('click', function(d)
+						{
+							newQuestionInput.node().value = '';
+							newQuestionInput.node().value = d.getDatum("_text");
+							newQuestionInput.node().focus();
+							var textWidth = newQuestionInput.node().value.length;
+							newQuestionInput.node().setSelectionRange(textWidth, textWidth)
+						});
+				resizeQuestionBoxes();
+			}, cr.asyncFail)		
 							
+		$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
+			
 		$(panel2Div.node()).on('resize.cr', resizeDetail);	
 						
 		$(panel2Div.node()).on('resize.cr', function()
