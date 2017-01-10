@@ -114,3 +114,11 @@ section.new-comment button.post {
 	top: 0;
 	padding: 6px 12px;
 }
+
+section.comment-prompts div {
+	border: none;
+	margin-left: 6px;
+	margin-right: 12px;
+	padding: 8px;
+	font-size: 0.8em;
+}
