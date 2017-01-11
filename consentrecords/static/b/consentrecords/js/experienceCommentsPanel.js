@@ -173,6 +173,14 @@ var ExperienceCommentsPanel = (function() {
 					.attr('readonly', null)
 					.classed('fixed', false)
 					.classed('editable', true);
+					
+				this.editChevronContainer.transition()
+					.duration(400)
+					.attr("transform", 
+						"translate({0},{1})".format(
+							parseInt(this.svg.style('width')) - 12 - 12, 
+							(parseInt(this.svg.style('height')) - 18) / 2));
+							
 				unblockClick();
 			}
 			catch(err)
@@ -211,6 +219,33 @@ var ExperienceCommentsPanel = (function() {
 		answerTextArea.focus();
 	}
 
+	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
+	{
+		if (fd.experience.getTypeName() == "Experience") {
+			;	/* Nothing to edit */
+		}
+		else
+		{
+			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
+			{
+				try
+				{
+					var experience = new Experience(fd.experience.cell.parent, fd.experience);
+					experience.replaced(fd.experience);
+					
+					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
+					
+					editPanel.showLeft().then(unblockClick);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
+				d3.event.stopPropagation();
+			}
+		}
+	}
+	
 	function ExperienceCommentsPanel(fd)
 	{
 		this.createRoot(fd, "Comments", "comments", revealPanelLeft);
@@ -271,6 +306,13 @@ var ExperienceCommentsPanel = (function() {
 									});
 								_this.checkTextAreas(function()
 									{
+										_this.editChevronContainer.transition()
+											.duration(400)
+											.attr("transform", 
+												"translate({0},{1})".format(
+													parseInt(_this.svg.style('width')), 
+													(parseInt(_this.svg.style('height')) - 18) / 2));
+
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
 										commentList.classed('edit', false);
@@ -278,6 +320,7 @@ var ExperienceCommentsPanel = (function() {
 											.attr('readonly', 'readonly')
 											.classed('editable', false)
 											.classed('fixed', true);
+
 										unblockClick();
 									},
 									fail);
@@ -320,8 +363,49 @@ var ExperienceCommentsPanel = (function() {
 			_this.detailFrontRect.attr('height', _this.detailRectHeight)
 				.attr('width', _this.svg.style('width'));
 			_this.svg.attr('height', _this.detailRectHeight);
+			
+			if (fd.experience.canWrite())
+				_this.editChevronContainer.attr("transform", 
+					"translate({0},{1})".format(
+						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 - 12 : 0), 
+						(parseInt(_this.svg.style('height')) - 18) / 2));
+
 		}
 		setTimeout(resizeDetail);
+		
+		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
+			{
+				fd.colorElement(_this.detailFrontRect.node());
+				resizeDetail();
+			});
+		
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", this.node(), function(eventObject)
+			{
+				_this.hideNow();
+			});
+
+		if (fd.experience.canWrite())
+		{
+			this.editChevronContainer = this.detailGroup.append('g');
+		
+			this.editChevronContainer.append('g')
+				.classed('chevron-right', true)
+				.attr('transform', 'scale(0.0625)')
+				.append('polygon')
+				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
+			this.editChevronContainer.attr("transform", 
+					"translate({0},{1})".format(
+						_this.svg.style('width'), 
+						_this.svg.style('height') / 2));
+						
+			this.svg.on('click', function(e)
+				{
+					if (_this.inEditMode)
+					{
+						_this.showDetailPanel(fd);
+					}
+				})
+		}
 		
 		var comments = fd.experience.getValue("Comments");
 		var commentsDiv = panel2Div.append('section')

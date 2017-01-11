@@ -122,3 +122,7 @@ section.comment-prompts div {
 	padding: 8px;
 	font-size: 0.8em;
 }
+
+panel.comments svg g.chevron-right>polygon {
+	fill: #777;
+}
