@@ -1935,6 +1935,12 @@ var SitePanel = (function () {
 				});
 	}
 	
+	SitePanel.prototype.hideNow = function()
+	{
+		$(this.node()).trigger("hiding.cr")
+					  .remove();
+	}
+	
 	SitePanel.prototype.hideRightEvent = function()
 	{
 		if (prepareClick('click', 'Close Right'))
@@ -1948,9 +1954,17 @@ var SitePanel = (function () {
 		d3.event.preventDefault();
 	}
 	
-	SitePanel.prototype.appendDeleteControls = function(buttons)
+	SitePanel.prototype.appendDeleteControls = function(containers)
 	{
-		return buttons.append("button")
+		containers.each(function(e)
+			{
+				$(this).on('resize.cr', function(eventObject)
+					{
+						eventObject.stopPropagation();
+					});
+			});
+
+		return containers.append("button")
 			.classed("delete-dial glyphicon glyphicon-minus-sign", true)
 			.on("click", function(e)
 			{

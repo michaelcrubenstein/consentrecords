@@ -392,6 +392,47 @@ var FlagData = (function() {
 		
 		return detailText;
 	}
+	
+	FlagData.prototype.setupChangeEventHandler = function(data, handler)
+	{
+		var experience = this.experience;
+		
+		var allCells = [experience.getCell("Organization"),
+		 experience.getCell("User Entered Organization"),
+		 experience.getCell("Site"),
+		 experience.getCell("User Entered Site"),
+		 experience.getCell("Offering"),
+		 experience.getCell("User Entered Offering"),
+		 experience.getCell("Start"),
+		 experience.getCell("End"),
+		 experience.getCell("Timeframe"),
+		 experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		var serviceCells = [experience.getCell("Service"),
+		 experience.getCell("User Entered Service")];
+		 
+		allCells.forEach(function(cell)
+		 {
+			/* cell will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (cell)
+			{
+				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", data, handler);
+			}
+		 });
+		serviceCells.forEach(function(cell)
+		 {
+			/* cell will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			if (cell)
+			{
+				setupOnViewEventHandler(cell, "valueDeleted.cr", data, handler);
+			}
+		 });
+	}
 
 	function FlagData(experience)
 	{
@@ -683,72 +724,14 @@ var PathView = (function() {
 			textClipRect.attr('height', this.detailRectHeight); 
 		}
 		
-		var experience = this.detailFlagData.experience;
-		
 		function handleChangeDetailGroup(eventObject, newValue)
 		{
 			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
 				_this.refreshDetail();
 		}
 		
-		var allCells = [experience.getCell("Organization"),
-		 experience.getCell("User Entered Organization"),
-		 experience.getCell("Site"),
-		 experience.getCell("User Entered Site"),
-		 experience.getCell("Start"),
-		 experience.getCell("End"),
-		 experience.getCell("Timeframe"),
-		 experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
+		this.detailFlagData.setupChangeEventHandler(_this, handleChangeDetailGroup)
 		 
-		var serviceCells = [experience.getCell("Service"),
-		 experience.getCell("User Entered Service")];
-		 
-		allCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				cell.on("valueAdded.cr valueDeleted.cr dataChanged.cr", _this, handleChangeDetailGroup);
-			}
-		 });
-		serviceCells.forEach(function(cell)
-		 {
-			/* cell will be null if the experience came from the organization for the 
-				User Entered Organization and User Entered Site.
-			 */
-			if (cell)
-			{
-				cell.on("valueDeleted.cr", _this, handleChangeDetailGroup);
-			}
-		 });
-		 
-		 $(this).one("clearTriggers.cr", function(eventObject)
-		 {
-			allCells.forEach(function(cell)
-			 {
-				/* cell will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-			 	if (cell)
-			 	{
-					cell.off("valueAdded.cr valueDeleted.cr dataChanged.cr", handleChangeDetailGroup);
-				}
-			 });
-			serviceCells.forEach(function(cell)
-			 {
-				/* cell will be null if the experience came from the organization for the 
-					User Entered Organization and User Entered Site.
-				 */
-				if (cell)
-				{
-					cell.off("valueDeleted.cr", handleChangeDetailGroup);
-				}
-			 });
-		 });
-		
 		this.changedContent();
 		this.setupHeights();
 		this.setupWidths();
@@ -847,7 +830,7 @@ var PathView = (function() {
 		this.isLayoutDirty = true;
 	}
 	
-	PathView.prototype.showDetailPanel = function(fd, i)
+	PathView.prototype.showDetailPanel = function(fd)
 	{
 		if (fd.experience.getTypeName() == "Experience") {
 			;	/* Nothing to edit */
