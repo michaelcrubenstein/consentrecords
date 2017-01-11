@@ -686,125 +686,20 @@ var PathView = (function() {
 		}
 	}
 	
-	PathView.prototype.showDetailGroup = function(fd, duration)
-	{
-		duration = (duration !== undefined ? duration : 700);
-		var _this = this;
-				
-		this.detailGroup.datum(fd);
-		this.detailGroup.selectAll('rect').datum(fd);
-		
-		this.appendDetailGroupElements(fd);
-		
-		this.detailGroup.attr("transform", 
-		                      "translate({0},{1})".format(fd.x + this.experienceGroupDX, (fd.y * this.emToPX) + this.experienceGroupDY));
-		this.detailGroup.selectAll('rect')
-			.attr('x', this.detailRectX)	/* half the stroke width */;
-		this.detailFrontRect.datum().colorElement(this.detailFrontRect.node());
-		this.detailFrontRect.each(function(d) { _this.setupColorWatchTriggers(this, d); });
-		this.detailGroup.selectAll('rect.full')
-			.attr('height', this.detailRectHeight);
-	   
-		this.detailFlagData = fd;
-		
-		/* Set the clip path of the text to grow so the text is revealed in parallel */
-		var textClipRect = d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('x', 1.5)
-			.attr('y', 0); 
-		
-		if (duration > 0)
-		{
-			textClipRect.attr('height', 0)
-				.transition()
-				.duration(duration)
-				.attr('height', this.detailRectHeight); 
-		}
-		else
-		{
-			textClipRect.attr('height', this.detailRectHeight); 
-		}
-		
-		function handleChangeDetailGroup(eventObject, newValue)
-		{
-			if (!(eventObject.type == "valueAdded" && newValue && newValue.isEmpty()))
-				_this.refreshDetail();
-		}
-		
-		this.detailFlagData.setupChangeEventHandler(_this, handleChangeDetailGroup)
-		 
-		this.changedContent();
-		this.setupHeights();
-		this.setupWidths();
-		
-		if (duration > 0)
-		{
-			this.scrollToRectangle(this.containerDiv, 
-							   {y: (fd.y * this.emToPX) + this.experienceGroupDY,
-							    x: fd.x + this.experienceGroupDX,
-							    height: this.detailRectHeight,
-							    width: parseFloat(this.detailFrontRect.attr('width'))},
-							   this.topNavHeight,
-							   this.bottomNavHeight,
-							   duration);
-		}
-	}
-	
 	PathView.prototype.clearDetail = function()
 	{
-		this.detailGroup.selectAll('text').remove();
-		/* Remove the image here instead of when the other clipPath ends
-			so that it is sure to be removed when the done method is called. 
-		 */
-		this.detailGroup.selectAll('image').remove();
-		this.detailGroup.selectAll('line').remove();
 		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
 		
 		var _this = this;
 		$(this).trigger("clearTriggers.cr");
-		$(this.detailFrontRect).trigger("clearTriggers.cr");
-		
-		this.detailGroup.datum(null);
-		this.detailGroup.selectAll('rect').datum(null);
-		this.detailFlagData = null;
 	}
 
-	PathView.prototype.hideDetail = function(done, duration)
-	{
-		duration = (duration !== undefined ? duration : 250);
-		
-		var _this = this;
-		if (this.detailFlagData != null)
-		{
-			if (duration === 0)
-			{
-				this.clearDetail();
-				if (done) done();
-			}
-			else
-			{
-				d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-					.transition()
-					.attr("height", 0)
-					.duration(duration)
-					.each("end", function() {
-						_this.clearDetail();
-						if (done)
-							done();
-					});
-			}
-		}
-		else if (done)
-			done();
-	}
-	
 	PathView.prototype.updateDetail = function(fd, duration)
 	{
 		var _this = this;
 		fd.checkOfferingCells(function()
 			{
-				_this.hideDetail(
-					function() { _this.showDetailGroup(fd, duration); },
-					duration);
+				_this.showCommentsPanel(fd);
 			});
 	}
 	
@@ -1332,14 +1227,8 @@ var PathLines = (function() {
 		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		var f = function() {
-					_this.clearLayout();
-					_this.checkLayout();
-				}
-		if (this.detailFlagData && experience == this.detailFlagData.experience)
-			this.hideDetail(f, 0);
-		else
-			f();
+		this.clearLayout();
+		this.checkLayout();
 	};
 
 	/* Lay out all of the contents within the svg object. */
@@ -1376,26 +1265,8 @@ var PathLines = (function() {
 		 */
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
-			
-		if (this.detailFlagData != null)
-		{
-			/*( Restore the detailFlagData */
-			var fds = g.data();
-			var i = fds.findIndex(function(fd) { return fd.experience === _this.detailFlagData.experience; });
-			if (i >= 0)
-			{
-				_this.hideDetail(function()
-					{
-						_this.setupClipPaths();
-						_this.showDetailGroup(fds[i], 0);
-					}, 0
-				);
-			}
-			else
-				throw "experience lost in layout";
-		}
-		else
-			this.setupClipPaths();
+		
+		this.setupClipPaths();
 		
 		this.layoutYears(g);
 		
@@ -1657,11 +1528,8 @@ var PathLines = (function() {
 				if (_this.detailFlagData)
 				{
 					cr.logRecord('click', 'hide details');
-					_this.hideDetail(function()
-						{
-							_this.setupHeights();
-							_this.setupWidths();
-						});
+					_this.setupHeights();
+					_this.setupWidths();
 				}
 			});
 		
@@ -1892,14 +1760,6 @@ var PathlinesPanel = (function () {
 				return d3.select(this).datum().experience.id == id; 
 				});
 		return d3.select($group.get(0)).datum();
-	}
-	
-	/* id is the id of the value that contains the experience instance, not
-		the id of the instance itself.
-	 */
-	PathlinesPanel.prototype.showExperience = function(id)
-	{
-		this.pathtree.showDetailGroup(this.getFlagData(id));
 	}
 	
 	PathlinesPanel.prototype.showCommentsPanel = function(id)

@@ -635,7 +635,6 @@
 						
 								try
 								{
-									var experience = pathwayPanel.showExperience(id);
 									if (stateString.startsWith("comments/"))
 									{
 										pathwayPanel.showCommentsPanel(id);
@@ -658,6 +657,9 @@
 													});									
 										}
 									}
+									else
+										pathwayPanel.showCommentsPanel(id);
+										
 								}
 								catch(err)
 								{
