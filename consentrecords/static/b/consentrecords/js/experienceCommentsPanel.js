@@ -173,12 +173,16 @@ var ExperienceCommentsPanel = (function() {
 					.attr('readonly', null)
 					.classed('fixed', false)
 					.classed('editable', true);
-					
+				
+				/* position the edit chevron as appropriate. 
+					12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
+					18 is the height of the chevron, so that the chevron is vertically centered. 
+				 */
 				this.editChevronContainer.transition()
 					.duration(400)
 					.attr("transform", 
 						"translate({0},{1})".format(
-							parseInt(this.svg.style('width')) - 12 - 12, 
+							parseInt(this.svg.style('width')) - (12 + 12), 
 							(parseInt(this.svg.style('height')) - 18) / 2));
 							
 				unblockClick();
@@ -367,7 +371,7 @@ var ExperienceCommentsPanel = (function() {
 			if (fd.experience.canWrite())
 				_this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
-						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 - 12 : 0), 
+						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 + 12 : 0), 
 						(parseInt(_this.svg.style('height')) - 18) / 2));
 
 		}
