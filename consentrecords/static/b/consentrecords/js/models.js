@@ -575,6 +575,11 @@ cr.Value = (function() {
 		throw new Error("clearValue must be overwritten");
 	};
 	
+	Value.prototype.updateFromChangeData = function()
+	{
+		throw new Error("updateFromChangeData must be overwritten");
+	};
+	
 	Value.prototype.triggerDeleteValue = function()
 	{
 		/* Delete from the cell first, so that other objects know the cell may be empty. */
@@ -640,6 +645,18 @@ cr.Value = (function() {
 				});
 		}
 	};
+	
+	Value.prototype.update = function(newValueID, initialData, done)
+	{
+		this.id = newValueID;
+
+		this.updateFromChangeData(initialData[i]);
+
+		if (update)
+			update();
+
+		this.triggerDataChanged();
+	}
 			
 	function Value() {
 		this.id = null; 
@@ -1798,18 +1815,11 @@ cr.updateValues = function(initialData, sourceObjects)
 					
 							if (newValueID)
 							{
-								d.id = newValueID;
-						
 								/* Object Values have an instance ID as well. */
 								if (newInstanceID)
 									initialData[i].instanceID = newInstanceID;
 							
-								d.updateFromChangeData(initialData[i]);
-						
-								if (update)
-									update();
-						
-								d.triggerDataChanged();
+								d.update(newValueID, initialData, update);
 							}
 							else
 							{
