@@ -562,17 +562,17 @@ cr.Value = (function() {
 	
 	Value.prototype.getDescription = function()
 	{ 
-		throw "getDescription must be overwritten";
+		throw new Error("getDescription must be overwritten");
 	};
 	
 	Value.prototype.isEmpty = function()
 	{
-		throw "isEmpty must be overwritten";
+		throw new Error("isEmpty must be overwritten");
 	}
 	
 	Value.prototype.clearValue = function()
 	{
-		throw "clearValue must be overwritten";
+		throw new Error("clearValue must be overwritten");
 	};
 	
 	Value.prototype.triggerDeleteValue = function()
