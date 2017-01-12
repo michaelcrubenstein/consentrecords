@@ -252,7 +252,7 @@ var ExperienceCommentsPanel = (function() {
 	
 	function ExperienceCommentsPanel(fd)
 	{
-		this.createRoot(fd, "Comments", "comments", revealPanelLeft);
+		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
 		this.fd = fd;
 		var _this = this;
 		
@@ -343,7 +343,7 @@ var ExperienceCommentsPanel = (function() {
 			this.editButton.append('span').text("Edit");
 		}
 
-		navContainer.appendTitle('Comments');
+		navContainer.appendTitle('Experience');
 		
 		var panel2Div = this.appendScrollArea();
 
