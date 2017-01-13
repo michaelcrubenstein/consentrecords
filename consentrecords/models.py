@@ -198,7 +198,7 @@ class Instance(dbmodels.Model):
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
         for v in vs:
             if v.field not in terms.securityFields or cache.value:
-                fieldID = v.field.id
+                fieldID = v.field_id
                 if fieldID not in values:
                     values[fieldID] = [v]
                 else:
@@ -321,7 +321,7 @@ class Instance(dbmodels.Model):
         d = {'id': None, 
              'instanceID': self.id, 
              'description': self.getDescription(language),
-             'parentID': self.parent and self.parent.id,
+             'parentID': self.parent_id,
              'typeName': self.typeID.getDescription()}
         privilege = self.getPrivilege(userInfo)
         if privilege:
