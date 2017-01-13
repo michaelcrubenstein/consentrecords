@@ -1226,11 +1226,16 @@ cr.ObjectValue = (function() {
 			return this._instance;
 		else
 		{
+			if (this._instance)
+			{
+				this._instance.off("dataChanged.cr", this._instanceDataChanged);
+			}
+			
 			this._instance = instance;
 			var _this = this;
 			this._instanceDataChanged = function(eventObject, newValue)
 			{
-				$(_this).trigger("dataChanged.cr", newValue == this ? _this : newValue);
+				$(eventObject.data).trigger("dataChanged.cr", newValue == this ? eventObject.data : newValue);
 			}
 			this._instance.on("dataChanged.cr", this, this._instanceDataChanged);
 			return this;
@@ -1239,7 +1244,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getDescription = function() 
 	{ 
-		return this._instance.getDescription();
+		return this._instance ? this._instance.getDescription() : "None";
 	};
 	
 	ObjectValue.prototype.setDescription = function(description)
@@ -1283,7 +1288,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getCells = function()
 	{
-		return this._instance.getCells();
+		return this._instance && this._instance.getCells();
 	}
 	
 	ObjectValue.prototype.areCellsLoaded = function()

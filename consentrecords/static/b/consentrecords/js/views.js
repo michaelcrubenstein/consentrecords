@@ -3245,7 +3245,7 @@ function showPickObjectPanel(cell, oldData) {
 							   an item that was added to the cell but not saved;
 							   a placeholder or a previously picked value.
 							 */
-							oldData.updateFromChangeData({instanceID: d.getInstanceID(), description: d.getDescription()});
+							oldData.instance(d.instance());
 							oldData.triggerDataChanged();
 							successFunction();
 						}
