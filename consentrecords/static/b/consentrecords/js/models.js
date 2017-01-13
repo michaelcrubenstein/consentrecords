@@ -562,17 +562,22 @@ cr.Value = (function() {
 	
 	Value.prototype.getDescription = function()
 	{ 
-		throw "getDescription must be overwritten";
+		throw new Error("getDescription must be overwritten");
 	};
 	
 	Value.prototype.isEmpty = function()
 	{
-		throw "isEmpty must be overwritten";
+		throw new Error("isEmpty must be overwritten");
 	}
 	
 	Value.prototype.clearValue = function()
 	{
-		throw "clearValue must be overwritten";
+		throw new Error("clearValue must be overwritten");
+	};
+	
+	Value.prototype.updateFromChangeData = function()
+	{
+		throw new Error("updateFromChangeData must be overwritten");
 	};
 	
 	Value.prototype.triggerDeleteValue = function()
@@ -640,6 +645,18 @@ cr.Value = (function() {
 				});
 		}
 	};
+	
+	Value.prototype.update = function(newValueID, initialData, done)
+	{
+		this.id = newValueID;
+
+		this.updateFromChangeData(initialData[i]);
+
+		if (update)
+			update();
+
+		this.triggerDataChanged();
+	}
 			
 	function Value() {
 		this.id = null; 
@@ -1209,11 +1226,16 @@ cr.ObjectValue = (function() {
 			return this._instance;
 		else
 		{
+			if (this._instance)
+			{
+				this._instance.off("dataChanged.cr", this._instanceDataChanged);
+			}
+			
 			this._instance = instance;
 			var _this = this;
 			this._instanceDataChanged = function(eventObject, newValue)
 			{
-				$(_this).trigger("dataChanged.cr", newValue == this ? _this : newValue);
+				$(eventObject.data).trigger("dataChanged.cr", newValue == this ? eventObject.data : newValue);
 			}
 			this._instance.on("dataChanged.cr", this, this._instanceDataChanged);
 			return this;
@@ -1222,7 +1244,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getDescription = function() 
 	{ 
-		return this._instance.getDescription();
+		return this._instance ? this._instance.getDescription() : "None";
 	};
 	
 	ObjectValue.prototype.setDescription = function(description)
@@ -1233,7 +1255,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getInstanceID = function()
 	{
-		return this._instance.getInstanceID();
+		return this._instance && this._instance.getInstanceID();
 	};
 	
 	ObjectValue.prototype.setInstanceID = function(instanceID)
@@ -1266,7 +1288,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getCells = function()
 	{
-		return this._instance.getCells();
+		return this._instance && this._instance.getCells();
 	}
 	
 	ObjectValue.prototype.areCellsLoaded = function()
@@ -1346,17 +1368,13 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._completeUpdate = function(newValue)
 	{
 		this.id = newValue.id;
-		if (newValue.getTypeName())
-			this.setTypeName(newValue.getTypeName());
-		if (newValue.getPrivilege())
-			this.setPrivilege(newValue.getPrivilege());
-		this.updateFromChangeData({instanceID: newValue.getInstanceID(), description: newValue.getDescription()});
+		this.instance(newValue.instance());
 		this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return this._instance.isEmpty();
+		return !this._instance || this._instance.isEmpty();
 	}
 
 	ObjectValue.prototype.clearValue = function()
@@ -1420,8 +1438,19 @@ cr.ObjectValue = (function() {
 	{
 		if (data.id)
 			this.id = data.id;
-			
-		this._instance.loadData(data);
+		
+		if (data.instance && data.instance())
+		{
+			if (this._instance)
+				this._instance.off("dataChanged.cr", this._instanceDataChanged);
+			this.instance(data.instance());
+		}
+		else
+		{
+			if (!this.instance())
+				this.instance(new cr.Instance());
+			this.instance().loadData(data);
+		}
 	}
 
 	/* Save a new version of this object.
@@ -1495,7 +1524,6 @@ cr.ObjectValue = (function() {
 	
 	function ObjectValue() {
 		cr.Value.call(this);
-		this._instance = new cr.Instance();
 	};
 	
 	return ObjectValue;
@@ -1505,6 +1533,7 @@ cr.signedinUser = new cr.ObjectValue();
 
 cr.createSignedinUser = function(instanceID, description)
 {
+	cr.signedinUser.instance(new cr.Instance());
 	cr.signedinUser.setInstanceID(instanceID);
 	cr.signedinUser.setDescription(description);
 	cr.signedinUser.promiseCellsFromCache(["_system access"])
@@ -1798,18 +1827,11 @@ cr.updateValues = function(initialData, sourceObjects)
 					
 							if (newValueID)
 							{
-								d.id = newValueID;
-						
 								/* Object Values have an instance ID as well. */
 								if (newInstanceID)
 									initialData[i].instanceID = newInstanceID;
 							
-								d.updateFromChangeData(initialData[i]);
-						
-								if (update)
-									update();
-						
-								d.triggerDataChanged();
+								d.update(newValueID, initialData, update);
 							}
 							else
 							{
@@ -2033,9 +2055,28 @@ cr.requestExperienceComment = function(experience, followerPath, question)
 							{
 								var newComments = cr.ObjectCell.prototype.copyValue(json.Comments);
 								var commentsCell = experience.getCell('Comments');
-								commentsCell.replaceValues([newComments]);
-								$(commentsCell).trigger('valueAdded.cr', newComments);
-								newData = newComments.getValue('Comment');
+								
+								var commentsValue = null;
+								for (var i = 0; i < commentsCell.data.length; ++i)
+								{
+									var oldData = commentsCell.data[i];
+									if (!oldData.id && oldData.isEmpty()) {
+										if (oldData.instance())
+											throw new Error("Assert failed: old comments has instance");
+										oldData.id = newComments.id;
+										oldData.instance(newComments.instance());
+										commentsValue = oldData;
+										break;
+									}
+								}
+								if (!commentsValue)
+								{
+									commentsCell.pushValue(newComments);
+									commentsValue = newComments;
+								}
+
+								$(commentsValue).trigger('dataChanged.cr', commentsValue);
+								newData = commentsValue.getValue('Comment');
 							}
 							else
 							{
