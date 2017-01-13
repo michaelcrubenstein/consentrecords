@@ -1250,7 +1250,7 @@ cr.ObjectValue = (function() {
 	
 	ObjectValue.prototype.getInstanceID = function()
 	{
-		return this._instance.getInstanceID();
+		return this._instance && this._instance.getInstanceID();
 	};
 	
 	ObjectValue.prototype.setInstanceID = function(instanceID)
@@ -1363,17 +1363,13 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype._completeUpdate = function(newValue)
 	{
 		this.id = newValue.id;
-		if (newValue.getTypeName())
-			this.setTypeName(newValue.getTypeName());
-		if (newValue.getPrivilege())
-			this.setPrivilege(newValue.getPrivilege());
-		this.updateFromChangeData({instanceID: newValue.getInstanceID(), description: newValue.getDescription()});
+		this.instance(newValue.instance());
 		this.triggerDataChanged();
 	}
 
 	ObjectValue.prototype.isEmpty = function()
 	{
-		return this._instance.isEmpty();
+		return !this._instance || this._instance.isEmpty();
 	}
 
 	ObjectValue.prototype.clearValue = function()
@@ -1437,8 +1433,19 @@ cr.ObjectValue = (function() {
 	{
 		if (data.id)
 			this.id = data.id;
-			
-		this._instance.loadData(data);
+		
+		if (data.instance && data.instance())
+		{
+			if (this._instance)
+				this._instance.off("dataChanged.cr", this._instanceDataChanged);
+			this.instance(data.instance());
+		}
+		else
+		{
+			if (!this.instance())
+				this.instance(new cr.Instance());
+			this.instance().loadData(data);
+		}
 	}
 
 	/* Save a new version of this object.
@@ -1512,7 +1519,6 @@ cr.ObjectValue = (function() {
 	
 	function ObjectValue() {
 		cr.Value.call(this);
-		this._instance = new cr.Instance();
 	};
 	
 	return ObjectValue;
@@ -1522,6 +1528,7 @@ cr.signedinUser = new cr.ObjectValue();
 
 cr.createSignedinUser = function(instanceID, description)
 {
+	cr.signedinUser.instance(new cr.Instance());
 	cr.signedinUser.setInstanceID(instanceID);
 	cr.signedinUser.setDescription(description);
 	cr.signedinUser.promiseCellsFromCache(["_system access"])
@@ -2043,9 +2050,28 @@ cr.requestExperienceComment = function(experience, followerPath, question)
 							{
 								var newComments = cr.ObjectCell.prototype.copyValue(json.Comments);
 								var commentsCell = experience.getCell('Comments');
-								commentsCell.replaceValues([newComments]);
-								$(commentsCell).trigger('valueAdded.cr', newComments);
-								newData = newComments.getValue('Comment');
+								
+								var commentsValue = null;
+								for (var i = 0; i < commentsCell.data.length; ++i)
+								{
+									var oldData = commentsCell.data[i];
+									if (!oldData.id && oldData.isEmpty()) {
+										if (oldData.instance())
+											throw new Error("Assert failed: old comments has instance");
+										oldData.id = newComments.id;
+										oldData.instance(newComments.instance());
+										commentsValue = oldData;
+										break;
+									}
+								}
+								if (!commentsValue)
+								{
+									commentsCell.pushValue(newComments);
+									commentsValue = newComments;
+								}
+
+								$(commentsValue).trigger('dataChanged.cr', commentsValue);
+								newData = commentsValue.getValue('Comment');
 							}
 							else
 							{
