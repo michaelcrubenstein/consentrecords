@@ -893,7 +893,7 @@ class api:
                         if oldValue.hasNewValue(c):
                             container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
                             item = oldValue.updateValue(c, transactionState)
-                            instanceID = item.referenceValue and item.referenceValue.id
+                            instanceID = item.referenceValue_id
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -922,7 +922,7 @@ class api:
                             instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
-                            instanceID = item.referenceValue and item.referenceValue.id
+                            instanceID = item.referenceValue_id
                             
                         if item.isDescriptor:
                             descriptionQueue.append(container)
