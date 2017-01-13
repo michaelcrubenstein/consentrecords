@@ -1097,7 +1097,7 @@ class api:
                                 .select_related('parent')\
                                 .select_related('description')\
                                 .select_related('typeID__description')\
-                                .get(pk=p.parent.id)
+                                .get(pk=p.parent_id)
                                 
                 fieldData = p.typeID.getParentReferenceFieldData()
             
