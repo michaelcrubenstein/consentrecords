@@ -1175,7 +1175,6 @@ class api:
 
         return sourceFilter.select_related(instanceDataPath + 'typeID')\
                            .select_related(instanceDataPath + 'typeID__description')\
-                           .select_related(instanceDataPath + 'parent')\
                            .select_related(instanceDataPath + 'description')\
                            .prefetch_related(Prefetch(instanceDataPath + 'value_set',
                                                         queryset=valueQueryset,
