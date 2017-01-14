@@ -1414,12 +1414,16 @@ terms = Terms()
 class FieldsDataDictionary:
     def __init__(self, typeInstances=[], language=None):
         self.language = language
+        self._dict = None
         self._dict = dict((lambda i:(i, i.getFieldsData(language)))(self.getType(t)) for t in typeInstances)
     
     def getType(self, t):
         if isinstance(t, str):
-            return next((key for key in self._dict.keys() if key.id == t),
-                         Instance.objects.get(pk=t))
+            if self._dict:
+                return next((key for key in self._dict.keys() if key.id == t),
+                             Instance.objects.get(pk=t))
+            else:
+                return Instance.objects.get(pk=t)
         else:
             return t
     
