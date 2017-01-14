@@ -1182,7 +1182,6 @@ class api:
             
         
     def getData(user, path, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
         try:
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
