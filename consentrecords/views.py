@@ -1192,8 +1192,6 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
             
-            language = data.get('language', None)
-
             userInfo=UserInfo(user)
             
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
@@ -1207,7 +1205,8 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
-            typeset = frozenset([x.typeID for x in uuObjects])
+            language = data.get('language', None)
+            typeset = frozenset([x.typeID_id for x in uuObjects])
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             
             p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
