@@ -1433,6 +1433,8 @@ class UserInfo:
         self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
         self._findValueFilter = None
         self._readValueFilter = None
+        self._logs = []
+        self.log('Create UserInfo')
     
     @property    
     def is_administrator(self):
@@ -1492,3 +1494,5 @@ class UserInfo:
         else:
             return self.instance.administerFilter(resultSet)
 
+    def log(self, s):
+        self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
