@@ -1362,7 +1362,14 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.updateFromChangeData = function(changeData)
 	{
-		this._instance.updateFromChangeData(changeData);
+		if (changeData.instanceID && crp.getInstance(changeData.instanceID))
+			this.instance(crp.getInstance(changeData.instanceID));
+		else
+		{
+			var instance = new cr.Instance();
+			instance.loadData(changeData);
+			this.instance(crp.pushInstance(instance));
+		}
 	}
 	
 	ObjectValue.prototype._completeUpdate = function(newValue)
