@@ -650,10 +650,10 @@ cr.Value = (function() {
 	{
 		this.id = newValueID;
 
-		this.updateFromChangeData(initialData[i]);
+		this.updateFromChangeData(initialData);
 
-		if (update)
-			update();
+		if (done)
+			done();
 
 		this.triggerDataChanged();
 	}
@@ -1831,7 +1831,7 @@ cr.updateValues = function(initialData, sourceObjects)
 								if (newInstanceID)
 									initialData[i].instanceID = newInstanceID;
 							
-								d.update(newValueID, initialData, update);
+								d.update(newValueID, initialData[i], update);
 							}
 							else
 							{
