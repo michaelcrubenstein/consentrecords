@@ -103,13 +103,4 @@ pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>S
 pathparser.selectAllObjects('Organization[_name="Boston Public Schools"]>Sites>Site[Offerings>Offering[Service=%s]]'%\
     pathparser.selectAllObjects('Service[_name="Grade 9"]')[0].id)
     
-# Test api.createInstance by creating an Organization with a name.
-# Test api.updateValues by editing the name of an Organization.
-# Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
-# Test api.updateValues by picking a new user for a group.
-# Test api.getConfiguration by getting the configuration of an Organization
-# Test api.getData with a string by displaying an Organization Name Translation
-# Test api.deleteInstances by deleting an Organization with a name.
-# Test api.deleteValue by deleting a user from a group.
-
 print ("Test complete")

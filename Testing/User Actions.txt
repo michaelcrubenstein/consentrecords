@@ -1,0 +1,8 @@
+1. From not signed in:
+	1a. Go to URL/for/michaelcrubenstein@gmail.com
+	1b. Click Done
+	1c. Click in Search Input Box
+	1d. Type "Grade"
+	1e. Pick Grade 8
+	1f. Choose a user
+	1g. Click Done
