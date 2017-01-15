@@ -322,7 +322,7 @@ class Instance(dbmodels.Model):
              'instanceID': self.id, 
              'description': self.getDescription(language),
              'parentID': self.parent_id,
-             'typeName': self.typeID.getDescription()}
+             'typeName': userInfo.getTypeName(self.typeID_id)}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             d["privilege"] = privilege.getDescription()
@@ -1428,7 +1428,7 @@ class FieldsDataDictionary:
             return t
     
     def __getitem__(self, t):
-        typeInstance = getType(t)
+        typeInstance = self.getType(t)
                             
         if typeInstance in self._dict:
             return self._dict[typeInstance]
@@ -1444,6 +1444,7 @@ class UserInfo:
         self._readValueFilter = None
         self._logs = []
         self.log('Create UserInfo')
+        self.typeNames = {}
     
     @property    
     def is_administrator(self):
@@ -1505,3 +1506,11 @@ class UserInfo:
 
     def log(self, s):
         self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
+        
+    def getTypeName(self, typeID):
+        if typeID in self.typeNames:
+        	return self.typeNames[typeID]
+        else:
+        	description = Instance.objects.get(pk=typeID).description.text
+        	self.typeNames[typeID] = description
+        	return description
