@@ -356,15 +356,15 @@ class Instance(dbmodels.Model):
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
-    def getParentReferenceFieldData(self):
-        name = self.description.text
+    def getParentReferenceFieldData(userInfo, id):
+        name = userInfo.getTypeName(id)
         fieldData = {"name" : name,
-                     "nameID" : self.id,
+                     "nameID" : id,
                      "dataType" : TermNames.objectEnum,
                      "dataTypeID" : terms.objectEnum.id,
                      "capacity" : TermNames.uniqueValueEnum,
                      "ofKind" : name,
-                     "ofKindID" : self.id}
+                     "ofKindID" : id}
         return fieldData
     
     # Returns a dictionary of information about a field with this configuration.
