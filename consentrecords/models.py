@@ -322,7 +322,7 @@ class Instance(dbmodels.Model):
              'instanceID': self.id, 
              'description': self.getDescription(language),
              'parentID': self.parent_id,
-             'typeName': self.typeID.getDescription()}
+             'typeName': userInfo.getTypeName(self.typeID_id)}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             d["privilege"] = privilege.getDescription()
@@ -356,15 +356,15 @@ class Instance(dbmodels.Model):
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
-    def getParentReferenceFieldData(self):
-        name = self.description.text
+    def getParentReferenceFieldData(userInfo, id):
+        name = userInfo.getTypeName(id)
         fieldData = {"name" : name,
-                     "nameID" : self.id,
+                     "nameID" : id,
                      "dataType" : TermNames.objectEnum,
                      "dataTypeID" : terms.objectEnum.id,
                      "capacity" : TermNames.uniqueValueEnum,
                      "ofKind" : name,
-                     "ofKindID" : self.id}
+                     "ofKindID" : id}
         return fieldData
     
     # Returns a dictionary of information about a field with this configuration.
@@ -1414,12 +1414,21 @@ terms = Terms()
 class FieldsDataDictionary:
     def __init__(self, typeInstances=[], language=None):
         self.language = language
-        self._dict = dict((t, t.getFieldsData(language)) for t in typeInstances)
+        self._dict = None
+        self._dict = dict((lambda i:(i, i.getFieldsData(language)))(self.getType(t)) for t in typeInstances)
     
-    def __getitem__(self, typeInstance):
-        if isinstance(typeInstance, str):
-            typeInstance = next((key for key in self._dict.keys() if key.id == typeInstance),
-                                Instance.objects.get(pk=typeInstance))
+    def getType(self, t):
+        if isinstance(t, str):
+            if self._dict:
+                return next((key for key in self._dict.keys() if key.id == t),
+                             Instance.objects.get(pk=t))
+            else:
+                return Instance.objects.get(pk=t)
+        else:
+            return t
+    
+    def __getitem__(self, t):
+        typeInstance = self.getType(t)
                             
         if typeInstance in self._dict:
             return self._dict[typeInstance]
@@ -1433,6 +1442,9 @@ class UserInfo:
         self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
         self._findValueFilter = None
         self._readValueFilter = None
+        self._logs = []
+        self.log('Create UserInfo')
+        self.typeNames = {}
     
     @property    
     def is_administrator(self):
@@ -1492,3 +1504,13 @@ class UserInfo:
         else:
             return self.instance.administerFilter(resultSet)
 
+    def log(self, s):
+        self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
+        
+    def getTypeName(self, typeID):
+        if typeID in self.typeNames:
+        	return self.typeNames[typeID]
+        else:
+        	description = Instance.objects.get(pk=typeID).description.text
+        	self.typeNames[typeID] = description
+        	return description

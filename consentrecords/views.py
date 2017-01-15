@@ -400,7 +400,7 @@ def acceptFollower(request, userPath=None):
             users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
-                if user.typeID != terms.user:
+                if user.typeID_id != terms.user.id:
                     return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
             else:
                 return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
@@ -412,7 +412,7 @@ def acceptFollower(request, userPath=None):
         objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
-            if follower.typeID == terms.user:
+            if follower.typeID_id != terms.user.id:
                 followerField = terms.user
             else:
                 followerField = terms.group
@@ -483,10 +483,10 @@ def requestAccess(request):
             else:
                 userInfo = UserInfo(request.user)
                 objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                if len(objs) > 0 and objs[0].typeID == terms.user:
+                if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                     following = objs[0]
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(objs) > 0 and objs[0].typeID == terms.user:
+                    if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                         follower = objs[0]
                         fieldTerm = terms['_access request']
                         ars = following.value_set.filter(field=fieldTerm,
@@ -686,12 +686,12 @@ def requestExperienceComment(request):
             else:
                 userInfo = UserInfo(request.user)
                 objs = pathparser.selectAllObjects(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
-                if len(objs) > 0 and objs[0].typeID == terms['More Experience']:
+                if len(objs) > 0 and objs[0].typeID_id == terms['More Experience'].id:
                     experience = objs[0]
                     sourcePath = experience.parent
                     experienceValue = sourcePath.value_set.get(referenceValue=experience)
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(objs) > 0 and objs[0].typeID == terms['Path']:
+                    if len(objs) > 0 and objs[0].typeID_id == terms['Path'].id:
                         follower = objs[0]
                         with transaction.atomic():
                             transactionState = TransactionState(request.user)
@@ -893,7 +893,7 @@ class api:
                         if oldValue.hasNewValue(c):
                             container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
                             item = oldValue.updateValue(c, transactionState)
-                            instanceID = item.referenceValue and item.referenceValue.id
+                            instanceID = item.referenceValue_id
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -922,7 +922,7 @@ class api:
                             instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
-                            instanceID = item.referenceValue and item.referenceValue.id
+                            instanceID = item.referenceValue_id
                             
                         if item.isDescriptor:
                             descriptionQueue.append(container)
@@ -1018,7 +1018,7 @@ class api:
                 p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
             else:
                 m = list(itertools.chain.from_iterable(m))
-                typeset = frozenset([v.referenceValue.typeID for v in m])
+                typeset = frozenset([v.referenceValue.typeID_id for v in m])
                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                 p = map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m)
                             
@@ -1086,26 +1086,24 @@ class api:
                 .select_related('referenceValue__description')
     
     def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = fieldsDataDictionary[uuObject.typeID]
+        fieldsData = fieldsDataDictionary[uuObject.typeID_id]
         cells = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
     
         if 'parents' in fields:
             p = uuObject
             while p.parent:
                 p = Instance.objects\
-                                .select_related('typeID')\
                                 .select_related('parent')\
                                 .select_related('description')\
-                                .select_related('typeID__description')\
                                 .get(pk=p.parent_id)
                                 
-                fieldData = p.typeID.getParentReferenceFieldData()
+                fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
             
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
                 if fieldData["name"] in fields:
                     vs = api._getValueQuerySet(p.value_set, userInfo)
-                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID], userInfo, language)
+                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
                     
                 cells.append({"field": fieldData, "data": [parentData]})
         
@@ -1117,7 +1115,7 @@ class api:
             else:
                 saObject = None
             if saObject:
-                fieldData = terms.systemAccess.getParentReferenceFieldData()
+                fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
                 parentData = [{'id': None, 
                               'instanceID' : saObject.id,
                               'description': saObject.getDescription(language),
@@ -1173,17 +1171,13 @@ class api:
                                   queryset=subValueQueryset,
                                   to_attr='subValues'))
 
-        return sourceFilter.select_related(instanceDataPath + 'typeID')\
-                           .select_related(instanceDataPath + 'typeID__description')\
-                           .select_related(instanceDataPath + 'parent')\
-                           .select_related(instanceDataPath + 'description')\
+        return sourceFilter.select_related(instanceDataPath + 'description')\
                            .prefetch_related(Prefetch(instanceDataPath + 'value_set',
                                                         queryset=valueQueryset,
                                                         to_attr='values'))
             
         
     def getData(user, path, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
         try:
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
@@ -1194,8 +1188,6 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
             
-            language = data.get('language', None)
-
             userInfo=UserInfo(user)
             
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
@@ -1209,7 +1201,8 @@ class api:
             elif start > 0:
                 uuObjects = uuObjects[start:]
                                                             
-            typeset = frozenset([x.typeID for x in uuObjects])
+            language = data.get('language', None)
+            typeset = frozenset([x.typeID_id for x in uuObjects])
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             
             p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
