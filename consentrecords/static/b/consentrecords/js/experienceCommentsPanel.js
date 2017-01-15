@@ -489,82 +489,89 @@ var ExperienceCommentsPanel = (function() {
 				});
 		}
 			
-		var newQuestionDiv = panel2Div.append('section')
-			.classed('new-comment', true);
-		var newQuestionInput = newQuestionDiv.append('textarea')
-			.attr('rows', 3);
-		newQuestionInput.attr('placeholder', 'New Question');
+		if (cr.signedinUser.getInstanceID())
+		{
+			var newQuestionDiv = panel2Div.append('section')
+				.classed('new-comment', true);
+			var newQuestionInput = newQuestionDiv.append('textarea')
+				.attr('rows', 3);
+			newQuestionInput.attr('placeholder', 'New Question');
 
-		var askButton = newQuestionDiv.append('button')
-			.classed('post site-active-div', true)
-			.text('Ask')
-			.on('click', function()
-				{
-					var newQuestion = newQuestionInput.node().value;
-					if (newQuestion)
+			var askButton = newQuestionDiv.append('button')
+				.classed('post site-active-div', true)
+				.text('Ask')
+				.on('click', function()
 					{
-						if (prepareClick('click', 'Ask Question'))
+						var newQuestion = newQuestionInput.node().value;
+						if (newQuestion)
 						{
-							try
+							if (prepareClick('click', 'Ask Question'))
 							{
-								showClickFeedback(this);
-								_this.askQuestion(newQuestion)
-									.then(function()
-										{
-											newQuestionInput.node().value = '';
-											unblockClick();
-										},
-										cr.syncFail);
-							}
-							catch(err)
-							{
-								cr.syncFail(err);
+								try
+								{
+									showClickFeedback(this);
+									_this.askQuestion(newQuestion)
+										.then(function()
+											{
+												newQuestionInput.node().value = '';
+												unblockClick();
+											},
+											cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
 							}
 						}
-					}
-				});
+					});
 			
-		var commentPromptsDiv = panel2Div.append('section')
-			.classed('comment-prompts', true);
+			var commentPromptsDiv = panel2Div.append('section')
+				.classed('comment-prompts', true);
 			
-		var resizeQuestionBoxes = function()
-			{
-				var newQuestionWidth = $(newQuestionDiv.node()).width() - 
-					$(postButton.node()).outerWidth(true) -
-					($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
-				$(newQuestionInput.node()).width(newQuestionWidth);
-				commentPromptsDiv.selectAll('div')
-					.style("width", function(d)
-						{
-							/* extra width is left-padding + right-padding + 1 */
-							var extraWidth = 17;
-							return (getTextWidth(d.getDatum("_text"), 
-												 d3.select(this).style("font"))+extraWidth).toString() + "px";
-						});
-			}
+			var resizeQuestionBoxes = function()
+				{
+					var newQuestionWidth = $(newQuestionDiv.node()).width() - 
+						($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
+					var askWidth = $(askButton.node()).outerWidth(true);
+					if (postButton && $(postkButton.node()).outerWidth(true) > askWidth)
+						askWidth = $(postkButton.node()).outerWidth(true);
+					newQuestionWidth -= askWidth;
+				
+					$(newQuestionInput.node()).width(newQuestionWidth);
+					commentPromptsDiv.selectAll('div')
+						.style("width", function(d)
+							{
+								/* extra width is left-padding + right-padding + 1 */
+								var extraWidth = 17;
+								return (getTextWidth(d.getDatum("_text"), 
+													 d3.select(this).style("font"))+extraWidth).toString() + "px";
+							});
+				}
 			
-		crp.promise({path:  '"Comment Prompt"'})
-		.then(function(prompts)
-			{
-				commentPromptsDiv.selectAll('div')
-					.data(prompts)
-					.enter()
-					.append('div')
-					.classed('site-active-text', true)
-					.text(function(d) 
-						{ return d.getDatum("_text"); })
-					.on('click', function(d)
-						{
-							newQuestionInput.node().value = '';
-							newQuestionInput.node().value = d.getDatum("_text");
-							newQuestionInput.node().focus();
-							var textWidth = newQuestionInput.node().value.length;
-							newQuestionInput.node().setSelectionRange(textWidth, textWidth)
-						});
-				resizeQuestionBoxes();
-			}, cr.asyncFail)		
+			crp.promise({path:  '"Comment Prompt"'})
+			.then(function(prompts)
+				{
+					commentPromptsDiv.selectAll('div')
+						.data(prompts)
+						.enter()
+						.append('div')
+						.classed('site-active-text', true)
+						.text(function(d) 
+							{ return d.getDatum("_text"); })
+						.on('click', function(d)
+							{
+								newQuestionInput.node().value = '';
+								newQuestionInput.node().value = d.getDatum("_text");
+								newQuestionInput.node().focus();
+								var textWidth = newQuestionInput.node().value.length;
+								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
+							});
+					resizeQuestionBoxes();
+				}, cr.asyncFail)		
 							
-		$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
+			$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
+		}
 			
 		$(panel2Div.node()).on('resize.cr', resizeDetail);	
 						
