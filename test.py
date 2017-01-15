@@ -1,17 +1,18 @@
 import django; django.setup()
 import json
+from django.contrib.auth.models import AnonymousUser
 
 from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords.views import api
 
-s = terms.term
 print ('##################################')
 print ('# Test 1 ')
+print ('# Tests getting information about a term')
 print ('##################################')
-print(s._getValues())
-print(s._descriptors)
-print(s._getDescription(s.typeID._descriptors))
+a = ("_term[_name=_term]")
+print (str(api.getData(AnonymousUser(), a, {}).content))
+
 
 print ('##################################')
 print ('# Test 2 ')
@@ -19,7 +20,7 @@ print ('##################################')
 us = terms['_user']
 u = us.typeInstances.all()[0]
 
-me = terms['More Experiences']
+me = terms['Path']
 v = u.getSubValue(me)
 print(v.referenceValue)
 print(v.referenceValue.getDescription())
@@ -43,46 +44,46 @@ print ('##################################')
 print ('# Test 6 ')
 print ('##################################')
 a = ('Organization')
-print(pathparser.selectAllDescriptors(a))
+print(pathparser.selectAllObjects(a))
 
 print ('##################################')
 print ('# Test 7 ')
 print ('##################################')
 a = ("#"+me.id)
-print(pathparser.selectAllDescriptors(a))
+print(pathparser.selectAllObjects(a))
 
 print ('##################################')
 print ('# Test 8 ')
 print ('##################################')
 a = ("#"+me.id+">_configuration")
-print(pathparser.selectAllDescriptors(a))
+print(pathparser.selectAllObjects(a))
 
 print ('##################################')
 print ('# Test 9 ')
 print ('##################################')
 a = ("#"+me.id+">_configuration[_name=Boston]")
-print(pathparser.selectAllDescriptors(a))
+print(pathparser.selectAllObjects(a))
 
 print ('##################################')
 print ('# Test 10 ')
 print ('##################################')
 a = ("#"+me.id+">_configuration[_name=Boston]>_field:not([_name^=M])")
-print(pathparser.selectAllDescriptors(a))
+print(pathparser.selectAllObjects(a))
 
 print ('##################################')
 print ('# Test 11 ')
 print ('# Tests getting data that contains a string and and object ')
 print ('##################################')
-a = ("Organization>_name[_text=BYCF]")
-dd = pathparser.selectAllDescriptors(a)
+a = ("Organization[_name=BCYF]")
+dd = pathparser.selectAllObjects(a)
 print(dd)
-print (str(api.getData(None, {'path': '#'+dd[0]['instanceID']} ).content))
+print (str(api.getData(AnonymousUser(), '#'+dd[0].id, {} ).content))
 
 print ('##################################')
 print ('# Test 11 ')
 print ('# Tests selectAll on a type name. ')
 print ('##################################')
-print (json.loads(api.selectAll(None, {'path': '_user'}).content.decode('utf-8')))
+print (json.loads(api.selectAll(AnonymousUser(), {'path': '_user'}).content.decode('utf-8')))
 
 pathparser.selectAllObjects('Site[_name^=Jackson]')
 pathparser.selectAllObjects('"Service Domain"')
