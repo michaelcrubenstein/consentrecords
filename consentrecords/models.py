@@ -197,7 +197,7 @@ class Instance(dbmodels.Model):
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
         for v in vs:
-            if v.field not in terms.securityFields or cache.value:
+            if v.field_id not in terms.securityFieldIDs or cache.value:
                 fieldID = v.field_id
                 if fieldID not in values:
                     values[fieldID] = [v]
@@ -335,7 +335,7 @@ class Instance(dbmodels.Model):
             # If there is a reference value, put in a duple with the referenceValue name and id.
             # Otherwise, put in the string value.
             if v.referenceValue:
-                d[v.field] = (v.referenceValue.name_values[0].stringValue, v.referenceValue.id)
+                d[v.field] = (v.referenceValue.description.text, v.referenceValue.id)
             else:
                 d[v.field] = v.stringValue
         return d
@@ -345,13 +345,9 @@ class Instance(dbmodels.Model):
     # the instance referenced by self from the key field.
     # Self is an instance of type field.
     def _getSubValueReferences(self):
-        vs2 = Value.objects.filter(field=terms.name,
-                                   deleteTransaction__isnull=True)
         vs1 = self.value_set.filter(deleteTransaction__isnull=True)\
                             .select_related('referenceValue')\
-                            .prefetch_related(Prefetch('referenceValue__value_set',
-                                                       queryset=vs2,
-                                                       to_attr='name_values'))
+                            .select_related('referenceValue__description')
         return Instance._sortValueDataByField(vs1)                                               
     
     # For a parent field when getting data, construct this special field record
@@ -420,18 +416,13 @@ class Instance(dbmodels.Model):
     
     # Returns the fieldsData from the database for self, which is a term.
     def getFieldsData(self, language=None):
-        vs2 = Value.objects.filter(field=terms.name,
-                            deleteTransaction__isnull=True)
-
         vs1 = Value.objects.filter(deleteTransaction__isnull=True)\
                             .select_related('field')\
                             .select_related('referenceValue')\
-                            .prefetch_related(Prefetch('referenceValue__value_set',
-                                                       queryset=vs2,
-                                                       to_attr='name_values'))
+                            .select_related('referenceValue__description')
 
-        fields = Instance.objects.filter(typeID=terms.field, deleteTransaction__isnull=True)\
-                                 .filter(parent__parent=self)\
+        configuration = self.children.filter(typeID=terms.configuration, deleteTransaction__isnull=True)[0]
+        fields = configuration.children.filter(typeID=terms.field, deleteTransaction__isnull=True)\
                                  .prefetch_related(Prefetch('value_set', queryset=vs1, to_attr='values'))\
                                  .order_by('parentValue__position')
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
@@ -1281,6 +1272,7 @@ class Terms():
             self.publicAccess = Terms.getOrCreateTerm(TermNames.publicAccess, transactionState)
             self.primaryAdministrator = Terms.getOrCreateTerm(TermNames.primaryAdministrator, transactionState)
             self.securityFields = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
+            self.securityFieldIDs = list(map(lambda f: f.id, self.securityFields))
         except Instance.DoesNotExist: pass
         except Value.DoesNotExist: pass
     
@@ -1357,6 +1349,8 @@ class Terms():
             x = Terms.getName()
         elif name == 'securityFields': 
             x = [self.accessRecord, self.systemAccess, self.defaultAccess, self.specialAccess, self.publicAccess, self.primaryAdministrator, self.accessRequest]
+        elif name == 'securityFieldIDs': 
+            x = list(map(lambda t: t.id, self.securityFields))
         elif name in ['textEnum', 'firstTextEnum', 'countEnum']:
             x = Terms.getNamedEnumerator(self.descriptorType, type.__getattribute__(TermNames, name))
         elif name in ['objectEnum', 'stringEnum', 'translationEnum']:
@@ -1509,8 +1503,8 @@ class UserInfo:
         
     def getTypeName(self, typeID):
         if typeID in self.typeNames:
-        	return self.typeNames[typeID]
+            return self.typeNames[typeID]
         else:
-        	description = Instance.objects.get(pk=typeID).description.text
-        	self.typeNames[typeID] = description
-        	return description
+            description = Instance.objects.get(pk=typeID).description.text
+            self.typeNames[typeID] = description
+            return description
