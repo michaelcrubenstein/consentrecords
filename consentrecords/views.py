@@ -1081,7 +1081,6 @@ class api:
     def _getValueQuerySet(vs, userInfo):
         return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
                 .order_by('position')\
-                .select_related('field')\
                 .select_related('referenceValue')\
                 .select_related('referenceValue__description')
     
@@ -1091,9 +1090,8 @@ class api:
     
         if 'parents' in fields:
             p = uuObject
-            while p.parent:
+            while p.parent_id:
                 p = Instance.objects\
-                                .select_related('parent')\
                                 .select_related('description')\
                                 .get(pk=p.parent_id)
                                 
@@ -1162,9 +1160,7 @@ class api:
             # The distinct is required to eliminate duplicate subValues.
             subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
                                       instance__referenceValues__deleteTransaction__isnull=True,
-                                      instance__referenceValues__field__value__deleteTransaction__isnull=True,
-                                      instance__referenceValues__field__value__field=terms.name,
-                                      instance__referenceValues__field__value__stringValue__in=fieldNames)\
+                                      instance__referenceValues__field__description__text__in=fieldNames)\
                 .distinct()
             subValueQueryset = api._getValueQuerySet(subValues, userInfo)
             valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
