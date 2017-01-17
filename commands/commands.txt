@@ -325,6 +325,12 @@ path='Service'
 q = QueryDict('fields=%5B%5D')
 profile.run('api.getData(user, path, q)')
 
+#path is to the user instance of the administrator
+from django.http import QueryDict
+path='#b3fb89e4eed844cb8a0d639a455b6ac7'
+q = QueryDict('fields=%5B%22More%20Experience%22%2C%22parents%22%5D')
+profile.run('api.getData(user, path, q)')
+
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
 path='"More Experiences"["More Experience"[Service="4576591a2f104927896b93e191bbf374"|Offering>Service="4576591a2f104927896b93e191bbf374"]]'
