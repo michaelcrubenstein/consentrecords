@@ -1935,6 +1935,12 @@ var SitePanel = (function () {
 				});
 	}
 	
+	SitePanel.prototype.hideNow = function()
+	{
+		$(this.node()).trigger("hiding.cr")
+					  .remove();
+	}
+	
 	SitePanel.prototype.hideRightEvent = function()
 	{
 		if (prepareClick('click', 'Close Right'))
@@ -1948,9 +1954,17 @@ var SitePanel = (function () {
 		d3.event.preventDefault();
 	}
 	
-	SitePanel.prototype.appendDeleteControls = function(buttons)
+	SitePanel.prototype.appendDeleteControls = function(containers)
 	{
-		return buttons.append("button")
+		containers.each(function(e)
+			{
+				$(this).on('resize.cr', function(eventObject)
+					{
+						eventObject.stopPropagation();
+					});
+			});
+
+		return containers.append("button")
 			.classed("delete-dial glyphicon glyphicon-minus-sign", true)
 			.on("click", function(e)
 			{
@@ -2391,132 +2405,6 @@ var PanelSearchView = (function() {
 	}
 	
 	return PanelSearchView;
-})();
-
-/* A div that can be shown or hidden to the right. */
-var HidableDiv = (function()
-{
-	HidableDiv.prototype._width = null;
-	HidableDiv.prototype.duration = 400;
-	HidableDiv.prototype.$div = null;
-	
-	HidableDiv.prototype.show = function(done, duration)
-	{
-		duration = duration !== undefined ? duration : this.duration;
-		
-		this.$div.css('display', '');
-		this.$div.animate({left: 0, width: this._width}, duration, done);
-	}
-	
-	HidableDiv.prototype.hide = function(done)
-	{
-		return this.$div.animate({left: this._width, width: 0}, this.duration, function()
-			{
-				$(this).css('display', 'none');
-				done();
-			})
-			.promise();
-	}
-	
-	HidableDiv.prototype.height = function(newHeight)
-	{
-		return (newHeight === undefined) ? this.$div.height() : this.$div.height(newHeight); 
-	}
-	
-	HidableDiv.prototype.isVisible = function()
-	{
-		return this.$div.css('display') != 'none';
-	}
-	
-	HidableDiv.prototype.value = function(newValue)
-	{
-		if (newValue === undefined)
-		{
-			return this.$div.text();
-		}
-		else
-		{
-			this.$div.text(newValue);
-			this.$div.width('auto');
-			this._width = this.$div.width();
-			return this;
-		}
-	}
-	
-	function HidableDiv(div, startDisplay, duration)
-	{
-		if (div)
-		{
-			var _this = this;
-			startDisplay = startDisplay !== undefined ? startDisplay : '';
-			duration = duration !== undefined ? duration : 400;
-		
-			this.$div = $(div);
-			this.duration = duration;
-			_this.$div.css('display', startDisplay);
-		
-			setTimeout(function()
-				{
-					if (_this.$div.width())
-						_this._width = _this.$div.width();
-					if (startDisplay === 'none')
-						_this.$div.width(0);
-				}, 0);
-		}
-	}
-	
-	return HidableDiv;
-})();
-
-/* A chevron that can be shown or hidden to the right. */
-var HidingChevron = (function () {
-	HidingChevron.prototype = new HidableDiv();
-	
-	function HidingChevron(itemDiv, doneHide)
-	{
-		var _this = this;
-		var endDateChevron = appendRightChevrons(itemDiv);
-		
-		HidableDiv.call(this, endDateChevron.node(), 'none', 200);
-		this._width = this.$div.height();
-		
-		endDateChevron.on('click', function()
-			{
-				if (prepareClick('click', 'end date chevron'))
-				{
-					_this.hide(doneHide);
-				}
-			});
-	}
-	
-	return HidingChevron;
-})();
-
-var CellToggleText = (function()
-{
-	CellToggleText.prototype.span = null;
-	
-	CellToggleText.prototype.enable = function()
-	{
-		this.span.classed('site-active-text', true)
-			.classed('site-disabled-text', false);
-	}
-	
-	CellToggleText.prototype.disable = function()
-	{
-		this.span.classed('site-active-text', false)
-			.classed('site-disabled-text', true);
-	}
-	
-	function CellToggleText(container, text, onClick)
-	{
-		this.span = container.append('span')
-			.classed('in-cell-button site-active-text', true)
-			.on('click', onClick)
-			.text(text);
-	}
-	
-	return CellToggleText;
 })();
 
 var Dimmer = (function () {
@@ -3357,7 +3245,7 @@ function showPickObjectPanel(cell, oldData) {
 							   an item that was added to the cell but not saved;
 							   a placeholder or a previously picked value.
 							 */
-							oldData.updateFromChangeData({instanceID: d.getInstanceID(), description: d.getDescription()});
+							oldData.instance(d.instance());
 							oldData.triggerDataChanged();
 							successFunction();
 						}

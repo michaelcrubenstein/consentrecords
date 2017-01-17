@@ -594,7 +594,7 @@ var DateWheel = (function () {
 		}
 		else if (typeof(newValue) != "string")
 		{
-			throw ("Runtime Error: unrecognized data for value: {0}".format(newValue));
+			throw new Error("Runtime Error: unrecognized data for value: {0}".format(newValue));
 		}
 		else
 		{
@@ -687,24 +687,39 @@ var DateWheel = (function () {
 		var bottomShade = datePickerContainer.append('div')
 			.classed('bottomShade', true);
 		
+		function unClear()
+		{
+			if (_this.isClear)
+			{
+				_this.isClear = false;
+				_this.onChange();
+				$(_this).trigger('change');
+			}
+		}
 		$(this.yearNode).scroll(this._getAlignmentFunction(function()
-			{ 
+			{
+				_this.isClear = false;
 				_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
 				_this._onYearChanged();
 				$(_this).trigger('change');
 			}));
 		$(this.monthNode).scroll(this._getAlignmentFunction(function() 
 			{ 
+				_this.isClear = false;
 				_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
 				_this._onMonthChanged();
 				$(_this).trigger('change');
 			}));
 		$(this.dayNode).scroll(this._getAlignmentFunction(function()
 			{ 
+				_this.isClear = false;
 				_this.oldDay = _this._getSelectedIndex(_this.dayNode);
 				_this.onChange(); 
 				$(_this).trigger('change');
 			}));
+		$(this.yearNode).click(unClear);
+		$(this.monthNode).click(unClear);
+		$(this.dayNode).click(unClear);
 		
 		var months = Date.CultureInfo.monthNames;
 		this.monthPickerList.selectAll('li')

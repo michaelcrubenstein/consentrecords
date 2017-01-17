@@ -516,11 +516,14 @@
 			var orgSection = d3.select(this);
 			var successFunction = function(newInstances)
 			{
-				var field = {name: "Organization",
+				var field = {
+							  id: "Organization", 
+							  name: "Organization",
 							  dataType: "_object",
 							  capacity: "_multiple values",
 							  };
-				var cell = cr.createCell(field);
+				crp.pushField(field);
+				var cell = cr.createCell("Organization");
 				cell.setup(null);
 				
 				/* Default orgSection style is "none", so override it if there are organizations to show. */
