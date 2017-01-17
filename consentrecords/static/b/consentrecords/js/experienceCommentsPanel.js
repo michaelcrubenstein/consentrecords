@@ -534,8 +534,8 @@ var ExperienceCommentsPanel = (function() {
 					var newQuestionWidth = $(newQuestionDiv.node()).width() - 
 						($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
 					var askWidth = $(askButton.node()).outerWidth(true);
-					if (postButton && $(postkButton.node()).outerWidth(true) > askWidth)
-						askWidth = $(postkButton.node()).outerWidth(true);
+					if (postButton && $(postButton.node()).outerWidth(true) > askWidth)
+						askWidth = $(postButton.node()).outerWidth(true);
 					newQuestionWidth -= askWidth;
 				
 					$(newQuestionInput.node()).width(newQuestionWidth);
