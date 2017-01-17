@@ -1,7 +1,3 @@
-		/* Add the functionality to a javascript object to attach event targets and
-			trigger events on them. This allows events to be fired on model objects.
-		 */
-
 var Queue = (function () {
 
     Queue.prototype.autorun = true;
@@ -56,21 +52,17 @@ var Queue = (function () {
 
 var CRP = (function() {
 	CRP.prototype.instances = {};	/* keys are ids, values are objects. */
-	CRP.prototype.paths = {};
-	CRP.prototype.promises = {};
-	CRP.prototype.queue = null;
+	CRP.prototype.promises = {};	/* keys are paths, values are promises */
+	CRP.prototype.fields = {};		/* keys are field ids, values are field data */
 	
     function CRP() {
-    	this.instances = {};
-    	this.paths = {};
-        this.queue = new Queue(true); //initialize the queue
+    	this.clear();
     };
     
     CRP.prototype.clear = function() {
     	this.instances = {};
-    	this.paths = {};
     	this.promises = {};
-        this.queue = new Queue(true); //initialize the queue
+    	this.fields = {};
     };
     
     /* Get an instance that has been loaded, or undefined if it hasn't been loaded. */
@@ -146,6 +138,29 @@ var CRP = (function() {
 		var promise = result.promise();
 		this.promises[args.path] = promise;
 		return promise;
+	}
+	
+	CRP.prototype.field = function(id)
+	{
+    	if (!id)
+    		throw new Error("id is not defined");
+    	if (id in this.fields)
+    		return this.fields[id];
+    	else
+    		return undefined;
+	}
+	
+	CRP.prototype.pushField = function(field)
+	{
+		if (!field.id)
+			throw new Error("field id is not defined");
+		if (field.id in this.fields)
+			return this.fields[field.id];
+		else
+		{
+			this.fields[field.id] = field;
+			return field;
+		}
 	}
 	
 	return CRP;
@@ -1111,6 +1126,10 @@ cr.Instance = (function() {
 					{
 						var r2 = $.Deferred();
 						try {
+							json.fields.forEach(function(field)
+								{
+									crp.pushField(field);
+								});
 							/* If the data length is 0, then this item can not be read. */
 							if (json.data.length > 0)
 							{
@@ -1564,7 +1583,11 @@ cr.cellFactory = {
 	_object: cr.ObjectCell
 }
 	
-cr.createCell = function(field) {
+cr.createCell = function(fieldID) {
+	var field = crp.field(fieldID);
+	if (!field)
+		throw new Error("fieldID is not recognized: {0}".format(fieldID));
+		
 	var f = cr.cellFactory[field.dataType];
 	return new f(field);
 };
@@ -1681,6 +1704,10 @@ cr.getValues = function (args)
 		return $.getJSON(cr.urls.getValues, data)
 			.then(function(json)
 				{
+					json.fields.forEach(function(field)
+						{
+							crp.pushField(field);
+						});
 					var newObjects = json.values.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
@@ -1888,7 +1915,8 @@ cr.getConfiguration = function(parent, typeID)
 				var cells = [];
 				json.cells.forEach(function(cell)
 				{
-					var newCell = cr.createCell(cell.field);
+					crp.pushField(cell.field);
+					var newCell = cr.createCell(cell.field.id);
 					newCell.setup(parent);
 					cells.push(newCell);
 				});
@@ -1920,6 +1948,10 @@ cr.getData = function(args)
 		return $.getJSON(cr.urls.getData, data)
 			.then(function(json)
 				{
+					json.fields.forEach(function(field)
+						{
+							crp.pushField(field);
+						});
 					var values = json.data.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
@@ -2054,6 +2086,10 @@ cr.requestExperienceComment = function(experience, followerPath, question)
 					{
 						var r2 = $.Deferred();
 						try {
+							json.fields.forEach(function(field)
+								{
+									crp.pushField(field);
+								});
 							/* Copy the data from json object into newData so that 
 								any functions are properly initialized.
 							 */

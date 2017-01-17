@@ -153,7 +153,7 @@ def showInstances(request):
     
     try:
         # The type of the root object.
-        rootType = request.GET.get('type', None)
+        rootType = request.GET.get('type', "_term")
         root = rootType and terms[rootType];
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")

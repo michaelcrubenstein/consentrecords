@@ -330,30 +330,25 @@ def ignore(request, email):
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
-    print ('1')
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
     }
     
-    print ('2')
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
         
-    print ('3')
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
     args['state'] = 'settings/'
         
-    print ('4')
     context = RequestContext(request, args)
         
-    print ('5')
     return HttpResponse(template.render(context))
 
 @ensure_csrf_cookie
@@ -761,21 +756,19 @@ def requestExperienceComment(request):
                                 vFilter = api._selectInstanceData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
                                 data = api._getValueData(vFilter[0], ['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
-                                typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
-                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                                 # Get the new value along with its subdata (v, above, only has the value)
                                 vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
                                 commentData = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 data['cells'][0]['data'] = [commentData]
-                                results = {'Comments': data}
+                                results = {'fields': fieldsDataDictionary.getData(), 'Comments': data}
                             else:
                                 typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                                 # Get the new value along with its subdata (v, above, only has the value)
                                 vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
                                 data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
-                                results = {'Comment': data}
+                                results = {'fields': fieldsDataDictionary.getData(), 'Comment': data}
                     else:
                         raise RuntimeError('the requestor is unrecognized')
                 else:
@@ -1014,15 +1007,18 @@ class api:
             containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: api._findValues(i, field, value, fields, userInfo), containers)
 
+            m = list(itertools.chain.from_iterable(m))
+            typeIDs = [v.referenceValue.typeID_id for v in m]
+            typeIDs.extend(map(lambda c: c.typeID_id, containers))
+            typeset = frozenset(typeIDs)
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             if len(fields) == 0:
-                p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
+                p = map(lambda v: v.getReferenceData(userInfo, language=language), m)
             else:
-                m = list(itertools.chain.from_iterable(m))
-                typeset = frozenset([v.referenceValue.typeID_id for v in m])
-                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-                p = map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m)
-                            
-            results = {'values': list(p)}
+                # iterate through the list so that fieldsDataDictionary is populated.
+                p = list(map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m))
+            
+            results = {'fields': fieldsDataDictionary.getData(), 'values': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -1094,8 +1090,11 @@ class api:
                 p = Instance.objects\
                                 .select_related('description')\
                                 .get(pk=p.parent_id)
-                                
-                fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
+                
+                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
+                if not fieldData:
+                    fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
+                    fieldsData.append(fieldData)
             
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
@@ -1103,7 +1102,7 @@ class api:
                     vs = api._getValueQuerySet(p.value_set, userInfo)
                     parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
                     
-                cells.append({"field": fieldData, "data": [parentData]})
+                cells.append({"field": fieldData["id"], "data": [parentData]})
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
@@ -1113,30 +1112,37 @@ class api:
             else:
                 saObject = None
             if saObject:
-                fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
+                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.id), None)
+                if not fieldData:
+                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
+                    fieldsData.append(fieldData)
                 parentData = [{'id': None, 
                               'instanceID' : saObject.id,
                               'description': saObject.getDescription(language),
                               'position': 0,
                               'privilege': saObject.description.text}]
-                cells.append({"field": fieldData, "data": parentData})
+                cells.append({"field": fieldData["id"], "data": parentData})
                 
         # For each of the cells, if the cell is in the field list explicitly, 
         # and the cell is in the fieldsData (and not the name of a parent type)
         # then get the subdata for all of the values in that cell.
         subValuesDict = None
         for cell in cells:
-            if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
-                and "ofKindID" in cell["field"] \
-                and next((field for field in fieldsData if field["nameID"] == cell["field"]["nameID"]), None):
+            fieldData = next((field for field in fieldsData if field["id"] == cell["field"]), None)
+            if not fieldData:
+                raise "fieldData is not found"
+            
+            if fieldData["name"] in fields and fieldData["name"] != TermNames.systemAccess \
+                and "ofKindID" in fieldData \
+                and next((field for field in fieldsData if field["nameID"] == fieldData["nameID"]), None):
                 
-                subFieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
+                subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
                 subValuesDict = subValuesDict or \
                                 dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
                 for d in cell["data"]:
                     i = subValuesDict[d["instanceID"]]
                     d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
-                    d['typeName'] = cell["field"]["ofKind"]
+                    d['typeName'] = fieldData["ofKind"]
         return cells
 
     def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
@@ -1203,7 +1209,7 @@ class api:
             
             p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
         
-            results = {'data': p}
+            results = {'fields': fieldsDataDictionary.getData(), 'data': p}
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
