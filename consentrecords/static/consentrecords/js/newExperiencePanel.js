@@ -2309,17 +2309,19 @@ var NewExperiencePanel = (function () {
 		var itemsDiv = dateContainer.append('ol')
 			.classed('item', true);
 		var itemDiv = itemsDiv.append('li');
-		var dateInput = itemDiv.append('span');
-		var hidableDiv = new HidableDiv(dateInput.node());
+		var dateSpan = itemDiv.append('span');
 		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
 			{
-				hidableDiv.value(getLocaleDateString(newDate));
+				if (newDate)
+					dateSpan.text(getLocaleDateString(newDate));
+				else
+					dateSpan.text("Not Sure");
 			}, minDate, maxDate);
 
 		var reveal = new VerticalReveal(dateWheel.node());
 		reveal.hide();
 		
-		dateInput.on('click', function()
+		dateSpan.on('click', function()
 			{
 				if (!reveal.isVisible())
 				{
@@ -2327,11 +2329,12 @@ var NewExperiencePanel = (function () {
 					{
 						var done = function()
 						{
-							dateInput.classed('site-active-text', true);
+							dateSpan.classed('site-active-text', true);
 							reveal.show({}, 200, undefined, function()
 								{
 									dateWheel.restoreDate();
 								});
+							notSureReveal.show({duration: 200});
 						}
 						if (!_this.onFocusInOtherInput(reveal, done))
 						{
@@ -2349,77 +2352,46 @@ var NewExperiencePanel = (function () {
 				}
 			});
 		
-		var hidingChevron = new HidingChevron(itemDiv, 
-			function()
-			{
-				dateWheel.unclear();
-				dateWheel.showDate(dateWheel.value());
-				hidableDiv.show(function()
-					{
-						unblockClick();
-					});
-				notSureReveal.show({}, 200,
-					function()
-					{
-						_this.calculateHeight();
-					})
-			});
-		
-		var notSureSpan = dateContainer.append('div')
+		var notSureButton = dateContainer.append('div')
 				.classed('in-cell-button site-active-text', true)
 				.on('click', function()
 					{
 						if (prepareClick('click', "Not Sure"))
 						{
 							hideWheel();
-							hideValue(unblockClick);
-							notSureReveal.hide({duration: 200,
-											    step: function()
-													{
-														_this.calculateHeight();
-													}
-												});
+							dateWheel.clear();
+							dateSpan.text("Not Sure");
+							unblockClick();
 						}
 					});
-		notSureSpan.append('div').text('Not Sure');
-		var notSureReveal = new VerticalReveal(notSureSpan.node());
-		
-		var hideValue = function(done)
-		{
-			hidableDiv.hide(function()
-			{
-				hidingChevron.show(function()
-					{
-						dateWheel.clear();
-						if (done)
-							done();
-					});
-			});
-		}
+		notSureButton.append('div').text('Not Sure');
+		var notSureReveal = new VerticalReveal(notSureButton.node());
+		notSureReveal.hide();
 			
 		var hideWheel = function(done)
 		{
-			dateInput.classed('site-active-text', false);
+			dateSpan.classed('site-active-text', false);
 			reveal.hide({duration: 200,
-						 before: done});
+						 before: function()
+						 	{
+						 		notSureReveal.hide({duration: 200,  before: done});
+						 	}});
 		}
 		
 		var showWheel = function(done)
 		{
-			dateInput.classed('site-active-text', true);
-			reveal.show({done: done});
+			dateSpan.classed('site-active-text', true);
+			reveal.show({}, 200, undefined,
+				function()
+				{
+					notSureReveal.show({done: done});
+				});
+			
 		}
 		
-		/* Calculate layout-based variables after css is complete. */
-		$(this.node()).one("revealing.cr", function()
-			{
-				hidingChevron.height(hidableDiv.height());
-			}, 0);
-		
-		return {dateInput: dateWheel, hidableDiv: hidableDiv, 
+		return {dateWheel: dateWheel, 
 		    wheelReveal: reveal,
 			notSureReveal: notSureReveal,
-			hideValue: hideValue,
 			hideWheel: hideWheel,
 			showWheel: showWheel,
 		};
@@ -2845,8 +2817,8 @@ var NewExperiencePanel = (function () {
 					{
 						try
 						{
-							experience.startDate = _this.startHidable.hidableDiv.isVisible() ? startDateInput.value() : null;
-							experience.endDate = _this.endHidable.hidableDiv.isVisible() ? endDateInput.value() : null;
+							experience.startDate = startDateWheel.value() != '' ? startDateWheel.value() : null;
+							experience.endDate = endDateWheel.value() != '' ? endDateWheel.value() : null;
 							if (experience.startDate && experience.endDate)
 							{
 								experience.timeframe = undefined;
@@ -3051,8 +3023,8 @@ var NewExperiencePanel = (function () {
 					goalButton.classed('pressed', false);
 					previousExperienceButton.classed('pressed', true);
 					
-					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
-					$(startDateInput).trigger('change');
+					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+					$(startDateWheel).trigger('change');
 				})
 			.text(this.previousExperienceLabel);
 		
@@ -3064,8 +3036,8 @@ var NewExperiencePanel = (function () {
 					previousExperienceButton.classed('pressed', false);
 					currentExperienceButton.classed('pressed', true);
 					
-					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
-					$(startDateInput).trigger('change');
+					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
+					$(startDateWheel).trigger('change');
 				})
 			.text(this.currentExperienceLabel);
 		
@@ -3078,7 +3050,7 @@ var NewExperiencePanel = (function () {
 					goalButton.classed('pressed', true);
 					
 					setGoalStartDateRange();
-					$(startDateInput).trigger('change');
+					$(startDateWheel).trigger('change');
 				})
 			.text(this.goalLabel);
 			
@@ -3088,11 +3060,11 @@ var NewExperiencePanel = (function () {
 		startDateContainer.append('label')
 			.text("Start");
 		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
-		var startDateInput = this.startHidable.dateInput;
+		var startDateWheel = this.startHidable.dateWheel;
 		
-		$(startDateInput).on('change', function() {
+		$(startDateWheel).on('change', function() {
 			var minEndDate, maxEndDate;
-			var dateWheelValue = this.value();
+			var dateWheelValue = this.value() != '' ? this.value() : null;
 			if (previousExperienceButton.classed('pressed'))
 			{
 				if (dateWheelValue && dateWheelValue.length > 0)
@@ -3124,7 +3096,7 @@ var NewExperiencePanel = (function () {
 				maxEndDate.setUTCFullYear(maxEndDate.getUTCFullYear() + 50);
 			}
 				
-			endDateInput.checkMinDate(minEndDate, maxEndDate);
+			endDateWheel.checkMinDate(minEndDate, maxEndDate);
 		});
 		
 		var endDateContainer = panel2Div.append('section')
@@ -3133,35 +3105,39 @@ var NewExperiencePanel = (function () {
 			.text("End");
 			
 		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
-		var endDateInput = this.endHidable.dateInput;
+		var endDateWheel = this.endHidable.dateWheel;
 		
 		if (experience.startDate)
-			this.startHidable.notSureReveal.show();
-		else
-			this.startHidable.notSureReveal.hide();
-		if (experience.endDate)
-			this.endHidable.notSureReveal.show();
-		else
-			this.endHidable.notSureReveal.hide();
-		
-		if (experience.startDate)
-			startDateInput.value(experience.startDate);
+			startDateWheel.value(experience.startDate);
 		else
 		{
-			$(this.node()).one("revealing.cr", function()
-				{
-					_this.startHidable.hideValue();
-				});
+			if (experience.endDate)
+			{
+				/* Initialize the start date to a reasonable value, not the current date. */
+				var startGuessDate = new Date(experience.endDate);
+				startGuessDate.setUTCFullYear(startGuessDate.getUTCFullYear() - 1);
+				var startGuessDateString = startGuessDate.toISOString().substring(0, 7);
+				if (startGuessDateString < birthday)
+					startDateWheel.value(birthday);
+				else
+					startDateWheel.value(startGuessDateString);
+			}
+			startDateWheel.clear();
 		}
 			
 		if (experience.endDate)
-			endDateInput.value(experience.endDate);
+			endDateWheel.value(experience.endDate);
 		else
 		{
-			$(this.node()).one("revealing.cr", function()
-				{
-					_this.endHidable.hideValue();
-				});
+			if (experience.startDate)
+			{
+				/* Initialize the end date to a reasonable value. */
+				var guessDate = new Date(experience.startDate);
+				guessDate.setUTCFullYear(guessDate.getUTCFullYear() + 1);
+				var guessDateString = guessDate.toISOString().substring(0, 7);
+				endDateWheel.value(guessDateString);
+			}
+			endDateWheel.clear();
 		}
 				
 		function setGoalStartDateRange()
@@ -3169,7 +3145,7 @@ var NewExperiencePanel = (function () {
 			var startMinDate = getUTCTodayDate();
 			var startMaxDate = new Date(startMinDate);
 			startMaxDate.setUTCFullYear(startMaxDate.getUTCFullYear() + 50);
-			startDateInput.checkMinDate(startMinDate, startMaxDate);
+			startDateWheel.checkMinDate(startMinDate, startMaxDate);
 		}
 		
 		$(this.node()).one("revealing.cr", function()
@@ -3190,9 +3166,9 @@ var NewExperiencePanel = (function () {
 
 				if (phase == 'Current')
 				{
-					startDateInput.onChange();
+					startDateWheel.onChange();
 					currentExperienceButton.classed('pressed', true);
-					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
+					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
 				else if (phase == 'Goal')
 				{
@@ -3201,12 +3177,12 @@ var NewExperiencePanel = (function () {
 				}
 				else
 				{
-					startDateInput.onChange();
-					endDateInput.onChange();
+					startDateWheel.onChange();
+					endDateWheel.onChange();
 					previousExperienceButton.classed('pressed', true);
-					startDateInput.checkMinDate(new Date(birthday), getUTCTodayDate());
+					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
-				$(startDateInput).trigger('change');
+				$(startDateWheel).trigger('change');
 			});
 
 		$(this.organizationInput.node()).on('focusin', function()

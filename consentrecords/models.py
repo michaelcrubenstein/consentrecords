@@ -12,6 +12,7 @@ import re
 import string
 from multiprocessing import Lock
 from functools import reduce
+import itertools
 
 from custom_user.models import AuthUser
 
@@ -354,7 +355,8 @@ class Instance(dbmodels.Model):
     # that can be used to display this field data.
     def getParentReferenceFieldData(userInfo, id):
         name = userInfo.getTypeName(id)
-        fieldData = {"name" : name,
+        fieldData = {"id": "parent/" + id,
+        			 "name" : name,
                      "nameID" : id,
                      "dataType" : TermNames.objectEnum,
                      "dataTypeID" : terms.objectEnum.id,
@@ -447,7 +449,7 @@ class Instance(dbmodels.Model):
     def _getCellData(self, fieldData, values, userInfo, language=None):
         if not fieldData:
             raise ValueError("fieldData is null")
-        cell = {"field": fieldData}                        
+        cell = {"field": fieldData["id"]}                        
         fieldID = fieldData["nameID"]
         if fieldID not in values:
             cell["data"] = []
@@ -1374,7 +1376,6 @@ class Terms():
         try:
             return terms[name]
         except Instance.DoesNotExist:
-            print('new term: %s' % name)
             i = terms.term.createEmptyInstance(None, transactionState)
             i.addStringValue(terms.name, name, 0, transactionState)
             return i
@@ -1429,6 +1430,9 @@ class FieldsDataDictionary:
         else:
             self._dict[typeInstance] = typeInstance.getFieldsData(self.language)
             return self._dict[typeInstance]
+    
+    def getData(self):
+        return list(itertools.chain.from_iterable(self._dict.values()))
 
 class UserInfo:
     def __init__(self, authUser):

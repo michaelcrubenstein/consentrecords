@@ -619,7 +619,7 @@ input[type="date"]:focus {
 }
 
 section.date-container ol {
-	text-align: right;
+	text-align: center;
 }
 
 section.date-container div.date-row {
@@ -629,17 +629,20 @@ section.date-container div.date-row {
 	white-space: nowrap;	/* To prevent wrapping during animation. */
 }
 
-/* section.date-container is in the new-experience panel and the edit experience panel. */
+/* section.date-container is in the new-experience panel. */
 section.date-container>div.in-cell-button {
 	font-size: .9em;
 	display: block;
 	padding-left: 12px;
 	padding-right: 12px;
-	text-align: right;
+	text-align: center;
 	position: relative;
 }
 
 section.date-container>div.in-cell-button>div {
+	display: inline-block;
+	margin-left: auto;
+	margin-right: auto;
 	padding-bottom: 4px;
 }
 

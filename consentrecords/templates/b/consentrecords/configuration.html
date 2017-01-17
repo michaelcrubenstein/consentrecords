@@ -97,18 +97,18 @@
 			});
 			
 			var field = {
+						  id: "{{rootID}}",
 						  dataType: "_object",
 			{% if singularName %}
 						  name: "{{singularName}}",
 			{% else %}
 						  name: "Item",
 			{% endif %}
-			{% if rootID %}
 						  ofKindID: "{{rootID}}",
-			{% endif %}
 						  capacity: "_multiple values",
 						  };
-			var cell = cr.createCell(field);
+			crp.pushField(field);
+			var cell = cr.createCell("{{rootID}}");
 			cell.setup(null);
 			
 			var containerPanel = document.getElementById("id_panel1");

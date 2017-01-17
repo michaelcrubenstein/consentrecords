@@ -173,6 +173,18 @@ var ExperienceCommentsPanel = (function() {
 					.attr('readonly', null)
 					.classed('fixed', false)
 					.classed('editable', true);
+				
+				/* position the edit chevron as appropriate. 
+					12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
+					18 is the height of the chevron, so that the chevron is vertically centered. 
+				 */
+				this.editChevronContainer.transition()
+					.duration(400)
+					.attr("transform", 
+						"translate({0},{1})".format(
+							parseInt(this.svg.style('width')) - (12 + 12), 
+							(parseInt(this.svg.style('height')) - 18) / 2));
+							
 				unblockClick();
 			}
 			catch(err)
@@ -211,9 +223,36 @@ var ExperienceCommentsPanel = (function() {
 		answerTextArea.focus();
 	}
 
+	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
+	{
+		if (fd.experience.getTypeName() == "Experience") {
+			;	/* Nothing to edit */
+		}
+		else
+		{
+			if (prepareClick('click', 'show experience detail: ' + fd.getDescription()))
+			{
+				try
+				{
+					var experience = new Experience(fd.experience.cell.parent, fd.experience);
+					experience.replaced(fd.experience);
+					
+					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
+					
+					editPanel.showLeft().then(unblockClick);
+				}
+				catch(err)
+				{
+					cr.syncFail(err);
+				}
+				d3.event.stopPropagation();
+			}
+		}
+	}
+	
 	function ExperienceCommentsPanel(fd)
 	{
-		this.createRoot(fd, "Comments", "comments", revealPanelLeft);
+		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
 		this.fd = fd;
 		var _this = this;
 		
@@ -271,6 +310,13 @@ var ExperienceCommentsPanel = (function() {
 									});
 								_this.checkTextAreas(function()
 									{
+										_this.editChevronContainer.transition()
+											.duration(400)
+											.attr("transform", 
+												"translate({0},{1})".format(
+													parseInt(_this.svg.style('width')), 
+													(parseInt(_this.svg.style('height')) - 18) / 2));
+
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
 										commentList.classed('edit', false);
@@ -278,6 +324,7 @@ var ExperienceCommentsPanel = (function() {
 											.attr('readonly', 'readonly')
 											.classed('editable', false)
 											.classed('fixed', true);
+
 										unblockClick();
 									},
 									fail);
@@ -296,7 +343,7 @@ var ExperienceCommentsPanel = (function() {
 			this.editButton.append('span').text("Edit");
 		}
 
-		navContainer.appendTitle('Comments');
+		navContainer.appendTitle('Experience');
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -320,8 +367,49 @@ var ExperienceCommentsPanel = (function() {
 			_this.detailFrontRect.attr('height', _this.detailRectHeight)
 				.attr('width', _this.svg.style('width'));
 			_this.svg.attr('height', _this.detailRectHeight);
+			
+			if (fd.experience.canWrite())
+				_this.editChevronContainer.attr("transform", 
+					"translate({0},{1})".format(
+						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 + 12 : 0), 
+						(parseInt(_this.svg.style('height')) - 18) / 2));
+
 		}
 		setTimeout(resizeDetail);
+		
+		fd.setupChangeEventHandler(this.mainDiv.node(), function(eventObject, newValue)
+			{
+				fd.colorElement(_this.detailFrontRect.node());
+				resizeDetail();
+			});
+		
+		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", this.node(), function(eventObject)
+			{
+				_this.hideNow();
+			});
+
+		if (fd.experience.canWrite())
+		{
+			this.editChevronContainer = this.detailGroup.append('g');
+		
+			this.editChevronContainer.append('g')
+				.classed('chevron-right', true)
+				.attr('transform', 'scale(0.0625)')
+				.append('polygon')
+				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
+			this.editChevronContainer.attr("transform", 
+					"translate({0},{1})".format(
+						_this.svg.style('width'), 
+						_this.svg.style('height') / 2));
+						
+			this.svg.on('click', function(e)
+				{
+					if (_this.inEditMode)
+					{
+						_this.showDetailPanel(fd);
+					}
+				})
+		}
 		
 		var comments = fd.experience.getValue("Comments");
 		var commentsDiv = panel2Div.append('section')
@@ -345,17 +433,16 @@ var ExperienceCommentsPanel = (function() {
 			_this.loadComments(commentCell.data);
 		}
 		
-		function onNewCommentsSaved(eventObject, changeTarget)
-		{
-			if (changeTarget.getTypeName() == "Comments")
-				changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
-					.then(function()
-						{
-							onCommentsChecked(comments.getCells());
-						}, cr.asyncFail)
-		}
-		
-		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), onNewCommentsSaved);
+		setupOnViewEventHandler(comments, 'dataChanged.cr', commentsDiv.node(), 
+			function (eventObject, changeTarget)
+			{
+				if (changeTarget.getTypeName() == "Comments")
+					changeTarget.promiseCellsFromCache(["Comment/Comment Request"])
+						.then(function()
+							{
+								onCommentsChecked(comments.getCells());
+							}, cr.asyncFail)
+			});
 		
 		if (fd.experience.canWrite())
 		{
@@ -392,7 +479,18 @@ var ExperienceCommentsPanel = (function() {
 							}
 						}
 					});
+
+			$(panel2Div.node()).on('resize.cr', function()
+				{
+					$(newCommentInput.node()).width(
+						$(newCommentDiv.node()).width() - 
+						$(postButton.node()).outerWidth(true) -
+						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
+				});
+		}
 			
+		if (cr.signedinUser.getInstanceID())
+		{
 			var newQuestionDiv = panel2Div.append('section')
 				.classed('new-comment', true);
 			var newQuestionInput = newQuestionDiv.append('textarea')
@@ -428,20 +526,53 @@ var ExperienceCommentsPanel = (function() {
 						}
 					});
 			
-			var resizeFunction = function()
-			{
-				$(newCommentInput.node()).width(
-					$(newCommentDiv.node()).width() - 
-					$(postButton.node()).outerWidth(true) -
-					($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
-				$(newQuestionInput.node()).width(
-					$(newQuestionDiv.node()).width() - 
-					$(postButton.node()).outerWidth(true) -
-					($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width()));
-			}
-			$(panel2Div.node()).on('resize.cr', resizeFunction);
-		}
+			var commentPromptsDiv = panel2Div.append('section')
+				.classed('comment-prompts', true);
+			
+			var resizeQuestionBoxes = function()
+				{
+					var newQuestionWidth = $(newQuestionDiv.node()).width() - 
+						($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
+					var askWidth = $(askButton.node()).outerWidth(true);
+					if (postButton && $(postButton.node()).outerWidth(true) > askWidth)
+						askWidth = $(postButton.node()).outerWidth(true);
+					newQuestionWidth -= askWidth;
+				
+					$(newQuestionInput.node()).width(newQuestionWidth);
+					commentPromptsDiv.selectAll('div')
+						.style("width", function(d)
+							{
+								/* extra width is left-padding + right-padding + 1 */
+								var extraWidth = 17;
+								return (getTextWidth(d.getDatum("_text"), 
+													 d3.select(this).style("font"))+extraWidth).toString() + "px";
+							});
+				}
+			
+			crp.promise({path:  '"Comment Prompt"'})
+			.then(function(prompts)
+				{
+					commentPromptsDiv.selectAll('div')
+						.data(prompts)
+						.enter()
+						.append('div')
+						.classed('site-active-text', true)
+						.text(function(d) 
+							{ return d.getDatum("_text"); })
+						.on('click', function(d)
+							{
+								newQuestionInput.node().value = '';
+								newQuestionInput.node().value = d.getDatum("_text");
+								newQuestionInput.node().focus();
+								var textWidth = newQuestionInput.node().value.length;
+								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
+							});
+					resizeQuestionBoxes();
+				}, cr.asyncFail)		
 							
+			$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
+		}
+			
 		$(panel2Div.node()).on('resize.cr', resizeDetail);	
 						
 		$(panel2Div.node()).on('resize.cr', function()
@@ -478,123 +609,5 @@ var ExperienceCommentsPanel = (function() {
 	}
 		
 	return ExperienceCommentsPanel;
-})();
-
-var AddCommentOptions = (function () {
-	AddCommentOptions.prototype.dimmer = null;
-	AddCommentOptions.prototype.panelNode = null;
-	AddCommentOptions.prototype.cancelButtonNode = null;
-
-	AddCommentOptions.prototype.handleCancel = function(done, fail)
-	{
-		$(this.cancelButtonNode).off('blur');
-		$(this.panelNode).hide("slide", {direction: "down"}, 400, function() {
-			d3.select(this.panelNode).remove();
-			if (done) done();
-		});
-	}
-	
-	AddCommentOptions.prototype.onCancel = function(e)
-	{
-		try
-		{
-			this.handleCancel(undefined);
-			this.dimmer.hide();
-		}
-		catch(err)
-		{
-			cr.asyncFail(err);
-		}
-		e.preventDefault();
-	}
-	
-	AddCommentOptions.prototype.addButton = function(div, name, clickFunction)
-	{
-		var _this = this;
-		var button = div.append('button')
-			.text(name)
-			.classed('site-active-text', true)
-			.on('click', function()
-				{
-					if (prepareClick('click', name))
-					{
-						_this.dimmer.hide();
-						clickFunction(unblockClick, cr.syncFail);
-					}
-				});
-		return button;
-	}
-	
-	AddCommentOptions.prototype.addCommandButtons = function(div)
-	{
-		var _this = this;
-
-		this.addButton(div, "Add Comment", 
-			function(done, fail)
-			{
-				$(_this.panelNode).hide("slide", {direction: "down"}, 400, function() {
-					d3.select(_this.panelNode).remove();
-				});
-			})
-			.classed('butted-down', true);
-		
-		this.addButton(div, "Ask Question", 
-			function(done, fail)
-			{
-				$(_this.panelNode).hide("slide", {direction: "down"}, 400, function() {
-					d3.select(_this.panelNode).remove();
-				});
-			});
-		
-		this.addButton(div, 'More Ideas',
-			function(done, fail)
-			{
-				$(_this.panelNode).hide("slide", {direction: "down"}, 400, function() {
-					d3.select(_this.panelNode).remove();
-				});
-			});
-		
-	}
-
-	function AddCommentOptions(pathlinesPanel)
-	{
-		var panelNode = pathlinesPanel.node();
-		this.dimmer = new Dimmer(panelNode);
-		var panel = d3.select(panelNode).append('panel')
-			.classed("confirm", true);
-		this.panelNode = panel.node();
-		var div = panel.append('div');
-		var _this = this;
-		
-		this.addCommandButtons(div);
-				
-		var cancelButton = this.addButton(div, 'Cancel', function(done, fail)
-			{
-				_this.handleCancel(done, fail);
-			});
-		this.cancelButtonNode = cancelButton.node();
-		$(this.cancelButtonNode).on('blur', function(e)
-			{
-				_this.onCancel(e);
-			});
-		
-		this.dimmer.show();
-		$(this.panelNode).toggle("slide", {direction: "down", duration: 0});
-		$(this.panelNode).effect("slide", {direction: "down", duration: 400, complete: 
-			function() {
-				$(_this.cancelButtonNode).focus();
-				unblockClick();
-			}});
-		this.dimmer.mousedown(function(e)
-			{
-				_this.onCancel(e);
-			});
-		$(this.panelNode).mousedown(function(e)
-			{
-				e.preventDefault();
-			});
-	}
-	
-	return AddCommentOptions;
 })();
 

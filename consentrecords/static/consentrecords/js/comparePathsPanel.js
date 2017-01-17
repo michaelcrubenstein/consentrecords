@@ -165,11 +165,6 @@ var ComparePath = (function() {
 		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		if (this.detailFlagData && experience == this.detailFlagData.experience)
-			this.hideDetail(function() {
-					_this.setupHeights();
-					_this.setupWidths();
-				}, 0);
 		this.clearLayout();
 		this.checkLayout();
 	};
@@ -259,25 +254,7 @@ var ComparePath = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 			
-		if (this.detailFlagData != null)
-		{
-			/*( Restore the detailFlagData */
-			var fds = g.data();
-			var i = fds.findIndex(function(fd) { return fd.experience === _this.detailFlagData.experience; });
-			if (i >= 0)
-			{
-				_this.hideDetail(function()
-					{
-						_this.setupClipPaths();
-						_this.showDetailGroup(fds[i], 0);
-					}, 0
-				);
-			}
-			else
-				throw "experience lost in layout";
-		}
-		else
-			this.setupClipPaths();
+		this.setupClipPaths();
 		
 		this.layoutYears(g);
 		
@@ -399,10 +376,7 @@ var ComparePath = (function() {
 		function showDetail(fd, i)
 		{
 			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			
-			_this.hideDetail(function() {
-					_this.showDetailGroup(fd); 
-				});
+			_this.showCommentsPanel(fd);
 		}
 		
 		return g;
@@ -642,17 +616,6 @@ var ComparePath = (function() {
 			.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 
-			})
-			.on("click.cr", function() {
-				if (_this.detailFlagData)
-				{
-					cr.logRecord('click', 'hide details');
-					_this.hideDetail(function()
-						{
-							_this.setupHeights();
-							_this.setupWidths();
-						});
-				}
 			});
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
