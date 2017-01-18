@@ -416,7 +416,7 @@ def acceptFollower(request, userPath=None):
                           .filter(referenceValue__value__field=followerField,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__referenceValue_id=follower.id)
-            if ars.count():
+            if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
@@ -487,7 +487,7 @@ def requestAccess(request):
                         ars = following.value_set.filter(field=fieldTerm,
                                                          deleteTransaction__isnull=True,
                                                          referenceValue_id=follower.id)
-                        if ars.count():
+                        if ars.exists():
                             if follower == user:
                                 error = 'You have already requested to follow %s.' % following.description.text
                             else:
@@ -510,12 +510,12 @@ def requestAccess(request):
                                                                             deleteTransaction__isnull=True)[0].stringValue
                                 firstNames = following.value_set.filter(field=terms['_first Name'],
                                                                    deleteTransaction__isnull=True)
-                                firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                                firstName = firstNames.exists() and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
                                 screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
                                                                                                     deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                                screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
                                     screenName or firstName,
@@ -733,12 +733,12 @@ def requestExperienceComment(request):
                                                                         deleteTransaction__isnull=True)[0].stringValue
                             firstNames = experienceUser.value_set.filter(field=terms['_first Name'],
                                                                deleteTransaction__isnull=True)
-                            firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                            firstName = firstNames.exists() and firstNames[0].stringValue
                             
                             path = experienceUser.parent
                             screenNames = path and path.value_set.filter(field=terms['_name'],
                                                                          deleteTransaction__isnull=True)
-                            screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                            screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                             
                             Emailer.sendNewExperienceQuestionEmail(settings.PASSWORD_RESET_SENDER, 
                                 screenName or firstName,

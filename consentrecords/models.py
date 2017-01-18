@@ -64,6 +64,7 @@ class Instance(dbmodels.Model):
     parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False)
     parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True)
     transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
+    accessSource = dbmodels.ForeignKey('consentrecords.Instance', related_name='accessTargets', db_index=True, null=True, editable=True)
     deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True)
         
     def __str__(self):
@@ -160,8 +161,7 @@ class Instance(dbmodels.Model):
         # If the field is special access, then make this and all of its children sourced to self.
         if field == terms.specialAccess and instance == terms.customAccessEnum:
             descendents = self._descendents()
-            n = AccessRecord.objects.filter(id__in=descendents).delete()
-            AccessRecord.objects.bulk_create(map(lambda i: AccessRecord(id=i,source=self), descendents))
+            descendents.update(accessSource=self)
             
         return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
@@ -216,7 +216,7 @@ class Instance(dbmodels.Model):
         
         try:
             f = self.value_set.filter(deleteTransaction__isnull=True, field=field).select_related('referenceValue')
-            return f[0] if f.count() else None
+            return f[0] if f.exists() else None
         except Value.DoesNotExist:
             return None
             
@@ -267,7 +267,7 @@ class Instance(dbmodels.Model):
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
             elif descriptorType == terms.firstTextEnum:
                 vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
-                if vs.count() > 0:
+                if vs.exists():
                     v = vs[0]
                     if dataType == terms.objectEnum:
                         try:
@@ -356,7 +356,7 @@ class Instance(dbmodels.Model):
     def getParentReferenceFieldData(userInfo, id):
         name = userInfo.getTypeName(id)
         fieldData = {"id": "parent/" + id,
-        			 "name" : name,
+                     "name" : name,
                      "nameID" : id,
                      "dataType" : TermNames.objectEnum,
                      "dataTypeID" : terms.objectEnum.id,
@@ -509,8 +509,7 @@ class Instance(dbmodels.Model):
     def deepDelete(self, transactionState):
         queue = [self]
         
-        AccessRecord.objects.filter(pk=self).delete()
-        
+        self.accessSource = None
         self.deleteTransaction = transactionState.transaction
         self.save()
         while len(queue) > 0:
@@ -520,10 +519,8 @@ class Instance(dbmodels.Model):
             values = next.value_set.filter(deleteTransaction__isnull=True).only('id')
             queue.extend(instances)
             
-            # Delete associated access records before marking the instances as deleted.
-            AccessRecord.objects.filter(id__in=instances).delete()
-            
-            instances.update(deleteTransaction=transactionState.transaction)
+            # Delete associated access sources before marking the instances as deleted.
+            instances.update(accessSource=None, deleteTransaction=transactionState.transaction)
             values.update(deleteTransaction=transactionState.transaction)
 
     def deleteOriginalReference(self, transactionState):
@@ -587,14 +584,15 @@ class Instance(dbmodels.Model):
     def getPrivilege(self, userInfo):
         if userInfo.is_administrator:
             return terms.administerPrivilegeEnum
-            
-        try:
-            source = self.accessrecord.source
-        except AccessRecord.DoesNotExist:
+        
+        if not self.accessSource_id:
             return terms.readPrivilegeEnum
+        
+        source_id = self.accessSource_id
             
         minPrivilege = None
-        minPrivilegeFilter = source.value_set.filter(field=terms.publicAccess, deleteTransaction__isnull=True)\
+        minPrivilegeFilter = Value.objects.filter(instance=source_id,
+                                                  field=terms.publicAccess, deleteTransaction__isnull=True)\
                                    .select_related('referenceValue__description')
         if minPrivilegeFilter.exists():
             minPrivilege=minPrivilegeFilter[0].referenceValue
@@ -602,11 +600,13 @@ class Instance(dbmodels.Model):
         if not userInfo.instance:
             return minPrivilege
         
-        if source.value_set.filter(field=terms.primaryAdministrator, deleteTransaction__isnull=True).count():
-            if source.value_set.filter(field=terms.primaryAdministrator, deleteTransaction__isnull=True)[0].referenceValue == userInfo.instance:
-                return terms.administerPrivilegeEnum
+        if Value.objects.filter(instance=source_id,
+                                field=terms.primaryAdministrator, 
+                                deleteTransaction__isnull=True,
+                                referenceValue=userInfo.instance).exists():
+            return terms.administerPrivilegeEnum
                 
-        f = source.children.filter(typeID=terms.accessRecord, deleteTransaction__isnull=True)\
+        f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord, deleteTransaction__isnull=True)\
             .filter(Q(value__referenceValue=userInfo.instance,
                       value__deleteTransaction__isnull=True)|
                     (Q(value__deleteTransaction__isnull=True,
@@ -634,12 +634,12 @@ class Instance(dbmodels.Model):
     
     ### Returns True if this user (self) is the primary administrator of the specified instance
     def isPrimaryAdministrator(self, instance):
-        try:
-            return instance.accessrecord.source.value_set.filter(field=terms.primaryAdministrator,
-                referenceValue=self,
-                deleteTransaction__isnull=True).exists()
-        except AccessRecord.DoesNotExist:
+        if not instance.accessSource_id:
             return False
+
+        return instance.accessSource.value_set.filter(field=terms.primaryAdministrator,
+            referenceValue=self,
+            deleteTransaction__isnull=True).exists()
     
     def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
@@ -662,10 +662,10 @@ class Instance(dbmodels.Model):
                        )
         
         if accessRecordOptional:
-            return f.filter(Q(accessrecord__isnull=True)|
-                            Q(accessrecord__source__in=sources))
+            return f.filter(Q(accessSource__isnull=True)|
+                            Q(accessSource__in=sources))
         else:
-            return f.filter(Q(accessrecord__source__in=sources))
+            return f.filter(Q(accessSource__in=sources))
     
     ### For the specified instance filter, filter only those instances that can be found by self.    
     def findFilter(self, f):
@@ -695,18 +695,17 @@ class Instance(dbmodels.Model):
         if user.is_authenticated():
             if userInstance and userInstance.isPrimaryAdministrator(self):
                 return True
-                            
-        try:
-            if self.accessrecord.source.value_set.filter(field=terms.publicAccess, 
-                                                         referenceValue__in=publicAccessPrivileges,
-                                                         deleteTransaction__isnull=True).exists():
-                return True
-            return userInstance and \
-                   self.accessrecord.source.children.filter(typeID=terms.accessRecord, 
-                        value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
-                        .exists()
-        except AccessRecord.DoesNotExist:
-            return False
+        
+        if not self.accessSource_id:
+            return False                    
+        if self.accessSource.value_set.filter(field=terms.publicAccess, 
+                                                     referenceValue__in=publicAccessPrivileges,
+                                                     deleteTransaction__isnull=True).exists():
+            return True
+        return userInstance and \
+               self.accessSource.children.filter(typeID=terms.accessRecord, 
+                    value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
+                    .exists()
 
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
@@ -796,8 +795,8 @@ class Instance(dbmodels.Model):
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return (Q(accessrecord__isnull=True)|
-                        Q(accessrecord__source__in=sources))
+        return (Q(accessSource__isnull=True)|
+                        Q(accessSource__in=sources))
         
     def anonymousReadFilter():
         sources=Instance.objects.filter(\
@@ -806,8 +805,8 @@ class Instance(dbmodels.Model):
                           Q(value__deleteTransaction__isnull=True)\
                         )
         
-        return (Q(accessrecord__isnull=True)|
-                        Q(accessrecord__source__in=sources))
+        return (Q(accessSource__isnull=True)|
+                        Q(accessSource__in=sources))
         
     def securityValueFilter(self, privilegeIDs):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
@@ -830,8 +829,8 @@ class Instance(dbmodels.Model):
                        )
         
         return (Q(referenceValue__isnull=True)|
-                        Q(referenceValue__accessrecord__isnull=True)|
-                        (Q(referenceValue__accessrecord__source__in=sources)))
+                        Q(referenceValue__accessSource__isnull=True)|
+                        (Q(referenceValue__accessSource__in=sources)))
     
     ### For the specified instance filter, filter only those instances that can be found by self. 
     @property   
@@ -905,7 +904,7 @@ class Instance(dbmodels.Model):
         children = self.value_set.filter(field=field,
                                            referenceValue=referenceValue,
                                            deleteTransaction__isnull=True)
-        if children.count():
+        if children.exists():
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
@@ -1024,10 +1023,7 @@ class Value(dbmodels.Model):
         # sourced to the same source as the parent of self.
         if self.field == terms.specialAccess:
             descendents = self.instance._descendents()
-            n = AccessRecord.objects.filter(id__in=descendents).delete()
-            if self.instance.parent and self.instance.parent.accessrecord:
-                AccessRecord.objects.bulk_create(\
-                    map(lambda i: AccessRecord(id=i,source=self.instance.parent.accessrecord.source), descendents))
+            descendents.update(accessSource=(self.instance.parent and self.instance.parent.accessSource_id))
             
         if self.isOriginalReference:
             self.referenceValue.deepDelete(transactionState)
@@ -1068,8 +1064,8 @@ class Value(dbmodels.Model):
                         )
         
         return (Q(referenceValue__isnull=True)|
-                        Q(referenceValue__accessrecord__isnull=True)|
-                        Q(referenceValue__accessrecord__source__in=sources))
+                        Q(referenceValue__accessSource__isnull=True)|
+                        Q(referenceValue__accessSource__in=sources))
 
     def anonymousReadFilter():
         sources=Instance.objects.filter(\
@@ -1079,8 +1075,8 @@ class Value(dbmodels.Model):
                         )
         
         return Q(referenceValue__isnull=True)|\
-               Q(referenceValue__accessrecord__isnull=True)|\
-               Q(referenceValue__accessrecord__source__in=sources)
+               Q(referenceValue__accessSource__isnull=True)|\
+               Q(referenceValue__accessSource__in=sources)
 
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -1089,15 +1085,7 @@ class Description(dbmodels.Model):
 
     def __str__(self):
         return "%s" % (self.text)
-        
-# Security Sources are used on targets to determine which record contains the security rules for the target.    
-class AccessRecord(dbmodels.Model):
-    id = dbmodels.OneToOneField('consentrecords.Instance', primary_key=True, db_column='id', db_index=True, editable=False)
-    source = dbmodels.ForeignKey('consentrecords.Instance', related_name='sources', db_index=True, editable=True)
-    
-    def __str__(self):
-        return str(self.id)
-        
+                
 class Containment(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False)

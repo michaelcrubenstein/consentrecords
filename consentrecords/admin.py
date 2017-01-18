@@ -4,14 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnly
 from django import forms
 
 from consentrecords.models import Instance, Value, Transaction, Description
-from consentrecords.models import AccessRecord
 
-class AccessRecordInline(admin.TabularInline):
-    model = AccessRecord
-    fk_name = 'id'
-    list_display = ('id', 'source',)
-    readonly_fields = ('id', 'source',)
-    
 class DescriptionInline(admin.TabularInline):
     model = Description
     extra = 0
@@ -22,7 +15,7 @@ class InstanceInline(admin.TabularInline):
     model = Instance
     extra = 0
     fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'accessSource', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')
     show_change_link = True
@@ -60,7 +53,7 @@ class DeletedValueInline(ValueInline):
     
 class InstanceAdmin(admin.ModelAdmin):
 
-    list_display = ('id', 'typeID', 'parent', '_description', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', 'typeID', 'parent', '_description', 't_creationTime', 'accessSource', 'deleteTransaction')
 
     fieldsets = (
         (None, {'fields': ('id', 'typeID', 'parent', '_description', 't_creationTime', 'deleteTransaction')}),
@@ -77,7 +70,7 @@ class InstanceAdmin(admin.ModelAdmin):
         return obj.transaction.creation_time
     t_creationTime.admin_order_field = 'transaction__creation_time'
     
-    inlines = [AccessRecordInline, InstanceValueInline]
+    inlines = [InstanceValueInline]
     
 class ValueAdmin(admin.ModelAdmin):
 
@@ -109,16 +102,7 @@ class DescriptionAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'text', 'instance')
     search_fields = ('id', 'text', 'instance__id')
 
-class AccessRecordAdmin(admin.ModelAdmin):
-    list_display=('id', 'source')
-    fieldsets = (
-        (None, {'fields': ('id', 'source')}),
-    )
-    readonly_fields = ('id', 'source')
-    search_fields=('id__description__text', 'source__description__text')
-      
 admin.site.register(Instance, InstanceAdmin)
 admin.site.register(Value, ValueAdmin)
 admin.site.register(Transaction, TransactionAdmin)
-admin.site.register(AccessRecord, AccessRecordAdmin)
 admin.site.register(Description, DescriptionAdmin)
