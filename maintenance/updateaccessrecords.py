@@ -1,7 +1,8 @@
 # Migrate translation objects to translation types.
+# python3 maintenance/updateaccessrecords.py 'michaelcrubenstein@gmail.com'
 
 import datetime
-import django
+import django; django.setup()
 import tzlocal
 import getpass
 import sys
@@ -11,12 +12,9 @@ from django.contrib.auth import authenticate
 from django.db.models import F
 from django.db.models import Count
 
-from consentrecords.models import TransactionState, Terms, Instance, Value, DeletedValue, DeletedInstance, NameList
-from consentrecords.models import AccessRecord
+from consentrecords.models import *
 
 if __name__ == "__main__":
-    django.setup()
-
     timezoneoffset = -int(tzlocal.get_localzone().utcoffset(datetime.datetime.now()).total_seconds()/60)
     if len(sys.argv) > 1:
         username = sys.argv[1]
@@ -27,37 +25,40 @@ if __name__ == "__main__":
     user = authenticate(username=username, password=password)
 
     with transaction.atomic():
-        transactionState = TransactionState(user, timezoneoffset)
-        Terms.initialize(transactionState)
         
-        f = Instance.objects.filter(accessrecord__isnull=True,
-                                    typeID__value__field=Terms.defaultAccess,
-                                    typeID__value__deletedvalue__isnull=True,
+        Instance.objects.update(accessSource=None)
+        
+        f = Instance.objects.filter(typeID__value__field=terms.defaultAccess,
+                                    typeID__value__deleteTransaction__isnull=True,
                                     deleteTransaction__isnull=True)
                                     
-        print("%s root instances with missing access records" % f.count())
+        print("%s root instances with access records" % f.count())
         
-        AccessRecord.objects.bulk_create([AccessRecord(id=i, source=i) for i in f])
+        f.update(accessSource=F('id'))
         
-        f = Instance.objects.filter(accessrecord__isnull=True,
-                                    value__field=Terms.specialAccess,
+        f = Instance.objects.filter(value__field=terms.specialAccess,
                                     value__deleteTransaction__isnull=True,
-                                    deletedinstance__isnull=True)
+                                    deleteTransaction__isnull=True)
                                     
-        print("%s special instances with missing access records" % f.count())
+        print("%s special instances with access records" % f.count())
         
-        AccessRecord.objects.bulk_create([AccessRecord(id=i, source=i) for i in f])
+        f.update(accessSource=F('id'))
         
-        f = Instance.objects.filter(accessrecord__isnull=True,
+        f = Instance.objects.filter(accessSource__isnull=True,
                                     deleteTransaction__isnull=True,
-                                    parent__accessrecord__isnull=False)
+                                    parent__accessSource__isnull=False)\
+                            .select_related('parent')
         
-        while f.count():                            
+        while f.exists():                            
             print("%s child instances with missing access records" % f.count())
-            AccessRecord.objects.bulk_create([AccessRecord(id=i, source=i.parent.accessrecord.source) for i in f])
-            f = Instance.objects.filter(accessrecord__isnull=True,
+            for i in f: 
+                i.accessSource_id = i.parent.accessSource_id
+                i.save()
+                
+            f = Instance.objects.filter(accessSource__isnull=True,
                                         deleteTransaction__isnull=True,
-                                        parent__accessrecord__isnull=False)
+                                        parent__accessSource__isnull=False)\
+                            .select_related('parent')
                                         
         print ("no more child instances with missing access records")
 
