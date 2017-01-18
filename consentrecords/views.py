@@ -1139,10 +1139,13 @@ class api:
                 subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
                 subValuesDict = subValuesDict or \
                                 dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
+                
                 for d in cell["data"]:
-                    i = subValuesDict[d["instanceID"]]
-                    d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
-                    d['typeName'] = fieldData["ofKind"]
+                    # d["instanceID"] won't be in subValuesDict if it is a parent.
+                    if d["instanceID"] in subValuesDict:
+                        i = subValuesDict[d["instanceID"]]
+                        d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
+                        d['typeName'] = fieldData["ofKind"]
         return cells
 
     def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
