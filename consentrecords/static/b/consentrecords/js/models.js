@@ -1421,32 +1421,32 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.hasTextDescription = function()
 	{
-		return this._instance.hasTextDescription();
+		return this._instance && this._instance.hasTextDescription();
 	}
 
 	ObjectValue.prototype.getCell = function(name)
 	{
-		return this._instance.getCell(name);
+		return this._instance && this._instance.getCell(name);
 	}
 
 	ObjectValue.prototype.getDatum = function(name)
 	{
-		return this._instance.getDatum(name);
+		return this._instance && this._instance.getDatum(name);
 	}
 		
 	ObjectValue.prototype.getValue = function(name)
 	{
-		return this._instance.getValue(name);
+		return this._instance && this._instance.getValue(name);
 	}
 	
 	ObjectValue.prototype.getNonNullValue = function(name)
 	{
-		return this._instance.getNonNullValue(name);
+		return this._instance && this._instance.getNonNullValue(name);
 	}
 		
 	ObjectValue.prototype.subInstance = function(name)
 	{
-		return this._instance.subInstance(name);
+		return this._instance && this._instance.subInstance(name);
 	}
 	
 	ObjectValue.prototype.importCell = function(cell)
