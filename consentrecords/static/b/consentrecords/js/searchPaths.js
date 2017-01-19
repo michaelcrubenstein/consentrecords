@@ -137,6 +137,15 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.queryFlagsHeight = 137;
 
+	SearchPathsPanel.prototype.clearInput = function()
+	{
+		$(this.searchInput).val('');
+											
+		/* Hide and show the input so that the placeholder
+			re-appears properly in safari 10 and earlier. */
+		$(this.searchInput).hide(0).show(0);
+	}
+	
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
 		var newTop = $(window).height() 
@@ -172,11 +181,7 @@ var SearchPathsPanel = (function () {
 										{duration: duration,
 										 done: function()
 											{
-												$(_this.searchInput).val('');
-											
-												/* Hide and show the input so that the placeholder
-													re-appears properly in safari 10 and earlier. */
-												$(_this.searchInput).hide(0).show(0);
+												_this.clearInput();
 											}
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
@@ -613,8 +618,11 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		/* Need to respecify the placeholder to fix a bug that causes
+			the placeholder to not display when manually clearing the value
+			after it has something within it.
+		 */
+		this.clearInput();
 		this.filterColumn = column;
 		this.filterPool();
 		this.layoutPoolFlags();
@@ -692,8 +700,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleAllClick = function()
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		this.clearInput();
 		this.filterColumn = undefined;
 		this.filterPool();
 		this.layoutPoolFlags();
@@ -753,7 +760,7 @@ var SearchPathsPanel = (function () {
 			
 		var div = stagesDiv.append('div');
 		
-		var svgData = [{name: "All", color: "#222", click: this.handleAllClick},
+		var svgData = [{name: "All Tags", color: "#222", click: this.handleAllClick},
 				   {name: "School", color: "#2828E7", click: this.handleSchoolClick},
 				   {name: "Interests", color: "#8328E7", click: this.handleInterestsClick},
 				   {name: "Career", color: "#805050", click: this.handleCareerClick},
@@ -773,8 +780,8 @@ var SearchPathsPanel = (function () {
 			.attr('r', 16).attr('cx', 30).attr('cy', 23)
 			.attr('fill', 'white');
 		svgs.append('circle')
-			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.8)
-			.attr('fill', '#777');
+			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.3)
+			.attr('fill', function(d) { return d.color; });
 		svgs.append('text')
 			.classed('icon-label', true)
 			.attr('x', 30).attr('y', 49)
@@ -784,13 +791,16 @@ var SearchPathsPanel = (function () {
 		svgs.on('click', function(d)
 			{
 				svgs.selectAll('circle:last-of-type')
-					.attr('fill', '#777');
+					.attr('opacity', 0.3);
 				d3.select(this).selectAll('circle:last-of-type')
-					.attr('fill', d.color);
+					.attr('opacity', 0.8);
 				svgs.selectAll('text')
 					.style('fill', '#777');
 				d3.select(this).selectAll('text')
 					.style('fill', d.color);
+					
+				/* Set the focus here so that the keyboard disappears on mobile devices. */
+				$(this).focus();
 				if (d.click)
 				{
 					_this.selectedPool = d;
@@ -800,7 +810,7 @@ var SearchPathsPanel = (function () {
 			
 		div.select('svg:first-child')
 			.selectAll('circle:last-of-type')
-			.attr('fill', function(d) { return d.color; });
+			.attr('opacity', 0.8);
 		div.select('svg:first-child')
 			.selectAll('text')
 			.style('fill', function(d) { return d.color; });
