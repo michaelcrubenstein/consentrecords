@@ -460,7 +460,8 @@ class Instance(dbmodels.Model):
     # Returns an array of arrays.
     def getData(self, vs, fieldsData, userInfo, language=None):
         values = self._groupValuesByField(vs, userInfo)
-        return [self._getCellData(fieldData, values, userInfo, language) for fieldData in fieldsData]
+        return [self._getCellData(fieldData, values, userInfo, language)\
+                for fieldData in filter(lambda f: not f["id"].startswith("parent/"), fieldsData)]
 
     # self should be a configuration object with fields.
     def getConfiguration(self):
