@@ -103,13 +103,11 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         
     # Process the access records for this new item.
     if typeInstance.defaultCustomAccess:
-        AccessRecord.objects.create(id=item, source=item)
+        item.accessSource = item
+        item.save()
     elif parent:
-        try:
-            parentAccessRecord = parent.accessrecord
-            AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
-        except AccessRecord.DoesNotExist:
-            pass
+        item.accessSource = parent.accessSource
+        item.save()
 
     # propertyList should be either null or a dictionary of properties.
     # The key of each element in the dictionary is the name of a term which is the fieldID.
