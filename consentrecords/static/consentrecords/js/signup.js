@@ -597,6 +597,7 @@ var SigninPanel = (function()
 		
 		var signInSuccess = function(data)
 		{
+			crp.clear();
 			cr.signedinUser.updateFromChangeData(data);
 			cr.signedinUser.promiseCells(["_system access"])
 				.then(function()
