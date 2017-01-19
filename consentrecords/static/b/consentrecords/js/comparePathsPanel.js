@@ -110,6 +110,14 @@ var CompareFlag = (function() {
 		return {top: top, bottom: bottom};
 	}
 	
+	/* Return true if the experience in this flag is on the specified path. */
+	CompareFlag.prototype.isOnPath = function(path)
+	{
+		return (this.experience.getTypeName() == "Experience") ?
+			   (this.experience.getValue("_user").getInstanceID() == path.getValue("_user").getInstanceID()) :
+			   (this.experience.cell.parent == path);
+	}
+	
 	function CompareFlag(experience, ageCalculator)
 	{
 		FlagData.call(this, experience);
@@ -171,7 +179,7 @@ var ComparePath = (function() {
 
 	ComparePath.prototype.getColumn = function(fd)
 	{
-		if (fd.experience.cell.parent == this.rightPath)
+		if (fd.isOnPath(this.rightPath))
 			return 1;
 		else
 			return 0;
@@ -323,7 +331,10 @@ var ComparePath = (function() {
 		
 		function getCompareFlag(experience)
 			{
-				if (experience.cell.parent == _this.leftFlag)
+				var isLeft = (experience.getTypeName() == "Experience") ?
+							 (experience.getValue("_user").getInstanceID() == _this.leftPath.getValue("_user").getInstanceID()) :
+							 (experience.cell.parent == _this.leftPath);
+				if (isLeft)
 					return new CompareFlag(experience, _this.leftAgeCalculator);
 				else
 					return new CompareFlag(experience, _this.rightAgeCalculator);
