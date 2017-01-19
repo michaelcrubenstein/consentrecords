@@ -867,7 +867,7 @@ var PathView = (function() {
 				{ 
 					_this.setupServiceTriggers(this, d, function(eventObject)
 						{
-							d.column = _this.getColumn(d);
+							d.column = d.getColumn();
 							_this.transitionPositions(g);
 						});
 				});
