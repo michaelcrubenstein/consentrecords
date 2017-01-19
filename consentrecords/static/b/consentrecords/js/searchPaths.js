@@ -345,7 +345,7 @@ var SearchPathsPanel = (function () {
 		g.interrupt().transition()
 			.duration(duration)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
-			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
+			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
 	}
 	
@@ -427,6 +427,13 @@ var SearchPathsPanel = (function () {
 					/* Run a new search based on the query. */
 					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
 				}});
+		if ($(this.queryFlags.node()).children().length == 1)
+		{
+			_this.queryContainer.selectAll('span')
+				.transition()
+				.duration(400)
+				.style('opacity', 1.0);
+		}
 	}
 	
 	SearchPathsPanel.prototype.clearQuery = function()
@@ -492,13 +499,21 @@ var SearchPathsPanel = (function () {
 	
 					_this.appendFlag(queryFlag);
 					
+					if (_this.queryFlags.selectAll('g').size() == 1)
+					{
+						_this.queryContainer.selectAll('span')
+							.transition()
+							.duration(400)
+							.style('opacity', 0.0);
+					}
+					
 					/* Dispose of the travelSVG. */
 					travelSVG.remove();
 					
 					/* Dispose of the hole. */
 					rectHole.transition()
 						.duration(400)
-						.attr('opacity', 0.0)
+						.style('opacity', 0.0)
 						.remove();
 		
 					/* Run a new search based on the query. */
@@ -597,6 +612,9 @@ var SearchPathsPanel = (function () {
 
 	}
 	
+	/* Remove all of the existing flags displayed and add all of the specified flags
+		to the flag pool.
+	 */
 	SearchPathsPanel.prototype.appendPoolFlags = function(s)
 	{
 		var _this = this;
@@ -825,6 +843,9 @@ var SearchPathsPanel = (function () {
 			
 		this.queryContainer = this.mainDiv.append('div')
 			.classed('query-container', true);
+			
+		this.queryHelp = this.queryContainer.append('span')
+			.text('Tap tags to find paths containing those tags.');
 			
 		this.queryFlags = this.queryContainer.append('svg')
 			.classed('query flags', true);

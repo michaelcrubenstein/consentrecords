@@ -116,6 +116,22 @@ div.query-container {
 	padding: 10px;
 }
 
+div.query-container>span {
+	position: absolute;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
+	width: calc(100% - 20px);
+	text-align: center;
+	-webkit-transform: translateY(-50%);
+	transform: translateY(-50%);
+	top: 50%;	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;	
+	cursor: default;
+}
+
 div.results-container {
 	position: relative;
 	width: 100%;
