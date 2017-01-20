@@ -102,7 +102,6 @@ div.pool-container {
 	position: absolute;
 	width: 100%;
 	padding: 10px;
-	height: 140px;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
 }
@@ -114,6 +113,26 @@ div.query-container {
 	border-radius: 5px;
 	margin: 10px;
 	padding: 10px;
+}
+
+div.query-container>span {
+	position: absolute;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
+	width: calc(100% - 20px);
+	text-align: center;
+	-webkit-transform: translateY(-50%);
+	transform: translateY(-50%);
+	top: 50%;	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;	
+	cursor: default;
+}
+
+div.query-container>svg {
+	position: relative;		/* So that it appears above the span. */
 }
 
 div.results-container {
