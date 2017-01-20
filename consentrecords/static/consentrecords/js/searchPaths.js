@@ -135,8 +135,17 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;
 	SearchPathsPanel.prototype.emToPX = 11;
 	
-	SearchPathsPanel.prototype.queryFlagsHeight = 137;
+	SearchPathsPanel.prototype.queryFlagsHeight = 101;
 
+	SearchPathsPanel.prototype.clearInput = function()
+	{
+		$(this.searchInput).val('');
+											
+		/* Hide and show the input so that the placeholder
+			re-appears properly in safari 10 and earlier. */
+		$(this.searchInput).hide(0).show(0);
+	}
+	
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
 		var newTop = $(window).height() 
@@ -151,13 +160,14 @@ var SearchPathsPanel = (function () {
 						 - inputMarginLeft + inputMarginRight
 						 - $(this.searchInput).outerWidth(true) + $(this.searchInput).outerWidth(false);
 
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
+		var queryBottom;
+		if (this.queryFlags.selectAll('g').size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
 		var _this = this;
 		
 		this.mainDiv.classed('vertical-scrolling', false)
@@ -172,25 +182,12 @@ var SearchPathsPanel = (function () {
 										{duration: duration,
 										 done: function()
 											{
-												$(_this.searchInput).val('');
-											
-												/* Hide and show the input so that the placeholder
-													re-appears properly in safari 10 and earlier. */
-												$(_this.searchInput).hide(0).show(0);
+												_this.clearInput();
 											}
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
 								   {duration: duration}),
-			$(this.stagesDiv).animate({top: $(this.topBox).height()},
-								   {duration: duration}),
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop},
-				{duration: duration}),
-			$(this.queryContainer.node()).stop().animate(
-				{left: 0,
-				 top: poolTop + poolHeight},
-				{duration: duration})
 			);
 	}
 	
@@ -221,54 +218,76 @@ var SearchPathsPanel = (function () {
 									  opacity: 1.0},
 							   {duration: duration});
 							   
-		$(this.stagesDiv).animate({top: $(this.topBox).height()},
-							   {duration: duration});
-		
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 		
 		this.mainDiv.classed('vertical-scrolling', true)
 			.classed('no-scrolling', false);
-			
+
 		var resultsTop;
+		var resultsHeight;
+		var queryHeight;
+		var queryBottom;
+		var poolHeight;
+		if (this.queryFlags.selectAll('g').size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
+		var $poolContainer = $(this.poolContainer.node());
+		var $queryContainer = $(this.queryContainer.node());
+			
+		var poolVMargins = $poolContainer.outerHeight(true) - $poolContainer.outerHeight(false);
+		var poolHMargins = $poolContainer.outerWidth(true) - $poolContainer.innerWidth();
+		var queryVMargins = $queryContainer.outerHeight(true) - $queryContainer.outerHeight(false);
+		var queryVPadding = parseInt($queryContainer.css('padding-top')) + 
+							parseInt($queryContainer.css('padding-bottom'));
 		if (parentHeight < parentWidth)
 		{
+			$poolContainer.css('display', 'inline-block');
+			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins;
+			queryHeight = poolHeight;
 			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth / 2, height: poolHeight},
+				{width: parentWidth / 2 - poolHMargins, 
+				 height: poolHeight},
 				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth / 2 - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: (parentWidth / 2),
-				 top: poolTop},
+			$queryContainer.stop().animate(
+				{"margin-top": 10,
+				 "margin-left": 0,
+				 width: parentWidth / 2 - poolHMargins,
+				 height: poolHeight},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
-			resultsTop = poolTop + $(this.queryContainer.node()).outerHeight(true);
+			this.layoutPoolFlags(parentWidth / 2 - poolHMargins, duration);
 		}
 		else
 		{
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth, height: poolHeight},
+			$poolContainer.css('display', 'block');
+			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
+						 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
+			queryHeight = this.queryFlagsHeight;
+			$poolContainer.stop().animate(
+				{width: parentWidth - poolHMargins, 
+				 height: poolHeight},
 				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: 0,
-				 top: poolTop + poolHeight},
+			$queryContainer.stop().animate(
+				{"margin-top": 0,
+				 "margin-left": 10,
+				 width: parentWidth - poolHMargins,
+				 height: this.queryFlagsHeight},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
-			resultsTop = poolTop + poolHeight + $(this.queryContainer.node()).outerHeight(true);
+			this.layoutPoolFlags(parentWidth - poolHMargins, duration);
 		}
 		
+		this.queryFlags
+ 			.interrupt().transition().duration(400)
+			.attr('height', this.queryFlagsHeight - queryVPadding);
+
+		if (this.queryFlags.selectAll('g').size() == 0)
+			resultsHeight = 0;
+		else
+			resultsHeight = $(window).height();
+		
 		$(this.resultContainerNode).stop().animate(
-			{"margin-top": resultsTop,
-			 height: $(window).height()},
+			{height: resultsHeight},
 			{duration: duration});
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
@@ -276,9 +295,6 @@ var SearchPathsPanel = (function () {
 		$(this.node().parentNode).animate({scrollTop: 0},
 			{duration: duration});
 		
-		queryFlagsWidth = $(this.queryFlags.node()).width();
-		
-		this.queryFlags.attr('height', this.queryFlagsHeight);
 	}
 	
 	SearchPathsPanel.prototype.setFlagText = function(node)
@@ -302,7 +318,7 @@ var SearchPathsPanel = (function () {
 				fd.x = nextX;
 				if (fd.visible === undefined || fd.visible)
 				{
-					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width + _this.searchFlagHSpacing;
+					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width;
 					nextX += thisSpacing;
 					if (nextX >= maxX && fd.x > startX)
 					{
@@ -311,6 +327,7 @@ var SearchPathsPanel = (function () {
 						fd.x = nextX;
 						nextX += thisSpacing;
 					}
+					nextX += _this.searchFlagHSpacing;
 				}
 				
 				fd.y = nextY;
@@ -333,14 +350,14 @@ var SearchPathsPanel = (function () {
 		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* Set the height of the svg to match the total height of all of the flags. */
-		this.poolFlags.transition()
-			.duration(duration)
-			.style('height', height)
+		this.poolFlags
+ 			.interrupt().transition().duration(duration)
+			.attr('height', height)
 		
-		g.interrupt().transition()
-			.duration(duration)
+		g
+ 			.interrupt().transition().duration(duration)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
-			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
+			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
 	}
 	
@@ -353,8 +370,8 @@ var SearchPathsPanel = (function () {
 		
 		this._setFlagCoordinates(g, $(this.queryFlags.node()).width());
 		
-		g.transition()
-			.duration(1000)
+		g
+ 			.interrupt().transition().duration(1000)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 		
 	}
@@ -418,10 +435,20 @@ var SearchPathsPanel = (function () {
 					
 					_this.layoutPoolFlags();
 					_this.layoutQueryFlags();
+					
+					if ($(_this.queryFlags.node()).children().length == 0)
+						_this.revealPanel();
 		
 					/* Run a new search based on the query. */
 					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
 				}});
+		if ($(this.queryFlags.node()).children().length == 1)
+		{
+			this.queryContainer.selectAll('span')
+ 				.interrupt().transition().duration(400)
+				.style('opacity', 1.0);
+			this.revealPanel();
+		}
 	}
 	
 	SearchPathsPanel.prototype.clearQuery = function()
@@ -431,6 +458,10 @@ var SearchPathsPanel = (function () {
 		this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 		
 		this.layoutPoolFlags();
+		
+		this.queryContainer.selectAll('span')
+ 							.interrupt().transition().duration(400)
+							.style('opacity', 1.0);
 
 		/* Run a new search based on the query. */
 		this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
@@ -470,7 +501,7 @@ var SearchPathsPanel = (function () {
  		
  		var _this = this;
  		/* Animate the movement of the svg to its new location. */
- 		travelSVG.transition()
+ 		travelSVG.interrupt().transition()
  			.duration(400)
  			.style('top', newPosition.top + flagPosition.top)
  			.style('left', newPosition.left + flagPosition.left)
@@ -487,13 +518,21 @@ var SearchPathsPanel = (function () {
 	
 					_this.appendFlag(queryFlag);
 					
+					if (_this.queryFlags.selectAll('g').size() == 1)
+					{
+						_this.queryContainer.selectAll('span')
+ 							.interrupt().transition().duration(400)
+							.style('opacity', 0.0);
+						_this.revealPanel();
+					}
+					
 					/* Dispose of the travelSVG. */
 					travelSVG.remove();
 					
 					/* Dispose of the hole. */
-					rectHole.transition()
+					rectHole.interrupt().transition()
 						.duration(400)
-						.attr('opacity', 0.0)
+						.style('opacity', 0.0)
 						.remove();
 		
 					/* Run a new search based on the query. */
@@ -592,6 +631,9 @@ var SearchPathsPanel = (function () {
 
 	}
 	
+	/* Remove all of the existing flags displayed and add all of the specified flags
+		to the flag pool.
+	 */
 	SearchPathsPanel.prototype.appendPoolFlags = function(s)
 	{
 		var _this = this;
@@ -613,8 +655,11 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		/* Need to respecify the placeholder to fix a bug that causes
+			the placeholder to not display when manually clearing the value
+			after it has something within it.
+		 */
+		this.clearInput();
 		this.filterColumn = column;
 		this.filterPool();
 		this.layoutPoolFlags();
@@ -692,8 +737,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleAllClick = function()
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		this.clearInput();
 		this.filterColumn = undefined;
 		this.filterPool();
 		this.layoutPoolFlags();
@@ -734,17 +778,17 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).focusin(function(event)
 			{
 				_this.revealPanel();
-				event.stopPropagation();
+				//event.stopPropagation();
 			})
 			.click(function(event)
 			{
-				event.stopPropagation();
+				//event.stopPropagation();
 			})
 			.on('input', function(event)
 			{
 				_this.filterPool();
 				_this.layoutPoolFlags();
-				event.stopPropagation();
+				//event.stopPropagation();
 			});
 			
 		stagesDiv = mainDiv.append('div')
@@ -753,7 +797,7 @@ var SearchPathsPanel = (function () {
 			
 		var div = stagesDiv.append('div');
 		
-		var svgData = [{name: "All", color: "#222", click: this.handleAllClick},
+		var svgData = [{name: "All Tags", color: "#222", click: this.handleAllClick},
 				   {name: "School", color: "#2828E7", click: this.handleSchoolClick},
 				   {name: "Interests", color: "#8328E7", click: this.handleInterestsClick},
 				   {name: "Career", color: "#805050", click: this.handleCareerClick},
@@ -773,8 +817,8 @@ var SearchPathsPanel = (function () {
 			.attr('r', 16).attr('cx', 30).attr('cy', 23)
 			.attr('fill', 'white');
 		svgs.append('circle')
-			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.8)
-			.attr('fill', '#777');
+			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.3)
+			.attr('fill', function(d) { return d.color; });
 		svgs.append('text')
 			.classed('icon-label', true)
 			.attr('x', 30).attr('y', 49)
@@ -784,13 +828,16 @@ var SearchPathsPanel = (function () {
 		svgs.on('click', function(d)
 			{
 				svgs.selectAll('circle:last-of-type')
-					.attr('fill', '#777');
+					.attr('opacity', 0.3);
 				d3.select(this).selectAll('circle:last-of-type')
-					.attr('fill', d.color);
+					.attr('opacity', 0.8);
 				svgs.selectAll('text')
 					.style('fill', '#777');
 				d3.select(this).selectAll('text')
 					.style('fill', d.color);
+					
+				/* Set the focus here so that the keyboard disappears on mobile devices. */
+				$(this).focus();
 				if (d.click)
 				{
 					_this.selectedPool = d;
@@ -800,7 +847,7 @@ var SearchPathsPanel = (function () {
 			
 		div.select('svg:first-child')
 			.selectAll('circle:last-of-type')
-			.attr('fill', function(d) { return d.color; });
+			.attr('opacity', 0.8);
 		div.select('svg:first-child')
 			.selectAll('text')
 			.style('fill', function(d) { return d.color; });
@@ -810,11 +857,13 @@ var SearchPathsPanel = (function () {
 			.classed('pool-container', true);
 				
 		this.poolFlags = this.poolContainer.append('svg')
-			.classed('flags', true)
-			.style('height', 120);
+			.classed('flags', true);
 			
 		this.queryContainer = this.mainDiv.append('div')
 			.classed('query-container', true);
+			
+		this.queryHelp = this.queryContainer.append('span')
+			.text('Tap tags to find paths containing those tags.');
 			
 		this.queryFlags = this.queryContainer.append('svg')
 			.classed('query flags', true);

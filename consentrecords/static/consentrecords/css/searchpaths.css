@@ -2,10 +2,13 @@ panel.search-paths {
 	background: #EEE;
 }
 
+panel.search-paths>div.panel-fill>div {
+	position: relative;
+}
+
 panel.search-paths > div.panel-fill > div:first-child {	/* top box */
 	width: 100%;
 	background: #EEE;
-	position: absolute;
 	overflow-x: hidden;	/* So the cancel button slides in from the right. */
 }
 
@@ -99,28 +102,47 @@ rect.hole {
 }
 
 div.pool-container {
-	position: absolute;
+	display: inline-block;
 	width: 100%;
-	padding: 10px;
-	height: 140px;
+	margin: 10px;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
 }
 
 div.query-container {
-	position: absolute;
+	display: inline-block;
 	border: #777 dotted;
 	border-width: 1px;
 	border-radius: 5px;
-	margin: 10px;
+	margin-right: 10px;
+	margin-bottom: 10px;
 	padding: 10px;
 }
 
+div.query-container>span {
+	position: absolute;
+	font-size: 0.8em;
+	color: #666;
+	background-color: transparent;
+	width: calc(100% - 20px);
+	text-align: center;
+	-webkit-transform: translateY(-50%);
+	transform: translateY(-50%);
+	top: 50%;	
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;	
+	cursor: default;
+}
+
+div.query-container>svg {
+	position: absolute;		/* So that it appears above the span. */
+}
+
 div.results-container {
-	position: relative;
 	width: 100%;
 	overflow-y: scroll;
-	margin-top: 100px;
 	-webkit-overflow-scrolling: touch;
 }
 
