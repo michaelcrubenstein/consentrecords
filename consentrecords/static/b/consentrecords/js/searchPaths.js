@@ -135,7 +135,7 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;
 	SearchPathsPanel.prototype.emToPX = 11;
 	
-	SearchPathsPanel.prototype.queryFlagsHeight = 137;
+	SearchPathsPanel.prototype.queryFlagsHeight = 101;
 
 	SearchPathsPanel.prototype.clearInput = function()
 	{
@@ -164,9 +164,14 @@ var SearchPathsPanel = (function () {
 								  + parseInt(this.poolContainer.style('padding-right'));					   
 		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
 								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
+		var queryBottom;
+		if (this.queryFlags.selectAll('g').size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
 		var _this = this;
 		
 		this.mainDiv.classed('vertical-scrolling', false)
@@ -194,7 +199,7 @@ var SearchPathsPanel = (function () {
 				{duration: duration}),
 			$(this.queryContainer.node()).stop().animate(
 				{left: 0,
-				 top: poolTop + poolHeight},
+				 bottom: -$(window).height()},
 				{duration: duration})
 			);
 	}
@@ -233,47 +238,72 @@ var SearchPathsPanel = (function () {
 								  + parseInt(this.poolContainer.style('padding-right'));					   
 		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
 								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 		
 		this.mainDiv.classed('vertical-scrolling', true)
 			.classed('no-scrolling', false);
-			
+
 		var resultsTop;
+		var resultsHeight;
+		var queryTop;
+		var queryBottom;
+		var poolBottom;
+		if (this.queryFlags.selectAll('g').size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
+		var queryVMargins = $(this.queryContainer.node()).outerHeight(true) - $(this.queryContainer.node()).outerHeight(false);
+		var queryVPadding = parseInt($(this.queryContainer.node()).css('padding-top')) + 
+							parseInt($(this.queryContainer.node()).css('padding-bottom'));
 		if (parentHeight < parentWidth)
 		{
+			poolBottom = queryBottom;
+			queryTop = poolTop;
 			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth / 2, height: poolHeight},
+				{top: poolTop, 'margin-bottom': 10, width: parentWidth / 2, bottom: poolBottom},
 				{duration: duration});
 			$(this.queryContainer.node()).stop().animate(
 				{width: parentWidth / 2 - 
 						(parseInt(this.queryContainer.style('margin-left'))
 						 + parseInt(this.queryContainer.style('margin-right'))),
 				 left: (parentWidth / 2),
-				 top: poolTop},
+				 top: queryTop,
+				 bottom: queryBottom},
 				{duration: duration});
 			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
-			resultsTop = poolTop + $(this.queryContainer.node()).outerHeight(true);
 		}
 		else
 		{
+			queryTop = $(window).height() - queryBottom - this.queryFlagsHeight - queryVMargins;
+			poolBottom = $(window).height() - queryTop;
 			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth, height: poolHeight},
+				{top: poolTop, 'margin-bottom': 0, width: parentWidth, bottom: poolBottom},
 				{duration: duration});
 			$(this.queryContainer.node()).stop().animate(
 				{width: parentWidth - 
 						(parseInt(this.queryContainer.style('margin-left'))
 						 + parseInt(this.queryContainer.style('margin-right'))),
 				 left: 0,
-				 top: poolTop + poolHeight},
+				 top: queryTop,
+				 bottom: queryBottom},
 				{duration: duration});
 			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
-			resultsTop = poolTop + poolHeight + $(this.queryContainer.node()).outerHeight(true);
 		}
+		
+		this.queryFlags.transition()
+					   .duration(400)
+					   .attr('height', $(window).height() - queryBottom - queryTop - queryVMargins - queryVPadding);
+
+		resultsTop = $(window).height() - queryBottom;
+		if (this.queryFlags.selectAll('g').size() == 0)
+			resultsHeight = 0;
+		else
+			resultsHeight = $(window).height();
 		
 		$(this.resultContainerNode).stop().animate(
 			{"margin-top": resultsTop,
-			 height: $(window).height()},
+			 height: resultsHeight},
 			{duration: duration});
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
@@ -283,7 +313,6 @@ var SearchPathsPanel = (function () {
 		
 		queryFlagsWidth = $(this.queryFlags.node()).width();
 		
-		this.queryFlags.attr('height', this.queryFlagsHeight);
 	}
 	
 	SearchPathsPanel.prototype.setFlagText = function(node)
@@ -423,16 +452,20 @@ var SearchPathsPanel = (function () {
 					
 					_this.layoutPoolFlags();
 					_this.layoutQueryFlags();
+					
+					if ($(_this.queryFlags.node()).children().length == 0)
+						_this.revealPanel();
 		
 					/* Run a new search based on the query. */
 					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
 				}});
 		if ($(this.queryFlags.node()).children().length == 1)
 		{
-			_this.queryContainer.selectAll('span')
+			this.queryContainer.selectAll('span')
 				.transition()
 				.duration(400)
 				.style('opacity', 1.0);
+			this.revealPanel();
 		}
 	}
 	
@@ -443,6 +476,11 @@ var SearchPathsPanel = (function () {
 		this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 		
 		this.layoutPoolFlags();
+		
+		this.queryContainer.selectAll('span')
+							.transition()
+							.duration(400)
+							.style('opacity', 1.0);
 
 		/* Run a new search based on the query. */
 		this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
@@ -505,6 +543,7 @@ var SearchPathsPanel = (function () {
 							.transition()
 							.duration(400)
 							.style('opacity', 0.0);
+						_this.revealPanel();
 					}
 					
 					/* Dispose of the travelSVG. */

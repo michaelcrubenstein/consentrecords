@@ -102,7 +102,6 @@ div.pool-container {
 	position: absolute;
 	width: 100%;
 	padding: 10px;
-	height: 140px;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
 }
@@ -130,6 +129,10 @@ div.query-container>span {
 	-ms-user-select: none;      /* IE 10+ */
 	user-select: none;	
 	cursor: default;
+}
+
+div.query-container>svg {
+	position: relative;		/* So that it appears above the span. */
 }
 
 div.results-container {
