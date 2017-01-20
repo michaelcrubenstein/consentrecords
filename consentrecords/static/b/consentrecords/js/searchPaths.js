@@ -187,7 +187,7 @@ var SearchPathsPanel = (function () {
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
-								   {duration: duration}),
+								   {duration: duration})
 			);
 	}
 	
