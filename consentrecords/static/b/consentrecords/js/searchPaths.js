@@ -160,10 +160,6 @@ var SearchPathsPanel = (function () {
 						 - inputMarginLeft + inputMarginRight
 						 - $(this.searchInput).outerWidth(true) + $(this.searchInput).outerWidth(false);
 
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
 		var queryBottom;
@@ -192,15 +188,6 @@ var SearchPathsPanel = (function () {
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
 								   {duration: duration}),
-			$(this.stagesDiv).animate({top: $(this.topBox).height()},
-								   {duration: duration}),
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop},
-				{duration: duration}),
-			$(this.queryContainer.node()).stop().animate(
-				{left: 0,
-				 bottom: -$(window).height()},
-				{duration: duration})
 			);
 	}
 	
@@ -231,13 +218,6 @@ var SearchPathsPanel = (function () {
 									  opacity: 1.0},
 							   {duration: duration});
 							   
-		$(this.stagesDiv).animate({top: $(this.topBox).height()},
-							   {duration: duration});
-		
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 		
 		this.mainDiv.classed('vertical-scrolling', true)
@@ -245,73 +225,75 @@ var SearchPathsPanel = (function () {
 
 		var resultsTop;
 		var resultsHeight;
-		var queryTop;
+		var queryHeight;
 		var queryBottom;
-		var poolBottom;
+		var poolHeight;
 		if (this.queryFlags.selectAll('g').size() == 0)
 			queryBottom = 0;
 		else
 			queryBottom = 100;
 			
-		var queryVMargins = $(this.queryContainer.node()).outerHeight(true) - $(this.queryContainer.node()).outerHeight(false);
-		var queryVPadding = parseInt($(this.queryContainer.node()).css('padding-top')) + 
-							parseInt($(this.queryContainer.node()).css('padding-bottom'));
+		var $poolContainer = $(this.poolContainer.node());
+		var $queryContainer = $(this.queryContainer.node());
+			
+		var poolVMargins = $poolContainer.outerHeight(true) - $poolContainer.outerHeight(false);
+		var poolHMargins = $poolContainer.outerWidth(true) - $poolContainer.innerWidth();
+		var queryVMargins = $queryContainer.outerHeight(true) - $queryContainer.outerHeight(false);
+		var queryVPadding = parseInt($queryContainer.css('padding-top')) + 
+							parseInt($queryContainer.css('padding-bottom'));
 		if (parentHeight < parentWidth)
 		{
-			poolBottom = queryBottom;
-			queryTop = poolTop;
+			$poolContainer.css('display', 'inline-block');
+			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins;
+			queryHeight = poolHeight;
 			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, 'margin-bottom': 10, width: parentWidth / 2, bottom: poolBottom},
+				{width: parentWidth / 2 - poolHMargins, 
+				 height: poolHeight},
 				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth / 2 - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: (parentWidth / 2),
-				 top: queryTop,
-				 bottom: queryBottom},
+			$queryContainer.stop().animate(
+				{"margin-top": 10,
+				 "margin-left": 0,
+				 width: parentWidth / 2 - poolHMargins,
+				 height: poolHeight},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
+			this.layoutPoolFlags(parentWidth / 2 - poolHMargins, duration);
 		}
 		else
 		{
-			queryTop = $(window).height() - queryBottom - this.queryFlagsHeight - queryVMargins;
-			poolBottom = $(window).height() - queryTop;
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, 'margin-bottom': 0, width: parentWidth, bottom: poolBottom},
+			$poolContainer.css('display', 'block');
+			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
+						 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
+			queryHeight = this.queryFlagsHeight;
+			$poolContainer.stop().animate(
+				{width: parentWidth - poolHMargins, 
+				 height: poolHeight},
 				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: 0,
-				 top: queryTop,
-				 bottom: queryBottom},
+			$queryContainer.stop().animate(
+				{"margin-top": 0,
+				 "margin-left": 10,
+				 width: parentWidth - poolHMargins,
+				 height: this.queryFlagsHeight},
 				{duration: duration});
-			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
+			this.layoutPoolFlags(parentWidth - poolHMargins, duration);
 		}
 		
-		this.queryFlags.transition()
-					   .duration(400)
-					   .attr('height', $(window).height() - queryBottom - queryTop - queryVMargins - queryVPadding);
+		this.queryFlags
+ 			.interrupt().transition().duration(400)
+			.attr('height', this.queryFlagsHeight - queryVPadding);
 
-		resultsTop = $(window).height() - queryBottom;
 		if (this.queryFlags.selectAll('g').size() == 0)
 			resultsHeight = 0;
 		else
 			resultsHeight = $(window).height();
 		
 		$(this.resultContainerNode).stop().animate(
-			{"margin-top": resultsTop,
-			 height: resultsHeight},
+			{height: resultsHeight},
 			{duration: duration});
 							   
 		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
 			This is important on iPhones where the soft keyboard appears and forces scrolling. */
 		$(this.node().parentNode).animate({scrollTop: 0},
 			{duration: duration});
-		
-		queryFlagsWidth = $(this.queryFlags.node()).width();
 		
 	}
 	
@@ -336,7 +318,7 @@ var SearchPathsPanel = (function () {
 				fd.x = nextX;
 				if (fd.visible === undefined || fd.visible)
 				{
-					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width + _this.searchFlagHSpacing;
+					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width;
 					nextX += thisSpacing;
 					if (nextX >= maxX && fd.x > startX)
 					{
@@ -345,6 +327,7 @@ var SearchPathsPanel = (function () {
 						fd.x = nextX;
 						nextX += thisSpacing;
 					}
+					nextX += _this.searchFlagHSpacing;
 				}
 				
 				fd.y = nextY;
@@ -367,12 +350,12 @@ var SearchPathsPanel = (function () {
 		var height = this._setFlagCoordinates(g, maxX);
 		
 		/* Set the height of the svg to match the total height of all of the flags. */
-		this.poolFlags.transition()
-			.duration(duration)
-			.style('height', height)
+		this.poolFlags
+ 			.interrupt().transition().duration(duration)
+			.attr('height', height)
 		
-		g.interrupt().transition()
-			.duration(duration)
+		g
+ 			.interrupt().transition().duration(duration)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
 			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 		
@@ -387,8 +370,8 @@ var SearchPathsPanel = (function () {
 		
 		this._setFlagCoordinates(g, $(this.queryFlags.node()).width());
 		
-		g.transition()
-			.duration(1000)
+		g
+ 			.interrupt().transition().duration(1000)
 			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 		
 	}
@@ -462,8 +445,7 @@ var SearchPathsPanel = (function () {
 		if ($(this.queryFlags.node()).children().length == 1)
 		{
 			this.queryContainer.selectAll('span')
-				.transition()
-				.duration(400)
+ 				.interrupt().transition().duration(400)
 				.style('opacity', 1.0);
 			this.revealPanel();
 		}
@@ -478,8 +460,7 @@ var SearchPathsPanel = (function () {
 		this.layoutPoolFlags();
 		
 		this.queryContainer.selectAll('span')
-							.transition()
-							.duration(400)
+ 							.interrupt().transition().duration(400)
 							.style('opacity', 1.0);
 
 		/* Run a new search based on the query. */
@@ -520,7 +501,7 @@ var SearchPathsPanel = (function () {
  		
  		var _this = this;
  		/* Animate the movement of the svg to its new location. */
- 		travelSVG.transition()
+ 		travelSVG.interrupt().transition()
  			.duration(400)
  			.style('top', newPosition.top + flagPosition.top)
  			.style('left', newPosition.left + flagPosition.left)
@@ -540,8 +521,7 @@ var SearchPathsPanel = (function () {
 					if (_this.queryFlags.selectAll('g').size() == 1)
 					{
 						_this.queryContainer.selectAll('span')
-							.transition()
-							.duration(400)
+ 							.interrupt().transition().duration(400)
 							.style('opacity', 0.0);
 						_this.revealPanel();
 					}
@@ -550,7 +530,7 @@ var SearchPathsPanel = (function () {
 					travelSVG.remove();
 					
 					/* Dispose of the hole. */
-					rectHole.transition()
+					rectHole.interrupt().transition()
 						.duration(400)
 						.style('opacity', 0.0)
 						.remove();
@@ -798,17 +778,17 @@ var SearchPathsPanel = (function () {
 		$(this.searchInput).focusin(function(event)
 			{
 				_this.revealPanel();
-				event.stopPropagation();
+				//event.stopPropagation();
 			})
 			.click(function(event)
 			{
-				event.stopPropagation();
+				//event.stopPropagation();
 			})
 			.on('input', function(event)
 			{
 				_this.filterPool();
 				_this.layoutPoolFlags();
-				event.stopPropagation();
+				//event.stopPropagation();
 			});
 			
 		stagesDiv = mainDiv.append('div')
@@ -877,8 +857,7 @@ var SearchPathsPanel = (function () {
 			.classed('pool-container', true);
 				
 		this.poolFlags = this.poolContainer.append('svg')
-			.classed('flags', true)
-			.style('height', 120);
+			.classed('flags', true);
 			
 		this.queryContainer = this.mainDiv.append('div')
 			.classed('query-container', true);
