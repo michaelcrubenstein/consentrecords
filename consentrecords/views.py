@@ -61,6 +61,7 @@ def home(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -88,6 +89,7 @@ def showLines(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -112,6 +114,7 @@ def orgHome(request):
     template = loader.get_template(templateDirectory + 'orgHome.html')
     args = {
         'user': request.user,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -139,6 +142,7 @@ def find(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -176,6 +180,7 @@ def showInstances(request):
     
         argList = {
             'user': request.user,
+            'jsversion': settings.JS_VERSION,
             'canShowObjects': request.user.is_staff,
             'canAddObject': request.user.is_staff,
             'path': urllib.parse.unquote_plus(path),
@@ -205,6 +210,7 @@ def showPathway(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -234,6 +240,7 @@ def showExperience(request, id):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -271,6 +278,7 @@ def accept(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -303,6 +311,7 @@ def ignore(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -334,6 +343,7 @@ def userSettings(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -359,6 +369,7 @@ def signup(request, email=None):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -546,6 +557,7 @@ def addExperience(request, experienceID):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -619,6 +631,7 @@ def addToPathway(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
 
     if settings.FACEBOOK_SHOW:
@@ -1436,6 +1449,7 @@ def updateUsername(request):
 def features(request):
     template = loader.get_template('doc/features.html')
     context = RequestContext(request, {
+        'jsversion': settings.JS_VERSION,
     })
         
     return HttpResponse(template.render(context))
