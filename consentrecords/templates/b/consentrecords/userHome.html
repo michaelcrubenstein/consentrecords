@@ -637,11 +637,11 @@
 								{
 									if (stateString.startsWith("comments/"))
 									{
-										pathwayPanel.showCommentsPanel(id);
+										pathwayPanel.showCommentsPanelAsync(id);
 									}
 									else if (stateString.startsWith("comment/"))
 									{
-										var commentsPanel = pathwayPanel.showCommentsPanel(id);
+										var commentsPanel = pathwayPanel.showCommentsPanelAsync(id);
 										stateString = stateString.substring("comment/".length);
 										id = stateString.substring(0, stateString.indexOf("/"));
 										stateString = stateString.substring(stateString.indexOf("/")+1);
@@ -658,7 +658,7 @@
 										}
 									}
 									else
-										pathwayPanel.showCommentsPanel(id);
+										pathwayPanel.showCommentsPanelAsync(id);
 										
 								}
 								catch(err)

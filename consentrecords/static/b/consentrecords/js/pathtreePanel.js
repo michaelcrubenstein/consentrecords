@@ -1762,7 +1762,7 @@ var PathlinesPanel = (function () {
 		return d3.select($group.get(0)).datum();
 	}
 	
-	PathlinesPanel.prototype.showCommentsPanel = function(id)
+	PathlinesPanel.prototype.showCommentsPanelAsync = function(id)
 	{
 		var newPanel = new ExperienceCommentsPanel(this.getFlagData(id));
 		newPanel.showLeft();
