@@ -478,10 +478,14 @@ var PathView = (function() {
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
+	PathView.prototype.flagLineOneDY = '1.4em';
+	PathView.prototype.flagLineTwoDY = '1.3em';
 	PathView.prototype.flagHeightEM = 3.5;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
 	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
+	PathView.prototype.topYearMarginEM = 1.4;	/* The distance between the top of a flagpole and a year marker. */
+	PathView.prototype.bottomYearMarginEM = 0.5;	/* The distance between the bottom of a flagpole and a year marker. */
 
 	PathView.prototype.commentLineHeight = 0;
 	PathView.prototype.commentLabelTopMargin = 5;
@@ -937,11 +941,11 @@ var PathView = (function() {
 		var text = g.append('text').classed('flag-label', true)
 			.attr('x', this.textDetailLeftMargin);
 		text.append('tspan')
-			.attr('dy', '1.4em')
+			.attr('dy', this.flagLineOneDY)
 			.attr('fill', function(d) { return d.fontColor(); });
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
-			.attr('dy', '1.3em')
+			.attr('dy', this.flagLineTwoDY)
 			.attr('fill', function(d) { return d.fontColor(); });
 		
 		g.each(function() { _this._setFlagText(this); });
@@ -969,7 +973,6 @@ var PathView = (function() {
 		var _this = this;
 		
 		this.yearGroup.selectAll('text').remove();
-		var yearHeight = this.flagHeightEM / 2;
 		var fds = g.data();
 		fds.forEach(function(fd)
 		{
@@ -1093,14 +1096,14 @@ var PathView = (function() {
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.top)
 					.attr('x', _this.yearTextX)
-					.attr('y', _this.experienceGroupDY + (fd.y + yearHeight) * _this.emToPX);
+					.attr('y', _this.experienceGroupDY + (fd.y + _this.topYearMarginEM) * _this.emToPX);
 			}
 			if (fd.yearBounds.bottom)
 			{
 				_this.yearGroup.append('text')
 					.text(fd.yearBounds.bottom)
 					.attr('x', _this.yearTextX)
-					.attr('y', _this.experienceGroupDY + (fd.y2 * _this.emToPX));
+					.attr('y', _this.experienceGroupDY + (fd.y2 - _this.bottomYearMarginEM) * _this.emToPX);
 			}
 		});
 	}
