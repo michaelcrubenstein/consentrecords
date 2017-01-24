@@ -5,6 +5,9 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
 	
+	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
+	ExperienceCommentsPanel.prototype.editChevronHeight = 18; 	/* pixels */
+	
 	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
 	{
 		var divs = buttons.append('div');
@@ -182,8 +185,8 @@ var ExperienceCommentsPanel = (function() {
 					.duration(400)
 					.attr("transform", 
 						"translate({0},{1})".format(
-							parseInt(this.svg.style('width')) - (12 + 12), 
-							(parseInt(this.svg.style('height')) - 18) / 2));
+							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
+							($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
 							
 				unblockClick();
 			}
@@ -314,8 +317,8 @@ var ExperienceCommentsPanel = (function() {
 											.duration(400)
 											.attr("transform", 
 												"translate({0},{1})".format(
-													parseInt(_this.svg.style('width')), 
-													(parseInt(_this.svg.style('height')) - 18) / 2));
+													$(_this.svg.node()).width(), 
+													($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
 
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
@@ -371,8 +374,8 @@ var ExperienceCommentsPanel = (function() {
 			if (fd.experience.canWrite())
 				_this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
-						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 + 12 : 0), 
-						(parseInt(_this.svg.style('height')) - 18) / 2));
+						$(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 12 : 0), 
+						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
 
 		}
 		setTimeout(resizeDetail);
@@ -399,8 +402,8 @@ var ExperienceCommentsPanel = (function() {
 				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
 			this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
-						_this.svg.style('width'), 
-						_this.svg.style('height') / 2));
+						$(_this.svg.node()).width(), 
+						$(_this.svg.node()).height() / 2));
 						
 			this.svg.on('click', function(e)
 				{
