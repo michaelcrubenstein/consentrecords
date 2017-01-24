@@ -297,7 +297,7 @@ var SearchPathsPanel = (function () {
 		
 	}
 	
-	SearchPathsPanel.prototype.setFlagText = function(node)
+	SearchPathsPanel.prototype._setFlagText = function(node)
 	{
 		var g = d3.select(node);
 		g.selectAll('text').selectAll('tspan:nth-child(1)')
@@ -617,7 +617,7 @@ var SearchPathsPanel = (function () {
 			.attr('dy', '1.1em');
 		
 		var _this = this;	
-		g.each(function() { _this.setFlagText(this); });
+		g.each(function() { _this._setFlagText(this); });
 
 		g.selectAll('rect')
 			.attr('height', "{0}em".format(this.flagHeightEM))

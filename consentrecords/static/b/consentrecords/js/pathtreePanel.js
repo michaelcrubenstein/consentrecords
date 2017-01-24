@@ -808,7 +808,7 @@ var PathView = (function() {
 		setupOnViewEventHandler(experience.getCell("Timeframe"), "valueAdded.cr valueDeleted.cr dataChanged.cr", node, handleExperienceDateChanged);
 	}
 	
-	PathView.prototype.setFlagText = function(node)
+	PathView.prototype._setFlagText = function(node)
 	{
 		var g = d3.select(node);
 		g.selectAll('text').selectAll('tspan:nth-child(1)')
@@ -894,7 +894,7 @@ var PathView = (function() {
 		text.append('tspan')
 			.attr('dy', '1.1em');
 		
-		g.each(function() { _this.setFlagText(this); });
+		g.each(function() { _this._setFlagText(this); });
 		
 		return g;
 	}
