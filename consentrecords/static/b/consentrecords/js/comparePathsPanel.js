@@ -380,15 +380,12 @@ var ComparePath = (function() {
 					.on("dragend", function(fd, i){
 						d3.select(ghostGroup).remove();
 						if (!didDrag)
-							showDetail(fd, i);
+						{
+							cr.logRecord('click', 'show comments: ' + fd.getDescription());
+							_this.showCommentsPanel(this, fd);
+						}
 					})
 				);
-		
-		function showDetail(fd, i)
-		{
-			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			_this.showCommentsPanel(fd);
-		}
 		
 		return g;
 	}

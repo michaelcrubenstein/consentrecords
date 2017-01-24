@@ -130,9 +130,22 @@ var FlagData = (function() {
 			this.experience.getDatum("User Entered Offering") ||
 			f("Service") ||
 			this.experience.getDatum("User Entered Service") ||
-			f("Organization") ||
-			this.experience.getDatum("User Entered Organization") ||
 			"None";
+	}
+	
+	FlagData.prototype.subHeading = function()
+	{
+		var _this = this;
+		var f = function(name)
+		{
+			var d = _this.experience.getValue(name);
+			return d && d.getInstanceID() && d.getDescription();
+		}
+		return f("Organization") ||
+			this.experience.getDatum("User Entered Organization") ||
+			f("Site") ||
+			this.experience.getDatum("User Entered Site") ||
+			"";
 	}
 	
 	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
@@ -257,6 +270,12 @@ var FlagData = (function() {
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].color;
+	}
+	
+	FlagData.prototype.fontColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].fontColor;
 	}
 	
 	FlagData.prototype.checkOfferingCells = function(done)
@@ -459,10 +478,9 @@ var PathView = (function() {
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
-	PathView.prototype.flagHeightEM = 2.333;
+	PathView.prototype.flagHeightEM = 3.5;
 	PathView.prototype.flagSpacing = 2;
 	PathView.prototype.flagSpacingEM = 0.1;
-	PathView.prototype.textDetailTopLineHeight = "1.5em";
 	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 
 	PathView.prototype.commentLineHeight = 0;
@@ -641,7 +659,7 @@ var PathView = (function() {
 					})
 				.on("click.cr", function(fd, i)
 					{
-						_this.showCommentsPanel(fd);
+						_this.showCommentsPanel(this, fd);
 						d3.event.stopPropagation();
 					});
 				
@@ -657,9 +675,9 @@ var PathView = (function() {
 					{ 
 						d3.event.stopPropagation(); 
 					})
-				.on("click.cr", function(fd, i)
+				.on("click.cr", function(fd)
 					{
-						_this.showCommentsPanel(fd, i);
+						_this.showCommentsPanel(this, fd);
 						d3.event.stopPropagation();
 					});
 			
@@ -694,18 +712,13 @@ var PathView = (function() {
 		$(this).trigger("clearTriggers.cr");
 	}
 
-	PathView.prototype.updateDetail = function(fd, duration)
+	PathView.prototype.updateDetail = function(flag, fd)
 	{
 		var _this = this;
 		fd.checkOfferingCells(function()
 			{
-				_this.showCommentsPanel(fd);
+				_this.showCommentsPanel(flag, fd);
 			});
-	}
-	
-	PathView.prototype.refreshDetail = function()
-	{
-		this.updateDetail(this.detailFlagData, 0);
 	}
 	
 	/* Append the detail contents that are static. */
@@ -753,7 +766,7 @@ var PathView = (function() {
 		}
 	}
 	
-	PathView.prototype.showCommentsPanel = function(fd, i)
+	PathView.prototype.showCommentsPanel = function(flag, fd)
 	{
 		if (fd.experience.getTypeName() == "Experience") {
 			;	/* Nothing to edit */
@@ -764,8 +777,18 @@ var PathView = (function() {
 			{
 				try
 				{
+					d3.select(flag).selectAll('rect.bg')
+						.transition()
+						.duration(200)
+						.style('fill-opacity', 0.4);
 					var newPanel = new ExperienceCommentsPanel(fd);
-					revealPanelLeft(newPanel.node());
+					newPanel.showLeft()
+						.always(function()
+							{
+								d3.select(flag).selectAll('rect.bg')
+									.style('fill-opacity', 0.2);
+							})
+						.always(unblockClick);
 					return newPanel;
 				}
 				catch(err)
@@ -811,8 +834,11 @@ var PathView = (function() {
 	PathView.prototype._setFlagText = function(node)
 	{
 		var g = d3.select(node);
-		g.selectAll('text').selectAll('tspan:nth-child(1)')
-			.text(function(d) { return d.getDescription(); })
+		g.selectAll('text>tspan:nth-child(1)')
+			.text(function(d) { return d.getDescription(); });
+		g.selectAll('text>tspan:nth-child(2)')
+			.text(function(d) { return d.subHeading(); });
+			
 	}
 		
 	/* Sets up each group (this) that displays an experience to delete itself if
@@ -821,28 +847,47 @@ var PathView = (function() {
 	PathView.prototype.setupDelete = function(fd, node) 
 	{
 		var _this = this;
-		var dataChanged = function(eventObject)
-		{
-			_this.setFlagText(eventObject.data);
-			
-			/* Make sure that the rectangles match the widths. */
-			var g = d3.select(eventObject.data);
-			g.selectAll('rect')
-				.attr('width', function(fd)
-					{
-						return $(this.parentNode).children('text').outerWidth() + 
-							(2 * _this.textDetailLeftMargin);
-					});	
-		}
 		
 		setupOneViewEventHandler(fd.experience, "valueDeleted.cr", node, function(eventObject)
 			{
 				$(eventObject.data).remove();
 				_this.handleValueDeleted(this);
 			});
-		setupOnViewEventHandler(fd.experience, "dataChanged.cr", node, dataChanged);
-		setupOnViewEventHandler(fd.experience.getCell("Service"), "dataChanged.cr", node, dataChanged);
-		setupOnViewEventHandler(fd.experience.getCell("User Entered Service"), "dataChanged.cr", node, dataChanged);
+		
+		var flagCells = ["Organization",
+		 	"User Entered Organization",
+		 	"Site",
+		 	"User Entered Site",
+		 	"Offering",
+		 	"User Entered Offering",
+		 	"Service",
+		 	"User Entered Service"];
+		
+		var flagDataChanged =  function(eventObject)
+			{
+				_this._setFlagText(eventObject.data);
+
+				/* Make sure that the rectangles match the widths. */
+				var g = d3.select(eventObject.data);
+				g.selectAll('rect')
+					.attr('width', function(fd)
+						{
+							return $(this.parentNode).children('text').outerWidth() + 
+								(2 * _this.textDetailLeftMargin);
+						});	
+			}
+						
+		flagCells.forEach(function(s)
+		 {
+			/* cell will be null if the experience came from the organization for the 
+				User Entered Organization and User Entered Site.
+			 */
+			var cell = fd.experience.getCell(s);
+			if (cell)
+			{
+				setupOnViewEventHandler(cell, "valueAdded.cr valueDeleted.cr dataChanged.cr", node, flagDataChanged);
+			}
+		 });
 	}
 	
 	PathView.prototype.setupFlags = function(g)
@@ -861,7 +906,7 @@ var PathView = (function() {
 			.on("click.cr", function(fd)
 				{
 					if (!d3.event.defaultPrevented)
-						_this.updateDetail(fd);
+						_this.updateDetail(this, fd);
 				})
 			.each(function(d) 
 				{ 
@@ -892,7 +937,12 @@ var PathView = (function() {
 		var text = g.append('text').classed('flag-label', true)
 			.attr('x', this.textDetailLeftMargin);
 		text.append('tspan')
-			.attr('dy', '1.1em');
+			.attr('dy', '1.4em')
+			.attr('fill', function(d) { return d.fontColor(); });
+		text.append('tspan')
+			.attr('x', this.textDetailLeftMargin)
+			.attr('dy', '1.3em')
+			.attr('fill', function(d) { return d.fontColor(); });
 		
 		g.each(function() { _this._setFlagText(this); });
 		
@@ -911,7 +961,7 @@ var PathView = (function() {
 
 		this.redoLayout();
 		
-		this.updateDetail(flags.datum(), 700);
+		this.updateDetail(flags.node(), flags.datum());
 	}
 	
 	PathView.prototype.layoutYears = function(g)
