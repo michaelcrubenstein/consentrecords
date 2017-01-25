@@ -4,6 +4,12 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype = new SitePanel();
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
+	ExperienceCommentsPanel.prototype.detailGroup = null;
+	ExperienceCommentsPanel.prototype.detailTextGroup = null;
+	ExperienceCommentsPanel.prototype.detailFrontRect = null;
+	ExperienceCommentsPanel.prototype.detailRectHeight = 0;
+	ExperienceCommentsPanel.prototype.svg = null;
+	ExperienceCommentsPanel.prototype.editChevronContainer = null;
 	
 	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
 	ExperienceCommentsPanel.prototype.editChevronHeight = 18; 	/* pixels */
