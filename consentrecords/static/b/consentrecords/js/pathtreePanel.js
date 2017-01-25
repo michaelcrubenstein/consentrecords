@@ -478,6 +478,7 @@ var PathView = (function() {
 	/* Constants related to the detail rectangle. */
 	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
+	PathView.prototype.yearTextX2 = "0.6em";
 	PathView.prototype.flagLineOneDY = '1.4em';
 	PathView.prototype.flagLineTwoDY = '1.3em';
 	PathView.prototype.flagHeightEM = 3.5;
@@ -894,6 +895,32 @@ var PathView = (function() {
 		 });
 	}
 	
+	PathView.prototype.compareDates = function (d1, d2)
+	{
+		if (d1 === "Done")
+			d1 = -10000;
+		if (d2 === "Done")
+			d2 = -10000;
+			
+		// negative numbers mean d1 is earlier than d2 chronologically
+		if (d1 === "Goal")
+			return d2 === "Goal" ? 0 : 1;
+		else if (d2 === "Goal")
+			return -1;
+		else if (d1 === "Now")
+		{
+			if (d2 === "Now")
+				return 0;
+			else 
+				return d2 <= thisYear ? 1 : -1;
+		}
+		else if (d2 === "Now")
+			return d1 <= thisYear ? -1 : 1;
+		else
+			return d1 - d2;
+	}
+
+	
 	PathView.prototype.setupFlags = function(g)
 	{
 		var _this = this;
@@ -972,140 +999,52 @@ var PathView = (function() {
 	{
 		var _this = this;
 		
+		this.yearGroup.selectAll('line').remove();
 		this.yearGroup.selectAll('text').remove();
 		var fds = g.data();
+		var years = {};
+		
 		fds.forEach(function(fd)
 		{
 			fd.yearBounds = fd.getYearArray();
+			if (!(fd.y in years) || _this.compareDates(years[fd.y].text, fd.yearBounds.top) > 0)
+				years[fd.y] = {y: fd.y + _this.topYearMarginEM, text: fd.yearBounds.top};
+			if (!(fd.y2 in years) || _this.compareDates(years[fd.y2].text, fd.yearBounds.bottom) > 0)
+				years[fd.y2] = {y: fd.y2 - _this.bottomYearMarginEM, text: fd.yearBounds.bottom};
 		});
 		
-		// Eliminate aboves >= aboves, tops or belows of previous items.
-		for (var i = 0; i < fds.length - 1; ++i)
-		{
-			var fdi = fds[i];
-			var ybi = fdi.yearBounds;
-			var ybj = fds[i+1].yearBounds;
-			if (ybi.top == ybi.bottom ||
-			    ybi.top == ybj.top ||
-			    ybi.top == ybj.bottom)
-			    ybi.top = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeightEM) {	/* Overlapping flag-pole */
-				for (var j = i + 1; j < fds.length; ++j)
-				{
-					var fdj = fds[j];
-					ybj = fdj.yearBounds;
-					if (ybi.top == ybj.top ||
-						ybi.top == ybj.bottom)
-					{
-						ybi.top = undefined;
-						break;
-					}
-				}
-			}
-			
-			var thisYear = new Date().getUTCFullYear();
-			function compareDates(d1, d2)
-			{
-				if (d1 === "Done")
-					d1 = -10000;
-				if (d2 === "Done")
-					d2 = -10000;
-					
-				// negative numbers mean d1 is earlier than d2 chronologically
-				if (d1 === "Goal")
-					return d2 === "Goal" ? 0 : 1;
-				else if (d2 === "Goal")
-					return -1;
-				else if (d1 === "Now")
-				{
-					if (d2 === "Now")
-						return 0;
-					else 
-						return d2 <= thisYear ? 1 : -1;
-				}
-				else if (d2 === "Now")
-					return d1 <= thisYear ? -1 : 1;
-				else
-					return d1 - d2;
-			}
-			
-			ybj = fds[i+1].yearBounds;
-			if (ybi.bottom == ybj.top)
-				ybi.bottom = undefined;
-			else if (fdi.y2 > fdi.y + this.flagHeightEM) {	/* Overlapping flag-pole */
-				for (var j = i + 1; j < fds.length; ++j)
-				{
-					var fdj = fds[j];
-					if (fdj.y < fdi.y2 && fdj.y2 >= fdi.y2)	/* If this crosses the bottom,  */
-					{
-						var isShortFlagpole = fdj.y + this.flagHeightEM == fdj.y2;
-						/* If the item after i's flag-pole has the same top year
-								then eliminate i's bottom (it is a duplicate year marker). 
-							or if the item at i's flag-pole has a lesser bottom year than i's flag-pole
-								then if that item doesn't extend below i,
-									then eliminate i's bottom (two labels will overlap)
-								otherwise, if the lower item's top is the same as i's bottom,
-									then eliminate the lower item's top (it is a duplicate year marker and higher.)
-						 */
-						if (isShortFlagpole && j < fds.length - 1 && fds[j+1].yearBounds.top == fdi.yearBounds.bottom)
-							fdi.yearBounds.bottom = undefined;
-						else if (compareDates(fdj.yearBounds.bottom, fdi.yearBounds.bottom) < 0)
-						{
-							if (isShortFlagpole)
-								fdi.yearBounds.bottom = undefined;
-							else if (fdj.yearBounds.top == fdi.yearBounds.bottom)
-								fdj.yearBounds.top = undefined;
-						}
-						else if (fdi.yearBounds.bottom && fdj.yearBounds.bottom)
-						{
-							if (fdj.y2 <= fdi.y2 + this.flagSpacing)
-							{
-								// The bottoms overlap.
-								if (fdj.yearBounds.bottom == fdi.yearBounds.bottom)
-									fdi.yearBounds.bottom = undefined;
-								else
-									fdj.yearBounds.bottom = undefined;
-							}
-						}
-					}
-					else if (ybi.bottom == fdj.yearBounds.top ||
-						     ybi.bottom == fdj.yearBounds.bottom)
-					{
-						ybi.bottom = undefined;
-					}
-					if (!ybi.bottom)
-						break;
-				}
-			}
-		}
+		var yearKeys = Object.keys(years);
 		
-		/* For the last FlagData, if the yearBounds are the same for the top and bottom, then 
-		    clear the top.
-		 */
-		if (fds.length > 0)
+		var sortedKeys = yearKeys.sort(function(a, b)
 		{
-			var ybi = fds[fds.length - 1].yearBounds;
-			if (ybi.top == ybi.bottom)
-				ybi.top = undefined;
-		}
-		
-		fds.forEach(function(fd)
-		{
-			if (fd.yearBounds.top)
-			{
-				_this.yearGroup.append('text')
-					.text(fd.yearBounds.top)
-					.attr('x', _this.yearTextX)
-					.attr('y', _this.experienceGroupDY + (fd.y + _this.topYearMarginEM) * _this.emToPX);
-			}
-			if (fd.yearBounds.bottom)
-			{
-				_this.yearGroup.append('text')
-					.text(fd.yearBounds.bottom)
-					.attr('x', _this.yearTextX)
-					.attr('y', _this.experienceGroupDY + (fd.y2 - _this.bottomYearMarginEM) * _this.emToPX);
-			}
+			return parseFloat(a) - parseFloat(b);
 		});
+		
+		var lastText = "";
+		var needLine = false;
+		for (i = 0; i < sortedKeys.length; ++i)
+		{
+			var keyI = sortedKeys[i];
+			if (i == 0 ||
+				years[keyI].text != lastText)
+			{
+				if (needLine)
+					_this.yearGroup.append('line')
+						.attr('x1', _this.yearTextX)
+						.attr('y1', _this.experienceGroupDY + (years[keyI].y - 1.3) * _this.emToPX)
+						.attr('x2', _this.yearTextX2)
+						.attr('y2', _this.experienceGroupDY + (years[keyI].y - 1.3) * _this.emToPX)
+						.attr('stroke', '#CCC');
+				_this.yearGroup.append('text')
+					.text(years[keyI].text)
+					.attr('x', _this.yearTextX)
+					.attr('y', _this.experienceGroupDY + years[keyI].y * _this.emToPX);
+				lastText = years[keyI].text;
+				needLine = false;
+			}
+			else
+				needLine = true;
+		}
 	}
 	
 	PathView.prototype._compareExperiences = function(a, b)
@@ -1288,7 +1227,6 @@ var PathLines = (function() {
 	PathLines.prototype.layout = function()
 	{
 		var g = this.experienceGroup.selectAll('g.flag');
-		var y = this.yearGroup.selectAll('text');
 		
 		var _this = this;
 		
