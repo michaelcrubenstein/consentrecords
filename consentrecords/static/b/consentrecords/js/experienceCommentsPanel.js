@@ -188,6 +188,12 @@ var ExperienceCommentsPanel = (function() {
 							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
 							($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
 							
+				this.detailTextGroup.selectAll('line')
+					.transition()
+					.duration(400)
+					.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
+
+							
 				unblockClick();
 			}
 			catch(err)
@@ -319,6 +325,11 @@ var ExperienceCommentsPanel = (function() {
 												"translate({0},{1})".format(
 													$(_this.svg.node()).width(), 
 													($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
+													
+										_this.detailTextGroup.selectAll('line')
+											.transition()
+											.duration(400)
+											.attr('x2', $(_this.svg.node()).width());
 
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
@@ -356,17 +367,16 @@ var ExperienceCommentsPanel = (function() {
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
 			.datum(fd);
+		this.detailTextGroup = this.detailGroup.append('g');
 		this.detailFrontRect = this.detailGroup.append('rect')
 			.classed('detail', true);
 		fd.colorElement(this.detailFrontRect.node());
 		
-		var detailText = _this.detailGroup.append('text');
-
 		function resizeDetail()
 		{
-			fd.appendTSpans(detailText, parseFloat(_this.svg.style('width')), 12);
-			var textBox = detailText.node().getBBox();
-			_this.detailRectHeight = textBox.height + (textBox.y * 2) + PathView.prototype.textBottomMargin;
+			fd.appendTSpans(_this.detailTextGroup, parseFloat(_this.svg.style('width')), 12);
+			var textBox = _this.detailTextGroup.node().getBBox();
+			_this.detailRectHeight = textBox.height + (textBox.y) + PathView.prototype.textBottomMargin;
 			_this.detailFrontRect.attr('height', _this.detailRectHeight)
 				.attr('width', _this.svg.style('width'));
 			_this.svg.attr('height', _this.detailRectHeight);

@@ -116,7 +116,7 @@ var FlagData = (function() {
 	FlagData.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
 	FlagData.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
 	FlagData.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	FlagData.prototype.detailTagSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	FlagData.prototype.detailTagSpacing = "1em";		/* The space between lines of text in the detail box. */
 	
 	FlagData.prototype.getDescription = function()
 	{
@@ -324,79 +324,114 @@ var FlagData = (function() {
 		}
 	}
 	
-	FlagData.prototype.appendTSpans = function(detailText, maxWidth, x)
+	FlagData.prototype.appendTSpans = function(detailGroup, maxWidth, x)
 	{
 		x = x !== undefined ? x : this.textDetailLeftMargin;
 		
-		detailText.selectAll('tspan').remove();
+		detailGroup.selectAll('text').remove();
+		detailGroup.selectAll('line').remove();
 		
-		var s;
+		var title;
 		var tspan;
-		s = this.pickedOrCreatedValue("Offering", "User Entered Offering");
-		if (!s)
+		title = this.pickedOrCreatedValue("Offering", "User Entered Offering");
+		if (!title)
 		{
-			var serviceCell = this.experience.getCell("Service");
-			var userServiceCell = this.experience.getCell("User Entered Service");
+			var serviceValue = this.experience.getValue("Service");
+			var userServiceValue = this.experience.getValue("User Entered Service");
 
-			if (serviceCell && serviceCell.data.length > 0)
-				s = serviceCell.data[0].getDescription();
-			else if (userServiceCell && userServiceCell.data.length > 0)
-				s = userServiceCell.data[0].getDescription();
+			if (serviceValue)
+				title = serviceValue.getDescription();
+			else if (userServiceValue)
+				title = userServiceValue.getDescription();
 		}
-		
-		if (s && s.length > 0)
-		{
-			tspan = detailText.append('tspan')
-				.classed('flag-label', true)
-				.text(s)
-				.attr("x", x)
-				.attr("dy", this.detailTopSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
-		}
-		
 		var orgString = this.pickedOrCreatedValue("Organization", "User Entered Organization");
-		if (orgString && orgString.length > 0)
+		var siteString = this.pickedOrCreatedValue("Site", "User Entered Site");
+		if (siteString == orgString)
+			siteString = "";
+		var dateRange = getDateRange(this.experience);
+		var tagDescriptions = getTagList(this.experience);
+		var lineHeight = 0;
+		var lineMargin = 3;
+		
+		if (title)
 		{
-			tspan = detailText.append('tspan')
+			tspan = detailGroup.append('text')
+				.classed('flag-label', true)
+				.text(title)
+				.attr("x", x)
+				.attr("dy", this.detailTopSpacing)
+				.attr("fill", this.fontColor());
+			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
+		}
+		
+		if (orgString)
+		{
+			tspan = detailGroup.append('text')
 				.classed('detail-organization', true)
 				.text(orgString)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailOrganizationSpacing : this.detailTopSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+				.attr("fill", this.fontColor());
+			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
+			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
 		}
 
-		s = this.pickedOrCreatedValue("Site", "User Entered Site");
-		if (s && s.length > 0 && s !== orgString)
+		if (siteString)
 		{
-			tspan = detailText.append('tspan')
+			if (orgString)
+				lineHeight -= lineMargin;
+			tspan = detailGroup.append('text')
 				.classed('site', true)
-				.text(s)
+				.text(siteString)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailSiteSpacing : this.detailTopSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+				.attr("fill", this.fontColor());
+			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
+			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
 		}
 
-		s = getDateRange(this.experience);
-		if (s && s.length > 0)
+		if (dateRange)
 		{
-			tspan = detailText.append('tspan')
+			if (lineHeight > 0)
+			{
+				detailGroup.append('line')
+					.attr('x1', x)
+					.attr('x2', maxWidth)
+					.attr('y1', lineHeight)
+					.attr('y2', lineHeight)
+					.attr('stroke', this.fontColor());
+				lineHeight += lineMargin;
+			}
+			tspan = detailGroup.append('text')
 				.classed('detail-dates', true)
-				.text(s)
+				.text(dateRange)
 				.attr("x", x)
-				.attr("dy", maxWidth ? this.detailDateSpacing : this.detailTopSpacing);
-			maxWidth = Math.max(maxWidth, tspan.node().getComputedTextLength());
+				.attr("fill", this.fontColor());
+			tspan.attr('y', lineHeight + tspan.node().getBBox().height || this.detailTopSpacing)
+			lineHeight = tspan.node().getBBox().y + tspan.node().getBBox().height + lineMargin;
 		}
 		
-		s = getTagList(this.experience);
-		if (s && s.length > 0)
+		if (tagDescriptions)
 		{
 			var _this = this;
-			FlagData.appendWrappedText(s, function(spanIndex)
+			if (lineHeight > 0)
+			{
+				detailGroup.append('line')
+					.attr('x1', x)
+					.attr('x2', maxWidth)
+					.attr('y1', lineHeight)
+					.attr('y2', lineHeight)
+					.attr('stroke', this.fontColor());
+				lineHeight += lineMargin;
+			}
+			var detailText = detailGroup.append('text')
+				.attr("x", x)
+				.attr("y", lineHeight || this.detailTopSpacing);
+			FlagData.appendWrappedText(tagDescriptions, function(spanIndex)
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
 						.attr("x", x)
-						.attr("dy", (spanIndex || !maxWidth) ? _this.detailTopSpacing : _this.detailTagSpacing);
+						.attr("dy", _this.detailTagSpacing)
+						.attr("fill", _this.fontColor());
 				},
 				maxWidth);
 		}

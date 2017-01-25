@@ -108,7 +108,6 @@ g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
 }
 
 g.detail .flag-label {	/* For detail panels */
-	fill: #222;
 	text-anchor: start;
 	font-weight: 500;
 	-webkit-user-select: none;  /* Chrome all / Safari all */
