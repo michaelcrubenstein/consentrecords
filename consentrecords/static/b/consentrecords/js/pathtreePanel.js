@@ -534,16 +534,6 @@ var PathView = (function() {
 	PathView.prototype.commentLabelBottomMargin = 10;
 	PathView.prototype.commentLabelLeftMargin = 10;
 
-	/* Variables related to the detail rectangle. */
-	PathView.prototype.nextClipID = 1;
-	PathView.prototype.clipID = null;
-	PathView.prototype.defs = null;
-	PathView.prototype.detailGroup = null;
-	PathView.prototype.detailBackRect = null;
-	PathView.prototype.detailFrontRect = null;
-	PathView.prototype.detailRectHeight = 0;
-	PathView.prototype.detailFlagData = null;
-	
 	PathView.prototype.guideHSpacing = 30;
 							  
 	PathView.prototype.emToPX = 11;
@@ -625,136 +615,13 @@ var PathView = (function() {
 		}
 	}
 	
-	PathView.prototype.setupClipID = function()
-	{
-		/* Set up a clipID that uniquely identifies the clip paths for this PathView. */
-		this.clipID = PathView.prototype.nextClipID;
-		PathView.prototype.nextClipID += 1;
-	}
-	
-	PathView.prototype.setupClipPaths = function()
-	{
-		this.defs.selectAll('clipPath').remove();
-		
-		/* Add a clipPath for the detail area. */
-		this.defs.append('clipPath')
-			.attr('id', 'id_detailClipPath{0}'.format(this.clipID))
-			.append('rect');
-	}
-	
 	PathView.prototype.canEditExperience = function(fd)
 	{
 		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
 	}
 	
-	PathView.prototype.changedContent = function()
-	{
-		var hasEditChevron = this.canEditExperience(this.detailGroup.datum());
-		var iconAreaWidth = (hasEditChevron ? this.showDetailIconWidth + this.textDetailLeftMargin : 0);
-		var rectWidth = $(this.detailGroup.node()).children('text')
-							.map(function() { return this.getBBox().width; })
-							.toArray()
-							.reduce(function(a, b) { return Math.max(a, b); }, 0) +
-						iconAreaWidth + (this.textDetailLeftMargin * 2);
-							
-		this.detailGroup.selectAll('line').attr('x2', rectWidth);
-		this.detailGroup.selectAll('rect').attr('width', rectWidth);
-		d3.select("#id_detailClipPath{0}".format(this.clipID)).selectAll('rect')
-			.attr('width', rectWidth);
-			
-		this.detailGroup.select('image.edit-chevron')
-			.attr('x', rectWidth - this.showDetailIconWidth - this.textDetailLeftMargin)
-	}
-	
-	PathView.prototype.getDetailClipPath = function()
-	{
-		return 'url(#id_detailClipPath{0})'.format(this.clipID);
-	}
-	
-	PathView.prototype.appendDetailGroupElements = function(fd)
-	{
-		var _this = this;
-		
-		var detailText = fd.appendText(this.detailGroup);
-		
-		var textBox = detailText.node().getBBox();
-		
-		this.detailRectHeight = textBox.height + (textBox.y * 2) + this.textBottomMargin;
-
-		if (this.canEditExperience(fd))
-		{	
-			this.detailGroup.append('image')
-				.classed('edit-chevron', true)
-				.attr("width", this.showDetailIconWidth)
-				.attr("height", this.showDetailIconWidth)
-				.attr("xlink:href", rightChevronPath)
-				.attr('y', textBox.y + (textBox.height - this.showDetailIconWidth) / 2);
-		}
-			
-		var commentsValue = fd.experience.getValue("Comments");
-		var commentsCount = (commentsValue && commentsValue.getInstanceID()) ? parseInt(commentsValue.getDescription()) : 0;
-		if (fd.experience.canWrite() ||
-			commentsCount > 0)
-		{
-			this.detailRectHeight += (this.commentLineHeight / 2);
-			this.detailCommentRect.attr('x', 1.5)
-				.attr('y', this.detailRectHeight)
-				.on("click", function(d) 
-					{ 
-						d3.event.stopPropagation(); 
-					})
-				.on("click.cr", function(fd, i)
-					{
-						_this.showCommentsPanel(this, fd);
-						d3.event.stopPropagation();
-					});
-				
-			var commentLine = this.detailGroup.append('line')
-				.attr('x1', this.commentLabelLeftMargin)
-				.attr('y1', this.detailRectHeight)
-				.attr('y2', this.detailRectHeight);
-		
-			var commentLabel = this.detailGroup.append('text')
-				.classed('comments', true)
-				.attr('x', this.commentLabelLeftMargin)
-				.on("click", function(d) 
-					{ 
-						d3.event.stopPropagation(); 
-					})
-				.on("click.cr", function(fd)
-					{
-						_this.showCommentsPanel(this, fd);
-						d3.event.stopPropagation();
-					});
-			
-			function setCommentsText()
-			{
-				var commentsCount = (commentsValue && commentsValue.getInstanceID()) ? parseInt(commentsValue.getDescription()) : 0;
-				commentLabel.text(commentsCount == 0 ? "Comments" : commentsCount == 1 ? "1 Comment" : "{0} Comments".format(commentsCount));
-				
-				_this.changedContent();
-			}
-			
-			var commentsCell = fd.experience.getCell("Comments");
-			setCommentsText();
-			setupOnViewEventHandler(commentsCell, "dataChanged.cr valueAdded.cr valueDeleted.cr", commentLabel.node(),
-				setCommentsText);
-			
-			var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
-			commentLabel
-				.attr('y', this.detailRectHeight + commentLabelY);
-			
-			this.detailCommentRect.attr('height', commentLabelY + this.commentLabelBottomMargin);
-
-			this.detailRectHeight += commentLabelY + this.commentLabelBottomMargin;
-		}
-	}
-	
 	PathView.prototype.clearDetail = function()
 	{
-		d3.select("#id_detailClipPath{0}".format(this.clipID)).attr('height', 0);
-		
-		var _this = this;
 		$(this).trigger("clearTriggers.cr");
 	}
 
@@ -765,17 +632,6 @@ var PathView = (function() {
 			{
 				_this.showCommentsPanel(flag, fd);
 			});
-	}
-	
-	/* Append the detail contents that are static. */
-	PathView.prototype.appendDetailContents = function()
-	{
-		this.detailBackRect = this.detailGroup.append('rect')
-			.classed('bg full', true);
-		this.detailFrontRect = this.detailGroup.append('rect')
-			.classed('detail full', true);
-		this.detailCommentRect = this.detailGroup.append('rect')
-			.classed('comments', true);
 	}
 	
 	PathView.prototype.clearLayout = function()
@@ -1006,9 +862,9 @@ var PathView = (function() {
 					_this.handleChangedExperience(this, d);
 					_this.setupColorWatchTriggers(this, d);
 				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', this.textDetailLeftMargin);
+		var text = g.append('text').classed('flag-label', true);
 		text.append('tspan')
+			.attr('x', this.textDetailLeftMargin)
 			.attr('dy', this.flagLineOneDY)
 			.attr('fill', function(d) { return d.fontColor(); });
 		text.append('tspan')
@@ -1200,7 +1056,6 @@ var PathView = (function() {
 	{
 		this.containerDiv = containerDiv;
 		this.sitePanel = sitePanel;
-		this.detailFlagData = null;
 		this.allExperiences = [];
 		
 		if (sitePanel)
@@ -1239,7 +1094,6 @@ var PathLines = (function() {
 	PathLines.prototype.pathwayContainer = null;
 	PathLines.prototype.svg = null;
 	PathLines.prototype.loadingMessage = null;
-	PathLines.prototype.defs = null;
 	PathLines.prototype.bg = null;
 	PathLines.prototype.loadingText = null;
 	PathLines.prototype.promptAddText = null;
@@ -1297,8 +1151,6 @@ var PathLines = (function() {
 		 */
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
-		
-		this.setupClipPaths();
 		
 		this.layoutYears(g);
 		
@@ -1406,13 +1258,6 @@ var PathLines = (function() {
 		//var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		var svgHeight = containerBounds.height;
 		
-		if (this.detailFlagData != null)
-		{
-			var h = (this.detailFlagData.y * this.emToPX) + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
-			if (svgHeight < h)
-				svgHeight = h;
-		}
-		
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
 		if (svgHeight < flagHeights)
@@ -1430,13 +1275,6 @@ var PathLines = (function() {
 		var guideGroupBounds = this.guideGroup.node().getBBox();
 		var newWidth = guideGroupBounds.x + guideGroupBounds.width + this.experienceGroupDX;
 		var _this = this;
-		
-		if (this.detailFlagData != null)
-		{
-			var w = this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
-			if (newWidth < w)
-				newWidth = w;
-		}
 		
 		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
@@ -1465,8 +1303,6 @@ var PathLines = (function() {
 		this.path = path;
 		this.editable = (editable !== undefined ? editable : true);
 		
-		this.setupClipID();
-
 		var container = d3.select(this.containerDiv);
 		
 		this.pathwayContainer = container.append('div')
@@ -1477,8 +1313,6 @@ var PathLines = (function() {
 			.attr('xmlns', "http://www.w3.org/2000/svg")
 			.attr('version', "1.1");
 		
-		this.defs = this.svg.append('defs');
-	
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
 			.style("width", "100%")
@@ -1536,33 +1370,10 @@ var PathLines = (function() {
 				.classed("experiences", true)
 				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
 			
-		this.detailGroup = this.svg.append('g')
-			.classed('detail', true)
-			.attr('clip-path', this.getDetailClipPath())
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					if (_this.canEditExperience(fd))
-						_this.showDetailPanel(fd, i);
-				});
-				
-		this.appendDetailContents();
-			
 		d3.select(this.containerDiv)
 			.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 
-			})
-			.on("click.cr", function() {
-				if (_this.detailFlagData)
-				{
-					cr.logRecord('click', 'hide details');
-					_this.setupHeights();
-					_this.setupWidths();
-				}
 			});
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
@@ -2316,59 +2127,6 @@ var OtherPathlines = (function() {
 				cr.syncFail(err);
 			}
 		}
-	}
-	
-	OtherPathlines.prototype.appendDetailGroupElements = function(fd)
-	{
-		PathView.prototype.appendDetailGroupElements.call(this, fd);
-		
-		var _this = this;
-		
-		this.detailRectHeight += (this.commentLineHeight / 2);
-		this.detailAddToPathRect.attr('x', 1.5)
-			.attr('y', this.detailRectHeight)
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					_this.handleAddToPathway(fd, i);
-				});
-			
-		var commentLine = this.detailGroup.append('line')
-			.attr('x1', this.commentLabelLeftMargin)
-			.attr('y1', this.detailRectHeight)
-			.attr('y2', this.detailRectHeight);
-	
-		var commentLabel = this.detailGroup.append('text')
-			.classed('comments', true)
-			.attr('x', this.commentLabelLeftMargin)
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					_this.handleAddToPathway(fd, i);
-				})
-			.text("Add to My Path");
-		
-		var commentLabelY = this.commentLineHeight / 2 + this.commentLabelTopMargin + commentLabel.node().getBBox().height;
-		commentLabel
-			.attr('y', this.detailRectHeight + commentLabelY);
-		
-		this.detailAddToPathRect.attr('height', commentLabelY + this.commentLabelBottomMargin);
-
-		this.detailRectHeight += commentLabelY + this.commentLabelBottomMargin;
-	}
-	
-	OtherPathlines.prototype.appendDetailContents = function()
-	{
-		PathLines.prototype.appendDetailContents.call(this);
-		
-		this.detailAddToPathRect = this.detailGroup.append('rect')
-			.classed('comments', true);
 	}
 	
 	function OtherPathlines(sitePanel, containerDiv)
