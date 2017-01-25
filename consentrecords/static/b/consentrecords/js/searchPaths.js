@@ -614,7 +614,10 @@ var SearchPathsPanel = (function () {
 		var text = g.append('text').classed('flag-label', true)
 			.attr('x', this.textDetailLeftMargin);
 		text.append('tspan')
-			.attr('dy', '1.1em');
+			.attr('dy', '1.1em')
+			.attr('fill', function(d) {
+				return d.fontColor();
+			});
 		
 		var _this = this;	
 		g.each(function() { _this._setFlagText(this); });

@@ -66,6 +66,12 @@ var Service = (function() {
 		return PathGuides.data[column].color;
 	}
 	
+	Service.prototype.fontColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].fontColor;
+	}
+	
 	Service.prototype.getDescription = function()
 	{
 		return this.service.getDescription();
