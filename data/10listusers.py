@@ -51,10 +51,14 @@ if __name__ == "__main__":
                            not u.getDescription().endswith('@consentrecords.org'))
         for u in users:
             if t(u):
-                p = u.value_set.get(field=terms['Path'], deleteTransaction__isnull=True)
-                experiences = p.referenceValue.value_set.filter(field=terms['More Experience'], deleteTransaction__isnull=True)
-                sum += experiences.count()
-                sys.stdout.write("%s\t%s\t%s\n" % (u.getDescription(), experiences.count(), u.transaction.creation_time))
+                try:
+                    p = u.value_set.get(field=terms['Path'], deleteTransaction__isnull=True)
+                    experiences = p.referenceValue.value_set.filter(field=terms['More Experience'], deleteTransaction__isnull=True)
+                    experienceCount = experiences.count()
+                    sum += experienceCount
+                except Exception as e:
+                    experienceCount = 0
+                sys.stdout.write("%s\t%s\t%s\n" % (u.getDescription(), experienceCount, u.transaction.creation_time))
             # raise RuntimeError("Done")
                                 
         print ('Experience Count: ', sum)
