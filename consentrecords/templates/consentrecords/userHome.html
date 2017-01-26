@@ -184,6 +184,7 @@
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		staticPath = '{% static "" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
 		rightChevronPath = '{% static "consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "consentrecords/png/ios7-arrow-back-512px.svg" %}'
 		settingsImagePath = '{% static "consentrecords/png/settings.png" %}'
@@ -637,11 +638,11 @@
 								{
 									if (stateString.startsWith("comments/"))
 									{
-										pathwayPanel.showCommentsPanel(id);
+										pathwayPanel.showCommentsPanelAsync(id);
 									}
 									else if (stateString.startsWith("comment/"))
 									{
-										var commentsPanel = pathwayPanel.showCommentsPanel(id);
+										var commentsPanel = pathwayPanel.showCommentsPanelAsync(id);
 										stateString = stateString.substring("comment/".length);
 										id = stateString.substring(0, stateString.indexOf("/"));
 										stateString = stateString.substring(stateString.indexOf("/")+1);
@@ -658,7 +659,7 @@
 										}
 									}
 									else
-										pathwayPanel.showCommentsPanel(id);
+										pathwayPanel.showCommentsPanelAsync(id);
 										
 								}
 								catch(err)
