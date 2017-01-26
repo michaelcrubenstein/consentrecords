@@ -155,7 +155,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.pathwayContainer = null;
 	ComparePath.prototype.svg = null;
 	ComparePath.prototype.loadingMessage = null;
-	ComparePath.prototype.defs = null;
 	ComparePath.prototype.bg = null;
 	ComparePath.prototype.loadingText = null;
 	ComparePath.prototype.yearGroup = null;
@@ -262,8 +261,6 @@ var ComparePath = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 			
-		this.setupClipPaths();
-		
 		this.layoutYears(g);
 		
 		this.setupHeights();
@@ -380,15 +377,12 @@ var ComparePath = (function() {
 					.on("dragend", function(fd, i){
 						d3.select(ghostGroup).remove();
 						if (!didDrag)
-							showDetail(fd, i);
+						{
+							cr.logRecord('click', 'show comments: ' + fd.getDescription());
+							_this.showCommentsPanel(this, fd);
+						}
 					})
 				);
-		
-		function showDetail(fd, i)
-		{
-			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			_this.showCommentsPanel(fd);
-		}
 		
 		return g;
 	}
@@ -516,13 +510,6 @@ var ComparePath = (function() {
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
 		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		
-		if (this.detailFlagData != null)
-		{
-			var h = (this.detailFlagData.y * this.emToPX) + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
-			if (svgHeight < h)
-				svgHeight = h;
-		}
-		
 		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
@@ -539,13 +526,6 @@ var ComparePath = (function() {
 	{
 		var newWidth = this.sitePanel.scrollAreaWidth();
 		var _this = this;
-		
-		if (this.detailFlagData != null)
-		{
-			var w = this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
-			if (newWidth < w)
-				newWidth = w;
-		}
 		
 		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
@@ -572,8 +552,6 @@ var ComparePath = (function() {
 		this.rightPath = rightPath;
 		this.editable = (editable !== undefined ? editable : true);
 
-		this.setupClipID();
-
 		var container = d3.select(this.containerDiv);
 		
 		this.pathwayContainer = container.append('div')
@@ -584,8 +562,6 @@ var ComparePath = (function() {
 			.attr('xmlns', "http://www.w3.org/2000/svg")
 			.attr('version', "1.1");
 		
-		this.defs = this.svg.append('defs');
-	
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
 			.style("width", "100%")
@@ -607,21 +583,6 @@ var ComparePath = (function() {
 		this.experienceGroup = this.svg.append('g')
 				.classed("experiences", true)
 				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
-			
-		this.detailGroup = this.svg.append('g')
-			.classed('detail', true)
-			.attr('clip-path', this.getDetailClipPath())
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					if (fd.experience.canWrite())
-						_this.showDetailPanel(fd, i);
-				});
-
-		this.appendDetailContents();
 			
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 

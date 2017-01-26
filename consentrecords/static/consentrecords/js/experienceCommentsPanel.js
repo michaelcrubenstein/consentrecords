@@ -4,6 +4,15 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype = new SitePanel();
 	ExperienceCommentsPanel.prototype.fd = null;
 	ExperienceCommentsPanel.prototype.inEditMode = false;
+	ExperienceCommentsPanel.prototype.detailGroup = null;
+	ExperienceCommentsPanel.prototype.detailTextGroup = null;
+	ExperienceCommentsPanel.prototype.detailFrontRect = null;
+	ExperienceCommentsPanel.prototype.detailRectHeight = 0;
+	ExperienceCommentsPanel.prototype.svg = null;
+	ExperienceCommentsPanel.prototype.editChevronContainer = null;
+	
+	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
+	ExperienceCommentsPanel.prototype.editChevronHeight = 18; 	/* pixels */
 	
 	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
 	{
@@ -182,8 +191,14 @@ var ExperienceCommentsPanel = (function() {
 					.duration(400)
 					.attr("transform", 
 						"translate({0},{1})".format(
-							parseInt(this.svg.style('width')) - (12 + 12), 
-							(parseInt(this.svg.style('height')) - 18) / 2));
+							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
+							($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
+							
+				this.detailTextGroup.selectAll('line')
+					.transition()
+					.duration(400)
+					.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
+
 							
 				unblockClick();
 			}
@@ -314,8 +329,13 @@ var ExperienceCommentsPanel = (function() {
 											.duration(400)
 											.attr("transform", 
 												"translate({0},{1})".format(
-													parseInt(_this.svg.style('width')), 
-													(parseInt(_this.svg.style('height')) - 18) / 2));
+													$(_this.svg.node()).width(), 
+													($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
+													
+										_this.detailTextGroup.selectAll('line')
+											.transition()
+											.duration(400)
+											.attr('x2', $(_this.svg.node()).width());
 
 										_this.hideDeleteControls();
 										_this.inEditMode = false;
@@ -353,17 +373,16 @@ var ExperienceCommentsPanel = (function() {
 		this.detailGroup = this.svg.append('g')
 			.classed('detail', true)
 			.datum(fd);
+		this.detailTextGroup = this.detailGroup.append('g');
 		this.detailFrontRect = this.detailGroup.append('rect')
 			.classed('detail', true);
 		fd.colorElement(this.detailFrontRect.node());
 		
-		var detailText = _this.detailGroup.append('text');
-
 		function resizeDetail()
 		{
-			fd.appendTSpans(detailText, parseFloat(_this.svg.style('width')), 12);
-			var textBox = detailText.node().getBBox();
-			_this.detailRectHeight = textBox.height + (textBox.y * 2) + PathView.prototype.textBottomMargin;
+			fd.appendTSpans(_this.detailTextGroup, parseFloat(_this.svg.style('width')), 12);
+			var textBox = _this.detailTextGroup.node().getBBox();
+			_this.detailRectHeight = textBox.height + (textBox.y) + PathView.prototype.textBottomMargin;
 			_this.detailFrontRect.attr('height', _this.detailRectHeight)
 				.attr('width', _this.svg.style('width'));
 			_this.svg.attr('height', _this.detailRectHeight);
@@ -371,8 +390,8 @@ var ExperienceCommentsPanel = (function() {
 			if (fd.experience.canWrite())
 				_this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
-						parseInt(_this.svg.style('width')) - (_this.inEditMode ? 12 + 12 : 0), 
-						(parseInt(_this.svg.style('height')) - 18) / 2));
+						$(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 12 : 0), 
+						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
 
 		}
 		setTimeout(resizeDetail);
@@ -399,8 +418,8 @@ var ExperienceCommentsPanel = (function() {
 				.attr('points', "0,32.4 32.3,0 192,160 192,160 192,160 32.3,320 0,287.6 127.3,160");
 			this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
-						_this.svg.style('width'), 
-						_this.svg.style('height') / 2));
+						$(_this.svg.node()).width(), 
+						$(_this.svg.node()).height() / 2));
 						
 			this.svg.on('click', function(e)
 				{

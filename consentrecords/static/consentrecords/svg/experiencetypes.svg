@@ -19,64 +19,64 @@ svg.pathway .flag-label {	/* For both flags and detail panels */
 		<line class="flag-pole" fill="#804040" stroke="#804040" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#804040" stroke="#804040" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Housing</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#402020">Housing</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(30,30)">
 		<line class="flag-pole" fill="#2828E7" stroke="#2828E7" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#2828E7" stroke="#2828E7" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">School</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#141474">School</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(45,60)">
 		<line class="flag-pole" fill="#8328E7" stroke="#8328E7" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#8328E7" stroke="#8328E7" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Interests</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#421474">Interests</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(60,90)">
 		<line class="flag-pole" fill="#805050" stroke="#805050" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#805050" stroke="#805050" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Career</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#402828">Career</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(75,120)">
 		<line class="flag-pole" fill="#D35B27" stroke="#D35B27" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#D35B27" stroke="#D35B27" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Skills</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#6A2E14">Skills</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(90,150)">
 		<line class="flag-pole" fill="#0BBB0B" stroke="#0BBB0B" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#0BBB0B" stroke="#0BBB0B" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Giving Back</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#066E06">Giving Back</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(105,180)">
 		<line class="flag-pole" fill="#0694F3" stroke="#0694F3" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#0694F3" stroke="#0694F3" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Wellness</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#034A7A">Wellness</tspan>
 		</text>
 	</g>
 	<g class="flag" transform="translate(120,210)">
 		<line class="flag-pole" fill="#777777" stroke="#777777" y2="2.333em" stroke-opacity="0.6" stroke-width="3"></line>
 		<rect class="opaque" x="1.5" height="2.333em" width="162" fill-opacity="1.0" fill="white" stroke-opacity="0.0"></rect>
 		<rect class="bg" x="1.5" fill="#777777" stroke="#777777" height="2.333em" width="162" fill-opacity="0.2" stroke-width="0"></rect>
-		<text class="flag-label" x="3" fill="#222" text-anchor="start" font-weight="500">
-			<tspan dy="1.1em">Other</tspan>
+		<text class="flag-label" x="3" text-anchor="start" font-weight="500">
+			<tspan dy="1.1em" fill="#777777">Other</tspan>
 		</text>
 	</g>
 </svg>

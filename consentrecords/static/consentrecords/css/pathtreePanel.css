@@ -89,8 +89,25 @@ g.flag line.flag-pole {
 	stroke-opacity: 0.6;
 	stroke-width: 3;
 }
-g.flag .flag-label, g.detail .flag-label {	/* For both flags and detail panels */
-	fill: #222;
+
+g.flag .flag-label {	/* For flags */
+	text-anchor: start;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;
+	cursor: default;
+}
+
+g.flag .flag-label>tspan:nth-child(1) {	/* For flags */
+	font-weight: 600;
+}
+
+g.flag .flag-label>tspan:nth-child(2) {	/* For flags */
+	font-weight: 400;
+}
+
+g.detail .flag-label {	/* For detail panels */
 	text-anchor: start;
 	font-weight: 500;
 	-webkit-user-select: none;  /* Chrome all / Safari all */
