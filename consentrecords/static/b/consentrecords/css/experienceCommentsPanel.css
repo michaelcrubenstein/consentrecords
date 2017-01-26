@@ -112,7 +112,7 @@ section.new-comment textarea {
 	margin-top: 6px;
 	font-size: 0.8em;
 	resize: none;
-	border-color: #ddd;
+	border: solid 1px #ddd;
 	outline: none;
 }
 
