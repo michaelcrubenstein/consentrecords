@@ -322,7 +322,7 @@ var SharingPanel = (function() {
 			{
 				if (_this.inEditMode)
 				{
-					if (prepareClick('click', 'Done Editing'))
+					if (prepareClick('click', 'Done Edit Sharing'))
 					{
 						showClickFeedback(this, function()
 							{
@@ -335,7 +335,7 @@ var SharingPanel = (function() {
 				}
 				else
 				{
-					if (prepareClick('click', 'Start Editing'))
+					if (prepareClick('click', 'Edit Sharing'))
 					{
 						showClickFeedback(this, function()
 							{
