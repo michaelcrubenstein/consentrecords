@@ -1352,7 +1352,7 @@ cr.ObjectValue = (function() {
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
 						{
-							_this.importCells(newValue.getCells());
+							_this.instance(newValue.instance());
 						}});
 				}
 				else
