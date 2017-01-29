@@ -23,8 +23,17 @@ var ExperienceCommentsPanel = (function() {
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request"); 
 				return cp && cp.getInstanceID() && cp.getValue("Path"); })
-			.text(function(d) { 
-					return d && d.getInstanceID() && "{0} asked".format(d.getDescription()); 
+			.text(function(d) {
+					if (!d || !d.getInstanceID())
+						return null;
+					if (d.getInstanceID() == cr.signedinUser.getValue('Path').getInstanceID())
+						return "You asked";
+					else {
+						var s = d.instance().getDescription();
+						if (s == "None")
+							s = "Someone";
+						return "{0} asked".format(s);
+					}
 				});
 
 		var questions = divs.append('textarea')
