@@ -95,6 +95,7 @@ var CRP = (function() {
 						oldInstance.setCells(i.getCells());
 					}
 					else 
+					{
 						i.getCells().forEach(function(cell)
 							{
 								if (!oldInstance.getCell(cell.field.name))
@@ -102,6 +103,7 @@ var CRP = (function() {
 									oldInstance.importCell(cell);
 								}
 							});
+					}
 				}
 				if (!oldInstance.getTypeName() && i.getTypeName())
 					oldInstance.setTypeName(i.getTypeName());
@@ -174,12 +176,12 @@ cr.ModelObject = (function()
 {
 	ModelObject.prototype.on = function(events, data, handler)
 	{
-	if (typeof(events) != "string")
-		throw new Error("events is not a string");
-	if (typeof(data) != "object")
-		throw new Error("data is not an object");
-	if (typeof(handler) != "function")
-		throw new Error("handler is not a function");
+		if (typeof(events) != "string")
+			throw new Error("events is not a string");
+		if (typeof(data) != "object")
+			throw new Error("data is not an object");
+		if (typeof(handler) != "function")
+			throw new Error("handler is not a function");
 		$(this).on(events, data, handler);
 	}
 
@@ -1584,7 +1586,14 @@ cr.cellFactory = {
 }
 	
 cr.createCell = function(fieldID) {
-	var field = crp.field(fieldID);
+	var field;
+	if (typeof(fieldID) == "string")
+		field = crp.field(fieldID);
+	else if ('id' in fieldID)
+		field = crp.field(fieldID.id);
+	else
+		field = null;
+		
 	if (!field)
 		throw new Error("fieldID is not recognized: {0}".format(fieldID));
 		
