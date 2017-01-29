@@ -767,7 +767,13 @@ class Instance(dbmodels.Model):
                 raise RuntimeError("administer permission failed")
         else:
             if not self._canWrite(user):
-                raise RuntimeError("write permission failed")
+                try:
+                    s = "write permission failed for %s" % self.description.text
+                except Exception:
+                    s = "write permission failed for %s" % self.typeID.description.text
+                if field:
+                    s += " to %s field" % field.description.text
+                raise RuntimeError(s)
     
     # Raises an error unless the specified user can write the specified value to the specified field of self.
     # This handles the special case of register permission if the value is a user.

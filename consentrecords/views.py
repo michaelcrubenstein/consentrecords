@@ -729,7 +729,7 @@ def requestExperienceComment(request):
                                     }
                                 item, v = instancecreator.create(terms['Comment'], 
                                     containerObject, terms['Comment'], -1, 
-                                    propertyList, nameLists, transactionState)
+                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
         
                             else:
                                 propertyList = {\
@@ -742,7 +742,7 @@ def requestExperienceComment(request):
                                     }
                                 item, commentsValue = instancecreator.create(commentsTerm, 
                                     experience, commentsTerm, -1, 
-                                    propertyList, nameLists, transactionState)
+                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
                                 containerObject = experience.getSubInstance(commentsTerm)
                                 v = containerObject.getSubValue(terms['Comment'])
                                 item = v.referenceValue
