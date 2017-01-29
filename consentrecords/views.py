@@ -418,7 +418,7 @@ def acceptFollower(request, userPath=None):
         objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
-            if follower.typeID_id != terms.user.id:
+            if follower.typeID_id == terms.user.id:
                 followerField = terms.user
             else:
                 followerField = terms.group
