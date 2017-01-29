@@ -165,7 +165,7 @@ var ExperienceCommentsPanel = (function() {
 	
 	ExperienceCommentsPanel.prototype.startEditing = function()
 	{
-		if (prepareClick('click', 'Start Editing'))
+		if (prepareClick('click', 'Edit Experience Comments'))
 		{
 			try
 			{
@@ -306,7 +306,7 @@ var ExperienceCommentsPanel = (function() {
 				{
 					if (_this.inEditMode)
 					{
-						if (prepareClick('click', 'Done Editing'))
+						if (prepareClick('click', 'Done Edit Experience Comments'))
 						{
 							/* Store the new text in a button so that it is set properly
 								when an error occurs whether or not the callback to showClickFeedback is called. */

@@ -54,6 +54,7 @@ var RequestFollowPanel = (function() {
 							var re = /\S+@\S+\.\S\S+/;
 							return re.test(email);
 						}
+						
 						if (!validateEmail(email))
 						{
 							syncFailFunction(_this.badEmailMessage);
@@ -259,7 +260,7 @@ var FollowingPanel = (function() {
 						{
 							editButton.selectAll('span').text("Edit");
 						});
-					if (prepareClick('click', 'Done Editing'))
+					if (prepareClick('click', 'Done Edit Following'))
 					{
 						_this.hideDeleteControls();
 						
@@ -269,7 +270,7 @@ var FollowingPanel = (function() {
 				}
 				else
 				{
-					if (prepareClick('click', 'Start Editing'))
+					if (prepareClick('click', 'Edit Following'))
 					{
 						showClickFeedback(this, function()
 							{
