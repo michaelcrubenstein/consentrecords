@@ -8,7 +8,7 @@ import uuid
 from consentrecords.models import *
 from consentrecords import pathparser
 
-def _addElementData(parent, data, fieldData, nameLists, transactionState):
+def _addElementData(parent, data, fieldData, nameLists, transactionState, check):
     # If the data is not a list, then treat it as a list of one item.
     if not isinstance(data, list):
         data = [data]
@@ -50,14 +50,36 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     raise RuntimeError("%s field of type %s not configured with an object kind" % (field, parent.typeID))
                 elif "cells" in d:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
+                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState, check)
                 else:
                     raise RuntimeError("%s field of type %s missing data: %s" % (field, parent.typeID, str(d)))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
 
-def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState):
+### Ensure that the current user has permission to perform this operation.
+def checkCreateAccess(typeInstance, parent, parentField, transactionState):
+    if typeInstance == terms.user:
+    	return
+    elif parent:
+        parent.checkWriteAccess(transactionState.user, parentField)
+    else:
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+
+### Ensure that the current user has permission to perform this operation.
+def checkCreateCommentAccess(typeInstance, parent, parentField, transactionState):
+    if typeInstance in [terms['Comments'], terms['Comment'], terms['Comment Request']]:
+    	return
+    elif parentField == terms['Comments']:
+        return
+    elif parent:
+        parent.checkWriteAccess(transactionState.user, parentField)
+    else:
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+
+def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState, check=checkCreateAccess):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
@@ -71,6 +93,8 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         fieldData = fieldObject.getFieldData()
         if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
             raise ValueError("instances can not be created in parents with a _pick one field")
+    
+    check(typeInstance, parent, parentField, transactionState)
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
@@ -85,11 +109,6 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         if isinstance(userID, uuid.UUID):
             userID = userID.hex    # SQLite
         item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
-    elif parent:
-        parent.checkWriteAccess(transactionState.user, parentField)
-    else:
-        if not transactionState.user.is_staff:
-            raise RuntimeError("write permission failed")
         
     if parent:
         if position < 0:
@@ -130,12 +149,12 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
                 for key in filter(lambda key: terms[key] in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
                 
                 for key in filter(lambda key: terms[key] not in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
     

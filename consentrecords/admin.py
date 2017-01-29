@@ -15,7 +15,7 @@ class InstanceInline(admin.TabularInline):
     model = Instance
     extra = 0
     fieldsets = (
-        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'accessSource', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'typeID', 'parent', '_description', 'transaction', 'deleteTransaction')
     show_change_link = True
