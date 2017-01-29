@@ -1753,7 +1753,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 			  .done(function(json, textStatus, jqXHR)
 				{
 					oldValue.id = json.valueIDs[0];
-					oldValue.updateFromChangeData(d);
+					oldValue.instance(d.instance());
 					oldValue.triggerDataChanged();
 					successFunction();
 				})
