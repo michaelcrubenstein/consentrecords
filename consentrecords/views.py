@@ -503,7 +503,19 @@ def requestAccess(request):
                                 error = 'You have already requested to follow %s.' % following.description.text
                             else:
                                 error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
-                            raise RuntimeError(error)
+                            return HttpResponseBadRequest(reason=error)
+                        elif not follower.value_set.filter(field=terms['_public access'],
+                                                              deleteTransaction__isnull=True).exists() and \
+                             not Value.objects.filter(field=terms['_user'],
+                                                      deleteTransaction__isnull=True,
+                                                      referenceValue__id=following.id,
+                                                      instance__typeID=terms['_access request'],
+                                                      instance__referenceValues__instance_id=follower.id).exists():
+                            followerName = "you" if follower.id == user.id else ('"%s"' % follower.description.text)
+                            followerPossessive = "your" if follower.id == user.id else (('"%s"' + "'s") % follower.description.text)
+                            followingName = "You" if following.id == user.id else ('"%s"' % following.description.text)
+                            error = "%s will not be able to accept your request because they can't find %s. You can either change %s Profile Visibility or share %s profile with them." % (followingName, followerName, followerPossessive, followerPossessive)
+                            return HttpResponseBadRequest(reason=error)
                         else:
                             with transaction.atomic():
                                 transactionState = TransactionState(request.user)
@@ -537,9 +549,9 @@ def requestAccess(request):
                             
                                 results = {'object': data}
                     else:
-                        raise RuntimeError('the requestor is unrecognized')
+                        return HttpResponseBadRequest(reason='the requestor is unrecognized')
                 else:
-                    raise RuntimeError('the user to follow is unrecognized')
+                    return HttpResponseBadRequest(reason='the user to follow is unrecognized')
         else:
             return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
