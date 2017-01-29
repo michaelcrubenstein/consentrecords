@@ -2813,7 +2813,7 @@ var NewExperiencePanel = (function () {
 			{
 				function doAdd()
 				{
-					if (prepareClick('click', 'NewExperiencePanel: Add'))
+					if (prepareClick('click', 'NewExperiencePanel: {0}'.format(doneButton.select("span").text())))
 					{
 						try
 						{
