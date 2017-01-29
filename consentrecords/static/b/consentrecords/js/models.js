@@ -218,9 +218,14 @@ cr.Cell = (function()
 		Cell.prototype = new cr.ModelObject();
 		Cell.prototype.data = [];
 		Cell.prototype.field = null;
+		Cell.prototype.parent = null;
 		
 		Cell.prototype.setParent = function (parent)
 		{
+			if (this.field.descriptorType !== undefined && this.parent)
+			{
+				this.off("dataChanged.cr valueAdded.cr valueDeleted.cr", this.parent, this.parent._checkDescription);
+			}
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
