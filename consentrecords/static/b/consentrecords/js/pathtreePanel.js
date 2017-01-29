@@ -2070,7 +2070,7 @@ var ExperienceIdeaPanel = (function() {
 			.text('Answer')
 			.on('click', function()
 				{
-					if (prepareClick('click', 'Answer'))
+					if (prepareClick('click', 'Answer Experience Prompt'))
 					{
 						try
 						{
