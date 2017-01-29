@@ -509,7 +509,7 @@ def requestAccess(request):
                              not Value.objects.filter(field=terms['_user'],
                                                       deleteTransaction__isnull=True,
                                                       referenceValue__id=following.id,
-                                                      instance__typeID=terms['_access request'],
+                                                      instance__typeID=terms['_access record'],
                                                       instance__referenceValues__instance_id=follower.id).exists():
                             followerName = "you" if follower.id == user.id else ('"%s"' % follower.description.text)
                             followerPossessive = "your" if follower.id == user.id else (('"%s"' + "'s") % follower.description.text)
