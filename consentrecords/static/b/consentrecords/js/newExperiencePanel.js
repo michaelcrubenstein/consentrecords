@@ -537,6 +537,15 @@ var Experience = (function() {
 		var todayDate = getUTCTodayDate();
 		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
 		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 2, todayDate.getUTCMonth() + 1);
+	
+	Experience.prototype.initDateRange = function(phase)
+	{
+		if (phase === 'Goal')
+			this.initGoalDateRange();
+		else if (phase === 'Current')
+			this.initCurrentDateRange();
+		else
+			this.initPreviousDateRange();
 	}
 	
 	Experience.prototype.createFromData = function(organizationD, siteD, offeringD, services, previousNode, done)
@@ -2770,7 +2779,9 @@ var NewExperiencePanel = (function () {
 	}
 	
 	function NewExperiencePanel(experience, phase, showFunction) {
-		if (experience.instance)
+		if (experience.title)
+			this.title = experience.title;
+		else if (experience.instance)
 			this.title = this.editTitle;
 		else if (experience.domain)
 			this.title = this.newFromDomainTitle.format(experience.domain.getDescription());
@@ -3097,6 +3108,7 @@ var NewExperiencePanel = (function () {
 			}
 				
 			endDateWheel.checkMinDate(minEndDate, maxEndDate);
+			$(endDateWheel).trigger('change');
 		});
 		
 		var endDateContainer = panel2Div.append('section')

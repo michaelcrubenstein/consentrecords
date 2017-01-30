@@ -527,7 +527,6 @@ var DateWheel = (function () {
 		}
 		
 		this.onChange();
-		$(this).trigger('change');
     }
     
     DateWheel.prototype.checkMinDate = function(minDate, maxDate)
@@ -607,6 +606,7 @@ var DateWheel = (function () {
 			this.oldMonth = parseInt(newValue.substring(5, 7));
 			this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
 			this._onMonthChanged();
+			$(this).trigger('change');
 			
 			if (newValue.length > 8)
 			{
