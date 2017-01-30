@@ -258,6 +258,13 @@ _term
             _max capacity: _multiple values
             _object add rule: _pick one
             _of kind: Service
+        _field
+            _name: Timeframe
+            _data type: _object
+            _max capacity: _unique value
+            _object add rule: _pick one
+            _of kind: enumerator
+            _pick object path: _term[_name=Timeframe]>enumerator
 _term
     _name: Experiences
     _configuration

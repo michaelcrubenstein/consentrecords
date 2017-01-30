@@ -1525,13 +1525,8 @@ var PathlinesPanel = (function () {
 		try
 		{
 			var experience = this.createExperience();
-			if (phase === 'Goal')
-				experience.initGoalDateRange();
-			else if (phase === 'Current')
-				experience.initCurrentDateRange();
-			else
-				experience.initPreviousDateRange();
-				
+			experience.initDateRange(phase);
+							
 			new NewExperiencePanel(experience, phase)
 				.showUp()
 				.done(done);
@@ -1987,6 +1982,8 @@ var ExperienceIdeas = (function() {
 								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
 								datum.experience.setSite({instance: d.getNonNullValue('Site')});
 								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
+								datum.experience.timeframe = d.getNonNullValue('Timeframe');
+								datum.experience.title = d.getDatum('_name');
 								return datum;
 							});
 						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
@@ -2089,8 +2086,14 @@ var ExperienceIdeaPanel = (function() {
 					{
 						try
 						{
-							experience.initPreviousDateRange();
-							var panel = new NewExperiencePanel(experience, 'Previous');
+							var phase;
+							if (experience.timeframe)
+								phase = experience.timeframe.getDescription();
+							else
+								phase = 'Previous';
+								
+							experience.initDateRange(phase);
+							var panel = new NewExperiencePanel(experience, phase);
 							panel.done = function()
 								{
 									skipButton.on('click')();
