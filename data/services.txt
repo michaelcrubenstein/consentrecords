@@ -13,8 +13,6 @@ Service
 Service
     _name: en - Art History
 Service
-    _name: en - Art History Class
-Service
     _name: en - Art Teacher
 Service
     _name: en - Ballet
@@ -39,7 +37,7 @@ Service
 Service
     _name: en - Be a Tutor
 Service
-    _name: en - Boys
+    _name: en - Boys Life Skills
 Service
     _name: en - Business Founder
 Service
@@ -153,7 +151,7 @@ Service
 Service
     _name: en - Get a Mentor
 Service
-    _name: en - Girls
+    _name: en - Girls Life Skills
 Service
     _name: en - Government
 Service
@@ -214,8 +212,6 @@ Service
 Service
     _name: en - Journalism
 Service
-    _name: en - Journalism Class
-Service
     _name: en - Journalist
 Service
     _name: en - Jump Year to Grade 9
@@ -258,6 +254,8 @@ Service
 Service
     _name: en - Music Performance
 Service
+    _name: en - Music Teacher
+Service
     _name: en - Nutrition
 Service
     _name: en - Oboe Lessons
@@ -283,6 +281,8 @@ Service
     _name: en - Political Organizing Job
 Service
     _name: en - Preschool
+Service
+    _name: en - Professional Actor
 Service
     _name: en - Professional Group Participation
 Service
@@ -363,8 +363,8 @@ Service
     _name: en - Wrestling
 Service
     _name: en - Acting
-    Service Domain: Arts
     Stage: Whatever
+    Service: Acting
 Service
     _name: en - After School Program
     Service: After School Program
@@ -379,7 +379,6 @@ Service
     Service: Animals
 Service
     _name: en - Animals
-    Service Domain: Science, Technology, Engineering & Math
     Service: Animals
 Service
     _name: en - Art Class
@@ -387,28 +386,21 @@ Service
     Service: Art Class
 Service
     _name: en - Art History
-    Service Domain: Humanities
-    Service: Art History
-Service
-    _name: en - Art History Class
-    Stage: Studying
-    Service: Art History Class
     Service: Art History
 Service
     _name: en - Art Teacher
     Stage: Teaching
     Service: Art Teacher
     Service: Teacher
+    Service: Job Employment
 Service
     _name: en - Ballet
-    Service Domain: Arts
     Stage: Training
     Service: Ballet
     Service: Dance
     Service: Exercise
 Service
     _name: en - Baseball
-    Service Domain: Sports
     Stage: Whatever
     Service: Baseball
     Service: Exercise
@@ -424,7 +416,6 @@ Service
     Service: Baseball
 Service
     _name: en - Basketball
-    Service Domain: Sports
     Stage: Whatever
     Service: Basketball
     Service: Exercise
@@ -435,7 +426,6 @@ Service
     Service: Basketball
 Service
     _name: en - Bass Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Bass Lessons
     Service: Music Lessons
@@ -457,11 +447,11 @@ Service
     Stage: Tutoring
     Service: Be a Tutor
 Service
-    _name: en - Boys
-    Service: Boys
+    _name: en - Boys Life Skills
+    Service: Boys Life Skills
+    Service: Life Skills
 Service
     _name: en - Business Founder
-    Service Domain: Business & Finance
     Stage: Working
     Service: Business Founder
     Service: Entrepreneurship
@@ -472,7 +462,6 @@ Service
     Service: Computer Software & Programming
 Service
     _name: en - Camping
-    Service Domain: Wellness
     Stage: Wellness
     Service: Camping
 Service
@@ -480,14 +469,12 @@ Service
     Service: Career Guidance
 Service
     _name: en - Cello Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Music Performance
     Service: Cello Lessons
     Service: Music Lessons
 Service
     _name: en - Ceramics
-    Service Domain: Arts
     Service: Ceramics
 Service
     _name: en - Chess
@@ -495,12 +482,10 @@ Service
     Service: Chess
 Service
     _name: en - Chinese
-    Service Domain: Humanities
     Stage: Skills
     Service: Chinese
 Service
     _name: en - Chinese Class
-    Service Domain: Humanities
     Stage: Studying
     Service: Chinese Class
     Service: Chinese
@@ -518,21 +503,17 @@ Service
     Service: Civics Class
 Service
     _name: en - Clarinet Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Music Performance
     Service: Clarinet Lessons
     Service: Music Lessons
 Service
     _name: en - College
-    Service Domain: Education
     Stage: Studying
     Service: School
     Service: College
 Service
     _name: en - Community Organizing
-    Service Domain: Human, Social, Public Services
-    Stage: Volunteering
     Service: Community Organizing
 Service
     _name: en - Community Organizing Internship
@@ -546,7 +527,6 @@ Service
     Service: Community Organizing Job
 Service
     _name: en - Computer Applications
-    Service Domain: Science, Technology, Engineering & Math
     Service: Computer Applications
 Service
     _name: en - Computer Applications Training
@@ -555,7 +535,6 @@ Service
     Service: Computer Applications Training
 Service
     _name: en - Computer Hardware
-    Service Domain: Science, Technology, Engineering & Math
     Service: Computer Hardware
 Service
     _name: en - Computer Hardware Hobby
@@ -569,11 +548,9 @@ Service
     Service: Computer Programming Class
 Service
     _name: en - Computer Software & Programming
-    Service Domain: Science, Technology, Engineering & Math
     Service: Computer Software & Programming
 Service
     _name: en - Construction
-    Service Domain: Science, Technology, Engineering & Math
     Service: Construction
 Service
     _name: en - Construction Skills
@@ -587,41 +564,34 @@ Service
     Service: Construction Training
 Service
     _name: en - Cycling
-    Service Domain: Sports
     Stage: Whatever
     Service: Cycling
     Service: Exercise
 Service
     _name: en - Dance
-    Service Domain: Arts
     Stage: Skills
     Service: Dance
     Service: Exercise
 Service
     _name: en - Dance Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Dance
     Service: Dance Lessons
 Service
     _name: en - Doctor
-    Service Domain: Human, Social, Public Services
     Stage: Working
     Service: Doctor
 Service
     _name: en - Drawing
-    Service Domain: Arts
     Stage: Skills
     Service: Drawing
 Service
     _name: en - Drawing Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Drawing
     Service: Drawing Lessons
 Service
     _name: en - Drum Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Drums
     Service: Music Performance
@@ -629,12 +599,10 @@ Service
     Service: Music Lessons
 Service
     _name: en - Drums
-    Service Domain: Arts
     Service: Drums
     Service: Music Performance
 Service
     _name: en - Education
-    Service Domain: Education
     Stage: Studying
     Service: Education
 Service
@@ -647,11 +615,9 @@ Service
     Service: Engineer
 Service
     _name: en - Engineering
-    Service Domain: Science, Technology, Engineering & Math
     Service: Engineering
 Service
     _name: en - English
-    Service Domain: Humanities
     Service: English
 Service
     _name: en - English Class
@@ -666,23 +632,19 @@ Service
     Service: Teacher
 Service
     _name: en - Entrepreneurship
-    Service Domain: Business & Finance
     Service: Entrepreneurship
 Service
     _name: en - Entrepreneurship Skills
-    Service Domain: Business & Finance
     Stage: Training
     Service: Entrepreneurship
     Service: Entrepreneurship Skills
 Service
     _name: en - Entrepreneurship Training
-    Service Domain: Business & Finance
     Stage: Training
     Service: Entrepreneurship
     Service: Entrepreneurship Training
 Service
     _name: en - Exercise
-    Service Domain: Wellness
     Stage: Wellness
     Service: Exercise
 Service
@@ -695,21 +657,17 @@ Service
     Service: Floor Hockey
 Service
     _name: en - Floor Hockey
-    Service Domain: Sports
     Service: Floor Hockey
 Service
     _name: en - Flute Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Music Performance
     Service: Flute Lessons
 Service
     _name: en - Food Service Job
-    Service Domain: Service
     Service: Food Service Job
 Service
     _name: en - Football
-    Service Domain: Sports
     Stage: Whatever
     Service: Football
 Service
@@ -719,7 +677,6 @@ Service
     Service: Football Coach
 Service
     _name: en - French
-    Service Domain: Humanities
     Stage: Skills
     Service: French
 Service
@@ -729,32 +686,26 @@ Service
     Service: French Class
 Service
     _name: en - German
-    Service Domain: Humanities
     Stage: Skills
     Service: German
 Service
     _name: en - German Class
-    Service Domain: Humanities
     Stage: Studying
     Service: German Class
     Service: German
 Service
     _name: en - Get a Mentor
-    Stage: Whatever
     Service: Life Skills
     Service: Get a Mentor
 Service
-    _name: en - Girls
-    Stage: Whatever
+    _name: en - Girls Life Skills
     Service: Life Skills
-    Service: Girls
+    Service: Girls Life Skills
 Service
     _name: en - Government
-    Service Domain: Arts
     Service: Government
 Service
     _name: en - Grade 1
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -763,7 +714,6 @@ Service
     Service: Grade 1
 Service
     _name: en - Grade 10
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -772,7 +722,6 @@ Service
     Service: Grade 10
 Service
     _name: en - Grade 11
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -781,7 +730,6 @@ Service
     Service: Grade 11
 Service
     _name: en - Grade 12
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -790,7 +738,6 @@ Service
     Service: Grade 12
 Service
     _name: en - Grade 2
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -799,7 +746,6 @@ Service
     Service: Grade 2
 Service
     _name: en - Grade 3
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -808,7 +754,6 @@ Service
     Service: Grade 3
 Service
     _name: en - Grade 4
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -817,7 +762,6 @@ Service
     Service: Grade 4
 Service
     _name: en - Grade 5
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -826,7 +770,6 @@ Service
     Service: Grade 5
 Service
     _name: en - Grade 6
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -835,7 +778,6 @@ Service
     Service: Grade 6
 Service
     _name: en - Grade 7
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -844,7 +786,6 @@ Service
     Service: Grade 7
 Service
     _name: en - Grade 8
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -853,7 +794,6 @@ Service
     Service: Grade 8
 Service
     _name: en - Grade 9
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -862,12 +802,10 @@ Service
     Service: Grade 9
 Service
     _name: en - Guitar
-    Service Domain: Arts
     Service: Guitar
     Service: Music Performance
 Service
     _name: en - Guitar Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Music Performance
     Service: Guitar Lessons
@@ -880,13 +818,11 @@ Service
     Service: Exercise
 Service
     _name: en - Gymnastics
-    Service Domain: Sports
     Stage: Whatever
     Service: Gymnastics
     Service: Exercise
 Service
     _name: en - High School Post Graduate
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Grade Level
@@ -894,7 +830,6 @@ Service
     Service: High School Post Graduate
 Service
     _name: en - History
-    Service Domain: Humanities
     Stage: Skills
 Service
     _name: en - History Class
@@ -903,27 +838,23 @@ Service
     Service: History
 Service
     _name: en - History Teacher
-    Service Domain: Humanities
     Stage: Teaching
     Service: History Teacher
     Service: History
 Service
     _name: en - Hospitality
-    Service Domain: Service
     Service: Hospitality
 Service
     _name: en - Housing
-    Service Domain: Housing
     Stage: Housing
     Service: Housing
 Service
     _name: en - Ice Hockey
-    Service Domain: Sports
+    Stage: Whatever
     Service: Ice Hockey
     Service: Exercise
 Service
     _name: en - Independent School Prep
-    Service Domain: Education
     Stage: Studying
     Service: Independent School Prep
 Service
@@ -932,7 +863,6 @@ Service
     Service: Internship
 Service
     _name: en - Japanese
-    Service Domain: Humanities
     Service: Japanese
 Service
     _name: en - Job
@@ -940,24 +870,15 @@ Service
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
-    Service: Job
+    Service: Job Employment
 Service
     _name: en - Journalism
-    Service Domain: Mass Communication, Media & Entertainment
-    Service: Journalism
-Service
-    _name: en - Journalism Class
-    Stage: Studying
-    Service: Journalism Class
     Service: Journalism
 Service
     _name: en - Journalist
     Stage: Working
-    Service: Journalist
-    Service: Journalism
 Service
     _name: en - Jump Year to Grade 9
-    Service Domain: Education
     Organization Label: en - District
     Site Label: en - School
     Offering Label: en - Class
@@ -970,16 +891,13 @@ Service
     Service: Martial Arts
 Service
     _name: en - Kindergarten
-    Service Domain: Education
     Stage: Studying
     Service: Kindergarten
 Service
     _name: en - Korean
-    Service Domain: Humanities
     Service: Korean
 Service
     _name: en - Lacrosse
-    Service Domain: Sports
     Stage: Whatever
     Service: Lacrosse
 Service
@@ -988,12 +906,10 @@ Service
     Service: Lacrosse Coach
 Service
     _name: en - Lawyer
-    Service Domain: Human, Social, Public Services
     Stage: Working
     Service: Lawyer
 Service
     _name: en - Leadership
-    Service Domain: Leadership
     Service: Leadership
 Service
     _name: en - Leadership Class
@@ -1005,12 +921,10 @@ Service
     Service: Leadership Training
 Service
     _name: en - Life Skills
-    Service Domain: Wellness
     Stage: Wellness
     Service: Life Skills
 Service
     _name: en - Literacy
-    Service Domain: Humanities
     Service: Literacy
 Service
     _name: en - Literacy Skills
@@ -1018,13 +932,11 @@ Service
     Service: Literacy Skills
 Service
     _name: en - Martial Arts
-    Service Domain: Wellness
     Stage: Training
     Service: Martial Arts
     Service: Exercise
 Service
     _name: en - Math
-    Service Domain: Science, Technology, Engineering & Math
     Service: Math
 Service
     _name: en - Math Teacher
@@ -1035,34 +947,34 @@ Service
     Offering Label: en - Program
     Stage: Tutoring
     Service: Math Tutoring
+    Service: Be a Tutor
 Service
     _name: en - Microsoft Office Skills
     Stage: Skills
     Service: Microsoft Office Skills
 Service
     _name: en - Music Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Music Performance
-    Service Domain: Arts
     Service: Music Performance
 Service
+    _name: en - Music Teacher
+    Stage: Working
+    Service: Music Teacher
+Service
     _name: en - Nutrition
-    Service Domain: Human, Social, Public Services
     Service: Nutrition
 Service
     _name: en - Oboe Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Oboe Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Painting
-    Service Domain: Arts
     Service: Painting
 Service
     _name: en - Pharmacist
@@ -1070,11 +982,9 @@ Service
     Service: Pharmacist
 Service
     _name: en - Pharmacy
-    Service Domain: Science, Technology, Engineering & Math
     Service: Pharmacy
 Service
     _name: en - Physical Conditioning
-    Service Domain: Wellness
     Stage: Wellness
     Service: Physical Conditioning
 Service
@@ -1084,19 +994,16 @@ Service
     Service: Music Performance
 Service
     _name: en - Piano Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Piano Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Piano Teacher
-    Service Domain: Arts
     Stage: Teaching
     Service: Piano Teacher
 Service
     _name: en - Political Organizing
-    Service Domain: Human, Social, Public Services
     Stage: Volunteering
     Service: Political Organizing
 Service
@@ -1109,9 +1016,14 @@ Service
     Service: Political Organizing Job
 Service
     _name: en - Preschool
-    Service Domain: Education
     Stage: Studying
     Service: Preschool
+Service
+    _name: en - Professional Actor
+    Stage: Working
+    Service: Professional Actor
+    Service: Acting
+    Service: Job Employment
 Service
     _name: en - Professional Group Participation
     Stage: Training
@@ -1125,17 +1037,16 @@ Service
     Service: Python Coding Skills
 Service
     _name: en - Racquetball
-    Service Domain: Sports
+    Stage: Whatever
     Service: Racquetball
     Service: Exercise
 Service
     _name: en - Rugby
-    Service Domain: Sports
+    Stage: Whatever
     Service: Rugby
     Service: Exercise
 Service
     _name: en - Running
-    Service Domain: Sports
     Stage: Training
     Service: Running
 Service
@@ -1144,17 +1055,15 @@ Service
     Service: Safety Training
 Service
     _name: en - School
-    Service Domain: Education
     Stage: Studying
     Service: School
 Service
     _name: en - Skiing
-    Service Domain: Sports
+    Stage: Whatever
     Service: Skiing
     Service: Exercise
 Service
     _name: en - Soccer
-    Service Domain: Sports
     Stage: Whatever
     Service: Soccer
     Service: Exercise
@@ -1164,17 +1073,14 @@ Service
     Service: Soccer Coach
 Service
     _name: en - Social Work
-    Service Domain: Human, Social, Public Services
     Service: Social Work
 Service
     _name: en - Softball
-    Service Domain: Sports
     Stage: Training
     Service: Softball
     Service: Exercise
 Service
     _name: en - Softball Coach
-    Service Domain: Sports
     Stage: Coaching
     Service: Softball Coach
 Service
@@ -1183,7 +1089,6 @@ Service
     Service: Software Developer
 Service
     _name: en - Somali Culture
-    Service Domain: Humanities
     Service: Somali Culture
 Service
     _name: en - Somali Culture Class
@@ -1191,7 +1096,6 @@ Service
     Service: Somali Culture Class
 Service
     _name: en - Spanish
-    Service Domain: Humanities
     Stage: Skills
     Service: Spanish
 Service
@@ -1204,7 +1108,6 @@ Service
     Service: Spanish Teacher
 Service
     _name: en - Squash
-    Service Domain: Sports
     Stage: Whatever
     Service: Squash
     Service: Exercise
@@ -1220,7 +1123,6 @@ Service
     Service: Summer Job
 Service
     _name: en - Swimming
-    Service Domain: Sports
     Stage: Training
     Service: Swimming
 Service
@@ -1232,7 +1134,6 @@ Service
     Service: Teen Programming
 Service
     _name: en - Tennis
-    Service Domain: Sports
     Stage: Whatever
     Service: Tennis
     Service: Exercise
@@ -1242,7 +1143,6 @@ Service
     Service: Tennis Coach
 Service
     _name: en - Theater Role
-    Service Domain: Arts
     Offering Label: en - Title of Show & Role
     Stage: Whatever
     Service: Theater Role
@@ -1252,45 +1152,38 @@ Service
     Service: Tour Guide
 Service
     _name: en - Track & Field
-    Service Domain: Sports
     Stage: Whatever
     Service: Track & Field
     Service: Exercise
 Service
     _name: en - Trumpet Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Trumpet Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Viola Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Viola Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Violin Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Violin Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Visual Arts
-    Service Domain: Arts
     Service: Visual Arts
 Service
     _name: en - Voice Lessons
-    Service Domain: Arts
     Stage: Training
     Service: Voice Lessons
     Service: Music Lessons
     Service: Music Performance
 Service
     _name: en - Volleyball
-    Service Domain: Sports
     Stage: Whatever
     Service: Volleyball
     Service: Exercise
@@ -1300,7 +1193,6 @@ Service
     Service: Volunteer
 Service
     _name: en - Wrestling
-    Service Domain: Sports
     Stage: Whatever
     Service: Wrestling
     Service: Exercise
