@@ -537,6 +537,7 @@ var Experience = (function() {
 		var todayDate = getUTCTodayDate();
 		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
 		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 2, todayDate.getUTCMonth() + 1);
+	}
 	
 	Experience.prototype.initDateRange = function(phase)
 	{
