@@ -95,6 +95,7 @@ var CRP = (function() {
 						oldInstance.setCells(i.getCells());
 					}
 					else 
+					{
 						i.getCells().forEach(function(cell)
 							{
 								if (!oldInstance.getCell(cell.field.name))
@@ -102,6 +103,7 @@ var CRP = (function() {
 									oldInstance.importCell(cell);
 								}
 							});
+					}
 				}
 				if (!oldInstance.getTypeName() && i.getTypeName())
 					oldInstance.setTypeName(i.getTypeName());
@@ -174,12 +176,12 @@ cr.ModelObject = (function()
 {
 	ModelObject.prototype.on = function(events, data, handler)
 	{
-	if (typeof(events) != "string")
-		throw new Error("events is not a string");
-	if (typeof(data) != "object")
-		throw new Error("data is not an object");
-	if (typeof(handler) != "function")
-		throw new Error("handler is not a function");
+		if (typeof(events) != "string")
+			throw new Error("events is not a string");
+		if (typeof(data) != "object")
+			throw new Error("data is not an object");
+		if (typeof(handler) != "function")
+			throw new Error("handler is not a function");
 		$(this).on(events, data, handler);
 	}
 
@@ -216,9 +218,14 @@ cr.Cell = (function()
 		Cell.prototype = new cr.ModelObject();
 		Cell.prototype.data = [];
 		Cell.prototype.field = null;
+		Cell.prototype.parent = null;
 		
 		Cell.prototype.setParent = function (parent)
 		{
+			if (this.field.descriptorType !== undefined && this.parent)
+			{
+				this.off("dataChanged.cr valueAdded.cr valueDeleted.cr", this.parent, this.parent._checkDescription);
+			}
 			this.parent = parent;
 			if (this.field.descriptorType !== undefined && parent)
 			{
@@ -1352,7 +1359,7 @@ cr.ObjectValue = (function() {
 					var _this = this;
 					sourceObjects.push({target: this, update: function()
 						{
-							_this.importCells(newValue.getCells());
+							_this.instance(newValue.instance());
 						}});
 				}
 				else
@@ -1584,7 +1591,14 @@ cr.cellFactory = {
 }
 	
 cr.createCell = function(fieldID) {
-	var field = crp.field(fieldID);
+	var field;
+	if (typeof(fieldID) == "string")
+		field = crp.field(fieldID);
+	else if ('id' in fieldID)
+		field = crp.field(fieldID.id);
+	else
+		field = null;
+		
 	if (!field)
 		throw new Error("fieldID is not recognized: {0}".format(fieldID));
 		
@@ -1621,8 +1635,8 @@ cr.tokenType = null;
 	
 cr.postError = function(jqXHR, textStatus, errorThrown)
 	{
-		if (jqXHR.status == 504 || textStatus == "timeout")
-			return "This operation ran out of time.";
+		if (textStatus == "timeout")
+			return "This operation ran out of time. Try again.";
 		else if (jqXHR.status == 0)
 			return "The server is not responding. Please try again.";
 		else
@@ -1753,7 +1767,7 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 			  .done(function(json, textStatus, jqXHR)
 				{
 					oldValue.id = json.valueIDs[0];
-					oldValue.updateFromChangeData(d);
+					oldValue.instance(d.instance());
 					oldValue.triggerDataChanged();
 					successFunction();
 				})

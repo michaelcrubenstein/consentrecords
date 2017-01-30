@@ -517,6 +517,7 @@ var PathView = (function() {
 	PathView.prototype.bottomNavHeight = 0;	/* The height of the bottom nav container; set by container. */
 
 	/* Constants related to the detail rectangle. */
+	PathView.prototype.poleSpacing = 4;	/* The distance between two flags that are on the same line with overlapping poles. */
 	PathView.prototype.textBottomMargin = 5;
 	PathView.prototype.yearTextX = "3.0em";
 	PathView.prototype.yearTextX2 = "0.6em";
@@ -528,11 +529,6 @@ var PathView = (function() {
 	PathView.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 	PathView.prototype.topYearMarginEM = 1.4;	/* The distance between the top of a flagpole and a year marker. */
 	PathView.prototype.bottomYearMarginEM = 0.5;	/* The distance between the bottom of a flagpole and a year marker. */
-
-	PathView.prototype.commentLineHeight = 0;
-	PathView.prototype.commentLabelTopMargin = 5;
-	PathView.prototype.commentLabelBottomMargin = 10;
-	PathView.prototype.commentLabelLeftMargin = 10;
 
 	PathView.prototype.guideHSpacing = 30;
 							  
@@ -1017,6 +1013,28 @@ var PathView = (function() {
 			});
 	}
 	
+	PathView.prototype.transitionPositions = function(g)
+	{
+		var _this = this;
+		g.sort(this._compareExperiences);
+		this._setCoordinates(g);
+		g.transition()
+			.duration(700)
+			.ease("in-out")
+			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX);});
+		
+		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
+			to the fd.y position.
+		 */
+		g.selectAll('line.flag-pole')
+			.transition()
+			.duration(700)
+			.ease("in-out")
+			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
+
+		this.layoutYears(g);
+	}
+	
 	/*
 		r has x, y, height and width for the rectangle to be displayed.
 		bottomPadding: number of pixels below r that must be visible within container.
@@ -1076,7 +1094,6 @@ var PathView = (function() {
 
 var PathLines = (function() {
 	PathLines.prototype = new PathView();
-	PathLines.prototype.poleSpacing = 4;
 		
 	PathLines.prototype.textLeftMargin = 10;
 	PathLines.prototype.textDetailRightMargin = 7; /* textRightMargin; */
@@ -1174,28 +1191,6 @@ var PathLines = (function() {
 	{
 		this.clearLayout();
 		this.checkLayout();
-	}
-	
-	PathLines.prototype.transitionPositions = function(g)
-	{
-		var _this = this;
-		g.sort(this._compareExperiences);
-		this._setCoordinates(g);
-		g.transition()
-			.duration(700)
-			.ease("in-out")
-			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX);});
-		
-		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
-			to the fd.y position.
-		 */
-		g.selectAll('line.flag-pole')
-			.transition()
-			.duration(700)
-			.ease("in-out")
-			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
-
-		this.layoutYears(g);
 	}
 	
 	PathLines.prototype.appendExperiences = function(experience)
@@ -1530,13 +1525,8 @@ var PathlinesPanel = (function () {
 		try
 		{
 			var experience = this.createExperience();
-			if (phase === 'Goal')
-				experience.initGoalDateRange();
-			else if (phase === 'Current')
-				experience.initCurrentDateRange();
-			else
-				experience.initPreviousDateRange();
-				
+			experience.initDateRange(phase);
+							
 			new NewExperiencePanel(experience, phase)
 				.showUp()
 				.done(done);
@@ -1932,6 +1922,25 @@ var ExperienceIdeas = (function() {
 		
 		var data;
 		
+		function shuffle(array) {
+		  var currentIndex = array.length, temporaryValue, randomIndex;
+
+		  // While there remain elements to shuffle...
+		  while (0 !== currentIndex) {
+
+			// Pick a remaining element...
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex -= 1;
+
+			// And swap it with the current element.
+			temporaryValue = array[currentIndex];
+			array[currentIndex] = array[randomIndex];
+			array[randomIndex] = temporaryValue;
+		  }
+
+		  return array;
+		}
+
 		crp.promise({path: '"Experience Prompt"'})
 			.done(function(prompts)
 				{
@@ -1960,6 +1969,7 @@ var ExperienceIdeas = (function() {
 											});
 									});
 							});
+						prompts = shuffle(prompts);
 						data = prompts.map(function(d)
 							{
 								var datum = {name: d.getDatum('_name'),
@@ -1972,6 +1982,8 @@ var ExperienceIdeas = (function() {
 								datum.experience.setOrganization({instance: d.getNonNullValue('Organization')});
 								datum.experience.setSite({instance: d.getNonNullValue('Site')});
 								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
+								datum.experience.timeframe = d.getNonNullValue('Timeframe');
+								datum.experience.title = d.getDatum('_name');
 								return datum;
 							});
 						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
@@ -2070,12 +2082,18 @@ var ExperienceIdeaPanel = (function() {
 			.text('Answer')
 			.on('click', function()
 				{
-					if (prepareClick('click', 'Answer'))
+					if (prepareClick('click', 'Answer Experience Prompt'))
 					{
 						try
 						{
-							experience.initPreviousDateRange();
-							var panel = new NewExperiencePanel(experience, 'Previous');
+							var phase;
+							if (experience.timeframe)
+								phase = experience.timeframe.getDescription();
+							else
+								phase = 'Previous';
+								
+							experience.initDateRange(phase);
+							var panel = new NewExperiencePanel(experience, phase);
 							panel.done = function()
 								{
 									skipButton.on('click')();
