@@ -1822,7 +1822,7 @@ cr.createInstance = function(field, containerUUID, initialData)
 		if (containerUUID)
 			jsonArray.containerUUID = containerUUID;
 	
-		return $.when($.post(cr.urls.createInstance, jsonArray))
+		return $.post(cr.urls.createInstance, jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -2024,37 +2024,29 @@ cr.submitSignout = function()
 			.then(function(json) {
 					crp.clear();
 				},
-				cr.postError)
+				cr.thenFail)
 			.promise();
 	}
 
-cr.updateUsername = function(newUsername, password, done, fail)
+cr.updateUsername = function(newUsername, password)
 	{
-		$.post(cr.urls.updateUsername, {newUsername: newUsername, 
+		return $.post(cr.urls.updateUsername, {newUsername: newUsername, 
 										password: password})
-		.done(function(json)
-			{
-				var v = cr.signedinUser.getValue('_email');
-				v.updateFromChangeData({text: newUsername});
-				v.triggerDataChanged();
-				done();
-		   })
-		.fail(function(jqXHR, textStatus, errorThrown)
-		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-		});
+		        .then(function(json)
+				{
+					var v = cr.signedinUser.getValue('_email');
+					v.updateFromChangeData({text: newUsername});
+					v.triggerDataChanged();
+				},
+				cr.thenFail);
 	}
 	
-cr.updatePassword = function(username, oldPassword, newPassword, done, fail)
+cr.updatePassword = function(username, oldPassword, newPassword)
 	{
-		$.post(cr.urls.updatePassword, {username: username,
+		return $.post(cr.urls.updatePassword, {username: username,
 										oldPassword: oldPassword,
 										newPassword: newPassword })
-		.done(done)
-		.fail(function(jqXHR, textStatus, errorThrown)
-		{
-			cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-		});
+				.fail(cr.thenFail);
 	}
 
 cr.share = function(userPath, path, privilegeID, done, fail)
