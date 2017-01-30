@@ -805,10 +805,18 @@ var PathView = (function() {
 			if (d2 === "Now")
 				return 0;
 			else 
+			{
+				var thisDate = new Date();
+				var thisYear = thisDate.getUTCFullYear();
 				return d2 <= thisYear ? 1 : -1;
+			}
 		}
 		else if (d2 === "Now")
+		{
+			var thisDate = new Date();
+			var thisYear = thisDate.getUTCFullYear();
 			return d1 <= thisYear ? -1 : 1;
+		}
 		else
 			return d1 - d2;
 	}

@@ -1,24 +1,6 @@
 var UpdatePasswordPanel = (function () {
 	UpdatePasswordPanel.prototype = new SitePanel();
 
-	UpdatePasswordPanel.prototype.submit = function(username, oldPassword, newPassword, successFunction, failFunction)
-	{
-		bootstrap_alert.show($('.alert-container'), "Updating Password...\n(this may take a minute)", "alert-info");
-
-		$.post(cr.urls.updatePassword, 
-			{ username: username,
-				oldPassword: oldPassword,
-				newPassword: newPassword
-			})
-		  .done(function(json, textStatus, jqXHR)
-			{
-				successFunction(json.user);
-			})
-		  .fail(function(jqXHR, textStatus, errorThrown) {
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-		  });
-	}
-
 	function UpdatePasswordPanel() {
 		this.createRoot(null, "Password", "view", revealPanelUp);
 		var _this = this;
@@ -50,16 +32,17 @@ var UpdatePasswordPanel = (function () {
 					{
 						cr.updatePassword(username, 
 										  currentPasswordInput.property('value'),
-										  newPasswordInput.property('value'),
-										  function() {
-										  	_this.hideRight(
-										  		function()
-										  		{
-										  			bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
-										  			unblockClick();
-										  		});
-										  },
-										  syncFailFunction);
+										  newPasswordInput.property('value'))
+							.then(function()
+								  {
+									_this.hideRight(
+										function()
+										{
+											bootstrap_alert.show($('.alert-container'), "Password Changed", "alert-info");
+											unblockClick();
+										});
+								  },
+								  syncFailFunction);
 					}
 				}
 				d3.event.preventDefault();
@@ -112,23 +95,6 @@ var UpdatePasswordPanel = (function () {
 var UpdateUsernamePanel = (function () {
 	UpdateUsernamePanel.prototype = new SitePanel();
 
-	UpdateUsernamePanel.prototype.submit = function(newUsername, password, successFunction, failFunction)
-	{
-		bootstrap_alert.show($('.alert-container'), "Updating Email...\n(this may take a minute)", "alert-info");
-
-		$.post(cr.urls.updateUsername, 
-			{ newUsername: newUsername,
-				password: password
-			})
-		  .done(function(json, textStatus, jqXHR)
-			{
-				successFunction(json.user);
-			})
-		  .fail(function(jqXHR, textStatus, errorThrown) {
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-		  });
-	}
-
 	function UpdateUsernamePanel(user) {
 		this.createRoot(null, "Username", "view", revealPanelUp);
 		var _this = this;
@@ -157,15 +123,16 @@ var UpdateUsernamePanel = (function () {
 					else
 					{
 						cr.updateUsername(newUsernameInput.property('value'),
-										  currentPasswordInput.property('value'),
-										  function() {
-										  	_this.hideRight(function()
-										  		{
-										  			bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
-										  			unblockClick();
-										  		});
-										  },
-										  syncFailFunction);
+										  currentPasswordInput.property('value'))
+						.then(function()
+							  {
+								_this.hideRight(function()
+									{
+										bootstrap_alert.show($('.alert-container'), "Email Changed", "alert-info");
+										unblockClick();
+									});
+							  },
+							  syncFailFunction);
 					}
 				}
 			}
