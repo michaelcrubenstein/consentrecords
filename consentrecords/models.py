@@ -1410,8 +1410,9 @@ class FieldsDataDictionary:
     def getType(self, t):
         if isinstance(t, str):
             if self._dict:
-                return next((key for key in self._dict.keys() if key.id == t),
-                             Instance.objects.get(pk=t))
+            
+                return next((key for key in self._dict.keys() if key.id == t), None) or \
+                       Instance.objects.get(pk=t)
             else:
                 return Instance.objects.get(pk=t)
         else:
