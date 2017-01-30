@@ -3108,6 +3108,7 @@ var NewExperiencePanel = (function () {
 			}
 				
 			endDateWheel.checkMinDate(minEndDate, maxEndDate);
+			$(endDateWheel).trigger('change');
 		});
 		
 		var endDateContainer = panel2Div.append('section')
