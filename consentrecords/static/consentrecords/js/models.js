@@ -1621,8 +1621,8 @@ cr.tokenType = null;
 	
 cr.postError = function(jqXHR, textStatus, errorThrown)
 	{
-		if (textStatus == "timeout")
-			return "This operation ran out of time. Try again.";
+		if (jqXHR.status == 504 || textStatus == "timeout")
+			return "This operation ran out of time.";
 		else if (jqXHR.status == 0)
 			return "The server is not responding. Please try again.";
 		else
