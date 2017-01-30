@@ -13,6 +13,8 @@ Service
 Service
     _name: en - Art History
 Service
+    _name: en - Art History Class
+Service
     _name: en - Art Teacher
 Service
     _name: en - Ballet
@@ -212,6 +214,8 @@ Service
 Service
     _name: en - Journalism
 Service
+    _name: en - Journalism Class
+Service
     _name: en - Journalist
 Service
     _name: en - Jump Year to Grade 9
@@ -388,6 +392,11 @@ Service
     _name: en - Art History
     Service: Art History
 Service
+    _name: en - Art History Class
+    Stage: Studying
+    Service: Art History Class
+    Service: Art History
+Service
     _name: en - Art Teacher
     Stage: Teaching
     Service: Art Teacher
@@ -514,6 +523,7 @@ Service
     Service: College
 Service
     _name: en - Community Organizing
+    Stage: Volunteering
     Service: Community Organizing
 Service
     _name: en - Community Organizing Internship
@@ -875,8 +885,15 @@ Service
     _name: en - Journalism
     Service: Journalism
 Service
+    _name: en - Journalism Class
+    Stage: Studying
+    Service: Journalism Class
+    Service: Journalism
+Service
     _name: en - Journalist
     Stage: Working
+    Service: Journalist
+    Service: Journalism
 Service
     _name: en - Jump Year to Grade 9
     Organization Label: en - District
@@ -964,6 +981,8 @@ Service
     _name: en - Music Teacher
     Stage: Working
     Service: Music Teacher
+    Service: Teacher
+    Service: Job Employment
 Service
     _name: en - Nutrition
     Service: Nutrition
