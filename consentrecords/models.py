@@ -57,7 +57,7 @@ class _deferred():
             self._value = self._f()
             self._isCached = True
         return self._value
-        
+
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False)
@@ -119,7 +119,7 @@ class Instance(dbmodels.Model):
             elif isinstance(value, dict) and "instanceID" in value:
                 f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
                 if len(f) == 0:
-                    raise Value.DoesNotExist("specified primary key for instance does not exist")
+                    raise Value.DoesNotExist("specified primary key (%s) for instance does not exist" % value["instanceID"])
                 value = f[0]
                 return self.addReferenceValue(field, value, position, transactionState)
             else:
@@ -143,14 +143,16 @@ class Instance(dbmodels.Model):
                                     stringValue = value["text"], languageCode = value["languageCode"],
                                     position=position, transaction=transactionState.transaction)
 
-    def _descendents(self):
-        d = [self]
-        i = 0
-        while i < len(d):
-            d.extend(d[i].children.filter(deleteTransaction__isnull=True))
-            i += 1
-        return d
-
+    def updateDescendentAccessSources(self, accessSource):
+        self.accessSource = accessSource
+        self.save()
+        items = [self]
+        while len(items) > 0:
+            item = items.pop(0)
+            children = item.children.filter(deleteTransaction__isnull=True)
+            children.update(accessSource=accessSource)
+            items.extend(item.children.filter(deleteTransaction__isnull=True))
+            
     # Returns a newly created value contained by self with the specified referenceValue
     def addReferenceValue(self, field, instance, position, transactionState):
         if position < 0:
@@ -160,8 +162,7 @@ class Instance(dbmodels.Model):
             
         # If the field is special access, then make this and all of its children sourced to self.
         if field == terms.specialAccess and instance == terms.customAccessEnum:
-            descendents = self._descendents()
-            descendents.update(accessSource=self)
+        	self.updateDescendentAccessSources(self)
             
         return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
@@ -1029,8 +1030,7 @@ class Value(dbmodels.Model):
         # If the field is special access, then make this and all of its children 
         # sourced to the same source as the parent of self.
         if self.field == terms.specialAccess:
-            descendents = self.instance._descendents()
-            descendents.update(accessSource=(self.instance.parent and self.instance.parent.accessSource_id))
+        	self.instance.updateDescendentAccessSources(self.instance.parent and self.instance.parent.accessSource)
             
         if self.isOriginalReference:
             self.referenceValue.deepDelete(transactionState)

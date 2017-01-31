@@ -55,8 +55,10 @@ var Settings = (function () {
  			.append("span").text("Done");
 
 		var userPublicAccessCell = user.getCell("_public access");
+		var userPrimaryAdministratorCell = user.getCell("_primary administrator");
 		var pathPublicAccessCell = path.getCell("_public access");
 		var pathSpecialAccessCell = path.getCell("_special access");
+		var pathPrimaryAdministratorCell = path.getCell("_primary administrator");
 		
 		user.getCell("_first name").field.label = this.firstNameLabel;
 		user.getCell("_last name").field.label = this.lastNameLabel;
@@ -116,6 +118,7 @@ var Settings = (function () {
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];
 			var pathSpecialAccessValue = pathSpecialAccessCell.data[0];
+			var pathPrimaryAdministratorValue = pathPrimaryAdministratorCell.data[0];
 			
 			var divs = addUniqueCellSection(userPublicAccessCell, this.userPublicAccessLabel,
 				function(cell) {
@@ -124,7 +127,7 @@ var Settings = (function () {
 						try
 						{
 							new PickUserAccessPanel()
-								.createRoot(userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue)
+								.createRoot(user, path, userPublicAccessValue, pathPublicAccessValue, pathSpecialAccessValue, pathPrimaryAdministratorValue)
 								.showLeft().then(unblockClick);
 						}
 						catch(err)
@@ -351,7 +354,7 @@ var PickUserAccessPanel = (function () {
 						  }
 						 ];
 	
-	PickUserAccessPanel.prototype.createRoot = function(oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue)
+	PickUserAccessPanel.prototype.createRoot = function(user, path, oldUserAccessValue, oldPathAccessValue, oldPathSpecialAccessValue, oldPathPrimaryAdministratorValue)
 	{
 		PickFromListPanel.prototype.createRoot(null, this.title, "");
 		var _this = this;
@@ -403,12 +406,19 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push({ id: oldPathSpecialAccessValue.id });
 								}
+								if (oldPathPrimaryAdministratorValue.id)
+								{
+									sourceObjects.push(oldPathPrimaryAdministratorValue);
+									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
+								}
 							}
 							else if (d.description == Settings.prototype.emailVisibleLabel)
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != "_find")
+									if (oldUserAccessValue.getDescription() != "_find" &&
+										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
+										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -421,7 +431,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
+												containerUUID: user.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -437,12 +447,19 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push({ id: oldPathSpecialAccessValue.id });
 								}
+								if (oldPathPrimaryAdministratorValue.id)
+								{
+									sourceObjects.push(oldPathPrimaryAdministratorValue);
+									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
+								}
 							}
 							else if (d.description == Settings.prototype.pathVisibleLabel)
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != "_find")
+									if (oldUserAccessValue.getDescription() != "_find" &&
+										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
+										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
 									{
 										sourceObjects.push(oldUserAccessValue);
 										initialData.push({ id: oldUserAccessValue.id,
@@ -455,43 +472,59 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
+												containerUUID: user.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
 											});
 								}
+								sourceObjects.push(oldPathAccessValue);
 								if (oldPathAccessValue.id)
 								{
-									sourceObjects.push(oldPathAccessValue);
 									initialData.push({ id: oldPathAccessValue.id,
 												 instance: d.pathPrivilegePath,
 												 description: d.description });
 								}
 								else
 								{
-									sourceObjects.push(oldPathAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathAccessValue.cell.parent.getInstanceID(),
+												containerUUID: path.getInstanceID(),
 												fieldID: oldPathAccessValue.cell.field.nameID,
 												instance: d.pathPrivilegePath,
 												description: d.pathPrivilegeDescription
 											});
 								}
+								var newInstanceID = user.getValue("_primary administrator").getInstanceID();
+								if (newInstanceID)
+								{
+									sourceObjects.push(oldPathPrimaryAdministratorValue);
+									var newData;
+									if (oldPathPrimaryAdministratorValue.id)
+									{
+										newData = { id: oldPathPrimaryAdministratorValue.id }
+									}
+									else
+									{
+										newData = { containerUUID: path.getInstanceID(),
+													fieldID: oldPathPrimaryAdministratorValue.cell.field.nameID };
+									}
+									newData.instanceID = newInstanceID;
+									newData.description = user.getValue("_primary administrator").getDescription();
+									initialData.push(newData);
+								}
+								sourceObjects.push(oldPathSpecialAccessValue);
 								if (oldPathSpecialAccessValue.id)
 								{
-									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push({ id: oldPathSpecialAccessValue.id,
 												 instance: d.pathSpecialAccessPath,
 												 description: d.pathSpecialAccessDescription });
 								}
 								else
 								{
-									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldPathSpecialAccessValue.cell.parent.getInstanceID(),
+												containerUUID: path.getInstanceID(),
 												fieldID: oldPathSpecialAccessValue.cell.field.nameID,
 												instance: d.pathSpecialAccessPath,
 												description: d.pathSpecialAccessDescription
@@ -512,7 +545,7 @@ var PickUserAccessPanel = (function () {
 									sourceObjects.push(oldUserAccessValue);
 									initialData.push(
 											{
-												containerUUID: oldUserAccessValue.cell.parent.getInstanceID(),
+												containerUUID: user.getInstanceID(),
 												fieldID: oldUserAccessValue.cell.field.nameID,
 												instance: d.instancePath,
 												description: d.description
@@ -527,6 +560,11 @@ var PickUserAccessPanel = (function () {
 								{
 									sourceObjects.push(oldPathSpecialAccessValue);
 									initialData.push({ id: oldPathSpecialAccessValue.id });
+								}
+								if (oldPathPrimaryAdministratorValue.id)
+								{
+									sourceObjects.push(oldPathPrimaryAdministratorValue);
+									initialData.push({ id: oldPathPrimaryAdministratorValue.id });
 								}
 							}
 							
