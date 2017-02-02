@@ -66,7 +66,7 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 	bootstrap_alert.timeout = setTimeout(function()
 		{
 			bootstrap_alert.timeout = null;
-			if (bootstrap_alert.closeOnTimeout)
+			if (bootstrap_alert.closeOnTimeout && clickBlockCount == 0)
 				bootstrap_alert.close();
 		}, 1500);
 		
@@ -268,6 +268,10 @@ function unblockClick()
 	if (clickBlockCount === 0)
 		throw ("Click unblocked.");
 	clickBlockCount -= 1;
+	if (clickBlockCount == 0 && 
+		bootstrap_alert.timeout == null && 
+		bootstrap_alert.closeOnTimeout)
+		bootstrap_alert.close();
 }
 
 function prepareClick(name, message)
