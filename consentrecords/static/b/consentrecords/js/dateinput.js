@@ -382,6 +382,7 @@ var DateWheel = (function () {
 	DateWheel.prototype.minDate = null;
 	DateWheel.prototype.maxDate = null;
 	DateWheel.prototype.isClear = false;
+	DateWheel.prototype.didDrag = false;
 	
 	DateWheel.prototype._getAlignmentFunction = function(done)
 	{
@@ -397,12 +398,23 @@ var DateWheel = (function () {
 						var scrollTop =  Math.round($(node).scrollTop());
 						
 						var newScrollTop;
-						if (scrollTop % itemHeight < itemHeight / 2)
-							newScrollTop = scrollTop - (scrollTop % itemHeight);
+						var newIndex;
+						if (!_this.didDrag)
+						{
+							if (scrollTop % itemHeight < itemHeight / 2)
+								newScrollTop = scrollTop - (scrollTop % itemHeight);
+							else
+								newScrollTop = scrollTop + itemHeight - (scrollTop % itemHeight);
+							newIndex = Math.round(newScrollTop / itemHeight);
+						}
 						else
-							newScrollTop = scrollTop + itemHeight - (scrollTop % itemHeight);
-							
-						var newIndex = Math.round(newScrollTop / itemHeight);
+						{
+							if (scrollTop % itemHeight < itemHeight / 2)
+								newIndex = Math.round(scrollTop / itemHeight);
+							else
+								newIndex = Math.round(scrollTop / itemHeight) + 1;
+						}	
+						
 						if (_this._getIsIndexDisabled(node, newIndex))
 						{
 							var numItems = $(node).children('li').length;
@@ -444,7 +456,7 @@ var DateWheel = (function () {
 	
 	DateWheel.prototype._getIsIndexDisabled = function(node, i)
 	{
-		var li = $(node).children('li:nth-child({0})'.format(i+1));
+		var li = $(node.childNodes.item(i));
 		return li.hasClass('disabled');
 	}
 	
@@ -656,6 +668,40 @@ var DateWheel = (function () {
     	return this._node;
     }
     
+    DateWheel.prototype._setupDrag = function(node)
+    {
+		var offsetY;
+		var _this = this;
+		d3.select(node).attr('draggable', 'true')
+			.call(
+				d3.behavior.drag()
+					.on("dragstart", function(){
+						try
+						{
+							var offset = d3.mouse(this);
+							offsetY = offset[1];
+							startScrollTop = $(this).scrollTop();
+							_this.didDrag = false;
+						}
+						catch(err)
+						{
+							console.log(err);
+						}
+					})
+					.on("drag", function(){
+						_this.didDrag = true;
+						$(this).scrollTop(startScrollTop + offsetY - d3.mouse(this)[1]);
+					})
+					.on("dragend", function(fd, i){
+						if (_this.didDrag)
+						{
+							_this.didDrag = false;
+							$(this).scroll();
+						}
+					})
+				);
+    }
+    
 	function DateWheel(container, showDate, minDate, maxDate)
 	{
     	if (!container)
@@ -696,6 +742,10 @@ var DateWheel = (function () {
 				$(_this).trigger('change');
 			}
 		}
+		
+		this._setupDrag(this.yearNode);	
+		this._setupDrag(this.monthNode);	
+		this._setupDrag(this.dayNode);
 		$(this.yearNode).scroll(this._getAlignmentFunction(function()
 			{
 				_this.isClear = false;
