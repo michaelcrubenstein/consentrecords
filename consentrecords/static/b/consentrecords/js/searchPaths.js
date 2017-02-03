@@ -505,7 +505,7 @@ var SearchPathsPanel = (function () {
 		var offsetParent = $(this.resultContainerNode).offsetParent();
 		var maxScrollTop = offsetParent.prop('scrollHeight') - offsetParent.innerHeight();
 		var canOverflow = (maxScrollTop <= offsetParent.scrollTop()) ||
-			$(this.resultContainerNode) > 0;
+			$(this.resultContainerNode).scrollTop() > 0;
 		
 		$(this.resultContainerNode).css('overflow-y', canOverflow ? '' : 'hidden');
 	}
