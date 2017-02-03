@@ -135,6 +135,8 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;
 	SearchPathsPanel.prototype.emToPX = 11;
 	
+	SearchPathsPanel.prototype.resultsTopMargin = 10;
+	
 	SearchPathsPanel.prototype.queryFlagsHeight = 101;
 
 	SearchPathsPanel.prototype.clearInput = function()
@@ -284,17 +286,26 @@ var SearchPathsPanel = (function () {
 		if (this.queryFlags.selectAll('g').size() == 0)
 			resultsHeight = 0;
 		else
-			resultsHeight = $(window).height();
+			resultsHeight = $(window).height() - this.resultsTopMargin;
 		
-		$(this.resultContainerNode).stop().animate(
-			{height: resultsHeight},
-			{duration: duration});
+		var _this = this;
+		return $.when(
+			$(this.resultContainerNode).stop()
+				.animate({height: resultsHeight},
+						 {duration: duration})
+				.promise(),
 							   
-		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
-			This is important on iPhones where the soft keyboard appears and forces scrolling. */
-		$(this.node().parentNode).animate({scrollTop: 0},
-			{duration: duration});
-		
+			/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
+				This is important on iPhones where the soft keyboard appears and forces scrolling. */
+			$(this.node().parentNode)
+				.animate({scrollTop: 0},
+						 {duration: duration})
+				.promise()
+			)
+			.then(function()
+				{
+					_this.checkResultsScrolling();
+				});
 	}
 	
 	SearchPathsPanel.prototype._setFlagText = function(node)
@@ -436,11 +447,22 @@ var SearchPathsPanel = (function () {
 					_this.layoutPoolFlags();
 					_this.layoutQueryFlags();
 					
+					var promise = null;
 					if ($(_this.queryFlags.node()).children().length == 0)
-						_this.revealPanel();
+						promise = _this.revealPanel();
 		
+					var f = function()
+						{
+							_this.enableResultsScrolling();
+							_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
+							_this.checkResultsScrolling();
+						}
 					/* Run a new search based on the query. */
-					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+					if (promise)
+						promise.then(f);
+					else
+						f();
+					
 				}});
 		if ($(this.queryFlags.node()).children().length == 1)
 		{
@@ -451,7 +473,7 @@ var SearchPathsPanel = (function () {
 		}
 	}
 	
-	SearchPathsPanel.prototype.clearQuery = function()
+	SearchPathsPanel.prototype._clearQuery = function()
 	{
 		var _this = this;
 		$(this.queryFlags.node()).children().remove();
@@ -459,12 +481,31 @@ var SearchPathsPanel = (function () {
 		
 		this.layoutPoolFlags();
 		
+		/* Show the help message in the query container */ 
 		this.queryContainer.selectAll('span')
  							.interrupt().transition().duration(400)
 							.style('opacity', 1.0);
 
-		/* Run a new search based on the query. */
-		this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+		/* Clear the results from the search. */
+		this.searchPathsResultsView.cancelSearch();
+	}
+	
+	SearchPathsPanel.prototype.enableResultsScrolling = function()
+	{
+		$(this.resultContainerNode).css('overflow-y', '');
+	}
+	
+	SearchPathsPanel.prototype.disableResultsScrolling = function()
+	{
+		$(this.resultContainerNode).css('overflow-y', 'hidden');
+	}
+	
+	SearchPathsPanel.prototype.checkResultsScrolling = function()
+	{
+		var offsetParent = $(this.resultContainerNode).offsetParent();
+		var maxScrollTop = offsetParent.prop('scrollHeight') - offsetParent.innerHeight();
+		
+		$(this.resultContainerNode).css('overflow-y', (maxScrollTop <= offsetParent.scrollTop()) ? '' : 'hidden');
 	}
 	
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
@@ -518,12 +559,13 @@ var SearchPathsPanel = (function () {
 	
 					_this.appendFlag(queryFlag);
 					
+					var promise = null;
 					if (_this.queryFlags.selectAll('g').size() == 1)
 					{
 						_this.queryContainer.selectAll('span')
  							.interrupt().transition().duration(400)
 							.style('opacity', 0.0);
-						_this.revealPanel();
+						promise = _this.revealPanel();
 					}
 					
 					/* Dispose of the travelSVG. */
@@ -536,7 +578,16 @@ var SearchPathsPanel = (function () {
 						.remove();
 		
 					/* Run a new search based on the query. */
-					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+					var f = function()
+					{
+						_this.enableResultsScrolling();
+						_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
+						_this.checkResultsScrolling();
+					}
+					if (promise)
+						promise.then(f);
+					else
+						f();
 				 });
  		
  		/* Move the poolFlag to the end of its list. */
@@ -887,7 +938,7 @@ var SearchPathsPanel = (function () {
 				_this.revealInput()
 					.then(function()
 						{
-							_this.clearQuery();
+							_this._clearQuery();
 						});
 				
 				event.stopPropagation();
@@ -923,6 +974,9 @@ var SearchPathsPanel = (function () {
 							_this.filterPool();
 							_this.layoutPoolFlags();
 						});
+				$(mainDiv.node()).scroll(function() {
+					_this.checkResultsScrolling();
+					});
 			});
 			
 		this.resultContainerNode = this.mainDiv.append('div')
