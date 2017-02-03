@@ -504,8 +504,10 @@ var SearchPathsPanel = (function () {
 	{
 		var offsetParent = $(this.resultContainerNode).offsetParent();
 		var maxScrollTop = offsetParent.prop('scrollHeight') - offsetParent.innerHeight();
+		var canOverflow = (maxScrollTop <= offsetParent.scrollTop()) ||
+			$(this.resultContainerNode) > 0;
 		
-		$(this.resultContainerNode).css('overflow-y', (maxScrollTop <= offsetParent.scrollTop()) ? '' : 'hidden');
+		$(this.resultContainerNode).css('overflow-y', canOverflow ? '' : 'hidden');
 	}
 	
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
