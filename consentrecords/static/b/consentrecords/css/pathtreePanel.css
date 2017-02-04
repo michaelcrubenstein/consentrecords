@@ -15,6 +15,10 @@ panel.pathway text {
 	cursor: pointer;
 }
 
+panel.pathway > nav .settings {
+	padding-top: 7px;
+}
+
 panel.pathway .settings>img {
 	width: 22px;
 	height: 22px;
@@ -23,8 +27,8 @@ panel.pathway .settings>img {
 panel.pathway span.badge {
 	background-color: #2C55CC;
 	position: relative;
-	left: -3px;
-	top: -3px;
+	left: -4px;
+	top: -4px;
 	font-weight: normal;
 	padding: 3px 5px;
 }

@@ -116,6 +116,12 @@ panel>nav .right-link {
 	font-weight: 500
 }
 
+/* Links go on the right or left over titles. */
+.site-navbar-link {
+	padding-top: 9px;
+	padding-bottom: 2px;
+}
+
 nav .site-left-chevron {
 	height: 18px;
 }

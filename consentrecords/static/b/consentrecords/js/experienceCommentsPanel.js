@@ -381,7 +381,9 @@ var ExperienceCommentsPanel = (function() {
 						_this.startEditing();
 					}
 				});
-			this.editButton.append('span').text("Edit");
+			this.editButton
+				.classed('edit', true)
+				.append('span').text("Edit");
 		}
 
 		navContainer.appendTitle('Experience');
