@@ -2912,18 +2912,6 @@ var NewExperiencePanel = (function () {
 						_this.handleDeleteButtonClick();
 					})
 				.append("span").classed("text-danger", true).text("Delete");
-			
-			var shareButton = bottomNavContainer.appendLeftButton()
-				.classed("share", true)
-				.on('click', function()
-					{
-						if (prepareClick('click', 'share'))
-						{
-							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
-						}
-					});
-			shareButton.append("img")
-				.attr("src", shareImagePath);
 		}
 
 		var section;

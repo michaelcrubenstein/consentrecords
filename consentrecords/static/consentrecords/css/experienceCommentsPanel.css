@@ -1,3 +1,15 @@
+panel.comments > nav .site-navbar-link.share
+{
+	padding-top: 7px;
+}
+
+/* Set the minimum width of this button so that the buttons don't shift when changing
+	the text from Edit to Done */
+panel.comments > nav div.edit {
+	text-align: center;
+	min-width: 70px;
+}
+
 panel.comments div.panel-fill {
 	background: white;
 }

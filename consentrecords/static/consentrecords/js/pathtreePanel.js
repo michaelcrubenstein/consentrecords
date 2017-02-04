@@ -252,7 +252,7 @@ var FlagData = (function() {
 		if (e)
 			top = new Date(e).getUTCFullYear();
 		else if (s)
-			top = "Now";
+			top = (new Date().toISOString().substr(0, s.length) < s) ? "Goal" : "Now"
 		else if (t && t.getDescription() == "Previous")
 			top = "Done";
 		else if (t && t.getDescription() == "Current")
