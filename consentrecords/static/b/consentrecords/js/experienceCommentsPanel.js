@@ -307,6 +307,18 @@ var ExperienceCommentsPanel = (function() {
 		appendLeftChevronSVG(backButton).classed("chevron-left", true);
 		backButton.append("span").text("Back");
 
+		var shareButton = navContainer.appendRightButton()
+			.classed("share", true)
+			.on('click', function()
+				{
+					if (prepareClick('click', 'share'))
+					{
+						new ExperienceShareOptions(_this.node(), fd.experience, fd.experience.cell.parent);
+					}
+				});
+		shareButton.append("img")
+			.attr("src", shareImagePath);
+
 		this.inEditMode = false;
 		if (fd.experience.canWrite())
 		{		
@@ -369,7 +381,9 @@ var ExperienceCommentsPanel = (function() {
 						_this.startEditing();
 					}
 				});
-			this.editButton.append('span').text("Edit");
+			this.editButton
+				.classed('edit', true)
+				.append('span').text("Edit");
 		}
 
 		navContainer.appendTitle('Experience');

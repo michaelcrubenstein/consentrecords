@@ -36,32 +36,6 @@
 	bottom: 40px;
 }
 
-/* Titles go in the lower center of the nav bar. */
-.site-title {
-	font-size: medium;
-	padding-top: 6px;
-	padding-bottom: 12px;
-	display: block;
-    vertical-align: middle;
-    width: 100%;
-	text-align: center;
-	margin: 0 auto;
-	font-weight: 600;
-	user-select: none;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-o-user-select: none;
-}
-/* Links go on the right or left over titles. */
-.site-navbar-link {
-	padding-top: 6px;
-	padding-bottom: 2px;
-}
-.site-spacer {
-	visibility: hidden;
-}
-
 /* A span that functions as a link to another page. */
 .site-span-link:hover {
 	text-decoration: none;
