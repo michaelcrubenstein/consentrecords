@@ -3167,16 +3167,6 @@ var NewExperiencePanel = (function () {
 
 				_this.showTags();
 				
-				if (!experience.instance)
-				{
-					if (!experience.organizationName)
-						_this.organizationInput.node().focus();
-					else if (!experience.siteName)
-						_this.siteInput.node().focus();
-					else if (!experience.offeringName)
-						_this.offeringInput.node().focus();
-				}
-
 				if (phase == 'Current')
 				{
 					startDateWheel.onChange();
