@@ -499,14 +499,14 @@
 										cr.signedinUser.promiseCellsFromCache()
 											.then(function()
 												{
-													if (experiences[0].typeName == "More Experience")
+													if (experiences[0].getTypeName() == "More Experience")
 													{
 														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
 														new NewExperiencePanel(experience, experience.getPhase())
 															.showUp();
 													}
 													else
-														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].getTypeName()));
 												},
 												cr.asyncFail);
 									}
