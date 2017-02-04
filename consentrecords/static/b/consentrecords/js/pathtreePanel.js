@@ -536,17 +536,9 @@ var PathView = (function() {
 							  
 	PathView.prototype.handleChangedExperience = function(r, fd)
 	{
-		var _this = this;
-		
-		var expChanged = function(eventObject)
+		setupOnViewEventHandler(fd.experience, "dataChanged.cr", r, function(eventObject)
 		{
 			fd.colorElement(eventObject.data);
-		}
-		
-		fd.experience.on("dataChanged.cr", r, expChanged);
-		$(this).on("remove", null, fd.experience, function(eventObject)
-		{
-			eventObject.data.off("dataChanged.cr", expChanged);
 		});
 	}
 
@@ -578,7 +570,6 @@ var PathView = (function() {
 		
 		var f = function(eventObject)
 			{
-				var fd = d3.select(eventObject.data).datum();
 				fd.colorElement(eventObject.data);
 			}
 		
@@ -870,11 +861,33 @@ var PathView = (function() {
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
 			.attr('dy', this.flagLineOneDY)
-			.attr('fill', function(d) { return d.fontColor(); });
+			.attr('fill', function(d) { return d.fontColor(); })
+			.each(function(d)
+				{
+					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					{
+						d3.select(eventObject.data).attr('fill', d.fontColor());
+					});
+					_this.setupServiceTriggers(this, d, function(eventObject)
+						{
+							d3.select(eventObject.data).attr('fill', d.fontColor());
+						});
+				});
 		text.append('tspan')
 			.attr('x', this.textDetailLeftMargin)
 			.attr('dy', this.flagLineTwoDY)
-			.attr('fill', function(d) { return d.fontColor(); });
+			.attr('fill', function(d) { return d.fontColor(); })
+			.each(function(d)
+				{
+					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
+					{
+						d3.select(eventObject.data).attr('fill', d.fontColor());
+					});
+					_this.setupServiceTriggers(this, d, function(eventObject)
+						{
+							d3.select(eventObject.data).attr('fill', d.fontColor());
+						});
+				});
 		
 		g.each(function() { _this._setFlagText(this); });
 		
