@@ -140,6 +140,9 @@ var GetDataChunker = (function() {
 		scrollingNode.on("resize.cr", this._check);
 	}
 	
+	/* checkStart is called to start up a new search that is going to append its results
+		to the current search results.
+	 */
 	GetDataChunker.prototype.checkStart = function(startVal)
 	{
 		if (!this.path)
