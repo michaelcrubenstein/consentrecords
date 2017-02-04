@@ -2207,7 +2207,7 @@ var SearchOptionsView = (function () {
 		}
 			
 		var searchPath = this.searchPath(this._constrainCompareText);
-		if (searchPath && searchPath.length > 0)
+		if (searchPath)
 		{
 			this.getDataChunker.path = searchPath;
 			this.getDataChunker.fields = this.fields();
@@ -2232,11 +2232,14 @@ var SearchOptionsView = (function () {
 	// Begin a timeout that, when it is done, begins a search.
 	// This gives the user time to update the search text without 
 	// doing a search for each change to the search text.
-	SearchOptionsView.prototype.startSearchTimeout = function(val)
+	SearchOptionsView.prototype.startSearchTimeout = function(val, pauseDuration)
 	{
+		pauseDuration = pauseDuration !== undefined ? pauseDuration : 300;
 		this.clearListPanel();
-		if (this.searchPath(val) != "")
+		if (this.searchPath(val))
 			this.getDataChunker.showLoadingMessage();
+		else
+			this.getDataChunker.clearLoadingMessage();
 				
 		/* Once we have hit this point, old data is not valid. */
 		this._foundCompareText = null;
@@ -2254,7 +2257,10 @@ var SearchOptionsView = (function () {
 				asyncFailFunction(err);
 			}
 		}
-		this._searchTimeout = setTimeout(endSearchTimeout, 300);
+		if (pauseDuration == 0)
+			endSearchTimeout();
+		else
+			this._searchTimeout = setTimeout(endSearchTimeout, pauseDuration);
 	}
 	
 	SearchOptionsView.prototype.textCleared = function()
