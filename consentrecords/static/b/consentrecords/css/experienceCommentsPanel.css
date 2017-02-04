@@ -1,3 +1,8 @@
+panel.comments > nav .site-navbar-link.share
+{
+	padding-top: 7px;
+}
+
 panel.comments div.panel-fill {
 	background: white;
 }
