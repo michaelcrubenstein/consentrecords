@@ -501,8 +501,11 @@ var FlagController = (function() {
 			return this._selected;
 		else
 		{
-			this._selected = newValue;
-			$(this).trigger("selectedChanged.cr");
+			if (this._selected != newValue)
+			{
+				this._selected = newValue;
+				$(this).trigger("selectedChanged.cr");
+			}
 		}
 	}
 
@@ -678,16 +681,22 @@ var PathView = (function() {
 			{
 				try
 				{
-					d3.select(flag).selectAll('rect.bg')
-						.transition()
-						.duration(200)
-						.style('fill-opacity', 0.4);
+					if (!fd.selected())
+					{
+						d3.select(flag).selectAll('rect.bg')
+							.transition()
+							.duration(200)
+							.style('fill-opacity', 0.4);
+					}
 					var newPanel = new ExperienceCommentsPanel(fd);
 					newPanel.showLeft()
 						.always(function()
 							{
-								d3.select(flag).selectAll('rect.bg')
-									.style('fill-opacity', 0.2);
+								if (!fd.selected())
+								{
+									d3.select(flag).selectAll('rect.bg')
+										.style('fill-opacity', 0.2);
+								}
 							})
 						.always(unblockClick);
 					return newPanel;
@@ -850,6 +859,12 @@ var PathView = (function() {
 							d.column = d.getColumn();
 							_this.transitionPositions(g);
 						});
+					setupOnViewEventHandler($(d), "selectedChanged.cr", this, function(eventObject)
+						{
+							var g = d3.select(eventObject.data);
+							g.classed('selected', d.selected());
+							g.selectAll('tspan').attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
+						});
 				});
 					
 		g.append('line').classed('flag-pole', true)
@@ -878,11 +893,11 @@ var PathView = (function() {
 				{
 					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
 					{
-						d3.select(eventObject.data).attr('fill', d.fontColor());
+						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 					});
 					_this.setupServiceTriggers(this, d, function(eventObject)
 						{
-							d3.select(eventObject.data).attr('fill', d.fontColor());
+							d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 						});
 				});
 		text.append('tspan')
