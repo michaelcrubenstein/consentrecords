@@ -61,7 +61,7 @@ var AgeCalculator = (function() {
 })();
 
 var CompareFlag = (function() {
-	CompareFlag.prototype = new FlagData();
+	CompareFlag.prototype = new FlagController();
 	
 	CompareFlag.prototype.getEndAge = function()
 	{
@@ -120,7 +120,7 @@ var CompareFlag = (function() {
 	
 	function CompareFlag(experience, ageCalculator)
 	{
-		FlagData.call(this, experience);
+		FlagController.call(this, experience);
 		this.ageCalculator = ageCalculator;
 		this.birthday = ageCalculator.birthdays[0];
 	}
@@ -231,7 +231,7 @@ var ComparePath = (function() {
 			.each(function(d, i)
 				{
 					var t = d3.select(this);
-					FlagData.appendWrappedText(d.name, function(i)
+					FlagController.appendWrappedText(d.name, function(i)
 							{
 								return t.append("tspan")
 									.attr("x", 0)
