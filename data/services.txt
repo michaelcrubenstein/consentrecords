@@ -9,7 +9,17 @@ Service
 Service
     _name: en - Animals
 Service
+    _name: en - Architect
+Service
+    _name: en - Architecture
+Service
+    _name: en - Architecture Job
+Service
+    _name: en - Art
+Service
     _name: en - Art Class
+Service
+    _name: en - Artist
 Service
     _name: en - Art History
 Service
@@ -65,6 +75,8 @@ Service
 Service
     _name: en - Clarinet Lessons
 Service
+    _name: en - Class
+Service
     _name: en - College
 Service
     _name: en - Community Organizing
@@ -108,6 +120,8 @@ Service
     _name: en - Drums
 Service
     _name: en - Education
+Service
+    _name: en - Education Job
 Service
     _name: en - Emergency Services
 Service
@@ -205,12 +219,17 @@ Service
 Service
     _name: en - Independent School Prep
 Service
+    _name: en - Interior Design
+Service
+    _name: en - Interior Design Class
+Service
+    _name: en - Interior Designer
+Service
     _name: en - Internship
 Service
     _name: en - Japanese
 Service
     _name: en - Job
-    _name: en - Employment
 Service
     _name: en - Journalism
 Service
@@ -270,6 +289,12 @@ Service
 Service
     _name: en - Pharmacy
 Service
+    _name: en - Photography
+Service
+    _name: en - Photography Class
+Service
+    _name: en - Photographer
+Service
     _name: en - Physical Conditioning
 Service
     _name: en - Piano
@@ -304,7 +329,15 @@ Service
 Service
     _name: en - School
 Service
+    _name: en - Science
+Service
+    _name: en - Science Class
+Service
+    _name: en - Science Job
+Service
     _name: en - Skiing
+Service
+    _name: en - Skills
 Service
     _name: en - Soccer
 Service
@@ -381,27 +414,59 @@ Service
     Service: Animal Shelter Volunteer
     Service: Animal Care
     Service: Animals
+    Service: Volunteer
 Service
     _name: en - Animals
     Service: Animals
 Service
+    _name: en - Architect
+    Stage: Working
+    Service: Architect
+    Service: Architecture
+    Service: Job
+Service
+    _name: en - Architecture
+    Stage: Whatever
+    Service: Architecture
+Service
+    _name: en - Architecture Class
+    Stage: Studying
+    Service: Architecture Class
+    Service: Architecture
+    Service: Class
+Service
+    _name: en - Art
+    Stage: Whatever
+    Service: Art
+Service
     _name: en - Art Class
     Stage: Studying
     Service: Art Class
+    Service: Art
+    Service: Class
+Service
+    _name: en - Artist
+    Stage: Working
+    Service: Artist
+    Service: Art
+    Service: Job
 Service
     _name: en - Art History
+    Stage: Whatever
     Service: Art History
 Service
     _name: en - Art History Class
     Stage: Studying
     Service: Art History Class
     Service: Art History
+    Service: Class
 Service
     _name: en - Art Teacher
     Stage: Teaching
     Service: Art Teacher
     Service: Teacher
-    Service: Job Employment
+    Service: Job
+    Service: Education Job
 Service
     _name: en - Ballet
     Stage: Training
@@ -423,6 +488,7 @@ Service
     Stage: Working
     Service: Baseball Job
     Service: Baseball
+    Service: Job
 Service
     _name: en - Basketball
     Stage: Whatever
@@ -447,6 +513,7 @@ Service
     _name: en - Be a Foster Parent
     Stage: Volunteering
     Service: Be a Foster Parent
+    Service: Volunteer
 Service
     _name: en - Be a Mentor
     Stage: Mentoring
@@ -498,11 +565,13 @@ Service
     Stage: Studying
     Service: Chinese Class
     Service: Chinese
+    Service: Class
 Service
     _name: en - Civic Group Participation
     Stage: Volunteering
     Service: Community Organizing
     Service: Civic Group Participation
+    Service: Volunteer
 Service
     _name: en - Civics Class
     Site Label: en - School
@@ -510,12 +579,17 @@ Service
     Stage: Studying
     Service: Government
     Service: Civics Class
+    Service: Class
 Service
     _name: en - Clarinet Lessons
     Stage: Training
     Service: Music Performance
     Service: Clarinet Lessons
     Service: Music Lessons
+Service
+    _name: en - Class
+    Stage: Studying
+    Service: Class
 Service
     _name: en - College
     Stage: Studying
@@ -525,6 +599,7 @@ Service
     _name: en - Community Organizing
     Stage: Volunteering
     Service: Community Organizing
+    Service: Volunteer
 Service
     _name: en - Community Organizing Internship
     Stage: Training
@@ -535,6 +610,7 @@ Service
     Stage: Working
     Service: Community Organizing
     Service: Community Organizing Job
+    Service: Job
 Service
     _name: en - Computer Applications
     Service: Computer Applications
@@ -556,6 +632,7 @@ Service
     Stage: Studying
     Service: Computer Software & Programming
     Service: Computer Programming Class
+    Service: Class
 Service
     _name: en - Computer Software & Programming
     Service: Computer Software & Programming
@@ -616,6 +693,11 @@ Service
     Stage: Studying
     Service: Education
 Service
+    _name: en - Education Job
+    Stage: Working
+    Service: Education Job
+    Service: Job
+Service
     _name: en - Emergency Services
     Service: Emergency Services
 Service
@@ -634,12 +716,14 @@ Service
     Stage: Studying
     Service: English
     Service: English Class
+    Service: Class
 Service
     _name: en - English Teacher
     Stage: Teaching
     Service: English
     Service: English Teacher
     Service: Teacher
+    Service: Education Job
 Service
     _name: en - Entrepreneurship
     Service: Entrepreneurship
@@ -676,6 +760,7 @@ Service
 Service
     _name: en - Food Service Job
     Service: Food Service Job
+    Service: Job
 Service
     _name: en - Football
     Stage: Whatever
@@ -694,6 +779,7 @@ Service
     Stage: Studying
     Service: French
     Service: French Class
+    Service: Class
 Service
     _name: en - German
     Stage: Skills
@@ -703,6 +789,7 @@ Service
     Stage: Studying
     Service: German Class
     Service: German
+    Service: Class
 Service
     _name: en - Get a Mentor
     Service: Life Skills
@@ -846,11 +933,15 @@ Service
     Stage: Studying
     Service: History Class
     Service: History
+    Service: Class
 Service
     _name: en - History Teacher
     Stage: Teaching
     Service: History Teacher
     Service: History
+    Service: Teacher
+    Service: Education Job
+    Service: Job
 Service
     _name: en - Hospitality
     Service: Hospitality
@@ -868,6 +959,22 @@ Service
     Stage: Studying
     Service: Independent School Prep
 Service
+    _name: en - Interior Design
+    Stage: Whatever
+    Service: Interior Design
+Service
+    _name: en - Interior Design Class
+    Stage: Studying
+    Service: Interior Design Class
+    Service: Interior Design
+    Service: Class
+Service
+    _name: en - Interior Designer
+    Stage: Working
+    Service: Interior Designer
+    Service: Interior Design
+    Service: Job
+Service
     _name: en - Internship
     Stage: Training
     Service: Internship
@@ -876,11 +983,10 @@ Service
     Service: Japanese
 Service
     _name: en - Job
-    _name: en - Employment
     Organization Label: en - Employer
     Offering Label: en - Job Title
     Stage: Working
-    Service: Job Employment
+    Service: Job
 Service
     _name: en - Journalism
     Service: Journalism
@@ -889,6 +995,7 @@ Service
     Stage: Studying
     Service: Journalism Class
     Service: Journalism
+    Service: Class
 Service
     _name: en - Journalist
     Stage: Working
@@ -932,6 +1039,7 @@ Service
     _name: en - Leadership Class
     Stage: Studying
     Service: Leadership Class
+    Service: Class
 Service
     _name: en - Leadership Training
     Stage: Training
@@ -959,6 +1067,10 @@ Service
     _name: en - Math Teacher
     Stage: Teaching
     Service: Math Teacher
+    Service: Teacher
+    Service: Math
+    Service: Education Job
+    Service: Job
 Service
     _name: en - Math Tutoring
     Offering Label: en - Program
@@ -982,7 +1094,8 @@ Service
     Stage: Working
     Service: Music Teacher
     Service: Teacher
-    Service: Job Employment
+    Service: Job
+    Service: Education Job
 Service
     _name: en - Nutrition
     Service: Nutrition
@@ -999,9 +1112,27 @@ Service
     _name: en - Pharmacist
     Stage: Working
     Service: Pharmacist
+    Service: Pharmacy
+    Service: Job
 Service
     _name: en - Pharmacy
     Service: Pharmacy
+Service
+    _name: en - Photography
+    Stage: Whatever
+    Service: Photography
+Service
+    _name: en - Photography Class
+    Stage: Whatever
+    Service: Photography Class
+    Service: Photography
+    Service: Class
+Service
+    _name: en - Photographer
+    Stage: Whatever
+    Service: Photographer
+    Service: Photography
+    Service: Job
 Service
     _name: en - Physical Conditioning
     Stage: Wellness
@@ -1021,10 +1152,15 @@ Service
     _name: en - Piano Teacher
     Stage: Teaching
     Service: Piano Teacher
+    Service: Teacher
+    Service: Piano
+    Service: Education Job
+    Service: Job
 Service
     _name: en - Political Organizing
     Stage: Volunteering
     Service: Political Organizing
+    Service: Volunteer
 Service
     _name: en - Political Organizing Internship
     Stage: Training
@@ -1033,6 +1169,7 @@ Service
     _name: en - Political Organizing Job
     Stage: Working
     Service: Political Organizing Job
+    Service: Job
 Service
     _name: en - Preschool
     Stage: Studying
@@ -1042,7 +1179,7 @@ Service
     Stage: Working
     Service: Professional Actor
     Service: Acting
-    Service: Job Employment
+    Service: Job
 Service
     _name: en - Professional Group Participation
     Stage: Training
@@ -1077,10 +1214,30 @@ Service
     Stage: Studying
     Service: School
 Service
+    _name: en - Science
+    Stage: Whatever
+    Service: Science
+Service
+    _name: en - Science Class
+    Stage: Studying
+    Service: Science Class
+    Service: Science
+    Service: Class
+Service
+    _name: en - Scientist
+    Stage: Working
+    Service: Scientist
+    Service: Science
+    Service: Job
+Service
     _name: en - Skiing
     Stage: Whatever
     Service: Skiing
     Service: Exercise
+Service
+    _name: en - Skills
+    Stage: Skills
+    Service: Skills
 Service
     _name: en - Soccer
     Stage: Whatever
@@ -1106,6 +1263,7 @@ Service
     _name: en - Software Developer
     Stage: Working
     Service: Software Developer
+    Service: Job
 Service
     _name: en - Somali Culture
     Service: Somali Culture
@@ -1113,6 +1271,7 @@ Service
     _name: en - Somali Culture Class
     Stage: Studying
     Service: Somali Culture Class
+    Service: Class
 Service
     _name: en - Spanish
     Stage: Skills
@@ -1121,10 +1280,14 @@ Service
     _name: en - Spanish Class
     Stage: Studying
     Service: Spanish Class
+    Service: Class
 Service
     _name: en - Spanish Teacher
     Stage: Teaching
     Service: Spanish Teacher
+    Service: Spanish
+    Service: Education Job
+    Service: Job
 Service
     _name: en - Squash
     Stage: Whatever
@@ -1140,6 +1303,7 @@ Service
     Offering Label: en - Job Title
     Stage: Working
     Service: Summer Job
+    Service: Job
 Service
     _name: en - Swimming
     Stage: Training
