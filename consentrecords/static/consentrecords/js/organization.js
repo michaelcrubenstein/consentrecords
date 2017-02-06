@@ -175,14 +175,18 @@ function getUserDescription(user)
 				
 function showPath(path, previousPanelNode)
 {
-	path.promiseCells(["More Experience", "parents", "_user"])
-	.then(function()
-		{
-			var panel = new OtherPathPanel(path, true);
-			panel.pathtree.setUser(path, true);
-			panel.showLeft().then(unblockClick);
-		},
-		cr.syncFail);
+	return path.promiseCells(["More Experience", "parents", "_user"])
+			   .then(function()
+				{
+					var panel = new OtherPathPanel(path, true);
+					panel.pathtree.setUser(path, true);
+					panel.showLeft().then(unblockClick);
+					
+					r2 = $.Deferred();
+					r2.resolve(panel);
+					return r2;
+				},
+				cr.syncFail);
 }
 
 function showUser(user, previousPanelNode)

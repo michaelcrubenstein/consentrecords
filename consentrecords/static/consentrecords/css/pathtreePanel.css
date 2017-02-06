@@ -89,6 +89,9 @@ g.flag rect.bg {
 	stroke-width: 0;
 	stroke-opacity: 0.0;
 }
+g.flag.selected rect.bg {
+	fill-opacity: 0.6;
+}
 g.flag line.flag-pole {
 	stroke-opacity: 0.6;
 	stroke-width: 3;
