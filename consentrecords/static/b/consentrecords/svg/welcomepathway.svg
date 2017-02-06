@@ -22,11 +22,6 @@
 				fill: #555;
 			}
 
-			svg.pathway g.year text {
-				fill: #777;
-				text-anchor: end;
-			}
-
 			svg.pathway g.detail rect.bg {
 				fill: white;
 			}
@@ -37,42 +32,6 @@
 				stroke-opacity: 0.0;
 			}
 	
-			svg.pathway g.guide line.column {
-				stroke-width: 2;
-				stroke-opacity: 0.1;
-			}
-			svg.pathway g.guide text.column-label {
-				fill: #777;
-				stroke-width: .3
-			}
-			svg.pathlines g.guide text.column-label {
-				text-anchor: middle;
-			}
-			svg.pathway g.guide rect.column-icon {
-				stroke-width: 2;
-				stroke-opacity: 0.0;
-				fill-opacity: 0.0;
-			}
-
-			svg.pathway g.experiences g.flag rect.opaque {
-				fill-opacity: 1.0;
-				fill: white;
-				stroke-opacity: 0.0;
-			}
-			svg.pathway g.experiences rect.bg {
-				fill-opacity: 0.2;
-				stroke-width: 0;
-				stroke-opacity: 0.0;
-			}
-			svg.pathway g.experiences line.flag-pole {
-				stroke-opacity: 0.6;
-				stroke-width: 3;
-			}
-			svg.pathway .flag-label {	/* For both flags and detail panels */
-				text-anchor: start;
-				font-weight: 600;
-			}
-
 			@keyframes moveup4 {
     			from {transform: translate(0px, -0px);}
     			to   {transform: translate(0px, 60px);}
