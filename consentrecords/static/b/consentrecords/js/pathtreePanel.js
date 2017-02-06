@@ -105,26 +105,27 @@ var Service = (function() {
 	return Service;
 })();
 
-var FlagData = (function() {
-	FlagData.prototype.experience = null;
-	FlagData.prototype.x = null;
-	FlagData.prototype.y = null;
-	FlagData.prototype.height = null;
-	FlagData.prototype.width = null;
+var FlagController = (function() {
+	FlagController.prototype.experience = null;
+	FlagController.prototype.x = null;
+	FlagController.prototype.y = null;
+	FlagController.prototype.height = null;
+	FlagController.prototype.width = null;
+	FlagController.prototype._selected = false;
 	
-	FlagData.prototype.previousDateString = "0000-00";
-	FlagData.prototype.goalDateString = "9999-12-31";
+	FlagController.prototype.previousDateString = "0000-00";
+	FlagController.prototype.goalDateString = "9999-12-31";
 	
-	FlagData.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
+	FlagController.prototype.textDetailLeftMargin = 10; /* textLeftMargin; */
 
 	/* Constants related to the detail text. */
-	FlagData.prototype.detailTopSpacing = "1.5em";		/* The space between lines of text in the detail box. */
-	FlagData.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	FlagData.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
-	FlagData.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
-	FlagData.prototype.detailTagSpacing = "1em";		/* The space between lines of text in the detail box. */
+	FlagController.prototype.detailTopSpacing = "1.5em";		/* The space between lines of text in the detail box. */
+	FlagController.prototype.detailOrganizationSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagController.prototype.detailSiteSpacing = "1.3em";	/* The space between lines of text in the detail box. */
+	FlagController.prototype.detailDateSpacing = "1.5em";	/* The space between lines of text in the detail box. */
+	FlagController.prototype.detailTagSpacing = "1em";		/* The space between lines of text in the detail box. */
 	
-	FlagData.prototype.getDescription = function()
+	FlagController.prototype.getDescription = function()
 	{
 		var _this = this;
 		var f = function(name)
@@ -139,7 +140,7 @@ var FlagData = (function() {
 			"None";
 	}
 	
-	FlagData.prototype.subHeading = function()
+	FlagController.prototype.subHeading = function()
 	{
 		var _this = this;
 		var f = function(name)
@@ -154,12 +155,12 @@ var FlagData = (function() {
 			"";
 	}
 	
-	FlagData.prototype.pickedOrCreatedValue = function(pickedName, createdName)
+	FlagController.prototype.pickedOrCreatedValue = function(pickedName, createdName)
 	{
 		return getPickedOrCreatedValue(this.experience, pickedName, createdName);
 	}
 	
-	FlagData.prototype.getColumn = function()
+	FlagController.prototype.getColumn = function()
 	{
 		var minColumn = Service.prototype.columnPriorities[Service.prototype.columnPriorities.length - 1];
 		
@@ -189,18 +190,18 @@ var FlagData = (function() {
 		return minColumn;
 	}
 	
-	FlagData.prototype.getStartDate = function()
+	FlagController.prototype.getStartDate = function()
 	{
 		return this.experience.getDatum("Start") || this.getTimeframeText() || this.goalDateString;
 	}
 	
-	FlagData.prototype.getTimeframe = function()
+	FlagController.prototype.getTimeframe = function()
 	{
 		var timeframeValue = this.experience.getValue("Timeframe");
 		return timeframeValue && timeframeValue.getInstanceID() && timeframeValue.getDescription();
 	}
 	
-	FlagData.prototype.getEndDate = function()
+	FlagController.prototype.getEndDate = function()
 	{
 		var s = this.experience.getDatum("End");
 		if (s) return s;
@@ -222,7 +223,7 @@ var FlagData = (function() {
 		}
 	}
 	
-	FlagData.prototype.getTimeframeText = function()
+	FlagController.prototype.getTimeframeText = function()
 	{
 		var text = this.getTimeframe();
 		if (!text)
@@ -237,12 +238,12 @@ var FlagData = (function() {
 			throw new Error("Unrecognized timeframe");
 	}
 	
-	FlagData.prototype.startsBeforeOtherEnd = function(otherFD)
+	FlagController.prototype.startsBeforeOtherEnd = function(otherFD)
 	{
 		return this.getStartDate() < otherFD.getEndDate();
 	}
 	
-	FlagData.prototype.getYearArray = function()
+	FlagController.prototype.getYearArray = function()
 	{
 		var e = this.experience.getDatum("End");
 		var s = this.experience.getDatum("Start");
@@ -272,19 +273,19 @@ var FlagData = (function() {
 		return {top: top, bottom: bottom};
 	}
 	
-	FlagData.prototype.getColor = function()
+	FlagController.prototype.getColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].color;
 	}
 	
-	FlagData.prototype.fontColor = function()
+	FlagController.prototype.fontColor = function()
 	{
 		var column = this.getColumn();
 		return PathGuides.data[column].fontColor;
 	}
 	
-	FlagData.prototype.checkOfferingCells = function(done)
+	FlagController.prototype.checkOfferingCells = function(done)
 	{
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
@@ -296,7 +297,7 @@ var FlagData = (function() {
 			done();
 	}
 	
-	FlagData.prototype.colorElement = function(r)
+	FlagController.prototype.colorElement = function(r)
 	{
 		var _this = this;
 		var f = function()
@@ -309,7 +310,7 @@ var FlagData = (function() {
 		this.checkOfferingCells(f);
 	}
 	
-	FlagData.appendWrappedText = function(s, newSpan, maxWidth)
+	FlagController.appendWrappedText = function(s, newSpan, maxWidth)
 	{
 		var words = s.split(/\s+/).reverse(),
 			word,
@@ -330,7 +331,7 @@ var FlagData = (function() {
 		}
 	}
 	
-	FlagData.prototype.appendTSpans = function(detailGroup, maxWidth, x)
+	FlagController.prototype.appendTSpans = function(detailGroup, maxWidth, x)
 	{
 		x = x !== undefined ? x : this.textDetailLeftMargin;
 		
@@ -431,7 +432,7 @@ var FlagData = (function() {
 			var detailText = detailGroup.append('text')
 				.attr("x", x)
 				.attr("y", lineHeight || this.detailTopSpacing);
-			FlagData.appendWrappedText(tagDescriptions, function(spanIndex)
+			FlagController.appendWrappedText(tagDescriptions, function(spanIndex)
 				{
 					return detailText.append("tspan")
 						.classed('tags', true)
@@ -443,7 +444,7 @@ var FlagData = (function() {
 		}
 	}
 	
-	FlagData.prototype.appendText = function(container, maxWidth)
+	FlagController.prototype.appendText = function(container, maxWidth)
 	{
 		var detailText = container.append('text');
 		maxWidth = maxWidth !== undefined ? maxWidth : 0;
@@ -453,7 +454,7 @@ var FlagData = (function() {
 		return detailText;
 	}
 	
-	FlagData.prototype.setupChangeEventHandler = function(data, handler)
+	FlagController.prototype.setupChangeEventHandler = function(data, handler)
 	{
 		var experience = this.experience;
 		
@@ -493,8 +494,22 @@ var FlagData = (function() {
 			}
 		 });
 	}
+	
+	FlagController.prototype.selected = function(newValue)
+	{
+		if (newValue === undefined)
+			return this._selected;
+		else
+		{
+			if (this._selected != newValue)
+			{
+				this._selected = newValue;
+				$(this).trigger("selectedChanged.cr");
+			}
+		}
+	}
 
-	function FlagData(experience)
+	function FlagController(experience)
 	{
 		this.experience = experience;
 		this.y = null;
@@ -502,7 +517,7 @@ var FlagData = (function() {
 		this.height = null;
 		this.width = null;
 	}
-	return FlagData;
+	return FlagController;
 })();
 
 var PathView = (function() {
@@ -666,16 +681,22 @@ var PathView = (function() {
 			{
 				try
 				{
-					d3.select(flag).selectAll('rect.bg')
-						.transition()
-						.duration(200)
-						.style('fill-opacity', 0.4);
+					if (!fd.selected())
+					{
+						d3.select(flag).selectAll('rect.bg')
+							.transition()
+							.duration(200)
+							.style('fill-opacity', 0.4);
+					}
 					var newPanel = new ExperienceCommentsPanel(fd);
 					newPanel.showLeft()
 						.always(function()
 							{
-								d3.select(flag).selectAll('rect.bg')
-									.style('fill-opacity', 0.2);
+								if (!fd.selected())
+								{
+									d3.select(flag).selectAll('rect.bg')
+										.style('fill-opacity', 0.2);
+								}
 							})
 						.always(unblockClick);
 					return newPanel;
@@ -838,6 +859,12 @@ var PathView = (function() {
 							d.column = d.getColumn();
 							_this.transitionPositions(g);
 						});
+					setupOnViewEventHandler($(d), "selectedChanged.cr", this, function(eventObject)
+						{
+							var g = d3.select(eventObject.data);
+							g.classed('selected', d.selected());
+							g.selectAll('tspan').attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
+						});
 				});
 					
 		g.append('line').classed('flag-pole', true)
@@ -866,11 +893,11 @@ var PathView = (function() {
 				{
 					setupOnViewEventHandler(d.experience, "dataChanged.cr", this, function(eventObject)
 					{
-						d3.select(eventObject.data).attr('fill', d.fontColor());
+						d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 					});
 					_this.setupServiceTriggers(this, d, function(eventObject)
 						{
-							d3.select(eventObject.data).attr('fill', d.fontColor());
+							d3.select(eventObject.data).attr('fill', d.selected() ? '#FFFFFF' : d.fontColor());
 						});
 				});
 		text.append('tspan')
@@ -909,7 +936,7 @@ var PathView = (function() {
 		this.updateDetail(flags.node(), flags.datum());
 	}
 	
-	PathView.prototype.layoutYears = function(g)
+	PathView.prototype._layoutYears = function(g)
 	{
 		var _this = this;
 		
@@ -1053,7 +1080,7 @@ var PathView = (function() {
 			.ease("in-out")
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 
-		this.layoutYears(g);
+		this._layoutYears(g);
 	}
 	
 	/*
@@ -1089,6 +1116,12 @@ var PathView = (function() {
 			$(container).animate(
 				{ scrollLeft: "{0}px".format(r.x) });
 		}
+	}
+	
+	/* Returns an array of all of the flag controllers */
+	PathView.prototype.flagControllers = function()
+	{
+		return this.experienceGroup.selectAll('g.flag').data();
 	}
 	
 	function PathView(sitePanel, containerDiv)
@@ -1190,7 +1223,7 @@ var PathLines = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 		
-		this.layoutYears(g);
+		this._layoutYears(g);
 		
 		this.setupHeights();
 		this.setupWidths();
@@ -1222,12 +1255,12 @@ var PathLines = (function() {
 		if (experience)
 		{
 			g = this.experienceGroup.append('g')
-				.datum(new FlagData(experience));
+				.datum(new FlagController(experience));
 		}
 		else
 		{
 			g = this.experienceGroup.selectAll('g')
-				.data(this.allExperiences.map(function(e) { return new FlagData(e); }))
+				.data(this.allExperiences.map(function(e) { return new FlagController(e); }))
 				.enter()
 				.append('g');
 		}

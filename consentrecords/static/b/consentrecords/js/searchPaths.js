@@ -38,12 +38,61 @@ var SearchPathsResultsView = (function () {
 			});
 	}
 	
+	SearchPathsResultsView.prototype.containsQuery = function(fc, queryFlags) {
+		var offering = fc.experience.getValue("Offering");
+		if (offering && offering.getInstanceID())
+		{
+			if (!offering.areCellsLoaded())
+				throw ("Runtime error: offering data is not loaded");
+				
+			var services = offering.getCell("Service");
+			if (services.data.findIndex(function(s)
+				{
+					return queryFlags.findIndex(function(qf)
+						{
+							return s.getCell("Service").data.findIndex(function(s2)
+								{
+									return qf.service.getInstanceID() == s2.getInstanceID();
+								}) >= 0;
+						}) >= 0;
+				}) >= 0)
+				return true;
+		}
+		
+		var serviceCell = fc.experience.getCell("Service");
+		if (serviceCell)
+		{
+			if (serviceCell.data.findIndex(function(s) {
+					return queryFlags.findIndex(function(qf)
+					{
+						return s.getCell("Service").data.findIndex(function(s2)
+							{
+								return qf.service.getInstanceID() == s2.getInstanceID();
+							}) >= 0;
+					}) >= 0;
+				}) >= 0)
+				return true;
+		}
+		return false;
+	}
+	
 	SearchPathsResultsView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		
 		if (prepareClick('click', 'other path'))
 		{
-			showPath(d, this.searchPathsPanel.node());
+			showPath(d, this.searchPathsPanel.node())
+				.then(function(panel)
+					{
+						$(panel.pathtree).on("userSet.cr", function()
+							{
+								var queryFlags = _this.searchPathsPanel.queryFlags.selectAll('g.flag').data();
+								panel.pathtree.flagControllers().forEach(function(fc)
+									{
+										fc.selected(_this.containsQuery(fc, queryFlags));
+									});
+							});
+					});
 		}
 		d3.event.preventDefault();
 	}
