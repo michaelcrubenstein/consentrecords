@@ -1111,10 +1111,12 @@ class api:
     
         if 'parents' in fields:
             p = uuObject
-            while p.parent_id:
-                p = Instance.objects\
+            fp = p.parent_id and \
+                 userInfo.readFilter(Instance.objects\
                                 .select_related('description')\
-                                .get(pk=p.parent_id)
+                                .filter(pk=p.parent_id))
+            while fp and fp.exists():
+                p = fp[0]
                 
                 fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
                 if not fieldData:
@@ -1128,6 +1130,11 @@ class api:
                     parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
                     
                 cells.append({"field": fieldData["id"], "data": [parentData]})
+                
+                fp = p.parent_id and \
+                     userInfo.readFilter(Instance.objects\
+                                .select_related('description')\
+                                .filter(pk=p.parent_id))
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
