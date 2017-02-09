@@ -103,7 +103,7 @@ rect.hole {
 
 div.pool-container {
 	display: inline-block;
-	width: 100%;
+	width: calc(100% - 20px);
 	margin: 10px;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
