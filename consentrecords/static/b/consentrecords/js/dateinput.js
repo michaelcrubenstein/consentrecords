@@ -748,24 +748,42 @@ var DateWheel = (function () {
 		this._setupDrag(this.dayNode);
 		$(this.yearNode).scroll(this._getAlignmentFunction(function()
 			{
-				_this.isClear = false;
-				_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
-				_this._onYearChanged();
-				$(_this).trigger('change');
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
+					_this._onYearChanged();
+					$(_this).trigger('change');
+				}
 			}));
 		$(this.monthNode).scroll(this._getAlignmentFunction(function() 
 			{ 
-				_this.isClear = false;
-				_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
-				_this._onMonthChanged();
-				$(_this).trigger('change');
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
+					_this._onMonthChanged();
+					$(_this).trigger('change');
+				}
 			}));
 		$(this.dayNode).scroll(this._getAlignmentFunction(function()
 			{ 
-				_this.isClear = false;
-				_this.oldDay = _this._getSelectedIndex(_this.dayNode);
-				_this.onChange(); 
-				$(_this).trigger('change');
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldDay = _this._getSelectedIndex(_this.dayNode);
+					_this.onChange(); 
+					$(_this).trigger('change');
+				}
 			}));
 		$(this.yearNode).click(unClear);
 		$(this.monthNode).click(unClear);
