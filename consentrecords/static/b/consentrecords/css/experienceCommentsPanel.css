@@ -137,10 +137,14 @@ section.new-comment button.post {
 
 section.comment-prompts div {
 	border: none;
-	margin-left: 6px;
-	margin-right: 12px;
-	padding: 8px;
+	width: 100%;
 	font-size: 0.8em;
+}
+
+section.comment-prompts div>span {
+	padding: 8px;
+	padding-left: 14px;	/* Aligned with the left edge of the text in the textarea above it. */
+	display: inline-block;
 }
 
 panel.comments svg g.chevron-right>polygon {

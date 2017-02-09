@@ -573,22 +573,16 @@ var ExperienceCommentsPanel = (function() {
 			
 			var resizeQuestionBoxes = function()
 				{
-					var newQuestionWidth = $(newQuestionDiv.node()).width() - 
-						($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width());
+					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
+					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
 					var askWidth = $(askButton.node()).outerWidth(true);
 					if (postButton && $(postButton.node()).outerWidth(true) > askWidth)
 						askWidth = $(postButton.node()).outerWidth(true);
 					newQuestionWidth -= askWidth;
 				
 					$(newQuestionInput.node()).width(newQuestionWidth);
-					commentPromptsDiv.selectAll('div')
-						.style("width", function(d)
-							{
-								/* extra width is left-padding + right-padding + 1 */
-								var extraWidth = 17;
-								return (getTextWidth(d.getDatum("_text"), 
-													 d3.select(this).style("font"))+extraWidth).toString() + "px";
-							});
+					commentPromptsDiv
+						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
 				}
 			
 			crp.promise({path:  '"Comment Prompt"'})
@@ -598,6 +592,7 @@ var ExperienceCommentsPanel = (function() {
 						.data(prompts)
 						.enter()
 						.append('div')
+						.append('span')
 						.classed('site-active-text', true)
 						.text(function(d) 
 							{ return d.getDatum("_text"); })
