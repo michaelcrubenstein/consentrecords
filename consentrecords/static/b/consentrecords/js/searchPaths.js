@@ -276,9 +276,11 @@ var SearchPathsPanel = (function () {
 
 		var resultsTop;
 		var resultsHeight;
-		var queryHeight;
 		var queryBottom;
 		var poolHeight;
+		var poolWidth;
+		var _this = this;
+
 		if (this.queryContainer.flags().size() == 0)
 			queryBottom = 0;
 		else
@@ -292,67 +294,41 @@ var SearchPathsPanel = (function () {
 		var queryVMargins = $queryContainer.outerHeight(true) - $queryContainer.outerHeight(false);
 		var queryVPadding = parseInt($queryContainer.css('padding-top')) + 
 							parseInt($queryContainer.css('padding-bottom'));
-		if (parentHeight < parentWidth)
-		{
-			$poolContainer.css('display', 'inline-block');
-			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins;
-			queryHeight = poolHeight;
-			$(this.poolContainer.node()).stop().animate(
-				{width: parentWidth / 2 - poolHMargins, 
-				 height: poolHeight},
-				{duration: duration});
-			$queryContainer.stop().animate(
-				{"margin-top": 10,
-				 "margin-left": 0,
-				 width: parentWidth / 2 - poolHMargins,
-				 height: poolHeight},
-				{duration: duration});
-			this.poolContainer.layoutFlags(parentWidth / 2 - poolHMargins, duration);
-		}
-		else
-		{
-			$poolContainer.css('display', 'block');
-			poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
-						 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
-			queryHeight = this.queryFlagsHeight;
-			$poolContainer.stop().animate(
-				{width: parentWidth - poolHMargins, 
-				 height: poolHeight},
-				{duration: duration});
-			$queryContainer.stop().animate(
-				{"margin-top": 0,
-				 "margin-left": 10,
-				 width: parentWidth - poolHMargins,
-				 height: this.queryFlagsHeight},
-				{duration: duration});
-			this.poolContainer.layoutFlags(parentWidth - poolHMargins, duration);
-		}
+		var queryContainerWidth;
+		var animatePromise;
 		
-		this.queryContainer.svg
- 			.interrupt().transition().duration(400)
-			.attr('height', this.queryFlagsHeight - queryVPadding);
-
-		if (this.queryContainer.flags().size() == 0)
-			resultsHeight = 0;
-		else
-			resultsHeight = $(window).height() - this.resultsTopMargin;
+		poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
+					 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
+		poolWidth = parentWidth - poolHMargins;
+		queryContainerWidth = parentWidth - poolHMargins;
 		
-		var _this = this;
-		return $.when(
-			$(this.resultContainerNode).stop()
+		resultsHeight = this.queryContainer.flags().size() && ($(window).height() - this.resultsTopMargin);
+		
+		return $.when($poolContainer.animate(
+					{width: poolWidth, 
+					 height: poolHeight},
+					{duration: duration}).promise(),
+/* 
+			   $(this.queryContainer.svg.node()).animate(
+			   		{
+			   			width: queryContainerWidth,
+			   			height: this.queryFlagsHeight - queryVPadding
+			   		},
+			   		{duration: duration}).promise(),
+ */
+			   $(this.resultContainerNode)
 				.animate({height: resultsHeight},
 						 {duration: duration})
 				.promise(),
-							   
 			/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
 				This is important on iPhones where the soft keyboard appears and forces scrolling. */
 			$(this.node().parentNode)
 				.animate({scrollTop: 0},
 						 {duration: duration})
-				.promise()
-			)
-			.then(function()
-				{
+				.promise())
+		 .then(function()
+			 	{
+					_this.poolContainer.layoutFlags(queryContainerWidth, duration);
 					_this.checkResultsScrolling();
 				});
 	}
@@ -703,12 +679,18 @@ var SearchPathsPanel = (function () {
 			
 		$(this.searchInput).focusin(function(event)
 			{
-				_this.revealPanel();
+				_this.revealPanel()
+					.then(function()
+						{
+							_this.filterPool();
+							_this.poolContainer.layoutFlags();
+						});
 				//event.stopPropagation();
 			})
 			.click(function(event)
 			{
-				//event.stopPropagation();
+				if ($(_this.node()).position().top == 0)
+					event.stopPropagation();
 			})
 			.on('input', function(event)
 			{
@@ -785,11 +767,13 @@ var SearchPathsPanel = (function () {
 			
 		this.queryHelp = this.queryContainer.div.append('span')
 			.text('Tap tags to find paths containing those tags.');
-			
+		
 		$(this.topBox).click(function(event)
 			{
 				if ($(_this.node()).position().top == 0)
+				{
 					_this.revealInput();
+				}
 				else
 				{
 					$(_this.searchInput).focus();

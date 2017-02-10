@@ -85,7 +85,8 @@ var Service = (function() {
 	{
 		if (this.service)
 		{
-			if (this.service.getDescription().toLocaleUpperCase().indexOf(s) >= 0)
+			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^])/, "\$1"), "i");
+			if (re.test(this.service.getDescription()))
 				return true;
 			
 			var cell = this.service.getCell("Service");
@@ -182,12 +183,25 @@ var TagPoolView = (function () {
 		this.svg
  			.interrupt().transition().duration(duration)
 			.attr('height', height)
+			
+		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
+		/* If it was visible and it is still visible, animate its position. */
+		/* If it was visible and is not visible, animate opacity to 0 */
 		
-		g
- 			.interrupt().transition().duration(duration)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
+		g.filter(function(fd) { return parseInt($(this).css('opacity')) == 0; })
+			.interrupt().attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
+			.transition().duration(duration)
 			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
-		
+			
+		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   (fd.visible === undefined || fd.visible); })
+			.interrupt().transition().duration(duration)
+			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
+		 
+		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   !(fd.visible === undefined || fd.visible); })
+			.interrupt().transition().duration(duration)
+			.style('opacity', 0.0);
 	}
 	
 	TagPoolView.prototype.filterFlags = function(filterColumn, filterText)
