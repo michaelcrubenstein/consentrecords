@@ -388,7 +388,10 @@ var SearchPathsPanel = (function () {
 			{done: function()
 				{
 					$(this).remove();
-					_this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
+					_this.poolContainer.flags().data().find(function(s) { return s.service == service.service; })
+						.visible = true;
+						
+					// _this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 					
 					_this.poolContainer.layoutFlags();
 					_this.queryContainer.layoutFlags();
@@ -538,8 +541,8 @@ var SearchPathsPanel = (function () {
 						f();
 				 });
  		
- 		/* Move the poolFlag to the end of its list. */
- 		poolFlag.parentElement.appendChild(poolFlag);
+ 		/* Hide the poolFlag. */
+ 		d3.select(poolFlag).datum().visible = false;
  		
  		/* Reset the positions of all of the pool flags. */
  		this.poolContainer.layoutFlags();
@@ -552,7 +555,18 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.filterPool = function()
 	{
-		this.poolContainer.filterFlags(this.filterColumn, this.searchInput.value);
+		var _this = this;
+		var queryData = _this.queryContainer.flags().data();
+		
+		function inQueryFlags(a)
+		{
+			return queryData.some(function(fd) { return fd.service == a.service; });
+		}
+
+		var filterFunction = this.filterColumn !== undefined ?
+			function(fs) { fs.visible = (fs.getColumn() == _this.filterColumn) && !inQueryFlags(fs); } :
+			function(fs) { fs.visible = !inQueryFlags(fs); };
+		this.poolContainer.filterFlags(filterFunction, this.searchInput.value);
 	}
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)

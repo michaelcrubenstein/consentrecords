@@ -1199,7 +1199,7 @@ var TagSearchView = (function() {
 
 	TagSearchView.prototype.constrainTagFlags = function()
 	{
-		this.filterFlags(undefined, this.focusNode.value);
+		this.filterFlags(function(fs) { fs.visible = undefined; }, this.focusNode.value);
 		this.layoutFlags();
 	}
 	

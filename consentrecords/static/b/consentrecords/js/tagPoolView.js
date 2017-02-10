@@ -204,24 +204,11 @@ var TagPoolView = (function () {
 			.style('opacity', 0.0);
 	}
 	
-	TagPoolView.prototype.filterFlags = function(filterColumn, filterText)
+	TagPoolView.prototype.filterFlags = function(filteringFunction, filterText)
 	{
 		var g = this.flags();
 		
-		var f;
-		if (filterColumn !== undefined)
-		{
-			f = function(fs)
-				{
-					fs.visible = (fs.getColumn() == filterColumn);
-				}
-		}
-		else
-		{
-			f = function(fs) { fs.visible = undefined; }
-		}
-		
-		g.each(f);
+		g.each(filteringFunction);
 			
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
 		
