@@ -994,7 +994,6 @@ var ExperienceDatumSearchView = (function() {
 					   d.getDescription() === compareText &&
 					   d.getValue("Organization").getDescription() === compareText;
 			});
-		return false;
 	}
 	
 	ExperienceDatumSearchView.prototype.isButtonVisible = function(button, d, compareText)
@@ -1148,17 +1147,13 @@ var ExperienceDatumSearchView = (function() {
 	search view should never need to interact with the server.
  */
 var TagSearchView = (function() {
-	TagSearchView.prototype = new ExperienceDatumSearchView();
+	TagSearchView.prototype = new TagPoolView();
 	
-	TagSearchView.prototype.searchPath = function(val)
-	{
-		throw new Error("TagSearchView.prototype.searchPath should never be called");
-	}
-	
-	TagSearchView.prototype.setupSearchTypes = function(searchText)
-	{
-		throw new Error("TagSearchView.prototype.setupSearchTypes should never be called");
-	}
+	TagSearchView.prototype.reveal = null;
+	TagSearchView.prototype.focusNode = null;
+	TagSearchView.prototype.sitePanel = null;
+	TagSearchView.prototype.inputBox = null;
+	TagSearchView.prototype.experience = null;
 	
 	TagSearchView.prototype.onTagAdded = function()
 	{
@@ -1169,140 +1164,83 @@ var TagSearchView = (function() {
 		unblockClick();
 	}
 	
-	TagSearchView.prototype.checkHelp = function(showHelp)
+	TagSearchView.prototype.hideSearch = function(done)
 	{
-		var helpDiv = d3.select(this.helpNode);
-		
-		if (showHelp == (helpDiv.style('display') == 'block'))
-			return false;
-			
-		if (showHelp)
-		{
-			var texts = [{styles: '', text: 'Tags identify the benefits you got out of each experience.'},
-						 {styles: '', text: 'When comparing your path with others, tags are used to identify similar experiences.'},
-						 ];
-			helpDiv.selectAll('p')
-				.data(texts)
-				.enter()
-				.append('p')
-				.classed('list', function(d) { return d.styles == 'list'; })
-				.text(function(d) { return d.text; });
-			helpDiv.style('display', 'block');
-		}
-		else
-		{
-			helpDiv.selectAll('p').remove();
-			helpDiv.style('display', 'none');
-		}
-		return true;
+		this.reveal.hide({duration: 200,
+						  before: done});
 	}
 	
-	TagSearchView.prototype.appendDescriptions = function(buttons)
+	/* Expand this object view so that it fills as much of the window as possible without
+		scrolling other elements off screen.
+	 */
+	TagSearchView.prototype.showSearch = function(duration, step, done)
 	{
+		duration = duration !== undefined ? duration : 400;
+		var parent = $(this.reveal.node).parent();
+		var oldHeight = $(this.reveal.node).height();
+		$(this.reveal.node).height(0);
+		var newHeight = parent.getFillHeight() - 
+						parent.outerHeight(true);
+		$(this.reveal.node).height(oldHeight);
 		var _this = this;
-		
-		buttons.each(function(d)
-			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
-				leftText.text(d.getDescription());
-			});
+		if (oldHeight != newHeight)
+		{
+			this.reveal.show(
+				/* To calculate the new height, get the fill height of the parent (the height of its parent minus the height of all other nodes)
+					and subtract the parent's height and add back the reveal node's height. */
+				{newHeight: newHeight,
+				 before: function()
+				 	{
+				 		_this.layoutFlags();
+				 	}},
+				duration, step, done);
+		}
+	}	
+
+	TagSearchView.prototype.constrainTagFlags = function()
+	{
+		this.filterFlags(function(fs) { fs.visible = undefined; }, this.focusNode.value);
+		this.layoutFlags();
 	}
 	
-	TagSearchView.prototype.onClickButton = function(d, i) {
-		var _this = this;
-		if (d.getTypeName() === 'Service')
+	TagSearchView.prototype.onClickButton = function(d) {
+		if (prepareClick('click', 'service: ' + d.getDescription()))
 		{
-			if (prepareClick('click', 'service: ' + d.getDescription()))
+			try
 			{
-				try
+				var d3Focus = d3.select(this.focusNode);
+				if (d3Focus.datum())
 				{
-					var d3Focus = d3.select(this.focusNode);
-					if (d3Focus.datum())
-					{
-						d3Focus.datum().name = d.getDescription();
-						d3Focus.datum().pickedObject = d;
-						this.focusNode.value = d.getDescription();
-						this.onTagAdded();
-					}
-					else
-					{
-						this.experience.addService({instance: d});
-						this.onTagAdded();
-					}
+					d3Focus.datum().name = d.getDescription();
+					d3Focus.datum().pickedObject = d;
+					this.focusNode.value = d.getDescription();
+					this.onTagAdded();
 				}
-				catch(err)
+				else
 				{
-					cr.syncFail(err);
+					this.experience.addService({instance: d});
+					this.onTagAdded();
 				}
 			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
 		}
+
 		d3.event.preventDefault();
 	}
 	
-	TagSearchView.prototype.isButtonVisible = function(button, d, compareText, inputNode)
+	function TagSearchView(container, sitePanel, experience, tagInput)
 	{
-		if (d.getDescription().toLocaleLowerCase() == compareText)
-			return true;
-			
-		if (d.getTypeName() === "Service")
-		{
-			if (this.experience.offering && 
-				this.experience.offering.getCell("Service").find(d))
-				return false;
-			if (this.experience.services.find(function(d2) { 
-				return d2.pickedObject && d2.pickedObject.getInstanceID() == d.getInstanceID() &&
-					!(inputNode && d3.select(inputNode).datum() == d2) ; 
-			}))
-				return false;
-			
-			/* TODO: After moving this to the main line, look for a Service instead of comparing domain names. */
-			var domain = this.experience.domain;
-			if (domain &&
-				!d.getCell("Service").data.find(function(d)
-					{
-						return d.getDescription() == domain.getDescription();
-					}))
-				return false;
-			if (this.experience.stage &&
-				!d.getCell("Stage").find(this.experience.stage))
-				return false;
-		}
-			
-		if (this.isMatchingDatum(d, compareText))
-			return true;
-
-		return false;
-	}
-	
-	TagSearchView.prototype.constrainFoundObjects = function(inputNode)
-	{
-		var constrainText = inputNode ? inputNode.value.trim().toLocaleLowerCase() : this.sitePanel.getTagConstrainText();
-		var buttons = this.listElement.selectAll(".btn");
-		var _this = this;
-		buttons.style("display", function(d) 
-			{ 
-				if (_this.isButtonVisible(this, d, constrainText, inputNode))
-					return null;
-				else
-					return "none";
-			});
-	}
-	
-	TagSearchView.prototype.textCleared = function()
-	{
-		this.setConstrainText("");
-		SearchOptionsView.prototype.constrainFoundObjects.call(this);
-	}
-	
-	TagSearchView.prototype.restartSearchTimeout = function(val)
-	{
-		this.setConstrainText(val);
-		SearchOptionsView.prototype.constrainFoundObjects.call(this);
-	}
-	
-	function TagSearchView(containerNode, sitePanel, experience, inputNode, helpNode)
-	{
-		ExperienceDatumSearchView.call(this, containerNode, sitePanel, experience, inputNode, helpNode);
+		TagPoolView.call(this, container, 'pool-container');
+		
+		this.sitePanel = sitePanel;
+		this.experience = experience;
+		this.inputBox = tagInput.node();
+		this.tagInput = tagInput;
+		
+		this.reveal = new VerticalReveal(container.node());
 	}
 	
 	return TagSearchView;
@@ -2443,8 +2381,10 @@ var NewExperiencePanel = (function () {
 		$(input.node()).on('input', function()
 			{
 				/* Check for text changes for all input boxes.  */
-				if (this != _this.tagInput.node())
-					_this.tagSearchView.constrainFoundObjects(this);
+				if (this == _this.tagSearchView.focusNode)
+				{
+					_this.tagSearchView.constrainTagFlags();
+				}
 				_this.setTagInputWidth(this);
 			});
 		
@@ -2470,9 +2410,15 @@ var NewExperiencePanel = (function () {
 				/* If this is a node whose value matches the previous value, then don't handle here. */
 				else if (instance && input.node().value == instance.getDescription())
 					return;
+				else if (instance && input.node().value != instance.getDescription())
+				{
+					_this.checkTagInput();
+					/* Do not prevent default. */
+				}
 				else
 				{
 					_this.checkTagInput();
+					_this.tagSearchView.constrainTagFlags();
 					event.preventDefault();
 				}
 			}
@@ -2629,7 +2575,7 @@ var NewExperiencePanel = (function () {
 					}
 					else
 					{
-						var newInstance = _this.tagSearchView.hasNamedButton(newText.toLocaleLowerCase());
+						var newInstance = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
 						if (!newInstance)
 						{
 							if (newText != d.name)
@@ -2654,13 +2600,14 @@ var NewExperiencePanel = (function () {
 					var newText = this.value.trim();
 					if (newText)
 					{
-						var d = _this.tagSearchView.hasNamedButton(newText.toLocaleLowerCase());
+						var d = _this.tagSearchView.hasNamedService(newText.toLocaleLowerCase());
 						if (d)
 							_this.experience.addService({instance: d});
 						else
 							_this.experience.addService({text: newText});
 						_this.showTags();
 						this.value = "";
+						$(this).attr('placeholder', $(this).attr('placeholder'));
 					}
 				}
 			});
@@ -2718,7 +2665,7 @@ var NewExperiencePanel = (function () {
 		var _this = this;
 		var done = function()
 				{
-					_this.tagSearchView.constrainFoundObjects(inputNode);
+					_this.tagSearchView.constrainTagFlags();
 					_this.tagSearchView.showSearch(200, undefined, function()
 						{
 							var oldTop = $(_this.tagsSection.node()).offset().top;
@@ -2732,7 +2679,7 @@ var NewExperiencePanel = (function () {
 		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
 		{
 			this.checkTagInput(inputNode);
-			this.tagSearchView.constrainFoundObjects(inputNode);
+			this.tagSearchView.constrainTagFlags();
 			if (!this.tagSearchView.reveal.isVisible())
 			{
 				this.tagSearchView.showSearch();
@@ -2794,7 +2741,7 @@ var NewExperiencePanel = (function () {
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
 		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
-	
+		
 		var hidePanel = function() { 
 				_this.hide()
 					.then(function() {					
@@ -2912,6 +2859,18 @@ var NewExperiencePanel = (function () {
 						_this.handleDeleteButtonClick();
 					})
 				.append("span").classed("text-danger", true).text("Delete");
+			
+			var shareButton = bottomNavContainer.appendLeftButton()
+				.classed("share", true)
+				.on('click', function()
+					{
+						if (prepareClick('click', 'share'))
+						{
+							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
+						}
+					});
+			shareButton.append("img")
+				.attr("src", shareImagePath);
 		}
 
 		var section;
@@ -2967,44 +2926,7 @@ var NewExperiencePanel = (function () {
 														 this.offeringInput.node(), 
 														 offeringHelp.node());
 		
-		this.tagsSection = panel2Div.append('section')
-			.classed('cell tags', true);
-		label = this.tagsSection.append('label')
-			.text('Tags:');
-		
-		/* Put the officeTagsContains and the tagsContainer within the label so that,
-			when they word wrap, then do so rationally.
-		 */
-		var officeTagsContainer = label.append('span')
-			.classed('offering-tags-container', true);
-		
-		var tagsContainer = label.append('span')
-			.classed('tags-container', true);
-		
-		this.tagInput = this.appendTag(tagsContainer, null);
-		
-		tagHelp = tagsContainer.append('div').classed('help', true);
-			
-		searchContainer = this.tagsSection.append('div');
-		
-		this.tagSearchView = new TagSearchView(searchContainer.node(), 
-												this, experience, 
-												this.tagInput.node(), 
-												tagHelp.node());
-												
-		crp.promise({path: "Service"})
-			.then(function(newInstances)
-				{
-					_this.allServices = newInstances;
-					_this.tagSearchView.showObjects(newInstances);
-				},
-				cr.syncFail);
-		
-		$(panel2Div.node()).on('resize.cr', function()
-		{
-			_this.resizeVisibleSearch(0);
-		});
-
+		/* Code starting for the date range. */
 		var birthday = experience.path.getDatum("Birthday") ||
 			(function()
 			 {
@@ -3175,6 +3097,49 @@ var NewExperiencePanel = (function () {
 				}
 				$(startDateWheel).trigger('change');
 			});
+
+		/* Code start for the tags section. */
+		this.tagsSection = panel2Div.append('section')
+			.classed('cell tags', true);
+		label = this.tagsSection.append('label')
+			.text('Tags:');
+		
+		/* Put the officeTagsContains and the tagsContainer within the label so that,
+			when they word wrap, then do so rationally.
+		 */
+		var officeTagsContainer = label.append('span')
+			.classed('offering-tags-container', true);
+		
+		var tagsContainer = label.append('span')
+			.classed('tags-container', true);
+		
+		this.tagInput = this.appendTag(tagsContainer, null);
+		
+		tagHelp = tagsContainer.append('div').classed('help', true);
+			
+		searchContainer = this.tagsSection.append('div');
+		
+		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
+												
+		crp.promise({path: "Service"})
+			.then(function(newInstances)
+				{
+					_this.allServices = newInstances;
+					_this.tagSearchView.appendFlags(newInstances.map(function(s) { return new Service(s); }))
+						.on('click', function(s)
+							{
+								_this.tagSearchView.onClickButton(s);
+							});
+					
+					/* Have to hide after appending the flags or the metrics aren't calculated. */
+					_this.tagSearchView.reveal.hide();
+				},
+				cr.syncFail);
+		
+		$(panel2Div.node()).on('resize.cr', function()
+		{
+			_this.resizeVisibleSearch(0);
+		});
 
 		$(this.organizationInput.node()).on('focusin', function()
 			{

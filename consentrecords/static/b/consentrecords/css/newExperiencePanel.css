@@ -140,8 +140,13 @@
 		margin-left: 0.5em;
 	}
 	
+	panel.new-experience-panel div.pool-container {
+		margin-top: 0px;
+		height: calc(100% - 10px);
+	}
+	
 	section.date-range-options {
-		margin-top: 24px;
+		margin-top: 12px;
 		background: white;
 		width: 100%;
 		text-align: center;
