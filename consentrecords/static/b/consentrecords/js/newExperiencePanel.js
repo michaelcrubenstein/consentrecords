@@ -2741,7 +2741,7 @@ var NewExperiencePanel = (function () {
 		showFunction = showFunction !== undefined ? showFunction : revealPanelUp;
 			
 		this.createRoot(null, this.title, "edit experience new-experience-panel", showFunction);
-	
+		
 		var hidePanel = function() { 
 				_this.hide()
 					.then(function() {					
@@ -2926,48 +2926,7 @@ var NewExperiencePanel = (function () {
 														 this.offeringInput.node(), 
 														 offeringHelp.node());
 		
-		this.tagsSection = panel2Div.append('section')
-			.classed('cell tags', true);
-		label = this.tagsSection.append('label')
-			.text('Tags:');
-		
-		/* Put the officeTagsContains and the tagsContainer within the label so that,
-			when they word wrap, then do so rationally.
-		 */
-		var officeTagsContainer = label.append('span')
-			.classed('offering-tags-container', true);
-		
-		var tagsContainer = label.append('span')
-			.classed('tags-container', true);
-		
-		this.tagInput = this.appendTag(tagsContainer, null);
-		
-		tagHelp = tagsContainer.append('div').classed('help', true);
-			
-		searchContainer = this.tagsSection.append('div');
-		
-		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
-												
-		crp.promise({path: "Service"})
-			.then(function(newInstances)
-				{
-					_this.allServices = newInstances;
-					_this.tagSearchView.appendFlags(newInstances.map(function(s) { return new Service(s); }))
-						.on('click', function(s)
-							{
-								_this.tagSearchView.onClickButton(s);
-							});
-					
-					/* Have to hide after appending the flags or the metrics aren't calculated. */
-					_this.tagSearchView.reveal.hide();
-				},
-				cr.syncFail);
-		
-		$(panel2Div.node()).on('resize.cr', function()
-		{
-			_this.resizeVisibleSearch(0);
-		});
-
+		/* Code starting for the date range. */
 		var birthday = experience.path.getDatum("Birthday") ||
 			(function()
 			 {
@@ -3138,6 +3097,49 @@ var NewExperiencePanel = (function () {
 				}
 				$(startDateWheel).trigger('change');
 			});
+
+		/* Code start for the tags section. */
+		this.tagsSection = panel2Div.append('section')
+			.classed('cell tags', true);
+		label = this.tagsSection.append('label')
+			.text('Tags:');
+		
+		/* Put the officeTagsContains and the tagsContainer within the label so that,
+			when they word wrap, then do so rationally.
+		 */
+		var officeTagsContainer = label.append('span')
+			.classed('offering-tags-container', true);
+		
+		var tagsContainer = label.append('span')
+			.classed('tags-container', true);
+		
+		this.tagInput = this.appendTag(tagsContainer, null);
+		
+		tagHelp = tagsContainer.append('div').classed('help', true);
+			
+		searchContainer = this.tagsSection.append('div');
+		
+		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
+												
+		crp.promise({path: "Service"})
+			.then(function(newInstances)
+				{
+					_this.allServices = newInstances;
+					_this.tagSearchView.appendFlags(newInstances.map(function(s) { return new Service(s); }))
+						.on('click', function(s)
+							{
+								_this.tagSearchView.onClickButton(s);
+							});
+					
+					/* Have to hide after appending the flags or the metrics aren't calculated. */
+					_this.tagSearchView.reveal.hide();
+				},
+				cr.syncFail);
+		
+		$(panel2Div.node()).on('resize.cr', function()
+		{
+			_this.resizeVisibleSearch(0);
+		});
 
 		$(this.organizationInput.node()).on('focusin', function()
 			{
