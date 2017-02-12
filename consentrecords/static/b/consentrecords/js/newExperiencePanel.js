@@ -529,14 +529,14 @@ var Experience = (function() {
 	{
 		var todayDate = getUTCTodayDate();
 		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear(), todayDate.getUTCMonth() + 1);
-		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
+		this.endDate = "";
 	}
 	
 	Experience.prototype.initGoalDateRange = function()
 	{
 		var todayDate = getUTCTodayDate();
-		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 1, todayDate.getUTCMonth() + 1);
-		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear() + 2, todayDate.getUTCMonth() + 1);
+		this.startDate = "";
+		this.endDate = "";
 	}
 	
 	Experience.prototype.initDateRange = function(phase)
@@ -2280,7 +2280,7 @@ var NewExperiencePanel = (function () {
 							dateSpan.classed('site-active-text', true);
 							reveal.show({}, 200, undefined, function()
 								{
-									dateWheel.restoreDate();
+									dateWheel.onShowing();
 								});
 							notSureReveal.show({duration: 200});
 						}
@@ -2319,6 +2319,7 @@ var NewExperiencePanel = (function () {
 		var hideWheel = function(done)
 		{
 			dateSpan.classed('site-active-text', false);
+			dateWheel.onHiding();
 			reveal.hide({duration: 200,
 						 before: function()
 						 	{

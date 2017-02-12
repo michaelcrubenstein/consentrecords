@@ -384,6 +384,10 @@ var DateWheel = (function () {
 	DateWheel.prototype.isClear = false;
 	DateWheel.prototype.didDrag = false;
 	
+	DateWheel.prototype._yearScrolled = null;
+	DateWheel.prototype._monthScrolled = null;
+	DateWheel.prototype._dayScrolled = null;
+	
 	DateWheel.prototype._getAlignmentFunction = function(done)
 	{
 		var timeout = null;
@@ -649,12 +653,30 @@ var DateWheel = (function () {
 		this.isClear = false;
 	}
 	
-	DateWheel.prototype.restoreDate = function()
+	DateWheel.prototype.onShowing = function()
 	{
 		this._setSelectedIndex(this.yearNode, 
 			this._getMaxYear() - this.oldYear);
 		this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
 		this._setSelectedIndex(this.dayNode, this.oldDay);
+		
+		/* Set up scrolling in a timeout after the scrolling caused by the
+			above code is handled. 
+		 */
+		var _this = this;
+		setTimeout(function()
+			{
+				$(_this.yearNode).on('scroll', _this._yearScrolled);
+				$(_this.monthNode).on('scroll', _this._monthScrolled);
+				$(_this.dayNode).on('scroll', _this._dayScrolled);
+			});
+	}
+	
+	DateWheel.prototype.onHiding = function()
+	{
+		$(this.yearNode).off('scroll', this._yearScrolled);
+		$(this.monthNode).off('scroll', this._monthScrolled);
+		$(this.dayNode).off('scroll', this._dayScrolled);
 	}
 	
     DateWheel.prototype.onChange = function()
@@ -746,7 +768,7 @@ var DateWheel = (function () {
 		this._setupDrag(this.yearNode);	
 		this._setupDrag(this.monthNode);	
 		this._setupDrag(this.dayNode);
-		$(this.yearNode).scroll(this._getAlignmentFunction(function()
+		this._yearScrolled = this._getAlignmentFunction(function()
 			{
 				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
 					after this item is undisplayed.
@@ -758,8 +780,8 @@ var DateWheel = (function () {
 					_this._onYearChanged();
 					$(_this).trigger('change');
 				}
-			}));
-		$(this.monthNode).scroll(this._getAlignmentFunction(function() 
+			});
+		this._monthScrolled = this._getAlignmentFunction(function() 
 			{ 
 				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
 					after this item is undisplayed.
@@ -771,8 +793,9 @@ var DateWheel = (function () {
 					_this._onMonthChanged();
 					$(_this).trigger('change');
 				}
-			}));
-		$(this.dayNode).scroll(this._getAlignmentFunction(function()
+			});
+		
+		this._dayScrolled = this._getAlignmentFunction(function()
 			{ 
 				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
 					after this item is undisplayed.
@@ -784,11 +807,11 @@ var DateWheel = (function () {
 					_this.onChange(); 
 					$(_this).trigger('change');
 				}
-			}));
+			});
 		$(this.yearNode).click(unClear);
 		$(this.monthNode).click(unClear);
 		$(this.dayNode).click(unClear);
-		
+				
 		var months = Date.CultureInfo.monthNames;
 		this.monthPickerList.selectAll('li')
 			.data(months)
