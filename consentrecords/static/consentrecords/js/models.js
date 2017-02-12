@@ -123,21 +123,18 @@ var CRP = (function() {
 			return this.promises[args.path];
 
 		var _this = this;
-		var result = $.Deferred();
-		cr.getData({path: args.path, 
+		
+		var promise = cr.getData({path: args.path, 
 					start: args.start,
 					end: args.end,
 					fields: args.fields})
-			.then(function(values)
-				{
-					result.resolve(values);
-				},
-				function(err)
+			.fail(function(err)
 				{
 					_this.promises[args.path] = undefined;
+					var result = $.Deferred();
 					result.reject(err);
+					return result.promise();
 				});
-		var promise = result.promise();
 		this.promises[args.path] = promise;
 		return promise;
 	}
