@@ -75,6 +75,18 @@ var Service = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
+	Service.prototype.flagColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].flagColor;
+	}
+	
+	Service.prototype.poleColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].poleColor;
+	}
+	
 	Service.prototype.getDescription = function()
 	{
 		return this.service.getDescription();
@@ -121,8 +133,8 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.div = null;
 	TagPoolView.prototype.svg = null;
 	
-	TagPoolView.prototype.searchFlagHSpacing = 15;
-	TagPoolView.prototype.searchFlagVSpacing = 1.0;
+	TagPoolView.prototype.flagHSpacing = 15;
+	TagPoolView.prototype.flagVSpacing = 1.0;
 	TagPoolView.prototype.flagHeightEM = 2.333;
 	TagPoolView.prototype.emToPX = 11;
 
@@ -141,7 +153,7 @@ var TagPoolView = (function () {
 	{
 		var _this = this;
 
-		var deltaY = this.flagHeightEM + this.searchFlagVSpacing;
+		var deltaY = this.flagHeightEM + this.flagVSpacing;
 		var startX = 0;
 		var nextY = 0;
 		var nextX = 0;
@@ -159,7 +171,7 @@ var TagPoolView = (function () {
 						fd.x = nextX;
 						nextX += thisSpacing;
 					}
-					nextX += _this.searchFlagHSpacing;
+					nextX += _this.flagHSpacing;
 				}
 				
 				fd.y = nextY;
