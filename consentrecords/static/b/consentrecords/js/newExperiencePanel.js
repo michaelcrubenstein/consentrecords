@@ -121,6 +121,9 @@ var Experience = (function() {
 		{
 			var newName = args.text;
 			var d = args.instance;
+			if (d && d.getTypeName() != "Service")
+				throw new Error("Invalid instance to addService");
+				
 			service = new ReportedObject({name: newName, pickedObject: d});
 			if (newName.length > 0)
 			{
@@ -129,12 +132,15 @@ var Experience = (function() {
 		}
 		else if ("instance" in args && args.instance)
 		{
+			if (args.instance.getTypeName() != "Service")
+				throw new Error("Invalid instance to addService");
+				
 			var d = args.instance;
 			var service = new ReportedObject({pickedObject: d})
 			this.services.push(service);
 		}
 		else
-			throw "Invalid arguments to addService";
+			throw new Error("Invalid arguments to addService");
 			
 		return service;
 	}
@@ -473,51 +479,6 @@ var Experience = (function() {
 		}
 	}
 	
-	Experience.prototype._getInstanceLabel = function(i, name)
-	{
-		var cell = i.getCell(name);
-		if (cell && cell.data.length > 0)
-		{
-			var labelValue = cell.data[0];
-			if (!labelValue.isEmpty())
-				return labelValue.getDescription();
-		}
-		return null;
-	}
-	
-	Experience.prototype._getLabel = function(fieldName, defaultLabel)
-	{
-		if (this.services.length > 0 && this.services[0].pickedObject)
-		{
-			var label = this._getInstanceLabel(this.services[0].pickedObject, fieldName);
-			if (label)
-				return label;
-		}
-		if (this.serviceDomain)
-		{
-			var label = this._getInstanceLabel(this.serviceDomain, fieldName);
-			if (label)
-				return label;
-		}
-		
-		return defaultLabel;
-	}
-	
-	Experience.prototype.getOrganizationLabel = function()
-	{
-		return this._getLabel("Organization Label", "Organization");
-	}
-	
-	Experience.prototype.getSiteLabel = function()
-	{
-		return this._getLabel("Site Label", "Site");
-	}
-	
-	Experience.prototype.getOfferingLabel = function()
-	{
-		return this._getLabel("Offering Label", "Name");
-	}
-	
 	Experience.prototype.initPreviousDateRange = function()
 	{
 		var todayDate = getUTCTodayDate();
@@ -813,7 +774,7 @@ var MultiTypeOptionView = (function() {
 	
 })();
 
-/* A reported object combines a name and an object value that might be picked. */
+/* A reported object combines a name and a ModelObject that might be picked. */
 var ReportedObject = function () {
 	ReportedObject.prototype.name = null;
 	ReportedObject.prototype.pickedObject = null;
@@ -853,6 +814,8 @@ var ExperienceDatumSearchView = (function() {
 	
 	ExperienceDatumSearchView.prototype.inputBox = null;
 	ExperienceDatumSearchView.prototype.helpNode = null;
+	
+	ExperienceDatumSearchView.prototype.minRevealHeight = 100;	/* pixels */
 
 	ExperienceDatumSearchView.prototype.inputText = function(val)
 	{
@@ -1077,8 +1040,12 @@ var ExperienceDatumSearchView = (function() {
 		var parent = $(this.reveal.node).parent();
 		var oldHeight = $(this.reveal.node).height();
 		$(this.reveal.node).height(0);
+		
 		var newHeight = parent.getFillHeight() - 
 						parent.outerHeight(true);
+		if (this.minRevealHeight > newHeight)
+			newHeight = this.minRevealHeight;
+			
 		$(this.reveal.node).height(oldHeight);
 		if (oldHeight != newHeight)
 		{
@@ -1155,12 +1122,30 @@ var TagSearchView = (function() {
 	TagSearchView.prototype.inputBox = null;
 	TagSearchView.prototype.experience = null;
 	
+	TagSearchView.prototype.minRevealedHeight = 118;
+	
 	TagSearchView.prototype.onTagAdded = function()
 	{
+		var types = ["Job", 
+						 "School", 
+						 "Interest", 
+						 "Skills", 
+						 "Internship", 
+						 "Volunteer", 
+						 "Exercise", 
+						 "Housing"];
+						 
+		var wasInitialTag = this.focusNode == this.firstTagInputNode() &&
+			(this.sitePanel.experience.services.length > 0 &&
+			 types.indexOf(this.sitePanel.experience.services[0].getDescription() ) >= 0);
+							
 		this.sitePanel.onExperienceUpdated();
 		this.inputBox.value = "";
 		$(this.inputBox).trigger('input');
-		this.inputBox.focus();
+		if (!wasInitialTag)
+			this.inputBox.focus();
+		else
+			this.firstTagInputNode().focus();
 		unblockClick();
 	}
 	
@@ -1181,6 +1166,10 @@ var TagSearchView = (function() {
 		$(this.reveal.node).height(0);
 		var newHeight = parent.getFillHeight() - 
 						parent.outerHeight(true);
+
+		if (this.minRevealedHeight > newHeight)
+			newHeight = this.minRevealedHeight;
+			
 		$(this.reveal.node).height(oldHeight);
 		var _this = this;
 		if (oldHeight != newHeight)
@@ -1195,11 +1184,43 @@ var TagSearchView = (function() {
 				 	}},
 				duration, step, done);
 		}
-	}	
+		else
+			this.layoutFlags();
+	}
+	
+	TagSearchView.prototype.firstTagInputNode = function()
+	{
+		return this.sitePanel.mainDiv.select('.tags-container>input.tag').node();
+	}
+	
+	/* Set the visible flags for each of the services associated with this flags. */
+	TagSearchView.prototype.setFlagVisibles = function()
+	{
+		if (this.focusNode.value ||
+			this.focusNode != this.firstTagInputNode() ||
+			(this.experience.offering &&
+			  this.experience.offering.getCell("Service").data.length > 0))
+			TagPoolView.prototype.setFlagVisibles.call(this);
+		else
+		{
+			var types = ["Job", 
+						 "School", 
+						 "Interest", 
+						 "Skills", 
+						 "Internship", 
+						 "Volunteer", 
+						 "Exercise", 
+						 "Housing"];
+			this.flags().each(function(fs)
+				{
+					fs.visible = (types.indexOf(fs.getDescription()) < 0 ? false : undefined);
+				});
+		}
+	}
 
 	TagSearchView.prototype.constrainTagFlags = function()
 	{
-		this.filterFlags(function(fs) { fs.visible = undefined; }, this.focusNode.value);
+		this.filterFlags(this.focusNode.value);
 		this.layoutFlags();
 	}
 	
@@ -1212,13 +1233,13 @@ var TagSearchView = (function() {
 				if (d3Focus.datum())
 				{
 					d3Focus.datum().name = d.getDescription();
-					d3Focus.datum().pickedObject = d;
+					d3Focus.datum().pickedObject = d.service;
 					this.focusNode.value = d.getDescription();
 					this.onTagAdded();
 				}
 				else
 				{
-					this.experience.addService({instance: d});
+					this.experience.addService({instance: d.service});
 					this.onTagAdded();
 				}
 			}
@@ -2246,10 +2267,16 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.title = "New Experience";
 	NewExperiencePanel.prototype.editTitle = "Edit Experience";
 	NewExperiencePanel.prototype.newFromDomainTitle = "New {0} Experience";
+	NewExperiencePanel.prototype.timeframeLabel = "This experience is...";
 	NewExperiencePanel.prototype.previousExperienceLabel = "Done";
-	NewExperiencePanel.prototype.currentExperienceLabel = "Doing Now";
-	NewExperiencePanel.prototype.goalLabel = "Goal";
+	NewExperiencePanel.prototype.currentExperienceLabel = "Something I'm Doing Now";
+	NewExperiencePanel.prototype.goalLabel = "My Goal";
 	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
+	NewExperiencePanel.prototype.firstTagHelp = 'What type of experience is this?';
+	NewExperiencePanel.prototype.otherTagHelp = 'What other tag goes with this experience?';
+	NewExperiencePanel.prototype.organizationDefaultPlaceholder = 'Organization (Optional)';
+	NewExperiencePanel.prototype.siteDefaultPlaceholder = 'Location (Optional)';
+	NewExperiencePanel.prototype.offeringDefaultPlaceholder = 'Title';
 	
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
@@ -2357,10 +2384,51 @@ var NewExperiencePanel = (function () {
 		return width;
 	}
 	
+	NewExperiencePanel.prototype.setTagColor = function(node)
+	{
+		if (node == document.activeElement)
+		{
+			d3.select(node)
+				.style('background-color', null)
+				.style('border-color', null)
+				.style('color', null);
+		}
+		else
+		{
+			var pathGuide;
+			var d = d3.select(node).datum();
+			var service = null;
+			
+			if (d)
+			{
+				if (d.constructor == cr.ModelObject)
+					service = d;	/* This occurs for tags associated with offerings. */
+				else if (d.constructor == ReportedObject)
+					service = d.pickedObject;
+			}
+			
+			if (service)
+			{
+				var s = new Service(service);
+				pathGuide = PathGuides.data[s.getColumn()];
+			}
+			else
+				pathGuide = PathGuides.data[PathGuides.data.length - 1];
+		
+			d3.select(node)
+				.style('background-color', pathGuide.flagColor)
+				.style('border-color', pathGuide.poleColor)
+				.style('color', pathGuide.fontColor);
+		}
+	}
+	
 	NewExperiencePanel.prototype.setTagInputWidth = function(inputNode)
 	{
 		var newWidth = this.getInputTextWidth(inputNode) + 18;
 		$(inputNode).outerWidth(newWidth);
+		
+		this.setTagColor(inputNode);
+		
 	}
 	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
@@ -2387,43 +2455,45 @@ var NewExperiencePanel = (function () {
 					_this.tagSearchView.constrainTagFlags();
 				}
 				_this.setTagInputWidth(this);
-			});
-		
-		$(input.node()).on('focusin', function()
+			})
+			.on('focusin', function()
 			{
 				_this.tagSearchView.focusNode = this;
 				_this.onFocusInTagInput(this);
-			});
-			
-		$(input.node()).keypress(function(e) {
-			if (e.which == 13)
+			})
+			.on('focusout', function()
 			{
-				_this.checkTagInput();
-				e.preventDefault();
-			}
-		});
-				
-		$(input.node()).keydown( function(event) {
-			if (event.keyCode == 9) {
-				/* If this is an empty node with no instance to remove, then don't handle here. */
-				if (!input.node().value && !instance)
-					return;
-				/* If this is a node whose value matches the previous value, then don't handle here. */
-				else if (instance && input.node().value == instance.getDescription())
-					return;
-				else if (instance && input.node().value != instance.getDescription())
+				_this.setTagInputWidth(this);
+				_this.setPlaceholders();
+			})
+			.keypress(function(e) {
+				if (e.which == 13)
 				{
 					_this.checkTagInput();
-					/* Do not prevent default. */
+					e.preventDefault();
 				}
-				else
-				{
-					_this.checkTagInput();
-					_this.tagSearchView.constrainTagFlags();
-					event.preventDefault();
+			})
+			.keydown( function(event) {
+				if (event.keyCode == 9) {
+					/* If this is an empty node with no instance to remove, then don't handle here. */
+					if (!input.node().value && !instance)
+						return;
+					/* If this is a node whose value matches the previous value, then don't handle here. */
+					else if (instance && input.node().value == instance.getDescription())
+						return;
+					else if (instance && input.node().value != instance.getDescription())
+					{
+						_this.checkTagInput();
+						/* Do not prevent default. */
+					}
+					else
+					{
+						_this.checkTagInput();
+						_this.tagSearchView.constrainTagFlags();
+						event.preventDefault();
+					}
 				}
-			}
-		});
+			});
 
 		return input;
 	}
@@ -2432,6 +2502,7 @@ var NewExperiencePanel = (function () {
 	{
 		var offeringTags = [];
 		var tags = [];
+		var _this = this;
 		
 		var offering = this.experience.offering;
 		if (offering && offering.getInstanceID())
@@ -2442,14 +2513,27 @@ var NewExperiencePanel = (function () {
 		
 		var container = this.mainDiv.select('span.offering-tags-container');
 		container.selectAll('span').remove();
-		container.selectAll('span')
-			.data(offeringTags)
-			.enter()
-			.append('span')
-			.classed('tag', true)
-			.text(function(d) { return d.getDescription(); });
+		var parent = $(container.node().parentNode.parentNode);
+		if (offeringTags.length > 0)
+		{
+			container.selectAll('span')
+				.data(offeringTags)
+				.enter()
+				.append('span')
+				.classed('tag', true)
+				.text(function(d) { return d.getDescription(); })
+				.each(function()
+					{
+						_this.setTagColor(this);
+					});
+			parent.css('display', 'block');
+		}
+		else
+		{
+			parent.css('display', 'none');
+		}
 			
-		var container = this.mainDiv.select('.tags-container');
+		container = this.mainDiv.select('.tags-container');
 		var tagDivs = container.selectAll('input.tag');
 		tags = tags.concat(this.experience.services.filter(function(v) 
 			{ 
@@ -2468,20 +2552,70 @@ var NewExperiencePanel = (function () {
 		var ds = tagDivs.data();
 		for (var i = 0; i < tags.length; ++i)
 		{
+			var input;
 			if (ds.indexOf(tags[i]) < 0)
 			{
-				var input = this.appendTag(container, tags[i]);
-				this.setTagInputWidth(input.node());
+				input = this.appendTag(container, tags[i]);
 			}
+			else
+			{
+				input = tagDivs.filter(function(d) { return d == tags[i]; });
+				input.node().value = tags[i].getDescription();
+			}
+			this.setTagInputWidth(input.node());
 		}
+	}
+	
+	NewExperiencePanel.prototype._serviceLabel = function(service, cellName)
+	{
+		if (!service)
+			return "";
+			
+		var label = service.getDatum(cellName);
+		if (label)
+			return label;
+			
+		var subObj = service.getCell("Service").data.find(function(s)
+			{
+				return s.getDatum(cellName);
+			});
+		return subObj && subObj.getDatum(cellName);
+	}
+	
+	NewExperiencePanel.prototype.setPlaceholders = function()
+	{
+		var service = this.experience.services.find(function(s)
+			{
+				return s.pickedObject &&
+					   new Service(s.pickedObject).getColumn() < PathGuides.data.length - 1;
+			});
+			
+		this.organizationInput
+			.attr('placeholder', 
+				  (service && this._serviceLabel(service.pickedObject, 'Organization Label')) || this.organizationDefaultPlaceholder);
+		this.siteInput
+			.attr('placeholder', 
+				  (service && this._serviceLabel(service.pickedObject, 'Site Label')) || this.siteDefaultPlaceholder);
+		this.offeringInput
+			.attr('placeholder', 
+				  (service && this._serviceLabel(service.pickedObject, 'Offering Label')) || this.offeringDefaultPlaceholder);
 	}
 	
 	NewExperiencePanel.prototype.updateInputs = function()
 	{
+		/* Reset the placeholders to ensure that they are properly displayed or hidden given
+			the changes in the values. This fixes a bug on MacOS Safari.
+		 */
+		this.organizationInput.attr('placeholder', null);
+		this.siteInput.attr('placeholder', null);
+		this.offeringInput.attr('placeholder', null);
+		
 		this.organizationInput.node().value = this.experience.organizationName;
 		this.siteInput.node().value = this.experience.siteName;
 		this.offeringInput.node().value = this.experience.offeringName;
+
 		this.showTags();
+		this.setPlaceholders();
 	}
 
 	NewExperiencePanel.prototype.onExperienceUpdated = function()
@@ -2587,7 +2721,7 @@ var NewExperiencePanel = (function () {
 								$(this).trigger('input');
 							}
 						}
-						else if (newInstance != d.instance)
+						else if (newInstance != d.pickedObject)
 						{
 							d.pickedObject = newInstance;
 							d.name = newInstance.getDescription();
@@ -2612,6 +2746,8 @@ var NewExperiencePanel = (function () {
 					}
 				}
 			});
+			
+		this.setPlaceholders();
 	}
 	
 	/* Hide the currently open input (if it isn't newReveal, and then execute done). */
@@ -2661,11 +2797,27 @@ var NewExperiencePanel = (function () {
 			return false;
 	}
 	
+	NewExperiencePanel.prototype.setTagHelp = function()
+	{
+		if (this.tagSearchView.focusNode == this.tagSearchView.firstTagInputNode() &&
+			(!this.experience.offering ||
+			  this.experience.offering.getCell("Service").data.length == 0))
+			this.tagHelp.text(this.firstTagHelp);
+		else
+			this.tagHelp.text(this.otherTagHelp);
+	}
+	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
+		d3.select(inputNode)
+			.style('background-color', null)
+			.style('border-color', null)
+			.style('color', null);
+			
 		var done = function()
 				{
+					_this.setTagHelp();
 					_this.tagSearchView.constrainTagFlags();
 					_this.tagSearchView.showSearch(200, undefined, function()
 						{
@@ -2680,6 +2832,7 @@ var NewExperiencePanel = (function () {
 		if (!this.onFocusInOtherInput(_this.tagSearchView.reveal, done))
 		{
 			this.checkTagInput(inputNode);
+			this.setTagHelp();
 			this.tagSearchView.constrainTagFlags();
 			if (!this.tagSearchView.reveal.isVisible())
 			{
@@ -2766,7 +2919,27 @@ var NewExperiencePanel = (function () {
 			});
 		backButton.append("span").text("Cancel");
 		
-		var doneButton = navContainer.appendRightButton()
+		if (experience.instance)
+		{
+			var shareButton = navContainer.appendRightButton()
+				.classed("share", true)
+				.on('click', function()
+					{
+						if (prepareClick('click', 'share'))
+						{
+							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
+						}
+					});
+			shareButton.append("img")
+				.attr("src", shareImagePath);
+		}
+		
+		navContainer.appendTitle(this.title);
+		
+		var panel2Div = this.appendScrollArea();
+		
+		var bottomNavContainer = this.appendBottomNavContainer();
+		var doneButton = bottomNavContainer.appendRightButton()
 			.classed("site-active-text", true)
 			.classed("default-link", true)
 			.on("click", function()
@@ -2845,88 +3018,41 @@ var NewExperiencePanel = (function () {
 			});
 		doneButton.append("span").text(experience.instance ? "Done" : "Add");
 		
-		navContainer.appendTitle(this.title);
-		
-		var panel2Div = this.appendScrollArea()
-			.classed("vertical-scrolling", false)
-			.classed("no-scrolling", true);
-		
 		if (experience.instance)
 		{
-			var bottomNavContainer = this.appendBottomNavContainer();
-			bottomNavContainer.appendRightButton()
+			bottomNavContainer.appendLeftButton()
 				.on("click", 
 					function() {
 						_this.handleDeleteButtonClick();
 					})
 				.append("span").classed("text-danger", true).text("Delete");
-			
-			var shareButton = bottomNavContainer.appendLeftButton()
-				.classed("share", true)
-				.on('click', function()
-					{
-						if (prepareClick('click', 'share'))
-						{
-							new ExperienceShareOptions(_this.node(), experience.instance, experience.instance.cell.parent);
-						}
-					});
-			shareButton.append("img")
-				.attr("src", shareImagePath);
 		}
 
 		var section;
 		var label;
 		var searchContainer;
-				
-		section = panel2Div.append('section')
-			.classed('cell unique organization', true);
-				
-		this.organizationInput = section.append('input')
-			.classed('organization', true)
-			.attr('placeholder', 'Organization (Optional)')
-			.attr('value', experience.organizationName);
-		organizationHelp = section.append('div')
-			.classed('help', true);
-			
-		searchContainer = section.append('div');
-			
-		this.organizationSearchView = new OrganizationSearchView(searchContainer.node(), 
-																 this, experience, 
-																 this.organizationInput.node(), 
-																 organizationHelp.node());
 		
-		section = panel2Div.append('section')
-			.classed('cell unique site', true);
-				
-		this.siteInput = section.append('input')
-			.classed('site', true)
-			.attr('placeholder', 'Location (Optional)')
-			.attr('value', experience.siteName);
-		siteHelp = section.append('div').classed('help', true);
+		section = panel2Div.append('section');
 		
-		searchContainer = section.append('div');
-			
-		this.siteSearchView = new SiteSearchView(searchContainer.node(), 
-												 this, experience, 
-												 this.siteInput.node(), 
-												 siteHelp.node());
+		/* The tags section. */
+		this.tagsSection = panel2Div.append('section')
+			.classed('cell tags custom', true);
+		var tagsTopContainer = this.tagsSection.append('div');
+		label = tagsTopContainer.append('label')
+			.text('Tags:');
 		
-		section = panel2Div.append('section')
-			.classed('cell unique offering', true);
-				
-		this.offeringInput = section.append('input')
-			.classed('offering', true)
-			.attr('placeholder', 'Title')
-			.attr('value', experience.offeringName);
-		offeringHelp = section.append('div').classed('help', true);
-			
-		searchContainer = section.append('div');
-			
-		this.offeringSearchView = new OfferingSearchView(searchContainer.node(), 
-														 this, experience, 
-														 this.offeringInput.node(), 
-														 offeringHelp.node());
+		var tagsContainer = tagsTopContainer.append('span')
+			.classed('tags-container', true);
 		
+		this.tagInput = this.appendTag(tagsContainer, null);
+		
+		searchContainer = this.tagsSection.append('div');
+		
+		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
+		this.tagHelp.text(this.firstTagHelp);
+			
+		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
+												
 		/* Code starting for the date range. */
 		var birthday = experience.path.getDatum("Birthday") ||
 			(function()
@@ -2937,8 +3063,12 @@ var NewExperiencePanel = (function () {
 		
 		var optionPanel = panel2Div.append('section')
 			.classed('date-range-options', true);
+		
+		optionPanel.append('div')
+			.text(this.timeframeLabel);
 
-		var previousExperienceButton = optionPanel.append('button')
+		var buttonDiv = optionPanel.append('div');
+		var previousExperienceButton = buttonDiv.append('button')
 			.classed('previous', true)
 			.on('click', function()
 				{
@@ -2948,10 +3078,11 @@ var NewExperiencePanel = (function () {
 					
 					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateWheel).trigger('change');
+					setDateRangeLabels();
 				})
 			.text(this.previousExperienceLabel);
 		
-		var currentExperienceButton = optionPanel.append('button')
+		var currentExperienceButton = buttonDiv.append('button')
 			.classed('present', true)
 			.on('click', function()
 				{
@@ -2961,10 +3092,11 @@ var NewExperiencePanel = (function () {
 					
 					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 					$(startDateWheel).trigger('change');
+					setDateRangeLabels();
 				})
 			.text(this.currentExperienceLabel);
 		
-		var goalButton = optionPanel.append('button')
+		var goalButton = buttonDiv.append('button')
 			.classed('goal', true)
 			.on('click', function()
 				{
@@ -2974,8 +3106,17 @@ var NewExperiencePanel = (function () {
 					
 					setGoalStartDateRange();
 					$(startDateWheel).trigger('change');
+					setDateRangeLabels();
 				})
 			.text(this.goalLabel);
+			
+		function setDateRangeLabels()
+		{
+			startDateContainer.select('label')
+						.text(goalButton.classed('pressed') ? 'Starts' : 'Started');
+			endDateContainer.select('label')
+						.text(previousExperienceButton.classed('pressed') ? 'Ended' : 'Ends');
+		}
 			
 		var startDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true);
@@ -3064,6 +3205,67 @@ var NewExperiencePanel = (function () {
 			endDateWheel.clear();
 		}
 				
+		/* The organization section. */
+		section = panel2Div.append('section')
+			.classed('cell unique organization', true);
+				
+		this.organizationInput = section.append('input')
+			.classed('organization', true)
+			.attr('placeholder', this.organizationDefaultPlaceholder)
+			.attr('value', experience.organizationName);
+		organizationHelp = section.append('div')
+			.classed('help', true);
+			
+		searchContainer = section.append('div');
+			
+		this.organizationSearchView = new OrganizationSearchView(searchContainer.node(), 
+																 this, experience, 
+																 this.organizationInput.node(), 
+																 organizationHelp.node());
+		
+		section = panel2Div.append('section')
+			.classed('cell unique site', true);
+				
+		this.siteInput = section.append('input')
+			.classed('site', true)
+			.attr('placeholder', this.siteDefaultPlaceholder)
+			.attr('value', experience.siteName);
+		siteHelp = section.append('div').classed('help', true);
+		
+		searchContainer = section.append('div');
+			
+		this.siteSearchView = new SiteSearchView(searchContainer.node(), 
+												 this, experience, 
+												 this.siteInput.node(), 
+												 siteHelp.node());
+		
+		section = panel2Div.append('section')
+			.classed('cell unique offering', true);
+				
+		this.offeringInput = section.append('input')
+			.classed('offering', true)
+			.attr('placeholder', this.offeringDefaultPlaceholder)
+			.attr('value', experience.offeringName);
+		offeringHelp = section.append('div').classed('help', true);
+			
+		searchContainer = section.append('div');
+			
+		this.offeringSearchView = new OfferingSearchView(searchContainer.node(), 
+														 this, experience, 
+														 this.offeringInput.node(), 
+														 offeringHelp.node());
+		
+		/* The offering tags section. */
+		tagsTopContainer = panel2Div.append('section')
+			.classed('cell tags offering', true)
+			.append('div');
+		label = tagsTopContainer.append('label')
+			.append('span')
+			.text('Offering Tags:');
+		
+		tagsTopContainer.append('span')
+			.classed('offering-tags-container', true);
+		
 		function setGoalStartDateRange()
 		{
 			var startMinDate = getUTCTodayDate();
@@ -3097,43 +3299,27 @@ var NewExperiencePanel = (function () {
 					startDateWheel.checkMinDate(new Date(birthday), getUTCTodayDate());
 				}
 				$(startDateWheel).trigger('change');
+				setDateRangeLabels();
 			});
 
-		/* Code start for the tags section. */
-		this.tagsSection = panel2Div.append('section')
-			.classed('cell tags', true);
-		label = this.tagsSection.append('label')
-			.text('Tags:');
-		
-		/* Put the officeTagsContains and the tagsContainer within the label so that,
-			when they word wrap, then do so rationally.
-		 */
-		var officeTagsContainer = label.append('span')
-			.classed('offering-tags-container', true);
-		
-		var tagsContainer = label.append('span')
-			.classed('tags-container', true);
-		
-		this.tagInput = this.appendTag(tagsContainer, null);
-		
-		tagHelp = tagsContainer.append('div').classed('help', true);
-			
-		searchContainer = this.tagsSection.append('div');
-		
-		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
-												
 		crp.promise({path: "Service"})
 			.then(function(newInstances)
 				{
 					_this.allServices = newInstances;
-					_this.tagSearchView.appendFlags(newInstances.map(function(s) { return new Service(s); }))
+					var services = newInstances.map(function(s) { return new Service(s); });
+					_this.tagSearchView.appendFlags(services)
 						.on('click', function(s)
 							{
-								_this.tagSearchView.onClickButton(s);
+								if (s.visible === undefined || s.visible)
+									_this.tagSearchView.onClickButton(s);
+								else
+									d3.event.preventDefault();
 							});
 					
 					/* Have to hide after appending the flags or the metrics aren't calculated. */
 					_this.tagSearchView.reveal.hide();
+				
+					_this.tagSearchView.inputBox.focus();
 				},
 				cr.syncFail);
 		
