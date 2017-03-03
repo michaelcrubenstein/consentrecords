@@ -167,6 +167,37 @@ var SearchPathsResultsView = (function () {
 	return SearchPathsResultsView;
 })();
 
+var SearchTagPoolView = (function () {
+	SearchTagPoolView.prototype = new TagPoolView();
+	
+	SearchTagPoolView.prototype.sitePanel = null;
+	
+	SearchTagPoolView.prototype.setFlagVisibles = function()
+	{
+		var _this = this;
+		var queryData = this.sitePanel.queryContainer.flags().data();
+		
+		function inQueryFlags(a)
+		{
+			return queryData.some(function(fd) { return fd.service == a.service; });
+		}
+
+		var filterFunction = this.sitePanel.filterColumn !== undefined ?
+			function(fs) { fs.visible = (fs.getColumn() == _this.sitePanel.filterColumn) && !inQueryFlags(fs); } :
+			function(fs) { fs.visible = !inQueryFlags(fs); };
+			
+		this.flags().each(filterFunction);
+	}
+	
+	function SearchTagPoolView(sitePanel)
+	{
+		TagPoolView.call(this, sitePanel.mainDiv, 'pool-container');
+		this.sitePanel = sitePanel;
+	}
+	
+	return SearchTagPoolView;
+})();
+
 var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype = new SitePanel();
 	SearchPathsPanel.prototype.selectedPool = null;
@@ -509,6 +540,8 @@ var SearchPathsPanel = (function () {
 						      function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 	
 					_this.queryContainer.appendFlag(queryFlag);
+					queryFlag.transition()
+						.style('opacity', 1);
 					
 					var promise = null;
 					if (_this.queryContainer.flags().size() == 1)
@@ -555,18 +588,7 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.filterPool = function()
 	{
-		var _this = this;
-		var queryData = _this.queryContainer.flags().data();
-		
-		function inQueryFlags(a)
-		{
-			return queryData.some(function(fd) { return fd.service == a.service; });
-		}
-
-		var filterFunction = this.filterColumn !== undefined ?
-			function(fs) { fs.visible = (fs.getColumn() == _this.filterColumn) && !inQueryFlags(fs); } :
-			function(fs) { fs.visible = !inQueryFlags(fs); };
-		this.poolContainer.filterFlags(filterFunction, this.searchInput.value);
+		this.poolContainer.filterFlags(this.searchInput.value);
 	}
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
@@ -775,7 +797,7 @@ var SearchPathsPanel = (function () {
 			.style('fill', function(d) { return d.color; });
 		this.selectedPool = svgData[0];
 		
-		this.poolContainer = new TagPoolView(this.mainDiv, 'pool-container');
+		this.poolContainer = new SearchTagPoolView(this);
 			
 		this.queryContainer = new TagPoolView(this.mainDiv, 'query-container');
 			

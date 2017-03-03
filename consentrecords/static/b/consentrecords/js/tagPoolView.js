@@ -29,8 +29,6 @@ var Service = (function() {
 		Wellness: 6,
 	};
 	
-	Service.prototype.columnPriorities = [0, 2, 4, 1, 3, 5, 6, 7];
-	
 	Service.prototype.getStageDescription = function(stage)
 	{
 		var stageDescription = stage && stage.getDescription();
@@ -213,20 +211,29 @@ var TagPoolView = (function () {
 		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
 									   !(fd.visible === undefined || fd.visible); })
 			.interrupt().transition().duration(duration)
-			.style('opacity', 0.0);
+			.style('opacity', 0.0)
+			.each('end', function()
+				{
+					d3.select(this).attr('transform',
+						function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
+				});
 	}
 	
-	TagPoolView.prototype.filterFlags = function(filteringFunction, filterText)
+	TagPoolView.prototype.setFlagVisibles = function()
 	{
 		var g = this.flags();
-		
-		g.each(filteringFunction);
+		g.each(function(fs) { fs.visible = undefined; });
+	}
+	
+	TagPoolView.prototype.filterFlags = function(filterText)
+	{
+		this.setFlagVisibles();
 			
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
 		
 		if (inputTexts.length > 0)
 		{
-			g.each(function(fs)
+			this.flags().each(function(fs)
 				{
 					if (!inputTexts.reduce(function(a, b)
 						{
@@ -239,7 +246,8 @@ var TagPoolView = (function () {
 	
 	TagPoolView.prototype.appendFlag = function(g)
 	{
-		g.classed('flag', true);
+		g.classed('flag', true)
+		 .style('opacity', '0');
 		
 		g.append('line').classed('flag-pole', true)
 			.attr('x1', 1.5)
