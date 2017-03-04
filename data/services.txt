@@ -13,19 +13,21 @@ Service
 Service
     _name: en - Architecture
 Service
+    _name: en - Architecture Class
+Service
     _name: en - Architecture Job
 Service
     _name: en - Art
 Service
     _name: en - Art Class
 Service
-    _name: en - Artist
-Service
     _name: en - Art History
 Service
     _name: en - Art History Class
 Service
     _name: en - Art Teacher
+Service
+    _name: en - Artist
 Service
     _name: en - Ballet
 Service
@@ -213,11 +215,15 @@ Service
 Service
     _name: en - Hospitality
 Service
+    _name: en - Hospitality Skills
+Service
     _name: en - Housing
 Service
     _name: en - Ice Hockey
 Service
     _name: en - Independent School Prep
+Service
+    _name: en - Interest
 Service
     _name: en - Interior Design
 Service
@@ -289,11 +295,11 @@ Service
 Service
     _name: en - Pharmacy
 Service
+    _name: en - Photographer
+Service
     _name: en - Photography
 Service
     _name: en - Photography Class
-Service
-    _name: en - Photographer
 Service
     _name: en - Physical Conditioning
 Service
@@ -333,7 +339,7 @@ Service
 Service
     _name: en - Science Class
 Service
-    _name: en - Science Job
+    _name: en - Scientist
 Service
     _name: en - Skiing
 Service
@@ -402,12 +408,15 @@ Service
     _name: en - Acting
     Stage: Whatever
     Service: Acting
+    Service: Interest
 Service
     _name: en - After School Program
     Service: After School Program
 Service
     _name: en - Animal Care
+    Stage: Whatever
     Service: Animal Care
+    Service: Interest
 Service
     _name: en - Animal Shelter Volunteer
     Stage: Volunteering
@@ -417,7 +426,9 @@ Service
     Service: Volunteer
 Service
     _name: en - Animals
+    Stage: Whatever
     Service: Animals
+    Service: Interest
 Service
     _name: en - Architect
     Stage: Working
@@ -428,6 +439,7 @@ Service
     _name: en - Architecture
     Stage: Whatever
     Service: Architecture
+    Service: Interest
 Service
     _name: en - Architecture Class
     Stage: Studying
@@ -435,9 +447,12 @@ Service
     Service: Architecture
     Service: Class
 Service
+    _name: en - Architecture Job
+Service
     _name: en - Art
     Stage: Whatever
     Service: Art
+    Service: Interest
 Service
     _name: en - Art Class
     Stage: Studying
@@ -445,15 +460,10 @@ Service
     Service: Art
     Service: Class
 Service
-    _name: en - Artist
-    Stage: Working
-    Service: Artist
-    Service: Art
-    Service: Job
-Service
     _name: en - Art History
     Stage: Whatever
     Service: Art History
+    Service: Interest
 Service
     _name: en - Art History Class
     Stage: Studying
@@ -468,21 +478,28 @@ Service
     Service: Job
     Service: Education Job
 Service
+    _name: en - Artist
+    Stage: Working
+    Service: Artist
+    Service: Art
+    Service: Job
+Service
     _name: en - Ballet
-    Stage: Training
     Service: Ballet
     Service: Dance
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Baseball
-    Stage: Whatever
     Service: Baseball
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Baseball Coach
     Stage: Coaching
     Service: Baseball Coach
     Service: Baseball
+    Service: Be a Coach
 Service
     _name: en - Baseball Job
     Stage: Working
@@ -491,14 +508,15 @@ Service
     Service: Job
 Service
     _name: en - Basketball
-    Stage: Whatever
     Service: Basketball
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Basketball Coach
     Stage: Coaching
     Service: Basketball Coach
     Service: Basketball
+    Service: Be a Coach
 Service
     _name: en - Bass Lessons
     Stage: Training
@@ -531,11 +549,12 @@ Service
     Stage: Working
     Service: Business Founder
     Service: Entrepreneurship
+    Service: Job
 Service
     _name: en - C++ Programming Skills
-    Stage: Skills
     Service: C++ Programming Skills
     Service: Computer Software & Programming
+    Service: Skills
 Service
     _name: en - Camping
     Stage: Wellness
@@ -552,17 +571,17 @@ Service
 Service
     _name: en - Ceramics
     Service: Ceramics
+    Service: Interest
 Service
     _name: en - Chess
-    Stage: Whatever
     Service: Chess
+    Service: Interest
 Service
     _name: en - Chinese
-    Stage: Skills
     Service: Chinese
+    Service: Interest
 Service
     _name: en - Chinese Class
-    Stage: Studying
     Service: Chinese Class
     Service: Chinese
     Service: Class
@@ -576,7 +595,6 @@ Service
     _name: en - Civics Class
     Site Label: en - School
     Offering Label: en - Class Name
-    Stage: Studying
     Service: Government
     Service: Civics Class
     Service: Class
@@ -588,6 +606,8 @@ Service
     Service: Music Lessons
 Service
     _name: en - Class
+    Site Label: en - School
+    Offering Label: en - Class Name
     Stage: Studying
     Service: Class
 Service
@@ -627,6 +647,7 @@ Service
     Stage: Whatever
     Service: Computer Hardware
     Service: Computer Hardware Hobby
+    Service: Interest
 Service
     _name: en - Computer Programming Class
     Stage: Studying
@@ -651,14 +672,14 @@ Service
     Service: Construction Training
 Service
     _name: en - Cycling
-    Stage: Whatever
     Service: Cycling
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Dance
-    Stage: Skills
     Service: Dance
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Dance Lessons
     Stage: Training
@@ -668,6 +689,7 @@ Service
     _name: en - Doctor
     Stage: Working
     Service: Doctor
+    Service: Job
 Service
     _name: en - Drawing
     Stage: Skills
@@ -705,12 +727,15 @@ Service
     Stage: Working
     Service: Engineering
     Service: Engineer
+    Service: Job
 Service
     _name: en - Engineering
     Service: Engineering
+    Service: Interest
 Service
     _name: en - English
     Service: English
+    Service: Interest
 Service
     _name: en - English Class
     Stage: Studying
@@ -727,11 +752,12 @@ Service
 Service
     _name: en - Entrepreneurship
     Service: Entrepreneurship
+    Service: Interest
 Service
     _name: en - Entrepreneurship Skills
-    Stage: Training
     Service: Entrepreneurship
     Service: Entrepreneurship Skills
+    Service: Skills
 Service
     _name: en - Entrepreneurship Training
     Stage: Training
@@ -746,12 +772,14 @@ Service
     Service: Extra-Curricular Activity
 Service
     _name: en - Field Hockey
-    Stage: Whatever
     Service: Field Hockey
-    Service: Floor Hockey
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Floor Hockey
     Service: Floor Hockey
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Flute Lessons
     Stage: Training
@@ -763,17 +791,20 @@ Service
     Service: Job
 Service
     _name: en - Football
-    Stage: Whatever
     Service: Football
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Football Coach
     Stage: Coaching
     Service: Football
     Service: Football Coach
+    Service: Be a Coach
 Service
     _name: en - French
     Stage: Skills
     Service: French
+    Service: Skills
 Service
     _name: en - French Class
     Stage: Studying
@@ -784,6 +815,7 @@ Service
     _name: en - German
     Stage: Skills
     Service: German
+    Service: Skills
 Service
     _name: en - German Class
     Stage: Studying
@@ -801,6 +833,7 @@ Service
 Service
     _name: en - Government
     Service: Government
+    Service: Interest
 Service
     _name: en - Grade 1
     Organization Label: en - District
@@ -909,15 +942,15 @@ Service
     Service: Music Lessons
 Service
     _name: en - Gym
-    Stage: Whatever
     Service: Physical Conditioning
     Service: Gym
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Gymnastics
-    Stage: Whatever
     Service: Gymnastics
     Service: Exercise
+    Service: Interest
 Service
     _name: en - High School Post Graduate
     Organization Label: en - District
@@ -927,7 +960,8 @@ Service
     Service: High School Post Graduate
 Service
     _name: en - History
-    Stage: Skills
+    Service: History
+    Service: Interest
 Service
     _name: en - History Class
     Stage: Studying
@@ -945,23 +979,34 @@ Service
 Service
     _name: en - Hospitality
     Service: Hospitality
+    Service: Interest
+Service
+    _name: en - Hospitality Skills
+    Service: Hospitality Skills
+    Service: Hospitality
+    Service: Skills
 Service
     _name: en - Housing
     Stage: Housing
     Service: Housing
 Service
     _name: en - Ice Hockey
-    Stage: Whatever
     Service: Ice Hockey
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Independent School Prep
     Stage: Studying
     Service: Independent School Prep
 Service
+    _name: en - Interest
+    Stage: Whatever
+    Service: Interest
+Service
     _name: en - Interior Design
     Stage: Whatever
     Service: Interior Design
+    Service: Interest
 Service
     _name: en - Interior Design Class
     Stage: Studying
@@ -976,7 +1021,7 @@ Service
     Service: Job
 Service
     _name: en - Internship
-    Stage: Training
+    Stage: Working
     Service: Internship
 Service
     _name: en - Japanese
@@ -1001,6 +1046,7 @@ Service
     Stage: Working
     Service: Journalist
     Service: Journalism
+    Service: Job
 Service
     _name: en - Jump Year to Grade 9
     Organization Label: en - District
@@ -1009,10 +1055,10 @@ Service
     Service: Jump Year to Grade 9
 Service
     _name: en - Karate
-    Stage: Training
     Service: Karate
-    Service: Exercise
     Service: Martial Arts
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Kindergarten
     Stage: Studying
@@ -1022,23 +1068,28 @@ Service
     Service: Korean
 Service
     _name: en - Lacrosse
-    Stage: Whatever
     Service: Lacrosse
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Lacrosse Coach
     Stage: Coaching
     Service: Lacrosse Coach
+    Service: Be a Coach
 Service
     _name: en - Lawyer
     Stage: Working
     Service: Lawyer
+    Service: Job
 Service
     _name: en - Leadership
     Service: Leadership
+    Service: Interest
 Service
     _name: en - Leadership Class
     Stage: Studying
     Service: Leadership Class
+    Service: Leadership
     Service: Class
 Service
     _name: en - Leadership Training
@@ -1051,18 +1102,22 @@ Service
 Service
     _name: en - Literacy
     Service: Literacy
+    Service: English
 Service
     _name: en - Literacy Skills
-    Stage: Training
     Service: Literacy Skills
+    Service: Literacy
+    Service: English
+    Service: Skills
 Service
     _name: en - Martial Arts
-    Stage: Training
     Service: Martial Arts
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Math
     Service: Math
+    Service: Interest
 Service
     _name: en - Math Teacher
     Stage: Teaching
@@ -1081,6 +1136,7 @@ Service
     _name: en - Microsoft Office Skills
     Stage: Skills
     Service: Microsoft Office Skills
+    Service: Skills
 Service
     _name: en - Music Lessons
     Stage: Training
@@ -1118,21 +1174,22 @@ Service
     _name: en - Pharmacy
     Service: Pharmacy
 Service
-    _name: en - Photography
-    Stage: Whatever
-    Service: Photography
-Service
-    _name: en - Photography Class
-    Stage: Whatever
-    Service: Photography Class
-    Service: Photography
-    Service: Class
-Service
     _name: en - Photographer
-    Stage: Whatever
+    Stage: Working
     Service: Photographer
     Service: Photography
     Service: Job
+Service
+    _name: en - Photography
+    Stage: Whatever
+    Service: Photography
+    Service: Interest
+Service
+    _name: en - Photography Class
+    Stage: Studying
+    Service: Photography Class
+    Service: Photography
+    Service: Class
 Service
     _name: en - Physical Conditioning
     Stage: Wellness
@@ -1142,6 +1199,7 @@ Service
     Stage: Whatever
     Service: Piano
     Service: Music Performance
+    Service: Interest
 Service
     _name: en - Piano Lessons
     Stage: Training
@@ -1156,6 +1214,7 @@ Service
     Service: Piano
     Service: Education Job
     Service: Job
+    Service: Music Teacher
 Service
     _name: en - Political Organizing
     Stage: Volunteering
@@ -1193,14 +1252,14 @@ Service
     Service: Python Coding Skills
 Service
     _name: en - Racquetball
-    Stage: Whatever
     Service: Racquetball
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Rugby
-    Stage: Whatever
     Service: Rugby
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Running
     Stage: Training
@@ -1217,6 +1276,7 @@ Service
     _name: en - Science
     Stage: Whatever
     Service: Science
+    Service: Interest
 Service
     _name: en - Science Class
     Stage: Studying
@@ -1231,34 +1291,36 @@ Service
     Service: Job
 Service
     _name: en - Skiing
-    Stage: Whatever
     Service: Skiing
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Skills
     Stage: Skills
     Service: Skills
 Service
     _name: en - Soccer
-    Stage: Whatever
     Service: Soccer
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Soccer Coach
     Stage: Coaching
     Service: Soccer Coach
+    Service: Be a Coach
 Service
     _name: en - Social Work
     Service: Social Work
 Service
     _name: en - Softball
-    Stage: Training
     Service: Softball
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Softball Coach
     Stage: Coaching
     Service: Softball Coach
+    Service: Be a Coach
 Service
     _name: en - Software Developer
     Stage: Working
@@ -1290,9 +1352,9 @@ Service
     Service: Job
 Service
     _name: en - Squash
-    Stage: Whatever
     Service: Squash
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Summer Camp
     Stage: Whatever
@@ -1306,38 +1368,43 @@ Service
     Service: Job
 Service
     _name: en - Swimming
-    Stage: Training
     Service: Swimming
+    Service: Exercise
+    Service: Interest
 Service
     _name: en - Teacher
     Stage: Working
     Service: Teacher
+    Service: Job
 Service
     _name: en - Teen Programming
     Service: Teen Programming
 Service
     _name: en - Tennis
-    Stage: Whatever
     Service: Tennis
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Tennis Coach
     Stage: Coaching
     Service: Tennis Coach
+    Service: Be a Coach
 Service
     _name: en - Theater Role
     Offering Label: en - Title of Show & Role
     Stage: Whatever
     Service: Theater Role
+    Service: Interest
 Service
     _name: en - Tour Guide
     Stage: Working
     Service: Tour Guide
+    Service: Job
 Service
     _name: en - Track & Field
-    Stage: Whatever
     Service: Track & Field
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Trumpet Lessons
     Stage: Training
@@ -1359,6 +1426,7 @@ Service
 Service
     _name: en - Visual Arts
     Service: Visual Arts
+    Service: Interest
 Service
     _name: en - Voice Lessons
     Stage: Training
@@ -1367,15 +1435,15 @@ Service
     Service: Music Performance
 Service
     _name: en - Volleyball
-    Stage: Whatever
     Service: Volleyball
     Service: Exercise
+    Service: Interest
 Service
     _name: en - Volunteer
     Stage: Volunteering
     Service: Volunteer
 Service
     _name: en - Wrestling
-    Stage: Whatever
     Service: Wrestling
     Service: Exercise
+    Service: Interest
