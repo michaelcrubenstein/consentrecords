@@ -230,15 +230,20 @@ var TagPoolView = (function () {
 		this.setFlagVisibles();
 			
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
-		
+		var inputRegExps = inputTexts.map(function(s)
+			{
+				return new RegExp("\\b" + s.replace(/([\.\\\/\^])/, "\$1"), "i");
+			});
+			
 		if (inputTexts.length > 0)
 		{
 			this.flags().each(function(fs)
 				{
-					if (!inputTexts.reduce(function(a, b)
-						{
-							return a && fs.contains(b);
-						}, true))
+					if (!fs.contains(filterText.toLocaleUpperCase()) &&
+						!inputRegExps.reduce(function(a, b)
+							{
+								return a && b.test(fs.getDescription());
+							}, true))
 						fs.visible = false;
 				});
 		}
