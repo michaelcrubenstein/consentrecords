@@ -1126,27 +1126,6 @@ var TagSearchView = (function() {
 	
 	TagSearchView.prototype.onTagAdded = function()
 	{
-		var types = ["Job", 
-						 "School", 
-						 "Interest", 
-						 "Skills", 
-						 "Internship", 
-						 "Volunteer", 
-						 "Exercise", 
-						 "Housing"];
-						 
-		var wasInitialTag = this.focusNode == this.firstTagInputNode() &&
-			(this.sitePanel.experience.services.length > 0 &&
-			 types.indexOf(this.sitePanel.experience.services[0].getDescription() ) >= 0);
-							
-		this.sitePanel.onExperienceUpdated();
-		this.inputBox.value = "";
-		$(this.inputBox).trigger('input');
-		if (!wasInitialTag)
-			this.inputBox.focus();
-		else
-			this.firstTagInputNode().focus();
-		unblockClick();
 	}
 	
 	TagSearchView.prototype.hideSearch = function(done)
@@ -1204,7 +1183,8 @@ var TagSearchView = (function() {
 		else
 		{
 			var types = ["Job", 
-						 "School", 
+						 "School",
+						 "Class", 
 						 "Interest", 
 						 "Skills", 
 						 "Internship", 
@@ -1224,24 +1204,65 @@ var TagSearchView = (function() {
 		this.layoutFlags();
 	}
 	
+	TagSearchView.prototype.hasSubService = function(service)
+	{
+		serviceID = service.getInstanceID();
+		
+		return this.sitePanel.allServices.find(function(s)
+			{
+				if (s.getInstanceID() == serviceID)
+					return false;
+				return s.getCell("Service").data.find(function(subS)
+					{
+						return subS.getInstanceID() == serviceID;
+					});
+			});
+	}
+	
 	TagSearchView.prototype.onClickButton = function(d) {
 		if (prepareClick('click', 'service: ' + d.getDescription()))
 		{
 			try
 			{
 				var d3Focus = d3.select(this.focusNode);
+				var moveToNewInput = !this.hasSubService(d.service);
+				var newDatum;
+				
 				if (d3Focus.datum())
 				{
-					d3Focus.datum().name = d.getDescription();
-					d3Focus.datum().pickedObject = d.service;
-					this.focusNode.value = d.getDescription();
-					this.onTagAdded();
+					newDatum = d3Focus.datum();
+					if (newDatum.pickedObject == d.service)
+						moveToNewInput = true;
+					else
+					{
+						newDatum.name = d.getDescription();
+						newDatum.pickedObject = d.service;
+						this.focusNode.value = d.getDescription();
+					}
+					
 				}
 				else
 				{
-					this.experience.addService({instance: d.service});
-					this.onTagAdded();
+					newDatum = this.experience.addService({instance: d.service});
 				}
+				
+				/* If the user clicks a flag that is the same as the flag already there, then move on. 
+					If the user clicks a flag that has no sub-flags other than itself, then move on.
+					Otherwise, stay there.
+				 */			 
+				this.sitePanel.onExperienceUpdated();
+				this.inputBox.value = "";
+				$(this.inputBox).trigger('input');
+				if (moveToNewInput)
+					this.inputBox.focus();
+				else
+				{
+					d3.select(this.focusNode.parentNode)
+						.selectAll('input.tag')
+						.filter(function(d) { return d == newDatum; })
+						.node().focus();
+				}
+				unblockClick();
 			}
 			catch(err)
 			{
