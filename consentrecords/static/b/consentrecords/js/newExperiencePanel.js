@@ -1183,7 +1183,8 @@ var TagSearchView = (function() {
 		else
 		{
 			var types = ["Job", 
-						 "School", 
+						 "School",
+						 "Class", 
 						 "Interest", 
 						 "Skills", 
 						 "Internship", 
