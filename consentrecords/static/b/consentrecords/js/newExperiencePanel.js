@@ -482,14 +482,14 @@ var Experience = (function() {
 	Experience.prototype.initPreviousDateRange = function()
 	{
 		var todayDate = getUTCTodayDate();
-		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() - 1, todayDate.getUTCMonth() + 1);
-		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear(), todayDate.getUTCMonth() + 1);
+		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear() - 1, getMonthString(todayDate));
+		this.endDate = "{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate));
 	}
 	
 	Experience.prototype.initCurrentDateRange = function()
 	{
 		var todayDate = getUTCTodayDate();
-		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear(), todayDate.getUTCMonth() + 1);
+		this.startDate = "{0}-{1}".format(todayDate.getUTCFullYear(), getMonthString(todayDate));
 		this.endDate = "";
 	}
 	
@@ -3079,7 +3079,7 @@ var NewExperiencePanel = (function () {
 			(function()
 			 {
 				var todayDate = getUTCTodayDate();
-				return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, todayDate.getUTCMonth() + 1);
+				return "{0}-{1}".format(todayDate.getUTCFullYear() - 100, getMonthString(todayDate));
 			 })();
 		
 		var optionPanel = panel2Div.append('section')
