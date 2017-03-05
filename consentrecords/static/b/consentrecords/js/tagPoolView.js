@@ -197,19 +197,24 @@ var TagPoolView = (function () {
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
 		/* If it was visible and is not visible, animate opacity to 0 */
+		/* Calculate all of the groups before moving any of them so that subsequent sets are properly calculated. */
 		
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) == 0; })
+		var hiddenG = g.filter(function(fd) { return parseFloat($(this).css('opacity')) < 1; });
+		var movingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   (fd.visible === undefined || fd.visible); });
+		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   !(fd.visible === undefined || fd.visible); });
+		hiddenG
 			.interrupt().attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
 			.transition().duration(duration)
 			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 			
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
-									   (fd.visible === undefined || fd.visible); })
+		movingG
 			.interrupt().transition().duration(duration)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
+			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
+			.attr('opacity', 1.0);
 		 
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
-									   !(fd.visible === undefined || fd.visible); })
+		hidingG
 			.interrupt().transition().duration(duration)
 			.style('opacity', 0.0)
 			.each('end', function()
