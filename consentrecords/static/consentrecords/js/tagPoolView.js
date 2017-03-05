@@ -29,8 +29,6 @@ var Service = (function() {
 		Wellness: 6,
 	};
 	
-	Service.prototype.columnPriorities = [0, 2, 4, 1, 3, 5, 6, 7];
-	
 	Service.prototype.getStageDescription = function(stage)
 	{
 		var stageDescription = stage && stage.getDescription();
@@ -75,6 +73,18 @@ var Service = (function() {
 		return PathGuides.data[column].fontColor;
 	}
 	
+	Service.prototype.flagColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].flagColor;
+	}
+	
+	Service.prototype.poleColor = function()
+	{
+		var column = this.getColumn();
+		return PathGuides.data[column].poleColor;
+	}
+	
 	Service.prototype.getDescription = function()
 	{
 		return this.service.getDescription();
@@ -85,7 +95,7 @@ var Service = (function() {
 	{
 		if (this.service)
 		{
-			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^])/, "\$1"), "i");
+			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			if (re.test(this.service.getDescription()))
 				return true;
 			
@@ -121,8 +131,8 @@ var TagPoolView = (function () {
 	TagPoolView.prototype.div = null;
 	TagPoolView.prototype.svg = null;
 	
-	TagPoolView.prototype.searchFlagHSpacing = 15;
-	TagPoolView.prototype.searchFlagVSpacing = 1.0;
+	TagPoolView.prototype.flagHSpacing = 15;
+	TagPoolView.prototype.flagVSpacing = 1.0;
 	TagPoolView.prototype.flagHeightEM = 2.333;
 	TagPoolView.prototype.emToPX = 11;
 
@@ -141,7 +151,7 @@ var TagPoolView = (function () {
 	{
 		var _this = this;
 
-		var deltaY = this.flagHeightEM + this.searchFlagVSpacing;
+		var deltaY = this.flagHeightEM + this.flagVSpacing;
 		var startX = 0;
 		var nextY = 0;
 		var nextX = 0;
@@ -159,7 +169,7 @@ var TagPoolView = (function () {
 						fd.x = nextX;
 						nextX += thisSpacing;
 					}
-					nextX += _this.searchFlagHSpacing;
+					nextX += _this.flagHSpacing;
 				}
 				
 				fd.y = nextY;
@@ -187,39 +197,58 @@ var TagPoolView = (function () {
 		/* If it wasn't visible, transform instantly and animate its opacity to 1. */
 		/* If it was visible and it is still visible, animate its position. */
 		/* If it was visible and is not visible, animate opacity to 0 */
+		/* Calculate all of the groups before moving any of them so that subsequent sets are properly calculated. */
 		
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) == 0; })
+		var hiddenG = g.filter(function(fd) { return parseFloat($(this).css('opacity')) < 1; });
+		var movingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   (fd.visible === undefined || fd.visible); });
+		var hidingG = g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
+									   !(fd.visible === undefined || fd.visible); });
+		hiddenG
 			.interrupt().attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
 			.transition().duration(duration)
 			.style('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
 			
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
-									   (fd.visible === undefined || fd.visible); })
+		movingG
 			.interrupt().transition().duration(duration)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
+			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); })
+			.attr('opacity', 1.0);
 		 
-		g.filter(function(fd) { return parseInt($(this).css('opacity')) != 0 && 
-									   !(fd.visible === undefined || fd.visible); })
+		hidingG
 			.interrupt().transition().duration(duration)
-			.style('opacity', 0.0);
+			.style('opacity', 0.0)
+			.each('end', function()
+				{
+					d3.select(this).attr('transform',
+						function(fd) { return "translate({0},{1})".format(fd.x, fd.y * fd.emToPX); });
+				});
 	}
 	
-	TagPoolView.prototype.filterFlags = function(filteringFunction, filterText)
+	TagPoolView.prototype.setFlagVisibles = function()
 	{
 		var g = this.flags();
-		
-		g.each(filteringFunction);
+		g.each(function(fs) { fs.visible = undefined; });
+	}
+	
+	TagPoolView.prototype.filterFlags = function(filterText)
+	{
+		this.setFlagVisibles();
 			
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
-		
+		var inputRegExps = inputTexts.map(function(s)
+			{
+				return new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
+			});
+			
 		if (inputTexts.length > 0)
 		{
-			g.each(function(fs)
+			this.flags().each(function(fs)
 				{
-					if (!inputTexts.reduce(function(a, b)
-						{
-							return a && fs.contains(b);
-						}, true))
+					if (!fs.contains(filterText.toLocaleUpperCase()) &&
+						!inputRegExps.reduce(function(a, b)
+							{
+								return a && b.test(fs.getDescription());
+							}, true))
 						fs.visible = false;
 				});
 		}
@@ -227,7 +256,8 @@ var TagPoolView = (function () {
 	
 	TagPoolView.prototype.appendFlag = function(g)
 	{
-		g.classed('flag', true);
+		g.classed('flag', true)
+		 .style('opacity', '0');
 		
 		g.append('line').classed('flag-pole', true)
 			.attr('x1', 1.5)

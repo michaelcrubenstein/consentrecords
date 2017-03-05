@@ -51,6 +51,12 @@ function getUTCTodayDate()
 	return new Date(Date.UTC(startMinDate.getFullYear(), startMinDate.getMonth(), startMinDate.getDate(), 0, 0, 0));
 }
 
+function getMonthString(date)
+{
+	var s = (date.getUTCMonth() + 1).toString();
+	return (s.length == 1) ? "0" + s : s;
+}
+
 function getStartDate(d)
 {
 	return d.getDatum("Start");

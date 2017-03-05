@@ -57,20 +57,25 @@ var FlagController = (function() {
 	
 	FlagController.prototype.getColumn = function()
 	{
-		var minColumn = Service.prototype.columnPriorities[Service.prototype.columnPriorities.length - 1];
+		var minColumn = PathGuides.data.length - 1;
+		var maxColumn = minColumn;
 		
 		var offering = this.experience.getValue("Offering");
 		if (offering && offering.getInstanceID())
 		{
 			if (!offering.areCellsLoaded())
-				throw ("Runtime error: offering data is not loaded");
+				throw new Error("Runtime error: offering data is not loaded");
 				
 			var services = offering.getCell("Service");
 			minColumn = services.data.map(function(s) {
 					return new Service(s).getColumn();
 				})
 				.reduce(function(a, b) {
-					return a < b ? a : b; }, minColumn);
+					if (a < maxColumn)
+						return a;
+					else
+						return b;
+				}, minColumn);
 		}
 		
 		var service = this.experience.getCell("Service");
@@ -80,7 +85,11 @@ var FlagController = (function() {
 						return new Service(s).getColumn();
 					})
 					.reduce(function(a, b) {
-						return a < b ? a : b; }, minColumn);
+						if (a < maxColumn)
+							return a;
+						else
+							return b;
+					}, minColumn);
 		}
 		return minColumn;
 	}
