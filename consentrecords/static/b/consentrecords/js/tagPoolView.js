@@ -95,7 +95,7 @@ var Service = (function() {
 	{
 		if (this.service)
 		{
-			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^])/, "\$1"), "i");
+			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			if (re.test(this.service.getDescription()))
 				return true;
 			
@@ -232,7 +232,7 @@ var TagPoolView = (function () {
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
 		var inputRegExps = inputTexts.map(function(s)
 			{
-				return new RegExp("\\b" + s.replace(/([\.\\\/\^])/, "\$1"), "i");
+				return new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			});
 			
 		if (inputTexts.length > 0)
