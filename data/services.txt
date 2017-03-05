@@ -866,9 +866,8 @@ Service
     Service: Be a Coach
 Service
     _name: en - French
-    Stage: Skills
     Service: French
-    Service: Skills
+    Service: Interest
 Service
     _name: en - French Class
     Stage: Studying
@@ -877,9 +876,8 @@ Service
     Service: Class
 Service
     _name: en - German
-    Stage: Skills
     Service: German
-    Service: Skills
+    Service: Interest
 Service
     _name: en - German Class
     Stage: Studying
@@ -1491,8 +1489,8 @@ Service
     Service: Class
 Service
     _name: en - Spanish
-    Stage: Skills
     Service: Spanish
+    Service: Interest
 Service
     _name: en - Spanish Class
     Stage: Studying
