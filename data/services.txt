@@ -15,8 +15,6 @@ Service
 Service
     _name: en - Architecture Class
 Service
-    _name: en - Architecture Job
-Service
     _name: en - Art
 Service
     _name: en - Art Class
@@ -105,6 +103,8 @@ Service
 Service
     _name: en - Construction Training
 Service
+    _name: en - Consultant
+Service
     _name: en - Cycling
 Service
     _name: en - Dance
@@ -135,6 +135,8 @@ Service
 Service
     _name: en - English Class
 Service
+    _name: en - English Degree
+Service
     _name: en - English Teacher
 Service
     _name: en - Entrepreneurship
@@ -148,6 +150,12 @@ Service
     _name: en - Extra-Curricular Activity
 Service
     _name: en - Field Hockey
+Service
+    _name: en - Finance
+Service
+    _name: en - Finance Degree
+Service
+    _name: en - Finance Job
 Service
     _name: en - Floor Hockey
 Service
@@ -173,6 +181,8 @@ Service
 Service
     _name: en - Government
 Service
+    _name: en - Government Job
+Service
     _name: en - Grade 1
 Service
     _name: en - Grade 10
@@ -197,6 +207,8 @@ Service
 Service
     _name: en - Grade 9
 Service
+    _name: en - Graduate School
+Service
     _name: en - Guitar
 Service
     _name: en - Guitar Lessons
@@ -211,7 +223,11 @@ Service
 Service
     _name: en - History Class
 Service
+    _name: en - History Degree
+Service
     _name: en - History Teacher
+Service
+    _name: en - Home
 Service
     _name: en - Hospitality
 Service
@@ -232,6 +248,8 @@ Service
     _name: en - Interior Designer
 Service
     _name: en - Internship
+Service
+    _name: en - Investor
 Service
     _name: en - Japanese
 Service
@@ -271,7 +289,11 @@ Service
 Service
     _name: en - Martial Arts
 Service
+    _name: en - Master of Business Administration
+Service
     _name: en - Math
+Service
+    _name: en - Math Degree
 Service
     _name: en - Math Teacher
 Service
@@ -285,11 +307,17 @@ Service
 Service
     _name: en - Music Teacher
 Service
+    _name: en - Non-profit Founder
+Service
     _name: en - Nutrition
 Service
     _name: en - Oboe Lessons
 Service
     _name: en - Painting
+Service
+    _name: en - Painting Class
+Service
+    _name: en - Painting Job
 Service
     _name: en - Pharmacist
 Service
@@ -323,6 +351,14 @@ Service
 Service
     _name: en - Provide a Summer Job
 Service
+    _name: en - Public Policy
+Service
+    _name: en - Public Policy Degree
+Service
+    _name: en - Public Policy Job
+Service
+    _name: en - Public Policy Volunteer
+Service
     _name: en - Python Coding Skills
 Service
     _name: en - Racquetball
@@ -350,6 +386,8 @@ Service
     _name: en - Soccer Coach
 Service
     _name: en - Social Work
+Service
+    _name: en - Sociology
 Service
     _name: en - Softball
 Service
@@ -446,8 +484,6 @@ Service
     Service: Architecture Class
     Service: Architecture
     Service: Class
-Service
-    _name: en - Architecture Job
 Service
     _name: en - Art
     Stage: Whatever
@@ -671,6 +707,10 @@ Service
     Service: Construction
     Service: Construction Training
 Service
+    _name: en - Consultant
+    Service: Consultant
+    Service: Job
+Service
     _name: en - Cycling
     Service: Cycling
     Service: Exercise
@@ -743,6 +783,13 @@ Service
     Service: English Class
     Service: Class
 Service
+    _name: en - English Degree
+    Stage: Studying
+    Service: English Degree
+    Service: English
+    Service: Education
+    Service: School
+Service
     _name: en - English Teacher
     Stage: Teaching
     Service: English
@@ -775,6 +822,23 @@ Service
     Service: Field Hockey
     Service: Exercise
     Service: Interest
+Service
+    _name: en - Finance
+    Service: Finance
+    Service: Interest
+Service
+    _name: en - Finance Degree
+    Stage: Studying
+    Service: Finance Degree
+    Service: Finance
+    Service: Education
+    Service: School
+Service
+    _name: en - Finance Job
+    Stage: Working
+    Service: Finance Job
+    Service: Job
+    Service: Finance
 Service
     _name: en - Floor Hockey
     Service: Floor Hockey
@@ -834,6 +898,11 @@ Service
     _name: en - Government
     Service: Government
     Service: Interest
+Service
+    _name: en - Government Job
+    Service: Government Job
+    Service: Government
+    Service: Job
 Service
     _name: en - Grade 1
     Organization Label: en - District
@@ -931,6 +1000,13 @@ Service
     Service: School
     Service: Grade 9
 Service
+    _name: en - Graduate School
+    Offering Label: en - Degree
+    Stage: Studying
+    Service: Graduate School
+    Service: Education
+    Service: School
+Service
     _name: en - Guitar
     Service: Guitar
     Service: Music Performance
@@ -969,6 +1045,13 @@ Service
     Service: History
     Service: Class
 Service
+    _name: en - History Degree
+    Stage: Studying
+    Service: History Degree
+    Service: History
+    Service: Education
+    Service: School
+Service
     _name: en - History Teacher
     Stage: Teaching
     Service: History Teacher
@@ -976,6 +1059,11 @@ Service
     Service: Teacher
     Service: Education Job
     Service: Job
+Service
+    _name: en - Home
+    Stage: Housing
+    Service: Home
+    Service: Housing
 Service
     _name: en - Hospitality
     Service: Hospitality
@@ -1024,6 +1112,10 @@ Service
     Stage: Working
     Service: Internship
 Service
+    _name: en - Investor
+    Service: Investor
+    Service: Job
+Service
     _name: en - Japanese
     Service: Japanese
 Service
@@ -1053,6 +1145,7 @@ Service
     Site Label: en - School
     Offering Label: en - Class
     Service: Jump Year to Grade 9
+    Service: School
 Service
     _name: en - Karate
     Service: Karate
@@ -1115,9 +1208,24 @@ Service
     Service: Exercise
     Service: Interest
 Service
+    _name: en - Master of Business Administration
+    Offering Label: en - Degree
+    Stage: Studying
+    Service: Master of Business Administration
+    Service: Graduate School
+    Service: Education
+    Service: School
+Service
     _name: en - Math
     Service: Math
     Service: Interest
+Service
+    _name: en - Math Degree
+    Stage: Studying
+    Service: Math Degree
+    Service: Math
+    Service: Education
+    Service: School
 Service
     _name: en - Math Teacher
     Stage: Teaching
@@ -1153,8 +1261,13 @@ Service
     Service: Job
     Service: Education Job
 Service
+    _name: en - Non-profit Founder
+    Service: Non-profit Founder
+    Service: Job
+Service
     _name: en - Nutrition
     Service: Nutrition
+    Service: Interest
 Service
     _name: en - Oboe Lessons
     Stage: Training
@@ -1164,6 +1277,21 @@ Service
 Service
     _name: en - Painting
     Service: Painting
+    Service: Art
+Service
+    _name: en - Painting Class
+    Stage: Studying
+    Service: Painting Class
+    Service: Painting
+    Service: Class
+    Service: Art Class
+    Service: Art
+Service
+    _name: en - Painting Job
+    Stage: Working
+    Service: Painting Job
+    Service: Painting
+    Service: Job
 Service
     _name: en - Pharmacist
     Stage: Working
@@ -1247,6 +1375,29 @@ Service
     _name: en - Provide a Summer Job
     Service: Provide a Summer Job
 Service
+    _name: en - Public Policy
+    Service: Public Policy
+    Service: Interest
+Service
+    _name: en - Public Policy Degree
+    Stage: Studying
+    Service: Public Policy Degree
+    Service: Public Policy
+    Service: Education
+    Service: School
+Service
+    _name: en - Public Policy Job
+    Stage: Working
+    Service: Public Policy Job
+    Service: Public Policy
+    Service: Job
+Service
+    _name: en - Public Policy Volunteer
+    Stage: Volunteering
+    Service: Public Policy Volunteer
+    Service: Public Policy
+    Service: Volunteer
+Service
     _name: en - Python Coding Skills
     Stage: Skills
     Service: Python Coding Skills
@@ -1312,6 +1463,10 @@ Service
     _name: en - Social Work
     Service: Social Work
 Service
+    _name: en - Sociology
+    Service: Sociology
+    Service: Interest
+Service
     _name: en - Softball
     Service: Softball
     Service: Exercise
@@ -1348,6 +1503,7 @@ Service
     Stage: Teaching
     Service: Spanish Teacher
     Service: Spanish
+    Service: Teacher
     Service: Education Job
     Service: Job
 Service
@@ -1375,6 +1531,7 @@ Service
     _name: en - Teacher
     Stage: Working
     Service: Teacher
+    Service: Education Job
     Service: Job
 Service
     _name: en - Teen Programming
