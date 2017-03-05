@@ -1224,6 +1224,10 @@ var TagSearchView = (function() {
 		{
 			try
 			{
+				/* If the user clicks a flag that is the same as the flag already there, then move on. 
+					If the user clicks a flag that has no sub-flags other than itself, then move on.
+					Otherwise, stay there.
+				 */	
 				var d3Focus = d3.select(this.focusNode);
 				var moveToNewInput = !this.hasSubService(d.service);
 				var newDatum;
@@ -1246,15 +1250,13 @@ var TagSearchView = (function() {
 					newDatum = this.experience.addService({instance: d.service});
 				}
 				
-				/* If the user clicks a flag that is the same as the flag already there, then move on. 
-					If the user clicks a flag that has no sub-flags other than itself, then move on.
-					Otherwise, stay there.
-				 */			 
-				this.sitePanel.onExperienceUpdated();
+				this.sitePanel.updateInputs();
 				this.inputBox.value = "";
-				$(this.inputBox).trigger('input');
 				if (moveToNewInput)
+				{
+					$(this.inputBox).trigger('input');
 					this.inputBox.focus();
+				}
 				else
 				{
 					d3.select(this.focusNode.parentNode)
