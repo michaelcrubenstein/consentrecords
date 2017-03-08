@@ -250,6 +250,7 @@ panel.view .panel-fill>header
 button {
 	appearance: none;
 	-webkit-appearance: none;
+	-moz-appearance:none;
 	background: transparent;
 	border: 0;
 	padding: 0;
@@ -593,6 +594,7 @@ input[type="date"]
 {
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
+    appearance: textfield;
 	height: 34px;
 	border: 0px;
 }
