@@ -112,7 +112,7 @@
 	panel.new-experience-panel section.tags input.tag {
 		display: inline-block;
 		background-color: white;
-		color: #2C55CC;
+		color: #222;
 		border-style: solid;
 		border-width: 0px;
 		border-left: solid 3px;
@@ -127,30 +127,22 @@
 		height: 25px;
 	}
 	
-	panel.new-experience-panel section.tags input.tag:last-of-type {
-		margin-right: 0px;
-	}
-	
-	
 	panel.new-experience-panel section.tags input.tag:focus {
 		display: inline-block;
 		background-color: white;
-		color: #2C55CC;
+		color: #222;
 		border-style: solid;
 		border-width: 1px;
 		outline: none;
 		padding-left: 3px;
 	}
 	
-	/* draw any selected text yellow on red background */
-	panel.new-experience-panel section.tags input.tag::-moz-selection {
+	panel.new-experience-panel section.tags input.tag::-moz-selection,
+	panel.new-experience-panel section.tags input.tag::selection
+	{
 	  color: white; background: #2C55CC;
 	}
 
-	panel.new-experience-panel section.tags input.tag::selection {
-	  color: white; background: #2C55CC;
-	}
-	
 	panel.new-experience-panel section.tags span.textWidth {
 		display: inline-block;
 		border-style: solid;
@@ -164,6 +156,13 @@
 	
 	panel.new-experience-panel section.tags input.tag:focus {
 		border-color: #ddd;
+	}
+	
+	panel.new-experience-panel section.tags button {
+		font-size: 11px;
+		font-weight: 600;
+		padding-left: 3px;
+		padding-right: 1.5px;
 	}
 	
 	panel.new-experience-panel section.cell.unique input {
