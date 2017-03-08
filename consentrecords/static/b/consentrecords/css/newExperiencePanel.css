@@ -135,6 +135,10 @@
 		border-width: 1px;
 		outline: none;
 		padding-left: 3px;
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		border-radius: 0px;
 	}
 	
 	panel.new-experience-panel section.tags input.tag::-moz-selection,
@@ -168,6 +172,7 @@
 	panel.new-experience-panel section.cell.unique input {
 		-webkit-appearance: none;
 		-moz-appearance: none;
+		appearance: none;
 		background-color: white;
 		border: none;
 		outline: none;
