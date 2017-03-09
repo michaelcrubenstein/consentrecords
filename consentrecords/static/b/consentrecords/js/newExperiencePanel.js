@@ -1227,11 +1227,11 @@ var TagSearchView = (function() {
 					If the user clicks a flag that has no sub-flags other than itself, then move on.
 					Otherwise, stay there.
 				 */	
-				var d3Focus = d3.select(this.focusNode);
+				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
 				var moveToNewInput = !this.hasSubService(d.service);
 				var newDatum;
 				
-				if (d3Focus.datum())
+				if (d3Focus && d3Focus.datum())
 				{
 					newDatum = d3Focus.datum();
 					if (newDatum.pickedObject == d.service)
@@ -2293,7 +2293,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.previousExperienceLabel = "Done";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Something I'm Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "My Goal";
-	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
+	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a tag or a title.';
 	NewExperiencePanel.prototype.firstTagHelp = 'What type of experience is this?';
 	NewExperiencePanel.prototype.otherTagHelp = 'What other tag goes with this experience?';
 	NewExperiencePanel.prototype.organizationDefaultPlaceholder = 'Organization (Optional)';
@@ -2505,11 +2505,17 @@ var NewExperiencePanel = (function () {
 			{
 				_this.setTagInputWidth(this);
 				_this.setPlaceholders();
+				if (!_this.inMouseDown)
+				{
+					_this.checkTagInput();
+					_this.showAddTagButton();
+				}
 			})
 			.keypress(function(e) {
 				if (e.which == 13)
 				{
 					_this.checkTagInput();
+					_this.showAddTagButton();
 					e.preventDefault();
 				}
 			})
@@ -2524,11 +2530,13 @@ var NewExperiencePanel = (function () {
 					else if (instance && input.node().value != instance.getDescription())
 					{
 						_this.checkTagInput();
+						_this.showAddTagButton();
 						/* Do not prevent default. */
 					}
 					else
 					{
 						_this.checkTagInput();
+						_this.showAddTagButton();
 						_this.tagSearchView.constrainTagFlags();
 						event.preventDefault();
 					}
@@ -3400,6 +3408,17 @@ var NewExperiencePanel = (function () {
 					_this.allServices = newInstances;
 					var services = newInstances.map(function(s) { return new Service(s); });
 					_this.tagSearchView.appendFlags(services)
+						.on('mousedown', function()
+							{
+								/* Set this variable so that the focusout event of an active 
+									tag text box doesn't over-process.
+								 */
+								_this.inMouseDown = true;
+							})
+						.on('mouseup', function()
+							{
+								_this.inMouseDown = false;
+							})
 						.on('click', function(s)
 							{
 								if (s.visible === undefined || s.visible)
@@ -3421,8 +3440,6 @@ var NewExperiencePanel = (function () {
 						var tagInput = _this.mainDiv.select('.tags-container>input.tag');
 						tagInput.node().focus();
 					}
-				
-
 				},
 				cr.syncFail);
 		
