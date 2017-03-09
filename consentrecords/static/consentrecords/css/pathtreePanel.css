@@ -241,6 +241,8 @@ panel.idea > footer button.answer:only-of-type {
 
 panel.idea > button.close {
 	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
 	color: white;
 	background-color: #2C55CC;
 	position: absolute;

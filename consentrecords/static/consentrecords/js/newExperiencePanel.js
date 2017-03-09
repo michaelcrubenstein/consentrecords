@@ -1119,7 +1119,6 @@ var TagSearchView = (function() {
 	TagSearchView.prototype.reveal = null;
 	TagSearchView.prototype.focusNode = null;
 	TagSearchView.prototype.sitePanel = null;
-	TagSearchView.prototype.inputBox = null;
 	TagSearchView.prototype.experience = null;
 	
 	TagSearchView.prototype.minRevealedHeight = 118;
@@ -1228,11 +1227,11 @@ var TagSearchView = (function() {
 					If the user clicks a flag that has no sub-flags other than itself, then move on.
 					Otherwise, stay there.
 				 */	
-				var d3Focus = d3.select(this.focusNode);
+				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
 				var moveToNewInput = !this.hasSubService(d.service);
 				var newDatum;
 				
-				if (d3Focus.datum())
+				if (d3Focus && d3Focus.datum())
 				{
 					newDatum = d3Focus.datum();
 					if (newDatum.pickedObject == d.service)
@@ -1251,15 +1250,17 @@ var TagSearchView = (function() {
 				}
 				
 				this.sitePanel.updateInputs();
-				this.inputBox.value = "";
+				this.sitePanel.showTags();
+
+				var container = this.sitePanel.mainDiv.select('.tags-container');
 				if (moveToNewInput)
 				{
-					$(this.inputBox).trigger('input');
-					this.inputBox.focus();
+					var newInput = this.sitePanel.appendTag(container, null);
+					newInput.node().focus();
 				}
 				else
 				{
-					d3.select(this.focusNode.parentNode)
+					container
 						.selectAll('input.tag')
 						.filter(function(d) { return d == newDatum; })
 						.node().focus();
@@ -1275,14 +1276,12 @@ var TagSearchView = (function() {
 		d3.event.preventDefault();
 	}
 	
-	function TagSearchView(container, sitePanel, experience, tagInput)
+	function TagSearchView(container, sitePanel, experience)
 	{
 		TagPoolView.call(this, container, 'pool-container');
 		
 		this.sitePanel = sitePanel;
 		this.experience = experience;
-		this.inputBox = tagInput.node();
-		this.tagInput = tagInput;
 		
 		this.reveal = new VerticalReveal(container.node());
 	}
@@ -2294,7 +2293,7 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.previousExperienceLabel = "Done";
 	NewExperiencePanel.prototype.currentExperienceLabel = "Something I'm Doing Now";
 	NewExperiencePanel.prototype.goalLabel = "My Goal";
-	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a name or a tag.';
+	NewExperiencePanel.prototype.nameOrTagRequiredMessage = 'Your experience needs at least a tag or a title.';
 	NewExperiencePanel.prototype.firstTagHelp = 'What type of experience is this?';
 	NewExperiencePanel.prototype.otherTagHelp = 'What other tag goes with this experience?';
 	NewExperiencePanel.prototype.organizationDefaultPlaceholder = 'Organization (Optional)';
@@ -2434,14 +2433,28 @@ var NewExperiencePanel = (function () {
 			{
 				var s = new Service(service);
 				pathGuide = PathGuides.data[s.getColumn()];
+		
+				d3.select(node)
+					.style('background-color', pathGuide.flagColor)
+					.style('border-color', pathGuide.poleColor)
+					.style('color', pathGuide.fontColor);
 			}
-			else
+			else if (d)
+			{
 				pathGuide = PathGuides.data[PathGuides.data.length - 1];
 		
-			d3.select(node)
-				.style('background-color', pathGuide.flagColor)
-				.style('border-color', pathGuide.poleColor)
-				.style('color', pathGuide.fontColor);
+				d3.select(node)
+					.style('background-color', pathGuide.flagColor)
+					.style('border-color', pathGuide.poleColor)
+					.style('color', pathGuide.fontColor);
+			}
+			else
+			{
+				d3.select(node)
+					.style('background-color', null)
+					.style('border-color', null)
+					.style('color', null);
+			}
 		}
 	}
 	
@@ -2456,10 +2469,10 @@ var NewExperiencePanel = (function () {
 	
 	NewExperiencePanel.prototype.appendTag = function(container, instance)
 	{
-		var input = container.insert('input', 'input:last-of-type')
+		var input = container.insert('input', 'button')
 			.datum(instance)
 			.classed('tag', true)
-			.attr('placeholder', instance ? 'Tag' : 'New Tag')
+			.attr('placeholder', 'Tag')
 			.attr('value', instance && instance.getDescription());
 			
 		$(input.node()).on('click', function(e)
@@ -2473,8 +2486,12 @@ var NewExperiencePanel = (function () {
 		$(input.node()).on('input', function()
 			{
 				/* Check for text changes for all input boxes.  */
-				if (this == _this.tagSearchView.focusNode)
+				if (this == document.activeElement)
 				{
+					if (!document.activeElement.value)
+						_this.hideAddTagButton();
+					else
+						_this.showAddTagButton();
 					_this.tagSearchView.constrainTagFlags();
 				}
 				_this.setTagInputWidth(this);
@@ -2488,11 +2505,17 @@ var NewExperiencePanel = (function () {
 			{
 				_this.setTagInputWidth(this);
 				_this.setPlaceholders();
+				if (!_this.inMouseDown)
+				{
+					_this.checkTagInput();
+					_this.showAddTagButton();
+				}
 			})
 			.keypress(function(e) {
 				if (e.which == 13)
 				{
 					_this.checkTagInput();
+					_this.showAddTagButton();
 					e.preventDefault();
 				}
 			})
@@ -2507,17 +2530,21 @@ var NewExperiencePanel = (function () {
 					else if (instance && input.node().value != instance.getDescription())
 					{
 						_this.checkTagInput();
+						_this.showAddTagButton();
 						/* Do not prevent default. */
 					}
 					else
 					{
 						_this.checkTagInput();
+						_this.showAddTagButton();
 						_this.tagSearchView.constrainTagFlags();
 						event.preventDefault();
 					}
 				}
 			});
 
+		this.setTagInputWidth(input.node());
+		
 		return input;
 	}
 	
@@ -2570,7 +2597,7 @@ var NewExperiencePanel = (function () {
 					})
 			}));
 		
-		tagDivs.filter(function(d) { return d != null && tags.indexOf(d) < 0; } ).remove();
+		tagDivs.filter(function(d) { return d == null || tags.indexOf(d) < 0; } ).remove();
 		
 		var ds = tagDivs.data();
 		for (var i = 0; i < tags.length; ++i)
@@ -2584,8 +2611,8 @@ var NewExperiencePanel = (function () {
 			{
 				input = tagDivs.filter(function(d) { return d == tags[i]; });
 				input.node().value = tags[i].getDescription();
+				this.setTagInputWidth(input.node());
 			}
-			this.setTagInputWidth(input.node());
 		}
 	}
 	
@@ -2637,13 +2664,13 @@ var NewExperiencePanel = (function () {
 		this.siteInput.node().value = this.experience.siteName;
 		this.offeringInput.node().value = this.experience.offeringName;
 
-		this.showTags();
 		this.setPlaceholders();
 	}
 
 	NewExperiencePanel.prototype.onExperienceUpdated = function()
 	{
 		this.updateInputs();
+		this.showTags();
 		this.calculateHeight();
 	}
 	
@@ -2767,6 +2794,10 @@ var NewExperiencePanel = (function () {
 						this.value = "";
 						$(this).attr('placeholder', $(this).attr('placeholder'));
 					}
+					else
+					{
+						$(this).remove();
+					}
 				}
 			});
 			
@@ -2801,6 +2832,7 @@ var NewExperiencePanel = (function () {
 			this.tagSearchView.reveal.isVisible())
 		{
 			this.checkTagInput();
+			this.showAddTagButton();
 			this.tagSearchView.hideSearch(done);
 			return true;
 		}
@@ -2830,6 +2862,35 @@ var NewExperiencePanel = (function () {
 			this.tagHelp.text(this.otherTagHelp);
 	}
 	
+	NewExperiencePanel.prototype.hideAddTagButton = function()
+	{
+		var button = this.mainDiv.select('.tags-container>button');
+		if (button.style('display') != 'none')
+		{
+			button.interrupt().transition()
+				.style('opacity', 0)
+				.each('end', function()
+					{
+						button.style('display', 'none');
+					});
+		}
+	}
+	
+	NewExperiencePanel.prototype.showAddTagButton = function()
+	{
+		var button = this.mainDiv.select('.tags-container>button');
+		if (button.style('display') == 'none')
+		{
+			button.style('display', null);
+			button.interrupt().transition()
+				.style('opacity', 1)
+				.each('end', function()
+					{
+						button.style('display', null);
+					});
+		}
+	}
+	
 	NewExperiencePanel.prototype.onFocusInTagInput = function(inputNode)
 	{
 		var _this = this;
@@ -2842,6 +2903,11 @@ var NewExperiencePanel = (function () {
 				{
 					_this.setTagHelp();
 					_this.tagSearchView.constrainTagFlags();
+					if (!inputNode.value)
+						_this.hideAddTagButton();
+					else
+						_this.showAddTagButton();
+						
 					_this.tagSearchView.showSearch(200, undefined, function()
 						{
 							var oldTop = $(_this.tagsSection.node()).offset().top;
@@ -2857,6 +2923,11 @@ var NewExperiencePanel = (function () {
 			this.checkTagInput(inputNode);
 			this.setTagHelp();
 			this.tagSearchView.constrainTagFlags();
+			if (!inputNode.value)
+				_this.hideAddTagButton();
+			else
+				_this.showAddTagButton();
+				
 			if (!this.tagSearchView.reveal.isVisible())
 			{
 				this.tagSearchView.showSearch();
@@ -3066,15 +3137,23 @@ var NewExperiencePanel = (function () {
 		
 		var tagsContainer = tagsTopContainer.append('span')
 			.classed('tags-container', true);
-		
-		this.tagInput = this.appendTag(tagsContainer, null);
+			
+		tagsContainer.append('button')
+			.classed('site-active-text', true)
+			.text('Add Tag')
+			.on('click', function()
+				{
+					_this.checkTagInput(null);
+					var tagInput = _this.appendTag(tagsContainer, null);
+					tagInput.node().focus();
+				});
 		
 		searchContainer = this.tagsSection.append('div');
 		
 		this.tagHelp = searchContainer.append('div').classed('tag-help', true);
 		this.tagHelp.text(this.firstTagHelp);
 			
-		this.tagSearchView = new TagSearchView(searchContainer, this, experience, this.tagInput);
+		this.tagSearchView = new TagSearchView(searchContainer, this, experience);
 												
 		/* Code starting for the date range. */
 		var birthday = experience.path.getDatum("Birthday") ||
@@ -3299,8 +3378,6 @@ var NewExperiencePanel = (function () {
 		
 		$(this.node()).one("revealing.cr", function()
 			{
-				_this.setTagInputWidth(_this.tagInput.node());
-
 				_this.showTags();
 				
 				if (phase == 'Current')
@@ -3331,6 +3408,17 @@ var NewExperiencePanel = (function () {
 					_this.allServices = newInstances;
 					var services = newInstances.map(function(s) { return new Service(s); });
 					_this.tagSearchView.appendFlags(services)
+						.on('mousedown', function()
+							{
+								/* Set this variable so that the focusout event of an active 
+									tag text box doesn't over-process.
+								 */
+								_this.inMouseDown = true;
+							})
+						.on('mouseup', function()
+							{
+								_this.inMouseDown = false;
+							})
 						.on('click', function(s)
 							{
 								if (s.visible === undefined || s.visible)
@@ -3341,8 +3429,17 @@ var NewExperiencePanel = (function () {
 					
 					/* Have to hide after appending the flags or the metrics aren't calculated. */
 					_this.tagSearchView.reveal.hide();
-				
-					_this.tagSearchView.inputBox.focus();
+
+					if (_this.experience.services.length == 0)
+					{
+						var tagInput = _this.appendTag(tagsContainer, null);
+						tagInput.node().focus();
+					}
+					else
+					{
+						var tagInput = _this.mainDiv.select('.tags-container>input.tag');
+						tagInput.node().focus();
+					}
 				},
 				cr.syncFail);
 		
