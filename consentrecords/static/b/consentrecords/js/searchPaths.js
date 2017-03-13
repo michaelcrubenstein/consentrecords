@@ -79,7 +79,7 @@ var SearchPathsResultsView = (function () {
 	SearchPathsResultsView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		
-		if (prepareClick('click', 'other path'))
+		if (prepareClick('click', 'search result path'))
 		{
 			showPath(d, this.searchPathsPanel.node())
 				.then(function(panel)
@@ -415,10 +415,19 @@ var SearchPathsPanel = (function () {
 	{
 		var _this = this;
 		
-		$(queryFlag).animate({opacity: 0.0},
-			{done: function()
+		if (this.queryContainer.flags().size() == 1)
+		{
+			this.queryContainer.div.selectAll('span')
+ 				.interrupt().transition().duration(400)
+				.style('opacity', 1.0);
+			this.revealPanel();
+		}
+
+		return $(queryFlag).animate({opacity: 0.0})
+			.promise()
+			.done(function()
 				{
-					$(this).remove();
+					$(queryFlag).remove();
 					_this.poolContainer.flags().data().find(function(s) { return s.service == service.service; })
 						.visible = true;
 						
@@ -430,6 +439,12 @@ var SearchPathsPanel = (function () {
 					var promise = null;
 					if (_this.queryContainer.flags().size() == 0)
 						promise = _this.revealPanel();
+					else
+					{
+						promise = new $.Deferred();
+						promise.resolve();
+					}
+							
 		
 					var f = function()
 						{
@@ -438,19 +453,9 @@ var SearchPathsPanel = (function () {
 							_this.checkResultsScrolling();
 						}
 					/* Run a new search based on the query. */
-					if (promise)
-						promise.then(f);
-					else
-						f();
+					return promise.then(f);
 					
-				}});
-		if (this.queryContainer.flags().size() == 1)
-		{
-			this.queryContainer.div.selectAll('span')
- 				.interrupt().transition().duration(400)
-				.style('opacity', 1.0);
-			this.revealPanel();
-		}
+				});
 	}
 	
 	SearchPathsPanel.prototype._clearQuery = function()
@@ -535,7 +540,14 @@ var SearchPathsPanel = (function () {
 					newS.y = flagPosition.top / _this.emToPX;
 					var queryFlag = _this.queryContainer.svg.append('g')
 						.datum(newS)
-						.on('click', function(fd) { _this.onQueryFlagClicked(this, fd); })
+						.on('click', function(fd) 
+							{ 
+								if (prepareClick('click', 'remove query flag: {0}'.format(fd.getDescription())))
+								{
+									_this.onQueryFlagClicked(this, fd)
+										.done(unblockClick);
+								} 
+							})
 						.attr('transform', 
 						      function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 	
@@ -715,13 +727,16 @@ var SearchPathsPanel = (function () {
 			
 		$(this.searchInput).focusin(function(event)
 			{
-				_this.revealPanel()
-					.then(function()
-						{
-							_this.filterPool();
-							_this.poolContainer.layoutFlags();
-						});
-				//event.stopPropagation();
+				if (prepareClick('focusin', 'searchInput'))
+				{
+					_this.revealPanel()
+						.then(function()
+							{
+								_this.filterPool();
+								_this.poolContainer.layoutFlags();
+								unblockClick();
+							});
+				}
 			})
 			.click(function(event)
 			{
@@ -771,21 +786,25 @@ var SearchPathsPanel = (function () {
 			
 		svgs.on('click', function(d)
 			{
-				svgs.selectAll('circle:last-of-type')
-					.attr('opacity', 0.3);
-				d3.select(this).selectAll('circle:last-of-type')
-					.attr('opacity', 0.8);
-				svgs.selectAll('text')
-					.style('fill', '#777');
-				d3.select(this).selectAll('text')
-					.style('fill', d.color);
-					
-				/* Set the focus here so that the keyboard disappears on mobile devices. */
-				$(this).focus();
-				if (d.click)
+				if (prepareClick('click', 'category circle: {0}'.format(d.name)))
 				{
-					_this.selectedPool = d;
-					d.click.call(_this);
+					svgs.selectAll('circle:last-of-type')
+						.attr('opacity', 0.3);
+					d3.select(this).selectAll('circle:last-of-type')
+						.attr('opacity', 0.8);
+					svgs.selectAll('text')
+						.style('fill', '#777');
+					d3.select(this).selectAll('text')
+						.style('fill', d.color);
+					
+					/* Set the focus here so that the keyboard disappears on mobile devices. */
+					$(this).focus();
+					if (d.click)
+					{
+						_this.selectedPool = d;
+						d.click.call(_this);
+					}
+					unblockClick();
 				}
 			});
 			
@@ -857,7 +876,13 @@ var SearchPathsPanel = (function () {
 								 .on('click', function(s)
 									{
 										if (s.visible === undefined || s.visible)
-											_this.addFlagToQuery(this, s);
+										{
+											if (prepareClick('click', 'add query flag: {0}'.format(s.getDescription())))
+											{
+												_this.addFlagToQuery(this, s);
+												unblockClick();
+											}
+										}
 									});
 
 							_this.filterColumn = undefined;
