@@ -46,7 +46,8 @@ var Service = (function() {
 		if (this.service && this.service.getInstanceID())
 		{
 			var services = crp.getInstance(this.service.getInstanceID()).getCell("Service");
-			var s = services.data.find(function(s)
+			/* services may be null if the service has been deleted */
+			var s = services && services.data.find(function(s)
 				{
 					var stage =  s.getInstanceID() && crp.getInstance(s.getInstanceID()).getValue("Stage");
 					return _this.getStageDescription(stage);
