@@ -162,7 +162,7 @@ class Instance(dbmodels.Model):
             
         # If the field is special access, then make this and all of its children sourced to self.
         if field == terms.specialAccess and instance == terms.customAccessEnum:
-        	self.updateDescendentAccessSources(self)
+            self.updateDescendentAccessSources(self)
             
         return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
@@ -1030,7 +1030,7 @@ class Value(dbmodels.Model):
         # If the field is special access, then make this and all of its children 
         # sourced to the same source as the parent of self.
         if self.field == terms.specialAccess:
-        	self.instance.updateDescendentAccessSources(self.instance.parent and self.instance.parent.accessSource)
+            self.instance.updateDescendentAccessSources(self.instance.parent and self.instance.parent.accessSource)
             
         if self.isOriginalReference:
             self.referenceValue.deepDelete(transactionState)
@@ -1320,13 +1320,8 @@ class Terms():
             value__stringValue=TermNames.term)
 
     def getName():
-        return Instance.objects.get(typeID=terms.term,
             value__deleteTransaction__isnull=True,
-            value__field=F('id'),
-            value__stringValue=TermNames.name)
 
-    # If name is a 32 character hex string, then it is considered that ID. Otherwise,
-    # it is looked up by name.
     def __getitem__(self, name):
         try:
             if terms.isUUID(name):
@@ -1335,9 +1330,7 @@ class Terms():
                 return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
                     value__field = terms.name,
-                    value__stringValue=name)
         except Instance.DoesNotExist:
-            raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
             
     def __getattr__(self, name):
         if name == 'term':

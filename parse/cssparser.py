@@ -42,7 +42,7 @@ class parser:
                         lastString=c
                 else:
                     lastString = c
-            elif c in '#~^$|<>+':
+            elif c in '#~^$|<>+/':
                 if len(lastString) > 0:
                     a += [lastString]
                 lastString = c
@@ -61,7 +61,7 @@ class parser:
                     if len(lastString) > 0: a += [lastString]
                     lastString = c
             else:
-                if len(lastString) > 0 and lastString[-1] in ' :#~^$|<>+[()]=':
+                if len(lastString) > 0 and lastString[-1] in ' :#~^$|<>+[()]=/':
                     a += [lastString]
                     lastString = ""
                 lastString += c

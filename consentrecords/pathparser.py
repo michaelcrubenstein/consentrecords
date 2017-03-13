@@ -92,6 +92,7 @@ def _getAncestorClause(symbol, testValue):
     else:
         return _getSimpleAncestorClause(symbol, testValue)
 
+# returns a query set that matches the specified parameters.
 def _getReferenceValues(params, userInfo):
 #     print('_getReferenceValues: %s'%params)
     
@@ -112,7 +113,7 @@ def _clauseByReferenceValues(fieldNames, referenceValues):
                  value__deleteTransaction__isnull=True,
                  value__referenceValue__in=referenceValues)
 
-# Filter the resultSet according to the specified params.
+# Return a Q clause according to the specified params.
 # If the parameter list is a single item:
 #     If there is a list, then the object must contain a value with the specified field type.
 #     If there is a question mark, then this is a no-op.
@@ -160,7 +161,7 @@ def _filterClause(params, userInfo):
     else:
         raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
-# Return the filtering test based on all of the elements within a []
+# Return the Q Clause based on all of the elements within a []
 # This function factors out '|' operations within the clause into simple tests.
 def _clause(params, userInfo):
     paramClauses = []
@@ -181,6 +182,8 @@ def _clause(params, userInfo):
         return reduce(lambda q1, q2: q1 | q2, \
                       map(lambda p: _filterClause(p, userInfo), paramClauses))
 
+# Returns a duple containing a new result set based on the first "phrase" of the path 
+# and a subset of path containing everything but the first "phrase" of the path.
 def _refineResults(resultSet, path, userInfo):
 #     logger = logging.getLogger(__name__)
 #     logger.error("_refineResults(%s, %s)" % (str(resultSet), path))
@@ -218,7 +221,7 @@ def _refineResults(resultSet, path, userInfo):
         # Need to add distinct after the tests to prevent duplicates if there is
         # more than one value of the instance that matches.
         return resultSet.filter(q).distinct(), path[2:]
-    elif path[0] == '>':
+    elif path[0] == '>' or path[0] == '/':
         i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
                                     referenceValues__field=i,
@@ -278,7 +281,7 @@ def _refineResults(resultSet, path, userInfo):
         f = Instance.objects.filter(typeID__in=t,
                                     deleteTransaction__isnull=True)
         return f, path[1:]
-    else:   # Path[0] is a typeID.
+    else:   # Path[0] is the name of a type.
         i = terms[path[0]]
         f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
         return f, path[1:]
