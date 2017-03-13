@@ -1380,7 +1380,7 @@ def handleURL(request, urlPath):
             raise PermissionDenied
         return api.deleteInstances(request.user, urlPath)
     else:
-        raise Http404("api only responds to GET methods")
+        raise Http404("api only responds to GET and DELETE methods")
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
