@@ -221,7 +221,7 @@ def _refineResults(resultSet, path, userInfo):
         # Need to add distinct after the tests to prevent duplicates if there is
         # more than one value of the instance that matches.
         return resultSet.filter(q).distinct(), path[2:]
-    elif path[0] == '>':
+    elif path[0] == '>' or path[0] == '/':
         i = terms[path[1]]
         f = Instance.objects.filter(referenceValues__instance__in=userInfo.findFilter(resultSet),
                                     referenceValues__field=i,
