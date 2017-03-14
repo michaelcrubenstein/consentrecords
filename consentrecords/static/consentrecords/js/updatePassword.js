@@ -23,7 +23,7 @@ var UpdatePasswordPanel = (function () {
 			{
 				if (prepareClick('click', 'Change'))
 				{
-					username = cr.signedinUser.getDatum("_email");
+					username = cr.signedinUser.getDatum(cr.fieldNames.email);
 					if (newPasswordInput.property('value').length == 0)
 						syncFailFunction("The new password can not be blank.");
 					else if (newPasswordInput.property('value') != confirmPasswordInput.property('value'))
@@ -153,7 +153,7 @@ var UpdateUsernamePanel = (function () {
 						.classed('form-simple form-signin', true);
 		form.append('div')
 			.classed('help-block', true)
-			.text("Current Email: " + cr.signedinUser.getDatum("_email"));
+			.text("Current Email: " + cr.signedinUser.getDatum(cr.fieldNames.email));
 		
 		form.append('label').attr('for', 'id_newusername').attr('class', 'sr-only').text('New Email');
 		var newUsernameInput = form.append('input')

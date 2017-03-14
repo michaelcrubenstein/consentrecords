@@ -840,7 +840,7 @@ var PathView = (function() {
 		this.updateDetail(flags.node(), flags.datum());
 	}
 	
-	PathView.prototype._layoutYears = function(g)
+	PathView.prototype.layoutYears = function(g)
 	{
 		var _this = this;
 		
@@ -984,7 +984,7 @@ var PathView = (function() {
 			.ease("in-out")
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 
-		this._layoutYears(g);
+		this.layoutYears(g);
 	}
 	
 	/*
@@ -1127,7 +1127,7 @@ var PathLines = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 		
-		this._layoutYears(g);
+		this.layoutYears(g);
 		
 		this.setupHeights();
 		this.setupWidths();
@@ -1241,12 +1241,12 @@ var PathLines = (function() {
 	
 	PathLines.prototype.getUser = function()
 	{
-		return this.path.getValue("_user");
+		return this.path.getValue(cr.fieldNames.user);
 	}
 	
 	PathLines.prototype.setUser = function(path, editable)
 	{
-		if (path.getPrivilege() === '_find')
+		if (path.getPrivilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(path.getDescription());
 		if (this.path)
 			throw "path has already been set for this pathtree";
@@ -1391,7 +1391,7 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  "#" + this.path.getInstanceID() + '::reference(_user)::reference(Experience)', 
+		return crp.promise({path:  "#" + this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]})
 		.then(function(experiences)
 			{
@@ -1402,7 +1402,7 @@ var PathLines = (function() {
 				});
 			})
 		.then(function() {
-			return crp.promise({path: "#" + _this.path.getInstanceID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+			return crp.promise({path: "#" + _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
@@ -1437,7 +1437,7 @@ var PathlinesPanel = (function () {
 	
 	PathlinesPanel.prototype.userSettingsBadgeCount = function(user)
 	{
-		var cell = user.getCell("_access request");
+		var cell = user.getCell(cr.fieldNames.accessRequest);
 		if (cell && cell.data.length > 0)
 			return cell.data.length;
 		else
@@ -1465,7 +1465,7 @@ var PathlinesPanel = (function () {
 					d3.event.preventDefault();
 				})
 			.classed("settings", true)
-			.style("display", user.getPrivilege() == "_administer" ? null : "none")
+			.style("display", user.getPrivilege() == cr.privileges.administer ? null : "none")
 			.append("img")
 			.attr("src", settingsImagePath);
 		settingsButton.append("span")
@@ -1646,15 +1646,15 @@ var PathlinesPanel = (function () {
 				
 				_this.setupSettingsButton(settingsButton, user);
 
-				setupOnViewEventHandler(user.getCell("_access request"), "valueDeleted.cr valueAdded.cr", 
+				setupOnViewEventHandler(user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
 					_this.node(), checkSettingsBadge);
 				checkSettingsBadge();
 				
-				setupOnViewEventHandler(user.getCell("_first name"), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell("_last name"), "dataChanged.cr", _this.node(), checkTitle);
-				setupOnViewEventHandler(user.getCell("_email"), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user.getCell(cr.fieldNames.firstName), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user.getCell(cr.fieldNames.lastName), "dataChanged.cr", _this.node(), checkTitle);
+				setupOnViewEventHandler(user.getCell(cr.fieldNames.email), "dataChanged.cr", _this.node(), checkTitle);
 				
-// 				findButton.style("display", user.getPrivilege() === "_administer" ? null : "none");
+// 				findButton.style("display", user.getPrivilege() === cr.privileges.administer ? null : "none");
 				
 				this.isMinHeight = true;
 				this.handleResize();
@@ -1701,7 +1701,7 @@ var ShareOptions = (function () {
 		
 		var clipboard = new Clipboard('button.copy', {
 			text: function(trigger) {
-				return '{0}/for/{1}'.format(window.location.origin, user.getDatum("_email"));
+				return '{0}/for/{1}'.format(window.location.origin, user.getDatum(cr.fieldNames.email));
 			}});
 			
 		clipboard.on('error', function(e) {
@@ -1721,12 +1721,12 @@ var ShareOptions = (function () {
 							if (user.getInstanceID() == cr.signedinUser.getInstanceID())
 							{
 								window.location = 'mailto:?subject=My%20Pathway&body=Here is a link to my pathway: {0}/for/{1}.'
-											.format(window.location.origin, user.getDatum("_email"));
+											.format(window.location.origin, user.getDatum(cr.fieldNames.email));
 							}
 							else
 							{
 								window.location = 'mailto:?subject=Pathway for {0}&body=Here is a link to the pathway for {0}: {1}/for/{2}.'
-											.format(getUserDescription(user), window.location.origin, user.getDatum("_email"));
+											.format(getUserDescription(user), window.location.origin, user.getDatum(cr.fieldNames.email));
 							}
 							unblockClick();
 						});
@@ -1930,8 +1930,8 @@ var ExperienceIdeas = (function() {
 						prompts = shuffle(prompts);
 						data = prompts.map(function(d)
 							{
-								var datum = {name: d.getDatum('_name'),
-											 prompt: d.getDatum('_text'),
+								var datum = {name: d.getDatum(cr.fieldNames.name),
+											 prompt: d.getDatum(cr.fieldNames.text),
 											 experience: new Experience(path)};
 								var s = d.getNonNullValue('Service');
 								if (s) datum.experience.addService({instance: s});
@@ -1941,7 +1941,7 @@ var ExperienceIdeas = (function() {
 								datum.experience.setSite({instance: d.getNonNullValue('Site')});
 								datum.experience.setOffering({instance: d.getNonNullValue('Offering')});
 								datum.experience.timeframe = d.getNonNullValue('Timeframe');
-								datum.experience.title = d.getDatum('_name');
+								datum.experience.title = d.getDatum(cr.fieldNames.name);
 								return datum;
 							});
 						getGetNext(0, "Here are some ideas to help fill in your pathway", done)();
@@ -2159,8 +2159,8 @@ var OtherPathPanel = (function () {
 		}
 
 		var title;
-		var screenName = path.getDatum("_name");
-		var user = path.getValue("_user");
+		var screenName = path.getDatum(cr.fieldNames.name);
+		var user = path.getValue(cr.fieldNames.user);
 		
 		if (screenName)
 			title = screenName;

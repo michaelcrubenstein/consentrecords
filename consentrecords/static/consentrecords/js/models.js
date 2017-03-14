@@ -169,6 +169,70 @@ var crp = new CRP();
 
 var cr = {}
 
+cr.fieldNames = {
+    /* These names are associated with fields. */
+    term: 'term',
+    name: 'name',
+    configuration: 'configuration',
+    field: 'field',
+    boolean: 'boolean',
+    dataType: 'data type',
+    ofKind: 'of kind',
+    pickObjectPath: 'pick object path',
+    enumerator: 'enumerator',
+    maxCapacity: 'max capacity',
+    addObjectRule: 'object add rule',
+    descriptorType: 'descriptor type',
+    user: 'user',
+    userID: 'userID',
+    email: 'email',
+    firstName: 'first name',
+    lastName: 'last name',
+    text: 'text',
+    accessRecord: 'access record',
+    accessRequest: 'access request',
+    systemAccess: 'system access',
+    privilege: 'privilege',
+    group: 'group',
+    defaultAccess: 'default access',
+    specialAccess: 'special access',
+    publicAccess: 'public access',
+    primaryAdministrator: 'primary administrator',
+}
+
+cr.descriptorTypes = {
+	byText: "by text",
+	byFirstText: "by first text",
+	byCount: "by count"
+}
+
+cr.privileges = {
+	find: "find",
+	read: "read",
+	write: "write",
+	administer: "administer",
+	register: "register"
+}
+
+cr.objectAddRules = {
+	pickOne: "pick one",
+	createOne: "create one",
+	pickOrCreateOne: "pick or create one",
+}
+
+cr.specialAccesses = {
+	custom: "custom"
+}
+
+cr.maxCapacities = {
+	uniqueValue: "unique value",
+	multipleValues: "multiple values"
+}
+
+cr.dataTypes = {
+	objectType: "object"
+}
+
 cr.ModelObject = (function()
 {
 	ModelObject.prototype.on = function(events, data, handler)
@@ -253,7 +317,7 @@ cr.Cell = (function()
 		
 		Cell.prototype.isUnique = function()
 		{
-			return this.field && this.field.capacity === "_unique value";
+			return this.field && this.field.capacity === cr.maxCapacities.uniqueValue;
 		}
 
 		Cell.prototype.pushValue = function(newValue)
@@ -907,21 +971,21 @@ cr.Instance = (function() {
 			var nameArray = [];
 			this.getCells().forEach(function(cell)
 			{
-				if (cell.field.descriptorType == "_by text")
+				if (cell.field.descriptorType == cr.descriptorTypes.byText)
 				{
 					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
 						.map(function (d) { return d.getDescription(); });
 					if (cellNames.length > 0)
 						nameArray.push(cellNames.join(separator=' '));
 				}
-				else if (cell.field.descriptorType == "_by first text")
+				else if (cell.field.descriptorType == cr.descriptorTypes.byFirstText)
 				{
 					var cellNames = cell.data.filter(function (d) { return !d.isEmpty(); })
 						.map(function (d) { return d.getDescription(); });
 					if (cellNames.length > 0)
 						nameArray.push(cellNames[0]);
 				}
-				else if (cell.field.descriptorType == "_by count")
+				else if (cell.field.descriptorType == cr.descriptorTypes.byCount)
 				{
 					nameArray.push(cell.data.length.toString());
 				}
@@ -936,8 +1000,8 @@ cr.Instance = (function() {
 		for (var i = 0; i < cells; ++i)
 		{
 			var cell = cells[i];
-			if ((cell.field.descriptorType == "_by text" ||
-			     cell.field.descriptorType == "_by first text") &&
+			if ((cell.field.descriptorType == cr.descriptorTypes.byText ||
+			     cell.field.descriptorType == cr.descriptorTypes.byFirstText) &&
 				cell.data.length > 0)
 				return true;
 		}
@@ -1057,7 +1121,7 @@ cr.Instance = (function() {
 	
 	Instance.prototype.promiseParent = function()
 	{
-		if (this.getPrivilege() == "_find")
+		if (this.getPrivilege() == cr.privileges.find)
 		{
 			var result = $.Deferred();
 			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
@@ -1090,7 +1154,7 @@ cr.Instance = (function() {
 
 	Instance.prototype.promiseCells = function(fields)
 	{
-		if (this.getPrivilege() == "_find")
+		if (this.getPrivilege() == cr.privileges.find)
 		{
 			var result = $.Deferred();
 			result.reject("You do not have permission to see information about {0}".format(this.getDescription()));
@@ -1549,7 +1613,7 @@ cr.ObjectValue = (function() {
 		if (this.getInstanceID() === null)
 			throw(this.getDescription() + " has not been saved");
 			
-		return ["_write", "_administer"].indexOf(this.getPrivilege()) >= 0;
+		return [cr.privileges.write, cr.privileges.administer].indexOf(this.getPrivilege()) >= 0;
 	}
 	
 	function ObjectValue() {
@@ -1566,7 +1630,7 @@ cr.createSignedinUser = function(instanceID, description)
 	cr.signedinUser.instance(new cr.Instance());
 	cr.signedinUser.setInstanceID(instanceID);
 	cr.signedinUser.setDescription(description);
-	cr.signedinUser.promiseCellsFromCache(["_system access"])
+	cr.signedinUser.promiseCellsFromCache([cr.fieldNames.systemAccess])
 		.then(function()
 			{
 				$(cr.signedinUser).trigger("signin.cr");
@@ -1584,7 +1648,17 @@ cr.cellFactory = {
 	_datestamp: cr.DatestampCell, 
 	"_datestamp (day optional)": cr.DatestampDayOptionalCell,
 	_time: cr.TimeCell,
-	_object: cr.ObjectCell
+	_object: cr.ObjectCell,
+	string: cr.StringCell,
+	number: cr.NumberCell,
+	email: cr.EmailCell,
+	url: cr.UrlCell,
+	telephone: cr.TelephoneCell,
+	translation: cr.TranslationCell, 
+	datestamp: cr.DatestampCell, 
+	"datestamp (day optional)": cr.DatestampDayOptionalCell,
+	time: cr.TimeCell,
+	object: cr.ObjectCell
 }
 	
 cr.createCell = function(fieldID) {
@@ -2031,7 +2105,7 @@ cr.updateUsername = function(newUsername, password)
 										password: password})
 		        .then(function(json)
 				{
-					var v = cr.signedinUser.getValue('_email');
+					var v = cr.signedinUser.getValue(cr.fieldNames.email);
 					v.updateFromChangeData({text: newUsername});
 					v.triggerDataChanged();
 				},

@@ -40,14 +40,14 @@ var ExperienceCommentsPanel = (function() {
 			.classed('question', true)
 			.datum(function(d) { 
 				var cp = d.getValue("Comment Request");
-				return cp && cp.getInstanceID() && cp.getValue("_text"); })
+				return cp && cp.getInstanceID() && cp.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
 					return d && d.text; 
 				});
 				
 		var answers = divs.append('textarea')
 			.classed('answer', true)
-			.datum(function(d) { return d.getValue("_text"); })
+			.datum(function(d) { return d.getValue(cr.fieldNames.text); })
 			.text(function(d) { 
 					return (d && d.text); 
 				})
@@ -112,7 +112,8 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.postComment = function(newText, done, fail)
 	{
 		var comments = this.fd.experience.getValue("Comments");
-		var initialData = {_text: [{text: newText}]};
+		var initialData = {};
+		initialData[cr.fieldNames.text] = [{text: newText}];
 		
 		if (comments.getInstanceID())
 		{
@@ -595,11 +596,11 @@ var ExperienceCommentsPanel = (function() {
 						.append('span')
 						.classed('site-active-text', true)
 						.text(function(d) 
-							{ return d.getDatum("_text"); })
+							{ return d.getDatum(cr.fieldNames.text); })
 						.on('click', function(d)
 							{
 								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.getDatum("_text");
+								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
 								newQuestionInput.node().focus();
 								var textWidth = newQuestionInput.node().value.length;
 								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
