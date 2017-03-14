@@ -72,6 +72,8 @@ urlpatterns = [
     url(r'^api/selectall/', views.selectAll),
     url(r'^api/getvalues/', views.getValues),
     
+    url(r'^api/paths', views.paths),
+    
     url(r'^api/createinstance/', views.ApiEndpoint.as_view()),
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),

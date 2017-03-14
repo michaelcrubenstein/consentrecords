@@ -114,7 +114,7 @@ var CompareFlag = (function() {
 	CompareFlag.prototype.isOnPath = function(path)
 	{
 		return (this.experience.getTypeName() == "Experience") ?
-			   (this.experience.getValue("_user").getInstanceID() == path.getValue("_user").getInstanceID()) :
+			   (this.experience.getValue(cr.fieldNames.user).getInstanceID() == path.getValue(cr.fieldNames.user).getInstanceID()) :
 			   (this.experience.cell.parent == path);
 	}
 	
@@ -308,7 +308,7 @@ var ComparePath = (function() {
 		function getCompareFlag(experience)
 			{
 				var isLeft = (experience.getTypeName() == "Experience") ?
-							 (experience.getValue("_user").getInstanceID() == _this.leftPath.getValue("_user").getInstanceID()) :
+							 (experience.getValue(cr.fieldNames.user).getInstanceID() == _this.leftPath.getValue(cr.fieldNames.user).getInstanceID()) :
 							 (experience.cell.parent == _this.leftPath);
 				if (isLeft)
 					return new CompareFlag(experience, _this.leftAgeCalculator);
@@ -518,9 +518,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
-		if (leftPath.getPrivilege() === '_find')
+		if (leftPath.getPrivilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(leftPath.getDescription());
-		if (rightPath.getPrivilege() === '_find')
+		if (rightPath.getPrivilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(rightPath.getDescription());
 		if (this.leftPath)
 			throw "paths have already been set for this pathtree";
@@ -586,9 +586,9 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path:  "#" + this.rightPath.getInstanceID() + '::reference(_user)::reference(Experience)', 
+		var p1 = crp.promise({path:  "#" + this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]});
-		var p2 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+		var p2 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 						'::reference(Session)::reference(Sessions)::reference(Offering)'});
 		var p3 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '>"More Experience">Offering'});
 		$.when(p1, p2, p3)

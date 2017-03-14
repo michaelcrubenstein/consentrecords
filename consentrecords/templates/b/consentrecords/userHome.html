@@ -554,7 +554,7 @@
 						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
-								if (newValue.getTypeName() == '_access record')
+								if (newValue.getTypeName() == cr.fieldNames.accessRecord)
 								{
 									newValue.promiseCells().then(function()
 										{

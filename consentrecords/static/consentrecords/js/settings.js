@@ -54,37 +54,37 @@ var Settings = (function () {
 				})
  			.append("span").text("Done");
 
-		var userPublicAccessCell = user.getCell("_public access");
-		var userPrimaryAdministratorCell = user.getCell("_primary administrator");
-		var pathPublicAccessCell = path.getCell("_public access");
-		var pathSpecialAccessCell = path.getCell("_special access");
-		var pathPrimaryAdministratorCell = path.getCell("_primary administrator");
+		var userPublicAccessCell = user.getCell(cr.fieldNames.publicAccess);
+		var userPrimaryAdministratorCell = user.getCell(cr.fieldNames.primaryAdministrator);
+		var pathPublicAccessCell = path.getCell(cr.fieldNames.publicAccess);
+		var pathSpecialAccessCell = path.getCell(cr.fieldNames.specialAccess);
+		var pathPrimaryAdministratorCell = path.getCell(cr.fieldNames.primaryAdministrator);
 		
-		user.getCell("_first name").field.label = this.firstNameLabel;
-		user.getCell("_last name").field.label = this.lastNameLabel;
-		path.getCell("_name").field.label = this.screenNameLabel;
+		user.getCell(cr.fieldNames.firstName).field.label = this.firstNameLabel;
+		user.getCell(cr.fieldNames.lastName).field.label = this.lastNameLabel;
+		path.getCell(cr.fieldNames.name).field.label = this.screenNameLabel;
 		userPublicAccessCell.field.label = this.userPublicAccessLabel;
 		
 		var oldGetDescription = userPublicAccessCell.data[0].getDescription;
 		userPublicAccessCell.data[0].getDescription = function() 
 			{
 				var oldDescription = oldGetDescription.call(this);
-				if (oldDescription == "_read" ||
+				if (oldDescription == cr.privileges.read ||
 					oldDescription == _this.allVisibleLabel)
 					return _this.allVisibleLabel;
-				else if (pathPublicAccessCell.data[0].getDescription() == "_read" ||
+				else if (pathPublicAccessCell.data[0].getDescription() == cr.privileges.read ||
 				         oldDescription == _this.pathVisibleLabel)
 				    return _this.pathVisibleLabel;
-				else if (oldDescription == "_find" ||
+				else if (oldDescription == cr.privileges.find ||
 						 oldDescription == _this.emailVisibleLabel)
 					return _this.emailVisibleLabel;
 				else
 					return _this.profileHiddenLabel;
 			};
 		
-		var cells = [user.getCell("_first name"),
-					 user.getCell("_last name"),
-					 path.getCell("_name"),
+		var cells = [user.getCell(cr.fieldNames.firstName),
+					 user.getCell(cr.fieldNames.lastName),
+					 path.getCell(cr.fieldNames.name),
 					 birthdayCell
 					 ];
 					 
@@ -113,7 +113,7 @@ var Settings = (function () {
 				.each(_pushTextChanged);
 		}
 		
-		if (user.getPrivilege() === "_administer")
+		if (user.getPrivilege() === cr.privileges.administer)
 		{
 			var userPublicAccessValue = userPublicAccessCell.data[0];
 			var pathPublicAccessValue = pathPublicAccessCell.data[0];
@@ -176,7 +176,7 @@ var Settings = (function () {
 	
 			function checkSharingBadge()
 			{
-				var cell = user.getCell("_access request");
+				var cell = user.getCell(cr.fieldNames.accessRequest);
 				cell.field.label = _this.accessRequestLabel;
 				var badgeCount = (cell && cell.data.length > 0) ? cell.data.length : "";
 
@@ -185,7 +185,7 @@ var Settings = (function () {
 			
 			var urlSection = panel2Div.append('section')
 				.classed('cell edit unique', true)
-				.datum(user.getCell("_email"));
+				.datum(user.getCell(cr.fieldNames.email));
 				
 			urlSection.append('label')
 				.text("Your Path");
@@ -196,7 +196,7 @@ var Settings = (function () {
 			var urlItem = urlList.append('li')
 				.classed('site-active-text', true)
 				.text("{0}/for/{1}"
-					.format(window.location.origin, user.getDatum("_email")))
+					.format(window.location.origin, user.getDatum(cr.fieldNames.email)))
 				.on('click', function()
 					{
 						if (prepareClick('click', 'share'))
@@ -215,13 +215,13 @@ var Settings = (function () {
 			function updateURL()
 			{
 				urlItem.text("{0}/for/{1}"
-					.format(window.location.origin, user.getDatum("_email")));
+					.format(window.location.origin, user.getDatum(cr.fieldNames.email)));
 			}
-			setupOnViewEventHandler(user.getCell("_email"), 'dataChanged.cr', urlItem.node(), 
+			setupOnViewEventHandler(user.getCell(cr.fieldNames.email), 'dataChanged.cr', urlItem.node(), 
 				function()
 				{
 					urlItem.text("{0}/for/{1}"
-						.format(window.location.origin, user.getDatum("_email")));
+						.format(window.location.origin, user.getDatum(cr.fieldNames.email)));
 				});
 	
 			var sharingDiv = this.appendActionButton('Sharing', function() {
@@ -239,7 +239,7 @@ var Settings = (function () {
 				.classed('badge', true);
 			checkSharingBadge();
 			
-			setupOnViewEventHandler(user.getCell("_access request"), "valueDeleted.cr valueAdded.cr", 
+			setupOnViewEventHandler(user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
 				sharingButton.node(), checkSharingBadge);
 				
 			this.appendActionButton('Following', function() {
@@ -340,17 +340,17 @@ var PickUserAccessPanel = (function () {
 						   instancePath: null
 						  },
 						  {description: Settings.prototype.emailVisibleLabel,
-						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]"
+						   instancePath: "term[name=privilege]>enumerator[name=find]"
 						  },
 						  {description: Settings.prototype.pathVisibleLabel,
-						   instancePath: "_term[_name=_privilege]>enumerator[_name=_find]",
-						   pathPrivilegePath: "_term[_name=_privilege]>enumerator[_name=_read]",
-						   pathPrivilegeDescription: "_read",
-						   pathSpecialAccessPath: '_term[_name="_special access"]>enumerator[_name=_custom]',
-						   pathSpecialAccessDescription: "_custom"
+						   instancePath: "term[name=privilege]>enumerator[name=find]",
+						   pathPrivilegePath: "term[name=privilege]>enumerator[name=read]",
+						   pathPrivilegeDescription: cr.privileges.read,
+						   pathSpecialAccessPath: 'term[name="special access"]>enumerator[name=custom]',
+						   pathSpecialAccessDescription: cr.specialAccesses.custom
 						  },
 						  {description: Settings.prototype.allVisibleLabel,
-						   instancePath: "_term[_name=_privilege]>enumerator[_name=_read]"
+						   instancePath: "term[name=privilege]>enumerator[name=read]"
 						  }
 						 ];
 	
@@ -416,7 +416,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != "_find" &&
+									if (oldUserAccessValue.getDescription() != cr.privileges.find &&
 										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
 										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
 									{
@@ -457,7 +457,7 @@ var PickUserAccessPanel = (function () {
 							{
 								if (oldUserAccessValue.id)
 								{
-									if (oldUserAccessValue.getDescription() != "_find" &&
+									if (oldUserAccessValue.getDescription() != cr.privileges.find &&
 										oldUserAccessValue.getDescription() != Settings.prototype.pathVisibleLabel &&
 										oldUserAccessValue.getDescription() != Settings.prototype.emailVisibleLabel)
 									{
@@ -495,7 +495,7 @@ var PickUserAccessPanel = (function () {
 												description: d.pathPrivilegeDescription
 											});
 								}
-								var newInstanceID = user.getValue("_primary administrator").getInstanceID();
+								var newInstanceID = user.getValue(cr.fieldNames.primaryAdministrator).getInstanceID();
 								if (newInstanceID)
 								{
 									sourceObjects.push(oldPathPrimaryAdministratorValue);
@@ -510,7 +510,7 @@ var PickUserAccessPanel = (function () {
 													fieldID: oldPathPrimaryAdministratorValue.cell.field.nameID };
 									}
 									newData.instanceID = newInstanceID;
-									newData.description = user.getValue("_primary administrator").getDescription();
+									newData.description = user.getValue(cr.fieldNames.primaryAdministrator).getDescription();
 									initialData.push(newData);
 								}
 								sourceObjects.push(oldPathSpecialAccessValue);

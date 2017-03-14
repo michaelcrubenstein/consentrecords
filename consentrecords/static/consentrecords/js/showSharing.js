@@ -104,7 +104,7 @@ var SharingPanel = (function() {
 		var accessRequestSection, accessRequestList;
 		
 		accessRequestSection = panel2Div.append("section")
-			.datum(this.user.getCell("_access request"))
+			.datum(this.user.getCell(cr.fieldNames.accessRequest))
 			.classed("cell multiple edit", true);
 		accessRequestSection.append("label")
 			.text("Access Requests");
@@ -131,7 +131,7 @@ var SharingPanel = (function() {
 		for (var i = 0; i < accessRecords.length; ++i)
 		{
 			var a = accessRecords[i];
-			var cell = a.getCell("_privilege");
+			var cell = a.getCell(cr.fieldNames.privilege);
 			if (cell && cell.data.length > 0)
 			{
 				var d = cell.data[0];
@@ -139,8 +139,8 @@ var SharingPanel = (function() {
 				{
 					var sa = this.privilegesByID[d.getInstanceID()];
 					sa.accessRecords.push(a);
-					var userCell = a.getCell("_user");
-					var groupCell = a.getCell("_group");
+					var userCell = a.getCell(cr.fieldNames.user);
+					var groupCell = a.getCell(cr.fieldNames.group);
 					for (var j = 0; j < userCell.data.length; ++j)
 					{
 						sa.accessors.push(userCell.data[j]);
@@ -203,7 +203,7 @@ var SharingPanel = (function() {
 				}
 			}
 		}
-		cr.getData({path: "#" + this.user.getInstanceID() + '>"_access record"', 
+		cr.getData({path: "#" + this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
 					fields: ["parents"], 
 					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
 					fail: asyncFailFunction});
@@ -216,7 +216,7 @@ var SharingPanel = (function() {
 		var userPath = "#{0}".format(this.user.getInstanceID());
 		cr.share(userPath, path, accessorLevel.id, function(newData)
 			{
-				var accessRecordCell = _this.user.getCell("_access record");
+				var accessRecordCell = _this.user.getCell(cr.fieldNames.accessRecord);
 				accessRecordCell.addValue(newData);
 				accessorLevel.accessRecords.push(newData);
 				newData.promiseCells(undefined)
@@ -224,7 +224,7 @@ var SharingPanel = (function() {
 					{
 						try
 						{
-							var newValue = newData.getValue('_user') || newData.getValue('_group');
+							var newValue = newData.getValue(cr.fieldNames.user) || newData.getValue(cr.fieldNames.group);
 							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
 							done();
 						}
@@ -247,7 +247,7 @@ var SharingPanel = (function() {
 				{
 					cr.share(userPath, path, accessorLevel.id, function(newValue)
 						{
-							var cellName = newValue.getTypeName() == '_user' ? '_user' : '_group';
+							var cellName = newValue.getTypeName() == cr.fieldNames.user ? cr.fieldNames.user : cr.fieldNames.group;
 							var cell = ar.getCell(cellName);
 							cell.addValue(newValue);
 							_this.onUserAdded(accessorLevel.itemsDiv, newValue);
@@ -282,7 +282,7 @@ var SharingPanel = (function() {
 		
 		if (prepareClick('click', 'add accessor: ' + accessorLevel.name))
 		{
-			var accessRecordCell = user.getCell("_access record");
+			var accessRecordCell = user.getCell(cr.fieldNames.accessRecord);
 			function onPick(path)
 			{
 				function done()
@@ -355,10 +355,10 @@ var SharingPanel = (function() {
 
 		this.privilegesByID =  {};
 		this.privileges =  [
-			{name: "_read", id: "", accessRecords: [], accessors: [], label: "Who Can See Your Profile"},
-			{name: "_administer", id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
+			{name: cr.privileges.read, id: "", accessRecords: [], accessors: [], label: "Who Can See Your Profile"},
+			{name: cr.privileges.administer, id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
-		var privilegePath = "_term[_name=_privilege]>enumerator";
+		var privilegePath = "term[name=privilege]>enumerator";
 		crp.promise({path: privilegePath})
 			.done(function(enumerators) { _this.getPrivileges(panel2Div, enumerators); })
 			.fail(cr.asyncFail);
@@ -416,7 +416,7 @@ var PickSharingUserPanel = (function() {
 						}
 						else
 						{
-							done('_user[_email="{0}"]'.format(email), _this);
+							done('user[email="{0}"]'.format(email), _this);
 						}
 					}
 					catch(err)

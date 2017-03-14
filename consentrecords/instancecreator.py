@@ -22,7 +22,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState, check)
             raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
         if fieldData["dataTypeID"] == terms.objectEnum.id:
-            if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
+            if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
                 if "instanceID" in d:
                     # This is a reference to an object.
                     if not terms.isUUID(d["instanceID"]):
@@ -91,8 +91,8 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         configuration = parent.typeID.getSubInstance(terms.configuration)
         fieldObject = configuration.getFieldByReferenceValue(parentField.id)
         fieldData = fieldObject.getFieldData()
-        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-            raise ValueError("instances can not be created in parents with a _pick one field")
+        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
+            raise ValueError("instances can not be created in parents with a pick one field")
     
     check(typeInstance, parent, parentField, transactionState)
                 
@@ -207,7 +207,7 @@ def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode,
     else:
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
-        if fieldData['dataType'] == '_translation':
+        if fieldData['dataType'] == TermNames.translationEnum:
             propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
             propertyList = {nameField.id: [{'text': text}]}

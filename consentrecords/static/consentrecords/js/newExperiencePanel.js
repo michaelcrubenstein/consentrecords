@@ -698,7 +698,7 @@ var MultiTypeOptionView = (function() {
 			return true;
 		var data = this.buttons().data();
 		return data.find(function(d) {
-				return d.getCell && d.getCell("_name").data.find(
+				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
 					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
 			});
@@ -1326,15 +1326,15 @@ var OrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Site from Organization")
 			{
-				path = 'Organization[_name{0}"{1}"]>Sites>Site::not(Site[_name{0}"{1}"])';
+				path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
 			}
 			else if (this.typeName === "Site")
 			{
-				path = 'Site[_name{0}"{1}"]';
+				path = 'Site[name{0}"{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[_name{0}"{1}"]';
+				path = 'Organization[name{0}"{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1485,19 +1485,19 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
+					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
 					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Offering from Site")
 				{
-					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+					path = 'Site[name{0}"{1}"]>Offerings>Offering';
 					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[_name{0}"{1}"]';
+					path = 'Site[name{0}"{1}"]';
 					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 				}
 			
@@ -1516,19 +1516,19 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
+					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Offering from Site")
 				{
-					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+					path = 'Site[name{0}"{1}"]>Offerings>Offering';
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site from Organization")
 				{
 					if (this.experience.services[0].pickedObject)
 					{
-						path = 'Organization[_name{0}"{1}"]>Sites>Site::not(Site[_name{0}"{1}"])';
+						path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
 						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
 					}
 					else
@@ -1536,11 +1536,11 @@ var SiteSearchView = (function() {
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[_name{0}"{1}"]';
+					path = 'Site[name{0}"{1}"]';
 				}
 				else if (this.typeName === "Organization")
 				{
-					path = 'Organization[_name{0}"{1}"]';
+					path = 'Organization[name{0}"{1}"]';
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1556,15 +1556,15 @@ var SiteSearchView = (function() {
 		{
 			if (this.typeName === "Site from Organization")
 			{
-				path = 'Organization[_name{0}"{1}"]>Sites>Site::not(Site[_name{0}"{1}"])';
+				path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
 			}
 			else if (this.typeName === "Site")
 			{
-				path = 'Site[_name{0}"{1}"]';
+				path = 'Site[name{0}"{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[_name{0}"{1}"]';
+				path = 'Organization[name{0}"{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1780,7 +1780,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[_name{0}"{1}"]';
+						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name{0}"{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1816,13 +1816,13 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
+						path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
 						path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 					else if (this.typeName === "Offering from Site")
 					{
-						path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+						path = 'Site[name{0}"{1}"]>Offerings>Offering';
 						path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
@@ -1843,12 +1843,12 @@ var OfferingSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[_name{0}"{1}"]::not(Site[_name{0}"{1}"]>Offerings>Offering)';
+					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Offering from Site")
 				{
-					path = 'Site[_name{0}"{1}"]>Offerings>Offering';
+					path = 'Site[name{0}"{1}"]>Offerings>Offering';
 					path += this.experience.getOfferingConstraint();
 				}
 				else
@@ -1870,7 +1870,7 @@ var OfferingSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[_name{0}"{1}"]' +
+				path = 'Offering[name{0}"{1}"]' +
 						this.experience.getOfferingConstraint();
 			}
 			else
@@ -3054,7 +3054,7 @@ var NewExperiencePanel = (function () {
 							}
 							else
 							{
-								$.when(crp.promise({path: "_term[_name=Timeframe]>enumerator"}))
+								$.when(crp.promise({path: "term[name=Timeframe]>enumerator"}))
 								 .then(function(enumerators)
 								     {
 								     	var timeframeName;

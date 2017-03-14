@@ -327,7 +327,7 @@ var TagPoolView = (function () {
 		var data = this.flags().data();
 		var sd = data.find(function(sd) {
 				var d = sd.service;
-				return d.getCell && d.getCell("_name").data.find(
+				return d.getCell && d.getCell(cr.fieldNames.name).data.find(
 					function(d) { return d.text.toLocaleLowerCase() === compareText;}) ||
 					(d.getDescription && d.getDescription().toLocaleLowerCase() === compareText);
 			});

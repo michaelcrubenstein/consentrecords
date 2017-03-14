@@ -98,14 +98,14 @@
 			
 			var field = {
 						  id: "{{rootID}}",
-						  dataType: "_object",
+						  dataType: cr.dataTypes.objectType,
 			{% if singularName %}
 						  name: "{{singularName}}",
 			{% else %}
 						  name: "Item",
 			{% endif %}
 						  ofKindID: "{{rootID}}",
-						  capacity: "_multiple values",
+						  capacity: cr.maxCapacities.multipleValues,
 						  };
 			crp.pushField(field);
 			var cell = cr.createCell("{{rootID}}");

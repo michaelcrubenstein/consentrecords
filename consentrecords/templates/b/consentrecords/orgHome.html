@@ -519,8 +519,8 @@
 				var field = {
 							  id: "Organization", 
 							  name: "Organization",
-							  dataType: "_object",
-							  capacity: "_multiple values",
+							  dataType: cr.objectDataType,
+							  capacity: cr.maxCapacities.multipleValues,
 							  };
 				crp.pushField(field);
 				var cell = cr.createCell("Organization");
@@ -551,7 +551,7 @@
 				});
 			}
 			
-			var path = '#'+cr.signedinUser.getInstanceID()+'::reference(_group)::reference(Organization)';
+			var path = '#'+cr.signedinUser.getInstanceID()+'::reference(group)::reference(Organization)';
 			cr.selectAll({path: path})
 				.then(successFunction, cr.asyncFail);
 		}
@@ -993,7 +993,7 @@
 						}
 					}
 					
-					cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+					cr.selectAll({path: 'user[email^="'+val+'"]', end: 50})
 						.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
@@ -1282,7 +1282,7 @@
 									}
 								}
 					
-								cr.selectAll({path: '_user[_email^="'+val+'"]', end: 50})
+								cr.selectAll({path: 'user[email^="'+val+'"]', end: 50})
 									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
