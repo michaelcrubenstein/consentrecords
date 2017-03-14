@@ -59,17 +59,16 @@ var Signup = (function () {
 				var birthDay = _thisSignup.getBirthday();
 				var birthMonth = birthDay.substr(0, 7);
 				var initialData = {"Birthday": [{text: birthDay}],
-								   "_public access":
-								   		[{path: "_term[_name=_privilege]enumerator[_name=_find]"}],
 				                   "Path": 
 				                   		[{cells: {"Birthday": [{text: birthMonth}] }}
 				                   		]};
+				initialData[cr.fieldNames.publicAccess] = [{path: "term[name=privilege]>enumerator[name=find]"}];
 				_thisSignup.submit(_thisSignup.getEmail(), _thisSignup.getPassword(), 
 					initialData, 
 					function(data)
 					{
 						cr.signedinUser.updateFromChangeData(data);
-						cr.signedinUser.promiseCells(["_system access"])
+						cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
 							.then(function()
 							{
 								$("#id_sign_in_panel").hide("slide", {direction: "right"}, 0);
@@ -438,7 +437,7 @@ var Signup = (function () {
 				.attr('type', 'radio')
 				.attr('checked', 1)
 				.attr('name', 'publicAccess')
-				.property('value', '_find')
+				.property('value', cr.privileges.find)
 				.on('change', function()
 					{
 						var _this = this;
@@ -452,7 +451,7 @@ var Signup = (function () {
 			var readInput = cell.append('input')
 				.attr('type', 'radio')
 				.attr('name', 'publicAccess')
-				.property('value', '_read')
+				.property('value', cr.privileges.read)
 				.on('change', function()
 					{
 						var _this = this;
@@ -475,16 +474,16 @@ var Signup = (function () {
 				return false;	/* Block moving forward until the following script completes. */
 			}
 			
-			crp.promise({path: '_term[_name=_privilege]'})
+			crp.promise({path: 'term[name=privilege]'})
 				.done(function(newInstances)
 					{
 						var enumeratorCell = newInstances[0].getCell('enumerator');
 						for (var i = 0; i < enumeratorCell.data.length; ++i)
 						{
 							var d = enumeratorCell.data[i];
-							if (d.getDescription() === '_read')
+							if (d.getDescription() === cr.privileges.read)
 								readInput.property('value', d.getInstanceID());
-							else if (d.getDescription() === '_find')
+							else if (d.getDescription() === cr.privileges.find)
 								findInput.property('value', d.getInstanceID());
 						}
 						p.node().onCheckForwardEnabled = undefined;
@@ -599,7 +598,7 @@ var SigninPanel = (function()
 		{
 			crp.clear();
 			cr.signedinUser.updateFromChangeData(data);
-			cr.signedinUser.promiseCells(["_system access"])
+			cr.signedinUser.promiseCells([cr.fieldNames.systemAccess])
 				.then(function()
 					{
 						_this.hideRight(function()

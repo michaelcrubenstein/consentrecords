@@ -1103,54 +1103,68 @@ class Containment(dbmodels.Model):
         
 class TermNames():
     # These verbs are associated with field IDs of values.
-    term = '_term'
-    configuration = '_configuration'
-    field = '_field'
-    boolean = '_boolean'
-    name = '_name'
-    dataType = '_data type'
-    stringEnum = '_string'
-    number = '_number'
-    datestamp = '_datestamp'
-    datestampDayOptional = '_datestamp (day optional)'
-    translationEnum = '_translation'
-    objectEnum = '_object'
-    ofKind = '_of kind'
-    pickObjectPath = '_pick object path'
+    term = 'term'
+    name = 'name'
+    configuration = 'configuration'
+    field = 'field'
+    boolean = 'boolean'
+    dataType = 'data type'
+    ofKind = 'of kind'
+    pickObjectPath = 'pick object path'
     enumerator = 'enumerator'
-    maxCapacity = '_max capacity'
-    uniqueValueEnum = '_unique value'
-    multipleValuesEnum = '_multiple values'
-    addObjectRule = '_object add rule'
-    pickObjectRuleEnum = '_pick one'
-    createObjectRuleEnum = '_create one'
-    descriptorType = '_descriptor type'
-    yes = '_yes'
-    no = '_no'
-    user = '_user'
-    userID = '_userID'
-    email = '_email'
-    firstName = '_first name'
-    lastName = '_last name'
-    text = '_text'
-    textEnum = '_by text'
-    firstTextEnum = '_by first text'
-    countEnum = '_by count'
-    accessRecord = '_access record'
-    accessRequest = '_access request'
-    systemAccess = '_system access'
-    privilege = '_privilege'
-    findPrivilegeEnum = '_find'
-    readPrivilegeEnum = '_read'
-    writePrivilegeEnum = '_write'
-    administerPrivilegeEnum = '_administer'
-    registerPrivilegeEnum = '_register'
-    group = '_group'
-    defaultAccess = '_default access'
-    specialAccess = '_special access'
-    custom = '_custom'
-    publicAccess='_public access'
-    primaryAdministrator='_primary administrator'
+    maxCapacity = 'max capacity'
+    addObjectRule = 'object add rule'
+    descriptorType = 'descriptor type'
+    user = 'user'
+    userID = 'userID'
+    email = 'email'
+    firstName = 'first name'
+    lastName = 'last name'
+    text = 'text'
+    accessRecord = 'access record'
+    accessRequest = 'access request'
+    systemAccess = 'system access'
+    privilege = 'privilege'
+    group = 'group'
+    defaultAccess = 'default access'
+    specialAccess = 'special access'
+    publicAccess='public access'
+    primaryAdministrator='primary administrator'
+    
+    # enumerations for data type
+    stringEnum = 'string'
+    number = 'number'
+    datestamp = 'datestamp'
+    datestampDayOptional = 'datestamp (day optional)'
+    translationEnum = 'translation'
+    objectEnum = 'object'
+    
+    # enumerations for max capacity
+    uniqueValueEnum = 'unique value'
+    multipleValuesEnum = 'multiple values'
+    
+    # enumerations for addObjectRule
+    pickObjectRuleEnum = 'pick one'
+    createObjectRuleEnum = 'create one'
+    
+    # enumerations for boolean
+    yes = 'yes'
+    no = 'no'
+    
+    # enumerations for descriptor type
+    textEnum = 'by text'
+    firstTextEnum = 'by first text'
+    countEnum = 'by count'
+    
+    # enumerations for privilege
+    findPrivilegeEnum = 'find'
+    readPrivilegeEnum = 'read'
+    writePrivilegeEnum = 'write'
+    administerPrivilegeEnum = 'administer'
+    registerPrivilegeEnum = 'register'
+    
+    # enumerations for special access.
+    custom = 'custom'
 
     initialKinds = [
         configuration,      # identifies a configuration instance (contained by a uuName)
@@ -1315,13 +1329,20 @@ class Terms():
         except Value.DoesNotExist: pass
             
     def getUUName():
-        return Instance.objects.get(typeID=F('id'),
-            value__deleteTransaction__isnull=True,
-            value__stringValue=TermNames.term)
+        return Instance.objects.get(
+            (Q(value__stringValue__iexact=TermNames.term)|Q(value__stringValue__iexact=('_'+TermNames.term))),
+            typeID=F('id'),
+            value__deleteTransaction__isnull=True)
 
     def getName():
+        return Instance.objects.get(
+            (Q(value__stringValue__iexact=TermNames.name)|Q(value__stringValue__iexact=('_'+TermNames.name))),
+            typeID=terms.term,
             value__deleteTransaction__isnull=True,
+            value__field=F('id'))
 
+    # If name is a 32 character hex string, then it is considered that ID. 
+    # Otherwise, it is looked up by case-insensitive name.
     def __getitem__(self, name):
         try:
             if terms.isUUID(name):
@@ -1330,7 +1351,24 @@ class Terms():
                 return Instance.objects.get(typeID=terms.term,
                     value__deleteTransaction__isnull=True,
                     value__field = terms.name,
+                    value__stringValue__iexact=name)
         except Instance.DoesNotExist:
+            if name.startswith('_'):
+                try: 
+                    return Instance.objects.get(typeID=terms.term,
+                        value__deleteTransaction__isnull=True,
+                        value__field = terms.name,
+                        value__stringValue__iexact=name[1:])
+                except Instance.DoesNotExist:
+                    raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
+            else:
+                try: 
+                    return Instance.objects.get(typeID=terms.term,
+                        value__deleteTransaction__isnull=True,
+                        value__field = terms.name,
+                        value__stringValue__iexact='_'+name)
+                except Instance.DoesNotExist:
+                    raise Instance.DoesNotExist('the term "%s" is not recognized' % name)
             
     def __getattr__(self, name):
         if name == 'term':
@@ -1370,24 +1408,68 @@ class Terms():
             
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
-    def getNamedEnumerator(term, stringValue):
+    def getNamedEnumerator(term, name):
         if not term:
             raise ValueError("term is null")
-        v = Value.objects.get(instance=term, field=terms.enumerator,
-                          deleteTransaction__isnull=True,
-                          referenceValue__value__field=terms.name,
-                          referenceValue__value__deleteTransaction__isnull=True,
-                          referenceValue__value__stringValue=stringValue)
-        return v.referenceValue
+        try:
+            v = Value.objects.get(instance=term, field=terms.enumerator,
+                              deleteTransaction__isnull=True,
+                              referenceValue__value__field=terms.name,
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__stringValue__iexact=name)
+            return v.referenceValue
+        except Value.DoesNotExist:
+            if name.startswith('_'):
+                try: 
+                    v = Value.objects.get(instance=term, field=terms.enumerator,
+                              deleteTransaction__isnull=True,
+                              referenceValue__value__field=terms.name,
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__stringValue__iexact=name[1:])
+                    return v.referenceValue
+                except Value.DoesNotExist:
+                    raise Value.DoesNotExist('the enumerator "%s" for term "%s" is not recognized' % (name, str(term)))
+            else:
+                try: 
+                    v = Value.objects.get(instance=term, field=terms.enumerator,
+                              deleteTransaction__isnull=True,
+                              referenceValue__value__field=terms.name,
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__stringValue__iexact='_'+name)
+                    return v.referenceValue
+                except Value.DoesNotExist:
+                    raise Value.DoesNotExist('the enumerator "%s" for term "%s" is not recognized' % (name, str(term)))
     
     # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
-    def getTranslationNamedEnumerator(term, stringValue, languageCode):
-        v = Value.objects.get(instance=term, field = terms.enumerator,
-                              referenceValue__value__deleteTransaction__isnull=True,
+    def getTranslationNamedEnumerator(term, name, languageCode):
+        try:
+            v = Value.objects.get(instance=term, field = terms.enumerator,
+                                  referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=terms.translation,
+                                  referenceValue__value__stringValue=name,
+                                  referenceValue__value__languageCode=languageCode)
+            return v.referenceValue
+        except Value.DoesNotExist:
+            if name.startswith('_'):
+                try: 
+                    v = Value.objects.get(instance=term, field=terms.enumerator,
                               referenceValue__value__field=terms.translation,
-                              referenceValue__value__stringValue=stringValue,
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__stringValue__iexact=name[1:],
                               referenceValue__value__languageCode=languageCode)
-        return v.referenceValue
+                    return v.referenceValue
+                except Value.DoesNotExist:
+                    raise Value.DoesNotExist('the enumerator "%s" for term "%s" is not recognized' % (name, str(term)))
+            else:
+                try: 
+                    v = Value.objects.get(instance=term, field=terms.enumerator,
+                              referenceValue__value__field=terms.translation,
+                              referenceValue__value__deleteTransaction__isnull=True,
+                              referenceValue__value__stringValue__iexact='_'+name,
+                              referenceValue__value__languageCode=languageCode)
+                    return v.referenceValue
+                except Value.DoesNotExist:
+                    raise Value.DoesNotExist('the enumerator "%s" for term "%s" is not recognized' % (name, str(term)))
         
     def isUUID(self, s):
         return re.search('^[a-fA-F0-9]{32}$', s)

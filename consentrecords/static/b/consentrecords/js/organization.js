@@ -153,8 +153,8 @@ function appendSessionDescriptions(buttons)
 
 function getUserName(user)
 {
-	var firstName = user.getDatum("_first name");
-	var lastName = user.getDatum("_last name");
+	var firstName = user.getDatum(cr.fieldNames.firstName);
+	var lastName = user.getDatum(cr.fieldNames.lastName);
 	if (firstName)
 	{
 		if (lastName)
@@ -169,7 +169,7 @@ function getUserName(user)
 function getPathDescription(path)
 {
 	return (path.parent() && getUserName(path.parent())) ||
-			path.getDatum("_name") ||
+			path.getDatum(cr.fieldNames.name) ||
 		   (path.parent() && path.parent().getDescription()) ||
 		   null;
 }
@@ -181,7 +181,7 @@ function getUserDescription(user)
 				
 function showPath(path, previousPanelNode)
 {
-	return path.promiseCells(["More Experience", "parents", "_user"])
+	return path.promiseCells(["More Experience", "parents", cr.fieldNames.user])
 			   .then(function()
 				{
 					var panel = new OtherPathPanel(path, true);
@@ -406,7 +406,7 @@ function getNamedInstance(data, name)
 	for (i = 0; i < data.length; ++i)
 	{
 		var d = data[i];
-		if (d.getDatum("_name") === name)
+		if (d.getDatum(cr.fieldNames.name) === name)
 			return d;
 	}
 	return null;
@@ -417,11 +417,11 @@ function getNamedInstance(data, name)
  */
 function getValidPrivileges(enumerators, priv)
 {
-	var administerValue = getNamedInstance(enumerators, "_administer");
-	var writeValue = getNamedInstance(enumerators, "_write");
-	var readValue = getNamedInstance(enumerators, "_read");
-	var findValue = getNamedInstance(enumerators, "_find");
-	var registerValue = getNamedInstance(enumerators, "_register");
+	var administerValue = getNamedInstance(enumerators, cr.privileges.administer);
+	var writeValue = getNamedInstance(enumerators, cr.privileges.write);
+	var readValue = getNamedInstance(enumerators, cr.privileges.read);
+	var findValue = getNamedInstance(enumerators, cr.privileges.find);
+	var registerValue = getNamedInstance(enumerators, cr.privileges.register);
 	
 	if (priv === findValue)
 		return [findValue, readValue, registerValue, writeValue, administerValue];
@@ -440,9 +440,9 @@ function getValidPrivileges(enumerators, priv)
 /* Adds a missing access record to the source user. */
 function addMissingAccess(source, privilege, target, cellName, done, fail)
 {
-	var privilegePath = "_term[_name=_privilege]>enumerator";
+	var privilegePath = "term[name=privilege]>enumerator";
 	var p1 = crp.promise({path: privilegePath});
-	var p2 = cr.getData({path: "#" + source.getInstanceID() + '>"_access record"'});
+	var p2 = cr.getData({path: "#" + source.getInstanceID() + '>"access record"'});
 	$.when(p1, p2)
 	 .then(function(enumerators, accessRecords)
 		{
@@ -451,7 +451,7 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 
 			var a = accessRecords.filter(
 				function(ar) {
-					var privCell = ar.getCell("_privilege");
+					var privCell = ar.getCell(cr.fieldNames.privilege);
 					return privCell.data.some(
 						function(d) { 
 							return validPrivs.indexOf(d.getInstanceID()) >= 0; 
@@ -472,7 +472,7 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 			{
 				var c = a.filter(
 					function(ar) {
-						var storedPrivilegeValue = ar.getValue("_privilege");
+						var storedPrivilegeValue = ar.getValue(cr.fieldNames.privilege);
 						return storedPrivilegeValue &&
 							   storedPrivilegeValue.getInstanceID() === priv.getInstanceID();
 					});
@@ -490,8 +490,9 @@ function addMissingAccess(source, privilege, target, cellName, done, fail)
 				{
 					/* Test case: Sign up for a session (using the /find/ URL) when the 
 						user shares read access with no users or groups. */
-					var field = source.getCell("_access record").field;
-					var initialData = {"_privilege": [{instanceID: priv.getInstanceID()}] };
+					var field = source.getCell(cr.fieldNames.accessRecord).field;
+					var initialData = {};
+					initialData[cr.fieldNames.privilege] = [{instanceID: priv.getInstanceID()}];
 					initialData[cellName] = [{instanceID: target.getInstanceID()}];
 					promise = cr.createInstance(field, source.getInstanceID(), initialData);
 				}

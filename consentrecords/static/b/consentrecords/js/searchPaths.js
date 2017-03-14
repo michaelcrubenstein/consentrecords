@@ -23,8 +23,8 @@ var SearchPathsResultsView = (function () {
 				/* TODO: */
 				var leftText = d3.select(this);
 				
-				var screenName = d.getDatum("_name");
-				var user = d.getValue("_user");
+				var screenName = d.getDatum(cr.fieldNames.name);
+				var user = d.getValue(cr.fieldNames.user);
 				var userName = user && (getUserName(user));
 				var userDescription = user && user.getDescription();
 				var ageCalculator = new AgeCalculator(d.getValue("Birthday").getDescription());
@@ -147,7 +147,7 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["parents", "_user"];
+		return ["parents", cr.fieldNames.user];
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)

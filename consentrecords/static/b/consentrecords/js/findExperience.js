@@ -165,7 +165,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				{
 					var initialData = [{
 							container: '#{0}>Inquiries'.format(session.getInstanceID()),
-							field: '_user',
+							field: cr.fieldNames.user,
 							instanceID: user.getInstanceID(),
 							description: getUserDescription(user)
 						}];
@@ -187,7 +187,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							if (groupPaths.length == 0)
 								done();
 							else {
-								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+								addMissingAccess(user, cr.fieldNames.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
 							}
 						});
 					return cr.updateValues(initialData, sourceObjects);
@@ -209,7 +209,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				var _this = this;
 				
 				cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
-					field: "_user",
+					field: cr.fieldNames.user,
 					value: this.getInstanceID(),
 					done: function(valueIDs)
 					{
@@ -277,7 +277,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
 		cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
-			field: "_user",
+			field: cr.fieldNames.user,
 			value: user.getInstanceID(),
 			done: done,
 			fail: asyncFailFunction});
@@ -319,9 +319,9 @@ var PickOfferingSearchView = (function () {
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
-			return s + '[ancestor:_name^="' + val + '"]';
+			return s + '[ancestor:name^="' + val + '"]';
 		else
-			return s + '[ancestor:_name*="' + val + '"]';
+			return s + '[ancestor:name*="' + val + '"]';
 	}
 	
 	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
@@ -429,9 +429,9 @@ var FindExperienceSearchView = (function () {
 		else
 		{
 			if (val.length < 3)
-				return s + '[_name^="' + val + '"]';
+				return s + '[name^="' + val + '"]';
 			else
-				return s + '[_name*="' + val + '"]';
+				return s + '[name*="' + val + '"]';
 		}
 	}
 	

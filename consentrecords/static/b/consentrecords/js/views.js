@@ -307,8 +307,8 @@ function showClickFeedback(obj, done)
 function _isPickCell(cell)
 {
 	if (("objectAddRule" in cell.field) &&
-			 (cell.field["objectAddRule"] == "_pick one" ||
-			  cell.field["objectAddRule"] == "_pick or create one"))
+			 (cell.field["objectAddRule"] == cr.objectAddRules.pickOne ||
+			  cell.field["objectAddRule"] == cr.objectAddRules.pickOrCreateOne))
 		return true;
 	else
 		return false;
@@ -472,7 +472,7 @@ function _showEditStringCell(obj, cell, inputType)
 			.attr("placeholder", label)
 			.property("value", _getDataValue);
 
-		if (cell.field.descriptorType != "_by text")
+		if (cell.field.descriptorType != cr.descriptorTypes.byText)
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(label);
@@ -552,7 +552,7 @@ function _showEditDateStampDayOptionalCell(obj)
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 		appendInputs(divs);
 	
-		if (this.field.descriptorType != "_by text")
+		if (this.field.descriptorType != cr.descriptorTypes.byText)
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(this.field.label || this.field.name);
@@ -647,7 +647,7 @@ function _showEditTranslationCell(obj, cell, inputType)
 	
 		appendInputControls(divs);
 
-		if (cell.field.descriptorType != "_by text")
+		if (cell.field.descriptorType != cr.descriptorTypes.byText)
 		{
 			var labelDiv = sectionObj.insert("label", ":first-child")
 				.text(cell.field.label || cell.field.name);
@@ -1815,7 +1815,7 @@ var SitePanel = (function () {
 		var _this = this;
 		var sections = this.mainDiv.appendSections(cells.filter(function(cell) 
 				{ 
-					return cell.field.descriptorType != "_by text" 
+					return cell.field.descriptorType != cr.descriptorTypes.byText 
 				}))
 			.classed("cell view", true)
 			.classed("unique", function(cell) { return cell.isUnique(); })
@@ -2869,7 +2869,7 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 		
 		var checkEdit = function()
 		{
-			if (cr.signedinUser.getValue("_system access"))
+			if (cr.signedinUser.getValue(cr.fieldNames.systemAccess))
 			{
 				var editButton = navContainer.appendRightButton()
 					.on("click", function(d) {

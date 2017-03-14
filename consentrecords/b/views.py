@@ -208,7 +208,7 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -276,13 +276,13 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
-        args['cell'] = '_user'
+        args['cell'] = TermNames.user
         args['privilege'] = terms.readPrivilegeEnum.id
 
     context = RequestContext(request, args)
@@ -309,7 +309,7 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -413,7 +413,7 @@ def acceptFollower(request, userPath=None):
                 followerField = terms.user
             else:
                 followerField = terms.group
-            ars = user.value_set.filter(field=terms['_access record'],
+            ars = user.value_set.filter(field=terms.accessRecord,
                                   deleteTransaction__isnull=True) \
                           .filter(referenceValue__value__field=followerField,
                                   referenceValue__value__deleteTransaction__isnull=True,
@@ -425,19 +425,19 @@ def acceptFollower(request, userPath=None):
                     transactionState = TransactionState(request.user)
                     nameLists = NameList()
                     try:
-                        ar = user.value_set.filter(field=terms['_access record'],
+                        ar = user.value_set.filter(field=terms.accessRecord,
                                                    deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms['_privilege'],
+                                     .get(referenceValue__value__field=terms.privilege,
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=privilegeID).referenceValue
                         newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
                     except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
-                            {'_privilege': [{'instanceID': privilegeID}],
+                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
+                            {terms.privilege: [{'instanceID': privilegeID}],
                              followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms['_access request'],
+                    vs = user.value_set.filter(field=terms.accessRequest,
                                            deleteTransaction__isnull=True,
                                            referenceValue_id=follower.id)
                     for v in vs:
@@ -485,7 +485,7 @@ def requestAccess(request):
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID == terms.user:
                         follower = objs[0]
-                        fieldTerm = terms['_access request']
+                        fieldTerm = terms.accessRequest
                         ars = following.value_set.filter(field=fieldTerm,
                                                          deleteTransaction__isnull=True,
                                                          referenceValue_id=follower.id)
@@ -510,12 +510,12 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms['_first Name'],
+                                firstNames = following.value_set.filter(field=terms.firstName,
                                                                    deleteTransaction__isnull=True)
                                 firstName = firstNames.exists() and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
                                                                                                     deleteTransaction__isnull=True)
                                 screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                                 

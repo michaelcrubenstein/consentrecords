@@ -61,7 +61,7 @@ var RequestFollowPanel = (function() {
 						}
 						else
 						{
-							cr.requestAccess(user, '_user[_email="{0}"]'.format(email), done, syncFailFunction);
+							cr.requestAccess(user, 'user[email="{0}"]'.format(email), done, syncFailFunction);
 						}
 					}
 					catch(err)
@@ -124,9 +124,9 @@ var FollowingPanel = (function() {
 					if (d.getInstanceID)
 						path = '#{0}'.format(d.getInstanceID())
 					else
-						path = '_user[_email={0}]'.format(d.getDescription())
+						path = 'user[email={0}]'.format(d.getDescription())
 					cr.getValues({path: path,
-						field: "_access request",
+						field: cr.fieldNames.accessRequest,
 						value: _this.user.getInstanceID(),
 						done: function(values)
 						{
@@ -299,7 +299,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
-		this._pendingChunker.path = '_user["_access request"={0}]'.format(this.user.getInstanceID());
+		this._pendingChunker.path = 'user["access request"={0}]'.format(this.user.getInstanceID());
 		this._pendingChunker.fields = [];
 		
 		this.appendActionButton("Ask To Follow", function()
@@ -326,7 +326,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '#{0}::reference("_access record")[_privilege=(_read,_write,_administer)]::reference(_user)'.format(this.user.getInstanceID());
+		this._followingChunker.path = '#{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
 		this._followingChunker.fields = [];
 		
 		$(this.node()).one("revealing.cr", function()

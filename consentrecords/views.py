@@ -222,7 +222,7 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -290,13 +290,13 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
-        args['cell'] = '_user'
+        args['cell'] = TermNames.user
         args['privilege'] = terms.readPrivilegeEnum.id
 
     context = RequestContext(request, args)
@@ -323,7 +323,7 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
     objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
@@ -422,7 +422,7 @@ def acceptFollower(request, userPath=None):
                 followerField = terms.user
             else:
                 followerField = terms.group
-            ars = user.value_set.filter(field=terms['_access record'],
+            ars = user.value_set.filter(field=terms.accessRecord,
                                   deleteTransaction__isnull=True) \
                           .filter(referenceValue__value__field=followerField,
                                   referenceValue__value__deleteTransaction__isnull=True,
@@ -434,19 +434,19 @@ def acceptFollower(request, userPath=None):
                     transactionState = TransactionState(request.user)
                     nameLists = NameList()
                     try:
-                        ar = user.value_set.filter(field=terms['_access record'],
+                        ar = user.value_set.filter(field=terms.accessRecord,
                                                    deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms['_privilege'],
+                                     .get(referenceValue__value__field=terms.privilege,
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=privilegeID).referenceValue
                         newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
                     except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
-                            {'_privilege': [{'instanceID': privilegeID}],
+                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
+                            {TermNames.privilege: [{'instanceID': privilegeID}],
                              followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms['_access request'],
+                    vs = user.value_set.filter(field=terms.accessRequest,
                                            deleteTransaction__isnull=True,
                                            referenceValue_id=follower.id)
                     for v in vs:
@@ -494,7 +494,7 @@ def requestAccess(request):
                     objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                         follower = objs[0]
-                        fieldTerm = terms['_access request']
+                        fieldTerm = terms.accessRequest
                         ars = following.value_set.filter(field=fieldTerm,
                                                          deleteTransaction__isnull=True,
                                                          referenceValue_id=follower.id)
@@ -504,12 +504,12 @@ def requestAccess(request):
                             else:
                                 error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
                             return HttpResponseBadRequest(reason=error)
-                        elif not follower.value_set.filter(field=terms['_public access'],
+                        elif not follower.value_set.filter(field=terms.publicAccess,
                                                               deleteTransaction__isnull=True).exists() and \
-                             not Value.objects.filter(field=terms['_user'],
+                             not Value.objects.filter(field=terms.user,
                                                       deleteTransaction__isnull=True,
                                                       referenceValue__id=following.id,
-                                                      instance__typeID=terms['_access record'],
+                                                      instance__typeID=terms.accessRecord,
                                                       instance__referenceValues__instance_id=follower.id).exists():
                             followerName = "you" if follower.id == user.id else ('"%s"' % follower.description.text)
                             followerPossessive = "your" if follower.id == user.id else (('"%s"' + "'s") % follower.description.text)
@@ -531,12 +531,12 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms['_first Name'],
+                                firstNames = following.value_set.filter(field=terms.firstName,
                                                                    deleteTransaction__isnull=True)
                                 firstName = firstNames.exists() and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
                                                                                                     deleteTransaction__isnull=True)
                                 screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                                 
@@ -724,7 +724,7 @@ def requestExperienceComment(request):
                                 propertyList = {\
                                         'Comment Request': [{'cells': {\
                                             'Path': [{'instanceID': follower.id}],
-                                            '_text': [{'text': question}],
+                                            TermNames.text: [{'text': question}],
                                            }}],
                                     }
                                 item, v = instancecreator.create(terms['Comment'], 
@@ -736,7 +736,7 @@ def requestExperienceComment(request):
                                         'Comment': [{'cells': {\
                                             'Comment Request': [{'cells': {\
                                                 'Path': [{'instanceID': follower.id}],
-                                                '_text': [{'text': question}],
+                                                TermNames.text: [{'text': question}],
                                                }}],
                                             }}],
                                     }
@@ -756,12 +756,12 @@ def requestExperienceComment(request):
                             experienceUser = experience.parent.parent
                             recipientEMail = experienceUser.value_set.filter(field=terms.email,
                                                                         deleteTransaction__isnull=True)[0].stringValue
-                            firstNames = experienceUser.value_set.filter(field=terms['_first Name'],
+                            firstNames = experienceUser.value_set.filter(field=terms.firstName,
                                                                deleteTransaction__isnull=True)
                             firstName = firstNames.exists() and firstNames[0].stringValue
                             
                             path = experienceUser.parent
-                            screenNames = path and path.value_set.filter(field=terms['_name'],
+                            screenNames = path and path.value_set.filter(field=terms.name,
                                                                          deleteTransaction__isnull=True)
                             screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                             
@@ -1038,7 +1038,7 @@ class api:
             typeset = frozenset(typeIDs)
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             if len(fields) == 0:
-                p = map(lambda v: v.getReferenceData(userInfo, language=language), m)
+                p = list(map(lambda v: v.getReferenceData(userInfo, language=language), m))
             else:
                 # iterate through the list so that fieldsDataDictionary is populated.
                 p = list(map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m))
@@ -1237,7 +1237,7 @@ class api:
                 uuObjects = uuObjects[start:end]
             elif start > 0:
                 uuObjects = uuObjects[start:]
-                                                            
+                
             language = data.get('language', None)
             typeset = frozenset([x.typeID_id for x in uuObjects])
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
@@ -1306,6 +1306,54 @@ class api:
             
         return JsonResponse(results)
 
+    def paths(user, data):
+        try:
+            userInfo=UserInfo(user)
+            
+            print(data)
+            
+            start = int(data.get("start", "0"))
+            end = int(data.get("end", "0"))
+        
+            fieldString = data.get('fields', "[]")
+            fields = json.loads(fieldString)
+            
+            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
+            fieldNames = list(fieldNames)
+            
+            moreExperienceString = data.get('more experience', '[]')
+            
+            print(moreExperienceString)
+            moreExperienceQuery = json.loads(moreExperienceString)
+            
+            print(str(moreExperienceQuery))
+            
+            uuObjects = userInfo.readFilter(Instance.objects.filter(typeID=terms['Path'], deleteTransaction__isnull=True))
+            
+            uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
+            uuObjects = uuObjects.order_by('description__text', 'id');
+            if end > 0:
+                uuObjects = uuObjects[start:end]
+            elif start > 0:
+                uuObjects = uuObjects[start:]
+                
+            print(str(uuObjects.query))
+                                                            
+            language = data.get('language', None)
+            typeset = frozenset([x.typeID_id for x in uuObjects])
+            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            
+            p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+        
+            results = {'fields': fieldsDataDictionary.getData(), 'data': p}
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("%s" % traceback.format_exc())
+            logger.error("getData data:%s" % str(data))
+            return HttpResponseBadRequest(reason=str(e))
+        
+        return JsonResponse(results)
+        
 def createInstance(request):
     if request.method != "POST":
         raise Http404("createInstance only responds to POST methods")
@@ -1371,6 +1419,12 @@ def getData(request):
         return api.getData(request.user, request.GET.get('path', None), request.GET)
     else:
         raise Http404("getData only responds to GET methods")
+        
+def paths(request):
+    if request.method == 'GET':
+        return api.paths(request.user, request.GET)
+    else:
+        raise Http404("paths only responds to GET methods")
 
 def handleURL(request, urlPath):
     if request.method == 'GET':
