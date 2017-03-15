@@ -1,3 +1,9 @@
+# Script for replacing User Entered Services with standard services
+# and User Entered Offerings with standard services.
+#
+# For example, if a user enters 'football' as an offering, that is changed
+# to a standard service so that it can be found by a search.
+#
 # python3 data/14standardizetags.py -user michaelcrubenstein@gmail.com
 
 import datetime
