@@ -1,3 +1,9 @@
+# Script for replacing User Entered Services with standard services
+# and User Entered Offerings with standard services.
+#
+# For example, if a user enters 'football' as an offering, that is changed
+# to a standard service so that it can be found by a search.
+#
 # python3 data/14standardizetags.py -user michaelcrubenstein@gmail.com
 
 import datetime
@@ -146,16 +152,16 @@ if __name__ == "__main__":
             language = None
             serviceField = terms['Service']
             
-            customServices = Value.objects.filter(\
-                field=terms['User Entered Service'],\
-                deleteTransaction__isnull=True);
-                
             standardServices = Instance.objects.filter(\
                 typeID=serviceField,\
                 deleteTransaction__isnull=True);
                 
             d = dict((''.join(s.description.text.lower().split()), s) for s in standardServices)
             
+            customServices = Value.objects.filter(\
+                field=terms['User Entered Service'],\
+                deleteTransaction__isnull=True);
+                
             for c in customServices:
                 key = ''.join(c.stringValue.lower().split())
                 if key in d.keys():
@@ -167,5 +173,20 @@ if __name__ == "__main__":
                         parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
                         print(parent.description.text, d[key])
                                 
+            customOfferings = Value.objects.filter(\
+                field=terms['User Entered Offering'],\
+                deleteTransaction__isnull=True);
+                
+            for c in customOfferings:
+                key = ''.join(c.stringValue.lower().split())
+                if key in d.keys():
+                    parent = c.instance
+                    if not parent.value_set.filter(deleteTransaction__isnull=True,
+                        field=serviceField,
+                        referenceValue__value__deleteTransaction__isnull=True,
+                        referenceValue__value__field=serviceField,
+                        referenceValue__value__referenceValue_id=d[key].id).exists():
+                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
+                        print(str(parent.parent.parent), parent.description.text, d[key])
     except Exception as e:
         print("%s" % traceback.format_exc())
