@@ -855,7 +855,7 @@ Service
     Stage: Studying
     Service: English Degree
     Service: English
-    Service: Education
+    Service: College
     Service: School
 Service
     name: en - English Teacher
@@ -899,7 +899,7 @@ Service
     Stage: Studying
     Service: Finance Degree
     Service: Finance
-    Service: Education
+    Service: College
     Service: School
 Service
     name: en - Finance Job
@@ -1074,6 +1074,7 @@ Service
     Stage: Studying
     Service: Graduate School
     Service: College
+    Service: School
 Service
     name: en - Guitar
     Service: Guitar
@@ -1117,7 +1118,7 @@ Service
     Stage: Studying
     Service: History Degree
     Service: History
-    Service: Education
+    Service: College
     Service: School
 Service
     name: en - History Teacher
@@ -1314,7 +1315,7 @@ Service
     Stage: Studying
     Service: Math Degree
     Service: Math
-    Service: Education
+    Service: College
     Service: School
 Service
     name: en - Math Teacher
@@ -1474,7 +1475,7 @@ Service
     Stage: Studying
     Service: Public Policy Degree
     Service: Public Policy
-    Service: Education
+    Service: College
     Service: School
 Service
     name: en - Public Policy Job
@@ -1564,6 +1565,7 @@ Service
     name: en - Sociology Degree
     Service: Sociology Degree
     Service: Sociology
+    Service: College
     Service: School
 Service
     name: en - Softball
