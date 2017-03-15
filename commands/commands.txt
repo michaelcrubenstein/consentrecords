@@ -345,8 +345,21 @@ q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%
 Value.objects.filter(stringValue='_uuname').update(stringValue='_term')
 
 ##################################################################
-# Commands to update the EC2 ubuntu with the latest security patches:
+# Shell commands to update the EC2 ubuntu with the latest security patches:
 ##################################################################
 sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
 sudo reboot
 
+##################################################################
+# Python commands to update a value
+##################################################################
+
+# This example uses the commands to strip the leading character from a text value.
+from django.db import transaction
+nameLists = NameList()
+user = Instance.objects.get(typeID=terms.user, deleteTransaction__isnull=True, description__text='michaelcrubenstein@gmail.com')
+def d1(i):
+    with transaction.atomic():
+        transactionState = TransactionState(user.transaction.user)
+        i.value_set.get(field=terms.name, deleteTransaction__isnull=True).updateValue({'text': i.description.text[1:]}, transactionState)
+        Instance.updateDescriptions([i], nameLists)
