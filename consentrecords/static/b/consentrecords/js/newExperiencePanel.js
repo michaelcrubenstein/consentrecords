@@ -1228,21 +1228,18 @@ var TagSearchView = (function() {
 					Otherwise, stay there.
 				 */	
 				var d3Focus = this.focusNode && this.focusNode.parentNode && d3.select(this.focusNode);
-				var moveToNewInput = !this.hasSubService(d.service);
 				var newDatum;
 				
+				var moveToNewInput = !this.hasSubService(d.service) ||
+					(this.focusNode && 
+					 this.focusNode.value.toLocaleUpperCase() == d.getDescription().toLocaleUpperCase());
+					
 				if (d3Focus && d3Focus.datum())
 				{
 					newDatum = d3Focus.datum();
-					if (newDatum.pickedObject == d.service)
-						moveToNewInput = true;
-					else
-					{
-						newDatum.name = d.getDescription();
-						newDatum.pickedObject = d.service;
-						this.focusNode.value = d.getDescription();
-					}
-					
+					newDatum.name = d.getDescription();
+					newDatum.pickedObject = d.service;
+					this.focusNode.value = d.getDescription();
 				}
 				else
 				{
