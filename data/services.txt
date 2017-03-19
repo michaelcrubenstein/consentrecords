@@ -903,7 +903,6 @@ Service
 Service
     name: en - College
     Organization Label: en - College or University Name
-    Site Label: en - None
     Offering Label: en - Program or Degree
     Stage: Studying
     Service: School
@@ -1526,7 +1525,7 @@ Service
     Service: Journalist
     Service: Journalism
     Service: Journalism Job
-    Service: Journalist
+    Service: Job
 Service
     name: en - Jump Year to Grade 9
     Organization Label: en - District
