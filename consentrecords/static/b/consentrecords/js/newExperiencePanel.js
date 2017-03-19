@@ -1203,6 +1203,101 @@ var TagSearchView = (function() {
 		}
 	}
 
+	TagSearchView.prototype.filterFlags = function(filterText)
+	{
+		TagPoolView.prototype.filterFlags.call(this, filterText);
+		
+		if (filterText)
+		{
+			var flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
+			var flagData = flags.data();
+			var flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
+			
+			var flagIndexOf = function(s)
+			{
+				var min, mid, max;
+				min = 0; 
+				max = flagData.length - 1;
+				
+				var t = s;
+				while (max >= min)
+				{
+					mid = Math.floor((min + max) / 2);
+					var target = flagDescriptions[mid];
+					if (target < t)
+						min = mid + 1;
+					else if (target > t)
+						max = mid - 1;
+					else
+						return mid;
+				}
+				return -1;
+			}
+			
+			var flagIndex = flagIndexOf(filterText.toLocaleUpperCase());
+			if (flagIndex >= 0)
+			{
+				var rootService = flagData[flagIndex];
+				// Add to the visible list any item that contains the root service as a sub service.
+				this.flags().each(function(fs)
+					{
+						if (!fs.visible && fs.service.getCell("Service").data.find(function(subService)
+							{
+								return subService.getInstanceID() == rootService.service.getInstanceID();
+							}))
+							fs.visible = true;
+					});
+				flags = this.flags().filter(function(fs) { return fs.visible || fs.visible === undefined; });
+				flagData = flags.data();
+				flagDescriptions = flagData.map(function(fs) { return fs.getDescription().toLocaleUpperCase(); });
+			}
+			
+			var levels = {};
+			var levelCount = 1;
+			var flagServices = {};
+			
+			// Fill flagServices with all of the subServices associated with each flag that are
+			// in the set of visible flags except for the service itself.
+			flags.each(function(fs)
+			{
+				flagServices[fs.service.getInstanceID()] = fs.service.getCell("Service").data.filter(
+					function(s) {
+						return flagIndexOf(s.getDescription().toLocaleUpperCase()) >= 0 && 
+										   s.getInstanceID() != fs.service.getInstanceID();
+					});
+			});
+			
+			for (levelCount = 1; 
+			     (Object.keys(levels).length < flagData.length &&
+				   levelCount <= 3);
+				 ++levelCount)
+			{
+				flags.each(function(fs)
+				{
+					var thisID = fs.service.getInstanceID();
+					
+					if (!(thisID in levels))
+					{
+						// Add a service into the levels list if all of its visible flags 
+						// are already in the levels except for itself.
+						var f = function(s)
+							{
+								return s.getInstanceID() in levels && levels[s.getInstanceID()] < levelCount;
+							};
+						
+						if (flagServices[thisID].filter(f).length == flagServices[thisID].length)
+							levels[thisID] = levelCount;
+					}
+				});
+			}
+			
+			flags.each(function(fs)
+				{
+					fs.visible = fs.service.getInstanceID() in levels;
+				});
+		}
+	}
+	
 	TagSearchView.prototype.constrainTagFlags = function()
 	{
 		this.filterFlags(this.focusNode.value);
