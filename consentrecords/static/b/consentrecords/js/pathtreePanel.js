@@ -634,8 +634,7 @@ var PathView = (function() {
 	
 		var handleExperienceDateChanged = function(eventObject)
 		{
-			var g = _this.experienceGroup.selectAll('g.flag');
-			_this.transitionPositions(g);
+			_this.transitionPositions();
 		}
 	
 		var node = this.sitePanel.node();
@@ -761,7 +760,7 @@ var PathView = (function() {
 					_this.setupServiceTriggers(this, d, function(eventObject)
 						{
 							d.column = d.getColumn();
-							_this.transitionPositions(g);
+							_this.transitionPositions();
 						});
 					setupOnViewEventHandler($(d), "selectedChanged.cr", this, function(eventObject)
 						{
@@ -965,8 +964,9 @@ var PathView = (function() {
 			});
 	}
 	
-	PathView.prototype.transitionPositions = function(g)
+	PathView.prototype.transitionPositions = function()
 	{
+		var g = this.experienceFlags();
 		var _this = this;
 		g.sort(this._compareExperiences);
 		this._setCoordinates(g);
@@ -1022,10 +1022,15 @@ var PathView = (function() {
 		}
 	}
 	
+	PathView.prototype.experienceFlags = function()
+	{
+		return this.experienceGroup.selectAll('g.flag');
+	}
+	
 	/* Returns an array of all of the flag controllers */
 	PathView.prototype.flagControllers = function()
 	{
-		return this.experienceGroup.selectAll('g.flag').data();
+		return this.experienceFlags().data();
 	}
 	
 	function PathView(sitePanel, containerDiv)
