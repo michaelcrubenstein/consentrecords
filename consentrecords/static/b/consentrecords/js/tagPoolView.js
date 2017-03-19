@@ -92,11 +92,11 @@ var Service = (function() {
 	}
 	
 	/* Returns True if the service contains the specified text. */
-	Service.prototype.contains = function(s)
+	Service.prototype.contains = function(s, prefix)
 	{
 		if (this.service)
 		{
-			var re = new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
+			var re = new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			if (re.test(this.service.getDescription()))
 				return true;
 			
@@ -236,16 +236,23 @@ var TagPoolView = (function () {
 		this.setFlagVisibles();
 			
 		var inputTexts = filterText.toLocaleUpperCase().split(' ');
+		var prefix;
+		if (inputTexts.length == 1 &&
+			inputTexts[0].length == 1)
+			prefix = "^";
+		else
+			prefix = "\\b";
+			
 		var inputRegExps = inputTexts.map(function(s)
 			{
-				return new RegExp("\\b" + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
+				return new RegExp(prefix + s.replace(/([\.\\\/\^\+])/, "\\$1"), "i");
 			});
 			
 		if (inputTexts.length > 0)
 		{
 			this.flags().each(function(fs)
 				{
-					if (!fs.contains(filterText.toLocaleUpperCase()) &&
+					if (!fs.contains(filterText.toLocaleUpperCase(), prefix) &&
 						!inputRegExps.reduce(function(a, b)
 							{
 								return a && b.test(fs.getDescription());
