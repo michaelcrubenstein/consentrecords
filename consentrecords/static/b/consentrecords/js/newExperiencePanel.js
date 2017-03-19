@@ -1174,11 +1174,17 @@ var TagSearchView = (function() {
 	/* Set the visible flags for each of the services associated with this flags. */
 	TagSearchView.prototype.setFlagVisibles = function()
 	{
-		if (this.focusNode.value ||
-			this.focusNode != this.firstTagInputNode() ||
-			(this.experience.offering &&
-			  this.experience.offering.getCell("Service").data.length > 0))
+		if (this.focusNode.value)
 			TagPoolView.prototype.setFlagVisibles.call(this);
+		else if (this.focusNode != this.firstTagInputNode() ||
+				 (this.experience.offering &&
+			 	  this.experience.offering.getCell("Service").data.length > 0))
+		{
+			this.flags().each(function(fs)
+				{
+					fs.visible = (fs.service.getCell("Service").data.length > 1) ? false : undefined;
+				});
+		}
 		else
 		{
 			var types = ["Job", 
