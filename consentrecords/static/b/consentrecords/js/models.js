@@ -1186,10 +1186,10 @@ cr.Instance = (function() {
 		}
 		else if (this.getInstanceID())
 		{
-			var jsonArray = { "path" : this.getInstanceID() };
+			var jsonArray = {};
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
-			return $.getJSON(cr.urls.getData, jsonArray)
+			return $.getJSON(cr.urls.getData + this.getInstanceID(), jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -2021,7 +2021,7 @@ cr.getData = function(args)
 		if (!args.path)
 			throw new Error("path is not specified to getData");
 			
-		var data = {path : args.path}
+		var data = {};
 		if (args.fields)
 			data['fields'] = JSON.stringify(args.fields); 
 		if (cr.accessToken)
@@ -2032,7 +2032,7 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		return $.getJSON(cr.urls.getData, data)
+		return $.getJSON(cr.urls.getData + args.path, data)
 			.then(function(json)
 				{
 					json.fields.forEach(function(field)
