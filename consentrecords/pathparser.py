@@ -281,6 +281,8 @@ def _refineResults(resultSet, path, userInfo):
         f = Instance.objects.filter(typeID__in=t,
                                     deleteTransaction__isnull=True)
         return f, path[1:]
+    elif terms.isUUID(path[0]):
+        return Instance.objects.filter(pk=path[0]), path[1:]
     else:   # Path[0] is the name of a type.
         i = terms[path[0]]
         f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)

@@ -687,7 +687,7 @@ cr.Value = (function() {
 			{
 				/* In this case, this is a root object, so we just need to 
 					delete the instance. */
-				var jsonArray = { path: "#" + this.getInstanceID()
+				var jsonArray = { path: this.getInstanceID()
 						};
 				$.post(cr.urls.deleteInstances, jsonArray)
 					.done(function(json, textStatus, jqXHR)
@@ -1143,7 +1143,7 @@ cr.Instance = (function() {
 			return result.promise();
 		}
 		
-		return cr.getData({ "path" : "#" + this.getInstanceID() })
+		return cr.getData({ "path" : this.getInstanceID() })
 			.done(function(values)
 				{
 					var result = $.Deferred();
@@ -1186,7 +1186,7 @@ cr.Instance = (function() {
 		}
 		else if (this.getInstanceID())
 		{
-			var jsonArray = { "path" : "#" + this.getInstanceID() };
+			var jsonArray = { "path" : this.getInstanceID() };
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
 			return $.getJSON(cr.urls.getData, jsonArray)

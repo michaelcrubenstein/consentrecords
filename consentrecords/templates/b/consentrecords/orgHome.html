@@ -411,7 +411,7 @@
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getInstanceID() + '>"Consent Record"';
+			var path = cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
 						fields: ["parents"], 
 						done: successFunction, 
@@ -551,7 +551,7 @@
 				});
 			}
 			
-			var path = '#'+cr.signedinUser.getInstanceID()+'::reference(group)::reference(Organization)';
+			var path = cr.signedinUser.getInstanceID()+'::reference(group)::reference(Organization)';
 			cr.selectAll({path: path})
 				.then(successFunction, cr.asyncFail);
 		}
@@ -1128,7 +1128,7 @@
 		
 		function check_single_field_instance(container, childFields, fieldName, dataValue, existsFunction, doesntExistFunction, failFunction)
 		{
-			var path = "#"+container.getInstanceID();
+			var path = container.getInstanceID();
 			for (i = 0; i < childFields.length; ++i)
 			{
 				path += ">" + childFields[i];

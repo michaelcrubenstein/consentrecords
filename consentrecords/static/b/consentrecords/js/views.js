@@ -3313,7 +3313,7 @@ function showPickObjectPanel(cell, oldData) {
 			if (currentObject != null && currentObject.getInstanceID())
 			{
 				/* Test case: edit the inquiry access group of an organization */
-				pickObjectPath = "#"+currentObject.getInstanceID()+pickObjectPath;
+				pickObjectPath = currentObject.getInstanceID()+pickObjectPath;
 				cr.selectAll({path: pickObjectPath})
 					.then(selectAllSuccessFunction, cr.syncFail);
 			}

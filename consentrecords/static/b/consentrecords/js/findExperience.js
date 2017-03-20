@@ -159,7 +159,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = '#'+organization.getInstanceID() + '>"Inquiry Access Group"';
+		groupPath = organization.getInstanceID() + '>"Inquiry Access Group"';
 		cr.selectAll({path: groupPath})
 			.done(function(groupPaths)
 				{
@@ -208,7 +208,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
+				cr.getValues({path: session.getInstanceID()+">Inquiries",
 					field: cr.fieldNames.user,
 					value: this.getInstanceID(),
 					done: function(valueIDs)
@@ -276,7 +276,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
+		cr.getValues({path: session.getInstanceID()+">Inquiries",
 			field: cr.fieldNames.user,
 			value: user.getInstanceID(),
 			done: done,
