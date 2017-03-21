@@ -3313,8 +3313,8 @@ function showPickObjectPanel(cell, oldData) {
 			if (currentObject != null && currentObject.getInstanceID())
 			{
 				/* Test case: edit the inquiry access group of an organization */
-				pickObjectPath = "#"+currentObject.getInstanceID()+pickObjectPath;
-				cr.selectAll({path: pickObjectPath})
+				pickObjectPath = currentObject.getInstanceID()+pickObjectPath;
+				cr.getData({path: pickObjectPath, fields: ['none']})
 					.then(selectAllSuccessFunction, cr.syncFail);
 			}
 			else
@@ -3322,12 +3322,12 @@ function showPickObjectPanel(cell, oldData) {
 		}
 		else
 			/* Test case: edit the public access of an organization. */
-			cr.selectAll({path: pickObjectPath})
+			cr.getData({path: pickObjectPath, fields: ['none']})
 				.then(selectAllSuccessFunction, cr.syncFail);
 	}
 	else
 		/* Test case: edit the name of a field of a configuration of a term. */
-		cr.selectAll({path: cell.field.ofKindID})
+		cr.getData({path: cell.field.ofKindID, fields: ['none']})
 			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		

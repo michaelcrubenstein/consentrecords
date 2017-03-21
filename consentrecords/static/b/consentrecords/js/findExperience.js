@@ -159,8 +159,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = '#'+organization.getInstanceID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath})
+		groupPath = organization.getInstanceID() + '>"Inquiry Access Group"';
+		cr.getData({path: groupPath, fields: ['none']})
 			.done(function(groupPaths)
 				{
 					var initialData = [{
@@ -208,7 +208,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
+				cr.getValues({path: session.getInstanceID()+">Inquiries",
 					field: cr.fieldNames.user,
 					value: this.getInstanceID(),
 					done: function(valueIDs)
@@ -276,7 +276,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
+		cr.getValues({path: session.getInstanceID()+">Inquiries",
 			field: cr.fieldNames.user,
 			value: user.getInstanceID(),
 			done: done,
@@ -417,7 +417,7 @@ var FindExperienceSearchView = (function () {
 	
 	FindExperienceSearchView.prototype.fields = function()
 	{
-		return ["parents", "type"];
+		return ["parents"];
 	}
 	
 	/* Overrides SearchView.searchPath */

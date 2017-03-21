@@ -1396,7 +1396,7 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  "#" + this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
+		return crp.promise({path:  this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]})
 		.then(function(experiences)
 			{
@@ -1407,11 +1407,11 @@ var PathLines = (function() {
 				});
 			})
 		.then(function() {
-			return crp.promise({path: "#" + _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
+			return crp.promise({path: _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
-				return crp.promise({path: "#" + _this.path.getInstanceID() + '>"More Experience">Offering'});
+				return crp.promise({path: _this.path.getInstanceID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
 				return crp.promise({path: "Service"});

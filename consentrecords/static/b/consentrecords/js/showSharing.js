@@ -203,10 +203,10 @@ var SharingPanel = (function() {
 				}
 			}
 		}
-		cr.getData({path: "#" + this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
-					fields: ["parents"], 
-					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
-					fail: asyncFailFunction});
+		cr.getData({path: this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
+					fields: ["parents"]})
+			.then(function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
+				  asyncFailFunction);
 	}
 	
 	SharingPanel.prototype.addAccessRecord = function(accessorLevel, path, done)

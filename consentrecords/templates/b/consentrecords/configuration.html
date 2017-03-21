@@ -120,7 +120,7 @@
 			{
 				panelDiv.sitePanel.showNow();
 			}
-			cr.selectAll({path: "{{path}}"})
+			cr.getData({path: "{{path}}", fields: ['none']})
 				.then(getViewRootObjectsFunction(cell, headerText, sortByDescription, showFunction), 
 					  cr.asyncFail);
 		});
