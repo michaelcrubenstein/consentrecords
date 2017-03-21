@@ -56,9 +56,7 @@ urlpatterns = [
     url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
 
     url(r'^local/getuserid/', views.getUserID),
-    url(r'^local/getdata/', views.getData),
     url(r'^local/getconfiguration/', views.getConfiguration),
-    url(r'^local/selectall/', views.selectAll),
     url(r'^local/getvalues/', views.getValues),
     
     url(r'^local/createinstance/', views.createInstance, name='createInstance'),
@@ -67,9 +65,7 @@ urlpatterns = [
     url(r'^local/deletevalue/', views.deleteValue, name='deleteValue'),
     
     url(r'^api/getuserid/', views.getUserID),
-    url(r'^api/getdata/', views.getData),
     url(r'^api/getconfiguration/', views.getConfiguration),
-    url(r'^api/selectall/', views.selectAll),
     url(r'^api/getvalues/', views.getValues),
     
     url(r'^api/paths', views.paths),

@@ -330,7 +330,7 @@
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
-					crp.promise({path: organizationName, fields: ["parents", "type"]})
+					crp.promise({path: organizationName, fields: ["parents"]})
 						.done(function(organizations)
 							{
 								if (organizations.length > 0)
@@ -389,7 +389,7 @@
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 			{
-				crp.promise({path: serviceName, fields: ["parents", "type"]})
+				crp.promise({path: serviceName, fields: ["parents"]})
 					.done(function(services)
 						{
 							if (services.length == 0)
@@ -492,7 +492,7 @@
 						{
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("Path");
-							cr.getData({path: experienceID, fields: ["type", "Offering"]})
+							cr.getData({path: experienceID, fields: ["Offering"]})
 								.then(function(experiences)
 								{
 									if (experiences.length > 0)
@@ -807,9 +807,8 @@
 			
 			var path = cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
+						fields: ["parents"]})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -942,9 +941,8 @@
 			
 			var path = cr.signedinUser.getInstanceID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
+						fields: ["parents"]})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		function validateEmail(email) 

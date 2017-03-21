@@ -160,7 +160,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	var addInquiry = function(user)
 	{
 		groupPath = organization.getInstanceID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath})
+		cr.getData({path: groupPath, fields: ['none']})
 			.done(function(groupPaths)
 				{
 					var initialData = [{

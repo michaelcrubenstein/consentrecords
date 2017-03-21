@@ -1189,7 +1189,7 @@ cr.Instance = (function() {
 			var jsonArray = {};
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
-			return $.getJSON(cr.urls.getData + this.getInstanceID(), jsonArray)
+			return $.getJSON(cr.urls.getData + this.getInstanceID() + "/", jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -1678,7 +1678,6 @@ cr.createCell = function(fieldID) {
 };
 	
 cr.urls = {
-		selectAll : "/api/selectall/",
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
@@ -1728,41 +1727,8 @@ cr.thenFail = function(jqXHR, textStatus, errorThrown)
 		return r2;
 	};
 	
-	/* args is an object with up to five parameters: path, access_token, start, end */
-cr.selectAll = function(args)
-	{
-		if (!args.path)
-			throw "path was not specified to selectAll";
-
-		var data = {path : args.path};
-		if (cr.accessToken)
-			data["access_token"] = cr.accessToken;
-		
-		if (args.start !== undefined)
-			data.start = args.start;
-		if (args.end !== undefined)
-			data.end = args.end;
-		
-		return $.getJSON(cr.urls.selectAll, data)
-			.then(
-				function(json)
-				{
-					try
-					{
-						return json.objects.map(cr.ObjectCell.prototype.copyValue);
-					}
-					catch(err)
-					{
-						var r = $.Deferred();
-						r.reject(err);
-						return r.promise();
-					}
-				},
-				cr.postError);
-	};
-	
-	/* args is an object with up to seven parameters: path, field, value, start, end, done, fail.
-		The done method takes a single argument, which is an array of value objects. */
+/* args is an object with up to seven parameters: path, field, value, start, end, done, fail.
+	The done method takes a single argument, which is an array of value objects. */
 cr.getValues = function (args)
 	{
 		var data = {};
@@ -2032,40 +1998,28 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		return $.getJSON(cr.urls.getData + args.path, data)
+		return $.getJSON(cr.urls.getData + encodeURIComponent(args.path) + "/", data)
 			.then(function(json)
 				{
-					json.fields.forEach(function(field)
-						{
-							crp.pushField(field);
-						});
-					var values = json.data.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
-						var result = $.Deferred();
-						result.resolve(values);
-						if (args.done)
-							args.done(values);
-						return result;
+						if (json.fields)
+						{
+							json.fields.forEach(function(field)
+								{
+									crp.pushField(field);
+								});
+						}
+						return json.data.map(cr.ObjectCell.prototype.copyValue);
 					}
 					catch(err)
 					{
 						var result = $.Deferred();
 						result.reject(err);
-						if (args.fail)
-							args.fail(err);
 						return result;
 					}
 				},
-				function(jqXHR, textStatus, errorThrown)
-				{
-					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
-					var result = $.Deferred();
-						result.reject(resultText);
-					if (args.fail)
-						args.fail(resultText);
-					return result;
-				});
+				cr.thenFail);
 	}
 
 /* Loads all of the elements of the specified cell within the specified object.

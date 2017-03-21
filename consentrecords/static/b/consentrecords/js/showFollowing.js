@@ -297,10 +297,10 @@ var FollowingPanel = (function() {
 		this._noPendingResultsDiv = this._pendingSection.append("div")
 			.text("None")
 			.style("display", "none")
-		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
+		this._pendingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
 		this._pendingChunker.path = 'user["access request"={0}]'.format(this.user.getInstanceID());
-		this._pendingChunker.fields = [];
+		this._pendingChunker.fields = ["none"];
 		
 		this.appendActionButton("Ask To Follow", function()
 			{
@@ -324,10 +324,10 @@ var FollowingPanel = (function() {
 		this._noFollowingResultsDiv = this._followingSection.append("div")
 			.text("None")
 			.style("display", "none")
-		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
+		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
 		this._followingChunker.path = '#{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
-		this._followingChunker.fields = [];
+		this._followingChunker.fields = ["none"];
 		
 		$(this.node()).one("revealing.cr", function()
 			{

@@ -960,35 +960,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    def selectAll(user, data):
-        try:
-            path = data.get("path", None)
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-            userInfo = UserInfo(user)
-            language=None
-        
-            if not path:
-                raise ValueError("path was not specified")
-        
-            uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
-                            .select_related('description')\
-                            .order_by('description__text', 'id')
-            
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-            
-            p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
-            results = {'objects': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-
     # Returns an iterable of the values within self associated with the specified field.
     # If value is specified, then filter the returned values according to the value. Otherwise,
     # return all of the values.       
@@ -1182,7 +1153,8 @@ class api:
 
     def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
         data = uuObject.getReferenceData(userInfo, language)
-        data['cells'] = api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo)
+        if not 'none' in fields:
+            data['cells'] = api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo)
         return data;
     
     def _getValueData(v, fields, fieldsDataDictionary, language, userInfo):
@@ -1230,8 +1202,13 @@ class api:
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
             
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
+            if 'none' in fields:
+                uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
+                                .select_related('description')
+            else:
+                uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
+                uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
+                
             uuObjects = uuObjects.order_by('description__text', 'id');
             if end > 0:
                 uuObjects = uuObjects[start:end]
@@ -1242,9 +1219,12 @@ class api:
             typeset = frozenset([x.typeID_id for x in uuObjects])
             fieldsDataDictionary = FieldsDataDictionary(typeset, language)
             
-            p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+            p = [api._getInstanceData(i, fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
         
-            results = {'fields': fieldsDataDictionary.getData(), 'data': p}
+            results = {'data': p}
+            if not 'none' in fields:
+                results['fields'] = fieldsDataDictionary.getData()
+                
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
@@ -1390,12 +1370,6 @@ def deleteValue(request):
     
     return api.deleteValue(request.user, request.POST)
     
-def selectAll(request):
-    if request.method != "GET":
-        raise Http404("selectAll only responds to GET methods")
-    
-    return api.selectAll(request.user, request.GET)
-    
 def getValues(request):
     if request.method != "GET":
         raise Http404("getValues only responds to GET methods")
@@ -1438,12 +1412,10 @@ def handleURL(request, urlPath):
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
-        if request.path_info == '/api/getdata/':
+        if request.path_info == '/api/':
             return getData(request)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
-        elif request.path_info == '/api/selectall/':
-            return selectAll(request)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
         return HttpResponseNotFound(reason='unrecognized url')

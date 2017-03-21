@@ -413,9 +413,8 @@
 			
 			var path = cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
+						fields: ["parents"]})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -552,7 +551,7 @@
 			}
 			
 			var path = cr.signedinUser.getInstanceID()+'::reference(group)::reference(Organization)';
-			cr.selectAll({path: path})
+			cr.getData({path: path, fields: ['none']})
 				.then(successFunction, cr.asyncFail);
 		}
 		
@@ -896,7 +895,7 @@
 						}
 					};
 		
-					cr.selectAll({path: "_user[_email="+email+"]", end: 50})
+					cr.getData({path: "_user[_email="+email+"]", fields: ['none'], end: 50})
 						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
@@ -993,7 +992,7 @@
 						}
 					}
 					
-					cr.selectAll({path: 'user[email^="'+val+'"]', end: 50})
+					cr.getData({path: 'user[email^="'+val+'"]', fields: ['none'], end: 50})
 						.then(selectAllSuccess, cr.asyncFail);
 				}
 			}
@@ -1135,7 +1134,7 @@
 			}
 			path += "[" + fieldName + "=" + dataValue + "]";
 			
-			cr.selectAll({path: path})
+			cr.getData({path: path, fields: ['none']})
 				.then(function(newInstances)
 					{
 						if (newInstances.length > 0)
@@ -1282,7 +1281,7 @@
 									}
 								}
 					
-								cr.selectAll({path: 'user[email^="'+val+'"]', end: 50})
+								cr.getData({path: 'user[email^="'+val+'"]', fields: ['none'], end: 50})
 									.then(selectAllSuccess, cr.asyncFail);
 							}
 						}
