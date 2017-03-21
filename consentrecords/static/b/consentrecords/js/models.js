@@ -1682,7 +1682,6 @@ cr.urls = {
 		getUserID : "/api/getuserid/",
 		getData : "/api/getdata/",
 		getConfiguration : "/api/getconfiguration/",
-		createInstance : "/api/createinstance/",
 		updateValues : "/api/updatevalues/",
 		deleteValue : '/api/deletevalue/',
 		deleteInstances : '/api/deleteinstances/',
@@ -1855,11 +1854,14 @@ cr.createInstance = function(field, containerUUID, initialData)
 			jsonArray.typeName = field.ofKind;
 		else
 			throw ("neither field.ofKindID nor field.ofKind is specified");
-			
+		
+		var url;	
 		if (containerUUID)
-			jsonArray.containerUUID = containerUUID;
+			url = cr.urls.getData + containerUUID + "/";
+		else
+			url = cr.urls.getData;
 	
-		return $.post(cr.urls.createInstance, jsonArray)
+		return $.post(url, jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();

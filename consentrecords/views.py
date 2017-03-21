@@ -809,7 +809,7 @@ def requestExperienceComment(request):
 
 class api:
     # Handle a POST event to create a new instance of an object with a set of properties.
-    def createInstance(user, data):
+    def createInstance(user, path, data):
         try:
             # The type of the new object.
             instanceType = data.get('typeName', None)
@@ -821,9 +821,6 @@ class api:
             else:
                 ofKindObject = terms[instanceType]
          
-            # An optional container for the new object.
-            containerUUID = data.get('containerUUID', None)
-        
             # The element name for the type of element that the new object is to the container object
             elementName = data.get('elementName', None)
             elementUUID = data.get('elementUUID', None)
@@ -851,8 +848,12 @@ class api:
             
             with transaction.atomic():
                 transactionState = TransactionState(user)
-                if containerUUID:
-                    containerObject = Instance.objects.get(pk=containerUUID)
+                if path:
+                    instances = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(instances) > 0:
+                    	containerObject = instances[0]
+                    else:
+                    	raise RuntimeError("%s is not recognized" % path)
                 else:
                     containerObject = None
 
@@ -1334,15 +1335,6 @@ class api:
         
         return JsonResponse(results)
         
-def createInstance(request):
-    if request.method != "POST":
-        raise Http404("createInstance only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.createInstance(request.user, request.POST)
-    
 def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
@@ -1400,13 +1392,17 @@ def paths(request):
     else:
         raise Http404("paths only responds to GET methods")
 
-def handleURL(request, urlPath):
+def handleURL(request, urlPath=None):
     if request.method == 'GET':
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
             raise PermissionDenied
         return api.deleteInstances(request.user, urlPath)
+    elif request.method == 'POST':
+        if not request.user.is_authenticated():
+            raise PermissionDenied
+        return api.createInstance(request.user, urlPath, request.POST)
     else:
         raise Http404("api only responds to GET and DELETE methods")
 
@@ -1421,8 +1417,8 @@ class ApiEndpoint(ProtectedResourceView):
         return HttpResponseNotFound(reason='unrecognized url')
         
     def post(self, request, *args, **kwargs):
-        if request.path_info == '/api/createinstance/':
-            return createInstance(request)
+        if request.path_info == '/api/':
+            return handleURL(request, None)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
         elif request.path_info == '/api/deleteinstances/':

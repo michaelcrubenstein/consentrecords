@@ -9,7 +9,6 @@ cr.urls.getData = '/api/';
 cr.urls.getValues = '/local/getvalues/';
 cr.urls.getUserID = '/local/getuserid/';
 cr.urls.getConfiguration = '/local/getconfiguration/';
-cr.urls.createInstance = '/local/createinstance/';
 cr.urls.updateValues = '/local/updatevalues/';
 cr.urls.deleteValue = '/local/deletevalue/';
 cr.urls.deleteInstances = '/local/deleteinstances/';
