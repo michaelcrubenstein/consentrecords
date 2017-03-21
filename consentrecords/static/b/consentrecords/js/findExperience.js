@@ -417,7 +417,7 @@ var FindExperienceSearchView = (function () {
 	
 	FindExperienceSearchView.prototype.fields = function()
 	{
-		return ["parents", "type"];
+		return ["parents"];
 	}
 	
 	/* Overrides SearchView.searchPath */
