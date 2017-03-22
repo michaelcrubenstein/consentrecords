@@ -240,8 +240,8 @@
 		cr.signedinUser.on("dataChanged.cr", usernameLabel[0], setName);
 		cr.signedinUser.on("signin.cr", usernameLabel[0], function(eventObject)
 		{
-			userFirstName = this.getValue("_first name");
-			userLastName = this.getValue("_last name");
+			userFirstName = this.getValue("first name");
+			userLastName = this.getValue("last name");
 			userFirstName.on("valueDeleted.cr dataChanged.cr", eventObject.data, setName);
 			userLastName.on("valueDeleted.cr dataChanged.cr", eventObject.data, setName);
 			setName.call(this, eventObject);
@@ -675,8 +675,8 @@
 		
 		function compareUsers(a, b)
 		{
-			var aDatum = a.getDatum("_email");
-			var bDatum = b.getDatum("_email");
+			var aDatum = a.getDatum("email");
+			var bDatum = b.getDatum("email");
 			if (aDatum)
 			{
 				if (bDatum)
@@ -826,7 +826,7 @@
 						var inquiriesInstance = inquiriesInstances[0];
 						inquiriesInstance.promiseCells().then(function()
 							{
-								inquiryCell = inquiriesInstance.getCell("_user");
+								inquiryCell = inquiriesInstance.getCell("user");
 						
 								var sitePanel = new SitePanel();
 								sitePanel.createRoot(session, "Pick User", "list");
@@ -880,7 +880,7 @@
 		{
 			var checkSuccessFunction = function() 
 			{
-				var email = inquiry.getDatum("_email");
+				var email = inquiry.getDatum("email");
 				if (!email)
 					failFunction("The email is not set up.");
 				else
@@ -895,7 +895,7 @@
 						}
 					};
 		
-					cr.getData({path: "_user[_email="+email+"]", fields: ['none'], end: 50})
+					cr.getData({path: "user[email="+email+"]", fields: ['none'], end: 50})
 						.then(selectAllSuccess, cr.syncFail);
 				}
 			}
@@ -1018,7 +1018,7 @@
 						{
 							check_single_field_instance(enrollmentsInstance, 
 								["Enrollment"],
-								"_user",
+								"user",
 								user.getInstanceID(), 
 								function(newData)
 								{
@@ -1029,7 +1029,7 @@
 								function()
 								{
 									/* Test case: Enroll a user into a session from org page. */
-									var initialData = {"_user": [{instanceID: user.getInstanceID()}] };
+									var initialData = {"user": [{instanceID: user.getInstanceID()}] };
 									$.when(cr.createInstance(enrollmentCell.field, enrollmentsInstance.getInstanceID(),
 													  initialData))
 									 .then(function(newData)
@@ -1088,10 +1088,10 @@
 							cr.getConfiguration(null, experienceCell.field.ofKindID)
 								.then(function(cells)
 								{
-									var userCell = cells_get_cell_by_name(cells, "_user");
+									var userCell = cells_get_cell_by_name(cells, "user");
 									check_single_field_instance(experiences, 
 										["Experience"],
-										"_user",
+										"user",
 										user.getInstanceID(), 
 										function(data)
 										{
@@ -1108,7 +1108,7 @@
 												function(cells) {
 													experience.setCells(cells);
 													/* Copy the user into the data set. */
-													userCell = experience.getCell("_user");
+													userCell = experience.getCell("user");
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
 													
@@ -1238,7 +1238,7 @@
 																.then(
 																function(cells)
 																{
-																	var inquiryCell = cells_get_cell_by_name(cells, "_user");
+																	var inquiryCell = cells_get_cell_by_name(cells, "user");
 																	
 																	var newValue = inquiryCell.addNewValue();
 																	cr.updateValues([{
@@ -1427,7 +1427,7 @@
 		{
 			var checkSuccessFunction = function() 
 			{
-				var user = enrollment.getValue("_user");
+				var user = enrollment.getValue("user");
 				if (!user)
 					failFunction("The user is not set up.");
 				else

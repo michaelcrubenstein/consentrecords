@@ -542,7 +542,7 @@
 					{
 						function clearAccessRequests(newValue)
 						{
-							var cell = cr.signedinUser.getCell("_access request");
+							var cell = cr.signedinUser.getCell("access request");
 							for (var i = 0; i < cell.data.length; ++i)
 							{
 								var d = cell.data[i];
@@ -578,7 +578,7 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						var cell = cr.signedinUser.getCell("_access request");
+						var cell = cr.signedinUser.getCell("access request");
 						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
 						if (v)
 						{
