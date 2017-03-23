@@ -851,9 +851,9 @@ class api:
                 if path:
                     instances = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(instances) > 0:
-                    	containerObject = instances[0]
+                        containerObject = instances[0]
                     else:
-                    	raise RuntimeError("%s is not recognized" % path)
+                        raise RuntimeError("%s is not recognized" % path)
                 else:
                     containerObject = None
 
@@ -1245,9 +1245,12 @@ class api:
                     nameLists = NameList()
                     userInfo=UserInfo(user)
                     for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
-                        if uuObject.parent:
-                            raise RuntimeError("can only delete root instances directly")
-                        uuObject.deleteOriginalReference(transactionState)
+                        values = uuObject.referenceValues.filter(deleteTransaction__isnull=True)
+                        for v in values:
+                            v.markAsDeleted(transactionState)
+                            if v.isDescriptor:
+                                Instance.updateDescriptions([v.instance], nameLists)
+
                         uuObject.deepDelete(transactionState)
             else:   
                 raise ValueError("path was not specified in delete")

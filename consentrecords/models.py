@@ -525,11 +525,6 @@ class Instance(dbmodels.Model):
             instances.update(accessSource=None, deleteTransaction=transactionState.transaction)
             values.update(deleteTransaction=transactionState.transaction)
 
-    def deleteOriginalReference(self, transactionState):
-        if self.parent:
-            for v in self.referenceValues.filter(instance=self.parent):
-                v.markAsDeleted(transactionState) 
-                
     # Return a filter of all of the instances of this type that exactly match the specified name.
     def getInstanceByName(self, nameField, name, userInfo):
         f = userInfo.findFilter(self.typeInstances.filter(deleteTransaction__isnull=True,
