@@ -3329,7 +3329,7 @@ function showPickObjectPanel(cell, oldData) {
 	}
 	else
 		/* Test case: edit the name of a field of a configuration of a term. */
-		cr.getData({path: cell.field.ofKindID, fields: ['none']})
+		cr.getData({path: '"' + cell.field.ofKind + '"', fields: ['none']})
 			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		
