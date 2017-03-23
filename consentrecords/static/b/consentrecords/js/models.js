@@ -700,9 +700,10 @@ cr.Value = (function() {
 		}
 		else
 		{
-			var jsonArray = { valueID: this.id
-					};
-			return $.post(cr.urls.deleteValue, jsonArray)
+			return $.ajax({
+					url: cr.urls.getData + "value/" + this.id + "/",
+					type: 'DELETE',
+				})
 				.then(function()
 					{
 						_this.triggerDeleteValue();
@@ -1805,17 +1806,15 @@ cr.deleteValue = function(valueID, successFunction, failFunction)
 		if (!successFunction)
 			throw ("successFunction is not specified");
 			
-		var jsonArray = { valueID: valueID
-				};
-		$.post(cr.urls.deleteValue, jsonArray)
-			.done(function(json, textStatus, jqXHR)
+		return $.ajax({
+				url: cr.urls.getData + "value/" + valueID + "/",
+				type: 'DELETE',
+			})
+			.then(function(json, textStatus, jqXHR)
 			{
 				successFunction(valueID);
-			})
-			.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-			});
+			},
+			cr.thenFail);
 	};
 			
 cr.createInstance = function(field, containerUUID, initialData)

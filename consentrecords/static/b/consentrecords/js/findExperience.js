@@ -255,7 +255,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			showClickFeedback(this);
 			
-			var successFunction = function(valueID)
+			var successFunction = function()
 			{
 				bootstrap_alert.success("You have backed out of " + 
 							  offering.getDescription() + "/" + session.getDescription() + ".",
@@ -263,7 +263,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				checkInquiryFunction(user, null);
 			}
 			
-			cr.deleteValue(inquiryValueID, successFunction, asyncFailFunction);
+			cr.deleteValue(inquiryValueID)
+				.then(successFunction, cr.asyncFail);
 			
 			unblockClick();
 		}

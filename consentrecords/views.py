@@ -1236,10 +1236,25 @@ class api:
         
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def deleteInstances(user, path):
+    def delete(user, path):
         try:
-            if path:
-                with transaction.atomic():
+            if not path:
+                raise ValueError("path was not specified in delete")
+
+            with transaction.atomic():
+                if path.startswith("value/"):
+                    valueID = path[6:6+32]
+                    v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
+
+                    v.checkWriteAccess(user)
+                    
+                    transactionState = TransactionState(user)
+                    v.deepDelete(transactionState)
+                    
+                    if v.isDescriptor:
+                        nameLists = NameList()
+                        Instance.updateDescriptions([v.instance], nameLists)
+                else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
@@ -1252,8 +1267,7 @@ class api:
                                 Instance.updateDescriptions([v.instance], nameLists)
 
                         uuObject.deepDelete(transactionState)
-            else:   
-                raise ValueError("path was not specified in delete")
+ 
             results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -1262,34 +1276,6 @@ class api:
             
         return JsonResponse(results)
         
-    def deleteValue(user, data):
-        try:
-            valueID = data.get('valueID', None)
-        
-            if valueID:
-                v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
-
-                with transaction.atomic():
-                    v.checkWriteAccess(user)
-                    
-                    transactionState = TransactionState(user)
-                    v.deepDelete(transactionState)
-                    
-                    if v.isDescriptor:
-                        nameLists = NameList()
-                        Instance.updateDescriptions([v.instance], nameLists)
-            else:   
-                raise ValueError("valueID was not specified in delete")
-            results = {}
-        except Value.DoesNotExist:
-            return HttpResponseBadRequest(reason="the specified value ID was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
     def paths(user, data):
         try:
             userInfo=UserInfo(user)
@@ -1347,24 +1333,6 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-def deleteInstances(request):
-    if request.method != "POST":
-        raise Http404("deleteInstances only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-        
-    return api.deleteInstances(request.user, request.POST.get('path', None))
-    
-def deleteValue(request):
-    if request.method != "POST":
-        raise Http404("deleteValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.deleteValue(request.user, request.POST)
-    
 def getValues(request):
     if request.method != "GET":
         raise Http404("getValues only responds to GET methods")
@@ -1401,18 +1369,18 @@ def handleURL(request, urlPath=None):
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
             raise PermissionDenied
-        return api.deleteInstances(request.user, urlPath)
+        return api.delete(request.user, urlPath)
     elif request.method == 'POST':
         if not request.user.is_authenticated():
             raise PermissionDenied
         return api.createInstance(request.user, urlPath, request.POST)
     else:
-        raise Http404("api only responds to GET and DELETE methods")
+        raise Http404("api only responds to GET, DELETE and POST methods")
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/':
-            return getData(request)
+            return handleURL(request, None)
         elif request.path_info == '/api/getconfiguration/':
             return getConfiguration(request)
         elif request.path_info == '/api/getvalues/':
@@ -1424,10 +1392,6 @@ class ApiEndpoint(ProtectedResourceView):
             return handleURL(request, None)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/deleteinstances/':
-            return deleteInstances(request)
-        elif request.path_info == '/api/deletevalues/':
-            return deleteValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
     
 class ApiGetUserIDEndpoint(ProtectedResourceView):

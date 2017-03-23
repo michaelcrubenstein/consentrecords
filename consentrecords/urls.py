@@ -60,8 +60,6 @@ urlpatterns = [
     url(r'^local/getvalues/', views.getValues),
     
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
-    url(r'^local/deleteinstances/', views.deleteInstances, name='deleteInstances'),
-    url(r'^local/deletevalue/', views.deleteValue, name='deleteValue'),
     
     url(r'^api/getuserid/', views.getUserID),
     url(r'^api/getconfiguration/', views.getConfiguration),
