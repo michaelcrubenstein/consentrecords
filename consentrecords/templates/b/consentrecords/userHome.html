@@ -582,10 +582,11 @@
 						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
 						if (v)
 						{
-							v.deleteValue(function()
-								{
-									bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
-								},
+							v.deleteValue()
+								.then(function()
+									{
+										bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
+									},
 								asyncFailFunction);
 						}
 						else

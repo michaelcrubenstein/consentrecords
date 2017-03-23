@@ -11,6 +11,5 @@ cr.urls.getUserID = '/local/getuserid/';
 cr.urls.getConfiguration = '/local/getconfiguration/';
 cr.urls.updateValues = '/local/updatevalues/';
 cr.urls.deleteValue = '/local/deletevalue/';
-cr.urls.deleteInstances = '/local/deleteinstances/';
 	
 	

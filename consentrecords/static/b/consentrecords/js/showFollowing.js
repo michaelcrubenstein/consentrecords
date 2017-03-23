@@ -132,7 +132,8 @@ var FollowingPanel = (function() {
 						{
 							if (values.length > 0)
 							{
-								values[0].deleteValue(
+								values[0].deleteValue()
+									.then(
 									function(v)
 									{
 										removeItem(_thisItem,
@@ -143,10 +144,10 @@ var FollowingPanel = (function() {
 												unblockClick();
 											});
 									},
-									syncFailFunction);
+									cr.syncFail);
 							}
 						},
-						fail: syncFailFunction});
+						fail: cr.syncFail});
 				}
 			});
 		var buttons = appendRowButtons(divs);

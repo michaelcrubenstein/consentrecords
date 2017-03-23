@@ -774,7 +774,8 @@ function appendConfirmDeleteControls(divs, onClick)
 			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
 			{
 				try {
-					d.deleteValue(unblockClick, cr.syncFail);
+					d.deleteValue()
+						.then(unblockClick, cr.syncFail);
 				} catch(err) { cr.syncFail(err); }
 			}
 		});
@@ -3235,7 +3236,8 @@ function showPickObjectPanel(cell, oldData) {
 						else
 						{
 							/* Test case: Choose none for a unique item that was previously specified. */
-							oldData.deleteValue(successFunction, cr.syncFail);
+							oldData.deleteValue()
+								.then(successFunction, cr.syncFail);
 						}
 					}
 					else if (d.getInstanceID())

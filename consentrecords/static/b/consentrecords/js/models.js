@@ -671,61 +671,44 @@ cr.Value = (function() {
 		$(this).trigger("valueDeleted.cr", this);
 	}
 	
-	Value.prototype.deleteValue = function(done, fail)
+	Value.prototype.deleteValue = function()
 	{
-		if (!fail)
-			throw ("fail is not specified");
-		if (!done)
-			throw ("done is not specified");
-			
 		var _this = this;
-		if (this.id == null)	/* It was never saved */
+		if (this.cell != null &&
+			this.getInstanceID() != null &&
+			this.instance().parent() == this.cell.parent)
 		{
-			if (this.cell != null && 
-				this.cell.parent == null &&
-				this.getInstanceID() != null)
-			{
-				/* In this case, this is a root object, so we just need to 
-					delete the instance. */
-				var jsonArray = { path: this.getInstanceID()
-						};
-				$.post(cr.urls.deleteInstances, jsonArray)
-					.done(function(json, textStatus, jqXHR)
+			/* In this case, this is a root object, so we just need to 
+				delete the instance. */
+			return $.ajax({
+					url: cr.urls.getData + this.getInstanceID() + "/",
+					type: 'DELETE',
+				})
+				.then(function()
 					{
-						if (done) 
-						{
-							_this.triggerDeleteValue();
-							done(_this);
-						}
-					})
-					.fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-					});
-			}
-			else
-			{
-				_this.triggerDeleteValue();
-				done(_this);
-			}
+						_this.triggerDeleteValue();
+						return _this;
+					},
+					cr.thenFail);
+		}
+		else if (this.id == null)	/* It was never saved */
+		{
+			_this.triggerDeleteValue();
+			var r = $.Deferred();
+			r.resolve(_this);
+			return r;
 		}
 		else
 		{
 			var jsonArray = { valueID: this.id
 					};
-			$.post(cr.urls.deleteValue, jsonArray)
-				.done(function(json, textStatus, jqXHR)
-				{
-					if (done) 
+			return $.post(cr.urls.deleteValue, jsonArray)
+				.then(function()
 					{
 						_this.triggerDeleteValue();
-						done(_this);
-					}
-				})
-				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-				});
+						return _this;
+					},
+					cr.thenFail);
 		}
 	};
 	
@@ -1684,7 +1667,6 @@ cr.urls = {
 		getConfiguration : "/api/getconfiguration/",
 		updateValues : "/api/updatevalues/",
 		deleteValue : '/api/deletevalue/',
-		deleteInstances : '/api/deleteinstances/',
 		checkUnusedEmail : '/user/checkunusedemail/',
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
