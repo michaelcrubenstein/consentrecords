@@ -1667,7 +1667,6 @@ cr.urls = {
 		getData : "/api/getdata/",
 		getConfiguration : "/api/getconfiguration/",
 		updateValues : "/api/updatevalues/",
-		deleteValue : '/api/deletevalue/',
 		checkUnusedEmail : '/user/checkunusedemail/',
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
