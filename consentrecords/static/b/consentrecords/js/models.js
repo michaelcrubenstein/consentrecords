@@ -1664,8 +1664,7 @@ cr.createCell = function(fieldID) {
 cr.urls = {
 		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
-		getData : "/api/getdata/",
-		getConfiguration : "/api/getconfiguration/",
+		getData : "/api/",
 		updateValues : "/api/updatevalues/",
 		checkUnusedEmail : '/user/checkunusedemail/',
 		submitSignout: '/user/submitsignout/',
@@ -1937,27 +1936,69 @@ cr.getUserID = function(successFunction, failFunction)
 		);
 	},
 
+cr.getFieldData = function(field)
+{
+	var nameValue = field.getValue(cr.fieldNames.name);
+	var dataTypeValue = field.getValue(cr.fieldNames.dataType);
+	var fieldData = {};
+	
+	fieldData.id = field.getInstanceID();
+	fieldData.name = nameValue.getDescription();
+	fieldData.dataType = dataTypeValue.getDescription();
+	fieldData.dataTypeID = dataTypeValue.getInstanceID();
+	
+	var maxCapacity = field.getValue(cr.fieldNames.maxCapacity);
+	fieldData.capacity = maxCapacity ? maxCapacity.getDescription() : cr.maxCapacities.multipleValues;
+	
+	var descriptorTypeField = field.getValue(cr.fieldNames.descriptorType);
+	if (descriptorTypeField)
+		fieldData.descriptorType = descriptorTypeField.getDescription();
+	
+	var addObjectRuleField = field.getValue(cr.fieldNames.addObjectRule);
+	if (addObjectRuleField)
+		fieldData.objectAddRule = addObjectRuleField.getDescription();
+	
+	if (fieldData.dataType == cr.dataTypes.objectType)
+	{
+		var ofKindField = field.getValue(cr.fieldNames.ofKind);
+		if (ofKindField)
+		{
+			fieldData.ofKind = ofKindField.getDescription();
+			fieldData.ofKindID = ofKindField.getInstanceID();
+		}
+		
+		var pickObjectPath = field.getDatum(cr.fieldNames.pickObjectPath);
+		if (pickObjectPath)
+			fieldData.pickObjectPath = pickObjectPath;
+	}
+	
+	return fieldData;
+}
+
 cr.getConfiguration = function(parent, typeID)
 	{
 		var data;
+		var path;
 		if (/^[A-Za-z0-9]{32}$/.test(typeID))
-			data = {"typeID" : typeID};
+			path = typeID+'/configuration';
 		else
-			data = {"typeName" : typeID};
-		return $.getJSON(cr.urls.getConfiguration, data)
-		.then(function(json)
-			{
-				var cells = [];
-				json.cells.forEach(function(cell)
+			path = 'term[name="{0}"]/configuration'.format(typeID);
+		return crp.promise({path:path, fields: ['field']})
+			.then(function(configurations)
 				{
-					crp.pushField(cell.field);
-					var newCell = cr.createCell(cell.field.id);
-					newCell.setup(parent);
-					cells.push(newCell);
+					var configuration = configurations[0];
+					var cells = [];
+					configuration.getCell(cr.fieldNames.field).data.forEach(function(field)
+					{
+						crp.pushField(cr.getFieldData(field));
+						var newCell = cr.createCell(field.getInstanceID());
+						newCell.setup(parent);
+						cells.push(newCell);
+					});
+					var r = $.Deferred();
+					r.resolve(cells);
+					return r;
 				});
-				return cells;
-			},
-			cr.postError);
 	},
 	
 	

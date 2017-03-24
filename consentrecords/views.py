@@ -1023,37 +1023,6 @@ class api:
         
         return JsonResponse(results)
         
-    def getConfiguration(user, data):
-        try:
-            # Get the uuid for the configuration.
-            typeName = data.get('typeName', None)
-            typeUUID = data.get('typeID', None)
-            if typeUUID:
-                kindObject = Instance.objects.get(pk=typeUUID)
-            elif typeName:
-                kindObject = terms[typeName]
-            else:
-                raise ValueError("typeName was not specified in getConfiguration")
-        
-            configurationObject = kindObject.getSubInstance(terms.configuration)
-        
-            if not configurationObject:
-                raise ValueError("objects of this kind have no configuration object")
-                
-            p = configurationObject.getConfiguration()
-        
-            results = {'cells': p}
-        except Instance.DoesNotExist:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason="the specified instanceType was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
     def getUserID(user, data):
         accessTokenID = data.get('access_token', None)
     
@@ -1339,12 +1308,6 @@ def getValues(request):
     
     return api.getValues(request.user, request.GET)
     
-def getConfiguration(request):
-    if request.method != "GET":
-        raise Http404("getConfiguration only responds to GET methods")
-    
-    return api.getConfiguration(request.user, request.GET)
-    
 def getUserID(request):
     if request.method != "GET":
         raise Http404("getUserID only responds to GET methods")
@@ -1381,8 +1344,6 @@ class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/':
             return handleURL(request, None)
-        elif request.path_info == '/api/getconfiguration/':
-            return getConfiguration(request)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
         return HttpResponseNotFound(reason='unrecognized url')

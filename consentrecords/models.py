@@ -464,10 +464,6 @@ class Instance(dbmodels.Model):
         return [self._getCellData(fieldData, values, userInfo, language)\
                 for fieldData in filter(lambda f: not f["id"].startswith("parent/"), fieldsData)]
 
-    # self should be a configuration object with fields.
-    def getConfiguration(self):
-        return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(terms.field)]
-
     def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
                                  [e.position for e in self._getSubValues(field)],
