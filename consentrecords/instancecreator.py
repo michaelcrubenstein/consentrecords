@@ -28,7 +28,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState, check)
                     if not terms.isUUID(d["instanceID"]):
                         raise RuntimeError("value(%s) for %s field is not an instance ID" % (d["instanceID"], field))
                         
-                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
+                    values = list(userInfo.findFilter(InstanceQuerySet(Instance.objects.filter(pk=d["instanceID"]))))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
                     elif d["instanceID"] == parent.id and field == terms.primaryAdministrator:

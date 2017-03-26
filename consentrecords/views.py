@@ -778,12 +778,12 @@ def requestExperienceComment(request):
                             if commentsValue:
                                 typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
-                                data = api._getValueData(vFilter[0], ['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                commentData = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                commentData = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 data['cells'][0]['data'] = [commentData]
                                 results = {'fields': fieldsDataDictionary.getData(), 'Comments': data}
@@ -791,8 +791,8 @@ def requestExperienceComment(request):
                                 typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 results = {'fields': fieldsDataDictionary.getData(), 'Comment': data}
                     else:
                         raise RuntimeError('the requestor is unrecognized')
@@ -969,7 +969,7 @@ class api:
         if value:
             return f.filter(Q(stringValue=value)|Q(referenceValue_id=value))
         else:
-            return api._selectInstanceData(f, fieldNames, 'referenceValue__', userInfo)\
+            return InstanceQuerySet.selectRelatedData(f, fieldNames, 'referenceValue__', userInfo)\
                       .order_by('position');
         
     
@@ -1013,7 +1013,7 @@ class api:
                 p = list(map(lambda v: v.getReferenceData(userInfo, language=language), m))
             else:
                 # iterate through the list so that fieldsDataDictionary is populated.
-                p = list(map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m))
+                p = list(map(lambda v: v.getData(fields, fieldsDataDictionary, language, userInfo), m))
             
             results = {'fields': fieldsDataDictionary.getData(), 'values': p}
         except Exception as e:
@@ -1040,122 +1040,6 @@ class api:
             
         return JsonResponse(results)
     
-    def _getValueQuerySet(vs, userInfo):
-        return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
-                .order_by('position')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
-    
-    def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = fieldsDataDictionary[uuObject.typeID_id]
-        cells = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
-    
-        if 'parents' in fields:
-            p = uuObject
-            fp = p.parent_id and \
-                 userInfo.readFilter(Instance.objects\
-                                .select_related('description')\
-                                .filter(pk=p.parent_id))
-            while fp and fp.exists():
-                p = fp[0]
-                
-                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
-                if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
-                    fieldsData.append(fieldData)
-            
-                parentData = p.getReferenceData(userInfo, language)
-                parentData['position'] = 0
-                if fieldData["name"] in fields:
-                    vs = api._getValueQuerySet(p.value_set, userInfo)
-                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
-                    
-                cells.append({"field": fieldData["id"], "data": [parentData]})
-                
-                fp = p.parent_id and \
-                     userInfo.readFilter(Instance.objects\
-                                .select_related('description')\
-                                .filter(pk=p.parent_id))
-        
-        if TermNames.systemAccess in fields:
-            if userInfo.authUser.is_superuser:
-                saObject = terms.administerPrivilegeEnum
-            elif userInfo.authUser.is_staff:
-                saObject = terms.writePrivilegeEnum
-            else:
-                saObject = None
-            if saObject:
-                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.id), None)
-                if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
-                    fieldsData.append(fieldData)
-                parentData = [{'id': None, 
-                              'instanceID' : saObject.id,
-                              'description': saObject.getDescription(language),
-                              'position': 0,
-                              'privilege': saObject.description.text}]
-                cells.append({"field": fieldData["id"], "data": parentData})
-                
-        # For each of the cells, if the cell is in the field list explicitly, 
-        # and the cell is in the fieldsData (and not the name of a parent type)
-        # then get the subdata for all of the values in that cell.
-        subValuesDict = None
-        for cell in cells:
-            fieldData = next((field for field in fieldsData if field["id"] == cell["field"]), None)
-            if not fieldData:
-                raise "fieldData is not found"
-            
-            if fieldData["name"] in fields and fieldData["name"] != TermNames.systemAccess \
-                and "ofKindID" in fieldData \
-                and next((field for field in fieldsData if field["nameID"] == fieldData["nameID"]), None):
-                
-                subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
-                subValuesDict = subValuesDict or \
-                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
-                
-                for d in cell["data"]:
-                    # d["instanceID"] won't be in subValuesDict if it is a parent.
-                    if d["instanceID"] in subValuesDict:
-                        i = subValuesDict[d["instanceID"]]
-                        d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
-                        d['typeName'] = fieldData["ofKind"]
-        return cells
-
-    def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        data = uuObject.getReferenceData(userInfo, language)
-        if not 'none' in fields:
-            data['cells'] = api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo)
-        return data;
-    
-    def _getValueData(v, fields, fieldsDataDictionary, language, userInfo):
-        data = v.getReferenceData(userInfo, language=language)
-        data['cells'] = api._getCells(v.referenceValue, fields, fieldsDataDictionary, language, userInfo)
-        return data
-    
-    # instanceDataPath is the django query path from the sourceFilter objects to the 
-    # data to be selected.
-    def _selectInstanceData(sourceFilter, fieldNames, instanceDataPath, userInfo):
-        # preload the typeID, parent, value_set and description to improve performance.
-        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-        valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
-
-        if len(fieldNames):
-            # The distinct is required to eliminate duplicate subValues.
-            subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
-                                      instance__referenceValues__deleteTransaction__isnull=True,
-                                      instance__referenceValues__field__description__text__in=fieldNames)\
-                .distinct()
-            subValueQueryset = api._getValueQuerySet(subValues, userInfo)
-            valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
-                                  queryset=subValueQueryset,
-                                  to_attr='subValues'))
-
-        return sourceFilter.select_related(instanceDataPath + 'description')\
-                           .prefetch_related(Prefetch(instanceDataPath + 'value_set',
-                                                        queryset=valueQueryset,
-                                                        to_attr='values'))
-            
-        
     def getData(user, path, data):
         try:
             start = int(data.get("start", "0"))
@@ -1173,23 +1057,13 @@ class api:
             fieldNames = list(fieldNames)
             
             if 'none' in fields:
-                uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
-                                .select_related('description')
+                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             else:
-                uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-                uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
-                
-            uuObjects = uuObjects.order_by('description__text', 'id');
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-                
-            language = data.get('language', None)
-            typeset = frozenset([x.typeID_id for x in uuObjects])
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
-            p = [api._getInstanceData(i, fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
+            language = data.get('language', None)
+            fieldsDataDictionary = qs.getFieldsDataDictionary(language)
+            p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
             if not 'none' in fields:
@@ -1243,54 +1117,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
             
-        return JsonResponse(results)
-        
-    def paths(user, data):
-        try:
-            userInfo=UserInfo(user)
-            
-            print(data)
-            
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-        
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
-            fieldNames = list(fieldNames)
-            
-            moreExperienceString = data.get('more experience', '[]')
-            
-            print(moreExperienceString)
-            moreExperienceQuery = json.loads(moreExperienceString)
-            
-            print(str(moreExperienceQuery))
-            
-            uuObjects = userInfo.readFilter(Instance.objects.filter(typeID=terms['Path'], deleteTransaction__isnull=True))
-            
-            uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
-            uuObjects = uuObjects.order_by('description__text', 'id');
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-                
-            print(str(uuObjects.query))
-                                                            
-            language = data.get('language', None)
-            typeset = frozenset([x.typeID_id for x in uuObjects])
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-            
-            p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
-        
-            results = {'fields': fieldsDataDictionary.getData(), 'data': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            return HttpResponseBadRequest(reason=str(e))
-        
         return JsonResponse(results)
         
 def updateValues(request):

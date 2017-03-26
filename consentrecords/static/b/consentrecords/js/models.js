@@ -191,7 +191,7 @@ cr.fieldNames = {
     text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
-    systemAccess: 'system access',
+    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
     privilege: 'privilege',
     group: 'group',
     defaultAccess: 'default access',
@@ -2051,8 +2051,8 @@ cr.getData = function(args)
  */
 cr.getCellValues = function(object, cellName, fieldNames)
 	{
-		var path = '#{0}'.format(object.getInstanceID());
-		return cr.getValues({path: path, field: cellName, fields: fieldNames})
+		var path = '{0}/"{1}"'.format(object.getInstanceID(), cellName);
+		return cr.getData({path: path, fields: fieldNames})
 			.then(function(instances)
 				{
 					var cell = object.getCell(cellName);

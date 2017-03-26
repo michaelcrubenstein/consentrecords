@@ -63,8 +63,6 @@ urlpatterns = [
     url(r'^api/getuserid/', views.getUserID),
     url(r'^api/getvalues/', views.getValues),
     
-    url(r'^api/paths', views.paths),
-    
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),

@@ -125,29 +125,28 @@ var FollowingPanel = (function() {
 						path = '#{0}'.format(d.getInstanceID())
 					else
 						path = 'user[email={0}]'.format(d.getDescription())
-					cr.getValues({path: path,
-						field: cr.fieldNames.accessRequest,
-						value: _this.user.getInstanceID(),
-						done: function(values)
-						{
-							if (values.length > 0)
+					path += '"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID();
+					cr.getData({path: path})
+						.then(function(values)
 							{
-								values[0].deleteValue()
-									.then(
-									function(v)
-									{
-										removeItem(_thisItem,
-											function()
-											{
-												_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
-												_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
-												unblockClick();
-											});
-									},
-									cr.syncFail);
-							}
-						},
-						fail: cr.syncFail});
+								if (values.length > 0)
+								{
+									values[0].deleteValue()
+										.then(
+										function(v)
+										{
+											removeItem(_thisItem,
+												function()
+												{
+													_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
+													_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
+													unblockClick();
+												});
+										},
+										cr.syncFail);
+								}
+							},
+							fail: cr.syncFail});
 				}
 			});
 		var buttons = appendRowButtons(divs);
