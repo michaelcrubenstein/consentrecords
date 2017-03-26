@@ -224,7 +224,7 @@ def showPathway(request, email):
     
     containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'user/%s' % objs[0].id
 
@@ -292,7 +292,7 @@ def accept(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
@@ -325,7 +325,7 @@ def ignore(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
@@ -403,7 +403,7 @@ def acceptFollower(request, userPath=None):
             
         userInfo = UserInfo(request.user)
         if userPath:
-            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
                 if user.typeID_id != terms.user.id:
@@ -415,7 +415,7 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
             if follower.typeID_id == terms.user.id:
@@ -488,10 +488,10 @@ def requestAccess(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                 if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                     following = objs[0]
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                         follower = objs[0]
                         fieldTerm = terms.accessRequest
@@ -705,12 +705,12 @@ def requestExperienceComment(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
+                objs = pathparser.getQuerySet(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
                 if len(objs) > 0 and objs[0].typeID_id == terms['More Experience'].id:
                     experience = objs[0]
                     sourcePath = experience.parent
                     experienceValue = sourcePath.value_set.get(referenceValue=experience)
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID_id == terms['Path'].id:
                         follower = objs[0]
                         with transaction.atomic():
@@ -849,7 +849,7 @@ class api:
             with transaction.atomic():
                 transactionState = TransactionState(user)
                 if path:
-                    instances = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    instances = pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(instances) > 0:
                         containerObject = instances[0]
                     else:
@@ -1003,7 +1003,7 @@ class api:
             # An optional value within the container on which to filter.
             value = data.get('value', None)
         
-            containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            containers = pathparser.getQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             m = map(lambda i: api._findValues(i, field, value, fields, userInfo), containers)
 
             m = list(itertools.chain.from_iterable(m))
@@ -1104,7 +1104,7 @@ class api:
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
-                    for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
+                    for uuObject in pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
                         values = uuObject.referenceValues.filter(deleteTransaction__isnull=True)
                         for v in values:
                             v.markAsDeleted(transactionState)

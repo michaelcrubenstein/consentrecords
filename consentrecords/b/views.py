@@ -210,7 +210,7 @@ def showPathway(request, email):
     
     containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'user/%s' % objs[0].id
 
@@ -278,7 +278,7 @@ def accept(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
@@ -311,7 +311,7 @@ def ignore(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
@@ -394,7 +394,7 @@ def acceptFollower(request, userPath=None):
             
         userInfo = UserInfo(request.user)
         if userPath:
-            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
                 if user.typeID != terms.user:
@@ -406,7 +406,7 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
             if follower.typeID == terms.user:
@@ -479,10 +479,10 @@ def requestAccess(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                 if len(objs) > 0 and objs[0].typeID == terms.user:
                     following = objs[0]
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID == terms.user:
                         follower = objs[0]
                         fieldTerm = terms.accessRequest

@@ -19,17 +19,17 @@ def _tokenize(path):
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
 # a duple with a value followed by the instance.
-def selectAllObjects(path, userInfo=UserInfo(AnonymousUser()), securityFilter=None):
+def getQuerySet(path, userInfo=UserInfo(AnonymousUser()), securityFilter=None):
 #     logger = logging.getLogger(__name__)
-#     logger.error("selectAllObjects path: %s" % str(path))
+#     logger.error("getQuerySet path: %s" % str(path))
 
     if not securityFilter: securityFilter = userInfo.findFilter
     
     parsed = InstanceQuerySet().parse(_tokenize(path), userInfo)
     return securityFilter(parsed).distinct()
 #     logger = logging.getLogger(__name__)
-#     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
-#     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
+#     logger.error("getQuerySet result: %s" % (str(resultSet[-1][0])))
+#     logger.error("getQuerySet result for %s: %s" % (userInfo.authUser, str(f)))
            
 # select all of the ids that are represented by the specified path.
 # The resulting IDs are represented tuples as either a single instance id or
