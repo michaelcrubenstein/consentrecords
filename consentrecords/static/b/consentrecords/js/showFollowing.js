@@ -125,7 +125,7 @@ var FollowingPanel = (function() {
 						path = '#{0}'.format(d.getInstanceID())
 					else
 						path = 'user[email={0}]'.format(d.getDescription())
-					path += '"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID();
+					path += '"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
 					cr.getData({path: path})
 						.then(function(values)
 							{
@@ -146,7 +146,7 @@ var FollowingPanel = (function() {
 										cr.syncFail);
 								}
 							},
-							fail: cr.syncFail});
+							cr.syncFail);
 				}
 			});
 		var buttons = appendRowButtons(divs);

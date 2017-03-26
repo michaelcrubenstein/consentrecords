@@ -159,12 +159,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = organization.getInstanceID() + '>"Inquiry Access Group"';
+		groupPath = organization.getInstanceID() + '/"Inquiry Access Group"';
 		cr.getData({path: groupPath, fields: ['none']})
-			.done(function(groupPaths)
+			.then(function(groupPaths)
 				{
 					var initialData = [{
-							container: '#{0}>Inquiries'.format(session.getInstanceID()),
+							container: '{0}/Inquiries'.format(session.getInstanceID()),
 							field: cr.fieldNames.user,
 							instanceID: user.getInstanceID(),
 							description: getUserDescription(user)
@@ -192,7 +192,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 						});
 					return cr.updateValues(initialData, sourceObjects);
 				})
-			.fail(cr.asyncFail);
+			.then(undefined, cr.asyncFail);
 	}
 	
 	var tryAddInquiry = function(user)
@@ -208,25 +208,23 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: session.getInstanceID()+">Inquiries",
-					field: cr.fieldNames.user,
-					value: this.getInstanceID(),
-					done: function(valueIDs)
-					{
-						if (valueIDs.length > 0)
+				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), this.getInstanceID())})
+					.then(function(valueIDs)
 						{
-							checkInquiryFunction(user, valueIDs[0].id);
-							bootstrap_alert.success(_this.getDescription() + 
-												  " already signed up for " + 
-												  offering.getDescription() + "/" + session.getDescription(),
-												  ".alert-container");
-						}
-						else
-						{
-							addInquiry(_this);
-						}
-					},
-					fail: asyncFailFunction});
+							if (valueIDs.length > 0)
+							{
+								checkInquiryFunction(user, valueIDs[0].id);
+								bootstrap_alert.success(_this.getDescription() + 
+													  " already signed up for " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+							}
+							else
+							{
+								addInquiry(_this);
+							}
+						},
+						cr.asyncFail);
 			};
 			cr.signedinUser.on("signin.cr", panel, onSignin);
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
@@ -277,11 +275,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: session.getInstanceID()+">Inquiries",
-			field: cr.fieldNames.user,
-			value: user.getInstanceID(),
-			done: done,
-			fail: asyncFailFunction});
+		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), user.getInstanceID())})
+					.then(done, cr.asyncFail);
 	}
 	else
 		checkInquiryFunction(user, null);
