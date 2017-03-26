@@ -122,10 +122,10 @@ var FollowingPanel = (function() {
 				{
 					var path;
 					if (d.getInstanceID)
-						path = '#{0}'.format(d.getInstanceID())
+						path = d.getInstanceID()
 					else
 						path = 'user[email={0}]'.format(d.getDescription())
-					path += '"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+					path += '/"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
 					cr.getData({path: path})
 						.then(function(values)
 							{
@@ -145,6 +145,8 @@ var FollowingPanel = (function() {
 										},
 										cr.syncFail);
 								}
+								else
+									cr.syncFail("Error: this access request was not found");
 							},
 							cr.syncFail);
 				}
