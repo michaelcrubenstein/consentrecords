@@ -1662,7 +1662,6 @@ cr.createCell = function(fieldID) {
 };
 	
 cr.urls = {
-		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
 		getData : "/api/",
 		updateValues : "/api/updatevalues/",
@@ -1705,69 +1704,6 @@ cr.thenFail = function(jqXHR, textStatus, errorThrown)
 		var r2 = $.Deferred();
 		r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
 		return r2;
-	};
-	
-/* args is an object with up to seven parameters: path, field, value, start, end, done, fail.
-	The done method takes a single argument, which is an array of value objects. */
-cr.getValues = function (args)
-	{
-		var data = {};
-		if (args.path)
-			data.path = args.path;
-		else
-			throw "path was not specified to getValues"
-			
-		if (args.field)
-			data.fieldName = args.field;
-		else
-			throw "field was not specified to getValues"
-			
-		if (args.value)
-			data.value = args.value;
-		if (args.fields)
-			data.fields = JSON.stringify(args.fields); 
-		if (cr.accessToken)
-			data.access_token = cr.accessToken;
-			
-		if (args.start !== undefined)
-			data.start = args.start;
-		if (args.end !== undefined)
-			data.end = args.end;
-		
-		return $.getJSON(cr.urls.getValues, data)
-			.then(function(json)
-				{
-					json.fields.forEach(function(field)
-						{
-							crp.pushField(field);
-						});
-					var newObjects = json.values.map(cr.ObjectCell.prototype.copyValue);
-					try
-					{
-						if (args.done)
-							args.done(newObjects);
-						var result = $.Deferred();
-						result.resolve(newObjects);
-						return result;
-					}
-					catch(err)
-					{
-						if (args.fail)
-							args.fail(err);
-						var result = $.Deferred();
-						result.reject(err);
-						return result;
-					}
-				},
-				function(jqXHR, textStatus, errorThrown)
-				{
-					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
-					if (args.fail)
-						args.fail(resultText);
-					var result = $.Deferred();
-					result.reject(resultText);
-					return result;
-				});
 	};
 	
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)

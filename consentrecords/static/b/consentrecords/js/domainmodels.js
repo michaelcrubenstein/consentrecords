@@ -6,7 +6,6 @@
  */
 
 cr.urls.getData = '/api/';
-cr.urls.getValues = '/local/getvalues/';
 cr.urls.getUserID = '/local/getuserid/';
 cr.urls.updateValues = '/local/updatevalues/';
 	
