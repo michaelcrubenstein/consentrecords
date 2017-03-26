@@ -1799,19 +1799,11 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	
 cr.deleteValue = function(valueID, successFunction, failFunction)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-			
 		return $.ajax({
 				url: cr.urls.getData + "value/" + valueID + "/",
 				type: 'DELETE',
 			})
-			.then(function(json, textStatus, jqXHR)
-			{
-				successFunction(valueID);
-			},
+			.then(undefined,
 			cr.thenFail);
 	};
 			

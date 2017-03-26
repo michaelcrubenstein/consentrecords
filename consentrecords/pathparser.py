@@ -36,13 +36,13 @@ def selectAllObjects(path, userInfo=UserInfo(AnonymousUser()), securityFilter=No
 # a duple with a value followed by the instance.
 def getObjectQuerySet(path, userInfo=UserInfo(AnonymousUser()), securityFilter=None):
 #     logger = logging.getLogger(__name__)
-#     logger.error("selectAllObjects path: %s" % str(path))
+#     logger.error("getObjectQuerySet path: %s" % str(path))
 
     if not securityFilter: securityFilter = userInfo.findFilter
     
     parsed = InstanceQuerySet().parse(_tokenize(path), userInfo)
     return parsed.createObjectQuerySet(securityFilter(parsed).distinct())
 #     logger = logging.getLogger(__name__)
-#     logger.error("selectAllObjects result: %s" % (str(resultSet[-1][0])))
-#     logger.error("selectAllObjects result for %s: %s" % (userInfo.authUser, str(f)))
+#     logger.error("getObjectQuerySet result: %s" % (str(resultSet[-1][0])))
+#     logger.error("getObjectQuerySet result for %s: %s" % (userInfo.authUser, str(f)))
            

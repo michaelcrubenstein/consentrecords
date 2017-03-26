@@ -187,7 +187,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							if (groupPaths.length == 0)
 								done();
 							else {
-								addMissingAccess(user, cr.fieldNames.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
+								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
 							}
 						});
 					return cr.updateValues(initialData, sourceObjects);

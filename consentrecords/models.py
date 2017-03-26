@@ -1888,7 +1888,7 @@ class ValueQuerySet(ObjectQuerySet):
         
     # return an InstanceQuerySet derived from the contents of self.
     def filterToInstances(self):
-        return InstanceQuerySet(Instance.objects.filter(referenceValues__in=parsed.querySet))
+        return InstanceQuerySet(Instance.objects.filter(referenceValues__in=self.querySet))
         
     # returns a Q clause to filter instances to those that contain references in 
     # the specified fields to one of the specified referenceValues.

@@ -878,7 +878,9 @@ class api:
     def checkForPath(c, user, pathKey, idKey):
         if pathKey in c:
             userInfo = UserInfo(user)
-            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
+            					  .filterToInstances()\
+            					  .querySet
             if len(instances) > 0:
                 c[idKey] = instances[0].id
             else:
