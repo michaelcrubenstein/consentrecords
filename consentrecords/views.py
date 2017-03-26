@@ -1089,29 +1089,14 @@ class api:
             with transaction.atomic():
                 if path.startswith("value/"):
                     valueID = path[6:6+32]
-                    v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
-
-                    v.checkWriteAccess(user)
-                    
-                    transactionState = TransactionState(user)
-                    v.deepDelete(transactionState)
-                    
-                    if v.isDescriptor:
-                        nameLists = NameList()
-                        Instance.updateDescriptions([v.instance], nameLists)
+                    ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
+                    	.deleteObjects(user, NameList(), TransactionState(user))
                 else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
-                    for uuObject in pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
-                        values = uuObject.referenceValues.filter(deleteTransaction__isnull=True)
-                        for v in values:
-                            v.markAsDeleted(transactionState)
-                            if v.isDescriptor:
-                                Instance.updateDescriptions([v.instance], nameLists)
-
-                        uuObject.deepDelete(transactionState)
+                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, transactionState)
  
             results = {}
         except Exception as e:

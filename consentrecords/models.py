@@ -707,6 +707,8 @@ class Instance(dbmodels.Model):
             referenceValue=self,
             deleteTransaction__isnull=True).exists()
     
+    # Return a QuerySet that filters f according to the specified privileges.
+    # self is a user to whom the privileges apply.
     def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
@@ -1607,14 +1609,7 @@ class UserInfo:
         return resultSet.applyReadFilter(self)
 
     def administerFilter(self, resultSet):
-        if not self.is_authenticated:
-            return []   # If not authenticated, then return an empty iterable.
-        elif self.is_administrator:
-            return resultSet
-        elif isValueSet:
-            return self.instance.administerValueFilter(resultset)
-        else:
-            return self.instance.administerFilter(resultSet)
+        return resultSet.applyAdministerFilter(self)
 
     def log(self, s):
         self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
@@ -1739,7 +1734,6 @@ class ObjectQuerySet:
             
             # Need to add distinct after the tests to prevent duplicates if there is
             # more than one value of the instance that matches.
-            print(self.querySet, path[1], q)
             return self.applyClause(q), path[2:]
         elif path[0] == '>' or path[0] == '/':
             i = terms[path[1]]
@@ -1934,6 +1928,15 @@ class ValueQuerySet(ObjectQuerySet):
                 userInfo._readValueFilter = userInfo.instance.readValueFilter
             return qs.filter(userInfo._readValueFilter)
 
+    def applyAdministerFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return []   # If not authenticated, then return an empty iterable.
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            return userInfo.instance.administerValueFilter(qs)
+    
     def getFieldsDataDictionary(self, language):
         typeset = frozenset([x.referenceValue.typeID_id for x in self.querySet])
         return FieldsDataDictionary(typeset, language)
@@ -1947,6 +1950,25 @@ class ValueQuerySet(ObjectQuerySet):
             uuObjects = uuObjects[start:]
             
         return [v.getData(fields, fieldsDataDictionary, language, userInfo) for v in uuObjects]        
+
+    def deleteObjects(self, user, nameLists, transactionState):
+        for value in self.querySet:
+            if not value.referenceValue or value.referenceValue.parentValue != value:
+                value.checkWriteAccess(user)
+                
+                value.deepDelete(transactionState)
+                if value.isDescriptor:
+                    Instance.updateDescriptions([value.instance], nameLists)
+            else:
+                uuObject = value.referenceValue
+                uuObject.checkWriteAccess(user)
+                
+                for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
+                    v.markAsDeleted(transactionState)
+                    if v.isDescriptor:
+                        Instance.updateDescriptions([v.instance], nameLists)
+
+                uuObject.deepDelete(transactionState)
 
 class InstanceQuerySet(ObjectQuerySet):
 
@@ -2129,6 +2151,15 @@ class InstanceQuerySet(ObjectQuerySet):
         else:
             return userInfo.instance.readFilter(qs)
 
+    def applyAdministerFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return []   # If not authenticated, then return an empty iterable.
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            return userInfo.instance.administerFilter(qs)
+    
     def getFieldsDataDictionary(self, language):
         typeset = frozenset([x.typeID_id for x in self.querySet])
         return FieldsDataDictionary(typeset, language)
@@ -2143,3 +2174,12 @@ class InstanceQuerySet(ObjectQuerySet):
             uuObjects = uuObjects[start:]
             
         return [i.getData(fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
+
+    def deleteObjects(self, user, nameLists, transactionState):
+        for uuObject in self.querySet:
+            for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
+                v.markAsDeleted(transactionState)
+                if v.isDescriptor:
+                    Instance.updateDescriptions([v.instance], nameLists)
+
+            uuObject.deepDelete(transactionState)
