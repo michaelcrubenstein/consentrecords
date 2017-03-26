@@ -103,7 +103,12 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 		panel.classed(bootstrap_alert.alertClass, false);
 		bootstrap_alert.alertClass = alertClass;
 		panel.classed(bootstrap_alert.alertClass, true);
-		panel.select('span').text(message);
+		panel.selectAll('span').remove();
+		panel.selectAll('span')
+			.data(message.toString().split('\n'))
+			.enter()
+			.append('span')
+			.text(function(d) { return d; });
 		$(bootstrap_alert.panel)
 			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
 	}
