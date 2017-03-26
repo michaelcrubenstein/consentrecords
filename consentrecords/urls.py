@@ -56,12 +56,10 @@ urlpatterns = [
     url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
 
     url(r'^local/getuserid/', views.getUserID),
-    url(r'^local/getvalues/', views.getValues),
     
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
     
     url(r'^api/getuserid/', views.getUserID),
-    url(r'^api/getvalues/', views.getValues),
     
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),

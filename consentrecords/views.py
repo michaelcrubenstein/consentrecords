@@ -963,68 +963,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    # Returns an iterable of the values within self associated with the specified field.
-    # If value is specified, then filter the returned values according to the value. Otherwise,
-    # return all of the values.       
-    def _findValues(instance, field, value, fieldNames, userInfo):
-        f = instance.value_set.filter(deleteTransaction__isnull=True, field=field)
-        if value:
-            return f.filter(Q(stringValue=value)|Q(referenceValue_id=value))
-        else:
-            return InstanceQuerySet.selectRelatedData(f, fieldNames, 'referenceValue__', userInfo)\
-                      .order_by('position');
-        
-    
-    # getValues is used to test whether or not a particular value exists in a field of any
-    # instance with the specified path.    
-    def getValues(user, data):
-        try:
-            path = data.get("path", None)
-            if not path:
-                raise ValueError('the path was not specified')
-                
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            language = data.get('language', None)
-
-            userInfo = UserInfo(user)
-        
-            # The element name for the type of element that the new value is to the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                raise ValueError('the fieldName was not specified')
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # An optional value within the container on which to filter.
-            value = data.get('value', None)
-        
-            containers = pathparser.getQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            m = map(lambda i: api._findValues(i, field, value, fields, userInfo), containers)
-
-            m = list(itertools.chain.from_iterable(m))
-            typeIDs = [v.referenceValue.typeID_id for v in m]
-            typeIDs.extend(map(lambda c: c.typeID_id, containers))
-            typeset = frozenset(typeIDs)
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-            if len(fields) == 0:
-                p = list(map(lambda v: v.getReferenceData(userInfo, language=language), m))
-            else:
-                # iterate through the list so that fieldsDataDictionary is populated.
-                p = list(map(lambda v: v.getData(fields, fieldsDataDictionary, language, userInfo), m))
-            
-            results = {'fields': fieldsDataDictionary.getData(), 'values': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-        
     def getUserID(user, data):
         accessTokenID = data.get('access_token', None)
     
