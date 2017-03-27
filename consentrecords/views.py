@@ -224,7 +224,7 @@ def showPathway(request, email):
     
     containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'user/%s' % objs[0].id
 
@@ -292,7 +292,7 @@ def accept(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
@@ -325,7 +325,7 @@ def ignore(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
@@ -403,7 +403,7 @@ def acceptFollower(request, userPath=None):
             
         userInfo = UserInfo(request.user)
         if userPath:
-            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
                 if user.typeID_id != terms.user.id:
@@ -415,7 +415,7 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
             if follower.typeID_id == terms.user.id:
@@ -488,10 +488,10 @@ def requestAccess(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                 if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                     following = objs[0]
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                         follower = objs[0]
                         fieldTerm = terms.accessRequest
@@ -705,12 +705,12 @@ def requestExperienceComment(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
+                objs = pathparser.getQuerySet(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
                 if len(objs) > 0 and objs[0].typeID_id == terms['More Experience'].id:
                     experience = objs[0]
                     sourcePath = experience.parent
                     experienceValue = sourcePath.value_set.get(referenceValue=experience)
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID_id == terms['Path'].id:
                         follower = objs[0]
                         with transaction.atomic():
@@ -778,12 +778,12 @@ def requestExperienceComment(request):
                             if commentsValue:
                                 typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
-                                data = api._getValueData(vFilter[0], ['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                commentData = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                commentData = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 data['cells'][0]['data'] = [commentData]
                                 results = {'fields': fieldsDataDictionary.getData(), 'Comments': data}
@@ -791,8 +791,8 @@ def requestExperienceComment(request):
                                 typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = api._selectInstanceData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                data = api._getValueData(vFilter[0], ['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 results = {'fields': fieldsDataDictionary.getData(), 'Comment': data}
                     else:
                         raise RuntimeError('the requestor is unrecognized')
@@ -809,7 +809,7 @@ def requestExperienceComment(request):
 
 class api:
     # Handle a POST event to create a new instance of an object with a set of properties.
-    def createInstance(user, data):
+    def createInstance(user, path, data):
         try:
             # The type of the new object.
             instanceType = data.get('typeName', None)
@@ -821,9 +821,6 @@ class api:
             else:
                 ofKindObject = terms[instanceType]
          
-            # An optional container for the new object.
-            containerUUID = data.get('containerUUID', None)
-        
             # The element name for the type of element that the new object is to the container object
             elementName = data.get('elementName', None)
             elementUUID = data.get('elementUUID', None)
@@ -851,8 +848,12 @@ class api:
             
             with transaction.atomic():
                 transactionState = TransactionState(user)
-                if containerUUID:
-                    containerObject = Instance.objects.get(pk=containerUUID)
+                if path:
+                    instances = pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(instances) > 0:
+                        containerObject = instances[0]
+                    else:
+                        raise RuntimeError("%s is not recognized" % path)
                 else:
                     containerObject = None
 
@@ -877,7 +878,9 @@ class api:
     def checkForPath(c, user, pathKey, idKey):
         if pathKey in c:
             userInfo = UserInfo(user)
-            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
+            					  .filterToInstances()\
+            					  .querySet
             if len(instances) > 0:
                 c[idKey] = instances[0].id
             else:
@@ -960,99 +963,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    # Returns an iterable of the values within self associated with the specified field.
-    # If value is specified, then filter the returned values according to the value. Otherwise,
-    # return all of the values.       
-    def _findValues(instance, field, value, fieldNames, userInfo):
-        f = instance.value_set.filter(deleteTransaction__isnull=True, field=field)
-        if value:
-            return f.filter(Q(stringValue=value)|Q(referenceValue_id=value))
-        else:
-            return api._selectInstanceData(f, fieldNames, 'referenceValue__', userInfo)\
-                      .order_by('position');
-        
-    
-    # getValues is used to test whether or not a particular value exists in a field of any
-    # instance with the specified path.    
-    def getValues(user, data):
-        try:
-            path = data.get("path", None)
-            if not path:
-                raise ValueError('the path was not specified')
-                
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            language = data.get('language', None)
-
-            userInfo = UserInfo(user)
-        
-            # The element name for the type of element that the new value is to the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                raise ValueError('the fieldName was not specified')
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # An optional value within the container on which to filter.
-            value = data.get('value', None)
-        
-            containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            m = map(lambda i: api._findValues(i, field, value, fields, userInfo), containers)
-
-            m = list(itertools.chain.from_iterable(m))
-            typeIDs = [v.referenceValue.typeID_id for v in m]
-            typeIDs.extend(map(lambda c: c.typeID_id, containers))
-            typeset = frozenset(typeIDs)
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-            if len(fields) == 0:
-                p = list(map(lambda v: v.getReferenceData(userInfo, language=language), m))
-            else:
-                # iterate through the list so that fieldsDataDictionary is populated.
-                p = list(map(lambda v: api._getValueData(v, fields, fieldsDataDictionary, language, userInfo), m))
-            
-            results = {'fields': fieldsDataDictionary.getData(), 'values': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-        
-    def getConfiguration(user, data):
-        try:
-            # Get the uuid for the configuration.
-            typeName = data.get('typeName', None)
-            typeUUID = data.get('typeID', None)
-            if typeUUID:
-                kindObject = Instance.objects.get(pk=typeUUID)
-            elif typeName:
-                kindObject = terms[typeName]
-            else:
-                raise ValueError("typeName was not specified in getConfiguration")
-        
-            configurationObject = kindObject.getSubInstance(terms.configuration)
-        
-            if not configurationObject:
-                raise ValueError("objects of this kind have no configuration object")
-                
-            p = configurationObject.getConfiguration()
-        
-            results = {'cells': p}
-        except Instance.DoesNotExist:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason="the specified instanceType was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
     def getUserID(user, data):
         accessTokenID = data.get('access_token', None)
     
@@ -1070,122 +980,6 @@ class api:
             
         return JsonResponse(results)
     
-    def _getValueQuerySet(vs, userInfo):
-        return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
-                .order_by('position')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
-    
-    def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = fieldsDataDictionary[uuObject.typeID_id]
-        cells = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
-    
-        if 'parents' in fields:
-            p = uuObject
-            fp = p.parent_id and \
-                 userInfo.readFilter(Instance.objects\
-                                .select_related('description')\
-                                .filter(pk=p.parent_id))
-            while fp and fp.exists():
-                p = fp[0]
-                
-                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
-                if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
-                    fieldsData.append(fieldData)
-            
-                parentData = p.getReferenceData(userInfo, language)
-                parentData['position'] = 0
-                if fieldData["name"] in fields:
-                    vs = api._getValueQuerySet(p.value_set, userInfo)
-                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
-                    
-                cells.append({"field": fieldData["id"], "data": [parentData]})
-                
-                fp = p.parent_id and \
-                     userInfo.readFilter(Instance.objects\
-                                .select_related('description')\
-                                .filter(pk=p.parent_id))
-        
-        if TermNames.systemAccess in fields:
-            if userInfo.authUser.is_superuser:
-                saObject = terms.administerPrivilegeEnum
-            elif userInfo.authUser.is_staff:
-                saObject = terms.writePrivilegeEnum
-            else:
-                saObject = None
-            if saObject:
-                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.id), None)
-                if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
-                    fieldsData.append(fieldData)
-                parentData = [{'id': None, 
-                              'instanceID' : saObject.id,
-                              'description': saObject.getDescription(language),
-                              'position': 0,
-                              'privilege': saObject.description.text}]
-                cells.append({"field": fieldData["id"], "data": parentData})
-                
-        # For each of the cells, if the cell is in the field list explicitly, 
-        # and the cell is in the fieldsData (and not the name of a parent type)
-        # then get the subdata for all of the values in that cell.
-        subValuesDict = None
-        for cell in cells:
-            fieldData = next((field for field in fieldsData if field["id"] == cell["field"]), None)
-            if not fieldData:
-                raise "fieldData is not found"
-            
-            if fieldData["name"] in fields and fieldData["name"] != TermNames.systemAccess \
-                and "ofKindID" in fieldData \
-                and next((field for field in fieldsData if field["nameID"] == fieldData["nameID"]), None):
-                
-                subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
-                subValuesDict = subValuesDict or \
-                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
-                
-                for d in cell["data"]:
-                    # d["instanceID"] won't be in subValuesDict if it is a parent.
-                    if d["instanceID"] in subValuesDict:
-                        i = subValuesDict[d["instanceID"]]
-                        d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
-                        d['typeName'] = fieldData["ofKind"]
-        return cells
-
-    def _getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        data = uuObject.getReferenceData(userInfo, language)
-        if not 'none' in fields:
-            data['cells'] = api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo)
-        return data;
-    
-    def _getValueData(v, fields, fieldsDataDictionary, language, userInfo):
-        data = v.getReferenceData(userInfo, language=language)
-        data['cells'] = api._getCells(v.referenceValue, fields, fieldsDataDictionary, language, userInfo)
-        return data
-    
-    # instanceDataPath is the django query path from the sourceFilter objects to the 
-    # data to be selected.
-    def _selectInstanceData(sourceFilter, fieldNames, instanceDataPath, userInfo):
-        # preload the typeID, parent, value_set and description to improve performance.
-        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-        valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
-
-        if len(fieldNames):
-            # The distinct is required to eliminate duplicate subValues.
-            subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
-                                      instance__referenceValues__deleteTransaction__isnull=True,
-                                      instance__referenceValues__field__description__text__in=fieldNames)\
-                .distinct()
-            subValueQueryset = api._getValueQuerySet(subValues, userInfo)
-            valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
-                                  queryset=subValueQueryset,
-                                  to_attr='subValues'))
-
-        return sourceFilter.select_related(instanceDataPath + 'description')\
-                           .prefetch_related(Prefetch(instanceDataPath + 'value_set',
-                                                        queryset=valueQueryset,
-                                                        to_attr='values'))
-            
-        
     def getData(user, path, data):
         try:
             start = int(data.get("start", "0"))
@@ -1203,23 +997,13 @@ class api:
             fieldNames = list(fieldNames)
             
             if 'none' in fields:
-                uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
-                                .select_related('description')
+                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
             else:
-                uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-                uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
-                
-            uuObjects = uuObjects.order_by('description__text', 'id');
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-                
-            language = data.get('language', None)
-            typeset = frozenset([x.typeID_id for x in uuObjects])
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
-            p = [api._getInstanceData(i, fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
+            language = data.get('language', None)
+            fieldsDataDictionary = qs.getFieldsDataDictionary(language)
+            p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
             if not 'none' in fields:
@@ -1235,21 +1019,23 @@ class api:
         
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def deleteInstances(user, path):
+    def delete(user, path):
         try:
-            if path:
-                with transaction.atomic():
+            if not path:
+                raise ValueError("path was not specified in delete")
+
+            with transaction.atomic():
+                if path.startswith("value/"):
+                    valueID = path[6:6+32]
+                    ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
+                    	.deleteObjects(user, NameList(), TransactionState(user))
+                else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
-                    for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
-                        if uuObject.parent:
-                            raise RuntimeError("can only delete root instances directly")
-                        uuObject.deleteOriginalReference(transactionState)
-                        uuObject.deepDelete(transactionState)
-            else:   
-                raise ValueError("path was not specified in delete")
+                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, transactionState)
+ 
             results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -1258,91 +1044,6 @@ class api:
             
         return JsonResponse(results)
         
-    def deleteValue(user, data):
-        try:
-            valueID = data.get('valueID', None)
-        
-            if valueID:
-                v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
-
-                with transaction.atomic():
-                    v.checkWriteAccess(user)
-                    
-                    transactionState = TransactionState(user)
-                    v.deepDelete(transactionState)
-                    
-                    if v.isDescriptor:
-                        nameLists = NameList()
-                        Instance.updateDescriptions([v.instance], nameLists)
-            else:   
-                raise ValueError("valueID was not specified in delete")
-            results = {}
-        except Value.DoesNotExist:
-            return HttpResponseBadRequest(reason="the specified value ID was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
-    def paths(user, data):
-        try:
-            userInfo=UserInfo(user)
-            
-            print(data)
-            
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-        
-            fieldString = data.get('fields', "[]")
-            fields = json.loads(fieldString)
-            
-            fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
-            fieldNames = list(fieldNames)
-            
-            moreExperienceString = data.get('more experience', '[]')
-            
-            print(moreExperienceString)
-            moreExperienceQuery = json.loads(moreExperienceString)
-            
-            print(str(moreExperienceQuery))
-            
-            uuObjects = userInfo.readFilter(Instance.objects.filter(typeID=terms['Path'], deleteTransaction__isnull=True))
-            
-            uuObjects = api._selectInstanceData(uuObjects, fieldNames, '', userInfo)
-            uuObjects = uuObjects.order_by('description__text', 'id');
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-                
-            print(str(uuObjects.query))
-                                                            
-            language = data.get('language', None)
-            typeset = frozenset([x.typeID_id for x in uuObjects])
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-            
-            p = [api._getInstanceData(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
-        
-            results = {'fields': fieldsDataDictionary.getData(), 'data': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            logger.error("getData data:%s" % str(data))
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-        
-def createInstance(request):
-    if request.method != "POST":
-        raise Http404("createInstance only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.createInstance(request.user, request.POST)
-    
 def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
@@ -1352,35 +1053,11 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-def deleteInstances(request):
-    if request.method != "POST":
-        raise Http404("deleteInstances only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-        
-    return api.deleteInstances(request.user, request.POST.get('path', None))
-    
-def deleteValue(request):
-    if request.method != "POST":
-        raise Http404("deleteValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.deleteValue(request.user, request.POST)
-    
 def getValues(request):
     if request.method != "GET":
         raise Http404("getValues only responds to GET methods")
     
     return api.getValues(request.user, request.GET)
-    
-def getConfiguration(request):
-    if request.method != "GET":
-        raise Http404("getConfiguration only responds to GET methods")
-    
-    return api.getConfiguration(request.user, request.GET)
     
 def getUserID(request):
     if request.method != "GET":
@@ -1400,35 +1077,33 @@ def paths(request):
     else:
         raise Http404("paths only responds to GET methods")
 
-def handleURL(request, urlPath):
+def handleURL(request, urlPath=None):
     if request.method == 'GET':
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
             raise PermissionDenied
-        return api.deleteInstances(request.user, urlPath)
+        return api.delete(request.user, urlPath)
+    elif request.method == 'POST':
+        if not request.user.is_authenticated():
+            raise PermissionDenied
+        return api.createInstance(request.user, urlPath, request.POST)
     else:
-        raise Http404("api only responds to GET and DELETE methods")
+        raise Http404("api only responds to GET, DELETE and POST methods")
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/':
-            return getData(request)
-        elif request.path_info == '/api/getconfiguration/':
-            return getConfiguration(request)
+            return handleURL(request, None)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
         
     def post(self, request, *args, **kwargs):
-        if request.path_info == '/api/createinstance/':
-            return createInstance(request)
+        if request.path_info == '/api/':
+            return handleURL(request, None)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/deleteinstances/':
-            return deleteInstances(request)
-        elif request.path_info == '/api/deletevalues/':
-            return deleteValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
     
 class ApiGetUserIDEndpoint(ProtectedResourceView):

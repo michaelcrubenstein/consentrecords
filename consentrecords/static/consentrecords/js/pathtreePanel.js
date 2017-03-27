@@ -1396,7 +1396,7 @@ var PathLines = (function() {
 			}
 		}
 		
-		return crp.promise({path:  "#" + this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
+		return crp.promise({path:  this.path.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]})
 		.then(function(experiences)
 			{
@@ -1407,11 +1407,11 @@ var PathLines = (function() {
 				});
 			})
 		.then(function() {
-			return crp.promise({path: "#" + _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
+			return crp.promise({path: _this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
-				return crp.promise({path: "#" + _this.path.getInstanceID() + '>"More Experience">Offering'});
+				return crp.promise({path: _this.path.getInstanceID() + '>"More Experience">Offering'});
 			})
 		.then(function() {
 				return crp.promise({path: "Service"});
@@ -1676,7 +1676,7 @@ var ShareOptions = (function () {
 		var dimmer = new Dimmer(panelNode);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
-		var div = panel.append('div');
+
 		function onCancel(e)
 		{
 			if (prepareClick('click', 'Cancel'))
@@ -1698,6 +1698,9 @@ var ShareOptions = (function () {
 			}
 			e.preventDefault();
 		}
+		
+		var div = panel.append('div');
+		$(div.node()).click(onCancel);
 		
 		var copyButton = div.append('button')
 			.text("Copy Path")
@@ -1774,8 +1777,6 @@ var AddOptions = (function () {
 		var dimmer = new Dimmer(panelNode, 200);
 		var panel = d3.select(panelNode).append('panel')
 			.classed("confirm", true);
-		var div = panel.append('div')
-			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
 		
 		function handleCancel(done)
 		{
@@ -1829,6 +1830,10 @@ var AddOptions = (function () {
 					});
 			return button;
 		}
+		
+		var div = panel.append('div')
+			.style('margin-bottom', '{0}px'.format(pathlinesPanel.getBottomNavHeight()));
+		$(div.node()).click(onCancel);
 		
 		var confirmButton = addButton(div, this.addPreviousExperienceLabel, 
 			function(done)

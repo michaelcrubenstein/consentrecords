@@ -56,27 +56,18 @@ urlpatterns = [
     url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
 
     url(r'^local/getuserid/', views.getUserID),
-    url(r'^local/getconfiguration/', views.getConfiguration),
-    url(r'^local/getvalues/', views.getValues),
     
-    url(r'^local/createinstance/', views.createInstance, name='createInstance'),
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
-    url(r'^local/deleteinstances/', views.deleteInstances, name='deleteInstances'),
-    url(r'^local/deletevalue/', views.deleteValue, name='deleteValue'),
     
     url(r'^api/getuserid/', views.getUserID),
-    url(r'^api/getconfiguration/', views.getConfiguration),
-    url(r'^api/getvalues/', views.getValues),
     
-    url(r'^api/paths', views.paths),
-    
-    url(r'^api/createinstance/', views.ApiEndpoint.as_view()),
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),
     url(r'^api/deleteinstances/', views.ApiEndpoint.as_view()),
     url(r'^api/deletevalue/', views.ApiEndpoint.as_view()),
     
     url(r'^api/([^?]*)/', views.handleURL),
+    url(r'^api/$', views.handleURL),
     
     url(r'^doc/features/', views.features),
 ]

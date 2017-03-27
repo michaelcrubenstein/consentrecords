@@ -117,7 +117,7 @@ class Instance(dbmodels.Model):
                 else:
                     raise Instance.DoesNotExist()
             elif isinstance(value, dict) and "instanceID" in value:
-                f = list(UserInfo(transactionState.user).findFilter(Instance.objects.filter(pk=value["instanceID"])))
+                f = list(UserInfo(transactionState.user).findFilter(InstanceQuerySet(Instance.objects.filter(pk=value["instanceID"]))))
                 if len(f) == 0:
                     raise Value.DoesNotExist("specified primary key (%s) for instance does not exist" % value["instanceID"])
                 value = f[0]
@@ -320,15 +320,21 @@ class Instance(dbmodels.Model):
     # Return enough data for a reference to this object and its human readable form.
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, userInfo, language=None):
-        d = {'id': None, 
+        data = {'id': None, 
              'instanceID': self.id, 
              'description': self.getDescription(language),
              'parentID': self.parent_id,
              'typeName': userInfo.getTypeName(self.typeID_id)}
         privilege = self.getPrivilege(userInfo)
         if privilege:
-            d["privilege"] = privilege.getDescription()
-        return d
+            data["privilege"] = privilege.getDescription()
+        return data
+    
+    def getData(self, fields, fieldsDataDictionary, language, userInfo):
+        data = self.getReferenceData(userInfo, language)
+        if not 'none' in fields:
+            data['cells'] = self.getCellsData(fields, fieldsDataDictionary, language, userInfo)
+        return data;
     
     # This code presumes that all fields have unique values.
     def _sortValueDataByField(values):
@@ -439,14 +445,6 @@ class Instance(dbmodels.Model):
             # Default case is that each datum in this cell contains a unique value.
             return [{"id": v.id, "text": v.stringValue} for v in values]
             
-    def getReadableSubValues(self, field, userInfo):
-        return userInfo.readValueFilter(self.value_set.filter(field=field, deleteTransaction__isnull=True)) \
-            .order_by('position')\
-            .select_related('referenceValue')\
-            .select_related('referenceValue__typeID')\
-            .select_related('referenceValue__typeID__description')
-    
-    
     def _getCellData(self, fieldData, values, userInfo, language=None):
         if not fieldData:
             raise ValueError("fieldData is null")
@@ -458,15 +456,86 @@ class Instance(dbmodels.Model):
             cell["data"] = Instance._getCellValues(fieldData["dataTypeID"], values[fieldID], userInfo, language)
         return cell
                 
-    # Returns an array of arrays.
-    def getData(self, vs, fieldsData, userInfo, language=None):
+    # Returns an array data for each cell of this, with all of the data in vs.
+    def _getChildCellsData(self, vs, fieldsData, userInfo, language=None):
         values = self._groupValuesByField(vs, userInfo)
         return [self._getCellData(fieldData, values, userInfo, language)\
                 for fieldData in filter(lambda f: not f["id"].startswith("parent/"), fieldsData)]
 
-    # self should be a configuration object with fields.
-    def getConfiguration(self):
-        return [{"field": fieldObject.getFieldData()} for fieldObject in self._getSubInstances(terms.field)]
+    def getCellsData(self, fields, fieldsDataDictionary, language, userInfo):
+        fieldsData = fieldsDataDictionary[self.typeID_id]
+        cells = self._getChildCellsData(self.values, fieldsData, userInfo, language)
+    
+        if 'parents' in fields:
+            p = self
+            fp = p.parent_id and \
+                 userInfo.readFilter(InstanceQuerySet(Instance.objects\
+                                .select_related('description')\
+                                .filter(pk=p.parent_id)))
+            while fp and fp.exists():
+                p = fp[0]
+                
+                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
+                if not fieldData:
+                    fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
+                    fieldsData.append(fieldData)
+            
+                parentData = p.getReferenceData(userInfo, language)
+                parentData['position'] = 0
+                if fieldData["name"] in fields:
+                    vs = ValueQuerySet.selectRelatedData(p.value_set, [], userInfo)
+                    parentData['cells'] = p._getChildCellsData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
+                    
+                cells.append({"field": fieldData["id"], "data": [parentData]})
+                
+                fp = p.parent_id and \
+                     userInfo.readFilter(InstanceQuerySet(Instance.objects\
+                                                                .select_related('description')\
+                                                                .filter(pk=p.parent_id)))
+        
+        if TermNames.systemAccess in fields:
+            if userInfo.authUser.is_superuser:
+                saObject = terms.administerPrivilegeEnum
+            elif userInfo.authUser.is_staff:
+                saObject = terms.writePrivilegeEnum
+            else:
+                saObject = None
+            if saObject:
+                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.id), None)
+                if not fieldData:
+                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
+                    fieldsData.append(fieldData)
+                parentData = [{'id': None, 
+                              'instanceID' : saObject.id,
+                              'description': saObject.getDescription(language),
+                              'position': 0,
+                              'privilege': saObject.description.text}]
+                cells.append({"field": fieldData["id"], "data": parentData})
+                
+        # For each of the cells, if the cell is in the field list explicitly, 
+        # and the cell is in the fieldsData (and not the name of a parent type)
+        # then get the subdata for all of the values in that cell.
+        subValuesDict = None
+        for cell in cells:
+            fieldData = next((field for field in fieldsData if field["id"] == cell["field"]), None)
+            if not fieldData:
+                raise "fieldData is not found"
+            
+            if fieldData["name"] in fields and fieldData["name"] != TermNames.systemAccess \
+                and "ofKindID" in fieldData \
+                and next((field for field in fieldsData if field["nameID"] == fieldData["nameID"]), None):
+                
+                subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
+                subValuesDict = subValuesDict or \
+                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, self.values)))  
+                
+                for d in cell["data"]:
+                    # d["instanceID"] won't be in subValuesDict if it is a parent.
+                    if d["instanceID"] in subValuesDict:
+                        i = subValuesDict[d["instanceID"]]
+                        d['cells'] = i._getChildCellsData(i.subValues, subFieldsData, userInfo, language)
+                        d['typeName'] = fieldData["ofKind"]
+        return cells
 
     def getNextElementIndex(self, field):
         maxElementIndex = reduce(lambda x,y: max(x, y), 
@@ -525,17 +594,12 @@ class Instance(dbmodels.Model):
             instances.update(accessSource=None, deleteTransaction=transactionState.transaction)
             values.update(deleteTransaction=transactionState.transaction)
 
-    def deleteOriginalReference(self, transactionState):
-        if self.parent:
-            for v in self.referenceValues.filter(instance=self.parent):
-                v.markAsDeleted(transactionState) 
-                
     # Return a filter of all of the instances of this type that exactly match the specified name.
     def getInstanceByName(self, nameField, name, userInfo):
-        f = userInfo.findFilter(self.typeInstances.filter(deleteTransaction__isnull=True,
+        f = userInfo.findFilter(InstanceQuerySet(self.typeInstances.filter(deleteTransaction__isnull=True,
                                          value__deleteTransaction__isnull=True,
                                          value__field=nameField,
-                                         value__stringValue__iexact=name))
+                                         value__stringValue__iexact=name)))
         return f[0] if len(f) else None
                                             
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
@@ -643,6 +707,8 @@ class Instance(dbmodels.Model):
             referenceValue=self,
             deleteTransaction__isnull=True).exists()
     
+    # Return a QuerySet that filters f according to the specified privileges.
+    # self is a user to whom the privileges apply.
     def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
         sourceValues = self._getPrivilegeValues(privilegeIDs)
         
@@ -856,6 +922,12 @@ class Instance(dbmodels.Model):
         
         return self.securityValueFilter(privilegeIDs)
     
+    ### For the specified instance filter, filter only those instances that can be administered by self. 
+    @property   
+    def administerValueFilter(self):
+        privilegeIDs = [terms.administerPrivilegeEnum.id]
+        
+        return self.securityValueFilter(privilegeIDs)
     
     @property                
     def defaultCustomAccess(self):
@@ -1000,11 +1072,18 @@ class Value(dbmodels.Model):
         return self.referenceValue.parent == self.instance
         
     def getReferenceData(self, userInfo, language=None):
-        d = self.referenceValue.getReferenceData(userInfo, language)
-        d['id'] = self.id
-        d['position'] = self.position
-        return d
-            
+        data = self.referenceValue.getReferenceData(userInfo, language)
+        data['id'] = self.id
+        data['position'] = self.position
+        return data
+    
+    # Return the data associated with this value that references an object.        
+    def getData(self, fields, fieldsDataDictionary, language, userInfo):
+        data = self.getReferenceData(userInfo, language=language)
+        if not 'none' in fields:
+            data['cells'] = self.referenceValue.getCellsData(fields, fieldsDataDictionary, language, userInfo)
+        return data
+    
     # Updates the value of the specified object
     # All existing facts that identify the value are marked as deleted.            
     def updateValue(self, newValue, transactionState):
@@ -1479,13 +1558,12 @@ terms = Terms()
 class FieldsDataDictionary:
     def __init__(self, typeInstances=[], language=None):
         self.language = language
-        self._dict = None
+        self._dict = None   # Initialize for calls to getType.
         self._dict = dict((lambda i:(i, i.getFieldsData(language)))(self.getType(t)) for t in typeInstances)
     
     def getType(self, t):
         if isinstance(t, str):
             if self._dict:
-            
                 return next((key for key in self._dict.keys() if key.id == t), None) or \
                        Instance.objects.get(pk=t)
             else:
@@ -1503,7 +1581,8 @@ class FieldsDataDictionary:
             return self._dict[typeInstance]
     
     def getData(self):
-        return list(itertools.chain.from_iterable(self._dict.values()))
+        fds = list(itertools.chain.from_iterable(self._dict.values()))
+        return fds
 
 class UserInfo:
     def __init__(self, authUser):
@@ -1524,54 +1603,13 @@ class UserInfo:
         return self.authUser.is_authenticated()
 
     def findFilter(self, resultSet):
-        if not self.is_authenticated:
-            return resultSet.filter(Instance.anonymousFindFilter())
-        elif self.is_administrator:
-            return resultSet
-        elif self.instance:
-            return self.instance.findFilter(resultSet)
-        else:
-            return resultSet.filter(Instance.anonymousFindFilter()) # This case occurs while setting up a user.
-
-    def findValueFilter(self, resultSet):
-        if self._findValueFilter:
-            return resultSet.filter(self._findValueFilter)
-        elif self.is_administrator:
-            return resultSet
-        else:
-            if not self.is_authenticated:
-                self._findValueFilter = Value.anonymousFindFilter()
-            else:
-                self._findValueFilter = self.instance.findValueFilter
-            return resultSet.filter(self._findValueFilter)
-
-    def readValueFilter(self, resultSet):
-        if self._readValueFilter:
-            return resultSet.filter(self._readValueFilter)
-        elif self.is_administrator:
-            return resultSet
-        else:
-            if not self.is_authenticated:
-                self._readValueFilter = Value.anonymousReadFilter()
-            else:
-                self._readValueFilter = self.instance.readValueFilter
-            return resultSet.filter(self._readValueFilter)
+        return resultSet.applyFindFilter(self)
 
     def readFilter(self, resultSet):
-        if not self.is_authenticated:
-            return resultSet.filter(Instance.anonymousReadFilter())
-        elif self.is_administrator:
-            return resultSet
-        else:
-            return self.instance.readFilter(resultSet)
+        return resultSet.applyReadFilter(self)
 
     def administerFilter(self, resultSet):
-        if not self.is_authenticated:
-            return []   # If not authenticated, then return an empty iterable.
-        elif self.is_administrator:
-            return resultSet
-        else:
-            return self.instance.administerFilter(resultSet)
+        return resultSet.applyAdministerFilter(self)
 
     def log(self, s):
         self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
@@ -1583,3 +1621,565 @@ class UserInfo:
             description = Instance.objects.get(pk=typeID).description.text
             self.typeNames[typeID] = description
             return description
+            
+class ObjectQuerySet:
+    def __init__(self, querySet=None):
+        if isinstance(querySet, ObjectQuerySet):
+            raise ValueError("querySet is an ObjectQuerySet")
+        self.querySet = querySet
+
+    def getQClause(self, field, symbol, testValue):
+        if isinstance(testValue, list):
+            simples = map(lambda t: self.getSimpleQClause(field, symbol, t), testValue)
+            return reduce(lambda q1, q2: q1 | q2, simples)
+        else:
+            return self.getSimpleQClause(field, symbol, testValue)
+
+    def getAncestorClause(self, symbol, testValue):
+        if isinstance(testValue, list):
+            simples = map(lambda t: self.getSimpleAncestorClause(symbol, t), testValue)
+            return reduce(lambda q1, q2: q1 | q2, simples)
+        else:
+            return self.getSimpleAncestorClause(symbol, testValue)
+
+    # Return the Q Clause based on all of the elements within a []
+    # This function factors out '|' operations within the clause into simple tests.
+    def clause(self, params, userInfo):
+        paramClauses = []
+        paramClause = []
+        for s in params:
+            if s == '|':
+                if len(paramClause):
+                    paramClauses.append(paramClause)
+                    paramClause = []
+            else:
+                paramClause.append(s)
+        if len(paramClause):
+            paramClauses.append(paramClause)
+        
+        if len(paramClauses) == 1:
+            return self.filterClause(paramClauses[0], userInfo)
+        else: 
+            return reduce(lambda q1, q2: q1 | q2, \
+                          map(lambda p: self.filterClause(p, userInfo), paramClauses))
+
+    def getValueFilter(self, field, symbol, testValue):
+        if terms.isUUID(testValue):
+            if symbol == '=':
+                vFilter = Value.objects.filter(referenceValue_id=testValue)
+            else:
+                raise ValueError("unrecognized symbol: %s" % symbol)
+        else:
+            if symbol == '^=':
+                vFilter = Value.objects.filter(Q(stringValue__istartswith=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__istartswith=testValue))
+            elif symbol == '=':
+                vFilter = Value.objects.filter(Q(stringValue__iexact=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__iexact=testValue))
+            elif symbol == '*=':
+                vFilter = Value.objects.filter(Q(stringValue__iregex='[[:<:]]' + testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__iregex='[[:<:]]' + testValue))
+            elif symbol == '<':
+                vFilter = Value.objects.filter(Q(stringValue__lt=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__lt=testValue))
+            elif symbol == '<=':
+                vFilter = Value.objects.filter(Q(stringValue__lte=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__lte=testValue))
+            elif symbol == '>':
+                vFilter = Value.objects.filter(Q(stringValue__gt=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__gt=testValue))
+            elif symbol == '>=':
+                vFilter = Value.objects.filter(Q(stringValue__gte=testValue,referenceValue__isnull=True)|
+                                               Q(referenceValue__description__text__gte=testValue))
+            else:
+                raise ValueError("unrecognized symbol: %s"%symbol)
+        vFilter = vFilter.filter(deleteTransaction__isnull=True)
+        return vFilter.filter(field=field) if field else vFilter
+
+    # Returns a duple containing a new result set based on the first "phrase" of the path 
+    # and a subset of path containing everything but the first "phrase" of the path.
+    def refineResults(self, path, userInfo):
+#         logger = logging.getLogger(__name__)
+#         logger.error("refineResults(%s, %s)" % (str(self.querySet), path))
+    
+        if path[0] == '#':
+            return InstanceQuerySet(Instance.objects.filter(pk=path[1])), path[2:]
+        elif path[0] == '*':
+            return InstanceQuerySet(Instance.objects.filter(deleteTransaction__isnull=True)), path[1:]
+        elif path[0] == '[':
+            params = path[1]
+            if params[0] == 'ancestor' and params[1] == ':':
+                q = self.ancestorClause(params)
+                # Filter by items that contain an ancestor with the specified field clause. 
+                if params[2] != '?':
+                    i = terms[params[2]]
+                else:
+                    i = None
+                if len(params) == 5:
+                    # example: ancestor:name*='foo'
+                    #
+                    # Get a Q clause that compares either a single test value or a comma-separated list of test values
+                    # according to the specified symbol.
+                    stringText = self.getAncestorClause(symbol=params[3], testValue=params[-1])
+            
+                    if i:
+                        q = stringText & Q(ancestors__ancestor__value__field=i,
+                                           ancestors__ancestor__value__deleteTransaction__isnull=True)
+                    else:
+                        q = stringText & Q(ancestors__ancestor__value__deleteTransaction__isnull=True)
+                else:
+                    raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
+            else:
+                q = self.clause(params, userInfo)
+            
+            # Need to add distinct after the tests to prevent duplicates if there is
+            # more than one value of the instance that matches.
+            return self.applyClause(q), path[2:]
+        elif path[0] == '>' or path[0] == '/':
+            i = terms[path[1]]
+            if len(path) == 2:
+                f = Value.objects.filter(instance__in=self.applyFindFilter(userInfo),
+                                         field=i,
+                                         deleteTransaction__isnull=True)\
+                                 .order_by('instance', 'position')
+                return ValueQuerySet(f), []
+            elif len(path) == 4 and path[2] == '/' and terms.isUUID(path[3]):
+                f = Value.objects.filter(instance__in=self.applyFindFilter(userInfo),
+                                         field=i,
+                                         deleteTransaction__isnull=True,
+                                         referenceValue_id=path[3])\
+                                 .order_by('instance', 'position')
+                return ValueQuerySet(f), []
+            else:
+                f = Instance.objects.filter(referenceValues__instance__in=self.applyFindFilter(userInfo),
+                                            referenceValues__field=i,
+                                            referenceValues__deleteTransaction__isnull=True)\
+                                    .order_by('parent', 'parentValue__position')
+                return InstanceQuerySet(f), path[2:]       
+        elif path[0] == '::':
+            function = path[1]
+            if function == 'reference':
+                if isinstance(path[2], list):
+                    if len(path[2]) != 1:
+                        t = map(terms.__getitem__, path[2])
+                        f = Instance.objects.filter(typeID__in=t,
+                                                    value__deleteTransaction__isnull=True,
+                                                    value__referenceValue__in=self.applyFindFilter(userInfo))
+                    else:
+                        t = terms[path[2][0]]
+                        f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
+                                                    Q(value__referenceValue__in=self.applyFindFilter(userInfo)),
+                                                    typeID=t,
+                                                   )
+                    return InstanceQuerySet(f), path[3:]
+                else:
+                    raise ValueError("malformed reference (missing parentheses)")
+            elif function == 'not':
+                if isinstance(path[2], list):
+                    parsed = InstanceQuerySet().parse(path[2], userInfo)
+                    f = parsed.excludeFrom(self.querySet)
+                    return f, path[3:]
+                else:
+                    raise ValueError("malformed not (missing parentheses)")
+            else:
+                raise ValueError("unrecognized function: %s" % function)
+        elif path[0] == '|':
+            # 'or' case.
+            parsed = InstanceQuerySet().parse(path[1:], userInfo)
+            return InstanceObjectSet(Instance.objects.filter(self.instanceQ()|parsed.instanceQ())), []
+        elif len(path) >= 3 and path[0] == ':' and path[1] == 'not':
+            if isinstance(path[2], list):
+                if path[2][0] == '[':
+                    params = path[2][1]
+                    i = terms[params[0]]
+                    if len(params) == 1:
+                        f = self.excludeByField(i)
+                        return f, path[3:]
+                    elif len(params) == 3:
+                        symbol = params[1]
+                        testValue = params[2]
+                        f = self.excludeByValue(i, symbol, testValue)
+                        return f, path[3:]
+                    else:
+                        raise ValueError("unrecognized contents within ':not([...])'")
+                else:
+                    raise ValueError("unimplemented 'not' expression")
+            else:
+                raise ValueError("malformed 'not' expression")
+        elif isinstance(path[0], list): # Path[0] is a list of type IDs.
+            t = map(terms.__getitem__, path[0])
+            f = Instance.objects.filter(typeID__in=t,
+                                        deleteTransaction__isnull=True)
+            return InstanceQuerySet(f), path[1:]
+        elif terms.isUUID(path[0]):
+            if self.querySet:
+                return InstanceQuerySet(self.querySet.filter(pk=path[0], deleteTransaction__isnull=True)), path[1:]
+            else:
+                return InstanceQuerySet(Instance.objects.filter(pk=path[0], deleteTransaction__isnull=True)), path[1:]
+        else:   # Path[0] is the name of a type.
+            i = terms[path[0]]
+            f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
+            return InstanceQuerySet(f), path[1:]
+
+    def parse(self, a, userInfo):
+        qs = self
+        path = a
+        while len(path) > 0:
+            qs, path = qs.refineResults(path, userInfo)
+            firstRefine = False
+        return qs
+    
+class ValueQuerySet(ObjectQuerySet):
+    
+    # Extends the specified QuerySet of Values with data to be returned to the client.
+    def selectRelatedData(vs, fieldNames, userInfo):
+        vds = ValueQuerySet(vs.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo)\
+                .order_by('instance', 'position')\
+                .select_related('referenceValue')\
+                .select_related('referenceValue__description')
+                
+        # preload the typeID, parent, value_set and description to improve performance.
+        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+        valueQueryset = ValueQuerySet(Value.objects.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo)\
+                .order_by('instance', 'position')\
+                .select_related('referenceValue')\
+                .select_related('referenceValue__description')
+
+        if len(fieldNames):
+            # The distinct is required to eliminate duplicate subValues.
+            subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
+                                      instance__referenceValues__deleteTransaction__isnull=True,
+                                      instance__referenceValues__field__description__text__in=fieldNames)\
+                .distinct()
+            subValueQueryset = ValueQuerySet.selectRelatedData(subValues, [], userInfo)
+            valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                  queryset=subValueQueryset,
+                                  to_attr='subValues'))
+
+        return vds.select_related('referenceValue__description')\
+                  .prefetch_related(Prefetch('referenceValue__value_set',
+                                             queryset=valueQueryset,
+                                             to_attr='values'))
+    
+    def __init__(self, querySet=None):
+        super(ValueQuerySet, self).__init__(querySet)
+        
+    def createObjectQuerySet(self, querySet):
+        return ValueQuerySet(querySet)
+        
+    def excludeFrom(self, querySet):
+        return ValueQuerySet(querySet.exclude(referenceValues__in=self.querySet))
+
+    # Return a Q expression that returns all of the instances in this query set.
+    def instanceQ(self):
+        return Q(referenceValues__in=self.querySet)
+        
+    def excludeByField(self, field):
+        raise RuntimeError("ValueQuerySet.excludeByField not implemented")
+
+    def excludeByValue(self, field, symbol, testValue):
+        raise RuntimeError("ValueQuerySet.excludeByValue not implemented")
+        
+    # return an InstanceQuerySet derived from the contents of self.
+    def filterToInstances(self):
+        return InstanceQuerySet(Instance.objects.filter(referenceValues__in=self.querySet))
+        
+    # returns a Q clause to filter instances to those that contain references in 
+    # the specified fields to one of the specified referenceValues.
+    def clauseByReferenceValues(self, fieldNames, referenceValues):
+        if isinstance(referenceValues, ObjectQuerySet):
+            raise ValueError("referenceValues is an ObjectQuerySet")
+            
+        if isinstance(fieldNames, list):
+            return Q(field__in=map(terms.__getitem__, fieldNames),
+                     value__deleteTransaction__isnull=True,
+                     value__referenceValue__in=referenceValues)
+        else:
+            return Q(field=terms[fieldNames],
+                     deleteTransaction__isnull=True,
+                     referenceValue__in=referenceValues)
+
+    def applyClause(self, q):
+        return ValueQuerySet(self.querySet.filter(q).distinct())
+        
+    def applyFindFilter(self, userInfo):
+        qs = self.querySet
+        if userInfo._findValueFilter:
+            return qs.filter(userInfo._findValueFilter)
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            if not userInfo.is_authenticated:
+                userInfo._findValueFilter = Value.anonymousFindFilter()
+            else:
+                userInfo._findValueFilter = userInfo.instance.findValueFilter
+            return qs.filter(userInfo._findValueFilter)
+
+    def applyReadFilter(self, userInfo):
+        qs = self.querySet
+        if userInfo._readValueFilter:
+            return qs.filter(userInfo._readValueFilter)
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            if not userInfo.is_authenticated:
+                userInfo._readValueFilter = Value.anonymousReadFilter()
+            else:
+                userInfo._readValueFilter = userInfo.instance.readValueFilter
+            return qs.filter(userInfo._readValueFilter)
+
+    def applyAdministerFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return []   # If not authenticated, then return an empty iterable.
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            return userInfo.instance.administerValueFilter(qs)
+    
+    def getFieldsDataDictionary(self, language):
+        typeset = frozenset([x.referenceValue.typeID_id for x in self.querySet])
+        return FieldsDataDictionary(typeset, language)
+    
+    def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
+        uuObjects = ValueQuerySet.selectRelatedData(self.querySet, fieldNames, userInfo)
+        uuObjects = uuObjects.order_by('instance', 'position');
+        if end > 0:
+            uuObjects = uuObjects[start:end]
+        elif start > 0:
+            uuObjects = uuObjects[start:]
+            
+        return [v.getData(fields, fieldsDataDictionary, language, userInfo) for v in uuObjects]        
+
+    def deleteObjects(self, user, nameLists, transactionState):
+        for value in self.querySet:
+            if not value.referenceValue or value.referenceValue.parentValue != value:
+                value.checkWriteAccess(user)
+                
+                value.deepDelete(transactionState)
+                if value.isDescriptor:
+                    Instance.updateDescriptions([value.instance], nameLists)
+            else:
+                uuObject = value.referenceValue
+                uuObject.checkWriteAccess(user)
+                
+                for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
+                    v.markAsDeleted(transactionState)
+                    if v.isDescriptor:
+                        Instance.updateDescriptions([v.instance], nameLists)
+
+                uuObject.deepDelete(transactionState)
+
+class InstanceQuerySet(ObjectQuerySet):
+
+    # Extended the specified querySet to include related Instance data to be sent back to the client tier.
+    # instanceDataPath is the django query path from the sourceFilter objects to the 
+    # data to be selected.
+    def selectRelatedData(sourceFilter, fieldNames, instanceDataPath, userInfo):
+        # preload the typeID, parent, value_set and description to improve performance.
+        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+        valueQueryset = ValueQuerySet.selectRelatedData(Value.objects, [], userInfo)
+
+        if len(fieldNames):
+            # The distinct is required to eliminate duplicate subValues.
+            subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
+                                      instance__referenceValues__deleteTransaction__isnull=True,
+                                      instance__referenceValues__field__description__text__in=fieldNames)\
+                .distinct()
+            subValueQueryset = ValueQuerySet.selectRelatedData(subValues, [], userInfo)
+            valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
+                                  queryset=subValueQueryset,
+                                  to_attr='subValues'))
+
+        return sourceFilter.select_related(instanceDataPath + 'description')\
+                           .prefetch_related(Prefetch(instanceDataPath + 'value_set',
+                                                        queryset=valueQueryset,
+                                                        to_attr='values'))
+            
+    def __init__(self, querySet=None):
+        super(InstanceQuerySet, self).__init__(querySet)
+        
+    def createObjectQuerySet(self, querySet):
+        return InstanceQuerySet(querySet)
+        
+    def excludeFrom(self, querySet):
+        return InstanceQuerySet(querySet.exclude(pk__in=self.querySet))
+
+    # Return a Q expression that returns all of the instances in this query set.
+    def instanceQ(self):
+        return Q(pk__in=self.querySet)
+        
+    def excludeByField(self, field):
+        return InstanceQuerySet(self.querySet.exclude(value__field=field, value__deleteTransaction__isnull=True))
+
+    # Return an InstanceQuerySet that excludes instances that have a field that matches the testValue.
+    def excludeByValue(self, field, symbol, testValue):
+        if isinstance(testValue, list):
+            f = self.querySet
+            for test in testValue:
+                vFilter = self.getValueFilter(field, symbol, test)
+                f = f.exclude(value__in=vFilter)
+            return InstanceQuerySet(f)
+        else:
+            vFilter = self.getValueFilter(field, symbol, testValue)
+            return InstanceQuerySet(self.querySet.exclude(value__in=vFilter))          
+
+    # return an InstanceQuerySet derived from the contents of self.
+    def filterToInstances(self):
+        return self
+    
+    # returns a Q clause to filter instances to those that contain references in 
+    # the specified fields to one of the specified referenceValues.
+    def clauseByReferenceValues(self, fieldNames, referenceValues):
+        if isinstance(referenceValues, ObjectQuerySet):
+            raise ValueError("referenceValues is an ObjectQuerySet")
+            
+        if isinstance(fieldNames, list):
+            return Q(value__field__in=map(terms.__getitem__, fieldNames),
+                     value__deleteTransaction__isnull=True,
+                     value__referenceValue__in=referenceValues)
+        else:
+            return Q(value__field=terms[fieldNames],
+                     value__deleteTransaction__isnull=True,
+                     value__referenceValue__in=referenceValues)
+
+    def applyClause(self, q):
+        return InstanceQuerySet(self.querySet.filter(q).distinct())
+        
+    def getSimpleQClause(self, field, symbol, testValue):
+        vFilter = self.getValueFilter(field, symbol, testValue)
+        return Q(value__in=vFilter)
+
+    def getSimpleAncestorClause(self, symbol, testValue):
+        if symbol == '^=':
+            q = Q(ancestors__ancestor__value__stringValue__istartswith=testValue)
+        elif symbol == '=':
+            q = Q(ancestors__ancestor__value__stringValue__iexact=testValue)
+        elif symbol == '*=':
+            q = Q(ancestors__ancestor__value__stringValue__icontains=testValue)
+        elif symbol == '<':
+            q = Q(ancestors__ancestor__value__stringValue__lt=testValue)
+        elif symbol == '<=':
+            q = Q(ancestors__ancestor__value__stringValue__lte=testValue)
+        elif symbol == '>':
+            q = Q(ancestors__ancestor__value__stringValue__gt=testValue)
+        elif symbol == '>=':
+            q = Q(ancestors__ancestor__value__stringValue__gte=testValue)
+        else:
+            raise ValueError("unrecognized symbol: %s" & symbol)
+        return q
+        # Handles a degenerate case where a referenceValue was stored in the same place as
+        # the stringValue and it happens to match the query string, 
+
+    # returns an QuerySet that matches the specified parameters.
+    def getReferenceValues(self, params, userInfo):
+    #     print('getReferenceValues: %s'%params)
+        if len(params) > 2 and params[1] == '>':
+            subF = InstanceQuerySet(Instance.objects.filter(self.clauseByReferenceValues(params[2], self.getReferenceValues(params[2:], userInfo))))
+        else:
+            # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
+            subF = InstanceQuerySet().parse(['*'] + params[1:], userInfo)
+        return userInfo.findFilter(subF)
+
+    # Return a Q clause according to the specified params.
+    # If the parameter list is a single item:
+    #     If there is a list, then the object must contain a value with the specified field type.
+    #     If there is a question mark, then this is a no-op.
+    #     If there is a single term name, then each instance must contain a value of that term.
+    # If the parameter list is three or more items and the second item is a '>',
+    #     then tighten the filter of the result set for only those fields that are references to objects
+    #     that match params[2:]. For example:
+    #     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+    # If the parameter list is three or more items and the second item is a '[',
+    #     then tighten the filter of the result set for only those fields that are references to objects
+    #     that match the clause in params[2] and any following clauses. For example: 
+    #     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+    # If the parameter list is three values, interpret the three values as a query clause and
+    #     filter self on that clause.  
+    def filterClause(self, params, userInfo):
+    #     print('_filterClause params: %s'% (params))
+    
+        if len(params) == 1:
+            if isinstance(params[0], list):
+                return Q(value__field__in=map(terms.__getitem__, params[0]), 
+                                        value__deleteTransaction__isnull=True)
+            elif params[0] == '?':
+                return Q(value__deleteTransaction__isnull=True) #degenerate case
+            else:
+                return Q(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
+        elif len(params) > 2 and params[1]=='>':
+            return Q(self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo)))
+        elif len(params) > 2 and params[1]=='[':
+            parsed = InstanceQuerySet().parse(['*'] + params[1:3], userInfo)
+            subF = InstanceQuerySet(userInfo.findFilter(parsed))
+            if len(params) > 3:
+                parsed = subF.parse(params[3:], userInfo)
+                subF = parsed.filterToInstances()
+            return Q(self.clauseByReferenceValues(params[0], subF.querySet))
+        elif len(params) == 3:
+            i = None if params[0] == '?' else \
+                map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
+                terms[params[0]]
+        
+            # Return a Q clause that compares either a single test value or a comma-separated list of test values
+            # according to the specified symbol to a list of fields or a single field.
+            if isinstance(i, map):
+                return reduce(lambda q1, q2: q1 | q2, \
+                                    map(lambda field: self.getQClause(field, params[1], params[2]), i))
+            else:
+                return self.getQClause(i, symbol=params[1], testValue=params[2])
+        else:
+            raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+
+    def applyFindFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return qs.filter(Instance.anonymousFindFilter())
+        elif userInfo.is_administrator:
+            return qs
+        elif userInfo.instance:
+            return userInfo.instance.findFilter(qs)
+        else:
+            return qs.filter(Instance.anonymousFindFilter()) # This case occurs while setting up a user.
+
+    def applyReadFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return qs.filter(Instance.anonymousReadFilter())
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            return userInfo.instance.readFilter(qs)
+
+    def applyAdministerFilter(self, userInfo):
+        qs = self.querySet
+        if not userInfo.is_authenticated:
+            return []   # If not authenticated, then return an empty iterable.
+        elif userInfo.is_administrator:
+            return qs
+        else:
+            return userInfo.instance.administerFilter(qs)
+    
+    def getFieldsDataDictionary(self, language):
+        typeset = frozenset([x.typeID_id for x in self.querySet])
+        return FieldsDataDictionary(typeset, language)
+    
+    def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
+        uuObjects = InstanceQuerySet.selectRelatedData(self.querySet, fieldNames, '', userInfo)
+            
+        uuObjects = uuObjects.order_by('description__text', 'id');
+        if end > 0:
+            uuObjects = uuObjects[start:end]
+        elif start > 0:
+            uuObjects = uuObjects[start:]
+            
+        return [i.getData(fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
+
+    def deleteObjects(self, user, nameLists, transactionState):
+        for uuObject in self.querySet:
+            for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
+                v.markAsDeleted(transactionState)
+                if v.isDescriptor:
+                    Instance.updateDescriptions([v.instance], nameLists)
+
+            uuObject.deepDelete(transactionState)

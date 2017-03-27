@@ -159,12 +159,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = '#'+organization.getInstanceID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath})
-			.done(function(groupPaths)
+		groupPath = organization.getInstanceID() + '/"Inquiry Access Group"';
+		cr.getData({path: groupPath, fields: ['none']})
+			.then(function(groupPaths)
 				{
 					var initialData = [{
-							container: '#{0}>Inquiries'.format(session.getInstanceID()),
+							container: '{0}/Inquiries'.format(session.getInstanceID()),
 							field: cr.fieldNames.user,
 							instanceID: user.getInstanceID(),
 							description: getUserDescription(user)
@@ -187,12 +187,12 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							if (groupPaths.length == 0)
 								done();
 							else {
-								addMissingAccess(user, cr.fieldNames.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
+								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
 							}
 						});
 					return cr.updateValues(initialData, sourceObjects);
 				})
-			.fail(cr.asyncFail);
+			.then(undefined, cr.asyncFail);
 	}
 	
 	var tryAddInquiry = function(user)
@@ -208,25 +208,23 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
-					field: cr.fieldNames.user,
-					value: this.getInstanceID(),
-					done: function(valueIDs)
-					{
-						if (valueIDs.length > 0)
+				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), this.getInstanceID())})
+					.then(function(valueIDs)
 						{
-							checkInquiryFunction(user, valueIDs[0].id);
-							bootstrap_alert.success(_this.getDescription() + 
-												  " already signed up for " + 
-												  offering.getDescription() + "/" + session.getDescription(),
-												  ".alert-container");
-						}
-						else
-						{
-							addInquiry(_this);
-						}
-					},
-					fail: asyncFailFunction});
+							if (valueIDs.length > 0)
+							{
+								checkInquiryFunction(user, valueIDs[0].id);
+								bootstrap_alert.success(_this.getDescription() + 
+													  " already signed up for " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+							}
+							else
+							{
+								addInquiry(_this);
+							}
+						},
+						cr.asyncFail);
 			};
 			cr.signedinUser.on("signin.cr", panel, onSignin);
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
@@ -255,7 +253,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			showClickFeedback(this);
 			
-			var successFunction = function(valueID)
+			var successFunction = function()
 			{
 				bootstrap_alert.success("You have backed out of " + 
 							  offering.getDescription() + "/" + session.getDescription() + ".",
@@ -263,7 +261,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				checkInquiryFunction(user, null);
 			}
 			
-			cr.deleteValue(inquiryValueID, successFunction, asyncFailFunction);
+			cr.deleteValue(inquiryValueID)
+				.then(successFunction, cr.asyncFail);
 			
 			unblockClick();
 		}
@@ -276,11 +275,8 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: '#'+session.getInstanceID()+">Inquiries",
-			field: cr.fieldNames.user,
-			value: user.getInstanceID(),
-			done: done,
-			fail: asyncFailFunction});
+		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), user.getInstanceID())})
+					.then(done, cr.asyncFail);
 	}
 	else
 		checkInquiryFunction(user, null);
@@ -417,7 +413,7 @@ var FindExperienceSearchView = (function () {
 	
 	FindExperienceSearchView.prototype.fields = function()
 	{
-		return ["parents", "type"];
+		return ["parents"];
 	}
 	
 	/* Overrides SearchView.searchPath */

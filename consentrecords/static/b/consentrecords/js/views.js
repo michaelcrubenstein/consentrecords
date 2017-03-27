@@ -103,7 +103,12 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 		panel.classed(bootstrap_alert.alertClass, false);
 		bootstrap_alert.alertClass = alertClass;
 		panel.classed(bootstrap_alert.alertClass, true);
-		panel.select('span').text(message);
+		panel.selectAll('span').remove();
+		panel.selectAll('span')
+			.data(message.toString().split('\n'))
+			.enter()
+			.append('span')
+			.text(function(d) { return d; });
 		$(bootstrap_alert.panel)
 			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
 	}
@@ -774,7 +779,8 @@ function appendConfirmDeleteControls(divs, onClick)
 			if (prepareClick('click', 'confirm delete: ' + d.getDescription()))
 			{
 				try {
-					d.deleteValue(unblockClick, cr.syncFail);
+					d.deleteValue()
+						.then(unblockClick, cr.syncFail);
 				} catch(err) { cr.syncFail(err); }
 			}
 		});
@@ -3235,7 +3241,8 @@ function showPickObjectPanel(cell, oldData) {
 						else
 						{
 							/* Test case: Choose none for a unique item that was previously specified. */
-							oldData.deleteValue(successFunction, cr.syncFail);
+							oldData.deleteValue()
+								.then(successFunction, cr.syncFail);
 						}
 					}
 					else if (d.getInstanceID())
@@ -3327,7 +3334,7 @@ function showPickObjectPanel(cell, oldData) {
 	}
 	else
 		/* Test case: edit the name of a field of a configuration of a term. */
-		cr.getData({path: cell.field.ofKindID, fields: ['none']})
+		cr.getData({path: '"' + cell.field.ofKind + '"', fields: ['none']})
 			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		

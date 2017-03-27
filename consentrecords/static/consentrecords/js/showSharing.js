@@ -86,11 +86,12 @@ var SharingPanel = (function() {
 		spans.on('click', function(d) {
 				if (prepareClick('click', 'ignore access request {0}'.format(d.getDescription())))
 				{
-					d.deleteValue(function()
+					d.deleteValue()
+						.then(function()
 						{
 							unblockClick();
 						},
-						syncFailFunction);
+						cr.syncFail);
 				}
 			});
 			
@@ -203,10 +204,10 @@ var SharingPanel = (function() {
 				}
 			}
 		}
-		cr.getData({path: "#" + this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
-					fields: ["parents"], 
-					done: function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
-					fail: asyncFailFunction});
+		cr.getData({path: this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
+					fields: ["parents"]})
+			.then(function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
+				  asyncFailFunction);
 	}
 	
 	SharingPanel.prototype.addAccessRecord = function(accessorLevel, path, done)
