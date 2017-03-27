@@ -122,31 +122,33 @@ var FollowingPanel = (function() {
 				{
 					var path;
 					if (d.getInstanceID)
-						path = '#{0}'.format(d.getInstanceID())
+						path = d.getInstanceID()
 					else
 						path = 'user[email={0}]'.format(d.getDescription())
-					cr.getValues({path: path,
-						field: cr.fieldNames.accessRequest,
-						value: _this.user.getInstanceID(),
-						done: function(values)
-						{
-							if (values.length > 0)
+					path += '/"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+					cr.getData({path: path})
+						.then(function(values)
 							{
-								values[0].deleteValue(
-									function(v)
-									{
-										removeItem(_thisItem,
-											function()
-											{
-												_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
-												_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
-												unblockClick();
-											});
-									},
-									syncFailFunction);
-							}
-						},
-						fail: syncFailFunction});
+								if (values.length > 0)
+								{
+									values[0].deleteValue()
+										.then(
+										function(v)
+										{
+											removeItem(_thisItem,
+												function()
+												{
+													_this._foundPendingRequests.splice(_this._foundPendingRequests.indexOf(d), 1);
+													_this._noPendingResultsDiv.style('display', _this._foundPendingRequests.length === 0 ? null : 'none');
+													unblockClick();
+												});
+										},
+										cr.syncFail);
+								}
+								else
+									cr.syncFail("Error: this access request was not found");
+							},
+							cr.syncFail);
 				}
 			});
 		var buttons = appendRowButtons(divs);
@@ -297,10 +299,10 @@ var FollowingPanel = (function() {
 		this._noPendingResultsDiv = this._pendingSection.append("div")
 			.text("None")
 			.style("display", "none")
-		this._pendingChunker = new SelectAllChunker(itemsDiv.node(), 
+		this._pendingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getPendingRequestsDone(foundObjects, startVal); });
 		this._pendingChunker.path = 'user["access request"={0}]'.format(this.user.getInstanceID());
-		this._pendingChunker.fields = [];
+		this._pendingChunker.fields = ["none"];
 		
 		this.appendActionButton("Ask To Follow", function()
 			{
@@ -324,10 +326,10 @@ var FollowingPanel = (function() {
 		this._noFollowingResultsDiv = this._followingSection.append("div")
 			.text("None")
 			.style("display", "none")
-		this._followingChunker = new SelectAllChunker(itemsDiv.node(), 
+		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
 		this._followingChunker.path = '#{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
-		this._followingChunker.fields = [];
+		this._followingChunker.fields = ["none"];
 		
 		$(this.node()).one("revealing.cr", function()
 			{

@@ -121,7 +121,7 @@ var SearchPathsResultsView = (function () {
 	{
 		var path;
 		{
-			path = '"Path"';
+			path = 'Path';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
 			if (!qf.length)
@@ -130,7 +130,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '["More Experience"[Service[Service="{0}"]|Offering>Service[Service="{0}"]]]'.format(sf.service.getInstanceID());
+						path += '["More Experience"[Service[Service={0}]|Offering>Service[Service={0}]]]'.format(sf.service.getInstanceID());
 				});
 			return path;
 		}

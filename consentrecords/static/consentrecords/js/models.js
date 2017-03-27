@@ -191,7 +191,7 @@ cr.fieldNames = {
     text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
-    systemAccess: 'system access',
+    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
     privilege: 'privilege',
     group: 'group',
     defaultAccess: 'default access',
@@ -671,61 +671,45 @@ cr.Value = (function() {
 		$(this).trigger("valueDeleted.cr", this);
 	}
 	
-	Value.prototype.deleteValue = function(done, fail)
+	Value.prototype.deleteValue = function()
 	{
-		if (!fail)
-			throw ("fail is not specified");
-		if (!done)
-			throw ("done is not specified");
-			
 		var _this = this;
-		if (this.id == null)	/* It was never saved */
+		if (this.cell != null &&
+			this.getInstanceID() != null &&
+			this.instance().parent() == this.cell.parent)
 		{
-			if (this.cell != null && 
-				this.cell.parent == null &&
-				this.getInstanceID() != null)
-			{
-				/* In this case, this is a root object, so we just need to 
-					delete the instance. */
-				var jsonArray = { path: "#" + this.getInstanceID()
-						};
-				$.post(cr.urls.deleteInstances, jsonArray)
-					.done(function(json, textStatus, jqXHR)
+			/* In this case, this is a root object, so we just need to 
+				delete the instance. */
+			return $.ajax({
+					url: cr.urls.getData + this.getInstanceID() + "/",
+					type: 'DELETE',
+				})
+				.then(function()
 					{
-						if (done) 
-						{
-							_this.triggerDeleteValue();
-							done(_this);
-						}
-					})
-					.fail(function(jqXHR, textStatus, errorThrown)
-					{
-						cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-					});
-			}
-			else
-			{
-				_this.triggerDeleteValue();
-				done(_this);
-			}
+						_this.triggerDeleteValue();
+						return _this;
+					},
+					cr.thenFail);
+		}
+		else if (this.id == null)	/* It was never saved */
+		{
+			_this.triggerDeleteValue();
+			var r = $.Deferred();
+			r.resolve(_this);
+			return r;
 		}
 		else
 		{
-			var jsonArray = { valueID: this.id
-					};
-			$.post(cr.urls.deleteValue, jsonArray)
-				.done(function(json, textStatus, jqXHR)
-				{
-					if (done) 
+			return $.ajax({
+					url: cr.urls.getData + "value/" + this.id + "/",
+					type: 'DELETE',
+				})
+				.then(function()
 					{
 						_this.triggerDeleteValue();
-						done(_this);
-					}
-				})
-				.fail(function(jqXHR, textStatus, errorThrown)
-				{
-					cr.postFailed(jqXHR, textStatus, errorThrown, fail);
-				});
+						return _this;
+					},
+					cr.thenFail);
 		}
 	};
 	
@@ -1143,7 +1127,7 @@ cr.Instance = (function() {
 			return result.promise();
 		}
 		
-		return cr.getData({ "path" : "#" + this.getInstanceID() })
+		return cr.getData({ "path" : this.getInstanceID() })
 			.done(function(values)
 				{
 					var result = $.Deferred();
@@ -1186,10 +1170,10 @@ cr.Instance = (function() {
 		}
 		else if (this.getInstanceID())
 		{
-			var jsonArray = { "path" : "#" + this.getInstanceID() };
+			var jsonArray = {};
 			if (fields)
 				jsonArray["fields"] = JSON.stringify(fields.filter(function(s) { return s.indexOf("/") < 0; }));
-			return $.getJSON(cr.urls.getData, jsonArray)
+			return $.getJSON(cr.urls.getData + this.getInstanceID() + "/", jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -1678,15 +1662,9 @@ cr.createCell = function(fieldID) {
 };
 	
 cr.urls = {
-		selectAll : "/api/selectall/",
-		getValues : "/api/getvalues/",
 		getUserID : "/api/getuserid/",
-		getData : "/api/getdata/",
-		getConfiguration : "/api/getconfiguration/",
-		createInstance : "/api/createinstance/",
+		getData : "/api/",
 		updateValues : "/api/updatevalues/",
-		deleteValue : '/api/deletevalue/',
-		deleteInstances : '/api/deleteinstances/',
 		checkUnusedEmail : '/user/checkunusedemail/',
 		submitSignout: '/user/submitsignout/',
 		submitSignin: '/submitsignin/',
@@ -1728,102 +1706,6 @@ cr.thenFail = function(jqXHR, textStatus, errorThrown)
 		return r2;
 	};
 	
-	/* args is an object with up to five parameters: path, access_token, start, end */
-cr.selectAll = function(args)
-	{
-		if (!args.path)
-			throw "path was not specified to selectAll";
-
-		var data = {path : args.path};
-		if (cr.accessToken)
-			data["access_token"] = cr.accessToken;
-		
-		if (args.start !== undefined)
-			data.start = args.start;
-		if (args.end !== undefined)
-			data.end = args.end;
-		
-		return $.getJSON(cr.urls.selectAll, data)
-			.then(
-				function(json)
-				{
-					try
-					{
-						return json.objects.map(cr.ObjectCell.prototype.copyValue);
-					}
-					catch(err)
-					{
-						var r = $.Deferred();
-						r.reject(err);
-						return r.promise();
-					}
-				},
-				cr.postError);
-	};
-	
-	/* args is an object with up to seven parameters: path, field, value, start, end, done, fail.
-		The done method takes a single argument, which is an array of value objects. */
-cr.getValues = function (args)
-	{
-		var data = {};
-		if (args.path)
-			data.path = args.path;
-		else
-			throw "path was not specified to getValues"
-			
-		if (args.field)
-			data.fieldName = args.field;
-		else
-			throw "field was not specified to getValues"
-			
-		if (args.value)
-			data.value = args.value;
-		if (args.fields)
-			data.fields = JSON.stringify(args.fields); 
-		if (cr.accessToken)
-			data.access_token = cr.accessToken;
-			
-		if (args.start !== undefined)
-			data.start = args.start;
-		if (args.end !== undefined)
-			data.end = args.end;
-		
-		return $.getJSON(cr.urls.getValues, data)
-			.then(function(json)
-				{
-					json.fields.forEach(function(field)
-						{
-							crp.pushField(field);
-						});
-					var newObjects = json.values.map(cr.ObjectCell.prototype.copyValue);
-					try
-					{
-						if (args.done)
-							args.done(newObjects);
-						var result = $.Deferred();
-						result.resolve(newObjects);
-						return result;
-					}
-					catch(err)
-					{
-						if (args.fail)
-							args.fail(err);
-						var result = $.Deferred();
-						result.reject(err);
-						return result;
-					}
-				},
-				function(jqXHR, textStatus, errorThrown)
-				{
-					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
-					if (args.fail)
-						args.fail(resultText);
-					var result = $.Deferred();
-					result.reject(resultText);
-					return result;
-				});
-	};
-	
 cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	{
 		if (!failFunction)
@@ -1853,22 +1735,12 @@ cr.updateObjectValue = function(oldValue, d, i, successFunction, failFunction)
 	
 cr.deleteValue = function(valueID, successFunction, failFunction)
 	{
-		if (!failFunction)
-			throw ("failFunction is not specified");
-		if (!successFunction)
-			throw ("successFunction is not specified");
-			
-		var jsonArray = { valueID: valueID
-				};
-		$.post(cr.urls.deleteValue, jsonArray)
-			.done(function(json, textStatus, jqXHR)
-			{
-				successFunction(valueID);
+		return $.ajax({
+				url: cr.urls.getData + "value/" + valueID + "/",
+				type: 'DELETE',
 			})
-			.fail(function(jqXHR, textStatus, errorThrown)
-			{
-				cr.postFailed(jqXHR, textStatus, errorThrown, failFunction);
-			});
+			.then(undefined,
+			cr.thenFail);
 	};
 			
 cr.createInstance = function(field, containerUUID, initialData)
@@ -1889,11 +1761,14 @@ cr.createInstance = function(field, containerUUID, initialData)
 			jsonArray.typeName = field.ofKind;
 		else
 			throw ("neither field.ofKindID nor field.ofKind is specified");
-			
+		
+		var url;	
 		if (containerUUID)
-			jsonArray.containerUUID = containerUUID;
+			url = cr.urls.getData + containerUUID + "/";
+		else
+			url = cr.urls.getData;
 	
-		return $.post(cr.urls.createInstance, jsonArray)
+		return $.post(url, jsonArray)
 				.then(function(json)
 					{
 						var r2 = $.Deferred();
@@ -1989,27 +1864,69 @@ cr.getUserID = function(successFunction, failFunction)
 		);
 	},
 
+cr.getFieldData = function(field)
+{
+	var nameValue = field.getValue(cr.fieldNames.name);
+	var dataTypeValue = field.getValue(cr.fieldNames.dataType);
+	var fieldData = {};
+	
+	fieldData.id = field.getInstanceID();
+	fieldData.name = nameValue.getDescription();
+	fieldData.dataType = dataTypeValue.getDescription();
+	fieldData.dataTypeID = dataTypeValue.getInstanceID();
+	
+	var maxCapacity = field.getValue(cr.fieldNames.maxCapacity);
+	fieldData.capacity = maxCapacity ? maxCapacity.getDescription() : cr.maxCapacities.multipleValues;
+	
+	var descriptorTypeField = field.getValue(cr.fieldNames.descriptorType);
+	if (descriptorTypeField)
+		fieldData.descriptorType = descriptorTypeField.getDescription();
+	
+	var addObjectRuleField = field.getValue(cr.fieldNames.addObjectRule);
+	if (addObjectRuleField)
+		fieldData.objectAddRule = addObjectRuleField.getDescription();
+	
+	if (fieldData.dataType == cr.dataTypes.objectType)
+	{
+		var ofKindField = field.getValue(cr.fieldNames.ofKind);
+		if (ofKindField)
+		{
+			fieldData.ofKind = ofKindField.getDescription();
+			fieldData.ofKindID = ofKindField.getInstanceID();
+		}
+		
+		var pickObjectPath = field.getDatum(cr.fieldNames.pickObjectPath);
+		if (pickObjectPath)
+			fieldData.pickObjectPath = pickObjectPath;
+	}
+	
+	return fieldData;
+}
+
 cr.getConfiguration = function(parent, typeID)
 	{
 		var data;
+		var path;
 		if (/^[A-Za-z0-9]{32}$/.test(typeID))
-			data = {"typeID" : typeID};
+			path = typeID+'/configuration';
 		else
-			data = {"typeName" : typeID};
-		return $.getJSON(cr.urls.getConfiguration, data)
-		.then(function(json)
-			{
-				var cells = [];
-				json.cells.forEach(function(cell)
+			path = 'term[name="{0}"]/configuration'.format(typeID);
+		return crp.promise({path:path, fields: ['field']})
+			.then(function(configurations)
 				{
-					crp.pushField(cell.field);
-					var newCell = cr.createCell(cell.field.id);
-					newCell.setup(parent);
-					cells.push(newCell);
+					var configuration = configurations[0];
+					var cells = [];
+					configuration.getCell(cr.fieldNames.field).data.forEach(function(field)
+					{
+						crp.pushField(cr.getFieldData(field));
+						var newCell = cr.createCell(field.getInstanceID());
+						newCell.setup(parent);
+						cells.push(newCell);
+					});
+					var r = $.Deferred();
+					r.resolve(cells);
+					return r;
 				});
-				return cells;
-			},
-			cr.postError);
 	},
 	
 	
@@ -2021,7 +1938,7 @@ cr.getData = function(args)
 		if (!args.path)
 			throw new Error("path is not specified to getData");
 			
-		var data = {path : args.path}
+		var data = {};
 		if (args.fields)
 			data['fields'] = JSON.stringify(args.fields); 
 		if (cr.accessToken)
@@ -2032,40 +1949,28 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		return $.getJSON(cr.urls.getData, data)
+		return $.getJSON(cr.urls.getData + encodeURIComponent(args.path) + "/", data)
 			.then(function(json)
 				{
-					json.fields.forEach(function(field)
-						{
-							crp.pushField(field);
-						});
-					var values = json.data.map(cr.ObjectCell.prototype.copyValue);
 					try
 					{
-						var result = $.Deferred();
-						result.resolve(values);
-						if (args.done)
-							args.done(values);
-						return result;
+						if (json.fields)
+						{
+							json.fields.forEach(function(field)
+								{
+									crp.pushField(field);
+								});
+						}
+						return json.data.map(cr.ObjectCell.prototype.copyValue);
 					}
 					catch(err)
 					{
 						var result = $.Deferred();
 						result.reject(err);
-						if (args.fail)
-							args.fail(err);
 						return result;
 					}
 				},
-				function(jqXHR, textStatus, errorThrown)
-				{
-					var resultText = cr.postError(jqXHR, textStatus, errorThrown);
-					var result = $.Deferred();
-						result.reject(resultText);
-					if (args.fail)
-						args.fail(resultText);
-					return result;
-				});
+				cr.thenFail);
 	}
 
 /* Loads all of the elements of the specified cell within the specified object.
@@ -2074,8 +1979,8 @@ cr.getData = function(args)
  */
 cr.getCellValues = function(object, cellName, fieldNames)
 	{
-		var path = '#{0}'.format(object.getInstanceID());
-		return cr.getValues({path: path, field: cellName, fields: fieldNames})
+		var path = '{0}/"{1}"'.format(object.getInstanceID(), cellName);
+		return cr.getData({path: path, fields: fieldNames})
 			.then(function(instances)
 				{
 					var cell = object.getCell(cellName);

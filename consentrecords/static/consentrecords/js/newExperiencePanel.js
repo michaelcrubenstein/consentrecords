@@ -3062,9 +3062,9 @@ var NewExperiencePanel = (function () {
 			var _this = this;
 			new ConfirmDeleteAlert(this.node(), "Delete Experience", 
 				function() { 
-					_this.experience.instance.deleteValue(
-						function() { _this.hideDown(unblockClick) },
-						cr.syncFail);
+					_this.experience.instance.deleteValue()
+						.then(function() { _this.hideDown(unblockClick) },
+							  cr.syncFail);
 				}, 
 				function() { 
 					unblockClick();

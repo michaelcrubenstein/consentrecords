@@ -247,17 +247,3 @@ var GetDataChunker = (function() {
 	
 	return GetDataChunker;
 })();
-
-var SelectAllChunker = (function() {
-	SelectAllChunker.prototype = new GetDataChunker();
-
-	SelectAllChunker.prototype._dataGetter = function()
-	{
-		return cr.selectAll;
-	}
-	function SelectAllChunker(containerNode, onGetDataDone)
-	{
-		GetDataChunker.call(this, containerNode, onGetDataDone);
-	}
-	return SelectAllChunker;
-})();

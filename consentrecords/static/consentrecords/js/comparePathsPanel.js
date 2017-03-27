@@ -586,11 +586,11 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path:  "#" + this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
+		var p1 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]});
-		var p2 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
+		var p2 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 						'::reference(Session)::reference(Sessions)::reference(Offering)'});
-		var p3 = crp.promise({path: "#" + _this.rightPath.getInstanceID() + '>"More Experience">Offering'});
+		var p3 = crp.promise({path: this.rightPath.getInstanceID() + '>"More Experience">Offering'});
 		$.when(p1, p2, p3)
 		.then(function(experiences, r2, r3)
 			{
