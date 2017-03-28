@@ -1012,6 +1012,7 @@ class api:
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
+            logger.error("getData path:%s" % str(path))
             logger.error("getData data:%s" % str(data))
             return HttpResponseBadRequest(reason=str(e))
         

@@ -1829,21 +1829,20 @@ class ObjectQuerySet:
             firstRefine = False
         return qs
     
+    def getSubValueQuerySet(vqs, userInfo):     
+        return ValueQuerySet(vqs.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo) \
+                       .order_by('position')\
+                       .select_related('referenceValue')\
+                       .select_related('referenceValue__description')
+
 class ValueQuerySet(ObjectQuerySet):
     
     # Extends the specified QuerySet of Values with data to be returned to the client.
-    def selectRelatedData(vs, fieldNames, userInfo):
-        vds = ValueQuerySet(vs.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo)\
-                .order_by('instance', 'position')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
-                
+    def selectRelatedData(sourceFilter, fieldNames, userInfo):
+
         # preload the typeID, parent, value_set and description to improve performance.
         # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-        valueQueryset = ValueQuerySet(Value.objects.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo)\
-                .order_by('instance', 'position')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
+        valueQueryset = ObjectQuerySet.getSubValueQuerySet(Value.objects, userInfo)
 
         if len(fieldNames):
             # The distinct is required to eliminate duplicate subValues.
@@ -1851,12 +1850,12 @@ class ValueQuerySet(ObjectQuerySet):
                                       instance__referenceValues__deleteTransaction__isnull=True,
                                       instance__referenceValues__field__description__text__in=fieldNames)\
                 .distinct()
-            subValueQueryset = ValueQuerySet.selectRelatedData(subValues, [], userInfo)
+            subValueQueryset = ObjectQuerySet.getSubValueQuerySet(subValues, userInfo)
             valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
                                   queryset=subValueQueryset,
                                   to_attr='subValues'))
 
-        return vds.select_related('referenceValue__description')\
+        return sourceFilter.select_related('referenceValue__description')\
                   .prefetch_related(Prefetch('referenceValue__value_set',
                                              queryset=valueQueryset,
                                              to_attr='values'))
@@ -1978,7 +1977,7 @@ class InstanceQuerySet(ObjectQuerySet):
     def selectRelatedData(sourceFilter, fieldNames, instanceDataPath, userInfo):
         # preload the typeID, parent, value_set and description to improve performance.
         # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-        valueQueryset = ValueQuerySet.selectRelatedData(Value.objects, [], userInfo)
+        valueQueryset = ObjectQuerySet.getSubValueQuerySet(Value.objects, userInfo)
 
         if len(fieldNames):
             # The distinct is required to eliminate duplicate subValues.
@@ -1986,7 +1985,7 @@ class InstanceQuerySet(ObjectQuerySet):
                                       instance__referenceValues__deleteTransaction__isnull=True,
                                       instance__referenceValues__field__description__text__in=fieldNames)\
                 .distinct()
-            subValueQueryset = ValueQuerySet.selectRelatedData(subValues, [], userInfo)
+            subValueQueryset = ObjectQuerySet.getSubValueQuerySet(subValues, userInfo)
             valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
                                   queryset=subValueQueryset,
                                   to_attr='subValues'))
@@ -2166,13 +2165,13 @@ class InstanceQuerySet(ObjectQuerySet):
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
         uuObjects = InstanceQuerySet.selectRelatedData(self.querySet, fieldNames, '', userInfo)
-            
+        
         uuObjects = uuObjects.order_by('description__text', 'id');
         if end > 0:
             uuObjects = uuObjects[start:end]
         elif start > 0:
             uuObjects = uuObjects[start:]
-            
+
         return [i.getData(fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
 
     def deleteObjects(self, user, nameLists, transactionState):
