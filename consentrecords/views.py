@@ -1054,29 +1054,11 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-def getValues(request):
-    if request.method != "GET":
-        raise Http404("getValues only responds to GET methods")
-    
-    return api.getValues(request.user, request.GET)
-    
 def getUserID(request):
     if request.method != "GET":
         raise Http404("getUserID only responds to GET methods")
     
     return api.getUserID(request.user, request.GET)
-
-def getData(request):
-    if request.method == 'GET':
-        return api.getData(request.user, request.GET.get('path', None), request.GET)
-    else:
-        raise Http404("getData only responds to GET methods")
-        
-def paths(request):
-    if request.method == 'GET':
-        return api.paths(request.user, request.GET)
-    else:
-        raise Http404("paths only responds to GET methods")
 
 def handleURL(request, urlPath=None):
     if request.method == 'GET':
