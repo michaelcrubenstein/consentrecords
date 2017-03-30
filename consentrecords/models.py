@@ -483,7 +483,7 @@ class Instance(dbmodels.Model):
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
                 if fieldData["name"] in fields:
-                    vs = ValueQuerySet.selectRelatedData(p.value_set, [], userInfo)
+                    vs = ValueQuerySet.selectRelatedData(p.value_set.filter(deleteTransaction__isnull=True), [], userInfo)
                     parentData['cells'] = p._getChildCellsData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
                     
                 cells.append({"field": fieldData["id"], "data": [parentData]})

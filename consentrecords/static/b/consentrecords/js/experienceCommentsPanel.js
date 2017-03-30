@@ -586,7 +586,7 @@ var ExperienceCommentsPanel = (function() {
 						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
 				}
 			
-			crp.promise({path:  '"Comment Prompt"'})
+			crp.promise({path:  'Comment Prompt'})
 			.then(function(prompts)
 				{
 					commentPromptsDiv.selectAll('div')

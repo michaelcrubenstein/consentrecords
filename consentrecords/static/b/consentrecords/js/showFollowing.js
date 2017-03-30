@@ -125,7 +125,7 @@ var FollowingPanel = (function() {
 						path = d.getInstanceID()
 					else
 						path = 'user[email={0}]'.format(d.getDescription())
-					path += '/"{0}"/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+					path += '/{0}/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
 					cr.getData({path: path})
 						.then(function(values)
 							{
@@ -328,7 +328,7 @@ var FollowingPanel = (function() {
 			.style("display", "none")
 		this._followingChunker = new GetDataChunker(itemsDiv.node(), 
 			function(foundObjects, startVal) { return _this.getFollowingRequestsDone(foundObjects, startVal); });
-		this._followingChunker.path = '#{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
+		this._followingChunker.path = '{0}::reference("access record")[privilege=(read,write,administer)]::reference(user)'.format(this.user.getInstanceID());
 		this._followingChunker.fields = ["none"];
 		
 		$(this.node()).one("revealing.cr", function()

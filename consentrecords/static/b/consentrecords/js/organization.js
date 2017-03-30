@@ -440,9 +440,9 @@ function getValidPrivileges(enumerators, priv)
 /* Adds a missing access record to the source user. */
 function addMissingAccess(source, privilege, target, cellName, done, fail)
 {
-	var privilegePath = "term[name=privilege]>enumerator";
+	var privilegePath = "term[name=privilege]/enumerator";
 	var p1 = crp.promise({path: privilegePath});
-	var p2 = cr.getData({path: source.getInstanceID() + '>"access record"'});
+	var p2 = cr.getData({path: source.getInstanceID() + '/' + cr.fieldNames.accessRecord});
 	$.when(p1, p2)
 	 .then(function(enumerators, accessRecords)
 		{
