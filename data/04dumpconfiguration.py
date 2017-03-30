@@ -96,7 +96,7 @@ if __name__ == "__main__":
             userInfo = UserInfo(user)
             fieldsDataDictionary = FieldsDataDictionary()
         
-            terms = pathparser.selectAllObjects(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
+            terms = pathparser.getQuerySet(path, userInfo=userInfo,securityFilter=userInfo.findFilter)\
                               .select_related('typeID')\
                               .select_related('description')\
                               .order_by('description__text', 'id')

@@ -124,7 +124,7 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
     if 'ofKindID' in fd:
         type = Instance.objects.get(pk=fd['ofKindID'])
     else:
-        l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        l = pathparser.getQuerySet(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         type = l[0].typeID
         
     verbs = list(filter(lambda verb: verb[2] == terms.textEnum or verb[2] == terms.firstTextEnum, nameLists.getNameUUIDs(type)))
@@ -136,7 +136,7 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         text = value
     pickObjectPath += '[' + field.getDescription() + '="' + text + '"]'
     
-    l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    l = pathparser.getQuerySet(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(l):
         return l[0]
     else:
