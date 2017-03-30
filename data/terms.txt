@@ -1,1180 +1,1196 @@
-_term
-    _name: Address
-    _configuration
-        _name: Boston
-        _field
-            _name: Street
-            _data type: _string
-            _max capacity: _multiple values
-            _descriptor type: _by text
-        _field
-            _name: City
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: State
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=State]>enumerator
-        _field
-            _name: Zip Code
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-_term
-    _name: Birthday
-_term
-    _name: City
-_term
-    _name: Color
-_term
-    _name: Comment
-    _configuration
-        _name: Boston
-        _field
-            _name: Comment Request
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Comment Request
-        _field
-            _name: _text
-            _data type: _string
-            _max capacity: _unique value
-_term
-    _name: Comment Prompt
-    _configuration
-        _name: Boston
-        _field
-            _name: _text
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-_term
-    _name: Comment Request
-    _configuration
-        _name: Boston
-        _field
-            _name: Path
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Path
-        _field
-            _name: _text
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-_term
-    _name: Comments
-    _configuration
-        _name: Boston
-        _field
-            _name: Comment
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Comment
-_term
-    _name: Consent Form
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: _text
-            _data type: _translation
-            _max capacity: _multiple values
-            _object add rule: _create one
-_term
-    _name: Consent Record
-    _configuration
-        _name: Boston
-_term
-    _name: Disqualifying Tag
-_term
-    _name: Domain
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-        _field
-            _name: Service Domain
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service Domain
-_term
-    _name: Employee
-    _configuration
-        _name: Boston
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: _user
-_term
-    _name: Employees
-    _configuration
-        _name: Boston
-        _field
-            _name: Employee
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Employee
-_term
-    _name: End
-_term
-    _name: End Time
-_term
-    _name: Enrollment
-    _configuration
-        _name: Boston
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: _user
-_term
-    _name: Enrollments
-    _configuration
-        _name: Boston
-        _field
-            _name: Enrollment
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Enrollment
-_term
-    _name: enumerator
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: _translation
-            _data type: _translation
-            _descriptor type: _by text
-            _object add rule: _create one
-_term
-    _name: Experience
-    _configuration
-        _name: Boston
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: Start
-            _data type: _datestamp
-            _max capacity: _unique value
-        _field
-            _name: End
-            _data type: _datestamp
-            _max capacity: _unique value
-_term
-    _name: Experience Prompt
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: _text
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Organization
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Organization
-        _field
-            _name: Site
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Site
-        _field
-            _name: Offering
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Offering
-        _field
-            _name: Service
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service
-        _field
-            _name: Domain
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Domain
-        _field
-            _name: Stage
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Stage
-        _field
-            _name: Service Domain
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Service Domain
-        _field
-            _name: Disqualifying Tag
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service
-        _field
-            _name: Timeframe
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=Timeframe]>enumerator
-_term
-    _name: Experiences
-    _configuration
-        _name: Boston
-        _field
-            _name: Experience
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Experience
-_term
-    _name: Inquiries
-    _configuration
-        _name: Boston
-        _field
-            _name: _special access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name="_special access"]>enumerator
-        _field
-            _name: _public access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_register]
-        _field
-            _name: _primary administrator
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: _access record
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _access record
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _pick one
-            _of kind: _user
-_term
-    _name: Inquiry
-    _configuration
-        _name: Boston
-        _field
-            _name: _email
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-_term
-    _name: Inquiry Access Group
-_term
-    _name: Maximum Age
-_term
-    _name: Maximum Grade
-_term
-    _name: Minimum Age
-_term
-    _name: Minimum Grade
-_term
-    _name: More Experience
-    _configuration
-        _name: Boston
-        _field
-            _name: Organization
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Organization
-        _field
-            _name: User Entered Organization
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: Site
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: Site
-        _field
-            _name: User Entered Site
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: Offering
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: Offering
-        _field
-            _name: User Entered Offering
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: Service
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service
-        _field
-            _name: User Entered Service
-            _data type: _string
-            _max capacity: _multiple values
-        _field
-            _name: Start
-            _data type: _datestamp (day optional)
-            _max capacity: _unique value
-        _field
-            _name: End
-            _data type: _datestamp (day optional)
-            _max capacity: _unique value
-        _field
-            _name: Comments
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Comments
-        _field
-            _name: Timeframe
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=Timeframe]>enumerator
-_term
-    _name: Offering
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: Service
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service
-        _field
-            _name: Minimum Age
-            _data type: _number
-            _max capacity: _unique value
-        _field
-            _name: Maximum Age
-            _data type: _number
-            _max capacity: _unique value
-        _field
-            _name: Sessions
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Sessions
-        _field
-            _name: Web Site
-            _data type: _url
-            _max capacity: _unique value
-        _field
-            _name: Minimum Grade
-            _data type: _number
-            _max capacity: _unique value
-        _field
-            _name: Maximum Grade
-            _data type: _number
-            _max capacity: _unique value
-_term
-    _name: Offering Label
-_term
-    _name: Offerings
-    _configuration
-        _name: Boston
-        _field
-            _name: Offering
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Offering
-_term
-    _name: Organization
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: Sites
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Sites
-        _field
-            _name: Web Site
-            _data type: _url
-            _max capacity: _unique value
-        _field
-            _name: _group
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _group
-        _field
-            _name: _access record
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _access record
-        _field
-            _name: _public access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=(_find,_read)]
-        _field
-            _name: Inquiry Access Group
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _group
-            _pick object path: parent>_group
-    _default access: _custom
-_term
-    _name: Organization Label
-_term
-    _name: Path
-    _configuration
-        _name: Boston
-        _field
-            _name: More Experience
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: More Experience
-        _field
-            _name: Birthday
-            _data type: _datestamp (day optional)
-            _max capacity: _unique value
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: _special access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name="_special access"]>enumerator
-        _field
-            _name: _public access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=_read]
-        _field
-            _name: _primary administrator
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: _access record
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _access record
-_term
-    _name: Period
-    _configuration
-        _name: Boston
-        _field
-            _name: Weekday
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=Weekday]>enumerator
-        _field
-            _name: Start Time
-            _data type: _time
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: End Time
-            _data type: _time
-            _max capacity: _unique value
-            _descriptor type: _by text
-_term
-    _name: Registration Deadline
-_term
-    _name: Service
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: Organization Label
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Site Label
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Offering Label
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Stage
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Stage
-        _field
-            _name: Service
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: Service
-_term
-    _name: Service Domain
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: Color
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: Organization Label
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Site Label
-            _data type: _translation
-            _max capacity: _multiple values
-        _field
-            _name: Offering Label
-            _data type: _translation
-            _max capacity: _multiple values
-_term
-    _name: Session
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-        _field
-            _name: Registration Deadline
-            _data type: _datestamp
-            _max capacity: _unique value
-        _field
-            _name: Start
-            _data type: _datestamp
-            _max capacity: _unique value
-        _field
-            _name: End
-            _data type: _datestamp
-            _max capacity: _unique value
-        _field
-            _name: Inquiries
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Inquiries
-        _field
-            _name: Enrollments
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Enrollments
-        _field
-            _name: Experiences
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Experiences
-        _field
-            _name: Period
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: Period
-_term
-    _name: Sessions
-    _configuration
-        _name: Boston
-        _field
-            _name: Session
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Session
-_term
-    _name: Site
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: Address
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Address
-        _field
-            _name: Offerings
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Offerings
-        _field
-            _name: Web Site
-            _data type: _url
-            _max capacity: _unique value
-_term
-    _name: Site Label
-_term
-    _name: Sites
-    _configuration
-        _name: Boston
-        _field
-            _name: Site
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _create one
-            _of kind: Site
-_term
-    _name: Stage
-    _configuration
-        _name: Boston
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-        _field
-            _name: Color
-            _data type: _string
-            _max capacity: _unique value
-_term
-    _name: Start
-_term
-    _name: Start Time
-_term
-    _name: State
-    enumerator
-        _name: MA
-    enumerator
-        _name: NH
-    enumerator
-        _name: AL
-    enumerator
-        _name: AK
-    enumerator
-        _name: AZ
-    enumerator
-        _name: AR
-    enumerator
-        _name: CA
-    enumerator
-        _name: CO
-    enumerator
-        _name: CT
-    enumerator
-        _name: DE
-    enumerator
-        _name: FL
-    enumerator
-        _name: GA
-    enumerator
-        _name: HI
-    enumerator
-        _name: ID
-    enumerator
-        _name: IL
-    enumerator
-        _name: IN
-    enumerator
-        _name: IA
-    enumerator
-        _name: KS
-    enumerator
-        _name: KY
-    enumerator
-        _name: LA
-    enumerator
-        _name: ME
-    enumerator
-        _name: MD
-    enumerator
-        _name: MI
-    enumerator
-        _name: MN
-    enumerator
-        _name: MS
-    enumerator
-        _name: MO
-    enumerator
-        _name: MT
-    enumerator
-        _name: NE
-    enumerator
-        _name: NV
-    enumerator
-        _name: NJ
-    enumerator
-        _name: NM
-    enumerator
-        _name: NY
-    enumerator
-        _name: NC
-    enumerator
-        _name: ND
-    enumerator
-        _name: OH
-    enumerator
-        _name: OK
-    enumerator
-        _name: OR
-    enumerator
-        _name: PA
-    enumerator
-        _name: RI
-    enumerator
-        _name: SC
-    enumerator
-        _name: SD
-    enumerator
-        _name: TN
-    enumerator
-        _name: TX
-    enumerator
-        _name: UT
-    enumerator
-        _name: VT
-    enumerator
-        _name: VA
-    enumerator
-        _name: WA
-    enumerator
-        _name: WV
-    enumerator
-        _name: WI
-    enumerator
-        _name: WY
-_term
-    _name: Street
-_term
-    _name: Timeframe
-    enumerator
-        _name: Previous
-    enumerator
-        _name: Current
-    enumerator
-        _name: Goal
-_term
-    _name: User Entered Offering
-_term
-    _name: User Entered Organization
-_term
-    _name: User Entered Service
-_term
-    _name: User Entered Site
-_term
-    _name: Web Site
-_term
-    _name: Weekday
-    enumerator
-        _name: M
-    enumerator
-        _name: Tu
-    enumerator
-        _name: W
-    enumerator
-        _name: Th
-    enumerator
-        _name: F
-    enumerator
-        _name: Sa
-    enumerator
-        _name: Su
-_term
-    _name: Zip Code
-_term
-    _name: _access record
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _group
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: _group
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: _privilege
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator
-_term
-    _name: _access request
-_term
-    _name: _boolean
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _translation
-            _descriptor type: _by text
-    enumerator
-        _translation: en - _yes
-    enumerator
-        _translation: en - _no
-_term
-    _name: _configuration
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-        _field
-            _name: _field
-            _data type: _object
-            _object add rule: _create one
-            _of kind: _field
-_term
-    _name: _data type
-    enumerator
-        _name: _object
-    enumerator
-        _name: _string
-    enumerator
-        _name: _datestamp
-    enumerator
-        _name: _number
-    enumerator
-        _name: _time
-    enumerator
-        _name: _email
-    enumerator
-        _name: _url
-    enumerator
-        _name: _telephone
-    enumerator
-        _name: _datestamp (day optional)
-    enumerator
-        _name: _translation
-_term
-    _name: _default access
-    enumerator
-        _name: _custom
-_term
-    _name: _descriptor type
-    enumerator
-        _name: _by text
-    enumerator
-        _name: _by count
-    enumerator
-        _name: _by first text
-_term
-    _name: _email
-_term
-    _name: _field
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _object
-            _max capacity: _unique value
-            _descriptor type: _by text
-            _object add rule: _pick one
-            _of kind: _term
-        _field
-            _name: _data type
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _pick object path: _term[_name="_data type"]>enumerator
-        _field
-            _name: _max capacity
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _pick object path: _term[_name="_max capacity"]>enumerator
-        _field
-            _name: _descriptor type
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _pick object path: _term[_name="_descriptor type"]>enumerator
-        _field
-            _name: _object add rule
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _pick object path: _term[_name="_object add rule"]>enumerator
-        _field
-            _name: _of kind
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _term
-        _field
-            _name: _pick object path
-            _data type: _string
-            _max capacity: _unique value
-_term
-    _name: _first name
-_term
-    _name: _group
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _translation
-            _max capacity: _multiple values
-            _descriptor type: _by text
-            _object add rule: _create one
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: _user
-_term
-    _name: _language
-    enumerator
-        _name: English
-_term
-    _name: _last name
-_term
-    _name: _max capacity
-    enumerator
-        _name: _unique value
-    enumerator
-        _name: _multiple values
-_term
-    _name: _name
-_term
-    _name: _object add rule
-    enumerator
-        _name: _pick one
-    enumerator
-        _name: _create one
-_term
-    _name: _of kind
-_term
-    _name: _pick object path
-_term
-    _name: _primary administrator
-_term
-    _name: _privilege
-    enumerator
-        _name: _find
-    enumerator
-        _name: _read
-    enumerator
-        _name: _write
-    enumerator
-        _name: _administer
-    enumerator
-        _name: _register
-_term
-    _name: _public access
-_term
-    _name: _special access
-    enumerator
-        _name: _custom
-_term
-    _name: _system access
-_term
-    _name: _term
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _name
-            _data type: _string
-            _max capacity: _multiple values
-            _descriptor type: _by first text
-        _field
-            _name: _configuration
-            _data type: _object
-            _object add rule: _create one
-            _of kind: _configuration
-        _field
-            _name: enumerator
-            _data type: _object
-            _object add rule: _create one
-            _of kind: enumerator
-        _field
-            _name: _default access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name="_default access"]>enumerator
-_term
-    _name: _text
-_term
-    _name: _translation
-_term
-    _name: _user
-    _configuration
-        _name: Boston
-        _field
-            _name: _email
-            _data type: _email
-            _max capacity: _multiple values
-            _descriptor type: _by text
-        _field
-            _name: _first name
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: _last name
-            _data type: _string
-            _max capacity: _unique value
-        _field
-            _name: Birthday
-            _data type: _datestamp (day optional)
-            _max capacity: _unique value
-        _field
-            _name: Path
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _create one
-            _of kind: Path
-        _field
-            _name: _access record
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _create one
-            _of kind: _access record
-        _field
-            _name: _public access
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: enumerator
-            _pick object path: _term[_name=_privilege]>enumerator[_name=(_find,_read)]
-        _field
-            _name: _primary administrator
-            _data type: _object
-            _max capacity: _unique value
-            _object add rule: _pick one
-            _of kind: _user
-        _field
-            _name: _access request
-            _data type: _object
-            _max capacity: _multiple values
-            _object add rule: _pick one
-            _of kind: _user
-    _default access: _custom
-_term
-    _name: _userID
-_term
-    _name: _users
-    _configuration
-        _name: Bootstrap
-        _field
-            _name: _user
-            _data type: _object
-            _max capacity: _multiple values
-            _descriptor type: _by count
-            _object add rule: _pick one
-            _of kind: _user
+term
+    name: access record
+    configuration
+        name: Bootstrap
+        field
+            name: group
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: group
+        field
+            name: user
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: user
+        field
+            name: privilege
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=privilege]>enumerator
+term
+    name: access request
+term
+    name: Address
+    configuration
+        name: Boston
+        field
+            name: Street
+            data type: string
+            max capacity: multiple values
+            descriptor type: by text
+        field
+            name: City
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: State
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=State]>enumerator
+        field
+            name: Zip Code
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+term
+    name: argument
+term
+    name: Birthday
+term
+    name: boolean
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: translation
+            descriptor type: by text
+    enumerator
+        translation: en - yes
+    enumerator
+        translation: en - no
+term
+    name: City
+term
+    name: Color
+term
+    name: Comment
+    configuration
+        name: Boston
+        field
+            name: Comment Request
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Comment Request
+        field
+            name: text
+            data type: string
+            max capacity: unique value
+term
+    name: Comment Prompt
+    configuration
+        name: Boston
+        field
+            name: text
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+term
+    name: Comment Request
+    configuration
+        name: Boston
+        field
+            name: Path
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Path
+        field
+            name: text
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+term
+    name: Comments
+    configuration
+        name: Boston
+        field
+            name: Comment
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Comment
+term
+    name: configuration
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+        field
+            name: field
+            data type: object
+            object add rule: create one
+            of kind: field
+term
+    name: Consent Form
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: text
+            data type: translation
+            max capacity: multiple values
+            object add rule: create one
+term
+    name: Consent Record
+    configuration
+        name: Boston
+term
+    name: data type
+    enumerator
+        name: object
+    enumerator
+        name: string
+    enumerator
+        name: datestamp
+    enumerator
+        name: number
+    enumerator
+        name: time
+    enumerator
+        name: email
+    enumerator
+        name: url
+    enumerator
+        name: telephone
+    enumerator
+        name: datestamp (day optional)
+    enumerator
+        name: translation
+term
+    name: default access
+    enumerator
+        name: custom
+term
+    name: descriptor type
+    enumerator
+        name: by text
+    enumerator
+        name: by count
+    enumerator
+        name: by first text
+term
+    name: Disqualifying Tag
+term
+    name: Domain
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+        field
+            name: Service Domain
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service Domain
+term
+    name: email
+term
+    name: Employee
+    configuration
+        name: Boston
+        field
+            name: user
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: user
+term
+    name: Employees
+    configuration
+        name: Boston
+        field
+            name: Employee
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Employee
+term
+    name: End
+term
+    name: End Time
+term
+    name: Enrollment
+    configuration
+        name: Boston
+        field
+            name: user
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: user
+term
+    name: Enrollments
+    configuration
+        name: Boston
+        field
+            name: Enrollment
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Enrollment
+term
+    name: enumerator
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: translation
+            data type: translation
+            descriptor type: by text
+            object add rule: create one
+term
+    name: Experience
+    configuration
+        name: Boston
+        field
+            name: user
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: user
+        field
+            name: Start
+            data type: datestamp
+            max capacity: unique value
+        field
+            name: End
+            data type: datestamp
+            max capacity: unique value
+term
+    name: Experience Prompt
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: text
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Organization
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Organization
+        field
+            name: Site
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Site
+        field
+            name: Offering
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Offering
+        field
+            name: Service
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service
+        field
+            name: Domain
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Domain
+        field
+            name: Stage
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Stage
+        field
+            name: Service Domain
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Service Domain
+        field
+            name: Disqualifying Tag
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service
+        field
+            name: Timeframe
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=Timeframe]>enumerator
+term
+    name: Experiences
+    configuration
+        name: Boston
+        field
+            name: Experience
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Experience
+term
+    name: field
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: term
+        field
+            name: data type
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            pick object path: term[name="data type"]>enumerator
+        field
+            name: max capacity
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            pick object path: term[name="max capacity"]>enumerator
+        field
+            name: descriptor type
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            pick object path: term[name="descriptor type"]>enumerator
+        field
+            name: object add rule
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            pick object path: term[name="object add rule"]>enumerator
+        field
+            name: of kind
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: term
+        field
+            name: pick object path
+            data type: string
+            max capacity: unique value
+term
+    name: first name
+term
+    name: group
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: user
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: user
+term
+    name: Inquiries
+    configuration
+        name: Boston
+        field
+            name: special access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name="special access"]>enumerator
+        field
+            name: public access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=privilege]>enumerator[name=register]
+        field
+            name: primary administrator
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: user
+        field
+            name: access record
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: access record
+        field
+            name: user
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: pick one
+            of kind: user
+term
+    name: Inquiry
+    configuration
+        name: Boston
+        field
+            name: email
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+term
+    name: Inquiry Access Group
+term
+    name: language
+    enumerator
+        name: English
+term
+    name: last name
+term
+    name: max capacity
+    enumerator
+        name: unique value
+    enumerator
+        name: multiple values
+term
+    name: Maximum Age
+term
+    name: Maximum Grade
+term
+    name: Minimum Age
+term
+    name: Minimum Grade
+term
+    name: More Experience
+    configuration
+        name: Boston
+        field
+            name: Organization
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Organization
+        field
+            name: User Entered Organization
+            data type: string
+            max capacity: unique value
+        field
+            name: Site
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: Site
+        field
+            name: User Entered Site
+            data type: string
+            max capacity: unique value
+        field
+            name: Offering
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: Offering
+        field
+            name: User Entered Offering
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: Service
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service
+        field
+            name: User Entered Service
+            data type: string
+            max capacity: multiple values
+        field
+            name: Start
+            data type: datestamp (day optional)
+            max capacity: unique value
+        field
+            name: End
+            data type: datestamp (day optional)
+            max capacity: unique value
+        field
+            name: Comments
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Comments
+        field
+            name: Timeframe
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=Timeframe]>enumerator
+term
+    name: name
+term
+    name: notification
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: argument
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+term
+    name: object add rule
+    enumerator
+        name: pick one
+    enumerator
+        name: create one
+term
+    name: of kind
+term
+    name: Offering
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: Service
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service
+        field
+            name: Minimum Age
+            data type: number
+            max capacity: unique value
+        field
+            name: Maximum Age
+            data type: number
+            max capacity: unique value
+        field
+            name: Sessions
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Sessions
+        field
+            name: Web Site
+            data type: url
+            max capacity: unique value
+        field
+            name: Minimum Grade
+            data type: number
+            max capacity: unique value
+        field
+            name: Maximum Grade
+            data type: number
+            max capacity: unique value
+term
+    name: Offering Label
+term
+    name: Offerings
+    configuration
+        name: Boston
+        field
+            name: Offering
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Offering
+term
+    name: Organization
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: Sites
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Sites
+        field
+            name: Web Site
+            data type: url
+            max capacity: unique value
+        field
+            name: group
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: group
+        field
+            name: access record
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: access record
+        field
+            name: public access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=privilege]>enumerator[name=(find,read)]
+        field
+            name: Inquiry Access Group
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: group
+            pick object path: parent>group
+    default access: custom
+term
+    name: Organization Label
+term
+    name: Path
+    configuration
+        name: Boston
+        field
+            name: More Experience
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: More Experience
+        field
+            name: Birthday
+            data type: datestamp (day optional)
+            max capacity: unique value
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: special access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name="special access"]>enumerator
+        field
+            name: public access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=privilege]>enumerator[name=read]
+        field
+            name: primary administrator
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: user
+        field
+            name: access record
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: access record
+term
+    name: Period
+    configuration
+        name: Boston
+        field
+            name: Weekday
+            data type: object
+            max capacity: unique value
+            descriptor type: by text
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=Weekday]>enumerator
+        field
+            name: Start Time
+            data type: time
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: End Time
+            data type: time
+            max capacity: unique value
+            descriptor type: by text
+term
+    name: pick object path
+term
+    name: primary administrator
+term
+    name: privilege
+    enumerator
+        name: find
+    enumerator
+        name: read
+    enumerator
+        name: write
+    enumerator
+        name: administer
+    enumerator
+        name: register
+term
+    name: public access
+term
+    name: Registration Deadline
+term
+    name: Service
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: Organization Label
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Site Label
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Offering Label
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Stage
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Stage
+        field
+            name: Service
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: Service
+term
+    name: Service Domain
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: Color
+            data type: string
+            max capacity: unique value
+        field
+            name: Organization Label
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Site Label
+            data type: translation
+            max capacity: multiple values
+        field
+            name: Offering Label
+            data type: translation
+            max capacity: multiple values
+term
+    name: Session
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: string
+            max capacity: unique value
+            descriptor type: by text
+        field
+            name: Registration Deadline
+            data type: datestamp
+            max capacity: unique value
+        field
+            name: Start
+            data type: datestamp
+            max capacity: unique value
+        field
+            name: End
+            data type: datestamp
+            max capacity: unique value
+        field
+            name: Inquiries
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Inquiries
+        field
+            name: Enrollments
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Enrollments
+        field
+            name: Experiences
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Experiences
+        field
+            name: Period
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: Period
+term
+    name: Sessions
+    configuration
+        name: Boston
+        field
+            name: Session
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Session
+term
+    name: Site
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+            object add rule: create one
+        field
+            name: Address
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Address
+        field
+            name: Offerings
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Offerings
+        field
+            name: Web Site
+            data type: url
+            max capacity: unique value
+term
+    name: Site Label
+term
+    name: Sites
+    configuration
+        name: Boston
+        field
+            name: Site
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: create one
+            of kind: Site
+term
+    name: special access
+    enumerator
+        name: custom
+term
+    name: Stage
+    configuration
+        name: Boston
+        field
+            name: name
+            data type: translation
+            max capacity: multiple values
+            descriptor type: by text
+        field
+            name: Color
+            data type: string
+            max capacity: unique value
+term
+    name: Start
+term
+    name: Start Time
+term
+    name: State
+    enumerator
+        name: MA
+    enumerator
+        name: NH
+    enumerator
+        name: AL
+    enumerator
+        name: AK
+    enumerator
+        name: AZ
+    enumerator
+        name: AR
+    enumerator
+        name: CA
+    enumerator
+        name: CO
+    enumerator
+        name: CT
+    enumerator
+        name: DE
+    enumerator
+        name: FL
+    enumerator
+        name: GA
+    enumerator
+        name: HI
+    enumerator
+        name: ID
+    enumerator
+        name: IL
+    enumerator
+        name: IN
+    enumerator
+        name: IA
+    enumerator
+        name: KS
+    enumerator
+        name: KY
+    enumerator
+        name: LA
+    enumerator
+        name: ME
+    enumerator
+        name: MD
+    enumerator
+        name: MI
+    enumerator
+        name: MN
+    enumerator
+        name: MS
+    enumerator
+        name: MO
+    enumerator
+        name: MT
+    enumerator
+        name: NE
+    enumerator
+        name: NV
+    enumerator
+        name: NJ
+    enumerator
+        name: NM
+    enumerator
+        name: NY
+    enumerator
+        name: NC
+    enumerator
+        name: ND
+    enumerator
+        name: OH
+    enumerator
+        name: OK
+    enumerator
+        name: OR
+    enumerator
+        name: PA
+    enumerator
+        name: RI
+    enumerator
+        name: SC
+    enumerator
+        name: SD
+    enumerator
+        name: TN
+    enumerator
+        name: TX
+    enumerator
+        name: UT
+    enumerator
+        name: VT
+    enumerator
+        name: VA
+    enumerator
+        name: WA
+    enumerator
+        name: WV
+    enumerator
+        name: WI
+    enumerator
+        name: WY
+term
+    name: Street
+term
+    name: system access
+term
+    name: term
+    configuration
+        name: Bootstrap
+        field
+            name: name
+            data type: string
+            max capacity: multiple values
+            descriptor type: by first text
+        field
+            name: configuration
+            data type: object
+            object add rule: create one
+            of kind: configuration
+        field
+            name: enumerator
+            data type: object
+            object add rule: create one
+            of kind: enumerator
+        field
+            name: default access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name="default access"]>enumerator
+term
+    name: text
+term
+    name: Timeframe
+    enumerator
+        name: Previous
+    enumerator
+        name: Current
+    enumerator
+        name: Goal
+term
+    name: translation
+term
+    name: user
+    configuration
+        name: Boston
+        field
+            name: email
+            data type: email
+            max capacity: multiple values
+            descriptor type: by text
+        field
+            name: first name
+            data type: string
+            max capacity: unique value
+        field
+            name: last name
+            data type: string
+            max capacity: unique value
+        field
+            name: Birthday
+            data type: datestamp (day optional)
+            max capacity: unique value
+        field
+            name: Path
+            data type: object
+            max capacity: unique value
+            object add rule: create one
+            of kind: Path
+        field
+            name: access record
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: access record
+        field
+            name: public access
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=privilege]>enumerator[name=(find,read)]
+        field
+            name: primary administrator
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: user
+        field
+            name: access request
+            data type: object
+            max capacity: multiple values
+            object add rule: pick one
+            of kind: user
+    default access: custom
+term
+    name: User Entered Offering
+term
+    name: User Entered Organization
+term
+    name: User Entered Service
+term
+    name: User Entered Site
+term
+    name: userID
+term
+    name: users
+    configuration
+        name: Bootstrap
+        field
+            name: user
+            data type: object
+            max capacity: multiple values
+            descriptor type: by count
+            object add rule: pick one
+            of kind: user
+term
+    name: Web Site
+term
+    name: Weekday
+    enumerator
+        name: M
+    enumerator
+        name: Tu
+    enumerator
+        name: W
+    enumerator
+        name: Th
+    enumerator
+        name: F
+    enumerator
+        name: Sa
+    enumerator
+        name: Su
+term
+    name: Zip Code
