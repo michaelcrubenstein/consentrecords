@@ -21,7 +21,7 @@ term
             descriptor type: by text
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=privilege]>enumerator
+            pick object path: term[name=privilege]/enumerator
 term
     name: access request
 term
@@ -45,7 +45,7 @@ term
             descriptor type: by text
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=State]>enumerator
+            pick object path: term[name=State]/enumerator
         field
             name: Zip Code
             data type: string
@@ -355,7 +355,7 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=Timeframe]>enumerator
+            pick object path: term[name=Timeframe]/enumerator
 term
     name: Experiences
     configuration
@@ -383,25 +383,25 @@ term
             data type: object
             max capacity: unique value
             object add rule: pick one
-            pick object path: term[name="data type"]>enumerator
+            pick object path: term[name=data type]/enumerator
         field
             name: max capacity
             data type: object
             max capacity: unique value
             object add rule: pick one
-            pick object path: term[name="max capacity"]>enumerator
+            pick object path: term[name=max capacity]/enumerator
         field
             name: descriptor type
             data type: object
             max capacity: unique value
             object add rule: pick one
-            pick object path: term[name="descriptor type"]>enumerator
+            pick object path: term[name=descriptor type]/enumerator
         field
             name: object add rule
             data type: object
             max capacity: unique value
             object add rule: pick one
-            pick object path: term[name="object add rule"]>enumerator
+            pick object path: term[name=object add rule]/enumerator
         field
             name: of kind
             data type: object
@@ -440,14 +440,14 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name="special access"]>enumerator
+            pick object path: term[name=special access]/enumerator
         field
             name: public access
             data type: object
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=privilege]>enumerator[name=register]
+            pick object path: term[name=privilege]/enumerator[name=register]
         field
             name: primary administrator
             data type: object
@@ -564,7 +564,7 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=Timeframe]>enumerator
+            pick object path: term[name=Timeframe]/enumerator
 term
     name: name
 term
@@ -682,14 +682,14 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=privilege]>enumerator[name=(find,read)]
+            pick object path: term[name=privilege]/enumerator[name=(find,read)]
         field
             name: Inquiry Access Group
             data type: object
             max capacity: unique value
             object add rule: pick one
             of kind: group
-            pick object path: parent>group
+            pick object path: parent/group
     default access: custom
 term
     name: Organization Label
@@ -718,14 +718,14 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name="special access"]>enumerator
+            pick object path: term[name=special access]/enumerator
         field
             name: public access
             data type: object
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=privilege]>enumerator[name=read]
+            pick object path: term[name=privilege]/enumerator[name=read]
         field
             name: primary administrator
             data type: object
@@ -749,7 +749,7 @@ term
             descriptor type: by text
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=Weekday]>enumerator
+            pick object path: term[name=Weekday]/enumerator
         field
             name: Start Time
             data type: time
@@ -1087,7 +1087,7 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name="default access"]>enumerator
+            pick object path: term[name=default access]/enumerator
 term
     name: text
 term
@@ -1139,7 +1139,7 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: term[name=privilege]>enumerator[name=(find,read)]
+            pick object path: term[name=privilege]/enumerator[name=(find,read)]
         field
             name: primary administrator
             data type: object
