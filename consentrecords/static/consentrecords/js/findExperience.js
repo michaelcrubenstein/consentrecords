@@ -159,7 +159,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = organization.getInstanceID() + '/"Inquiry Access Group"';
+		groupPath = organization.getInstanceID() + '/Inquiry Access Group';
 		cr.getData({path: groupPath, fields: ['none']})
 			.then(function(groupPaths)
 				{
@@ -309,15 +309,15 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.getInstanceID());
-		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
+		var s = '{0}::reference(Offering)/Sessions/Session'.format(this.tag.getInstanceID());
+		s += ':not([Registration Deadline<"{0}"])'.format(todayString);
 		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
-			return s + '[ancestor:name^="' + val + '"]';
+			return s + '[ancestor:name^="' + encodeURIComponent(val) + '"]';
 		else
-			return s + '[ancestor:name*="' + val + '"]';
+			return s + '[ancestor:name*="' + encodeURIComponent(val) + '"]';
 	}
 	
 	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
@@ -425,9 +425,9 @@ var FindExperienceSearchView = (function () {
 		else
 		{
 			if (val.length < 3)
-				return s + '[name^="' + val + '"]';
+				return s + '[name^="' + encodeURIComponent(val) + '"]';
 			else
-				return s + '[name*="' + val + '"]';
+				return s + '[name*="' + encodeURIComponent(val) + '"]';
 		}
 	}
 	

@@ -283,6 +283,9 @@ cr.Cell = (function()
 		
 		Cell.prototype.setParent = function (parent)
 		{
+			if (parent && !(parent instanceof cr.Instance))
+				throw new Error("parent argument is not an instance");
+				
 			if (this.field.descriptorType !== undefined && this.parent)
 			{
 				this.off("dataChanged.cr valueAdded.cr valueDeleted.cr", this.parent, this.parent._checkDescription);
@@ -1159,6 +1162,14 @@ cr.Instance = (function() {
 						return true;
 				}))
 				return false;
+			if (fields && fields.indexOf("parents") >= 0)
+			{
+				if (!_this.getCells().find(function(cell)
+					{
+						return cell.field.name == _this.parent().getTypeName();
+					}))
+					return false;
+			}
 			return true;
 		}
 	
@@ -1508,6 +1519,9 @@ cr.ObjectValue = (function() {
 
 	ObjectValue.prototype.importCells = function(cells)
 	{
+		if (!this.instance())
+			throw new Error("instance has not been instantiated.");
+			
 		this._instance.importCells(cells);
 	}
 
@@ -1872,6 +1886,7 @@ cr.getFieldData = function(field)
 	
 	fieldData.id = field.getInstanceID();
 	fieldData.name = nameValue.getDescription();
+	fieldData.nameID = nameValue.getInstanceID();
 	fieldData.dataType = dataTypeValue.getDescription();
 	fieldData.dataTypeID = dataTypeValue.getInstanceID();
 	
@@ -1907,10 +1922,11 @@ cr.getConfiguration = function(parent, typeID)
 	{
 		var data;
 		var path;
+		
 		if (/^[A-Za-z0-9]{32}$/.test(typeID))
 			path = typeID+'/configuration';
 		else
-			path = 'term[name="{0}"]/configuration'.format(typeID);
+			path = 'term[name={0}]/configuration'.format(typeID);
 		return crp.promise({path:path, fields: ['field']})
 			.then(function(configurations)
 				{
@@ -1949,7 +1965,7 @@ cr.getData = function(args)
 		if (args.end !== undefined)
 			data.end = args.end;
 		
-		return $.getJSON(cr.urls.getData + encodeURIComponent(args.path) + "/", data)
+		return $.getJSON(cr.urls.getData + args.path + "/", data)
 			.then(function(json)
 				{
 					try
@@ -1979,7 +1995,7 @@ cr.getData = function(args)
  */
 cr.getCellValues = function(object, cellName, fieldNames)
 	{
-		var path = '{0}/"{1}"'.format(object.getInstanceID(), cellName);
+		var path = '{0}/{1}'.format(object.getInstanceID(), cellName);
 		return cr.getData({path: path, fields: fieldNames})
 			.then(function(instances)
 				{

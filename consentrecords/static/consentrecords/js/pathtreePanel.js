@@ -1411,7 +1411,7 @@ var PathLines = (function() {
 								'::reference(Session)::reference(Sessions)::reference(Offering)'});
 			})
 		.then(function() {
-				return crp.promise({path: _this.path.getInstanceID() + '>"More Experience">Offering'});
+				return crp.promise({path: _this.path.getInstanceID() + '/More Experience/Offering'});
 			})
 		.then(function() {
 				return crp.promise({path: "Service"});
@@ -1909,7 +1909,7 @@ var ExperienceIdeas = (function() {
 		  return array;
 		}
 
-		crp.promise({path: '"Experience Prompt"'})
+		crp.promise({path: 'Experience Prompt'})
 			.done(function(prompts)
 				{
 					try
