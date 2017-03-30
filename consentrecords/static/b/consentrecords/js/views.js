@@ -2584,7 +2584,10 @@ function _b64_to_utf8( str ) {
 function promiseImportCells(containerCell, d, cells)
 {
 	if (d == null)
+	{
 		d = containerCell.addNewValue();
+		d.instance(new cr.Instance());
+	}
 		
 	d.importCells(cells);
 
@@ -2664,7 +2667,7 @@ var EditPanel = (function() {
 							cell.updateCell(this);
 						});
 						
-					$.when(promise(containerCell, objectData, sections.data()))
+					promise(containerCell, objectData, sections.data())
 					 .then(function() {
 							_this.hide();
 						}, 
@@ -3334,7 +3337,7 @@ function showPickObjectPanel(cell, oldData) {
 	}
 	else
 		/* Test case: edit the name of a field of a configuration of a term. */
-		cr.getData({path: '"' + cell.field.ofKind + '"', fields: ['none']})
+		cr.getData({path: cell.field.ofKind, fields: ['none']})
 			.then(selectAllSuccessFunction, cr.syncFail);
 }
 		

@@ -66,7 +66,7 @@ var SharingPanel = (function() {
 							unblockClick();
 						};
 					
-						_this.addAccess(accessorLevel, "#{0}".format(d.getInstanceID()), done);
+						_this.addAccess(accessorLevel, "{0}".format(d.getInstanceID()), done);
 					}
 					catch (err)
 					{
@@ -204,7 +204,7 @@ var SharingPanel = (function() {
 				}
 			}
 		}
-		cr.getData({path: this.user.getInstanceID() + '>"' + cr.fieldNames.accessRecord + '"', 
+		cr.getData({path: this.user.getInstanceID() + '/' + cr.fieldNames.accessRecord, 
 					fields: ["parents"]})
 			.then(function(accessRecords) { _this.loadAccessRecords(panel2Div, accessRecords); }, 
 				  asyncFailFunction);
@@ -214,7 +214,7 @@ var SharingPanel = (function() {
 	{
 		var _this = this;
 
-		var userPath = "#{0}".format(this.user.getInstanceID());
+		var userPath = "{0}".format(this.user.getInstanceID());
 		cr.share(userPath, path, accessorLevel.id, function(newData)
 			{
 				var accessRecordCell = _this.user.getCell(cr.fieldNames.accessRecord);
@@ -242,7 +242,7 @@ var SharingPanel = (function() {
 		var _this = this;
 
 		var ar = accessorLevel.accessRecords[0]
-		var userPath = "#{0}".format(this.user.getInstanceID());
+		var userPath = "{0}".format(this.user.getInstanceID());
 		ar.promiseCells()
 			.then(function()
 				{
@@ -359,7 +359,7 @@ var SharingPanel = (function() {
 			{name: cr.privileges.read, id: "", accessRecords: [], accessors: [], label: "Who Can See Your Profile"},
 			{name: cr.privileges.administer, id: "", accessRecords: [], accessors: [], label: "Who Can Manage Your Account"}];
 	
-		var privilegePath = "term[name=privilege]>enumerator";
+		var privilegePath = "term[name=privilege]/enumerator";
 		crp.promise({path: privilegePath})
 			.done(function(enumerators) { _this.getPrivileges(panel2Div, enumerators); })
 			.fail(cr.asyncFail);

@@ -1424,7 +1424,7 @@ var OrganizationSearchView = (function() {
 		{
 			if (this.typeName === "Site from Organization")
 			{
-				path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
+				path = 'Organization[name{0}"{1}"]/Sites/Site::not(Site[name{0}"{1}"])';
 			}
 			else if (this.typeName === "Site")
 			{
@@ -1436,7 +1436,7 @@ var OrganizationSearchView = (function() {
 			}
 			var symbol = "*=";
 		
-			return path.format(symbol, val);
+			return path.format(symbol, encodeURIComponent(val));
 		}
 		else
 			return '';
@@ -1571,10 +1571,10 @@ var SiteSearchView = (function() {
 			else if (!val)
 			{
 				if (this.typeName === "Site")
-					return "#{0}>Sites>Site".format(this.experience.organization.getInstanceID());
+					return "{0}/Sites/Site".format(this.experience.organization.getInstanceID());
 				else if (this.typeName === "Offering from Site")
 				{
-					path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
+					path = "{0}/Sites/Site/Offerings/Offering".format(this.experience.organization.getInstanceID());
 					path += this.experience.getOfferingConstraint();
 					return path;
 				}
@@ -1583,25 +1583,25 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
-					path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
+					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]/Offerings/Offering)';
+					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Offering from Site")
 				{
-					path = 'Site[name{0}"{1}"]>Offerings>Offering';
-					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
+					path = 'Site[name{0}"{1}"]/Offerings/Offering';
+					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
 					path = 'Site[name{0}"{1}"]';
-					path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
+					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
 				}
 			
 				var symbol = "*=";
 			
-				return path.format(symbol, val);
+				return path.format(symbol, encodeURIComponent(val));
 			}
 		}
 		else if (this.experience.services.length > 0)
@@ -1868,7 +1868,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID());
+						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID());
 						return path;
 					}
 					else
@@ -1878,14 +1878,14 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name{0}"{1}"]';
+						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name{0}"{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
 			
 					var symbol = "*=";
 			
-					return path.format(symbol, val);
+					return path.format(symbol, encodeURIComponent(val));
 				}
 			}
 			else if (val)
@@ -1903,7 +1903,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "#{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
+						path = "{0}>Sites>Site>Offerings>Offering".format(this.experience.organization.getInstanceID());
 						path += this.experience.getOfferingConstraint();
 						return path;
 					}
@@ -1915,19 +1915,19 @@ var OfferingSearchView = (function() {
 					if (this.typeName === "Offering")
 					{
 						path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
-						path = "#{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
+						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 					else if (this.typeName === "Offering from Site")
 					{
 						path = 'Site[name{0}"{1}"]>Offerings>Offering';
-						path = "#{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
+						path = "{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 			
 					var symbol = "*=";
 			
-					return path.format(symbol, val);
+					return path.format(symbol, encodeURIComponent(val));
 				}
 			}
 			else
@@ -1955,7 +1955,7 @@ var OfferingSearchView = (function() {
 
 				var symbol = "*=";
 			
-				return path.format(symbol, val);
+				return path.format(symbol, encodeURIComponent(val));
 			}
 			else
 			{
@@ -1976,7 +1976,7 @@ var OfferingSearchView = (function() {
 				
 			var symbol = "*=";
 		
-			return path.format(symbol, val);
+			return path.format(symbol, encodeURIComponent(val));
 		}
 		else
 			return '';
@@ -3152,7 +3152,7 @@ var NewExperiencePanel = (function () {
 							}
 							else
 							{
-								$.when(crp.promise({path: "term[name=Timeframe]>enumerator"}))
+								$.when(crp.promise({path: "term[name=Timeframe]/enumerator"}))
 								 .then(function(enumerators)
 								     {
 								     	var timeframeName;
