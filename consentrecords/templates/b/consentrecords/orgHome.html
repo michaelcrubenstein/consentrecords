@@ -519,7 +519,7 @@
 				var field = {
 							  id: "Organization", 
 							  name: "Organization",
-							  dataType: cr.objectDataType,
+							  dataType: cr.dataTypes.objectType,
 							  capacity: cr.maxCapacities.multipleValues,
 							  };
 				crp.pushField(field);
@@ -1005,14 +1005,14 @@
 			{
 				var checkCellsSuccessFunction = function()
 				{
-					var offering = session.cell.parent.cell.parent;
+					var offering = session.instance().parent().parent();
 					var enrollmentsCell = session.getCell("Enrollments");
 					var enrollmentsInstances = enrollmentsCell.data;
 					if (enrollmentsInstances.length == 0)
 						syncFailFunction("Session enrollments are not set up");
 					else
 					{
-						var enrollmentsInstance = enrollmentsInstances[0];
+						var enrollmentsInstance = enrollmentsInstances[0].instance();
 						var enrollmentCell = enrollmentsInstance.getCell("Enrollment");
 						
 						function addUserToEnrollmentCell()
@@ -1073,7 +1073,7 @@
 		{
 			return function()
 			{
-				var offering = session.cell.parent.cell.parent;
+				var offering = session.instance().parent().parent();
 				var experiencesCell = session.getCell("Experiences");
 				var experiencesInstances = experiencesCell.data;
 				if (experiencesInstances.length == 0)
@@ -1186,7 +1186,7 @@
 					function pickSessionSuccess(session, previousPanel)
 					{
 						var addInquiryPanelDiv = new SitePanel();
-						sitePanel.createRoot(session, "Add Inquiry", "list");
+						addInquiryPanelDiv.createRoot(session, "Add Inquiry", "list");
 
 						var navContainer = addInquiryPanelDiv.appendNavContainer();
 
@@ -1234,7 +1234,7 @@
 															syncFailFunction("Session Inquiries are not set up");
 														else
 														{
-															var inquiriesInstance = inquiriesInstances[0];
+															var inquiriesInstance = inquiriesInstances[0].instance();
 															cr.getConfiguration(inquiriesInstance, inquiriesCell.field.ofKindID)
 																.then(
 																function(cells)
@@ -1244,7 +1244,7 @@
 																	var newValue = inquiryCell.addNewValue();
 																	cr.updateValues([{
 																			containerUUID: inquiriesInstance.getInstanceID(),
-																			fieldID: inquiryCell.field.nameID, 
+																			field: inquiryCell.field.name, 
 						   													instanceID: pickedUser.getInstanceID(),
 						   													description: pickedUser.getDescription()
 																		}], [newValue])

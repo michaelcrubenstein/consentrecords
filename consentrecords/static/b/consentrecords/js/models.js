@@ -283,6 +283,9 @@ cr.Cell = (function()
 		
 		Cell.prototype.setParent = function (parent)
 		{
+			if (parent && !(parent instanceof cr.Instance))
+				throw new Error("parent argument is not an instance");
+				
 			if (this.field.descriptorType !== undefined && this.parent)
 			{
 				this.off("dataChanged.cr valueAdded.cr valueDeleted.cr", this.parent, this.parent._checkDescription);
@@ -1159,6 +1162,14 @@ cr.Instance = (function() {
 						return true;
 				}))
 				return false;
+			if (fields && fields.indexOf("parents") >= 0)
+			{
+				if (!_this.getCells().find(function(cell)
+					{
+						return cell.field.name == _this.parent().getTypeName();
+					}))
+					return false;
+			}
 			return true;
 		}
 	
@@ -1875,6 +1886,7 @@ cr.getFieldData = function(field)
 	
 	fieldData.id = field.getInstanceID();
 	fieldData.name = nameValue.getDescription();
+	fieldData.nameID = nameValue.getInstanceID();
 	fieldData.dataType = dataTypeValue.getDescription();
 	fieldData.dataTypeID = dataTypeValue.getInstanceID();
 	
@@ -1910,6 +1922,7 @@ cr.getConfiguration = function(parent, typeID)
 	{
 		var data;
 		var path;
+		
 		if (/^[A-Za-z0-9]{32}$/.test(typeID))
 			path = typeID+'/configuration';
 		else

@@ -924,9 +924,11 @@ class api:
 
                         if "field" in c:
                             field = terms[c["field"]]
-                        else:
+                        elif "fieldID" in c:
                             field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
-                        
+                        else:
+                            raise ValueError("neither field nor fieldID was specified")
+                            
                         if "index" in c:
                             newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
                         else:
