@@ -183,7 +183,7 @@ var ExperienceCommentsPanel = (function() {
 				var commentList = this.mainDiv.select('section.comments>ol');
 				showClickFeedback(this.editButton.node(), function()
 					{
-						_this.editButton.selectAll('span').text("Done");
+						_this.editButton.selectAll('span').text(crv.buttonTexts.done);
 					});
 				this.showDeleteControls();
 				this.inEditMode = true;

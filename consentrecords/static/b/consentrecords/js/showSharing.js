@@ -340,7 +340,7 @@ var SharingPanel = (function() {
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text("Done");
+								editButton.selectAll('span').text(crv.buttonTexts.done);
 							});
 						_this.showDeleteControls();
 						_this.inEditMode = true;

@@ -1,5 +1,6 @@
 var Settings = (function () {
 	Settings.prototype = new SitePanel();
+	Settings.prototype.panelTitle = "Settings";
 	Settings.prototype.firstNameLabel = "First Name";
 	Settings.prototype.lastNameLabel = "Last Name";
 	Settings.prototype.userPublicAccessLabel = "Profile Visibility";
@@ -25,7 +26,7 @@ var Settings = (function () {
 
 		var doneButton = navContainer.appendRightButton();
 			
-		navContainer.appendTitle('Settings');
+		navContainer.appendTitle(this.panelTitle);
 		
 		var panel2Div = this.appendScrollArea();
 		
@@ -52,7 +53,7 @@ var Settings = (function () {
 					panel2Div.handleDoneEditingButton.call(this);
 					birthdayCell.data[0].appendUpdateCommands = oldAppendUpdateBirthdayCommands;
 				})
- 			.append("span").text("Done");
+ 			.append("span").text(crv.buttonTexts.done);
 
 		var userPublicAccessCell = user.getCell(cr.fieldNames.publicAccess);
 		var userPrimaryAdministratorCell = user.getCell(cr.fieldNames.primaryAdministrator);

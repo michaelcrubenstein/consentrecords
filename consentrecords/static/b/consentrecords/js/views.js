@@ -226,6 +226,10 @@ var crv = {
 	},
 };
 
+crv.buttonTexts = {
+	done: "Done"
+}
+
 function syncFailFunction(error)
 {
 	cr.logRecord('sync fail', error);
@@ -2787,7 +2791,7 @@ function showEditObjectPanel(containerCell, objectData, backText, onShow, getSav
 				doneButton = sitePanel.navContainer.appendRightButton();
 			else
 				doneButton = sitePanel.navContainer.appendLeftButton();
-			doneButton.append("span").text("Done");
+			doneButton.append("span").text(crv.buttonTexts.done);
 			doneButton.on("click", function()
 				{
 					sitePanel.mainDiv.handleDoneEditingButton.call(this);
@@ -2874,7 +2878,7 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 
 		var backButton = navContainer.appendLeftButton()
 			.on("click", function() { sitePanel.hideRightEvent(); });
-		backButton.append("span").text("Done");
+		backButton.append("span").text(crv.buttonTexts.done);
 		
 		var checkEdit = function()
 		{
@@ -2992,7 +2996,7 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 		{
 			sitePanel.handleCloseDownEvent();
 		});
-	backButton.append("span").text("Done");
+	backButton.append("span").text(crv.buttonTexts.done);
 	
 	var addButton = navContainer.appendRightButton()
 		.classed("add-button", true)

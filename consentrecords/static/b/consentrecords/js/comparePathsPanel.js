@@ -639,7 +639,7 @@ var ComparePathsPanel = (function () {
 		
 		var backButton = this.navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); });
-		backButton.append("span").text("Done");
+		backButton.append("span").text(crv.buttonTexts.done);
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		

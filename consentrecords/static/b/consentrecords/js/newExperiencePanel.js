@@ -3208,7 +3208,7 @@ var NewExperiencePanel = (function () {
 				}
 				d3.event.preventDefault();
 			});
-		doneButton.append("span").text(experience.instance ? "Done" : "Add");
+		doneButton.append("span").text(experience.instance ? crv.buttonTexts.done : "Add");
 		
 		if (experience.instance)
 		{
