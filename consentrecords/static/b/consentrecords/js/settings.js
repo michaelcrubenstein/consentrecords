@@ -39,10 +39,10 @@ var Settings = (function () {
 		birthdayCell.data[0].appendUpdateCommands = function(i, newValue, initialData, sourceObjects)
 		{
 			if (!newValue)
-				throw ("Your birthday is required.");
+				throw new Error("Your birthday is required.");
 			var birthMonth = newValue.substr(0, 7);
 			if (birthMonth.length < 7)
-				throw ("Your birthday must include a year and a month.");
+				throw new Error("Your birthday must include a year and a month.");
 			oldAppendUpdateBirthdayCommands.call(birthdayCell.data[0], i, newValue, initialData, sourceObjects);
 			path.getValue("Birthday").appendUpdateCommands(0, birthMonth, initialData, sourceObjects);
 		}
