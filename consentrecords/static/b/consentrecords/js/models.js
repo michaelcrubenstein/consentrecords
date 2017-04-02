@@ -191,6 +191,7 @@ cr.fieldNames = {
     text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
+    notification: 'notification',
     systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
     privilege: 'privilege',
     group: 'group',
@@ -677,24 +678,7 @@ cr.Value = (function() {
 	Value.prototype.deleteValue = function()
 	{
 		var _this = this;
-		if (this.cell != null &&
-			this.getInstanceID() != null &&
-			this.instance().parent() == this.cell.parent)
-		{
-			/* In this case, this is a root object, so we just need to 
-				delete the instance. */
-			return $.ajax({
-					url: cr.urls.getData + this.getInstanceID() + "/",
-					type: 'DELETE',
-				})
-				.then(function()
-					{
-						_this.triggerDeleteValue();
-						return _this;
-					},
-					cr.thenFail);
-		}
-		else if (this.id == null)	/* It was never saved */
+		if (this.id == null)	/* It was never saved */
 		{
 			_this.triggerDeleteValue();
 			var r = $.Deferred();
@@ -1461,6 +1445,30 @@ cr.ObjectValue = (function() {
 		this.triggerDataChanged();
 	}
 
+	ObjectValue.prototype.deleteValue = function()
+	{
+		var _this = this;
+		if (this.cell != null &&
+			this.getInstanceID() != null &&
+			this.instance().parent() == this.cell.parent)
+		{
+			/* In this case, this is a root object, so we just need to 
+				delete the instance. */
+			return $.ajax({
+					url: cr.urls.getData + this.getInstanceID() + "/",
+					type: 'DELETE',
+				})
+				.then(function()
+					{
+						_this.triggerDeleteValue();
+						return _this;
+					},
+					cr.thenFail);
+		}
+		else
+			cr.Value.deleteValue.call(this);
+	};
+	
 	ObjectValue.prototype.isEmpty = function()
 	{
 		return !this._instance || this._instance.isEmpty();

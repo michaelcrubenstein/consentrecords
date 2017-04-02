@@ -33,7 +33,8 @@ class Transaction(dbmodels.Model):
         
 class TransactionState:
     mutex = Lock()
-    
+
+    # The user is an instance of AuthUser    
     def __init__(self, user):
         self.currentTransaction = None
         self.user = user
@@ -1227,8 +1228,8 @@ class TermNames():
     createObjectRuleEnum = 'create one'
     
     # enumerations for boolean
-    yes = 'yes'
-    no = 'no'
+    yesEnum = 'yes'
+    noEnum = 'no'
     
     # enumerations for descriptor type
     textEnum = 'by text'
@@ -1466,6 +1467,8 @@ class Terms():
             x = Terms.getNamedEnumerator(self.maxCapacity, type.__getattribute__(TermNames, name))
         elif name in ['pickObjectRuleEnum', 'createObjectRuleEnum']:
             x = Terms.getNamedEnumerator(self.addObjectRule, type.__getattribute__(TermNames, name))
+        elif name in ['yesEnum', 'noEnum']:
+            x = Terms.getNamedEnumerator(self.boolean, type.__getattribute__(TermNames, name))
         elif name in ['findPrivilegeEnum', 'readPrivilegeEnum', 'writePrivilegeEnum', 'administerPrivilegeEnum', 'registerPrivilegeEnum']:
             x = Terms.getNamedEnumerator(self.privilege, type.__getattribute__(TermNames, name))
         elif name == 'defaultCustomEnum':

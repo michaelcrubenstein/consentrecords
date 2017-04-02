@@ -60,7 +60,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState, check)
 ### Ensure that the current user has permission to perform this operation.
 def checkCreateAccess(typeInstance, parent, parentField, transactionState):
     if typeInstance == terms.user:
-    	return
+        return
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)
     else:
@@ -70,8 +70,19 @@ def checkCreateAccess(typeInstance, parent, parentField, transactionState):
 ### Ensure that the current user has permission to perform this operation.
 def checkCreateCommentAccess(typeInstance, parent, parentField, transactionState):
     if typeInstance in [terms['Comments'], terms['Comment'], terms['Comment Request']]:
-    	return
+        return
     elif parentField == terms['Comments']:
+        return
+    elif parent:
+        parent.checkWriteAccess(transactionState.user, parentField)
+    else:
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+
+### Ensure that the current user has permission to perform this operation.
+def checkCreateNotificationAccess(typeInstance, parent, parentField, transactionState):
+    if typeInstance in [terms['notification']] and parentField == terms['notification'] and \
+        parent.getPrivilege(UserInfo(transactionState.user)) is not None:
         return
     elif parent:
         parent.checkWriteAccess(transactionState.user, parentField)

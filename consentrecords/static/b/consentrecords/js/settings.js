@@ -596,3 +596,65 @@ var PickUserAccessPanel = (function () {
 	return PickUserAccessPanel;
 })();
 
+var NotificationsPanel = (function () {
+	NotificationsPanel.prototype = new SitePanel();
+	NotificationsPanel.prototype.panelTitle = "Notifications";
+	NotificationsPanel.prototype.firstNameLabel = "First Name";
+	NotificationsPanel.prototype.lastNameLabel = "Last Name";
+	NotificationsPanel.prototype.userPublicAccessLabel = "Profile Visibility";
+	NotificationsPanel.prototype.accessRequestLabel = "Access Requests";
+	NotificationsPanel.prototype.screenNameLabel = "Screen Name";
+	NotificationsPanel.prototype.pathPublicAccessLabel = "Path Visiblity";
+	NotificationsPanel.prototype.pathSameAccessLabel = "Same As Profile";
+	NotificationsPanel.prototype.pathAlwaysPublicAccessLabel = "Public";
+	NotificationsPanel.prototype.profileHiddenLabel = "Hidden";
+	NotificationsPanel.prototype.emailVisibleLabel = "By Request";
+	NotificationsPanel.prototype.pathVisibleLabel = "Public Path Only";
+	NotificationsPanel.prototype.allVisibleLabel = "Public Profile and Path";
+	NotificationsPanel.prototype.hiddenDocumentation = "No one will be able to locate or identify you.";
+	NotificationsPanel.prototype.byRequestVisibleDocumentation = "Others can request access to your profile if they know your email address.";
+	NotificationsPanel.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
+	NotificationsPanel.prototype.allVisibleDocumentation = "Others can look at your profile and path (except for information you hide from view).";
+
+	function NotificationsPanel(user) {
+		var _this = this;
+		this.createRoot(null, "NotificationsPanel", "edit settings", revealPanelUp);
+
+		var navContainer = this.appendNavContainer();
+
+		var doneButton = navContainer.appendRightButton();
+			
+		navContainer.appendTitle(this.panelTitle);
+		
+		var panel2Div = this.appendScrollArea();
+		
+		doneButton.on("click", function()
+				{
+					panel2Div.handleDoneEditingButton.call(this);
+				})
+ 			.append("span").text(crv.buttonTexts.done);
+
+		var cells = [user.getCell(cr.fieldNames.notification)
+					 ];
+					 
+		var sections = this.mainDiv.appendSections(cells)
+			.classed("cell edit", true)
+			.classed("unique", function(cell) { return cell.isUnique(); })
+			.classed("multiple", function(cell) { return !cell.isUnique(); });
+			
+		itemCells = sections.append("ol")
+			.classed("cell-items", true);
+	
+		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data);
+		
+		appendConfirmDeleteControls(items);
+	
+		var buttons = appendRowButtons(items);
+
+		buttons.append('div').classed("left-expanding-div description-text", true)
+			.text(_getDataDescription);
+	}
+	
+	return NotificationsPanel;
+})();
+

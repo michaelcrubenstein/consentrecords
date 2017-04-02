@@ -470,17 +470,8 @@ def requestAccess(request):
     
     try:    
         language = None
-        followingID = request.POST["following"]
-        if terms.isUUID(followingID):
-            followingPath = '#%s' % followingID
-        else:
-            followingPath = followingID
-            
-        followerID = request.POST["follower"]
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
+        followingPath = request.POST["following"]
+        followerPath = request.POST["follower"]
         
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
@@ -527,8 +518,6 @@ def requestAccess(request):
                             
                                 # Send an email to the following user.
                                 protocol = "https://" if request.is_secure() else "http://"
-
-                                # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
                                 firstNames = following.value_set.filter(field=terms.firstName,
@@ -547,6 +536,15 @@ def requestAccess(request):
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
+                                propertyList = {\
+                                        'name': [{'text': 'crn.followerRequest'}],
+                                        'argument': [{'instanceID': follower.id}],
+                                        'is fresh': [{'instanceID': terms.yesEnum.id}]
+                                    }
+                                item, v = instancecreator.create(terms['notification'], 
+                                    following, terms['notification'], -1, 
+                                    propertyList, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+                                
                                 results = {'object': data}
                     else:
                         return HttpResponseBadRequest(reason='the requestor is unrecognized')
@@ -689,11 +687,7 @@ def requestExperienceComment(request):
         else:
             experiencePath = experienceID
             
-        followerID = request.POST["path"]
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
+        followerPath = request.POST["path"]
             
         question = request.POST["question"]
         if len(question) == 0:
@@ -879,8 +873,8 @@ class api:
         if pathKey in c:
             userInfo = UserInfo(user)
             instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
-            					  .filterToInstances()\
-            					  .querySet
+                                  .filterToInstances()\
+                                  .querySet
             if len(instances) > 0:
                 c[idKey] = instances[0].id
             else:
@@ -1031,7 +1025,7 @@ class api:
                 if path.startswith("value/"):
                     valueID = path[6:6+32]
                     ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
-                    	.deleteObjects(user, NameList(), TransactionState(user))
+                        .deleteObjects(user, NameList(), TransactionState(user))
                 else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
