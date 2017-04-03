@@ -1559,9 +1559,15 @@ var NotificationsButton = (function() {
 		AlertButton.prototype.setup.call(this, notificationsImagePath);
 		
 		var _this = this;
-		setupOnViewEventHandler(this.user.getCell(cr.fieldNames.notification), "valueDeleted.cr valueAdded.cr", 
-			this.button.node(), function() { _this.checkBadge(); });
-		this.checkBadge();
+		crp.promise({path: "{0}/notification".format(this.user.getInstanceID())})
+			.then(function()
+				{
+					setupOnViewEventHandler(_this.user.getCell(cr.fieldNames.notification), "valueDeleted.cr valueAdded.cr", 
+						_this.button.node(), function() { _this.checkBadge(); });
+		
+					_this.checkBadge();
+				},
+				cr.asyncFail)
 	}
 	
 	function NotificationsButton(button, user)

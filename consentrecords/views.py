@@ -390,13 +390,8 @@ def acceptFollower(request, userPath=None):
     
     try:    
         language = None
-        followerID = request.POST["follower"]
+        followerPath = request.POST["follower"]
         privilegeID = request.POST["privilege"]
-        
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
         
         if not request.user.is_authenticated():
             return HttpResponseBadRequest(reason="user is not authenticated")
@@ -452,6 +447,16 @@ def acceptFollower(request, userPath=None):
                     for v in vs:
                         v.deepDelete(transactionState)
                 
+                    if follower.typeID_id == terms.user.id:
+                        propertyList = {\
+                                'name': [{'text': 'crn.FollowerAccept'}],
+                                'argument': [{'instanceID': user.id}],
+                                'is fresh': [{'instanceID': terms.yesEnum.id}]
+                            }
+                        item, v = instancecreator.create(terms['notification'], 
+                            follower, terms['notification'], -1, 
+                            propertyList, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
                     data = newValue.getReferenceData(userInfo, language)
                     results = {'object': data} 
         else:
@@ -537,7 +542,7 @@ def requestAccess(request):
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
                                 propertyList = {\
-                                        'name': [{'text': 'crn.followerRequest'}],
+                                        'name': [{'text': 'crn.FollowerRequest'}],
                                         'argument': [{'instanceID': follower.id}],
                                         'is fresh': [{'instanceID': terms.yesEnum.id}]
                                     }

@@ -191,6 +191,7 @@ cr.fieldNames = {
     text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
+    argument: 'argument',
     notification: 'notification',
     systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
     privilege: 'privilege',
@@ -1584,7 +1585,6 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.promiseCellsFromCache = function(fields)
 	{
 		return this._instance.promiseCellsFromCache(fields);
-		var storedI = crp.getInstance(this.getInstanceID());
 	}
 	
 	ObjectValue.prototype.checkConfiguration = function(done, fail)

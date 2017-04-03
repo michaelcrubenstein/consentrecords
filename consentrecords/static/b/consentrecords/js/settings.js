@@ -596,6 +596,48 @@ var PickUserAccessPanel = (function () {
 	return PickUserAccessPanel;
 })();
 
+var crn = {}
+
+crn.FollowerAccept = (function() {
+	FollowerAccept.prototype.notification = null;
+	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
+	
+	FollowerAccept.prototype.appendDescription = function(buttonNode)
+	{
+		args = this.notification.getCell(cr.fieldNames.argument).data;
+		user = args[0];
+		
+		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
+	}
+	
+	function FollowerAccept(d)
+	{
+		this.notification = d;
+	}
+	
+	return FollowerAccept;
+})();
+
+crn.FollowerRequest = (function() {
+	FollowerRequest.prototype.notification = null;
+	FollowerRequest.prototype.buttonText = "<b>{0}</b> has asked to follow you.";
+	
+	FollowerRequest.prototype.appendDescription = function(buttonNode)
+	{
+		args = this.notification.getCell(cr.fieldNames.argument).data;
+		user = args[0];
+		
+		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
+	}
+	
+	function FollowerRequest(d)
+	{
+		this.notification = d;
+	}
+	
+	return FollowerRequest;
+})();
+
 var NotificationsPanel = (function () {
 	NotificationsPanel.prototype = new SitePanel();
 	NotificationsPanel.prototype.panelTitle = "Notifications";
@@ -652,7 +694,21 @@ var NotificationsPanel = (function () {
 		var buttons = appendRowButtons(items);
 
 		buttons.append('div').classed("left-expanding-div description-text", true)
-			.text(_getDataDescription);
+			.each(function(d)
+				{
+					var name = d.getDatum(cr.fieldNames.name);
+					if (name && name.indexOf('crn.') != 0)
+						name = null;
+					
+					if (name)
+					{
+						var arr = name.split(".")[1];
+						var f = crn[arr];
+						new f(d).appendDescription(this);
+					}
+					else
+						d3.select(this).text(d.getDescription());
+				});
 	}
 	
 	return NotificationsPanel;
