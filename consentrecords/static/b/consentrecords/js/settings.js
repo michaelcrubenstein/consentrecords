@@ -684,7 +684,7 @@ var NotificationsPanel = (function () {
 
 	function NotificationsPanel(user) {
 		var _this = this;
-		this.createRoot(null, "NotificationsPanel", "edit settings", revealPanelUp);
+		this.createRoot(null, "NotificationsPanel", "edit notifications", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
 
@@ -715,7 +715,14 @@ var NotificationsPanel = (function () {
 		
 		appendConfirmDeleteControls(items);
 	
-		var buttons = appendRowButtons(items);
+		var buttons = appendRowButtons(items)
+			.classed('is-fresh', function(d)
+				{
+					var e = d.getValue(cr.fieldNames.isFresh);
+					return e && e.getDescription() == cr.booleans.yes;
+				});
+
+		var deleteControls = this.appendDeleteControls(buttons);
 
 		buttons.append('div').classed("left-expanding-div description-text", true)
 			.each(function(d)
@@ -733,6 +740,55 @@ var NotificationsPanel = (function () {
 					else
 						d3.select(this).text(d.getDescription());
 				});
+				
+		this.showDeleteControls($(deleteControls[0]), 0);
+		
+		function checkIsFresh()
+		{
+			crp.promise({path: "term[name=boolean]"})
+				.then(function(terms)
+					{
+						try
+						{
+							termNo = terms[0].getCell(cr.fieldNames.enumerator).data.find(function(d)
+								{
+									return d.getDescription() == cr.booleans.no;
+								});
+							var updateData = [];
+							var sourceObjects = [];
+							var scrollParent = $(itemCells.node()).scrollParent();
+							var scrollParentTop = scrollParent.offset().top;
+							var innerTop = scrollParent.scrollTop();
+							var innerBottom = innerTop + scrollParent.innerHeight();
+							items.each(function(d)
+								{
+									var itemTop = $(this).offset().top - scrollParentTop;
+									if (itemTop < innerBottom &&
+										itemTop >= innerTop)
+									{
+										var v = d.getValue(cr.fieldNames.isFresh);
+										if (v && v.getDescription() == cr.booleans.yes)
+										{
+											v.appendUpdateCommands(0, termNo, updateData, sourceObjects);
+										}
+									}
+								});
+							if (updateData.length > 0)
+							{
+								cr.updateValues(updateData, sourceObjects)
+									.fail(cr.asyncFail);
+							}
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
+					},
+					cr.asyncFail);
+		}
+					
+		$(panel2Div.node()).on('resize.cr', checkIsFresh);
+		$(itemCells.node()).scroll(checkIsFresh);
 	}
 	
 	return NotificationsPanel;

@@ -274,3 +274,6 @@ panel.settings span.badge:hover {
 	background-color: #2222FF;
 }
 
+panel.notifications .is-fresh {
+	background: #D5DDF5;
+}

@@ -171,35 +171,36 @@ var cr = {}
 
 cr.fieldNames = {
     /* These names are associated with fields. */
-    term: 'term',
-    name: 'name',
-    configuration: 'configuration',
-    field: 'field',
-    boolean: 'boolean',
-    dataType: 'data type',
-    ofKind: 'of kind',
-    pickObjectPath: 'pick object path',
-    enumerator: 'enumerator',
-    maxCapacity: 'max capacity',
-    addObjectRule: 'object add rule',
-    descriptorType: 'descriptor type',
-    user: 'user',
-    userID: 'userID',
-    email: 'email',
-    firstName: 'first name',
-    lastName: 'last name',
-    text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
+    addObjectRule: 'object add rule',
     argument: 'argument',
-    notification: 'notification',
-    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
-    privilege: 'privilege',
-    group: 'group',
+    configuration: 'configuration',
+    booleans: 'boolean',
+    dataType: 'data type',
     defaultAccess: 'default access',
-    specialAccess: 'special access',
+    descriptorType: 'descriptor type',
+    email: 'email',
+    enumerator: 'enumerator',
+    field: 'field',
+    firstName: 'first name',
+    group: 'group',
+    isFresh: 'is fresh',
+    lastName: 'last name',
+    maxCapacity: 'max capacity',
+    name: 'name',
+    notification: 'notification',
+    ofKind: 'of kind',
+    pickObjectPath: 'pick object path',
+    privilege: 'privilege',
     publicAccess: 'public access',
     primaryAdministrator: 'primary administrator',
+    specialAccess: 'special access',
+    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
+    term: 'term',
+    text: 'text',
+    user: 'user',
+    userID: 'userID',
 }
 
 cr.descriptorTypes = {
@@ -233,6 +234,11 @@ cr.maxCapacities = {
 
 cr.dataTypes = {
 	objectType: "object"
+}
+
+cr.booleans = {
+	yes: "yes",
+	no: "no"
 }
 
 cr.ModelObject = (function()
