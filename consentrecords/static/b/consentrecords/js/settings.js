@@ -665,25 +665,23 @@ crn.FollowerRequest = (function() {
 var NotificationsPanel = (function () {
 	NotificationsPanel.prototype = new SitePanel();
 	NotificationsPanel.prototype.panelTitle = "Notifications";
-	NotificationsPanel.prototype.firstNameLabel = "First Name";
-	NotificationsPanel.prototype.lastNameLabel = "Last Name";
-	NotificationsPanel.prototype.userPublicAccessLabel = "Profile Visibility";
-	NotificationsPanel.prototype.accessRequestLabel = "Access Requests";
-	NotificationsPanel.prototype.screenNameLabel = "Screen Name";
-	NotificationsPanel.prototype.pathPublicAccessLabel = "Path Visiblity";
-	NotificationsPanel.prototype.pathSameAccessLabel = "Same As Profile";
-	NotificationsPanel.prototype.pathAlwaysPublicAccessLabel = "Public";
-	NotificationsPanel.prototype.profileHiddenLabel = "Hidden";
-	NotificationsPanel.prototype.emailVisibleLabel = "By Request";
-	NotificationsPanel.prototype.pathVisibleLabel = "Public Path Only";
-	NotificationsPanel.prototype.allVisibleLabel = "Public Profile and Path";
-	NotificationsPanel.prototype.hiddenDocumentation = "No one will be able to locate or identify you.";
-	NotificationsPanel.prototype.byRequestVisibleDocumentation = "Others can request access to your profile if they know your email address.";
-	NotificationsPanel.prototype.pathVisibleDocumentation = "Your path may be found by others, identified only by your screen name. Others can request access to your profile if they know your email address.";
-	NotificationsPanel.prototype.allVisibleDocumentation = "Others can look at your profile and path (except for information you hide from view).";
-
+	NotificationsPanel.prototype.noItemsDescription = "You have no notifications.";
+	
+	NotificationsPanel.prototype.user = null;
+	
+	NotificationsPanel.prototype.noItemsDiv = null;
+	
+	NotificationsPanel.prototype.checkNoItems = function()
+	{
+		var text = this.noItemsDescription;
+		this.noItemsDiv.text(text);
+		this.noItemsDiv.style('display', (this.user.getCell(cr.fieldNames.notification).data.length !== 0) ? 'none' : null);
+	}
+	
 	function NotificationsPanel(user) {
 		var _this = this;
+		this.user = user;
+		
 		this.createRoot(null, "NotificationsPanel", "edit notifications", revealPanelUp);
 
 		var navContainer = this.appendNavContainer();
@@ -708,6 +706,10 @@ var NotificationsPanel = (function () {
 			.classed("unique", function(cell) { return cell.isUnique(); })
 			.classed("multiple", function(cell) { return !cell.isUnique(); });
 			
+		this.noItemsDiv = sections.append('div')
+			.classed('no-results', true)
+			.style('display', 'none');
+
 		itemCells = sections.append("ol")
 			.classed("cell-items", true);
 	
@@ -789,6 +791,10 @@ var NotificationsPanel = (function () {
 					
 		$(panel2Div.node()).on('resize.cr', checkIsFresh);
 		$(itemCells.node()).scroll(checkIsFresh);
+		
+		user.getCell(cr.fieldNames.notification).on("valueDeleted.cr", panel2Div.node(), 
+			function() { _this.checkNoItems(); });
+		this.checkNoItems();
 	}
 	
 	return NotificationsPanel;
