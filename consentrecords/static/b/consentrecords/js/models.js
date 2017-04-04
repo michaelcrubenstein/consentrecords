@@ -1645,16 +1645,6 @@ cr.createSignedinUser = function(instanceID, description)
 }
 
 cr.cellFactory = {
-	_string: cr.StringCell,
-	_number: cr.NumberCell,
-	_email: cr.EmailCell,
-	_url: cr.UrlCell,
-	_telephone: cr.TelephoneCell,
-	_translation: cr.TranslationCell, 
-	_datestamp: cr.DatestampCell, 
-	"_datestamp (day optional)": cr.DatestampDayOptionalCell,
-	_time: cr.TimeCell,
-	_object: cr.ObjectCell,
 	string: cr.StringCell,
 	number: cr.NumberCell,
 	email: cr.EmailCell,
