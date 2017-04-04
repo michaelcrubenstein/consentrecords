@@ -1473,7 +1473,7 @@ cr.ObjectValue = (function() {
 					cr.thenFail);
 		}
 		else
-			cr.Value.deleteValue.call(this);
+			return cr.Value.prototype.deleteValue.call(this);
 	};
 	
 	ObjectValue.prototype.isEmpty = function()
