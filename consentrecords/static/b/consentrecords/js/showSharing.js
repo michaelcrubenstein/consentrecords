@@ -297,9 +297,10 @@ var SharingPanel = (function() {
 		}
 	}
 
-	function SharingPanel(user)
+	function SharingPanel(user, backButtonText, showFunction)
 	{
-		this.createRoot(null, "Sharing", "edit sharing", revealPanelUp);
+		showFunction = (showFunction !== undefined) ? showFunction : revealPanelUp;
+		this.createRoot(null, "Sharing", "edit sharing", showFunction);
 		this.user = user;
 		var _this = this;
 		
@@ -315,7 +316,7 @@ var SharingPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("span").text("Settings");
+		backButton.append("span").text(backButtonText);
 		
 		this.inEditMode = false;
 		var editButton = navContainer.appendRightButton()

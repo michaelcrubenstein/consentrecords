@@ -229,7 +229,7 @@ var Settings = (function () {
 					if (prepareClick('click', 'Sharing'))
 					{
 						showClickFeedback(this);
-						new SharingPanel(user)
+						new SharingPanel(user, Settings.prototype.panelTitle)
 							.showUp()
 							.always(unblockClick);
 					}
@@ -598,6 +598,7 @@ var PickUserAccessPanel = (function () {
 
 var crn = {}
 
+/* This is a message to inform you that you have been accepted as a follower by another user. */
 crn.FollowerAccept = (function() {
 	FollowerAccept.prototype.notification = null;
 	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
@@ -618,6 +619,9 @@ crn.FollowerAccept = (function() {
 	return FollowerAccept;
 })();
 
+/* This notification tells you that another user has asked to follow you.
+	Clicking this message takes you to settings.
+ */
 crn.FollowerRequest = (function() {
 	FollowerRequest.prototype.notification = null;
 	FollowerRequest.prototype.buttonText = "<b>{0}</b> has asked to follow you.";
@@ -628,6 +632,26 @@ crn.FollowerRequest = (function() {
 		user = args[0];
 		
 		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
+		
+		$(buttonNode).click(function(e)
+			{
+				if (prepareClick('click', "Sharing"))
+				{
+					try
+					{
+						showClickFeedback(this);
+						new SharingPanel(cr.signedinUser, NotificationsPanel.prototype.panelTitle, revealPanelLeft)
+							.showLeft()
+							.always(unblockClick);
+					}
+					catch(err)
+					{
+						cr.syncFail(err);
+					}
+				}
+				
+				e.preventDefault();
+			});
 	}
 	
 	function FollowerRequest(d)
