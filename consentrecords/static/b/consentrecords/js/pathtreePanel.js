@@ -1465,8 +1465,7 @@ var AlertButton = (function() {
 			.append("img")
 			.attr("src", imagePath);
 		this.button.append("span")
-			.classed("badge", true)
-			.text(this.badgeCount());
+			.classed("badge", true);
 	}
 	
 	function AlertButton(button, user)
@@ -1548,10 +1547,16 @@ var NotificationsButton = (function() {
 	NotificationsButton.prototype.badgeCount = function()
 	{
 		var cell = this.user.getCell(cr.fieldNames.notification);
-		if (cell && cell.data.length > 0)
-			return cell.data.length;
-		else
+		if (!cell)
 			return "";
+		else {
+			var freshItems = cell.data.filter(function (d) 
+			{ 
+				var isFreshEnum = cell.data[0].getValue(cr.fieldNames.isFresh);
+				return isFreshEnum && isFreshEnum.getDescription() == cr.booleans.yes; 
+			});
+			return freshItems.length || "";
+		}
 	}
 	
 	NotificationsButton.prototype.setup = function()
@@ -1562,8 +1567,14 @@ var NotificationsButton = (function() {
 		crp.promise({path: "{0}/notification".format(this.user.getInstanceID())})
 			.then(function()
 				{
-					setupOnViewEventHandler(_this.user.getCell(cr.fieldNames.notification), "valueDeleted.cr valueAdded.cr", 
+					var cell = _this.user.getCell(cr.fieldNames.notification);
+					cell.on("valueDeleted.cr valueAdded.cr dataChanged.cr", 
 						_this.button.node(), function() { _this.checkBadge(); });
+					cell.data.forEach(function(d)
+						{
+							d.getCell(cr.fieldNames.isFresh).on("dataChanged.cr", _this.button.node(),
+								 function() { _this.checkBadge(); });
+						})
 		
 					_this.checkBadge();
 				},
