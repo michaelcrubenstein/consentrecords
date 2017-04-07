@@ -618,7 +618,7 @@ class Instance(dbmodels.Model):
                                       referenceValue__value__referenceValue__value__stringValue=name)\
                                  .referenceValue
         except Value.DoesNotExist:
-            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration' % (name, self))
+            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration of term "%s"' % (name, self, self.parent))
 
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
