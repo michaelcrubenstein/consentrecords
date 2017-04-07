@@ -686,11 +686,7 @@ def requestExperienceComment(request):
     
     try:    
         language = None
-        experienceID = request.POST["experience"]
-        if terms.isUUID(experienceID):
-            experiencePath = '#%s' % experienceID
-        else:
-            experiencePath = experienceID
+        experiencePath = request.POST["experience"]
             
         followerPath = request.POST["path"]
             
