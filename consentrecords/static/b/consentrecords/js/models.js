@@ -1180,10 +1180,13 @@ cr.Instance = (function() {
 					{
 						var r2 = $.Deferred();
 						try {
-							json.fields.forEach(function(field)
-								{
-									crp.pushField(field);
-								});
+							if (json.fields)
+							{
+								json.fields.forEach(function(field)
+									{
+										crp.pushField(field);
+									});
+							}
 							/* If the data length is 0, then this item can not be read. */
 							if (json.data.length > 0)
 							{
