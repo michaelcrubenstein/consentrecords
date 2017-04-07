@@ -121,7 +121,7 @@ STATIC_ROOT= os.path.join(BASE_DIR, 'static')
 AUTH_USER_MODEL = 'custom_user.AuthUser'
 
 # Email address of the sender of emails.
-PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
+PASSWORD_RESET_SENDER = r'no-reply@pathadvisor.com'
 
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
