@@ -1552,7 +1552,7 @@ var NotificationsButton = (function() {
 		else {
 			var freshItems = cell.data.filter(function (d) 
 			{ 
-				var isFreshEnum = cell.data[0].getValue(cr.fieldNames.isFresh);
+				var isFreshEnum = d.getValue(cr.fieldNames.isFresh);
 				return isFreshEnum && isFreshEnum.getDescription() == cr.booleans.yes; 
 			});
 			return freshItems.length || "";
