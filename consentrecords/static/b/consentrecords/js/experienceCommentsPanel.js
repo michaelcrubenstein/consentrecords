@@ -177,48 +177,42 @@ var ExperienceCommentsPanel = (function() {
 	
 	ExperienceCommentsPanel.prototype.startEditing = function()
 	{
-		if (prepareClick('click', 'Edit Experience Comments'))
+		try
 		{
-			try
-			{
-				var _this = this;
-				var commentList = this.mainDiv.select('section.comments>ol');
-				showClickFeedback(this.editButton.node(), function()
-					{
-						_this.editButton.selectAll('span').text(crv.buttonTexts.done);
-					});
-				this.showDeleteControls();
-				this.inEditMode = true;
-				commentList.classed('edit', true);
-				commentList.selectAll('textarea')
-					.attr('readonly', null)
-					.classed('fixed', false)
-					.classed('editable', true);
-				
-				/* position the edit chevron as appropriate. 
-					12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
-					18 is the height of the chevron, so that the chevron is vertically centered. 
-				 */
-				this.editChevronContainer.transition()
-					.duration(400)
-					.attr("transform", 
-						"translate({0},{1})".format(
-							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
-							($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-							
-				this.detailTextGroup.selectAll('line')
-					.transition()
-					.duration(400)
-					.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
-
-							
-				unblockClick();
-			}
-			catch(err)
-			{
-				this.editButton.selectAll('span').text("Edit");
-				cr.syncFail(err);
-			}
+			var _this = this;
+			var commentList = this.mainDiv.select('section.comments>ol');
+			showClickFeedback(this.editButton.node(), function()
+				{
+					_this.editButton.selectAll('span').text(crv.buttonTexts.done);
+				});
+			this.showDeleteControls();
+			this.inEditMode = true;
+			commentList.classed('edit', true);
+			commentList.selectAll('textarea')
+				.attr('readonly', null)
+				.classed('fixed', false)
+				.classed('editable', true);
+			
+			/* position the edit chevron as appropriate. 
+				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
+				18 is the height of the chevron, so that the chevron is vertically centered. 
+			 */
+			this.editChevronContainer.transition()
+				.duration(400)
+				.attr("transform", 
+					"translate({0},{1})".format(
+						$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
+						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
+						
+			this.detailTextGroup.selectAll('line')
+				.transition()
+				.duration(400)
+				.attr('x2', $(_this.svg.node()).width() - (_this.editChevronWidth + 12) - 12);
+		}
+		catch(err)
+		{
+			this.editButton.selectAll('span').text("Edit");
+			throw err;
 		}
 	}
 	
@@ -381,7 +375,18 @@ var ExperienceCommentsPanel = (function() {
 					}
 					else
 					{
-						_this.startEditing();
+						if (prepareClick('click', 'Edit Experience Comments'))
+						{
+							try
+							{
+								_this.startEditing();
+								unblockClick();
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						}
 					}
 				});
 			this.editButton

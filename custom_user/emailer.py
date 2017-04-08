@@ -52,8 +52,23 @@ The PathAdvisor Team
         send_mail('Path Question From Another User', txtMessage, senderEMail,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
+    # Sends a message saying that the specified experiement has a new question to the specified email recipient.
+    # following - an instance of the path of the user who owns the experience containing the question.
+    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, comment, hostURL):
+        experienceHRef = hostURL + '/experience/%s/' % experienceValue.id
+        context = Context({'salutation': salutation, 
+                           'following': following.getDescription(),
+                           'experience': experienceValue.referenceValue.getDescription(),
+                           'question': comment.getSubInstance(terms['Comment Request']),
+                           'answer': comment.getSubValue(terms.text).stringValue,
+                           'experienceHRef': experienceHRef})
+        htmlTemplate = loader.get_template('email/answerExperienceQuestion.html')
+        txtTemplate = loader.get_template('email/answerExperienceQuestion.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
         
-        send_mail('Path Question From Another User', message, senderEMail,
+        send_mail('Your Question Has Been Answered', txtMessage, 
+            settings.PASSWORD_RESET_SENDER,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
     # Sends a reset password message to the specified email recipient.

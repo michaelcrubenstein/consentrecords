@@ -1,0 +1,13 @@
+<body>
+	<style>
+	</style>
+	<p>Hi{% if salutation %} {{ salutation }}{% endif %}!</p>
+	<p>{{ following }} has answered your question regarding their {{ experience }} experience:</p>
+	<blockquote>Q: {{ question }}<br>
+				A: {{ answer }}</blockquote>
+
+	<p>You can see more about their experience <a href="{{ experienceHRef }}">here</a>.</p>
+
+	<p>Enjoy!
+	<br><b>The PathAdvisor Team</b></p>
+</body>

@@ -877,8 +877,23 @@ class api:
                 c[idKey] = instances[0].id
             else:
                 raise RuntimeError("%s is not recognized" % pathKey)
-           
-    def updateValues(user, data):
+    
+    def valueAdded(v, transactionState, hostURL):
+        if v.instance.typeID_id == terms['Comment'].id and \
+           v.field_id == terms['text'].id:
+           request = v.instance.getSubInstance(terms['Comment Request'])
+           if request:
+               follower = request.getSubInstance(terms['Path'])
+               recipient = follower.parent
+               recipientEMail = recipient.getSubDatum(terms.email)
+               experienceValue = v.instance.parent.parent.parentValue
+               salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
+               following = experienceValue.instance
+               comment = v.instance
+               Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
+                   experienceValue, following, comment, hostURL)
+       
+    def updateValues(user, data, hostURL):
         try:
             commandString = data.get('commands', "[]")
             commands = json.loads(commandString)
@@ -938,7 +953,9 @@ class api:
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
                             instanceID = item.referenceValue_id
-                            
+                            # Handle special cases that should occur when adding a new value.
+                            api.valueAdded(item, transactionState, hostURL)
+
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -1046,7 +1063,8 @@ def updateValues(request):
     if not request.user.is_authenticated():
         raise PermissionDenied
     
-    return api.updateValues(request.user, request.POST)
+    hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
+    return api.updateValues(request.user, request.POST, hostURL)
     
 def getUserID(request):
     if request.method != "GET":
