@@ -1,6 +1,7 @@
 from django.core.mail import send_mail
 
 from django.template import Context, loader
+from consentrecords.models import *
 
 class Emailer():
     # Sends a reset password message to the specified email recipient.
@@ -47,6 +48,7 @@ The PathAdvisor Team
         txtTemplate = loader.get_template('email/requestExperienceComment.txt')
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
+        
         send_mail('Path Question From Another User', txtMessage, senderEMail,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
@@ -58,16 +60,16 @@ The PathAdvisor Team
     def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>
     p > span {
-    	margin-left: 20px;
-    	margin-right: 20px;
-    	text-decoration: none;
+        margin-left: 20px;
+        margin-right: 20px;
+        text-decoration: none;
         cursor: pointer;
         color: #2222FF;
         font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
         font-size: 15px;
     }
     p>span>a {
-    	text-decoration: none;
+        text-decoration: none;
         cursor: pointer;
         color: #2222FF;
         font-family: "SF-UI", "Helvetica Neue", Helvetica, Arial, sans-serif;

@@ -211,7 +211,7 @@ class Instance(dbmodels.Model):
     def _getSubInstances(self, field): # Previously _getSubValueObjects
         return [v.referenceValue for v in self._getSubValues(field)]
         
-    # Returns a unique value of the specified id.
+    # Returns a unique value in the cell specified by the field.
     def getSubValue(self, field):
         if not field:
             raise ValueError("field is not specified")
@@ -221,13 +221,16 @@ class Instance(dbmodels.Model):
             return f[0] if f.exists() else None
         except Value.DoesNotExist:
             return None
-            
+    
+    # Returns the instance associated with a unique value in the cell specified by the field.      
     def getSubInstance(self, field):
-        if not field:
-            raise ValueError("field is not specified")
-            
         v = self.getSubValue(field)
         return v and v.referenceValue
+     
+    # Returns the datum associated with a unique value in the cell specified by the field.      
+    def getSubDatum(self, field):
+        v = self.getSubValue(field)
+        return v and v.stringValue
      
     # Returns a list of pairs of text that are used to generate the description of objects 
     # of this kind.
@@ -486,7 +489,7 @@ class Instance(dbmodels.Model):
                 if fieldData["name"] in fields:
                     vs = ValueQuerySet.selectRelatedData(p.value_set.filter(deleteTransaction__isnull=True), [], userInfo)
                     parentData['cells'] = p._getChildCellsData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
-                    
+                
                 cells.append({"field": fieldData["id"], "data": [parentData]})
                 
                 fp = p.parent_id and \
@@ -1165,6 +1168,7 @@ class Value(dbmodels.Model):
                Q(referenceValue__accessSource__isnull=True)|\
                Q(referenceValue__accessSource__in=sources)
 
+# The description of an instance.    	 
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
@@ -1173,6 +1177,8 @@ class Description(dbmodels.Model):
     def __str__(self):
         return "%s" % (self.text)
                 
+# A denormalization that identifies instances that descend through the parent node to 
+# other instances.
 class Containment(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False)

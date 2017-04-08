@@ -523,19 +523,12 @@ def requestAccess(request):
                             
                                 # Send an email to the following user.
                                 protocol = "https://" if request.is_secure() else "http://"
-                                recipientEMail = following.value_set.filter(field=terms.email,
-                                                                            deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms.firstName,
-                                                                   deleteTransaction__isnull=True)
-                                firstName = firstNames.exists() and firstNames[0].stringValue
-                                
-                                moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
-                                                                                                    deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
+                                recipientEMail = following.getSubDatum(terms.email)
+                                path = following.getSubInstance(terms['Path'])
+                                salutation = (path and path.getSubDatum(terms.name)) or following.getSubDatum(terms.firstName)
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
-                                    screenName or firstName,
+                                    salutation,
                                     recipientEMail, 
                                     follower.getDescription(),
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
@@ -747,22 +740,14 @@ def requestExperienceComment(request):
                             # Send an email to the following user.
                             protocol = "https://" if request.is_secure() else "http://"
 
-                            # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                             experienceUser = experience.parent.parent
-                            recipientEMail = experienceUser.value_set.filter(field=terms.email,
-                                                                        deleteTransaction__isnull=True)[0].stringValue
-                            firstNames = experienceUser.value_set.filter(field=terms.firstName,
-                                                               deleteTransaction__isnull=True)
-                            firstName = firstNames.exists() and firstNames[0].stringValue
-                            
-                            path = experienceUser.parent
-                            screenNames = path and path.value_set.filter(field=terms.name,
-                                                                         deleteTransaction__isnull=True)
-                            screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
+                            recipientEMail = experienceUser.getSubDatum(terms.email)
+                            path = experience.parent
+                            salutation = path.getSubDatum(terms.name) or experienceUser.getSubDatum(terms.firstName)
                             
                             # Send an email to the recipient that they have a question.
                             Emailer.sendRequestExperienceCommentEmail(settings.PASSWORD_RESET_SENDER, 
-                                screenName or firstName,
+                                salutation,
                                 recipientEMail,
                                 experienceValue,
                                 follower,
@@ -1015,7 +1000,7 @@ class api:
             p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
-            if not 'none' in fields:
+            if 'none' not in fields:
                 results['fields'] = fieldsDataDictionary.getData()
                 
         except Exception as e:
