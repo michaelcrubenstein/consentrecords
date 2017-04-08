@@ -784,7 +784,7 @@ var NotificationsPanel = (function () {
 		itemCells = sections.append("ol")
 			.classed("cell-items", true);
 	
-		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data);
+		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data.reverse());
 		
 		appendConfirmDeleteControls(items);
 	
