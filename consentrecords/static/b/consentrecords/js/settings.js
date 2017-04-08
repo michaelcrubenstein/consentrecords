@@ -605,8 +605,8 @@ crn.FollowerAccept = (function() {
 	
 	FollowerAccept.prototype.appendDescription = function(buttonNode)
 	{
-		args = this.notification.getCell(cr.fieldNames.argument).data;
-		user = args[0];
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var user = args[0];
 		
 		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
 	}
@@ -628,14 +628,14 @@ crn.FollowerRequest = (function() {
 	
 	FollowerRequest.prototype.appendDescription = function(buttonNode)
 	{
-		args = this.notification.getCell(cr.fieldNames.argument).data;
-		user = args[0];
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var user = args[0];
 		
 		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
 		
 		$(buttonNode).click(function(e)
 			{
-				if (prepareClick('click', "Sharing"))
+				if (prepareClick('click', "Follower Request"))
 				{
 					try
 					{
@@ -660,6 +660,77 @@ crn.FollowerRequest = (function() {
 	}
 	
 	return FollowerRequest;
+})();
+
+crn.ExperienceCommentRequested = (function() {
+	ExperienceCommentRequested.prototype.notification = null;
+	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";
+
+	ExperienceCommentRequested.prototype.appendDescription = function(buttonNode)
+	{
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var path = args[0];
+		var experienceInstance = crp.getInstance(args[1].getInstanceID());
+		var experience = experienceInstance.parent().getCell("More Experience")
+							.data.find(function(v) { return v.instance() == experienceInstance; });
+		var comments = experienceInstance.getValue("Comments");
+		
+		var _this = this;
+		$.when(path.instance().parentPromise(), comments.promiseCellsFromCache(["Comment/Comment Request"]))
+			.then(function()
+				{
+					var commentInstanceID = args[2].getInstanceID();
+					var comment = comments.getCell("Comment")
+						.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
+		
+					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), experience.getDescription());
+		
+					$(buttonNode).click(function(e)
+						{
+							if (prepareClick('click', "Experience Comment Requested"))
+							{
+								try
+								{
+									showClickFeedback(this);
+						
+									var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+									newPanel.startEditing();
+									try 
+									{
+										newPanel.promise = newPanel.promise.then(function()
+											{
+												try
+												{
+													newPanel.focusOnComment(comment.id);
+												}
+												catch (err) { cr.asyncFail(err); }
+											});
+									}
+									catch(err)
+									{
+										cr.asyncFail(err);
+									}
+									newPanel.showLeft()
+										.always(unblockClick);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+				
+							e.preventDefault();
+						});
+				},
+				cr.asyncFail);
+	}
+	
+    function ExperienceCommentRequested(d)
+    {
+    	this.notification = d;
+    }
+    
+    return ExperienceCommentRequested;
 })();
 
 var NotificationsPanel = (function () {

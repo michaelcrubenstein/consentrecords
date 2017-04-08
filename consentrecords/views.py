@@ -760,7 +760,8 @@ def requestExperienceComment(request):
                                                                          deleteTransaction__isnull=True)
                             screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                             
-                            Emailer.sendNewExperienceQuestionEmail(settings.PASSWORD_RESET_SENDER, 
+                            # Send an email to the recipient that they have a question.
+                            Emailer.sendRequestExperienceCommentEmail(settings.PASSWORD_RESET_SENDER, 
                                 screenName or firstName,
                                 recipientEMail,
                                 experienceValue,
@@ -768,8 +769,19 @@ def requestExperienceComment(request):
                                 question,
                                 v,
                                 protocol + request.get_host())
-                        
                             
+                            # Create a notification for the user.    
+                            notificationData = {\
+                                    'name': [{'text': 'crn.ExperienceCommentRequested'}],
+                                    'argument': [{'instanceID': follower.id},
+                                                 {'instanceID': experience.id},
+                                                 {'instanceID': item.id}],
+                                    'is fresh': [{'instanceID': terms.yesEnum.id}]
+                                }
+                            notification, notificationValue = instancecreator.create(terms['notification'], 
+                                experienceUser, terms['notification'], -1, 
+                                notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
                             if commentsValue:
                                 typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)

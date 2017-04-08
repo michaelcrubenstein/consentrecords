@@ -14,10 +14,14 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.editChevronWidth = 12; 	/* pixels */
 	ExperienceCommentsPanel.prototype.editChevronHeight = 18; 	/* pixels */
 	
+	ExperienceCommentsPanel.prototype.youAskedText = "You asked";
+	ExperienceCommentsPanel.prototype.someoneAskedText = "{0} asked";
+	
 	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
 	{
 		var divs = buttons.append('div');
 		
+		var _this = this;
 		var askers = divs.append('div')
 			.classed('asker', true)
 			.datum(function(d) { 
@@ -27,12 +31,10 @@ var ExperienceCommentsPanel = (function() {
 					if (!d || !d.getInstanceID())
 						return null;
 					if (d.getInstanceID() == cr.signedinUser.getValue('Path').getInstanceID())
-						return "You asked";
+						return _this.youAskedText;
 					else {
-						var s = d.instance().getDescription();
-						if (s == "None")
-							s = "Someone";
-						return "{0} asked".format(s);
+						var s = getPathDescription(d.instance());
+						return _this.someoneAskedText.format(s);
 					}
 				});
 

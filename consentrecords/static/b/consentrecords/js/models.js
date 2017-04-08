@@ -902,6 +902,12 @@ cr.Instance = (function() {
 		return this;
 	}
 	
+	/** if parentID is undefined, returns the parent of this instance. The parent off
+	 * an instance is the instance that, when deleted, will automatically delete this instance.
+	 *
+	 * If parentID is defined, then set the parentID of this instance and return this so that
+	 * subsequent operations can be chained.
+	 */
 	Instance.prototype.parent = function(parentID)
 	{
 		if (parentID === undefined)
@@ -911,6 +917,21 @@ cr.Instance = (function() {
 			this._parentID = parentID;
 			return this;
 		}
+	}
+	
+	/** Returns a promise that the parent of this instance can be retrieved from the parent 
+	 * function.
+	 */
+	Instance.prototype.parentPromise = function()
+	{
+		if (!this._parentID)
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
+		
+		return crp.promise({path: this._parentID});
 	}
 	
 	Instance.prototype.updateFromChangeData = function(changeData)
