@@ -1064,13 +1064,16 @@ cr.Instance = (function() {
 		return newCell;
 	}
 
-	Instance.prototype.importCells = function(oldCells)
+	/** Import all of the cells from oldCells into the cells of this instance.
+	 */
+	Instance.prototype.importCells = function(cells)
 	{
+		if (!cells)
+			throw new Error("Runtime Error: argument of cells to import is null");
+			
 		this._cells = [];
-		for (var j = 0; j < oldCells.length; ++j)
-		{
-			this.importCell(oldCells[j]);
-		}
+		for (var i = 0, len = cells.length; len > 0; ++i, --len)
+			this.importCell(cells[i]);
 	}
 
 	/* loadData loads the data from the middle tier or another ObjectValue. */

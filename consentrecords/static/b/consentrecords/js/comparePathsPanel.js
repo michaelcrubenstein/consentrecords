@@ -446,7 +446,7 @@ var ComparePath = (function() {
 		/* Ensure that all of the offerings have their associated cells. */
 		this.allExperiences.forEach(function(experience)
 			{
-				_this.checkOfferingCells(experience, null);
+				checkOfferingCells(experience);
 			});
 			
 		var resizeFunction = function()

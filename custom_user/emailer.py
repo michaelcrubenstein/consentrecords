@@ -71,7 +71,7 @@ The PathAdvisor Team
             settings.PASSWORD_RESET_SENDER,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
-    # Sends a reset password message to the specified email recipient.
+    # Sends an email when someone requests to follow the recipient of the email.
     def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>
     p > span {

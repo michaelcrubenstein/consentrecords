@@ -740,10 +740,10 @@ def requestExperienceComment(request):
                             # Send an email to the following user.
                             protocol = "https://" if request.is_secure() else "http://"
 
-                            experienceUser = experience.parent.parent
-                            recipientEMail = experienceUser.getSubDatum(terms.email)
+                            recipient = experience.parent.parent
+                            recipientEMail = recipient.getSubDatum(terms.email)
                             path = experience.parent
-                            salutation = path.getSubDatum(terms.name) or experienceUser.getSubDatum(terms.firstName)
+                            salutation = path.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
                             
                             # Send an email to the recipient that they have a question.
                             Emailer.sendRequestExperienceCommentEmail(settings.PASSWORD_RESET_SENDER, 
@@ -764,7 +764,7 @@ def requestExperienceComment(request):
                                     'is fresh': [{'instanceID': terms.yesEnum.id}]
                                 }
                             notification, notificationValue = instancecreator.create(terms['notification'], 
-                                experienceUser, terms['notification'], -1, 
+                                recipient, terms['notification'], -1, 
                                 notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
 
                             if commentsValue:
@@ -878,21 +878,33 @@ class api:
             else:
                 raise RuntimeError("%s is not recognized" % pathKey)
     
-    def valueAdded(v, transactionState, hostURL):
+    def valueAdded(v, nameLists, transactionState, hostURL):
         if v.instance.typeID_id == terms['Comment'].id and \
            v.field_id == terms['text'].id:
-           request = v.instance.getSubInstance(terms['Comment Request'])
-           if request:
-               follower = request.getSubInstance(terms['Path'])
-               recipient = follower.parent
-               recipientEMail = recipient.getSubDatum(terms.email)
-               experienceValue = v.instance.parent.parent.parentValue
-               salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
-               following = experienceValue.instance
-               comment = v.instance
-               Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
-                   experienceValue, following, comment, hostURL)
-       
+            request = v.instance.getSubInstance(terms['Comment Request'])
+            if request:
+                follower = request.getSubInstance(terms['Path'])
+                recipient = follower.parent
+                recipientEMail = recipient.getSubDatum(terms.email)
+                experienceValue = v.instance.parent.parent.parentValue
+                salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
+                following = experienceValue.instance
+                comment = v.instance
+                Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
+                    experienceValue, following, comment, hostURL)
+
+                # Create a notification for the user.    
+                notificationData = {\
+                    'name': [{'text': 'crn.ExperienceQuestionAnswered'}],
+                    'argument': [{'instanceID': following.id},
+                                 {'instanceID': experienceValue.referenceValue.id},
+                                 {'instanceID': comment.id}],
+                    'is fresh': [{'instanceID': terms.yesEnum.id}]
+                }
+                notification, notificationValue = instancecreator.create(terms['notification'], 
+                    recipient, terms['notification'], -1, 
+                    notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
     def updateValues(user, data, hostURL):
         try:
             commandString = data.get('commands', "[]")
@@ -954,7 +966,7 @@ class api:
                             item = container.addValue(field, c, newIndex, transactionState)
                             instanceID = item.referenceValue_id
                             # Handle special cases that should occur when adding a new value.
-                            api.valueAdded(item, transactionState, hostURL)
+                            api.valueAdded(item, nameLists, transactionState, hostURL)
 
                         if item.isDescriptor:
                             descriptionQueue.append(container)

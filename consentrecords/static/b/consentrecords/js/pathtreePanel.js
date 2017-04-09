@@ -496,31 +496,6 @@ var PathView = (function() {
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
-	PathView.prototype.checkOfferingCells = function(experience, done)
-	{
-		offering = experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-		{
-			var storedI = crp.getInstance(offering.getInstanceID());
-			if (storedI != null)
-			{
-				offering.importCells(storedI.getCells());
-				if (done) done();
-			}
-			else
-			{
-				var r1 = offering.promiseCells()
-					.fail(cr.asyncFail);
-				if (done)
-					r1.done(done);
-			}
-		}
-		else
-		{
-			if (done) done();
-		}
-	}
-	
 	PathView.prototype.canEditExperience = function(fd)
 	{
 		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
@@ -624,12 +599,13 @@ var PathView = (function() {
 		var handleDataChanged = function(eventObject)
 		{
 			var exp = this;
-			_this.checkOfferingCells(exp,
-				function()
-				{
-					_this.clearLayout();
-					_this.checkLayout();
-				});
+			checkOfferingCells(exp)
+				.then(function()
+					{
+						_this.clearLayout();
+						_this.checkLayout();
+					},
+					cr.asyncFail);
 		}
 	
 		var handleExperienceDateChanged = function(eventObject)
@@ -826,17 +802,19 @@ var PathView = (function() {
 	
 	PathView.prototype.addMoreExperience = function(experience)
 	{
-		this.checkOfferingCells(experience);
+		var _this = this;
+		checkOfferingCells(experience)
+			.then(function()
+				{
+					_this.allExperiences.push(experience);
+					_this.setupExperienceTriggers(experience);
 		
-		this.allExperiences.push(experience);
+					var flags = _this.appendExperiences(experience);
+					_this.redoLayout();
+					_this.updateDetail(flags.node(), flags.datum());
+				},
+				cr.asyncFail);
 		
-		this.setupExperienceTriggers(experience);
-		
-		var flags = this.appendExperiences(experience);
-
-		this.redoLayout();
-		
-		this.updateDetail(flags.node(), flags.datum());
 	}
 	
 	PathView.prototype.layoutYears = function(g)
@@ -1373,7 +1351,7 @@ var PathLines = (function() {
 				/* Ensure that all of the offerings have their associated cells. */
 				_this.allExperiences.forEach(function(experience)
 					{
-						_this.checkOfferingCells(experience, null);
+						checkOfferingCells(experience);
 					});
 		
 				_this.showAllExperiences();

@@ -670,20 +670,12 @@ crn.ExperienceCommentRequested = (function() {
 	{
 		var args = this.notification.getCell(cr.fieldNames.argument).data;
 		var path = args[0];
-		var experienceInstance = crp.getInstance(args[1].getInstanceID());
-		var experience = experienceInstance.parent().getCell("More Experience")
-							.data.find(function(v) { return v.instance() == experienceInstance; });
-		var comments = experienceInstance.getValue("Comments");
 		
 		var _this = this;
-		$.when(path.instance().parentPromise(), comments.promiseCellsFromCache(["Comment/Comment Request"]))
+		$.when(path.instance().parentPromise())
 			.then(function()
 				{
-					var commentInstanceID = args[2].getInstanceID();
-					var comment = comments.getCell("Comment")
-						.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
-		
-					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), experience.getDescription());
+					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
 		
 					$(buttonNode).click(function(e)
 						{
@@ -693,6 +685,9 @@ crn.ExperienceCommentRequested = (function() {
 								{
 									showClickFeedback(this);
 						
+									var experienceInstance = crp.getInstance(args[1].getInstanceID());
+									var experience = experienceInstance.parent().getCell("More Experience")
+														.data.find(function(v) { return v.instance() == experienceInstance; });
 									var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
 									newPanel.startEditing();
 									try 
@@ -701,6 +696,11 @@ crn.ExperienceCommentRequested = (function() {
 											{
 												try
 												{
+													var comments = experienceInstance.getValue("Comments");
+													var commentInstanceID = args[2].getInstanceID();
+													var comment = comments.getCell("Comment")
+														.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
+		
 													newPanel.focusOnComment(comment.id);
 												}
 												catch (err) { cr.asyncFail(err); }
@@ -731,6 +731,105 @@ crn.ExperienceCommentRequested = (function() {
     }
     
     return ExperienceCommentRequested;
+})();
+
+crn.ExperienceQuestionAnswered = (function() {
+	ExperienceQuestionAnswered.prototype.notification = null;
+	ExperienceQuestionAnswered.prototype.buttonText = "<b>{0}</b> has answered a question you asked about their {1} experience.";
+
+	ExperienceQuestionAnswered.prototype.appendSpinner = function(buttonNode)
+	{
+		var child = d3.select(buttonNode).append('span');
+		var opts = {
+		  lines: 13 // The number of lines to draw
+		, length: 4 // The length of each line
+		, width: 2 // The line thickness
+		, radius: 5 // The radius of the inner circle
+		, scale: 0.8 // Scales overall size of the spinner
+		, corners: 1 // Corner roundness (0..1)
+		, color: '#000' // #rgb or #rrggbb or array of colors
+		, opacity: 0.25 // Opacity of the lines
+		, rotate: 0 // The rotation offset
+		, direction: 1 // 1: clockwise, -1: counterclockwise
+		, speed: 1 // Rounds per second
+		, trail: 60 // Afterglow percentage
+		, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
+		, zIndex: 2e9 // The z-index (defaults to 2000000000)
+		, className: 'spinner' // The CSS class to assign to the spinner
+		, top: '11px' // Top position relative to parent
+		, left: '9px' // Left position relative to parent
+		, shadow: false // Whether to render a shadow
+		, hwaccel: false // Whether to use hardware acceleration
+		, position: 'relative' // Element positioning
+		, display: 'inline-block'
+		}
+		var spinner = new Spinner(opts).spin(child.node());
+		child.datum(spinner);
+		return child;
+	}
+	
+	ExperienceQuestionAnswered.prototype.appendDescription = function(buttonNode)
+	{
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var path = args[0];
+		
+		var _this = this;
+		var spinnerSpan = this.appendSpinner(buttonNode);
+		var textSpan = d3.select(buttonNode).append('span');
+		
+		textSpan.node().innerHTML = _this.buttonText.format("", args[1].getDescription());
+		spinnerSpan.style('display', 'inline-block')
+			.style('height', "{0}px".format($(textSpan.node()).height()))
+			.style('width', "{0}px".format(16));	/* 16 = The width of the spinner plus 4px padding */
+		
+		$.when(path.instance().parentPromise())
+			.then(function()
+				{
+					spinnerSpan.datum().stop();
+					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
+		
+					$(buttonNode).click(function(e)
+						{
+							if (prepareClick('click', "Experience Question Answered"))
+							{
+								try
+								{
+									showClickFeedback(this);
+									$.when(path.instance().promiseCellsFromCache(), args[1].promiseCellsFromCache())
+										.then(function()
+											{
+												return checkOfferingCells(args[1]);
+											})
+										.then(function()
+											{
+												var experienceInstance = crp.getInstance(args[1].getInstanceID());
+												var experience = path.instance().getCell("More Experience")
+																	.data.find(function(v) { return v.instance() == experienceInstance; });
+												var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+												
+												newPanel.showLeft()
+													.always(unblockClick);
+											},
+											cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+				
+							e.preventDefault();
+						});
+				},
+				cr.asyncFail);
+	}
+	
+    function ExperienceQuestionAnswered(d)
+    {
+    	this.notification = d;
+    }
+    
+    return ExperienceQuestionAnswered;
 })();
 
 var NotificationsPanel = (function () {

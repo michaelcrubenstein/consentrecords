@@ -385,6 +385,32 @@ function getPickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
+function checkOfferingCells(experience)
+{
+	offering = experience.getValue("Offering");
+	if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
+	{
+		var storedI = crp.getInstance(offering.getInstanceID());
+		if (storedI && storedI.getCells())
+		{
+			offering.importCells(storedI.getCells());
+			r = $.Deferred();
+			r.resolve();
+			return r;
+		}
+		else
+		{
+			return offering.promiseCells();
+		}
+	}
+	else
+	{
+		r = $.Deferred();
+		r.resolve();
+		return r;
+	}
+}
+
 function getTagList(experience)
 {
 	var names = [];
@@ -393,7 +419,7 @@ function getTagList(experience)
 	if (offering && offering.getInstanceID())
 	{
 		if (!offering.areCellsLoaded())
-			throw ("Runtime error: offering data is not loaded");
+			throw new Error("Runtime error: offering data is not loaded");
 			
 		names = offering.getCell("Service").data
 			.filter(function(v) { return !v.isEmpty(); })
