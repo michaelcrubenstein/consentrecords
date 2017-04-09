@@ -307,6 +307,12 @@ from parse import cssparser
 from consentrecords.views import api
 terms.initialize()
 
+user = authenticate(username='testuser28@pathadvisor.com', password=getpass.getpass("Password: "))
+from django.http import QueryDict
+path='ad5b6f1e2ab84f2c935651f345b7226b'
+q = QueryDict()
+profile.run('api.getData(user, path, q)')
+
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
 path='Service'
@@ -328,7 +334,7 @@ profile.run('api.getData(user, path, q)')
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
-path='#107d7f83095d41efb0472a60f4816043'
+path='107d7f83095d41efb0472a60f4816043'
 q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
 profile.run('api.getData(user, path, q)')
 

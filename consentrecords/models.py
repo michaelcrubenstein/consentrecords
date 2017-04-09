@@ -649,7 +649,7 @@ class Instance(dbmodels.Model):
         aIndex = privileges.index(a)
         return b if b in privileges[(aIndex+1):] else a
         
-    # returns the privilege level that the specified user instance has for this instance. 
+    ### Returns the privilege level that the specified user instance has for this instance. 
     def getPrivilege(self, userInfo):
         if userInfo.is_administrator:
             return terms.administerPrivilegeEnum
@@ -657,49 +657,7 @@ class Instance(dbmodels.Model):
         if not self.accessSource_id:
             return terms.readPrivilegeEnum
         
-        source_id = self.accessSource_id
-            
-        minPrivilege = None
-        minPrivilegeFilter = Value.objects.filter(instance=source_id,
-                                                  field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                   .select_related('referenceValue__description')
-        if minPrivilegeFilter.exists():
-            minPrivilege=minPrivilegeFilter[0].referenceValue
-        
-        if not userInfo.instance:
-            return minPrivilege
-        
-        if Value.objects.filter(instance=source_id,
-                                field=terms.primaryAdministrator, 
-                                deleteTransaction__isnull=True,
-                                referenceValue=userInfo.instance).exists():
-            return terms.administerPrivilegeEnum
-                
-        f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord, deleteTransaction__isnull=True)\
-            .filter(Q(value__referenceValue=userInfo.instance,
-                      value__deleteTransaction__isnull=True)|
-                    (Q(value__deleteTransaction__isnull=True,
-                       value__referenceValue__value__referenceValue=userInfo.instance,
-                       value__referenceValue__value__deleteTransaction__isnull=True)))
-                      
-        p = map(lambda i: i.value_set.filter(field=terms.privilege, deleteTransaction__isnull=True)\
-                           .select_related('referenceValue__description')[0].referenceValue, f)
-        
-        return reduce(Instance.comparePrivileges, p, minPrivilege)
-    
-    ### For the specified self user, return a filter of values indicating which access records are accessible to this user.   
-    def _getPrivilegeValues(self, privilegeIDs):
-        return Value.objects.filter(Q(referenceValue=self)|\
-                                       (Q(referenceValue__value__referenceValue=self)\
-                                        &Q(referenceValue__value__deleteTransaction__isnull=True)\
-                                       ),\
-                                       instance__typeID=terms.accessRecord,
-                                       deleteTransaction__isnull=True
-                                       ) \
-            .annotate(pField=F('instance__value__field'),privilege=F('instance__value__referenceValue'),
-                      pDeleted=F('instance__value__deleteTransaction')
-                     ) \
-            .filter(pField=terms.privilege.id, privilege__in=privilegeIDs,pDeleted=None)
+        return userInfo.getPrivilege(self.accessSource_id)
     
     ### Returns True if this user (self) is the primary administrator of the specified instance
     def isPrimaryAdministrator(self, instance):
@@ -710,14 +668,13 @@ class Instance(dbmodels.Model):
             referenceValue=self,
             deleteTransaction__isnull=True).exists()
     
-    # Return a QuerySet that filters f according to the specified privileges.
-    # self is a user to whom the privileges apply.
-    def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
-        sourceValues = self._getPrivilegeValues(privilegeIDs)
-        
+    ### Returns a QuerySet that filters f according to the specified privileges.
+    ### self is a user to whom the privileges apply.
+    def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):        
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=terms.accessRecord)&
-                         Q(children__value__in=sourceValues))
+                        (Q(children__typeID=terms.accessRecord,
+                           children__deleteTransaction__isnull=True,
+                           children__value__referenceValue__in=privilegeIDs))
                         |
                         (((Q(value__field=terms.publicAccess.id)\
                            &Q(value__referenceValue__in=privilegeIDs)\
@@ -769,14 +726,29 @@ class Instance(dbmodels.Model):
         
         if not self.accessSource_id:
             return False                    
-        if self.accessSource.value_set.filter(field=terms.publicAccess, 
-                                                     referenceValue__in=publicAccessPrivileges,
-                                                     deleteTransaction__isnull=True).exists():
+        if len(publicAccessPrivileges) > 0 and \
+           Value.objects.filter(instance=self.accessSource_id,
+                                field=terms.publicAccess, 
+                                referenceValue__in=publicAccessPrivileges,
+                                deleteTransaction__isnull=True).exists():
             return True
-        return userInstance and \
-               self.accessSource.children.filter(typeID=terms.accessRecord, 
-                    value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
-                    .exists()
+        
+        if not userInstance:
+            return False
+        
+        # create a query set of all of the access records that contain this instance.        
+        f = Instance.objects.filter(parent=self.accessSource_id, typeID=terms.accessRecord)\
+            .filter(Q(value__referenceValue=userInstance,
+                      value__deleteTransaction__isnull=True)|
+                    Q(value__deleteTransaction__isnull=True,
+                      value__referenceValue__value__referenceValue=userInstance,
+                      value__referenceValue__value__deleteTransaction__isnull=True))
+
+        g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                deleteTransaction__isnull=True,
+                referenceValue__in=accessRecordPrivilegeIDs)
+                
+        return g.exists()
 
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
@@ -886,28 +858,24 @@ class Instance(dbmodels.Model):
                         Q(accessSource__in=sources))
         
     def securityValueFilter(self, privilegeIDs):
-        sourceValues = self._getPrivilegeValues(privilegeIDs)
-        
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=terms.accessRecord)&
-                         Q(children__value__in=sourceValues))
+                        Q(children__typeID=terms.accessRecord,
+                          children__deleteTransaction__isnull=True,
+                          children__value__referenceValue__in=privilegeIDs)
                         |
-                        (((Q(value__field=terms.publicAccess.id)\
-                           &Q(value__referenceValue__in=privilegeIDs)\
-                           &Q(value__deleteTransaction__isnull=True)\
-                          )\
+                        (Q(value__field=terms.publicAccess.id,
+                           value__referenceValue__in=privilegeIDs,
+                           value__deleteTransaction__isnull=True)\
                           |
-                          (Q(value__field=terms.primaryAdministrator.id)\
-                           &Q(value__referenceValue=self)\
-                           &Q(value__deleteTransaction__isnull=True)\
-                          )\
-                         )\
+                          Q(value__field=terms.primaryAdministrator.id,
+                            value__referenceValue=self,
+                            value__deleteTransaction__isnull=True)\
                         )\
                        )
         
-        return (Q(referenceValue__isnull=True)|
-                        Q(referenceValue__accessSource__isnull=True)|
-                        (Q(referenceValue__accessSource__in=sources)))
+        return Q(referenceValue__isnull=True)|\
+               Q(referenceValue__accessSource__isnull=True)|\
+               Q(referenceValue__accessSource__in=sources)
     
     ### For the specified instance filter, filter only those instances that can be found by self. 
     @property   
@@ -1477,7 +1445,8 @@ class Terms():
             return i
             
     
-    # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Return an Instance representing the specified Ontology object. 
+    # If the Instance doesn't exist, raise a Value.DoesNotExist.   
     def getNamedEnumerator(term, name):
         if not term:
             raise ValueError("term is null")
@@ -1584,6 +1553,9 @@ class UserInfo:
         self._logs = []
         self.log('Create UserInfo')
         self.typeNames = {}
+        
+        # privileges is a cache of privileges where the keys are instance ids.
+        self._privileges = {}
     
     @property    
     def is_administrator(self):
@@ -1612,6 +1584,44 @@ class UserInfo:
             description = Instance.objects.get(pk=typeID).description.text
             self.typeNames[typeID] = description
             return description
+    
+    # Returns a privilege instance for the specified source_id.
+    def getPrivilege(self, source_id):
+        if source_id not in self._privileges:
+            minPrivilege = None
+            minPrivilegeFilter = Value.objects.filter(instance=source_id,
+                                                      field=terms.publicAccess, deleteTransaction__isnull=True)\
+                                       .select_related('referenceValue__description')
+            if minPrivilegeFilter.exists():
+                minPrivilege=minPrivilegeFilter[0].referenceValue
+        
+            if not self.instance:
+                return minPrivilege
+        
+            if Value.objects.filter(instance=source_id,
+                                    field=terms.primaryAdministrator, 
+                                    deleteTransaction__isnull=True,
+                                    referenceValue=self.instance).exists():
+                return terms.administerPrivilegeEnum
+        
+            # create a query set of all of the access records that contain this instance.        
+            f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
+                .filter(Q(value__referenceValue=self.instance,
+                          value__deleteTransaction__isnull=True)|
+                        Q(value__deleteTransaction__isnull=True,
+                          value__referenceValue__value__referenceValue=self.instance,
+                          value__referenceValue__value__deleteTransaction__isnull=True))
+        
+            g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                    deleteTransaction__isnull=True)\
+                    .select_related('referenceValue__description')
+                
+            # map the access records to their corresponding privilege values.              
+            p = map(lambda i: i.referenceValue, g)
+        
+            self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
+        
+        return self._privileges[source_id]
             
 class ObjectQuerySet:
     def __init__(self, querySet=None):
