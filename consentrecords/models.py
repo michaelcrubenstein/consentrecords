@@ -191,10 +191,19 @@ class Instance(dbmodels.Model):
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding string %s(%s)" % (str(self), str(field), str(value)))
                 self.addStringValue(field, value, position, transactionState)
-        
-    def _getSubValues(self, field):
-        return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
+    # Returns a filter enumerating all of the values that match the specified field.
+    def __getitem__(self, field):
+        if not field:
+            raise ValueError("field is not specified")
+        
+        if isinstance(field, str):
+            field = terms[field]
+        return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
+    
+    # Returns a dictionary whose keys are field ids and whose values are arrays of
+    # values contained by self.
+    # userInfo is used to determine if the dictionary includes security field data.  
     def _groupValuesByField(self, vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
@@ -208,8 +217,8 @@ class Instance(dbmodels.Model):
                     values[fieldID].append(v)
         return values
     
-    def _getSubInstances(self, field): # Previously _getSubValueObjects
-        return [v.referenceValue for v in self._getSubValues(field)]
+    def _getSubInstances(self, field):
+        return [v.referenceValue for v in self[field]]
         
     # Returns a unique value in the cell specified by the field.
     def getSubValue(self, field):
@@ -217,7 +226,7 @@ class Instance(dbmodels.Model):
             raise ValueError("field is not specified")
         
         try:
-            f = self.value_set.filter(deleteTransaction__isnull=True, field=field).select_related('referenceValue')
+            f = self[field].select_related('referenceValue')
             return f[0] if f.exists() else None
         except Value.DoesNotExist:
             return None
@@ -258,8 +267,8 @@ class Instance(dbmodels.Model):
         verbs = nameLists.getNameUUIDs(self.typeID)
         r = []
         for field, dataType, descriptorType in verbs:
+            vs = self[field]
             if descriptorType == terms.textEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
                 if dataType == terms.objectEnum:
                     for v in vs:
                         try:
@@ -271,7 +280,6 @@ class Instance(dbmodels.Model):
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
             elif descriptorType == terms.firstTextEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
                 if vs.exists():
                     v = vs[0]
                     if dataType == terms.objectEnum:
@@ -285,7 +293,6 @@ class Instance(dbmodels.Model):
                         if v.stringValue:
                             r.append(v.stringValue)
             elif descriptorType == terms.countEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
             else:
                 raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(terms.textEnum), str(terms.countEnum)))
@@ -542,19 +549,11 @@ class Instance(dbmodels.Model):
         return cells
 
     def getNextElementIndex(self, field):
-        maxElementIndex = reduce(lambda x,y: max(x, y), 
-                                 [e.position for e in self._getSubValues(field)],
-                                 -1)
-        if maxElementIndex < 0:
-            return 0
-        else:
-            return maxElementIndex + 1
+        f = self[field]
+        return 0 if not f.exists() else (f.reverse()[0].position + 1)
 
     def updateElementIndexes(self, field, newIndex, transactionState):
-        ids = {}
-        
-        for e in self._getSubValues(field):
-            ids[e.position] = e
+        ids = dict([(e.position, e) for e in self[field]])
         if len(ids) == 0:
             return 0
         else:
@@ -948,52 +947,41 @@ class Instance(dbmodels.Model):
     
     @property    
     def user(self):
-        field = terms[TermNames.userID]
-        id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
+        id = self[TermNames.userID][0].stringValue
         return AuthUser.objects.get(pk=id)
 
     # The following functions are used for loading scraped data into the system.
     def getOrCreateTextValue(self, field, value, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           stringValue=value['text'],
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(stringValue=value['text'])
         if len(children):
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue(value, transactionState)
                     
             return self.addValue(field, value, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateTranslationValue(self, field, text, languageCode, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           stringValue=text,
-                                           languageCode=languageCode,
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(stringValue=text, languageCode=languageCode)
         if len(children):
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue({'text': text, 'languageCode': languageCode}, transactionState)
                     
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           referenceValue=referenceValue,
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(referenceValue=referenceValue)
         if children.exists():
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue(referenceValue, transactionState)
                     
@@ -1002,24 +990,18 @@ class Instance(dbmodels.Model):
     # returns the querySet of values within self that are in the specified object field and named using
     # a string within the referenceValue of the value.
     def getChildrenByName(self, field, nameField, name):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue__value__deleteTransaction__isnull=True,
-                                        referenceValue__value__field=nameField,
-                                        referenceValue__value__stringValue__iexact=name)
+        return self[field].filter(referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=nameField,
+                                  referenceValue__value__stringValue__iexact=name)
     
     # returns the querySet of values within self that are in the specified object field and named using
     # a referenceValue within the referenceValue of the value.
     def getChildrenByReferenceName(self, field, nameField, name):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue__value__deleteTransaction__isnull=True,
-                                        referenceValue__value__field=nameField,
-                                        referenceValue__value__referenceValue=name)
+        return self[field].filter(referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=nameField,
+                                  referenceValue__value__referenceValue=name)
     def getValueByReference(self, field, r):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue=r)
+        return self[field].filter(referenceValue=r)
     # The previous functions are used for loading scraped data into the system.
 
     
@@ -1168,7 +1150,7 @@ class Value(dbmodels.Model):
                Q(referenceValue__accessSource__isnull=True)|\
                Q(referenceValue__accessSource__in=sources)
 
-# The description of an instance.    	 
+# The description of an instance.        
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
