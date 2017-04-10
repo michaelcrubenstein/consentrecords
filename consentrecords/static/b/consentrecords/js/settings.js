@@ -622,46 +622,6 @@ crn.FollowerAccept = (function() {
 /* This notification tells you that another user has asked to follow you.
 	Clicking this message takes you to settings.
  */
-crn.FollowerRequest = (function() {
-	FollowerRequest.prototype.notification = null;
-	FollowerRequest.prototype.buttonText = "<b>{0}</b> has asked to follow you.";
-	
-	FollowerRequest.prototype.appendDescription = function(buttonNode)
-	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
-		var user = args[0];
-		
-		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
-		
-		$(buttonNode).click(function(e)
-			{
-				if (prepareClick('click', "Follower Request"))
-				{
-					try
-					{
-						showClickFeedback(this);
-						new SharingPanel(cr.signedinUser, NotificationsPanel.prototype.panelTitle, revealPanelLeft)
-							.showLeft()
-							.always(unblockClick);
-					}
-					catch(err)
-					{
-						cr.syncFail(err);
-					}
-				}
-				
-				e.preventDefault();
-			});
-	}
-	
-	function FollowerRequest(d)
-	{
-		this.notification = d;
-	}
-	
-	return FollowerRequest;
-})();
-
 crn.ExperienceCommentRequested = (function() {
 	ExperienceCommentRequested.prototype.notification = null;
 	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";

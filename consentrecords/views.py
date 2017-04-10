@@ -527,22 +527,12 @@ def requestAccess(request):
                                 path = following.getSubInstance(terms['Path'])
                                 salutation = (path and path.getSubDatum(terms.name)) or following.getSubDatum(terms.firstName)
                                 
-                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
-                                    salutation,
+                                Emailer.sendNewFollowerEmail(salutation,
                                     recipientEMail, 
                                     follower.getDescription(),
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
                                     protocol + request.get_host() + settings.IGNORE_FOLLOWER_PATH + follower.id)
                             
-                                propertyList = {\
-                                        'name': [{'text': 'crn.FollowerRequest'}],
-                                        'argument': [{'instanceID': follower.id}],
-                                        'is fresh': [{'instanceID': terms.yesEnum.id}]
-                                    }
-                                item, v = instancecreator.create(terms['notification'], 
-                                    following, terms['notification'], -1, 
-                                    propertyList, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
-                                
                                 results = {'object': data}
                     else:
                         return HttpResponseBadRequest(reason='the requestor is unrecognized')

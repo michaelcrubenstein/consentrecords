@@ -72,7 +72,7 @@ The PathAdvisor Team
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
     # Sends an email when someone requests to follow the recipient of the email.
-    def sendNewFollowerEmail(senderEMail, salutation, recipientEMail, follower, acceptURL, ignoreURL):
+    def sendNewFollowerEmail(salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>
     p > span {
         margin-left: 20px;
@@ -117,6 +117,6 @@ We hope you discover new opportunities and enjoy inspiring others by sharing you
 The PathAdvisor Team
 """ % (follower, acceptURL, ignoreURL)
         
-        send_mail('A New PathAdvisor Follower', message, senderEMail,
+        send_mail('A New PathAdvisor Follower', message, settings.PASSWORD_RESET_SENDER,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
