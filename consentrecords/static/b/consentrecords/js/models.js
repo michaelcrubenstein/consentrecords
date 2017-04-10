@@ -887,9 +887,31 @@ cr.Instance = (function() {
 		return this._cells;
 	}
 	
-	Instance.prototype.areCellsLoaded = function()
+	/** Returns true if the cells of this instance are loaded. Otherwise, returns false.
+	 * If fields are specified, then, in order to return true, each of the instances referenced
+	 * in each specified field must also have all of its cells loaded.
+	 */
+	Instance.prototype.areCellsLoaded = function(fields)
 	{
-		return this._cells !== null;
+		if (this._cells === null)
+			return false;
+		
+		if (fields)
+		{
+			for (var i = 0; i < fields.length; ++i)
+			{
+				var fieldName = fields[i];
+				var cell = this.getCell(fieldName);
+				if (cell)
+				{
+					var datum = cell.data.find(function(d) { return d.getInstanceID() && !d.instance()._cells; });
+					if (datum)
+						return false;
+				}
+			}
+		}
+		
+		return true;
 	}
 
 	Instance.prototype.setCells = function(cells)
@@ -1294,7 +1316,7 @@ cr.Instance = (function() {
 	Instance.prototype.promiseCellsFromCache = function(fields)
 	{
 		var storedI = crp.getInstance(this.getInstanceID());
-		if (storedI && storedI.areCellsLoaded())
+		if (storedI && storedI.areCellsLoaded(fields))
 		{
 			if (this !== storedI)
 			{
@@ -1391,9 +1413,9 @@ cr.ObjectValue = (function() {
 		return this._instance && this._instance.getCells();
 	}
 	
-	ObjectValue.prototype.areCellsLoaded = function()
+	ObjectValue.prototype.areCellsLoaded = function(fields)
 	{
-		return this._instance.areCellsLoaded();
+		return this._instance.areCellsLoaded(fields);
 	}
 
 	ObjectValue.prototype.setCells = function(oldCells)
