@@ -215,7 +215,7 @@ var FollowingPanel = (function() {
 			{
 				if (prepareClick('click', 'show user'))
 				{
-					showUser(user, _this.node());
+					showUser(user);
 				}
 			});
 			

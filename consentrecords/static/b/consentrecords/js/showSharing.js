@@ -16,7 +16,7 @@ var SharingPanel = (function() {
 
 		var deleteControls = this.appendDeleteControls(buttons);
 	
-		appendInfoButtons(buttons, this.node());
+		appendInfoButtons(buttons);
 
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
@@ -120,7 +120,7 @@ var SharingPanel = (function() {
 		accessRequestSection.style('display', items.size() ? "" : "none");
 		
 		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
-		var infoButtons = appendInfoButtons(buttons, this.node());
+		var infoButtons = appendInfoButtons(buttons);
 		
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);

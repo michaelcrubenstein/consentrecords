@@ -194,7 +194,10 @@ function getUserDescription(user)
 	return getUserName(user) || user.getDescription();
 }
 				
-function showPath(path, previousPanelNode)
+/**
+ *	Displays a panel containing the experiences within the specified path.
+ */				
+function showPath(path)
 {
 	return path.promiseCells(["More Experience", "parents", cr.fieldNames.user])
 			   .then(function()
@@ -210,7 +213,10 @@ function showPath(path, previousPanelNode)
 				cr.syncFail);
 }
 
-function showUser(user, previousPanelNode)
+/**
+ *	Displays a panel containing the experiences within the path of the specified user.
+ */				
+function showUser(user)
 {
 	user.promiseCells([])
 	 .then(function()
@@ -222,6 +228,10 @@ function showUser(user, previousPanelNode)
 		cr.syncFail);
 }
 
+/**
+	Draw the contents of the specified infoButtons.
+	An info button is a circle with the letter 'i' within it.
+ */
 function drawInfoButtons(infoButtons)
 {
 	var activeColor = "#2C55CC"
@@ -249,7 +259,7 @@ function drawInfoButtons(infoButtons)
 		.text("i");
 }
 
-function appendInfoButtons(buttons, panelNode)
+function appendInfoButtons(buttons)
 {
 	var infoButtons =  buttons.insert("div", ":first-child")
 		.classed("info-button right-fixed-width-div", true)
@@ -258,7 +268,7 @@ function appendInfoButtons(buttons, panelNode)
 			{
 				try
 				{
-					showUser(user, panelNode);
+					showUser(user);
 				}
 				catch(err)
 				{
