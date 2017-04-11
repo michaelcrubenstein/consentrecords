@@ -941,6 +941,7 @@ var NotificationsPanel = (function () {
 						var f = crn[arr];
 						if (f)
 						{
+							appendRightChevrons(d3.select(this));
 							new f(d).appendDescription(this, q);
 						}
 						else
