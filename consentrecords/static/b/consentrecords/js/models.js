@@ -953,7 +953,11 @@ cr.Instance = (function() {
 			return r;
 		}
 		
-		return crp.promise({path: this._parentID});
+		var i = crp.getInstance(this._parentID);
+		if (i)
+			return i.promiseCellsFromCache();
+		else
+			return crp.promise({path: this._parentID});
 	}
 	
 	Instance.prototype.updateFromChangeData = function(changeData)

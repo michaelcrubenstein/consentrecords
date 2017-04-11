@@ -598,106 +598,10 @@ var PickUserAccessPanel = (function () {
 
 var crn = {}
 
-/* This is a message to inform you that you have been accepted as a follower by another user. */
-crn.FollowerAccept = (function() {
-	FollowerAccept.prototype.notification = null;
-	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
+crn.Notification = (function() {
+	Notification.prototype.notification = null;
 	
-	FollowerAccept.prototype.appendDescription = function(buttonNode)
-	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
-		var user = args[0];
-		
-		buttonNode.innerHTML = this.buttonText.format(getUserDescription(user));
-	}
-	
-	function FollowerAccept(d)
-	{
-		this.notification = d;
-	}
-	
-	return FollowerAccept;
-})();
-
-/* This notification tells you that another user has asked to follow you.
-	Clicking this message takes you to settings.
- */
-crn.ExperienceCommentRequested = (function() {
-	ExperienceCommentRequested.prototype.notification = null;
-	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";
-
-	ExperienceCommentRequested.prototype.appendDescription = function(buttonNode)
-	{
-		var args = this.notification.getCell(cr.fieldNames.argument).data;
-		var path = args[0];
-		
-		var _this = this;
-		$.when(path.instance().parentPromise())
-			.then(function()
-				{
-					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
-		
-					$(buttonNode).click(function(e)
-						{
-							if (prepareClick('click', "Experience Comment Requested"))
-							{
-								try
-								{
-									showClickFeedback(this);
-						
-									var experienceInstance = crp.getInstance(args[1].getInstanceID());
-									var experience = experienceInstance.parent().getCell("More Experience")
-														.data.find(function(v) { return v.instance() == experienceInstance; });
-									var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
-									newPanel.startEditing();
-									try 
-									{
-										newPanel.promise = newPanel.promise.then(function()
-											{
-												try
-												{
-													var comments = experienceInstance.getValue("Comments");
-													var commentInstanceID = args[2].getInstanceID();
-													var comment = comments.getCell("Comment")
-														.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
-		
-													newPanel.focusOnComment(comment.id);
-												}
-												catch (err) { cr.asyncFail(err); }
-											});
-									}
-									catch(err)
-									{
-										cr.asyncFail(err);
-									}
-									newPanel.showLeft()
-										.always(unblockClick);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
-				
-							e.preventDefault();
-						});
-				},
-				cr.asyncFail);
-	}
-	
-    function ExperienceCommentRequested(d)
-    {
-    	this.notification = d;
-    }
-    
-    return ExperienceCommentRequested;
-})();
-
-crn.ExperienceQuestionAnswered = (function() {
-	ExperienceQuestionAnswered.prototype.notification = null;
-	ExperienceQuestionAnswered.prototype.buttonText = "<b>{0}</b> has answered a question you asked about their {1} experience.";
-
-	ExperienceQuestionAnswered.prototype.appendSpinner = function(buttonNode)
+	Notification.prototype.appendSpinner = function(buttonNode)
 	{
 		var child = d3.select(buttonNode).append('span');
 		var opts = {
@@ -728,65 +632,232 @@ crn.ExperienceQuestionAnswered = (function() {
 		return child;
 	}
 	
-	ExperienceQuestionAnswered.prototype.appendDescription = function(buttonNode)
+	Notification.prototype.appendTextSpan = function(buttonNode, spinnerSpan, innerHTML)
+	{
+		var textSpan = d3.select(buttonNode).append('span');
+		
+		textSpan.node().innerHTML = innerHTML;
+		spinnerSpan.style('display', 'inline-block')
+			.style('height', "{0}px".format($(textSpan.node()).height()))
+			.style('width', "{0}px".format(16));	/* 16 = The width of the spinner plus 4px padding */
+		return textSpan;
+	}
+	
+	function Notification(d)
+	{
+		this.notification = d;
+	}
+	
+	return Notification;
+})();
+
+
+
+/* This is a message to inform you that you have been accepted as a follower by another user. */
+crn.FollowerAccept = (function() {
+	FollowerAccept.prototype = new crn.Notification();
+	FollowerAccept.prototype.buttonText = "<b>{0}</b> has accepted you as a follower.";
+	
+	FollowerAccept.prototype.appendDescription = function(buttonNode, q)
+	{
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var user = args[0];
+		
+		var _this = this;
+		var spinnerSpan = this.appendSpinner(buttonNode);
+		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
+			_this.buttonText.format(""));
+		
+		q.add(function()
+			{
+				$.when(user.promiseCellsFromCache())
+				 .then(function()
+				 	{
+						spinnerSpan.datum().stop();
+						spinnerSpan.remove();
+						textSpan.node().innerHTML = _this.buttonText.format(getUserDescription(user));
+						$(buttonNode).click(function(e)
+							{
+								if (prepareClick('click', "Follower Accepted"))
+								{
+									try
+									{
+										showClickFeedback(this);
+										showUser(user);
+									}
+									catch(err)
+									{
+										cr.syncFail(err);
+									}
+								}
+	
+								e.preventDefault();
+							});
+					})
+				 .always(function() {q.dequeue()});
+				return false;
+			});
+	}
+	
+	function FollowerAccept(d)
+	{
+		crn.Notification.call(this, d);
+	}
+	
+	return FollowerAccept;
+})();
+
+/* This notification tells you that another user has asked to follow you.
+	Clicking this message takes you to settings.
+ */
+crn.ExperienceCommentRequested = (function() {
+	ExperienceCommentRequested.prototype = new crn.Notification();
+	ExperienceCommentRequested.prototype.buttonText = "<b>{0}</b> has a question about your {1} experience.";
+
+	ExperienceCommentRequested.prototype.appendDescription = function(buttonNode, q)
+	{
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var path = args[0];
+		
+		var _this = this;
+		var _this = this;
+		var spinnerSpan = this.appendSpinner(buttonNode);
+		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
+			_this.buttonText.format("", args[1].getDescription()));
+		
+		q.add(function()
+			{
+				$.when(path.instance().parentPromise())
+				 .then(function()
+					{
+						spinnerSpan.datum().stop();
+						spinnerSpan.remove();
+						textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
+	
+						$(buttonNode).click(function(e)
+							{
+								if (prepareClick('click', "Experience Comment Requested"))
+								{
+									try
+									{
+										showClickFeedback(this);
+					
+										var experienceInstance = crp.getInstance(args[1].getInstanceID());
+										var experience = experienceInstance.parent().getCell("More Experience")
+															.data.find(function(v) { return v.instance() == experienceInstance; });
+										var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+										newPanel.startEditing();
+										try 
+										{
+											newPanel.promise = newPanel.promise.then(function()
+												{
+													try
+													{
+														var comments = experienceInstance.getValue("Comments");
+														var commentInstanceID = args[2].getInstanceID();
+														var comment = comments.getCell("Comment")
+															.data.find(function(v) { return v.getInstanceID() == commentInstanceID; });
+	
+														newPanel.focusOnComment(comment.id);
+													}
+													catch (err) { cr.asyncFail(err); }
+												});
+										}
+										catch(err)
+										{
+											cr.asyncFail(err);
+										}
+										newPanel.showLeft()
+											.always(unblockClick);
+									}
+									catch(err)
+									{
+										cr.syncFail(err);
+									}
+								}
+			
+								e.preventDefault();
+							});
+					},
+					cr.asyncFail)
+				 .always(function() {q.dequeue(); });
+			   return false;
+			});
+	}
+	
+    function ExperienceCommentRequested(d)
+    {
+    	crn.Notification.call(this, d);
+    }
+    
+    return ExperienceCommentRequested;
+})();
+
+crn.ExperienceQuestionAnswered = (function() {
+	ExperienceQuestionAnswered.prototype = new crn.Notification();
+	ExperienceQuestionAnswered.prototype.buttonText = "<b>{0}</b> has answered a question you asked about their {1} experience.";
+
+	ExperienceQuestionAnswered.prototype.appendDescription = function(buttonNode, q)
 	{
 		var args = this.notification.getCell(cr.fieldNames.argument).data;
 		var path = args[0];
 		
 		var _this = this;
 		var spinnerSpan = this.appendSpinner(buttonNode);
-		var textSpan = d3.select(buttonNode).append('span');
+		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
+			_this.buttonText.format("", args[1].getDescription()));
 		
-		textSpan.node().innerHTML = _this.buttonText.format("", args[1].getDescription());
-		spinnerSpan.style('display', 'inline-block')
-			.style('height', "{0}px".format($(textSpan.node()).height()))
-			.style('width', "{0}px".format(16));	/* 16 = The width of the spinner plus 4px padding */
-		
-		$.when(path.instance().parentPromise())
-			.then(function()
-				{
-					spinnerSpan.datum().stop();
-					buttonNode.innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
-		
-					$(buttonNode).click(function(e)
+		q.add(function()
+			{
+				$.when(path.instance().parentPromise())
+					.then(function()
 						{
-							if (prepareClick('click', "Experience Question Answered"))
-							{
-								try
+							spinnerSpan.datum().stop();
+							spinnerSpan.remove();
+							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription());
+		
+							$(buttonNode).click(function(e)
 								{
-									showClickFeedback(this);
-									$.when(path.instance().promiseCellsFromCache(), args[1].promiseCellsFromCache())
-										.then(function()
-											{
-												return checkOfferingCells(args[1]);
-											})
-										.then(function()
-											{
-												var experienceInstance = crp.getInstance(args[1].getInstanceID());
-												var experience = path.instance().getCell("More Experience")
-																	.data.find(function(v) { return v.instance() == experienceInstance; });
-												var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
+									if (prepareClick('click', "Experience Question Answered"))
+									{
+										try
+										{
+											showClickFeedback(this);
+											$.when(path.instance().promiseCellsFromCache(), args[1].promiseCellsFromCache())
+												.then(function()
+													{
+														return checkOfferingCells(args[1]);
+													})
+												.then(function()
+													{
+														var experienceInstance = crp.getInstance(args[1].getInstanceID());
+														var experience = path.instance().getCell("More Experience")
+																			.data.find(function(v) { return v.instance() == experienceInstance; });
+														var newPanel = new ExperienceCommentsPanel(new FlagController(experience));
 												
-												newPanel.showLeft()
-													.always(unblockClick);
-											},
-											cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
+														newPanel.showLeft()
+															.always(unblockClick);
+													},
+													cr.syncFail);
+										}
+										catch(err)
+										{
+											cr.syncFail(err);
+										}
+									}
 				
-							e.preventDefault();
-						});
-				},
-				cr.asyncFail);
+									e.preventDefault();
+								});
+						},
+						cr.asyncFail)
+				 .always(function() { q.dequeue(); });
+				 return false;
+			});
 	}
 	
     function ExperienceQuestionAnswered(d)
     {
-    	this.notification = d;
+    	crn.Notification.call(this, d);
     }
     
     return ExperienceQuestionAnswered;
@@ -856,6 +927,7 @@ var NotificationsPanel = (function () {
 
 		var deleteControls = this.appendDeleteControls(buttons);
 
+		var q = new Queue();
 		buttons.append('div').classed("left-expanding-div description-text", true)
 			.each(function(d)
 				{
@@ -867,7 +939,12 @@ var NotificationsPanel = (function () {
 					{
 						var arr = name.split(".")[1];
 						var f = crn[arr];
-						new f(d).appendDescription(this);
+						if (f)
+						{
+							new f(d).appendDescription(this, q);
+						}
+						else
+							d3.select(this).text(d.getDescription());
 					}
 					else
 						d3.select(this).text(d.getDescription());
