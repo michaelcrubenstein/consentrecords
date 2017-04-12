@@ -201,13 +201,16 @@ var ExperienceCommentsPanel = (function() {
 				12 + 12 is the left edge (12 for the width of the chevron and 12 for the right margin)
 				18 is the height of the chevron, so that the chevron is vertically centered. 
 			 */
-			this.editChevronContainer.transition()
-				.duration(400)
-				.attr("transform", 
-					"translate({0},{1})".format(
-						$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
-						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-						
+			if (_this.detailRectHeight > 0)
+			{
+				this.editChevronContainer.transition()
+					.duration(400)
+					.attr("transform", 
+						"translate({0},{1})".format(
+							$(_this.svg.node()).width() - (_this.editChevronWidth + 12), 
+							(_this.detailRectHeight - _this.editChevronHeight) / 2));
+			}
+					
 			this.detailTextGroup.selectAll('line')
 				.transition()
 				.duration(400)
@@ -252,6 +255,10 @@ var ExperienceCommentsPanel = (function() {
 		answerTextArea.focus();
 	}
 
+	/**
+		Displays a panel for editing the description of the experience: its organization,
+		site, offering, etc.
+	 */
 	ExperienceCommentsPanel.prototype.showDetailPanel = function(fd)
 	{
 		if (fd.experience.getTypeName() == "Experience") {
@@ -266,9 +273,9 @@ var ExperienceCommentsPanel = (function() {
 					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					
-					var editPanel = new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft);
-					
-					editPanel.showLeft().then(unblockClick);
+					new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
+						.showLeft()
+						.always(unblockClick);
 				}
 				catch(err)
 				{
@@ -479,11 +486,16 @@ var ExperienceCommentsPanel = (function() {
 			_this.svg.attr('height', _this.detailRectHeight);
 			
 			if (fd.experience.canWrite())
+			{
 				_this.editChevronContainer.attr("transform", 
 					"translate({0},{1})".format(
 						$(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 12 : 0), 
-						($(_this.svg.node()).height() - _this.editChevronHeight) / 2));
-
+						(_this.detailRectHeight - _this.editChevronHeight) / 2));
+				
+				var lineWidth = $(_this.svg.node()).width() - (_this.inEditMode ? _this.editChevronWidth + 24 : 0);	
+				_this.detailTextGroup.selectAll('line')
+					.attr('x2', lineWidth);
+			}
 		}
 		setTimeout(resizeDetail);
 		
