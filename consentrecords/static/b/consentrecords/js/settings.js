@@ -85,16 +85,18 @@ var Settings = (function () {
 		
 		var cells = [user.getCell(cr.fieldNames.firstName),
 					 user.getCell(cr.fieldNames.lastName),
-					 path.getCell(cr.fieldNames.name),
-					 birthdayCell
+					 path.getCell(cr.fieldNames.name)
 					 ];
 					 
-		this.showEditCells(cells);
+		this.showEditCells(cells, function() { return false; })
+			.classed('first', function(d, i) { return i != 1; });
+		this.showEditCells([birthdayCell])
+			.classed('first', true);
 		
 		var addUniqueCellSection = function(cell, label, clickFunction)
 		{
 			var sectionPanel = panel2Div.append('section')
-				.classed('cell edit unique btn row-button', true)
+				.classed('cell edit unique first btn row-button', true)
 				.datum(cell)
 				.on("click", clickFunction);
 				

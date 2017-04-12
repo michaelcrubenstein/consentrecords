@@ -464,34 +464,23 @@ function _showViewStringCell(obj, cell)
 function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
+	var itemsDiv = sectionObj.append("ol");
 	
 	if (cell.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
 			.append("li")
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 	
-		var label = cell.field.label || cell.field.name;
 		divs.append("input")
 			.attr("type", inputType)
-			.attr("placeholder", label)
+			.attr("placeholder", cell.field.label || cell.field.name)
 			.property("value", _getDataValue);
-
-		if (cell.field.descriptorType != cr.descriptorTypes.byText)
-		{
-			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(label);
-		}
 	}
 	else
 	{
-		cell.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = appendItems(itemsDiv, cell.data);
 		
 		var appendControls = function(divs, cell)
@@ -538,6 +527,7 @@ function _showEditStringCell(obj, cell, inputType)
 function _showEditDateStampDayOptionalCell(obj)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
+	var itemsDiv = sectionObj.append("ol");
 	
 	function appendInputs(divs)
 	{
@@ -552,26 +542,15 @@ function _showEditDateStampDayOptionalCell(obj)
 	
 	if (this.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = itemsDiv.selectAll("li")
 			.data(this.data)
 			.enter()
 			.append("li")
 			.classed("string-input-container", true);	// So that each item appears on its own row.
 		appendInputs(divs);
-	
-		if (this.field.descriptorType != cr.descriptorTypes.byText)
-		{
-			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(this.field.label || this.field.name);
-		}
 	}
 	else
 	{
-		this.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = appendItems(itemsDiv, this.data);
 		
 		var appendControls = function(divs, cell)
@@ -616,6 +595,7 @@ function _showEditDateStampDayOptionalCell(obj)
 function _showEditTranslationCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string translation", true);
+	var itemsDiv = sectionObj.append("ol");
 	
 	function appendInputControls(divs)
 	{
@@ -641,32 +621,21 @@ function _showEditTranslationCell(obj, cell, inputType)
 			.classed("string-input-container", true)
 			.append("input")
 			.attr("type", "text")
-			.attr("placeholder", cell.field.name)
+			.attr("placeholder", cell.field.label || cell.field.name)
 			.property("value", _getDataValue);
 	}
 	
 	if (cell.isUnique())
 	{
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = itemsDiv.selectAll("li")
 			.data(cell.data)
 			.enter()
 			.append("li");	// So that each item appears on its own row.
 	
 		appendInputControls(divs);
-
-		if (cell.field.descriptorType != cr.descriptorTypes.byText)
-		{
-			var labelDiv = sectionObj.insert("label", ":first-child")
-				.text(cell.field.label || cell.field.name);
-		}
 	}
 	else
 	{
-		cell.appendLabel(obj);
-		var itemsDiv = sectionObj.append("ol");
-
 		var divs = appendItems(itemsDiv, cell.data);
 		
 		var appendControls = function(divs, cell)
@@ -1251,7 +1220,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, backText)
 {
 	var sectionObj = d3.select(obj);
 	
-	var labelDiv = this.appendLabel(obj);
+	this.appendLabel(obj);
 	var itemsDiv = sectionObj.append("ol");
 
 	if (this.isUnique())
@@ -1820,6 +1789,9 @@ var SitePanel = (function () {
 		return this.mainDiv;
 	}
 	
+	/**
+	 *	Adds UI elements to display the contents of the specified cells.
+	 */
 	SitePanel.prototype.showViewCells = function(cells)
 	{
 		var _this = this;
@@ -1841,14 +1813,30 @@ var SitePanel = (function () {
 		return sections;
 	}
 	
-	SitePanel.prototype.showEditCells = function(cells)
+	/**
+	 *	Adds UI elements to edit the specified cells.
+	 *	labelTest is an optional function that takes a cell and determines
+	 *	if the cell should be labeled. If not specified, then cells that are
+	 *	not unique or are not descriptorTypes.byText are labeled.
+	 */
+	SitePanel.prototype.showEditCells = function(cells, labelTest)
 	{
+		labelTest = labelTest !== undefined ? labelTest :
+			function(cell) 
+			    { 
+			    	return !cell.isUnique() ||
+							cell.field.descriptorType != cr.descriptorTypes.byText; 
+				};
+						
 		var _this = this;
 		return this.mainDiv.appendSections(cells)
 			.classed("cell edit", true)
 			.classed("unique", function(cell) { return cell.isUnique(); })
 			.classed("multiple", function(cell) { return !cell.isUnique(); })
 			.each(function(cell) {
+					if (labelTest(cell))
+						cell.appendLabel(this);
+						
 					cell.showEdit(this, _this.headerText);
 				});
 	}
@@ -2694,7 +2682,8 @@ var EditPanel = (function() {
 		this.navContainer = this.appendNavContainer();
 
 		var panel2Div = this.appendScrollArea();
-		this.showEditCells(cells);
+		this.showEditCells(cells)
+			.classed('first', true);
 
 		$(this.node()).on('dragover',
 			function(e) {
