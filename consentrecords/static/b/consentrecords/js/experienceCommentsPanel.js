@@ -149,6 +149,10 @@ var ExperienceCommentsPanel = (function() {
 		return cr.requestExperienceComment(this.fd.experience, cr.signedinUser.getValue("Path"), newText);
 	}
 	
+	/**
+		Checks all of the text areas in the panel to see if their contents have changed. 
+		If so, then the changes are saved.
+	 */
 	ExperienceCommentsPanel.prototype.checkTextAreas = function(done, fail)
 	{
 		var commentsDiv = this.mainDiv.select('section.comments');
@@ -163,18 +167,18 @@ var ExperienceCommentsPanel = (function() {
 					d.appendUpdateCommands(0, newValue, initialData, sourceObjects);
 			});
 		if (initialData.length > 0)
-		{
-			cr.updateValues(initialData, sourceObjects)
-				.then(function() {
-					if (done)
-						done();
-				}, 
-				fail);
-		}
+			return cr.updateValues(initialData, sourceObjects);
 		else
-			done();
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
 	}
 	
+	/**
+		Change the UI elements to indicate that this panel is in Edit mode.
+	 */
 	ExperienceCommentsPanel.prototype.startEditing = function()
 	{
 		try
@@ -216,6 +220,10 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
+	/**
+		Sets the keyboard focus to the text of the comment that has the specified 
+		Value ID.
+	 */
 	ExperienceCommentsPanel.prototype.focusOnComment = function(id)
 	{
 		var commentList = this.mainDiv.select('section.comments>ol');
@@ -271,6 +279,47 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
+	/**
+		Deletes any notifications of the currently logged in user that are no longer valid
+		for this experience.
+		Invalid notifications include crn.ExperienceCommentRequested notifications where
+		the comment has been specified.
+	 */
+	ExperienceCommentsPanel.prototype.clearNotifications = function()
+	{
+		var _this = this;
+		var initialData = [];
+		var sourceObjects = [];
+
+		cr.signedinUser.getCell(cr.fieldNames.notification).data.forEach(function(n)
+			{
+				if (n.getDatum(cr.fieldNames.name) == "crn.ExperienceCommentRequested")
+				{
+					var args = n.getCell(cr.fieldNames.argument).data;
+					if (args.length >= 3 && 
+						args[1].getInstanceID() == _this.fd.experience.getInstanceID())
+					{
+						var comment = crp.getInstance(args[2].getInstanceID());
+						if (comment.getDatum(cr.fieldNames.text))
+						{
+							n.appendDeleteCommand(initialData, sourceObjects);
+						}
+					}
+				}
+			});
+			
+		if (initialData.length > 0)
+		{
+			return cr.updateValues(initialData, sourceObjects);
+		}
+		else
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
+	}
+	
 	function ExperienceCommentsPanel(fd)
 	{
 		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
@@ -288,11 +337,21 @@ var ExperienceCommentsPanel = (function() {
 					try
 					{
 						showClickFeedback(this);
-						_this.checkTextAreas(function()
-							{
-								_this.hide();
-							},
-							cr.syncFail);
+						if (fd.experience.canWrite())
+						{
+							_this.checkTextAreas()
+								.then(function()
+									{
+										_this.clearNotifications();
+									})
+								.then(function()
+									{
+										_this.hide();
+									},
+								cr.syncFail);
+						}
+						else
+							_this.hide();
 					}
 					catch(err)
 					{
@@ -341,7 +400,8 @@ var ExperienceCommentsPanel = (function() {
 									{
 										_this.editButton.selectAll('span').text(newButtonText);
 									});
-								_this.checkTextAreas(function()
+								_this.checkTextAreas()
+									.then(function()
 									{
 										_this.editChevronContainer.transition()
 											.duration(400)

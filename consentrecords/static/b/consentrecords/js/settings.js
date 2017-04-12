@@ -709,8 +709,11 @@ crn.FollowerAccept = (function() {
 	return FollowerAccept;
 })();
 
-/* This notification tells you that another user has asked to follow you.
+/** This notification tells you that another user has asked to follow you.
 	Clicking this message takes you to settings.
+	
+	The arguments are: The path of the user making the request, the experience and the 
+		comment instance being requested.
  */
 crn.ExperienceCommentRequested = (function() {
 	ExperienceCommentRequested.prototype = new crn.Notification();

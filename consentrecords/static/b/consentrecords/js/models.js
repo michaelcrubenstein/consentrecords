@@ -707,6 +707,12 @@ cr.Value = (function() {
 		}
 	};
 	
+	Value.prototype.appendDeleteCommand = function(initialData, sourceObjects)
+	{
+		initialData.push({id: this.id});
+		sourceObjects.push(this);
+	}
+	
 	Value.prototype.update = function(newValueID, initialData, done)
 	{
 		this.id = newValueID;
@@ -1440,13 +1446,8 @@ cr.ObjectValue = (function() {
 		var command;
 		if (!newInstanceID)
 		{
-			if (!this.getInstanceID())
-				return;
-			else
-			{
-				command = {id: this.id};
-				sourceObjects.push(this);
-			}
+			if (this.getInstanceID())
+				this.appendDeleteCommand(initialData, sourceObjects);
 		}
 		else {
 			if (this.getInstanceID() == newInstanceID)
@@ -1481,8 +1482,8 @@ cr.ObjectValue = (function() {
 				else
 					sourceObjects.push(this);
 			}
+			initialData.push(command);
 		}
-		initialData.push(command);
 		
 	}
 
