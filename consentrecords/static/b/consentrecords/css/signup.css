@@ -245,3 +245,6 @@
 		padding-bottom: 10px;
 	}
 
+panel.change-password form {
+	margin-top: 12px;
+}
