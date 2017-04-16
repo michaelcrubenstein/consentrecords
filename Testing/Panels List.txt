@@ -1,0 +1,26 @@
+Pathways Panel
+	Experience Comments Panel
+	More Experiences Panels
+	Edit Experience Panel
+	Search Panel
+	Settings Panel
+		Pick Public Visibility Panel
+		Sharing Panel
+			Add User or Group Panel
+		Following Panel
+			Request to Follow Panel
+			Compare Paths Panel
+			Other Path Panel
+		Change Email Panel
+		Change Password Panel
+	Notifications Panel
+		Other Path Panel
+		Experience Comment Panel
+
+Find Experience Panel
+
+View Root Objects Panel
+Edit Root Objects Panel
+View Object Panel
+Edit Object Panel
+Pick Object Panel
