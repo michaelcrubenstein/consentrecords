@@ -8,7 +8,7 @@ import uuid
 from consentrecords.models import *
 from consentrecords import pathparser
 
-def _addElementData(parent, data, fieldData, nameLists, transactionState):
+def _addElementData(parent, data, fieldData, nameLists, transactionState, check):
     # If the data is not a list, then treat it as a list of one item.
     if not isinstance(data, list):
         data = [data]
@@ -22,13 +22,13 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
             raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
         if fieldData["dataTypeID"] == terms.objectEnum.id:
-            if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
+            if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
                 if "instanceID" in d:
                     # This is a reference to an object.
                     if not terms.isUUID(d["instanceID"]):
                         raise RuntimeError("value(%s) for %s field is not an instance ID" % (d["instanceID"], field))
                         
-                    values = list(userInfo.findFilter(Instance.objects.filter(pk=d["instanceID"])))
+                    values = list(userInfo.findFilter(InstanceQuerySet(Instance.objects.filter(pk=d["instanceID"]))))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
                     elif d["instanceID"] == parent.id and field == terms.primaryAdministrator:
@@ -38,7 +38,7 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     else:
                         raise RuntimeError("find permission failed for %s" % field)
                 elif "path" in d:
-                    ids = pathparser.selectAllObjects(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    ids = pathparser.getQuerySet(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(ids):
                         parent.addReferenceValue(field, ids[len(ids)-1], i, transactionState)
                     else:
@@ -50,14 +50,36 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState):
                     raise RuntimeError("%s field of type %s not configured with an object kind" % (field, parent.typeID))
                 elif "cells" in d:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState)
+                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState, check)
                 else:
                     raise RuntimeError("%s field of type %s missing data: %s" % (field, parent.typeID, str(d)))
         else:
             parent.addValue(field, d, i, transactionState)
         i += 1
 
-def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState):
+### Ensure that the current user has permission to perform this operation.
+def checkCreateAccess(typeInstance, parent, parentField, transactionState):
+    if typeInstance == terms.user:
+    	return
+    elif parent:
+        parent.checkWriteAccess(transactionState.user, parentField)
+    else:
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+
+### Ensure that the current user has permission to perform this operation.
+def checkCreateCommentAccess(typeInstance, parent, parentField, transactionState):
+    if typeInstance in [terms['Comments'], terms['Comment'], terms['Comment Request']]:
+    	return
+    elif parentField == terms['Comments']:
+        return
+    elif parent:
+        parent.checkWriteAccess(transactionState.user, parentField)
+    else:
+        if not transactionState.user.is_staff:
+            raise RuntimeError("write permission failed")
+
+def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState, check=checkCreateAccess):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
@@ -69,8 +91,10 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         configuration = parent.typeID.getSubInstance(terms.configuration)
         fieldObject = configuration.getFieldByReferenceValue(parentField.id)
         fieldData = fieldObject.getFieldData()
-        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == "_pick one":
-            raise ValueError("instances can not be created in parents with a _pick one field")
+        if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
+            raise ValueError("instances can not be created in parents with a pick one field")
+    
+    check(typeInstance, parent, parentField, transactionState)
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
@@ -85,11 +109,6 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         if isinstance(userID, uuid.UUID):
             userID = userID.hex    # SQLite
         item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
-    elif parent:
-        parent.checkWriteAccess(transactionState.user, parentField)
-    else:
-        if not transactionState.user.is_staff:
-            raise RuntimeError("write permission failed")
         
     if parent:
         if position < 0:
@@ -103,13 +122,11 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         
     # Process the access records for this new item.
     if typeInstance.defaultCustomAccess:
-        AccessRecord.objects.create(id=item, source=item)
+        item.accessSource = item
+        item.save()
     elif parent:
-        try:
-            parentAccessRecord = parent.accessrecord
-            AccessRecord.objects.create(id=item, source=parentAccessRecord.source)
-        except AccessRecord.DoesNotExist:
-            pass
+        item.accessSource = parent.accessSource
+        item.save()
 
     # propertyList should be either null or a dictionary of properties.
     # The key of each element in the dictionary is the name of a term which is the fieldID.
@@ -132,12 +149,12 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
                 for key in filter(lambda key: terms[key] in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
                 
                 for key in filter(lambda key: terms[key] not in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
     
@@ -190,7 +207,7 @@ def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode,
     else:
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
-        if fieldData['dataType'] == '_translation':
+        if fieldData['dataType'] == TermNames.translationEnum:
             propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
             propertyList = {nameField.id: [{'text': text}]}

@@ -1,21 +1,52 @@
 Experience Prompt
-    _name: 8th grade
+    _name: 8th Grade Experience
     _text: en - Where did you finish eighth grade?
     Service: Grade 8
     Disqualifying Tag: Grade 8
 Experience Prompt
-    _name: Exercise
+    _name: Current Exercise Experience
     _text: en - What do you do for exercise?
     Service: Exercise
+    Timeframe: Current
 Experience Prompt
-    _name: Musical Instrument
+    _name: Current Hobby
+    _text: en - What hobbies do you enjoy?
+    Stage: Whatever
+    Timeframe: Current
+Experience Prompt
+    _name: First Job
+    _text: en - What was your first job?
+    Stage: Working
+    Timeframe: Previous
+Experience Prompt
+    _name: Future Home
+    _text: en - Where would you like to live?
+    Service: Housing
+    Timeframe: Goal
+Experience Prompt
+    _name: Last Job
+    _text: en - What was the last job you had?
+    Stage: Working
+    Timeframe: Previous
+Experience Prompt
+    _name: Musical Instrument Experience
     _text: en - Have you ever studied a musical instrument?
     Domain: Music Performance
 Experience Prompt
-    _name: Summer Job
+    _name: New Activity Goal
+    _text: en - What is an activity you would like to try?
+    Stage: Whatever
+    Timeframe: Goal
+Experience Prompt
+    _name: New Skill Goal
+    _text: en - What skill would you like to develop?
+    Stage: Skills
+    Timeframe: Goal
+Experience Prompt
+    _name: Summer Job Experience
     _text: en - Have you ever had a summer job?
     Service: Summer Job
 Experience Prompt
-    _name: Team Sport
+    _name: Team Sport Experience
     _text: en - Have you ever played a team sport?
     Service Domain: Sports

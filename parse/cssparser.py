@@ -20,7 +20,7 @@ class parser:
                 elif parser._countTrailingQuotes(lastString[1:]) % 2 == 1: #The number of quotes at the end is odd
                     a += [lastString[1:-1].replace('""', '"')]
                     inQuote = False
-                    lastString = '' if c in ' ,' else c
+                    lastString = '' if c in ',' else c
                 else:
                     lastString += c
             elif c == '"':
@@ -29,7 +29,7 @@ class parser:
                     lastString=""   # Clear lastString so that it becomes just a double quote
                 inQuote = True
                 lastString += c
-            elif c in ' ,':
+            elif c == ',':
                 if len(lastString) > 0:
                     a += [lastString]
                     lastString=''
@@ -42,7 +42,7 @@ class parser:
                         lastString=c
                 else:
                     lastString = c
-            elif c in '#~^$|<>+':
+            elif c in '#~^$|<>+/':
                 if len(lastString) > 0:
                     a += [lastString]
                 lastString = c
@@ -61,7 +61,7 @@ class parser:
                     if len(lastString) > 0: a += [lastString]
                     lastString = c
             else:
-                if len(lastString) > 0 and lastString[-1] in ' :#~^$|<>+[()]=':
+                if len(lastString) > 0 and lastString[-1] in ':#~^$|<>+[()]=/':
                     a += [lastString]
                     lastString = ""
                 lastString += c

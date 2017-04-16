@@ -4,7 +4,7 @@ from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 
 from oauth2_provider.views.generic import ProtectedResourceView
@@ -28,6 +28,10 @@ from consentrecords import instancecreator
 from consentrecords import pathparser
 from consentrecords.userfactory import UserFactory
 
+templateDirectory = 'consentrecords/'
+logPrefix = ''
+urlPrefix = ''
+
 def handler404(request):
     response = render_to_response('404.html', {},
                                   context_instance=RequestContext(request))
@@ -47,14 +51,17 @@ def logPage(request, name):
     except Exception:
         userAgent = 'Unspecified user agent'
         
-    LogRecord.emit(request.user, name, userAgent)
+    LogRecord.emit(request.user, logPrefix + name, userAgent)
 
+@ensure_csrf_cookie
 def home(request):
     logPage(request, 'pathAdvisor/home')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -74,12 +81,15 @@ def home(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showLines(request):
     logPage(request, 'pathAdvisor/showLines')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -97,12 +107,14 @@ def showLines(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def orgHome(request):
     logPage(request, 'pathAdvisor/orgHome')
     
-    template = loader.get_template('consentrecords/orgHome.html')
+    template = loader.get_template(templateDirectory + 'orgHome.html')
     args = {
         'user': request.user,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -122,12 +134,15 @@ def orgHome(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def find(request):
     logPage(request, 'pathAdvisor/find')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -150,6 +165,7 @@ def find(request):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def showInstances(request):
     logPage(request, 'pathAdvisor/list')
     
@@ -160,10 +176,11 @@ def showInstances(request):
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
             
-        template = loader.get_template('consentrecords/configuration.html')
+        template = loader.get_template(templateDirectory + 'configuration.html')
     
         argList = {
             'user': request.user,
+            'jsversion': settings.JS_VERSION,
             'canShowObjects': request.user.is_staff,
             'canAddObject': request.user.is_staff,
             'path': urllib.parse.unquote_plus(path),
@@ -185,12 +202,15 @@ def showInstances(request):
     except Exception as e:
         return HttpResponse(str(e))
 
+@ensure_csrf_cookie
 def showPathway(request, email):
     logPage(request, 'pathAdvisor/showPathway')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -202,22 +222,25 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'pathway%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].id
 
     context = RequestContext(request, args)
         
     return HttpResponse(template.render(context))
 
-def accept(request, email):
-    LogRecord.emit(request.user, 'pathAdvisor/accept', email)
+@ensure_csrf_cookie
+def showExperience(request, id):
+    logPage(request, 'pathAdvisor/experience')
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -229,25 +252,66 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    if terms.isUUID(id):
+        args['state'] = 'experience/%s/' % id
+        pathend = re.search(r'experience/%s/' % id, request.path).end()
+        path = request.path[pathend:]
+
+        if re.match(r'comments/*', path, re.I):
+            args['state'] += 'comments/'
+        elif re.match(r'comment/.*', path, re.I):
+            args['state'] += 'comment/'
+            path = path[len('comment/'):]
+            if re.match(r'[A-Fa-f0-9]{32}/', path):
+                args['state'] += path[:33]
+                path = path[33:]
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+@ensure_csrf_cookie
+def accept(request, email):
+    LogRecord.emit(request.user, 'pathAdvisor/accept', email)
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
-        args['cell'] = '_user'
+        args['cell'] = TermNames.user
         args['privilege'] = terms.readPrivilegeEnum.id
 
     context = RequestContext(request, args)
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def ignore(request, email):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -259,9 +323,9 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
@@ -271,40 +335,41 @@ def ignore(request, email):
         
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
-    print ('1')
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
-    print ('2')
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
         args['userID'] = user.id
         
-    print ('3')
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
     args['state'] = 'settings/'
         
-    print ('4')
     context = RequestContext(request, args)
         
-    print ('5')
     return HttpResponse(template.render(context))
 
+@ensure_csrf_cookie
 def signup(request, email=None):
     LogRecord.emit(request.user, 'pathAdvisor/ignore', email)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -338,10 +403,10 @@ def acceptFollower(request, userPath=None):
             
         userInfo = UserInfo(request.user)
         if userPath:
-            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
-                if user.typeID != terms.user:
+                if user.typeID_id != terms.user.id:
                     return HttpResponseBadRequest(reason="item to accept follower is not a user: %s" % userPath)
             else:
                 return HttpResponseBadRequest(reason="user is not recognized: %s" % userPath)
@@ -350,38 +415,38 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
-            if follower.typeID == terms.user:
+            if follower.typeID_id == terms.user.id:
                 followerField = terms.user
             else:
                 followerField = terms.group
-            ars = user.value_set.filter(field=terms['_access record'],
+            ars = user.value_set.filter(field=terms.accessRecord,
                                   deleteTransaction__isnull=True) \
                           .filter(referenceValue__value__field=followerField,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__referenceValue_id=follower.id)
-            if ars.count():
+            if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
                     transactionState = TransactionState(request.user)
                     nameLists = NameList()
                     try:
-                        ar = user.value_set.filter(field=terms['_access record'],
+                        ar = user.value_set.filter(field=terms.accessRecord,
                                                    deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms['_privilege'],
+                                     .get(referenceValue__value__field=terms.privilege,
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=privilegeID).referenceValue
                         newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
                     except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
-                            {'_privilege': [{'instanceID': privilegeID}],
+                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
+                            {TermNames.privilege: [{'instanceID': privilegeID}],
                              followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms['_access request'],
+                    vs = user.value_set.filter(field=terms.accessRequest,
                                            deleteTransaction__isnull=True,
                                            referenceValue_id=follower.id)
                     for v in vs:
@@ -423,22 +488,34 @@ def requestAccess(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                if len(objs) > 0 and objs[0].typeID == terms.user:
+                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                     following = objs[0]
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-                    if len(objs) > 0 and objs[0].typeID == terms.user:
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(objs) > 0 and objs[0].typeID_id == terms.user.id:
                         follower = objs[0]
-                        fieldTerm = terms['_access request']
+                        fieldTerm = terms.accessRequest
                         ars = following.value_set.filter(field=fieldTerm,
                                                          deleteTransaction__isnull=True,
                                                          referenceValue_id=follower.id)
-                        if ars.count():
+                        if ars.exists():
                             if follower == user:
                                 error = 'You have already requested to follow %s.' % following.description.text
                             else:
                                 error = 'There is already a request for %s to follow %s.' % (follower.description.text, following.description.text)
-                            raise RuntimeError(error)
+                            return HttpResponseBadRequest(reason=error)
+                        elif not follower.value_set.filter(field=terms.publicAccess,
+                                                              deleteTransaction__isnull=True).exists() and \
+                             not Value.objects.filter(field=terms.user,
+                                                      deleteTransaction__isnull=True,
+                                                      referenceValue__id=following.id,
+                                                      instance__typeID=terms.accessRecord,
+                                                      instance__referenceValues__instance_id=follower.id).exists():
+                            followerName = "you" if follower.id == user.id else ('"%s"' % follower.description.text)
+                            followerPossessive = "your" if follower.id == user.id else (('"%s"' + "'s") % follower.description.text)
+                            followingName = "You" if following.id == user.id else ('"%s"' % following.description.text)
+                            error = "%s will not be able to accept your request because they can't find %s. You can either change %s Profile Visibility or share %s profile with them." % (followingName, followerName, followerPossessive, followerPossessive)
+                            return HttpResponseBadRequest(reason=error)
                         else:
                             with transaction.atomic():
                                 transactionState = TransactionState(request.user)
@@ -454,14 +531,14 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms['_first Name'],
-                                								   deleteTransaction__isnull=True)
-                                firstName = firstNames.count() > 0 and firstNames[0].stringValue
+                                firstNames = following.value_set.filter(field=terms.firstName,
+                                                                   deleteTransaction__isnull=True)
+                                firstName = firstNames.exists() and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['_name'],
-                                																	deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.count() > 0 and screenNames[0].stringValue
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
+                                                                                                    deleteTransaction__isnull=True)
+                                screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
                                     screenName or firstName,
@@ -472,9 +549,9 @@ def requestAccess(request):
                             
                                 results = {'object': data}
                     else:
-                        raise RuntimeError('the requestor is unrecognized')
+                        return HttpResponseBadRequest(reason='the requestor is unrecognized')
                 else:
-                    raise RuntimeError('the user to follow is unrecognized')
+                    return HttpResponseBadRequest(reason='the user to follow is unrecognized')
         else:
             return HttpResponseBadRequest(reason="user is not authenticated")
     except Exception as e:
@@ -484,12 +561,15 @@ def requestAccess(request):
         
     return JsonResponse(results)
 
+@ensure_csrf_cookie
 def addExperience(request, experienceID):
     LogRecord.emit(request.user, 'pathAdvisor/addExperience', experienceID)
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -519,6 +599,7 @@ def _getOrganizationChildren(organization, siteName, offeringName):
             
     return site, offering
 
+@ensure_csrf_cookie
 def addToPathway(request):
     LogRecord.emit(request.user, 'pathAdvisor/addToPathway', str(request.user))
     
@@ -558,9 +639,11 @@ def addToPathway(request):
     else:
         service = None
     
-    template = loader.get_template('consentrecords/userHome.html')
+    template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
 
     if settings.FACEBOOK_SHOW:
@@ -594,9 +677,139 @@ def addToPathway(request):
     
     return HttpResponse(template.render(context))
 
-# Handle a POST event to create a new instance of an object with a set of properties.
+def requestExperienceComment(request):
+    if request.method != "POST":
+        raise Http404("requestExperienceComment only responds to POST methods")
+    
+    try:    
+        language = None
+        experienceID = request.POST["experience"]
+        if terms.isUUID(experienceID):
+            experiencePath = '#%s' % experienceID
+        else:
+            experiencePath = experienceID
+            
+        followerID = request.POST["path"]
+        if terms.isUUID(followerID):
+            followerPath = '#%s' % followerID
+        else:
+            followerPath = followerID
+            
+        question = request.POST["question"]
+        if len(question) == 0:
+            return HttpResponseBadRequest(reason="question text is not specified")
+        
+        if request.user.is_authenticated():
+            user = Instance.getUserInstance(request.user)
+            if not user:
+                return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
+            else:
+                userInfo = UserInfo(request.user)
+                objs = pathparser.getQuerySet(experiencePath, userInfo=userInfo, securityFilter=userInfo.readFilter)
+                if len(objs) > 0 and objs[0].typeID_id == terms['More Experience'].id:
+                    experience = objs[0]
+                    sourcePath = experience.parent
+                    experienceValue = sourcePath.value_set.get(referenceValue=experience)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(objs) > 0 and objs[0].typeID_id == terms['Path'].id:
+                        follower = objs[0]
+                        with transaction.atomic():
+                            transactionState = TransactionState(request.user)
+                            nameLists = NameList()
+                        
+                            commentsTerm = terms['Comments']
+                            containerObject = experience.getSubInstance(commentsTerm)
+                            if containerObject:
+                                commentsValue = None
+                                propertyList = {\
+                                        'Comment Request': [{'cells': {\
+                                            'Path': [{'instanceID': follower.id}],
+                                            TermNames.text: [{'text': question}],
+                                           }}],
+                                    }
+                                item, v = instancecreator.create(terms['Comment'], 
+                                    containerObject, terms['Comment'], -1, 
+                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
+        
+                            else:
+                                propertyList = {\
+                                        'Comment': [{'cells': {\
+                                            'Comment Request': [{'cells': {\
+                                                'Path': [{'instanceID': follower.id}],
+                                                TermNames.text: [{'text': question}],
+                                               }}],
+                                            }}],
+                                    }
+                                item, commentsValue = instancecreator.create(commentsTerm, 
+                                    experience, commentsTerm, -1, 
+                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
+                                containerObject = experience.getSubInstance(commentsTerm)
+                                v = containerObject.getSubValue(terms['Comment'])
+                                item = v.referenceValue
+                            
+                            Instance.updateDescriptions([item], nameLists)
+                            
+                            # Send an email to the following user.
+                            protocol = "https://" if request.is_secure() else "http://"
+
+                            # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
+                            experienceUser = experience.parent.parent
+                            recipientEMail = experienceUser.value_set.filter(field=terms.email,
+                                                                        deleteTransaction__isnull=True)[0].stringValue
+                            firstNames = experienceUser.value_set.filter(field=terms.firstName,
+                                                               deleteTransaction__isnull=True)
+                            firstName = firstNames.exists() and firstNames[0].stringValue
+                            
+                            path = experienceUser.parent
+                            screenNames = path and path.value_set.filter(field=terms.name,
+                                                                         deleteTransaction__isnull=True)
+                            screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
+                            
+                            Emailer.sendNewExperienceQuestionEmail(settings.PASSWORD_RESET_SENDER, 
+                                screenName or firstName,
+                                recipientEMail,
+                                experienceValue,
+                                follower,
+                                question,
+                                v,
+                                protocol + request.get_host())
+                        
+                            
+                            if commentsValue:
+                                typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
+                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
+                                
+                                # Get the new value along with its subdata (v, above, only has the value)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                commentData = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                
+                                data['cells'][0]['data'] = [commentData]
+                                results = {'fields': fieldsDataDictionary.getData(), 'Comments': data}
+                            else:
+                                typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
+                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+                                # Get the new value along with its subdata (v, above, only has the value)
+                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
+                                data = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                results = {'fields': fieldsDataDictionary.getData(), 'Comment': data}
+                    else:
+                        raise RuntimeError('the requestor is unrecognized')
+                else:
+                    raise RuntimeError('the user to follow is unrecognized')
+        else:
+            return HttpResponseBadRequest(reason="user is not authenticated")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error("%s" % traceback.format_exc())
+        return HttpResponseBadRequest(reason=str(e))
+        
+    return JsonResponse(results)
+
 class api:
-    def createInstance(user, data):
+    # Handle a POST event to create a new instance of an object with a set of properties.
+    def createInstance(user, path, data):
         try:
             # The type of the new object.
             instanceType = data.get('typeName', None)
@@ -608,9 +821,6 @@ class api:
             else:
                 ofKindObject = terms[instanceType]
          
-            # An optional container for the new object.
-            containerUUID = data.get('containerUUID', None)
-        
             # The element name for the type of element that the new object is to the container object
             elementName = data.get('elementName', None)
             elementUUID = data.get('elementUUID', None)
@@ -638,8 +848,12 @@ class api:
             
             with transaction.atomic():
                 transactionState = TransactionState(user)
-                if containerUUID:
-                    containerObject = Instance.objects.get(pk=containerUUID)
+                if path:
+                    instances = pathparser.getQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    if len(instances) > 0:
+                        containerObject = instances[0]
+                    else:
+                        raise RuntimeError("%s is not recognized" % path)
                 else:
                     containerObject = None
 
@@ -664,7 +878,9 @@ class api:
     def checkForPath(c, user, pathKey, idKey):
         if pathKey in c:
             userInfo = UserInfo(user)
-            instances = pathparser.selectAllObjects(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)
+            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
+            					  .filterToInstances()\
+            					  .querySet
             if len(instances) > 0:
                 c[idKey] = instances[0].id
             else:
@@ -694,9 +910,11 @@ class api:
                         
                         if oldValue.isDescriptor:
                             descriptionQueue.append(container)
+                        
                         if oldValue.hasNewValue(c):
                             container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
                             item = oldValue.updateValue(c, transactionState)
+                            instanceID = item.referenceValue_id
                         else:
                             oldValue.deepDelete(transactionState)
                             item = None
@@ -706,8 +924,11 @@ class api:
 
                         if "field" in c:
                             field = terms[c["field"]]
-                        else:
+                        elif "fieldID" in c:
                             field = Instance.objects.get(pk=c["fieldID"],deleteTransaction__isnull=True)
+                        else:
+                            raise ValueError("neither field nor fieldID was specified")
+                            
                         if "index" in c:
                             newIndex = container.updateElementIndexes(field, int(c["index"]), transactionState)
                         else:
@@ -724,6 +945,8 @@ class api:
                             instanceID = newInstance.id
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
+                            instanceID = item.referenceValue_id
+                            
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -742,105 +965,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    def selectAll(user, data):
-        try:
-            path = data.get("path", None)
-            start = int(data.get("start", "0"))
-            end = int(data.get("end", "0"))
-            userInfo = UserInfo(user)
-            language=None
-        
-            if not path:
-                raise ValueError("path was not specified")
-        
-            uuObjects = pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.findFilter)\
-                            .select_related('description')\
-                            .order_by('description__text', 'id')
-            
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-            
-            p = [i.getReferenceData(userInfo, language) for i in uuObjects]                                                
-            results = {'objects': p}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-    
-    # getValues is used to test whether or not a particular value exists in a field of any
-    # instance with the specified path.    
-    def getValues(user, data):
-        try:
-            path = data.get("path", None)
-            if not path:
-                raise ValueError('the path was not specified')
-                
-            userInfo = UserInfo(user)
-            language=None
-        
-            # The element name for the type of element that the new value is to the container object
-            fieldName = data.get('fieldName', None)
-        
-            if fieldName is None:
-                raise ValueError('the fieldName was not specified')
-            elif terms.isUUID(fieldName):
-                field = Instance.objects.get(pk=fieldName, deleteTransaction__isnull=True)
-            else:
-                field = terms[fieldName]
-            
-            # A value with the container.
-            value = data.get('value', None)
-        
-            if value is None:
-                raise ValueError('the value was not specified')
-            
-            containers = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.findFilter)
-            m = map(lambda i: i.findValues(field, value), containers)
-            p = map(lambda v: v.getReferenceData(userInfo, language=language), itertools.chain.from_iterable(m))
-                            
-            results = {'objects': [i for i in p]}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-        
-        return JsonResponse(results)
-        
-    def getConfiguration(user, data):
-        try:
-            # Get the uuid for the configuration.
-            typeName = data.get('typeName', None)
-            typeUUID = data.get('typeID', None)
-            if typeUUID:
-                kindObject = Instance.objects.get(pk=typeUUID)
-            elif typeName:
-                kindObject = terms[typeName]
-            else:
-                raise ValueError("typeName was not specified in getAddConfiguration")
-        
-            configurationObject = kindObject.getSubInstance(terms.configuration)
-        
-            if not configurationObject:
-                raise ValueError("objects of this kind have no configuration object")
-                
-            p = configurationObject.getConfiguration()
-        
-            results = {'cells': p}
-        except Instance.DoesNotExist:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason="the specified instanceType was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
     def getUserID(user, data):
         accessTokenID = data.get('access_token', None)
     
@@ -858,79 +982,7 @@ class api:
             
         return JsonResponse(results)
     
-    def _getValueQuerySet(vs, userInfo):
-        return userInfo.findValueFilter(vs.filter(deleteTransaction__isnull=True))\
-                .order_by('position')\
-                .select_related('field')\
-                .select_related('referenceValue')\
-                .select_related('referenceValue__description')
-    
-    def _getCells(uuObject, fields, fieldsDataDictionary, language, userInfo):
-        fieldsData = fieldsDataDictionary[uuObject.typeID]
-        
-        data = uuObject.getReferenceData(userInfo, language)
-        data['cells'] = uuObject.getData(uuObject.values, fieldsData, userInfo, language)
-    
-        if 'parents' in fields:
-            p = uuObject
-            while p.parent:
-                p = Instance.objects\
-                                .select_related('typeID')\
-                                .select_related('parent')\
-                                .select_related('description')\
-                                .select_related('typeID__description')\
-                                .get(pk=p.parent.id)
-                                
-                fieldData = p.typeID.getParentReferenceFieldData()
-            
-                parentData = p.getReferenceData(userInfo, language)
-                parentData['position'] = 0
-                if fieldData["name"] in fields:
-                    vs = api._getValueQuerySet(p.value_set, userInfo)
-                    parentData['cells'] = p.getData(vs, fieldsDataDictionary[p.typeID], userInfo, language)
-                    
-                data["cells"].append({"field": fieldData, "data": [parentData]})
-        
-        if TermNames.systemAccess in fields:
-            if userInfo.authUser.is_superuser:
-                saObject = terms.administerPrivilegeEnum
-            elif userInfo.authUser.is_staff:
-                saObject = terms.writePrivilegeEnum
-            else:
-                saObject = None
-            if saObject:
-                fieldData = terms.systemAccess.getParentReferenceFieldData()
-                parentData = [{'id': None, 
-                              'instanceID' : saObject.id,
-                              'description': saObject.getDescription(language),
-                              'position': 0,
-                              'privilege': saObject.description.text}]
-                data["cells"].append({"field": fieldData, "data": parentData})
-                
-        # For each of the cells, if the cell is in the field list explicitly, 
-        # and the cell is in the fieldsData (and not the name of a parent type)
-        # then get the subdata for all of the values in that cell.
-        subValuesDict = None
-        for field in fieldsData: 
-            if 'nameID' not in field:
-                print(field)
-        for cell in data["cells"]:
-            if cell["field"]["name"] in fields and cell["field"]["name"] != TermNames.systemAccess \
-                and "ofKindID" in cell["field"] \
-                and next((field for field in fieldsData if field["nameID"] == cell["field"]["nameID"]), None):
-                
-                subFieldsData = fieldsDataDictionary[cell["field"]["ofKindID"]]
-                subValuesDict = subValuesDict or \
-                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, uuObject.values)))  
-                for d in cell["data"]:
-                    i = subValuesDict[d["instanceID"]]
-                    d['cells'] = i.getData(i.subValues, subFieldsData, userInfo, language)
-                    d['typeName'] = cell["field"]["ofKind"]
-            
-        return data;
-        
     def getData(user, path, data):
-        pathparser.currentTimestamp = datetime.datetime.now()
         try:
             start = int(data.get("start", "0"))
             end = int(data.get("end", "0"))
@@ -941,53 +993,28 @@ class api:
             fieldString = data.get('fields', "[]")
             fields = json.loads(fieldString)
             
-            language = data.get('language', None)
-
             userInfo=UserInfo(user)
-            uuObjects = pathparser.selectAllObjects(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
-            
-            # preload the typeID, parent, value_set and description to improve performance.
-            # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
-            valueQueryset = api._getValueQuerySet(Value.objects, userInfo)
             
             fieldNames = filter(lambda s: s != TermNames.systemAccess and s != 'parents' and s != 'type', fields)
             fieldNames = list(fieldNames)
-            if len(fieldNames):
-                # The distinct is required to eliminate duplicate subValues.
-                subValues = Value.objects.filter(instance__deleteTransaction__isnull=True,
-                                          instance__referenceValues__deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__value__deleteTransaction__isnull=True,
-                                          instance__referenceValues__field__value__field=terms.name,
-                                          instance__referenceValues__field__value__stringValue__in=fieldNames)\
-                    .distinct()
-                subValueQueryset = api._getValueQuerySet(subValues, userInfo)
-                valueQueryset =  valueQueryset.prefetch_related(Prefetch('referenceValue__value_set',
-                                      queryset=subValueQueryset,
-                                      to_attr='subValues'))
-
-            uuObjects = uuObjects.select_related('typeID')\
-                                 .select_related('typeID__description')\
-                                 .select_related('parent')\
-                                 .select_related('description')\
-                                 .prefetch_related(Prefetch('value_set',
-                                                            queryset=valueQueryset,
-                                                            to_attr='values'))
             
-            uuObjects = uuObjects.order_by('description__text', 'id');
-            if end > 0:
-                uuObjects = uuObjects[start:end]
-            elif start > 0:
-                uuObjects = uuObjects[start:]
-                                                            
-            typeset = frozenset([x.typeID for x in uuObjects])
-            fieldsDataDictionary = FieldsDataDictionary(typeset, language)
+            if 'none' in fields:
+                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+            else:
+                qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
-            p = [api._getCells(uuObject, fields, fieldsDataDictionary, language, userInfo) for uuObject in uuObjects]        
+            language = data.get('language', None)
+            fieldsDataDictionary = qs.getFieldsDataDictionary(language)
+            p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
+            if not 'none' in fields:
+                results['fields'] = fieldsDataDictionary.getData()
+                
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error("%s" % traceback.format_exc())
+            logger.error("getData path:%s" % str(path))
             logger.error("getData data:%s" % str(data))
             return HttpResponseBadRequest(reason=str(e))
         
@@ -995,21 +1022,23 @@ class api:
         
     # This should only be done for root instances. Otherwise, the value should
     # be deleted, which will delete this as well.
-    def deleteInstances(user, path):
+    def delete(user, path):
         try:
-            if path:
-                with transaction.atomic():
+            if not path:
+                raise ValueError("path was not specified in delete")
+
+            with transaction.atomic():
+                if path.startswith("value/"):
+                    valueID = path[6:6+32]
+                    ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
+                    	.deleteObjects(user, NameList(), TransactionState(user))
+                else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
                     userInfo=UserInfo(user)
-                    for uuObject in pathparser.selectAllObjects(path, userInfo=userInfo, securityFilter=userInfo.administerFilter):
-                        if uuObject.parent:
-                            raise RuntimeError("can only delete root instances directly")
-                        uuObject.deleteOriginalReference(transactionState)
-                        uuObject.deepDelete(transactionState)
-            else:   
-                raise ValueError("path was not specified in delete")
+                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, transactionState)
+ 
             results = {}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -1018,43 +1047,6 @@ class api:
             
         return JsonResponse(results)
         
-    def deleteValue(user, data):
-        try:
-            valueID = data.get('valueID', None)
-        
-            if valueID:
-                v = Value.objects.get(pk=valueID, deleteTransaction__isnull=True)
-
-                with transaction.atomic():
-                    v.checkWriteAccess(user)
-                    
-                    transactionState = TransactionState(user)
-                    v.deepDelete(transactionState)
-                    
-                    if v.isDescriptor:
-                        nameLists = NameList()
-                        Instance.updateDescriptions([v.instance], nameLists)
-            else:   
-                raise ValueError("valueID was not specified in delete")
-            results = {}
-        except Value.DoesNotExist:
-            return HttpResponseBadRequest(reason="the specified value ID was not recognized")
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-
-def createInstance(request):
-    if request.method != "POST":
-        raise Http404("createInstance only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.createInstance(request.user, request.POST)
-    
 def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
@@ -1064,85 +1056,39 @@ def updateValues(request):
     
     return api.updateValues(request.user, request.POST)
     
-def deleteInstances(request):
-    if request.method != "POST":
-        raise Http404("deleteInstances only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-        
-    return api.deleteInstances(request.user, request.POST.get('path', None))
-    
-def deleteValue(request):
-    if request.method != "POST":
-        raise Http404("deleteValue only responds to POST methods")
-    
-    if not request.user.is_authenticated():
-        raise PermissionDenied
-    
-    return api.deleteValue(request.user, request.POST)
-    
-def selectAll(request):
-    if request.method != "GET":
-        raise Http404("selectAll only responds to GET methods")
-    
-    return api.selectAll(request.user, request.GET)
-    
-def getValues(request):
-    if request.method != "GET":
-        raise Http404("getValues only responds to GET methods")
-    
-    return api.getValues(request.user, request.GET)
-    
-def getConfiguration(request):
-    if request.method != "GET":
-        raise Http404("getConfiguration only responds to GET methods")
-    
-    return api.getConfiguration(request.user, request.GET)
-    
 def getUserID(request):
     if request.method != "GET":
         raise Http404("getUserID only responds to GET methods")
     
     return api.getUserID(request.user, request.GET)
 
-def getData(request):
-    if request.method == 'GET':
-        return api.getData(request.user, request.GET.get('path', None), request.GET)
-    else:
-        raise Http404("getData only responds to GET methods")
-
-def handleURL(request, urlPath):
+def handleURL(request, urlPath=None):
     if request.method == 'GET':
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated():
             raise PermissionDenied
-        return api.deleteInstances(request.user, urlPath)
+        return api.delete(request.user, urlPath)
+    elif request.method == 'POST':
+        if not request.user.is_authenticated():
+            raise PermissionDenied
+        return api.createInstance(request.user, urlPath, request.POST)
     else:
-        raise Http404("api only responds to GET methods")
+        raise Http404("api only responds to GET, DELETE and POST methods")
 
 class ApiEndpoint(ProtectedResourceView):
     def get(self, request, *args, **kwargs):
-        if request.path_info == '/api/getdata/':
-            return getData(request)
-        elif request.path_info == '/api/getconfiguration/':
-            return getConfiguration(request)
-        elif request.path_info == '/api/selectall/':
-            return selectAll(request)
+        if request.path_info == '/api/':
+            return handleURL(request, None)
         elif request.path_info == '/api/getvalues/':
             return getValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
         
     def post(self, request, *args, **kwargs):
-        if request.path_info == '/api/createinstance/':
-            return createInstance(request)
+        if request.path_info == '/api/':
+            return handleURL(request, None)
         elif request.path_info == '/api/updatevalues/':
             return updateValues(request)
-        elif request.path_info == '/api/deleteinstances/':
-            return deleteInstances(request)
-        elif request.path_info == '/api/deletevalues/':
-            return deleteValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
     
 class ApiGetUserIDEndpoint(ProtectedResourceView):
@@ -1208,6 +1154,7 @@ def updateUsername(request):
 def features(request):
     template = loader.get_template('doc/features.html')
     context = RequestContext(request, {
+        'jsversion': settings.JS_VERSION,
     })
         
     return HttpResponse(template.render(context))

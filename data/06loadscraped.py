@@ -1,3 +1,6 @@
+# Script for importing data into the database following the format that is produced by
+# data/04dumpconfiguration.py.
+#
 # python3 data/06loadscraped.py data/terms.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/servicedomains.txt michaelcrubenstein@gmail.com
 # python3 data/06loadscraped.py data/stages.txt michaelcrubenstein@gmail.com
@@ -90,16 +93,16 @@ def getSubFieldType(fd, field):
 def hasUniqueValue(fd):
     if "capacity" not in fd:
         return False
-    return fd["capacity"] == "_unique value"
+    return fd["capacity"] == TermNames.uniqueValueEnum
        
 def isTextField(fd):
-    return fd['dataType'] != '_translation' and fd['dataType'] != '_object'
+    return fd['dataType'] != TermNames.translationEnum and fd['dataType'] != TermNames.objectEnum
     
 def isObjectField(fd):
-    return fd['dataType'] == '_object'
+    return fd['dataType'] == TermNames.objectEnum
     
 def isTranslationField(fd):
-    return fd['dataType'] == '_translation'
+    return fd['dataType'] == TermNames.translationEnum
     
 def parseTranslation(text):
     m = re.search('^([a-z]{2}) \- (.*)', text)
@@ -113,16 +116,16 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
     if 'pickObjectPath' in fd:
         pickObjectPath = fd['pickObjectPath'];
         if pickObjectPath.startswith("parent") and pickObjectPath[6] in ">:=<":
-            pickObjectPath = "#"+parent.parent.id+pickObjectPath[6:];
+            pickObjectPath = parent.parent.id+pickObjectPath[6:];
     else:
-        pickObjectPath = fd['ofKindID']
+        pickObjectPath = fd['ofKind']
         
     # append a qualifier for the specified text to the pickObjectPath
     if 'ofKindID' in fd:
         type = Instance.objects.get(pk=fd['ofKindID'])
     else:
-        l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-        type = l[0].typeID
+        l = pathparser.getObjectQuerySet(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        type = l.filterToInstances().querySet[0].typeID
         
     verbs = list(filter(lambda verb: verb[2] == terms.textEnum or verb[2] == terms.firstTextEnum, nameLists.getNameUUIDs(type)))
     
@@ -133,9 +136,9 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         text = value
     pickObjectPath += '[' + field.getDescription() + '="' + text + '"]'
     
-    l = pathparser.selectAllObjects(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
-    if len(l):
-        return l[0]
+    l = pathparser.getObjectQuerySet(pickObjectPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    if len(l.querySet):
+        return l.filterToInstances().querySet[0]
     else:
         raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), value))
     

@@ -1,0 +1,14 @@
+# This document describes the tools that were used to build the systems used for PathAdvisor.
+
+mysql-5.7.9-osx10.10-x86_64.dmg
+	- Disk image for the mac version of mysql.
+	
+Python 3.4.2 (v3.4.2:ab2c023a9432, Oct  5 2014, 20:42:22) 
+[GCC 4.2.1 (Apple Inc. build 5666) (dot 3)] on darwin
+	- Version of Python used
+	
+>>> django
+<module 'django' from '/Users/michaelr/GitHub/lib/python3.4/site-packages/django/__init__.py'>
+>>> django.VERSION
+(1, 10, 3, 'final', 0)
+	- Version of Django used.

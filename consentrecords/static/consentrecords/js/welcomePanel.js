@@ -271,7 +271,7 @@ var WelcomePanel = (function () {
 		this.createRoot(null, "Welcome", "welcome");
 		var navContainer = this.appendNavContainer();
 
-		if (!cr.signedinUser.getValueID())
+		if (!cr.signedinUser.getInstanceID())
 		{
 			var signinSpan = navContainer.appendRightButton()
 				.on("click", function()
@@ -311,7 +311,7 @@ var WelcomePanel = (function () {
 					{text: "What Is Your Path?",
 					 cssClass: "title",
 					},
-					{url: staticPath + "consentrecords/svg/welcomepathway.svg",
+					{url: staticPath + "consentrecords/svg/welcomepathway.svg" + jsVersionPathSuffix,
 					 cssClass: "center max-height",
 					},
 				],
@@ -340,13 +340,13 @@ var WelcomePanel = (function () {
 					{text: "Types of Experiences",
 					 cssClass: "heading1",
 					},
-					{url: staticPath + "consentrecords/svg/experiencetypes.svg",
+					{url: staticPath + "consentrecords/svg/experiencetypes.svg" + jsVersionPathSuffix,
 					},
 				],
 				[
 					{text: "Let's take a look at an experience:",
 					},
-					{url: staticPath + "consentrecords/svg/experiencedetail.svg",
+					{url: staticPath + "consentrecords/svg/experiencedetail.svg" + jsVersionPathSuffix,
 					 cssClass: "center",
 					},
 					{panels:
@@ -543,7 +543,7 @@ var WelcomePanel = (function () {
 					{
 						if (subOL.children('li.active').next().length == 0)
 						{
-							if (cr.signedinUser.getValueID())
+							if (cr.signedinUser.getInstanceID())
 								return;
 								
 							if (prepareClick('click', 'Get Started'))
@@ -576,7 +576,7 @@ var WelcomePanel = (function () {
 		var getStartedSpan = div1
 			.append('span')
 			.classed('get-started', true)
-			.text(cr.signedinUser.getValueID() ? '' : 'Get Started')
+			.text(cr.signedinUser.getInstanceID() ? '' : 'Get Started')
 			.style('display', 'none');
 		
 		var jNode = $(div1.node());
@@ -619,10 +619,10 @@ var WelcomePanel = (function () {
 				_this.handleResize();
 			});
 		
-		$(cr.signedinUser).on("signin.cr", null, this.node(), signedIn);
+		cr.signedinUser.on("signin.cr", this.node(), signedIn);
 		$(this.node()).on("remove", null, function()
 			{
-				$(cr.signedinUser).off("signin.cr", null, signedIn);
+				cr.signedinUser.off("signin.cr", signedIn);
 			});
 	}
 	

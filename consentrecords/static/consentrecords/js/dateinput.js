@@ -382,6 +382,11 @@ var DateWheel = (function () {
 	DateWheel.prototype.minDate = null;
 	DateWheel.prototype.maxDate = null;
 	DateWheel.prototype.isClear = false;
+	DateWheel.prototype.didDrag = false;
+	
+	DateWheel.prototype._yearScrolled = null;
+	DateWheel.prototype._monthScrolled = null;
+	DateWheel.prototype._dayScrolled = null;
 	
 	DateWheel.prototype._getAlignmentFunction = function(done)
 	{
@@ -397,12 +402,23 @@ var DateWheel = (function () {
 						var scrollTop =  Math.round($(node).scrollTop());
 						
 						var newScrollTop;
-						if (scrollTop % itemHeight < itemHeight / 2)
-							newScrollTop = scrollTop - (scrollTop % itemHeight);
+						var newIndex;
+						if (!_this.didDrag)
+						{
+							if (scrollTop % itemHeight < itemHeight / 2)
+								newScrollTop = scrollTop - (scrollTop % itemHeight);
+							else
+								newScrollTop = scrollTop + itemHeight - (scrollTop % itemHeight);
+							newIndex = Math.round(newScrollTop / itemHeight);
+						}
 						else
-							newScrollTop = scrollTop + itemHeight - (scrollTop % itemHeight);
-							
-						var newIndex = Math.round(newScrollTop / itemHeight);
+						{
+							if (scrollTop % itemHeight < itemHeight / 2)
+								newIndex = Math.round(scrollTop / itemHeight);
+							else
+								newIndex = Math.round(scrollTop / itemHeight) + 1;
+						}	
+						
 						if (_this._getIsIndexDisabled(node, newIndex))
 						{
 							var numItems = $(node).children('li').length;
@@ -444,7 +460,7 @@ var DateWheel = (function () {
 	
 	DateWheel.prototype._getIsIndexDisabled = function(node, i)
 	{
-		var li = $(node).children('li:nth-child({0})'.format(i+1));
+		var li = $(node.childNodes.item(i));
 		return li.hasClass('disabled');
 	}
 	
@@ -527,7 +543,6 @@ var DateWheel = (function () {
 		}
 		
 		this.onChange();
-		$(this).trigger('change');
     }
     
     DateWheel.prototype.checkMinDate = function(minDate, maxDate)
@@ -594,7 +609,7 @@ var DateWheel = (function () {
 		}
 		else if (typeof(newValue) != "string")
 		{
-			throw ("Runtime Error: unrecognized data for value: {0}".format(newValue));
+			throw new Error("Runtime Error: unrecognized data for value: {0}".format(newValue));
 		}
 		else
 		{
@@ -607,6 +622,7 @@ var DateWheel = (function () {
 			this.oldMonth = parseInt(newValue.substring(5, 7));
 			this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
 			this._onMonthChanged();
+			$(this).trigger('change');
 			
 			if (newValue.length > 8)
 			{
@@ -637,12 +653,30 @@ var DateWheel = (function () {
 		this.isClear = false;
 	}
 	
-	DateWheel.prototype.restoreDate = function()
+	DateWheel.prototype.onShowing = function()
 	{
 		this._setSelectedIndex(this.yearNode, 
 			this._getMaxYear() - this.oldYear);
 		this._setSelectedIndex(this.monthNode, this.oldMonth - 1);
 		this._setSelectedIndex(this.dayNode, this.oldDay);
+		
+		/* Set up scrolling in a timeout after the scrolling caused by the
+			above code is handled. 
+		 */
+		var _this = this;
+		setTimeout(function()
+			{
+				$(_this.yearNode).on('scroll', _this._yearScrolled);
+				$(_this.monthNode).on('scroll', _this._monthScrolled);
+				$(_this.dayNode).on('scroll', _this._dayScrolled);
+			});
+	}
+	
+	DateWheel.prototype.onHiding = function()
+	{
+		$(this.yearNode).off('scroll', this._yearScrolled);
+		$(this.monthNode).off('scroll', this._monthScrolled);
+		$(this.dayNode).off('scroll', this._dayScrolled);
 	}
 	
     DateWheel.prototype.onChange = function()
@@ -654,6 +688,40 @@ var DateWheel = (function () {
     DateWheel.prototype.node = function()
     {
     	return this._node;
+    }
+    
+    DateWheel.prototype._setupDrag = function(node)
+    {
+		var offsetY;
+		var _this = this;
+		d3.select(node).attr('draggable', 'true')
+			.call(
+				d3.behavior.drag()
+					.on("dragstart", function(){
+						try
+						{
+							var offset = d3.mouse(this);
+							offsetY = offset[1];
+							startScrollTop = $(this).scrollTop();
+							_this.didDrag = false;
+						}
+						catch(err)
+						{
+							console.log(err);
+						}
+					})
+					.on("drag", function(){
+						_this.didDrag = true;
+						$(this).scrollTop(startScrollTop + offsetY - d3.mouse(this)[1]);
+					})
+					.on("dragend", function(fd, i){
+						if (_this.didDrag)
+						{
+							_this.didDrag = false;
+							$(this).scroll();
+						}
+					})
+				);
     }
     
 	function DateWheel(container, showDate, minDate, maxDate)
@@ -687,25 +755,63 @@ var DateWheel = (function () {
 		var bottomShade = datePickerContainer.append('div')
 			.classed('bottomShade', true);
 		
-		$(this.yearNode).scroll(this._getAlignmentFunction(function()
-			{ 
-				_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
-				_this._onYearChanged();
+		function unClear()
+		{
+			if (_this.isClear)
+			{
+				_this.isClear = false;
+				_this.onChange();
 				$(_this).trigger('change');
-			}));
-		$(this.monthNode).scroll(this._getAlignmentFunction(function() 
-			{ 
-				_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
-				_this._onMonthChanged();
-				$(_this).trigger('change');
-			}));
-		$(this.dayNode).scroll(this._getAlignmentFunction(function()
-			{ 
-				_this.oldDay = _this._getSelectedIndex(_this.dayNode);
-				_this.onChange(); 
-				$(_this).trigger('change');
-			}));
+			}
+		}
 		
+		this._setupDrag(this.yearNode);	
+		this._setupDrag(this.monthNode);	
+		this._setupDrag(this.dayNode);
+		this._yearScrolled = this._getAlignmentFunction(function()
+			{
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldYear = _this._getMaxYear() - _this._getSelectedIndex(_this.yearNode);
+					_this._onYearChanged();
+					$(_this).trigger('change');
+				}
+			});
+		this._monthScrolled = this._getAlignmentFunction(function() 
+			{ 
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldMonth = _this._getSelectedIndex(_this.monthNode) + 1;
+					_this._onMonthChanged();
+					$(_this).trigger('change');
+				}
+			});
+		
+		this._dayScrolled = this._getAlignmentFunction(function()
+			{ 
+				/* Test to make sure this is displayed, because in Firefox, the scroll event occurs
+					after this item is undisplayed.
+				 */
+				if ($(this).css('display') != 'none')
+				{
+					_this.isClear = false;
+					_this.oldDay = _this._getSelectedIndex(_this.dayNode);
+					_this.onChange(); 
+					$(_this).trigger('change');
+				}
+			});
+		$(this.yearNode).click(unClear);
+		$(this.monthNode).click(unClear);
+		$(this.dayNode).click(unClear);
+				
 		var months = Date.CultureInfo.monthNames;
 		this.monthPickerList.selectAll('li')
 			.data(months)

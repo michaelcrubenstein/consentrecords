@@ -12,6 +12,8 @@ export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 sftp -b - -i ~/Development/keys/BeTheChangeProjects.pem ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/prod/consentrecords
 lcd ~/GitHub/consentrecords
+cd consentrecords
+lcd consentrecords
 
 ##################################################################
 # Creating a self-sign certificate
@@ -215,7 +217,7 @@ python3 manage.py runserver --insecure
 ##################################################################
 # Command to launch the mySQL server with the production database.
 ##################################################################
-mysql -uadmin -p -hbtcdbproduction.cgbhphj40gae.us-east-1.rds.amazonaws.com --database=btcdb
+mysql -uadmin -p -hbtcdbproduction.cgbhphj40gae.us-east-1.rds.amazonaws.com --database=btcdevelopment
 
 ##################################################################
 # Command to initialize the bootstrap facts in the database:
@@ -253,22 +255,6 @@ get services.txt
 get experienceprompts.txt
 exit
 
-
-##################################################################
-# How to initialize a python session to work with objects.
-##################################################################
-
-import profile
-import getpass
-import django; django.setup()
-from django.contrib.auth import authenticate, get_user_model, login, logout
-from consentrecords.models import *
-from consentrecords import pathparser
-from consentrecords import instancecreator
-from parse import cssparser
-from consentrecords.views import api
-
-user=authenticate(username='testuser6@consentrecords.org', password=getpass.getpass("Password: "))
 
 ##################################################################
 # Python script for updating the reference values:
@@ -312,6 +298,8 @@ import django; django.setup()
 import profile
 import getpass
 from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.models import AnonymousUser
+from django.http import QueryDict
 from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
@@ -322,7 +310,13 @@ terms.initialize()
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
 from django.http import QueryDict
 path='Service'
-q = QueryDict('fields=%5B%22Domain%22%2C%22Stage%22%5D')
+q = QueryDict('fields=%5B%5D')
+profile.run('api.getData(user, path, q)')
+
+#path is to the user instance of the administrator
+from django.http import QueryDict
+path='#b3fb89e4eed844cb8a0d639a455b6ac7'
+q = QueryDict('fields=%5B%22More%20Experience%22%2C%22parents%22%5D')
 profile.run('api.getData(user, path, q)')
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
@@ -351,8 +345,21 @@ q = QueryDict('path=%23ae7207111ade4caaba361cf7eef99c44&fields=%5B%22parents%22%
 Value.objects.filter(stringValue='_uuname').update(stringValue='_term')
 
 ##################################################################
-# Commands to update the EC2 ubuntu with the latest security patches:
+# Shell commands to update the EC2 ubuntu with the latest security patches:
 ##################################################################
 sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
 sudo reboot
 
+##################################################################
+# Python commands to update a value
+##################################################################
+
+# This example uses the commands to strip the leading character from a text value.
+from django.db import transaction
+nameLists = NameList()
+user = Instance.objects.get(typeID=terms.user, deleteTransaction__isnull=True, description__text='michaelcrubenstein@gmail.com')
+def d1(i):
+    with transaction.atomic():
+        transactionState = TransactionState(user.transaction.user)
+        i.value_set.get(field=terms.name, deleteTransaction__isnull=True).updateValue({'text': i.description.text[1:]}, transactionState)
+        Instance.updateDescriptions([i], nameLists)

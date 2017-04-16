@@ -35,5 +35,6 @@ urlpatterns = [
     url(r'^settings/', views.userSettings),
     url(r'^signup/([^/@]+@[^/@]+\.[^/@]+)/', views.signup),
     url(r'^signup/', views.signup),
+    url(r'^experience/([^/]+)/', views.showExperience),
 
 ]

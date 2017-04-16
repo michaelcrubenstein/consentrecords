@@ -91,11 +91,11 @@ if __name__ == "__main__":
                 zipName = s[5].strip()
                 grades = s[6:]
                 statePath='_term[_name=State]>enumerator[_name='+stateName+']'
-                stateInstance = pathparser.selectAllObjects(statePath, userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
+                stateInstance = pathparser.getQuerySet(statePath, userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
                 
-                schoolInstance = pathparser.selectAllObjects('Service[_name=School]',
+                schoolInstance = pathparser.getQuerySet('Service[_name=School]',
                                                              userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
-                educationInstance = pathparser.selectAllObjects('Service[_name=Education]',
+                educationInstance = pathparser.getQuerySet('Service[_name=Education]',
                                                              userInfo=userInfo,securityFilter=userInfo.findFilter)[0]
                 
                 orgs = Instance.objects.filter(deleteTransaction__isnull=True,

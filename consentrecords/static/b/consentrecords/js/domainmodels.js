@@ -5,25 +5,7 @@
 	make crossDomain calls to the web server.
  */
 
-cr.urls = {
-		selectAll : "/local/selectall/",
-		getValues : "/local/getvalues/",
-		getUserID : "/local/getuserid/",
-		getData : "/local/getdata/",
-		getConfiguration : "/local/getconfiguration/",
-		createInstance : "/local/createinstance/",
-		updateValues : "/local/updatevalues/",
-		deleteValue : '/local/deletevalue/',
-		deleteInstances : '/local/deleteinstances/',
-		checkUnusedEmail : '/user/checkunusedemail/',
-		submitSignout : '/user/submitsignout/',
-		submitSignin: '/submitsignin/',
-		submitNewUser: '/submitnewuser/',
-		updateUsername: '/user/updateusername/',
-		updatePassword: '/user/updatepassword/',
-		acceptFollower: '/user/acceptFollower/',
-		requestAccess: '/user/requestAccess/',
-		resetPassword: '/user/resetpassword/',
-		log: '/monitor/log/',
-	};
+cr.urls.getData = '/api/';
+cr.urls.getUserID = '/local/getuserid/';
+cr.urls.updateValues = '/local/updatevalues/';
 	

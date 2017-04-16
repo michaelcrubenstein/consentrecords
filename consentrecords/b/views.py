@@ -47,6 +47,7 @@ def home(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -74,6 +75,7 @@ def showLines(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -98,6 +100,7 @@ def orgHome(request):
     template = loader.get_template(templateDirectory + 'orgHome.html')
     args = {
         'user': request.user,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -125,6 +128,7 @@ def find(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -153,7 +157,7 @@ def showInstances(request):
     
     try:
         # The type of the root object.
-        rootType = request.GET.get('type', None)
+        rootType = request.GET.get('type', "_term")
         root = rootType and terms[rootType];
         path=request.GET.get('path', "_term")
         header=request.GET.get('header', "List")
@@ -162,6 +166,7 @@ def showInstances(request):
     
         argList = {
             'user': request.user,
+            'jsversion': settings.JS_VERSION,
             'canShowObjects': request.user.is_staff,
             'canAddObject': request.user.is_staff,
             'path': urllib.parse.unquote_plus(path),
@@ -191,6 +196,7 @@ def showPathway(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -202,11 +208,49 @@ def showPathway(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = '_user[_email=%s]' % email
+    containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'pathway%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].id
+
+    context = RequestContext(request, args)
+        
+    return HttpResponse(template.render(context))
+
+@ensure_csrf_cookie
+def showExperience(request, id):
+    logPage(request, 'pathAdvisor/experience')
+    
+    template = loader.get_template(templateDirectory + 'userHome.html')
+    args = {
+        'user': request.user,
+        'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
+    }
+    
+    if request.user.is_authenticated():
+        user = Instance.getUserInstance(request.user)
+        if not user:
+            return HttpResponse("user is not set up: %s" % request.user.get_full_name())
+        args['userID'] = user.id
+        
+    if settings.FACEBOOK_SHOW:
+        args['facebookIntegration'] = True
+    
+    if terms.isUUID(id):
+        args['state'] = 'experience/%s/' % id
+        pathend = re.search(r'experience/%s/' % id, request.path).end()
+        path = request.path[pathend:]
+
+        if re.match(r'comments/*', path, re.I):
+            args['state'] += 'comments/'
+        elif re.match(r'comment/.*', path, re.I):
+            args['state'] += 'comment/'
+            path = path[len('comment/'):]
+            if re.match(r'[A-Fa-f0-9]{32}/', path):
+                args['state'] += path[:33]
+                path = path[33:]
 
     context = RequestContext(request, args)
         
@@ -220,6 +264,7 @@ def accept(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -231,13 +276,13 @@ def accept(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].id
-        args['cell'] = '_user'
+        args['cell'] = TermNames.user
         args['privilege'] = terms.readPrivilegeEnum.id
 
     context = RequestContext(request, args)
@@ -252,6 +297,7 @@ def ignore(request, email):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -263,9 +309,9 @@ def ignore(request, email):
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
-    containerPath = ('#%s' if terms.isUUID(email) else '_user[_email=%s]') % email
+    containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.selectAllObjects(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].id
@@ -284,6 +330,7 @@ def userSettings(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     print ('2')
@@ -313,6 +360,7 @@ def signup(request, email=None):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if settings.FACEBOOK_SHOW:
@@ -346,7 +394,7 @@ def acceptFollower(request, userPath=None):
             
         userInfo = UserInfo(request.user)
         if userPath:
-            users = pathparser.selectAllObjects(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
+            users = pathparser.getQuerySet(userPath, userInfo=userInfo, securityFilter=userInfo.administerFilter)
             if len(users):
                 user = users[0]
                 if user.typeID != terms.user:
@@ -358,38 +406,38 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
         if len(objs) > 0:
             follower = objs[0]
             if follower.typeID == terms.user:
                 followerField = terms.user
             else:
                 followerField = terms.group
-            ars = user.value_set.filter(field=terms['_access record'],
+            ars = user.value_set.filter(field=terms.accessRecord,
                                   deleteTransaction__isnull=True) \
                           .filter(referenceValue__value__field=followerField,
                                   referenceValue__value__deleteTransaction__isnull=True,
                                   referenceValue__value__referenceValue_id=follower.id)
-            if ars.count():
+            if ars.exists():
                 return HttpResponseBadRequest(reason='%s is already following you' % follower.description.text)
             else:
                 with transaction.atomic():
                     transactionState = TransactionState(request.user)
                     nameLists = NameList()
                     try:
-                        ar = user.value_set.filter(field=terms['_access record'],
+                        ar = user.value_set.filter(field=terms.accessRecord,
                                                    deleteTransaction__isnull=True) \
-                                     .get(referenceValue__value__field=terms['_privilege'],
+                                     .get(referenceValue__value__field=terms.privilege,
                                           referenceValue__value__deleteTransaction__isnull=True,
                                           referenceValue__value__referenceValue_id=privilegeID).referenceValue
                         newValue = ar.addReferenceValue(followerField, follower, ar.getNextElementIndex(followerField), transactionState)
                     except Value.DoesNotExist:
-                        ar, newValue = instancecreator.create(terms['_access record'], user, terms['_access record'], user.getNextElementIndex(terms['_access record']), 
-                            {'_privilege': [{'instanceID': privilegeID}],
+                        ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
+                            {TermNames.privilege: [{'instanceID': privilegeID}],
                              followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
     
                     # Remove any corresponding access requests.
-                    vs = user.value_set.filter(field=terms['_access request'],
+                    vs = user.value_set.filter(field=terms.accessRequest,
                                            deleteTransaction__isnull=True,
                                            referenceValue_id=follower.id)
                     for v in vs:
@@ -431,17 +479,17 @@ def requestAccess(request):
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
             else:
                 userInfo = UserInfo(request.user)
-                objs = pathparser.selectAllObjects(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                objs = pathparser.getQuerySet(followingPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                 if len(objs) > 0 and objs[0].typeID == terms.user:
                     following = objs[0]
-                    objs = pathparser.selectAllObjects(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
                     if len(objs) > 0 and objs[0].typeID == terms.user:
                         follower = objs[0]
-                        fieldTerm = terms['_access request']
+                        fieldTerm = terms.accessRequest
                         ars = following.value_set.filter(field=fieldTerm,
                                                          deleteTransaction__isnull=True,
                                                          referenceValue_id=follower.id)
-                        if ars.count():
+                        if ars.exists():
                             if follower == user:
                                 error = 'You have already requested to follow %s.' % following.description.text
                             else:
@@ -462,14 +510,14 @@ def requestAccess(request):
                                 # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
                                 recipientEMail = following.value_set.filter(field=terms.email,
                                                                             deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms['First Name'],
-                                								   deleteTransaction__isnull=True)
-                                firstName = firstNames.count() > 0 and firstNames[0]
+                                firstNames = following.value_set.filter(field=terms.firstName,
+                                                                   deleteTransaction__isnull=True)
+                                firstName = firstNames.exists() and firstNames[0].stringValue
                                 
                                 moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms['Screen Name'],
-                                																	deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.count() > 0 and screenNames[0]
+                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
+                                                                                                    deleteTransaction__isnull=True)
+                                screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
                                 
                                 Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
                                     screenName or firstName,
@@ -500,6 +548,7 @@ def addExperience(request, experienceID):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
     
     if request.user.is_authenticated():
@@ -573,6 +622,7 @@ def addToPathway(request):
     args = {
         'user': request.user,
         'urlprefix': urlPrefix,
+        'jsversion': settings.JS_VERSION,
     }
 
     if settings.FACEBOOK_SHOW:

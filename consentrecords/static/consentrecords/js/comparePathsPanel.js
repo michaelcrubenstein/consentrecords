@@ -61,7 +61,7 @@ var AgeCalculator = (function() {
 })();
 
 var CompareFlag = (function() {
-	CompareFlag.prototype = new FlagData();
+	CompareFlag.prototype = new FlagController();
 	
 	CompareFlag.prototype.getEndAge = function()
 	{
@@ -110,9 +110,17 @@ var CompareFlag = (function() {
 		return {top: top, bottom: bottom};
 	}
 	
+	/* Return true if the experience in this flag is on the specified path. */
+	CompareFlag.prototype.isOnPath = function(path)
+	{
+		return (this.experience.getTypeName() == "Experience") ?
+			   (this.experience.getValue(cr.fieldNames.user).getInstanceID() == path.getValue(cr.fieldNames.user).getInstanceID()) :
+			   (this.experience.cell.parent == path);
+	}
+	
 	function CompareFlag(experience, ageCalculator)
 	{
-		FlagData.call(this, experience);
+		FlagController.call(this, experience);
 		this.ageCalculator = ageCalculator;
 		this.birthday = ageCalculator.birthdays[0];
 	}
@@ -147,7 +155,6 @@ var ComparePath = (function() {
 	ComparePath.prototype.pathwayContainer = null;
 	ComparePath.prototype.svg = null;
 	ComparePath.prototype.loadingMessage = null;
-	ComparePath.prototype.defs = null;
 	ComparePath.prototype.bg = null;
 	ComparePath.prototype.loadingText = null;
 	ComparePath.prototype.yearGroup = null;
@@ -165,59 +172,13 @@ var ComparePath = (function() {
 		var _this = this;
 		if (index >= 0)
 			this.allExperiences.splice(index, 1);
-		if (this.detailFlagData && experience == this.detailFlagData.experience)
-			this.hideDetail(function() {
-					_this.setupHeights();
-					_this.setupWidths();
-				}, 0);
 		this.clearLayout();
 		this.checkLayout();
 	};
 
-	ComparePath.prototype.handleExperienceDateChanged = function(eventObject)
-	{
-		var _this = eventObject.data;
-		var g = _this.experienceGroup.selectAll('g.flag');
-		_this.transitionPositions(g);
-	}
-	
-	ComparePath.prototype.setFlagText = function(node)
-	{
-		var g = d3.select(node);
-		g.selectAll('text').selectAll('tspan:nth-child(1)')
-			.text(function(d) { return d.getDescription(); })
-	}
-		
-	/* Sets up each group (this) that displays an experience to delete itself if
-		the experience is deleted.
-	 */
-	ComparePath.prototype.setupDelete = function(fd, node) 
-	{
-		var _this = this;
-		var valueDeleted = function(eventObject)
-		{
-			$(eventObject.data).remove();
-			_this.handleValueDeleted(this);
-		};
-		
-		var dataChanged = function(eventObject)
-		{
-			_this.setFlagText(eventObject.data);
-		}
-		
-		$(fd.experience).one("valueDeleted.cr", null, node, valueDeleted);
-		$(fd.experience).on("dataChanged.cr", null, node, dataChanged);
-		
-		$(node).on("remove", null, fd.experience, function(eventObject)
-		{
-			$(eventObject.data).off("valueDeleted.cr", null, valueDeleted);
-			$(eventObject.data).off("dataChanged.cr", null, dataChanged);
-		});
-	}
-	
 	ComparePath.prototype.getColumn = function(fd)
 	{
-		if (fd.experience.cell.parent == this.rightPath)
+		if (fd.isOnPath(this.rightPath))
 			return 1;
 		else
 			return 0;
@@ -270,7 +231,7 @@ var ComparePath = (function() {
 			.each(function(d, i)
 				{
 					var t = d3.select(this);
-					FlagData.appendWrappedText(d.name, function(i)
+					FlagController.appendWrappedText(d.name, function(i)
 							{
 								return t.append("tspan")
 									.attr("x", 0)
@@ -300,26 +261,6 @@ var ComparePath = (function() {
 		g.selectAll('line.flag-pole')
 			.attr('y2', function(fd) { return "{0}em".format(fd.y2 - fd.y); });
 			
-		if (this.detailFlagData != null)
-		{
-			/*( Restore the detailFlagData */
-			var fds = g.data();
-			var i = fds.findIndex(function(fd) { return fd.experience === _this.detailFlagData.experience; });
-			if (i >= 0)
-			{
-				_this.hideDetail(function()
-					{
-						_this.setupClipPaths();
-						_this.showDetailGroup(fds[i], 0);
-					}, 0
-				);
-			}
-			else
-				throw "experience lost in layout";
-		}
-		else
-			this.setupClipPaths();
-		
 		this.layoutYears(g);
 		
 		this.setupHeights();
@@ -354,46 +295,43 @@ var ComparePath = (function() {
 		return toElement;
 	}
 	
-	ComparePath.prototype.transitionPositions = function(g)
-	{
-		g.sort(this._compareExperiences);
-		this._setCoordinates(g);
-		g.transition()
-			.duration(1000)
-			.ease("in-out")
-			.attr("transform", function(fd) { return "translate({0},{1})".format(fd.x, fd.y);});
-		
-		/* Set the line length to the difference between fd.y2 and fd.y, since g is transformed
-			to the fd.y position.
-		 */
-		g.selectAll('line.flag-pole')
-			.transition()
-			.duration(1000)
-			.ease("in-out")
-			.attr('y2', function(fd) { return fd.y2 - fd.y; });
-
-		this.layoutYears(g);
-	}
-	
-	ComparePath.prototype.appendExperiences = function(compareFlags)
+	ComparePath.prototype.appendExperiences = function(experience)
 	{
 		var _this = this;
 
-		$(this.experienceGroup.selectAll('g.flag')[0]).remove();
 		var offsetX;
 		var offsetY;
 		var ghostGroup;
 		var didDrag;
-		var g = this.experienceGroup.selectAll('g')
-			.data(compareFlags)
-			.enter()
-			.append('g')
-			.classed('flag', true)
-			.attr('draggable', 'true')
-			.each(function(d)
-				{
-					_this.setupDelete(d, this);
-				})
+		var g;
+		
+		function getCompareFlag(experience)
+			{
+				var isLeft = (experience.getTypeName() == "Experience") ?
+							 (experience.getValue(cr.fieldNames.user).getInstanceID() == _this.leftPath.getValue(cr.fieldNames.user).getInstanceID()) :
+							 (experience.cell.parent == _this.leftPath);
+				if (isLeft)
+					return new CompareFlag(experience, _this.leftAgeCalculator);
+				else
+					return new CompareFlag(experience, _this.rightAgeCalculator);
+			}
+		if (experience)
+		{
+			g = this.experienceGroup.append('g')
+				.datum(getCompareFlag(experience));
+		}
+		else
+		{
+			g = this.experienceGroup.selectAll('g')
+				.data(this.allExperiences.map(function(e) { 
+					return getCompareFlag(e); }))
+				.enter()
+				.append('g');
+		}
+		
+		this.setupFlags(g);
+
+		g.attr('draggable', 'true')
 			.call(
 				d3.behavior.drag()
 					.on("dragstart", function(){
@@ -418,64 +356,19 @@ var ComparePath = (function() {
 					.on("dragend", function(fd, i){
 						d3.select(ghostGroup).remove();
 						if (!didDrag)
-							showDetail(fd, i);
+						{
+							cr.logRecord('click', 'show comments: ' + fd.getDescription());
+							_this.showCommentsPanel(this, fd);
+						}
 					})
-				)
-			.on("click", function() 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					if (!d3.event.defaultPrevented)
-						_this.updateDetail(fd);
-				})
-			.each(function(d) 
-					{ 
-						_this.setupServiceTriggers(this, d, function(eventObject)
-							{
-								d.column = _this.getColumn(d);
-								_this.transitionPositions(g);
-							});
-					});
+				);
 		
-		function showDetail(fd, i)
-		{
-			cr.logRecord('click', 'show detail: ' + fd.getDescription());
-			
-			_this.hideDetail(function() {
-					_this.showDetailGroup(fd); 
-				});
-		}
-		
-		g.append('line').classed('flag-pole', true)
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		g.append('rect').classed('opaque', true)
-			.attr('x', '1.5');
-		g.append('rect').classed('bg', true)
-			.attr('x', '1.5')
-			.each(function(d)
-				{
-					d.colorElement(this);
-					_this.handleChangedExperience(this, d);
-					_this.setupColorWatchTriggers(this, d);
-				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', this.textDetailLeftMargin);
-		text.append('tspan')
-			.attr('dy', '1.1em');
-		
-		g.each(function() { _this.setFlagText(this); });
+		return g;
 	}
 	
 	ComparePath.prototype.getPathDescription = function(path, ageCalculator)
 	{
-		return (cr.signedinUser && path.cell.parent == cr.signedinUser && this.youName) ||
+		return (cr.signedinUser && path == cr.signedinUser.subInstance("Path") && this.youName) ||
 			getPathDescription(path) ||
 			ageCalculator.toString();
 	}
@@ -498,11 +391,11 @@ var ComparePath = (function() {
 		var _this = this;
 		var firstTime = true;
 		
-		var leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
-		var rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
+		this.leftAgeCalculator = new AgeCalculator(this.leftPath.getValue("Birthday").getDescription());
+		this.rightAgeCalculator = new AgeCalculator(this.rightPath.getValue("Birthday").getDescription());
 		
-		this.columnData[0].name = this.getPathDescription(this.leftPath, leftAgeCalculator);
-		this.columnData[1].name = this.getPathDescription(this.rightPath, rightAgeCalculator);
+		this.columnData[0].name = this.getPathDescription(this.leftPath, this.leftAgeCalculator);
+		this.columnData[1].name = this.getPathDescription(this.rightPath, this.rightAgeCalculator);
 		
 		var guides = this.guideGroup.selectAll('g')
 			.data(this.columnData)
@@ -535,15 +428,10 @@ var ComparePath = (function() {
 		var rightCell = this.rightPath.getCell("More Experience");
 		var addedFunction = function(eventObject, newData)
 			{
-				eventObject.data.addMoreExperience(newData);
+				_this.addMoreExperience(newData);
 			}
-		$(leftCell).on("valueAdded.cr", null, this, addedFunction);
-		$(rightCell).on("valueAdded.cr", null, this, addedFunction);
-		$(this.pathwayContainer.node()).on("remove", function()
-			{
-				$(leftCell).off("valueAdded.cr", null, addedFunction);
-				$(rightCell).off("valueAdded.cr", null, addedFunction);
-			});
+		setupOnViewEventHandler(leftCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
+		setupOnViewEventHandler(rightCell, "valueAdded.cr", this.pathwayContainer.node(), addedFunction);
 			
 		var experiences = leftCell.data;
 		
@@ -561,12 +449,6 @@ var ComparePath = (function() {
 				_this.checkOfferingCells(experience, null);
 			});
 			
-		var compareFlags = leftCell.data.map(function(e) { 
-				return new CompareFlag(e, leftAgeCalculator); 
-				}).concat(rightCell.data.map(function(e) {
-				return new CompareFlag(e, rightAgeCalculator);
-				}));
-	
 		var resizeFunction = function()
 		{
 			/* Wrap handleResize in a setTimeout call so that it happens after all of the
@@ -576,7 +458,7 @@ var ComparePath = (function() {
 				{
 					if (firstTime)
 					{
-						_this.appendExperiences(compareFlags);
+						_this.appendExperiences();
 						firstTime = false;
 					}
 					_this.handleResize();
@@ -586,7 +468,7 @@ var ComparePath = (function() {
 		var node = this.sitePanel.node();
 		this.allExperiences.filter(function(d)
 			{
-				return d.typeName === "More Experience";
+				return d.getTypeName() === "More Experience";
 			})
 			.forEach(function(d)
 			{
@@ -607,13 +489,6 @@ var ComparePath = (function() {
 		var pathwayBounds = this.pathwayContainer.node().getBoundingClientRect();
 		var svgHeight = containerBounds.height - (pathwayBounds.top - containerBounds.top);
 		
-		if (this.detailFlagData != null)
-		{
-			var h = (this.detailFlagData.y * this.emToPX) + this.detailRectHeight + this.experienceGroupDY + this.bottomNavHeight;
-			if (svgHeight < h)
-				svgHeight = h;
-		}
-		
 		var _this = this;
 		var lastFlag = this.experienceGroup.selectAll('g.flag:last-child');
 		var flagHeights = (lastFlag.size() ? (lastFlag.datum().y2 * this.emToPX) + this.experienceGroupDY : this.experienceGroupDY) + this.bottomNavHeight;
@@ -631,13 +506,6 @@ var ComparePath = (function() {
 		var newWidth = this.sitePanel.scrollAreaWidth();
 		var _this = this;
 		
-		if (this.detailFlagData != null)
-		{
-			var w = this.experienceGroupDX + this.detailFlagData.x + parseFloat(this.detailFrontRect.attr('width'));
-			if (newWidth < w)
-				newWidth = w;
-		}
-		
 		this.experienceGroup.selectAll('g.flag').each(function (fd)
 			{
 				var w = _this.experienceGroupDX + fd.x +parseFloat(d3.select(this).selectAll('rect').attr('width'));
@@ -650,9 +518,9 @@ var ComparePath = (function() {
 	
 	ComparePath.prototype.setUser = function(leftPath, rightPath, editable)
 	{
-		if (leftPath.privilege === '_find')
+		if (leftPath.getPrivilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(leftPath.getDescription());
-		if (rightPath.privilege === '_find')
+		if (rightPath.getPrivilege() === cr.privileges.find)
 			throw "You do not have permission to see information about {0}".format(rightPath.getDescription());
 		if (this.leftPath)
 			throw "paths have already been set for this pathtree";
@@ -662,8 +530,6 @@ var ComparePath = (function() {
 		this.leftPath = leftPath;
 		this.rightPath = rightPath;
 		this.editable = (editable !== undefined ? editable : true);
-
-		this.setupClipID();
 
 		var container = d3.select(this.containerDiv);
 		
@@ -675,8 +541,6 @@ var ComparePath = (function() {
 			.attr('xmlns', "http://www.w3.org/2000/svg")
 			.attr('version', "1.1");
 		
-		this.defs = this.svg.append('defs');
-	
 		/* bg is a rectangle that fills the background with the background color. */
 		this.bg = this.svg.append('rect')
 			.style("width", "100%")
@@ -699,36 +563,10 @@ var ComparePath = (function() {
 				.classed("experiences", true)
 				.attr('transform', 'translate({0},{1})'.format(this.experienceGroupDX, this.experienceGroupDY));
 			
-		this.detailGroup = this.svg.append('g')
-			.classed('detail', true)
-			.attr('clip-path', this.getDetailClipPath())
-			.on("click", function(d) 
-				{ 
-					d3.event.stopPropagation(); 
-				})
-			.on("click.cr", function(fd, i)
-				{
-					if (fd.experience.canWrite())
-						_this.showDetailPanel(fd, i);
-				});
-
-		this.appendDetailContents();
-			
 		d3.select(this.containerDiv).selectAll('svg')
 			.on("click", function() 
 			{ 
 				d3.event.stopPropagation(); 
-			})
-			.on("click.cr", function() {
-				if (_this.detailFlagData)
-				{
-					cr.logRecord('click', 'hide details');
-					_this.hideDetail(function()
-						{
-							_this.setupHeights();
-							_this.setupWidths();
-						});
-				}
 			});
 		
 		/* setupHeights now so that the initial height of the svg and the vertical lines
@@ -748,11 +586,11 @@ var ComparePath = (function() {
 			$(_this).trigger("userSet.cr");
 		}
 		
-		var p1 = crp.promise({path:  "#" + this.rightPath.getValueID() + '::reference(_user)::reference(Experience)', 
+		var p1 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)', 
 				   fields: ["parents"]});
-		var p2 = crp.promise({path: "#" + _this.rightPath.getValueID() + '::reference(_user)::reference(Experience)::reference(Experiences)' + 
+		var p2 = crp.promise({path: this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
 						'::reference(Session)::reference(Sessions)::reference(Offering)'});
-		var p3 = crp.promise({path: "#" + _this.rightPath.getValueID() + '>"More Experience">Offering'});
+		var p3 = crp.promise({path: this.rightPath.getInstanceID() + '/More Experience/Offering'});
 		$.when(p1, p2, p3)
 		.then(function(experiences, r2, r3)
 			{
@@ -815,8 +653,8 @@ var ComparePathsPanel = (function () {
 			throw "pathtree already assigned to pathtree panel";
 			
 		this.pathtree = new ComparePath(this, panel2Div.node());
-		this.pathtree.setUser(this.leftUser.getValue("Path"),
-							  this.rightUser.getValue("Path"));
+		this.pathtree.setUser(this.leftUser.subInstance("Path"),
+							  this.rightUser.subInstance("Path"));
 		
 		$(this.pathtree).on("userSet.cr", function()
 			{

@@ -1,4 +1,10 @@
-# python3 data/08createuser.py -email testuser32@pathadvisor.com -first Test -last User32 -birthday 2001-04 -user michaelcrubenstein@gmail.com
+# Script for replacing User Entered Services with standard services
+# and User Entered Offerings with standard services.
+#
+# For example, if a user enters 'football' as an offering, that is changed
+# to a standard service so that it can be found by a search.
+#
+# python3 data/14standardizetags.py -user michaelcrubenstein@gmail.com
 
 import datetime
 import django
@@ -8,6 +14,8 @@ import traceback
 import sys
 import csv
 import re
+
+django.setup()
 
 from django.db import transaction
 from django.contrib.auth import authenticate
@@ -47,6 +55,10 @@ def loadRoot(type, field, value, nameList, transactionState):
             root = objs[0]
             value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
             print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
+            if input('Create anyway? (y/n): ') == 'y':
+                propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
+                root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
+                print("+ %s: %s" % (text, root.id))
         else:
             propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
             root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
@@ -118,7 +130,7 @@ def getReferenceValue(parent, field, value, fd, nameLists, userInfo):
         raise RuntimeError("Unrecognized Reference Value in %s: %s(%s)" % (str(parent), str(field), value))
     
 if __name__ == "__main__":
-    django.setup()
+    check = '-check' in sys.argv
 
     try:
         try:
@@ -130,38 +142,51 @@ if __name__ == "__main__":
         password = getpass.getpass("Password: ")
 
         user = authenticate(username=username, password=password) 
-
-        email = sys.argv[sys.argv.index('-email') + 1]
-        first = sys.argv[sys.argv.index('-first') + 1]
-        last = sys.argv[sys.argv.index('-last') + 1]
-        birthday = sys.argv[sys.argv.index('-birthday') + 1]
-
-        # Make sure that there is not already a user with this email
-        f = Instance.objects.filter(typeID=terms.user, deleteTransaction__isnull=True,
-            value__stringValue=email,
-            value__deleteTransaction__isnull=True,
-            value__field=terms.email)
-        if f.exists():
-            raise RuntimeError('the email "%s" already exists' % email)
-            
+    
         with transaction.atomic():
-            transactionState = TransactionState(user)
+            transactionState = None if check else TransactionState(user)
             userInfo = UserInfo(user)
         
             nameList = NameList()
             fieldsDataDictionary = FieldsDataDictionary()
             language = None
+            serviceField = terms['Service']
             
-            properties = {'_email': [{'text': email}], 
-                          '_first name': [{'text': first}], 
-                          '_last name': [{'text': last}], 
-                          'Birthday': [{'text': birthday}],
-                          'More Experiences': [{'cells': 
-                              {'Birthday': [{'text': birthday}] }}],
-                         }
-            root, newValue = instancecreator.create(terms.user, None, None, -1, properties, nameList, transactionState)
-                        
-            # raise RuntimeError("Done")
+            standardServices = Instance.objects.filter(\
+                typeID=serviceField,\
+                deleteTransaction__isnull=True);
+                
+            d = dict((''.join(s.description.text.lower().split()), s) for s in standardServices)
+            
+            customServices = Value.objects.filter(\
+                field=terms['User Entered Service'],\
+                deleteTransaction__isnull=True);
+                
+            for c in customServices:
+                key = ''.join(c.stringValue.lower().split())
+                if key in d.keys():
+                    parent = c.instance
+                    if not parent.value_set.filter(deleteTransaction__isnull=True,
+                        field=serviceField,
+                        referenceValue_id=d[key].id).exists():
+                        c.markAsDeleted(transactionState)
+                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
+                        print(parent.description.text, d[key])
                                 
+            customOfferings = Value.objects.filter(\
+                field=terms['User Entered Offering'],\
+                deleteTransaction__isnull=True);
+                
+            for c in customOfferings:
+                key = ''.join(c.stringValue.lower().split())
+                if key in d.keys():
+                    parent = c.instance
+                    if not parent.value_set.filter(deleteTransaction__isnull=True,
+                        field=serviceField,
+                        referenceValue__value__deleteTransaction__isnull=True,
+                        referenceValue__value__field=serviceField,
+                        referenceValue__value__referenceValue_id=d[key].id).exists():
+                        parent.addValue(serviceField, d[key], parent.getNextElementIndex(serviceField), transactionState)
+                        print(str(parent.parent.parent), parent.description.text, d[key])
     except Exception as e:
         print("%s" % traceback.format_exc())

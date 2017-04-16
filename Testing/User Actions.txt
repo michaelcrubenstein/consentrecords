@@ -1,0 +1,30 @@
+1. From not signed in:
+	1a. Go to URL/for/michaelcrubenstein@gmail.com
+	1b. Click Done
+	1c. Click in Search Input Box
+	1d. Type "Grade"
+	1e. Pick Grade 8
+	1f. Choose a user
+	1g. Click Done
+
+# Test api.getConfiguration by getting the configuration of an Organization
+# Test api.createInstance by creating an Organization with a name.
+2. From signed in as an administrator
+	2a. Go to URL/list/?path=Organization&type=Organization&header=Local%20Organizations
+	2b. Click the Edit button
+	2c. Click the + button
+	2d. Specify a name
+	2e. Click the Done button
+	
+# Test api.getData with a string by displaying an Organization Name Translation
+3. From signed in as an administrator
+	3a. Go to URL/list/?path=Organization&type=Organization&header=Local%20Organizations
+	3b. Select an existing organization
+	3c. Display the contents of the organization
+	
+# Test api.updateValues by editing the name of an Organization.
+# Test api.updateValues by editing an address of a site by editing one Street Address and adding another.
+# Test api.deleteInstances by deleting an Organization with a name.
+
+# Test api.updateValues by picking a new user for a group.
+# Test api.deleteValue by deleting a user from a group.

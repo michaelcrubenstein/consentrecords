@@ -89,6 +89,26 @@ panel.view {
 panel.edit {
 	background: #eee;
 }
+
+/* Titles go in the lower center of the nav bar. */
+.site-title {
+	font-size: medium;
+	min-height: 40px;
+	padding-top: 9px;
+	padding-bottom: 2px;
+	display: block;
+    width: 100%;
+	white-space: nowrap;
+	text-align: center;
+	margin: 0 auto;
+	font-weight: 600;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+}
+
 panel>nav .left-link {
 	max-width: calc(100% - 48px);	/* Subtract 48 pixels to ensure it doesn't run into the right link */
 	overflow: hidden;
@@ -114,6 +134,12 @@ panel>nav .right-link {
 
 .default-link {
 	font-weight: 500
+}
+
+/* Links go on the right or left over titles. */
+.site-navbar-link {
+	padding-top: 9px;
+	padding-bottom: 2px;
 }
 
 nav .site-left-chevron {
@@ -224,6 +250,7 @@ panel.view .panel-fill>header
 button {
 	appearance: none;
 	-webkit-appearance: none;
+	-moz-appearance:none;
 	background: transparent;
 	border: 0;
 	padding: 0;
@@ -304,7 +331,7 @@ section.cell {
 	line-height: 1.5em;	/* The same as .cell.unique.view>label and .right-label */
 }
 
-.cell>label {
+.cell label {
     color: #222;
 	font-size: 13px;
 	font-weight: normal;
@@ -567,6 +594,7 @@ input[type="date"]
 {
     -webkit-appearance: textfield;
     -moz-appearance: textfield;
+    appearance: textfield;
 	height: 34px;
 	border: 0px;
 }
@@ -619,7 +647,7 @@ input[type="date"]:focus {
 }
 
 section.date-container ol {
-	text-align: right;
+	text-align: center;
 }
 
 section.date-container div.date-row {
@@ -629,17 +657,20 @@ section.date-container div.date-row {
 	white-space: nowrap;	/* To prevent wrapping during animation. */
 }
 
-/* section.date-container is in the new-experience panel and the edit experience panel. */
+/* section.date-container is in the new-experience panel. */
 section.date-container>div.in-cell-button {
 	font-size: .9em;
 	display: block;
 	padding-left: 12px;
 	padding-right: 12px;
-	text-align: right;
+	text-align: center;
 	position: relative;
 }
 
 section.date-container>div.in-cell-button>div {
+	display: inline-block;
+	margin-left: auto;
+	margin-right: auto;
 	padding-bottom: 4px;
 }
 

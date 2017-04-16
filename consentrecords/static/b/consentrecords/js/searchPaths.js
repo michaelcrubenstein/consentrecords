@@ -23,26 +23,76 @@ var SearchPathsResultsView = (function () {
 				/* TODO: */
 				var leftText = d3.select(this);
 				
-				var screenName = d.getDatum("_name");
-				var user = d.getValue("_user");
+				var screenName = d.getDatum(cr.fieldNames.name);
+				var user = d.getValue(cr.fieldNames.user);
 				var userName = user && (getUserName(user));
 				var userDescription = user && user.getDescription();
 				var ageCalculator = new AgeCalculator(d.getValue("Birthday").getDescription());
 				var ageDescription = ageCalculator.toString();			
 				
 				if (screenName) leftText.append('div').text(screenName);
-				if (userName) leftText.append('div').text(userName);
-				if (userDescription) leftText.append('div').text(userDescription);
+				if (userName && userName != screenName) leftText.append('div').text(userName);
+				/* Only include the email address if there is no userName or screenName */
+				if (userDescription && !userName && !screenName) leftText.append('div').text(userDescription);
 				leftText.append('div').text(ageDescription);
 			});
+	}
+	
+	SearchPathsResultsView.prototype.containsQuery = function(fc, queryFlags) {
+		var offering = fc.experience.getValue("Offering");
+		if (offering && offering.getInstanceID())
+		{
+			if (!offering.areCellsLoaded())
+				throw ("Runtime error: offering data is not loaded");
+				
+			var services = offering.getCell("Service");
+			if (services.data.findIndex(function(s)
+				{
+					return queryFlags.findIndex(function(qf)
+						{
+							return s.getCell("Service").data.findIndex(function(s2)
+								{
+									return qf.service.getInstanceID() == s2.getInstanceID();
+								}) >= 0;
+						}) >= 0;
+				}) >= 0)
+				return true;
+		}
+		
+		var serviceCell = fc.experience.getCell("Service");
+		if (serviceCell)
+		{
+			if (serviceCell.data.findIndex(function(s) {
+					return queryFlags.findIndex(function(qf)
+					{
+						return s.getCell("Service").data.findIndex(function(s2)
+							{
+								return qf.service.getInstanceID() == s2.getInstanceID();
+							}) >= 0;
+					}) >= 0;
+				}) >= 0)
+				return true;
+		}
+		return false;
 	}
 	
 	SearchPathsResultsView.prototype.onClickButton = function(d, i) {
 		var _this = this;
 		
-		if (prepareClick('click', 'other path'))
+		if (prepareClick('click', 'search result path'))
 		{
-			showPath(d, this.searchPathsPanel.node());
+			showPath(d, this.searchPathsPanel.node())
+				.then(function(panel)
+					{
+						$(panel.pathtree).on("userSet.cr", function()
+							{
+								var queryFlags = _this.searchPathsPanel.queryContainer.flags().data();
+								panel.pathtree.flagControllers().forEach(function(fc)
+									{
+										fc.selected(_this.containsQuery(fc, queryFlags));
+									});
+							});
+					});
 		}
 		d3.event.preventDefault();
 	}
@@ -71,8 +121,7 @@ var SearchPathsResultsView = (function () {
 	{
 		var path;
 		{
-			/* TODO: */
-			path = '"Path"';
+			path = 'Path';
 			
 			var qf = this.searchPathsPanel.getQueryFlags();
 			if (!qf.length)
@@ -81,7 +130,7 @@ var SearchPathsResultsView = (function () {
 			qf.forEach(function(sf)
 				{
 					if (sf.service)
-						path += '["More Experience"[Service[Service="{0}"]|Offering>Service[Service="{0}"]]]'.format(sf.service.getValueID());
+						path += '["More Experience"[Service[Service={0}]|Offering>Service[Service={0}]]]'.format(sf.service.getInstanceID());
 				});
 			return path;
 		}
@@ -98,7 +147,7 @@ var SearchPathsResultsView = (function () {
 	 */
 	SearchPathsResultsView.prototype.fields = function()
 	{
-		return ["parents", "_user"];
+		return ["parents", cr.fieldNames.user];
 	}
 	
 	function SearchPathsResultsView(searchPathsPanel)
@@ -118,6 +167,37 @@ var SearchPathsResultsView = (function () {
 	return SearchPathsResultsView;
 })();
 
+var SearchTagPoolView = (function () {
+	SearchTagPoolView.prototype = new TagPoolView();
+	
+	SearchTagPoolView.prototype.sitePanel = null;
+	
+	SearchTagPoolView.prototype.setFlagVisibles = function()
+	{
+		var _this = this;
+		var queryData = this.sitePanel.queryContainer.flags().data();
+		
+		function inQueryFlags(a)
+		{
+			return queryData.some(function(fd) { return fd.service == a.service; });
+		}
+
+		var filterFunction = this.sitePanel.filterColumn !== undefined ?
+			function(fs) { fs.visible = (fs.getColumn() == _this.sitePanel.filterColumn) && !inQueryFlags(fs); } :
+			function(fs) { fs.visible = !inQueryFlags(fs); };
+			
+		this.flags().each(filterFunction);
+	}
+	
+	function SearchTagPoolView(sitePanel)
+	{
+		TagPoolView.call(this, sitePanel.mainDiv, 'pool-container');
+		this.sitePanel = sitePanel;
+	}
+	
+	return SearchTagPoolView;
+})();
+
 var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype = new SitePanel();
 	SearchPathsPanel.prototype.selectedPool = null;
@@ -126,8 +206,8 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.searchInput = null;
 	SearchPathsPanel.prototype.cancelButton = null;
 	SearchPathsPanel.prototype.topHandle = null;
-	SearchPathsPanel.prototype.poolFlags = null;
-	SearchPathsPanel.prototype.queryFlags = null;
+	SearchPathsPanel.prototype.poolContainer = null;
+	SearchPathsPanel.prototype.queryContainer = null;
 	
 	SearchPathsPanel.prototype.textDetailLeftMargin = 4.5; /* textLeftMargin; */
 	SearchPathsPanel.prototype.searchFlagHSpacing = 15;
@@ -135,8 +215,19 @@ var SearchPathsPanel = (function () {
 	SearchPathsPanel.prototype.flagHeightEM = 2.333;
 	SearchPathsPanel.prototype.emToPX = 11;
 	
-	SearchPathsPanel.prototype.queryFlagsHeight = 137;
+	SearchPathsPanel.prototype.resultsTopMargin = 10;
+	
+	SearchPathsPanel.prototype.queryFlagsHeight = 101;
 
+	SearchPathsPanel.prototype.clearInput = function()
+	{
+		$(this.searchInput).val('');
+											
+		/* Hide and show the input so that the placeholder
+			re-appears properly in safari 10 and earlier. */
+		$(this.searchInput).hide(0).show(0);
+	}
+	
 	SearchPathsPanel.prototype.revealInput = function(duration)
 	{
 		var newTop = $(window).height() 
@@ -151,14 +242,19 @@ var SearchPathsPanel = (function () {
 						 - inputMarginLeft + inputMarginRight
 						 - $(this.searchInput).outerWidth(true) + $(this.searchInput).outerWidth(false);
 
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 
+		var queryBottom;
+		if (this.queryContainer.flags().selectAll('g').size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
 		var _this = this;
+		
+		this.mainDiv.classed('vertical-scrolling', false)
+			.classed('no-scrolling', true);
+			
 		return $.when(
 			$(this.node()).animate({top: newTop,
 									height: $(this.topBox).outerHeight(true)},
@@ -168,25 +264,12 @@ var SearchPathsPanel = (function () {
 										{duration: duration,
 										 done: function()
 											{
-												$(_this.searchInput).val('');
-											
-												/* Hide and show the input so that the placeholder
-													re-appears properly in safari 10 and earlier. */
-												$(_this.searchInput).hide(0).show(0);
+												_this.clearInput();
 											}
 										 }),
 			$(this.cancelButton).animate({left: inputWidth + (2 * inputMarginLeft),
 										  opacity: 0.0},
-								   {duration: duration}),
-			$(this.stagesDiv).animate({top: $(this.topBox).height()},
-								   {duration: duration}),
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop},
-				{duration: duration}),
-			$(this.queryContainer.node()).stop().animate(
-				{left: 0,
-				 top: poolTop + poolHeight},
-				{duration: duration})
+								   {duration: duration})
 			);
 	}
 	
@@ -217,144 +300,73 @@ var SearchPathsPanel = (function () {
 									  opacity: 1.0},
 							   {duration: duration});
 							   
-		$(this.stagesDiv).animate({top: $(this.topBox).height()},
-							   {duration: duration});
-		
-		var poolHPadding = parseInt(this.poolContainer.style('padding-left'))
-								  + parseInt(this.poolContainer.style('padding-right'));					   
-		var poolVPadding = parseInt(this.poolContainer.style('padding-top'))
-								  + parseInt(this.poolContainer.style('padding-bottom'));					   
-		var poolHeight = poolVPadding + 4 * (this.flagHeightEM * this.emToPX) + 3 * (this.searchFlagVSpacing * this.emToPX);
 		var poolTop = $(this.topBox).outerHeight(true) + $(this.stagesDiv).outerHeight(true);				   
 		
+		this.mainDiv.classed('vertical-scrolling', true)
+			.classed('no-scrolling', false);
+
 		var resultsTop;
-		if (parentHeight < parentWidth)
-		{
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth / 2, height: poolHeight},
-				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth / 2 - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: (parentWidth / 2),
-				 top: poolTop},
-				{duration: duration});
-			this.layoutPoolFlags(parentWidth / 2 - poolHPadding, duration);
-			resultsTop = poolTop + $(this.queryContainer.node()).outerHeight(true);
-		}
-		else
-		{
-			$(this.poolContainer.node()).stop().animate(
-				{top: poolTop, width: parentWidth, height: poolHeight},
-				{duration: duration});
-			$(this.queryContainer.node()).stop().animate(
-				{width: parentWidth - 
-						(parseInt(this.queryContainer.style('margin-left'))
-						 + parseInt(this.queryContainer.style('margin-right'))),
-				 left: 0,
-				 top: poolTop + poolHeight},
-				{duration: duration});
-			this.layoutPoolFlags(parentWidth - poolHPadding, duration);
-			resultsTop = poolTop + poolHeight + $(this.queryContainer.node()).outerHeight(true);
-		}
-		
-		$(this.resultContainerNode).stop().animate(
-			{"margin-top": resultsTop,
-			 height: $(window).height()},
-			{duration: duration});
-							   
-		/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
-			This is important on iPhones where the soft keyboard appears and forces scrolling. */
-		$(this.node().parentNode).animate({scrollTop: 0},
-			{duration: duration});
-		
-		queryFlagsWidth = $(this.queryFlags.node()).width();
-		
-		this.queryFlags.attr('height', this.queryFlagsHeight);
-	}
-	
-	SearchPathsPanel.prototype.setFlagText = function(node)
-	{
-		var g = d3.select(node);
-		g.selectAll('text').selectAll('tspan:nth-child(1)')
-			.text(function(d) { return d.getDescription(); })
-	}
-		
-	/* Sets the x, y and y2 coordinates of each flag. */
-	SearchPathsPanel.prototype._setFlagCoordinates = function(g, maxX)
-	{
+		var resultsHeight;
+		var queryBottom;
+		var poolHeight;
+		var poolWidth;
 		var _this = this;
 
-		var deltaY = _this.flagHeightEM + _this.searchFlagVSpacing;
-		var startX = 0;
-		var nextY = 0;
-		var nextX = 0;
-		g.each(function(fd, i)
-			{
-				fd.x = nextX;
-				if (fd.visible === undefined || fd.visible)
-				{
-					var thisSpacing = this.getElementsByTagName('rect')[0].getBBox().width + _this.searchFlagHSpacing;
-					nextX += thisSpacing;
-					if (nextX >= maxX && fd.x > startX)
-					{
-						nextY += deltaY;
-						nextX = startX;
-						fd.x = nextX;
-						nextX += thisSpacing;
-					}
-				}
-				
-				fd.y = nextY;
-				fd.y2 = fd.y + _this.flagHeightEM;
-			});
+		if (this.queryContainer.flags().size() == 0)
+			queryBottom = 0;
+		else
+			queryBottom = 100;
+			
+		var $poolContainer = $(this.poolContainer.node());
+		var $queryContainer = $(this.queryContainer.node());
+			
+		var poolVMargins = $poolContainer.outerHeight(true) - $poolContainer.outerHeight(false);
+		var poolHMargins = $poolContainer.outerWidth(true) - $poolContainer.innerWidth();
+		var queryVMargins = $queryContainer.outerHeight(true) - $queryContainer.outerHeight(false);
+		var queryVPadding = parseInt($queryContainer.css('padding-top')) + 
+							parseInt($queryContainer.css('padding-bottom'));
+		var queryContainerWidth;
+		var animatePromise;
 		
-		return (nextY + _this.flagHeightEM) * this.emToPX;
-	}
-	
-	/* Lay out all of the contents within the svg object. */
-	SearchPathsPanel.prototype.layoutPoolFlags = function(maxX, duration)
-	{
-		maxX = maxX !== undefined ? maxX : $(this.poolFlags.node()).width();
-		duration = duration !== undefined ? duration : 700;
+		poolHeight = $(window).height() - queryBottom - poolTop - poolVMargins -
+					 this.queryFlagsHeight - parseInt($queryContainer.css('margin-bottom'));
+		poolWidth = parentWidth - poolHMargins;
+		queryContainerWidth = parentWidth - poolHMargins;
 		
-		var g = this.poolFlags.selectAll('g.flag');
+		resultsHeight = this.queryContainer.flags().size() && ($(window).height() - this.resultsTopMargin);
 		
-		var _this = this;
-		
-		var height = this._setFlagCoordinates(g, maxX);
-		
-		/* Set the height of the svg to match the total height of all of the flags. */
-		this.poolFlags.transition()
-			.duration(duration)
-			.style('height', height)
-		
-		g.interrupt().transition()
-			.duration(duration)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); })
-			.attr('opacity', function(fd) { return (fd.visible === undefined || fd.visible) ? 1.0 : 0.0; });
-		
-	}
-	
-	/* Lay out all of the contents within the svg object. */
-	SearchPathsPanel.prototype.layoutQueryFlags = function()
-	{
-		var g = this.queryFlags.selectAll('g.flag');
-		
-		var _this = this;
-		
-		this._setFlagCoordinates(g, $(this.queryFlags.node()).width());
-		
-		g.transition()
-			.duration(1000)
-			.attr('transform', function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
-		
+		return $.when($poolContainer.animate(
+					{width: poolWidth, 
+					 height: poolHeight},
+					{duration: duration}).promise(),
+/* 
+			   $(this.queryContainer.svg.node()).animate(
+			   		{
+			   			width: queryContainerWidth,
+			   			height: this.queryFlagsHeight - queryVPadding
+			   		},
+			   		{duration: duration}).promise(),
+ */
+			   $(this.resultContainerNode)
+				.animate({height: resultsHeight},
+						 {duration: duration})
+				.promise(),
+			/* Scroll the parentNode top to 0 so that the searchInput is sure to appear.
+				This is important on iPhones where the soft keyboard appears and forces scrolling. */
+			$(this.node().parentNode)
+				.animate({scrollTop: 0},
+						 {duration: duration})
+				.promise())
+		 .then(function()
+			 	{
+					_this.poolContainer.layoutFlags(queryContainerWidth, duration);
+					_this.checkResultsScrolling();
+				});
 	}
 	
 	SearchPathsPanel.prototype.getNextQueryFlagPosition = function(sourceFlag)
 	{
-		var lastChild = this.queryFlags.selectAll('g:last-child');
+		var lastChild = this.queryContainer.svg.selectAll('g:last-child');
 		if (lastChild.size() == 0)
 			return {top: 0, left:0};
 		else
@@ -362,7 +374,7 @@ var SearchPathsPanel = (function () {
 			var oldS = lastChild.datum();
 			var nextRight = oldS.x + lastChild.node().getBBox().width + this.searchFlagHSpacing;
 			if (nextRight + sourceFlag.getBBox().width 
-				> $(this.queryFlags.node()).width())
+				> $(this.queryContainer.svg.node()).width())
 			{
 				return {top: (oldS.y + this.flagHeightEM + this.searchFlagVSpacing) * this.emToPX,
 						left: 0};
@@ -380,7 +392,7 @@ var SearchPathsPanel = (function () {
 		var _this = this;
 		function inQueryFlags(a)
 		{
-			return _this.queryFlags.selectAll('g.flag').data()
+			return _this.queryContainer.flags().data()
 				.some(function(fd) { return fd.service == a.service; });
 		}
 		
@@ -403,30 +415,84 @@ var SearchPathsPanel = (function () {
 	{
 		var _this = this;
 		
-		$(queryFlag).animate({opacity: 0.0},
-			{done: function()
+		if (this.queryContainer.flags().size() == 1)
+		{
+			this.queryContainer.div.selectAll('span')
+ 				.interrupt().transition().duration(400)
+				.style('opacity', 1.0);
+			this.revealPanel();
+		}
+
+		return $(queryFlag).animate({opacity: 0.0})
+			.promise()
+			.done(function()
 				{
-					$(this).remove();
-					_this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
+					$(queryFlag).remove();
+					_this.poolContainer.flags().data().find(function(s) { return s.service == service.service; })
+						.visible = true;
+						
+					// _this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 					
-					_this.layoutPoolFlags();
-					_this.layoutQueryFlags();
+					_this.poolContainer.layoutFlags();
+					_this.queryContainer.layoutFlags();
+					
+					var promise = null;
+					if (_this.queryContainer.flags().size() == 0)
+						promise = _this.revealPanel();
+					else
+					{
+						promise = new $.Deferred();
+						promise.resolve();
+					}
+							
 		
+					var f = function()
+						{
+							_this.enableResultsScrolling();
+							_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
+							_this.checkResultsScrolling();
+						}
 					/* Run a new search based on the query. */
-					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
-				}});
+					return promise.then(f);
+					
+				});
 	}
 	
-	SearchPathsPanel.prototype.clearQuery = function()
+	SearchPathsPanel.prototype._clearQuery = function()
 	{
 		var _this = this;
-		$(this.queryFlags.node()).children().remove();
-		this.poolFlags.selectAll('g.flag').sort(function(a, b) { return _this.comparePoolFlags(a, b); });
+		$(this.queryContainer.svg.node()).children().remove();
+		this.poolContainer.flags().sort(function(a, b) { return _this.comparePoolFlags(a, b); });
 		
-		this.layoutPoolFlags();
+		this.poolContainer.layoutFlags();
+		
+		/* Show the help message in the query container */ 
+		this.queryContainer.div.selectAll('span')
+ 							.interrupt().transition().duration(400)
+							.style('opacity', 1.0);
 
-		/* Run a new search based on the query. */
-		this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+		/* Clear the results from the search. */
+		this.searchPathsResultsView.cancelSearch();
+	}
+	
+	SearchPathsPanel.prototype.enableResultsScrolling = function()
+	{
+		$(this.resultContainerNode).css('overflow-y', '');
+	}
+	
+	SearchPathsPanel.prototype.disableResultsScrolling = function()
+	{
+		$(this.resultContainerNode).css('overflow-y', 'hidden');
+	}
+	
+	SearchPathsPanel.prototype.checkResultsScrolling = function()
+	{
+		var offsetParent = $(this.resultContainerNode).offsetParent();
+		var maxScrollTop = offsetParent.prop('scrollHeight') - offsetParent.innerHeight();
+		var canOverflow = (maxScrollTop <= offsetParent.scrollTop()) ||
+			$(this.resultContainerNode).scrollTop() > 0;
+		
+		$(this.resultContainerNode).css('overflow-y', canOverflow ? '' : 'hidden');
 	}
 	
 	SearchPathsPanel.prototype.addFlagToQuery = function(poolFlag, s)
@@ -442,7 +508,7 @@ var SearchPathsPanel = (function () {
 		$(travelSVG.node()).width(poolFlagRect.width)
 			.height(poolFlagRect.height);
 		
-		var poolFlagsRect = this.poolFlags.node().getBoundingClientRect();	
+		var poolFlagsRect = this.poolContainer.svg.node().getBoundingClientRect();	
 		travelSVG.style('left', poolFlagsRect.left + s.x)
 			.style('top', poolFlagsRect.top + (s.y * this.emToPX));
  		
@@ -450,20 +516,20 @@ var SearchPathsPanel = (function () {
  		var g = travelSVG.append('g')
  			.datum(s);
 			
-		this.appendFlag(g);
+		this.poolContainer.appendFlag(g);
 		
 		/* Cover the old flag with a hole. */
 		var rectHole = d3.select(poolFlag).append('rect').classed('hole', true)
 			.attr('width', poolFlagRect.width)
 			.attr('height', poolFlagRect.height);
  		
- 		/* Figure out where travelSVG is going to end up relative to queryFlags. */
- 		var newPosition = this.queryFlags.node().getBoundingClientRect();
+ 		/* Figure out where travelSVG is going to end up relative to queryContainer.svg. */
+ 		var newPosition = this.queryContainer.svg.node().getBoundingClientRect();
  		var flagPosition = this.getNextQueryFlagPosition(poolFlag);
  		
  		var _this = this;
  		/* Animate the movement of the svg to its new location. */
- 		travelSVG.transition()
+ 		travelSVG.interrupt().transition()
  			.duration(400)
  			.style('top', newPosition.top + flagPosition.top)
  			.style('left', newPosition.left + flagPosition.left)
@@ -472,145 +538,81 @@ var SearchPathsPanel = (function () {
 					var newS = new Service(s.service);
 					newS.x = flagPosition.left;
 					newS.y = flagPosition.top / _this.emToPX;
-					var queryFlag = _this.queryFlags.append('g')
+					var queryFlag = _this.queryContainer.svg.append('g')
 						.datum(newS)
-						.on('click', function(fd) { _this.onQueryFlagClicked(this, fd); })
+						.on('click', function(fd) 
+							{ 
+								if (prepareClick('click', 'remove query flag: {0}'.format(fd.getDescription())))
+								{
+									_this.onQueryFlagClicked(this, fd)
+										.done(unblockClick);
+								} 
+							})
 						.attr('transform', 
 						      function(fd) { return "translate({0},{1})".format(fd.x, fd.y * _this.emToPX); });
 	
-					_this.appendFlag(queryFlag);
+					_this.queryContainer.appendFlag(queryFlag);
+					queryFlag.transition()
+						.style('opacity', 1);
+					
+					var promise = null;
+					if (_this.queryContainer.flags().size() == 1)
+					{
+						_this.queryContainer.div.selectAll('span')
+ 							.interrupt().transition().duration(400)
+							.style('opacity', 0.0);
+						promise = _this.revealPanel();
+					}
 					
 					/* Dispose of the travelSVG. */
 					travelSVG.remove();
 					
 					/* Dispose of the hole. */
-					rectHole.transition()
+					rectHole.interrupt().transition()
 						.duration(400)
-						.attr('opacity', 0.0)
+						.style('opacity', 0.0)
 						.remove();
 		
 					/* Run a new search based on the query. */
-					_this.searchPathsResultsView.restartSearchTimeout(_this.searchPathsResultsView.inputCompareText());
+					var f = function()
+					{
+						_this.enableResultsScrolling();
+						_this.searchPathsResultsView.startSearchTimeout(_this.searchPathsResultsView.inputCompareText(), 0);
+						_this.checkResultsScrolling();
+					}
+					if (promise)
+						promise.then(f);
+					else
+						f();
 				 });
  		
- 		/* Move the poolFlag to the end of its list. */
- 		poolFlag.parentElement.appendChild(poolFlag);
+ 		/* Hide the poolFlag. */
+ 		d3.select(poolFlag).datum().visible = false;
  		
  		/* Reset the positions of all of the pool flags. */
- 		this.layoutPoolFlags();
+ 		this.poolContainer.layoutFlags();
 	}
 	
 	SearchPathsPanel.prototype.getQueryFlags = function()
 	{
-		return this.queryFlags.selectAll('g.flag').data();
+		return this.queryContainer.flags().data();
 	}
 	
 	SearchPathsPanel.prototype.filterPool = function()
 	{
-		var g = this.poolFlags.selectAll('g.flag');
-		
-		var f;
-		var _this = this;
-		if (this.filterColumn !== undefined)
-		{
-			f = function(fs)
-				{
-					fs.visible = (fs.getColumn() == _this.filterColumn);
-				}
-		}
-		else
-		{
-			f = function(fs) { fs.visible = undefined; }
-		}
-		
-		g.each(f);
-			
-		var inputTexts = this.searchInput.value.toLocaleUpperCase().split(' ');
-		
-		if (inputTexts.length > 0)
-		{
-			g.each(function(fs)
-				{
-					if (!inputTexts.reduce(function(a, b)
-						{
-							return a && fs.contains(b);
-						}, true))
-						fs.visible = false;
-				});
-		}
-	}
-	
-	SearchPathsPanel.prototype.appendFlag = function(g)
-	{
-		g.classed('flag', true);
-		
-		g.append('line').classed('flag-pole', true)
-			.attr('x1', 1.5)
-			.attr('x2', 1.5)
-			.attr('stroke-opacity', '1.0')
-			.attr('fill', 'white')
-			.attr('stroke', 'white');
-		g.append('line').classed('flag-pole', true)
-			.attr('x1', 1.5)
-			.attr('x2', 1.5)
-			.each(function(d)
-				{
-					d.colorElement(this);
-				});
-		g.append('rect').classed('opaque', true)
-			.attr('x', 3);
-		g.append('rect').classed('bg', true)
-			.attr('x', 3)
-			.each(function(d)
-				{
-					d.colorElement(this);
-				});
-		var text = g.append('text').classed('flag-label', true)
-			.attr('x', this.textDetailLeftMargin);
-		text.append('tspan')
-			.attr('dy', '1.1em');
-		
-		var _this = this;	
-		g.each(function() { _this.setFlagText(this); });
-
-		g.selectAll('rect')
-			.attr('height', "{0}em".format(this.flagHeightEM))
-			.attr('width', function(fd)
-				{
-					return $(this.parentNode).children('text')[0].getBBox().width + 5;
-				});	
-		
-		g.selectAll('line.flag-pole')
-			.attr('y2', function(fd) { return "{0}em".format(_this.flagHeightEM); });
-
-	}
-	
-	SearchPathsPanel.prototype.appendPoolFlags = function(s)
-	{
-		var _this = this;
-		this.poolFlags.selectAll('g.flag').remove();
-		
-		var g = this.poolFlags.selectAll('g')
-			.data(s)
-			.enter()
-			.append('g');
-			
-		this.appendFlag(g);
-
-		g.on('click', function(s)
-			{
-				if (s.visible === undefined || s.visible)
-					_this.addFlagToQuery(this, s);
-			});
+		this.poolContainer.filterFlags(this.searchInput.value);
 	}
 	
 	SearchPathsPanel.prototype.handleColumnClick = function(services, column)
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		/* Need to respecify the placeholder to fix a bug that causes
+			the placeholder to not display when manually clearing the value
+			after it has something within it.
+		 */
+		this.clearInput();
 		this.filterColumn = column;
 		this.filterPool();
-		this.layoutPoolFlags();
+		this.poolContainer.layoutFlags();
 	}
 
 	SearchPathsPanel.prototype.handleSchoolClick = function()
@@ -685,11 +687,10 @@ var SearchPathsPanel = (function () {
 	
 	SearchPathsPanel.prototype.handleAllClick = function()
 	{
-		$(this.searchInput).val('');
-		$(this.searchInput).focus();
+		this.clearInput();
 		this.filterColumn = undefined;
 		this.filterPool();
-		this.layoutPoolFlags();
+		this.poolContainer.layoutFlags();
 	}
 	
 	function SearchPathsPanel()
@@ -726,18 +727,27 @@ var SearchPathsPanel = (function () {
 			
 		$(this.searchInput).focusin(function(event)
 			{
-				_this.revealPanel();
-				event.stopPropagation();
+				if (prepareClick('focusin', 'searchInput'))
+				{
+					_this.revealPanel()
+						.then(function()
+							{
+								_this.filterPool();
+								_this.poolContainer.layoutFlags();
+								unblockClick();
+							});
+				}
 			})
 			.click(function(event)
 			{
-				event.stopPropagation();
+				if ($(_this.node()).position().top == 0)
+					event.stopPropagation();
 			})
 			.on('input', function(event)
 			{
 				_this.filterPool();
-				_this.layoutPoolFlags();
-				event.stopPropagation();
+				_this.poolContainer.layoutFlags();
+				//event.stopPropagation();
 			});
 			
 		stagesDiv = mainDiv.append('div')
@@ -746,7 +756,7 @@ var SearchPathsPanel = (function () {
 			
 		var div = stagesDiv.append('div');
 		
-		var svgData = [{name: "All", color: "#222", click: this.handleAllClick},
+		var svgData = [{name: "All Tags", color: "#222", click: this.handleAllClick},
 				   {name: "School", color: "#2828E7", click: this.handleSchoolClick},
 				   {name: "Interests", color: "#8328E7", click: this.handleInterestsClick},
 				   {name: "Career", color: "#805050", click: this.handleCareerClick},
@@ -766,8 +776,8 @@ var SearchPathsPanel = (function () {
 			.attr('r', 16).attr('cx', 30).attr('cy', 23)
 			.attr('fill', 'white');
 		svgs.append('circle')
-			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.8)
-			.attr('fill', '#777');
+			.attr('r', 16).attr('cx', 30).attr('cy', 23).attr('opacity', 0.3)
+			.attr('fill', function(d) { return d.color; });
 		svgs.append('text')
 			.classed('icon-label', true)
 			.attr('x', 30).attr('y', 49)
@@ -776,46 +786,49 @@ var SearchPathsPanel = (function () {
 			
 		svgs.on('click', function(d)
 			{
-				svgs.selectAll('circle:last-of-type')
-					.attr('fill', '#777');
-				d3.select(this).selectAll('circle:last-of-type')
-					.attr('fill', d.color);
-				svgs.selectAll('text')
-					.style('fill', '#777');
-				d3.select(this).selectAll('text')
-					.style('fill', d.color);
-				if (d.click)
+				if (prepareClick('click', 'category circle: {0}'.format(d.name)))
 				{
-					_this.selectedPool = d;
-					d.click.call(_this);
+					svgs.selectAll('circle:last-of-type')
+						.attr('opacity', 0.3);
+					d3.select(this).selectAll('circle:last-of-type')
+						.attr('opacity', 0.8);
+					svgs.selectAll('text')
+						.style('fill', '#777');
+					d3.select(this).selectAll('text')
+						.style('fill', d.color);
+					
+					/* Set the focus here so that the keyboard disappears on mobile devices. */
+					$(this).focus();
+					if (d.click)
+					{
+						_this.selectedPool = d;
+						d.click.call(_this);
+					}
+					unblockClick();
 				}
 			});
 			
 		div.select('svg:first-child')
 			.selectAll('circle:last-of-type')
-			.attr('fill', function(d) { return d.color; });
+			.attr('opacity', 0.8);
 		div.select('svg:first-child')
 			.selectAll('text')
 			.style('fill', function(d) { return d.color; });
 		this.selectedPool = svgData[0];
 		
-		this.poolContainer = this.mainDiv.append('div')
-			.classed('pool-container', true);
-				
-		this.poolFlags = this.poolContainer.append('svg')
-			.classed('flags', true)
-			.style('height', 120);
+		this.poolContainer = new SearchTagPoolView(this);
 			
-		this.queryContainer = this.mainDiv.append('div')
-			.classed('query-container', true);
+		this.queryContainer = new TagPoolView(this.mainDiv, 'query-container');
 			
-		this.queryFlags = this.queryContainer.append('svg')
-			.classed('query flags', true);
-			
+		this.queryHelp = this.queryContainer.div.append('span')
+			.text('Tap tags to find paths containing those tags.');
+		
 		$(this.topBox).click(function(event)
 			{
 				if ($(_this.node()).position().top == 0)
+				{
 					_this.revealInput();
+				}
 				else
 				{
 					$(_this.searchInput).focus();
@@ -828,7 +841,7 @@ var SearchPathsPanel = (function () {
 				_this.revealInput()
 					.then(function()
 						{
-							_this.clearQuery();
+							_this._clearQuery();
 						});
 				
 				event.stopPropagation();
@@ -859,11 +872,26 @@ var SearchPathsPanel = (function () {
 						{
 							var s = services.map(function(e) { return new Service(e); });
 			
-							_this.appendPoolFlags(s);
+							_this.poolContainer.appendFlags(s)
+								 .on('click', function(s)
+									{
+										if (s.visible === undefined || s.visible)
+										{
+											if (prepareClick('click', 'add query flag: {0}'.format(s.getDescription())))
+											{
+												_this.addFlagToQuery(this, s);
+												unblockClick();
+											}
+										}
+									});
+
 							_this.filterColumn = undefined;
 							_this.filterPool();
-							_this.layoutPoolFlags();
+							_this.poolContainer.layoutFlags();
 						});
+				$(mainDiv.node()).scroll(function() {
+					_this.checkResultsScrolling();
+					});
 			});
 			
 		this.resultContainerNode = this.mainDiv.append('div')

@@ -159,18 +159,18 @@ function showSessionDetails(user, session, service, previousPanelNode)
 	
 	var addInquiry = function(user)
 	{
-		groupPath = '#'+organization.getValueID() + '>"Inquiry Access Group"';
-		cr.selectAll({path: groupPath})
-			.done(function(groupPaths)
+		groupPath = organization.getInstanceID() + '/Inquiry Access Group';
+		cr.getData({path: groupPath, fields: ['none']})
+			.then(function(groupPaths)
 				{
 					var initialData = [{
-							container: '#{0}>Inquiries'.format(session.getValueID()),
-							field: '_user',
-							instanceID: user.getValueID(),
+							container: '{0}/Inquiries'.format(session.getInstanceID()),
+							field: cr.fieldNames.user,
+							instanceID: user.getInstanceID(),
 							description: getUserDescription(user)
 						}];
 					var sourceObjects = [new cr.ObjectValue()];
-					$(sourceObjects[0]).on('dataChanged.cr', null, user, function(eventObject)
+					sourceObjects[0].on('dataChanged.cr', user, function(eventObject)
 						{
 							var newInquiryID = this.id;
 							function done()
@@ -187,17 +187,17 @@ function showSessionDetails(user, session, service, previousPanelNode)
 							if (groupPaths.length == 0)
 								done();
 							else {
-								addMissingAccess(user, "_read", groupPaths[0], "_group", done, asyncFailFunction);
+								addMissingAccess(user, cr.privileges.read, groupPaths[0], cr.fieldNames.group, done, asyncFailFunction);
 							}
 						});
 					return cr.updateValues(initialData, sourceObjects);
 				})
-			.fail(cr.asyncFail);
+			.then(undefined, cr.asyncFail);
 	}
 	
 	var tryAddInquiry = function(user)
 	{
-		if (user.getValueID())
+		if (user.getInstanceID())
 		{
 			addInquiry(user);
 			unblockClick();
@@ -208,31 +208,28 @@ function showSessionDetails(user, session, service, previousPanelNode)
 			{
 				var _this = this;
 				
-				cr.getValues({path: '#'+session.getValueID()+">Inquiries",
-					field: "_user",
-					value: this.getValueID(),
-					done: function(valueIDs)
-					{
-						if (valueIDs.length > 0)
+				cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), this.getInstanceID())})
+					.then(function(valueIDs)
 						{
-							checkInquiryFunction(user, valueIDs[0].id);
-							bootstrap_alert.success(_this.getDescription() + 
-												  " already signed up for " + 
-												  offering.getDescription() + "/" + session.getDescription(),
-												  ".alert-container");
-						}
-						else
-						{
-							addInquiry(_this);
-						}
-					},
-					fail: asyncFailFunction});
+							if (valueIDs.length > 0)
+							{
+								checkInquiryFunction(user, valueIDs[0].id);
+								bootstrap_alert.success(_this.getDescription() + 
+													  " already signed up for " + 
+													  offering.getDescription() + "/" + session.getDescription(),
+													  ".alert-container");
+							}
+							else
+							{
+								addInquiry(_this);
+							}
+						},
+						cr.asyncFail);
 			};
-			$(cr.signedinUser).on("signin.cr", null, panel, onSignin);
-			
+			cr.signedinUser.on("signin.cr", panel, onSignin);
 			$(panel).on("hiding.cr", null, cr.signedinUser, function(eventObject)
 			{
-				$(eventObject.data).off("signin.cr", null, onSignin);
+				eventObject.data.off("signin.cr", onSignin);
 			});
 			
 			showFixedPanel(panel, "#id_sign_in_panel");
@@ -256,7 +253,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 		{
 			showClickFeedback(this);
 			
-			var successFunction = function(valueID)
+			var successFunction = function()
 			{
 				bootstrap_alert.success("You have backed out of " + 
 							  offering.getDescription() + "/" + session.getDescription() + ".",
@@ -264,24 +261,22 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				checkInquiryFunction(user, null);
 			}
 			
-			cr.deleteValue(inquiryValueID, successFunction, asyncFailFunction);
+			cr.deleteValue(inquiryValueID)
+				.then(successFunction, cr.asyncFail);
 			
 			unblockClick();
 		}
 		d3.event.preventDefault();
 	};
 	
-	if (user.getValueID())
+	if (user.getInstanceID())
 	{
 		function done(values)
 		{
 			checkInquiryFunction(user, values.length ? values[0].id : null);
 		}
-		cr.getValues({path: '#'+session.getValueID()+">Inquiries",
-			field: "_user",
-			value: user.getValueID(),
-			done: done,
-			fail: asyncFailFunction});
+		cr.getData({path: "{0}/Inquiries/user/{1}".format(session.getInstanceID(), user.getInstanceID())})
+					.then(done, cr.asyncFail);
 	}
 	else
 		checkInquiryFunction(user, null);
@@ -314,15 +309,15 @@ var PickOfferingSearchView = (function () {
 	{
 		var currentDate = new Date();
 		var todayString = currentDate.toISOString().substring(0, 10);
-		var s = '#{0}::reference(Offering)>Sessions>Session'.format(this.tag.instanceID);
-		s += ':not(["Registration Deadline"<"{0}"])'.format(todayString);
+		var s = '{0}::reference(Offering)/Sessions/Session'.format(this.tag.getInstanceID());
+		s += ':not([Registration Deadline<"{0}"])'.format(todayString);
 		s += ':not([End<"{0}"])'.format(todayString);
 		if (val.length == 0)
 			return s;
 		else if (val.length < 3)
-			return s + '[ancestor:_name^="' + val + '"]';
+			return s + '[ancestor:name^="' + encodeURIComponent(val) + '"]';
 		else
-			return s + '[ancestor:_name*="' + val + '"]';
+			return s + '[ancestor:name*="' + encodeURIComponent(val) + '"]';
 	}
 	
 	PickOfferingSearchView.prototype.showObjects = function(foundObjects)
@@ -407,7 +402,7 @@ var FindExperienceSearchView = (function () {
 	
 	/* Overrides SearchView.prototype.onClickButton */
 	FindExperienceSearchView.prototype.onClickButton = function(d, i, button) {
-		if (prepareClick('click', 'pick ' + d.typeName + ': ' + d.getDescription()))
+		if (prepareClick('click', 'pick ' + d.getTypeName() + ': ' + d.getDescription()))
 		{
 			showClickFeedback(button);
 			
@@ -418,7 +413,7 @@ var FindExperienceSearchView = (function () {
 	
 	FindExperienceSearchView.prototype.fields = function()
 	{
-		return ["parents", "type"];
+		return ["parents"];
 	}
 	
 	/* Overrides SearchView.searchPath */
@@ -430,9 +425,9 @@ var FindExperienceSearchView = (function () {
 		else
 		{
 			if (val.length < 3)
-				return s + '[_name^="' + val + '"]';
+				return s + '[name^="' + encodeURIComponent(val) + '"]';
 			else
-				return s + '[_name*="' + val + '"]';
+				return s + '[name*="' + encodeURIComponent(val) + '"]';
 		}
 	}
 	

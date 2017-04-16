@@ -3,7 +3,7 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
      class="pathway pathlines" font-family="SF-UI, Helvetica Neue, Arial, Helvetica, sans-serif"
-     height="-0px">
+     height="-0px" width="-0px">
     <style type="text/css" >
       <![CDATA[
 
@@ -22,11 +22,6 @@
 				fill: #555;
 			}
 
-			svg.pathway g.year text {
-				fill: #777;
-				text-anchor: end;
-			}
-
 			svg.pathway g.detail rect.bg {
 				fill: white;
 			}
@@ -37,43 +32,6 @@
 				stroke-opacity: 0.0;
 			}
 	
-			svg.pathway g.guide line.column {
-				stroke-width: 2;
-				stroke-opacity: 0.1;
-			}
-			svg.pathway g.guide text.column-label {
-				fill: #777;
-				stroke-width: .3
-			}
-			svg.pathlines g.guide text.column-label {
-				text-anchor: middle;
-			}
-			svg.pathway g.guide rect.column-icon {
-				stroke-width: 2;
-				stroke-opacity: 0.0;
-				fill-opacity: 0.0;
-			}
-
-			svg.pathway g.experiences g.flag rect.opaque {
-				fill-opacity: 1.0;
-				fill: white;
-				stroke-opacity: 0.0;
-			}
-			svg.pathway g.experiences rect.bg {
-				fill-opacity: 0.2;
-				stroke-width: 0;
-				stroke-opacity: 0.0;
-			}
-			svg.pathway g.experiences line.flag-pole {
-				stroke-opacity: 0.6;
-				stroke-width: 3;
-			}
-			svg.pathway .flag-label {	/* For both flags and detail panels */
-				fill: #222;
-				text-anchor: start;
-				font-weight: 500;
-			}
-
 			@keyframes moveup4 {
     			from {transform: translate(0px, -0px);}
     			to   {transform: translate(0px, 60px);}
@@ -179,8 +137,8 @@
 			}
 			
 			@keyframes moveup11 {
-    			from {transform: translate(150px, -0px);}
-    			to   {transform: translate(150px, 270px);}
+    			from {transform: translate(180px, -0px);}
+    			to   {transform: translate(180px, 270px);}
 			}
 			
 			svg.pathway g.flag.flag11 {
@@ -194,8 +152,8 @@
 			}
 			
 			@keyframes moveup12 {
-    			from {transform: translate(90px, -0px);}
-    			to   {transform: translate(90px, 0px);}
+    			from {transform: translate(180px, -0px);}
+    			to   {transform: translate(180px, 300px);}
 			}
 			
 			svg.pathway g.flag.flag12 {
@@ -209,14 +167,29 @@
 			}
 			
 			@keyframes moveup13 {
-    			from {transform: translate(180px, -0px);}
-    			to   {transform: translate(180px, 30px);}
+    			from {transform: translate(90px, -0px);}
+    			to   {transform: translate(90px, 0px);}
 			}
 			
 			svg.pathway g.flag.flag13 {
 				animation: moveup13;
 				animation-duration: 1s;
 				animation-delay: 5.9s;
+			    -webkit-animation-fill-mode: both;
+			    -webkit-animation-iteration-count: 1;
+				animation-fill-mode: both;
+				animation-iteration-count: 1;
+			}
+			
+			@keyframes moveup14 {
+    			from {transform: translate(210px, -0px);}
+    			to   {transform: translate(210px, 30px);}
+			}
+			
+			svg.pathway g.flag.flag14 {
+				animation: moveup14;
+				animation-duration: 1s;
+				animation-delay: 6.5s;
 			    -webkit-animation-fill-mode: both;
 			    -webkit-animation-iteration-count: 1;
 				animation-fill-mode: both;
@@ -255,24 +228,31 @@
 		</g>
 		<g transform="translate(120, 0)">
 			<text class="column-label" x="0" y="11">
-				<tspan x="0" dy="0em">Giving</tspan>
-				<tspan x="0" dy="1em">Back</tspan>
+				<tspan x="0" dy="0em">Skills</tspan>
 			</text>
-			<line class="column" x1="0" y1="23" x2="0" y2="919.0790000000004" stroke="#D55900">
+			<line class="column" x1="0" y1="14" x2="0" y2="919.0790000000004" stroke="#D35B27">
 			</line>
 		</g>
 		<g transform="translate(150, 0)">
-			<text class="column-label" x="0" y="33">
-				<tspan x="0" dy="0em">Wellness</tspan>
+			<text class="column-label" x="0" y="22">
+				<tspan x="0" dy="0em">Giving</tspan>
+				<tspan x="0" dy="1em">Back</tspan>
 			</text>
-			<line class="column" x1="0" y1="36" x2="0" y2="919.0790000000004" stroke="#0694F3">
+			<line class="column" x1="0" y1="36" x2="0" y2="919.0790000000004" stroke="#0BBB0B">
 			</line>
 		</g>
 		<g transform="translate(180, 0)">
 			<text class="column-label" x="0" y="11">
+				<tspan x="0" dy="0em">Wellness</tspan>
+			</text>
+			<line class="column" x1="0" y1="14" x2="0" y2="919.0790000000004" stroke="#0694F3">
+			</line>
+		</g>
+		<g transform="translate(210, 0)">
+			<text class="column-label" x="0" y="33">
 				<tspan x="0" dy="0em">Other</tspan>
 			</text>
-			<line class="column" x1="0" y1="14" x2="0" y2="919.0790000000004" stroke="#0BBB0B">
+			<line class="column" x1="0" y1="36" x2="0" y2="919.0790000000004" stroke="#0BBB0B">
 			</line>
 		</g>
 	</g>
@@ -282,7 +262,7 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#804040" stroke="#804040" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Places You've Lived</tspan>
+				<tspan dy="1.1em" fill="#402020">Places You've Lived</tspan>
 			</text>
 		</g>
 		<g class="flag flag5">
@@ -290,7 +270,7 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#2828E7" stroke="#2828E7" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Your Education</tspan>
+				<tspan dy="1.1em" fill="#141474">Your Education</tspan>
 			</text>
 		</g>
 		<g class="flag flag6">
@@ -298,7 +278,7 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#8328E7" stroke="#8328E7" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Arts</tspan>
+				<tspan dy="1.1em" fill="#421474">Arts</tspan>
 			</text>
 		</g>
 		<g class="flag flag7">
@@ -306,7 +286,7 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#8328E7" stroke="#8328E7" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Sports</tspan>
+				<tspan dy="1.1em" fill="#421474">Sports</tspan>
 			</text>
 		</g>
 		<g class="flag flag8">
@@ -314,23 +294,23 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#805050" stroke="#805050" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Jobs</tspan>
+				<tspan dy="1.1em" fill="#402828">Jobs</tspan>
 			</text>
 		</g>
 		<g class="flag flag9">
-			<line class="flag-pole" stroke="#D55900" y2="2.333em"></line>
-			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
-			<rect class="bg" x="1.5" fill="#D55900" height="2.333em" width="142"></rect>
+			<line class="flag-pole" stroke="#D35B27" y2="2.333em"></line>
+			<rect class="opaque" x="1.5" height="2.333em" width="172"></rect>
+			<rect class="bg" x="1.5" fill="#D35B27" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Helping Others</tspan>
+				<tspan dy="1.1em" fill="#6A2E14">Things You're Good At</tspan>
 			</text>
 		</g>
 		<g class="flag flag10">
-			<line class="flag-pole" stroke="#0694F3" y2="2.333em"></line>
+			<line class="flag-pole" stroke="#0BBB0B" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
-			<rect class="bg" x="1.5" fill="#0694F3" height="2.333em" width="142"></rect>
+			<rect class="bg" x="1.5" fill="#0BBB0B" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Your Health</tspan>
+				<tspan dy="1.1em" fill="#066E06">Helping Others</tspan>
 			</text>
 		</g>
 		<g class="flag flag11">
@@ -338,23 +318,31 @@
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#0694F3" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Exercise</tspan>
+				<tspan dy="1.1em" fill="#034A7A">Your Health</tspan>
 			</text>
 		</g>
 		<g class="flag flag12">
+			<line class="flag-pole" stroke="#0694F3" y2="2.333em"></line>
+			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
+			<rect class="bg" x="1.5" fill="#0694F3" height="2.333em" width="142"></rect>
+			<text class="flag-label" x="3">
+				<tspan dy="1.1em" fill="#034A7A">Exercise</tspan>
+			</text>
+		</g>
+		<g class="flag flag13">
 			<line class="flag-pole" fill="#805050" stroke="#805050" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
 			<rect class="bg" x="1.5" fill="#805050" stroke="#805050" height="2.333em" width="142"></rect>
 			<text class="flag-label" x="3">
-				<tspan dy="1.1em">Career Goals</tspan>
+				<tspan dy="1.1em" fill="#402828">Career Goals</tspan>
 			</text>
 		</g>
-		<g class="flag flag13">
-			<line class="flag-pole" stroke="#0BBB0B" y2="2.333em"></line>
+		<g class="flag flag14">
+			<line class="flag-pole" stroke="#777777" y2="2.333em"></line>
 			<rect class="opaque" x="1.5" height="2.333em" width="162"></rect>
-			<rect class="bg" x="1.5" fill="#0BBB0B" height="2.333em" width="142"></rect>
+			<rect class="bg" x="1.5" fill="#777777" height="2.333em" width="142"></rect>
 			<text class="flag-label">
-				<tspan x="3" dy="1.1em">Anything Else?</tspan>
+				<tspan x="3" dy="1.1em" fill="#3C3C3C">Anything Else?</tspan>
 			</text>
 		</g>
 	</g>

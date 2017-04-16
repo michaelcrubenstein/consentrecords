@@ -23,20 +23,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 
     <!-- Custom styles for this page -->
-    <link href="{% static "custom_user/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/base.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/searchpaths.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/showFollowing.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/showSharing.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/signup.css" %}" rel="stylesheet">
-    <link href="{% static "b/consentrecords/css/welcomePanel.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/base.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/comparePathsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/experienceCommentsPanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/newExperiencePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/pathtreePanel.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/searchpaths.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showFollowing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/showSharing.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/signup.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "b/consentrecords/css/welcomePanel.css" %}?v={{jsversion}}" rel="stylesheet">
     
-    <link href="{% static "custom_user/css/formsimple.css" %}" rel="stylesheet">
-    <link href="{% static "custom_user/css/signin.css" %}" rel="stylesheet">
+    <link href="{% static "custom_user/css/formsimple.css" %}?v={{jsversion}}" rel="stylesheet">
+    <link href="{% static "custom_user/css/signin.css" %}?v={{jsversion}}" rel="stylesheet">
 
     <style>
     	.consent-record {
@@ -146,7 +146,7 @@
 		</panel>
 		
 <!--     IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}"></script>
+    	<script src="{% static "bootstrap/assets/js/ie10-viewport-bug-workaround.js" %}?v={{jsversion}}"></script>
   	</body>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -158,32 +158,34 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
-	<script src="{% static "datejs/time.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/models.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/domainmodels.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/views.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/dateinput.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/findExperience.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/organization.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/pathGuides.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/searchPaths.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/comparePathsPanel.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/showFollowing.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/showSharing.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/signup.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/settings.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/updatePassword.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/welcomeOrganization.js" %}"></script>
-	<script src="{% static "b/consentrecords/js/welcomePanel.js" %}"></script>
+	<script src="{% static "datejs/time.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/models.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/domainmodels.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/views.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/tagPoolView.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/getDataChunker.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dateinput.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/dotsnavigator.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/experienceCommentsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/findExperience.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/newExperiencePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/organization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathGuides.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/pathtreePanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/searchPaths.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/comparePathsPanel.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showFollowing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/showSharing.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/signup.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/settings.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/updatePassword.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/welcomeOrganization.js" %}?v={{jsversion}}"></script>
+	<script src="{% static "b/consentrecords/js/welcomePanel.js" %}?v={{jsversion}}"></script>
 
 	<!-- Scripts for this web page -->
 	<script type="text/JavaScript">
 		staticPath = '{% static "b/" %}';
+		jsVersionPathSuffix = '?v={{jsversion}}';
 		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
 		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
 		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
@@ -218,37 +220,39 @@
 		var userFirstName = null;
 		var userLastName = null;
 
-		function checkSignin(done)
+		function checkSignin(handleState)
 		{
-			if (cr.signedinUser.getValueID())
-				done();
-			else
+			if (prepareClick('checkSignin'))
 			{
-				if (prepareClick('checkSignin'))
+				var onSignin = function(eventObject)
 				{
-					var onSignin = function(eventObject)
-					{
-						$(this).off("signinCanceled.cr", null, onSigninCanceled);
-						done();
-					};
-				
-					var onSigninCanceled = function(eventObject)
-					{
-						$(this).off("signin.cr", null, onSignin);
-						var firstPanel = new WelcomePanel();
-						firstPanel.showLeft();
-					}
-				
-					$(cr.signedinUser).one("signin.cr", null, null, onSignin);
-					$(cr.signedinUser).one("signinCanceled.cr", null, null, onSigninCanceled);
-				
-					var panel = new SigninPanel();
-					panel.showLeft().then(function()
-								{
-									panel.initializeFocus();
-									unblockClick();
-								});
+					this.off("signinCanceled.cr", onSigninCanceled);
+					var firstPanel = new PathlinesPanel(cr.signedinUser, false);
+					firstPanel.setupSearchPanel();
+					firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+						.then(function()
+							{
+								handleState(firstPanel)
+							});
+					firstPanel.showUp();
+				};
+			
+				var onSigninCanceled = function(eventObject)
+				{
+					this.off("signin.cr", onSignin);
+					var firstPanel = new WelcomePanel();
+					firstPanel.showLeft();
 				}
+			
+				cr.signedinUser.one("signin.cr", null, onSignin);
+				cr.signedinUser.one("signinCanceled.cr", null, onSigninCanceled);
+			
+				var panel = new SigninPanel();
+				panel.showLeft().then(function()
+							{
+								panel.initializeFocus();
+								unblockClick();
+							});
 			}
 		}
 		
@@ -280,7 +284,7 @@
 				var panel;
 				if (offeringName && /^[A-Za-z0-9]{32}$/.test(offeringName))
 				{
-					crp.promise({path: "#"+offeringName, fields: ["parents", "type"]}) 
+					crp.promise({path: offeringName, fields: ["parents"]}) 
 						.done(function(offerings)
 							{
 								if (offerings.length > 0)
@@ -302,7 +306,7 @@
 				}
 				else if (siteName && /^[A-Za-z0-9]{32}$/.test(siteName))
 				{
-					crp.promise({path: "#"+siteName, fields: ["parents", "type"]})
+					crp.promise({path: siteName, fields: ["parents"]})
 						.done(function(sites)
 							{
 								if (sites.length > 0)
@@ -326,7 +330,7 @@
 				}
 				else if (organizationName && /^[A-Za-z0-9]{32}$/.test(organizationName))
 				{
-					crp.promise({path: "#"+organizationName, fields: ["parents", "type"]})
+					crp.promise({path: organizationName, fields: ["parents"]})
 						.done(function(organizations)
 							{
 								if (organizations.length > 0)
@@ -385,7 +389,7 @@
 			}
 			if (serviceName && /^[A-Za-z0-9]{32}$/.test(serviceName))
 			{
-				crp.promise({path: "#"+serviceName, fields: ["parents", "type"]})
+				crp.promise({path: serviceName, fields: ["parents"]})
 					.done(function(services)
 						{
 							if (services.length == 0)
@@ -403,17 +407,7 @@
 				done([]);
 		}
 		
-		function loadPathlinesPanel(previousPanel)
-		{
-			var firstPanel = new PathlinesPanel(cr.signedinUser, false);
-			firstPanel.setupSearchPanel();
-			firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true);
-			firstPanel.showUp();
-			return firstPanel;
-		}
-		
 		$(document).ready (function(e) {						
-			var previousPanel = $("#id_user_home_panel")[0];
 			var firstPanel;
 			
 			/* handleState is an asynchronous function called when the setup is ready to process it. */
@@ -441,22 +435,22 @@
 					}
 					stateString = "";	/* So it only happens once. */
 				}
-				else if (stateString.startsWith("pathway"))
+				else if (stateString.startsWith("user/"))
 				{
-					stateString = stateString.substring("pathway".length);
+					stateString = stateString.substring("user/".length);
 					if (stateString.length > 0)
 					{
 						var pathwayID = stateString;
 						handleState = function()
 						{
-							crp.promise({path: "#"+pathwayID})
+							crp.promise({path: pathwayID})
 								.done(function(users)
 									{
 										if (users.length > 0)
 										{
 											var done;
 											var panel;
-											if (cr.signedinUser.getValueID())
+											if (cr.signedinUser.getInstanceID())
 											{
 												panel = new PathlinesPanel(users[0], true);
 											}	
@@ -474,7 +468,7 @@
 										}
 										else
 										{
-											if (!cr.signedinUser.getValueID())
+											if (!cr.signedinUser.getInstanceID())
 											{
 												firstPanel = new WelcomePanel();
 												firstPanel.showNow();
@@ -496,17 +490,9 @@
 						var experienceID = stateString;
 						var handleState = function(pathwayPanel)
 						{
-							if (!pathwayPanel)
-							{
-								if (!firstPanel)
-								{
-									firstPanel = loadPathlinesPanel(previousPanel);
-								}
-								pathwayPanel = firstPanel;
-							}
 							var pathway = pathwayPanel.pathtree;
 							var experiencesPath = cr.signedinUser.getValue("Path");
-							cr.getData({path: "#"+experienceID, fields: ["type", "Offering"]})
+							cr.getData({path: experienceID, fields: ["Offering"]})
 								.then(function(experiences)
 								{
 									if (experiences.length > 0)
@@ -514,14 +500,14 @@
 										cr.signedinUser.promiseCellsFromCache()
 											.then(function()
 												{
-													if (experiences[0].typeName == "More Experience")
+													if (experiences[0].getTypeName() == "More Experience")
 													{
 														var experience = new Experience(cr.signedinUser.getValue("Path"), experiences[0]);
 														new NewExperiencePanel(experience, experience.getPhase())
 															.showUp();
 													}
 													else
-														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].typeName));
+														cr.asyncFail("unrecognized experience to add: {0}".format(experiences[0].getTypeName()));
 												},
 												cr.asyncFail);
 									}
@@ -543,14 +529,6 @@
 					{
 						cr.signedinUser.promiseCellsFromCache()
 							.then(function() {
-								if (!pathwayPanel)
-								{
-									if (!firstPanel)
-									{
-										firstPanel = loadPathlinesPanel(previousPanel);
-									}
-									pathwayPanel = firstPanel;
-								}
 								addToPathway(pathwayPanel);
 							},
 							cr.asyncFail);
@@ -562,22 +540,13 @@
 					/* Accept the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
-
 						function clearAccessRequests(newValue)
 						{
-							var cell = cr.signedinUser.getCell("_access request");
+							var cell = cr.signedinUser.getCell("access request");
 							for (var i = 0; i < cell.data.length; ++i)
 							{
 								var d = cell.data[i];
-								if (d.getValueID() == newValue.getValueID())
+								if (d.getInstanceID() == newValue.getInstanceID())
 									d.triggerDeleteValue();
 							}
 						}
@@ -585,9 +554,9 @@
 						cr.share(null, "{{follower}}", "{{privilege}}", function(newValue)
 							{
 								// Remove any access request with this name.
-								if (newValue.typeName == '_access record')
+								if (newValue.getTypeName() == cr.fieldNames.accessRecord)
 								{
-									newValue.checkCells(["typeName"], function()
+									newValue.promiseCells().then(function()
 										{
 											newValue = newValue.getCell("{{cell}}").data[0];
 											clearAccessRequests(newValue);
@@ -609,22 +578,15 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
-						var cell = cr.signedinUser.getCell("_access request");
-						var v = cell.data.find(function(d) { return d.getValueID() === "{{follower}}"; });
+						var cell = cr.signedinUser.getCell("access request");
+						var v = cell.data.find(function(d) { return d.getInstanceID() === "{{follower}}"; });
 						if (v)
 						{
-							v.deleteValue(function()
-								{
-									bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
-								},
+							v.deleteValue()
+								.then(function()
+									{
+										bootstrap_alert.success("Access request from {0} has been denied.".format(v.getDescription()), '.alert-container');
+									},
 								asyncFailFunction);
 						}
 						else
@@ -637,15 +599,6 @@
 					/* Ignore the specified follower */
 					handleState = function(pathwayPanel)
 					{
-						if (!pathwayPanel)
-						{
-							if (!firstPanel)
-							{
-								firstPanel = loadPathlinesPanel(previousPanel);
-							}
-							pathwayPanel = firstPanel;
-						}
-						
 						try
 						{
 							new Settings(cr.signedinUser, pathwayPanel.node())
@@ -671,17 +624,65 @@
 					}
 					needsSignin = false;
 				}
+				else if (stateString.startsWith("experience/"))
+				{
+					stateString = stateString.substring("experience/".length);
+					
+					handleState = function(pathwayPanel)
+					{
+						f = function()
+							{
+								/* Show the specified experience. */
+								var id = stateString.substring(0, stateString.indexOf("/"));
+								stateString = stateString.substring(stateString.indexOf("/")+1);
+						
+								try
+								{
+									if (stateString.startsWith("comments/"))
+									{
+										pathwayPanel.showCommentsPanelAsync(id);
+									}
+									else if (stateString.startsWith("comment/"))
+									{
+										var commentsPanel = pathwayPanel.showCommentsPanelAsync(id);
+										stateString = stateString.substring("comment/".length);
+										id = stateString.substring(0, stateString.indexOf("/"));
+										stateString = stateString.substring(stateString.indexOf("/")+1);
+										if (commentsPanel)
+										{
+											/* Turn on editing */
+											commentsPanel.startEditing();
+											/* Edit the comment with the specified id. */
+											commentsPanel.promise = commentsPanel.promise
+												.then(function()
+													{
+														commentsPanel.focusOnComment(id);
+													});									
+										}
+									}
+									else
+										pathwayPanel.showCommentsPanelAsync(id);
+										
+								}
+								catch(err)
+								{
+									cr.asyncFail(err);
+								}
+							}
+						if (pathwayPanel.pathtree.isUserSet)
+							f();
+						else
+							$(pathwayPanel.pathtree).on('userSet.cr', f);
+					}
+					needsSignin = true;
+				}
 				else if (stateString.startsWith("me"))
 				{
-					var handleState = function()
+					var handleState = function(pathwayPanel)
 					{
 						cr.signedinUser.promiseCellsFromCache()
 							.then(function() {
-								if (!firstPanel)
-								{
-									firstPanel = loadPathlinesPanel(previousPanel);
-								}
-							},
+								},
 							cr.asyncFail);
 					}
 					needsSignin = true;
@@ -695,27 +696,34 @@
 			/* Initialize all of the objects that are dependent on whether or not the user is
 				signed in.
 			 */
-			if (!cr.signedinUser.getValueID())
+			if (!cr.signedinUser.getInstanceID())
 			{
 				$(cr.signedinUser).trigger("signout.cr");
 			}
+			
 			/* Otherwise, the signin.cr event will be triggered after the cr.signedinUser data loads. */
-
-			if (cr.signedinUser.getValueID())
+			if (cr.signedinUser.getInstanceID())
 			{
-				$(cr.signedinUser).one("signin.cr", null, null, function(eventObject)
+				cr.signedinUser.one("signin.cr", null, function(eventObject)
 					{
-						firstPanel = new PathlinesPanel(cr.signedinUser, false);
-						firstPanel.setupSearchPanel();
-						firstPanel.showNow();
-						firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
-						.then(function()
-							{
-								if (handleState)
-									handleState();
-								else
-									firstPanel.checkShowIdeas();
-							});
+						try
+						{
+							firstPanel = new PathlinesPanel(cr.signedinUser, false);
+							firstPanel.setupSearchPanel();
+							firstPanel.showNow();
+							firstPanel.pathtree.setUser(cr.signedinUser.getValue("Path"), true)
+							.then(function()
+								{
+									if (handleState)
+										handleState(firstPanel);
+									else
+										firstPanel.checkShowIdeas();
+								});
+						}
+						catch(err)
+						{
+							cr.asyncFail(err);
+						}
 					});
 			}
 			else if (!needsSignin)
@@ -794,15 +802,14 @@
 					.text("I Accept");
 				divs.append('div').classed("consent-form-title string-label-div expanding-div", true)
 					.text(function(d) { 
-						return d.cells[0].data[0].getDescription();
+						return d.getCells()[0].data[0].getDescription();
 					});
 			}
 			
-			var path = "#" + cr.signedinUser.getValueID() + '>"Consent Record"';
+			var path = cr.signedinUser.getInstanceID() + '>"Consent Record"';
 			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
+						fields: ["parents"]})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		function cells_get_cell_by_name(cells, name)
@@ -933,11 +940,10 @@
 				}
 			}
 			
-			var path = "#"+cr.signedinUser.getValueID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
+			var path = cr.signedinUser.getInstanceID()+"::reference(Enrollment)::reference(Enrollments)::reference(Session)";
 			cr.getData({path: path, 
-						fields: ["parents"], 
-						done: successFunction, 
-						fail: asyncFailFunction});
+						fields: ["parents"]})
+				.then(successFunction, cr.asyncFail);
 		}
 		
 		function validateEmail(email) 
