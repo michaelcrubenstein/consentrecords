@@ -186,14 +186,14 @@
 	<script type="text/JavaScript">
 		staticPath = '{% static "b/" %}';
 		jsVersionPathSuffix = '?v={{jsversion}}';
-		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}'
-		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}'
-		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}'
-		notificationsImagePath = '{% static "b/consentrecords/png/notifications.png" %}'
-		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}'
-		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}'
-		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}'
-		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}'
+		rightChevronPath = '{% static "b/consentrecords/png/ios7-arrow-forward-512px.svg" %}' + jsVersionPathSuffix;
+		leftChevronPath = '{% static "b/consentrecords/png/ios7-arrow-back-512px.svg" %}' + jsVersionPathSuffix;
+		settingsImagePath = '{% static "b/consentrecords/png/settings.png" %}' + jsVersionPathSuffix;
+		notificationsImagePath = '{% static "b/consentrecords/png/notifications.png" %}' + jsVersionPathSuffix;
+		shareImagePath = '{% static "b/consentrecords/png/share.svg" %}' + jsVersionPathSuffix;
+		myPathwayImagePath = '{% static "b/consentrecords/png/mypathway.svg" %}' + jsVersionPathSuffix;
+		compareImagePath = '{% static "b/consentrecords/png/compare.svg" %}' + jsVersionPathSuffix;
+		inquiryImagePath = '{% static "b/consentrecords/png/signup.svg" %}' + jsVersionPathSuffix;
 		
 		function csrfSafeMethod(method) {
 			// these HTTP methods do not require CSRF protection

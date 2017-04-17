@@ -10,24 +10,30 @@ var SharingPanel = (function() {
 	
 	SharingPanel.prototype.appendUserControls = function(items)
 	{
-		appendConfirmDeleteControls(items);
-	
-		var buttons = appendRowButtons(items);
+		crf.appendDeleteControls(items);
 
-		var deleteControls = this.appendDeleteControls(buttons);
-	
-		appendInfoButtons(buttons);
-
-		appendButtonDescriptions(buttons)
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(_getDataDescription)
 			.each(_pushTextChanged);
-		if (!this.inEditMode)
-			this.hideDeleteControlsNow($(deleteControls[0]));
-		else
-			this.showDeleteControls($(deleteControls[0]), 0);
+
+		appendInfoButtons(items);
+
+		crf.appendConfirmDeleteControls(items);
+		this.checkDeleteControlVisibility(items);
 		
-		return buttons;
+		return items;
 	}
 
+	SharingPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
 	/* Produces a function which adds new value view to a container view
 		when the new data is added.
 		the viewFunction is called when the item is clicked.
@@ -119,12 +125,11 @@ var SharingPanel = (function() {
 			});
 		accessRequestSection.style('display', items.size() ? "" : "none");
 		
-		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
-		var infoButtons = appendInfoButtons(buttons);
-		
-		appendButtonDescriptions(buttons)
+		appendButtonDescriptions(items)
 			.each(_pushTextChanged);
-		var itemButtonDivs = buttons.append('div');
+		var infoButtons = appendInfoButtons(items);
+		
+		var itemButtonDivs = items.append('div');
 		var applyButtons = this.appendApplyButtons(itemButtonDivs);
 		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
 			
@@ -168,7 +173,7 @@ var SharingPanel = (function() {
 			.text(function(d) { return d.label });
 			
 		itemCells = sections.append("ol")
-			.classed("cell-items", true);
+			.classed("cell-items deletable-items", true);
 	
 		// Reference the views back to the privileges objects.
 		itemCells.each(function(d) { d.itemsDiv = this; });
@@ -178,13 +183,13 @@ var SharingPanel = (function() {
 		this.appendUserControls(items);
 		
 		/* Add one more button for the add Button item. */
-		var buttonDiv = sections.append("div")
-			.append("button").classed("btn row-button multi-row-content site-active-text border-above border-below", true)
+		sections
+			.append("button").classed("btn row-button add-item site-active-text", true)
 			.on("click", function(d) {
 				_this.addAccessor(_this.user, d, $(this).parents(".cell").children(".cell-items")[0]);
 			})
-			.append("div").classed("pull-left", true);
-		buttonDiv.append("span").text("Add User or Group");
+			.append("div").text("Add User or Group");
+		
 	}
 
 	SharingPanel.prototype.getPrivileges = function(panel2Div, enumerators)
@@ -322,15 +327,16 @@ var SharingPanel = (function() {
 		var editButton = navContainer.appendRightButton()
 			.on("click", function()
 			{
+				var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
 				if (_this.inEditMode)
 				{
 					if (prepareClick('click', 'Done Edit Sharing'))
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text("Edit");
+								editButton.selectAll('span').text(crv.buttonTexts.edit);
 							});
-						_this.hideDeleteControls();
+						crf.hideDeleteControls(dials);
 						_this.inEditMode = false;
 						unblockClick();
 					}
@@ -343,13 +349,13 @@ var SharingPanel = (function() {
 							{
 								editButton.selectAll('span').text(crv.buttonTexts.done);
 							});
-						_this.showDeleteControls();
+						crf.showDeleteControls(dials);
 						_this.inEditMode = true;
 						unblockClick();
 					}
 				}
 			});
-		editButton.append('span').text("Edit");
+		editButton.append('span').text(crv.buttonTexts.edit);
 		
 		navContainer.appendTitle('Sharing');
 		
@@ -437,12 +443,13 @@ var PickSharingUserPanel = (function() {
 		var sectionPanel = panel2Div.append('section')
 			.classed('cell edit unique', true);
 			
-		var itemsDiv = sectionPanel.append("ol");
+		var itemsDiv = sectionPanel.append("ol")
+			.classed('cell-items', true);
 
-		var divs = itemsDiv.append("li")
-			.classed("string-input-container", true);	// So that each item appears on its own row.
+		var items = itemsDiv.append("li");	// So that each item appears on its own row.
 			
-		var emailInput = divs.append("input")
+		var emailInput = items.append("input")
+			.classed('growable', true)
 			.attr("type", "email")
 			.attr("placeholder", 'Email');
 			

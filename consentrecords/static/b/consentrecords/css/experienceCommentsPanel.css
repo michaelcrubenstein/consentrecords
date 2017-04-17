@@ -45,13 +45,17 @@ panel.comments svg line {	/* For both flags and detail panels */
 	stroke-opacity: 0.3;
 }
 
-section.comments {
+section.comments ol.cell-items>li {
 	font-size: 0.8em;
+}
+
+section.comments ol.cell-items>li:hover {
+	background-color: transparent;
 }
 
 section.comments > ol > li > div {
 	position: relative;
-	padding: 6px 12px 0px 12px;
+	padding: 6px 12px 0px 0px;
 }
 
 @keyframes showBorder {
