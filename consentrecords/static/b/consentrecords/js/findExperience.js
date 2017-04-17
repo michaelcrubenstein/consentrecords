@@ -17,7 +17,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 
 	var backButton = navContainer.appendLeftButton()
 		.on("click", function() { sitePanel.hideRightEvent(); });
-	backButton.append("span").text("Done");
+	backButton.append("span").text(crv.buttonTexts.done);
 	
 	var buttonDiv = navContainer.appendRightButton();
 	
@@ -97,11 +97,11 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				if (serviceCell.data.length > 0)
 				{
 					serviceCell.appendLabel(cellDiv.node());
-					var itemsDiv = cellDiv.append("ol");
+					var itemsDiv = cellDiv.append("ol")
+						.classed('cell-items', true);
 
-					var divs = appendItems(itemsDiv, serviceCell.data);
-					var buttons = divs.append("div").classed("multi-line-item", true);
-					appendButtonDescriptions(buttons);
+					var items = appendItems(itemsDiv, serviceCell.data);
+					appendButtonDescriptions(items);
 					cellDiv.append("div").classed("cell-border-below", true);
 				}
 			},
@@ -379,7 +379,7 @@ var PickOfferingPanel = (function() {
 		
 		navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); })
-		    .append("span").text("Done");
+		    .append("span").text(crv.buttonTexts.done);
 			
 		navContainer.appendTitle(header);
 
@@ -471,7 +471,7 @@ var FindExperiencePanel = (function () {
 		
 		navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); })
-		    .append("span").text("Done");
+		    .append("span").text(crv.buttonTexts.done);
 			
 		navContainer.appendTitle(header);
 		

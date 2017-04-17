@@ -2,7 +2,7 @@ var UpdatePasswordPanel = (function () {
 	UpdatePasswordPanel.prototype = new SitePanel();
 
 	function UpdatePasswordPanel() {
-		this.createRoot(null, "Password", "view", revealPanelUp);
+		this.createRoot(null, "Password", "view change-password", revealPanelUp);
 		var _this = this;
 		
 		var navContainer = this.appendNavContainer();

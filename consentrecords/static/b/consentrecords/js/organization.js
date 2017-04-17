@@ -3,6 +3,11 @@
 	
 	Utility routines for managing organizations and their contents
  */
+ 
+cr.organizationStrings = 
+	{
+		someone: "Someone"
+	};
 
 /* Append the specified address to the specified div, which is a d3.js object */
 function appendAddress(address)
@@ -166,12 +171,22 @@ function getUserName(user)
 		return lastName;
 }
 
+/**
+ * Returns a string that describes the user associated with the specified path.
+ * The string may be either the name of the user associated with the path (if defined
+ * and accessible), the screen name associated with the path, the email address
+ * associated with the user associated with the path (if defined and accessible) or
+ * "Someone" (or some translation thereof)
+ */
 function getPathDescription(path)
 {
+	if (path instanceof cr.Value)
+		path = path.instance();
+		
 	return (path.parent() && getUserName(path.parent())) ||
-			path.getDatum(cr.fieldNames.name) ||
+			path.getDescription() ||
 		   (path.parent() && path.parent().getDescription()) ||
-		   null;
+		    cr.organizationStrings.someone;
 }
 
 function getUserDescription(user)
@@ -179,7 +194,10 @@ function getUserDescription(user)
 	return getUserName(user) || user.getDescription();
 }
 				
-function showPath(path, previousPanelNode)
+/**
+ *	Displays a panel containing the experiences within the specified path.
+ */				
+function showPath(path)
 {
 	return path.promiseCells(["More Experience", "parents", cr.fieldNames.user])
 			   .then(function()
@@ -195,7 +213,10 @@ function showPath(path, previousPanelNode)
 				cr.syncFail);
 }
 
-function showUser(user, previousPanelNode)
+/**
+ *	Displays a panel containing the experiences within the path of the specified user.
+ */				
+function showUser(user)
 {
 	user.promiseCells([])
 	 .then(function()
@@ -207,10 +228,17 @@ function showUser(user, previousPanelNode)
 		cr.syncFail);
 }
 
+/**
+	Draw the contents of the specified infoButtons.
+	An info button is a circle with the letter 'i' within it.
+ */
 function drawInfoButtons(infoButtons)
 {
 	var activeColor = "#2C55CC"
+	
+	infoButtons.text("i");
 
+/* 
 	var svg = infoButtons.append("svg")
 		.attr('xmlns', "http://www.w3.org/2000/svg")
 		.attr('version', "1.1")
@@ -232,27 +260,35 @@ function drawInfoButtons(infoButtons)
 		.attr("font-size", "16px")
 		.attr("fill", activeColor)
 		.text("i");
+ */
 }
 
-function appendInfoButtons(buttons, panelNode)
+function appendInfoButtons(items)
 {
-	var infoButtons =  buttons.insert("div", ":first-child")
-		.classed("info-button right-fixed-width-div", true)
-		.on("click", function(user) {
+	/* infoButtons need to be wrapped inside of a div so that the other
+		div can contain a separate border if needed. 
+	 */
+	var outerDiv = items.append('div')
+		.classed('info-button-container', true);
+	var infoButtons =  outerDiv
+		.append('div')
+		.classed('info-button', true)
+		.on('click', function(user) {
 			if (prepareClick('click', 'show info: ' + user.getDescription()))
 			{
 				try
 				{
-					showUser(user, panelNode);
+					showUser(user);
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
 				}
 			}
 			d3.event.preventDefault();
 		});
 	drawInfoButtons(infoButtons);
+	return outerDiv;
 }
 
 function appendStringItem(obj, label, text, addBorder)
@@ -264,20 +300,16 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var labelDiv = sectionObj.append("label")
 		.text(label);
-	var itemsDiv = sectionObj.append("ol");
+	var itemsDiv = sectionObj.append("ol")
+							 .classed("cell-items hover-items", true);
 
-	itemsDiv.classed("right-label expanding-div", true);
-
-	var setupItems = function(divs) {
-		divs.append("div")
-		.classed("string-value-view", true)
-		.text(function(d) { return d; });
-	}
 	if (addBorder)
 		sectionObj.append("div").classed("cell-border-below", true);	
 
-	var divs = appendItems(itemsDiv, [text]);
-	setupItems(divs);
+	var items = appendItems(itemsDiv, [text]);
+	items.append("div")
+		.classed("string-value-view growable unselectable", true)
+		.text(function(d) { return d; });
 }
 
 function getOfferingAgeRange(offering)
@@ -370,6 +402,32 @@ function getPickedOrCreatedValue(i, pickedName, createdName)
 	}
 }
 
+function checkOfferingCells(experience)
+{
+	offering = experience.getValue("Offering");
+	if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
+	{
+		var storedI = crp.getInstance(offering.getInstanceID());
+		if (storedI && storedI.getCells())
+		{
+			offering.importCells(storedI.getCells());
+			r = $.Deferred();
+			r.resolve();
+			return r;
+		}
+		else
+		{
+			return offering.promiseCells();
+		}
+	}
+	else
+	{
+		r = $.Deferred();
+		r.resolve();
+		return r;
+	}
+}
+
 function getTagList(experience)
 {
 	var names = [];
@@ -378,7 +436,7 @@ function getTagList(experience)
 	if (offering && offering.getInstanceID())
 	{
 		if (!offering.areCellsLoaded())
-			throw ("Runtime error: offering data is not loaded");
+			throw new Error("Runtime error: offering data is not loaded");
 			
 		names = offering.getCell("Service").data
 			.filter(function(v) { return !v.isEmpty(); })

@@ -390,13 +390,8 @@ def acceptFollower(request, userPath=None):
     
     try:    
         language = None
-        followerID = request.POST["follower"]
+        followerPath = request.POST["follower"]
         privilegeID = request.POST["privilege"]
-        
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
         
         if not request.user.is_authenticated():
             return HttpResponseBadRequest(reason="user is not authenticated")
@@ -452,6 +447,16 @@ def acceptFollower(request, userPath=None):
                     for v in vs:
                         v.deepDelete(transactionState)
                 
+                    if follower.typeID_id == terms.user.id:
+                        propertyList = {\
+                                'name': [{'text': 'crn.FollowerAccept'}],
+                                'argument': [{'instanceID': user.id}],
+                                'is fresh': [{'instanceID': terms.yesEnum.id}]
+                            }
+                        item, v = instancecreator.create(terms['notification'], 
+                            follower, terms['notification'], -1, 
+                            propertyList, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
                     data = newValue.getReferenceData(userInfo, language)
                     results = {'object': data} 
         else:
@@ -470,17 +475,8 @@ def requestAccess(request):
     
     try:    
         language = None
-        followingID = request.POST["following"]
-        if terms.isUUID(followingID):
-            followingPath = '#%s' % followingID
-        else:
-            followingPath = followingID
-            
-        followerID = request.POST["follower"]
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
+        followingPath = request.POST["following"]
+        followerPath = request.POST["follower"]
         
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
@@ -527,21 +523,11 @@ def requestAccess(request):
                             
                                 # Send an email to the following user.
                                 protocol = "https://" if request.is_secure() else "http://"
-
-                                # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
-                                recipientEMail = following.value_set.filter(field=terms.email,
-                                                                            deleteTransaction__isnull=True)[0].stringValue
-                                firstNames = following.value_set.filter(field=terms.firstName,
-                                                                   deleteTransaction__isnull=True)
-                                firstName = firstNames.exists() and firstNames[0].stringValue
+                                recipientEMail = following.getSubDatum(terms.email)
+                                path = following.getSubInstance(terms['Path'])
+                                salutation = (path and path.getSubDatum(terms.name)) or following.getSubDatum(terms.firstName)
                                 
-                                moreExperiences = following.getSubInstance(terms['Path'])
-                                screenNames = moreExperiences and moreExperiences.value_set.filter(field=terms.name,
-                                                                                                    deleteTransaction__isnull=True)
-                                screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
-                                
-                                Emailer.sendNewFollowerEmail(settings.PASSWORD_RESET_SENDER, 
-                                    screenName or firstName,
+                                Emailer.sendNewFollowerEmail(salutation,
                                     recipientEMail, 
                                     follower.getDescription(),
                                     protocol + request.get_host() + settings.ACCEPT_FOLLOWER_PATH + follower.id,
@@ -683,17 +669,9 @@ def requestExperienceComment(request):
     
     try:    
         language = None
-        experienceID = request.POST["experience"]
-        if terms.isUUID(experienceID):
-            experiencePath = '#%s' % experienceID
-        else:
-            experiencePath = experienceID
+        experiencePath = request.POST["experience"]
             
-        followerID = request.POST["path"]
-        if terms.isUUID(followerID):
-            followerPath = '#%s' % followerID
-        else:
-            followerPath = followerID
+        followerPath = request.POST["path"]
             
         question = request.POST["question"]
         if len(question) == 0:
@@ -752,29 +730,33 @@ def requestExperienceComment(request):
                             # Send an email to the following user.
                             protocol = "https://" if request.is_secure() else "http://"
 
-                            # sendNewFollowerEmail(senderEMail, recipientEMail, follower, acceptURL, ignoreURL)
-                            experienceUser = experience.parent.parent
-                            recipientEMail = experienceUser.value_set.filter(field=terms.email,
-                                                                        deleteTransaction__isnull=True)[0].stringValue
-                            firstNames = experienceUser.value_set.filter(field=terms.firstName,
-                                                               deleteTransaction__isnull=True)
-                            firstName = firstNames.exists() and firstNames[0].stringValue
+                            recipient = experience.parent.parent
+                            recipientEMail = recipient.getSubDatum(terms.email)
+                            path = experience.parent
+                            salutation = path.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
                             
-                            path = experienceUser.parent
-                            screenNames = path and path.value_set.filter(field=terms.name,
-                                                                         deleteTransaction__isnull=True)
-                            screenName = screenNames and screenNames.exists() and screenNames[0].stringValue
-                            
-                            Emailer.sendNewExperienceQuestionEmail(settings.PASSWORD_RESET_SENDER, 
-                                screenName or firstName,
+                            # Send an email to the recipient that they have a question.
+                            Emailer.sendRequestExperienceCommentEmail(settings.PASSWORD_RESET_SENDER, 
+                                salutation,
                                 recipientEMail,
                                 experienceValue,
                                 follower,
                                 question,
                                 v,
                                 protocol + request.get_host())
-                        
                             
+                            # Create a notification for the user.    
+                            notificationData = {\
+                                    'name': [{'text': 'crn.ExperienceCommentRequested'}],
+                                    'argument': [{'instanceID': follower.id},
+                                                 {'instanceID': experience.id},
+                                                 {'instanceID': item.id}],
+                                    'is fresh': [{'instanceID': terms.yesEnum.id}]
+                                }
+                            notification, notificationValue = instancecreator.create(terms['notification'], 
+                                recipient, terms['notification'], -1, 
+                                notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
                             if commentsValue:
                                 typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
                                 fieldsDataDictionary = FieldsDataDictionary(typeset, language)
@@ -879,14 +861,41 @@ class api:
         if pathKey in c:
             userInfo = UserInfo(user)
             instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
-            					  .filterToInstances()\
-            					  .querySet
+                                  .filterToInstances()\
+                                  .querySet
             if len(instances) > 0:
                 c[idKey] = instances[0].id
             else:
                 raise RuntimeError("%s is not recognized" % pathKey)
-           
-    def updateValues(user, data):
+    
+    def valueAdded(v, nameLists, transactionState, hostURL):
+        if v.instance.typeID_id == terms['Comment'].id and \
+           v.field_id == terms['text'].id:
+            request = v.instance.getSubInstance(terms['Comment Request'])
+            if request:
+                follower = request.getSubInstance(terms['Path'])
+                recipient = follower.parent
+                recipientEMail = recipient.getSubDatum(terms.email)
+                experienceValue = v.instance.parent.parent.parentValue
+                salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
+                following = experienceValue.instance
+                comment = v.instance
+                Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
+                    experienceValue, following, comment, hostURL)
+
+                # Create a notification for the user.    
+                notificationData = {\
+                    'name': [{'text': 'crn.ExperienceQuestionAnswered'}],
+                    'argument': [{'instanceID': following.id},
+                                 {'instanceID': experienceValue.referenceValue.id},
+                                 {'instanceID': comment.id}],
+                    'is fresh': [{'instanceID': terms.yesEnum.id}]
+                }
+                notification, notificationValue = instancecreator.create(terms['notification'], 
+                    recipient, terms['notification'], -1, 
+                    notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+
+    def updateValues(user, data, hostURL):
         try:
             commandString = data.get('commands', "[]")
             commands = json.loads(commandString)
@@ -946,7 +955,9 @@ class api:
                         else:
                             item = container.addValue(field, c, newIndex, transactionState)
                             instanceID = item.referenceValue_id
-                            
+                            # Handle special cases that should occur when adding a new value.
+                            api.valueAdded(item, nameLists, transactionState, hostURL)
+
                         if item.isDescriptor:
                             descriptionQueue.append(container)
                     else:
@@ -1008,7 +1019,7 @@ class api:
             p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
-            if not 'none' in fields:
+            if 'none' not in fields:
                 results['fields'] = fieldsDataDictionary.getData()
                 
         except Exception as e:
@@ -1031,7 +1042,7 @@ class api:
                 if path.startswith("value/"):
                     valueID = path[6:6+32]
                     ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
-                    	.deleteObjects(user, NameList(), TransactionState(user))
+                        .deleteObjects(user, NameList(), TransactionState(user))
                 else:
                     transactionState = TransactionState(user)
                     descriptionCache = []
@@ -1054,7 +1065,8 @@ def updateValues(request):
     if not request.user.is_authenticated():
         raise PermissionDenied
     
-    return api.updateValues(request.user, request.POST)
+    hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
+    return api.updateValues(request.user, request.POST, hostURL)
     
 def getUserID(request):
     if request.method != "GET":

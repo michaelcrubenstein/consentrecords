@@ -274,3 +274,13 @@ panel.settings span.badge:hover {
 	background-color: #2222FF;
 }
 
+panel.notifications .is-fresh {
+	background: #D5DDF5;
+}
+
+panel.notifications div.no-results {
+	font-size: 0.8em;
+	font-style: italic;
+	color: #888888;
+}
+

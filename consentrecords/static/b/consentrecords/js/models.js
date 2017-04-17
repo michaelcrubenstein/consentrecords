@@ -171,33 +171,36 @@ var cr = {}
 
 cr.fieldNames = {
     /* These names are associated with fields. */
-    term: 'term',
-    name: 'name',
-    configuration: 'configuration',
-    field: 'field',
-    boolean: 'boolean',
-    dataType: 'data type',
-    ofKind: 'of kind',
-    pickObjectPath: 'pick object path',
-    enumerator: 'enumerator',
-    maxCapacity: 'max capacity',
-    addObjectRule: 'object add rule',
-    descriptorType: 'descriptor type',
-    user: 'user',
-    userID: 'userID',
-    email: 'email',
-    firstName: 'first name',
-    lastName: 'last name',
-    text: 'text',
     accessRecord: 'access record',
     accessRequest: 'access request',
-    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
-    privilege: 'privilege',
-    group: 'group',
+    addObjectRule: 'object add rule',
+    argument: 'argument',
+    configuration: 'configuration',
+    booleans: 'boolean',
+    dataType: 'data type',
     defaultAccess: 'default access',
-    specialAccess: 'special access',
+    descriptorType: 'descriptor type',
+    email: 'email',
+    enumerator: 'enumerator',
+    field: 'field',
+    firstName: 'first name',
+    group: 'group',
+    isFresh: 'is fresh',
+    lastName: 'last name',
+    maxCapacity: 'max capacity',
+    name: 'name',
+    notification: 'notification',
+    ofKind: 'of kind',
+    pickObjectPath: 'pick object path',
+    privilege: 'privilege',
     publicAccess: 'public access',
     primaryAdministrator: 'primary administrator',
+    specialAccess: 'special access',
+    systemAccess: 'system access',	/* A special field auto-generated to indicate whether a user has system access. */
+    term: 'term',
+    text: 'text',
+    user: 'user',
+    userID: 'userID',
 }
 
 cr.descriptorTypes = {
@@ -231,6 +234,11 @@ cr.maxCapacities = {
 
 cr.dataTypes = {
 	objectType: "object"
+}
+
+cr.booleans = {
+	yes: "yes",
+	no: "no"
 }
 
 cr.ModelObject = (function()
@@ -677,24 +685,7 @@ cr.Value = (function() {
 	Value.prototype.deleteValue = function()
 	{
 		var _this = this;
-		if (this.cell != null &&
-			this.getInstanceID() != null &&
-			this.instance().parent() == this.cell.parent)
-		{
-			/* In this case, this is a root object, so we just need to 
-				delete the instance. */
-			return $.ajax({
-					url: cr.urls.getData + this.getInstanceID() + "/",
-					type: 'DELETE',
-				})
-				.then(function()
-					{
-						_this.triggerDeleteValue();
-						return _this;
-					},
-					cr.thenFail);
-		}
-		else if (this.id == null)	/* It was never saved */
+		if (this.id == null)	/* It was never saved */
 		{
 			_this.triggerDeleteValue();
 			var r = $.Deferred();
@@ -715,6 +706,12 @@ cr.Value = (function() {
 					cr.thenFail);
 		}
 	};
+	
+	Value.prototype.appendDeleteCommand = function(initialData, sourceObjects)
+	{
+		initialData.push({id: this.id});
+		sourceObjects.push(this);
+	}
 	
 	Value.prototype.update = function(newValueID, initialData, done)
 	{
@@ -896,9 +893,31 @@ cr.Instance = (function() {
 		return this._cells;
 	}
 	
-	Instance.prototype.areCellsLoaded = function()
+	/** Returns true if the cells of this instance are loaded. Otherwise, returns false.
+	 * If fields are specified, then, in order to return true, each of the instances referenced
+	 * in each specified field must also have all of its cells loaded.
+	 */
+	Instance.prototype.areCellsLoaded = function(fields)
 	{
-		return this._cells !== null;
+		if (this._cells === null)
+			return false;
+		
+		if (fields)
+		{
+			for (var i = 0; i < fields.length; ++i)
+			{
+				var fieldName = fields[i];
+				var cell = this.getCell(fieldName);
+				if (cell)
+				{
+					var datum = cell.data.find(function(d) { return d.getInstanceID() && !d.instance()._cells; });
+					if (datum)
+						return false;
+				}
+			}
+		}
+		
+		return true;
 	}
 
 	Instance.prototype.setCells = function(cells)
@@ -911,6 +930,12 @@ cr.Instance = (function() {
 		return this;
 	}
 	
+	/** if parentID is undefined, returns the parent of this instance. The parent off
+	 * an instance is the instance that, when deleted, will automatically delete this instance.
+	 *
+	 * If parentID is defined, then set the parentID of this instance and return this so that
+	 * subsequent operations can be chained.
+	 */
 	Instance.prototype.parent = function(parentID)
 	{
 		if (parentID === undefined)
@@ -920,6 +945,25 @@ cr.Instance = (function() {
 			this._parentID = parentID;
 			return this;
 		}
+	}
+	
+	/** Returns a promise that the parent of this instance can be retrieved from the parent 
+	 * function.
+	 */
+	Instance.prototype.parentPromise = function()
+	{
+		if (!this._parentID)
+		{
+			var r = $.Deferred();
+			r.resolve(null);
+			return r;
+		}
+		
+		var i = crp.getInstance(this._parentID);
+		if (i)
+			return i.promiseCellsFromCache();
+		else
+			return crp.promise({path: this._parentID});
 	}
 	
 	Instance.prototype.updateFromChangeData = function(changeData)
@@ -1052,13 +1096,16 @@ cr.Instance = (function() {
 		return newCell;
 	}
 
-	Instance.prototype.importCells = function(oldCells)
+	/** Import all of the cells from oldCells into the cells of this instance.
+	 */
+	Instance.prototype.importCells = function(cells)
 	{
+		if (!cells)
+			throw new Error("Runtime Error: argument of cells to import is null");
+			
 		this._cells = [];
-		for (var j = 0; j < oldCells.length; ++j)
-		{
-			this.importCell(oldCells[j]);
-		}
+		for (var i = 0, len = cells.length; len > 0; ++i, --len)
+			this.importCell(cells[i]);
 	}
 
 	/* loadData loads the data from the middle tier or another ObjectValue. */
@@ -1189,10 +1236,13 @@ cr.Instance = (function() {
 					{
 						var r2 = $.Deferred();
 						try {
-							json.fields.forEach(function(field)
-								{
-									crp.pushField(field);
-								});
+							if (json.fields)
+							{
+								json.fields.forEach(function(field)
+									{
+										crp.pushField(field);
+									});
+							}
 							/* If the data length is 0, then this item can not be read. */
 							if (json.data.length > 0)
 							{
@@ -1276,7 +1326,7 @@ cr.Instance = (function() {
 	Instance.prototype.promiseCellsFromCache = function(fields)
 	{
 		var storedI = crp.getInstance(this.getInstanceID());
-		if (storedI && storedI.areCellsLoaded())
+		if (storedI && storedI.areCellsLoaded(fields))
 		{
 			if (this !== storedI)
 			{
@@ -1373,9 +1423,9 @@ cr.ObjectValue = (function() {
 		return this._instance && this._instance.getCells();
 	}
 	
-	ObjectValue.prototype.areCellsLoaded = function()
+	ObjectValue.prototype.areCellsLoaded = function(fields)
 	{
-		return this._instance.areCellsLoaded();
+		return this._instance.areCellsLoaded(fields);
 	}
 
 	ObjectValue.prototype.setCells = function(oldCells)
@@ -1396,13 +1446,8 @@ cr.ObjectValue = (function() {
 		var command;
 		if (!newInstanceID)
 		{
-			if (!this.getInstanceID())
-				return;
-			else
-			{
-				command = {id: this.id};
-				sourceObjects.push(this);
-			}
+			if (this.getInstanceID())
+				this.appendDeleteCommand(initialData, sourceObjects);
 		}
 		else {
 			if (this.getInstanceID() == newInstanceID)
@@ -1437,8 +1482,8 @@ cr.ObjectValue = (function() {
 				else
 					sourceObjects.push(this);
 			}
+			initialData.push(command);
 		}
-		initialData.push(command);
 		
 	}
 
@@ -1461,6 +1506,30 @@ cr.ObjectValue = (function() {
 		this.triggerDataChanged();
 	}
 
+	ObjectValue.prototype.deleteValue = function()
+	{
+		var _this = this;
+		if (this.cell != null &&
+			this.getInstanceID() != null &&
+			this.instance().parent() == this.cell.parent)
+		{
+			/* In this case, this is a root object, so we just need to 
+				delete the instance. */
+			return $.ajax({
+					url: cr.urls.getData + this.getInstanceID() + "/",
+					type: 'DELETE',
+				})
+				.then(function()
+					{
+						_this.triggerDeleteValue();
+						return _this;
+					},
+					cr.thenFail);
+		}
+		else
+			return cr.Value.prototype.deleteValue.call(this);
+	};
+	
 	ObjectValue.prototype.isEmpty = function()
 	{
 		return !this._instance || this._instance.isEmpty();
@@ -1576,7 +1645,6 @@ cr.ObjectValue = (function() {
 	ObjectValue.prototype.promiseCellsFromCache = function(fields)
 	{
 		return this._instance.promiseCellsFromCache(fields);
-		var storedI = crp.getInstance(this.getInstanceID());
 	}
 	
 	ObjectValue.prototype.checkConfiguration = function(done, fail)
@@ -1637,16 +1705,6 @@ cr.createSignedinUser = function(instanceID, description)
 }
 
 cr.cellFactory = {
-	_string: cr.StringCell,
-	_number: cr.NumberCell,
-	_email: cr.EmailCell,
-	_url: cr.UrlCell,
-	_telephone: cr.TelephoneCell,
-	_translation: cr.TranslationCell, 
-	_datestamp: cr.DatestampCell, 
-	"_datestamp (day optional)": cr.DatestampDayOptionalCell,
-	_time: cr.TimeCell,
-	_object: cr.ObjectCell,
 	string: cr.StringCell,
 	number: cr.NumberCell,
 	email: cr.EmailCell,

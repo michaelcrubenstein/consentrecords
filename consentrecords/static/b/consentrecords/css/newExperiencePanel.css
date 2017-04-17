@@ -293,31 +293,7 @@
 		border-right-color: #2C55CC;
 	}
 	
-	panel.new-experience-panel section.date-container {
-		margin-top: 0px;
-	}
-	
-	panel.new-experience-panel section.date-container label {
-		display: inline-block;
-		float: none;
-		width: calc(100% - 12px);
-		border-top-style: solid;
-		border-top-width: 1px;
-		border-top-color: #ddd;
-		margin-left: 12px;
-		padding-left: 0px;
-		text-align: left;
-	}
-	
-	panel.new-experience-panel section.date-container ol.item {
-		display: inline-block;
-		position: absolute;
-		right: 0px;
-		margin-top: 1px;	/* Don't use top. */
-		float: none;
-	}
-	
-	panel.new-experience-panel section.date-container ol.item span {
+	panel.new-experience-panel section.date-container ol.cell-items span {
 		white-space: nowrap;
 		cursor: pointer;
 	}
@@ -429,3 +405,10 @@
 		outline: none;
 	}
 	
+*.overlined-items {
+	border-top: 1px solid #eee;
+}
+
+*.overlined-items {
+	border-top: 1px solid #eee;
+}

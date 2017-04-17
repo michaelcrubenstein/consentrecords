@@ -33,7 +33,8 @@ class Transaction(dbmodels.Model):
         
 class TransactionState:
     mutex = Lock()
-    
+
+    # The user is an instance of AuthUser    
     def __init__(self, user):
         self.currentTransaction = None
         self.user = user
@@ -190,10 +191,19 @@ class Instance(dbmodels.Model):
                 logger = logging.getLogger(__name__)
                 logger.error("%s: adding string %s(%s)" % (str(self), str(field), str(value)))
                 self.addStringValue(field, value, position, transactionState)
-        
-    def _getSubValues(self, field):
-        return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position');
     
+    # Returns a filter enumerating all of the values that match the specified field.
+    def __getitem__(self, field):
+        if not field:
+            raise ValueError("field is not specified")
+        
+        if isinstance(field, str):
+            field = terms[field]
+        return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
+    
+    # Returns a dictionary whose keys are field ids and whose values are arrays of
+    # values contained by self.
+    # userInfo is used to determine if the dictionary includes security field data.  
     def _groupValuesByField(self, vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
@@ -207,26 +217,29 @@ class Instance(dbmodels.Model):
                     values[fieldID].append(v)
         return values
     
-    def _getSubInstances(self, field): # Previously _getSubValueObjects
-        return [v.referenceValue for v in self._getSubValues(field)]
+    def _getSubInstances(self, field):
+        return [v.referenceValue for v in self[field]]
         
-    # Returns a unique value of the specified id.
+    # Returns a unique value in the cell specified by the field.
     def getSubValue(self, field):
         if not field:
             raise ValueError("field is not specified")
         
         try:
-            f = self.value_set.filter(deleteTransaction__isnull=True, field=field).select_related('referenceValue')
+            f = self[field].select_related('referenceValue')
             return f[0] if f.exists() else None
         except Value.DoesNotExist:
             return None
-            
+    
+    # Returns the instance associated with a unique value in the cell specified by the field.      
     def getSubInstance(self, field):
-        if not field:
-            raise ValueError("field is not specified")
-            
         v = self.getSubValue(field)
         return v and v.referenceValue
+     
+    # Returns the datum associated with a unique value in the cell specified by the field.      
+    def getSubDatum(self, field):
+        v = self.getSubValue(field)
+        return v and v.stringValue
      
     # Returns a list of pairs of text that are used to generate the description of objects 
     # of this kind.
@@ -254,8 +267,8 @@ class Instance(dbmodels.Model):
         verbs = nameLists.getNameUUIDs(self.typeID)
         r = []
         for field, dataType, descriptorType in verbs:
+            vs = self[field]
             if descriptorType == terms.textEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
                 if dataType == terms.objectEnum:
                     for v in vs:
                         try:
@@ -267,7 +280,6 @@ class Instance(dbmodels.Model):
                 else:
                     r.extend([v.stringValue for v in filter(lambda v: v.stringValue, vs)])
             elif descriptorType == terms.firstTextEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
                 if vs.exists():
                     v = vs[0]
                     if dataType == terms.objectEnum:
@@ -281,7 +293,6 @@ class Instance(dbmodels.Model):
                         if v.stringValue:
                             r.append(v.stringValue)
             elif descriptorType == terms.countEnum:
-                vs = self.value_set.filter(field=field, deleteTransaction__isnull=True)
                 r.append(str(vs.count()))
             else:
                 raise ValueError("unrecognized descriptorType: %s ('%s' or '%s')" % (str(descriptorType), str(terms.textEnum), str(terms.countEnum)))
@@ -485,7 +496,7 @@ class Instance(dbmodels.Model):
                 if fieldData["name"] in fields:
                     vs = ValueQuerySet.selectRelatedData(p.value_set.filter(deleteTransaction__isnull=True), [], userInfo)
                     parentData['cells'] = p._getChildCellsData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
-                    
+                
                 cells.append({"field": fieldData["id"], "data": [parentData]})
                 
                 fp = p.parent_id and \
@@ -538,19 +549,11 @@ class Instance(dbmodels.Model):
         return cells
 
     def getNextElementIndex(self, field):
-        maxElementIndex = reduce(lambda x,y: max(x, y), 
-                                 [e.position for e in self._getSubValues(field)],
-                                 -1)
-        if maxElementIndex < 0:
-            return 0
-        else:
-            return maxElementIndex + 1
+        f = self[field]
+        return 0 if not f.exists() else (f.reverse()[0].position + 1)
 
     def updateElementIndexes(self, field, newIndex, transactionState):
-        ids = {}
-        
-        for e in self._getSubValues(field):
-            ids[e.position] = e
+        ids = dict([(e.position, e) for e in self[field]])
         if len(ids) == 0:
             return 0
         else:
@@ -617,7 +620,7 @@ class Instance(dbmodels.Model):
                                       referenceValue__value__referenceValue__value__stringValue=name)\
                                  .referenceValue
         except Value.DoesNotExist:
-            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration' % (name, self))
+            raise Value.DoesNotExist('the field name "%s" is not recognized for "%s" configuration of term "%s"' % (name, self, self.parent))
 
     # Return the Value for the specified configuration. If it doesn't exist, raise a Value.DoesNotExist.   
     # Self is of type configuration.
@@ -646,7 +649,7 @@ class Instance(dbmodels.Model):
         aIndex = privileges.index(a)
         return b if b in privileges[(aIndex+1):] else a
         
-    # returns the privilege level that the specified user instance has for this instance. 
+    ### Returns the privilege level that the specified user instance has for this instance. 
     def getPrivilege(self, userInfo):
         if userInfo.is_administrator:
             return terms.administerPrivilegeEnum
@@ -654,49 +657,7 @@ class Instance(dbmodels.Model):
         if not self.accessSource_id:
             return terms.readPrivilegeEnum
         
-        source_id = self.accessSource_id
-            
-        minPrivilege = None
-        minPrivilegeFilter = Value.objects.filter(instance=source_id,
-                                                  field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                   .select_related('referenceValue__description')
-        if minPrivilegeFilter.exists():
-            minPrivilege=minPrivilegeFilter[0].referenceValue
-        
-        if not userInfo.instance:
-            return minPrivilege
-        
-        if Value.objects.filter(instance=source_id,
-                                field=terms.primaryAdministrator, 
-                                deleteTransaction__isnull=True,
-                                referenceValue=userInfo.instance).exists():
-            return terms.administerPrivilegeEnum
-                
-        f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord, deleteTransaction__isnull=True)\
-            .filter(Q(value__referenceValue=userInfo.instance,
-                      value__deleteTransaction__isnull=True)|
-                    (Q(value__deleteTransaction__isnull=True,
-                       value__referenceValue__value__referenceValue=userInfo.instance,
-                       value__referenceValue__value__deleteTransaction__isnull=True)))
-                      
-        p = map(lambda i: i.value_set.filter(field=terms.privilege, deleteTransaction__isnull=True)\
-                           .select_related('referenceValue__description')[0].referenceValue, f)
-        
-        return reduce(Instance.comparePrivileges, p, minPrivilege)
-    
-    ### For the specified self user, return a filter of values indicating which access records are accessible to this user.   
-    def _getPrivilegeValues(self, privilegeIDs):
-        return Value.objects.filter(Q(referenceValue=self)|\
-                                       (Q(referenceValue__value__referenceValue=self)\
-                                        &Q(referenceValue__value__deleteTransaction__isnull=True)\
-                                       ),\
-                                       instance__typeID=terms.accessRecord,
-                                       deleteTransaction__isnull=True
-                                       ) \
-            .annotate(pField=F('instance__value__field'),privilege=F('instance__value__referenceValue'),
-                      pDeleted=F('instance__value__deleteTransaction')
-                     ) \
-            .filter(pField=terms.privilege.id, privilege__in=privilegeIDs,pDeleted=None)
+        return userInfo.getPrivilege(self.accessSource_id)
     
     ### Returns True if this user (self) is the primary administrator of the specified instance
     def isPrimaryAdministrator(self, instance):
@@ -707,14 +668,13 @@ class Instance(dbmodels.Model):
             referenceValue=self,
             deleteTransaction__isnull=True).exists()
     
-    # Return a QuerySet that filters f according to the specified privileges.
-    # self is a user to whom the privileges apply.
-    def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):
-        sourceValues = self._getPrivilegeValues(privilegeIDs)
-        
+    ### Returns a QuerySet that filters f according to the specified privileges.
+    ### self is a user to whom the privileges apply.
+    def _securityFilter(self, f, privilegeIDs, accessRecordOptional=True):        
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=terms.accessRecord)&
-                         Q(children__value__in=sourceValues))
+                        (Q(children__typeID=terms.accessRecord,
+                           children__deleteTransaction__isnull=True,
+                           children__value__referenceValue__in=privilegeIDs))
                         |
                         (((Q(value__field=terms.publicAccess.id)\
                            &Q(value__referenceValue__in=privilegeIDs)\
@@ -766,14 +726,29 @@ class Instance(dbmodels.Model):
         
         if not self.accessSource_id:
             return False                    
-        if self.accessSource.value_set.filter(field=terms.publicAccess, 
-                                                     referenceValue__in=publicAccessPrivileges,
-                                                     deleteTransaction__isnull=True).exists():
+        if len(publicAccessPrivileges) > 0 and \
+           Value.objects.filter(instance=self.accessSource_id,
+                                field=terms.publicAccess, 
+                                referenceValue__in=publicAccessPrivileges,
+                                deleteTransaction__isnull=True).exists():
             return True
-        return userInstance and \
-               self.accessSource.children.filter(typeID=terms.accessRecord, 
-                    value__in=userInstance._getPrivilegeValues(accessRecordPrivilegeIDs))\
-                    .exists()
+        
+        if not userInstance:
+            return False
+        
+        # create a query set of all of the access records that contain this instance.        
+        f = Instance.objects.filter(parent=self.accessSource_id, typeID=terms.accessRecord)\
+            .filter(Q(value__referenceValue=userInstance,
+                      value__deleteTransaction__isnull=True)|
+                    Q(value__deleteTransaction__isnull=True,
+                      value__referenceValue__value__referenceValue=userInstance,
+                      value__referenceValue__value__deleteTransaction__isnull=True))
+
+        g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                deleteTransaction__isnull=True,
+                referenceValue__in=accessRecordPrivilegeIDs)
+                
+        return g.exists()
 
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
@@ -883,28 +858,24 @@ class Instance(dbmodels.Model):
                         Q(accessSource__in=sources))
         
     def securityValueFilter(self, privilegeIDs):
-        sourceValues = self._getPrivilegeValues(privilegeIDs)
-        
         sources=Instance.objects.filter(\
-                        (Q(children__typeID=terms.accessRecord)&
-                         Q(children__value__in=sourceValues))
+                        Q(children__typeID=terms.accessRecord,
+                          children__deleteTransaction__isnull=True,
+                          children__value__referenceValue__in=privilegeIDs)
                         |
-                        (((Q(value__field=terms.publicAccess.id)\
-                           &Q(value__referenceValue__in=privilegeIDs)\
-                           &Q(value__deleteTransaction__isnull=True)\
-                          )\
+                        (Q(value__field=terms.publicAccess.id,
+                           value__referenceValue__in=privilegeIDs,
+                           value__deleteTransaction__isnull=True)\
                           |
-                          (Q(value__field=terms.primaryAdministrator.id)\
-                           &Q(value__referenceValue=self)\
-                           &Q(value__deleteTransaction__isnull=True)\
-                          )\
-                         )\
+                          Q(value__field=terms.primaryAdministrator.id,
+                            value__referenceValue=self,
+                            value__deleteTransaction__isnull=True)\
                         )\
                        )
         
-        return (Q(referenceValue__isnull=True)|
-                        Q(referenceValue__accessSource__isnull=True)|
-                        (Q(referenceValue__accessSource__in=sources)))
+        return Q(referenceValue__isnull=True)|\
+               Q(referenceValue__accessSource__isnull=True)|\
+               Q(referenceValue__accessSource__in=sources)
     
     ### For the specified instance filter, filter only those instances that can be found by self. 
     @property   
@@ -944,52 +915,41 @@ class Instance(dbmodels.Model):
     
     @property    
     def user(self):
-        field = terms[TermNames.userID]
-        id = self.value_set.get(field=field, deleteTransaction__isnull=True).stringValue
+        id = self[TermNames.userID][0].stringValue
         return AuthUser.objects.get(pk=id)
 
     # The following functions are used for loading scraped data into the system.
     def getOrCreateTextValue(self, field, value, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           stringValue=value['text'],
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(stringValue=value['text'])
         if len(children):
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue(value, transactionState)
                     
             return self.addValue(field, value, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateTranslationValue(self, field, text, languageCode, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           stringValue=text,
-                                           languageCode=languageCode,
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(stringValue=text, languageCode=languageCode)
         if len(children):
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue({'text': text, 'languageCode': languageCode}, transactionState)
                     
             return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
         
     def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
-        children = self.value_set.filter(field=field,
-                                           referenceValue=referenceValue,
-                                           deleteTransaction__isnull=True)
+        children = self[field].filter(referenceValue=referenceValue)
         if children.exists():
             return children[0]
         else:
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
-                children = self.value_set.filter(field=field,
-                                                 deleteTransaction__isnull=True)
+                children = self[field]
                 if len(children):
                     return children[0].updateValue(referenceValue, transactionState)
                     
@@ -998,24 +958,18 @@ class Instance(dbmodels.Model):
     # returns the querySet of values within self that are in the specified object field and named using
     # a string within the referenceValue of the value.
     def getChildrenByName(self, field, nameField, name):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue__value__deleteTransaction__isnull=True,
-                                        referenceValue__value__field=nameField,
-                                        referenceValue__value__stringValue__iexact=name)
+        return self[field].filter(referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=nameField,
+                                  referenceValue__value__stringValue__iexact=name)
     
     # returns the querySet of values within self that are in the specified object field and named using
     # a referenceValue within the referenceValue of the value.
     def getChildrenByReferenceName(self, field, nameField, name):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue__value__deleteTransaction__isnull=True,
-                                        referenceValue__value__field=nameField,
-                                        referenceValue__value__referenceValue=name)
+        return self[field].filter(referenceValue__value__deleteTransaction__isnull=True,
+                                  referenceValue__value__field=nameField,
+                                  referenceValue__value__referenceValue=name)
     def getValueByReference(self, field, r):
-        return self.value_set.filter(deleteTransaction__isnull=True,
-                                        field=field,
-                                        referenceValue=r)
+        return self[field].filter(referenceValue=r)
     # The previous functions are used for loading scraped data into the system.
 
     
@@ -1164,6 +1118,7 @@ class Value(dbmodels.Model):
                Q(referenceValue__accessSource__isnull=True)|\
                Q(referenceValue__accessSource__in=sources)
 
+# The description of an instance.        
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
@@ -1172,6 +1127,8 @@ class Description(dbmodels.Model):
     def __str__(self):
         return "%s" % (self.text)
                 
+# A denormalization that identifies instances that descend through the parent node to 
+# other instances.
 class Containment(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False)
@@ -1227,8 +1184,8 @@ class TermNames():
     createObjectRuleEnum = 'create one'
     
     # enumerations for boolean
-    yes = 'yes'
-    no = 'no'
+    yesEnum = 'yes'
+    noEnum = 'no'
     
     # enumerations for descriptor type
     textEnum = 'by text'
@@ -1466,6 +1423,8 @@ class Terms():
             x = Terms.getNamedEnumerator(self.maxCapacity, type.__getattribute__(TermNames, name))
         elif name in ['pickObjectRuleEnum', 'createObjectRuleEnum']:
             x = Terms.getNamedEnumerator(self.addObjectRule, type.__getattribute__(TermNames, name))
+        elif name in ['yesEnum', 'noEnum']:
+            x = Terms.getNamedEnumerator(self.boolean, type.__getattribute__(TermNames, name))
         elif name in ['findPrivilegeEnum', 'readPrivilegeEnum', 'writePrivilegeEnum', 'administerPrivilegeEnum', 'registerPrivilegeEnum']:
             x = Terms.getNamedEnumerator(self.privilege, type.__getattribute__(TermNames, name))
         elif name == 'defaultCustomEnum':
@@ -1486,7 +1445,8 @@ class Terms():
             return i
             
     
-    # Return the UUID for the specified Ontology object. If it doesn't exist, raise a Value.DoesNotExist.   
+    # Return an Instance representing the specified Ontology object. 
+    # If the Instance doesn't exist, raise a Value.DoesNotExist.   
     def getNamedEnumerator(term, name):
         if not term:
             raise ValueError("term is null")
@@ -1593,6 +1553,9 @@ class UserInfo:
         self._logs = []
         self.log('Create UserInfo')
         self.typeNames = {}
+        
+        # privileges is a cache of privileges where the keys are instance ids.
+        self._privileges = {}
     
     @property    
     def is_administrator(self):
@@ -1621,6 +1584,44 @@ class UserInfo:
             description = Instance.objects.get(pk=typeID).description.text
             self.typeNames[typeID] = description
             return description
+    
+    # Returns a privilege instance for the specified source_id.
+    def getPrivilege(self, source_id):
+        if source_id not in self._privileges:
+            minPrivilege = None
+            minPrivilegeFilter = Value.objects.filter(instance=source_id,
+                                                      field=terms.publicAccess, deleteTransaction__isnull=True)\
+                                       .select_related('referenceValue__description')
+            if minPrivilegeFilter.exists():
+                minPrivilege=minPrivilegeFilter[0].referenceValue
+        
+            if not self.instance:
+                return minPrivilege
+        
+            if Value.objects.filter(instance=source_id,
+                                    field=terms.primaryAdministrator, 
+                                    deleteTransaction__isnull=True,
+                                    referenceValue=self.instance).exists():
+                return terms.administerPrivilegeEnum
+        
+            # create a query set of all of the access records that contain this instance.        
+            f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
+                .filter(Q(value__referenceValue=self.instance,
+                          value__deleteTransaction__isnull=True)|
+                        Q(value__deleteTransaction__isnull=True,
+                          value__referenceValue__value__referenceValue=self.instance,
+                          value__referenceValue__value__deleteTransaction__isnull=True))
+        
+            g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                    deleteTransaction__isnull=True)\
+                    .select_related('referenceValue__description')
+                
+            # map the access records to their corresponding privilege values.              
+            p = map(lambda i: i.referenceValue, g)
+        
+            self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
+        
+        return self._privileges[source_id]
             
 class ObjectQuerySet:
     def __init__(self, querySet=None):

@@ -64,9 +64,9 @@ term
             data type: translation
             descriptor type: by text
     enumerator
-        translation: en - yes
+        name: yes
     enumerator
-        translation: en - no
+        name: no
 term
     name: City
 term
@@ -479,6 +479,8 @@ term
 term
     name: Inquiry Access Group
 term
+    name: is fresh
+term
     name: language
     enumerator
         name: English
@@ -581,6 +583,13 @@ term
             data type: object
             max capacity: multiple values
             object add rule: pick one
+        field
+            name: is fresh
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: End
+            pick object path: terms[name=boolean]/enumerator
 term
     name: object add rule
     enumerator
@@ -1152,6 +1161,12 @@ term
             max capacity: multiple values
             object add rule: pick one
             of kind: user
+        field
+            name: notification
+            data type: object
+            max capacity: multiple values
+            object add rule: create one
+            of kind: notification
     default access: custom
 term
     name: User Entered Offering

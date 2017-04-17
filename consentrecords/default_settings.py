@@ -121,7 +121,7 @@ STATIC_ROOT= os.path.join(BASE_DIR, 'static')
 AUTH_USER_MODEL = 'custom_user.AuthUser'
 
 # Email address of the sender of emails.
-PASSWORD_RESET_SENDER = r'info@pathadvisor.com'
+PASSWORD_RESET_SENDER = r'no-reply@pathadvisor.com'
 
 # Path of the web page to reset the password of a user.
 PASSWORD_RESET_PATH = r'/user/passwordreset/'
@@ -139,7 +139,7 @@ CR_REQ_HOST = r'http://localhost:8000/'
 
 FACEBOOK_SHOW = False
 
-JS_VERSION = '17'
+JS_VERSION = '20'
 
 from consentrecords.email_settings import *
 
