@@ -2580,6 +2580,8 @@ function promiseImportCells(containerCell, d, cells)
 		d = containerCell.addNewValue();
 		d.instance(new cr.Instance());
 	}
+	else if (!d.instance())
+		d.instance(new cr.Instance());
 		
 	d.importCells(cells);
 
