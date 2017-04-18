@@ -117,8 +117,6 @@ function getDateRange(d)
 
 function appendSessionDescriptions(buttons)
 {
-	appendRightChevrons(buttons);
-	
 	buttons.append('div')
 		.text(function(d) { 
 			return d.getValue("Offering").getDescription();
@@ -154,6 +152,7 @@ function appendSessionDescriptions(buttons)
 			else
 				return null;
 		});
+	crf.appendRightChevrons(buttons);
 }
 
 function getUserName(user)

@@ -2175,7 +2175,7 @@ var SearchOptionsView = (function () {
 		appendViewButtons(items, this._fill);
 		
 		this.constrainFoundObjects();
-		return buttons;
+		return items;
 	}
 	
 	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
@@ -2413,7 +2413,8 @@ var PanelSearchView = (function() {
 	PanelSearchView.prototype.appendSearchArea = function()
 	{
 		return this.sitePanel.appendScrollArea()
-			.append('ol');
+			.append('ol')
+			.classed('cell-items hover-items', true);
 	}
 	
 	return PanelSearchView;

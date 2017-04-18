@@ -752,8 +752,9 @@ var MultiTypeOptionView = (function() {
 	
 	MultiTypeOptionView.prototype.appendSearchArea = function()
 	{
-		return d3.select(this.containerNode).append('ol')
-			.classed('search', true);
+		return d3.select(this.containerNode)
+			.append('ol')
+			.classed('cell-items hover-items search', true);
 	}
 	
 	function MultiTypeOptionView(containerNode, experience, appendDescriptions)
@@ -1490,7 +1491,7 @@ var OrganizationSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
@@ -1752,7 +1753,7 @@ var SiteSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Offering")
 				{
 					leftText.append('div')
@@ -2070,7 +2071,7 @@ var OfferingSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Offering")
 				{
 					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())

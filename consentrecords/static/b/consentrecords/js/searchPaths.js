@@ -138,8 +138,9 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.appendSearchArea = function()
 	{
-		return d3.select(this.searchPathsPanel.resultContainerNode).append('ol')
-			.classed('search', true);
+		return d3.select(this.searchPathsPanel.resultContainerNode)
+			.append('ol')
+			.classed('cell-items hover-items search', true);
 	}
 	
 	/* Overwrite this function to use a different set of fields for the getData or selectAll operation
