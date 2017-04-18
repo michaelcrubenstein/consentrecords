@@ -350,8 +350,9 @@ var Experience = (function() {
 				var section = header.append('section')
 					.classed('cell view unique', true);
 				section.append('ol')
+					.classed('cell-items', true)
 					.append('li')
-					.append('div').classed('string-value-view', true)
+					.append('div').classed('growable string-value-view', true)
 					.text(t);
 			}
 		}
@@ -2146,6 +2147,8 @@ var VerticalReveal = (function() {
 		{
 			if (step) step();
 			if (done) done();
+			jNode.css('padding-top', "6px")
+				 .css('padding-bottom', "6px");
 		}
 		else if (args.newHeight == 'auto')
 		{
@@ -2154,14 +2157,14 @@ var VerticalReveal = (function() {
 				but I didn't test that. */
 			var outerHeight = jNode.outerHeight(false);
 			jNode.height(oldHeight);
-			jNode.animate({height: outerHeight}, {duration: duration, easing: 'swing', step: step, done: done});
+			jNode.animate({height: outerHeight, "padding-top": "6px", "padding-bottom": "6px"}, {duration: duration, easing: 'swing', step: step, done: done});
 			
 		}
 		else
 		{
 			var height = jNode.height();
 			jNode.height(oldHeight);
-			jNode.animate({height: height}, {duration: duration, easing: 'swing', step: step, done: done});
+			jNode.animate({height: height, "padding-top": "6px", "padding-bottom": "6px"}, {duration: duration, easing: 'swing', step: step, done: done});
 		}
 	}
 	
@@ -2175,7 +2178,11 @@ var VerticalReveal = (function() {
 		var jNode = $(this.node);
 
 		var oldHeight = jNode.height();
-		jNode.height(0);
+		var oldPaddingTop = jNode.css('padding-top');
+		var oldPaddingBottom = jNode.css('padding-bottom');
+		jNode.css('padding-top', '0px')
+			 .css('padding-bottom', '0px')
+			 .height(0);
 		if (before)
 			before();
 			
@@ -2189,8 +2196,10 @@ var VerticalReveal = (function() {
 		else
 		{
 			var _this = this;
-			jNode.height(oldHeight);
-			jNode.animate({height: "0px"}, {duration: duration, easing: 'swing', step: step, done: 
+			jNode.css('padding-top', oldPaddingTop)
+				 .css('padding-bottom', oldPaddingBottom)
+				 .height(oldHeight)
+				 .animate({height: '0px', 'padding-top': '0px', 'padding-bottom': '0px'}, {duration: duration, easing: 'swing', step: step, done: 
 				function() {
 					jNode.children().css('display', 'none');
 					_this._isVisible = false;
@@ -2402,10 +2411,11 @@ var NewExperiencePanel = (function () {
 	{
 		var _this = this;
 		var itemsDiv = dateContainer.append('ol')
-			.classed('item', true);
+			.classed('cell-items overlined-items', true);
 		var itemDiv = itemsDiv.append('li');
-		var dateSpan = itemDiv.append('span');
-		var dateWheel = new DateWheel(dateContainer.node(), function(newDate)
+		var dateSpan = itemDiv.append('span')
+			.classed('growable', true);
+		var dateWheel = new DateWheel(dateContainer.node().parentNode, function(newDate)
 			{
 				if (newDate)
 					dateSpan.text(getLocaleDateString(newDate));
@@ -2447,8 +2457,8 @@ var NewExperiencePanel = (function () {
 				}
 			});
 		
-		var notSureButton = dateContainer.append('div')
-				.classed('in-cell-button site-active-text', true)
+		var notSureButton = d3.select(dateContainer.node().parentNode).append('div')
+				.classed('not-sure-button site-active-text', true)
 				.on('click', function()
 					{
 						if (prepareClick('click', "Not Sure"))
@@ -2459,7 +2469,7 @@ var NewExperiencePanel = (function () {
 							unblockClick();
 						}
 					});
-		notSureButton.append('div').text('Not Sure');
+		notSureButton.append('div').text("Not Sure");
 		var notSureReveal = new VerticalReveal(notSureButton.node());
 		notSureReveal.hide();
 			
@@ -3322,6 +3332,7 @@ var NewExperiencePanel = (function () {
 			.classed('cell unique date-container', true);
 
 		startDateContainer.append('label')
+			.classed('overlined-items', true)
 			.text("Start");
 		this.startHidable = this.appendHidableDateInput(startDateContainer, new Date(birthday));
 		var startDateWheel = this.startHidable.dateWheel;
@@ -3367,6 +3378,7 @@ var NewExperiencePanel = (function () {
 		var endDateContainer = panel2Div.append('section')
 			.classed('cell unique date-container', true);
 		var endLabel = endDateContainer.append('label')
+			.classed('overlined-items', true)
 			.text("End");
 			
 		this.endHidable = this.appendHidableDateInput(endDateContainer, new Date(birthday));
@@ -3407,7 +3419,7 @@ var NewExperiencePanel = (function () {
 				
 		/* The organization section. */
 		section = panel2Div.append('section')
-			.classed('cell unique organization', true);
+			.classed('cell picker organization', true);
 				
 		this.organizationInput = section.append('input')
 			.classed('organization', true)
@@ -3424,7 +3436,7 @@ var NewExperiencePanel = (function () {
 																 organizationHelp.node());
 		
 		section = panel2Div.append('section')
-			.classed('cell unique site', true);
+			.classed('cell picker site', true);
 				
 		this.siteInput = section.append('input')
 			.classed('site', true)
@@ -3440,7 +3452,7 @@ var NewExperiencePanel = (function () {
 												 siteHelp.node());
 		
 		section = panel2Div.append('section')
-			.classed('cell unique offering', true);
+			.classed('cell picker offering', true);
 				
 		this.offeringInput = section.append('input')
 			.classed('offering', true)

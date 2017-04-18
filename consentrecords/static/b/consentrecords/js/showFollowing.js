@@ -80,12 +80,13 @@ var RequestFollowPanel = (function() {
 		var sectionPanel = panel2Div.append('section')
 			.classed('cell edit unique', true);
 			
-		var itemsDiv = sectionPanel.append("ol");
+		var itemsDiv = sectionPanel.append("ol")
+			.classed('cell-items', true);
 
-		var divs = itemsDiv.append("li")
-			.classed("string-input-container", true);	// So that each item appears on its own row.
+		var divs = itemsDiv.append("li");	// So that each item appears on its own row.
 			
 		var emailInput = divs.append("input")
+			.classed('growable', true)
 			.attr("type", "email")
 			.attr("placeholder", 'Email');
 			
@@ -114,8 +115,10 @@ var FollowingPanel = (function() {
 	FollowingPanel.prototype.showPendingObjects = function(foundObjects)
 	{
 		var _this = this;
-		var divs = this._pendingChunker.appendButtonContainers(foundObjects);
-		appendConfirmDeleteControls(divs, function(d)
+		var items = this._pendingChunker.appendButtonContainers(foundObjects);
+		crf.appendDeleteControls(items);
+		appendButtonDescriptions(items);
+		crf.appendConfirmDeleteControls(items, function(d)
 			{
 				var _thisItem = $(this).parents('li')[0];
 				if (prepareClick('click', 'delete access request'))
@@ -151,17 +154,20 @@ var FollowingPanel = (function() {
 							cr.syncFail);
 				}
 			});
-		var buttons = appendRowButtons(divs);
-		var deleteControls = this.appendDeleteControls(buttons);
-		appendButtonDescriptions(buttons);
-		if (!this.inEditMode)
-			this.hideDeleteControlsNow($(deleteControls[0]));
-		else
-			this.showDeleteControls($(deleteControls[0]), 0);
+		this.checkDeleteControlVisibility(items);
 		
-		return buttons;
+		return items;
 	}
 
+	FollowingPanel.prototype.checkDeleteControlVisibility = function(items)
+	{
+		var deleteControls = $(items.node()).parent().find('button.delete');
+		if (!this.inEditMode)
+			crf.hideDeleteControls(deleteControls, 0);
+		else
+			crf.showDeleteControls(deleteControls, 0);
+	}
+	
 	FollowingPanel.prototype.getPendingRequestsDone = function(foundObjects, startVal)
 	{
 		if (this._foundPendingRequests === null)
@@ -176,41 +182,40 @@ var FollowingPanel = (function() {
 	FollowingPanel.prototype.showFollowingObjects = function(foundObjects)
 	{
 		var _this = this;
-		var sections = this._followingChunker.appendButtonContainers(foundObjects);
-		var buttons = appendViewButtons(sections, function(buttons)
-			{
-				appendRightChevrons(buttons);
-				
-				buttons.append("div")
-					.classed("info-button right-fixed-width-div", true)
-					.on("click", function(user) {
-						if (prepareClick('click', 'compare to: ' + user.getDescription()))
+		var items = this._followingChunker.appendButtonContainers(foundObjects);
+
+		items.append('span').classed("left-expanding-div description-text growable unselectable", true)
+			.text(_getDataDescription);
+		items.append('button')
+			.classed("compare-button", true)
+			.on("click", function(user) {
+				if (prepareClick('click', 'compare to: ' + user.getDescription()))
+				{
+					user.promiseCells([])
+						.then(function()
 						{
-							user.promiseCells([])
-								.then(function()
-								{
-									try
-									{
-										new ComparePathsPanel(_this.user, user, _this.node())
-											.showUp()
-											.always(unblockClick);
-									}
-									catch(err)
-									{
-										cr.syncFail(err);
-									}
-								},
-								cr.syncFail);
-						}
-						d3.event.preventDefault();
-						d3.event.stopPropagation();
-					})
-					.append("img")
-					.attr("src", compareImagePath);
-		
-				buttons.append('div').classed("left-expanding-div description-text", true)
-					.text(_getDataDescription);
+							try
+							{
+								new ComparePathsPanel(_this.user, user, _this.node())
+									.showUp()
+									.always(unblockClick);
+							}
+							catch(err)
+							{
+								cr.syncFail(err);
+							}
+						},
+						cr.syncFail);
+				}
+				d3.event.preventDefault();
+				d3.event.stopPropagation();
 			})
+			.append("img")
+			.attr("src", compareImagePath);
+
+		crf.appendRightChevrons(items);
+
+		items
 			.on("click", function(user)
 			{
 				if (prepareClick('click', 'show user'))
@@ -219,7 +224,7 @@ var FollowingPanel = (function() {
 				}
 			});
 			
-		return buttons;
+		return items;
 	}
 
 	FollowingPanel.prototype.getFollowingRequestsDone = function(foundObjects, startVal)
@@ -256,16 +261,16 @@ var FollowingPanel = (function() {
 		var editButton = navContainer.appendRightButton()
 			.on("click", function()
 			{
+				var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
 				if (_this.inEditMode)
 				{
 					showClickFeedback(this, function()
 						{
-							editButton.selectAll('span').text("Edit");
+							editButton.selectAll('span').text(crv.buttonTexts.edit);
 						});
 					if (prepareClick('click', 'Done Edit Following'))
 					{
-						_this.hideDeleteControls();
-						
+						crf.hideDeleteControls(dials);
 						_this.inEditMode = false;
 						unblockClick();
 					}
@@ -278,13 +283,13 @@ var FollowingPanel = (function() {
 							{
 								editButton.selectAll('span').text(crv.buttonTexts.done);
 							});
-						_this.showDeleteControls();
+						crf.showDeleteControls(dials);
 						_this.inEditMode = true;
 						unblockClick();
 					}
 				}
 			});
-		editButton.append('span').text("Edit");
+		editButton.append('span').text(crv.buttonTexts.edit);
 		
 		navContainer.appendTitle(header);
 		
@@ -295,7 +300,8 @@ var FollowingPanel = (function() {
 
 		this._pendingSection.append("label")
 			.text("Pending Requests");
-		var itemsDiv = this._pendingSection.append("ol");
+		var itemsDiv = this._pendingSection.append("ol")
+			.classed('cell-items hover-items deletable-items', true);
 		this._noPendingResultsDiv = this._pendingSection.append("div")
 			.text("None")
 			.style("display", "none")
@@ -322,7 +328,8 @@ var FollowingPanel = (function() {
 
 		this._followingSection.append("label")
 			.text("Following");
-		itemsDiv = this._followingSection.append("ol");
+		itemsDiv = this._followingSection.append("ol")
+			.classed('cell-items hover-items', true);
 		this._noFollowingResultsDiv = this._followingSection.append("div")
 			.text("None")
 			.style("display", "none")

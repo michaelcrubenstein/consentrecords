@@ -563,17 +563,6 @@
 			{
 				var b;
 				
-				var addButton = function(sectionObj, title, clickFunction)
-				{
-					var b = sectionObj.append("button")
-						.classed("btn row-button site-active-text show-panel-button", true);
-					b.append("span")
-						.classed("pull-left", true)
-						.text(title);
-					appendRightChevrons(b);
-					b.on("click", clickFunction);
-				}
-				
 				var sitePanel = new SitePanel();
 				sitePanel.createRoot(objectData, objectData.getDescription(), "organization view");
 
@@ -598,19 +587,19 @@
 
 				sitePanel.showLeft().then(unblockClick);
 
-				var sectionObj = panel2Div.append("section")
-					.classed("row-button-group", true);
-					
-				addButton(sectionObj, "Record an Inquiry",
+				sitePanel.appendActionButton(
+					"Record an Inquiry",
 					function(organization)
 					{
 						if (prepareClick('click', 'Record an Inquiry'))
 						{
 							pick_inquiry_site(organization, sitePanel.node());
 						}
-					});
-					
-				addButton(sectionObj, "Manage Inquiries",
+					})
+					.classed('first', true);
+				
+				sitePanel.appendActionButton(
+					"Manage Inquiries",
 					function(organization)
 					{
 						if (prepareClick('click', 'Manage Inquiries'))
@@ -619,19 +608,19 @@
 						}
 					});
 					
-				sectionObj = panel2Div.append("section")
-					.classed("row-button-group", true);
-					
-				addButton(sectionObj, "Enroll an Inquiry",
+				sitePanel.appendActionButton(
+					"Enroll an Inquiry",
 					function(d)
 					{
 						if (prepareClick('click', 'Enroll an Inquiry'))
 						{
 							enroll_inquiry(d, sitePanel.node());
 						}
-					});
+					})
+					.classed('first', true);
 					
-				addButton(sectionObj, "Add an Enrollment",
+				sitePanel.appendActionButton(
+					"Add an Enrollment",
 					function(d)
 					{
 						if (prepareClick('click', 'Add an Enrollment'))
@@ -640,7 +629,8 @@
 						}
 					});
 					
-				addButton(sectionObj, "Manage Enrollment",
+				sitePanel.appendActionButton(
+					"Manage Enrollment",
 					function(d)
 					{
 						if (prepareClick('click', 'Manage Enrollment'))
@@ -649,19 +639,19 @@
 						}
 					});
 					
-				sectionObj = panel2Div.append("section")
-					.classed("row-button-group", true);
-					
-				addButton(sectionObj, "Record Participation",
+				sitePanel.appendActionButton(
+					"Record Participation",
 					function(d)
 					{
 						if (prepareClick('click', 'record participation'))
 						{
 							record_participation(d, sitePanel.node());
 						}
-					});
+					})
+					.classed('first', true);
 					
-				addButton(sectionObj, "Manage Participation",
+				sitePanel.appendActionButton(
+					"Manage Participation",
 					function(d)
 					{
 						if (prepareClick('click', 'manage participation'))
@@ -729,11 +719,12 @@
 			var panel2Div = sitePanel.appendScrollArea();
 			var itemsDiv = panel2Div.append('section')
 				.classed('cell multiple', true)
-				.append('ol');
+				.append('ol')
+				.classed('cell-items hover-items', true);
 				
 			var items = appendItems(itemsDiv, data);
 
-			var buttons = appendViewButtons(items)
+			appendViewButtons(items)
 				.on("click", function(d) {
 					if (prepareClick('click', 'header: ' + d.getDescription()))
 					{
@@ -836,7 +827,7 @@
 
 								var backButton = navContainer.appendLeftButton()
 									.on("click", function() { sitePanel.hideRightEvent(); });
-								backButton.append("span").text("Done");
+								backButton.append("span").text(crv.buttonTexts.done);
 								var centerButton = navContainer.appendTitle("Inquiries (" + inquiryCell.data.length + ")");
 						
 								sitePanel.appendSearchBar(show_matching_descriptions);
@@ -845,10 +836,11 @@
 
 								sitePanel.showLeft().then(unblockClick);
 						
-								panel2Div.selectAll("section").remove();
-								var sections = panel2Div.appendSections(inquiryCell.data);
-								sections.sort(compareUsers);
-								var buttons = appendViewButtons(sections)
+								var sections = panel2Div.appendSections([inquiryCell])
+									.classed('cell view multiple', true);
+								var itemsDiv = sections.append('ol')
+									.classed('cell-items hover-items', true);
+								var items = appendItems(itemsDiv, inquiryCell.data)
 									.on("click", function(user)
 									{
 										if (prepareClick('click', 'add enrollment'))
@@ -856,9 +848,10 @@
 											getAddEnrollmentFunction(session, user, unblockClick)();
 										}
 									});
-							
-								var infoButtons =  buttons.insert("div", ":first-child")
-									.classed("info-button right-fixed-width-div", true)
+								items.sort(compareUsers);
+								appendDescriptions(items);
+										
+								appendInfoButtons(items)
 									.on("click", function(inquiry) {
 										if (prepareClick('click', 'show user info'))
 										{
@@ -870,7 +863,6 @@
 										}
 										d3.event.preventDefault();
 									});
-								drawInfoButtons(infoButtons);
 							},
 							syncFailFunction);
 					}
@@ -1105,14 +1097,15 @@
 										function()
 										{
 											var experience = experienceCell.addNewValue();
+											experience.instance(new cr.Instance());
+										
 											experience.checkConfiguration(
 												function(cells) {
-													experience.setCells(cells);
 													/* Copy the user into the data set. */
 													userCell = experience.getCell("user");
 													var userValue = userCell.copyValue(user);
 													userCell.addValue(userValue);
-													
+												
 													showEditObjectPanel(experienceCell, experience, previousPanel, revealPanelUp);
 												},
 												syncFailFunction);
@@ -1242,6 +1235,8 @@
 																	var inquiryCell = cells_get_cell_by_name(cells, "user");
 																	
 																	var newValue = inquiryCell.addNewValue();
+																	newValue.instance(new cr.Instance());
+																	
 																	cr.updateValues([{
 																			containerUUID: inquiriesInstance.getInstanceID(),
 																			field: inquiryCell.field.name, 
@@ -1369,7 +1364,7 @@
 						instance.promiseCells(["Enrollment"])
 							.then(function()
 							{
-								var enrollments = instance.getCell("Enrollment").data;
+								var enrollmentCell = instance.getCell("Enrollment");
 								
 								var sitePanel = new SitePanel();
 								sitePanel.createRoot(session, "Record Participation", "list");
@@ -1385,25 +1380,26 @@
 
 								var panel2Div = sitePanel.appendScrollArea();
 
-								panel2Div.selectAll("section").remove();
-								var sections = panel2Div.appendSections(enrollments);
-								sections.sort(compareEnrollments);
-								var buttons = appendViewButtons(sections)
+								var sections = panel2Div.appendSections([enrollmentCell])
+									.classed('cell view multiple', true);
+								var itemsDiv = sections.append('ol')
+									.classed('cell-items hover-items', true);
+								var items = appendItems(itemsDiv, enrollmentCell.data)
 									.on("click", function(enrollment)
-									{
-										if (prepareClick('click', 'add Experience by enrollment'))
 										{
-											enrollment.promiseCells()
-												.then(function()
-												{
-													addExperienceByEnrollment(session, enrollment, sitePanel.node());
-												}, 
-												syncFailFunction);
-										}
-									});
-							
-								var infoButtons =  buttons.insert("div", ":first-child")
-									.classed("info-button right-fixed-width-div", true)
+											if (prepareClick('click', 'add Experience by enrollment'))
+											{
+												enrollment.promiseCells()
+													.then(function()
+													{
+														addExperienceByEnrollment(session, enrollment, sitePanel.node());
+													}, 
+													syncFailFunction);
+											}
+										});
+								items.sort(compareEnrollments);
+								appendDescriptions(items);
+								var infoButtons = appendInfoButtons(items)
 									.on("click", function(enrollment) {
 										if (prepareClick('click', 'show enrollment info: ' + enrollment.getDescription()))
 										{
@@ -1415,7 +1411,6 @@
 										}
 										d3.event.preventDefault();
 									});
-								drawInfoButtons(infoButtons);
 								
 								sitePanel.showLeft().then(unblockClick);
 							},

@@ -97,11 +97,11 @@ function showSessionDetails(user, session, service, previousPanelNode)
 				if (serviceCell.data.length > 0)
 				{
 					serviceCell.appendLabel(cellDiv.node());
-					var itemsDiv = cellDiv.append("ol");
+					var itemsDiv = cellDiv.append("ol")
+						.classed('cell-items', true);
 
-					var divs = appendItems(itemsDiv, serviceCell.data);
-					var buttons = divs.append("div").classed("multi-line-item", true);
-					appendButtonDescriptions(buttons);
+					var items = appendItems(itemsDiv, serviceCell.data);
+					appendButtonDescriptions(items);
 					cellDiv.append("div").classed("cell-border-below", true);
 				}
 			},
