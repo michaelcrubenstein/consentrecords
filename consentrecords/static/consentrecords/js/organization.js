@@ -117,8 +117,6 @@ function getDateRange(d)
 
 function appendSessionDescriptions(buttons)
 {
-	appendRightChevrons(buttons);
-	
 	buttons.append('div')
 		.text(function(d) { 
 			return d.getValue("Offering").getDescription();
@@ -154,6 +152,7 @@ function appendSessionDescriptions(buttons)
 			else
 				return null;
 		});
+	crf.appendRightChevrons(buttons);
 }
 
 function getUserName(user)
@@ -300,8 +299,8 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var labelDiv = sectionObj.append("label")
 		.text(label);
-	var itemsDiv = sectionObj.append("ol")
-							 .classed("cell-items hover-items", true);
+	var itemsDiv = crf.appendItemList(sectionObj)
+							 .classed("hover-items", true);
 
 	if (addBorder)
 		sectionObj.append("div").classed("cell-border-below", true);	

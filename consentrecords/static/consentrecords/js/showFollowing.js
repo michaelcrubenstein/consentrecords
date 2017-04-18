@@ -80,8 +80,7 @@ var RequestFollowPanel = (function() {
 		var sectionPanel = panel2Div.append('section')
 			.classed('cell edit unique', true);
 			
-		var itemsDiv = sectionPanel.append("ol")
-			.classed('cell-items', true);
+		var itemsDiv = crf.appendItemList(sectionPanel);
 
 		var divs = itemsDiv.append("li");	// So that each item appears on its own row.
 			
@@ -300,8 +299,8 @@ var FollowingPanel = (function() {
 
 		this._pendingSection.append("label")
 			.text("Pending Requests");
-		var itemsDiv = this._pendingSection.append("ol")
-			.classed('cell-items hover-items deletable-items', true);
+		var itemsDiv = crf.appendItemList(this._pendingSection)
+			.classed('hover-items deletable-items', true);
 		this._noPendingResultsDiv = this._pendingSection.append("div")
 			.text("None")
 			.style("display", "none")
@@ -328,8 +327,8 @@ var FollowingPanel = (function() {
 
 		this._followingSection.append("label")
 			.text("Following");
-		itemsDiv = this._followingSection.append("ol")
-			.classed('cell-items hover-items', true);
+		itemsDiv = crf.appendItemList(this._followingSection)
+			.classed('hover-items', true);
 		this._noFollowingResultsDiv = this._followingSection.append("div")
 			.text("None")
 			.style("display", "none")

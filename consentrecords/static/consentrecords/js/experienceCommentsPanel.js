@@ -537,8 +537,8 @@ var ExperienceCommentsPanel = (function() {
 		var comments = fd.experience.getValue("Comments");
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
-		var commentList = commentsDiv.append('ol')
-			.classed('cell-items deletable-items', true);
+		var commentList = crf.appendItemList(commentsDiv)
+			.classed('deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
 		
 		function onCommentAdded(eventObject, newData)
