@@ -16,7 +16,7 @@ var SharingPanel = (function() {
 
 		var deleteControls = this.appendDeleteControls(buttons);
 	
-		appendInfoButtons(buttons, this.node());
+		appendInfoButtons(buttons);
 
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
@@ -120,7 +120,7 @@ var SharingPanel = (function() {
 		accessRequestSection.style('display', items.size() ? "" : "none");
 		
 		var buttons = items.append("div").classed("btn row-button multi-row-content", true);
-		var infoButtons = appendInfoButtons(buttons, this.node());
+		var infoButtons = appendInfoButtons(buttons);
 		
 		appendButtonDescriptions(buttons)
 			.each(_pushTextChanged);
@@ -297,9 +297,10 @@ var SharingPanel = (function() {
 		}
 	}
 
-	function SharingPanel(user)
+	function SharingPanel(user, backButtonText, showFunction)
 	{
-		this.createRoot(null, "Sharing", "edit sharing", revealPanelUp);
+		showFunction = (showFunction !== undefined) ? showFunction : revealPanelUp;
+		this.createRoot(null, "Sharing", "edit sharing", showFunction);
 		this.user = user;
 		var _this = this;
 		
@@ -315,7 +316,7 @@ var SharingPanel = (function() {
 				d3.event.preventDefault();
 			});
 		appendLeftChevrons(backButton).classed("site-active-text", true);
-		backButton.append("span").text("Settings");
+		backButton.append("span").text(backButtonText);
 		
 		this.inEditMode = false;
 		var editButton = navContainer.appendRightButton()
@@ -340,7 +341,7 @@ var SharingPanel = (function() {
 					{
 						showClickFeedback(this, function()
 							{
-								editButton.selectAll('span').text("Done");
+								editButton.selectAll('span').text(crv.buttonTexts.done);
 							});
 						_this.showDeleteControls();
 						_this.inEditMode = true;

@@ -17,7 +17,7 @@ function showSessionDetails(user, session, service, previousPanelNode)
 
 	var backButton = navContainer.appendLeftButton()
 		.on("click", function() { sitePanel.hideRightEvent(); });
-	backButton.append("span").text("Done");
+	backButton.append("span").text(crv.buttonTexts.done);
 	
 	var buttonDiv = navContainer.appendRightButton();
 	
@@ -379,7 +379,7 @@ var PickOfferingPanel = (function() {
 		
 		navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); })
-		    .append("span").text("Done");
+		    .append("span").text(crv.buttonTexts.done);
 			
 		navContainer.appendTitle(header);
 
@@ -471,7 +471,7 @@ var FindExperiencePanel = (function () {
 		
 		navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); })
-		    .append("span").text("Done");
+		    .append("span").text(crv.buttonTexts.done);
 			
 		navContainer.appendTitle(header);
 		

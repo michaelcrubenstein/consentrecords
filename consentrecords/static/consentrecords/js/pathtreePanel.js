@@ -496,31 +496,6 @@ var PathView = (function() {
 		this.setupServiceTriggers(r, fd, f);
 	}
 	
-	PathView.prototype.checkOfferingCells = function(experience, done)
-	{
-		offering = experience.getValue("Offering");
-		if (offering && offering.getInstanceID() && !offering.areCellsLoaded())
-		{
-			var storedI = crp.getInstance(offering.getInstanceID());
-			if (storedI != null)
-			{
-				offering.importCells(storedI.getCells());
-				if (done) done();
-			}
-			else
-			{
-				var r1 = offering.promiseCells()
-					.fail(cr.asyncFail);
-				if (done)
-					r1.done(done);
-			}
-		}
-		else
-		{
-			if (done) done();
-		}
-	}
-	
 	PathView.prototype.canEditExperience = function(fd)
 	{
 		return fd.experience.getTypeName() == "More Experience" && fd.experience.canWrite();
@@ -624,12 +599,13 @@ var PathView = (function() {
 		var handleDataChanged = function(eventObject)
 		{
 			var exp = this;
-			_this.checkOfferingCells(exp,
-				function()
-				{
-					_this.clearLayout();
-					_this.checkLayout();
-				});
+			checkOfferingCells(exp)
+				.then(function()
+					{
+						_this.clearLayout();
+						_this.checkLayout();
+					},
+					cr.asyncFail);
 		}
 	
 		var handleExperienceDateChanged = function(eventObject)
@@ -826,17 +802,19 @@ var PathView = (function() {
 	
 	PathView.prototype.addMoreExperience = function(experience)
 	{
-		this.checkOfferingCells(experience);
+		var _this = this;
+		checkOfferingCells(experience)
+			.then(function()
+				{
+					_this.allExperiences.push(experience);
+					_this.setupExperienceTriggers(experience);
 		
-		this.allExperiences.push(experience);
+					var flags = _this.appendExperiences(experience);
+					_this.redoLayout();
+					_this.updateDetail(flags.node(), flags.datum());
+				},
+				cr.asyncFail);
 		
-		this.setupExperienceTriggers(experience);
-		
-		var flags = this.appendExperiences(experience);
-
-		this.redoLayout();
-		
-		this.updateDetail(flags.node(), flags.datum());
 	}
 	
 	PathView.prototype.layoutYears = function(g)
@@ -1373,7 +1351,7 @@ var PathLines = (function() {
 				/* Ensure that all of the offerings have their associated cells. */
 				_this.allExperiences.forEach(function(experience)
 					{
-						_this.checkOfferingCells(experience, null);
+						checkOfferingCells(experience);
 					});
 		
 				_this.showAllExperiences();
@@ -1434,32 +1412,193 @@ var PathLines = (function() {
 	return PathLines;
 })();
 
-var PathlinesPanel = (function () {
-	PathlinesPanel.prototype = new SitePanel();
-	PathlinesPanel.prototype.user = null;
-	PathlinesPanel.prototype.pathtree = null;
-	PathlinesPanel.prototype.navContainer = null;
+var AlertButton = (function() {
+	AlertButton.prototype.user = null;
+	AlertButton.prototype.button = null;
 	
-	PathlinesPanel.prototype.userSettingsBadgeCount = function(user)
+	AlertButton.prototype.badgeCount = function()
 	{
-		var cell = user.getCell(cr.fieldNames.accessRequest);
+		throw new Error("Override badgeCount required");
+	}
+	
+	AlertButton.prototype.onClick = function()
+	{
+		throw new Error ("Override onClick required");
+	}
+	
+	AlertButton.prototype.checkBadge = function()
+	{
+		this.button.selectAll("span").text(this.badgeCount());
+	}
+		
+	AlertButton.prototype.setup = function(imagePath)
+	{
+		var _this = this;
+		this.button.on("click", 
+				function() {
+					_this.onClick();
+				})
+			.classed("settings", true)
+			.style("display", this.user.getPrivilege() == cr.privileges.administer ? null : "none")
+			.append("img")
+			.attr("src", imagePath);
+		this.button.append("span")
+			.classed("badge", true);
+	}
+	
+	function AlertButton(button, user)
+	{
+		this.button = button;
+		this.user = user;
+	}
+	
+	return AlertButton;
+})();
+
+var SettingsButton = (function() {
+	SettingsButton.prototype = new AlertButton();
+	
+	SettingsButton.prototype.onClick = function()
+	{
+		if (prepareClick('click', "Settings"))
+		{
+			try
+			{
+				var panel = new Settings(this.user);
+				panel.showUp().always(unblockClick);
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+		d3.event.preventDefault();
+	}
+	
+	SettingsButton.prototype.badgeCount = function()
+	{
+		var cell = this.user.getCell(cr.fieldNames.accessRequest);
 		if (cell && cell.data.length > 0)
 			return cell.data.length;
 		else
 			return "";
 	}
 	
-	PathlinesPanel.prototype.setupSettingsButton = function(settingsButton, user)
+	SettingsButton.prototype.setup = function()
+	{
+		AlertButton.prototype.setup.call(this, settingsImagePath);
+		
+		var _this = this;
+		setupOnViewEventHandler(this.user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
+			this.button.node(), function() { _this.checkBadge(); });
+		this.checkBadge();
+	}
+	
+	function SettingsButton(button, user)
+	{
+		AlertButton.call(this, button, user);
+	}
+	
+	return SettingsButton;
+})();
+
+var NotificationsButton = (function() {
+	NotificationsButton.prototype = new AlertButton();
+	
+	NotificationsButton.prototype.onClick = function()
+	{
+		if (prepareClick('click', "Notifications"))
+		{
+			try
+			{
+				var panel = new NotificationsPanel(this.user);
+				panel.showUp().always(unblockClick);
+			}
+			catch(err)
+			{
+				cr.syncFail(err);
+			}
+		}
+		d3.event.preventDefault();
+	}
+	
+	NotificationsButton.prototype.badgeCount = function()
+	{
+		var cell = this.user.getCell(cr.fieldNames.notification);
+		if (!cell)
+			return "";
+		else {
+			var freshItems = cell.data.filter(function (d) 
+			{ 
+				var isFreshEnum = d.getValue(cr.fieldNames.isFresh);
+				return isFreshEnum && isFreshEnum.getDescription() == cr.booleans.yes; 
+			});
+			return freshItems.length || "";
+		}
+	}
+	
+	NotificationsButton.prototype.setup = function()
+	{
+		AlertButton.prototype.setup.call(this, notificationsImagePath);
+		
+		var _this = this;
+		crp.promise({path: "{0}/notification".format(this.user.getInstanceID())})
+			.then(function()
+				{
+					var cell = _this.user.getCell(cr.fieldNames.notification);
+					cell.on("valueDeleted.cr valueAdded.cr dataChanged.cr", 
+						_this.button.node(), function() { _this.checkBadge(); });
+					cell.data.forEach(function(d)
+						{
+							d.getCell(cr.fieldNames.isFresh).on("dataChanged.cr", _this.button.node(),
+								 function() { _this.checkBadge(); });
+						})
+		
+					_this.checkBadge();
+				},
+				cr.asyncFail)
+	}
+	
+	function NotificationsButton(button, user)
+	{
+		AlertButton.call(this, button, user);
+	}
+	
+	return NotificationsButton;
+})();
+
+var PathlinesPanel = (function () {
+	PathlinesPanel.prototype = new SitePanel();
+	PathlinesPanel.prototype.user = null;
+	PathlinesPanel.prototype.pathtree = null;
+	PathlinesPanel.prototype.navContainer = null;
+		
+	PathlinesPanel.prototype.checkSettingsBadge = function(user)
+	{
+		settingsButton.selectAll("span").text(this.userSettingsBadgeCount(user));
+	}
+		
+	PathlinesPanel.prototype.notificationsBadgeCount = function(user)
+	{
+		// TODO:
+		var cell = user.getCell(cr.fieldNames.notification);
+		if (cell && cell.data.length > 0)
+			return cell.data.length;
+		else
+			return "";
+	}
+	
+	PathlinesPanel.prototype.setupNotificationsButton = function(button, user)
 	{
 		var _this = this;
-		settingsButton
+		button
 			.on("click", 
 				function() {
-					if (prepareClick('click', "Settings"))
+					if (prepareClick('click', "Notifications"))
 					{
 						try
 						{
-							var panel = new Settings(user);
+							var panel = new NotificationsPanel(user);
 							panel.showUp().always(unblockClick);
 						}
 						catch(err)
@@ -1472,10 +1611,10 @@ var PathlinesPanel = (function () {
 			.classed("settings", true)
 			.style("display", user.getPrivilege() == cr.privileges.administer ? null : "none")
 			.append("img")
-			.attr("src", settingsImagePath);
-		settingsButton.append("span")
+			.attr("src", notificationsImagePath);
+		button.append("span")
 			.classed("badge", true)
-			.text(this.userSettingsBadgeCount(user));
+			.text(this.notificationsBadgeCount(user));
 	}
 	
 	PathlinesPanel.prototype.createExperience = function()
@@ -1578,6 +1717,7 @@ var PathlinesPanel = (function () {
 			.classed("transparentTop", true);
 
 		var settingsButton;
+		var notificationsButton;
 		
 		if (done)
 		{
@@ -1598,12 +1738,15 @@ var PathlinesPanel = (function () {
 						}
 						d3.event.preventDefault();
 					});
-			backButton.append("span").text("Done");
+			backButton.append("span").text(crv.buttonTexts.done);
 			
 			settingsButton = this.navContainer.appendRightButton();
 		}
 		else
+		{
 			settingsButton = this.navContainer.appendLeftButton();
+			notificationsButton = this.navContainer.appendLeftButton();
+		}
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
@@ -1635,11 +1778,6 @@ var PathlinesPanel = (function () {
 			
 		this.pathtree = new PathLines(this, panel2Div.node());
 		
-		function checkSettingsBadge()
-		{
-			settingsButton.selectAll("span").text(_this.userSettingsBadgeCount(user));
-		}
-		
 		function checkTitle()
 		{
 			_this.navContainer.setTitle(getUserDescription(user));
@@ -1649,11 +1787,13 @@ var PathlinesPanel = (function () {
 			{
 				_this.setupAddExperienceButton(user, addExperienceButton);
 				
-				_this.setupSettingsButton(settingsButton, user);
-
-				setupOnViewEventHandler(user.getCell(cr.fieldNames.accessRequest), "valueDeleted.cr valueAdded.cr", 
-					_this.node(), checkSettingsBadge);
-				checkSettingsBadge();
+				_this.settingsAlertButton = new SettingsButton(settingsButton, user);
+				_this.settingsAlertButton.setup();
+				if (notificationsButton)
+				{
+					_this.notificationsAlertButton = new NotificationsButton(notificationsButton, user);
+					_this.notificationsAlertButton.setup();
+				}
 				
 				setupOnViewEventHandler(user.getCell(cr.fieldNames.firstName), "dataChanged.cr", _this.node(), checkTitle);
 				setupOnViewEventHandler(user.getCell(cr.fieldNames.lastName), "dataChanged.cr", _this.node(), checkTitle);
@@ -2165,7 +2305,7 @@ var OtherPathPanel = (function () {
 						}
 						d3.event.preventDefault();
 					});
-			backButton.append("span").text("Done");
+			backButton.append("span").text(crv.buttonTexts.done);
 		}
 
 		var title;

@@ -446,7 +446,7 @@ var ComparePath = (function() {
 		/* Ensure that all of the offerings have their associated cells. */
 		this.allExperiences.forEach(function(experience)
 			{
-				_this.checkOfferingCells(experience, null);
+				checkOfferingCells(experience);
 			});
 			
 		var resizeFunction = function()
@@ -639,7 +639,7 @@ var ComparePathsPanel = (function () {
 		
 		var backButton = this.navContainer.appendLeftButton()
 			.on("click", function() { _this.hideRightEvent(); });
-		backButton.append("span").text("Done");
+		backButton.append("span").text(crv.buttonTexts.done);
 
 		var addExperienceButton = this.navContainer.appendRightButton();
 		
