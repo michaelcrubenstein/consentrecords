@@ -235,7 +235,10 @@ function showUser(user)
 function drawInfoButtons(infoButtons)
 {
 	var activeColor = "#2C55CC"
+	
+	infoButtons.text("i");
 
+/* 
 	var svg = infoButtons.append("svg")
 		.attr('xmlns', "http://www.w3.org/2000/svg")
 		.attr('version', "1.1")
@@ -257,13 +260,20 @@ function drawInfoButtons(infoButtons)
 		.attr("font-size", "16px")
 		.attr("fill", activeColor)
 		.text("i");
+ */
 }
 
-function appendInfoButtons(buttons)
+function appendInfoButtons(items)
 {
-	var infoButtons =  buttons.insert("div", ":first-child")
-		.classed("info-button right-fixed-width-div", true)
-		.on("click", function(user) {
+	/* infoButtons need to be wrapped inside of a div so that the other
+		div can contain a separate border if needed. 
+	 */
+	var outerDiv = items.append('div')
+		.classed('info-button-container', true);
+	var infoButtons =  outerDiv
+		.append('div')
+		.classed('info-button', true)
+		.on('click', function(user) {
 			if (prepareClick('click', 'show info: ' + user.getDescription()))
 			{
 				try
@@ -272,12 +282,13 @@ function appendInfoButtons(buttons)
 				}
 				catch(err)
 				{
-					syncFailFunction(err);
+					cr.syncFail(err);
 				}
 			}
 			d3.event.preventDefault();
 		});
 	drawInfoButtons(infoButtons);
+	return outerDiv;
 }
 
 function appendStringItem(obj, label, text, addBorder)
@@ -289,20 +300,16 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var labelDiv = sectionObj.append("label")
 		.text(label);
-	var itemsDiv = sectionObj.append("ol");
+	var itemsDiv = sectionObj.append("ol")
+							 .classed("cell-items hover-items", true);
 
-	itemsDiv.classed("right-label expanding-div", true);
-
-	var setupItems = function(divs) {
-		divs.append("div")
-		.classed("string-value-view", true)
-		.text(function(d) { return d; });
-	}
 	if (addBorder)
 		sectionObj.append("div").classed("cell-border-below", true);	
 
-	var divs = appendItems(itemsDiv, [text]);
-	setupItems(divs);
+	var items = appendItems(itemsDiv, [text]);
+	items.append("div")
+		.classed("string-value-view growable unselectable", true)
+		.text(function(d) { return d; });
 }
 
 function getOfferingAgeRange(offering)

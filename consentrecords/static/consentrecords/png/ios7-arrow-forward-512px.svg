@@ -2,6 +2,6 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="192" height="320" viewBox="0, 0, 192, 320">
   <g id="Layer_1">
-    <path d="M0,32.4 L32.3,0 L192,160 L192,160 L192,160 L32.3,320 L0,287.6 L127.3,160 z" fill="#000000"/>
+    <path d="M0,32.4 L32.3,0 L192,160 L192,160 L192,160 L32.3,320 L0,287.6 L127.3,160 z" fill="#777777"/>
   </g>
 </svg>

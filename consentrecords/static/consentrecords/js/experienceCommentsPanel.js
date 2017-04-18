@@ -17,9 +17,10 @@ var ExperienceCommentsPanel = (function() {
 	ExperienceCommentsPanel.prototype.youAskedText = "You asked";
 	ExperienceCommentsPanel.prototype.someoneAskedText = "{0} asked";
 	
-	ExperienceCommentsPanel.prototype.appendDescriptions = function(buttons)
+	ExperienceCommentsPanel.prototype.appendDescriptions = function(items)
 	{
-		var divs = buttons.append('div');
+		var divs = items.append('div')
+			.classed('growable', true);
 		
 		var _this = this;
 		var askers = divs.append('div')
@@ -62,7 +63,7 @@ var ExperienceCommentsPanel = (function() {
 			eventObject.stopPropagation();
 		}
 			
-		buttons.selectAll('textarea.question')
+		divs.selectAll('textarea.question')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
 			.classed('fixed', !this.inEditMode)
@@ -75,7 +76,7 @@ var ExperienceCommentsPanel = (function() {
 					$(this).on('resize.cr', checkSize);
 				});
 				
-		buttons.selectAll('textarea.answer')
+		divs.selectAll('textarea.answer')
 			.attr('readonly', this.inEditMode ? null : 'readonly')
 			.classed('editable', this.inEditMode)
 			.classed('fixed', !this.inEditMode)
@@ -94,16 +95,14 @@ var ExperienceCommentsPanel = (function() {
 		var commentList = this.mainDiv.select('section.comments>ol');
 		var items = appendItems(commentList, data);
 		
-		appendConfirmDeleteControls(items);
-		var buttons = items.append('div');
+		var deleteControls = crf.appendDeleteControls(items);
+		this.appendDescriptions(items);
+		crf.appendConfirmDeleteControls(items);
 
-		var deleteControls = this.appendDeleteControls(buttons);
-
-		this.appendDescriptions(buttons);
 		if (!this.inEditMode)
-			this.hideDeleteControlsNow($(deleteControls[0]));
+			crf.hideDeleteControls($(deleteControls[0]), 0);
 		else
-			this.showDeleteControls($(deleteControls[0]), 0);
+			crf.showDeleteControls($(deleteControls[0]), 0);
 			
 		checkItemsDisplay(commentList.node());
 		
@@ -185,11 +184,12 @@ var ExperienceCommentsPanel = (function() {
 		{
 			var _this = this;
 			var commentList = this.mainDiv.select('section.comments>ol');
+			var dials = $(this.node()).find('ol.deletable-items>li>button:first-of-type');
 			showClickFeedback(this.editButton.node(), function()
 				{
 					_this.editButton.selectAll('span').text(crv.buttonTexts.done);
 				});
-			this.showDeleteControls();
+			crf.showDeleteControls(dials);
 			this.inEditMode = true;
 			commentList.classed('edit', true);
 			commentList.selectAll('textarea')
@@ -218,7 +218,7 @@ var ExperienceCommentsPanel = (function() {
 		}
 		catch(err)
 		{
-			this.editButton.selectAll('span').text("Edit");
+			this.editButton.selectAll('span').text(crv.buttonTexts.edit);
 			throw err;
 		}
 	}
@@ -394,10 +394,10 @@ var ExperienceCommentsPanel = (function() {
 						{
 							/* Store the new text in a button so that it is set properly
 								when an error occurs whether or not the callback to showClickFeedback is called. */
-							var newButtonText = "Edit";
+							var newButtonText = crv.buttonTexts.edit;
 							var fail = function(err)
 								{
-									newButtonText = "Done";
+									newButtonText = crv.buttonsText.done;
 									_this.editButton.selectAll('span').text(newButtonText);
 									cr.syncFail(err);
 								}
@@ -422,7 +422,8 @@ var ExperienceCommentsPanel = (function() {
 											.duration(400)
 											.attr('x2', $(_this.svg.node()).width());
 
-										_this.hideDeleteControls();
+										var dials = $(_this.node()).find('ol.deletable-items>li>button:first-of-type');
+										crf.hideDeleteControls(dials);
 										_this.inEditMode = false;
 										commentList.classed('edit', false);
 										commentList.selectAll('textarea')
@@ -458,7 +459,7 @@ var ExperienceCommentsPanel = (function() {
 				});
 			this.editButton
 				.classed('edit', true)
-				.append('span').text("Edit");
+				.append('span').text(crv.buttonTexts.edit);
 		}
 
 		navContainer.appendTitle('Experience');
@@ -536,7 +537,8 @@ var ExperienceCommentsPanel = (function() {
 		var comments = fd.experience.getValue("Comments");
 		var commentsDiv = panel2Div.append('section')
 			.classed('multiple comments', true);
-		var commentList = commentsDiv.append('ol');
+		var commentList = commentsDiv.append('ol')
+			.classed('cell-items deletable-items', true);
 		commentList.classed('edit', this.inEditMode);
 		
 		function onCommentAdded(eventObject, newData)
