@@ -96,7 +96,7 @@ var Settings = (function () {
 		var addUniqueCellSection = function(cell, label, clickFunction)
 		{
 			var sectionPanel = panel2Div.append('section')
-				.classed('cell edit unique first btn row-button', true)
+				.classed('cell edit unique first', true)
 				.datum(cell)
 				.on("click", clickFunction);
 				
@@ -104,16 +104,17 @@ var Settings = (function () {
 				.text(label);
 			
 			var itemsDiv = sectionPanel.append("ol")
-				.classed("right-label", true);
+				.classed('cell-items', true);
 
-			var divs = appendItems(itemsDiv, cell.data);
+			var items = appendItems(itemsDiv, cell.data);
 	
-			var buttons = appendRowButtons(divs);
-
-			appendRightChevrons(buttons);	
-		
-			return appendButtonDescriptions(buttons)
+			var divs = appendButtonDescriptions(items)
+				.classed('unselectable', true)
 				.each(_pushTextChanged);
+				
+			crf.appendRightChevrons(items);	
+			
+			return divs;
 		}
 		
 		if (user.getPrivilege() === cr.privileges.administer)
@@ -194,10 +195,12 @@ var Settings = (function () {
 				.text("Your Path");
 					
 			var urlList = urlSection.append("ol")
-				.classed('right-label', true);
+				.classed('cell-items', true);
 						
 			var urlItem = urlList.append('li')
 				.classed('site-active-text', true)
+				.append('div')
+				.classed('growable unselectable', true)
 				.text("{0}/for/{1}"
 					.format(window.location.origin, user.getDatum(cr.fieldNames.email)))
 				.on('click', function()
@@ -317,8 +320,9 @@ var PickFromListPanel = (function () {
 
 		var panel2Div = this.appendScrollArea();
 		var itemsDiv = panel2Div.append("section")
-			.classed("multiple", true)
-			.append("ol");
+			.classed("cell multiple", true)
+			.append("ol")
+			.classed('cell-items hover-items', true);
 			
 		return this;
 	}
@@ -364,24 +368,22 @@ var PickUserAccessPanel = (function () {
 
 		var itemsDiv = d3.select(this.node()).selectAll('section>ol');
 	
-		var buttons = itemsDiv.selectAll('li')
+		var items = itemsDiv.selectAll('li')
 			.data(this.buttonData)
 			.enter()
 			.append('li');
 		
-		buttons.append("div").classed("btn row-button multi-row-content expanding-div", true)
-			.append("div")
-					.classed("description-text", true)
-					.text(function(d) { return d.description; });
+		items.append("div")
+			.classed("description-text growable unselectable", true)
+			.text(function(d) { return d.description; });
 				
-		buttons.selectAll('div.btn').filter(function(d, i)
+		items.filter(function(d, i)
 			{
 				return d.description === oldUserAccessValue.getDescription();
 			})
-			.insert("span", ":first-child").classed("glyphicon glyphicon-ok pull-left", true);
+			.insert("span", ":first-child").classed("glyphicon glyphicon-ok", true);
 				
-		buttons.selectAll('div.btn')
-			.on('click', function(d, i)
+		items.on('click', function(d, i)
 				{
 					if (d.description === oldUserAccessValue.getDescription())
 						return;
@@ -636,7 +638,8 @@ crn.Notification = (function() {
 	
 	Notification.prototype.appendTextSpan = function(buttonNode, spinnerSpan, innerHTML)
 	{
-		var textSpan = d3.select(buttonNode).append('span');
+		var textSpan = d3.select(buttonNode).append('p')
+			.classed('growable unselectable', true);
 		
 		textSpan.node().innerHTML = innerHTML;
 		spinnerSpan.style('display', 'inline-block')
@@ -917,24 +920,20 @@ var NotificationsPanel = (function () {
 			.style('display', 'none');
 
 		itemCells = sections.append("ol")
-			.classed("cell-items", true);
+			.classed("cell-items deletable-items", true);
 	
 		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data.reverse());
 		
-		appendConfirmDeleteControls(items);
-	
-		var buttons = appendRowButtons(items)
-			.classed('is-fresh', function(d)
+		items.classed('is-fresh', function(d)
 				{
 					var e = d.getValue(cr.fieldNames.isFresh);
 					return e && e.getDescription() == cr.booleans.yes;
 				});
 
-		var deleteControls = this.appendDeleteControls(buttons);
+		var deleteControls = crf.appendDeleteControls(items);
 
 		var q = new Queue();
-		buttons.append('div').classed("left-expanding-div description-text", true)
-			.each(function(d)
+		items.each(function(d)
 				{
 					var name = d.getDatum(cr.fieldNames.name);
 					if (name && name.indexOf('crn.') != 0)
@@ -946,8 +945,8 @@ var NotificationsPanel = (function () {
 						var f = crn[arr];
 						if (f)
 						{
-							appendRightChevrons(d3.select(this));
 							new f(d).appendDescription(this, q);
+							crf.appendRightChevrons(d3.select(this));
 						}
 						else
 							d3.select(this).text(d.getDescription());
@@ -956,7 +955,8 @@ var NotificationsPanel = (function () {
 						d3.select(this).text(d.getDescription());
 				});
 				
-		this.showDeleteControls($(deleteControls[0]), 0);
+		crf.appendConfirmDeleteControls(items);
+		crf.showDeleteControls($(deleteControls[0]), 0);
 		
 		function checkIsFresh()
 		{
