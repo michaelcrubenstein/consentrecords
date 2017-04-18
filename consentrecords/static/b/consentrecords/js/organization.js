@@ -299,8 +299,8 @@ function appendStringItem(obj, label, text, addBorder)
 
 	var labelDiv = sectionObj.append("label")
 		.text(label);
-	var itemsDiv = sectionObj.append("ol")
-							 .classed("cell-items hover-items", true);
+	var itemsDiv = crf.appendItemList(sectionObj)
+							 .classed("hover-items", true);
 
 	if (addBorder)
 		sectionObj.append("div").classed("cell-border-below", true);	

@@ -461,8 +461,7 @@ function _showViewStringCell(obj, cell)
 function _showEditStringCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
-	var itemsDiv = sectionObj.append("ol")
-		.classed('cell-items', true);
+	var itemsDiv = crf.appendItemList(sectionObj);
 	
 	if (cell.isUnique())
 	{
@@ -517,8 +516,7 @@ function _showEditStringCell(obj, cell, inputType)
 function _showEditDateStampDayOptionalCell(obj)
 {
 	var sectionObj = d3.select(obj).classed("string", true);
-	var itemsDiv = sectionObj.append("ol")
-		.classed('cell-items', true);
+	var itemsDiv = crf.appendItemList(sectionObj);
 	
 	function appendInputs(items)
 	{
@@ -580,8 +578,7 @@ function _showEditDateStampDayOptionalCell(obj)
 function _showEditTranslationCell(obj, cell, inputType)
 {
 	var sectionObj = d3.select(obj).classed("string translation", true);
-	var itemsDiv = sectionObj.append("ol")
-		.classed('cell-items', true);
+	var itemsDiv = crf.appendItemList(sectionObj);
 	
 	function appendInputControls(items)
 	{
@@ -725,6 +722,12 @@ var crf = {
 	buttonNames: {
 		delete: "Delete"
 	},
+	
+	appendItemList: function(container)
+	{
+		return container.append('ol')
+			.classed('cell-items', true);
+	}
 	
 	appendDeleteControls: function(containers)
 	{
@@ -1291,8 +1294,7 @@ cr.ObjectCell.prototype.showEdit = function(obj, backText)
 {
 	var sectionObj = d3.select(obj).classed('instance', true);
 	
-	var itemsDiv = sectionObj.append("ol")
-		.classed('cell-items', true);
+	var itemsDiv = crf.appendItemList(sectionObj);
 
 	if (this.isUnique())
 	{
@@ -1384,10 +1386,11 @@ function appendButtons(panel2Div, rootObjects, buttonClicked, fill)
 {
 	fill = typeof fill !== 'undefined' ? fill : appendDescriptions;
 	
-	var itemsDiv = panel2Div.append("section")
-		.classed("cell multiple", true)
-		.append("ol")
-		.classed('cell-items hover-items', true);
+	var section = panel2Div.append("section")
+		.classed("cell multiple", true);
+	
+	var itemsDiv = crf.appendItemList(section)
+		.classed('hover-items', true);
 
 	var items = itemsDiv.selectAll("li")
 				.data(rootObjects)
@@ -1891,8 +1894,7 @@ var SitePanel = (function () {
 			.each(function(cell) {
 					var section = d3.select(this);
 					cell.appendLabel(this);
-					var itemsDiv = section.append('ol')
-						.classed('cell-items', true);
+					var itemsDiv = crf.appendItemList(section);
 					_this.mainDiv.appendCellData(this, cell);
 				});
 		
@@ -1932,8 +1934,8 @@ var SitePanel = (function () {
 		var sectionDiv = this.mainDiv.append('section')
 			.classed('cell unique btn action', true)
 			.on('click', onClick);
-		var itemsDiv = sectionDiv.append('ol')
-			.classed('cell-items hover-items', true);
+		var itemsDiv = crf.appendItemList(sectionDiv)
+			.classed('hover-items', true);
 		
 		var item = itemsDiv.append('li');
 			
@@ -2412,9 +2414,8 @@ var PanelSearchView = (function() {
 	
 	PanelSearchView.prototype.appendSearchArea = function()
 	{
-		return this.sitePanel.appendScrollArea()
-			.append('ol')
-			.classed('cell-items hover-items', true);
+		return crf.appendItemList(this.sitePanel.appendScrollArea())
+			.classed('hover-items', true);
 	}
 	
 	return PanelSearchView;
@@ -2934,10 +2935,10 @@ function getViewRootObjectsFunction(cell, header, sortFunction, successFunction)
 
 		var panel2Div = sitePanel.appendScrollArea();
 		
-		var itemsDiv = panel2Div.append("section")
-			.classed("cell multiple", true)
-			.append("ol")
-			.classed("cell-items hover-items border-above", true)
+		var section = panel2Div.append("section")
+			.classed("cell multiple", true);
+		var itemsDiv = crf.appendItemList(section)
+			.classed("hover-items border-above", true)
 			.datum(cell);
 		
 
@@ -3040,10 +3041,10 @@ function showEditRootObjectsPanel(cell, header, sortFunction)
 
 	var panel2Div = sitePanel.appendScrollArea();
 	
-	var itemsDiv = panel2Div.append("section")
-		.classed("cell multiple", true)
-		.append("ol")
-		.classed("cell-items hover-items deletable-items border-above", true)
+	var section = panel2Div.append("section")
+		.classed("cell multiple", true);
+	var itemsDiv = crf.appendItemList(section)
+		.classed("hover-items deletable-items border-above", true)
 		.datum(cell);
 	
 	var addedFunction = getOnValueAddedFunction(true, true, showEditObjectPanel);
