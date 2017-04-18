@@ -9,3 +9,6 @@ cp -R -P consentrecords/static/b/consentrecords consentrecords/static/consentrec
 rm -r consentrecords/templates/consentrecords
 cp -R -P consentrecords/templates/b/consentrecords consentrecords/templates/consentrecords
 
+sed -i '' 's/\"b\//\"/g' consentrecords/templates/consentrecords/*.html
+
+
