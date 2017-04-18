@@ -321,7 +321,8 @@ section.cell {
 	vertical-align: middle;
 	width: 100%;
 }
-.cell.edit {
+
+.cell.first {
 	margin-top: 12px;
 }
 .cell.unique.edit {
@@ -343,10 +344,6 @@ section.cell {
 .cell.action {
 	font-size: medium;
 	text-align: left;
-}
-
-.panel-fill>section.cell.action.first {
-	margin-top: 12px;
 }
 
 .string-value-view {

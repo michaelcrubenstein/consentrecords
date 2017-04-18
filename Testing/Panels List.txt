@@ -17,10 +17,25 @@ Pathways Panel
 		Other Path Panel
 		Experience Comment Panel
 
-Find Experience Panel
-
 View Root Objects Panel
 Edit Root Objects Panel
 View Object Panel
 Edit Object Panel
 Pick Object Panel
+
+Org home
+	Pick Action Panel
+	Pick Site Panel
+	Pick Offering Panel
+	Pick Session Panel
+	Record Inquiry Panel
+	Manage Inquiries Panel
+	Record Enrollment Panel
+	Record Enrollment from Inquiry Panel
+	Manage Enrollments Panel
+	Record Participation Panel
+	Manage Participation Panel
+
+Find a New Experience Panel
+	Sign Up/Back Out Panel
+
