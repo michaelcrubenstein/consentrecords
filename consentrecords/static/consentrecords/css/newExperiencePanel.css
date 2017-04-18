@@ -169,7 +169,7 @@
 		padding-right: 1.5px;
 	}
 	
-	panel.new-experience-panel section.cell.unique input {
+	panel.new-experience-panel section.cell.picker input {
 		-webkit-appearance: none;
 		-moz-appearance: none;
 		appearance: none;
@@ -208,7 +208,7 @@
 		display: block;
 	}
 	
-	panel.new-experience-panel section.cell.unique input.organization {
+	panel.new-experience-panel section.cell.picker input.organization {
 		display: block;
 		border-top-style: none;
 	}

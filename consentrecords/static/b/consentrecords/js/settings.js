@@ -103,8 +103,7 @@ var Settings = (function () {
 			sectionPanel.append('label')
 				.text(label);
 			
-			var itemsDiv = sectionPanel.append("ol")
-				.classed('cell-items', true);
+			var itemsDiv = crf.appendItemList(sectionPanel);
 
 			var items = appendItems(itemsDiv, cell.data);
 	
@@ -194,8 +193,7 @@ var Settings = (function () {
 			urlSection.append('label')
 				.text("Your Path");
 					
-			var urlList = urlSection.append("ol")
-				.classed('cell-items', true);
+			var urlList = crf.appendItemList(urlSection);
 						
 			var urlItem = urlList.append('li')
 				.classed('site-active-text', true)
@@ -318,11 +316,10 @@ var PickFromListPanel = (function () {
 	
 		navContainer.appendTitle(this.title);
 
-		var panel2Div = this.appendScrollArea();
-		var itemsDiv = panel2Div.append("section")
-			.classed("cell multiple", true)
-			.append("ol")
-			.classed('cell-items hover-items', true);
+		var section = this.appendScrollArea().append("section")
+			.classed("cell multiple", true);
+		crf.appendItemList(section)
+			.classed('hover-items', true);
 			
 		return this;
 	}
@@ -919,8 +916,8 @@ var NotificationsPanel = (function () {
 			.classed('no-results', true)
 			.style('display', 'none');
 
-		itemCells = sections.append("ol")
-			.classed("cell-items deletable-items", true);
+		itemCells = crf.appendItemList(sections)
+			.classed('deletable-items', true);
 	
 		var items = appendItems(itemCells, user.getCell(cr.fieldNames.notification).data.reverse());
 		

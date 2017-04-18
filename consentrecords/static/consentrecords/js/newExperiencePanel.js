@@ -349,8 +349,7 @@ var Experience = (function() {
 			{
 				var section = header.append('section')
 					.classed('cell view unique', true);
-				section.append('ol')
-					.classed('cell-items', true)
+				crf.appendItemList(section)
 					.append('li')
 					.append('div').classed('growable string-value-view', true)
 					.text(t);
@@ -752,8 +751,8 @@ var MultiTypeOptionView = (function() {
 	
 	MultiTypeOptionView.prototype.appendSearchArea = function()
 	{
-		return d3.select(this.containerNode).append('ol')
-			.classed('search', true);
+		return crf.appendItemList(d3.select(this.containerNode))
+			.classed('hover-items search', true);
 	}
 	
 	function MultiTypeOptionView(containerNode, experience, appendDescriptions)
@@ -1490,7 +1489,7 @@ var OrganizationSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Site")
 				{
 					/* The organization name is either a value of d or, if d is a value
@@ -1752,7 +1751,7 @@ var SiteSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Offering")
 				{
 					leftText.append('div')
@@ -2070,7 +2069,7 @@ var OfferingSearchView = (function() {
 		
 		buttons.each(function(d)
 			{
-				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text", true);
+				var leftText = d3.select(this).append('div').classed("left-expanding-div description-text growable", true);
 				if (d.getTypeName() === "Offering")
 				{
 					if (_this.experience.site && _this.experience.site.getInstanceID() == d.getValue("Site").getInstanceID())
@@ -2410,8 +2409,8 @@ var NewExperiencePanel = (function () {
 	NewExperiencePanel.prototype.appendHidableDateInput = function(dateContainer, minDate, maxDate)
 	{
 		var _this = this;
-		var itemsDiv = dateContainer.append('ol')
-			.classed('cell-items overlined-items', true);
+		var itemsDiv = crf.appendItemList(dateContainer)
+			.classed('overlined-items', true);
 		var itemDiv = itemsDiv.append('li');
 		var dateSpan = itemDiv.append('span')
 			.classed('growable', true);

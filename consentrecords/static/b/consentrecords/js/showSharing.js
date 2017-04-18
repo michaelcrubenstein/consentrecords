@@ -115,8 +115,7 @@ var SharingPanel = (function() {
 			.classed("cell multiple edit", true);
 		accessRequestSection.append("label")
 			.text("Access Requests");
-		accessRequestList = accessRequestSection.append("ol")
-			.classed("cell-items", true);
+		accessRequestList = crf.appendItemList(accessRequestSection);
 			
 		items = appendItems(accessRequestList, accessRequestSection.datum().data,
 			function()
@@ -172,8 +171,8 @@ var SharingPanel = (function() {
 		sections.append("label")
 			.text(function(d) { return d.label });
 			
-		itemCells = sections.append("ol")
-			.classed("cell-items deletable-items", true);
+		itemCells = crf.appendSectionList(sections)
+			.classed("deletable-items", true);
 	
 		// Reference the views back to the privileges objects.
 		itemCells.each(function(d) { d.itemsDiv = this; });
@@ -443,8 +442,7 @@ var PickSharingUserPanel = (function() {
 		var sectionPanel = panel2Div.append('section')
 			.classed('cell edit unique', true);
 			
-		var itemsDiv = sectionPanel.append("ol")
-			.classed('cell-items', true);
+		var itemsDiv = crf.appendItemList(sectionPanel);
 
 		var items = itemsDiv.append("li");	// So that each item appears on its own row.
 			

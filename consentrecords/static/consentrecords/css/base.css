@@ -286,11 +286,11 @@ button:hover {
 .cell.btn {
 	padding: 0px 0px;		/* To override btn style. */
 }
-.cell>ol {
+ol.cell-items {
 	margin: 0;				/* To override bootstrap ol style */
 	font-size: 15px;
 }
-.cell.multiple>ol {
+ol.cell-items {
 	background: white;
 }
 
@@ -349,6 +349,9 @@ section.cell {
 	padding: 6px 0px;
 	margin-left: 12px;
 }
+.cell.unique>label.overlined-items {
+    padding-top: 9px;	/* Extra padding on the top is needed for overlined items. */
+}
 
 .cell.action {
 	font-size: medium;
@@ -399,7 +402,6 @@ section.cell {
 	padding-bottom: 2px;
 }
 .cell.multiple.edit > ol {
-	background: white;
 	border-top: 1px solid #eee;
 	/* The bottom border is provided by the add-value button, below */
 }
@@ -585,14 +587,6 @@ div.add-value>button {
 }
 .glyphicon-minus-sign:focus {
 	outline: none;
-}
-
-.delete-dial
-{
-	left: -12px;
-	top: 9px;
-	opacity: 0;
-	position: absolute;
 }
 
 ol.cell-items>li {
