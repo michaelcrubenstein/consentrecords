@@ -727,7 +727,7 @@ var crf = {
 	{
 		return container.append('ol')
 			.classed('cell-items', true);
-	}
+	},
 	
 	appendDeleteControls: function(containers)
 	{
