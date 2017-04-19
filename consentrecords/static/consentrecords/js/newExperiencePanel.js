@@ -2146,8 +2146,8 @@ var VerticalReveal = (function() {
 		{
 			if (step) step();
 			if (done) done();
-			jNode.css('padding-top', "6px")
-				 .css('padding-bottom', "6px");
+			jNode.css('padding-top', "0px")
+				 .css('padding-bottom', "0px");
 		}
 		else if (args.newHeight == 'auto')
 		{
@@ -2156,14 +2156,14 @@ var VerticalReveal = (function() {
 				but I didn't test that. */
 			var outerHeight = jNode.outerHeight(false);
 			jNode.height(oldHeight);
-			jNode.animate({height: outerHeight, "padding-top": "6px", "padding-bottom": "6px"}, {duration: duration, easing: 'swing', step: step, done: done});
+			jNode.animate({height: outerHeight, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
 			
 		}
 		else
 		{
 			var height = jNode.height();
 			jNode.height(oldHeight);
-			jNode.animate({height: height, "padding-top": "6px", "padding-bottom": "6px"}, {duration: duration, easing: 'swing', step: step, done: done});
+			jNode.animate({height: height, "padding-top": "0px", "padding-bottom": "0px"}, {duration: duration, easing: 'swing', step: step, done: done});
 		}
 	}
 	
