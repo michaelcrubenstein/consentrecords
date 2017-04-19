@@ -138,7 +138,8 @@ var SearchPathsResultsView = (function () {
 	
 	SearchPathsResultsView.prototype.appendSearchArea = function()
 	{
-		return crf.appendItemList(d3.select(this.searchPathsPanel.resultContainerNode))
+		return d3.select(this.searchPathsPanel.resultContainerNode)
+			.append('ol')
 			.classed('hover-items search', true);
 	}
 	

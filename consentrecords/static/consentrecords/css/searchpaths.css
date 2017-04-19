@@ -157,7 +157,12 @@ div.results-container {
 	-webkit-overflow-scrolling: touch;
 }
 
-div.results-container li div>div {
+div.results-container li {
+	background-color: white;
+	padding: 6px 12px;
+}
+
+div.results-container li div {
 	display: block;
 	color: #444;
 	font-size: smaller;
@@ -168,7 +173,7 @@ div.results-container li div>div {
 	cursor: pointer;
 }
 
-div.results-container li div>div:first-child
+div.results-container li div:first-child
 {
 	color: #333;
 	text-align: left;
