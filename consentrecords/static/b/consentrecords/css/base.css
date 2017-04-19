@@ -626,7 +626,7 @@ section.hover-items:hover {
 	background-color: #F8F8F8;
 }	
 
-ol.hover-items>li:hover {
+.hover-items li:hover {
 	background-color: #F8F8F8;
 }
 
