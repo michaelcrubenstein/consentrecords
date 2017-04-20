@@ -88,7 +88,7 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 			.data(message.toString().split('\n'))
 			.enter()
 			.append('span')
-			.text(function(d) { return d; });
+			.html(function(d) { return d; });
 		panel.on('click', bootstrap_alert.close);
 		$(closeButton.node()).on('focusout', bootstrap_alert.close);
 		
@@ -108,7 +108,7 @@ bootstrap_alert.show = function(parentDiv, message, alertClass) {
 			.data(message.toString().split('\n'))
 			.enter()
 			.append('span')
-			.text(function(d) { return d; });
+			.html(function(d) { return d; });
 		$(bootstrap_alert.panel)
 			.animate({'top': ($(window).innerHeight() - $(bootstrap_alert.panel).height()) / 3});
 	}
