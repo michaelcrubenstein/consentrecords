@@ -29,7 +29,7 @@ class Emailer():
         return p.sub(f, html)
         
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
-    def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, question, commentValue, hostURL):
+    def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, isAdmin, question, commentValue, hostURL):
         answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.id, commentValue.id)
         context = Context({'salutation': " " + salutation if salutation else "", 
                            'asker': follower.getDescription(),
@@ -37,8 +37,9 @@ class Emailer():
                            'question': question,
                            'staticURL': hostURL + '/static/',
                            'replyHRef': answerURL})
-        htmlTemplate = loader.get_template('email/requestExperienceComment.html')
-        txtTemplate = loader.get_template('email/requestExperienceComment.txt')
+        s = 'email/requestExperienceComment' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
         
@@ -47,7 +48,7 @@ class Emailer():
     
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     # following - an instance of the path of the user who owns the experience containing the question.
-    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, comment, hostURL):
+    def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, isAdmin, comment, hostURL):
         experienceHRef = hostURL + '/experience/%s/' % experienceValue.id
         context = Context({'salutation': salutation, 
                            'following': following.getDescription(),
@@ -56,8 +57,9 @@ class Emailer():
                            'answer': comment.getSubValue(terms.text).stringValue,
                            'staticURL': hostURL + '/static/',
                            'experienceHRef': experienceHRef})
-        htmlTemplate = loader.get_template('email/answerExperienceQuestion.html')
-        txtTemplate = loader.get_template('email/answerExperienceQuestion.txt')
+        s = 'email/answerExperienceQuestion' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
         htmlMessage = htmlTemplate.render(context)
         txtMessage = txtTemplate.render(context)
         
