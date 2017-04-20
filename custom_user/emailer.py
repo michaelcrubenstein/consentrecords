@@ -5,25 +5,17 @@ from consentrecords.models import *
 
 class Emailer():
     # Sends a reset password message to the specified email recipient.
-    def sendResetPasswordEmail(senderEMail, recipientEMail, resetURL):
-        htmlMessage = """\
-<p>There has been a request to reset your password at pathadvisor.com.</p>
-<p>Click <a href="%s">here</a> to reset your password.</p>
+    def sendResetPasswordEmail(recipientEMail, resetURL, hostURL):
+        context = Context({'resetURL': resetURL,
+                           'staticURL': hostURL + '/static/',
+                          })
 
-<p><b>The PathAdvisor Team</b></p>
-""" % resetURL
+        htmlTemplate = loader.get_template('email/resetPassword.html')
+        txtTemplate = loader.get_template('email/resetPassword.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
 
-        message = """\
-There has been a request to reset your password at pathadvisor.com.
-Open the following link in your web browser to reset your password:
-
-%s
-
-Thanks.
-The PathAdvisor Team
-""" % resetURL
-        
-        send_mail('Password Reset', message, senderEMail,
+        send_mail('Password Reset', txtMessage, settings.PASSWORD_RESET_SENDER,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
     def merge(html, dir):
@@ -43,6 +35,7 @@ The PathAdvisor Team
                            'asker': follower.getDescription(),
                            'experience': experienceValue.referenceValue.getDescription(),
                            'question': question,
+                           'staticURL': hostURL + '/static/',
                            'replyHRef': answerURL})
         htmlTemplate = loader.get_template('email/requestExperienceComment.html')
         txtTemplate = loader.get_template('email/requestExperienceComment.txt')
@@ -61,6 +54,7 @@ The PathAdvisor Team
                            'experience': experienceValue.referenceValue.getDescription(),
                            'question': comment.getSubInstance(terms['Comment Request']),
                            'answer': comment.getSubValue(terms.text).stringValue,
+                           'staticURL': hostURL + '/static/',
                            'experienceHRef': experienceHRef})
         htmlTemplate = loader.get_template('email/answerExperienceQuestion.html')
         txtTemplate = loader.get_template('email/answerExperienceQuestion.txt')
