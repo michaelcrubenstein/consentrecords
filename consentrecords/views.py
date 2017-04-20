@@ -741,6 +741,8 @@ def requestExperienceComment(request):
                                 recipientEMail,
                                 experienceValue,
                                 follower,
+                                (follower.id == user.getSubInstance(terms['Path']).id and \
+                                 request.user.is_staff),
                                 question,
                                 v,
                                 protocol + request.get_host())
@@ -868,7 +870,7 @@ class api:
             else:
                 raise RuntimeError("%s is not recognized" % pathKey)
     
-    def valueAdded(v, nameLists, transactionState, hostURL):
+    def valueAdded(v, nameLists, userInfo, transactionState, hostURL):
         if v.instance.typeID_id == terms['Comment'].id and \
            v.field_id == terms['text'].id:
             request = v.instance.getSubInstance(terms['Comment Request'])
@@ -879,9 +881,10 @@ class api:
                 experienceValue = v.instance.parent.parent.parentValue
                 salutation = follower.getSubDatum(terms.name) or recipient.getSubDatum(terms.firstName)
                 following = experienceValue.instance
+                isAdmin = userInfo.is_administrator
                 comment = v.instance
                 Emailer.sendAnswerExperienceQuestionEmail(salutation, recipientEMail, 
-                    experienceValue, following, comment, hostURL)
+                    experienceValue, following, isAdmin, comment, hostURL)
 
                 # Create a notification for the user.    
                 notificationData = {\
@@ -956,7 +959,7 @@ class api:
                             item = container.addValue(field, c, newIndex, transactionState)
                             instanceID = item.referenceValue_id
                             # Handle special cases that should occur when adding a new value.
-                            api.valueAdded(item, nameLists, transactionState, hostURL)
+                            api.valueAdded(item, nameLists, UserInfo(user), transactionState, hostURL)
 
                         if item.isDescriptor:
                             descriptionQueue.append(container)
