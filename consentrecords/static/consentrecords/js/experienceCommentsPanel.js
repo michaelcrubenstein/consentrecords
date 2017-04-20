@@ -634,10 +634,12 @@ var ExperienceCommentsPanel = (function() {
 								try
 								{
 									showClickFeedback(this);
+									bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
 									_this.askQuestion(newQuestion)
 										.then(function()
 											{
 												newQuestionInput.node().value = '';
+												bootstrap_alert.close();
 												unblockClick();
 											},
 											cr.syncFail);
