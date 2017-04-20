@@ -1,5 +1,9 @@
 <body>
 	<style>
+		body {
+			font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+			font-size: 14px;
+		}
 	</style>
 	<p>Hi{% if salutation %} {{ salutation }}{% endif %}!</p>
 	<p>{{ following }} has answered your question regarding their {{ experience }} experience:</p>
@@ -8,6 +12,9 @@
 
 	<p>You can see more about their experience <a href="{{ experienceHRef }}">here</a>.</p>
 
-	<p>Enjoy!
-	<br><b>The PathAdvisor Team</b></p>
+	<p>Thank you for participating in PathAdvisor.</p>
+	<p>Michael Rubenstein
+	<br><small>Director of Support</small></p>
+	<img src="{{ staticURL }}consentrecords/png/Email LOGO 1.png" width="100"></img>
+	<br><a href="www.pathadvisor.com">www.pathadvisor.com</a>
 </body>

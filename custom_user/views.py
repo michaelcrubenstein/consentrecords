@@ -89,8 +89,9 @@ def resetPassword(request):
         newKey = PasswordReset.createPasswordReset(email)
         protocol = "https://" if request.is_secure() else "http://"
         
-        Emailer.sendResetPasswordEmail(settings.PASSWORD_RESET_SENDER, email, 
-            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey)
+        Emailer.sendResetPasswordEmail(email, 
+            protocol + request.get_host() + settings.PASSWORD_RESET_PATH + "?key=" + newKey,
+            protocol + request.get_host())
         
         results = {}
     except Exception as e:
