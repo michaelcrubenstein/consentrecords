@@ -532,7 +532,6 @@ var PathView = (function() {
 			{
 				try
 				{
-					var panel = this.sitePanel.node();
 					var experience = new Experience(fd.experience.cell.parent, fd.experience);
 					experience.replaced(fd.experience);
 					

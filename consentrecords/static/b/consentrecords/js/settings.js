@@ -868,6 +868,81 @@ crn.ExperienceQuestionAnswered = (function() {
     return ExperienceQuestionAnswered;
 })();
 
+crn.ExperienceSuggestion = (function() {
+	ExperienceSuggestion.prototype = new crn.Notification();
+	ExperienceSuggestion.prototype.buttonText = "<b>{0}</b> suggests: add {2} with the {1} tag to your path.";
+
+	ExperienceSuggestion.prototype.appendDescription = function(buttonNode, q)
+	{
+		var args = this.notification.getCell(cr.fieldNames.argument).data;
+		var path = args[0];
+		var phaseInstance = args.length > 2 && args[2];
+		var phaseDescription;
+		
+		if (phaseInstance)
+		{
+			if (phaseInstance.getDescription() == "Goal")
+				phaseDescription = "a goal";
+			else
+				phaseDescription = "an experience";
+		}
+		else
+			phaseDescription = "an experience" 
+		
+		var _this = this;
+		var spinnerSpan = this.appendSpinner(buttonNode);
+		var textSpan = this.appendTextSpan(buttonNode, spinnerSpan, 
+			_this.buttonText.format("", args[1].getDescription()), phaseDescription);
+		
+		q.add(function()
+			{
+				$.when(path.instance().parentPromise(), )
+					.then(function()
+						{
+							spinnerSpan.datum().stop();
+							spinnerSpan.remove();
+							textSpan.node().innerHTML = _this.buttonText.format(getPathDescription(path), args[1].getDescription(), phaseDescription);
+		
+							$(buttonNode).click(function(e)
+								{
+									if (prepareClick('click', "Experience Suggestion"))
+									{
+										try
+										{
+											showClickFeedback(this);
+					
+											var phase = phaseInstance ? phaseInstance.getDescription() : "Previous";
+											var experience = new Experience(cr.signedinUser.getValue("Path"))
+											experience.initDateRange(phase);
+											var tag = crp.getInstance(args[1].getInstanceID());
+											experience.services.push(new ReportedObject({name: tag.getDescription(), pickedObject: tag}));
+											new NewExperiencePanel(experience, experience.getPhase(), revealPanelLeft)
+																.showLeft()
+																.always(unblockClick);
+										}
+										catch(err)
+										{
+											cr.syncFail(err);
+										}
+									}
+				
+									e.preventDefault();
+								});
+						},
+						cr.asyncFail)
+				 .always(function() { q.dequeue(); });
+				 return false;
+			});
+	}
+	
+    function ExperienceSuggestion(d)
+    {
+    	crn.Notification.call(this, d);
+    }
+    
+    return ExperienceSuggestion;
+})();
+
 var NotificationsPanel = (function () {
 	NotificationsPanel.prototype = new SitePanel();
 	NotificationsPanel.prototype.panelTitle = "Notifications";

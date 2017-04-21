@@ -1,3 +1,6 @@
+# A script for listing the users created between a specified start date and end date.
+# The -all option including users created for testing (.pathadvisor.com and .consentrecords.org)
+#
 # python3 data/10listusers.py -start 2016-05-08 -end 2016-05-08
 # python3 data/10listusers.py -start 2016-05-08 -end 2016-05-08 -all
 
@@ -57,8 +60,12 @@ if __name__ == "__main__":
                     experienceCount = experiences.count()
                     sum += experienceCount
                 except Exception as e:
+                    print(traceback.format_exc())
                     experienceCount = 0
+                    
                 sys.stdout.write("%s\t%s\t%s\n" % (u.getDescription(), experienceCount, u.transaction.creation_time))
+            else:
+            	print(u)
             # raise RuntimeError("Done")
                                 
         print ('Experience Count: ', sum)
