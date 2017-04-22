@@ -64,8 +64,7 @@ if __name__ == "__main__":
                     experienceCount = 0
                     
                 sys.stdout.write("%s\t%s\t%s\n" % (u.getDescription(), experienceCount, u.transaction.creation_time))
-            else:
-            	print(u)
+
             # raise RuntimeError("Done")
                                 
         print ('Experience Count: ', sum)

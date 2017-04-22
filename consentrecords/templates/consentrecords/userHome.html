@@ -290,7 +290,7 @@
 							{
 								if (offerings.length > 0)
 								{
-									if (offerings[0].typeName == "Offering")
+									if (offerings[0].getTypeName() == "Offering")
 									{
 										experience.createFromOffering(offerings[0], services, pathwayPanel.node(), function(panelNode)
 											{
@@ -312,7 +312,7 @@
 							{
 								if (sites.length > 0)
 								{
-									if (sites[0].typeName == "Site")
+									if (sites[0].getTypeName() == "Site")
 									{
 										experience.createFromSite(sites[0], services, pathwayPanel.node(), function(panelNode)
 											{
@@ -336,7 +336,7 @@
 							{
 								if (organizations.length > 0)
 								{
-									if (organizations[0].typeName == "Organization")
+									if (organizations[0].getTypeName() == "Organization")
 									{
 										experience.createFromData({instance: organizations[0] },
 											siteName && {text : siteName},
@@ -394,9 +394,9 @@
 					.done(function(services)
 						{
 							if (services.length == 0)
-								cr.asyncFail("The specified tag does not exist or you do not have permission to view it.");
-							else if (services[0].typeName != "Service")
-								cr.asyncFail("The specified tag does not appear to be a tag.");
+								cr.asyncFail(new Error("The specified tag does not exist or you do not have permission to view it."));
+							else if (services[0].getTypeName() != "Service")
+								cr.asyncFail(new Error("The specified tag does not appear to be a tag."));
 							else
 								done([{instance: services[0]}]);
 						})

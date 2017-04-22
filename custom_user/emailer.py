@@ -67,6 +67,22 @@ class Emailer():
             settings.PASSWORD_RESET_SENDER,
             [recipientEMail], fail_silently=False, html_message=htmlMessage)
     
+    # Sends a message saying that the specified experiement has a new question to the specified email recipient.
+    def sendSuggestExperienceByTagEmail(salutation, recipientEMail, tag, isAdmin, hostURL):
+        answerURL = '%s/add/?m=%s' % (hostURL, tag.getDescription())
+        context = Context({'salutation': " " + salutation if salutation else "", 
+                           'tag': tag.getDescription(),
+                           'staticURL': hostURL + '/static/',
+                           'href': answerURL})
+        s = 'email/suggestExperienceByTag' + ('Admin' if isAdmin else '')
+        htmlTemplate = loader.get_template(s+'.html')
+        txtTemplate = loader.get_template(s+'.txt')
+        htmlMessage = htmlTemplate.render(context)
+        txtMessage = txtTemplate.render(context)
+        
+        send_mail('A Suggestion from PathAdvisor', txtMessage, settings.PASSWORD_RESET_SENDER,
+            [recipientEMail], fail_silently=False, html_message=htmlMessage)
+    
     # Sends an email when someone requests to follow the recipient of the email.
     def sendNewFollowerEmail(salutation, recipientEMail, follower, acceptURL, ignoreURL):
         htmlMessage = """<body><style>

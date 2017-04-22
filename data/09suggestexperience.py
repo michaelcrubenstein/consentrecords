@@ -1,6 +1,7 @@
 # Script for making a suggestion for a user to add to their pathway.
 #
-# python3 data/09suggestexperience.py 'Testing/suggestions/suggestions 20170421.txt' michaelcrubenstein@gmail.com
+# python3 data/09suggestexperience.py 'Testing/suggestions/suggestions 20170421.txt' michaelcrubenstein@gmail.com https://www.pathadvisor.com
+# python3 data/09suggestexperience.py 'Testing/suggestions/suggestions test.txt' michaelcrubenstein@gmail.com http://127.0.0.1:8000
 
 import datetime
 import django
@@ -19,10 +20,12 @@ from django.contrib.auth import authenticate
 from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords import instancecreator
+from custom_user.emailer import *
 
 if __name__ == "__main__":
     username = sys.argv[2] if len(sys.argv) > 2 else input('Email Address: ')
     password = getpass.getpass("Password: ")
+    hostURL = sys.argv[3] if len(sys.argv) > 3 else 'http://127.0.0.1:8000'
 
     user = authenticate(username=username, password=password)
     
@@ -43,14 +46,14 @@ if __name__ == "__main__":
                 line = f.readline().strip()
                 while len(line) > 0:
                     args = line.split(None, 2)
-                    recipientName = args[0]
+                    recipientEmail = args[0]
                     phasename = args[1]
                     tagName = args[2]
-                    print (recipientName, tagName, phasename)
+                    print (recipientEmail, tagName, phasename)
                     
                     recipient = Instance.objects.get(value__deleteTransaction__isnull=True,
                                                       value__field=terms.email,
-                                                      value__stringValue__iexact=recipientName)
+                                                      value__stringValue__iexact=recipientEmail)
                     
                     tag = Instance.objects.get(typeID=terms['Service'],
                                                value__deleteTransaction__isnull=True,
@@ -71,6 +74,12 @@ if __name__ == "__main__":
                     notification, notificationValue = instancecreator.create(terms['notification'], 
                         recipient, terms['notification'], -1, 
                         notificationData, nameList, transactionState, instancecreator.checkCreateNotificationAccess)
+                    
+                    path = recipient.getSubInstance(terms['Path'])    
+                    salutation = recipient.getSubDatum(terms.firstName) or path.getSubDatum(terms.name)
+                    isAdmin = True
+                    
+                    Emailer.sendSuggestExperienceByTagEmail(salutation, recipientEmail, tag, isAdmin, hostURL)
                     
                     line = f.readline().strip()
                                             

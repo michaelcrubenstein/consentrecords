@@ -40,4 +40,16 @@ unwind three transactions.
 	4c. Click Done
 	4d. Create a new goal
 	4e. Fill in a tag, organization, site, offering by custom text
+		"Baseball Umpire", "Major League Baseball", "Boston Red Sox", "Umpire"
 	4f. Click Done
+		Flag appears in last column.
+	4g. Click the new flag
+	4h. Click the Edit button
+	4i. Click the right chevron
+	4j. Click the Add Tag text
+	4k. Click Job
+	4l. Click Done
+	4m. Click Done
+	4n. Click Back
+	
+unwind two transactions.
