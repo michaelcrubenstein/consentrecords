@@ -1,9 +1,10 @@
 Hi{% if salutation %} {{ salutation }}{% endif %}!
 
-Though it has been a long time (over a year) since you worked with me on PathAdvisor,
-I want to let you know that I am still working on PathAdvisor with the current Beacon 
-Academy students. PathAdvisor has changed a lot since you first helped me out, so I 
-hope you can help again.
+It has been over a year since you worked with me on PathAdvisor, the web application
+I have been developing to help people keep track of their experiences and share their 
+stories with others. Though it has been such a long time, I want to let you know that 
+I am still working on PathAdvisor with the 2016-2017 class of Beacon Academy students. 
+PathAdvisor has changed a lot since you first helped me out, so I hope you can help again.
 	
 Can you add your {{ tag }} experience to your path? Here is a link you can paste into 
 a browser:
