@@ -1,0 +1,24 @@
+<body>
+	<style>
+		body {
+			font-family: SF-UI,Helvetica Neue,Arial,Helvetica,sans-serif;
+			font-size: 14px;
+		}
+	</style>
+	<p>Hi{% if salutation %} {{ salutation }}{% endif %}!</p>
+	<p>Though it has been a long time (over a year) since you worked with me on PathAdvisor,
+	I want to let you know that I am still working on it with the current Beacon Academy 
+	students. PathAdvisor has changed a lot since you first helped me out, so I hope you can
+	help again.</p>
+	
+	<p>Can you add your <a href="{{href}}">{{ tag }}</a> experience to your path?
+
+	<p>Please feel free to add other experiences and goals to your path. I'd love to see what
+	you've been up to.</p>
+
+	<p>Michael Rubenstein
+	<br><small>Director of Support</small></p>
+	<img src="{{ staticURL }}consentrecords/png/Email LOGO 1.png" width="100"></img>
+	<br><a href="www.pathadvisor.com">www.pathadvisor.com</a>
+	<br></i>Real Paths That Are Right For You</i>
+</body>
