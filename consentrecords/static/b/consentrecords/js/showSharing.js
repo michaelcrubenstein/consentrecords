@@ -27,11 +27,14 @@ var SharingPanel = (function() {
 
 	SharingPanel.prototype.checkDeleteControlVisibility = function(items)
 	{
-		var deleteControls = $(items.node()).parent().find('button.delete');
-		if (!this.inEditMode)
-			crf.hideDeleteControls(deleteControls, 0);
-		else
-			crf.showDeleteControls(deleteControls, 0);
+		items.each(function(d, i)
+			{
+				var deleteControls = $(this).parent().find('button.delete');
+				if (!this.inEditMode)
+					crf.hideDeleteControls(deleteControls, 0);
+				else
+					crf.showDeleteControls(deleteControls, 0);
+			});
 	}
 	
 	/* Produces a function which adds new value view to a container view
@@ -120,9 +123,9 @@ var SharingPanel = (function() {
 		items = appendItems(accessRequestList, accessRequestSection.datum().data,
 			function()
 			{
-				accessRequestSection.style('display', accessRequestList.selectAll('li').size() ? "" : "none");
+				accessRequestSection.style('display', accessRequestList.selectAll('li').size() ? '' : 'none');
 			});
-		accessRequestSection.style('display', items.size() ? "" : "none");
+		accessRequestSection.style('display', items.size() ? '' : 'none');
 		
 		appendButtonDescriptions(items)
 			.each(_pushTextChanged);
