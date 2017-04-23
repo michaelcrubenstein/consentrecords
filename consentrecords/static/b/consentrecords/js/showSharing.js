@@ -174,7 +174,7 @@ var SharingPanel = (function() {
 		sections.append("label")
 			.text(function(d) { return d.label });
 			
-		itemCells = crf.appendSectionList(sections)
+		itemCells = crf.appendItemList(sections)
 			.classed("deletable-items", true);
 	
 		// Reference the views back to the privileges objects.
