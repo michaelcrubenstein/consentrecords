@@ -177,6 +177,7 @@ cr.fieldNames = {
     argument: 'argument',
     configuration: 'configuration',
     booleans: 'boolean',
+    canBeAskedAboutExperience: 'can be asked about experience',
     dataType: 'data type',
     defaultAccess: 'default access',
     descriptorType: 'descriptor type',
