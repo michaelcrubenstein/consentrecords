@@ -68,6 +68,8 @@ term
     enumerator
         name: no
 term
+    name: can be asked about experience
+term
     name: City
 term
     name: Color
@@ -588,7 +590,7 @@ term
             data type: object
             max capacity: unique value
             object add rule: pick one
-            of kind: End
+            of kind: enumerator
             pick object path: terms[name=boolean]/enumerator
 term
     name: object add rule
@@ -747,6 +749,13 @@ term
             max capacity: multiple values
             object add rule: create one
             of kind: access record
+        field
+            name: can be asked about experience
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: enumerator
+            pick object path: term[name=boolean]/enumerator
 term
     name: Period
     configuration

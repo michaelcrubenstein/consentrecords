@@ -327,6 +327,97 @@ var ExperienceCommentsPanel = (function() {
 		}
 	}
 	
+	ExperienceCommentsPanel.prototype.setupAsk = function(terms)
+	{
+		var _this = this;
+		var canBeAsked = this.fd.experience.cell.parent.getValue(cr.fieldNames.canBeAskedAboutExperience);
+		termNo = terms[0].getCell(cr.fieldNames.enumerator).data.find(function(d)
+			{
+				return d.getDescription() == cr.booleans.no;
+			});
+		if (cr.signedinUser.getInstanceID() &&
+			canBeAsked == null || canBeAsked.getInstanceID() != termNo.getInstanceID())
+		{
+			var newQuestionDiv = this.mainDiv.append('section')
+				.classed('new-comment', true);
+			var newQuestionInput = newQuestionDiv.append('textarea')
+				.attr('rows', 3);
+			newQuestionInput.attr('placeholder', "New Question");
+
+			var askButton = newQuestionDiv.append('button')
+				.classed('post site-active-div', true)
+				.text("Ask")
+				.on('click', function()
+					{
+						var newQuestion = newQuestionInput.node().value;
+						if (newQuestion)
+						{
+							if (prepareClick('click', 'Ask Question'))
+							{
+								try
+								{
+									showClickFeedback(this);
+									bootstrap_alert.success("Sending email (this may take a few minutes)...", this.alertSuccess);
+									_this.askQuestion(newQuestion)
+										.then(function()
+											{
+												newQuestionInput.node().value = '';
+												bootstrap_alert.close();
+												unblockClick();
+											},
+											cr.syncFail);
+								}
+								catch(err)
+								{
+									cr.syncFail(err);
+								}
+							}
+						}
+					});
+			
+			var commentPromptsDiv = this.mainDiv.append('section')
+				.classed('comment-prompts', true);
+			
+			var resizeQuestionBoxes = function()
+				{
+					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
+					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
+					var askWidth = $(askButton.node()).outerWidth(true);
+					if (_this.postButtonNode && $(_this.postButtonNode).outerWidth(true) > askWidth)
+						askWidth = $(_this.postButtonNode).outerWidth(true);
+					newQuestionWidth -= askWidth;
+				
+					$(newQuestionInput.node()).width(newQuestionWidth);
+					commentPromptsDiv
+						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
+				}
+			
+			crp.promise({path:  'Comment Prompt'})
+			.then(function(prompts)
+				{
+					commentPromptsDiv.selectAll('div')
+						.data(prompts)
+						.enter()
+						.append('div')
+						.append('span')
+						.classed('site-active-text', true)
+						.text(function(d) 
+							{ return d.getDatum(cr.fieldNames.text); })
+						.on('click', function(d)
+							{
+								newQuestionInput.node().value = '';
+								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
+								newQuestionInput.node().focus();
+								var textWidth = newQuestionInput.node().value.length;
+								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
+							});
+					resizeQuestionBoxes();
+				}, cr.asyncFail)		
+							
+			$(this.mainDiv.node()).on('resize.cr', resizeQuestionBoxes);
+		}
+	}
+	
 	function ExperienceCommentsPanel(fd)
 	{
 		this.createRoot(fd, "Experience", "comments", revealPanelLeft);
@@ -462,7 +553,7 @@ var ExperienceCommentsPanel = (function() {
 				.append('span').text(crv.buttonTexts.edit);
 		}
 
-		navContainer.appendTitle('Experience');
+		navContainer.appendTitle("Experience");
 		
 		var panel2Div = this.appendScrollArea();
 
@@ -576,7 +667,7 @@ var ExperienceCommentsPanel = (function() {
 				.attr('rows', 3);
 			newCommentInput.attr('placeholder', 'New Comment');
 
-			var postButton = newCommentDiv.append('button')
+			this.postButtonNode = newCommentDiv.append('button')
 				.classed('post site-active-div', true)
 				.text('Post')
 				.on('click', function()
@@ -602,98 +693,20 @@ var ExperienceCommentsPanel = (function() {
 								}
 							}
 						}
-					});
+					})
+				.node();
 
 			$(panel2Div.node()).on('resize.cr', function()
 				{
 					$(newCommentInput.node()).width(
 						$(newCommentDiv.node()).width() - 
-						$(postButton.node()).outerWidth(true) -
+						$(_this.postButtonNode).outerWidth(true) -
 						($(newCommentInput.node()).outerWidth(true) - $(newCommentInput.node()).width()));
 				});
 		}
-			
-		if (cr.signedinUser.getInstanceID())
-		{
-			var newQuestionDiv = panel2Div.append('section')
-				.classed('new-comment', true);
-			var newQuestionInput = newQuestionDiv.append('textarea')
-				.attr('rows', 3);
-			newQuestionInput.attr('placeholder', 'New Question');
-
-			var askButton = newQuestionDiv.append('button')
-				.classed('post site-active-div', true)
-				.text('Ask')
-				.on('click', function()
-					{
-						var newQuestion = newQuestionInput.node().value;
-						if (newQuestion)
-						{
-							if (prepareClick('click', 'Ask Question'))
-							{
-								try
-								{
-									showClickFeedback(this);
-									bootstrap_alert.success('Sending email (this may take a few minutes)...', this.alertSuccess);
-									_this.askQuestion(newQuestion)
-										.then(function()
-											{
-												newQuestionInput.node().value = '';
-												bootstrap_alert.close();
-												unblockClick();
-											},
-											cr.syncFail);
-								}
-								catch(err)
-								{
-									cr.syncFail(err);
-								}
-							}
-						}
-					});
-			
-			var commentPromptsDiv = panel2Div.append('section')
-				.classed('comment-prompts', true);
-			
-			var resizeQuestionBoxes = function()
-				{
-					var newQuestionHMargin = ($(newQuestionInput.node()).outerWidth(true) - $(newQuestionInput.node()).width())
-					var newQuestionWidth = $(newQuestionDiv.node()).width() - newQuestionHMargin;
-					var askWidth = $(askButton.node()).outerWidth(true);
-					if (postButton && $(postButton.node()).outerWidth(true) > askWidth)
-						askWidth = $(postButton.node()).outerWidth(true);
-					newQuestionWidth -= askWidth;
-				
-					$(newQuestionInput.node()).width(newQuestionWidth);
-					commentPromptsDiv
-						.style('width', "{0}px".format(newQuestionWidth + newQuestionHMargin));
-				}
-			
-			crp.promise({path:  'Comment Prompt'})
-			.then(function(prompts)
-				{
-					commentPromptsDiv.selectAll('div')
-						.data(prompts)
-						.enter()
-						.append('div')
-						.append('span')
-						.classed('site-active-text', true)
-						.text(function(d) 
-							{ return d.getDatum(cr.fieldNames.text); })
-						.on('click', function(d)
-							{
-								newQuestionInput.node().value = '';
-								newQuestionInput.node().value = d.getDatum(cr.fieldNames.text);
-								newQuestionInput.node().focus();
-								var textWidth = newQuestionInput.node().value.length;
-								newQuestionInput.node().setSelectionRange(textWidth, textWidth)
-							});
-					resizeQuestionBoxes();
-				}, cr.asyncFail)		
-							
-			$(panel2Div.node()).on('resize.cr', resizeQuestionBoxes);
-		}
-			
+		else
+			this.postButtonNode = null;
+		
 		$(panel2Div.node()).on('resize.cr', resizeDetail);	
 						
 		$(panel2Div.node()).on('resize.cr', function()
@@ -727,6 +740,16 @@ var ExperienceCommentsPanel = (function() {
 			this.promise = $.Deferred();
 			this.promise.resolve();
 		}
+		
+		this.promise = this.promise
+			.then(function()
+				{
+					return crp.promise({path: "term[name=boolean]"})
+						.then(function(terms)
+						{
+							_this.setupAsk(terms);
+						});
+				});
 	}
 		
 	return ExperienceCommentsPanel;
