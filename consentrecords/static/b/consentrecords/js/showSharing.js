@@ -127,11 +127,14 @@ var SharingPanel = (function() {
 			});
 		accessRequestSection.style('display', items.size() ? '' : 'none');
 		
-		appendButtonDescriptions(items)
+		var leftDivs = items.append('div')
+			.classed('growable', true);
+			
+		var texts = appendButtonDescriptions(leftDivs)
 			.each(_pushTextChanged);
 		var infoButtons = appendInfoButtons(items);
 		
-		var itemButtonDivs = items.append('div');
+		var itemButtonDivs = leftDivs.append('div');
 		var applyButtons = this.appendApplyButtons(itemButtonDivs);
 		var ignoreButtons = this.appendIgnoreButtons(itemButtonDivs);
 			
