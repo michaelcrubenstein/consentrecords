@@ -3,6 +3,7 @@
 # python3 data/09suggestexperience.py 'testing/suggestions/suggestions 20170421.txt' michaelcrubenstein@gmail.com https://www.pathadvisor.com
 # python3 data/09suggestexperience.py 'testing/suggestions/suggestions test.txt' michaelcrubenstein@gmail.com http://127.0.0.1:8000
 # python3 data/09suggestexperience.py 'testing/suggestions/suggestions 20170423.txt' michaelcrubenstein@gmail.com https://www.pathadvisor.com
+# python3 data/09suggestexperience.py 'testing/suggestions/suggestions 20170424.txt' michaelcrubenstein@gmail.com https://www.pathadvisor.com
 
 import datetime
 import django
