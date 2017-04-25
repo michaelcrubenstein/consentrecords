@@ -1778,7 +1778,7 @@ class ObjectQuerySet:
             elif function == 'not':
                 if isinstance(path[2], list):
                     parsed = InstanceQuerySet().parse(path[2], userInfo)
-                    f = parsed.excludeFrom(self.querySet)
+                    f = parsed.excludeFrom(self)
                     return f, path[3:]
                 else:
                     raise ValueError("malformed not (missing parentheses)")
@@ -1830,7 +1830,7 @@ class ObjectQuerySet:
             firstRefine = False
         return qs
     
-    def getSubValueQuerySet(vqs, userInfo):     
+    def getSubValueQuerySet(vqs, userInfo):
         return ValueQuerySet(vqs.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo) \
                        .order_by('position')\
                        .select_related('referenceValue')\
@@ -1867,8 +1867,11 @@ class ValueQuerySet(ObjectQuerySet):
     def createObjectQuerySet(self, querySet):
         return ValueQuerySet(querySet)
         
-    def excludeFrom(self, querySet):
-        return ValueQuerySet(querySet.exclude(referenceValues__in=self.querySet))
+    def excludeFrom(self, oqs):
+        if isinstance(oqs, InstanceQuerySet):
+            return InstanceQuerySet(oqs.querySet.exclude(value__in=self.querySet))
+        else:
+            return ValueQuerySet(oqs.querySet.exclude(pk__in=self.querySet))
 
     # Return a Q expression that returns all of the instances in this query set.
     def instanceQ(self):
@@ -1892,12 +1895,61 @@ class ValueQuerySet(ObjectQuerySet):
             
         if isinstance(fieldNames, list):
             return Q(field__in=map(terms.__getitem__, fieldNames),
-                     value__deleteTransaction__isnull=True,
-                     value__referenceValue__in=referenceValues)
+                     deleteTransaction__isnull=True,
+                     referenceValue__in=referenceValues)
         else:
             return Q(field=terms[fieldNames],
                      deleteTransaction__isnull=True,
                      referenceValue__in=referenceValues)
+
+    # Return a Q clause according to the specified params.
+    # If the parameter list is a single item:
+    #     If there is a list, then the object must contain a value with the specified field type.
+    #     If there is a question mark, then this is a no-op.
+    #     If there is a single term name, then each instance must contain a value of that term.
+    # If the parameter list is three or more items and the second item is a '>',
+    #     then tighten the filter of the result set for only those fields that are references to objects
+    #     that match params[2:]. For example:
+    #     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+    # If the parameter list is three or more items and the second item is a '[',
+    #     then tighten the filter of the result set for only those fields that are references to objects
+    #     that match the clause in params[2] and any following clauses. For example: 
+    #     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+    # If the parameter list is three values, interpret the three values as a query clause and
+    #     filter self on that clause.  
+    def filterClause(self, params, userInfo):
+    #     print('_filterClause params: %s'% (params))
+        if len(params) == 1:
+            if isinstance(params[0], list):
+                return Q(referenceValue__value__field__in=map(terms.__getitem__, params[0]), 
+                         referenceValue__value__deleteTransaction__isnull=True)
+            elif params[0] == '?':
+                return Q(referenceValue__value__deleteTransaction__isnull=True) #degenerate case
+            else:
+                return Q(referenceValue__value__field=terms[params[0]], value__deleteTransaction__isnull=True)
+        elif len(params) > 2 and params[1]=='>':
+            return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
+        elif len(params) > 2 and params[1]=='[':
+            parsed = InstanceQuerySet().parse(['*'] + params[1:3], userInfo)
+            subF = InstanceQuerySet(userInfo.findFilter(parsed))
+            if len(params) > 3:
+                parsed = subF.parse(params[3:], userInfo)
+                subF = parsed.filterToInstances()
+            return self.clauseByReferenceValues(params[0], subF.querySet)
+        elif len(params) == 3:
+            i = None if params[0] == '?' else \
+                map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
+                terms[params[0]]
+        
+            # Return a Q clause that compares either a single test value or a comma-separated list of test values
+            # according to the specified symbol to a list of fields or a single field.
+            if isinstance(i, map):
+                return reduce(lambda q1, q2: q1 | q2, \
+                                    map(lambda field: self.getQClause(field, params[1], params[2]), i))
+            else:
+                return self.getQClause(i, symbol=params[1], testValue=params[2])
+        else:
+            raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
     def applyClause(self, q):
         return ValueQuerySet(self.querySet.filter(q).distinct())
@@ -2002,8 +2054,11 @@ class InstanceQuerySet(ObjectQuerySet):
     def createObjectQuerySet(self, querySet):
         return InstanceQuerySet(querySet)
         
-    def excludeFrom(self, querySet):
-        return InstanceQuerySet(querySet.exclude(pk__in=self.querySet))
+    def excludeFrom(self, oqs):
+        if isinstance(oqs, InstanceQuerySet):
+            return InstanceQuerySet(oqs.querySet.exclude(pk__in=self.querySet))
+        else:
+            return ValueQuerySet(oqs.querySet.exclude(referenceValue__in=self.querySet))
 
     # Return a Q expression that returns all of the instances in this query set.
     def instanceQ(self):
