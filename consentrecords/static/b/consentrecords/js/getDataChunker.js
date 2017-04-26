@@ -8,14 +8,15 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype._loadingMessage = null;
 	GetDataChunker.prototype._isSpinning = null;
 	GetDataChunker.prototype._start = 0;
-	GetDataChunker.prototype._inGetData = false;
+	GetDataChunker.prototype._searchCount = 0;
+	GetDataChunker.prototype._curSearchID = 0;
 	GetDataChunker.prototype._onFoundInstances = null;
 	GetDataChunker.prototype._onDoneSearch = null;
 	GetDataChunker.prototype._check = null;
 	
 	GetDataChunker.prototype.invalidatePendingData = function()
 	{
-		this._inGetData = false;
+		this._curSearchID = 0;
 	}
 	
 	GetDataChunker.prototype._clearScrollCheck = function()
@@ -64,7 +65,7 @@ var GetDataChunker = (function() {
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
 			else
-				this._inGetData = false;
+				this.invalidatePendingData();
 		}
 	}
 	
@@ -94,6 +95,10 @@ var GetDataChunker = (function() {
 			throw ("path is not specified to GetDataChunker._continue");
 		
 		this.showLoadingMessage();
+		
+		this._searchCount += 1;
+		var curSearchCount = this._searchCount;
+		this._curSearchID = this._searchCount;
 
 		this._dataGetter()({path: this.path, 
 					start: this._start,
@@ -101,18 +106,17 @@ var GetDataChunker = (function() {
 					fields: this.fields})
 			.then(function(instances) 
 						{ 
-							/* this.inGetData is set to false if the scrollCheck is cleared, which occurs when
+							/* this._curSearchID is set to 0 if the scrollCheck is cleared, which occurs when
 								this is destroyed. If it is destroyed, there may be an asynchronous call hanging out,
 								which is handled here.
 							 */
-							if (_this._inGetData)
+							if (_this._curSearchID == curSearchCount)
 							{
 								if (_this._onFoundInstances(instances, startVal))
 									_this._restart(instances, startVal);
 							}
 						},
 					cr.asyncFail);
-		this._inGetData = true;
 	}
 	
 	GetDataChunker.prototype._setScrollCheck = function(startVal)
@@ -177,7 +181,7 @@ var GetDataChunker = (function() {
 		    a short gap for the user to type. In that gap, there is no path and 
 		    we shouldn't continue.
 		 */
-		if (this._loadingMessage != null && this.path && !this._inGetData)
+		if (this._loadingMessage != null && this.path && this._curSearchID == 0)
 		{
 			if (!this.isOverflowingY(this._loadingMessage.node()))
 				this._continue(startVal);
@@ -212,7 +216,7 @@ var GetDataChunker = (function() {
 	GetDataChunker.prototype.hasShortResults = function()
 	{
 		return this.buttons().size() < this._increment &&
-			   !this._inGetData &&
+			   this._curSearchID == 0 &&
 			   !this._isSpinning;
 	}
 	
@@ -233,7 +237,7 @@ var GetDataChunker = (function() {
 		this._isSpinning = false;
 		this.path = null;
 		this._start = 0;
-		this._inGetData = false;
+		this._curSearchID = 0;
 		this._onFoundInstances = onFoundInstances;
 		this._onDoneSearch = onDoneSearch;
 		this._check = null;
@@ -241,7 +245,7 @@ var GetDataChunker = (function() {
 		var _this = this;
 		$(this._containerNode).on("remove", function()
 			{
-				_this._inGetData = false;
+				_this.invalidatePendingData();
 			});
 	}
 	

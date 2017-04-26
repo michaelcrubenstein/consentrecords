@@ -1,5 +1,187 @@
 term
     name: access record
+term
+    name: access request
+term
+    name: Address
+term
+    name: argument
+term
+    name: Birthday
+term
+    name: boolean
+term
+    name: can be asked about experience
+term
+    name: City
+term
+    name: Color
+term
+    name: Comment
+term
+    name: Comment Prompt
+term
+    name: Comment Request
+term
+    name: Comments
+term
+    name: configuration
+term
+    name: Consent Form
+term
+    name: Consent Record
+term
+    name: data type
+term
+    name: default access
+term
+    name: descriptor type
+term
+    name: Disqualifying Tag
+term
+    name: Domain
+term
+    name: email
+term
+    name: Employee
+term
+    name: Employees
+term
+    name: End
+term
+    name: End Time
+term
+    name: Enrollment
+term
+    name: Enrollments
+term
+    name: enumerator
+term
+    name: Experience
+term
+    name: Experience Prompt
+term
+    name: Experiences
+term
+    name: field
+term
+    name: first name
+term
+    name: group
+term
+    name: Inquiries
+term
+    name: Inquiry
+term
+    name: Inquiry Access Group
+term
+    name: is fresh
+term
+    name: language
+term
+    name: last name
+term
+    name: max capacity
+term
+    name: Maximum Age
+term
+    name: Maximum Grade
+term
+    name: Minimum Age
+term
+    name: Minimum Grade
+term
+    name: More Experience
+term
+    name: name
+term
+    name: notification
+term
+    name: object add rule
+term
+    name: of kind
+term
+    name: Offering
+term
+    name: Offering Label
+term
+    name: Offerings
+term
+    name: Organization
+term
+    name: Organization Label
+term
+    name: Path
+term
+    name: Period
+term
+    name: pick object path
+term
+    name: primary administrator
+term
+    name: privilege
+term
+    name: public access
+term
+    name: Registration Deadline
+term
+    name: Service
+term
+    name: Service Domain
+term
+    name: Session
+term
+    name: Sessions
+term
+    name: Site
+term
+    name: Site Label
+term
+    name: Sites
+term
+    name: special access
+term
+    name: Stage
+term
+    name: Start
+term
+    name: Start Time
+term
+    name: State
+term
+    name: Street
+term
+    name: system access
+term
+    name: term
+term
+    name: text
+term
+    name: Timeframe
+term
+    name: translation
+term
+    name: user
+term
+    name: User Entered Offering
+term
+    name: User Entered Organization
+term
+    name: User Entered Service
+term
+    name: User Entered Site
+term
+    name: userID
+term
+    name: users
+term
+    name: Web Site
+term
+    name: Weekday
+term
+    name: Zip Code
+term
+    name: access record
     configuration
         name: Bootstrap
         field
@@ -832,6 +1014,7 @@ term
             max capacity: multiple values
             object add rule: pick one
             of kind: Service
+    of kind: Service
 term
     name: Service Domain
     configuration
@@ -1106,6 +1289,13 @@ term
             object add rule: pick one
             of kind: enumerator
             pick object path: term[name=default access]/enumerator
+        field
+            name: of kind
+            data type: object
+            max capacity: unique value
+            object add rule: pick one
+            of kind: term
+    of kind: term
 term
     name: text
 term

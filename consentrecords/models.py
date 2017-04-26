@@ -16,6 +16,17 @@ import itertools
 
 from custom_user.models import AuthUser
 
+# Returns a list containing the first argument. If t is None, then it is an empty list.
+def forceToList(t):
+    return [] if t is None else \
+         t if isinstance(t, list) else \
+         list(t) if isinstance(t, map) else \
+         [t]
+
+# Returns a list that concatenates the two arguments, converting each to a list as necessary.
+def combineTerms(t1, t2):
+    return forceToList(t1) + forceToList(t2)
+    
 class Transaction(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False)
@@ -1661,7 +1672,7 @@ class ObjectQuerySet:
         if len(paramClauses) == 1:
             return self.filterClause(paramClauses[0], userInfo)
         else: 
-            return reduce(lambda q1, q2: q1 | q2, \
+            return reduce(lambda q1, q2: ((q1[0] | q2[0]), combineTerms(q1[1], q2[1])), \
                           map(lambda p: self.filterClause(p, userInfo), paramClauses))
 
     def getValueFilter(self, field, symbol, testValue):
@@ -1731,11 +1742,11 @@ class ObjectQuerySet:
                 else:
                     raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
             else:
-                q = self.clause(params, userInfo)
+                q, i = self.clause(params, userInfo)
             
             # Need to add distinct after the tests to prevent duplicates if there is
             # more than one value of the instance that matches.
-            return self.applyClause(q), path[2:]
+            return self.applyClause(q, i), path[2:]
         elif path[0] == '>' or path[0] == '/':
             i = terms[path[1]]
             if len(path) == 2:
@@ -1743,20 +1754,20 @@ class ObjectQuerySet:
                                          field=i,
                                          deleteTransaction__isnull=True)\
                                  .order_by('instance', 'position')
-                return ValueQuerySet(f), []
+                return wrapValueQuerySet(i, f), []
             elif len(path) == 4 and path[2] == '/' and terms.isUUID(path[3]):
                 f = Value.objects.filter(instance__in=self.applyFindFilter(userInfo),
                                          field=i,
                                          deleteTransaction__isnull=True,
                                          referenceValue_id=path[3])\
                                  .order_by('instance', 'position')
-                return ValueQuerySet(f), []
+                return wrapValueQuerySet(i, f), []
             else:
                 f = Instance.objects.filter(referenceValues__instance__in=self.applyFindFilter(userInfo),
                                             referenceValues__field=i,
                                             referenceValues__deleteTransaction__isnull=True)\
                                     .order_by('parent', 'parentValue__position')
-                return InstanceQuerySet(f), path[2:]       
+                return wrapInstanceQuerySet(i, f), path[2:]       
         elif path[0] == '::':
             function = path[1]
             if function == 'reference':
@@ -1811,7 +1822,7 @@ class ObjectQuerySet:
             t = map(terms.__getitem__, path[0])
             f = Instance.objects.filter(typeID__in=t,
                                         deleteTransaction__isnull=True)
-            return InstanceQuerySet(f), path[1:]
+            return wrapInstanceQuerySet(t, f), path[1:]
         elif terms.isUUID(path[0]):
             if self.querySet:
                 return InstanceQuerySet(self.querySet.filter(pk=path[0], deleteTransaction__isnull=True)), path[1:]
@@ -1820,14 +1831,13 @@ class ObjectQuerySet:
         else:   # Path[0] is the name of a type.
             i = terms[path[0]]
             f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
-            return InstanceQuerySet(f), path[1:]
+            return wrapInstanceQuerySet(i, f), path[1:]
 
     def parse(self, a, userInfo):
         qs = self
         path = a
         while len(path) > 0:
             qs, path = qs.refineResults(path, userInfo)
-            firstRefine = False
         return qs
     
     def getSubValueQuerySet(vqs, userInfo):
@@ -1894,13 +1904,15 @@ class ValueQuerySet(ObjectQuerySet):
             raise ValueError("referenceValues is an ObjectQuerySet")
             
         if isinstance(fieldNames, list):
-            return Q(field__in=map(terms.__getitem__, fieldNames),
+            t = list(map(terms.__getitem__, fieldNames))
+            return Q(field__in=t,
                      deleteTransaction__isnull=True,
-                     referenceValue__in=referenceValues)
+                     referenceValue__in=referenceValues), t
         else:
-            return Q(field=terms[fieldNames],
+            t = terms[fieldNames]
+            return Q(field=t,
                      deleteTransaction__isnull=True,
-                     referenceValue__in=referenceValues)
+                     referenceValue__in=referenceValues), t
 
     # Return a Q clause according to the specified params.
     # If the parameter list is a single item:
@@ -1951,8 +1963,8 @@ class ValueQuerySet(ObjectQuerySet):
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
-    def applyClause(self, q):
-        return ValueQuerySet(self.querySet.filter(q).distinct())
+    def applyClause(self, q, i):
+        return wrapValueQuerySet(i, self.querySet.filter(q).distinct())
         
     def applyFindFilter(self, userInfo):
         qs = self.querySet
@@ -2022,6 +2034,24 @@ class ValueQuerySet(ObjectQuerySet):
 
                 uuObject.deepDelete(transactionState)
 
+### ReadValueQuerySet is an ValueQuerySet where all users have read access.
+class ReadValueQuerySet(ValueQuerySet):
+
+    def __init__(self, querySet=None):
+        super(ReadValueQuerySet, self).__init__(querySet)
+    
+    ### Returns the querySet associated with self.    
+    def applyFindFilter(self, userInfo):
+        return self.querySet
+
+    ### Returns the querySet associated with self.    
+    def applyReadFilter(self, userInfo):
+        return self.querySet
+
+    # return an InstanceQuerySet derived from the contents of self.
+    def filterToInstances(self):
+        return ReadInstanceQuerySet(Instance.objects.filter(referenceValues__in=self.querySet))
+        
 class InstanceQuerySet(ObjectQuerySet):
 
     # Extended the specified querySet to include related Instance data to be sent back to the client tier.
@@ -2063,23 +2093,28 @@ class InstanceQuerySet(ObjectQuerySet):
     # Return a Q expression that returns all of the instances in this query set.
     def instanceQ(self):
         return Q(pk__in=self.querySet)
-        
+    
+    ### Returns an instance queryset that excludes instances from the current query set
+    ### That contain the specified field.    
     def excludeByField(self, field):
-        return InstanceQuerySet(self.querySet.exclude(value__field=field, value__deleteTransaction__isnull=True))
+        return type(self)(field,
+                          self.querySet.exclude(value__field=field, 
+                                                value__deleteTransaction__isnull=True))
 
-    # Return an InstanceQuerySet that excludes instances that have a field that matches the testValue.
+    ### Returns an instance queryset that excludes instances from the current query set
+    ### that have a field that matches the testValue.    
     def excludeByValue(self, field, symbol, testValue):
         if isinstance(testValue, list):
             f = self.querySet
             for test in testValue:
                 vFilter = self.getValueFilter(field, symbol, test)
                 f = f.exclude(value__in=vFilter)
-            return InstanceQuerySet(f)
+            return type(self)(f)
         else:
             vFilter = self.getValueFilter(field, symbol, testValue)
-            return InstanceQuerySet(self.querySet.exclude(value__in=vFilter))          
+            return type(self)(self.querySet.exclude(value__in=vFilter))          
 
-    # return an InstanceQuerySet derived from the contents of self.
+    # Returns an InstanceQuerySet derived from the contents of self.
     def filterToInstances(self):
         return self
     
@@ -2090,16 +2125,18 @@ class InstanceQuerySet(ObjectQuerySet):
             raise ValueError("referenceValues is an ObjectQuerySet")
             
         if isinstance(fieldNames, list):
-            return Q(value__field__in=map(terms.__getitem__, fieldNames),
+            t = map(terms.__getitem__, fieldNames)
+            return Q(value__field__in=t,
                      value__deleteTransaction__isnull=True,
-                     value__referenceValue__in=referenceValues)
+                     value__referenceValue__in=referenceValues), t
         else:
-            return Q(value__field=terms[fieldNames],
+            t = terms[fieldNames]
+            return Q(value__field=t,
                      value__deleteTransaction__isnull=True,
-                     value__referenceValue__in=referenceValues)
+                     value__referenceValue__in=referenceValues), t
 
-    def applyClause(self, q):
-        return InstanceQuerySet(self.querySet.filter(q).distinct())
+    def applyClause(self, q, i):
+        return wrapInstanceQuerySet(i, self.querySet.filter(q).distinct())
         
     def getSimpleQClause(self, field, symbol, testValue):
         vFilter = self.getValueFilter(field, symbol, testValue)
@@ -2130,13 +2167,14 @@ class InstanceQuerySet(ObjectQuerySet):
     def getReferenceValues(self, params, userInfo):
     #     print('getReferenceValues: %s'%params)
         if len(params) > 2 and params[1] == '>':
-            subF = InstanceQuerySet(Instance.objects.filter(self.clauseByReferenceValues(params[2], self.getReferenceValues(params[2:], userInfo))))
+            q, i = self.clauseByReferenceValues(params[2], self.getReferenceValues(params[2:], userInfo))
+            subF = wrapInstanceQuerySet(i, Instance.objects.filter(q))
         else:
             # Replace the type name with a * for any item, because params[0] contains a field name, not a typeID.
             subF = InstanceQuerySet().parse(['*'] + params[1:], userInfo)
         return userInfo.findFilter(subF)
 
-    # Return a Q clause according to the specified params.
+    # Returns a duple of a Q clause and term(s) according to the specified params.
     # If the parameter list is a single item:
     #     If there is a list, then the object must contain a value with the specified field type.
     #     If there is a question mark, then this is a no-op.
@@ -2156,21 +2194,23 @@ class InstanceQuerySet(ObjectQuerySet):
     
         if len(params) == 1:
             if isinstance(params[0], list):
-                return Q(value__field__in=map(terms.__getitem__, params[0]), 
-                                        value__deleteTransaction__isnull=True)
+                t = list(map(terms.__getitem__, params[0]))
+                return Q(value__field__in=t, 
+                         value__deleteTransaction__isnull=True), t
             elif params[0] == '?':
-                return Q(value__deleteTransaction__isnull=True) #degenerate case
+                return Q(value__deleteTransaction__isnull=True), None #degenerate case
             else:
-                return Q(value__field=terms[params[0]], value__deleteTransaction__isnull=True)
+                t = terms[params[0]]
+                return Q(value__field=t, value__deleteTransaction__isnull=True), t
         elif len(params) > 2 and params[1]=='>':
-            return Q(self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo)))
+            return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
             parsed = InstanceQuerySet().parse(['*'] + params[1:3], userInfo)
             subF = InstanceQuerySet(userInfo.findFilter(parsed))
             if len(params) > 3:
                 parsed = subF.parse(params[3:], userInfo)
                 subF = parsed.filterToInstances()
-            return Q(self.clauseByReferenceValues(params[0], subF.querySet))
+            return self.clauseByReferenceValues(params[0], subF.querySet)
         elif len(params) == 3:
             i = None if params[0] == '?' else \
                 map(terms.__getitem__, params[0]) if isinstance(params[0], list) else \
@@ -2180,9 +2220,9 @@ class InstanceQuerySet(ObjectQuerySet):
             # according to the specified symbol to a list of fields or a single field.
             if isinstance(i, map):
                 return reduce(lambda q1, q2: q1 | q2, \
-                                    map(lambda field: self.getQClause(field, params[1], params[2]), i))
+                                    map(lambda field: self.getQClause(field, params[1], params[2]), i)), i
             else:
-                return self.getQClause(i, symbol=params[1], testValue=params[2])
+                return self.getQClause(i, symbol=params[1], testValue=params[2]), i
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
@@ -2238,3 +2278,42 @@ class InstanceQuerySet(ObjectQuerySet):
                     Instance.updateDescriptions([v.instance], nameLists)
 
             uuObject.deepDelete(transactionState)
+
+### ReadInstanceQuerySet is an InstanceQuerySet where all users have read access.
+class ReadInstanceQuerySet(InstanceQuerySet):
+
+    def __init__(self, querySet=None):
+        super(ReadInstanceQuerySet, self).__init__(querySet)
+    
+    ### Returns the querySet associated with self.    
+    def applyFindFilter(self, userInfo):
+        return self.querySet
+
+    ### Returns the querySet associated with self.    
+    def applyReadFilter(self, userInfo):
+        return self.querySet
+
+### Returns either a ReadValueQuerySet or a ValueQuerySet depending on whether
+### or not the objects of the term need to be secured.
+def wrapValueQuerySet(t, qs=None):
+    if isinstance(t, list) or isinstance(t, map):
+        isGlobal = reduce(lambda a, b: a and b,
+                          map(lambda i: i.getSubInstance('of kind') != None, t),
+                          True)
+    else:
+        isGlobal = t != None and t.getSubInstance('of kind') != None
+        
+    return ReadValueQuerySet(qs) if isGlobal else ValueQuerySet(qs)
+    
+### Returns either a ReadInstanceQuerySet or a InstanceQuerySet depending on whether
+### or not the objects of the term need to be secured.
+def wrapInstanceQuerySet(t, qs=None):
+    if isinstance(t, list) or isinstance(t, map):
+        isGlobal = reduce(lambda a, b: a and b,
+                          map(lambda i: i.getSubInstance('of kind') != None, t),
+                          True)
+    else:
+        isGlobal = t != None and t.getSubInstance('of kind') != None
+        
+    return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
+    
