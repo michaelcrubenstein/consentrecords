@@ -1607,30 +1607,29 @@ class UserInfo:
                 minPrivilege=minPrivilegeFilter[0].referenceValue
         
             if not self.instance:
-                return minPrivilege
-        
-            if Value.objects.filter(instance=source_id,
+                self._privileges[source_id] = minPrivilege
+            elif Value.objects.filter(instance=source_id,
                                     field=terms.primaryAdministrator, 
                                     deleteTransaction__isnull=True,
                                     referenceValue=self.instance).exists():
-                return terms.administerPrivilegeEnum
+                self._privileges[source_id] = terms.administerPrivilegeEnum
+            else:
+                # create a query set of all of the access records that contain this instance.        
+                f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
+                    .filter(Q(value__referenceValue=self.instance,
+                              value__deleteTransaction__isnull=True)|
+                            Q(value__deleteTransaction__isnull=True,
+                              value__referenceValue__value__referenceValue=self.instance,
+                              value__referenceValue__value__deleteTransaction__isnull=True))
         
-            # create a query set of all of the access records that contain this instance.        
-            f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
-                .filter(Q(value__referenceValue=self.instance,
-                          value__deleteTransaction__isnull=True)|
-                        Q(value__deleteTransaction__isnull=True,
-                          value__referenceValue__value__referenceValue=self.instance,
-                          value__referenceValue__value__deleteTransaction__isnull=True))
-        
-            g = Value.objects.filter(instance__in=f, field=terms.privilege, 
-                    deleteTransaction__isnull=True)\
-                    .select_related('referenceValue__description')
+                g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                        deleteTransaction__isnull=True)\
+                        .select_related('referenceValue__description')
                 
-            # map the access records to their corresponding privilege values.              
-            p = map(lambda i: i.referenceValue, g)
+                # map the access records to their corresponding privilege values.              
+                p = map(lambda i: i.referenceValue, g)
         
-            self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
+                self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
         
         return self._privileges[source_id]
             
