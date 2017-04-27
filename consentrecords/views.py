@@ -438,7 +438,7 @@ def acceptFollower(request, userPath=None):
                     except Value.DoesNotExist:
                         ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
                             {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
+                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, userInfo, transactionState)
     
                     # Remove any corresponding access requests.
                     vs = user.value_set.filter(field=terms.accessRequest,
@@ -455,7 +455,7 @@ def acceptFollower(request, userPath=None):
                             }
                         item, v = instancecreator.create(terms['notification'], 
                             follower, terms['notification'], -1, 
-                            propertyList, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+                            propertyList, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
 
                     data = newValue.getReferenceData(userInfo, language)
                     results = {'object': data} 
@@ -707,7 +707,7 @@ def requestExperienceComment(request):
                                     }
                                 item, v = instancecreator.create(terms['Comment'], 
                                     containerObject, terms['Comment'], -1, 
-                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
+                                    propertyList, nameLists, userInfo, transactionState, instancecreator.checkCreateCommentAccess)
         
                             else:
                                 propertyList = {\
@@ -720,7 +720,7 @@ def requestExperienceComment(request):
                                     }
                                 item, commentsValue = instancecreator.create(commentsTerm, 
                                     experience, commentsTerm, -1, 
-                                    propertyList, nameLists, transactionState, instancecreator.checkCreateCommentAccess)
+                                    propertyList, nameLists, userInfo, transactionState, instancecreator.checkCreateCommentAccess)
                                 containerObject = experience.getSubInstance(commentsTerm)
                                 v = containerObject.getSubValue(terms['Comment'])
                                 item = v.referenceValue
@@ -757,7 +757,7 @@ def requestExperienceComment(request):
                                 }
                             notification, notificationValue = instancecreator.create(terms['notification'], 
                                 recipient, terms['notification'], -1, 
-                                notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+                                notificationData, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
 
                             if commentsValue:
                                 typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
@@ -842,7 +842,7 @@ class api:
                     containerObject = None
 
                 nameLists = NameList()
-                item, newValue = instancecreator.create(ofKindObject, containerObject, field, index, propertyList, nameLists, transactionState)
+                item, newValue = instancecreator.create(ofKindObject, containerObject, field, index, propertyList, nameLists, userInfo, transactionState)
     
                 if newValue and newValue.isDescriptor:
                     Instance.updateDescriptions([item], nameLists)
@@ -896,7 +896,7 @@ class api:
                 }
                 notification, notificationValue = instancecreator.create(terms['notification'], 
                     recipient, terms['notification'], -1, 
-                    notificationData, nameLists, transactionState, instancecreator.checkCreateNotificationAccess)
+                    notificationData, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
 
     def updateValues(user, data, hostURL):
         try:
@@ -910,11 +910,12 @@ class api:
             
             with transaction.atomic():
                 transactionState = TransactionState(user)
+                userInfo = UserInfo(user)
                 for c in commands:
                     instanceID = None
                     if "id" in c:
                         oldValue = Value.objects.get(pk=c["id"],deleteTransaction__isnull=True)
-                        oldValue.checkWriteAccess(user)
+                        oldValue.checkWriteAccess(userInfo)
 
                         container = oldValue.instance
 
@@ -924,8 +925,8 @@ class api:
                             descriptionQueue.append(container)
                         
                         if oldValue.hasNewValue(c):
-                            container.checkWriteValueAccess(user, oldValue.field, c["instanceID"] if "instanceID" in c else None)
-                            item = oldValue.updateValue(c, transactionState)
+                            container.checkWriteValueAccess(userInfo, oldValue.field, c["instanceID"] if "instanceID" in c else None)
+                            item = oldValue.updateValue(c, userInfo, transactionState)
                             instanceID = item.referenceValue_id
                         else:
                             oldValue.deepDelete(transactionState)
@@ -949,17 +950,17 @@ class api:
                         api.checkForPath(c, user, "instance", "instanceID")
                         instanceID = c["instanceID"] if "instanceID" in c else None
 
-                        container.checkWriteValueAccess(user, field, instanceID)
+                        container.checkWriteValueAccess(userInfo, field, instanceID)
 
                         if "ofKindID" in c:
                             ofKindObject = Instance.objects.get(pk=c["ofKindID"],deleteTransaction__isnull=True)
-                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, transactionState)
+                            newInstance, item = instancecreator.create(ofKindObject, container, field, newIndex, c, nameLists, userInfo, transactionState)
                             instanceID = newInstance.id
                         else:
-                            item = container.addValue(field, c, newIndex, transactionState)
+                            item = container.addValue(field, c, newIndex, userInfo, transactionState)
                             instanceID = item.referenceValue_id
                             # Handle special cases that should occur when adding a new value.
-                            api.valueAdded(item, nameLists, UserInfo(user), transactionState, hostURL)
+                            api.valueAdded(item, nameLists, userInfo, transactionState, hostURL)
 
                         if item.isDescriptor:
                             descriptionQueue.append(container)
@@ -1042,16 +1043,16 @@ class api:
                 raise ValueError("path was not specified in delete")
 
             with transaction.atomic():
+                transactionState = TransactionState(user)
+                userInfo=UserInfo(user)
                 if path.startswith("value/"):
                     valueID = path[6:6+32]
                     ValueQuerySet(Value.objects.filter(pk=valueID, deleteTransaction__isnull=True))\
-                        .deleteObjects(user, NameList(), TransactionState(user))
+                        .deleteObjects(user, NameList(), userInfo, transactionState)
                 else:
-                    transactionState = TransactionState(user)
                     descriptionCache = []
                     nameLists = NameList()
-                    userInfo=UserInfo(user)
-                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, transactionState)
+                    pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.administerFilter).deleteObjects(user, nameLists, userInfo, transactionState)
  
             results = {}
         except Exception as e:
@@ -1134,7 +1135,7 @@ def submitNewUser(request):
         # An optional set of properties associated with the object.
         propertyString = request.POST.get('properties', "")
         propertyList = json.loads(propertyString)
-    
+        
         with transaction.atomic():
             results = userviews.newUserResults(request)
             userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
@@ -1156,7 +1157,7 @@ def updateUsername(request):
             userInstance = Instance.getUserInstance(request.user)
             transactionState = TransactionState(request.user)
             v = userInstance.getSubValue(terms.email)
-            v.updateValue({"text": request.user.email}, transactionState)
+            v.updateValue({"text": request.user.email}, UserInfo(request.user), transactionState)
             nameLists = NameList()
             userInstance.cacheDescription(nameLists);
     except Exception as e:

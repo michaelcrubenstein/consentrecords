@@ -8,7 +8,7 @@ import uuid
 from consentrecords.models import *
 from consentrecords import pathparser
 
-def _addElementData(parent, data, fieldData, nameLists, transactionState, check):
+def _addElementData(parent, data, fieldData, nameLists, userInfo, transactionState, check):
     # If the data is not a list, then treat it as a list of one item.
     if not isinstance(data, list):
         data = [data]
@@ -16,7 +16,6 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState, check)
     i = 0
     ids = []
     field = Instance.objects.get(pk=fieldData["nameID"])
-    userInfo=UserInfo(transactionState.user)
     for d in data:
         if not isinstance(d, dict):
             raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
@@ -50,47 +49,47 @@ def _addElementData(parent, data, fieldData, nameLists, transactionState, check)
                     raise RuntimeError("%s field of type %s not configured with an object kind" % (field, parent.typeID))
                 elif "cells" in d:
                     ofKindObject = Instance.objects.get(pk=fieldData["ofKindID"])
-                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, transactionState, check)
+                    create(ofKindObject, parent, field, -1, d["cells"], nameLists, userInfo, transactionState, check)
                 else:
                     raise RuntimeError("%s field of type %s missing data: %s" % (field, parent.typeID, str(d)))
         else:
-            parent.addValue(field, d, i, transactionState)
+            parent.addValue(field, d, i, userInfo, transactionState)
         i += 1
 
 ### Ensure that the current user has permission to perform this operation.
-def checkCreateAccess(typeInstance, parent, parentField, transactionState):
+def checkCreateAccess(typeInstance, parent, parentField, userInfo):
     if typeInstance == terms.user:
         return
     elif parent:
-        parent.checkWriteAccess(transactionState.user, parentField)
+        parent.checkWriteAccess(userInfo, parentField)
     else:
-        if not transactionState.user.is_staff:
+        if not userInfo.is_administrator:
             raise RuntimeError("write permission failed")
 
 ### Ensure that the current user has permission to perform this operation.
-def checkCreateCommentAccess(typeInstance, parent, parentField, transactionState):
+def checkCreateCommentAccess(typeInstance, parent, parentField, userInfo):
     if typeInstance in [terms['Comments'], terms['Comment'], terms['Comment Request']]:
         return
     elif parentField == terms['Comments']:
         return
     elif parent:
-        parent.checkWriteAccess(transactionState.user, parentField)
+        parent.checkWriteAccess(userInfo, parentField)
     else:
-        if not transactionState.user.is_staff:
+        if not userInfo.is_administrator:
             raise RuntimeError("write permission failed")
 
 ### Ensure that the current user has permission to perform this operation.
-def checkCreateNotificationAccess(typeInstance, parent, parentField, transactionState):
+def checkCreateNotificationAccess(typeInstance, parent, parentField, userInfo):
     if typeInstance in [terms['notification']] and parentField == terms['notification'] and \
-        parent.getPrivilege(UserInfo(transactionState.user)) is not None:
+        parent.getPrivilege(userInfo) is not None:
         return
     elif parent:
-        parent.checkWriteAccess(transactionState.user, parentField)
+        parent.checkWriteAccess(userInfo, parentField)
     else:
-        if not transactionState.user.is_staff:
+        if not userInfo.is_administrator:
             raise RuntimeError("write permission failed")
 
-def create(typeInstance, parent, parentField, position, propertyList, nameLists, transactionState, check=checkCreateAccess):
+def create(typeInstance, parent, parentField, position, propertyList, nameLists, userInfo, transactionState, check=checkCreateAccess):
 #     logger = logging.getLogger(__name__)
 #     logger.error("typeInstance: %s" % typeInstance._description)
 #     logger.error("propertyList: %s" % str(propertyList))
@@ -105,7 +104,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
             raise ValueError("instances can not be created in parents with a pick one field")
     
-    check(typeInstance, parent, parentField, transactionState)
+    check(typeInstance, parent, parentField, userInfo)
                 
     item = typeInstance.createEmptyInstance(parent, transactionState)
 
@@ -120,6 +119,9 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
         if isinstance(userID, uuid.UUID):
             userID = userID.hex    # SQLite
         item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
+        # Set up the userInfo explicitly if it isn't already set up.
+        if not userInfo.instance:
+            userInfo.instance = item
         
     if parent:
         if position < 0:
@@ -160,12 +162,12 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
                 for key in filter(lambda key: terms[key] in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, userInfo, transactionState, check)
                 
                 for key in filter(lambda key: terms[key] not in terms.securityFields, propertyList):
                     fieldData = configuration.getFieldDataByName(key) 
                     if fieldData:
-                        _addElementData(item, propertyList[key], fieldData, nameLists, transactionState, check)
+                        _addElementData(item, propertyList[key], fieldData, nameLists, userInfo, transactionState, check)
         else:
             raise ValueError('initial data is not a dictionary: %s' % str(propertyList))
     
@@ -173,7 +175,7 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     return (item, newValue)
                 
 # itemValues is a dictionary whose keys are the values to be found.
-def createMissingInstances(parent, field, type, descriptor, itemValues, transactionState):
+def createMissingInstances(parent, field, type, descriptor, itemValues, userInfo, transactionState):
     items = {}
 
     # See if there is an field of parent which has a value that points to a name which has a value in items.
@@ -196,22 +198,22 @@ def createMissingInstances(parent, field, type, descriptor, itemValues, transact
     
     for s in itemValues:
         if not s in items:
-            items[s] = create(type, parent, field, position, [], nameLists, transactionState)[0]
+            items[s] = create(type, parent, field, position, [], nameLists, userInfo, transactionState)[0]
             position += 1
-            items[s].addValue(descriptor, {"text": s}, 0, transactionState)
+            items[s].addValue(descriptor, {"text": s}, 0, userInfo, transactionState)
     
     return items
         
-def addUniqueChild(parent, field, typeID, propertyList, nameList, transactionState):
+def addUniqueChild(parent, field, typeID, propertyList, nameList, userInfo, transactionState):
     children = parent.value_set.filter(field=field,
                                     deleteTransaction__isnull=True)
     if len(children):
         return children[0].referenceValue
     else:
-        item, newValue = create(typeID, parent, field, -1, propertyList, nameList, transactionState)
+        item, newValue = create(typeID, parent, field, -1, propertyList, nameList, userInfo, transactionState)
         return item
 
-def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode, nameList, transactionState):
+def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode, nameList, userInfo, transactionState):
     children = parent.getChildrenByName(field, nameField, text)
     if len(children):
         return children[0].referenceValue
@@ -222,10 +224,10 @@ def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode,
             propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
         else:
             propertyList = {nameField.id: [{'text': text}]}
-        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, userInfo, transactionState)
         return child
 
-def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenceValue, nameList, transactionState):
+def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenceValue, nameList, userInfo, transactionState):
     children = parent.getChildrenByReferenceName(field, nameField, referenceValue)
     if len(children):
         return children[0].referenceValue
@@ -233,6 +235,6 @@ def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenc
         if fieldData['nameID'] != nameField.id:
             raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
         propertyList = {nameField.id: [{'instanceID': referenceValue.id}]}
-        child, newValue = create(type, parent, field, -1, propertyList, nameList, transactionState)
+        child, newValue = create(type, parent, field, -1, propertyList, nameList, userInfo, transactionState)
         return child
 

@@ -14,7 +14,7 @@ from consentrecords import instancecreator
 
 _bootstrapName = 'Bootstrap'
     
-def _addEnumeratorTranslations(container, enumerationNames, transactionState):
+def _addEnumeratorTranslations(container, enumerationNames, userInfo, transactionState):
     enumeratorInstance = terms.enumerator
     
     nameLists = NameList()
@@ -26,10 +26,10 @@ def _addEnumeratorTranslations(container, enumerationNames, transactionState):
         except Value.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("Adding enumerator translation: %s to container %s" % (name, str(container)))
-            item, value1 = instancecreator.create(enumeratorInstance, container, terms.enumerator, -1, None, nameLists, transactionState)
+            item, value1 = instancecreator.create(enumeratorInstance, container, terms.enumerator, -1, None, nameLists, userInfo, transactionState)
             item.addTranslationValue(terms.translation, {"text": name, "languageCode": "en"}, 0, transactionState)
 
-def _addEnumerators(container, enumerationNames, transactionState):
+def _addEnumerators(container, enumerationNames, userInfo, transactionState):
     nameLists = NameList()
     for name in enumerationNames:
         try:
@@ -39,57 +39,57 @@ def _addEnumerators(container, enumerationNames, transactionState):
         except Value.DoesNotExist:
             logger = logging.getLogger(__name__)
             logger.error("Adding enumerator: %s to container %s" % (name, str(container)))
-            item, newValue = instancecreator.create(terms.enumerator, container, terms.enumerator, -1, None, nameLists, transactionState)
+            item, newValue = instancecreator.create(terms.enumerator, container, terms.enumerator, -1, None, nameLists, userInfo, transactionState)
             item.addStringValue(terms.name, name, 0, transactionState)
             item.cacheDescription(nameLists)
 
-def createConfigurations(container, itemValues, transactionState):
-    return instancecreator.createMissingInstances(container, terms.configuration, terms.configuration, terms.name, itemValues, transactionState)
+def createConfigurations(container, itemValues, userInfo, transactionState):
+    return instancecreator.createMissingInstances(container, terms.configuration, terms.configuration, terms.name, itemValues, userInfo, transactionState)
     
-def createFields(container, itemValues, transactionState):
-    return instancecreator.createMissingInstances(container, terms.field, terms.field, terms.name, itemValues, transactionState)
+def createFields(container, itemValues, userInfo, transactionState):
+    return instancecreator.createMissingInstances(container, terms.field, terms.field, terms.name, itemValues, userInfo, transactionState)
 
-def createDataTypes(transactionState):
-    _addEnumerators(terms.dataType, [TermNames.objectEnum, TermNames.stringEnum, TermNames.translationEnum, TermNames.datestamp, TermNames.number, TermNames.datestampDayOptional, TermNames.email], transactionState)
+def createDataTypes(userInfo, transactionState):
+    _addEnumerators(terms.dataType, [TermNames.objectEnum, TermNames.stringEnum, TermNames.translationEnum, TermNames.datestamp, TermNames.number, TermNames.datestampDayOptional, TermNames.email], userInfo, transactionState)
     # TermNames.time, TermNames.url, TermNames.telephone
     
-def createAddObjectRules(transactionState):
-    _addEnumerators(terms.addObjectRule, [TermNames.pickObjectRule, TermNames.createObjectRule], transactionState)
+def createAddObjectRules(userInfo, transactionState):
+    _addEnumerators(terms.addObjectRule, [TermNames.pickObjectRule, TermNames.createObjectRule], userInfo, transactionState)
     
-def createMaxCapacities(transactionState):
-    _addEnumerators(terms.maxCapacity, [TermNames.uniqueValueEnum, TermNames.multipleValuesEnum], transactionState)
+def createMaxCapacities(userInfo, transactionState):
+    _addEnumerators(terms.maxCapacity, [TermNames.uniqueValueEnum, TermNames.multipleValuesEnum], userInfo, transactionState)
     
-def createDescriptorTypes(transactionState):
-    _addEnumerators(terms.descriptorType, [TermNames.textEnum, TermNames.firstTextEnum, TermNames.countEnum], transactionState)
+def createDescriptorTypes(userInfo, transactionState):
+    _addEnumerators(terms.descriptorType, [TermNames.textEnum, TermNames.firstTextEnum, TermNames.countEnum], userInfo, transactionState)
     
-def createBooleans(transactionState):
-    _addEnumeratorTranslations(terms.boolean, [TermNames.yes, TermNames.no], transactionState)
+def createBooleans(userInfo, transactionState):
+    _addEnumeratorTranslations(terms.boolean, [TermNames.yes, TermNames.no], userInfo, transactionState)
 
-def createDefaultAccesses(transactionState):
-    _addEnumerators(terms.defaultAccess, [TermNames.custom], transactionState)
+def createDefaultAccesses(userInfo, transactionState):
+    _addEnumerators(terms.defaultAccess, [TermNames.custom], userInfo, transactionState)
     
-def createSpecialAccesses(transactionState):
-    _addEnumerators(terms.specialAccess, [TermNames.custom], transactionState)
+def createSpecialAccesses(userInfo, transactionState):
+    _addEnumerators(terms.specialAccess, [TermNames.custom], userInfo, transactionState)
     
-def createPrivileges(transactionState):
+def createPrivileges(userInfo, transactionState):
     _addEnumerators(terms.privilege, 
                     [TermNames.findPrivilege, 
                      TermNames.readPrivilege, 
                      TermNames.registerPrivilege, 
                      TermNames.writePrivilege, 
                      TermNames.administerPrivilege], 
-                    transactionState)
+                    userInfo, transactionState)
     
-def createEnumeratorConfiguration(transactionState):
+def createEnumeratorConfiguration(userInfo, transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(terms.enumerator, configurationValues, transactionState)
+    configurations = createConfigurations(terms.enumerator, configurationValues, userInfo, transactionState)
     configObject = configurations[_bootstrapName]
     
     configObject.createMissingSubValue(terms.name, _bootstrapName, 0, transactionState)
 
     fieldValues = [terms.name, terms.translation]
     
-    fields = createFields(configObject, fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, userInfo, transactionState)
     p = fields[terms.name]
     p.createMissingSubValue(terms.dataType, terms.stringEnum, 0, transactionState)
     p.createMissingSubValue(terms.maxCapacity, terms.uniqueValueEnum, 0, transactionState)
@@ -100,32 +100,32 @@ def createEnumeratorConfiguration(transactionState):
     p.createMissingSubValue(terms.addObjectRule, terms.createObjectRuleEnum, 0, transactionState)
     p.createMissingSubValue(terms.descriptorType, terms.textEnum, 0, transactionState)
 
-def createBooleanConfiguration(transactionState):
+def createBooleanConfiguration(userInfo, transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(terms.boolean, configurationValues, transactionState)
+    configurations = createConfigurations(terms.boolean, configurationValues, userInfo, transactionState)
     configObject = configurations[_bootstrapName]
     
     configObject.createMissingSubValue(terms.name, _bootstrapName, 0, transactionState)
 
     fieldValues = [terms.name]
     
-    fields = createFields(configObject, fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, userInfo, transactionState)
 
     p = fields[terms.name]
     p.createMissingSubValue(terms.dataType, terms.translationEnum, 0, transactionState)
     p.createMissingSubValue(terms.descriptorType, terms.textEnum, 0, transactionState)
 
 # Create the configuration for the term term.
-def createUUNameConfiguration(transactionState):
+def createUUNameConfiguration(userInfo, transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(terms.term, configurationValues, transactionState)
+    configurations = createConfigurations(terms.term, configurationValues, userInfo, transactionState)
     configObject = configurations[_bootstrapName]
     
     configObject.createMissingSubValue(terms.name, _bootstrapName, 0, transactionState)
 
     fieldValues = [terms.name, terms.configuration, terms.enumerator, terms.defaultAccess]
 
-    fields = createFields(configObject, fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, userInfo, transactionState)
     
     p = fields[terms.name]
     p.createMissingSubValue(terms.dataType, terms.stringEnum, 0, transactionState)
@@ -151,16 +151,16 @@ def createUUNameConfiguration(transactionState):
     p.createMissingSubValue(terms.pickObjectPath, pickObjectPath, 0, transactionState)
         
 # Create the configuration for the configuration term.    
-def createConfigurationConfiguration(transactionState):
+def createConfigurationConfiguration(userInfo, transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(terms.configuration, configurationValues, transactionState)
+    configurations = createConfigurations(terms.configuration, configurationValues, userInfo, transactionState)
     configObject = configurations[_bootstrapName]
             
     configObject.createMissingSubValue(terms.name, _bootstrapName, 0, transactionState)
     
     fieldValues = [terms.name, terms.field]
 
-    fields = createFields(configObject, fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, userInfo, transactionState)
     
     p = fields[terms.name]
     p.createMissingSubValue(terms.dataType, terms.stringEnum, 0, transactionState)
@@ -180,9 +180,9 @@ def enumeratorPath(term):
     return '%s[%s=%s]>%s' % (TermNames.term, TermNames.name, quoteAsNeeded(term), quoteAsNeeded(TermNames.enumerator))
 
 # Create the configuration for the configuration term.    
-def createFieldConfiguration(transactionState):
+def createFieldConfiguration(userInfo, transactionState):
     configurationValues = [_bootstrapName];
-    configurations = createConfigurations(terms.field, configurationValues, transactionState)
+    configurations = createConfigurations(terms.field, configurationValues, userInfo, transactionState)
     configObject = configurations[_bootstrapName]
     
     configObject.createMissingSubValue(terms.name, _bootstrapName, 0, transactionState)
@@ -196,7 +196,7 @@ def createFieldConfiguration(transactionState):
                    terms.pickObjectPath,
                   ]
 
-    fields = createFields(configObject, fieldValues, transactionState)
+    fields = createFields(configObject, fieldValues, userInfo, transactionState)
     
     f = fields[terms.name]
     f.createMissingSubValue(terms.dataType, terms.objectEnum, 0, transactionState)
@@ -243,21 +243,21 @@ def createFieldConfiguration(transactionState):
     f.createMissingSubValue(terms.dataType, terms.stringEnum, 0, transactionState)
     f.createMissingSubValue(terms.maxCapacity, terms.uniqueValueEnum, 0, transactionState)
     
-def initializeFacts(transactionState):
+def initializeFacts(userInfo, transactionState):
     # Initialize global variables.
     terms.initialize(transactionState)
     
-    createDataTypes(transactionState)
-    createAddObjectRules(transactionState)
-    createMaxCapacities(transactionState)
-    createDescriptorTypes(transactionState)
-    createBooleans(transactionState)
-    createDefaultAccesses(transactionState)
-    createSpecialAccesses(transactionState)
-    createPrivileges(transactionState)
-    createEnumeratorConfiguration(transactionState)
-    createBooleanConfiguration(transactionState)
-    createUUNameConfiguration(transactionState)
-    createConfigurationConfiguration(transactionState)
-    createFieldConfiguration(transactionState)
+    createDataTypes(userInfo, transactionState)
+    createAddObjectRules(userInfo, transactionState)
+    createMaxCapacities(userInfo, transactionState)
+    createDescriptorTypes(userInfo, transactionState)
+    createBooleans(userInfo, transactionState)
+    createDefaultAccesses(userInfo, transactionState)
+    createSpecialAccesses(userInfo, transactionState)
+    createPrivileges(userInfo, transactionState)
+    createEnumeratorConfiguration(userInfo, transactionState)
+    createBooleanConfiguration(userInfo, transactionState)
+    createUUNameConfiguration(userInfo, transactionState)
+    createConfigurationConfiguration(userInfo, transactionState)
+    createFieldConfiguration(userInfo, transactionState)
             

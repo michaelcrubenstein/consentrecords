@@ -434,7 +434,7 @@ def acceptFollower(request, userPath=None):
                     except Value.DoesNotExist:
                         ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
                             {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, transactionState)
+                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, userInfo, transactionState)
     
                     # Remove any corresponding access requests.
                     vs = user.value_set.filter(field=terms.accessRequest,

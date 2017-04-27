@@ -117,19 +117,19 @@ class Instance(dbmodels.Model):
     
     # addValue ensures that the value can be found for object values. 
     # addValue does not validate that self is writable.           
-    def addValue(self, field, value, position, transactionState):
+    def addValue(self, field, value, position, userInfo, transactionState):
         if value == None:
             raise ValueError("value is not specified")
         
         dt = self.getDataType(field)
         if dt==terms.objectEnum:
             if isinstance(value, Instance):
-                if value._canFind(transactionState.user):
+                if value._canFind(userInfo):
                     return self.addReferenceValue(field, value, position, transactionState)
                 else:
                     raise Instance.DoesNotExist()
             elif isinstance(value, dict) and "instanceID" in value:
-                f = list(UserInfo(transactionState.user).findFilter(InstanceQuerySet(Instance.objects.filter(pk=value["instanceID"]))))
+                f = list(userInfo.findFilter(InstanceQuerySet(Instance.objects.filter(pk=value["instanceID"]))))
                 if len(f) == 0:
                     raise Value.DoesNotExist("specified primary key (%s) for instance does not exist" % value["instanceID"])
                 value = f[0]
@@ -218,7 +218,7 @@ class Instance(dbmodels.Model):
     def _groupValuesByField(self, vs, userInfo):
         values = {}
         # Do not allow a user to get security field data unless they can administer this instance.
-        cache = _deferred(lambda: self._canAdminister(userInfo.authUser, userInfo.instance))
+        cache = _deferred(lambda: self._canAdminister(userInfo))
         for v in vs:
             if v.field_id not in terms.securityFieldIDs or cache.value:
                 fieldID = v.field_id
@@ -726,14 +726,12 @@ class Instance(dbmodels.Model):
         
         return self._securityFilter(f, privilegeIDs, accessRecordOptional=False)
     
-    def _canUse(self, user, publicAccessPrivileges, accessRecordPrivilegeIDs):
-        if user.is_staff:
+    def _canUse(self, userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs):
+        if userInfo.is_administrator:
             return True
 
-        userInstance = Instance.getUserInstance(user)
-        if user.is_authenticated():
-            if userInstance and userInstance.isPrimaryAdministrator(self):
-                return True
+        if userInfo.isPrimaryAdministrator(self):
+            return True
         
         if not self.accessSource_id:
             return False                    
@@ -744,15 +742,15 @@ class Instance(dbmodels.Model):
                                 deleteTransaction__isnull=True).exists():
             return True
         
-        if not userInstance:
+        if not userInfo.instance:
             return False
         
         # create a query set of all of the access records that contain this instance.        
         f = Instance.objects.filter(parent=self.accessSource_id, typeID=terms.accessRecord)\
-            .filter(Q(value__referenceValue=userInstance,
+            .filter(Q(value__referenceValue=userInfo.instance,
                       value__deleteTransaction__isnull=True)|
                     Q(value__deleteTransaction__isnull=True,
-                      value__referenceValue__value__referenceValue=userInstance,
+                      value__referenceValue__value__referenceValue=userInfo.instance,
                       value__referenceValue__value__deleteTransaction__isnull=True))
 
         g = Value.objects.filter(instance__in=f, field=terms.privilege, 
@@ -764,7 +762,7 @@ class Instance(dbmodels.Model):
     ## Instances can be read if the specified user is a super user or there is no accessRecord
     ## associated with this instance.
     ## Otherwise, the user must have a permission, public access set to read or be the primary administrator.
-    def _canFind(self, user):
+    def _canFind(self, userInfo):
         publicAccessPrivileges = [terms.findPrivilegeEnum, terms.registerPrivilegeEnum, 
                                   terms.readPrivilegeEnum, 
                                   terms.writePrivilegeEnum]
@@ -773,53 +771,53 @@ class Instance(dbmodels.Model):
                                     terms.readPrivilegeEnum.id, 
                                     terms.writePrivilegeEnum.id, 
                                     terms.administerPrivilegeEnum.id]
-        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
+        return self._canUse(userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
-    def _canRead(self, user):
+    def _canRead(self, userInfo):
         publicAccessPrivileges = [terms.readPrivilegeEnum, 
                                   terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [terms.readPrivilegeEnum.id, 
                                     terms.writePrivilegeEnum.id, 
                                     terms.administerPrivilegeEnum.id]
-        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
+        return self._canUse(userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs)
     
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
-    def _canRegister(self, user):
+    def _canRegister(self, userInfo):
         publicAccessPrivileges = [terms.registerPrivilegeEnum, 
                                   terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [terms.registerPrivilegeEnum.id,
                                     terms.writePrivilegeEnum.id,
                                     terms.administerPrivilegeEnum.id]
-        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
+        return self._canUse(userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
     ## Instances can be written if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has either write or administer privilege on the instance.                        
-    def _canWrite(self, user):
+    def _canWrite(self, userInfo):
         publicAccessPrivileges = [terms.writePrivilegeEnum]
         accessRecordPrivilegeIDs = [terms.writePrivilegeEnum.id,
                                     terms.administerPrivilegeEnum.id]
-        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
+        return self._canUse(userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs)
         
     ## Instances can be administered if the specified user is a super user or the user is authenticated, the
     ## current instance has an access record and either the user is the primary administrator of the instance
     ## or the user has administer privilege on the instance.                        
-    def _canAdminister(self, user, userInstance=None):
+    def _canAdminister(self, userInfo):
         publicAccessPrivileges = []
         accessRecordPrivilegeIDs = [terms.administerPrivilegeEnum.id]
-        return self._canUse(user, publicAccessPrivileges, accessRecordPrivilegeIDs)
+        return self._canUse(userInfo, publicAccessPrivileges, accessRecordPrivilegeIDs)
             
-    def checkWriteAccess(self, user, field=None):
+    def checkWriteAccess(self, userInfo, field=None):
         if self.typeID==terms.accessRecord:
-            if not self._canAdminister(user):
+            if not self._canAdminister(userInfo):
                 raise RuntimeError("administer permission failed")
         elif field in terms.securityFields:
-            if not self._canAdminister(user):
+            if not self._canAdminister(userInfo):
                 raise RuntimeError("administer permission failed")
         else:
-            if not self._canWrite(user):
+            if not self._canWrite(userInfo):
                 try:
                     s = "write permission failed for %s" % self.description.text
                 except Exception:
@@ -831,22 +829,22 @@ class Instance(dbmodels.Model):
     # Raises an error unless the specified user can write the specified value to the specified field of self.
     # This handles the special case of register permission if the value is a user.
     # This also handles the special case of submitting an access request to another user.
-    def checkWriteValueAccess(self, user, field, value):
+    def checkWriteValueAccess(self, userInfo, field, value):
         if value:
             if isinstance(value, str) and terms.isUUID(value):
                 value = Instance.objects.get(pk=value, deleteTransaction__isnull=True)
             if isinstance(value, Instance) and \
                 value.typeID == terms.user and \
-                value._canAdminister(user) and \
+                value._canAdminister(userInfo) and \
                 field not in terms.securityFields and \
-                self._canRegister(user):
+                self._canRegister(userInfo):
                 return
             if isinstance(value, Instance) and \
                 value.typeID == terms.user and \
                 field == terms.accessRequest and \
                 self.typeID == terms.user:
                 return
-        self.checkWriteAccess(user, field)
+        self.checkWriteAccess(userInfo, field)
             
     def anonymousFindFilter():
         sources=Instance.objects.filter(\
@@ -916,7 +914,7 @@ class Instance(dbmodels.Model):
         return self.value_set.filter(field=terms.defaultAccess, deleteTransaction__isnull=True).exists()
                     
     def getUserInstance(user):
-        field = terms[TermNames.userID]
+        field = terms.userID
         userID = user.id
         if isinstance(userID, uuid.UUID):
             userID = userID.hex
@@ -930,7 +928,7 @@ class Instance(dbmodels.Model):
         return AuthUser.objects.get(pk=id)
 
     # The following functions are used for loading scraped data into the system.
-    def getOrCreateTextValue(self, field, value, fieldData, transactionState):
+    def getOrCreateTextValue(self, field, value, fieldData, userInfo, transactionState):
         children = self[field].filter(stringValue=value['text'])
         if len(children):
             return children[0]
@@ -938,11 +936,11 @@ class Instance(dbmodels.Model):
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
                 children = self[field]
                 if len(children):
-                    return children[0].updateValue(value, transactionState)
+                    return children[0].updateValue(value, userInfo, transactionState)
                     
-            return self.addValue(field, value, self.getNextElementIndex(field), transactionState)
+            return self.addValue(field, value, self.getNextElementIndex(field), userInfo, transactionState)
         
-    def getOrCreateTranslationValue(self, field, text, languageCode, fieldData, transactionState):
+    def getOrCreateTranslationValue(self, field, text, languageCode, fieldData, userInfo, transactionState):
         children = self[field].filter(stringValue=text, languageCode=languageCode)
         if len(children):
             return children[0]
@@ -950,11 +948,11 @@ class Instance(dbmodels.Model):
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
                 children = self[field]
                 if len(children):
-                    return children[0].updateValue({'text': text, 'languageCode': languageCode}, transactionState)
+                    return children[0].updateValue({'text': text, 'languageCode': languageCode}, userInfo, transactionState)
                     
-            return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), transactionState)
+            return self.addValue(field, {'text': text, 'languageCode': languageCode}, self.getNextElementIndex(field), userInfo, transactionState)
         
-    def getOrCreateReferenceValue(self, field, referenceValue, fieldData, transactionState):
+    def getOrCreateReferenceValue(self, field, referenceValue, fieldData, userInfo, transactionState):
         children = self[field].filter(referenceValue=referenceValue)
         if children.exists():
             return children[0]
@@ -962,7 +960,7 @@ class Instance(dbmodels.Model):
             if 'capacity' in fieldData and fieldData['capacity'] == TermNames.uniqueValueEnum:
                 children = self[field]
                 if len(children):
-                    return children[0].updateValue(referenceValue, transactionState)
+                    return children[0].updateValue(referenceValue, userInfo, transactionState)
                     
             return self.addReferenceValue(field, referenceValue, self.getNextElementIndex(field), transactionState)
         
@@ -1051,9 +1049,9 @@ class Value(dbmodels.Model):
     
     # Updates the value of the specified object
     # All existing facts that identify the value are marked as deleted.            
-    def updateValue(self, newValue, transactionState):
+    def updateValue(self, newValue, userInfo, transactionState):
         self.markAsDeleted(transactionState)
-        return self.instance.addValue(self.field, newValue, self.position, transactionState);
+        return self.instance.addValue(self.field, newValue, self.position, userInfo, transactionState);
     
     # Updates the position of the specified object
     # All existing facts that identify the value are marked as deleted.            
@@ -1104,8 +1102,8 @@ class Value(dbmodels.Model):
         else:
             return 'text' in c
 
-    def checkWriteAccess(self, user):
-        self.instance.checkWriteValueAccess(user, self.field, self.referenceValue)
+    def checkWriteAccess(self, userInfo):
+        self.instance.checkWriteValueAccess(userInfo, self.field, self.referenceValue)
         
     def anonymousFindFilter():
         sources=Instance.objects.filter(\
@@ -1584,6 +1582,9 @@ class UserInfo:
 
     def administerFilter(self, resultSet):
         return resultSet.applyAdministerFilter(self)
+        
+    def isPrimaryAdministrator(self, instance):
+        return self.is_authenticated and self.instance and self.instance.isPrimaryAdministrator(instance)
 
     def log(self, s):
         self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
@@ -2014,17 +2015,17 @@ class ValueQuerySet(ObjectQuerySet):
             
         return [v.getData(fields, fieldsDataDictionary, language, userInfo) for v in uuObjects]        
 
-    def deleteObjects(self, user, nameLists, transactionState):
+    def deleteObjects(self, user, nameLists, userInfo, transactionState):
         for value in self.querySet:
             if not value.referenceValue or value.referenceValue.parentValue != value:
-                value.checkWriteAccess(user)
+                value.checkWriteAccess(userInfo)
                 
                 value.deepDelete(transactionState)
                 if value.isDescriptor:
                     Instance.updateDescriptions([value.instance], nameLists)
             else:
                 uuObject = value.referenceValue
-                uuObject.checkWriteAccess(user)
+                uuObject.checkWriteAccess(userInfo)
                 
                 for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
                     v.markAsDeleted(transactionState)
@@ -2269,7 +2270,7 @@ class InstanceQuerySet(ObjectQuerySet):
 
         return [i.getData(fields, fieldsDataDictionary, language, userInfo) for i in uuObjects]        
 
-    def deleteObjects(self, user, nameLists, transactionState):
+    def deleteObjects(self, user, nameLists, userInfo, transactionState):
         for uuObject in self.querySet:
             for v in uuObject.referenceValues.filter(deleteTransaction__isnull=True):
                 v.markAsDeleted(transactionState)
