@@ -491,9 +491,11 @@ class Instance(dbmodels.Model):
         if 'parents' in fields:
             p = self
             fp = p.parent_id and \
-                 userInfo.readFilter(InstanceQuerySet(Instance.objects\
-                                .select_related('description')\
-                                .filter(pk=p.parent_id)))
+                 userInfo.readFilter(\
+                    InstanceQuerySet(\
+                        InstanceQuerySet.selectRelatedData(\
+                            Instance.objects.filter(pk=p.parent_id),
+                            [], "", userInfo)))
             while fp and fp.exists():
                 p = fp[0]
                 
@@ -505,15 +507,16 @@ class Instance(dbmodels.Model):
                 parentData = p.getReferenceData(userInfo, language)
                 parentData['position'] = 0
                 if fieldData["name"] in fields:
-                    vs = ValueQuerySet.selectRelatedData(p.value_set.filter(deleteTransaction__isnull=True), [], userInfo)
-                    parentData['cells'] = p._getChildCellsData(vs, fieldsDataDictionary[p.typeID_id], userInfo, language)
+                    parentData['cells'] = p._getChildCellsData(p.values, fieldsDataDictionary[p.typeID_id], userInfo, language)
                 
                 cells.append({"field": fieldData["id"], "data": [parentData]})
                 
                 fp = p.parent_id and \
-                     userInfo.readFilter(InstanceQuerySet(Instance.objects\
-                                                                .select_related('description')\
-                                                                .filter(pk=p.parent_id)))
+                     userInfo.readFilter(\
+                        InstanceQuerySet(\
+                            InstanceQuerySet.selectRelatedData(\
+                                Instance.objects.filter(pk=p.parent_id),
+                                [], "", userInfo)))
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
@@ -1597,40 +1600,43 @@ class UserInfo:
             self.typeNames[typeID] = description
             return description
     
+    def loadPrivilege(self, source_id):
+        try:
+            minPrivilege = Value.objects.get(instance=source_id,
+                                                  field=terms.publicAccess, deleteTransaction__isnull=True)\
+                                   .select_related('referenceValue__description').referenceValue
+        except Exception:
+            minPrivilege = None
+    
+        if not self.instance:
+            self._privileges[source_id] = minPrivilege
+        elif Value.objects.filter(instance=source_id,
+                                field=terms.primaryAdministrator, 
+                                deleteTransaction__isnull=True,
+                                referenceValue=self.instance).exists():
+            self._privileges[source_id] = terms.administerPrivilegeEnum
+        else:
+            # create a query set of all of the access records that contain this instance.        
+            f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
+                .filter(Q(value__referenceValue=self.instance,
+                          value__deleteTransaction__isnull=True)|
+                        Q(value__deleteTransaction__isnull=True,
+                          value__referenceValue__value__referenceValue=self.instance,
+                          value__referenceValue__value__deleteTransaction__isnull=True))
+    
+            g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+                    deleteTransaction__isnull=True)\
+                    .select_related('referenceValue__description')
+            
+            # map the access records to their corresponding privilege values.              
+            p = map(lambda i: i.referenceValue, g)
+    
+            self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
+    
     # Returns a privilege instance for the specified source_id.
     def getPrivilege(self, source_id):
         if source_id not in self._privileges:
-            minPrivilege = None
-            minPrivilegeFilter = Value.objects.filter(instance=source_id,
-                                                      field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                       .select_related('referenceValue__description')
-            if minPrivilegeFilter.exists():
-                minPrivilege=minPrivilegeFilter[0].referenceValue
-        
-            if not self.instance:
-                self._privileges[source_id] = minPrivilege
-            elif Value.objects.filter(instance=source_id,
-                                    field=terms.primaryAdministrator, 
-                                    deleteTransaction__isnull=True,
-                                    referenceValue=self.instance).exists():
-                self._privileges[source_id] = terms.administerPrivilegeEnum
-            else:
-                # create a query set of all of the access records that contain this instance.        
-                f = Instance.objects.filter(parent=source_id, typeID=terms.accessRecord)\
-                    .filter(Q(value__referenceValue=self.instance,
-                              value__deleteTransaction__isnull=True)|
-                            Q(value__deleteTransaction__isnull=True,
-                              value__referenceValue__value__referenceValue=self.instance,
-                              value__referenceValue__value__deleteTransaction__isnull=True))
-        
-                g = Value.objects.filter(instance__in=f, field=terms.privilege, 
-                        deleteTransaction__isnull=True)\
-                        .select_related('referenceValue__description')
-                
-                # map the access records to their corresponding privilege values.              
-                p = map(lambda i: i.referenceValue, g)
-        
-                self._privileges[source_id] = reduce(Instance.comparePrivileges, p, minPrivilege)
+            self.loadPrivilege(source_id)
         
         return self._privileges[source_id]
             
