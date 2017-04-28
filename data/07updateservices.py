@@ -40,7 +40,7 @@ def removeService(typeName, name, check, transactionState):
             v.markAsDeleted(transactionState)
         service.markAsDeleted(transactionState)
             
-def embedService(typeName, oldName, newName, check, transactionState):
+def embedService(typeName, oldName, newName, check, userInfo, transactionState):
     try:
         oldService = Instance.objects.get(typeID=terms[typeName],
                                        deleteTransaction__isnull=True,
@@ -64,7 +64,7 @@ def embedService(typeName, oldName, newName, check, transactionState):
     
     if not check:
         for v in vs:
-            v.updateValue(newService, transactionState)
+            v.updateValue(newService, userInfo, transactionState)
         oldService.markAsDeleted(transactionState)
             
 if __name__ == "__main__":
@@ -85,14 +85,15 @@ if __name__ == "__main__":
         
         with transaction.atomic():
             transactionState = None if check else TransactionState(user)
+            userInfo = UserInfo(user)
             removeService('Service', 'Education', check, transactionState)
             removeService('Service Domain', 'XCareer & Finance', check, transactionState)
             removeService('Service Domain', 'XExtra Curricular', check, transactionState)
             removeService('Service Domain', 'XHelping Out', check, transactionState)
-            embedService('Service', 'Basketball', 'Basketball Playing', check, transactionState)
-            embedService('Service', 'Football', 'Football Playing', check, transactionState)
-            embedService('Service', 'Soccer', 'Soccer Playing', check, transactionState)
-            embedService('Service', 'Theater', 'Theater Role', check, transactionState)
+            embedService('Service', 'Basketball', 'Basketball Playing', check, userInfo, transactionState)
+            embedService('Service', 'Football', 'Football Playing', check, userInfo, transactionState)
+            embedService('Service', 'Soccer', 'Soccer Playing', check, userInfo, transactionState)
+            embedService('Service', 'Theater', 'Theater Role', check, userInfo, transactionState)
                     
     except Exception as e:
         print("%s" % traceback.format_exc())

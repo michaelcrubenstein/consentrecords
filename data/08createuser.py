@@ -27,33 +27,6 @@ def parseProperty(s):
     v = a[1].strip() if len(a) > 1 else None
     return t, v
 
-def loadRoot(type, field, value, nameList, transactionState):
-    languageCode, text = parseTranslation(value)
-    
-    objs = Instance.objects.filter(deleteTransaction__isnull=True,
-                            typeID=type,
-                            value__deleteTransaction__isnull=True,
-                            value__field=field,
-                            value__stringValue__iexact=text)
-    if len(objs):
-        root = objs[0]
-    else:
-        objs = Instance.objects.filter(deleteTransaction__isnull=True,
-                                typeID=type,
-                                value__deleteTransaction__isnull=True,
-                                value__field=field,
-                                value__stringValue__istartswith=text);
-        if len(objs):
-            root = objs[0]
-            value = root.value_set.filter(field=field, stringValue__istartswith=text, deleteTransaction__isnull=True)
-            print ("? %s: %s: %s" % (text, value[0].stringValue, root.id))
-        else:
-            propertyList = {field.description.text: [{'text': text, 'languageCode': languageCode}]}
-            root, newValue = instancecreator.create(type, None, None, -1, propertyList, nameList, transactionState)
-            print("+ %s: %s" % (text, root.id))
-        
-    return root
-    
 def findFieldData(fieldsData, field):
     for fd in fieldsData:
         if fd["nameID"] == field.id:
@@ -159,7 +132,7 @@ if __name__ == "__main__":
                           'More Experiences': [{'cells': 
                               {'Birthday': [{'text': birthday}] }}],
                          }
-            root, newValue = instancecreator.create(terms.user, None, None, -1, properties, nameList, transactionState)
+            root, newValue = instancecreator.create(terms.user, None, None, -1, properties, nameList, userInfo, transactionState)
                         
             # raise RuntimeError("Done")
                                 
