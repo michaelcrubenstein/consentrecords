@@ -1787,13 +1787,6 @@ class ObjectQuerySet:
                     return InstanceQuerySet(f), path[3:]
                 else:
                     raise ValueError("malformed reference (missing parentheses)")
-            elif function == 'not':
-                if isinstance(path[2], list):
-                    parsed = InstanceQuerySet().parse(path[2], userInfo)
-                    f = parsed.excludeFrom(self)
-                    return f, path[3:]
-                else:
-                    raise ValueError("malformed not (missing parentheses)")
             else:
                 raise ValueError("unrecognized function: %s" % function)
         elif path[0] == '|':
