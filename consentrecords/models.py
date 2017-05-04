@@ -1780,20 +1780,13 @@ class ObjectQuerySet:
                                                     value__referenceValue__in=self.applyFindFilter(userInfo))
                     else:
                         t = terms[path[2][0]]
-                        f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
-                                                    Q(value__referenceValue__in=self.applyFindFilter(userInfo)),
+                        f = Instance.objects.filter(value__deleteTransaction__isnull=True,
+                                                    value__referenceValue__in=self.applyFindFilter(userInfo),
                                                     typeID=t,
                                                    )
                     return InstanceQuerySet(f), path[3:]
                 else:
                     raise ValueError("malformed reference (missing parentheses)")
-            elif function == 'not':
-                if isinstance(path[2], list):
-                    parsed = InstanceQuerySet().parse(path[2], userInfo)
-                    f = parsed.excludeFrom(self)
-                    return f, path[3:]
-                else:
-                    raise ValueError("malformed not (missing parentheses)")
             else:
                 raise ValueError("unrecognized function: %s" % function)
         elif path[0] == '|':

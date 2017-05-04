@@ -1422,17 +1422,13 @@ var OrganizationSearchView = (function() {
 		var path;
 		if (val)
 		{
-			if (this.typeName === "Site from Organization")
+			if (this.typeName === "Site")
 			{
-				path = 'Organization[name{0}"{1}"]/Sites/Site::not(Site[name{0}"{1}"])';
-			}
-			else if (this.typeName === "Site")
-			{
-				path = 'Site[name{0}"{1}"]';
+				path = 'Site[ancestor:name*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name{0}"{1}"]';
+				path = 'Organization[name*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1446,7 +1442,7 @@ var OrganizationSearchView = (function() {
 	{
 		if (searchText)
 		{
-			this.typeNames = ["Organization", "Site from Organization", "Site", ];
+			this.typeNames = ["Organization", "Site", ];
 		}
 		else
 		{
@@ -1583,19 +1579,13 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]/Offerings/Offering)';
+					path = 'Offering[ancestor:name*="{1}"]';
 					path = "{0}/Sites/Site/Offerings/".format(this.experience.organization.getInstanceID()) + path;
-					path += this.experience.getOfferingConstraint();
-				}
-				else if (this.typeName === "Offering from Site")
-				{
-					path = 'Site[name{0}"{1}"]/Offerings/Offering';
-					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
 					path += this.experience.getOfferingConstraint();
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[name{0}"{1}"]';
+					path = 'Site[name*="{1}"]';
 					path = "{0}/Sites/".format(this.experience.organization.getInstanceID()) + path;
 				}
 			
@@ -1614,31 +1604,20 @@ var SiteSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
+					path = 'Offering[ancestor:name*="{1}"]';
 					path += this.experience.getOfferingConstraint();
-				}
-				else if (this.typeName === "Offering from Site")
-				{
-					path = 'Site[name{0}"{1}"]>Offerings>Offering';
-					path += this.experience.getOfferingConstraint();
-				}
-				else if (this.typeName === "Site from Organization")
-				{
-					if (this.experience.services[0].pickedObject)
-					{
-						path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
-						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
-					}
-					else
-						return ""
 				}
 				else if (this.typeName === "Site")
 				{
-					path = 'Site[name{0}"{1}"]';
+					path = 'Site[ancestor:name*="{1}"]';
+					if (this.experience.services[0].pickedObject)
+					{
+						path += '[Offerings>Offering[Service*={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
+					}
 				}
 				else if (this.typeName === "Organization")
 				{
-					path = 'Organization[name{0}"{1}"]';
+					path = 'Organization[name*="{1}"]';
 				}
 				else
 					throw "Unrecognized typeName: {0}".format(this.typeName);
@@ -1649,20 +1628,15 @@ var SiteSearchView = (function() {
 				return path.format(symbol, val);
 			}
 		}
-		else 
-		if (val)
+		else if (val)
 		{
-			if (this.typeName === "Site from Organization")
+			if (this.typeName === "Site")
 			{
-				path = 'Organization[name{0}"{1}"]>Sites>Site::not(Site[name{0}"{1}"])';
-			}
-			else if (this.typeName === "Site")
-			{
-				path = 'Site[name{0}"{1}"]';
+				path = 'Site[ancestor:name*="{1}"]';
 			}
 			else if (this.typeName === "Organization")
 			{
-				path = 'Organization[name{0}"{1}"]';
+				path = 'Organization[name*="{1}"]';
 			}
 			var symbol = "*=";
 		
@@ -1680,9 +1654,9 @@ var SiteSearchView = (function() {
 			if (this.experience.organization)
 			{
 				if (searchText && searchText.length > 0)
-					this.typeNames = ["Site", "Offering from Site", "Offering"];
+					this.typeNames = ["Site", "Offering"];
 				else
-					this.typeNames = ["Site", "Offering from Site"];
+					this.typeNames = ["Site"];
 			}
 			else
 			{
@@ -1694,16 +1668,16 @@ var SiteSearchView = (function() {
 			if (this.experience.services[0].pickedObject)
 			{
 				if (searchText && searchText.length > 0)
-					this.typeNames = ["Offering from Site", "Offering", "Site", "Organization", "Site from Organization"];
+					this.typeNames = ["Offering", "Site", "Organization"];
 				else
 					this.typeNames = [""];
 			}
 			else
-				this.typeNames = ["Site", "Organization", "Site from Organization"];
+				this.typeNames = ["Site", "Organization"];
 		}
 		else if (searchText)
 		{
-			this.typeNames = ["Site", "Organization", "Site from Organization"];
+			this.typeNames = ["Site", "Organization"];
 		}
 		else
 		{
@@ -1878,7 +1852,7 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name{0}"{1}"]';
+						path = "{0}>Offerings>Offering".format(this.experience.site.getInstanceID()) + '[name*="{1}"]';
 					}
 					else
 						throw new Error('unrecognized typeName');
@@ -1914,14 +1888,8 @@ var OfferingSearchView = (function() {
 				{
 					if (this.typeName === "Offering")
 					{
-						path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
+						path = 'Offering[ancestor:name*="{1}"]';
 						path = "{0}>Sites>Site>Offerings>".format(this.experience.organization.getInstanceID()) + path;
-						path += this.experience.getOfferingConstraint();
-					}
-					else if (this.typeName === "Offering from Site")
-					{
-						path = 'Site[name{0}"{1}"]>Offerings>Offering';
-						path = "{0}>Sites>".format(this.experience.organization.getInstanceID()) + path;
 						path += this.experience.getOfferingConstraint();
 					}
 			
@@ -1941,12 +1909,7 @@ var OfferingSearchView = (function() {
 			{
 				if (this.typeName === "Offering")
 				{
-					path = 'Offering[name{0}"{1}"]::not(Site[name{0}"{1}"]>Offerings>Offering)';
-					path += this.experience.getOfferingConstraint();
-				}
-				else if (this.typeName === "Offering from Site")
-				{
-					path = 'Site[name{0}"{1}"]>Offerings>Offering';
+					path = 'Offering[ancestor:name*="{1}"]';
 					path += this.experience.getOfferingConstraint();
 				}
 				else
@@ -1968,7 +1931,7 @@ var OfferingSearchView = (function() {
 		{
 			if (this.typeName === "Offering")
 			{
-				path = 'Offering[name{0}"{1}"]' +
+				path = 'Offering[name*="{1}"]' +
 						this.experience.getOfferingConstraint();
 			}
 			else
@@ -2001,7 +1964,7 @@ var OfferingSearchView = (function() {
 			if (this.experience.organization)
 			{
 				if (searchText)
-					this.typeNames = ["Offering from Site", "Offering"];
+					this.typeNames = ["Offering"];
 				else if (this.experience.getOfferingConstraint())
 					this.typeNames = ["Offering"];
 				else
@@ -2017,7 +1980,7 @@ var OfferingSearchView = (function() {
 			if (this.experience.services[0].pickedObject)
 			{
 				if (searchText)
-					this.typeNames = ["Offering", "Offering from Site"];
+					this.typeNames = ["Offering"];
 				else
 					this.typeNames = ["Offering"];
 			}
