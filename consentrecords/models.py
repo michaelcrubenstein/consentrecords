@@ -492,10 +492,8 @@ class Instance(dbmodels.Model):
             p = self
             fp = p.parent_id and \
                  userInfo.readFilter(\
-                    InstanceQuerySet(\
-                        InstanceQuerySet.selectRelatedData(\
-                            Instance.objects.filter(pk=p.parent_id),
-                            [], "", userInfo)))
+                    InstanceQuerySet(Instance.objects.filter(pk=p.parent_id))\
+                    	.select_related([], "", userInfo))
             while fp and fp.exists():
                 p = fp[0]
                 
@@ -513,10 +511,8 @@ class Instance(dbmodels.Model):
                 
                 fp = p.parent_id and \
                      userInfo.readFilter(\
-                        InstanceQuerySet(\
-                            InstanceQuerySet.selectRelatedData(\
-                                Instance.objects.filter(pk=p.parent_id),
-                                [], "", userInfo)))
+                        InstanceQuerySet(Instance.objects.filter(pk=p.parent_id))\
+                            .select_related([], "", userInfo))
         
         if TermNames.systemAccess in fields:
             if userInfo.authUser.is_superuser:
@@ -1727,7 +1723,6 @@ class ObjectQuerySet:
         elif path[0] == '[':
             params = path[1]
             if params[0] == 'ancestor' and params[1] == ':':
-                q = self.ancestorClause(params)
                 # Filter by items that contain an ancestor with the specified field clause. 
                 if params[2] != '?':
                     i = terms[params[2]]
@@ -1855,7 +1850,7 @@ class ObjectQuerySet:
 class ValueQuerySet(ObjectQuerySet):
     
     # Extends the specified QuerySet of Values with data to be returned to the client.
-    def selectRelatedData(sourceFilter, fieldNames, userInfo):
+    def select_related(self, fieldNames, userInfo):
 
         # preload the typeID, parent, value_set and description to improve performance.
         # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
@@ -1872,10 +1867,11 @@ class ValueQuerySet(ObjectQuerySet):
                                   queryset=subValueQueryset,
                                   to_attr='subValues'))
 
-        return sourceFilter.select_related('referenceValue__description')\
+        self.querySet = self.querySet.select_related('referenceValue__description')\
                   .prefetch_related(Prefetch('referenceValue__value_set',
                                              queryset=valueQueryset,
                                              to_attr='values'))
+        return self
     
     def __init__(self, querySet=None):
         super(ValueQuerySet, self).__init__(querySet)
@@ -2012,8 +2008,8 @@ class ValueQuerySet(ObjectQuerySet):
         return FieldsDataDictionary(typeset, language)
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
-        uuObjects = ValueQuerySet.selectRelatedData(self.querySet, fieldNames, userInfo)
-        uuObjects = uuObjects.order_by('instance', 'position');
+        self.select_related(fieldNames, userInfo)
+        uuObjects = self.querySet.order_by('instance', 'position');
         if end > 0:
             uuObjects = uuObjects[start:end]
         elif start > 0:
@@ -2060,12 +2056,14 @@ class ReadValueQuerySet(ValueQuerySet):
         
 class InstanceQuerySet(ObjectQuerySet):
 
-    # Extended the specified querySet to include related Instance data to be sent back to the client tier.
-    # instanceDataPath is the django query path from the sourceFilter objects to the 
-    # data to be selected.
-    def selectRelatedData(sourceFilter, fieldNames, instanceDataPath, userInfo):
-        # preload the typeID, parent, value_set and description to improve performance.
-        # For each field that is in the fields list, also preload its field, referenceValue and referenceValue__description.
+    def __init__(self, querySet=None):
+        super(InstanceQuerySet, self).__init__(querySet)
+        
+    def createObjectQuerySet(self, querySet):
+        return InstanceQuerySet(querySet)
+    
+    ### Preloads the querySet of self with associated description and values
+    def select_related(self, fieldNames, instanceDataPath, userInfo):
         valueQueryset = ObjectQuerySet.getSubValueQuerySet(Value.objects, userInfo)
 
         if len(fieldNames):
@@ -2079,17 +2077,13 @@ class InstanceQuerySet(ObjectQuerySet):
                                   queryset=subValueQueryset,
                                   to_attr='subValues'))
 
-        return sourceFilter.select_related(instanceDataPath + 'description')\
-                           .prefetch_related(Prefetch(instanceDataPath + 'value_set',
+        self.querySet = self.querySet.select_related(instanceDataPath + 'description')\
+                            .prefetch_related(Prefetch(instanceDataPath + 'value_set',
                                                         queryset=valueQueryset,
                                                         to_attr='values'))
-            
-    def __init__(self, querySet=None):
-        super(InstanceQuerySet, self).__init__(querySet)
-        
-    def createObjectQuerySet(self, querySet):
-        return InstanceQuerySet(querySet)
-        
+        return self
+    
+     
     def excludeFrom(self, oqs):
         if isinstance(oqs, InstanceQuerySet):
             return InstanceQuerySet(oqs.querySet.exclude(pk__in=self.querySet))
@@ -2266,9 +2260,9 @@ class InstanceQuerySet(ObjectQuerySet):
         return FieldsDataDictionary(typeset, language)
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
-        uuObjects = InstanceQuerySet.selectRelatedData(self.querySet, fieldNames, '', userInfo)
+        self.select_related(fieldNames, '', userInfo)
         
-        uuObjects = uuObjects.order_by('description__text', 'id');
+        uuObjects = self.querySet.order_by('description__text', 'id');
         if end > 0:
             uuObjects = uuObjects[start:end]
         elif start > 0:
