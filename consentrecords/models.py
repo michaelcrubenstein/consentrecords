@@ -1723,7 +1723,6 @@ class ObjectQuerySet:
         elif path[0] == '[':
             params = path[1]
             if params[0] == 'ancestor' and params[1] == ':':
-                q = self.ancestorClause(params)
                 # Filter by items that contain an ancestor with the specified field clause. 
                 if params[2] != '?':
                     i = terms[params[2]]
