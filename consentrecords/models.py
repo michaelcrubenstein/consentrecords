@@ -1780,8 +1780,8 @@ class ObjectQuerySet:
                                                     value__referenceValue__in=self.applyFindFilter(userInfo))
                     else:
                         t = terms[path[2][0]]
-                        f = Instance.objects.filter(Q(value__deleteTransaction__isnull=True)&\
-                                                    Q(value__referenceValue__in=self.applyFindFilter(userInfo)),
+                        f = Instance.objects.filter(value__deleteTransaction__isnull=True,
+                                                    value__referenceValue__in=self.applyFindFilter(userInfo),
                                                     typeID=t,
                                                    )
                     return InstanceQuerySet(f), path[3:]
