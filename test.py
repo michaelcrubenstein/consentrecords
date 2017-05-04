@@ -6,9 +6,6 @@ from consentrecords.models import *
 from consentrecords import pathparser
 from consentrecords.views import api
 
-i = InstanceQuerySet()
-i.refineResults(['0005ddf4fec641f7b3dc66e58c902f51'], UserInfo(AnonymousUser()))
-
 print ('##################################')
 print ('# Test 1 ')
 print ('# Tests getting information about a term')
@@ -36,15 +33,7 @@ print(u.cacheDescription(nameLists))
 Instance.updateDescriptions([u], nameLists)
 
 print ('##################################')
-print ('# Test 5 ')
-print ('##################################')
-c = us._getSubInstances(terms.configuration)[0]
-fs = c._getSubInstances(terms.field)
-
-print (c.getConfiguration())
-
-print ('##################################')
-print ('# Test 6 ')
+print ('# Test 4 ')
 print ('##################################')
 a = ('Organization')
 print(pathparser.getQuerySet(a))
