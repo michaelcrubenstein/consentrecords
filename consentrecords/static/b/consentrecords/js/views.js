@@ -3306,7 +3306,7 @@ function showPickObjectPanel(cell, oldData) {
 	{
 		var pickObjectPath = cell.field.pickObjectPath;
 		if (pickObjectPath.indexOf("parent") === 0 &&
-			">:=<".indexOf(pickObjectPath.charAt(6)) >= 0)
+			">:=</".indexOf(pickObjectPath.charAt(6)) >= 0)
 		{
 			var currentObject = cell.parent;
 			pickObjectPath = pickObjectPath.slice(6);

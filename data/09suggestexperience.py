@@ -75,7 +75,7 @@ if __name__ == "__main__":
                         }
                     notification, notificationValue = instancecreator.create(terms['notification'], 
                         recipient, terms['notification'], -1, 
-                        notificationData, nameList, transactionState, instancecreator.checkCreateNotificationAccess)
+                        notificationData, nameList, transactionState, userInfo, instancecreator.checkCreateNotificationAccess)
                     
                     path = recipient.getSubInstance(terms['Path'])    
                     salutation = recipient.getSubDatum(terms.firstName) or path.getSubDatum(terms.name)

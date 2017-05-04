@@ -773,7 +773,7 @@ term
             max capacity: unique value
             object add rule: pick one
             of kind: enumerator
-            pick object path: terms[name=boolean]/enumerator
+            pick object path: term[name=boolean]/enumerator
 term
     name: object add rule
     enumerator
