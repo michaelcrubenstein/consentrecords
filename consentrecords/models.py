@@ -13,6 +13,7 @@ import string
 from multiprocessing import Lock
 from functools import reduce
 import itertools
+from collections import defaultdict
 
 from custom_user.models import AuthUser
 
@@ -216,16 +217,12 @@ class Instance(dbmodels.Model):
     # values contained by self.
     # userInfo is used to determine if the dictionary includes security field data.  
     def _groupValuesByField(self, vs, userInfo):
-        values = {}
+        values = defaultdict(list)
         # Do not allow a user to get security field data unless they can administer this instance.
         cache = _deferred(lambda: self._canAdminister(userInfo))
         for v in vs:
             if v.field_id not in terms.securityFieldIDs or cache.value:
-                fieldID = v.field_id
-                if fieldID not in values:
-                    values[fieldID] = [v]
-                else:
-                    values[fieldID].append(v)
+                values[v.field_id].append(v)
         return values
     
     def _getSubInstances(self, field):
