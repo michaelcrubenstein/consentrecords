@@ -490,7 +490,7 @@ class Instance(dbmodels.Model):
             fp = p.parent_id and \
                  userInfo.readFilter(\
                     InstanceQuerySet(Instance.objects.filter(pk=p.parent_id))\
-                    	.select_related([], "", userInfo))
+                        .select_related([], "", userInfo))
             while fp and fp.exists():
                 p = fp[0]
                 
@@ -1520,35 +1520,31 @@ class Terms():
                 
 terms = Terms()
 
-class FieldsDataDictionary:
-    def __init__(self, typeInstances=[], language=None):
-        self.language = language
-        self._dict = None   # Initialize for calls to getType.
-        self._dict = dict((lambda i:(i, i.getFieldsData(language)))(self.getType(t)) for t in typeInstances)
+class FieldsDataDictionary(dict):
+    def __init__(self, *args, **kwargs):
+        self.language = kwargs.pop('language', None)
+        dict.__init__(self, *args, **kwargs)
     
     def getType(self, t):
         if isinstance(t, str):
-            if self._dict:
-                return next((key for key in self._dict.keys() if key.id == t), None) or \
-                       Instance.objects.get(pk=t)
-            else:
-                return Instance.objects.get(pk=t)
+            return next((key for key in self.keys() if key.id == t), None) or \
+                   Instance.objects.get(pk=t)
         else:
             return t
     
     def __getitem__(self, t):
         typeInstance = self.getType(t)
                             
-        if typeInstance in self._dict:
-            return self._dict[typeInstance]
-        else:
-            self._dict[typeInstance] = typeInstance.getFieldsData(self.language)
-            return self._dict[typeInstance]
+        if typeInstance not in self:
+            self[typeInstance] = typeInstance.getFieldsData(self.language)
+        
+        return dict.__getitem__(self, typeInstance)
     
-    def getData(self):
-        fds = list(itertools.chain.from_iterable(self._dict.values()))
+    def getData(self, types):
+        values = map(lambda t: self[t], types)
+        fds = list(itertools.chain.from_iterable(values))
         return fds
-
+        
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
@@ -1993,9 +1989,13 @@ class ValueQuerySet(ObjectQuerySet):
         else:
             return userInfo.instance.administerValueFilter(qs)
     
+    @property        
+    def types(self):
+        return map(lambda i: Instance.objects.get(pk=i),
+                   frozenset([x.referenceValue.typeID_id for x in self.querySet]))
+    
     def getFieldsDataDictionary(self, language):
-        typeset = frozenset([x.referenceValue.typeID_id for x in self.querySet])
-        return FieldsDataDictionary(typeset, language)
+        return FieldsDataDictionary(self.types, language)
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
         self.select_related(fieldNames, userInfo)
@@ -2245,9 +2245,13 @@ class InstanceQuerySet(ObjectQuerySet):
         else:
             return userInfo.instance.administerFilter(qs)
     
+    @property        
+    def types(self):
+        return map(lambda i: Instance.objects.get(pk=i),
+                   frozenset([x.typeID_id for x in self.querySet]))
+    
     def getFieldsDataDictionary(self, language):
-        typeset = frozenset([x.typeID_id for x in self.querySet])
-        return FieldsDataDictionary(typeset, language)
+        return FieldsDataDictionary(self.types, language)
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
         self.select_related(fieldNames, '', userInfo)
