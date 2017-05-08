@@ -308,13 +308,11 @@ from consentrecords.views import api
 terms.initialize()
 
 user = authenticate(username='testuser28@pathadvisor.com', password=getpass.getpass("Password: "))
-from django.http import QueryDict
 path='ad5b6f1e2ab84f2c935651f345b7226b'
 q = QueryDict()
 profile.run('api.getData(user, path, q)')
 
 user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getpass("Password: "))
-from django.http import QueryDict
 path='Service'
 q = QueryDict('fields=%5B%5D')
 profile.run('api.getData(user, path, q)')
@@ -336,6 +334,23 @@ user=authenticate(username='michaelcrubenstein@gmail.com', password=getpass.getp
 from django.http import QueryDict
 path='107d7f83095d41efb0472a60f4816043'
 q = QueryDict('fields=%5B%22More+Experience%22%2C%22parents%22%2C%22type%22%5D')
+profile.run('api.getData(user, path, q)')
+
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
+profile.run('api.getData(user, path, q)')
+
+# Production system: Paths that have a College experience, a Grade 8 and a Business Founder experience
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]][More Experience[Service[Service=25e4ab353e2f4dab8c1320f967c3474f]|Offering>Service[Service=25e4ab353e2f4dab8c1320f967c3474f]]][More Experience[Service[Service=3c25cc1b36e74351aeb2aac8f25dc8c4]|Offering>Service[Service=3c25cc1b36e74351aeb2aac8f25dc8c4]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
+profile.run('api.getData(user, path, q)')
+
+# Production system: Paths that have a College experience and a Job experience
+path = 'Path[More Experience[Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]|Offering>Service[Service=0e7fb2bcbeb743f9ad432af03ecf8c1a]]][More Experience[Service[Service=38752df1adf54bd6ad9dbe2e1be6dfc2]|Offering>Service[Service=38752df1adf54bd6ad9dbe2e1be6dfc2]]]'
+q = QueryDict('fields=%5B%22parents%22%2C%22user%22%5D&start=0&end=20')
+user = AnonymousUser()
 profile.run('api.getData(user, path, q)')
 
 userInfo = UserInfo(user)
