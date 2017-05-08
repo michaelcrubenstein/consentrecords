@@ -1019,12 +1019,15 @@ class api:
                 qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             
             language = data.get('language', None)
-            fieldsDataDictionary = qs.getFieldsDataDictionary(language)
+            types = qs.types
+            typeDuples = map(lambda t: (t, t.getFieldsData(language)), qs.types)
+            
+            fieldsDataDictionary = FieldsDataDictionary(typeDuples, language=language)
             p = qs.getData(fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language)
         
             results = {'data': p}
             if 'none' not in fields:
-                results['fields'] = fieldsDataDictionary.getData()
+                results['fields'] = fieldsDataDictionary.getData(types)
                 
         except Exception as e:
             logger = logging.getLogger(__name__)
