@@ -1994,9 +1994,6 @@ class ValueQuerySet(ObjectQuerySet):
         return map(lambda i: Instance.objects.get(pk=i),
                    frozenset([x.referenceValue.typeID_id for x in self.querySet]))
     
-    def getFieldsDataDictionary(self, language):
-        return FieldsDataDictionary(self.types, language)
-    
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
         self.select_related(fieldNames, userInfo)
         uuObjects = self.querySet.order_by('instance', 'position');
@@ -2249,9 +2246,6 @@ class InstanceQuerySet(ObjectQuerySet):
     def types(self):
         return map(lambda i: Instance.objects.get(pk=i),
                    frozenset([x.typeID_id for x in self.querySet]))
-    
-    def getFieldsDataDictionary(self, language):
-        return FieldsDataDictionary(self.types, language)
     
     def getData(self, fields, fieldNames, fieldsDataDictionary, start, end, userInfo, language):
         self.select_related(fieldNames, '', userInfo)
