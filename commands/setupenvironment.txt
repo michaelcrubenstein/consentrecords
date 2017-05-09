@@ -35,3 +35,9 @@ pip3 install django-filter
 # Installs tzlocal, used to get the local timezone
 pip3 install tzlocal
 
+# To clone the branch from GitHub Desktop:
+# 1. Open GitHub Desktop
+# 2. Make sure that consentrecords is not present in the list of repositories on the left.
+# 3. From the File menu, choose Clone Repositories
+# 4. Choose consentrecords
+# 5. Choose the folder containing the Virtual Environment that will contain consentrecords.
