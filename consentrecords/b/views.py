@@ -63,9 +63,7 @@ def home(request):
     if state:
         args['state'] = state
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def showLines(request):
@@ -89,9 +87,7 @@ def showLines(request):
     
     args['state'] = "me"
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def orgHome(request):
@@ -116,9 +112,7 @@ def orgHome(request):
     if state:
         args['state'] = state
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def find(request):
@@ -147,9 +141,7 @@ def find(request):
         args['fbTitle'] = offering._description
         args['fbDescription'] = offering.parent and offering.parent.parent and offering.parent.parent._description
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def showInstances(request):
@@ -182,9 +174,7 @@ def showInstances(request):
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
             argList['userID'] = user.id
         
-        context = RequestContext(request, argList)
-        
-        return HttpResponse(template.render(context))
+        return HttpResponse(template.render(argList))
     except Exception as e:
         return HttpResponse(str(e))
 
@@ -214,9 +204,7 @@ def showPathway(request, email):
     if len(objs) > 0:
         args['state'] = 'user/%s' % objs[0].id
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def showExperience(request, id):
@@ -252,9 +240,7 @@ def showExperience(request, id):
                 args['state'] += path[:33]
                 path = path[33:]
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def accept(request, email):
@@ -285,9 +271,7 @@ def accept(request, email):
         args['cell'] = TermNames.user
         args['privilege'] = terms.readPrivilegeEnum.id
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def ignore(request, email):
@@ -317,15 +301,12 @@ def ignore(request, email):
         args['follower'] = objs[0].id
         args['follower_description'] = objs[0].getDescription()
         
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def userSettings(request):
     LogRecord.emit(request.user, 'pathAdvisor/userSettings/', None)
     
-    print ('1')
     template = loader.get_template(templateDirectory + 'userHome.html')
     args = {
         'user': request.user,
@@ -333,24 +314,18 @@ def userSettings(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    print ('2')
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
-    print ('3')
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
     
     args['state'] = 'settings/'
         
-    print ('4')
-    context = RequestContext(request, args)
-        
-    print ('5')
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 @ensure_csrf_cookie
 def signup(request, email=None):
@@ -371,9 +346,7 @@ def signup(request, email=None):
     else:
         args['state'] = 'signup/'
         
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 def acceptFollower(request, userPath=None):
     if request.method != "POST":
@@ -477,9 +450,7 @@ def addExperience(request, experienceID):
     
     args['state'] = 'addExperience%s' % experienceID
 
-    context = RequestContext(request, args)
-        
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
 def _getOrganizationChildren(organization, siteName, offeringName):
     site = None
@@ -567,7 +538,5 @@ def addToPathway(request):
 
     args['state'] = 'addToPathway'
 
-    context = RequestContext(request, args)
-    
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(args))
 
