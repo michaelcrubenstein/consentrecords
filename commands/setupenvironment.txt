@@ -47,3 +47,36 @@ pip3 install tzlocal
 # email_settings.py
 # local_settings.py
 # production_settings.py
+
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/base.py, 
+# DatabaseWrapper.__init function 
+# The _class properties need to be set before calling super and the
+# corresponding properties should not be set after.
+
+    def __init__(self, *args, **kwargs):
+        self.client_class = DatabaseClient
+        self.creation_class = DatabaseCreation
+        self.features_class = DatabaseFeatures
+        self.introspection_class = DatabaseIntrospection
+        self.validation_class = DatabaseValidation
+        self.ops_class = DatabaseOperations
+        
+        super(DatabaseWrapper, self).__init__(*args, **kwargs)
+        
+        try:
+            self._use_pure = self.settings_dict['OPTIONS']['use_pure']
+        except KeyError:
+            self._use_pure = True
+
+        if not self.use_pure:
+            self.converter = DjangoCMySQLConverter()
+        else:
+            self.converter = DjangoMySQLConverter()
+
+        # self.ops = DatabaseOperations(self)
+        # self.features = DatabaseFeatures(self)
+        # self.client = DatabaseClient(self)
+        # self.creation = DatabaseCreation(self)
+        # self.introspection = DatabaseIntrospection(self)
+        # self.validation = DatabaseValidation(self)
+
