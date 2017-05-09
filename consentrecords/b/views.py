@@ -54,7 +54,7 @@ def home(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -80,7 +80,7 @@ def showLines(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -103,7 +103,7 @@ def orgHome(request):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -126,7 +126,7 @@ def find(request):
     }
     
     if request.user.is_authenticated():
-        args['userID'] = Instance.getUserInstance(request.user).id
+        args['userID'] = Instance.getUserInstance(request.user).idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -165,14 +165,14 @@ def showInstances(request):
             'header': header,
             }
         if root:
-            argList["rootID"] = root.id
+            argList["rootID"] = root.idString
             argList["singularName"] = root._description
         
         if request.user.is_authenticated():
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-            argList['userID'] = user.id
+            argList['userID'] = user.idString
         
         return HttpResponse(template.render(argList))
     except Exception as e:
@@ -193,7 +193,7 @@ def showPathway(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -202,7 +202,7 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].idString
 
     return HttpResponse(template.render(args))
 
@@ -221,7 +221,7 @@ def showExperience(request, id):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -257,7 +257,7 @@ def accept(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -267,9 +267,9 @@ def accept(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
-        args['follower'] = objs[0].id
+        args['follower'] = objs[0].idString
         args['cell'] = TermNames.user
-        args['privilege'] = terms.readPrivilegeEnum.id
+        args['privilege'] = terms.readPrivilegeEnum.idString
 
     return HttpResponse(template.render(args))
 
@@ -288,7 +288,7 @@ def ignore(request, email):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -298,7 +298,7 @@ def ignore(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].id
+        args['follower'] = objs[0].idString
         args['follower_description'] = objs[0].getDescription()
         
     return HttpResponse(template.render(args))
@@ -407,7 +407,7 @@ def acceptFollower(request, userPath=None):
                     except Value.DoesNotExist:
                         ar, newValue = instancecreator.create(terms.accessRecord, user, terms.accessRecord, user.getNextElementIndex(terms.accessRecord), 
                             {TermNames.privilege: [{'instanceID': privilegeID}],
-                             followerField.getDescription(): [{'instanceID': follower.id}]}, nameLists, userInfo, transactionState)
+                             followerField.getDescription(): [{'instanceID': follower.idString}]}, nameLists, userInfo, transactionState)
     
                     # Remove any corresponding access requests.
                     vs = user.value_set.filter(field=terms.accessRequest,
@@ -443,7 +443,7 @@ def addExperience(request, experienceID):
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -519,19 +519,19 @@ def addToPathway(request):
         args['fbDescription'] = atText
 
     if organizationName:
-        args['organization'] = organization.id if organization else organizationName
+        args['organization'] = organization.idString if organization else organizationName
     if siteName:
-        args['site'] = site.id if site else siteName
+        args['site'] = site.idString if site else siteName
     if offeringName:
-        args['offering'] = offering.id if offering else offeringName
+        args['offering'] = offering.idString if offering else offeringName
     if serviceName:
-        args['service'] = service.id if service else serviceName
+        args['service'] = service.idString if service else serviceName
 
     if request.user.is_authenticated():
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
-        args['userID'] = user.id
+        args['userID'] = user.idString
     
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True

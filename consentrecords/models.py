@@ -89,6 +89,10 @@ class Instance(dbmodels.Model):
                 return "Deleted"
         except Description.DoesNotExist:
             return "Deleted"
+            
+    @property
+    def idString(self):
+        return self.id.hex if isinstance(self.id, uuid.UUID) else self.id
     
     @property    
     def _parentDescription(self):
@@ -213,7 +217,7 @@ class Instance(dbmodels.Model):
             field = terms[field]
         return self.value_set.filter(field=field, deleteTransaction__isnull=True).order_by('position')
     
-    # Returns a dictionary whose keys are field ids and whose values are arrays of
+    # Returns a dictionary whose keys are field id strings and whose values are arrays of
     # values contained by self.
     # userInfo is used to determine if the dictionary includes security field data.  
     def _groupValuesByField(self, vs, userInfo):
@@ -222,7 +226,7 @@ class Instance(dbmodels.Model):
         cache = _deferred(lambda: self._canAdminister(userInfo))
         for v in vs:
             if v.field_id not in terms.securityFieldIDs or cache.value:
-                values[v.field_id].append(v)
+                values[v.field_id.hex].append(v)
         return values
     
     def _getSubInstances(self, field):
@@ -340,7 +344,7 @@ class Instance(dbmodels.Model):
     # This method is called only for root instances that don't have containers.
     def getReferenceData(self, userInfo, language=None):
         data = {'id': None, 
-             'instanceID': self.id, 
+             'instanceID': self.idString, 
              'description': self.getDescription(language),
              'parentID': self.parent_id,
              'typeName': userInfo.getTypeName(self.typeID_id)}
@@ -362,7 +366,7 @@ class Instance(dbmodels.Model):
             # If there is a reference value, put in a duple with the referenceValue name and id.
             # Otherwise, put in the string value.
             if v.referenceValue:
-                d[v.field] = (v.referenceValue.description.text, v.referenceValue.id)
+                d[v.field] = (v.referenceValue.description.text, v.referenceValue.idString)
             else:
                 d[v.field] = v.stringValue
         return d
@@ -385,7 +389,7 @@ class Instance(dbmodels.Model):
                      "name" : name,
                      "nameID" : id,
                      "dataType" : TermNames.objectEnum,
-                     "dataTypeID" : terms.objectEnum.id,
+                     "dataTypeID" : terms.objectEnum.idString,
                      "capacity" : TermNames.uniqueValueEnum,
                      "ofKind" : name,
                      "ofKindID" : id}
@@ -414,7 +418,7 @@ class Instance(dbmodels.Model):
         if terms.name in values and terms.dataType in values:
             nameReference = values[terms.name]
             dataTypeReference = values[terms.dataType]
-            fieldData = {"id" : self.id, 
+            fieldData = {"id" : self.idString, 
                          "name" : nameReference[0],
                          "nameID" : nameReference[1],
                          "dataType" : dataTypeReference[0],
@@ -430,7 +434,7 @@ class Instance(dbmodels.Model):
             if terms.addObjectRule in values:
                 fieldData["objectAddRule"] = values[terms.addObjectRule][0]
             
-            if fieldData["dataTypeID"] == terms.objectEnum.id:
+            if fieldData["dataTypeID"] == terms.objectEnum.idString:
                 if terms.ofKind in values:
                     ofKindReference = values[terms.ofKind]
                     fieldData["ofKind"] = ofKindReference[0]
@@ -456,13 +460,13 @@ class Instance(dbmodels.Model):
         return [field._getFieldDataFromValues(Instance._sortValueDataByField(field.values), language) for field in fields]
 
     def _getCellValues(dataTypeID, values, userInfo, language=None):
-        if dataTypeID == terms.objectEnum.id:
+        if dataTypeID == terms.objectEnum.idString:
             return [v.getReferenceData(userInfo, language) for v in values]
-        elif dataTypeID == terms.translationEnum.id:
-            return [{"id": v.id, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
+        elif dataTypeID == terms.translationEnum.idString:
+            return [{"id": v.idString, "text": v.stringValue, "languageCode": v.languageCode} for v in values]
         else:
             # Default case is that each datum in this cell contains a unique value.
-            return [{"id": v.id, "text": v.stringValue} for v in values]
+            return [{"id": v.idString, "text": v.stringValue} for v in values]
             
     def _getCellData(self, fieldData, values, userInfo, language=None):
         if not fieldData:
@@ -519,12 +523,12 @@ class Instance(dbmodels.Model):
             else:
                 saObject = None
             if saObject:
-                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.id), None)
+                fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.idString), None)
                 if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.id)
+                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.idString)
                     fieldsData.append(fieldData)
                 parentData = [{'id': None, 
-                              'instanceID' : saObject.id,
+                              'instanceID' : saObject.idString,
                               'description': saObject.getDescription(language),
                               'position': 0,
                               'privilege': saObject.description.text}]
@@ -545,7 +549,7 @@ class Instance(dbmodels.Model):
                 
                 subFieldsData = fieldsDataDictionary[fieldData["ofKindID"]]
                 subValuesDict = subValuesDict or \
-                                dict((s.id, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, self.values)))  
+                                dict((s.idString, s) for s in filter(lambda s: s, map(lambda v: v.referenceValue, self.values)))  
                 
                 for d in cell["data"]:
                     # d["instanceID"] won't be in subValuesDict if it is a parent.
@@ -1009,6 +1013,10 @@ class Value(dbmodels.Model):
                                  str(self.position))
     
     @property
+    def idString(self):
+        return self.id.hex if isinstance(self.id, uuid.UUID) else self.id
+    
+    @property
     def objectValue(self):
         str(self.referenceValue) if self.referenceValue else self.stringValue
     
@@ -1032,7 +1040,7 @@ class Value(dbmodels.Model):
         
     def getReferenceData(self, userInfo, language=None):
         data = self.referenceValue.getReferenceData(userInfo, language)
-        data['id'] = self.id
+        data['id'] = self.idString
         data['position'] = self.position
         return data
     
@@ -1526,11 +1534,13 @@ class FieldsDataDictionary(dict):
         dict.__init__(self, *args, **kwargs)
     
     def getType(self, t):
-        if isinstance(t, str):
+        if isinstance(t, uuid.UUID):
             return next((key for key in self.keys() if key.id == t), None) or \
                    Instance.objects.get(pk=t)
-        else:
+        elif isinstance(t, Instance):
             return t
+        else:
+            raise ValueError("%s is not a type" % t)
     
     def __getitem__(self, t):
         typeInstance = self.getType(t)
@@ -1811,10 +1821,11 @@ class ObjectQuerySet:
                                         deleteTransaction__isnull=True)
             return wrapInstanceQuerySet(t, f), path[1:]
         elif terms.isUUID(path[0]):
+            pathID = uuid.UUID(path[0])
             if self.querySet:
-                return InstanceQuerySet(self.querySet.filter(pk=path[0], deleteTransaction__isnull=True)), path[1:]
+                return InstanceQuerySet(self.querySet.filter(pk=pathID, deleteTransaction__isnull=True)), path[1:]
             else:
-                return InstanceQuerySet(Instance.objects.filter(pk=path[0], deleteTransaction__isnull=True)), path[1:]
+                return InstanceQuerySet(Instance.objects.filter(pk=pathID, deleteTransaction__isnull=True)), path[1:]
         else:   # Path[0] is the name of a type.
             i = terms[path[0]]
             f = Instance.objects.filter(typeID=i, deleteTransaction__isnull=True)
