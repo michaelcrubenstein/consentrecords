@@ -140,7 +140,7 @@ def find(request):
     }
     
     if request.user.is_authenticated():
-        args['userID'] = Instance.getUserInstance(request.user).id
+        args['userID'] = Instance.getUserInstance(request.user).idString
         
     if settings.FACEBOOK_SHOW:
         args['facebookIntegration'] = True
@@ -179,7 +179,7 @@ def showInstances(request):
             'header': header,
             }
         if root:
-            argList["rootID"] = root.id
+            argList["rootID"] = root.idString
             argList["singularName"] = root._description
         
         if request.user.is_authenticated():
@@ -216,7 +216,7 @@ def showPathway(request, email):
     userInfo = UserInfo(request.user)
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
-        args['state'] = 'user/%s' % objs[0].id
+        args['state'] = 'user/%s' % objs[0].idString
 
     return HttpResponse(template.render(args))
 
@@ -281,9 +281,9 @@ def accept(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'accept'
-        args['follower'] = objs[0].id
+        args['follower'] = objs[0].idString
         args['cell'] = TermNames.user
-        args['privilege'] = terms.readPrivilegeEnum.id
+        args['privilege'] = terms.readPrivilegeEnum.idString
 
     return HttpResponse(template.render(args))
 
@@ -312,7 +312,7 @@ def ignore(request, email):
     objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
     if len(objs) > 0:
         args['state'] = 'ignore'
-        args['follower'] = objs[0].id
+        args['follower'] = objs[0].idString
         args['follower_description'] = objs[0].getDescription()
         
     return HttpResponse(template.render(args))
@@ -962,7 +962,7 @@ class api:
                 raise ValueError("the access token is not specified")
             accessToken = AccessToken.objects.get(token=accessTokenID)
         
-            userID = Instance.getUserInstance(accessToken.user).id
+            userID = Instance.getUserInstance(accessToken.user).idString
             results = {'userID': userID}
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -1116,7 +1116,7 @@ def submitNewUser(request):
         with transaction.atomic():
             results = userviews.newUserResults(request)
             userInstance = Instance.getUserInstance(request.user) or UserFactory.createUserInstance(request.user, propertyList)
-            results["user"] = { "instanceID": userInstance.id, "description" : userInstance.getDescription(None) }
+            results["user"] = { "instanceID": userInstance.idString, "description" : userInstance.getDescription(None) }
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error("%s" % traceback.format_exc())

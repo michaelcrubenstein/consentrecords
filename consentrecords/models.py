@@ -346,8 +346,8 @@ class Instance(dbmodels.Model):
         data = {'id': None, 
              'instanceID': self.idString, 
              'description': self.getDescription(language),
-             'parentID': self.parent_id,
-             'typeName': userInfo.getTypeName(self.typeID_id)}
+             'parentID': self.parent_id.hex,
+             'typeName': userInfo.getTypeName(self.typeID_id.hex)}
         privilege = self.getPrivilege(userInfo)
         if privilege:
             data["privilege"] = privilege.getDescription()
@@ -383,7 +383,7 @@ class Instance(dbmodels.Model):
     
     # For a parent field when getting data, construct this special field record
     # that can be used to display this field data.
-    def getParentReferenceFieldData(userInfo, id):
+    def _getParentReferenceFieldData(userInfo, id):
         name = userInfo.getTypeName(id)
         fieldData = {"id": "parent/" + id,
                      "name" : name,
@@ -498,9 +498,9 @@ class Instance(dbmodels.Model):
             while fp and fp.exists():
                 p = fp[0]
                 
-                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id), None)
+                fieldData = next((field for field in fieldsData if field["id"] == "parent/" + p.typeID_id.hex), None)
                 if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, p.typeID_id)
+                    fieldData = Instance._getParentReferenceFieldData(userInfo, p.typeID_id.hex)
                     fieldsData.append(fieldData)
             
                 parentData = p.getReferenceData(userInfo, language)
@@ -525,7 +525,7 @@ class Instance(dbmodels.Model):
             if saObject:
                 fieldData = next((field for field in fieldsData if field["id"] == terms.systemAccess.idString), None)
                 if not fieldData:
-                    fieldData = Instance.getParentReferenceFieldData(userInfo, terms.systemAccess.idString)
+                    fieldData = Instance._getParentReferenceFieldData(userInfo, terms.systemAccess.idString)
                     fieldsData.append(fieldData)
                 parentData = [{'id': None, 
                               'instanceID' : saObject.idString,
@@ -1537,6 +1537,9 @@ class FieldsDataDictionary(dict):
         if isinstance(t, uuid.UUID):
             return next((key for key in self.keys() if key.id == t), None) or \
                    Instance.objects.get(pk=t)
+        elif isinstance(t, str):
+            return next((key for key in self.keys() if key.id.hex == t), None) or \
+                   Instance.objects.get(pk=uuid.UUID(t))
         elif isinstance(t, Instance):
             return t
         else:
@@ -1591,12 +1594,12 @@ class UserInfo:
     def log(self, s):
         self._logs.append({"text": s, "timestamp": str(datetime.datetime.now())})
         
-    def getTypeName(self, typeID):
-        if typeID in self.typeNames:
-            return self.typeNames[typeID]
+    def getTypeName(self, idString):
+        if idString in self.typeNames:
+            return self.typeNames[idString]
         else:
-            description = Instance.objects.get(pk=typeID).description.text
-            self.typeNames[typeID] = description
+            description = Description.objects.get(instance_id=idString).text
+            self.typeNames[idString] = description
             return description
     
     def loadPrivilege(self, source_id):
