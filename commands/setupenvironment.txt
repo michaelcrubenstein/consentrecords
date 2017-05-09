@@ -41,3 +41,9 @@ pip3 install tzlocal
 # 3. From the File menu, choose Clone Repositories
 # 4. Choose consentrecords
 # 5. Choose the folder containing the Virtual Environment that will contain consentrecords.
+
+# Put a copy of the following files into consentrecords/consentrecords
+# These files are not in the repository because they contain security credentials
+# email_settings.py
+# local_settings.py
+# production_settings.py
