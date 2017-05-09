@@ -184,32 +184,16 @@ use consentrecordsdev;
 
 ##################################################################
 # Update to .bashrc and .bash_profile packages on development machine
+# These files are located in the user's home directory (such as michaelr)
 ##################################################################
-export PATH=/Library/Frameworks/Python.framework/Versions/3.4/bin:$PATH
-
-pip3 install virtualenv
-virtualenv ~/GitHub
-cd ~/GitHub
-. bin/activate
-pip3 install django
-
-##################################################################
-# Set the environment variable DJANGO_SETTINGS_MODULE for collectstatic operation
-##################################################################
-
-export DJANGO_SETTINGS_MODULE=consentrecords.settings
-export PYTHONPATH=~/eb_django_app/prod/consentrecords:$PYTHONPATH
-export PYTHONPATH=~/eb_django_app/prod/consentrecords/consentrecords:$PYTHONPATH
-
-export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+export PATH=/Library/Frameworks/Python.framework/Versions/3.6/bin:$PATH
 
 ##################################################################
 # How to bring up the development system from a reboot.
 ##################################################################
 cd ~/GitHub
-source ./bin/activate
-cd ~/GitHub
-export PYTHONPATH=~/GitHub/consentrecords/consentrecords:~/GitHub/consentrecords
+source bin/activate
+export PYTHONPATH=$VIRTUAL_ENV/consentrecords/consentrecords:$VIRTUAL_ENV/consentrecords
 export DJANGO_SETTINGS_MODULE=consentrecords.settings
 cd consentrecords
 python3 manage.py runserver --insecure

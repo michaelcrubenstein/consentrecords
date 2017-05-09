@@ -1,0 +1,37 @@
+# On Mac, Download the version of the python installer from www.python.org
+# This will create a version of the python environment in /Library/Frameworks/Python.Framekwork
+# After installing python 3.6 (which includes pip3)
+
+pip3 install virtualenv
+
+# Create a new directory and create a virtualenv there.
+mkdir python36env
+virtualenv -p /Library/Frameworks/Python.framework/Versions/3.6/bin/python3.6 python36env
+
+# Move to the new directory and activate the virtual environment.
+cd python36env
+source bin/activate
+
+# Install the aws command line interface (cli)
+pip3 install awscli
+
+# Install the aws elastic beanstalk command line interface
+pip3 install awsebcli
+
+pip3 install mysql-connector-python-rf
+
+pip3 install django
+
+pip3 install django-cors-headers
+
+pip3 install django-oauth-toolkit
+
+pip3 install django-oauth2-provider
+
+pip3 install djangorestframework
+
+pip3 install django-filter
+
+# Installs tzlocal, used to get the local timezone
+pip3 install tzlocal
+
