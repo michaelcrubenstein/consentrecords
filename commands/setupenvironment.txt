@@ -80,3 +80,13 @@ pip3 install tzlocal
         # self.introspection = DatabaseIntrospection(self)
         # self.validation = DatabaseValidation(self)
 
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/operations.py
+# DatabaseOperations.bulk_insert_sql function
+
+    def bulk_insert_sql(self, fields, placeholder_rows):
+        """
+        Format the SQL for bulk insert
+        """
+        placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
+        values_sql = ", ".join("(%s)" % sql for sql in placeholder_rows_sql)
+        return "VALUES " + values_sql
