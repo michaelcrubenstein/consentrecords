@@ -346,7 +346,7 @@ class Instance(dbmodels.Model):
         data = {'id': None, 
              'instanceID': self.idString, 
              'description': self.getDescription(language),
-             'parentID': self.parent_id.hex,
+             'parentID': self.parent_id and self.parent_id.hex,
              'typeName': userInfo.getTypeName(self.typeID_id.hex)}
         privilege = self.getPrivilege(userInfo)
         if privilege:
