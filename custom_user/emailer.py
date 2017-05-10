@@ -1,14 +1,14 @@
 from django.core.mail import send_mail
 
-from django.template import Context, loader
+from django.template import loader
 from consentrecords.models import *
 
 class Emailer():
     # Sends a reset password message to the specified email recipient.
     def sendResetPasswordEmail(recipientEMail, resetURL, hostURL):
-        context = Context({'resetURL': resetURL,
-                           'staticURL': hostURL + '/static/',
-                          })
+        context = {'resetURL': resetURL,
+                   'staticURL': hostURL + '/static/',
+                  }
 
         htmlTemplate = loader.get_template('email/resetPassword.html')
         txtTemplate = loader.get_template('email/resetPassword.txt')
@@ -31,12 +31,12 @@ class Emailer():
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, isAdmin, question, commentValue, hostURL):
         answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.id, commentValue.id)
-        context = Context({'salutation': " " + salutation if salutation else "", 
-                           'asker': follower.getDescription(),
-                           'experience': experienceValue.referenceValue.getDescription(),
-                           'question': question,
-                           'staticURL': hostURL + '/static/',
-                           'replyHRef': answerURL})
+        context = {'salutation': " " + salutation if salutation else "", 
+                   'asker': follower.getDescription(),
+                   'experience': experienceValue.referenceValue.getDescription(),
+                   'question': question,
+                   'staticURL': hostURL + '/static/',
+                   'replyHRef': answerURL}
         s = 'email/requestExperienceComment' + ('Admin' if isAdmin else '')
         htmlTemplate = loader.get_template(s+'.html')
         txtTemplate = loader.get_template(s+'.txt')
@@ -50,13 +50,13 @@ class Emailer():
     # following - an instance of the path of the user who owns the experience containing the question.
     def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, isAdmin, comment, hostURL):
         experienceHRef = hostURL + '/experience/%s/' % experienceValue.id
-        context = Context({'salutation': salutation, 
-                           'following': following.getDescription(),
-                           'experience': experienceValue.referenceValue.getDescription(),
-                           'question': comment.getSubInstance(terms['Comment Request']),
-                           'answer': comment.getSubValue(terms.text).stringValue,
-                           'staticURL': hostURL + '/static/',
-                           'experienceHRef': experienceHRef})
+        context = {'salutation': salutation, 
+                   'following': following.getDescription(),
+                   'experience': experienceValue.referenceValue.getDescription(),
+                   'question': comment.getSubInstance(terms['Comment Request']),
+                   'answer': comment.getSubValue(terms.text).stringValue,
+                   'staticURL': hostURL + '/static/',
+                   'experienceHRef': experienceHRef}
         s = 'email/answerExperienceQuestion' + ('Admin' if isAdmin else '')
         htmlTemplate = loader.get_template(s+'.html')
         txtTemplate = loader.get_template(s+'.txt')
@@ -70,10 +70,10 @@ class Emailer():
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     def sendSuggestExperienceByTagEmail(salutation, recipientEMail, tag, isAdmin, hostURL):
         answerURL = '%s/add/?m=%s' % (hostURL, tag.getDescription())
-        context = Context({'salutation': " " + salutation if salutation else "", 
-                           'tag': tag.getDescription(),
-                           'staticURL': hostURL + '/static/',
-                           'href': answerURL})
+        context = {'salutation': " " + salutation if salutation else "", 
+                   'tag': tag.getDescription(),
+                   'staticURL': hostURL + '/static/',
+                   'href': answerURL}
         s = 'email/suggestExperienceByTag' + ('Admin' if isAdmin else '')
         htmlTemplate = loader.get_template(s+'.html')
         txtTemplate = loader.get_template(s+'.txt')

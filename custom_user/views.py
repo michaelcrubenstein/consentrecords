@@ -24,10 +24,10 @@ def signin(request):
     
     backURL = request.GET.get(u'backURL', "/")
         
-    context = RequestContext(request, {
+    args = {
         'backURL' : backURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can specify an email address for 
 # resetting their password.
@@ -40,11 +40,11 @@ def forgotPassword(request):
     backURL = request.GET.get('backURL', '/')
     nextURL = request.GET.get('nextURL', '/')
         
-    context = RequestContext(request, {
+    args = {
         'backURL': backURL,
         'nextURL': nextURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can change their password.
 @ensure_csrf_cookie
@@ -55,11 +55,11 @@ def password(request):
     template = loader.get_template('custom_user/password.html')
     backURL = request.GET.get('back', '/')
         
-    context = RequestContext(request, {
+    args = {
         'user': request.user,
         'backURL': backURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Displays a web page in which a user can specify a new password based on a key.
 @ensure_csrf_cookie
@@ -69,10 +69,10 @@ def passwordReset(request):
     template = loader.get_template('custom_user/passwordreset.html')
     resetKey = request.GET.get('key', "")
         
-    context = RequestContext(request, {
+    args = {
         'resetkey': resetKey
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
 
 # Creates a record so that a user can reset their password via email.
 def resetPassword(request):
@@ -150,11 +150,11 @@ def signup(request):
     backURL = request.GET.get('backURL', '/')
     nextURL = request.GET.get('nextURL', '/')
 
-    context = RequestContext(request, {
+    args = {
         'backURL' : backURL,
         'nextURL' : nextURL,
-    })
-    return HttpResponse(template.render(context))
+    }
+    return HttpResponse(template.render(args))
     
 class AccountDisabledError(ValueError):
     def __str__(self):
