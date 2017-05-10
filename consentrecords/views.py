@@ -733,25 +733,26 @@ def requestExperienceComment(request):
                                 recipient, terms['notification'], -1, 
                                 notificationData, nameLists, userInfo, transactionState, instancecreator.checkCreateNotificationAccess)
 
+
+                            typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
+                            typeDuples = map(lambda t: (t, t.getFieldsData(language)), typeset)
+                            fieldsDataDictionary = FieldsDataDictionary(typeDuples, language=language)
+                            
                             if commentsValue:
-                                typeset = frozenset([terms['Comments'], terms['Comment'], terms['Comment Request'], ])
-                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
-                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=commentsValue.id), [], 'referenceValue__', userInfo)
-                                data = vFilter[0].getData(['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vqs = ValueQuerySet(Value.objects.filter(id=commentsValue.id)).select_related([], userInfo)
+                                data = vqs.querySet[0].getData(['Comment/Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                commentData = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
+                                vqs = ValueQuerySet(Value.objects.filter(id=v.id)).select_related(['Comment Request'], userInfo)
+                                commentData = vqs.querySet[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
                                 
                                 data['cells'][0]['data'] = [commentData]
-                                results = {'fields': fieldsDataDictionary.getData(), 'Comments': data}
                             else:
-                                typeset = frozenset([terms['Comment'], terms['Comment Request'], ])
-                                fieldsDataDictionary = FieldsDataDictionary(typeset, language)
                                 # Get the new value along with its subdata (v, above, only has the value)
-                                vFilter = InstanceQuerySet.selectRelatedData(Value.objects.filter(id=v.id), ['Comment Request'], 'referenceValue__', userInfo)
-                                data = vFilter[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
-                                results = {'fields': fieldsDataDictionary.getData(), 'Comment': data}
+                                vqs = ValueQuerySet(Value.objects.filter(id=v.id)).select_related(['Comment Request'], userInfo)
+                                data = vqs.querySet[0].getData(['Comment Request'], fieldsDataDictionary, language, userInfo)
+                            
+                            results = {'fields': fieldsDataDictionary.getData(typeset), 'Comment': data}
                     else:
                         raise RuntimeError('the requestor is unrecognized')
                 else:
