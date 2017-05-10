@@ -140,7 +140,7 @@ class Instance(dbmodels.Model):
                 value = f[0]
                 return self.addReferenceValue(field, value, position, transactionState)
             else:
-                raise RuntimeError("specified value is not an Instance or a dictionary with an instanceID")
+                raise RuntimeError("%s is not an Instance or a dictionary with an instanceID" % value)
         elif dt==terms.translationEnum:
             return self.addTranslationValue(field, value, position, transactionState)
         else:
