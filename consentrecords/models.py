@@ -1005,6 +1005,13 @@ class Value(dbmodels.Model):
     transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
     deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedValue', db_index=True, null=True, editable=True)
     
+    class Meta:
+        indexes = [
+            dbmodels.Index(fields=['field', 'stringValue', 'languageCode']),
+            dbmodels.Index(fields=['field', 'referenceValue']),
+            dbmodels.Index(fields=['instance', 'field']),
+        ]
+
     def __str__(self):
         d = str(self.referenceValue) if self.referenceValue else self.stringValue
         return "%s[%s:%s]@%s" % (str(self.instance), 
