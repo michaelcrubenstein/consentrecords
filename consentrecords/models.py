@@ -1555,8 +1555,7 @@ class FieldsDataDictionary(dict):
     
     def getData(self, types):
         values = map(lambda t: self[t], types)
-        fds = list(itertools.chain.from_iterable(values))
-        return fds
+        return list(itertools.chain.from_iterable(self.values()))
         
 class UserInfo:
     def __init__(self, authUser):
