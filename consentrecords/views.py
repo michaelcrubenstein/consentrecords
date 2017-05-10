@@ -932,7 +932,7 @@ class api:
                             instanceID = newInstance.idString
                         else:
                             item = container.addValue(field, c, newIndex, userInfo, transactionState)
-                            instanceID = item.referenceValue_id.hex
+                            instanceID = item.referenceValue_id and item.referenceValue_id.hex
                             # Handle special cases that should occur when adding a new value.
                             api.valueAdded(item, nameLists, userInfo, transactionState, hostURL)
 
