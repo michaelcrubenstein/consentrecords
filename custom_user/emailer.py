@@ -30,7 +30,7 @@ class Emailer():
         
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     def sendRequestExperienceCommentEmail(senderEMail, salutation, recipientEMail, experienceValue, follower, isAdmin, question, commentValue, hostURL):
-        answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.id, commentValue.id)
+        answerURL = hostURL + '/experience/%s/comment/%s/' % (experienceValue.idString, commentValue.idString)
         context = {'salutation': " " + salutation if salutation else "", 
                    'asker': follower.getDescription(),
                    'experience': experienceValue.referenceValue.getDescription(),
@@ -49,7 +49,7 @@ class Emailer():
     # Sends a message saying that the specified experiement has a new question to the specified email recipient.
     # following - an instance of the path of the user who owns the experience containing the question.
     def sendAnswerExperienceQuestionEmail(salutation, recipientEMail, experienceValue, following, isAdmin, comment, hostURL):
-        experienceHRef = hostURL + '/experience/%s/' % experienceValue.id
+        experienceHRef = hostURL + '/experience/%s/' % experienceValue.idString
         context = {'salutation': salutation, 
                    'following': following.getDescription(),
                    'experience': experienceValue.referenceValue.getDescription(),
