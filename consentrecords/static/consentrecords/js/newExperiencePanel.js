@@ -1612,7 +1612,7 @@ var SiteSearchView = (function() {
 					path = 'Site[ancestor:name*="{1}"]';
 					if (this.experience.services[0].pickedObject)
 					{
-						path += '[Offerings>Offering[Service*={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
+						path += '[Offerings>Offering[Service={0}]]'.format(this.experience.services[0].pickedObject.getInstanceID());
 					}
 				}
 				else if (this.typeName === "Organization")
