@@ -149,14 +149,14 @@ class Instance(dbmodels.Model):
     def addStringValue(self, field, value, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid", position)
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, stringValue = value, position=position, transaction=transactionState.transaction)
+        return Value.objects.create(instance=self, field=field, stringValue = value, position=position, transaction=transactionState.transaction)
 
     def addTranslationValue(self, field, value, position, transactionState):
         if position < 0:
             raise ValueError("the position %s is not valid", position)
         if not isinstance(value, dict):
             raise ValueError("the value(%s) is not a dictionary" % str(value))
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, 
+        return Value.objects.create(instance=self, field=field, 
                                     stringValue = value["text"], languageCode = value["languageCode"],
                                     position=position, transaction=transactionState.transaction)
 
@@ -181,7 +181,7 @@ class Instance(dbmodels.Model):
         if field == terms.specialAccess and instance == terms.customAccessEnum:
             self.updateDescendentAccessSources(self)
             
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
+        return Value.objects.create(instance=self, field=field, referenceValue=instance, position=position, transaction=transactionState.transaction)
 
     def createMissingSubValue(self, field, value, position, transactionState):
         if position < 0:
@@ -1068,7 +1068,7 @@ class Value(dbmodels.Model):
     # All existing facts that identify the value are marked as deleted.            
     def updateIndex(self, newIndex, transactionState):
         self.markAsDeleted(transactionState)
-        return Value.objects.create(id=uuid.uuid4().hex, instance=self.instance, 
+        return Value.objects.create(instance=self.instance, 
             field=self.field, 
             stringValue = self.stringValue, 
             referenceValue = self.referenceValue, 
