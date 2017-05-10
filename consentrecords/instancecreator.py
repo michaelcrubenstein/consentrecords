@@ -80,9 +80,11 @@ def checkCreateCommentAccess(typeInstance, parent, parentField, userInfo):
 
 ### Ensure that the current user has permission to perform this operation.
 def checkCreateNotificationAccess(typeInstance, parent, parentField, userInfo):
-    if typeInstance in [terms['notification']] and parentField == terms['notification'] and \
-        parent.getPrivilege(userInfo) is not None:
-        return
+    if typeInstance in [terms['notification']] and parentField == terms['notification']:
+    	if parent.getPrivilege(userInfo):
+    	    return
+    	else:
+    	    raise RuntimeError("the user or group is unrecognized")
     elif parent:
         parent.checkWriteAccess(userInfo, parentField)
     else:
@@ -95,6 +97,8 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
 #     logger.error("propertyList: %s" % str(propertyList))
     if not typeInstance:
         raise ValueError("typeInstance is null")
+    elif not isinstance(typeInstance, Instance):
+        raise ValueError("typeInstance is not an instance: %s" % typeInstance)
     if parent and not parentField:
         raise ValueError("parent is specified but parentField is not")
     if parent and parentField:

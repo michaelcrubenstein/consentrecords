@@ -419,7 +419,7 @@ def acceptFollower(request, userPath=None):
                     data = newValue.getReferenceData(userInfo, language)
                     results = {'object': data} 
         else:
-            raise RuntimeError('the user or group to accept is unrecognized')
+            raise RuntimeError('the user or group is unrecognized')
             
     except Exception as e:
         logger = logging.getLogger(__name__)
