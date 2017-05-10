@@ -1610,10 +1610,12 @@ class UserInfo:
     
     def loadPrivilege(self, source_id):
         try:
-            minPrivilege = Value.objects.get(instance=source_id,
-                                                  field=terms.publicAccess, deleteTransaction__isnull=True)\
-                                   .select_related('referenceValue__description').referenceValue
-        except Exception:
+            minPrivilege = Value.objects.select_related('referenceValue__description')\
+                                .get(instance=source_id,
+                                     field=terms.publicAccess, 
+                                     deleteTransaction__isnull=True)\
+                                   .referenceValue
+        except Value.DoesNotExist:
             minPrivilege = None
     
         if not self.instance:
