@@ -1769,13 +1769,13 @@ cr.postError = function(jqXHR, textStatus, errorThrown)
 
 cr.postFailed = function(jqXHR, textStatus, errorThrown, failFunction)
 	{
-		failFunction(cr.postError(jqXHR, textStatus, errorThrown));
+		failFunction(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
 	};
 
 cr.thenFail = function(jqXHR, textStatus, errorThrown)
 	{
 		var r2 = $.Deferred();
-		r2.reject(cr.postError(jqXHR, textStatus, errorThrown));
+		r2.reject(new Error(cr.postError(jqXHR, textStatus, errorThrown)));
 		return r2;
 	};
 	
