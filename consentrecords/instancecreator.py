@@ -20,7 +20,7 @@ def _addElementData(parent, data, fieldData, nameLists, userInfo, transactionSta
         if not isinstance(d, dict):
             raise RuntimeError("%s field of type %s is not a dictionary: %s" % (field, parent.typeID, str(d)))
             
-        if fieldData["dataTypeID"] == terms.objectEnum.id:
+        if fieldData["dataTypeID"] == terms.objectEnum.idString:
             if "objectAddRule" in fieldData and fieldData["objectAddRule"] == TermNames.pickObjectRuleEnum:
                 if "instanceID" in d:
                     # This is a reference to an object.
@@ -30,7 +30,7 @@ def _addElementData(parent, data, fieldData, nameLists, userInfo, transactionSta
                     values = list(userInfo.findFilter(InstanceQuerySet(Instance.objects.filter(pk=d["instanceID"]))))
                     if len(values):
                         parent.addReferenceValue(field, values[0], i, transactionState)
-                    elif d["instanceID"] == parent.id and field == terms.primaryAdministrator:
+                    elif d["instanceID"] == parent.idString and field == terms.primaryAdministrator:
                         # This is a special case of setting up the primary administrator. This
                         # is necessary when creating a user so that it can be bootstrapped.
                         parent.addReferenceValue(field, parent, i, transactionState)
@@ -113,11 +113,9 @@ def create(typeInstance, parent, parentField, position, propertyList, nameLists,
     # add values to the user.
     if typeInstance==terms.user:
         if TermNames.primaryAdministrator not in propertyList:
-            propertyList[TermNames.primaryAdministrator] = {"instanceID": item.id}
+            propertyList[TermNames.primaryAdministrator] = {"instanceID": item.idString}
         # Add userID explicitly in case it isn't part of the configuration.
-        userID = transactionState.user.id
-        if isinstance(userID, uuid.UUID):
-            userID = userID.hex    # SQLite
+        userID = transactionState.user.id.hex
         item.addStringValue(terms[TermNames.userID], userID, 0, transactionState)
         # Set up the userInfo explicitly if it isn't already set up.
         if not userInfo.instance:
@@ -218,12 +216,12 @@ def addNamedChild(parent, field, type, nameField, fieldData, text, languageCode,
     if len(children):
         return children[0].referenceValue
     else:
-        if fieldData['nameID'] != nameField.id:
-            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
+        if fieldData['nameID'] != nameField.idString:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.idString))
         if fieldData['dataType'] == TermNames.translationEnum:
-            propertyList = {nameField.id: [{'text': text, 'languageCode': languageCode}]}
+            propertyList = {nameField.idString: [{'text': text, 'languageCode': languageCode}]}
         else:
-            propertyList = {nameField.id: [{'text': text}]}
+            propertyList = {nameField.idString: [{'text': text}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, userInfo, transactionState)
         return child
 
@@ -232,9 +230,9 @@ def addNamedByReferenceChild(parent, field, type, nameField, fieldData, referenc
     if len(children):
         return children[0].referenceValue
     else:
-        if fieldData['nameID'] != nameField.id:
-            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.id))
-        propertyList = {nameField.id: [{'instanceID': referenceValue.id}]}
+        if fieldData['nameID'] != nameField.idString:
+            raise RuntimeError('Mismatch: %s/%s' % (fieldData['nameID'], nameField.idString))
+        propertyList = {nameField.idString: [{'instanceID': referenceValue.idString}]}
         child, newValue = create(type, parent, field, -1, propertyList, nameList, userInfo, transactionState)
         return child
 
