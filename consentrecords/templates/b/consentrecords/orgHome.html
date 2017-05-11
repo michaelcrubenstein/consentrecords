@@ -1192,6 +1192,11 @@
 						addInquiryPanelDiv.appendSearchBar(show_users);
 
 						var panel2Div = addInquiryPanelDiv.appendScrollArea();
+						var section = panel2Div.append('section')
+							.classed('cell view multiple', true);
+							
+						var itemList = crf.appendItemList(section)
+							.classed('hover-items', true);
 				
 						function show_users()
 						{
@@ -1200,7 +1205,7 @@
 				
 							if (val.length == 0)
 							{
-								panel2Div.selectAll("section").remove();
+								itemList.selectAll('li').remove();
 							}
 							else
 							{
@@ -1211,9 +1216,9 @@
 								{
 									if (inputBox.value.toLocaleLowerCase() == startVal)
 									{
-										panel2Div.selectAll("section").remove();
-										var sections = panel2Div.appendSections(userObjects);
-										var buttons = appendViewButtons(sections)
+										itemList.selectAll('li').remove();
+										var items = appendItems(itemList, userObjects);
+										var buttons = appendViewButtons(items)
 											.on("click", function(user) {
 												pickedUser = user;
 												var _thisButton = this;
@@ -1233,15 +1238,15 @@
 																function(cells)
 																{
 																	var inquiryCell = cells_get_cell_by_name(cells, "user");
-																	
+																
 																	var newValue = inquiryCell.addNewValue();
 																	newValue.instance(new cr.Instance());
-																	
+																
 																	cr.updateValues([{
 																			containerUUID: inquiriesInstance.getInstanceID(),
 																			field: inquiryCell.field.name, 
-						   													instanceID: pickedUser.getInstanceID(),
-						   													description: pickedUser.getDescription()
+																			instanceID: pickedUser.getInstanceID(),
+																			description: pickedUser.getDescription()
 																		}], [newValue])
 																		.then(function()
 																		   {
@@ -1264,16 +1269,7 @@
 												}
 												d3.event.preventDefault();
 											});
-										var infoButtons =  buttons.insert("div", ":first-child")
-											.classed("info-button right-fixed-width-div", true)
-											.on("click", function(user) {
-												if (prepareClick('click', 'show user info: ' + user.getDescription()))
-												{
-													showUser(user, addInquiryPanelDiv.node());
-												}
-												d3.event.preventDefault();
-											});
-										drawInfoButtons(infoButtons);
+										appendInfoButtons(items);
 									}
 								}
 					
