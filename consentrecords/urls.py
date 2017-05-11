@@ -22,7 +22,7 @@ from consentrecords import views
 urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
     url(r'^accounts/login/$', auth_views.login, name='authLogin'),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^user/', include('custom_user.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^developer/', include('developer.urls')),
