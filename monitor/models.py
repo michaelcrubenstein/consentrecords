@@ -8,7 +8,7 @@ class LogRecord(models.Model):
     message = models.TextField(null=True)
     
     def emit(user, name, message):
-        if user.is_authenticated():
+        if user.is_authenticated:
             LogRecord.objects.create(user=user, name=name, message=message)
         else:
             LogRecord.objects.create(user=None, name=name, message=message)

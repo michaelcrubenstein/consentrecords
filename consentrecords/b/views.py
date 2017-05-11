@@ -47,7 +47,7 @@ def home(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -73,7 +73,7 @@ def showLines(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -96,7 +96,7 @@ def orgHome(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -122,7 +122,7 @@ def find(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         args['userID'] = Instance.getUserInstance(request.user).idString
         
     if settings.FACEBOOK_SHOW:
@@ -165,7 +165,7 @@ def showInstances(request):
             argList["rootID"] = root.idString
             argList["singularName"] = root._description
         
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -186,7 +186,7 @@ def showPathway(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -214,7 +214,7 @@ def showExperience(request, id):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -250,7 +250,7 @@ def accept(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -281,7 +281,7 @@ def ignore(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -311,7 +311,7 @@ def userSettings(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -359,7 +359,7 @@ def acceptFollower(request, userPath=None):
         else:
             followerPath = followerID
         
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return HttpResponseBadRequest(reason="user is not authenticated")
             
         userInfo = UserInfo(request.user)
@@ -436,7 +436,7 @@ def addExperience(request, experienceID):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -524,7 +524,7 @@ def addToPathway(request):
     if serviceName:
         args['service'] = service.idString if service else serviceName
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())

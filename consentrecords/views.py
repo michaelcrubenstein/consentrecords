@@ -62,7 +62,7 @@ def home(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -88,7 +88,7 @@ def showLines(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -111,7 +111,7 @@ def orgHome(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -137,7 +137,7 @@ def find(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         args['userID'] = Instance.getUserInstance(request.user).idString
         
     if settings.FACEBOOK_SHOW:
@@ -180,7 +180,7 @@ def showInstances(request):
             argList["rootID"] = root.idString
             argList["singularName"] = root._description
         
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -201,7 +201,7 @@ def showPathway(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -229,7 +229,7 @@ def showExperience(request, id):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -265,7 +265,7 @@ def accept(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -296,7 +296,7 @@ def ignore(request, email):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -326,7 +326,7 @@ def userSettings(request):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -369,7 +369,7 @@ def acceptFollower(request, userPath=None):
         followerPath = request.POST["follower"]
         privilegeID = request.POST["privilege"]
         
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return HttpResponseBadRequest(reason="user is not authenticated")
             
         userInfo = UserInfo(request.user)
@@ -454,7 +454,7 @@ def requestAccess(request):
         followingPath = request.POST["following"]
         followerPath = request.POST["follower"]
         
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
@@ -534,7 +534,7 @@ def addExperience(request, experienceID):
         'jsversion': settings.JS_VERSION,
     }
     
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -622,7 +622,7 @@ def addToPathway(request):
     if serviceName:
         args['service'] = service.idString if service else serviceName
 
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = Instance.getUserInstance(request.user)
         if not user:
             return HttpResponse("user is not set up: %s" % request.user.get_full_name())
@@ -649,7 +649,7 @@ def requestExperienceComment(request):
         if len(question) == 0:
             return HttpResponseBadRequest(reason="question text is not specified")
         
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             user = Instance.getUserInstance(request.user)
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
@@ -1025,7 +1025,7 @@ def updateValues(request):
     if request.method != "POST":
         raise Http404("updateValues only responds to POST methods")
     
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         raise PermissionDenied
     
     hostURL = ("https://" if request.is_secure() else "http://") + request.get_host();
@@ -1041,11 +1041,11 @@ def handleURL(request, urlPath=None):
     if request.method == 'GET':
         return api.getData(request.user, urlPath, request.GET)
     elif request.method == 'DELETE':
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             raise PermissionDenied
         return api.delete(request.user, urlPath)
     elif request.method == 'POST':
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             raise PermissionDenied
         return api.createInstance(request.user, urlPath, request.POST)
     else:

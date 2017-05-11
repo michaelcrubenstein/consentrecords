@@ -2,6 +2,7 @@ from django.db import models as dbmodels
 from django.db.models import F, Q, Prefetch
 from django.contrib.auth.models import AnonymousUser
 
+import html
 import html.parser
 import logging
 from functools import reduce
@@ -11,7 +12,7 @@ from consentrecords.models import Instance, Value, Terms, terms, UserInfo, Insta
 
 def _tokenize(path):
     html_parser = html.parser.HTMLParser()
-    unescaped = html_parser.unescape(path)
+    unescaped = html.unescape(path)
     tokens = cssparser.tokenize(unescaped)
     a, remainder = cssparser.cascade(tokens)
     return a
