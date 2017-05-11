@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='description',
             name='instance',
-            field=models.OneToOneField(to='consentrecords.Instance', editable=False),
+            field=models.OneToOneField(to='consentrecords.Instance', editable=False, on_delete=models.CASCADE),
         ),
     ]

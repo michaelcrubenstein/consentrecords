@@ -15,12 +15,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='grant',
             name='instance',
-            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Instance'),
+            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Instance', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='grantee',
             name='grant',
-            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Grant'),
+            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Grant', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='grant',
@@ -35,6 +35,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='grantee',
             name='instance',
-            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Instance'),
+            field=models.ForeignKey(null=True, editable=False, to='consentrecords.Instance', on_delete=models.CASCADE),
         ),
     ]

@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instance',
             name='parentID',
-            field=models.ForeignKey(db_column='parentid', editable=False, to='consentrecords.Instance', null=True),
+            field=models.ForeignKey(db_column='parentid', editable=False, to='consentrecords.Instance', null=True, on_delete=models.CASCADE),
         ),
     ]

@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instance',
             name='parent',
-            field=models.ForeignKey(editable=False, null=True, related_name='parentInstance', to='consentrecords.Instance', db_column='parentid'),
+            field=models.ForeignKey(editable=False, null=True, related_name='parentInstance', to='consentrecords.Instance', db_column='parentid', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='instance',
             name='typeID',
-            field=models.ForeignKey(editable=False, related_name='typeInstance', db_column='typeid', to='consentrecords.Instance'),
+            field=models.ForeignKey(editable=False, related_name='typeInstance', db_column='typeid', to='consentrecords.Instance', on_delete=models.CASCADE),
         ),
     ]

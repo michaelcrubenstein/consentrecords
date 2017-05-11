@@ -14,21 +14,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='grant',
             name='instance',
-            field=models.ForeignKey(to='consentrecords.Instance', editable=False),
+            field=models.ForeignKey(to='consentrecords.Instance', editable=False, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='grant',
             name='privilege',
-            field=models.ForeignKey(to='consentrecords.Instance', editable=False, related_name='privilegeInstances'),
+            field=models.ForeignKey(to='consentrecords.Instance', editable=False, related_name='privilegeInstances', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='grantee',
             name='grant',
-            field=models.ForeignKey(to='consentrecords.Grant', editable=False),
+            field=models.ForeignKey(to='consentrecords.Grant', editable=False, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='grantee',
             name='instance',
-            field=models.ForeignKey(to='consentrecords.Instance', editable=False),
+            field=models.ForeignKey(to='consentrecords.Instance', editable=False, on_delete=models.CASCADE),
         ),
     ]
