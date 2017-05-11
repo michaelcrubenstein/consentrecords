@@ -1228,8 +1228,9 @@
 													{
 														var inquiriesCell = session.getCell("Inquiries");
 														var inquiriesInstances = inquiriesCell.data;
-														if (inquiriesInstances.length == 0)
-															syncFailFunction("Session Inquiries are not set up");
+														if (inquiriesInstances.length == 0 ||
+															inquiriesInstances[0].getInstanceID() == null)
+															cr.syncFail("Session Inquiries are not set up");
 														else
 														{
 															var inquiriesInstance = inquiriesInstances[0].instance();
