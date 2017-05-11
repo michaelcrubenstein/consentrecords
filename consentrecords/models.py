@@ -30,14 +30,14 @@ def combineTerms(t1, t2):
     
 class Transaction(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False)
+    user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     creation_time = dbmodels.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)
     
     def __str__(self):
         return str(self.creation_time)
     
     def createTransaction(user):
-        if not user.is_authenticated():
+        if not user.is_authenticated:
             raise RuntimeError('current user is not authenticated')
         if not user.is_active:
             raise RuntimeError('current user is not active')
@@ -73,12 +73,12 @@ class _deferred():
 
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False)
-    parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False)
-    parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True)
-    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
-    accessSource = dbmodels.ForeignKey('consentrecords.Instance', related_name='accessTargets', db_index=True, null=True, editable=True)
-    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True)
+    typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    parent = dbmodels.ForeignKey('consentrecords.Instance', related_name='children', db_column='parentid', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    parentValue = dbmodels.OneToOneField('consentrecords.Value', related_name='valueChild', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    accessSource = dbmodels.ForeignKey('consentrecords.Instance', related_name='accessTargets', db_index=True, null=True, editable=True, on_delete=dbmodels.CASCADE)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True, on_delete=dbmodels.CASCADE)
         
     def __str__(self):
         try:
@@ -996,14 +996,14 @@ class NameList():
     
 class Value(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.ForeignKey(Instance, db_index=True, editable=False)
-    field = dbmodels.ForeignKey(Instance, related_name='fieldValues', db_column='fieldid', db_index=True, editable=False)
+    instance = dbmodels.ForeignKey(Instance, db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    field = dbmodels.ForeignKey(Instance, related_name='fieldValues', db_column='fieldid', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     stringValue = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-    referenceValue = dbmodels.ForeignKey(Instance, related_name='referenceValues', db_index=True, null=True, editable=False)
+    referenceValue = dbmodels.ForeignKey(Instance, related_name='referenceValues', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     position = dbmodels.IntegerField(editable=False)
-    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False)
-    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedValue', db_index=True, null=True, editable=True)
+    transaction = dbmodels.ForeignKey(Transaction, db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedValue', db_index=True, null=True, editable=True, on_delete=dbmodels.CASCADE)
     
     class Meta:
         indexes = [
@@ -1141,7 +1141,7 @@ class Value(dbmodels.Model):
 # The description of an instance.        
 class Description(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False)
+    instance = dbmodels.OneToOneField('consentrecords.Instance', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     text = dbmodels.CharField(max_length=255, db_index=True, editable=True)
 
     def __str__(self):
@@ -1151,8 +1151,8 @@ class Description(dbmodels.Model):
 # other instances.
 class Containment(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False)
-    descendent = dbmodels.ForeignKey('consentrecords.Instance', related_name='ancestors', db_index=True, editable=False)
+    ancestor = dbmodels.ForeignKey('consentrecords.Instance', related_name='descendents', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    descendent = dbmodels.ForeignKey('consentrecords.Instance', related_name='ancestors', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     
     def __str__(self):
         return "%s -> %s" % (self.ancestor, self.descendent)
@@ -1567,7 +1567,7 @@ class FieldsDataDictionary(dict):
 class UserInfo:
     def __init__(self, authUser):
         self.authUser = authUser
-        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated() else None
+        self.instance = Instance.getUserInstance(authUser) if authUser.is_authenticated else None
         self._findValueFilter = None
         self._readValueFilter = None
         self._logs = []
@@ -1583,7 +1583,7 @@ class UserInfo:
         
     @property
     def is_authenticated(self):
-        return self.authUser.is_authenticated()
+        return self.authUser.is_authenticated
 
     def findFilter(self, resultSet):
         return resultSet.applyFindFilter(self)
