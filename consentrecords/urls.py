@@ -23,7 +23,6 @@ urlpatterns = [
     url('^', include('django.contrib.auth.urls')),
     url(r'^accounts/login/$', auth_views.login, name='authLogin'),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^user/', include('custom_user.urls')),
     url(r'^monitor/', include('monitor.urls')),
     url(r'^developer/', include('developer.urls')),
@@ -55,11 +54,7 @@ urlpatterns = [
     url(r'^user/requestAccess/', views.requestAccess, name='requestAccess'),
     url(r'^user/requestExperienceComment/', views.requestExperienceComment, name='requestExperienceComment'),
 
-    url(r'^local/getuserid/', views.getUserID),
-    
     url(r'^local/updatevalues/', views.updateValues, name='updateValues'),
-    
-    url(r'^api/getuserid/', views.getUserID),
     
     url(r'^api/updatevalues/', views.ApiEndpoint.as_view()),
     url(r'^api/addvalue/', views.ApiEndpoint.as_view()),

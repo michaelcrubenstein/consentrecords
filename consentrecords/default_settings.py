@@ -28,7 +28,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'oauth2_provider',
     'corsheaders',
     'consentrecords',
     'custom_user',
@@ -38,7 +37,6 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'oauth2_provider.backends.OAuth2Backend',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -51,7 +49,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'oauth2_provider.middleware.OAuth2TokenMiddleware',
 )
 
 ROOT_URLCONF = 'consentrecords.urls'

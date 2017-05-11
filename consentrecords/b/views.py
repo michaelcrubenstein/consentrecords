@@ -7,9 +7,6 @@ from django.template import RequestContext, loader
 from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
 
-from oauth2_provider.views.generic import ProtectedResourceView
-from oauth2_provider.models import AccessToken
-
 from pathlib import Path
 import os
 import json

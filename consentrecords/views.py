@@ -4,11 +4,9 @@ from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse, JsonResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, render_to_response
 from django.template import RequestContext, loader
+from django.views import View
 from django.views.decorators.csrf import requires_csrf_token, ensure_csrf_cookie
 from django.core.exceptions import PermissionDenied
-
-from oauth2_provider.views.generic import ProtectedResourceView
-from oauth2_provider.models import AccessToken
 
 from pathlib import Path
 import os
@@ -955,23 +953,6 @@ class api:
             logger.error("%s" % traceback.format_exc())
             return HttpResponseBadRequest(reason=str(e))
 
-    def getUserID(user, data):
-        accessTokenID = data.get('access_token', None)
-    
-        try:
-            if not accessTokenID:
-                raise ValueError("the access token is not specified")
-            accessToken = AccessToken.objects.get(token=accessTokenID)
-        
-            userID = Instance.getUserInstance(accessToken.user).idString
-            results = {'userID': userID}
-        except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.error("%s" % traceback.format_exc())
-            return HttpResponseBadRequest(reason=str(e))
-            
-        return JsonResponse(results)
-    
     def getData(user, path, data):
         try:
             start = int(data.get("start", "0"))
@@ -1070,7 +1051,7 @@ def handleURL(request, urlPath=None):
     else:
         raise Http404("api only responds to GET, DELETE and POST methods")
 
-class ApiEndpoint(ProtectedResourceView):
+class ApiEndpoint(View):
     def get(self, request, *args, **kwargs):
         if request.path_info == '/api/':
             return handleURL(request, None)
@@ -1085,10 +1066,6 @@ class ApiEndpoint(ProtectedResourceView):
             return updateValues(request)
         return HttpResponseNotFound(reason='unrecognized url')
     
-class ApiGetUserIDEndpoint(ProtectedResourceView):
-    def get(self, request, *args, **kwargs):
-        return getUserID(request)
-        
 # Handles a post operation that contains the users username (email address) and password.
 def submitsignin(request):
     if request.method != "POST":
