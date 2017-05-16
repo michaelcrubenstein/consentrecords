@@ -25,13 +25,12 @@ logout
 export PEMPATH=~/Development/keys/BeTheChangeProjects.pem
 
 # Create a local tar file of all of the website.
-cd ~/GitHub/consentrecords
+cd $VIRTUAL_ENV/consentrecords
 tar -cf c.tar consentrecords custom_user manage.py maintenance monitor parse static developer data reports scripts testing
 
 # Start a remote connection with this command:
 sftp -b - -i $PEMPATH ubuntu@ec2-52-20-239-27.compute-1.amazonaws.com
 cd eb_django_app/prod/consentrecords
-lcd ~/GitHub/consentrecords
 put c.tar
 exit
 

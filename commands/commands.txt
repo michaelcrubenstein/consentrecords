@@ -191,7 +191,7 @@ export PATH=/Library/Frameworks/Python.framework/Versions/3.6/bin:$PATH
 ##################################################################
 # How to bring up the development system from a reboot.
 ##################################################################
-cd ~/GitHub
+cd $VIRTUAL_ENV
 source bin/activate
 export PYTHONPATH=$VIRTUAL_ENV/consentrecords/consentrecords:$VIRTUAL_ENV/consentrecords
 export DJANGO_SETTINGS_MODULE=consentrecords.settings
