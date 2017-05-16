@@ -90,3 +90,15 @@ pip3 install tzlocal
         placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
         values_sql = ", ".join("(%s)" % sql for sql in placeholder_rows_sql)
         return "VALUES " + values_sql
+
+# Fix bug in /lib/python3.6/site-packages/mysql/connector/django/validations.py
+# Line 46
+            if getattr(field, 'remote_field', None) is None:
+
+# Make sure mysql-connector-python-rf is installed:
+pip3 install --egg mysql-connector-python-rf
+cd eb_django_app/prod/lib/python3.5/site-packages/mysql/connector/django
+lcd python36env/lib/python3.6/site-packages/mysql/connector/django
+put base.py
+put operations.py
+put validations.py
