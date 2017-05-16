@@ -1,0 +1,114 @@
+Enumerators of a term
+	term[name=privilege]/enumerator
+	term[name=State]/enumerator
+	term[name=Timeframe]/enumerator
+	term[name=data type]/enumerator
+	term[name=max capacity]/enumerator
+	term[name=descriptor type]/enumerator
+	term[name=object add rule]/enumerator
+	term[name=special access]/enumerator
+	term[name=privilege]/enumerator[name=register]
+	term[name=Timeframe]/enumerator
+	term[name=boolean]/enumerator
+	term[name=privilege]/enumerator[name=(find,read)]
+	term[name=special access]/enumerator
+	term[name=privilege]/enumerator[name=read]
+	term[name=boolean]/enumerator
+	term[name=Weekday]/enumerator
+	term[name=default access]/enumerator
+	term[name=privilege]/enumerator
+	term[name=boolean]
+	term[name=privilege]
+	term[name=Timeframe]/enumerator
+
+Name of a term - return all instances of that type
+cell.field.ofKind (name of a term)
+Comment Prompt
+Service
+Experience Prompt
+
+Item by ID
+	this.getInstanceID() + "/"
+	containerUUID + "/"
+	this._parentID
+	this.getInstanceID() + "/"
+
+Value by ID
+	"value/" + this.id + "/"
+
+Value by ID (when updating values
+	"this.id"
+
+Instance ID followed by one or more fields
+	organization.getInstanceID() + '/Inquiry Access Group'
+	source.getInstanceID() + '/' + cr.fieldNames.accessRecord
+	this.user.getInstanceID() + '/' + cr.fieldNames.accessRecord
+	{objectID}/group
+	this.rightPath.getInstanceID() + '/More Experience/Offering'
+	_this.path.getInstanceID() + '/More Experience/Offering'
+	"{0}/notification".format(this.user.getInstanceID())
+	typeID+'/configuration'
+	'{0}/{1}'.format(object.getInstanceID(), cellName)
+	"{0}/Sites/Site".format(this.experience.organization.getInstanceID()
+	
+Item by ID followed by one or more fields followed by an ID
+	"{0}/Inquiries/user/{1}".format(session.getInstanceID(), this.getInstanceID())
+	d.getInstanceID() + '/{0}/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+	'term[name={0}]/configuration'.format(typeID)
+
+Item by ID followed by one or more fields
+	followed by a test for an item two fields deep by id
+	"{0}/Sites/Site/Offerings/Offering".format(this.experience.organization.getInstanceID())
+	 + '[Service[Service={0}]]'
+	 or + '[Service[Stage={0}]]'
+
+Item by ID followed by one or more fields 
+	followed by a test for an item by descriptor type
+	followed by a not clause 
+		consisting of a type name 
+		followed by a descriptor test 
+		followed by field names
+	followed by a test for an item two fields deep by id
+	 "{0}/Sites/Site/Offerings/".format(this.experience.organization.getInstanceID()) + 'Offering[name*="{1}"]::not(Site[name*="{1}"]/Offerings/Offering)'
+	 + '[Service[Service={0}]]'
+	 or + '[Service[Stage={0}]]'
+
+Item by ID followed by one or more fields
+	followed by a test for an item by descriptor type
+	followed by one or more fields
+	followed by a test for an item two fields deep by id
+	
+	"{0}/Sites/".format(this.experience.organization.getInstanceID()) + 'Site[name{0}"{1}"]/Offerings/Offering'
+	 + '[Service[Service={0}]]'
+	 or + '[Service[Stage={0}]]'
+
+	
+type name by descriptor value followed by one or more fields followed by an ID
+	user[email={0}] + '/{0}/{1}'.format(cr.fieldNames.accessRequest, _this.user.getInstanceID());
+
+Item by ID followed by one or more references
+	this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)'
+	this.rightPath.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
+						'::reference(Session)::reference(Sessions)::reference(Offering)'
+	this.path.getInstanceID() + '::reference(user)::reference(Experience)'
+	_this.path.getInstanceID() + '::reference(user)::reference(Experience)::reference(Experiences)' + 
+									'::reference(Session)::reference(Sessions)::reference(Offering)'
+
+Instance ID followed by a mix of references and field names followed by not clauses followed by ancestor clauses
+		var s = '{0}::reference(Offering)/Sessions/Session'.format(this.tag.getInstanceID());
+		s += ':not([Registration Deadline<"{0}"])'.format(todayString);
+		s += ':not([End<"{0}"])'.format(todayString);
+		else if (val.length < 3)
+			return s + '[ancestor:name^="' + encodeURIComponent(val) + '"]';
+		else
+			return s + '[ancestor:name*="' + encodeURIComponent(val) + '"]';
+
+type name followed by name compare clauses
+		var s = "Service";
+			if (val.length < 3)
+				return s + '[name^="' + encodeURIComponent(val) + '"]';
+			else
+				return s + '[name*="' + encodeURIComponent(val) + '"]';
+	Site[name{0}"{1}"]
+	Organization[name{0}"{1}"]
+	
