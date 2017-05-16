@@ -835,7 +835,7 @@ class api:
     def checkForPath(c, user, pathKey, idKey):
         if pathKey in c:
             userInfo = UserInfo(user)
-            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo, securityFilter=userInfo.findFilter)\
+            instances = pathparser.getObjectQuerySet(c[pathKey], userInfo=userInfo)\
                                   .filterToInstances()\
                                   .querySet
             if len(instances) > 0:
@@ -970,7 +970,7 @@ class api:
             fieldNames = list(fieldNames)
             
             if 'none' in fields:
-                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo, securityFilter=userInfo.findFilter)
+                qs = pathparser.getObjectQuerySet(path, userInfo=userInfo)
             else:
                 qs = pathparser.getObjectQuerySet(path=path, userInfo=userInfo, securityFilter=userInfo.readFilter)
             

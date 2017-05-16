@@ -37,7 +37,7 @@ def _addElementData(parent, data, fieldData, nameLists, userInfo, transactionSta
                     else:
                         raise RuntimeError("find permission failed for %s" % field)
                 elif "path" in d:
-                    ids = pathparser.getQuerySet(d["path"], userInfo=userInfo, securityFilter=userInfo.findFilter)
+                    ids = pathparser.getQuerySet(d["path"], userInfo=userInfo)
                     if len(ids):
                         parent.addReferenceValue(field, ids[len(ids)-1], i, transactionState)
                     else:

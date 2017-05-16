@@ -197,7 +197,7 @@ def showPathway(request, email):
     
     containerPath = 'user[email=%s]' % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
     if len(objs) > 0:
         args['state'] = 'user/%s' % objs[0].idString
 
@@ -261,7 +261,7 @@ def accept(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
     if len(objs) > 0:
         args['state'] = 'accept'
         args['follower'] = objs[0].idString
@@ -292,7 +292,7 @@ def ignore(request, email):
     
     containerPath = ('#%s' if terms.isUUID(email) else 'user[email=%s]') % email
     userInfo = UserInfo(request.user)
-    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+    objs = pathparser.getQuerySet(containerPath, userInfo=userInfo)
     if len(objs) > 0:
         args['state'] = 'ignore'
         args['follower'] = objs[0].idString
@@ -376,7 +376,7 @@ def acceptFollower(request, userPath=None):
             if not user:
                 return HttpResponseBadRequest(reason="user is not set up: %s" % request.user.get_full_name())
 
-        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo, securityFilter=userInfo.findFilter)
+        objs = pathparser.getQuerySet(followerPath, userInfo=userInfo)
         if len(objs) > 0:
             follower = objs[0]
             if follower.typeID == terms.user:
