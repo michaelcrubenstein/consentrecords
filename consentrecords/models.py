@@ -753,7 +753,8 @@ class Instance(dbmodels.Model):
                       value__referenceValue__value__referenceValue=userInfo.instance,
                       value__referenceValue__value__deleteTransaction__isnull=True))
 
-        g = Value.objects.filter(instance__in=f, field=terms.privilege, 
+        g = Value.objects.filter(instance__in=f, 
+                field=terms.privilege, 
                 deleteTransaction__isnull=True,
                 referenceValue__in=accessRecordPrivilegeIDs)
                 
@@ -1658,10 +1659,10 @@ class ObjectQuerySet:
 
     def getQClause(self, field, symbol, testValue):
         if isinstance(testValue, list):
-            simples = map(lambda t: self.getSimpleQClause(field, symbol, t), testValue)
+            simples = map(lambda t: self.getValueQ(field, symbol, t), testValue)
             return reduce(lambda q1, q2: q1 | q2, simples)
         else:
-            return self.getSimpleQClause(field, symbol, testValue)
+            return self.getValueQ(field, symbol, testValue)
 
     def getAncestorClause(self, symbol, testValue):
         if isinstance(testValue, list):
@@ -1691,38 +1692,39 @@ class ObjectQuerySet:
             return reduce(lambda q1, q2: ((q1[0] | q2[0]), combineTerms(q1[1], q2[1])), \
                           map(lambda p: self.filterClause(p, userInfo), paramClauses))
 
-    def getValueFilter(self, field, symbol, testValue):
+    def getValueQ(self, field, symbol, testValue):
         if terms.isUUID(testValue):
             if symbol == '=':
-                vFilter = Value.objects.filter(referenceValue_id=testValue)
+                q = Q(value__referenceValue_id=testValue)
             else:
                 raise ValueError("unrecognized symbol: %s" % symbol)
         else:
             if symbol == '^=':
-                vFilter = Value.objects.filter(Q(stringValue__istartswith=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__istartswith=testValue))
+                q = Q(value__stringValue__istartswith=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__istartswith=testValue)
             elif symbol == '=':
-                vFilter = Value.objects.filter(Q(stringValue__iexact=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__iexact=testValue))
+                q = Q(value__stringValue__iexact=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__iexact=testValue)
             elif symbol == '*=':
-                vFilter = Value.objects.filter(Q(stringValue__iregex='[[:<:]]' + testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__iregex='[[:<:]]' + testValue))
+                q = Q(value__stringValue__iregex='[[:<:]]' + testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__iregex='[[:<:]]' + testValue)
             elif symbol == '<':
-                vFilter = Value.objects.filter(Q(stringValue__lt=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__lt=testValue))
+                q = Q(value__stringValue__lt=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__lt=testValue)
             elif symbol == '<=':
-                vFilter = Value.objects.filter(Q(stringValue__lte=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__lte=testValue))
+                q = Q(value__stringValue__lte=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__lte=testValue)
             elif symbol == '>':
-                vFilter = Value.objects.filter(Q(stringValue__gt=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__gt=testValue))
+                q = Q(value__stringValue__gt=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__gt=testValue)
             elif symbol == '>=':
-                vFilter = Value.objects.filter(Q(stringValue__gte=testValue,referenceValue__isnull=True)|
-                                               Q(referenceValue__description__text__gte=testValue))
+                q = Q(value__stringValue__gte=testValue,value__referenceValue__isnull=True)|\
+                    Q(value__referenceValue__description__text__gte=testValue)
             else:
                 raise ValueError("unrecognized symbol: %s"%symbol)
-        vFilter = vFilter.filter(deleteTransaction__isnull=True)
-        return vFilter.filter(field=field) if field else vFilter
+        q = q & Q(value__deleteTransaction__isnull=True)
+        if field: q = q & Q(value__field=field)
+        return q
 
     # Returns a duple containing a new result set based on the first "phrase" of the path 
     # and a subset of path containing everything but the first "phrase" of the path.
@@ -2113,15 +2115,15 @@ class InstanceQuerySet(ObjectQuerySet):
     ### Returns an instance queryset that excludes instances from the current query set
     ### that have a field that matches the testValue.    
     def excludeByValue(self, field, symbol, testValue):
+        f = self.querySet
+        
         if isinstance(testValue, list):
-            f = self.querySet
             for test in testValue:
-                vFilter = self.getValueFilter(field, symbol, test)
-                f = f.exclude(value__in=vFilter)
-            return type(self)(f)
+                f = f.exclude(self.getValueQ(field, symbol, test))
         else:
-            vFilter = self.getValueFilter(field, symbol, testValue)
-            return type(self)(self.querySet.exclude(value__in=vFilter))          
+            f = f.exclude(self.getValueQ(field, symbol, testValue))
+        
+        return type(self)(f)
 
     # Returns an InstanceQuerySet derived from the contents of self.
     def filterToInstances(self):
@@ -2147,10 +2149,6 @@ class InstanceQuerySet(ObjectQuerySet):
     def applyClause(self, q, i):
         return wrapInstanceQuerySet(i, self.querySet.filter(q).distinct())
         
-    def getSimpleQClause(self, field, symbol, testValue):
-        vFilter = self.getValueFilter(field, symbol, testValue)
-        return Q(value__in=vFilter)
-
     def getSimpleAncestorClause(self, symbol, testValue):
         if symbol == '^=':
             q = Q(ancestors__ancestor__value__stringValue__istartswith=testValue)
