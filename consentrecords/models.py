@@ -1889,12 +1889,6 @@ class ValueQuerySet(ObjectQuerySet):
     def createObjectQuerySet(self, querySet):
         return ValueQuerySet(querySet)
         
-    def excludeFrom(self, oqs):
-        if isinstance(oqs, InstanceQuerySet):
-            return InstanceQuerySet(oqs.querySet.exclude(value__in=self.querySet))
-        else:
-            return ValueQuerySet(oqs.querySet.exclude(pk__in=self.querySet))
-
     # Return a Q expression that returns all of the instances in this query set.
     def instanceQ(self):
         return Q(referenceValues__in=self.querySet)
@@ -2095,12 +2089,6 @@ class InstanceQuerySet(ObjectQuerySet):
         return self
     
      
-    def excludeFrom(self, oqs):
-        if isinstance(oqs, InstanceQuerySet):
-            return InstanceQuerySet(oqs.querySet.exclude(pk__in=self.querySet))
-        else:
-            return ValueQuerySet(oqs.querySet.exclude(referenceValue__in=self.querySet))
-
     # Return a Q expression that returns all of the instances in this query set.
     def instanceQ(self):
         return Q(pk__in=self.querySet)
