@@ -1587,13 +1587,13 @@ class UserInfo:
         return self.authUser.is_authenticated
 
     def findFilter(self, resultSet):
-        return resultSet.applyFindFilter(self)
+        return resultSet.findableQuerySet(self)
 
     def readFilter(self, resultSet):
-        return resultSet.applyReadFilter(self)
+        return resultSet.readableQuerySet(self)
 
     def administerFilter(self, resultSet):
-        return resultSet.applyAdministerFilter(self)
+        return resultSet.administerableQuerySet(self)
         
     def isPrimaryAdministrator(self, instance):
         return self.is_authenticated and self.instance and self.instance.isPrimaryAdministrator(instance)
@@ -1688,7 +1688,7 @@ class ObjectQuerySet:
         
         if len(paramClauses) == 1:
             return self.filterClause(paramClauses[0], userInfo)
-        else: 
+        else:
             return reduce(lambda q1, q2: ((q1[0] | q2[0]), combineTerms(q1[1], q2[1])), \
                           map(lambda p: self.filterClause(p, userInfo), paramClauses))
 
@@ -1769,20 +1769,20 @@ class ObjectQuerySet:
         elif path[0] == '>' or path[0] == '/':
             i = terms[path[1]]
             if len(path) == 2:
-                f = Value.objects.filter(instance__in=self.applyFindFilter(userInfo),
+                f = Value.objects.filter(instance__in=self.findableQuerySet(userInfo),
                                          field=i,
                                          deleteTransaction__isnull=True)\
                                  .order_by('instance', 'position')
                 return wrapValueQuerySet(i, f), []
             elif len(path) == 4 and path[2] == '/' and terms.isUUID(path[3]):
-                f = Value.objects.filter(instance__in=self.applyFindFilter(userInfo),
+                f = Value.objects.filter(instance__in=self.findableQuerySet(userInfo),
                                          field=i,
                                          deleteTransaction__isnull=True,
                                          referenceValue_id=path[3])\
                                  .order_by('instance', 'position')
                 return wrapValueQuerySet(i, f), []
             else:
-                f = Instance.objects.filter(referenceValues__instance__in=self.applyFindFilter(userInfo),
+                f = Instance.objects.filter(referenceValues__instance__in=self.findableQuerySet(userInfo),
                                             referenceValues__field=i,
                                             referenceValues__deleteTransaction__isnull=True)\
                                     .order_by('parent', 'parentValue__position')
@@ -1795,11 +1795,11 @@ class ObjectQuerySet:
                         t = map(terms.__getitem__, path[2])
                         f = Instance.objects.filter(typeID__in=t,
                                                     value__deleteTransaction__isnull=True,
-                                                    value__referenceValue__in=self.applyFindFilter(userInfo))
+                                                    value__referenceValue__in=self.findableQuerySet(userInfo))
                     else:
                         t = terms[path[2][0]]
                         f = Instance.objects.filter(value__deleteTransaction__isnull=True,
-                                                    value__referenceValue__in=self.applyFindFilter(userInfo),
+                                                    value__referenceValue__in=self.findableQuerySet(userInfo),
                                                     typeID=t,
                                                    )
                     return InstanceQuerySet(f), path[3:]
@@ -1854,11 +1854,16 @@ class ObjectQuerySet:
         return qs
     
     def getSubValueQuerySet(vqs, userInfo):
-        return ValueQuerySet(vqs.filter(deleteTransaction__isnull=True)).applyFindFilter(userInfo) \
+        return ValueQuerySet(vqs.filter(deleteTransaction__isnull=True)).findableQuerySet(userInfo) \
                        .order_by('position')\
                        .select_related('referenceValue')\
                        .select_related('referenceValue__description')
 
+    ### Applies the appropriate findFilter operation to the querySet associated with this
+    ### ObjectQuerySet.
+    def applyFindFilter(self, userInfo):
+        self.querySet = self.findableQuerySet(userInfo)
+    
 class ValueQuerySet(ObjectQuerySet):
     
     # Extends the specified QuerySet of Values with data to be returned to the client.
@@ -1950,8 +1955,8 @@ class ValueQuerySet(ObjectQuerySet):
         elif len(params) > 2 and params[1]=='>':
             return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
-            subF = InstanceQuerySet(userInfo.findFilter(parsed))
-            parsed = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
+            subF = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
+            subF.applyFindFilter(userInfo)
             if len(params) > 3:
                 parsed = subF.parse(params[3:], userInfo)
                 subF = parsed.filterToInstances()
@@ -1974,7 +1979,7 @@ class ValueQuerySet(ObjectQuerySet):
     def applyClause(self, q, i):
         return wrapValueQuerySet(i, self.querySet.filter(q).distinct())
         
-    def applyFindFilter(self, userInfo):
+    def findableQuerySet(self, userInfo):
         qs = self.querySet
         if userInfo._findValueFilter:
             return qs.filter(userInfo._findValueFilter)
@@ -1987,7 +1992,7 @@ class ValueQuerySet(ObjectQuerySet):
                 userInfo._findValueFilter = userInfo.instance.findValueFilter
             return qs.filter(userInfo._findValueFilter)
 
-    def applyReadFilter(self, userInfo):
+    def readableQuerySet(self, userInfo):
         qs = self.querySet
         if userInfo._readValueFilter:
             return qs.filter(userInfo._readValueFilter)
@@ -2000,7 +2005,7 @@ class ValueQuerySet(ObjectQuerySet):
                 userInfo._readValueFilter = userInfo.instance.readValueFilter
             return qs.filter(userInfo._readValueFilter)
 
-    def applyAdministerFilter(self, userInfo):
+    def administerableQuerySet(self, userInfo):
         qs = self.querySet
         if not userInfo.is_authenticated:
             return []   # If not authenticated, then return an empty iterable.
@@ -2008,7 +2013,7 @@ class ValueQuerySet(ObjectQuerySet):
             return qs
         else:
             return userInfo.instance.administerValueFilter(qs)
-    
+            
     @property        
     def types(self):
         return map(lambda i: Instance.objects.get(pk=i),
@@ -2050,11 +2055,11 @@ class ReadValueQuerySet(ValueQuerySet):
         super(ReadValueQuerySet, self).__init__(querySet)
     
     ### Returns the querySet associated with self.    
-    def applyFindFilter(self, userInfo):
+    def findableQuerySet(self, userInfo):
         return self.querySet
 
     ### Returns the querySet associated with self.    
-    def applyReadFilter(self, userInfo):
+    def readableQuerySet(self, userInfo):
         return self.querySet
 
     # return an InstanceQuerySet derived from the contents of self.
@@ -2202,8 +2207,8 @@ class InstanceQuerySet(ObjectQuerySet):
         elif len(params) > 2 and params[1]=='>':
             return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
-            subF = InstanceQuerySet(userInfo.findFilter(parsed))
-            parsed = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
+            subF = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
+            subF.applyFindFilter(userInfo)
             if len(params) > 3:
                 parsed = subF.parse(params[3:], userInfo)
                 subF = parsed.filterToInstances()
@@ -2223,7 +2228,7 @@ class InstanceQuerySet(ObjectQuerySet):
         else:
             raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
 
-    def applyFindFilter(self, userInfo):
+    def findableQuerySet(self, userInfo):
         qs = self.querySet
         if not userInfo.is_authenticated:
             return qs.filter(Instance.anonymousFindFilter())
@@ -2234,7 +2239,7 @@ class InstanceQuerySet(ObjectQuerySet):
         else:
             return qs.filter(Instance.anonymousFindFilter()) # This case occurs while setting up a user.
 
-    def applyReadFilter(self, userInfo):
+    def readableQuerySet(self, userInfo):
         qs = self.querySet
         if not userInfo.is_authenticated:
             return qs.filter(Instance.anonymousReadFilter())
@@ -2243,7 +2248,7 @@ class InstanceQuerySet(ObjectQuerySet):
         else:
             return userInfo.instance.readFilter(qs)
 
-    def applyAdministerFilter(self, userInfo):
+    def administerableQuerySet(self, userInfo):
         qs = self.querySet
         if not userInfo.is_authenticated:
             return []   # If not authenticated, then return an empty iterable.
@@ -2284,11 +2289,11 @@ class ReadInstanceQuerySet(InstanceQuerySet):
         super(ReadInstanceQuerySet, self).__init__(querySet)
     
     ### Returns the querySet associated with self.    
-    def applyFindFilter(self, userInfo):
+    def findableQuerySet(self, userInfo):
         return self.querySet
 
     ### Returns the querySet associated with self.    
-    def applyReadFilter(self, userInfo):
+    def readableQuerySet(self, userInfo):
         return self.querySet
 
 ### Returns either a ReadValueQuerySet or a ValueQuerySet depending on whether
