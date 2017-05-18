@@ -1726,6 +1726,34 @@ class ObjectQuerySet:
         if field: q = q & Q(value__field=field)
         return q
 
+    def refineFilter(self, params, userInfo):
+        if params[0] == 'ancestor' and params[1] == ':':
+            # Filter by items that contain an ancestor with the specified field clause. 
+            if params[2] != '?':
+                i = terms[params[2]]
+            else:
+                i = None
+            if len(params) == 5:
+                # example: ancestor:name*='foo'
+                #
+                # Get a Q clause that compares either a single test value or a comma-separated list of test values
+                # according to the specified symbol.
+                stringText = self.getAncestorClause(symbol=params[3], testValue=params[-1])
+    
+                if i:
+                    q = stringText & Q(ancestors__ancestor__value__field=i,
+                                       ancestors__ancestor__value__deleteTransaction__isnull=True)
+                else:
+                    q = stringText & Q(ancestors__ancestor__value__deleteTransaction__isnull=True)
+            else:
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
+        else:
+            q, i = self.clause(params, userInfo)
+            
+        # Need to add distinct after the tests to prevent duplicates if there is
+        # more than one value of the instance that matches.
+        return self.applyClause(q, i)
+    
     # Returns a duple containing a new result set based on the first "phrase" of the path 
     # and a subset of path containing everything but the first "phrase" of the path.
     def refineResults(self, path, userInfo):
@@ -1737,33 +1765,7 @@ class ObjectQuerySet:
         elif path[0] == '*':
             return InstanceQuerySet(Instance.objects.filter(deleteTransaction__isnull=True)), path[1:]
         elif path[0] == '[':
-            params = path[1]
-            if params[0] == 'ancestor' and params[1] == ':':
-                # Filter by items that contain an ancestor with the specified field clause. 
-                if params[2] != '?':
-                    i = terms[params[2]]
-                else:
-                    i = None
-                if len(params) == 5:
-                    # example: ancestor:name*='foo'
-                    #
-                    # Get a Q clause that compares either a single test value or a comma-separated list of test values
-                    # according to the specified symbol.
-                    stringText = self.getAncestorClause(symbol=params[3], testValue=params[-1])
-            
-                    if i:
-                        q = stringText & Q(ancestors__ancestor__value__field=i,
-                                           ancestors__ancestor__value__deleteTransaction__isnull=True)
-                    else:
-                        q = stringText & Q(ancestors__ancestor__value__deleteTransaction__isnull=True)
-                else:
-                    raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in path]))
-            else:
-                q, i = self.clause(params, userInfo)
-            
-            # Need to add distinct after the tests to prevent duplicates if there is
-            # more than one value of the instance that matches.
-            return self.applyClause(q, i), path[2:]
+            return self.refineFilter(path[1], userInfo), path[2:]
         elif path[0] == '>' or path[0] == '/':
             i = terms[path[1]]
             if len(path) == 2:
@@ -1948,8 +1950,8 @@ class ValueQuerySet(ObjectQuerySet):
         elif len(params) > 2 and params[1]=='>':
             return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
-            parsed = InstanceQuerySet().parse(['*'] + params[1:3], userInfo)
             subF = InstanceQuerySet(userInfo.findFilter(parsed))
+            parsed = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
             if len(params) > 3:
                 parsed = subF.parse(params[3:], userInfo)
                 subF = parsed.filterToInstances()
@@ -2200,8 +2202,8 @@ class InstanceQuerySet(ObjectQuerySet):
         elif len(params) > 2 and params[1]=='>':
             return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
-            parsed = InstanceQuerySet().parse(['*'] + params[1:3], userInfo)
             subF = InstanceQuerySet(userInfo.findFilter(parsed))
+            parsed = InstanceQuerySet(Instance.objects.all()).refineFilter(params[2], userInfo)
             if len(params) > 3:
                 parsed = subF.parse(params[3:], userInfo)
                 subF = parsed.filterToInstances()
