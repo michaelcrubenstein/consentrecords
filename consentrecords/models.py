@@ -2142,7 +2142,7 @@ class InstanceQuerySet(ObjectQuerySet):
                      value__referenceValue__in=referenceValues), t
 
     def applyClause(self, q, i):
-        return wrapInstanceQuerySet(i, self.querySet.filter(q).distinct())
+        return wrapInstanceQuerySet(i, self.querySet.filter(q))
         
     def getSimpleAncestorClause(self, symbol, testValue):
         if symbol == '^=':
