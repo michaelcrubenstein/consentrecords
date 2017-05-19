@@ -80,6 +80,11 @@ class Instance(dbmodels.Model):
     accessSource = dbmodels.ForeignKey('consentrecords.Instance', related_name='accessTargets', db_index=True, null=True, editable=True, on_delete=dbmodels.CASCADE)
     deleteTransaction = dbmodels.ForeignKey(Transaction, related_name='deletedInstance', db_index=True, null=True, editable=True, on_delete=dbmodels.CASCADE)
         
+    class Meta:
+        indexes = [
+            dbmodels.Index(fields=['parent', 'typeID']),
+        ]
+
     def __str__(self):
         try:
             d = self.description
