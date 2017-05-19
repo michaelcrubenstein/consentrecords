@@ -1162,6 +1162,21 @@ class Containment(dbmodels.Model):
     
     def __str__(self):
         return "%s -> %s" % (self.ancestor, self.descendent)
+
+### TagSource denormalizes Service instances that imply other service instances.
+### For example, "Teacher" source implies "Job" target.        
+class TagSource(dbmodels.Model):
+    source = dbmodels.ForeignKey('consentrecords.Instance', related_name='tag_sources', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    target = dbmodels.ForeignKey('consentrecords.Instance', related_name='tag_targets', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+        
+    class Meta:
+        indexes = [
+            dbmodels.Index(fields=['source', 'target']),
+            dbmodels.Index(fields=['target', 'source']),
+        ]
+
+    def __str__(self):
+        return "%s implies %s" % (self.source, self.target)
         
 class TermNames():
     # These verbs are associated with field IDs of values.
@@ -2197,7 +2212,7 @@ class InstanceQuerySet(ObjectQuerySet):
     # If the parameter list is three values, interpret the three values as a query clause and
     #     filter self on that clause.  
     def filterClause(self, params, userInfo):
-    #     print('_filterClause params: %s'% (params))
+#         print('filterClause params: %s'% (params))
     
         if len(params) == 1:
             if isinstance(params[0], list):
@@ -2209,6 +2224,10 @@ class InstanceQuerySet(ObjectQuerySet):
             else:
                 t = terms[params[0]]
                 return Q(value__field=t, value__deleteTransaction__isnull=True), t
+        elif len(params) == 3 and params[0] == 'TagTarget' and params[1] == '=':
+            return Q(value__field=terms['Service'],
+                     value__deleteTransaction__isnull=True,
+                     value__referenceValue__tag_sources__target_id=params[2]), terms['Service']
         elif len(params) > 2 and params[1]=='>':
             return self.clauseByReferenceValues(params[0], self.getReferenceValues(params, userInfo))
         elif len(params) > 2 and params[1]=='[':
