@@ -1015,7 +1015,8 @@ class Value(dbmodels.Model):
         indexes = [
             dbmodels.Index(fields=['field', 'stringValue', 'languageCode']),
             dbmodels.Index(fields=['field', 'referenceValue']),
-            dbmodels.Index(fields=['instance', 'field']),
+            dbmodels.Index(fields=['instance', 'field', 'referenceValue']),
+            dbmodels.Index(fields=['instance', 'field', 'stringValue', 'languageCode']),
         ]
 
     def __str__(self):
