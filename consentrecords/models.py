@@ -860,7 +860,7 @@ class Instance(dbmodels.Model):
                         )
         
         return (Q(accessSource__isnull=True)|
-                        Q(accessSource__in=sources))
+                Q(accessSource__in=sources))
         
     def anonymousReadFilter():
         sources=Instance.objects.filter(\
@@ -870,7 +870,7 @@ class Instance(dbmodels.Model):
                         )
         
         return (Q(accessSource__isnull=True)|
-                        Q(accessSource__in=sources))
+                Q(accessSource__in=sources))
         
     def securityValueFilter(self, privilegeIDs):
         sources=Instance.objects.filter(\
