@@ -3299,6 +3299,7 @@ class UserHistory(dbmodels.Model):
 class UserEmail(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdUserEmail')
+    lastTransaction = lastTransactionField('changedUserEmail')
     deleteTransaction = deleteTransactionField('deletedUserEmail')
 
     parent = parentField(User, 'email')

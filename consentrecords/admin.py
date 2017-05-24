@@ -134,6 +134,16 @@ class TabularInline(admin.TabularInline):
         return obj.transaction.creation_time
     t_creationTime.admin_order_field = 'transaction__creation_time'
     
+class ModelAdmin(admin.ModelAdmin):
+    def queryset(self, request):
+        qs = super(UserAdmin, self).queryset(request)
+        qs = qs.annotate('transaction__creation_time')
+        return qs
+
+    def t_creationTime(self, obj):
+        return obj.transaction.creation_time
+    t_creationTime.admin_order_field = 'transaction__creation_time'
+
 class UserHistoryInline(TabularInline):
     model = UserHistory
     list_display = ('id', 't_creationTime', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator')
@@ -158,7 +168,7 @@ class UserEmailInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ModelAdmin):
     list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
@@ -166,15 +176,30 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    def queryset(self, request):
-        qs = super(UserHistoryInline, self).queryset(request)
-        qs = qs.annotate('transaction__creation_time')
-        return qs
-
-    def t_creationTime(self, obj):
-        return obj.transaction.creation_time
-    t_creationTime.admin_order_field = 'transaction__creation_time'
-    
     inlines = [UserHistoryInline, UserEmailInline]
 
 admin.site.register(User, UserAdmin)
+
+class UserEmailHistoryInline(TabularInline):
+    model = UserEmailHistory
+    list_display = ('id', 'position', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'position', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'position', 't_creationTime', 'text')
+
+    ordering = ['position', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class UserEmailAdmin(ModelAdmin):
+    list_display = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'position', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'position', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    
+    inlines = [UserEmailHistoryInline]
+
+admin.site.register(UserEmail, UserEmailAdmin)
