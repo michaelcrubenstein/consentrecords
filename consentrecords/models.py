@@ -28,8 +28,26 @@ def forceToList(t):
 def combineTerms(t1, t2):
     return forceToList(t1) + forceToList(t2)
     
+def idField():
+    return dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+def createTransactionField(relatedName):
+    return dbmodels.ForeignKey(Transaction, related_name=relatedName, db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    
+def lastTransactionField(relatedName):
+    return dbmodels.ForeignKey(Transaction, related_name=relatedName, db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+def deleteTransactionField(relatedName):
+    return dbmodels.ForeignKey(Transaction, related_name=relatedName, db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+
+def parentField(otherModel, relatedName):
+    return dbmodels.ForeignKey(otherModel, related_name=relatedName, db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    
+def historyInstanceField(otherModel):
+    return dbmodels.ForeignKey(otherModel, related_name='history', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+        
 class Transaction(dbmodels.Model):
-    id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = idField()
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     creation_time = dbmodels.DateTimeField(db_column='creation_time', db_index=True, auto_now_add=True)
     
@@ -70,6 +88,10 @@ class _deferred():
             self._value = self._f()
             self._isCached = True
         return self._value
+
+### The interface shared by all types of instances.        
+class IInstance():
+    pass
 
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -1712,6 +1734,24 @@ class ObjectQuerySet:
             return reduce(lambda q1, q2: ((q1[0] | q2[0]), combineTerms(q1[1], q2[1])), \
                           map(lambda p: self.filterClause(p, userInfo), paramClauses))
 
+    def getFieldQ(field, symbol, testValue):
+        if symbol == '^=':
+            q = Q((field + 'istartswith', testValue))
+        elif symbol == '=':
+            q = Q((field + 'iexact', testValue))
+        elif symbol == '*=':
+            q = Q((field + 'iregex', '[[:<:]]' + testValue))
+        elif symbol == '<':
+            q = Q((field + 'lt', testValue))
+        elif symbol == '<=':
+            q = Q((field + 'lte', testValue))
+        elif symbol == '>':
+            q = Q((field + 'gt', testValue))
+        elif symbol == '>=':
+            q = Q((field + 'gte', testValue))
+        else:
+            raise ValueError("unrecognized symbol: %s"%symbol)
+
     def getValueQ(self, field, symbol, testValue):
         if terms.isUUID(testValue):
             if symbol == '=':
@@ -2344,3 +2384,987 @@ def wrapInstanceQuerySet(t, qs=None):
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
     
+class Address(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdAddress')
+    lastTransaction = lastTransactionField('changedAddress')
+    deleteTransaction = deleteTransactionField('deletedAddress')
+
+    parent = parentField('consentrecords.Site', 'address')
+    city = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    state = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+class AddressHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('addressHistory')
+    instance = historyInstanceField(Address)
+
+    city = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    state = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+
+class Comment(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdComment')
+    lastTransaction = lastTransactionField('changedComment')
+    deleteTransaction = deleteTransactionField('deletedComment')
+
+    parent = parentField('consentrecords.Experience', 'comment')
+    text = dbmodels.CharField(max_length=1023, db_index=True, null=True)
+    question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
+    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedComment', db_index=True, on_delete=dbmodels.CASCADE)
+    
+class CommentHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('commentHistory')
+    instance = historyInstanceField(Comment)
+    
+    text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
+    question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
+    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class CommentPrompt(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdCommentPrompt')
+    lastTransaction = lastTransactionField('changedCommentPrompt')
+    deleteTransaction = deleteTransactionField('deletedCommentPrompt')
+    question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
+    
+class CommentPromptHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('commentPromptHistory')
+    instance = historyInstanceField(CommentPrompt)
+    
+    question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
+
+class Engagement(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdEngagement')
+    lastTransaction = lastTransactionField('changedEngagement')
+    deleteTransaction = deleteTransactionField('deletedEngagement')
+
+    parent = parentField('consentrecords.Session', 'engagement')
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='engagementUser', db_index=True, on_delete=dbmodels.CASCADE)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class EngagementHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('engagementHistory')
+    instance = historyInstanceField(Engagement)
+
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='engagementUserHistory', db_index=True, on_delete=dbmodels.CASCADE)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Enrollment(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdEnrollment')
+    lastTransaction = lastTransactionField('changedEnrollment')
+    deleteTransaction = deleteTransactionField('deletedEnrollment')
+
+    parent = parentField('consentrecords.Session', 'enrollment')
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='enrollmentUser', db_index=True, on_delete=dbmodels.CASCADE)
+
+class EnrollmentHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('enrollmentHistory')
+    instance = historyInstanceField(Enrollment)
+
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='enrollmentUserHistory', db_index=True, on_delete=dbmodels.CASCADE)
+
+class Experience(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdExperience')
+    lastTransaction = lastTransactionField('changedExperience')
+    deleteTransaction = deleteTransactionField('deletedExperience')
+
+    parent = parentField('consentrecords.Path', 'experience')
+    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experience', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customOrganization = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experience', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experience', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    
+class ExperienceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experienceHistory')
+    instance = historyInstanceField(Experience)
+
+    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experienceHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    customOrganization = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experienceHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    customSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experienceHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class ExperienceCustomService(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdExperienceCustomService')
+    lastTransaction = lastTransactionField('changedExperienceCustomService')
+    deleteTransaction = deleteTransactionField('deletedExperienceCustomService')
+
+    parent = parentField(Experience, 'customService')
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+class ExperienceCustomServiceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experienceCustomServiceHistory')
+    instance = historyInstanceField(ExperienceCustomService)
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+
+class ExperienceService(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdExperienceService')
+    lastTransaction = lastTransactionField('changedExperienceService')
+    deleteTransaction = deleteTransactionField('deletedExperienceService')
+
+    parent = parentField(Experience, 'service')
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceService', db_index=True, on_delete=dbmodels.CASCADE)
+
+class ExperienceServiceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experienceServiceHistory')
+    instance = historyInstanceField(ExperienceService)
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class ExperiencePrompt(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdExperiencePrompt')
+    lastTransaction = lastTransactionField('changedExperiencePrompt')
+    deleteTransaction = deleteTransactionField('deletedExperiencePrompt')
+    
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiencePrompt', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiencePrompt', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiencePrompt', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptDomain', db_index=True, on_delete=dbmodels.CASCADE)
+    stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
+    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ExperiencePromptHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experiencePromptHistory')
+    instance = historyInstanceField(ExperiencePrompt)
+    
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiencePromptHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiencePromptHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiencePromptHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptDomainHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
+    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class DisqualifyingTag(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdDisqualifyingTag')
+    lastTransaction = lastTransactionField('changedDisqualifyingTag')
+    deleteTransaction = deleteTransactionField('deletedDisqualifyingTag')
+    
+    parent = parentField(ExperiencePrompt, 'disqualifyingTag')
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTag', db_index=True, on_delete=dbmodels.CASCADE)
+
+class DisqualifyingTagHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('disqualifyingTagHistory')
+    instance = historyInstanceField(DisqualifyingTag)
+
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistory', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
+
+class ExperiencePromptService(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdExperiencePromptService')
+    lastTransaction = lastTransactionField('changedExperiencePromptService')
+    deleteTransaction = deleteTransactionField('deletedExperiencePromptService')
+    
+    parent = parentField(ExperiencePrompt, 'experiencePromptService')
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptService', db_index=True, on_delete=dbmodels.CASCADE)
+
+class ExperiencePromptServiceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experiencePromptServiceHistory')
+    instance = historyInstanceField(ExperiencePromptService)
+
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServiceHistory', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
+
+class ExperiencePromptText(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdExperiencePromptText')
+    lastTransaction = lastTransactionField('changedExperiencePromptText')
+    deleteTransaction = deleteTransactionField('deletedExperiencePromptText')
+    
+    parent = parentField(ExperiencePrompt, 'experiencePromptText')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ExperiencePromptTextHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('experiencePromptTextHistory')
+    instance = historyInstanceField(ExperiencePromptText)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Group(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdGroup')
+    deleteTransaction = deleteTransactionField('deletedGroup')
+
+class GroupName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdGroupName')
+    lastTransaction = lastTransactionField('changedGroupName')
+    deleteTransaction = deleteTransactionField('deletedGroupName')
+
+    parent = parentField(Group, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class GroupNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('groupNameHistory')
+    instance = historyInstanceField(GroupName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class GroupMember(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdGroupMember')
+    lastTransaction = lastTransactionField('changedGroupMember')
+    deleteTransaction = deleteTransactionField('deletedGroupMember')
+
+    parent = parentField(Group, 'member')
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMember', db_index=True, on_delete=dbmodels.CASCADE)
+
+class GroupMemberHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('groupMemberHistory')
+    instance = historyInstanceField(GroupMember)
+
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMemberHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class Inquiry(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdInquiry')
+    lastTransaction = lastTransactionField('changedInquiry')
+    deleteTransaction = deleteTransactionField('deletedInquiry')
+
+    parent = parentField('consentrecords.Session', 'inquiry')
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiry', db_index=True, on_delete=dbmodels.CASCADE)
+
+class InquiryHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('inquiryHistory')
+    instance = historyInstanceField(Inquiry)
+
+    user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiryHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class Notification(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdNotification')
+    lastTransaction = lastTransactionField('changedNotification')
+    deleteTransaction = deleteTransactionField('deletedNotification')
+    parent = parentField('consentrecords.User', 'notification')
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    isFresh = dbmodels.CharField(max_length=10, null=True)
+    
+class NotificationHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('notificationHistory')
+    instance = historyInstanceField(Notification)
+
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    isFresh = dbmodels.CharField(max_length=10, null=True, editable=False)
+    
+class NotificationArgument(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdNotificationArgument')
+    lastTransaction = lastTransactionField('changedNotificationArgument')
+    deleteTransaction = deleteTransactionField('deletedNotificationArgument')
+    parent = parentField('consentrecords.Notification', 'notificationArgument')
+    argument = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+class NotificationArgumentHistory(dbmodels.Model):    
+    id = idField()
+    transaction = createTransactionField('notificationArgumentHistory')
+    instance = historyInstanceField(NotificationArgument)
+    argument = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+
+class Offering(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdOffering')
+    lastTransaction = lastTransactionField('changedOffering')
+    deleteTransaction = deleteTransactionField('deletedOffering')
+    parent = parentField('consentrecords.Site', 'offering')
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    minimumAge = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    maximumAge = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    
+class OfferingHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('offeringHistory')
+    instance = historyInstanceField(Offering)
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    minimumAge = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    maximumAge = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+
+class OfferingName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdOfferingName')
+    lastTransaction = lastTransactionField('changedOfferingName')
+    deleteTransaction = deleteTransactionField('deletedOfferingName')
+
+    parent = parentField(Offering, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class OfferingNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('offeringNameHistory')
+    instance = historyInstanceField(OfferingName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class OfferingService(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdOfferingService')
+    lastTransaction = lastTransactionField('changedOfferingService')
+    deleteTransaction = deleteTransactionField('deletedOfferingService')
+
+    parent = parentField(Offering, 'service')
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringService', db_index=True, on_delete=dbmodels.CASCADE)
+
+class OfferingServiceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('offeringServiceHistory')
+    instance = historyInstanceField(OfferingService)
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class Organization(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdOrganization')
+    lastTransaction = lastTransactionField('changedOrganization')
+    deleteTransaction = deleteTransactionField('deletedOrganization')
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationInquiryAccessGroup', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+class OrganizationHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('organizationHistory')
+    instance = historyInstanceField(Organization)
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationInquiryAccessGroupHistory', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
+
+class OrganizationName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdOrganizationName')
+    lastTransaction = lastTransactionField('changedOrganizationName')
+    deleteTransaction = deleteTransactionField('deletedOrganizationName')
+
+    parent = parentField(Organization, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class OrganizationNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('organizationNameHistory')
+    instance = historyInstanceField(OrganizationName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class OrganizationUserAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdOrganizationUserAccess')
+    lastTransaction = lastTransactionField('changedOrganizationUserAccess')
+    deleteTransaction = deleteTransactionField('deletedOrganizationUserAccess')
+
+    parent = parentField(Organization, 'userAccess')
+    accessee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationAccessUser', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class OrganizationUserAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('OrganizationUserAccessHistory')
+    instance = historyInstanceField(OrganizationUserAccess)
+
+    accessee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationUserAccessHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class OrganizationGroupAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdOrganizationGroupAccess')
+    lastTransaction = lastTransactionField('changedOrganizationGroupAccess')
+    deleteTransaction = deleteTransactionField('deletedOrganizationGroupAccess')
+
+    parent = parentField(Organization, 'groupAccess')
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationAccessGroup', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class OrganizationGroupAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('organizationGroupAccessHistory')
+    instance = historyInstanceField(OrganizationGroupAccess)
+
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGroupAccessHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Path(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdPath')
+    lastTransaction = lastTransactionField('changedPath')
+    deleteTransaction = deleteTransactionField('deletedPath')
+
+    parent = parentField('consentrecords.User', 'path')
+    birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredPath', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
+
+class PathHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('pathHistory')
+    instance = historyInstanceField(Path)
+    
+    birthday = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredPathHistory', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
+
+### A Multiple Picked Value
+class PathUserAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdPathUserAccess')
+    lastTransaction = lastTransactionField('changedPathUserAccess')
+    deleteTransaction = deleteTransactionField('deletedPathUserAccess')
+
+    parent = parentField(Path, 'userAccess')
+    accessee = dbmodels.ForeignKey('consentrecords.User', related_name='pathUserAccess', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class PathUserAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('PathUserAccessHistory')
+    instance = historyInstanceField(PathUserAccess)
+
+    accessee = dbmodels.ForeignKey('consentrecords.User', related_name='pathUserAccessHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class PathGroupAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdPathGroupAccess')
+    lastTransaction = lastTransactionField('changedPathGroupAccess')
+    deleteTransaction = deleteTransactionField('deletedPathGroupAccess')
+
+    parent = parentField(Path, 'groupAccess')
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='pathGroupAccess', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class PathGroupAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('pathGroupAccessHistory')
+    instance = historyInstanceField(PathGroupAccess)
+
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='pathGroupAccessHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Period(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdPeriod')
+    lastTransaction = lastTransactionField('changedPeriod')
+    deleteTransaction = deleteTransactionField('deletedPeriod')
+
+    parent = parentField('consentrecords.Session', 'period')
+    weekday = dbmodels.IntegerField(db_index=True, null=True)
+    startTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    endTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class PeriodHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('periodHistory')
+    instance = historyInstanceField(Period)
+
+    weekday = dbmodels.IntegerField(db_index=True, null=True, editable=False)
+    startTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    endTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Service(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdService')
+    lastTransaction = lastTransactionField('changedService')
+    deleteTransaction = deleteTransactionField('deletedService')
+    stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
+
+class ServiceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceHistory')
+    instance = historyInstanceField(Service)
+    stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
+
+class ServiceName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdServiceName')
+    lastTransaction = lastTransactionField('changedServiceName')
+    deleteTransaction = deleteTransactionField('deletedServiceName')
+
+    parent = parentField(Service, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ServiceNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceNameHistory')
+    instance = historyInstanceField(ServiceName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class ServiceOrganizationLabel(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdServiceOrganizationLabel')
+    lastTransaction = lastTransactionField('changedServiceOrganizationLabel')
+    deleteTransaction = deleteTransactionField('deletedServiceOrganizationLabel')
+
+    parent = parentField(Service, 'organizationLabel')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ServiceOrganizationLabelHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceOrganizationLabelHistory')
+    instance = historyInstanceField(ServiceOrganizationLabel)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class ServiceSiteLabel(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdServiceSiteLabel')
+    lastTransaction = lastTransactionField('changedServiceSiteLabel')
+    deleteTransaction = deleteTransactionField('deletedServiceSiteLabel')
+
+    parent = parentField(Service, 'siteLabel')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ServiceSiteLabelHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceSiteLabelHistory')
+    instance = historyInstanceField(ServiceSiteLabel)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class ServiceOfferingLabel(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdServiceOfferingLabel')
+    lastTransaction = lastTransactionField('changedServiceOfferingLabel')
+    deleteTransaction = deleteTransactionField('deletedServiceOfferingLabel')
+
+    parent = parentField(Service, 'offeringLabel')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class ServiceOfferingLabelHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceOfferingLabelHistory')
+    instance = historyInstanceField(ServiceOfferingLabel)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class ServiceImplication(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdServiceImplication')
+    lastTransaction = lastTransactionField('changedServiceImplication')
+    deleteTransaction = deleteTransactionField('deletedServiceImplication')
+    
+    parent = parentField(Service, 'serviceImplication')
+    impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedService', db_index=True, on_delete=dbmodels.CASCADE)
+
+class ServiceImplicationHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('serviceImplicationHistory')
+    instance = historyInstanceField(ServiceImplication)
+
+    impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedServiceHistory', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
+
+class Session(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdSession')
+    lastTransaction = lastTransactionField('changedSession')
+    deleteTransaction = deleteTransactionField('deletedSession')
+    
+    parent = parentField(Offering, 'session')
+    registrationDeadline = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class SessionHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('sessionHistory')
+    instance = historyInstanceField(Session)
+
+    registrationDeadline = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class SessionName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdSessionName')
+    lastTransaction = lastTransactionField('changedSessionName')
+    deleteTransaction = deleteTransactionField('deletedSessionName')
+
+    parent = parentField(Session, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class SessionNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('sessionNameHistory')
+    instance = historyInstanceField(SessionName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+class Site(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdSite')
+    lastTransaction = lastTransactionField('changedSite')
+    deleteTransaction = deleteTransactionField('deletedSite')
+    parent = parentField('consentrecords.Organization', 'site')
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+class SiteHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('siteHistory')
+    instance = historyInstanceField(Site)
+    webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+
+class SiteName(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdSiteName')
+    lastTransaction = lastTransactionField('changedSiteName')
+    deleteTransaction = deleteTransactionField('deletedSiteName')
+
+    parent = parentField(Site, 'name')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class SiteNameHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('siteNameHistory')
+    instance = historyInstanceField(SiteName)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+    
+class Street(dbmodels.Model, IInstance):    
+    id = idField()
+    transaction = createTransactionField('createdStreet')
+    lastTransaction = lastTransactionField('changedStreet')
+    deleteTransaction = deleteTransactionField('deletedStreet')
+    
+    parent = parentField('consentrecords.Address', 'street')
+    position = dbmodels.IntegerField()
+    text = dbmodels.CharField(max_length=255, null=True)
+
+class StreetHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('streetHistory')
+    instance = historyInstanceField(Street)
+    position = dbmodels.IntegerField(editable=False)
+    text = dbmodels.CharField(max_length=255, null=True, editable=False)
+
+class User(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdUser')
+    lastTransaction = lastTransactionField('changedUser')
+    deleteTransaction = deleteTransactionField('deletedUser')
+
+    firstName = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    lastName = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+    def description(self, language=None):
+        return self.email.order_by('position')[0].text
+        
+    def __str__(self):
+        return self.description()
+
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousFindFilter():
+        return Q(publicAccess__in=[terms.findPrivilegeEnum, terms.readPrivilegeEnum])
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousReadFilter():
+        return Q(publicAccess__id=terms.readPrivilegeEnum)
+        
+#         field
+#             name: Path
+#             data type: object
+#             max capacity: unique value
+#             object add rule: create one
+#             of kind: Path
+#         field
+#             name: access record
+#             data type: object
+#             max capacity: multiple values
+#             object add rule: create one
+#             of kind: access record
+#         field
+#             name: public access
+#             data type: object
+#             max capacity: unique value
+#             object add rule: pick one
+#             of kind: enumerator
+#             pick object path: term[name=privilege]/enumerator[name=(find,read)]
+#         field
+#             name: primary administrator
+#             data type: object
+#             max capacity: unique value
+#             object add rule: pick one
+#             of kind: user
+#         field
+#             name: access request
+#             data type: object
+#             max capacity: multiple values
+#             object add rule: pick one
+#             of kind: user
+#         field
+#             name: notification
+#             data type: object
+#             max capacity: multiple values
+#             object add rule: create one
+#             of kind: notification
+
+    class UserQuerySet(ObjectQuerySet):
+        
+        fieldMap = {'email': 'email__text__',
+                    'first name': 'firstName__',
+                    'last name': 'lastName__',
+                    'birthday': 'birthday__',
+                    'public access': 'publicAccess__',
+                   }
+        elementMap = {'group access': 'groupAccess__',
+                      'group access request': 'groupAccessRequest__',
+                      'notification': 'notification__',
+                      'path': 'path__',
+                      'primary administrator': 'primaryAdministrator__',
+                      'user access': 'userAccess__',
+                      'user access request': 'userAccessRequest__',
+                     }
+                     
+        def __init__(self, querySet=None):
+            super(ReadInstanceQuerySet, self).__init__(querySet)
+            self.fieldTerm = None
+    
+        def findableQuerySet(self, userInfo):
+            qs = self.querySet
+            if not userInfo.is_authenticated:
+                return qs.filter(User.anonymousFindFilter())
+            elif userInfo.is_administrator:
+                return qs
+            elif userInfo.instance:
+                privilegeIDs = [terms.findPrivilegeEnum.id, terms.readPrivilegeEnum.id, terms.registerPrivilegeEnum.id, 
+                              terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
+                return Q(publicAccess__in=privilegeIDs) |\
+                       Q(primaryAdministrator=userInfo.instance) |\
+                       Q(userAccess__privilege__in=privilegeIDs,
+                         userAccess__deleteTransaction__isnull=True,
+                         userAccess__accessee=userField.instance)|\
+                       Q(groupAccess__privilege__in=privilegeIDs,
+                         groupAccess__deleteTransaction__isnull=True,
+                         groupAccess__accessee__member__user=userField.instance,
+                         groupAccess__accessee__member__deleteTransaction__isnull=True)
+            else:
+                return qs.filter(User.anonymousFindFilter()) # This case occurs while setting up a user.
+
+        # Return a Q clause according to the specified params.
+        # If the parameter list is a single item:
+        #     If there is a list, then the object must contain a value with the specified field type.
+        #     If there is a question mark, then this is a no-op.
+        #     If there is a single term name, then each instance must contain a value of that term.
+        # If the parameter list is three or more items and the second item is a '>',
+        #     then tighten the filter of the result set for only those fields that are references to objects
+        #     that match params[2:]. For example:
+        #     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+        # If the parameter list is three or more items and the second item is a '[',
+        #     then tighten the filter of the result set for only those fields that are references to objects
+        #     that match the clause in params[2] and any following clauses. For example: 
+        #     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+        # If the parameter list is three values, interpret the three values as a query clause and
+        #     filter self on that clause.  
+        def filterClause(self, params, userInfo):
+        #     print('UserObjectSet.filterClause params: %s'% (params))
+            fieldName = params[0]
+            if fieldName in UserObjectSet.fieldMap:
+                if len(params) == 1:
+                    return Q((UserObjectSet.fieldMap[fieldName] + 'isnull', False))
+                else:
+                    return ObjectQuerySet.getFieldQ(UserObjectSet.fieldMap[fieldName], params[1], params[2])
+            elif fieldName in UserObjectSet.elementMap:
+                prefix = UserObjectSet.elementMap[fieldName]
+                if len(params) == 1:
+                    return Q((prefix + 'isnull', False), (prefix + 'deleteTransaction__isnull', True))
+                else:
+                    if fieldName == 'user access':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'group access':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'path':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'primary administrator':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'user access request':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'group access request':
+                        raise RuntimeError("Not yet implemented")
+                    elif fieldName == 'notification':
+                        raise RuntimeError("Not yet implemented")
+                    else:
+                        raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+            else:
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in params]))
+
+        def refineFilter(self, params, userInfo):
+            q, i = self.clause(params, userInfo)
+            
+            # Need to add distinct after the tests to prevent duplicates if there is
+            # more than one value of the instance that matches.
+            return self.applyClause(q, i)
+            
+        # Returns a duple containing a new result set based on the first "phrase" of the path 
+        # and a subset of path containing everything but the first "phrase" of the path.
+        def refineResults(self, path, userInfo):
+            if path[0] == '[':
+                return self.refineFilter(path[1], userInfo), path[2:]
+            elif path[0] == '>' or path[0] == '/':
+                i = terms[path[1]]
+                if len(path) == 2:
+                    self.fieldTerm = i
+                    return self, []
+                elif len(path) == 4 and path[2] == '/' and terms.isUUID(path[3]):
+                    raise ValueError('unimplemented path from user: %s' % path)
+                elif i == terms['Path']:
+                    f = Path.objects.filter(user__in=self.findableQuerySet(userInfo),
+                                            deleteTransaction__isnull=True)
+                    return Path.PathQuerySet(f), path[2:]
+                else:
+                    raise ValueError('unrecognized children path from user: %s' % path)
+            else:
+                raise ValueError('unrecognized path from user: %s' % path)
+
+class UserHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('userHistory')
+    instance = historyInstanceField(User)
+
+    firstName = dbmodels.CharField(max_length=255, null=True, editable=False)
+    lastName = dbmodels.CharField(max_length=255, null=True, editable=False)
+    birthday = dbmodels.CharField(max_length=10, null=True, editable=False)
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey(User, null=True, editable=False, on_delete=dbmodels.CASCADE)
+
+### A Multiple String Value containing an email associated with the specified user.
+class UserEmail(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdUserEmail')
+    deleteTransaction = deleteTransactionField('deletedUserEmail')
+
+    parent = parentField(User, 'email')
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    position = dbmodels.IntegerField()
+    
+class UserEmailHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('userEmailHistory')
+    instance = historyInstanceField(UserEmail)
+
+    text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
+    position = dbmodels.IntegerField(editable=False)
+
+### A Multiple Picked Value
+class UserUserAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdUserUserAccess')
+    lastTransaction = lastTransactionField('changedUserUserAccess')
+    deleteTransaction = deleteTransactionField('deletedUserUserAccess')
+
+    parent = parentField(User, 'userAccess')
+    accessee = dbmodels.ForeignKey(User, related_name='userAccessUser', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class UserUserAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('UserUserAccessHistory')
+    instance = historyInstanceField(UserUserAccess)
+
+    accessee = dbmodels.ForeignKey(User, related_name='userAccessUserHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class UserGroupAccess(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdUserGroupAccess')
+    lastTransaction = lastTransactionField('changedUserGroupAccess')
+    deleteTransaction = deleteTransactionField('deletedUserGroupAccess')
+
+    parent = parentField(User, 'groupAccess')
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='userAccessGroup', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+class UserGroupAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('userGroupAccessHistory')
+    instance = historyInstanceField(UserGroupAccess)
+
+    accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='userAccessGroupHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class UserUserAccessRequest(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdUserUserAccessRequest')
+    lastTransaction = lastTransactionField('changedUserUserAccessRequest')
+    deleteTransaction = deleteTransactionField('deletedUserUserAccessRequest')
+
+    parent = parentField(User, 'userAccessRequest')
+    accessee = dbmodels.ForeignKey(User, related_name='userAccessRequestUser', db_index=True, on_delete=dbmodels.CASCADE)
+
+class UserUserAccessRequestHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('UserUserAccessRequestHistory')
+    instance = historyInstanceField(UserUserAccessRequest)
+
+    accessee = dbmodels.ForeignKey(User, related_name='userAccessRequestUserHistory', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+
