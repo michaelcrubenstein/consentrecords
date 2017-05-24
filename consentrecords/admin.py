@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
 from django import forms
 
-from consentrecords.models import Instance, Value, Transaction, Description
+from consentrecords.models import *
 
 class DescriptionInline(admin.TabularInline):
     model = Description
@@ -121,3 +121,60 @@ admin.site.register(Instance, InstanceAdmin)
 admin.site.register(Value, ValueAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Description, DescriptionAdmin)
+
+class TabularInline(admin.TabularInline):
+    extra = 0
+
+    def queryset(self, request):
+        qs = super(UserHistoryInline, self).queryset(request)
+        qs = qs.annotate('transaction__creation_time')
+        return qs
+
+    def t_creationTime(self, obj):
+        return obj.transaction.creation_time
+    t_creationTime.admin_order_field = 'transaction__creation_time'
+    
+class UserHistoryInline(TabularInline):
+    model = UserHistory
+    list_display = ('id', 't_creationTime', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class UserEmailInline(TabularInline):
+    model = UserEmail
+    list_display = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['position']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    
+    def queryset(self, request):
+        qs = super(UserHistoryInline, self).queryset(request)
+        qs = qs.annotate('transaction__creation_time')
+        return qs
+
+    def t_creationTime(self, obj):
+        return obj.transaction.creation_time
+    t_creationTime.admin_order_field = 'transaction__creation_time'
+    
+    inlines = [UserHistoryInline, UserEmailInline]
+
+admin.site.register(User, UserAdmin)
