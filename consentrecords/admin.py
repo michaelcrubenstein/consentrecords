@@ -126,7 +126,7 @@ class TabularInline(admin.TabularInline):
     extra = 0
 
     def queryset(self, request):
-        qs = super(UserHistoryInline, self).queryset(request)
+        qs = super(TabularInline, self).queryset(request)
         qs = qs.annotate('transaction__creation_time')
         return qs
 
@@ -136,7 +136,7 @@ class TabularInline(admin.TabularInline):
     
 class ModelAdmin(admin.ModelAdmin):
     def queryset(self, request):
-        qs = super(UserAdmin, self).queryset(request)
+        qs = super(ModelAdmin, self).queryset(request)
         qs = qs.annotate('transaction__creation_time')
         return qs
 
@@ -203,3 +203,52 @@ class UserEmailAdmin(ModelAdmin):
     inlines = [UserEmailHistoryInline]
 
 admin.site.register(UserEmail, UserEmailAdmin)
+
+class OrganizationNameInline(TabularInline):
+    model = OrganizationName
+    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['languageCode']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class OrganizationAdmin(ModelAdmin):
+    list_display = ('__str__', 'id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [OrganizationNameInline]
+        
+admin.site.register(Organization, OrganizationAdmin)
+
+class OrganizationNameHistoryInline(TabularInline):
+    model = OrganizationNameHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class OrganizationNameAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [OrganizationNameHistoryInline]
+        
+admin.site.register(OrganizationName, OrganizationNameAdmin)
+

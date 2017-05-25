@@ -20,12 +20,26 @@ from consentrecords.models import *
 def getUniqueDatum(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
-    return f[0].stringValue if f.exists() else None
+    if f.exists() and (not f[0].deleteTransaction or f[0].deleteTransaction == i.deleteTransaction):
+        return f[0].stringValue
+    else:
+        return None
 
 def getUniqueReference(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
-    return f[0].referenceValue if f.exists() else None
+    if f.exists() and (not f[0].deleteTransaction and not f[0].deleteTransaction == i.deleteTransaction):
+        return f[0].referenceValue
+    else:
+        return None
+
+def getUniqueReferenceDescription(i, fieldName):
+    f = i.value_set.filter(field=terms[fieldName])\
+            .order_by('-transaction__creation_time')
+    if f.exists() and (not f[0].deleteTransaction or f[0].deleteTransaction == i.deleteTransaction):
+        return str(f[0].referenceValue)
+    else:
+        return None
 
 ### Builds history for the specified instances to the specified sourceType and historyType.
 ### uniqueTerms is a dictionary whose keys are terms and whose values are dictionaries with
@@ -95,6 +109,86 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
                 historyType.objects.get_or_create(instance=newItem, transaction=t, position=position,
                     defaults=defaults)
 
+def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerms):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        d = defaultdict(list)
+        for v in u.value_set.filter(field__in=uniqueTerms.keys()):
+            d[v.languageCode].append(v)
+        for languageCode in d.keys():
+            deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, d[languageCode]))
+            createTransactions = frozenset(map(lambda v: v.transaction, d[languageCode]))
+            tUnion = (deleteTransactions | createTransactions | frozenset([u.transaction])) - frozenset([u.deleteTransaction])
+            tList = list(tUnion)
+            tList.sort(key=lambda t:t.creation_time)
+            vList = d[languageCode]
+            vList.sort(key=lambda v: v.transaction.creation_time)
+            lastValue = vList[-1]
+            firstValue = vList[0]
+            newItem, created = sourceType.objects.get_or_create(parent=parent, languageCode=languageCode,
+                defaults={'transaction': firstValue.transaction,
+                          'lastTransaction': lastValue.transaction,
+                          'deleteTransaction': lastValue.deleteTransaction,
+                          'text': lastValue.stringValue})
+            
+            defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
+            for t in tList[:-1]:
+                for field in uniqueTerms.keys():
+                    termData = uniqueTerms[field]
+                    deletedValues = t.deletedValue.filter(field=field, instance=u)
+                    if t.deletedValue.filter(field=field, instance=u, languageCode=languageCode).exists():
+                        defaults[termData['dbField']] = None
+                        defaults['id'] = None   # Forces a new ID
+                    vs = t.value_set.filter(field=field, instance=u, languageCode=languageCode)
+                    if len(vs):
+                        defaults[termData['dbField']] = termData['f'](vs[0])
+                        defaults['id'] = vs[0].id
+                
+                print (newItem.text, t, languageCode, defaults)
+                historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
+                    defaults=defaults)
+
+def buildUserAccesses(instances, parentType, userSourceType, groupSourceType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        children = u.children.filter(typeID=accessRecord)
+        for i in children:
+            privilege = str(getUniqueReference(i, terms['privilege']))
+            for j in i.value_set(field=terms.user):
+                userSourceType.objects.get_or_create(id=j.id,
+                    defaults={'transaction': j.transaction,
+                              'lastTransaction': None,
+                              'deleteTransaction': j.deleteTransaction,
+                              'parent': parent,
+                              'accessee': User.objects.get(pk=j.referenceValue.id),
+                              'privilege': privilege}
+            for j in i.value_set(field=terms['group']):
+                groupSourceType.objects.get_or_create(id=j.id,
+                    defaults={'transaction': j.transaction,
+                              'lastTransaction': None,
+                              'deleteTransaction': j.deleteTransaction,
+                              'parent': parent,
+                              'accessee': Group.objects.get(pk=j.referenceValue.id),
+                              'privilege': privilege}
+                          
+def buildOrganizations(instances, sourceType):
+    for u in instances:
+        defaults={'transaction': u.transaction,
+                  'deleteTransaction': u.deleteTransaction,
+                  'webSite': getUniqueDatum(u, 'Web Site'),
+                  'publicAccess': getUniqueReferenceDescription(u, 'public access')}
+        print(u.id, defaults)
+        newItem, created = sourceType.objects.get_or_create(id=u.id,
+           defaults=defaults)
+
+def buildGroups(instances, parentType, sourceType):
+    for u in instances:
+        defaults={'transaction': u.transaction,
+                  'deleteTransaction': u.deleteTransaction,
+                  'parent': parentType.objects.get(pk=u.parent.id)}
+        print(u.id, defaults)
+        newItem, created = sourceType.objects.get_or_create(id=u.id,
+           defaults=defaults)
 
 if __name__ == "__main__":
     check = '-check' in sys.argv
@@ -102,9 +196,6 @@ if __name__ == "__main__":
     try:
         instances = Instance.objects.filter(typeID=terms.user)
         for u in instances:
-            id=u.id
-            transaction = u.transaction
-            deleteTransaction = u.deleteTransaction
             firstName = getUniqueDatum(u, 'first name')
             lastName = getUniqueDatum(u, 'last name')
             birthday = getUniqueDatum(u, 'birthday')
@@ -113,12 +204,12 @@ if __name__ == "__main__":
             print(u.id, transaction, deleteTransaction, firstName, lastName, 
                   birthday, publicAccess)
             newUser, created = User.objects.get_or_create(id=u.id,
-               defaults={'transaction': transaction,
-                         'deleteTransaction': deleteTransaction,
-                         'firstName': firstName,
-                         'lastName': lastName,
-                         'birthday': birthday,
-                         'publicAccess': str(publicAccess)})
+               defaults={'transaction': u.transaction,
+                         'deleteTransaction': u.deleteTransaction,
+                         'firstName': getUniqueDatum(u, 'first name'),
+                         'lastName': getUniqueDatum(u, 'last name'),
+                         'birthday': getUniqueDatum(u, 'birthday'),
+                         'publicAccess': getUniqueReferenceDescription(u, 'public access')})
             
         # Fill in the primary administrators, now that the users have been created.
         for u in instances:
@@ -141,7 +232,12 @@ if __name__ == "__main__":
         
         uniqueTerms = {terms['email']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildPositionedElements(instances, User, UserEmail, UserEmailHistory, uniqueTerms)
-                    
-                                       
+        
+        orgs = Instance.objects.filter(typeID=terms['Organization'])
+        buildOrganizations(orgs, Organization)
+
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(instances, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())

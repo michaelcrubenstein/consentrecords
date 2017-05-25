@@ -2764,6 +2764,21 @@ class Organization(dbmodels.Model, IInstance):
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='inquiryAccessGroupOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        enName = None
+        noneName = None
+        for v in self.names.filter(deleteTransaction__isnull=True):
+            if languageCode == v.languageCode:
+                return v.text
+            elif v.languageCode == 'en':
+                enName = v.text
+            elif not v.languageCode:
+                noneName = v.text
+        return noneName or enName or ''
+        
+    def __str__(self):
+        return self.description()
+
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -2781,6 +2796,9 @@ class OrganizationName(dbmodels.Model, IInstance):
     parent = parentField(Organization, 'names')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else self.text
 
 class OrganizationNameHistory(dbmodels.Model):
     id = idField()
