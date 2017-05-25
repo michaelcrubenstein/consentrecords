@@ -252,5 +252,12 @@ if __name__ == "__main__":
         
         buildInquiryAccessGroups(orgs, Organization)
         
+        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                       terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                       terms['Inquiry Access Group']: {'dbField': 'inquiryAccessGroup', 
+                                                       'f': lambda v: Group.objects.get(pk=v.referenceValue.id)},
+                      }
+        buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())
