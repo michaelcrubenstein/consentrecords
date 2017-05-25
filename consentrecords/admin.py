@@ -193,6 +193,18 @@ class UserGroupAccessInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class UserUserAccessRequestInline(TabularInline):
+    model = UserUserAccessRequest
+    list_display = ('id', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['id']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class UserAdmin(ModelAdmin):
     list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -201,7 +213,7 @@ class UserAdmin(ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline]
 
 admin.site.register(User, UserAdmin)
 

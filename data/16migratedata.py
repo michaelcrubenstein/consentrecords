@@ -200,6 +200,19 @@ def buildAccesses(instances, parentType, userSourceType, groupSourceType):
                                       'accessee': us[0],
                                       'privilege': privilege})
                           
+def buildAccessRequests(instances, parentType, userSourceType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        for i in u.value_set.filter(field=terms['access request']):
+            # group and user values may be associated with either groups or users fields.
+            us = User.objects.filter(pk=i.referenceValue.id)
+            userSourceType.objects.get_or_create(id=i.id,
+                defaults={'transaction': i.transaction,
+                          'lastTransaction': None,
+                          'deleteTransaction': i.deleteTransaction,
+                          'parent': parent,
+                          'accessee': us[0]})
+                          
 if __name__ == "__main__":
     check = '-check' in sys.argv
 
@@ -268,5 +281,7 @@ if __name__ == "__main__":
         
         buildAccesses(orgs, Organization, OrganizationUserAccess, OrganizationGroupAccess)
         
+        buildAccessRequests(users, User, UserUserAccessRequest)
+
     except Exception as e:
         print("%s" % traceback.format_exc())
