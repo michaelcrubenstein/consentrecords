@@ -189,6 +189,15 @@ def buildGroups(instances, parentType, sourceType):
         print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
+           
+def buildInquiryAccessGroups(instances, targetType):
+    for u in instances:
+        newItem = targetType.objects.get(pk=u.id)
+        oldReference = getUniqueReference(u, 'Inquiry Access Group')
+        if oldReference:
+            print(newItem, oldReference)
+            newItem.inquiryAccessGroup = Group.objects.get(pk=oldReference.pk)
+            newItem.save()
 
 if __name__ == "__main__":
     check = '-check' in sys.argv
@@ -244,6 +253,8 @@ if __name__ == "__main__":
         
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(groups, Group, GroupName, GroupNameHistory, uniqueTerms)
+        
+        buildInquiryAccessGroups(orgs, Organization)
         
     except Exception as e:
         print("%s" % traceback.format_exc())
