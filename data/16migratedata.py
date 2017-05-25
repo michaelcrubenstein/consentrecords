@@ -20,7 +20,7 @@ from consentrecords.models import *
 def getUniqueDatum(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
-    if f.exists() and (not f[0].deleteTransaction or f[0].deleteTransaction == i.deleteTransaction):
+    if f.exists() and ((not f[0].deleteTransaction) or (f[0].deleteTransaction == i.deleteTransaction)):
         return f[0].stringValue
     else:
         return None
@@ -28,7 +28,7 @@ def getUniqueDatum(i, fieldName):
 def getUniqueReference(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
-    if f.exists() and (not f[0].deleteTransaction and not f[0].deleteTransaction == i.deleteTransaction):
+    if f.exists() and ((not f[0].deleteTransaction) or (f[0].deleteTransaction == i.deleteTransaction)):
         return f[0].referenceValue
     else:
         return None
@@ -36,7 +36,7 @@ def getUniqueReference(i, fieldName):
 def getUniqueReferenceDescription(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
-    if f.exists() and (not f[0].deleteTransaction or f[0].deleteTransaction == i.deleteTransaction):
+    if f.exists() and ((not f[0].deleteTransaction) or (f[0].deleteTransaction == i.deleteTransaction)):
         return str(f[0].referenceValue)
     else:
         return None
