@@ -40,6 +40,14 @@ def getUniqueReferenceDescription(i, fieldName):
         return str(f[0].referenceValue)
     else:
         return None
+        
+def getValueTransactions(instance, vs):
+    deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, vs))
+    createTransactions = frozenset(map(lambda v: v.transaction, vs))
+    tUnion = (deleteTransactions | createTransactions | frozenset([instance.transaction])) - frozenset([instance.deleteTransaction])
+    tList = list(tUnion)
+    tList.sort(key=lambda t:t.creation_time)
+    return tList
 
 ### Builds history for the specified instances to the specified sourceType and historyType.
 ### uniqueTerms is a dictionary whose keys are terms and whose values are dictionaries with
@@ -47,11 +55,7 @@ def getUniqueReferenceDescription(i, fieldName):
 def buildHistory(instances, sourceType, historyType, uniqueTerms):
     for u in instances:
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
-        deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, vs))
-        createTransactions = frozenset(map(lambda v: v.transaction, vs))
-        tUnion = (deleteTransactions | createTransactions | frozenset([u.transaction])) - frozenset([u.deleteTransaction])
-        tList = list(tUnion)
-        tList.sort(key=lambda t:t.creation_time)
+        tList = getValueTransactions(u, vs)
         
         target = sourceType.objects.get(pk=u.id)
         target.lastTransaction = tList[-1]
@@ -77,11 +81,7 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
         for v in u.value_set.filter(field__in=uniqueTerms.keys()):
             d[v.position].append(v)
         for position in d.keys():
-            deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, d[position]))
-            createTransactions = frozenset(map(lambda v: v.transaction, d[position]))
-            tUnion = (deleteTransactions | createTransactions | frozenset([u.transaction])) - frozenset([u.deleteTransaction])
-            tList = list(tUnion)
-            tList.sort(key=lambda t:t.creation_time)
+            tList = getValueTransactions(u, d[position])
             vList = d[position]
             vList.sort(key=lambda v: v.transaction.creation_time)
             lastValue = vList[-1]
@@ -116,11 +116,7 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
         for v in u.value_set.filter(field__in=uniqueTerms.keys()):
             d[v.languageCode].append(v)
         for languageCode in d.keys():
-            deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, d[languageCode]))
-            createTransactions = frozenset(map(lambda v: v.transaction, d[languageCode]))
-            tUnion = (deleteTransactions | createTransactions | frozenset([u.transaction])) - frozenset([u.deleteTransaction])
-            tList = list(tUnion)
-            tList.sort(key=lambda t:t.creation_time)
+            tList = getValueTransactions(u, d[languageCode])
             vList = d[languageCode]
             vList.sort(key=lambda v: v.transaction.creation_time)
             lastValue = vList[-1]
