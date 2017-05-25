@@ -2945,12 +2945,15 @@ class PeriodHistory(dbmodels.Model):
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Service(dbmodels.Model, IInstance):    
+class Service(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdServices')
     lastTransaction = lastTransactionField('changedServices')
     deleteTransaction = deleteTransactionField('deletedServices')
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
+
+    def __str__(self):
+        return self.description()
 
 class ServiceHistory(dbmodels.Model):
     id = idField()

@@ -17,6 +17,14 @@ from django.contrib.auth import authenticate
 
 from consentrecords.models import *
 
+def getUniqueValue(i, field):
+    f = i.value_set.filter(field=field)\
+            .order_by('-transaction__creation_time')
+    if f.exists() and ((not f[0].deleteTransaction) or (f[0].deleteTransaction == i.deleteTransaction)):
+        return f[0]
+    else:
+        return None
+
 def getUniqueDatum(i, fieldName):
     f = i.value_set.filter(field=terms[fieldName])\
             .order_by('-transaction__creation_time')
@@ -44,7 +52,7 @@ def getUniqueReferenceDescription(i, fieldName):
 def getValueTransactions(instance, vs):
     deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, vs))
     createTransactions = frozenset(map(lambda v: v.transaction, vs))
-    tUnion = (deleteTransactions | createTransactions | frozenset([instance.transaction])) - frozenset([instance.deleteTransaction])
+    tUnion = (deleteTransactions | createTransactions | frozenset([instance.transaction])) - frozenset([None, instance.deleteTransaction])
     tList = list(tUnion)
     tList.sort(key=lambda t:t.creation_time)
     return tList
@@ -143,6 +151,38 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
                 print (newItem.text, t, languageCode, defaults)
                 historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
                     defaults=defaults)
+
+def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
+    for u in instances:
+        vs = u.value_set.filter(field__in=uniqueTerms.keys())
+        tList = getValueTransactions(u, vs)
+        defaults={'transaction': u.transaction,
+                  'lastTransaction': tList[-1],
+                  'deleteTransaction': u.deleteTransaction}
+        for field in uniqueTerms.keys():
+            termData = uniqueTerms[field]
+            v = getUniqueValue(u, field)
+            defaults[termData['dbField']] = v and termData['f'](getUniqueValue(u, field))
+        print(u.id, defaults)
+        newItem, created = sourceType.objects.get_or_create(id=u.id,
+           defaults=defaults)
+           
+        defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
+        for t in tList[:-1]:
+            for field in uniqueTerms.keys():
+                termData = uniqueTerms[field]
+                deletedValues = t.deletedValue.filter(field=field, instance=u)
+                if deletedValues.exists():
+                    defaults[termData['dbField']] = None
+                    defaults['id'] = None   # Forces a new ID
+                vs = t.value_set.filter(field=field, instance=u)
+                if len(vs):
+                    defaults[termData['dbField']] = termData['f'](vs[0])
+                    defaults['id'] = vs[0].id
+            
+            print (str(u), t, defaults)
+            historyType.objects.get_or_create(instance=newItem, transaction=t,
+                defaults=defaults)
 
 def buildOrganizations(instances, sourceType):
     for u in instances:
@@ -282,6 +322,13 @@ if __name__ == "__main__":
         buildAccesses(orgs, Organization, OrganizationUserAccess, OrganizationGroupAccess)
         
         buildAccessRequests(users, User, UserUserAccessRequest)
+        
+        uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
+        services = Instance.objects.filter(typeID=terms['Service'])
+        buildRootInstances(services, Service, ServiceHistory, uniqueTerms)
+
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(services, Service, ServiceName, ServiceNameHistory, uniqueTerms)
 
     except Exception as e:
         print("%s" % traceback.format_exc())

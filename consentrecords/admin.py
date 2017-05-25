@@ -347,7 +347,7 @@ class GroupNameInline(TabularInline):
     fk_name = 'parent'
     
 class GroupAdmin(ModelAdmin):
-    list_display = ('__str__', 'id', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', '__str__', 't_creationTime', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 't_creationTime', 'deleteTransaction')}),
     )
@@ -381,4 +381,64 @@ class GroupNameAdmin(ModelAdmin):
     inlines = [GroupNameHistoryInline]
         
 admin.site.register(GroupName, GroupNameAdmin)
+
+class ServiceHistoryInline(TabularInline):
+    model = ServiceHistory
+    list_display = ('id', 't_creationTime', 'stage')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'stage')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'stage')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ServiceNameInline(TabularInline):
+    model = ServiceName
+    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['languageCode']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class ServiceAdmin(ModelAdmin):
+    list_display = ('id', '__str__', 'stage', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'stage', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'stage', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'stage', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    
+    inlines = [ServiceHistoryInline, ServiceNameInline]
+
+admin.site.register(Service, ServiceAdmin)
+
+class ServiceNameHistoryInline(TabularInline):
+    model = ServiceNameHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ServiceNameAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [ServiceNameHistoryInline]
+        
+admin.site.register(ServiceName, ServiceNameAdmin)
 
