@@ -144,29 +144,6 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
                 historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
                     defaults=defaults)
 
-def buildUserAccesses(instances, parentType, userSourceType, groupSourceType):
-    for u in instances:
-        parent = parentType.objects.get(pk=u.id)
-        children = u.children.filter(typeID=accessRecord)
-        for i in children:
-            privilege = str(getUniqueReference(i, terms['privilege']))
-            for j in i.value_set(field=terms.user):
-                userSourceType.objects.get_or_create(id=j.id,
-                    defaults={'transaction': j.transaction,
-                              'lastTransaction': None,
-                              'deleteTransaction': j.deleteTransaction,
-                              'parent': parent,
-                              'accessee': User.objects.get(pk=j.referenceValue.id),
-                              'privilege': privilege}
-            for j in i.value_set(field=terms['group']):
-                groupSourceType.objects.get_or_create(id=j.id,
-                    defaults={'transaction': j.transaction,
-                              'lastTransaction': None,
-                              'deleteTransaction': j.deleteTransaction,
-                              'parent': parent,
-                              'accessee': Group.objects.get(pk=j.referenceValue.id),
-                              'privilege': privilege}
-                          
 def buildOrganizations(instances, sourceType):
     for u in instances:
         defaults={'transaction': u.transaction,
@@ -195,12 +172,40 @@ def buildInquiryAccessGroups(instances, targetType):
             newItem.inquiryAccessGroup = Group.objects.get(pk=oldReference.pk)
             newItem.save()
 
+def buildAccesses(instances, parentType, userSourceType, groupSourceType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        children = u.children.filter(typeID=terms.accessRecord)
+        for i in children:
+            privilege = getUniqueReferenceDescription(i, 'privilege')
+            # group and user values may be associated with either groups or users fields.
+            for j in i.value_set.filter(field__in=[terms['group'], terms.user]):
+                gs = Group.objects.filter(pk=j.referenceValue.id)
+                if gs.exists():
+                    groupSourceType.objects.get_or_create(id=j.id,
+                        defaults={'transaction': j.transaction,
+                                  'lastTransaction': None,
+                                  'deleteTransaction': j.deleteTransaction,
+                                  'parent': parent,
+                                  'accessee': gs[0],
+                                  'privilege': privilege})
+                else:
+                    us = User.objects.filter(pk=j.referenceValue.id)
+                    if us.exists():
+                        userSourceType.objects.get_or_create(id=j.id,
+                            defaults={'transaction': j.transaction,
+                                      'lastTransaction': None,
+                                      'deleteTransaction': j.deleteTransaction,
+                                      'parent': parent,
+                                      'accessee': us[0],
+                                      'privilege': privilege})
+                          
 if __name__ == "__main__":
     check = '-check' in sys.argv
 
     try:
-        instances = Instance.objects.filter(typeID=terms.user)
-        for u in instances:
+        users = Instance.objects.filter(typeID=terms.user)
+        for u in users:
             firstName = getUniqueDatum(u, 'first name')
             lastName = getUniqueDatum(u, 'last name')
             birthday = getUniqueDatum(u, 'birthday')
@@ -217,7 +222,7 @@ if __name__ == "__main__":
                          'publicAccess': getUniqueReferenceDescription(u, 'public access')})
             
         # Fill in the primary administrators, now that the users have been created.
-        for u in instances:
+        for u in users:
             id=u.id
             primaryAdministrator = getUniqueReference(u, 'primary administrator')
             if primaryAdministrator:
@@ -233,10 +238,10 @@ if __name__ == "__main__":
                        terms['primary administrator']: 
                            {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
                       }
-        buildHistory(instances, User, UserHistory, uniqueTerms)
+        buildHistory(users, User, UserHistory, uniqueTerms)
         
         uniqueTerms = {terms['email']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildPositionedElements(instances, User, UserEmail, UserEmailHistory, uniqueTerms)
+        buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
         
         orgs = Instance.objects.filter(typeID=terms['Organization'])
         buildOrganizations(orgs, Organization)
@@ -258,6 +263,10 @@ if __name__ == "__main__":
                                                        'f': lambda v: Group.objects.get(pk=v.referenceValue.id)},
                       }
         buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
+        
+        buildAccesses(users, User, UserUserAccess, UserGroupAccess)
+        
+        buildAccesses(orgs, Organization, OrganizationUserAccess, OrganizationGroupAccess)
         
     except Exception as e:
         print("%s" % traceback.format_exc())

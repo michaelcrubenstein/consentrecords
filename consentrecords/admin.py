@@ -124,7 +124,8 @@ admin.site.register(Description, DescriptionAdmin)
 
 class TabularInline(admin.TabularInline):
     extra = 0
-
+    can_delete = False
+    
     def queryset(self, request):
         qs = super(TabularInline, self).queryset(request)
         qs = qs.annotate('transaction__creation_time')
@@ -168,15 +169,39 @@ class UserEmailInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class UserUserAccessInline(TabularInline):
+    model = UserUserAccess
+    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['privilege', 'id']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class UserGroupAccessInline(TabularInline):
+    model = UserGroupAccess
+    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['privilege', 'id']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class UserAdmin(ModelAdmin):
     list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline]
 
 admin.site.register(User, UserAdmin)
 
@@ -237,6 +262,30 @@ class GroupInline(TabularInline):
     readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
 
+class OrganizationUserAccessInline(TabularInline):
+    model = OrganizationUserAccess
+    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['privilege', 'id']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class OrganizationGroupAccessInline(TabularInline):
+    model = OrganizationGroupAccess
+    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['privilege', 'id']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class OrganizationAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -245,7 +294,7 @@ class OrganizationAdmin(ModelAdmin):
     readonly_fields = ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('names__text', 'id', 'webSite', 'publicAccess', 'inquiryAccessGroup__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
-    inlines = [OrganizationHistoryInline, OrganizationNameInline, GroupInline]
+    inlines = [OrganizationHistoryInline, OrganizationNameInline, GroupInline, OrganizationUserAccessInline, OrganizationGroupAccessInline]
         
 admin.site.register(Organization, OrganizationAdmin)
 
