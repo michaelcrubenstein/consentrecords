@@ -216,6 +216,15 @@ class OrganizationNameInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class GroupInline(TabularInline):
+    model = Group
+    list_display = ('__str__', 'id', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
+
 class OrganizationAdmin(ModelAdmin):
     list_display = ('__str__', 'id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -224,7 +233,7 @@ class OrganizationAdmin(ModelAdmin):
     readonly_fields = ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'webSite', 'publicAccess', 'inquiryAccessGroup', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
-    inlines = [OrganizationNameInline]
+    inlines = [OrganizationNameInline, GroupInline]
         
 admin.site.register(Organization, OrganizationAdmin)
 
@@ -251,4 +260,52 @@ class OrganizationNameAdmin(ModelAdmin):
     inlines = [OrganizationNameHistoryInline]
         
 admin.site.register(OrganizationName, OrganizationNameAdmin)
+
+class GroupNameInline(TabularInline):
+    model = GroupName
+    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['languageCode']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class GroupAdmin(ModelAdmin):
+    list_display = ('__str__', 'id', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
+
+    inlines = [GroupNameInline]
+        
+admin.site.register(Group, GroupAdmin)
+
+class GroupNameHistoryInline(TabularInline):
+    model = GroupNameHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class GroupNameAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [GroupNameHistoryInline]
+        
+admin.site.register(GroupName, GroupNameAdmin)
 

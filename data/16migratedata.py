@@ -237,7 +237,13 @@ if __name__ == "__main__":
         buildOrganizations(orgs, Organization)
 
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
-        buildNameElements(instances, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
+        buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
+        
+        groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
+        buildGroups(groups, Organization, Group)
+        
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(groups, Group, GroupName, GroupNameHistory, uniqueTerms)
         
     except Exception as e:
         print("%s" % traceback.format_exc())

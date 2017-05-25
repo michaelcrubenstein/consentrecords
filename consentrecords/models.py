@@ -92,6 +92,21 @@ class _deferred():
 ### The interface shared by all types of instances.        
 class IInstance():
     pass
+    
+### An Instance that has names that vary by languageCode.
+class NamedInstance(IInstance):
+
+    def description(self, languageCode=None):
+        enName = None
+        noneName = None
+        for v in self.names.filter(deleteTransaction__isnull=True):
+            if languageCode == v.languageCode:
+                return v.text
+            elif v.languageCode == 'en':
+                enName = v.text
+            elif not v.languageCode:
+                noneName = v.text
+        return noneName or enName or '(None)'
 
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -2605,6 +2620,9 @@ class ExperiencePromptText(dbmodels.Model, IInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
 class ExperiencePromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptTextHistories')
@@ -2613,11 +2631,14 @@ class ExperiencePromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Group(dbmodels.Model, IInstance):
+class Group(dbmodels.Model, NamedInstance):
     id = idField()
     transaction = createTransactionField('createdGroups')
     deleteTransaction = deleteTransactionField('deletedGroups')
     parent = parentField('consentrecords.Organization', 'groups')
+
+    def __str__(self):
+        return self.description()
 
 class GroupName(dbmodels.Model, IInstance):
     id = idField()
@@ -2628,6 +2649,9 @@ class GroupName(dbmodels.Model, IInstance):
     parent = parentField(Group, 'names')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
 class GroupNameHistory(dbmodels.Model):
     id = idField()
@@ -2732,6 +2756,9 @@ class OfferingName(dbmodels.Model, IInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else self.text
+
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringNameHistories')
@@ -2755,7 +2782,7 @@ class OfferingServiceHistory(dbmodels.Model):
     instance = historyInstanceField(OfferingService)
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class Organization(dbmodels.Model, IInstance):    
+class Organization(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdOrganizations')
     lastTransaction = lastTransactionField('changedOrganizations')
@@ -2764,18 +2791,6 @@ class Organization(dbmodels.Model, IInstance):
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='inquiryAccessGroupOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
-    def description(self, languageCode=None):
-        enName = None
-        noneName = None
-        for v in self.names.filter(deleteTransaction__isnull=True):
-            if languageCode == v.languageCode:
-                return v.text
-            elif v.languageCode == 'en':
-                enName = v.text
-            elif not v.languageCode:
-                noneName = v.text
-        return noneName or enName or ''
-        
     def __str__(self):
         return self.description()
 
@@ -2798,7 +2813,7 @@ class OrganizationName(dbmodels.Model, IInstance):
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
     def __str__(self):
-        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else self.text
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
 class OrganizationNameHistory(dbmodels.Model):
     id = idField()
@@ -2953,6 +2968,9 @@ class ServiceName(dbmodels.Model, IInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
 class ServiceNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceNameHistories')
@@ -2970,6 +2988,9 @@ class ServiceOrganizationLabel(dbmodels.Model, IInstance):
     parent = parentField(Service, 'organizationLabels')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
 class ServiceOrganizationLabelHistory(dbmodels.Model):
     id = idField()
@@ -2989,6 +3010,9 @@ class ServiceSiteLabel(dbmodels.Model, IInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
 class ServiceSiteLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceSiteLabelHistories')
@@ -3006,6 +3030,9 @@ class ServiceOfferingLabel(dbmodels.Model, IInstance):
     parent = parentField(Service, 'offeringLabels')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
 class ServiceOfferingLabelHistory(dbmodels.Model):
     id = idField()
@@ -3063,6 +3090,9 @@ class SessionName(dbmodels.Model, IInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
 class SessionNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionNameHistories')
@@ -3094,6 +3124,9 @@ class SiteName(dbmodels.Model, IInstance):
     parent = parentField(Site, 'names')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
 class SiteNameHistory(dbmodels.Model):
     id = idField()
