@@ -208,7 +208,42 @@ def buildGroups(instances, parentType, sourceType):
         print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
-           
+
+### uniqueTerms should contain those items that are unique for objects of sourceType.           
+def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, parentIDF):
+    for u in instances:
+        print (u, u.parent)
+        vs = u.value_set.filter(field__in=uniqueTerms.keys())
+        tList = getValueTransactions(u, vs)
+        defaults={'transaction': u.transaction,
+                  'lastTransaction': tList[-1],
+                  'deleteTransaction': u.deleteTransaction,
+                  'parent': parentType.objects.get(pk=parentIDF(u))}
+        for field in uniqueTerms.keys():
+            termData = uniqueTerms[field]
+            v = getUniqueValue(u, field)
+            defaults[termData['dbField']] = v and termData['f'](getUniqueValue(u, field))
+        print(u.id, defaults)
+        newItem, created = sourceType.objects.get_or_create(id=u.id,
+           defaults=defaults)
+        
+        defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
+        for t in tList[:-1]:
+            for field in uniqueTerms.keys():
+                termData = uniqueTerms[field]
+                deletedValues = t.deletedValue.filter(field=field, instance=u)
+                if deletedValues.exists():
+                    defaults[termData['dbField']] = None
+                    defaults['id'] = None   # Forces a new ID
+                vs = t.value_set.filter(field=field, instance=u)
+                if vs.exists():
+                    defaults[termData['dbField']] = termData['f'](vs[0])
+                    defaults['id'] = vs[0].id
+            
+            print (str(u), t, defaults)
+            historyType.objects.get_or_create(instance=newItem, transaction=t,
+                defaults=defaults)
+
 def buildInquiryAccessGroups(instances, targetType):
     for u in instances:
         newItem = targetType.objects.get(pk=u.id)
@@ -258,6 +293,22 @@ def buildAccessRequests(instances, parentType, userSourceType):
                           'deleteTransaction': i.deleteTransaction,
                           'parent': parent,
                           'accessee': us[0]})
+
+### Build items like ServiceImplications.
+### userSourceType is the type of object you are trying to create.
+### targetType is the type of object referred in the dbField field.                        
+def buildSubReferences(instances, parentType, userSourceType, field, dbField, targetType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        for i in u.value_set.filter(field=field):
+            # group and user values may be associated with either groups or users fields.
+            us = targetType.objects.filter(pk=i.referenceValue.id)
+            userSourceType.objects.get_or_create(id=i.id,
+                defaults={'transaction': i.transaction,
+                          'lastTransaction': None,
+                          'deleteTransaction': i.deleteTransaction,
+                          'parent': parent,
+                          dbField: us[0]})
                           
 if __name__ == "__main__":
     check = '-check' in sys.argv
@@ -329,6 +380,7 @@ if __name__ == "__main__":
         
         buildAccessRequests(users, User, UserUserAccessRequest)
         
+        # Services
         uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
         services = Instance.objects.filter(typeID=terms['Service'])
         buildRootInstances(services, Service, ServiceHistory, uniqueTerms)
@@ -344,6 +396,25 @@ if __name__ == "__main__":
         
         uniqueTerms = {terms['Offering Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(services, Service, ServiceOfferingLabel, ServiceOfferingLabelHistory, uniqueTerms)
+        
+        buildSubReferences(services, Service, ServiceImplication, terms['Service'], 'impliedService', Service)
+        
+        sites = Instance.objects.filter(typeID=terms['Site'])
+        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                      }
+        buildChildren(sites, Organization, Site, SiteHistory, uniqueTerms,
+                      lambda i: i.parent.parent.id)
+        
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(sites, Site, SiteName, SiteNameHistory, uniqueTerms)
+        
+        addresses = Instance.objects.filter(typeID=terms['Address'])
+        uniqueTerms = {terms['City']: {'dbField': 'city', 'f': lambda v: v.stringValue},
+                       terms['State']: {'dbField': 'state', 'f': lambda v: str(v.referenceValue)},
+                       terms['Zip Code']: {'dbField': 'zipCode', 'f': lambda v: v.stringValue},
+                      }
+        buildChildren(addresses, Site, Address, AddressHistory, uniqueTerms,
+                      lambda i: i.parent.id)
         
     except Exception as e:
         print("%s" % traceback.format_exc())

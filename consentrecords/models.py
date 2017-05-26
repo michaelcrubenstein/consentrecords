@@ -2409,6 +2409,14 @@ class Address(dbmodels.Model, IInstance):
     city = dbmodels.CharField(max_length=255, db_index=True, null=True)
     state = dbmodels.CharField(max_length=255, db_index=True, null=True)
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    
+    def description(self, language=None):
+        streets = ' '.join(self.streets.order_by('position'))
+        if streets: streets = streets + ' '
+        return streets + ('%s, %s  %s' % (self.city or '', self.state or '', self.zipCode or '')) 
+        
+    def __str__(self):
+        return self.description() 
 
 class AddressHistory(dbmodels.Model):
     id = idField()
@@ -3104,13 +3112,16 @@ class SessionNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Site(dbmodels.Model, IInstance):    
+class Site(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdSites')
     lastTransaction = lastTransactionField('changedSites')
     deleteTransaction = deleteTransactionField('deletedSites')
     parent = parentField('consentrecords.Organization', 'sites')
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+    def __str__(self):
+        return self.description()
 
 class SiteHistory(dbmodels.Model):
     id = idField()
