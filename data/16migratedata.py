@@ -124,11 +124,16 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
         for v in u.value_set.filter(field__in=uniqueTerms.keys()):
             d[v.languageCode].append(v)
         for languageCode in d.keys():
-            tList = getValueTransactions(u, d[languageCode])
-            vList = d[languageCode]
-            vList.sort(key=lambda v: v.transaction.creation_time)
-            lastValue = vList[-1]
-            firstValue = vList[0]
+            # Produce a valueSet that contains values at the minimum position for this languageCode,
+            # Sorted by transaction creation time.
+            minPosition = reduce(lambda x, y: x if x < y else y, map(lambda v: v.position, d[languageCode]))
+            vs = list(filter(lambda v: v.position == minPosition, d[languageCode]))
+            vs.sort(key=lambda v: v.transaction.creation_time)
+            
+            tList = getValueTransactions(u, vs)
+            
+            lastValue = vs[-1]
+            firstValue = vs[0]
             newItem, created = sourceType.objects.get_or_create(parent=parent, languageCode=languageCode,
                 defaults={'transaction': firstValue.transaction,
                           'lastTransaction': lastValue.transaction,
@@ -139,11 +144,12 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
             for t in tList[:-1]:
                 for field in uniqueTerms.keys():
                     termData = uniqueTerms[field]
-                    deletedValues = t.deletedValue.filter(field=field, instance=u)
-                    if t.deletedValue.filter(field=field, instance=u, languageCode=languageCode).exists():
+                    
+                    # Produce a valueSet that contains values at the minimum position for this languageCode,
+                    vs = t.value_set.filter(field=field, instance=u, languageCode=languageCode, position=minPosition)
+                    if t.deletedValue.filter(field=field, instance=u, languageCode=languageCode, position=minPosition).exists():
                         defaults[termData['dbField']] = None
                         defaults['id'] = None   # Forces a new ID
-                    vs = t.value_set.filter(field=field, instance=u, languageCode=languageCode)
                     if len(vs):
                         defaults[termData['dbField']] = termData['f'](vs[0])
                         defaults['id'] = vs[0].id
@@ -330,5 +336,14 @@ if __name__ == "__main__":
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(services, Service, ServiceName, ServiceNameHistory, uniqueTerms)
 
+        uniqueTerms = {terms['Organization Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(services, Service, ServiceOrganizationLabel, ServiceOrganizationLabelHistory, uniqueTerms)
+        
+        uniqueTerms = {terms['Site Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(services, Service, ServiceSiteLabel, ServiceSiteLabelHistory, uniqueTerms)
+        
+        uniqueTerms = {terms['Offering Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(services, Service, ServiceOfferingLabel, ServiceOfferingLabelHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())

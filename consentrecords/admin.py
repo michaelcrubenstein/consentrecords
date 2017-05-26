@@ -406,6 +406,15 @@ class ServiceNameInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class ServiceOrganizationLabelInline(ServiceNameInline):
+    model = ServiceOrganizationLabel
+    
+class ServiceSiteLabelInline(ServiceNameInline):
+    model = ServiceSiteLabel
+    
+class ServiceOfferingLabelInline(ServiceNameInline):
+    model = ServiceOfferingLabel
+    
 class ServiceAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'stage', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -414,7 +423,7 @@ class ServiceAdmin(ModelAdmin):
     readonly_fields = ('id', 'stage', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'stage', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [ServiceHistoryInline, ServiceNameInline]
+    inlines = [ServiceHistoryInline, ServiceNameInline, ServiceOrganizationLabelInline, ServiceSiteLabelInline, ServiceOfferingLabelInline]
 
 admin.site.register(Service, ServiceAdmin)
 
@@ -439,6 +448,30 @@ class ServiceNameAdmin(ModelAdmin):
     search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     inlines = [ServiceNameHistoryInline]
-        
+
 admin.site.register(ServiceName, ServiceNameAdmin)
+
+class ServiceOrganizationLabelHistoryInline(ServiceNameHistoryInline):
+    model = ServiceOrganizationLabelHistory   
+
+class ServiceOrganizationLabelAdmin(ServiceNameAdmin):
+    inlines = [ServiceOrganizationLabelHistoryInline]
+    
+admin.site.register(ServiceOrganizationLabel, ServiceOrganizationLabelAdmin)
+
+class ServiceSiteLabelHistoryInline(ServiceNameHistoryInline):
+    model = ServiceSiteLabelHistory   
+
+class ServiceSiteLabelAdmin(ServiceNameAdmin):
+    inlines = [ServiceSiteLabelHistoryInline]
+    
+admin.site.register(ServiceSiteLabel, ServiceSiteLabelAdmin)
+
+class ServiceOfferingLabelHistoryInline(ServiceNameHistoryInline):
+    model = ServiceOfferingLabelHistory   
+
+class ServiceOfferingLabelAdmin(ServiceNameAdmin):
+    inlines = [ServiceOfferingLabelHistoryInline]
+    
+admin.site.register(ServiceOfferingLabel, ServiceOfferingLabelAdmin)
 
