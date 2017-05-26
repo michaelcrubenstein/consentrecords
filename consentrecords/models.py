@@ -2411,7 +2411,7 @@ class Address(dbmodels.Model, IInstance):
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True)
     
     def description(self, language=None):
-        streets = ' '.join(self.streets.order_by('position'))
+        streets = ' '.join(map(lambda s: s.text, self.streets.order_by('position')))
         if streets: streets = streets + ' '
         return streets + ('%s, %s  %s' % (self.city or '', self.state or '', self.zipCode or '')) 
         
@@ -3159,6 +3159,9 @@ class Street(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.Address', 'streets')
     position = dbmodels.IntegerField()
     text = dbmodels.CharField(max_length=255, null=True)
+
+    def __str__(self):
+        return self.text or '(None)'
 
 class StreetHistory(dbmodels.Model):
     id = idField()

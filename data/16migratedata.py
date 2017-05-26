@@ -416,5 +416,8 @@ if __name__ == "__main__":
         buildChildren(addresses, Site, Address, AddressHistory, uniqueTerms,
                       lambda i: i.parent.id)
         
+        uniqueTerms = {terms['Street']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildPositionedElements(addresses, Address, Street, StreetHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())

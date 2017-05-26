@@ -157,6 +157,15 @@ class AddressHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
+class StreetInline(TabularInline):
+    model = Street
+    list_display = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'position', 'text', 'transaction__id', 'deleteTransaction__id')
+
 class AddressAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'city', 'state', 'zipCode', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -165,7 +174,7 @@ class AddressAdmin(ModelAdmin):
     readonly_fields = ('id', 'city', 'state', 'zipCode', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'city', 'state', 'zipCode', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [AddressHistoryInline]
+    inlines = [AddressHistoryInline, StreetInline]
         
 admin.site.register(Address, AddressAdmin)
 
@@ -590,4 +599,28 @@ class SiteNameAdmin(ModelAdmin):
     inlines = [SiteNameHistoryInline]
         
 admin.site.register(SiteName, SiteNameAdmin)
+
+class StreetHistoryInline(TabularInline):
+    model = StreetHistory
+    list_display = ('id', 't_creationTime', 'position', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'position', 'text')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'position', 'text')
+
+    ordering = ['transaction__creation_time', 'position']
+    show_change_link = True
+    fk_name = 'instance'
+
+class StreetAdmin(ModelAdmin):
+    list_display = ('id', 'position', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'position', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'position', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'position', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [StreetHistoryInline]
+        
+admin.site.register(Street, StreetAdmin)
 
