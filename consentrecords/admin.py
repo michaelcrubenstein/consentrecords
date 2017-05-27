@@ -610,11 +610,11 @@ class OfferingInline(TabularInline):
     search_fields = ('id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 'transaction__id', 'deleteTransaction__id')
 
 class SiteAdmin(ModelAdmin):
-    list_display = ('id', '__str__', 'webSite', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', '__str__', 'parent', 'webSite', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'webSite', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('parent', 'parent_id', 'id', 'webSite', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'webSite', 't_creationTime', 'deleteTransaction')
+    readonly_fields = ('parent', 'parent_id', 'id', 'webSite', 't_creationTime', 'deleteTransaction')
     search_fields = ('names__text', 'id', 'webSite', 'transaction__id', 'deleteTransaction__id')
 
     inlines = [SiteHistoryInline, SiteNameInline, AddressInline, OfferingInline]
