@@ -311,27 +311,12 @@ def buildAccessRequests(instances, parentType, userSourceType):
                           'accessee': us[0]})
 
 ### Build items like ServiceImplications.
+### Parent is a function that returns the migrated parent of an instance.
 ### userSourceType is the type of object you are trying to create.
 ### targetType is the type of object referred in the dbField field.                        
-def buildSubReferences(instances, parentType, userSourceType, field, dbField, targetType):
+def buildSubReferences(instances, getParentF, userSourceType, field, dbField, targetType):
     for u in instances:
-        parent = parentType.objects.get(pk=u.id)
-        for i in u.value_set.filter(field=field):
-            # group and user values may be associated with either groups or users fields.
-            us = targetType.objects.filter(pk=i.referenceValue.id)
-            userSourceType.objects.get_or_create(id=i.id,
-                defaults={'transaction': i.transaction,
-                          'lastTransaction': None,
-                          'deleteTransaction': i.deleteTransaction,
-                          'parent': parent,
-                          dbField: us[0]})
-
-### Build items like ServiceImplications.
-### userSourceType is the type of object you are trying to create.
-### targetType is the type of object referred in the dbField field.                        
-def buildInquiries(instances, parentType, userSourceType, field, dbField, targetType):
-    for u in instances:
-        parent = parentType.objects.get(pk=u.parent.id)
+        parent = getParentF(u)
         for i in u.value_set.filter(field=field):
             # group and user values may be associated with either groups or users fields.
             us = targetType.objects.filter(pk=i.referenceValue.id)
@@ -429,7 +414,9 @@ if __name__ == "__main__":
         uniqueTerms = {terms['Offering Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(services, Service, ServiceOfferingLabel, ServiceOfferingLabelHistory, uniqueTerms)
         
-        buildSubReferences(services, Service, ServiceImplication, terms['Service'], 'impliedService', Service)
+        buildSubReferences(services, 
+                           lambda u: Service.objects.get(pk=u.id), 
+                           ServiceImplication, terms['Service'], 'impliedService', Service)
         
         sites = Instance.objects.filter(typeID=terms['Site'])
         uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
@@ -465,7 +452,9 @@ if __name__ == "__main__":
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
         
-        buildSubReferences(offerings, Offering, OfferingService, terms['Service'], 'service', Service)
+        buildSubReferences(offerings,  
+                           lambda u: Offering.objects.get(pk=u.id), 
+                           OfferingService, terms['Service'], 'service', Service)
         
         sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
         uniqueTerms = {terms['Registration Deadline']: {'dbField': 'registrationDeadline', 'f': lambda v: v.stringValue},
@@ -481,7 +470,13 @@ if __name__ == "__main__":
         buildNameElements(sessions, Session, SessionName, SessionNameHistory, uniqueTerms)
         
         inquiries = Instance.objects.filter(typeID=terms['Inquiries'])
-        buildInquiries(inquiries, Session, Inquiry, terms['user'], 'user', User)
+        buildSubReferences(inquiries, lambda u: Session.objects.get(pk=u.parent.id), 
+                       Inquiry, terms['user'], 'user', User)
+        
+        enrollments = Instance.objects.filter(typeID=terms['Enrollment'])
+        buildSubReferences(enrollments, lambda u: Session.objects.get(pk=u.parent.parent.id), 
+                       Enrollment, terms['user'], 'user', User)
+        
         
     except Exception as e:
         print("%s" % traceback.format_exc())
