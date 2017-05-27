@@ -256,7 +256,7 @@ class UserAdmin(ModelAdmin):
         (None, {'fields': ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
     inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline]
 
@@ -546,7 +546,7 @@ class SiteAdmin(ModelAdmin):
         (None, {'fields': ('id', 'webSite', 't_creationTime', 'deleteTransaction')}),
     )
     readonly_fields = ('id', 'webSite', 't_creationTime', 'deleteTransaction')
-    search_fields = ('id', 'webSite', 'transaction__id', 'deleteTransaction__id')
+    search_fields = ('names__text', 'id', 'webSite', 'transaction__id', 'deleteTransaction__id')
 
     inlines = [SiteHistoryInline, SiteNameInline, AddressInline]
         
