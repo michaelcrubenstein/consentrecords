@@ -2732,7 +2732,7 @@ class NotificationArgumentHistory(dbmodels.Model):
     instance = historyInstanceField(NotificationArgument)
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class Offering(dbmodels.Model, IInstance):    
+class Offering(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdOfferings')
     lastTransaction = lastTransactionField('changedOfferings')
@@ -2744,6 +2744,9 @@ class Offering(dbmodels.Model, IInstance):
     minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
     maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
     
+    def __str__(self):
+        return self.description()
+
 class OfferingHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringHistories')

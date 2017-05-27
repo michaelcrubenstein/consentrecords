@@ -215,10 +215,15 @@ def buildChildren(instances, parentType, sourceType, historyType, uniqueTerms, p
         print (u, u.parent)
         vs = u.value_set.filter(field__in=uniqueTerms.keys())
         tList = getValueTransactions(u, vs)
-        defaults={'transaction': u.transaction,
-                  'lastTransaction': tList[-1],
-                  'deleteTransaction': u.deleteTransaction,
-                  'parent': parentType.objects.get(pk=parentIDF(u))}
+        try:
+            defaults={'transaction': u.transaction,
+                      'lastTransaction': tList[-1],
+                      'deleteTransaction': u.deleteTransaction,
+                      'parent': parentType.objects.get(pk=parentIDF(u))}
+        except parentType.DoesNotExist:
+            print(u, parentIDF(u))
+            raise
+            
         for field in uniqueTerms.keys():
             termData = uniqueTerms[field]
             v = getUniqueValue(u, field)
@@ -418,6 +423,22 @@ if __name__ == "__main__":
         
         uniqueTerms = {terms['Street']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildPositionedElements(addresses, Address, Street, StreetHistory, uniqueTerms)
+        
+        offerings = Instance.objects.filter(typeID=terms['Offering'], parent__parent__typeID=terms['Site'])
+        uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
+                       terms['Minimum Age']: {'dbField': 'minimumAge', 'f': lambda v: v.stringValue},
+                       terms['Maximum Age']: {'dbField': 'maximumAge', 'f': lambda v: v.stringValue},
+                       terms['Minimum Grade']: {'dbField': 'minimumGrade', 'f': lambda v: v.stringValue},
+                       terms['Maximum Grade']: {'dbField': 'maximumGrade', 'f': lambda v: v.stringValue},
+                      }
+        
+        buildChildren(offerings, Site, Offering, OfferingHistory, uniqueTerms,
+                      lambda i: i.parent.parent.id)
+        
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
+        
+        buildSubReferences(offerings, Offering, OfferingService, terms['Service'], 'service', Service)
         
     except Exception as e:
         print("%s" % traceback.format_exc())

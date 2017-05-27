@@ -325,6 +325,66 @@ class GroupNameAdmin(ModelAdmin):
         
 admin.site.register(GroupName, GroupNameAdmin)
 
+class OfferingHistoryInline(TabularInline):
+    model = OfferingHistory
+    list_display = ('id', 't_creationTime', 'webSite')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'webSite')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'webSite')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class OfferingNameInline(NameInline):
+    model = OfferingName
+    
+class OfferingServiceInline(TabularInline):
+    model = OfferingService
+    list_display = ('id', '__str__', 'service', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'service__id', 'transaction__id', 'deleteTransaction__id')
+
+class OfferingAdmin(ModelAdmin):
+    list_display = ('id', '__str__', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'names__text', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 'transaction__id', 'deleteTransaction__id')
+
+    inlines = [OfferingHistoryInline, OfferingNameInline, OfferingServiceInline]
+        
+admin.site.register(Offering, OfferingAdmin)
+
+class OfferingNameHistoryInline(TabularInline):
+    model = OfferingNameHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class OfferingNameAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [OfferingNameHistoryInline]
+        
+admin.site.register(OfferingName, OfferingNameAdmin)
+
 class OrganizationHistoryInline(TabularInline):
     model = OrganizationHistory
     list_display = ('id', 't_creationTime', 'webSite', 'publicAccess', 'inquiryAccessGroup')
@@ -540,6 +600,15 @@ class AddressInline(TabularInline):
     readonly_fields = ('id', 'city', 'state', 'zipCode', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'city', 'state', 'zipCode', 'transaction__id', 'deleteTransaction__id')
 
+class OfferingInline(TabularInline):
+    model = Offering
+    list_display = ('id', '__str__', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 'transaction__id', 'deleteTransaction__id')
+
 class SiteAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'webSite', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -548,7 +617,7 @@ class SiteAdmin(ModelAdmin):
     readonly_fields = ('id', 'webSite', 't_creationTime', 'deleteTransaction')
     search_fields = ('names__text', 'id', 'webSite', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [SiteHistoryInline, SiteNameInline, AddressInline]
+    inlines = [SiteHistoryInline, SiteNameInline, AddressInline, OfferingInline]
         
 admin.site.register(Site, SiteAdmin)
 
