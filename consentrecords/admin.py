@@ -325,6 +325,31 @@ class GroupNameAdmin(ModelAdmin):
         
 admin.site.register(GroupName, GroupNameAdmin)
 
+class InquiryHistoryInline(TabularInline):
+    model = InquiryHistory
+    list_display = ('id', 't_creationTime', 'user')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'user')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'user')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class InquiryAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'user', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'user', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'user', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'user', 'user__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['transaction__creation_time']
+    inlines = [InquiryHistoryInline]
+        
+admin.site.register(Inquiry, InquiryAdmin)
+
 class OfferingHistoryInline(TabularInline):
     model = OfferingHistory
     list_display = ('id', 't_creationTime', 'webSite')
@@ -601,16 +626,28 @@ class SessionHistoryInline(TabularInline):
 
 class SessionNameInline(NameInline):
     model = SessionName
+
+class InquiryInline(TabularInline):
+    model = Inquiry
+    list_display = ('id', 'user', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'user', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'user', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
     
 class SessionAdmin(ModelAdmin):
-    list_display = ('id', '__str__', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', '__str__', 'parent', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')}),
     )
     readonly_fields = ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
-    search_fields = ('names__text', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
+    search_fields = ('names__text', 'id', 'parent__names__text', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [SessionHistoryInline, SessionNameInline]
+    inlines = [SessionHistoryInline, SessionNameInline, InquiryInline]
         
 admin.site.register(Session, SessionAdmin)
 

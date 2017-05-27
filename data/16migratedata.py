@@ -48,7 +48,7 @@ def getUniqueReferenceDescription(i, fieldName):
         return str(f[0].referenceValue)
     else:
         return None
-        
+
 def getValueTransactions(instance, vs):
     deleteTransactions = frozenset(map(lambda v: v.deleteTransaction, vs))
     createTransactions = frozenset(map(lambda v: v.transaction, vs))
@@ -81,7 +81,7 @@ def buildHistory(instances, sourceType, historyType, uniqueTerms):
             
             historyType.objects.get_or_create(instance=target, transaction=t, 
                 defaults=defaults)
-                
+
 def buildPositionedElements(instances, parentType, sourceType, historyType, uniqueTerms):
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
@@ -296,7 +296,7 @@ def buildAccesses(instances, parentType, userSourceType, groupSourceType):
                                       'parent': parent,
                                       'accessee': us[0],
                                       'privilege': privilege})
-                          
+
 def buildAccessRequests(instances, parentType, userSourceType):
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
@@ -325,7 +325,23 @@ def buildSubReferences(instances, parentType, userSourceType, field, dbField, ta
                           'deleteTransaction': i.deleteTransaction,
                           'parent': parent,
                           dbField: us[0]})
-                          
+
+### Build items like ServiceImplications.
+### userSourceType is the type of object you are trying to create.
+### targetType is the type of object referred in the dbField field.                        
+def buildInquiries(instances, parentType, userSourceType, field, dbField, targetType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.parent.id)
+        for i in u.value_set.filter(field=field):
+            # group and user values may be associated with either groups or users fields.
+            us = targetType.objects.filter(pk=i.referenceValue.id)
+            userSourceType.objects.get_or_create(id=i.id,
+                defaults={'transaction': i.transaction,
+                          'lastTransaction': None,
+                          'deleteTransaction': i.deleteTransaction,
+                          'parent': parent,
+                          dbField: us[0]})
+
 if __name__ == "__main__":
     check = '-check' in sys.argv
 
@@ -464,6 +480,8 @@ if __name__ == "__main__":
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(sessions, Session, SessionName, SessionNameHistory, uniqueTerms)
         
+        inquiries = Instance.objects.filter(typeID=terms['Inquiries'])
+        buildInquiries(inquiries, Session, Inquiry, terms['user'], 'user', User)
         
     except Exception as e:
         print("%s" % traceback.format_exc())
