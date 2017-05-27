@@ -258,6 +258,17 @@ def buildInquiryAccessGroups(instances, targetType):
             newItem.inquiryAccessGroup = Group.objects.get(pk=oldReference.pk)
             newItem.save()
 
+def buildSessionCanRegister(sessions, targetType):
+    for u in sessions:
+        newItem = targetType.objects.get(pk=u.id)
+        oldReference = getUniqueReference(u, 'Inquiries')
+        if oldReference:
+            oldPAReference = getUniqueReference(oldReference, 'public access')
+            canRegister = 'yes' if oldPAReference and str(oldPAReference) == 'register' else 'no'
+            print(newItem, canRegister)
+            newItem.canRegister = canRegister
+            newItem.save()
+
 def buildAccesses(instances, parentType, userSourceType, groupSourceType):
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
@@ -439,6 +450,20 @@ if __name__ == "__main__":
         buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
         
         buildSubReferences(offerings, Offering, OfferingService, terms['Service'], 'service', Service)
+        
+        sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
+        uniqueTerms = {terms['Registration Deadline']: {'dbField': 'registrationDeadline', 'f': lambda v: v.stringValue},
+                       terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
+                       terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                      }
+        
+        buildChildren(sessions, Offering, Session, SessionHistory, uniqueTerms,
+                      lambda i: i.parent.parent.id)
+        buildSessionCanRegister(sessions, Session)
+        
+        uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(sessions, Session, SessionName, SessionNameHistory, uniqueTerms)
+        
         
     except Exception as e:
         print("%s" % traceback.format_exc())

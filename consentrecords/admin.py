@@ -349,6 +349,17 @@ class OfferingServiceInline(TabularInline):
     readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'service__id', 'transaction__id', 'deleteTransaction__id')
 
+class SessionInline(TabularInline):
+    model = Session
+    list_display = ('id', '__str__', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
+
+    ordering = ['start', 'end', 'transaction__creation_time']
+    
 class OfferingAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -357,7 +368,7 @@ class OfferingAdmin(ModelAdmin):
     readonly_fields = ('parent', 'parent_id', 'id', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'names__text', 'webSite', 'minimumAge', 'maximumAge', 'minimumGrade', 'maximumGrade', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [OfferingHistoryInline, OfferingNameInline, OfferingServiceInline]
+    inlines = [OfferingHistoryInline, OfferingNameInline, OfferingServiceInline, SessionInline]
         
 admin.site.register(Offering, OfferingAdmin)
 
@@ -575,6 +586,57 @@ class ServiceOfferingLabelAdmin(ServiceNameAdmin):
     inlines = [ServiceOfferingLabelHistoryInline]
     
 admin.site.register(ServiceOfferingLabel, ServiceOfferingLabelAdmin)
+
+class SessionHistoryInline(TabularInline):
+    model = SessionHistory
+    list_display = ('id', 't_creationTime', 'registrationDeadline', 'start', 'end', 'canRegister')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'registrationDeadline', 'start', 'end', 'canRegister')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'registrationDeadline', 'start', 'end', 'canRegister')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class SessionNameInline(NameInline):
+    model = SessionName
+    
+class SessionAdmin(ModelAdmin):
+    list_display = ('id', '__str__', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
+    search_fields = ('names__text', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
+
+    inlines = [SessionHistoryInline, SessionNameInline]
+        
+admin.site.register(Session, SessionAdmin)
+
+class SessionNameHistoryInline(TabularInline):
+    model = SessionNameHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class SessionNameAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [SessionNameHistoryInline]
+        
+admin.site.register(SessionName, SessionNameAdmin)
 
 class SiteHistoryInline(TabularInline):
     model = SiteHistory

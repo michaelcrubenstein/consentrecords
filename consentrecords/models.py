@@ -3072,7 +3072,7 @@ class ServiceImplicationHistory(dbmodels.Model):
 
     impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-class Session(dbmodels.Model, IInstance):    
+class Session(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdSessions')
     lastTransaction = lastTransactionField('changedSessions')
@@ -3083,6 +3083,9 @@ class Session(dbmodels.Model, IInstance):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return self.description()
 
 class SessionHistory(dbmodels.Model):
     id = idField()
