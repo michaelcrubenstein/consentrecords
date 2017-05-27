@@ -134,6 +134,18 @@ class TabularInline(admin.TabularInline):
     def t_creationTime(self, obj):
         return obj.transaction.creation_time
     t_creationTime.admin_order_field = 'transaction__creation_time'
+
+### An Inline for the names of an element  
+class NameInline(TabularInline):
+    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['languageCode']
+    show_change_link = True
+    fk_name = 'parent'
     
 class ModelAdmin(admin.ModelAdmin):
     def queryset(self, request):
@@ -274,17 +286,8 @@ class UserEmailAdmin(ModelAdmin):
 
 admin.site.register(UserEmail, UserEmailAdmin)
 
-class GroupNameInline(TabularInline):
+class GroupNameInline(NameInline):
     model = GroupName
-    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['languageCode']
-    show_change_link = True
-    fk_name = 'parent'
     
 class GroupAdmin(ModelAdmin):
     list_display = ('id', '__str__', 't_creationTime', 'deleteTransaction')
@@ -334,17 +337,8 @@ class OrganizationHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
-class OrganizationNameInline(TabularInline):
+class OrganizationNameInline(NameInline):
     model = OrganizationName
-    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['languageCode']
-    show_change_link = True
-    fk_name = 'parent'
     
 class GroupInline(TabularInline):
     model = Group
@@ -438,17 +432,8 @@ class ServiceHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
-class ServiceNameInline(TabularInline):
+class ServiceNameInline(NameInline):
     model = ServiceName
-    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['languageCode']
-    show_change_link = True
-    fk_name = 'parent'
     
 class ServiceOrganizationLabelInline(ServiceNameInline):
     model = ServiceOrganizationLabel
@@ -543,17 +528,8 @@ class SiteHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
-class SiteNameInline(TabularInline):
+class SiteNameInline(NameInline):
     model = SiteName
-    list_display = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'languageCode', 'text', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['languageCode']
-    show_change_link = True
-    fk_name = 'parent'
     
 class AddressInline(TabularInline):
     model = Address
