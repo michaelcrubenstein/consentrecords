@@ -168,7 +168,8 @@ def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
         for field in uniqueTerms.keys():
             termData = uniqueTerms[field]
             v = getUniqueValue(u, field)
-            defaults[termData['dbField']] = v and termData['f'](getUniqueValue(u, field))
+            print(termData['dbField'], v)
+            defaults[termData['dbField']] = v and termData['f'](v)
         print(u.id, defaults)
         newItem, created = sourceType.objects.get_or_create(id=u.id,
            defaults=defaults)
@@ -494,5 +495,31 @@ if __name__ == "__main__":
         buildChildren(periods, Session, Period, PeriodHistory, uniqueTerms,
                       lambda i: i.parent.id)
                       
+        experiencePrompts = Instance.objects.filter(typeID=terms['Experience Prompt'])
+        def findDomainService(v):
+            if v.referenceValue.typeID == terms['Domain']:
+                return Service.objects.get(names__text=str(v.referenceValue))
+            else:
+                return Service.objects.get(pk=v.referenceValue.id)
+        uniqueTerms = {terms['name']: {'dbField': 'name', 'f': lambda v: v.stringValue},
+                       terms['Organization']: {'dbField': 'organization', 
+                                       'f': lambda v: Organization.objects.get(pk=v.referenceValue.id)},
+                       terms['Site']: {'dbField': 'site', 
+                                       'f': lambda v: Site.objects.get(pk=v.referenceValue.id)},
+                       terms['Offering']: {'dbField': 'offering', 
+                                       'f': lambda v: Offering.objects.get(pk=v.referenceValue.id)},
+                       terms['Domain']: {'dbField': 'domain', 
+                                       'f': findDomainService},
+                       terms['Stage']: {'dbField': 'stage', 
+                                       'f': lambda v: str(v.referenceValue)},
+                       terms['Timeframe']: {'dbField': 'timeframe', 
+                                       'f': lambda v: str(v.referenceValue)},
+                      }
+        buildRootInstances(experiencePrompts, ExperiencePrompt, ExperiencePromptHistory, uniqueTerms)
+        
+        buildSubReferences(experiencePrompts,
+                           lambda u: ExperiencePrompt.objects.get(pk=u.id), 
+                           DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
+
     except Exception as e:
         print("%s" % traceback.format_exc())

@@ -2461,6 +2461,25 @@ class CommentPromptHistory(dbmodels.Model):
     
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
 
+class DisqualifyingTag(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdDisqualifyingTags')
+    lastTransaction = lastTransactionField('changedDisqualifyingTags')
+    deleteTransaction = deleteTransactionField('deletedDisqualifyingTags')
+    
+    parent = parentField('consentrecords.ExperiencePrompt', 'disqualifyingTags')
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTags', db_index=True, on_delete=dbmodels.CASCADE)
+
+    def __str__(self):
+        return str(self.service)
+
+class DisqualifyingTagHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('disqualifyingTagHistories')
+    instance = historyInstanceField(DisqualifyingTag)
+
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
+
 class Engagement(dbmodels.Model, IInstance):    
     id = idField()
     transaction = createTransactionField('createdEngagements')
@@ -2569,9 +2588,12 @@ class ExperiencePrompt(dbmodels.Model, IInstance):
     organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiencePrompts', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiencePrompts', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiencePrompts', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='domainExperiencePrompts', db_index=True, on_delete=dbmodels.CASCADE)
+    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='domainExperiencePrompts', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
@@ -2582,25 +2604,9 @@ class ExperiencePromptHistory(dbmodels.Model):
     organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiencePromptHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiencePromptHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiencePromptHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
-    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptDomainHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    domain = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptDomainHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
-
-class DisqualifyingTag(dbmodels.Model, IInstance):
-    id = idField()
-    transaction = createTransactionField('createdDisqualifyingTags')
-    lastTransaction = lastTransactionField('changedDisqualifyingTags')
-    deleteTransaction = deleteTransactionField('deletedDisqualifyingTags')
-    
-    parent = parentField(ExperiencePrompt, 'disqualifyingTags')
-    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTags', db_index=True, on_delete=dbmodels.CASCADE)
-
-class DisqualifyingTagHistory(dbmodels.Model):
-    id = idField()
-    transaction = createTransactionField('disqualifyingTagHistories')
-    instance = historyInstanceField(DisqualifyingTag)
-
-    service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
 class ExperiencePromptService(dbmodels.Model, IInstance):
     id = idField()
