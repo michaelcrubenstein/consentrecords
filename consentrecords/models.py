@@ -2617,6 +2617,9 @@ class ExperiencePromptService(dbmodels.Model, IInstance):
     parent = parentField(ExperiencePrompt, 'experiencePromptServices')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServices', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def __str__(self):
+        return str(self.service)
+
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptServiceHistories')

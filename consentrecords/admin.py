@@ -385,6 +385,18 @@ class DisqualifyingTagInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class ExperiencePromptServiceInline(TabularInline):
+    model = ExperiencePromptService
+    list_display = ('id', 'service', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class ExperiencePromptAdmin(ModelAdmin):
     list_display = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -396,9 +408,34 @@ class ExperiencePromptAdmin(ModelAdmin):
                      'domain__id', 'domain__names__text', 'stage', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['name', 'transaction__creation_time']
-    inlines = [ExperiencePromptHistoryInline, DisqualifyingTagInline]
+    inlines = [ExperiencePromptHistoryInline, DisqualifyingTagInline, ExperiencePromptServiceInline]
         
 admin.site.register(ExperiencePrompt, ExperiencePromptAdmin)
+
+class ExperiencePromptServiceHistoryInline(TabularInline):
+    model = ExperiencePromptServiceHistory
+    list_display = ('id', 't_creationTime', 'service')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'service')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'service')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ExperiencePromptServiceAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'service', 'service__id', 'service__names__text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['service__names__text', 'transaction__creation_time']
+    inlines = [ExperiencePromptServiceHistoryInline]
+        
+admin.site.register(ExperiencePromptService, ExperiencePromptServiceAdmin)
 
 class GroupNameInline(NameInline):
     model = GroupName

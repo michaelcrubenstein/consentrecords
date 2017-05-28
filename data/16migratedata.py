@@ -520,6 +520,9 @@ if __name__ == "__main__":
         buildSubReferences(experiencePrompts,
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
+		buildSubReferences(experiencePrompts,
+                           lambda u: ExperiencePrompt.objects.get(pk=u.id), 
+                           ExperiencePromptService, terms['Service'], 'service', Service)
 
     except Exception as e:
         print("%s" % traceback.format_exc())
