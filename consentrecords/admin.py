@@ -286,6 +286,31 @@ class UserEmailAdmin(ModelAdmin):
 
 admin.site.register(UserEmail, UserEmailAdmin)
 
+class EngagementHistoryInline(TabularInline):
+    model = EngagementHistory
+    list_display = ('id', 't_creationTime', 'user', 'start', 'end')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'user', 'start', 'end')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'user', 'start', 'end')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class EngagementAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'user', 'start', 'end', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'user', 'start', 'end', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'user', 'start', 'end', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'user', 'user__id', 'user__emails__text', 'start', 'end', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['user__emails__text', 'transaction__creation_time']
+    inlines = [EngagementHistoryInline]
+        
+admin.site.register(Engagement, EngagementAdmin)
+
 class EnrollmentHistoryInline(TabularInline):
     model = EnrollmentHistory
     list_display = ('id', 't_creationTime', 'user')
@@ -676,6 +701,18 @@ class EnrollmentInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class EngagementInline(TabularInline):
+    model = Engagement
+    list_display = ('id', 'user', 'start', 'end', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'user', 'start', 'end', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'user', 'start', 'end', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class SessionAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'parent', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -684,7 +721,7 @@ class SessionAdmin(ModelAdmin):
     readonly_fields = ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
     search_fields = ('names__text', 'id', 'parent__names__text', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [SessionHistoryInline, SessionNameInline, InquiryInline, EnrollmentInline]
+    inlines = [SessionHistoryInline, SessionNameInline, InquiryInline, EnrollmentInline, EngagementInline]
         
 admin.site.register(Session, SessionAdmin)
 

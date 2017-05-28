@@ -477,6 +477,13 @@ if __name__ == "__main__":
         buildSubReferences(enrollments, lambda u: Session.objects.get(pk=u.parent.parent.id), 
                        Enrollment, terms['user'], 'user', User)
         
-        
+        engagements = Instance.objects.filter(typeID=terms['Experience'])
+        uniqueTerms = {terms['Start']: {'dbField': 'start', 'f': lambda v: v.stringValue},
+                       terms['End']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                       terms['user']: {'dbField': 'user', 
+                                       'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                      }
+        buildChildren(engagements, Session, Engagement, EngagementHistory, uniqueTerms,
+                      lambda i: i.parent.parent.id)
     except Exception as e:
         print("%s" % traceback.format_exc())
