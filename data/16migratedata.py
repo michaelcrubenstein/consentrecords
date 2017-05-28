@@ -524,5 +524,8 @@ if __name__ == "__main__":
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            ExperiencePromptService, terms['Service'], 'service', Service)
 
+        uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())

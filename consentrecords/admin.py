@@ -397,6 +397,9 @@ class ExperiencePromptServiceInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class ExperiencePromptTextInline(NameInline):
+    model = ExperiencePromptText
+    
 class ExperiencePromptAdmin(ModelAdmin):
     list_display = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -408,7 +411,7 @@ class ExperiencePromptAdmin(ModelAdmin):
                      'domain__id', 'domain__names__text', 'stage', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['name', 'transaction__creation_time']
-    inlines = [ExperiencePromptHistoryInline, DisqualifyingTagInline, ExperiencePromptServiceInline]
+    inlines = [ExperiencePromptHistoryInline, DisqualifyingTagInline, ExperiencePromptServiceInline, ExperiencePromptTextInline]
         
 admin.site.register(ExperiencePrompt, ExperiencePromptAdmin)
 
@@ -436,6 +439,30 @@ class ExperiencePromptServiceAdmin(ModelAdmin):
     inlines = [ExperiencePromptServiceHistoryInline]
         
 admin.site.register(ExperiencePromptService, ExperiencePromptServiceAdmin)
+
+class ExperiencePromptTextHistoryInline(TabularInline):
+    model = ExperiencePromptTextHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ExperiencePromptTextAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [ExperiencePromptTextHistoryInline]
+        
+admin.site.register(ExperiencePromptText, ExperiencePromptTextAdmin)
 
 class GroupNameInline(NameInline):
     model = GroupName
