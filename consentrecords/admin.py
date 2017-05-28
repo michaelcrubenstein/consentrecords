@@ -286,6 +286,45 @@ class UserEmailAdmin(ModelAdmin):
 
 admin.site.register(UserEmail, UserEmailAdmin)
 
+class CommentPromptTextInline(NameInline):
+    model = CommentPromptText
+    
+class CommentPromptAdmin(ModelAdmin):
+    list_display = ('id', '__str__', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
+
+    inlines = [CommentPromptTextInline]
+        
+admin.site.register(CommentPrompt, CommentPromptAdmin)
+
+class CommentPromptTextHistoryInline(TabularInline):
+    model = CommentPromptTextHistory
+    list_display = ('id', 'languageCode', 't_creationTime', 'text')
+    fieldsets = (
+        (None, {'fields': ('id', 'languageCode', 't_creationTime', 'text')}),
+    )
+    readonly_fields = ('id', 'languageCode', 't_creationTime', 'text')
+
+    ordering = ['languageCode', 'transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class CommentPromptTextAdmin(ModelAdmin):
+    list_display = ('id', 'languageCode', 'text', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'languageCode', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'languageCode', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [CommentPromptTextHistoryInline]
+        
+admin.site.register(CommentPromptText, CommentPromptTextAdmin)
+
 class DisqualifyingTagHistoryInline(TabularInline):
     model = DisqualifyingTagHistory
     list_display = ('id', 't_creationTime', 'service')

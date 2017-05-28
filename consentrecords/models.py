@@ -2447,19 +2447,44 @@ class CommentHistory(dbmodels.Model):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class CommentPrompt(dbmodels.Model, IInstance):    
+class CommentPrompt(dbmodels.Model, NamedInstance):    
     id = idField()
     transaction = createTransactionField('createdCommentPrompts')
     lastTransaction = lastTransactionField('changedCommentPrompts')
     deleteTransaction = deleteTransactionField('deletedCommentPrompts')
-    question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
     
+    @property
+    def names(self):
+        return self.texts
+    
+    def __str__(self):
+        return self.description()
+
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptHistories')
     instance = historyInstanceField(CommentPrompt)
     
-    question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
+class CommentPromptText(dbmodels.Model, IInstance):
+    id = idField()
+    transaction = createTransactionField('createdCommentPromptTexts')
+    lastTransaction = lastTransactionField('changedCommentPromptTexts')
+    deleteTransaction = deleteTransactionField('deletedCommentPromptTexts')
+
+    parent = parentField(CommentPrompt, 'texts')
+    text = dbmodels.CharField(max_length=1023, db_index=True, null=True)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+class CommentPromptTextHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('commentPromptTextHistories')
+    instance = historyInstanceField(CommentPromptText)
+
+    text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
+    languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 class DisqualifyingTag(dbmodels.Model, IInstance):
     id = idField()

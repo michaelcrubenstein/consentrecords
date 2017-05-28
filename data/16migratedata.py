@@ -527,5 +527,12 @@ if __name__ == "__main__":
         uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
         
+        commentPrompts = Instance.objects.filter(typeID=terms['Comment Prompt'])
+        uniqueTerms = {}
+        buildRootInstances(commentPrompts, CommentPrompt, CommentPromptHistory, uniqueTerms)
+        
+        uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        buildNameElements(commentPrompts, CommentPrompt, CommentPromptText, CommentPromptTextHistory, uniqueTerms)
+        
     except Exception as e:
         print("%s" % traceback.format_exc())
