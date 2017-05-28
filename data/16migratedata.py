@@ -485,5 +485,14 @@ if __name__ == "__main__":
                       }
         buildChildren(engagements, Session, Engagement, EngagementHistory, uniqueTerms,
                       lambda i: i.parent.parent.id)
+                      
+        periods = Instance.objects.filter(typeID=terms['Period'], parent__parent__parent__parent__parent__typeID=terms['Site'])
+        uniqueTerms = {terms['Weekday']: {'dbField': 'start', 'f': lambda v: str(v.referenceValue)},
+                       terms['End Time']: {'dbField': 'end', 'f': lambda v: v.stringValue},
+                       terms['Start Time']: {'dbField': 'user', 'f': lambda v: v.stringValue},
+                      }
+        buildChildren(periods, Session, Period, PeriodHistory, uniqueTerms,
+                      lambda i: i.parent.id)
+                      
     except Exception as e:
         print("%s" % traceback.format_exc())

@@ -400,6 +400,31 @@ class InquiryAdmin(ModelAdmin):
         
 admin.site.register(Inquiry, InquiryAdmin)
 
+class PeriodHistoryInline(TabularInline):
+    model = PeriodHistory
+    list_display = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class PeriodAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'weekday', 'startTime', 'endTime', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['transaction__creation_time']
+    inlines = [PeriodHistoryInline]
+        
+admin.site.register(Period, PeriodAdmin)
+
 class OfferingHistoryInline(TabularInline):
     model = OfferingHistory
     list_display = ('id', 't_creationTime', 'webSite')
@@ -713,6 +738,18 @@ class EngagementInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class PeriodInline(TabularInline):
+    model = Period
+    list_display = ('id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class SessionAdmin(ModelAdmin):
     list_display = ('id', '__str__', 'parent', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -721,7 +758,7 @@ class SessionAdmin(ModelAdmin):
     readonly_fields = ('parent', 'parent_id', 'id', 'registrationDeadline', 'start', 'end', 'canRegister', 't_creationTime', 'deleteTransaction')
     search_fields = ('names__text', 'id', 'parent__names__text', 'registrationDeadline', 'start', 'end', 'canRegister', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [SessionHistoryInline, SessionNameInline, InquiryInline, EnrollmentInline, EngagementInline]
+    inlines = [SessionHistoryInline, SessionNameInline, InquiryInline, EnrollmentInline, EngagementInline, PeriodInline]
         
 admin.site.register(Session, SessionAdmin)
 
