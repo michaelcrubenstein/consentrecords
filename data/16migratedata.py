@@ -48,6 +48,14 @@ class IDTranslator(Translator):
     def f(self, v):
         return v.referenceValue_id.hex
 
+class ForeignKeyTranslator(Translator):
+    def __init__(self, dbField, foreignKeyType):
+        super(ForeignKeyTranslator, self).__init__(dbField)
+        self.foreignKeyType = foreignKeyType
+        
+    def f(self, v):
+        return self.foreignKeyType.objects.get(pk=v.referenceValue_id)
+
 def getUniqueValue(i, field):
     f = i.value_set.filter(field=field)\
             .order_by('-transaction__creation_time')
@@ -578,5 +586,15 @@ if __name__ == "__main__":
         uniqueTerms = {terms['argument']: IDTranslator('argument')}
         buildPositionedElements(notifications, Notification, NotificationArgument, NotificationArgumentHistory, uniqueTerms)
         
+        paths = Instance.objects.filter(typeID=terms['Path'])
+        uniqueTerms = {terms['Birthday']: StringValueTranslator('birthday'),
+                       terms['name']: StringValueTranslator('name'),
+                       terms['public access']: EnumerationTranslator('publicAccess'),
+                       terms['primary administrator']: ForeignKeyTranslator('primaryAdministrator', User),
+                       terms['special access']: EnumerationTranslator('specialAccess'),
+                       terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
+                      }
+        buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
+
     except Exception as e:
         print("%s" % traceback.format_exc())

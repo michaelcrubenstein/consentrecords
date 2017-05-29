@@ -259,6 +259,17 @@ class NotificationInline(TabularInline):
     readonly_fields = ('id', 'name', 'isFresh', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'name', 'isFresh', 'transaction__id', 'deleteTransaction__id')
 
+class PathInline(TabularInline):
+    model = Path
+    list_display = ('id', '__str__', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'specialAccess', 'canAnswerExperience', 'transaction__id', 'deleteTransaction__id')
+
+    fk_name = 'parent'
+    
 class UserAdmin(ModelAdmin):
     list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -267,7 +278,7 @@ class UserAdmin(ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline, NotificationInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline, NotificationInline, PathInline]
 
 admin.site.register(User, UserAdmin)
 
@@ -801,6 +812,30 @@ class OrganizationNameAdmin(ModelAdmin):
     inlines = [OrganizationNameHistoryInline]
         
 admin.site.register(OrganizationName, OrganizationNameAdmin)
+
+class PathHistoryInline(TabularInline):
+    model = PathHistory
+    list_display = ('id', 't_creationTime', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience')
+
+    ordering = ['transaction__creation_time']
+    fk_name = 'instance'
+
+class PathAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'specialAccess', 'canAnswerExperience', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['transaction__creation_time']
+    inlines = [PathHistoryInline]
+        
+admin.site.register(Path, PathAdmin)
 
 class PeriodHistoryInline(TabularInline):
     model = PeriodHistory
