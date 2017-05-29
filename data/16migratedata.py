@@ -17,6 +17,30 @@ from django.contrib.auth import authenticate
 
 from consentrecords.models import *
 
+class Translator:
+    def __init__(self, dbField):
+        self.dbField = dbField
+    
+    def __getitem__(self, name):
+        if name == 'dbField':
+            return self.dbField
+        elif name == 'f':
+            return self.f
+
+class StringValueTranslator(Translator):
+    def __init__(self, dbField):
+        super(StringValueTranslator, self).__init__(dbField)
+        
+    def f(self, v):
+        return v.stringValue
+
+class EnumerationTranslator(Translator):
+    def __init__(self, dbField):
+        super(EnumerationTranslator, self).__init__(dbField)
+        
+    def f(self, v):
+        return str(v.referenceValue)
+
 def getUniqueValue(i, field):
     f = i.value_set.filter(field=field)\
             .order_by('-transaction__creation_time')
@@ -520,7 +544,7 @@ if __name__ == "__main__":
         buildSubReferences(experiencePrompts,
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            DisqualifyingTag, terms['Disqualifying Tag'], 'service', Service)
-		buildSubReferences(experiencePrompts,
+        buildSubReferences(experiencePrompts,
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            ExperiencePromptService, terms['Service'], 'service', Service)
 
@@ -533,6 +557,13 @@ if __name__ == "__main__":
         
         uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(commentPrompts, CommentPrompt, CommentPromptText, CommentPromptTextHistory, uniqueTerms)
+        
+        notifications = Instance.objects.filter(typeID=terms['Notification'])
+        uniqueTerms = {terms['name']: StringValueTranslator('name'),
+                       terms['is fresh']: EnumerationTranslator('isFresh'),
+                      }
+        buildChildren(notifications, User, Notification, NotificationHistory, uniqueTerms,
+                      lambda i: i.parent.id)
         
     except Exception as e:
         print("%s" % traceback.format_exc())

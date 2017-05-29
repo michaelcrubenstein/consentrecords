@@ -250,6 +250,15 @@ class UserUserAccessRequestInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
+class NotificationInline(TabularInline):
+    model = Notification
+    list_display = ('id', '__str__', 'name', 'isFresh', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'name', 'isFresh', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'name', 'isFresh', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'name', 'isFresh', 'transaction__id', 'deleteTransaction__id')
+
 class UserAdmin(ModelAdmin):
     list_display = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -258,7 +267,7 @@ class UserAdmin(ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline, NotificationInline]
 
 admin.site.register(User, UserAdmin)
 
@@ -567,30 +576,30 @@ class InquiryAdmin(ModelAdmin):
         
 admin.site.register(Inquiry, InquiryAdmin)
 
-class PeriodHistoryInline(TabularInline):
-    model = PeriodHistory
-    list_display = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+class NotificationHistoryInline(TabularInline):
+    model = NotificationHistory
+    list_display = ('id', 't_creationTime', 'name', 'isFresh')
     fieldsets = (
-        (None, {'fields': ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')}),
+        (None, {'fields': ('id', 't_creationTime', 'name', 'isFresh')}),
     )
-    readonly_fields = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+    readonly_fields = ('id', 't_creationTime', 'name', 'isFresh')
 
     ordering = ['transaction__creation_time']
     show_change_link = True
     fk_name = 'instance'
 
-class PeriodAdmin(ModelAdmin):
-    list_display = ('id', 'parent', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+class NotificationAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'name', 'isFresh', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+        (None, {'fields': ('parent', 'parent_id', 'id', 'name', 'isFresh', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
     )
-    readonly_fields = ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'weekday', 'startTime', 'endTime', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    readonly_fields = ('parent', 'parent_id', 'id', 'name', 'isFresh', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'name', 'isFresh', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [PeriodHistoryInline]
+    inlines = [NotificationHistoryInline]
         
-admin.site.register(Period, PeriodAdmin)
+admin.site.register(Notification, NotificationAdmin)
 
 class OfferingHistoryInline(TabularInline):
     model = OfferingHistory
@@ -757,6 +766,31 @@ class OrganizationNameAdmin(ModelAdmin):
     inlines = [OrganizationNameHistoryInline]
         
 admin.site.register(OrganizationName, OrganizationNameAdmin)
+
+class PeriodHistoryInline(TabularInline):
+    model = PeriodHistory
+    list_display = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'weekday', 'startTime', 'endTime')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class PeriodAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'weekday', 'startTime', 'endTime', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'weekday', 'startTime', 'endTime', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['transaction__creation_time']
+    inlines = [PeriodHistoryInline]
+        
+admin.site.register(Period, PeriodAdmin)
 
 class ServiceHistoryInline(TabularInline):
     model = ServiceHistory
