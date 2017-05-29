@@ -597,6 +597,19 @@ if __name__ == "__main__":
         buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
         
         buildAccesses(paths, Path, PathUserAccess, PathGroupAccess)
+        
+        experiences = Instance.objects.filter(typeID=terms['More Experience'])
+        uniqueTerms = {terms['Organization']: ForeignKeyTranslator('organization', Organization),
+                       terms['User Entered Organization']: StringValueTranslator('customOrganization'),
+                       terms['Site']: ForeignKeyTranslator('site', Site),
+                       terms['User Entered Site']: StringValueTranslator('customSite'),
+                       terms['Offering']: ForeignKeyTranslator('offering', Offering),
+                       terms['User Entered Offering']: StringValueTranslator('customOffering'),
+                       terms['Start']: StringValueTranslator('start'),
+                       terms['End']: StringValueTranslator('end'),
+                       terms['Timeframe']: EnumerationTranslator('timeframe'),
+                      }
+        buildChildren(experiences, Path, Experience, ExperienceHistory, uniqueTerms, lambda i: i.parent.id)
 
     except Exception as e:
         print("%s" % traceback.format_exc())

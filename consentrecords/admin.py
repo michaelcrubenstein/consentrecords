@@ -413,6 +413,31 @@ class EnrollmentAdmin(ModelAdmin):
         
 admin.site.register(Enrollment, EnrollmentAdmin)
 
+class ExperienceHistoryInline(TabularInline):
+    model = ExperienceHistory
+    list_display = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ExperienceAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    ordering = ['transaction__creation_time']
+    inlines = [ExperienceHistoryInline]
+        
+admin.site.register(Experience, ExperienceAdmin)
+
 class ExperiencePromptHistoryInline(TabularInline):
     model = ExperiencePromptHistory
     list_display = ('id', 't_creationTime', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe')
@@ -805,6 +830,17 @@ class PathUserAccessInline(AccessInline):
 class PathGroupAccessInline(AccessInline):
     model = PathGroupAccess
     
+class ExperienceInline(TabularInline):
+    model = Experience
+    list_display = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['start', 'end', 'transaction__creation_time']
+    fk_name = 'parent'
+    
 class PathAdmin(ModelAdmin):
     list_display = ('id', 'parent', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -814,7 +850,7 @@ class PathAdmin(ModelAdmin):
     search_fields = ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'specialAccess', 'canAnswerExperience', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [PathHistoryInline, PathUserAccessInline, PathGroupAccessInline]
+    inlines = [PathHistoryInline, PathUserAccessInline, PathGroupAccessInline, ExperienceInline]
         
 admin.site.register(Path, PathAdmin)
 
