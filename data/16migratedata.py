@@ -595,6 +595,8 @@ if __name__ == "__main__":
                        terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
                       }
         buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
+        
+        buildAccesses(paths, Path, PathUserAccess, PathGroupAccess)
 
     except Exception as e:
         print("%s" % traceback.format_exc())

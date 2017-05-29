@@ -147,6 +147,17 @@ class NameInline(TabularInline):
     ordering = ['languageCode']
     show_change_link = True
     fk_name = 'parent'
+
+### An Inline for access records.   
+class AccessInline(TabularInline):
+    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['privilege', 'id']
+    fk_name = 'parent'
     
 class ModelAdmin(admin.ModelAdmin):
     def queryset(self, request):
@@ -214,29 +225,11 @@ class UserEmailInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
-class UserUserAccessInline(TabularInline):
+class UserUserAccessInline(AccessInline):
     model = UserUserAccess
-    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['privilege', 'id']
-    show_change_link = True
-    fk_name = 'parent'
     
-class UserGroupAccessInline(TabularInline):
+class UserGroupAccessInline(AccessInline):
     model = UserGroupAccess
-    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['privilege', 'id']
-    show_change_link = True
-    fk_name = 'parent'
     
 class UserUserAccessRequestInline(TabularInline):
     model = UserUserAccessRequest
@@ -742,29 +735,11 @@ class GroupInline(TabularInline):
     readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
 
-class OrganizationUserAccessInline(TabularInline):
+class OrganizationUserAccessInline(AccessInline):
     model = OrganizationUserAccess
-    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['privilege', 'id']
-    show_change_link = True
-    fk_name = 'parent'
     
-class OrganizationGroupAccessInline(TabularInline):
+class OrganizationGroupAccessInline(AccessInline):
     model = OrganizationGroupAccess
-    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-    fieldsets = (
-        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
-    )
-    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
-
-    ordering = ['privilege', 'id']
-    show_change_link = True
-    fk_name = 'parent'
     
 class SiteInline(TabularInline):
     model = Site
@@ -824,6 +799,12 @@ class PathHistoryInline(TabularInline):
     ordering = ['transaction__creation_time']
     fk_name = 'instance'
 
+class PathUserAccessInline(AccessInline):
+    model = PathUserAccess
+    
+class PathGroupAccessInline(AccessInline):
+    model = PathGroupAccess
+    
 class PathAdmin(ModelAdmin):
     list_display = ('id', 'parent', 'name', 'birthday', 'publicAccess', 'primaryAdministrator', 'specialAccess', 'canAnswerExperience', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -833,7 +814,7 @@ class PathAdmin(ModelAdmin):
     search_fields = ('id', 'name', 'birthday', 'publicAccess', 'primaryAdministrator__id', 'specialAccess', 'canAnswerExperience', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [PathHistoryInline]
+    inlines = [PathHistoryInline, PathUserAccessInline, PathGroupAccessInline]
         
 admin.site.register(Path, PathAdmin)
 
