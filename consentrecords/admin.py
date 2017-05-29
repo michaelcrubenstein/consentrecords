@@ -927,6 +927,30 @@ class ServiceAdmin(ModelAdmin):
 
 admin.site.register(Service, ServiceAdmin)
 
+class ServiceImplicationHistoryInline(TabularInline):
+    model = ServiceImplicationHistory
+    list_display = ('id', 't_creationTime', 'impliedService')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'impliedService')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'impliedService')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ServiceImplicationAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'impliedService', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'impliedService', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'impliedService', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'impliedService', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [ServiceImplicationHistoryInline]
+
+admin.site.register(ServiceImplication, ServiceImplicationAdmin)
+
 class ServiceNameHistoryInline(TabularInline):
     model = ServiceNameHistory
     list_display = ('id', 'languageCode', 't_creationTime', 'text')
