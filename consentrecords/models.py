@@ -2758,12 +2758,17 @@ class NotificationArgument(dbmodels.Model, IInstance):
     lastTransaction = lastTransactionField('changedNotificationArguments')
     deleteTransaction = deleteTransactionField('deletedNotificationArguments')
     parent = parentField('consentrecords.Notification', 'notificationArguments')
+    position = dbmodels.IntegerField()
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True)
+
+    def __str__(self):
+        return '%s: %s' % (self.position, str(self.argument))
 
 class NotificationArgumentHistory(dbmodels.Model):    
     id = idField()
     transaction = createTransactionField('notificationArgumentHistories')
     instance = historyInstanceField(NotificationArgument)
+    position = dbmodels.IntegerField()
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
 class Offering(dbmodels.Model, NamedInstance):    

@@ -134,6 +134,7 @@ class TabularInline(admin.TabularInline):
     def t_creationTime(self, obj):
         return obj.transaction.creation_time
     t_creationTime.admin_order_field = 'transaction__creation_time'
+    show_change_link = True
 
 ### An Inline for the names of an element  
 class NameInline(TabularInline):
@@ -166,7 +167,6 @@ class AddressHistoryInline(TabularInline):
     readonly_fields = ('id', 't_creationTime', 'city', 'state', 'zipCode', )
 
     ordering = ['transaction__creation_time']
-    show_change_link = True
     fk_name = 'instance'
 
 class StreetInline(TabularInline):
@@ -588,6 +588,17 @@ class NotificationHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
+class NotificationArgumentInline(TabularInline):
+    model = NotificationArgument
+    list_display = ('id', 'position', 'argument', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'position', 'argument', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'position', 'argument', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'position', 'argument', 'transaction__id', 'deleteTransaction__id')
+    
+    ordering = ['position']
+
 class NotificationAdmin(ModelAdmin):
     list_display = ('id', 'parent', 'name', 'isFresh', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -597,9 +608,33 @@ class NotificationAdmin(ModelAdmin):
     search_fields = ('id', 'name', 'isFresh', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [NotificationHistoryInline]
+    inlines = [NotificationHistoryInline, NotificationArgumentInline]
         
 admin.site.register(Notification, NotificationAdmin)
+
+class NotificationArgumentHistoryInline(TabularInline):
+    model = NotificationArgumentHistory
+    list_display = ('id', 't_creationTime', 'position', 'argument')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'position', 'argument')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'position', 'argument')
+
+    ordering = ['transaction__creation_time', 'position']
+    show_change_link = True
+    fk_name = 'instance'
+
+class NotificationArgumentAdmin(ModelAdmin):
+    list_display = ('id', 'position', 'argument', 'parent', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'position', 'argument', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'position', 'argument', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'position', 'argument', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [NotificationArgumentHistoryInline]
+        
+admin.site.register(NotificationArgument, NotificationArgumentAdmin)
 
 class OfferingHistoryInline(TabularInline):
     model = OfferingHistory

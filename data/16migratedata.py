@@ -41,6 +41,13 @@ class EnumerationTranslator(Translator):
     def f(self, v):
         return str(v.referenceValue)
 
+class IDTranslator(Translator):
+    def __init__(self, dbField):
+        super(IDTranslator, self).__init__(dbField)
+        
+    def f(self, v):
+        return v.referenceValue_id.hex
+
 def getUniqueValue(i, field):
     f = i.value_set.filter(field=field)\
             .order_by('-transaction__creation_time')
@@ -118,11 +125,13 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
             vList.sort(key=lambda v: v.transaction.creation_time)
             lastValue = vList[-1]
             firstValue = vList[0]
+            defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], uniqueTerms[t]['f'](lastValue)), uniqueTerms.keys()))
+            defaults['transaction'] = firstValue.transaction
+            defaults['lastTransaction'] = lastValue.transaction
+            defaults['deleteTransaction'] = lastValue.transaction
+            
             newItem, created = sourceType.objects.get_or_create(parent=parent, position=position,
-                defaults={'transaction': firstValue.transaction,
-                          'lastTransaction': lastValue.transaction,
-                          'deleteTransaction': lastValue.deleteTransaction,
-                          'text': lastValue.stringValue})
+                defaults=defaults)
             
             defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
             for t in tList[:-1]:
@@ -137,7 +146,7 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
                         defaults[termData['dbField']] = termData['f'](vs[0])
                         defaults['id'] = vs[0].id
                 
-                print (newItem.text, t, position, defaults)
+                print (str(newItem), t, position, defaults)
                 historyType.objects.get_or_create(instance=newItem, transaction=t, position=position,
                     defaults=defaults)
 
@@ -548,7 +557,7 @@ if __name__ == "__main__":
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            ExperiencePromptService, terms['Service'], 'service', Service)
 
-        uniqueTerms = {terms['text']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        uniqueTerms = {terms['text']: StringValueTranslator('text')}
         buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
         
         commentPrompts = Instance.objects.filter(typeID=terms['Comment Prompt'])
@@ -564,6 +573,10 @@ if __name__ == "__main__":
                       }
         buildChildren(notifications, User, Notification, NotificationHistory, uniqueTerms,
                       lambda i: i.parent.id)
+                      
+        # Notification Arguments
+        uniqueTerms = {terms['argument']: IDTranslator('argument')}
+        buildPositionedElements(notifications, Notification, NotificationArgument, NotificationArgumentHistory, uniqueTerms)
         
     except Exception as e:
         print("%s" % traceback.format_exc())
