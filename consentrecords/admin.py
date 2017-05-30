@@ -425,6 +425,42 @@ class ExperienceHistoryInline(TabularInline):
     show_change_link = True
     fk_name = 'instance'
 
+class ExperienceServiceInline(TabularInline):
+    model = ExperienceService
+    list_display = ('id', 'service', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class ExperienceCustomServiceInline(TabularInline):
+    model = ExperienceCustomService
+    list_display = ('id', 'name', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'name', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'name', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
+class CommentInline(TabularInline):
+    model = Comment
+    list_display = ('id', 'text', 'question', 'asker', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'text', 'question', 'asker', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'text', 'question', 'asker', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class ExperienceAdmin(ModelAdmin):
     list_display = ('id', 'parent', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     fieldsets = (
@@ -434,7 +470,7 @@ class ExperienceAdmin(ModelAdmin):
     search_fields = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [ExperienceHistoryInline]
+    inlines = [ExperienceHistoryInline, ExperienceServiceInline, ExperienceCustomServiceInline, CommentInline]
         
 admin.site.register(Experience, ExperienceAdmin)
 
@@ -540,6 +576,54 @@ class ExperiencePromptTextAdmin(ModelAdmin):
     inlines = [ExperiencePromptTextHistoryInline]
         
 admin.site.register(ExperiencePromptText, ExperiencePromptTextAdmin)
+
+class ExperienceCustomServiceHistoryInline(TabularInline):
+    model = ExperienceCustomServiceHistory
+    list_display = ('id', 't_creationTime', 'name')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'name')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'name')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ExperienceCustomServiceAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'name', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'name', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'name', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'name', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [ExperienceCustomServiceHistoryInline]
+
+admin.site.register(ExperienceCustomService, ExperienceCustomServiceAdmin)
+
+class ExperienceServiceHistoryInline(TabularInline):
+    model = ExperienceServiceHistory
+    list_display = ('id', 't_creationTime','position',  'service')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'position', 'service')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'position', 'service')
+
+    ordering = ['transaction__creation_time', 'position']
+    show_change_link = True
+    fk_name = 'instance'
+
+class ExperienceServiceAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'position', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'position', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'position', 'service', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'position', 'service', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [ExperienceServiceHistoryInline]
+
+admin.site.register(ExperienceService, ExperienceServiceAdmin)
 
 class GroupNameInline(NameInline):
     model = GroupName

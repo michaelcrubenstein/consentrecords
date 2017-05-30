@@ -133,30 +133,32 @@ def buildPositionedElements(instances, parentType, sourceType, historyType, uniq
             vList.sort(key=lambda v: v.transaction.creation_time)
             lastValue = vList[-1]
             firstValue = vList[0]
+                    
             defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], uniqueTerms[t]['f'](lastValue)), uniqueTerms.keys()))
             defaults['transaction'] = firstValue.transaction
             defaults['lastTransaction'] = lastValue.transaction
-            defaults['deleteTransaction'] = lastValue.transaction
+            defaults['deleteTransaction'] = lastValue.deleteTransaction
             
+            print(sourceType, parent, position, defaults)
             newItem, created = sourceType.objects.get_or_create(parent=parent, position=position,
                 defaults=defaults)
             
             defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
             for t in tList[:-1]:
-                for field in uniqueTerms.keys():
-                    termData = uniqueTerms[field]
-                    deletedValues = t.deletedValue.filter(field=field, instance=u)
-                    if t.deletedValue.filter(field=field, instance=u, position=position).exists():
-                        defaults[termData['dbField']] = None
-                        defaults['id'] = None
-                    vs = t.value_set.filter(field=field, instance=u, position=position)
-                    if len(vs):
-                        defaults[termData['dbField']] = termData['f'](vs[0])
-                        defaults['id'] = vs[0].id
+                if t.creation_time >= firstValue.transaction.creation_time:
+                    for field in uniqueTerms.keys():
+                        termData = uniqueTerms[field]
+                        deletedValues = t.deletedValue.filter(field=field, instance=u)
+                        if t.deletedValue.filter(field=field, instance=u, position=position).exists():
+                            defaults[termData['dbField']] = None
+                            defaults['id'] = None
+                        vs = t.value_set.filter(field=field, instance=u, position=position)
+                        if len(vs):
+                            defaults[termData['dbField']] = termData['f'](vs[0])
+                            defaults['id'] = vs[0].id
                 
-                print (str(newItem), t, position, defaults)
-                historyType.objects.get_or_create(instance=newItem, transaction=t, position=position,
-                    defaults=defaults)
+                    historyType.objects.get_or_create(instance=newItem, transaction=t, position=position,
+                        defaults=defaults)
 
 def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerms):
     for u in instances:
@@ -183,21 +185,22 @@ def buildNameElements(instances, parentType, sourceType, historyType, uniqueTerm
             
             defaults = dict(map(lambda t: (uniqueTerms[t]['dbField'], None), uniqueTerms.keys()))
             for t in tList[:-1]:
-                for field in uniqueTerms.keys():
-                    termData = uniqueTerms[field]
+                if t.creation_time >= firstValue.transaction.creation_time:
+                    for field in uniqueTerms.keys():
+                        termData = uniqueTerms[field]
                     
-                    # Produce a valueSet that contains values at the minimum position for this languageCode,
-                    vs = t.value_set.filter(field=field, instance=u, languageCode=languageCode, position=minPosition)
-                    if t.deletedValue.filter(field=field, instance=u, languageCode=languageCode, position=minPosition).exists():
-                        defaults[termData['dbField']] = None
-                        defaults['id'] = None   # Forces a new ID
-                    if len(vs):
-                        defaults[termData['dbField']] = termData['f'](vs[0])
-                        defaults['id'] = vs[0].id
+                        # Produce a valueSet that contains values at the minimum position for this languageCode,
+                        vs = t.value_set.filter(field=field, instance=u, languageCode=languageCode, position=minPosition)
+                        if t.deletedValue.filter(field=field, instance=u, languageCode=languageCode, position=minPosition).exists():
+                            defaults[termData['dbField']] = None
+                            defaults['id'] = None   # Forces a new ID
+                        if len(vs):
+                            defaults[termData['dbField']] = termData['f'](vs[0])
+                            defaults['id'] = vs[0].id
                 
-                print (newItem.text, t, languageCode, defaults)
-                historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
-                    defaults=defaults)
+                    print (newItem.text, t, languageCode, defaults)
+                    historyType.objects.get_or_create(instance=newItem, transaction=t, languageCode=languageCode,
+                        defaults=defaults)
 
 def buildRootInstances(instances, sourceType, historyType, uniqueTerms):
     for u in instances:
@@ -409,7 +412,7 @@ if __name__ == "__main__":
                       }
         buildHistory(users, User, UserHistory, uniqueTerms)
         
-        uniqueTerms = {terms['email']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        uniqueTerms = {terms['email']: StringValueTranslator('text')}
         buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
         
         orgs = Instance.objects.filter(typeID=terms['Organization'])
@@ -477,7 +480,7 @@ if __name__ == "__main__":
         buildChildren(addresses, Site, Address, AddressHistory, uniqueTerms,
                       lambda i: i.parent.id)
         
-        uniqueTerms = {terms['Street']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
+        uniqueTerms = {terms['Street']: StringValueTranslator('text')}
         buildPositionedElements(addresses, Address, Street, StreetHistory, uniqueTerms)
         
         offerings = Instance.objects.filter(typeID=terms['Offering'], parent__parent__typeID=terms['Site'])
@@ -610,6 +613,15 @@ if __name__ == "__main__":
                        terms['Timeframe']: EnumerationTranslator('timeframe'),
                       }
         buildChildren(experiences, Path, Experience, ExperienceHistory, uniqueTerms, lambda i: i.parent.id)
+
+        # ExperienceServices
+        uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
+        buildPositionedElements(experiences, Experience, ExperienceService, ExperienceServiceHistory, uniqueTerms)
+        
+        # ExperienceCustomServices
+        uniqueTerms = {terms['User Entered Service']: StringValueTranslator('name')}
+        buildPositionedElements(experiences, Experience, ExperienceCustomService, ExperienceCustomServiceHistory, uniqueTerms)
+        
 
     except Exception as e:
         print("%s" % traceback.format_exc())

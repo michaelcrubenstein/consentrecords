@@ -2580,12 +2580,14 @@ class ExperienceCustomService(dbmodels.Model, IInstance):
     deleteTransaction = deleteTransactionField('deletedExperienceCustomServices')
 
     parent = parentField(Experience, 'customServices')
+    position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
 
 class ExperienceCustomServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceCustomServiceHistories')
     instance = historyInstanceField(ExperienceCustomService)
+    position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
 class ExperienceService(dbmodels.Model, IInstance):
@@ -2595,13 +2597,15 @@ class ExperienceService(dbmodels.Model, IInstance):
     deleteTransaction = deleteTransactionField('deletedExperienceServices')
 
     parent = parentField(Experience, 'services')
-    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServices', db_index=True, on_delete=dbmodels.CASCADE)
+    position = dbmodels.IntegerField()
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServices', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
     instance = historyInstanceField(ExperienceService)
-    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    position = dbmodels.IntegerField()
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class ExperiencePrompt(dbmodels.Model, IInstance):    
     id = idField()
@@ -2925,6 +2929,9 @@ class Path(dbmodels.Model, IInstance):
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
+    def __str__(self):
+        return self.name or ("%s %s" % (str(self.parent), "Path"))
+
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -3228,7 +3235,11 @@ class User(dbmodels.Model, IInstance):
     primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredUsers', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
     def description(self, language=None):
-        return self.emails.order_by('position')[0].text
+        qs = self.emails.order_by('position')
+        if len(qs):
+            return qs[0].text
+        else:
+            return '(User without email address)'
         
     def __str__(self):
         return self.description()
