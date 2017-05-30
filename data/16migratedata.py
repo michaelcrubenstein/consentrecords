@@ -326,7 +326,7 @@ def buildAccesses(instances, parentType, userSourceType, groupSourceType):
                 if gs.exists():
                     groupSourceType.objects.get_or_create(id=j.id,
                         defaults={'transaction': j.transaction,
-                                  'lastTransaction': None,
+                                  'lastTransaction': j.transaction,
                                   'deleteTransaction': j.deleteTransaction,
                                   'parent': parent,
                                   'accessee': gs[0],
@@ -336,7 +336,7 @@ def buildAccesses(instances, parentType, userSourceType, groupSourceType):
                     if us.exists():
                         userSourceType.objects.get_or_create(id=j.id,
                             defaults={'transaction': j.transaction,
-                                      'lastTransaction': None,
+                                      'lastTransaction': j.transaction,
                                       'deleteTransaction': j.deleteTransaction,
                                       'parent': parent,
                                       'accessee': us[0],
@@ -350,7 +350,7 @@ def buildAccessRequests(instances, parentType, userSourceType):
             us = User.objects.filter(pk=i.referenceValue.id)
             userSourceType.objects.get_or_create(id=i.id,
                 defaults={'transaction': i.transaction,
-                          'lastTransaction': None,
+                          'lastTransaction': i.transaction,
                           'deleteTransaction': i.deleteTransaction,
                           'parent': parent,
                           'accessee': us[0]})
@@ -367,10 +367,34 @@ def buildSubReferences(instances, getParentF, userSourceType, field, dbField, ta
             us = targetType.objects.filter(pk=i.referenceValue.id)
             userSourceType.objects.get_or_create(id=i.id,
                 defaults={'transaction': i.transaction,
-                          'lastTransaction': None,
+                          'lastTransaction': i.transaction,
                           'deleteTransaction': i.deleteTransaction,
                           'parent': parent,
                           dbField: us[0]})
+
+def buildComments(instances, parentType, sourceType):
+    for u in instances:
+        parent = parentType.objects.get(pk=u.id)
+        children = u.children.filter(typeID=terms['Comments'])
+        for i in children:
+            for j in i.children.filter(typeID=terms['Comment']):
+                text = getUniqueDatum(j, 'text')
+                request = getUniqueReference(j, 'Comment Request')
+                if request:
+                    question = getUniqueDatum(request, 'text')
+                    asker = getUniqueReference(request, 'Path')
+                else:
+                    question = None
+                    asker = None
+                
+                sourceType.objects.get_or_create(id=j.id,
+                    defaults={'transaction': j.transaction,
+                              'lastTransaction': j.transaction,
+                              'deleteTransaction': j.deleteTransaction,
+                              'parent': parent,
+                              'text': text,
+                              'question': question,
+                              'asker': Path.objects.get(pk=asker.id) if asker else None})
 
 if __name__ == "__main__":
     check = '-check' in sys.argv
@@ -622,6 +646,6 @@ if __name__ == "__main__":
         uniqueTerms = {terms['User Entered Service']: StringValueTranslator('name')}
         buildPositionedElements(experiences, Experience, ExperienceCustomService, ExperienceCustomServiceHistory, uniqueTerms)
         
-
+        buildComments(experiences, Experience, Comment)
     except Exception as e:
         print("%s" % traceback.format_exc())

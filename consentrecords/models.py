@@ -2436,7 +2436,7 @@ class Comment(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.Experience', 'comments')
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True)
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
-    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedComments', db_index=True, on_delete=dbmodels.CASCADE)
+    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedComments', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     
 class CommentHistory(dbmodels.Model):
     id = idField()
@@ -2445,7 +2445,7 @@ class CommentHistory(dbmodels.Model):
     
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
-    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class CommentPrompt(dbmodels.Model, NamedInstance):    
     id = idField()

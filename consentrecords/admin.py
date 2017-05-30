@@ -299,6 +299,30 @@ class UserEmailAdmin(ModelAdmin):
 
 admin.site.register(UserEmail, UserEmailAdmin)
 
+class CommentHistoryInline(TabularInline):
+    model = CommentHistory
+    list_display = ('id', 't_creationTime', 'text', 'question', 'asker')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'text', 'question', 'asker')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'text', 'question', 'asker')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class CommentAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'text', 'question', 'asker', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'text', 'question', 'asker', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'text', 'question', 'asker', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'text', 'question', 'asker', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [CommentHistoryInline]
+
+admin.site.register(Comment, CommentAdmin)
+
 class CommentPromptTextInline(NameInline):
     model = CommentPromptText
     
