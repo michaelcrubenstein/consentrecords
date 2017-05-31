@@ -2713,7 +2713,7 @@ class GroupMember(dbmodels.Model, IInstance):
     lastTransaction = lastTransactionField('changedGroupMembers')
     deleteTransaction = deleteTransactionField('deletedGroupMembers')
 
-    parent = parentField(Group, 'member')
+    parent = parentField(Group, 'members')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMembers', db_index=True, on_delete=dbmodels.CASCADE)
 
 class GroupMemberHistory(dbmodels.Model):
