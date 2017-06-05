@@ -451,6 +451,10 @@ if __name__ == "__main__":
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(groups, Group, GroupName, GroupNameHistory, uniqueTerms)
         
+        buildSubReferences(groups, 
+                           lambda u: Group.objects.get(pk=u.id), 
+                           GroupMember, terms['user'], 'user', User)
+        
         buildInquiryAccessGroups(orgs, Organization)
         
         uniqueTerms = {terms['Web Site']: {'dbField': 'webSite', 'f': lambda v: v.stringValue},
