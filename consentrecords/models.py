@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.db import models as dbmodels
 from django.db.models import F, Q, Prefetch
@@ -91,15 +92,28 @@ class _deferred():
 
 ### The interface shared by all types of instances.        
 class IInstance():
-    pass
-    
-### An Instance that has names that vary by languageCode.
-class NamedInstance(IInstance):
 
-    def description(self, languageCode=None):
+    def reducePrivileges(f, publicAccess):
+        # map the access records to their corresponding privilege values.              
+        p = map(lambda i: i['privilege'], f)
+
+        def comparePrivileges(a, b):
+            if a == b:
+                return a
+            elif not a:
+                return b
+            
+            privileges = ["find", "read", "register", "write", "administer"]
+                  
+            aIndex = privileges.index(a)
+            return b if b in privileges[(aIndex+1):] else a
+
+        return reduce(comparePrivileges, p, publicAccess)
+        
+    def getName(querySet, languageCode=None):
         enName = None
         noneName = None
-        for v in self.names.filter(deleteTransaction__isnull=True):
+        for v in querySet:
             if languageCode == v.languageCode:
                 return v.text
             elif v.languageCode == 'en':
@@ -107,7 +121,93 @@ class NamedInstance(IInstance):
             elif not v.languageCode:
                 noneName = v.text
         return noneName or enName or '(None)'
+    
+    
+### An Instance that has names that vary by languageCode.
+class NamedInstance(IInstance):
 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(deleteTransaction__isnull=True)
+
+    def description(self, languageCode=None):
+        enName = None
+        noneName = None
+        for v in self.currentNamesQuerySet:
+            if languageCode == v.languageCode:
+                return v.text
+            elif v.languageCode == 'en':
+                enName = v.text
+            elif not v.languageCode:
+                noneName = v.text
+        return noneName or enName or '(None)'
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        names = self.currentNamesQuerySet
+        data['names'] = [i.getData([], context) for i in names]
+        return data
+        
+### An Instance that has no parent
+class RootInstance(IInstance):
+    def headData(self, context):
+        return {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+                'privilege': context.getPrivilege(self),
+               }
+               
+    def fetchPrivilege(self, user):
+        return "read"
+    
+### An Instance that has a parent
+class ChildInstance(IInstance):
+    def headData(self, context):
+        data = {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+                'parentID': self.parent_id.hex, 
+               }
+        privilege = context.getPrivilege(self.parent)
+        if privilege:
+            data['privilege'] = privilege
+        return data
+               
+    def fetchPrivilege(self, user):
+        return self.parent.fetchPrivilege(user)
+    
+### An Instance that is a name and a language code
+class TranslationInstance(ChildInstance):
+    def description(self, languageCode=None):
+        return self.text
+    
+    def headData(self, context):
+        data = super(TranslationInstance, self).headData(context)
+        data['text'] = self.text
+        if self.languageCode:
+            data['languageCode'] = self.languageCode
+        return data
+               
+    def getData(self, fields, context):
+        return self.headData(context)
+        
+
+### An instance that contains access information.
+class AccessInstance(ChildInstance):
+    def description(self, languageCode=None):
+        return self.accessee.description(languageCode)
+        
+    def select_related(querySet):
+        return querySet.select_related('accessee')
+
+    def getData(self, fieldNames, context):
+        data = self.headData(context)
+        data['grantee'] = self.accessee.headData(context)
+        if 'privilege' in self.__dict__:
+            data['grant'] = self.privilege
+        return data
+        
+    def fetchPrivilege(self, user):
+        return "administer" if self.parent.fetchPrivilege(user) == "administer" else None
+    
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -2399,7 +2499,7 @@ def wrapInstanceQuerySet(t, qs=None):
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
     
-class Address(dbmodels.Model, IInstance):
+class Address(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdAddresses')
     lastTransaction = lastTransactionField('changedAddresses')
@@ -2418,6 +2518,27 @@ class Address(dbmodels.Model, IInstance):
     def __str__(self):
         return self.description() 
 
+    def select_related(querySet):
+        return querySet.prefetch_related(Prefetch('streets', 
+                           queryset=Street.objects.filter(deleteTransaction__isnull=True)))
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.city:
+                data['city'] = self.city
+            if self.state:
+                data['state'] = self.state
+            if self.zipCode:
+                data['zip code'] = self.zipCode
+            qs = self.streets.filter(deleteTransaction__isnull=True).order_by('position')
+            if 'street' in fields:
+                data['streets'] = [i.getData([], context) for i in qs]
+            else:
+                data['streets'] = [i.headData(context) for i in qs]
+        
+        return data
+    
 class AddressHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('addressHistories')
@@ -2427,7 +2548,7 @@ class AddressHistory(dbmodels.Model):
     state = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class Comment(dbmodels.Model, IInstance):
+class Comment(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdComments')
     lastTransaction = lastTransactionField('changedComments')
@@ -2438,6 +2559,30 @@ class Comment(dbmodels.Model, IInstance):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedComments', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     
+    def description(self, languageCode=None):
+        return str(self.transaction.creation_time);
+        
+    def __str__(self):
+        return self.description()
+        
+    def select_head_related(querySet):
+        return querySet
+        
+    def select_related(querySet):
+        return querySet.select_related('asker')
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.text:
+                data['text'] = self.text
+            if self.asker:
+                data['asker'] = self.asker.headData(context)
+            if self.question:
+                data['question'] = self.question
+        
+        return data
+
 class CommentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentHistories')
@@ -2447,7 +2592,7 @@ class CommentHistory(dbmodels.Model):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedCommentHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class CommentPrompt(dbmodels.Model, NamedInstance):    
+class CommentPrompt(dbmodels.Model, NamedInstance, RootInstance):    
     id = idField()
     transaction = createTransactionField('createdCommentPrompts')
     lastTransaction = lastTransactionField('changedCommentPrompts')
@@ -2460,12 +2605,26 @@ class CommentPrompt(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('texts',
+                                                  queryset=CommentPromptText.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return CommentPrompt.select_head_related(querySet)
+    
+    def getData(self, fields, context):
+        data = super(CommentPrompt, self).getData(fields, context)
+        labels = self.currentNames
+        data['texts'] = [i.getData([], context) for i in labels]
+        return data
+        
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptHistories')
     instance = historyInstanceField(CommentPrompt)
     
-class CommentPromptText(dbmodels.Model, IInstance):
+class CommentPromptText(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdCommentPromptTexts')
     lastTransaction = lastTransactionField('changedCommentPromptTexts')
@@ -2486,7 +2645,7 @@ class CommentPromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class DisqualifyingTag(dbmodels.Model, IInstance):
+class DisqualifyingTag(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdDisqualifyingTags')
     lastTransaction = lastTransactionField('changedDisqualifyingTags')
@@ -2495,8 +2654,25 @@ class DisqualifyingTag(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.ExperiencePrompt', 'disqualifyingTags')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTags', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.service.description(languageCode)
+        
+    def select_head_related(querySet):
+        return querySet.select_related('service')
+        
+    def select_related(querySet):
+        return ExperiencePromptService.select_head_related(querySet)
+        
     def __str__(self):
         return str(self.service)
+
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.service:
+                data['service'] = self.service.headData(context)
+            
+        return data
 
 class DisqualifyingTagHistory(dbmodels.Model):
     id = idField()
@@ -2505,7 +2681,7 @@ class DisqualifyingTagHistory(dbmodels.Model):
 
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTagHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-class Engagement(dbmodels.Model, IInstance):    
+class Engagement(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdEngagements')
     lastTransaction = lastTransactionField('changedEngagements')
@@ -2516,6 +2692,30 @@ class Engagement(dbmodels.Model, IInstance):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def description(self, languageCode=None):
+        return self.user.description(languageCode)
+        
+    def __str__(self):
+        return str(self.user)
+
+    def select_head_related(querySet):
+        return querySet.select_related('user')
+        
+    def select_related(querySet):
+        return querySet.select_related('user')
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.user:
+                data['user'] = self.user.headData(context)
+            if self.start:
+                data['start'] = self.start
+            if self.end:
+                data['end'] = self.end
+        
+        return data
+
 class EngagementHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('engagementHistories')
@@ -2525,7 +2725,7 @@ class EngagementHistory(dbmodels.Model):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Enrollment(dbmodels.Model, IInstance):    
+class Enrollment(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdEnrollments')
     lastTransaction = lastTransactionField('changedEnrollments')
@@ -2534,6 +2734,26 @@ class Enrollment(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.Session', 'enrollments')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='userEnrollments', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.user.description(languageCode)
+        
+    def __str__(self):
+        return str(self.user)
+
+    def select_head_related(querySet):
+        return querySet.select_related('user')
+        
+    def select_related(querySet):
+        return querySet.select_related('user')
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.user:
+                data['user'] = self.user.headData(context)
+        
+        return data
+    
 class EnrollmentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('enrollmentHistories')
@@ -2541,7 +2761,7 @@ class EnrollmentHistory(dbmodels.Model):
 
     user = dbmodels.ForeignKey('consentrecords.User', related_name='userEnrollmentHistories', db_index=True, on_delete=dbmodels.CASCADE)
 
-class Experience(dbmodels.Model, IInstance):
+class Experience(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdExperiences')
     lastTransaction = lastTransactionField('changedExperiences')
@@ -2558,6 +2778,69 @@ class Experience(dbmodels.Model, IInstance):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
     
+    def description(self, languageCode=None):
+        if self.offering_id:
+            return self.offering.description(languageCode)
+        elif self.customOffering:
+            return self.customOffering
+        else:
+            return 'Unnamed Offering'
+    
+    def __str__(self):
+        return self.description(None)
+    
+    def select_related(querySet):
+        return querySet.select_related('organization')\
+                       .select_related('site')\
+                       .select_related('offering')\
+                       .prefetch_related(Prefetch('customServices', 
+                           queryset=ExperienceCustomService.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('services', 
+                           queryset=ExperienceService.objects.filter(deleteTransaction__isnull=True)))
+    
+    def getData(self, fieldNames, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.customOrganization:
+                data['customOrganization'] = self.customOrganization
+            if self.customSite:
+                data['customSite'] = self.customSite
+            if self.customOffering:
+                data['customOffering'] = self.customOffering
+            if self.organization_id:
+                if 'organization' in fieldNames:
+                    data['organization'] = self.organization.getData([], context)
+                else:
+                    data['organization'] = self.organization.headData(context)
+            if self.site_id:
+                if 'site' in fieldNames:
+                    data['site'] = self.site.getData([], context)
+                else:
+                    data['site'] = self.site.headData(context)
+            if self.offering_id:
+                if 'offering' in fieldNames:
+                    data['offering'] = self.offering.getData([], context)
+                else:
+                    data['offering'] = self.offering.headData(context)
+            qs = self.services.filter(deleteTransaction__isnull=True).order_by('position')
+            if 'service' in fieldNames:
+                data['services'] = [i.getData([], context) for i in qs]
+            else:
+                data['services'] = [i.headData(context) for i in qs]
+            qs = self.customServices.filter(deleteTransaction__isnull=True).order_by('position')
+            if 'custom service' in fieldNames:
+                data['custom services'] = [i.getData([], context) for i in qs]
+            else:
+                data['custom services'] = [i.headData(context) for i in qs]
+            if self.start:
+                data['start'] = self.start
+            if self.end:
+                data['end'] = self.end
+            if self.timeframe:
+                data['timeframe'] = self.timeframe
+        
+        return data
+
 class ExperienceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceHistories')
@@ -2573,7 +2856,7 @@ class ExperienceHistory(dbmodels.Model):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ExperienceCustomService(dbmodels.Model, IInstance):
+class ExperienceCustomService(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdExperienceCustomServices')
     lastTransaction = lastTransactionField('changedExperienceCustomServices')
@@ -2583,6 +2866,19 @@ class ExperienceCustomService(dbmodels.Model, IInstance):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
 
+    def description(self, languageCode=None):
+        return self.name
+    
+    def __str__(self):
+        return self.name
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['position'] = self.position
+        if self.name:
+            data['name'] = self.name
+        return data
+    
 class ExperienceCustomServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceCustomServiceHistories')
@@ -2590,7 +2886,7 @@ class ExperienceCustomServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class ExperienceService(dbmodels.Model, IInstance):
+class ExperienceService(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdExperienceServices')
     lastTransaction = lastTransactionField('changedExperienceServices')
@@ -2600,6 +2896,22 @@ class ExperienceService(dbmodels.Model, IInstance):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServices', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.service.description(languageCode)
+        
+    def __str__(self):
+        return str(self.service)
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['position'] = self.position
+        if self.service:
+            if 'service' in fields:
+                data['service'] = self.service.getData([], context)
+            else:
+                data['service'] = self.service.headData(context)
+        return data
+    
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
@@ -2607,7 +2919,7 @@ class ExperienceServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class ExperiencePrompt(dbmodels.Model, IInstance):    
+class ExperiencePrompt(dbmodels.Model, RootInstance):    
     id = idField()
     transaction = createTransactionField('createdExperiencePrompts')
     lastTransaction = lastTransactionField('changedExperiencePrompts')
@@ -2621,9 +2933,47 @@ class ExperiencePrompt(dbmodels.Model, IInstance):
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def description(self, languageCode=None):
+        return self.name
+    
     def __str__(self):
         return self.name
 
+    def select_head_related(querySet):
+        return querySet
+        
+    def select_related(querySet):
+        return ExperiencePrompt.select_head_related(querySet)\
+                    .select_related('organization')\
+                    .select_related('site')\
+                    .select_related('offering')\
+                    .select_related('domain')\
+                    .prefetch_related(Prefetch('services',
+                                               ExperiencePromptService.select_related(ExperiencePromptService.objects.all()),
+                                               to_attr='fetchedServices'))\
+                    .prefetch_related(Prefetch('texts',
+                                               ExperiencePromptText.objects.all(),
+                                               to_attr='fetchedTexts'))\
+                    .prefetch_related(Prefetch('disqualifyingTags',
+                                               DisqualifyingTag.select_related(DisqualifyingTag.objects.all()),
+                                               to_attr='fetchedDisqualifyingTags'))
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['name'] = self.name
+        if self.organization:
+            data['organization'] = self.organization.headData(context)
+        if self.site:
+            data['site'] = self.site.headData(context)
+        if self.offering:
+            data['offering'] = self.offering.headData(context)
+        if self.domain:
+            data['domain'] = self.domain.headData(context)
+        data['services'] = [i.headData(context) for i in self.fetchedServices]
+        data['texts'] = [i.getData([], context) for i in self.fetchedTexts]
+        data['disqualifying tags'] = [i.headData(context) for i in self.fetchedDisqualifyingTags]
+        return data
+        
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptHistories')
@@ -2637,17 +2987,34 @@ class ExperiencePromptHistory(dbmodels.Model):
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ExperiencePromptService(dbmodels.Model, IInstance):
+class ExperiencePromptService(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdExperiencePromptServices')
     lastTransaction = lastTransactionField('changedExperiencePromptServices')
     deleteTransaction = deleteTransactionField('deletedExperiencePromptServices')
     
-    parent = parentField(ExperiencePrompt, 'experiencePromptServices')
+    parent = parentField(ExperiencePrompt, 'services')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServices', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.service.description(languageCode)
+    
+    def select_head_related(querySet):
+        return querySet.select_related('service')
+        
+    def select_related(querySet):
+        return ExperiencePromptService.select_head_related(querySet)
+        
     def __str__(self):
         return str(self.service)
+
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.service:
+                data['service'] = self.service.headData(context)
+            
+        return data
 
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()
@@ -2656,13 +3023,13 @@ class ExperiencePromptServiceHistory(dbmodels.Model):
 
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-class ExperiencePromptText(dbmodels.Model, IInstance):    
+class ExperiencePromptText(dbmodels.Model, TranslationInstance):    
     id = idField()
     transaction = createTransactionField('createdExperiencePromptTexts')
     lastTransaction = lastTransactionField('changedExperiencePromptTexts')
     deleteTransaction = deleteTransactionField('deletedExperiencePromptTexts')
     
-    parent = parentField(ExperiencePrompt, 'experiencePromptTexts')
+    parent = parentField(ExperiencePrompt, 'texts')
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -2677,7 +3044,7 @@ class ExperiencePromptTextHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Group(dbmodels.Model, NamedInstance):
+class Group(dbmodels.Model, NamedInstance, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdGroups')
     deleteTransaction = deleteTransactionField('deletedGroups')
@@ -2686,7 +3053,20 @@ class Group(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
-class GroupName(dbmodels.Model, IInstance):
+    def select_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=GroupName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))\
+                       .prefetch_related(Prefetch('members', 
+                                                  queryset=GroupMember.select_related(GroupMember.objects.filter(deleteTransaction__isnull=True)),
+                                                  to_attr='fetchedMembers'))
+        
+    def getData(self, fields, context):
+        data = super(Group, self).getData(fields, context)
+        data['members'] = [i.getData([], context) for i in self.fetchedMembers]
+        return data
+    
+class GroupName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdGroupNames')
     lastTransaction = lastTransactionField('changedGroupNames')
@@ -2707,7 +3087,7 @@ class GroupNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class GroupMember(dbmodels.Model, IInstance):
+class GroupMember(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdGroupMembers')
     lastTransaction = lastTransactionField('changedGroupMembers')
@@ -2716,6 +3096,26 @@ class GroupMember(dbmodels.Model, IInstance):
     parent = parentField(Group, 'members')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMembers', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.user.description(languageCode)
+        
+    def __str__(self):
+        return self.description()
+
+    def select_head_related(querySet):
+        return querySet.select_related('user')
+    
+    def select_related(querySet):
+        return GroupMember.select_head_related(querySet)
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.user:
+                data['user'] = self.user.headData(context)
+        
+        return data
+
 class GroupMemberHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupMemberHistories')
@@ -2723,7 +3123,7 @@ class GroupMemberHistory(dbmodels.Model):
 
     user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMemberHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class Inquiry(dbmodels.Model, IInstance):    
+class Inquiry(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdInquiries')
     lastTransaction = lastTransactionField('changedInquiries')
@@ -2732,6 +3132,23 @@ class Inquiry(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.Session', 'inquiries')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiries', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.user.description(languageCode)
+        
+    def select_head_related(querySet):
+        return querySet.select_related('user')
+    
+    def select_related(querySet):
+        return Inquiry.select_head_related(querySet)
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.user:
+                data['user'] = self.user.headData(context)
+        
+        return data
+
 class InquiryHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('inquiryHistories')
@@ -2739,7 +3156,7 @@ class InquiryHistory(dbmodels.Model):
 
     user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiryHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class Notification(dbmodels.Model, IInstance):    
+class Notification(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdNotifications')
     lastTransaction = lastTransactionField('changedNotifications')
@@ -2747,6 +3164,42 @@ class Notification(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.User', 'notifications')
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
     isFresh = dbmodels.CharField(max_length=10, null=True)
+    
+    def description(self, languageCode=None):
+        return self.name
+    
+    def __str__(self):
+        return self.name
+        
+    def select_head_related(querySet):
+        return querySet
+    
+    def select_related(querySet):
+        return querySet.prefetch_related(Prefetch('notificationArguments', 
+                           queryset=NotificationArgument.objects.filter(deleteTransaction__isnull=True)))
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['name'] = self.name
+        data['is fresh'] = self.isFresh
+        
+        arguments = self.notificationArguments.filter(deleteTransaction__isnull=True).order_by('position')
+        
+        if self.name == 'crn.FollowerAccept':
+            types = [User]
+        elif self.name == 'crn.ExperienceCommentRequested':
+            types = [Path, Experience, Comment]
+        elif self.name == 'crn.ExperienceQuestionAnswered':
+            types = [Path, Experience]
+        elif self.name == 'crn.ExperienceSuggestion':
+            types = [Path, Service]
+        else:
+            types = []
+            
+        data['arguments'] = [types[i].objects.get(id=arguments[i].argument).headData(context) \
+                            for i in range(0, min(len(arguments), len(types)))]
+        
+        return data
     
 class NotificationHistory(dbmodels.Model):
     id = idField()
@@ -2756,7 +3209,7 @@ class NotificationHistory(dbmodels.Model):
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     isFresh = dbmodels.CharField(max_length=10, null=True, editable=False)
     
-class NotificationArgument(dbmodels.Model, IInstance):    
+class NotificationArgument(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdNotificationArguments')
     lastTransaction = lastTransactionField('changedNotificationArguments')
@@ -2775,7 +3228,7 @@ class NotificationArgumentHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class Offering(dbmodels.Model, NamedInstance):    
+class Offering(dbmodels.Model, NamedInstance, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdOfferings')
     lastTransaction = lastTransactionField('changedOfferings')
@@ -2790,6 +3243,51 @@ class Offering(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Offering.select_head_related(querySet)\
+                       .prefetch_related(Prefetch('services',
+                                         queryset=OfferingService.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('sessions',
+                                         queryset=Session.objects.filter(deleteTransaction__isnull=True)))
+        
+    def getData(self, fields, context):
+        data = super(Offering, self).getData(fields, context)
+        
+        if context.canRead(self):
+            if self.webSite:
+                data['web site'] = self.webSite
+            if self.minimumAge:
+                data['minimum age'] = self.minimumAge
+            if self.maximumAge:
+                data['maximum age'] = self.maximumAge
+            if self.minimumGrade:
+                data['minimum grade'] = self.minimumGrade
+            if self.maximumGrade:
+                data['maximum grade'] = self.maximumGrade
+        
+            if 'service' in fields:
+                data['services'] = [i.getData([], context) for i in \
+                    OfferingService.select_related(self.services.filter(deleteTransaction__isnull=True))]
+            else:
+                data['services'] = [i.headData(context) for i in \
+                    OfferingService.select_related(self.services.filter(deleteTransaction__isnull=True))]
+            data['services'].sort(key=lambda i: i['description'])
+            
+            if 'session' in fields:
+                data['sessions'] = [i.getData([], context) for i in \
+                    Session.select_related(self.sessions.filter(deleteTransaction__isnull=True))]
+            else:
+                data['sessions'] = [i.headData(context) for i in \
+                    Session.select_head_related(self.sessions.filter(deleteTransaction__isnull=True))]
+            data['sessions'].sort(key=lambda i: i['description'])
+            
+        return data
+
 class OfferingHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringHistories')
@@ -2800,7 +3298,7 @@ class OfferingHistory(dbmodels.Model):
     minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class OfferingName(dbmodels.Model, IInstance):
+class OfferingName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdOfferingNames')
     lastTransaction = lastTransactionField('changedOfferingNames')
@@ -2821,7 +3319,7 @@ class OfferingNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class OfferingService(dbmodels.Model, IInstance):
+class OfferingService(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdOfferingServices')
     lastTransaction = lastTransactionField('changedOfferingServices')
@@ -2830,6 +3328,26 @@ class OfferingService(dbmodels.Model, IInstance):
     parent = parentField(Offering, 'services')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServices', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        return self.service.description(languageCode)
+    
+    def select_head_related(querySet):
+        return querySet.select_related('service')
+        
+    def select_related(querySet):
+        return ExperiencePromptService.select_head_related(querySet)
+        
+    def __str__(self):
+        return str(self.service)
+
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.service:
+                data['service'] = self.service.headData(context)
+            
+        return data
+        
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringServiceHistories')
@@ -2848,6 +3366,72 @@ class Organization(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=OrganizationName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Offering.select_head_related(querySet)\
+                       .prefetch_related(Prefetch('sites',
+                                         queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True))))\
+                       .prefetch_related(Prefetch('groups',
+                                         queryset=Group.select_head_related(Group.objects.filter(deleteTransaction__isnull=True))))\
+                       .prefetch_related(Prefetch('userAccesses',
+                                         queryset=OrganizationUserAccess.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('groupAccesses',
+                                         queryset=OrganizationGroupAccess.objects.filter(deleteTransaction__isnull=True)))\
+                       .select_related('inquiryAccessGroup')
+        
+    def headData(self, context):
+        data = {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+               }
+        privilege = context.getPrivilege(self)
+        if privilege:
+            data['privilege'] = privilege
+        return data
+    
+    def getData(self, fields, context):
+        data = super(Organization, self).getData(fields, context)
+        if context.canRead(self):
+            if self.webSite:
+                data['web site'] = self.webSite
+            
+            data['sites'] = [i.headData(context) for i in \
+                Site.select_related(self.sites.filter(deleteTransaction__isnull=True))]
+            data['sites'].sort(key=lambda s: s['description'])
+                
+            data['groups'] = [i.headData(context) for i in \
+                Group.select_related(self.groups.filter(deleteTransaction__isnull=True))]
+            data['groups'].sort(key=lambda s: s['description'])
+                
+        if context.getPrivilege(self) == 'administer':
+            if self.publicAccess: data['public access'] = self.publicAccess
+            if self.inquiryAccessGroup:
+                data['inquiry access group'] = self.inquiryAccessGroup.headData(context)
+
+            if 'user access' in fields: 
+                data['user accesses'] = [i.getData([], context) for i in \
+                    OrganizationUserAccess.select_related(self.userAccesses.filter(deleteTransaction__isnull=True))]
+            
+            if 'group access' in fields:
+                data['group accesses'] = [i.getData([], context) for i in \
+                    OrganizationGroupAccess.select_related(self.groupAccesses.filter(deleteTransaction__isnull=True))]
+        
+        return data
+        
+    def fetchPrivilege(self, user):
+        if not user:
+            return self.publicAccess
+        else:
+            f = OrganizationUserAccess.objects.filter(parent=self, accessee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(OrganizationGroupAccess.objects.filter(parent=self, accessee__members__user=user, deleteTransaction__isnull=True,
+                                                      accessee__deleteTransaction__isnull=True,
+                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
+            
+            return IInstance.reducePrivileges(f, self.publicAccess)
+    
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -2856,7 +3440,7 @@ class OrganizationHistory(dbmodels.Model):
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='InquiryAccessGroupOrganizationHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class OrganizationName(dbmodels.Model, IInstance):
+class OrganizationName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdOrganizationNames')
     lastTransaction = lastTransactionField('changedOrganizationNames')
@@ -2878,7 +3462,7 @@ class OrganizationNameHistory(dbmodels.Model):
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class OrganizationUserAccess(dbmodels.Model, IInstance):
+class OrganizationUserAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdOrganizationUserAccesses')
     lastTransaction = lastTransactionField('changedOrganizationUserAccesses')
@@ -2888,6 +3472,9 @@ class OrganizationUserAccess(dbmodels.Model, IInstance):
     accessee = dbmodels.ForeignKey('consentrecords.User', related_name='organizationUserAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return self.description()
+    
 class OrganizationUserAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('OrganizationUserAccessHistories')
@@ -2897,7 +3484,7 @@ class OrganizationUserAccessHistory(dbmodels.Model):
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class OrganizationGroupAccess(dbmodels.Model, IInstance):
+class OrganizationGroupAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdOrganizationGroupAccesses')
     lastTransaction = lastTransactionField('changedOrganizationGroupAccesses')
@@ -2907,6 +3494,9 @@ class OrganizationGroupAccess(dbmodels.Model, IInstance):
     accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='organizationGroupAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return self.description()
+    
 class OrganizationGroupAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationGroupAccessHistories')
@@ -2932,6 +3522,63 @@ class Path(dbmodels.Model, IInstance):
     def __str__(self):
         return self.name or ("%s %s" % (str(self.parent), "Path"))
 
+    def select_related(querySet):
+        return querySet.select_related('primaryAdministrator')
+        
+    
+    def fetchPrivilege(self, user):
+        if not self.specialAccess:
+            return self.parent.fetchPrivilege(user)
+            
+        if not user:
+            return self.publicAccess
+        elif self.primaryAdministrator_id == user.id:
+            return "administer"
+        else:
+            f = PathUserAccess.objects.filter(accessee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(PathGroupAccess.objects.filter(accessee__members__user=user, deleteTransaction__isnull=True,
+                                                      accessee__deleteTransaction__isnull=True,
+                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
+            
+            return IInstance.reducePrivileges(f, self.publicAccess)
+
+    def headData(self, context):
+        return {'id': self.id.hex, 
+                'description': self.name, 
+                'parentID': self.parent_id.hex, 
+                'privilege': context.getPrivilege(self),
+               }
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        
+        data['birthday'] = self.birthday
+        data['special access'] = self.specialAccess
+        data['public access'] = self.publicAccess
+        data['primary administrator ID'] = self.primaryAdministrator_id and self.primaryAdministrator_id.hex
+        data['can answer experience'] = self.canAnswerExperience
+
+        if 'parents' in fields:
+            if context.canRead(self.parent):
+                if 'user' in fields:
+                    data['user'] = self.parent.getData([], context)
+                else:
+                    data['user'] = self.parent.headData(context)
+        
+        if 'user access' in fields: 
+            data['user accesses'] = [i.getData([], context) for i in \
+                PathUserAccess.select_related(self.userAccesses.filter(deleteTransaction__isnull=True))]
+            
+        if 'group access' in fields:
+            data['group accesses'] = [i.getData([], context) for i in \
+                PathGroupAccess.select_related(self.groupAccesses.filter(deleteTransaction__isnull=True))]
+        
+        if 'experience' in fields: 
+            data['experiences'] = [i.getData([], context) for i in \
+                Experience.select_related(self.experiences.filter(deleteTransaction__isnull=True))]
+
+        return data
+    
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -2945,7 +3592,7 @@ class PathHistory(dbmodels.Model):
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
 ### A Multiple Picked Value
-class PathUserAccess(dbmodels.Model, IInstance):
+class PathUserAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdPathUserAccesses')
     lastTransaction = lastTransactionField('changedPathUserAccesses')
@@ -2954,7 +3601,10 @@ class PathUserAccess(dbmodels.Model, IInstance):
     parent = parentField(Path, 'userAccesses')
     accessee = dbmodels.ForeignKey('consentrecords.User', related_name='pathUserAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
-
+    
+    def __str__(self):
+        return self.description()
+    
 class PathUserAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('PathUserAccessHistories')
@@ -2964,7 +3614,7 @@ class PathUserAccessHistory(dbmodels.Model):
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class PathGroupAccess(dbmodels.Model, IInstance):
+class PathGroupAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdPathGroupAccesses')
     lastTransaction = lastTransactionField('changedPathGroupAccesses')
@@ -2974,6 +3624,9 @@ class PathGroupAccess(dbmodels.Model, IInstance):
     accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='pathGroupAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return self.description()
+    
 class PathGroupAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathGroupAccessHistories')
@@ -2982,7 +3635,7 @@ class PathGroupAccessHistory(dbmodels.Model):
     accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='pathGroupAccessHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Period(dbmodels.Model, IInstance):
+class Period(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdPeriods')
     lastTransaction = lastTransactionField('changedPeriods')
@@ -2992,6 +3645,27 @@ class Period(dbmodels.Model, IInstance):
     weekday = dbmodels.IntegerField(db_index=True, null=True)
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def description(self, languageCode=None):
+        return self.user.description('%s: %s-%s' % (weekday or 'any day', startTime or '', endTime or ''))
+        
+    def select_head_related(querySet):
+        return querySet
+        
+    def select_related(querySet):
+        return querySet
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.weekday:
+                data['weekday'] = self.weekday
+            if self.start:
+                data['start time'] = self.startTime
+            if self.end:
+                data['end time'] = self.endTime
+        
+        return data
 
 class PeriodHistory(dbmodels.Model):
     id = idField()
@@ -3012,13 +3686,67 @@ class Service(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Service.select_head_related(querySet)\
+                      .prefetch_related(Prefetch('organizationLabels',
+                                                 queryset=ServiceOrganizationLabel.objects.filter(deleteTransaction__isnull=True),
+                                                 to_attr='currentOrganizationLabels'))\
+                      .prefetch_related(Prefetch('siteLabels',
+                                                 queryset=ServiceSiteLabel.objects.filter(deleteTransaction__isnull=True),
+                                                 to_attr='currentSiteLabels'))\
+                      .prefetch_related(Prefetch('offeringLabels',
+                                                 queryset=ServiceOfferingLabel.objects.filter(deleteTransaction__isnull=True),
+                                                 to_attr='currentOfferingLabels'))\
+                      .prefetch_related(Prefetch('serviceImplications',
+                                                 queryset=ServiceImplication.select_head_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)),
+                                                 to_attr='currentServiceImplications'))
+                        
+    def fetchPrivilege(self, user):
+        return "read"
+    
+    def headData(self, context):
+        return {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+                'privilege': context.getPrivilege(self),
+               }
+    
+    def getData(self, fields, context):
+        data = super(Service, self).getData(fields, context)
+        
+        if context.canRead(self):
+            if self.stage:
+                data['stage'] = self.stage
+            labels = self.currentOrganizationLabels
+            if 'organization label' in fields:
+                data['organization labels'] = [i.getData([], context) for i in labels]
+            else:
+                data['organization labels'] = [i.headData(context) for i in labels]
+            labels = self.currentSiteLabels
+            if 'site label' in fields:
+                data['site labels'] = [i.getData([], context) for i in labels]
+            else:
+                data['site labels'] = [i.headData(context) for i in labels]
+            labels = self.currentOfferingLabels
+            if 'offering label' in fields:
+                data['offering labels'] = [i.getData([], context) for i in labels]
+            else:
+                data['offering labels'] = [i.headData(context) for i in labels]
+            data['services'] = [i.headData(context) for i in self.currentServiceImplications]
+            data['services'].sort(key=lambda i: i['description'])
+        return data
+        
 class ServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceHistories')
     instance = historyInstanceField(Service)
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
 
-class ServiceName(dbmodels.Model, IInstance):
+class ServiceName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdServiceNames')
     lastTransaction = lastTransactionField('changedServiceNames')
@@ -3039,7 +3767,7 @@ class ServiceNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceOrganizationLabel(dbmodels.Model, IInstance):
+class ServiceOrganizationLabel(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdServiceOrganizationLabels')
     lastTransaction = lastTransactionField('changedServiceOrganizationLabels')
@@ -3060,7 +3788,7 @@ class ServiceOrganizationLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceSiteLabel(dbmodels.Model, IInstance):
+class ServiceSiteLabel(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdServiceSiteLabels')
     lastTransaction = lastTransactionField('changedServiceSiteLabels')
@@ -3081,7 +3809,7 @@ class ServiceSiteLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceOfferingLabel(dbmodels.Model, IInstance):
+class ServiceOfferingLabel(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdServiceOfferingLabels')
     lastTransaction = lastTransactionField('changedServiceOfferingLabels')
@@ -3102,7 +3830,7 @@ class ServiceOfferingLabelHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ServiceImplication(dbmodels.Model, IInstance):
+class ServiceImplication(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdServiceImplications')
     lastTransaction = lastTransactionField('changedServiceImplications')
@@ -3111,6 +3839,21 @@ class ServiceImplication(dbmodels.Model, IInstance):
     parent = parentField(Service, 'serviceImplications')
     impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedServiceImplications', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def description(self, languageCode=None):
+        if 'currentNames' in self.__dict__:
+            print('currentNames')
+            return IInstance.getName(self.currentNames, languageCode)
+        else:
+            return self.impliedService.description(languageCode)
+        
+    def select_head_related(querySet):
+        return querySet.select_related('impliedService')\
+                       .prefetch_related(Prefetch('impliedService__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    def __str__(self):
+        return str(self.impliedService)
+
 class ServiceImplicationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceImplicationHistories')
@@ -3118,7 +3861,7 @@ class ServiceImplicationHistory(dbmodels.Model):
 
     impliedService = dbmodels.ForeignKey('consentrecords.Service', related_name='impliedServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
-class Session(dbmodels.Model, NamedInstance):    
+class Session(dbmodels.Model, NamedInstance, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdSessions')
     lastTransaction = lastTransactionField('changedSessions')
@@ -3133,6 +3876,53 @@ class Session(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=SessionName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Session.select_head_related(querySet)\
+                       .prefetch_related(Prefetch('engagements',
+                                         queryset=Engagement.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('enrollments',
+                                         queryset=Enrollment.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('inquiries',
+                                         queryset=Inquiry.objects.filter(deleteTransaction__isnull=True)))\
+                       .prefetch_related(Prefetch('periods',
+                                         queryset=Period.objects.filter(deleteTransaction__isnull=True)))
+        
+    def getData(self, fields, context):
+        data = super(Session, self).getData(fields, context)
+        
+        if context.canRead(self):
+            if self.registrationDeadline:
+                data['registration deadline'] = self.registrationDeadline
+            if self.start:
+                data['start'] = self.start
+            if self.end:
+                data['end'] = self.end
+            if self.canRegister:
+                data['can register'] = self.canRegister
+                
+            data['engagements'] = [i.headData(context) for i in \
+                Engagement.select_head_related(self.engagements.filter(deleteTransaction__isnull=True))]
+            data['engagements'].sort(key=lambda s: s['description'])
+            
+            data['enrollments'] = [i.headData(context) for i in \
+                Enrollment.select_head_related(self.enrollments.filter(deleteTransaction__isnull=True))]
+            data['enrollments'].sort(key=lambda s: s['description'])
+            
+            data['inquiries'] = [i.headData(context) for i in \
+                Inquiry.select_head_related(self.inquiries.filter(deleteTransaction__isnull=True))]
+            data['inquiries'].sort(key=lambda s: s['description'])
+            
+            data['periods'] = [i.getData(context) for i in \
+                Period.select_related(self.periods.filter(deleteTransaction__isnull=True))]
+            data['periods'].sort(key=lambda s: s['description'])
+                
+        return data
+        
 class SessionHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionHistories')
@@ -3143,7 +3933,7 @@ class SessionHistory(dbmodels.Model):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
-class SessionName(dbmodels.Model, IInstance):
+class SessionName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdSessionNames')
     lastTransaction = lastTransactionField('changedSessionNames')
@@ -3164,7 +3954,7 @@ class SessionNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Site(dbmodels.Model, NamedInstance):    
+class Site(dbmodels.Model, NamedInstance, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdSites')
     lastTransaction = lastTransactionField('changedSites')
@@ -3175,13 +3965,42 @@ class Site(dbmodels.Model, NamedInstance):
     def __str__(self):
         return self.description()
 
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('names',
+                                                  queryset=SiteName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Site.select_head_related(querySet)\
+                       .prefetch_related(Prefetch('addresses',
+                                         queryset=Address.objects.filter(deleteTransaction__isnull=True)))
+        
+    def getData(self, fields, context):
+        data = super(Site, self).getData(fields, context)
+        if context.canRead(self):
+            if self.webSite:
+                data['web site'] = self.webSite
+            
+            qs = self.addresses.filter(deleteTransaction__isnull=True)
+            if qs.count():
+                if 'address' in fields:
+                    data['address'] = Address.select_related(qs)[0].getData([], context)
+                else:
+                    data['address'] = Address.select_related(qs)[0].headData(context)
+                
+            data['offerings'] = [i.headData(context) for i in \
+                Offering.select_head_related(self.offerings.filter(deleteTransaction__isnull=True))]
+            data['offerings'].sort(key=lambda s: s['description'])
+                
+        return data
+        
 class SiteHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteHistories')
     instance = historyInstanceField(Site)
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class SiteName(dbmodels.Model, IInstance):
+class SiteName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdSiteNames')
     lastTransaction = lastTransactionField('changedSiteNames')
@@ -3212,9 +4031,24 @@ class Street(dbmodels.Model, IInstance):
     position = dbmodels.IntegerField()
     text = dbmodels.CharField(max_length=255, null=True)
 
+    def description(self, languageCode=None):
+        return self.text
+    
     def __str__(self):
         return self.text or '(None)'
 
+    def headData(self, context):
+        return {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+                'parentID': self.parent_id.hex, 
+                'privilege': context.getPrivilege(self.parent),
+                'position': self.position,
+                'text': self.text
+               }
+               
+    def getData(self, fieldNames, context):
+        return self.headData(context)
+        
 class StreetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('streetHistories')
@@ -3239,11 +4073,23 @@ class User(dbmodels.Model, IInstance):
         if len(qs):
             return qs[0].text
         else:
-            return '(User without email address)'
+            return 'Unbound user: %s %s' % (self.firstName, self.lastName), 
         
     def __str__(self):
         return self.description()
+        
+    def select_head_related(querySet):
+        return querySet.prefetch_related(Prefetch('emails',
+                                                  queryset=UserEmail.objects.filter(delete_transaction__isnull=True),
+                                                  to_attr='currentEMails'))
 
+    def select_related(querySet):
+        return User.select_head_related(querySet)\
+                   .prefetch_related(Prefetch('paths',
+                                         queryset=Path.objects.filter(deleteTransaction__isnull=True)))\
+                   .prefetch_related(Prefetch('notifications',
+                                         queryset=Notification.objects.filter(deleteTransaction__isnull=True)))
+        
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousFindFilter():
@@ -3292,6 +4138,72 @@ class User(dbmodels.Model, IInstance):
 #             object add rule: create one
 #             of kind: notification
 
+    def fetchPrivilege(self, user):
+        if not user:
+            return self.publicAccess
+        elif self.primaryAdministrator_id == user.id:
+            return "administer"
+        else:
+            f = UserUserAccess.objects.filter(parent=self, accessee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(UserGroupAccess.objects.filter(parent=self, accessee__members__user=user, deleteTransaction__isnull=True,
+                                                      accessee__deleteTransaction__isnull=True,
+                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
+            
+            return IInstance.reducePrivileges(f, self.publicAccess)
+    
+    def headData(self, context):
+        emails = self.emails.all()
+        data = {'id': self.id.hex, 
+                'description': self.description(context.languageCode),
+                'privilege': context.getPrivilege(self),
+               }
+        return data
+    
+    def getData(self, fields, context):
+        data = self.headData(context)
+        
+        if self.birthday: data['birthday'] = self.birthday
+        if self.firstName: data['first name'] = self.firstName
+        if self.lastName: data['last name'] = self.lastName
+        if 'system access' in fields:
+            if context.is_administrator:
+                data['system access'] = 'administer'
+            elif context.is_staff:
+                data['system access'] = 'write'
+
+        emails = self.emails.filter(deleteTransaction__isnull=True).order_by('position')
+        if 'email' in fields: 
+            data['emails'] = [i.getData([], context) for i in emails]
+        else:
+            data['emails'] = [i.headData(context) for i in emails]
+
+        if 'path' in fields: 
+            qs = self.paths.filter(deleteTransaction__isnull=True)
+            if qs.exists():
+                data['path'] = Path.select_related(qs)[0].getData([], context)
+
+        if 'notification' in fields: 
+            data['notifications'] = [i.getData([], context) for i in \
+                Notification.select_related(self.notifications.filter(deleteTransaction__isnull=True).order_by('transaction__creation_time'))]
+
+        if context.getPrivilege(self) == 'administer':
+            if self.publicAccess: data['public access'] = self.publicAccess
+            if self.primaryAdministrator_id: data['primary administrator ID'] = self.primaryAdministrator_id.hex
+
+            if 'user access' in fields: 
+                data['user accesses'] = [i.getData([], context) for i in \
+                    UserUserAccess.select_related(self.userAccesses.filter(deleteTransaction__isnull=True))]
+            
+            if 'group access' in fields:
+                data['group accesses'] = [i.getData([], context) for i in \
+                    UserGroupAccess.select_related(self.groupAccesses.filter(deleteTransaction__isnull=True))]
+        
+            if 'user access request' in fields: 
+                data['user access requests'] = [i.getData([], context) for i in \
+                    UserUserAccessRequest.select_related(self.userAccessRequests.filter(deleteTransaction__isnull=True))]
+
+        return data
+    
     class UserQuerySet(ObjectQuerySet):
         
         fieldMap = {'email': 'email__text__',
@@ -3431,6 +4343,21 @@ class UserEmail(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     position = dbmodels.IntegerField()
     
+    def description(self, languageCode=None):
+        return self.text
+    
+    def headData(self, context):
+        return {'id': self.id.hex, 
+                'description': self.description(context.languageCode), 
+                'parentID': self.parent_id.hex, 
+                'privilege': context.getPrivilege(self.parent),
+                'position': self.position,
+                'text': self.text
+               }
+               
+    def getData(self, fieldNames, context):
+        return self.headData(context)
+        
 class UserEmailHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userEmailHistories')
@@ -3440,7 +4367,7 @@ class UserEmailHistory(dbmodels.Model):
     position = dbmodels.IntegerField(editable=False)
 
 ### A Multiple Picked Value
-class UserUserAccess(dbmodels.Model, IInstance):
+class UserUserAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdUserUserAccesses')
     lastTransaction = lastTransactionField('changedUserUserAccesses')
@@ -3450,6 +4377,9 @@ class UserUserAccess(dbmodels.Model, IInstance):
     accessee = dbmodels.ForeignKey(User, related_name='userUserAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return self.description()
+    
 class UserUserAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('UserUserAccessHistories')
@@ -3459,7 +4389,7 @@ class UserUserAccessHistory(dbmodels.Model):
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class UserGroupAccess(dbmodels.Model, IInstance):
+class UserGroupAccess(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdUserGroupAccesses')
     lastTransaction = lastTransactionField('changedUserGroupAccesses')
@@ -3469,6 +4399,9 @@ class UserGroupAccess(dbmodels.Model, IInstance):
     accessee = dbmodels.ForeignKey('consentrecords.Group', related_name='userGroupAccesses', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    def __str__(self):
+        return self.description()
+    
 class UserGroupAccessHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userGroupAccessHistories')
@@ -3478,7 +4411,7 @@ class UserGroupAccessHistory(dbmodels.Model):
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class UserUserAccessRequest(dbmodels.Model, IInstance):
+class UserUserAccessRequest(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdUserUserAccessRequests')
     lastTransaction = lastTransactionField('changedUserUserAccessRequests')
@@ -3487,6 +4420,9 @@ class UserUserAccessRequest(dbmodels.Model, IInstance):
     parent = parentField(User, 'userAccessRequests')
     accessee = dbmodels.ForeignKey(User, related_name='userUserAccessRequests', db_index=True, on_delete=dbmodels.CASCADE)
 
+    def __str__(self):
+        return self.description()
+    
 class UserUserAccessRequestHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('UserUserAccessRequestHistories')
@@ -3494,3 +4430,33 @@ class UserUserAccessRequestHistory(dbmodels.Model):
 
     accessee = dbmodels.ForeignKey(User, related_name='userUserAccessRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
+class Context:
+    def __init__(self, languageCode, user):
+        self.languageCode = languageCode
+        self.user = user
+        if user:
+            qs = AuthUser.objects.filter(email=user.emails.all()[0].text)
+            self.authUser = qs[0] if len(qs) else AnonymousUser()
+        else:
+            self.authUser = AnonymousUser()
+        self._privileges = {}
+        
+    def getPrivilege(self, i):
+        if self.is_administrator:
+            return "administer"
+            
+        if i not in self._privileges:
+            self._privileges[i.id] = i.fetchPrivilege(self.user)
+        return self._privileges[i.id]
+    
+    @property
+    def is_administrator(self):
+        return self.authUser and self.authUser.is_superuser
+            
+    @property
+    def is_staff(self):
+        return self.authUser and self.authUser.is_staff
+            
+    def canRead(self, i):
+        privilege = self.getPrivilege(i)
+        return privilege in ["read", "write", "administer"]
