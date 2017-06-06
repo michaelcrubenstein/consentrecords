@@ -150,11 +150,11 @@ class NameInline(TabularInline):
 
 ### An Inline for access records.   
 class AccessInline(TabularInline):
-    list_display = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', 'privilege', 'grantee', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'privilege', 'grantee', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'privilege', 'accessee', 't_creationTime', 'deleteTransaction')
+    readonly_fields = ('id', 'privilege', 'grantee', 't_creationTime', 'deleteTransaction')
 
     ordering = ['privilege', 'id']
     fk_name = 'parent'
@@ -225,12 +225,6 @@ class UserEmailInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
-class UserUserAccessInline(AccessInline):
-    model = UserUserAccess
-    
-class UserGroupAccessInline(AccessInline):
-    model = UserGroupAccess
-    
 class UserUserAccessRequestInline(TabularInline):
     model = UserUserAccessRequest
     list_display = ('id', 'accessee', 't_creationTime', 'deleteTransaction')
@@ -271,7 +265,7 @@ class UserAdmin(ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessInline, UserGroupAccessInline, UserUserAccessRequestInline, NotificationInline, PathInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessRequestInline, NotificationInline, PathInline]
 
 admin.site.register(User, UserAdmin)
 
@@ -868,12 +862,6 @@ class GroupInline(TabularInline):
     readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
 
-class OrganizationUserAccessInline(AccessInline):
-    model = OrganizationUserAccess
-    
-class OrganizationGroupAccessInline(AccessInline):
-    model = OrganizationGroupAccess
-    
 class SiteInline(TabularInline):
     model = Site
     list_display = ('id', '__str__', 'webSite', 't_creationTime', 'deleteTransaction')
@@ -892,7 +880,6 @@ class OrganizationAdmin(ModelAdmin):
     search_fields = ('names__text', 'id', 'webSite', 'inquiryAccessGroup__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     inlines = [OrganizationHistoryInline, OrganizationNameInline, GroupInline, 
-               OrganizationUserAccessInline, OrganizationGroupAccessInline,
                SiteInline]
         
 admin.site.register(Organization, OrganizationAdmin)
@@ -932,12 +919,6 @@ class PathHistoryInline(TabularInline):
     ordering = ['transaction__creation_time']
     fk_name = 'instance'
 
-class PathUserAccessInline(AccessInline):
-    model = PathUserAccess
-    
-class PathGroupAccessInline(AccessInline):
-    model = PathGroupAccess
-    
 class ExperienceInline(TabularInline):
     model = Experience
     list_display = ('id', 'organization', 'customOrganization', 'site', 'customSite', 'offering', 'customOffering', 'start', 'end', 'timeframe', 't_creationTime', 'deleteTransaction')
@@ -958,7 +939,7 @@ class PathAdmin(ModelAdmin):
     search_fields = ('id', 'name', 'birthday', 'specialAccess', 'canAnswerExperience', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
 
     ordering = ['transaction__creation_time']
-    inlines = [PathHistoryInline, PathUserAccessInline, PathGroupAccessInline, ExperienceInline]
+    inlines = [PathHistoryInline, ExperienceInline]
         
 admin.site.register(Path, PathAdmin)
 
