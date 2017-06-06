@@ -314,9 +314,9 @@ def buildSessionCanRegister(sessions, targetType):
             newItem.canRegister = canRegister
             newItem.save()
 
-def buildAccesses(instances, parentType, userSourceType, groupSourceType):
+def buildAccesses(instances):
     for u in instances:
-        parent = parentType.objects.get(pk=u.id)
+        parent = AccessSource.objects.get(pk=u.id)
         children = u.children.filter(typeID=terms.accessRecord)
         for i in children:
             privilege = getUniqueReferenceDescription(i, 'privilege')
@@ -324,22 +324,22 @@ def buildAccesses(instances, parentType, userSourceType, groupSourceType):
             for j in i.value_set.filter(field__in=[terms['group'], terms.user]):
                 gs = Group.objects.filter(pk=j.referenceValue.id)
                 if gs.exists():
-                    groupSourceType.objects.get_or_create(id=j.id,
+                    GroupAccess.objects.get_or_create(id=j.id,
                         defaults={'transaction': j.transaction,
                                   'lastTransaction': j.transaction,
                                   'deleteTransaction': j.deleteTransaction,
                                   'parent': parent,
-                                  'accessee': gs[0],
+                                  'grantee': gs[0],
                                   'privilege': privilege})
                 else:
                     us = User.objects.filter(pk=j.referenceValue.id)
                     if us.exists():
-                        userSourceType.objects.get_or_create(id=j.id,
+                        UserAccess.objects.get_or_create(id=j.id,
                             defaults={'transaction': j.transaction,
                                       'lastTransaction': j.transaction,
                                       'deleteTransaction': j.deleteTransaction,
                                       'parent': parent,
-                                      'accessee': us[0],
+                                      'grantee': us[0],
                                       'privilege': privilege})
 
 def buildAccessRequests(instances, parentType, userSourceType):
@@ -414,36 +414,37 @@ if __name__ == "__main__":
                          'deleteTransaction': u.deleteTransaction,
                          'firstName': getUniqueDatum(u, 'first name'),
                          'lastName': getUniqueDatum(u, 'last name'),
-                         'birthday': getUniqueDatum(u, 'birthday'),
-                         'publicAccess': getUniqueReferenceDescription(u, 'public access')})
+                         'birthday': getUniqueDatum(u, 'birthday')})
             
-        # Fill in the primary administrators, now that the users have been created.
-        for u in users:
-            id=u.id
-            primaryAdministrator = getUniqueReference(u, 'primary administrator')
-            if primaryAdministrator:
-                target = User.objects.get(pk=u.id)
-                target.primaryAdministrator_id=primaryAdministrator.id
-                target.save()
-        
         # Create the user history
         uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
                        terms['last name']: {'dbField': 'lastName', 'f': lambda v: v.stringValue},
                        terms['birthday']: {'dbField': 'birthday', 'f': lambda v: v.stringValue},
-                       terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
-                       terms['primary administrator']: 
-                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
                       }
         buildHistory(users, User, UserHistory, uniqueTerms)
         
         uniqueTerms = {terms['email']: StringValueTranslator('text')}
         buildPositionedElements(users, User, UserEmail, UserEmailHistory, uniqueTerms)
         
+        # Create the user access source records
+        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                       terms['primary administrator']: 
+                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                      }
+        buildRootInstances(users, AccessSource, AccessSourceHistory, uniqueTerms)
+        
         orgs = Instance.objects.filter(typeID=terms['Organization'])
         buildOrganizations(orgs, Organization)
 
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
+        
+        # Create the user access source records
+        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                       terms['primary administrator']: 
+                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                      }
+        buildRootInstances(orgs, AccessSource, AccessSourceHistory, uniqueTerms)
         
         groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
         buildGroups(groups, Organization, Group)
@@ -464,9 +465,9 @@ if __name__ == "__main__":
                       }
         buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
         
-        buildAccesses(users, User, UserUserAccess, UserGroupAccess)
+        buildAccesses(users)
         
-        buildAccesses(orgs, Organization, OrganizationUserAccess, OrganizationGroupAccess)
+        buildAccesses(orgs)
         
         buildAccessRequests(users, User, UserUserAccessRequest)
         
@@ -620,14 +621,24 @@ if __name__ == "__main__":
         paths = Instance.objects.filter(typeID=terms['Path'])
         uniqueTerms = {terms['Birthday']: StringValueTranslator('birthday'),
                        terms['name']: StringValueTranslator('name'),
-                       terms['public access']: EnumerationTranslator('publicAccess'),
-                       terms['primary administrator']: ForeignKeyTranslator('primaryAdministrator', User),
                        terms['special access']: EnumerationTranslator('specialAccess'),
                        terms['can be asked about experience']: EnumerationTranslator('canAnswerExperience'),
                       }
         buildChildren(paths, User, Path, PathHistory, uniqueTerms, lambda i: i.parent.id)
         
-        buildAccesses(paths, Path, PathUserAccess, PathGroupAccess)
+        # Create the user access source records
+        uniqueTerms = {terms['public access']: {'dbField': 'publicAccess', 'f': lambda v: str(v.referenceValue)},
+                       terms['primary administrator']: 
+                           {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
+                      }
+        buildRootInstances(paths, AccessSource, AccessSourceHistory, uniqueTerms)
+        
+        newPaths = Path.objects.all()
+        for p in newPaths:
+            p.accessSource = AccessSource.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
+            p.save()
+        
+        buildAccesses(paths)
         
         experiences = Instance.objects.filter(typeID=terms['More Experience'])
         uniqueTerms = {terms['Organization']: ForeignKeyTranslator('organization', Organization),

@@ -2498,7 +2498,81 @@ def wrapInstanceQuerySet(t, qs=None):
         isGlobal = t != None and t.getSubInstance('of kind') != None
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
+
+class AccessSource(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('createdAccessSources')
+    lastTransaction = lastTransactionField('changedAccessSources')
+    deleteTransaction = deleteTransactionField('deletedAccessSources')
+
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administered', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+    def fetchPrivilege(self, user):
+        if not user:
+            return self.publicAccess
+        elif self.primaryAdministrator_id == user.id:
+            return "administer"
+        else:
+            f = UserAccess.objects.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(GroupAccess.objects.filter(grantee__members__user=user, deleteTransaction__isnull=True,
+                                                  grantee__deleteTransaction__isnull=True,
+                                                  grantee__members__deleteTransaction__isnull=True).values('privilege'))
+            
+            return IInstance.reducePrivileges(f, self.publicAccess)
+
+class AccessSourceHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('accessSourceHistories')
+    instance = historyInstanceField(AccessSource)
+
+    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+
+### A Multiple Picked Value
+class UserAccess(dbmodels.Model, AccessInstance):
+    id = idField()
+    transaction = createTransactionField('createdUserAccesses')
+    lastTransaction = lastTransactionField('changedUserAccesses')
+    deleteTransaction = deleteTransactionField('deletedUserAccesses')
+
+    parent = parentField(AccessSource, 'userAccesses')
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return self.description()
     
+class UserAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('userAccessHistories')
+    instance = historyInstanceField(UserAccess)
+
+    grantee = dbmodels.ForeignKey('consentrecords.User', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
+### A Multiple Picked Value
+class GroupAccess(dbmodels.Model, AccessInstance):
+    id = idField()
+    transaction = createTransactionField('createdGroupAccesses')
+    lastTransaction = lastTransactionField('changedGroupAccesses')
+    deleteTransaction = deleteTransactionField('deletedGroupAccesses')
+
+    parent = parentField(AccessSource, 'groupAccesses')
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    def __str__(self):
+        return self.description()
+    
+class GroupAccessHistory(dbmodels.Model):
+    id = idField()
+    transaction = createTransactionField('groupAccessHistories')
+    instance = historyInstanceField(GroupAccess)
+
+    grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
+
 class Address(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdAddresses')
@@ -3360,7 +3434,6 @@ class Organization(dbmodels.Model, NamedInstance):
     lastTransaction = lastTransactionField('changedOrganizations')
     deleteTransaction = deleteTransactionField('deletedOrganizations')
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='inquiryAccessGroupOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
     def __str__(self):
@@ -3377,10 +3450,6 @@ class Organization(dbmodels.Model, NamedInstance):
                                          queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True))))\
                        .prefetch_related(Prefetch('groups',
                                          queryset=Group.select_head_related(Group.objects.filter(deleteTransaction__isnull=True))))\
-                       .prefetch_related(Prefetch('userAccesses',
-                                         queryset=OrganizationUserAccess.objects.filter(deleteTransaction__isnull=True)))\
-                       .prefetch_related(Prefetch('groupAccesses',
-                                         queryset=OrganizationGroupAccess.objects.filter(deleteTransaction__isnull=True)))\
                        .select_related('inquiryAccessGroup')
         
     def headData(self, context):
@@ -3407,37 +3476,19 @@ class Organization(dbmodels.Model, NamedInstance):
             data['groups'].sort(key=lambda s: s['description'])
                 
         if context.getPrivilege(self) == 'administer':
-            if self.publicAccess: data['public access'] = self.publicAccess
             if self.inquiryAccessGroup:
                 data['inquiry access group'] = self.inquiryAccessGroup.headData(context)
 
-            if 'user access' in fields: 
-                data['user accesses'] = [i.getData([], context) for i in \
-                    OrganizationUserAccess.select_related(self.userAccesses.filter(deleteTransaction__isnull=True))]
-            
-            if 'group access' in fields:
-                data['group accesses'] = [i.getData([], context) for i in \
-                    OrganizationGroupAccess.select_related(self.groupAccesses.filter(deleteTransaction__isnull=True))]
-        
         return data
         
     def fetchPrivilege(self, user):
-        if not user:
-            return self.publicAccess
-        else:
-            f = OrganizationUserAccess.objects.filter(parent=self, accessee=user, deleteTransaction__isnull=True).values('privilege')\
-                .union(OrganizationGroupAccess.objects.filter(parent=self, accessee__members__user=user, deleteTransaction__isnull=True,
-                                                      accessee__deleteTransaction__isnull=True,
-                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
-            
-            return IInstance.reducePrivileges(f, self.publicAccess)
+        return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
     
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
     instance = historyInstanceField(Organization)
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='InquiryAccessGroupOrganizationHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class OrganizationName(dbmodels.Model, TranslationInstance):
@@ -3514,33 +3565,18 @@ class Path(dbmodels.Model, IInstance):
     parent = parentField('consentrecords.User', 'paths')
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredPaths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    accessSource = dbmodels.ForeignKey('consentrecords.AccessSource', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
     def __str__(self):
         return self.name or ("%s %s" % (str(self.parent), "Path"))
 
     def select_related(querySet):
-        return querySet.select_related('primaryAdministrator')
+        return querySet
         
-    
     def fetchPrivilege(self, user):
-        if not self.specialAccess:
-            return self.parent.fetchPrivilege(user)
-            
-        if not user:
-            return self.publicAccess
-        elif self.primaryAdministrator_id == user.id:
-            return "administer"
-        else:
-            f = PathUserAccess.objects.filter(accessee=user, deleteTransaction__isnull=True).values('privilege')\
-                .union(PathGroupAccess.objects.filter(accessee__members__user=user, deleteTransaction__isnull=True,
-                                                      accessee__deleteTransaction__isnull=True,
-                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
-            
-            return IInstance.reducePrivileges(f, self.publicAccess)
+        return self.accessSource.fetchPrivilege(user)
 
     def headData(self, context):
         return {'id': self.id.hex, 
@@ -3554,8 +3590,6 @@ class Path(dbmodels.Model, IInstance):
         
         data['birthday'] = self.birthday
         data['special access'] = self.specialAccess
-        data['public access'] = self.publicAccess
-        data['primary administrator ID'] = self.primaryAdministrator_id and self.primaryAdministrator_id.hex
         data['can answer experience'] = self.canAnswerExperience
 
         if 'parents' in fields:
@@ -3564,14 +3598,6 @@ class Path(dbmodels.Model, IInstance):
                     data['user'] = self.parent.getData([], context)
                 else:
                     data['user'] = self.parent.headData(context)
-        
-        if 'user access' in fields: 
-            data['user accesses'] = [i.getData([], context) for i in \
-                PathUserAccess.select_related(self.userAccesses.filter(deleteTransaction__isnull=True))]
-            
-        if 'group access' in fields:
-            data['group accesses'] = [i.getData([], context) for i in \
-                PathGroupAccess.select_related(self.groupAccesses.filter(deleteTransaction__isnull=True))]
         
         if 'experience' in fields: 
             data['experiences'] = [i.getData([], context) for i in \
@@ -3586,8 +3612,6 @@ class PathHistory(dbmodels.Model):
     
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredPathHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
@@ -4139,17 +4163,7 @@ class User(dbmodels.Model, IInstance):
 #             of kind: notification
 
     def fetchPrivilege(self, user):
-        if not user:
-            return self.publicAccess
-        elif self.primaryAdministrator_id == user.id:
-            return "administer"
-        else:
-            f = UserUserAccess.objects.filter(parent=self, accessee=user, deleteTransaction__isnull=True).values('privilege')\
-                .union(UserGroupAccess.objects.filter(parent=self, accessee__members__user=user, deleteTransaction__isnull=True,
-                                                      accessee__deleteTransaction__isnull=True,
-                                                      accessee__members__deleteTransaction__isnull=True).values('privilege'))
-            
-            return IInstance.reducePrivileges(f, self.publicAccess)
+        return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
     
     def headData(self, context):
         emails = self.emails.all()
@@ -4204,6 +4218,37 @@ class User(dbmodels.Model, IInstance):
 
         return data
     
+    def __getattr__(self, name):
+        if name == 'authUser':
+            qs = AuthUser.objects.filter(email=self.emails.all()[0].text)
+            x = qs[0] if len(qs) else AnonymousUser()
+            self.__setattr__(name, x)
+        else:
+            return super(User, self).__getattr__(name)
+        return x
+        
+    @property
+    def is_administrator(self):
+        return self.authUser and self.authUser.is_superuser
+            
+    def findableQuerySet(qs, user):
+        if not user:
+            return qs.filter(User.anonymousFindFilter())
+        elif user.is_administrator:
+            return qs
+        else:
+            privilegeIDs = ["find", "read", "register", "write", "administer"]
+            return qs.filter(id__in=AccessSource.objects.filter(\
+                             Q(publicAccess__in=privilegeIDs) |\
+                             Q(primaryAdministrator=user) |\
+                             Q(userAccesses__privilege__in=privilegeIDs,
+                               userAccesses__deleteTransaction__isnull=True,
+                               userAccesses__grantee=user) |\
+                             Q(groupAccesses__privilege__in=privilegeIDs,
+                               groupAccesses__deleteTransaction__isnull=True,
+                               groupAccesses__grantee__members__user=user,
+                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))
+
     class UserQuerySet(ObjectQuerySet):
         
         fieldMap = {'email': 'email__text__',
@@ -4225,27 +4270,6 @@ class User(dbmodels.Model, IInstance):
             super(ReadInstanceQuerySet, self).__init__(querySet)
             self.fieldTerm = None
     
-        def findableQuerySet(self, userInfo):
-            qs = self.querySet
-            if not userInfo.is_authenticated:
-                return qs.filter(User.anonymousFindFilter())
-            elif userInfo.is_administrator:
-                return qs
-            elif userInfo.instance:
-                privilegeIDs = [terms.findPrivilegeEnum.id, terms.readPrivilegeEnum.id, terms.registerPrivilegeEnum.id, 
-                              terms.writePrivilegeEnum.id, terms.administerPrivilegeEnum.id]
-                return Q(publicAccess__in=privilegeIDs) |\
-                       Q(primaryAdministrator=userInfo.instance) |\
-                       Q(userAccess__privilege__in=privilegeIDs,
-                         userAccess__deleteTransaction__isnull=True,
-                         userAccess__accessee=userField.instance)|\
-                       Q(groupAccess__privilege__in=privilegeIDs,
-                         groupAccess__deleteTransaction__isnull=True,
-                         groupAccess__accessee__member__user=userField.instance,
-                         groupAccess__accessee__member__deleteTransaction__isnull=True)
-            else:
-                return qs.filter(User.anonymousFindFilter()) # This case occurs while setting up a user.
-
         # Return a Q clause according to the specified params.
         # If the parameter list is a single item:
         #     If there is a list, then the object must contain a value with the specified field type.
@@ -4329,8 +4353,6 @@ class UserHistory(dbmodels.Model):
     firstName = dbmodels.CharField(max_length=255, null=True, editable=False)
     lastName = dbmodels.CharField(max_length=255, null=True, editable=False)
     birthday = dbmodels.CharField(max_length=10, null=True, editable=False)
-    publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    primaryAdministrator = dbmodels.ForeignKey(User, related_name='administeredUserHistories', null=True, editable=False, on_delete=dbmodels.CASCADE)
 
 ### A Multiple String Value containing an email associated with the specified user.
 class UserEmail(dbmodels.Model):
