@@ -29,6 +29,9 @@ def forceToList(t):
 def combineTerms(t1, t2):
     return forceToList(t1) + forceToList(t2)
     
+def isUUID(s):
+    return re.search('^[a-fA-F0-9]{32}$', s)
+            
 def idField():
     return dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
@@ -47,6 +50,97 @@ def parentField(otherModel, relatedName):
 def historyInstanceField(otherModel):
     return dbmodels.ForeignKey(otherModel, related_name='history', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
         
+def getFieldQ(field, symbol, testValue):
+    if symbol == '^=':
+        return Q((field + 'istartswith', testValue))
+    elif symbol == '=':
+        return Q((field + 'iexact', testValue))
+    elif symbol == '*=':
+        return Q((field + 'iregex', '[[:<:]]' + testValue))
+    elif symbol == '<':
+        return Q((field + 'lt', testValue))
+    elif symbol == '<=':
+        return Q((field + 'lte', testValue))
+    elif symbol == '>':
+        return Q((field + 'gt', testValue))
+    elif symbol == '>=':
+        return Q((field + 'gte', testValue))
+    else:
+        raise ValueError("unrecognized symbol: %s"%symbol)
+
+# Return a Q clause according to the specified params.
+# If the parameter list is a single item:
+#     If there is a list, then the object must contain a value with the specified field type.
+#     If there is a question mark, then this is a no-op.
+#     If there is a single term name, then each instance must contain a value of that term.
+# If the parameter list is three or more items and the second item is a '>',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match params[2:]. For example:
+#     /api/Offering[Service>Domain>%22Service%20Domain%22[_name=Sports]]
+# If the parameter list is three or more items and the second item is a '[',
+#     then tighten the filter of the result set for only those fields that are references to objects
+#     that match the clause in params[2] and any following clauses. For example: 
+#     /api/Service[Domain[%22Service%20Domain%22[_name=Sports]][_name^=B]
+# If the parameter list is three values, interpret the three values as a query clause and
+#     filter self on that clause.  
+def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
+#     print('UserObjectSet.filterClause params: %s'% (params))
+    fieldName = tokens[0]
+    if fieldName in fieldMap:
+        prefix += fieldMap[fieldName]
+        if len(tokens) == 1:
+            return Q((prefix + 'isnull', False))
+        else:
+            return getFieldQ(prefix, tokens[1], tokens[2])
+    elif fieldName in elementMap:
+        prefix = prefix + elementMap[fieldName][0]
+        if len(tokens) == 1:
+            return Q((prefix + 'isnull', False), (prefix + 'deleteTransaction__isnull', True))
+        else:
+            subType = eval(elementMap[fieldName][1])
+            
+            if tokens[1] == '>':
+                return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, prefix=prefix)
+            elif tokens[1] == '[':
+                q = Q((prefix + 'in', subType.subQuerySet(subType.objects.filter(tokens[2], user), user)))
+                i = 3
+                while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
+                    q = q | Q((prefix + 'in', subType.subQuerySet(subType.objects.filter(tokens[i+2], user), user)))
+                    i += 3
+                return q
+            else:
+                raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in tokens]))
+    else:
+        raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in tokens]))
+
+def _subTypeParse(qs, tokens, user, qsType, elementMap):
+    if isUUID(tokens[1]):
+        return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType)
+    elif tokens[1] in elementMap:
+        e = elementMap[tokens[1]]
+        subType = eval(e[1])
+        inClause = e[2] + '__in'
+        return _parse(subType.objects.filter(Q((inClause, qsType.findableQuerySet(qs, user))),
+                                             deleteTransaction__isnull=True), 
+                      tokens[3:], user, qsType)
+
+def _parse(qs, tokens, user, qsType):
+	if len(tokens) == 0:
+		return qs, tokens, qsType
+	elif isUUID(tokens[0]):
+		return _parse(qs.filter(pk=tokens[0]), tokens[1:], user, qsType)
+	elif tokens[0] == '[':
+		q = _filterClause(tokens[1], user, qsType.fieldMap, qsType.elementMap)
+		i = 2
+		while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
+			q = q | _filterClause(tokens[1+2], user, qsType.fieldMap, qsType.elementMap)
+			i += 3
+		return _parse(qs.filter(q), tokens[i:], user, qsType)
+	elif tokens[0] == '/':
+		return _subTypeParse(qs, tokens, user, qsType, qsType.elementMap)
+	else:
+		raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))
+
 class Transaction(dbmodels.Model):
     id = idField()
     user = dbmodels.ForeignKey('custom_user.AuthUser', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -158,6 +252,17 @@ class RootInstance(IInstance):
                
     def fetchPrivilege(self, user):
         return "read"
+        
+    def parse(tokens, user):
+        d = {'user': User,
+             'path': Path,
+             'organization': Organization,
+            }
+        if tokens[0] in d:
+            qsType = d[tokens[0]]
+            return _parse(qsType.objects.filter(deleteTransaction__isnull=True), tokens[1:], user, qsType)
+        else:
+            raise ValueError("unrecognized root token: %s" % tokens[0])
     
 ### An Instance that has a parent
 class ChildInstance(IInstance):
@@ -3561,6 +3666,43 @@ class Path(dbmodels.Model, IInstance):
 
         return data
     
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousFindFilter():
+        return Q(accessSource__in=AccessSource.objects.filter(publicAccess__in=["find", "read"]))
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousReadFilter():
+        return Q(accessSource__in=AccessSource.objects.filter(publicAccess__id="read"))
+        
+    def findableQuerySet(qs, user):
+        if not user:
+            return qs.filter(Path.anonymousFindFilter())
+        elif user.is_administrator:
+            return qs
+        else:
+            privilegeIDs = ["find", "read", "register", "write", "administer"]
+            return qs.filter(accessSource__in=AccessSource.objects.filter(\
+                             Q(publicAccess__in=privilegeIDs) |\
+                             Q(primaryAdministrator=user) |\
+                             Q(userAccesses__privilege__in=privilegeIDs,
+                               userAccesses__deleteTransaction__isnull=True,
+                               userAccesses__grantee=user) |\
+                             Q(groupAccesses__privilege__in=privilegeIDs,
+                               groupAccesses__deleteTransaction__isnull=True,
+                               groupAccesses__grantee__members__user=user,
+                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))
+
+    fieldMap = {'screen name': 'name__',
+                'birthday': 'birthday__',
+                'special access': 'firstName__',
+                'can answer experience': 'canAnswerExperience__',
+               }
+               
+    elementMap = {'experience': ('experiences__', "Experience"),
+                 }
+
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -4140,23 +4282,23 @@ class User(dbmodels.Model, RootInstance):
                                groupAccesses__grantee__members__user=user,
                                groupAccesses__grantee__members__deleteTransaction__isnull=True)))
 
+    fieldMap = {'email': 'emails__text__',
+                'first name': 'firstName__',
+                'last name': 'lastName__',
+                'birthday': 'birthday__',
+                'public access': 'publicAccess__',
+               }
+               
+    elementMap = {'group access': ('groupAccesses__', "UserGroupAccess", 'parent'),
+                  'notification': ('notifications__', "Notification", 'parent'),
+                  'path': ('paths__', "Path", 'parent'),
+                  'primary administrator': ('primaryAdministrator__', "User", 'administeredUsers'),
+                  'user access': ('userAccesses__', "UserUserAccess", 'parent'),
+                  'user access request': ('userAccessRequests__', "UserUserAccessRequest", 'parent'),
+                 }
+
     class UserQuerySet(ObjectQuerySet):
         
-        fieldMap = {'email': 'email__text__',
-                    'first name': 'firstName__',
-                    'last name': 'lastName__',
-                    'birthday': 'birthday__',
-                    'public access': 'publicAccess__',
-                   }
-        elementMap = {'group access': 'groupAccess__',
-                      'group access request': 'groupAccessRequest__',
-                      'notification': 'notification__',
-                      'path': 'path__',
-                      'primary administrator': 'primaryAdministrator__',
-                      'user access': 'userAccess__',
-                      'user access request': 'userAccessRequest__',
-                     }
-                     
         def __init__(self, querySet=None):
             super(ReadInstanceQuerySet, self).__init__(querySet)
             self.fieldTerm = None
