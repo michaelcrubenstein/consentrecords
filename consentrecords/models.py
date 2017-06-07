@@ -52,21 +52,25 @@ def historyInstanceField(otherModel):
         
 def getFieldQ(field, symbol, testValue):
     if symbol == '^=':
-        return Q((field + 'istartswith', testValue))
+        return Q((field + '__istartswith', testValue))
     elif symbol == '=':
-        return Q((field + 'iexact', testValue))
+        return Q((field + '__iexact', testValue))
     elif symbol == '*=':
-        return Q((field + 'iregex', '[[:<:]]' + testValue))
+        return Q((field + '__iregex', '[[:<:]]' + testValue))
     elif symbol == '<':
-        return Q((field + 'lt', testValue))
+        return Q((field + '__lt', testValue))
     elif symbol == '<=':
-        return Q((field + 'lte', testValue))
+        return Q((field + '__lte', testValue))
     elif symbol == '>':
-        return Q((field + 'gt', testValue))
+        return Q((field + '__gt', testValue))
     elif symbol == '>=':
-        return Q((field + 'gte', testValue))
+        return Q((field + '__gte', testValue))
     else:
         raise ValueError("unrecognized symbol: %s"%symbol)
+
+def _subElementQuerySet(tokens, user, subType):
+    c = _filterClause(tokens, user, subType.fieldMap, subType.elementMap, prefix='')
+    return subType.objects.filter(c, deleteTransaction__isnull=True)
 
 # Return a Q clause according to the specified params.
 # If the parameter list is a single item:
@@ -84,12 +88,12 @@ def getFieldQ(field, symbol, testValue):
 # If the parameter list is three values, interpret the three values as a query clause and
 #     filter self on that clause.  
 def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
-#     print('UserObjectSet.filterClause params: %s'% (params))
+    # print('_filterClause: %s, %s' % (tokens, prefix))
     fieldName = tokens[0]
     if fieldName in fieldMap:
         prefix += fieldMap[fieldName]
         if len(tokens) == 1:
-            return Q((prefix + 'isnull', False))
+            return Q((prefix + '__isnull', False))
         else:
             return getFieldQ(prefix, tokens[1], tokens[2])
     elif fieldName in elementMap:
@@ -102,10 +106,10 @@ def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
             if tokens[1] == '>':
                 return _filterClause(tokens[2:], user, subType.fieldMap, subType.elementMap, prefix=prefix)
             elif tokens[1] == '[':
-                q = Q((prefix + 'in', subType.subQuerySet(subType.objects.filter(tokens[2], user), user)))
+                q = Q((prefix + 'in', _subElementQuerySet(tokens[2], user, subType)))
                 i = 3
                 while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
-                    q = q | Q((prefix + 'in', subType.subQuerySet(subType.objects.filter(tokens[i+2], user), user)))
+                    q = q | Q((prefix + 'in', _subElementQuerySet(tokens[i+2], user, subType)))
                     i += 3
                 return q
             else:
@@ -113,33 +117,36 @@ def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
     else:
         raise ValueError("unrecognized path contents within [] for %s" % "".join([str(i) for i in tokens]))
 
-def _subTypeParse(qs, tokens, user, qsType, elementMap):
+### Access type is the type, if any, that the qs has already been filtered.
+def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
     if isUUID(tokens[1]):
-        return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType)
+        return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType, accessType)
     elif tokens[1] in elementMap:
         e = elementMap[tokens[1]]
         subType = eval(e[1])
         inClause = e[2] + '__in'
-        return _parse(subType.objects.filter(Q((inClause, qsType.findableQuerySet(qs, user))),
+        elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
+        return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
-                      tokens[3:], user, qsType)
+                      tokens[3:], user, subType, newAccessType)
 
-def _parse(qs, tokens, user, qsType):
-	if len(tokens) == 0:
-		return qs, tokens, qsType
-	elif isUUID(tokens[0]):
-		return _parse(qs.filter(pk=tokens[0]), tokens[1:], user, qsType)
-	elif tokens[0] == '[':
-		q = _filterClause(tokens[1], user, qsType.fieldMap, qsType.elementMap)
-		i = 2
-		while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
-			q = q | _filterClause(tokens[1+2], user, qsType.fieldMap, qsType.elementMap)
-			i += 3
-		return _parse(qs.filter(q), tokens[i:], user, qsType)
-	elif tokens[0] == '/':
-		return _subTypeParse(qs, tokens, user, qsType, qsType.elementMap)
-	else:
-		raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))
+def _parse(qs, tokens, user, qsType, accessType):
+    # print('_parse: %s, %s' % (qsType, tokens))
+    if len(tokens) == 0:
+        return qs, tokens, qsType, accessType
+    elif isUUID(tokens[0]):
+        return _parse(qs.filter(pk=tokens[0]), tokens[1:], user, qsType, accessType)
+    elif tokens[0] == '[':
+        q = _filterClause(tokens[1], user, qsType.fieldMap, qsType.elementMap)
+        i = 2
+        while i < len(tokens) - 2 and tokens[i] == '|' and tokens[i+1] == '[':
+            q = q | _filterClause(tokens[1+2], user, qsType.fieldMap, qsType.elementMap)
+            i += 3
+        return _parse(qs.filter(q), tokens[i:], user, qsType, accessType)
+    elif tokens[0] == '/':
+        return _subTypeParse(qs, tokens, user, qsType, accessType, qsType.elementMap)
+    else:
+        raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))
 
 class Transaction(dbmodels.Model):
     id = idField()
@@ -254,13 +261,50 @@ class RootInstance(IInstance):
         return "read"
         
     def parse(tokens, user):
-        d = {'user': User,
-             'path': Path,
+        d = {'address': Address,
+             'comment': Comment,
+             'comment prompt': CommentPrompt,
+             'comment prompt text': CommentPromptText,
+             'disqualifying tag': DisqualifyingTag,
+             'engagement': Engagement,
+             'enrollment': Enrollment,
+             'experience': Experience,
+             'experience custom service': ExperienceCustomService,
+             'experience service': ExperienceService,
+             'experience prompt': ExperiencePrompt,
+             'experience prompt service': ExperiencePromptService,
+             'experience prompt text': ExperiencePromptText,
+             'group': Group,
+             'group name': GroupName,
+             'group member': GroupMember,
+             'inquiry': Inquiry,
+             'notification': Notification,
+             'notification argument': NotificationArgument,
+             'offering': Offering,
+             'offering name': OfferingName,
+             'offering service': OfferingService,
              'organization': Organization,
+             'organization name': OrganizationName,
+             'path': Path,
+             'period': Period,
+             'service': Service,
+             'service name': ServiceName,
+             'service organization label': ServiceOrganizationLabel,
+             'service site label': ServiceSiteLabel,
+             'service offering label': ServiceOfferingLabel,
+             'service implication': ServiceImplication,
+             'session': Session,
+             'session name': SessionName,
+             'site': Site,
+             'site name': SiteName,
+             'street': Street,
+             'user': User,
+             'user email': UserEmail,
+             'user user access request': UserUserAccessRequest,
             }
         if tokens[0] in d:
             qsType = d[tokens[0]]
-            return _parse(qsType.objects.filter(deleteTransaction__isnull=True), tokens[1:], user, qsType)
+            return _parse(qsType.objects.filter(deleteTransaction__isnull=True), tokens[1:], user, qsType, None)
         else:
             raise ValueError("unrecognized root token: %s" % tokens[0])
     
@@ -3020,6 +3064,40 @@ class Experience(dbmodels.Model, ChildInstance):
         
         return data
 
+    def findableQuerySet(qs, user, prefix=''):
+        return Path.findableQuerySet(qs, user, prefix='parent__')
+
+    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customOrganization = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True)
+    start = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    end = dbmodels.CharField(max_length=10, db_index=True, null=True)
+    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
+
+    fieldMap = {'custom organization': 'customOrganization',
+                'custom site': 'customSite',
+                'custom offering': 'customOffering',
+                'start': 'start',
+                'end': 'end',
+                'timeframe': 'timeframe',
+               }
+               
+    elementMap = {'organization': ('organization__', "Organization", 'experiences'),
+                  'site': ('site__', "Site", 'experiences'),
+                  'offering': ('offering__', "Offering", 'experiences'),
+                  'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
+                  'service': ('services__', "ExperienceService", 'parent'),
+                 }
+                 
+    def getSubClause(qs, user, accessType):
+        if accessType == Path:
+            return qs, accessType
+        else:
+            return Path.findableQuerySet(qs, user, prefix='parent__'), Path
+
 class ExperienceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceHistories')
@@ -3091,6 +3169,18 @@ class ExperienceService(dbmodels.Model, ChildInstance):
                 data['service'] = self.service.headData(context)
         return data
     
+    fieldMap = {'position': 'position',
+               }
+               
+    elementMap = {'service': ('service__', "Service", 'experienceServices'),
+                 }
+                 
+    def getSubClause(qs, user, accessType):
+        if accessType == Path:
+            return qs, accessType
+        else:
+            return Path.findableQuerySet(qs, user, prefix='parent__parent__'), Path
+
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
@@ -3467,6 +3557,24 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
             
         return data
 
+    fieldMap = {'web site': 'webSite',
+                'minimum age': 'minimumAge',
+                'maximum age': 'maximumAge',
+                'minimum grade': 'minimumGrade',
+                'maximum grade': 'maximumGrade',
+               }
+               
+    elementMap = {'name': ('names__', "OfferingName", 'parent'),
+                  'service': ('services__', "OfferingService", 'parent'),
+                  'session': ('sessions__', "Session", 'parent'),
+                 }
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent__'), Organization
+
 class OfferingHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringHistories')
@@ -3489,6 +3597,12 @@ class OfferingName(dbmodels.Model, TranslationInstance):
 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else self.text
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent__'), Path
 
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
@@ -3527,6 +3641,18 @@ class OfferingService(dbmodels.Model, ChildInstance):
             
         return data
         
+    fieldMap = {'position': 'position',
+               }
+               
+    elementMap = {'service': ('service__', "Service", 'offeringServices'),
+                 }
+                 
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent__'), Organization
+
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringServiceHistories')
@@ -3650,8 +3776,10 @@ class Path(dbmodels.Model, IInstance):
         data = self.headData(context)
         
         data['birthday'] = self.birthday
-        data['special access'] = self.specialAccess
-        data['can answer experience'] = self.canAnswerExperience
+        if self.specialAccess:
+            data['special access'] = self.specialAccess
+        if self.canAnswerExperience:
+            data['can answer experience'] = self.canAnswerExperience
 
         if 'parents' in fields:
             if context.canRead(self.parent):
@@ -3668,22 +3796,23 @@ class Path(dbmodels.Model, IInstance):
     
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
-    def anonymousFindFilter():
-        return Q(accessSource__in=AccessSource.objects.filter(publicAccess__in=["find", "read"]))
+    def anonymousFindFilter(prefix=''):
+        return Q((prefix + 'accessSource__in', AccessSource.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
-    def anonymousReadFilter():
-        return Q(accessSource__in=AccessSource.objects.filter(publicAccess__id="read"))
+    def anonymousReadFilter(prefix=''):
+        return Q((prefix + 'accessSource__in', AccessSource.objects.filter(publicAccess__id="read")))
         
-    def findableQuerySet(qs, user):
+    def findableQuerySet(qs, user, prefix=''):
         if not user:
-            return qs.filter(Path.anonymousFindFilter())
+            return qs.filter(Path.anonymousFindFilter(prefix))
         elif user.is_administrator:
             return qs
         else:
             privilegeIDs = ["find", "read", "register", "write", "administer"]
-            return qs.filter(accessSource__in=AccessSource.objects.filter(\
+            return qs.filter(Q((prefix + 'accessSource__in',
+                                AccessSource.objects.filter(\
                              Q(publicAccess__in=privilegeIDs) |\
                              Q(primaryAdministrator=user) |\
                              Q(userAccesses__privilege__in=privilegeIDs,
@@ -3692,16 +3821,22 @@ class Path(dbmodels.Model, IInstance):
                              Q(groupAccesses__privilege__in=privilegeIDs,
                                groupAccesses__deleteTransaction__isnull=True,
                                groupAccesses__grantee__members__user=user,
-                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))
+                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))))
 
-    fieldMap = {'screen name': 'name__',
-                'birthday': 'birthday__',
-                'special access': 'firstName__',
-                'can answer experience': 'canAnswerExperience__',
+    fieldMap = {'screen name': 'name',
+                'birthday': 'birthday',
+                'special access': 'specialAccess',
+                'can answer experience': 'canAnswerExperience',
                }
                
-    elementMap = {'experience': ('experiences__', "Experience"),
+    elementMap = {'experience': ('experiences__', "Experience", 'parent'),
                  }
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Path:
+            return qs, Path
+        else:
+            return Path.findableQuerySet(qs, user), Path
 
 class PathHistory(dbmodels.Model):
     id = idField()
@@ -3818,6 +3953,20 @@ class Service(dbmodels.Model, NamedInstance):
             data['services'].sort(key=lambda i: i['description'])
         return data
         
+    fieldMap = {'stage': 'stage',
+               }
+               
+    elementMap = {'name': ('names__', "ServiceName", 'parent'),
+                  'organization label': ('organizationLabels__', "ServiceOrganizationLabel", 'parent'),
+                  'site label': ('siteLabels__', "ServiceSiteLabel", 'parent'),
+                  'offering label': ('offeringLabels__', "ServiceOfferingLabel", 'parent'),
+                  'implies': ('serviceImplications__', 'ServiceImplication', 'parent'),
+                  'implied by': ('impliedServiceImplications__', 'serviceImplication', 'impliedService'),
+                 }
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class ServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceHistories')
@@ -3836,6 +3985,15 @@ class ServiceName(dbmodels.Model, TranslationInstance):
 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
 
 class ServiceNameHistory(dbmodels.Model):
     id = idField()
@@ -3931,6 +4089,16 @@ class ServiceImplication(dbmodels.Model, ChildInstance):
                                                   to_attr='currentNames'))
     def __str__(self):
         return str(self.impliedService)
+
+    fieldMap = {
+               }
+               
+    elementMap = {'parent': ('parent__', "Service", 'serviceImplications'),
+                  'service': ('impliedService__', "Service", 'impliedServiceImplications'),
+                 }
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
 
 class ServiceImplicationHistory(dbmodels.Model):
     id = idField()
@@ -4282,11 +4450,11 @@ class User(dbmodels.Model, RootInstance):
                                groupAccesses__grantee__members__user=user,
                                groupAccesses__grantee__members__deleteTransaction__isnull=True)))
 
-    fieldMap = {'email': 'emails__text__',
-                'first name': 'firstName__',
-                'last name': 'lastName__',
-                'birthday': 'birthday__',
-                'public access': 'publicAccess__',
+    fieldMap = {'email': 'emails__text',
+                'first name': 'firstName',
+                'last name': 'lastName',
+                'birthday': 'birthday',
+                'public access': 'publicAccess',
                }
                
     elementMap = {'group access': ('groupAccesses__', "UserGroupAccess", 'parent'),
@@ -4296,6 +4464,9 @@ class User(dbmodels.Model, RootInstance):
                   'user access': ('userAccesses__', "UserUserAccess", 'parent'),
                   'user access request': ('userAccessRequests__', "UserUserAccessRequest", 'parent'),
                  }
+
+    def getSubClause(qs, user, accessType):
+        return User.findableQuerySet(qs, user), User
 
     class UserQuerySet(ObjectQuerySet):
         

@@ -9,7 +9,7 @@ anoncontext = Context('en', None)
 print("### User")
 path = "user"
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, None)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, None)
 print(qs2)
@@ -17,7 +17,7 @@ print(qs2)
 print("### User by email")
 path = 'user[email="michaelcrubenstein@gmail.com"]'
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, escontext.user)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, escontext.user).distinct()
 print(qs2)
@@ -25,7 +25,7 @@ print(qs2)
 print("### User by first name")
 path = 'user[first name="Elizabeth"]'
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, escontext.user)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, escontext.user)
 print(qs2)
@@ -33,7 +33,7 @@ print(qs2)
 print("### User by last name")
 path = 'user[last name="Skavish"]'
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, escontext.user)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, escontext.user)
 print(qs2)
@@ -41,7 +41,7 @@ print(qs2)
 print("### User by birthday")
 path = 'user[birthday<"1964-01-01"]'
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, escontext.user)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 data = [qsType.headData(i, escontext) for i in qs]
 qs2 = qsType.findableQuerySet(qs, escontext.user).distinct()
 data = [qsType.headData(i, escontext) for i in qs2]
@@ -51,7 +51,7 @@ print(data)
 print("### User by path>screen name")
 path = 'user[path>screen name=tu28]'
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, None)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, None).distinct()
 data = User.headData(qs2[0], anoncontext)
@@ -61,7 +61,7 @@ print("### User by id")
 id = data['id']
 path = 'user/' + id
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, None)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
 qs2 = User.findableQuerySet(qs, None).distinct()
 data = User.headData(qs2[0], anoncontext)
@@ -71,17 +71,119 @@ print("### User by id to Path, escontext")
 print("escontext.is_administrator: %s" % escontext.user.is_administrator)
 path = 'user/' + id + "/path"
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, escontext.user)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('name')
-qs2 = Path.findableQuerySet(qs, escontext.user).distinct()
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, escontext.user, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
 data = Path.headData(qs2[0], escontext)
 print(data)
 
 print("### User by id to Path, anonymous context")
 path = 'user/' + id + "/path"
 tokens = pathparser._tokenize(path)
-qs, tokens, qsType = RootInstance.parse(tokens, None)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
-qs2 = Path.findableQuerySet(qs, None).distinct()
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
+data = Path.headData(qs2[0], anoncontext)
+print("accessType: %s" % accessType)
+print(data)
+pathID = data['id']
+
+print("### Path by id, anonymous context")
+path = 'path/' + pathID
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
 data = Path.headData(qs2[0], anoncontext)
 print(data)
+
+print("### Path by id to Experiences, anonymous context")
+path = 'path/' + pathID + '/experience'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+print("accessType: %s" % accessType)
+qs2, accessType = Experience.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [Experience.headData(i, anoncontext) for i in qs2]
+print(data)
+
+print("### Path by Experience/Service name, anonymous context")
+path = 'path[experience>service>service>name>text=Grade 8]'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
+print(data)
+
+print("### Path by Experience/Service name, anonymous context")
+path = 'path[experience[service>service>implies>service>name>text=College]|[offering>service>service>implies>service>name>text=College]]'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
+print(data)
+                                                                                                                         
+print("### Path by Experience/Service name, anonymous context")
+path = 'path[experience[service>service>implies>service>name>text=Job]|[offering>service>service>implies>service>name>text=Job]]'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [i.getData(['parents'], anoncontext) for i in qs2]
+print(data)
+
+print("### Path by Experience/Service name, anonymous context")
+path = 'path[experience[service>service>implies>service>name>text=Job]|[offering>service>service>implies>service>name>text=Job]]' +\
+       '[experience[service>service>implies>service>name>text=College]|[offering>service>service>implies>service>name>text=College]]' + \
+       '[experience[service>service>implies>service>name>text=Business Founder]|[offering>service>service>implies>service>name>text=Business Founder]]'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [i.getData(['parents'], anoncontext) for i in qs2]
+print(data)
+
+path = 'path/%s/experience' % data[0]['id']
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('start')
+print("accessType: %s" % accessType)
+qs2, accessType = Path.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], anoncontext) for i in qs2]
+print(list(map(lambda i: i['start'], data)))
+
+path = 'service'
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+print("accessType: %s" % accessType)
+qs2, accessType = Service.getSubClause(qs, None, accessType)
+print("accessType: %s" % accessType)
+qs2 = Service.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
