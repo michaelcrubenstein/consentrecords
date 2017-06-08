@@ -3709,6 +3709,7 @@ class OfferingService(dbmodels.Model, ChildInstance):
     deleteTransaction = deleteTransactionField('deletedOfferingServices')
 
     parent = parentField(Offering, 'services')
+    position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServices', db_index=True, on_delete=dbmodels.CASCADE)
 
     def description(self, languageCode=None):
@@ -3747,7 +3748,8 @@ class OfferingServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringServiceHistories')
     instance = historyInstanceField(OfferingService)
-    service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    position = dbmodels.IntegerField()
+    service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class Organization(dbmodels.Model, NamedInstance):    
     id = idField()

@@ -526,9 +526,9 @@ if __name__ == "__main__":
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(offerings, Offering, OfferingName, OfferingNameHistory, uniqueTerms)
         
-        buildSubReferences(offerings,  
-                           lambda u: Offering.objects.get(pk=u.id), 
-                           OfferingService, terms['Service'], 'service', Service)
+        # ExperienceServices
+        uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
+        buildPositionedElements(offerings, Offering, OfferingService, OfferingServiceHistory, uniqueTerms)
         
         sessions = Instance.objects.filter(typeID=terms['Session'], parent__parent__id__in=offerings)
         uniqueTerms = {terms['Registration Deadline']: {'dbField': 'registrationDeadline', 'f': lambda v: v.stringValue},
