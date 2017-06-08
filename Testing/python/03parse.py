@@ -58,8 +58,8 @@ data = User.headData(qs2[0], anoncontext)
 print(data)
 
 print("### User by id")
-id = data['id']
-path = 'user/' + id
+userID = data['id']
+path = 'user/' + userID
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
@@ -69,7 +69,7 @@ print(data)
 
 print("### User by id to Path, escontext")
 print("escontext.is_administrator: %s" % escontext.user.is_administrator)
-path = 'user/' + id + "/path"
+path = 'user/' + userID + "/path"
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('name')
@@ -81,7 +81,7 @@ data = Path.headData(qs2[0], escontext)
 print(data)
 
 print("### User by id to Path, anonymous context")
-path = 'user/' + id + "/path"
+path = 'user/' + userID + "/path"
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
@@ -187,3 +187,27 @@ qs2 = Service.select_related(qs2.distinct())
 data = [i.getData([], anoncontext) for i in qs2]
 data.sort(key=lambda i: i['description'])
 print(list(map(lambda d: d['description'], data)))
+
+print("escontext.is_administrator: %s" % escontext.user.is_administrator)
+path = 'user/' + userID + "/notification"
+print("### %s, escontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
+qs = qs.order_by('name')
+print("accessType: %s" % accessType)
+qs2, accessType = Notification.getSubClause(qs, escontext.user, accessType)
+print("accessType: %s" % accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], escontext) for i in Notification.select_related(qs2)]
+print(data)
+
+notificationID = data[0]['id']
+path = 'notification/%s/argument' % notificationID
+print("### %s, escontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
+qs2, accessType = NotificationArgument.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], escontext) for i in NotificationArgument.select_related(qs2)]
+print(data)
+

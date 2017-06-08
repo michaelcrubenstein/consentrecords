@@ -3445,7 +3445,7 @@ class Notification(dbmodels.Model, ChildInstance):
     
     def select_related(querySet):
         return querySet.prefetch_related(Prefetch('notificationArguments', 
-                           queryset=NotificationArgument.objects.filter(deleteTransaction__isnull=True)))
+                           queryset=NotificationArgument.objects.filter(deleteTransaction__isnull=True).order_by('position')))
         
     def getData(self, fields, context):
         data = self.headData(context)
@@ -3470,6 +3470,19 @@ class Notification(dbmodels.Model, ChildInstance):
         
         return data
     
+    fieldMap = {'name': 'name',
+                'is fresh': 'isFresh',
+               }
+               
+    elementMap = {'argument': ('argument__', "NotificationArgument", 'parent'),
+                 }
+
+    def getSubClause(qs, user, accessType):
+        if accessType == User:
+            return qs, accessType
+        else:
+            return User.findableQuerySet(qs, user, 'parent'), User
+
 class NotificationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('notificationHistories')
@@ -3487,8 +3500,30 @@ class NotificationArgument(dbmodels.Model, ChildInstance):
     position = dbmodels.IntegerField()
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True)
 
+    def description(self, languageCode=None):
+        return str(self.position)
+        
     def __str__(self):
         return '%s: %s' % (self.position, str(self.argument))
+
+    def select_head_related(querySet):
+        return querySet.order_by('position')
+    
+    def select_related(querySet):
+        return querySet.order_by('position')
+        
+    def getData(self, fields, context):
+        data = self.headData(context)
+        data['position'] = self.position
+        data['argument'] = self.argument
+        
+        return data
+
+    def getSubClause(qs, user, accessType):
+        if accessType == User:
+            return qs, accessType
+        else:
+            return User.findableQuerySet(qs, user, 'parent__parent'), User
 
 class NotificationArgumentHistory(dbmodels.Model):    
     id = idField()
@@ -4336,52 +4371,16 @@ class User(dbmodels.Model, RootInstance):
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
-    def anonymousFindFilter():
-        return Q(id__in=AccessSource.objects.filter(publicAccess__in=["find", "read"]))
+    def anonymousFindFilter(prefix=''):
+        return Q(((prefix + '__id__in') if prefix else 'id__in',
+                  AccessSource.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
-    def anonymousReadFilter():
-        return Q(id__in=AccessSource.objects.filter(publicAccess__id="read"))
+    def anonymousReadFilter(prefix=''):
+        return Q(((prefix + '__id__in') if prefix else 'id__in',
+                  AccessSource.objects.filter(publicAccess__id="read")))
         
-#         field
-#             name: Path
-#             data type: object
-#             max capacity: unique value
-#             object add rule: create one
-#             of kind: Path
-#         field
-#             name: access record
-#             data type: object
-#             max capacity: multiple values
-#             object add rule: create one
-#             of kind: access record
-#         field
-#             name: public access
-#             data type: object
-#             max capacity: unique value
-#             object add rule: pick one
-#             of kind: enumerator
-#             pick object path: term[name=privilege]/enumerator[name=(find,read)]
-#         field
-#             name: primary administrator
-#             data type: object
-#             max capacity: unique value
-#             object add rule: pick one
-#             of kind: user
-#         field
-#             name: access request
-#             data type: object
-#             max capacity: multiple values
-#             object add rule: pick one
-#             of kind: user
-#         field
-#             name: notification
-#             data type: object
-#             max capacity: multiple values
-#             object add rule: create one
-#             of kind: notification
-
     def fetchPrivilege(self, user):
         return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
     
@@ -4432,23 +4431,26 @@ class User(dbmodels.Model, RootInstance):
     def is_administrator(self):
         return self.authUser and self.authUser.is_superuser
             
-    def findableQuerySet(qs, user):
+    def findableQuerySet(qs, user, prefix=''):
         if not user:
-            return qs.filter(User.anonymousFindFilter())
+            return qs.filter(User.anonymousFindFilter(prefix))
         elif user.is_administrator:
             return qs
         else:
             privilegeIDs = ["find", "read", "register", "write", "administer"]
-            return qs.filter(id__in=AccessSource.objects.filter(\
-                             Q(publicAccess__in=privilegeIDs) |\
-                             Q(primaryAdministrator=user) |\
-                             Q(userAccesses__privilege__in=privilegeIDs,
-                               userAccesses__deleteTransaction__isnull=True,
-                               userAccesses__grantee=user) |\
-                             Q(groupAccesses__privilege__in=privilegeIDs,
-                               groupAccesses__deleteTransaction__isnull=True,
-                               groupAccesses__grantee__members__user=user,
-                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))
+            inClause = (prefix + '__id__in') if prefix else 'id__in'
+            elementClause = AccessSource.objects.filter(\
+                                 Q(publicAccess__in=privilegeIDs) |\
+                                 Q(primaryAdministrator=user) |\
+                                 Q(userAccesses__privilege__in=privilegeIDs,
+                                   userAccesses__deleteTransaction__isnull=True,
+                                   userAccesses__grantee=user) |\
+                                 Q(groupAccesses__privilege__in=privilegeIDs,
+                                   groupAccesses__deleteTransaction__isnull=True,
+                                   groupAccesses__grantee__members__user=user,
+                                   groupAccesses__grantee__members__deleteTransaction__isnull=True))
+            qClause = Q((inClause, elementClause))
+            return qs.filter(qClause)
 
     fieldMap = {'email': 'emails__text',
                 'first name': 'firstName',
@@ -4466,14 +4468,13 @@ class User(dbmodels.Model, RootInstance):
                  }
 
     def getSubClause(qs, user, accessType):
-        return User.findableQuerySet(qs, user), User
+        if accessType == User:
+            return qs, accessType
+        else:
+            return User.findableQuerySet(qs, user), User
 
     class UserQuerySet(ObjectQuerySet):
         
-        def __init__(self, querySet=None):
-            super(ReadInstanceQuerySet, self).__init__(querySet)
-            self.fieldTerm = None
-    
         # Return a Q clause according to the specified params.
         # If the parameter list is a single item:
         #     If there is a list, then the object must contain a value with the specified field type.
