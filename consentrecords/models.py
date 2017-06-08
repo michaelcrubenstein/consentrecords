@@ -119,6 +119,7 @@ def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
 
 ### Access type is the type, if any, that the qs has already been filtered.
 def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
+    # print('_subTypeParse: %s, %s' % (qsType, tokens))
     if isUUID(tokens[1]):
         return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType, accessType)
     elif tokens[1] in elementMap:
@@ -128,7 +129,7 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         elementClause, newAccessType = qsType.getSubClause(qs, user, accessType)
         return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
-                      tokens[3:], user, subType, newAccessType)
+                      tokens[2:], user, subType, newAccessType)
     else:
         raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
@@ -3075,9 +3076,6 @@ class Experience(dbmodels.Model, ChildInstance):
         
         return data
 
-    def findableQuerySet(qs, user, prefix=''):
-        return Path.findableQuerySet(qs, user, prefix='parent__')
-
     organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     customOrganization = dbmodels.CharField(max_length=255, db_index=True, null=True)
     site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
@@ -3107,7 +3105,7 @@ class Experience(dbmodels.Model, ChildInstance):
         if accessType == Path:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent__'), Path
+            return Path.findableQuerySet(qs, user, prefix='parent'), Path
 
 class ExperienceHistory(dbmodels.Model):
     id = idField()
@@ -3134,6 +3132,11 @@ class ExperienceCustomService(dbmodels.Model, ChildInstance):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
 
+    fieldMap = {'name': 'name',
+                'position': 'position'}
+                
+    elementMap = {}
+    
     def description(self, languageCode=None):
         return self.name
     
@@ -3146,7 +3149,13 @@ class ExperienceCustomService(dbmodels.Model, ChildInstance):
         if self.name:
             data['name'] = self.name
         return data
-    
+        
+    def getSubClause(qs, user, accessType):
+        if accessType == Path:
+            return qs, accessType
+        else:
+            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
+
 class ExperienceCustomServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceCustomServiceHistories')
@@ -3190,7 +3199,7 @@ class ExperienceService(dbmodels.Model, ChildInstance):
         if accessType == Path:
             return qs, accessType
         else:
-            return Path.findableQuerySet(qs, user, prefix='parent__parent__'), Path
+            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
@@ -3619,7 +3628,7 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent__'), Organization
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
 class OfferingHistory(dbmodels.Model):
     id = idField()
@@ -3648,7 +3657,7 @@ class OfferingName(dbmodels.Model, TranslationInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent__'), Path
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent'), Path
 
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
@@ -3697,7 +3706,7 @@ class OfferingService(dbmodels.Model, ChildInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent__'), Organization
+            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
@@ -3843,12 +3852,14 @@ class Path(dbmodels.Model, IInstance):
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousFindFilter(prefix=''):
-        return Q((prefix + 'accessSource__in', AccessSource.objects.filter(publicAccess__in=["find", "read"])))
+        inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+        return Q((inClause, AccessSource.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
-        return Q((prefix + 'accessSource__in', AccessSource.objects.filter(publicAccess__id="read")))
+        inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+        return Q((inClause, AccessSource.objects.filter(publicAccess__id="read")))
         
     def findableQuerySet(qs, user, prefix=''):
         if not user:
@@ -3857,7 +3868,8 @@ class Path(dbmodels.Model, IInstance):
             return qs
         else:
             privilegeIDs = ["find", "read", "register", "write", "administer"]
-            return qs.filter(Q((prefix + 'accessSource__in',
+            inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+            return qs.filter(Q((inClause,
                                 AccessSource.objects.filter(\
                              Q(publicAccess__in=privilegeIDs) |\
                              Q(primaryAdministrator=user) |\
@@ -4062,6 +4074,15 @@ class ServiceOrganizationLabel(dbmodels.Model, TranslationInstance):
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class ServiceOrganizationLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceOrganizationLabelHistories')
@@ -4083,6 +4104,15 @@ class ServiceSiteLabel(dbmodels.Model, TranslationInstance):
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class ServiceSiteLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceSiteLabelHistories')
@@ -4103,6 +4133,15 @@ class ServiceOfferingLabel(dbmodels.Model, TranslationInstance):
 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
 
 class ServiceOfferingLabelHistory(dbmodels.Model):
     id = idField()

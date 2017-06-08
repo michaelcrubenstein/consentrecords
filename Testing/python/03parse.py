@@ -105,8 +105,8 @@ qs2 = qs2.distinct()
 data = Path.headData(qs2[0], anoncontext)
 print(data)
 
-print("### Path by id to Experiences, anonymous context")
-path = 'path/' + pathID + '/experience'
+path = 'path/%s/experience' % pathID
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 print("accessType: %s" % accessType)
@@ -116,8 +116,8 @@ qs2 = qs2.distinct()
 data = [Experience.headData(i, anoncontext) for i in qs2]
 print(data)
 
-print("### Path by Experience/Service name, anonymous context")
 path = 'path[experience>service>service>name>text=Grade 8]'
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
@@ -128,8 +128,8 @@ qs2 = qs2.distinct()
 data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
 print(data)
 
-print("### Path by Experience/Service name, anonymous context")
 path = 'path[experience[service>service>implies>service>name>text=College]|[offering>service>service>implies>service>name>text=College]]'
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
@@ -140,8 +140,8 @@ qs2 = qs2.distinct()
 data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
 print(data)
                                                                                                                          
-print("### Path by Experience/Service name, anonymous context")
 path = 'path[experience[service>service>implies>service>name>text=Job]|[offering>service>service>implies>service>name>text=Job]]'
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
@@ -152,10 +152,10 @@ qs2 = qs2.distinct()
 data = [i.getData(['parents'], anoncontext) for i in qs2]
 print(data)
 
-print("### Path by Experience/Service name, anonymous context")
 path = 'path[experience[service>service>implies>service>name>text=Job]|[offering>service>service>implies>service>name>text=Job]]' +\
        '[experience[service>service>implies>service>name>text=College]|[offering>service>service>implies>service>name>text=College]]' + \
        '[experience[service>service>implies>service>name>text=Business Founder]|[offering>service>service>implies>service>name>text=Business Founder]]'
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('name')
@@ -165,17 +165,49 @@ print("accessType: %s" % accessType)
 qs2 = qs2.distinct()
 data = [i.getData(['parents'], anoncontext) for i in qs2]
 print(data)
+pathID = data[0]['id']
 
-path = 'path/%s/experience' % data[0]['id']
+path = 'path/%s/experience' % pathID
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('start')
-print("accessType: %s" % accessType)
 qs2, accessType = Path.getSubClause(qs, None, accessType)
-print("accessType: %s" % accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], anoncontext) for i in qs2]
 print(list(map(lambda i: i['start'], data)))
+
+path = 'path/%s/experience[custom service]' % pathID
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('start')
+qs2, accessType = Experience.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], anoncontext) for i in qs2]
+print(list(map(lambda i: i['custom services'], data)))
+experienceID = data[0]['id']
+customServiceID = data[0]['custom services'][0]['id']
+
+path = 'path/%s/experience[custom service]/custom service' % pathID
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+qs2, accessType = ExperienceCustomService.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], anoncontext) for i in qs2]
+print(data)
+
+path = 'experience/%s/custom service/%s' % (experienceID, customServiceID)
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs = qs.order_by('name')
+qs2, accessType = ExperienceCustomService.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], anoncontext) for i in qs2]
+print(data)
 
 path = 'service'
 print("### %s, anoncontext" % path)
@@ -190,6 +222,46 @@ data.sort(key=lambda i: i['description'])
 print(list(map(lambda d: d['description'], data)))
 
 path = 'service[name>text=Business Founder]/name'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceName.getSubClause(qs, None, accessType)
+qs2 = ServiceName.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
+path = 'service[name>text=Grade 8]/organization label'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceName.getSubClause(qs, None, accessType)
+qs2 = ServiceName.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
+path = 'service[name>text=Grade 8]/site label'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceName.getSubClause(qs, None, accessType)
+qs2 = ServiceName.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
+path = 'service[name>text=Business Founder]/site label'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceName.getSubClause(qs, None, accessType)
+qs2 = ServiceName.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
+path = 'service[name>text=Job]/offering label'
 print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
