@@ -4122,9 +4122,20 @@ class ServiceImplication(dbmodels.Model, ChildInstance):
                        .prefetch_related(Prefetch('impliedService__names',
                                                   queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentNames'))
+    def select_related(querySet):
+        return ServiceImplication.select_head_related(querySet)
+    
     def __str__(self):
         return str(self.impliedService)
 
+    def getData(self, fields, context):
+        data = self.headData(context)
+        if context.canRead(self):
+            if self.impliedService:
+                data['service'] = self.impliedService.headData(context)
+        
+        return data
+    
     fieldMap = {
                }
                
@@ -4452,14 +4463,14 @@ class User(dbmodels.Model, RootInstance):
             qClause = Q((inClause, elementClause))
             return qs.filter(qClause)
 
-    fieldMap = {'email': 'emails__text',
-                'first name': 'firstName',
+    fieldMap = {'first name': 'firstName',
                 'last name': 'lastName',
                 'birthday': 'birthday',
                 'public access': 'publicAccess',
                }
                
-    elementMap = {'group access': ('groupAccesses__', "UserGroupAccess", 'parent'),
+    elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
+                  'group access': ('groupAccesses__', "UserGroupAccess", 'parent'),
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
                   'primary administrator': ('primaryAdministrator__', "User", 'administeredUsers'),
@@ -4573,6 +4584,9 @@ class UserEmail(dbmodels.Model):
     def description(self, languageCode=None):
         return self.text
     
+    def select_related(querySet):
+        return querySet
+        
     def headData(self, context):
         return {'id': self.id.hex, 
                 'description': self.description(context.languageCode), 
@@ -4585,6 +4599,18 @@ class UserEmail(dbmodels.Model):
     def getData(self, fieldNames, context):
         return self.headData(context)
         
+    fieldMap = {'text': 'text',
+                'position': 'position',
+               }
+               
+    elementMap = {}
+
+    def getSubClause(qs, user, accessType):
+        if accessType == User:
+            return qs, accessType
+        else:
+            return User.findableQuerySet(qs, user, 'parent'), User
+
 class UserEmailHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userEmailHistories')

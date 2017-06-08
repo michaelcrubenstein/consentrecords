@@ -15,7 +15,7 @@ qs2 = User.findableQuerySet(qs, None)
 print(qs2)
 
 print("### User by email")
-path = 'user[email="michaelcrubenstein@gmail.com"]'
+path = 'user[email>text="michaelcrubenstein@gmail.com"]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
@@ -178,6 +178,7 @@ data = [i.getData([], anoncontext) for i in qs2]
 print(list(map(lambda i: i['start'], data)))
 
 path = 'service'
+print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 print("accessType: %s" % accessType)
@@ -188,8 +189,18 @@ data = [i.getData([], anoncontext) for i in qs2]
 data.sort(key=lambda i: i['description'])
 print(list(map(lambda d: d['description'], data)))
 
+path = 'service[name>text=Business Founder]/implies'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceImplication.getSubClause(qs, None, accessType)
+qs2 = ServiceImplication.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
 print("escontext.is_administrator: %s" % escontext.user.is_administrator)
-path = 'user/' + userID + "/notification"
+path = 'user/%s/notification' % userID
 print("### %s, escontext" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
@@ -209,5 +220,14 @@ qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs2, accessType = NotificationArgument.getSubClause(qs, escontext.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], escontext) for i in NotificationArgument.select_related(qs2)]
+print(data)
+
+path = 'user/%s/email' % userID
+print("### %s, escontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
+qs2, accessType = UserEmail.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], escontext) for i in UserEmail.select_related(qs2)]
 print(data)
 
