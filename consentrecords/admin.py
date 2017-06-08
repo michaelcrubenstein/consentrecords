@@ -227,11 +227,11 @@ class UserEmailInline(TabularInline):
     
 class UserUserAccessRequestInline(TabularInline):
     model = UserUserAccessRequest
-    list_display = ('id', 'accessee', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', 'grantee', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'accessee', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'grantee', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'accessee', 't_creationTime', 'deleteTransaction')
+    readonly_fields = ('id', 'grantee', 't_creationTime', 'deleteTransaction')
 
     ordering = ['id']
     show_change_link = True

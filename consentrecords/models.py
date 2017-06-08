@@ -129,6 +129,8 @@ def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
         return _parse(subType.objects.filter(Q((inClause, elementClause)),
                                              deleteTransaction__isnull=True), 
                       tokens[3:], user, subType, newAccessType)
+    else:
+        raise ValueError("unrecognized path from %s: %s" % (qsType, tokens))    
 
 def _parse(qs, tokens, user, qsType, accessType):
     # print('_parse: %s, %s' % (qsType, tokens))
@@ -344,8 +346,11 @@ class AccessInstance(ChildInstance):
     def description(self, languageCode=None):
         return self.grantee.description(languageCode)
         
-    def select_related(querySet):
+    def select_head_related(querySet):
         return querySet.select_related('grantee')
+
+    def select_related(querySet):
+        return AccessInstance.select_head_related(querySet)
 
     def getData(self, fieldNames, context):
         data = self.headData(context)
@@ -4470,11 +4475,8 @@ class User(dbmodels.Model, RootInstance):
                }
                
     elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
-                  'group access': ('groupAccesses__', "UserGroupAccess", 'parent'),
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
-                  'primary administrator': ('primaryAdministrator__', "User", 'administeredUsers'),
-                  'user access': ('userAccesses__', "UserUserAccess", 'parent'),
                   'user access request': ('userAccessRequests__', "UserUserAccessRequest", 'parent'),
                  }
 
@@ -4627,17 +4629,29 @@ class UserUserAccessRequest(dbmodels.Model, AccessInstance):
     deleteTransaction = deleteTransactionField('deletedUserUserAccessRequests')
 
     parent = parentField(User, 'userAccessRequests')
-    accessee = dbmodels.ForeignKey(User, related_name='userUserAccessRequests', db_index=True, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey(User, related_name='userUserAccessRequests', db_index=True, on_delete=dbmodels.CASCADE)
 
     def __str__(self):
         return self.description()
     
+    fieldMap = {}
+               
+    elementMap = {'grantee': ('grantee__', 'User', 'userUserAccessRequests'),
+                  'parent': ('parent__', "User", 'userAccessRequests'),
+                 }
+
+    def getSubClause(qs, user, accessType):
+        if accessType == User:
+            return qs, accessType
+        else:
+            return User.findableQuerySet(qs, user, 'parent'), User
+
 class UserUserAccessRequestHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('UserUserAccessRequestHistories')
     instance = historyInstanceField(UserUserAccessRequest)
 
-    accessee = dbmodels.ForeignKey(User, related_name='userUserAccessRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey(User, related_name='userUserAccessRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class Context:
     def __init__(self, languageCode, user):
