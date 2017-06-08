@@ -330,6 +330,12 @@ class TranslationInstance(ChildInstance):
     def description(self, languageCode=None):
         return self.text
     
+    def select_head_related(querySet):
+        return querySet
+        
+    def select_related(querySet):
+        return querySet
+        
     def headData(self, context):
         data = super(TranslationInstance, self).headData(context)
         data['text'] = self.text

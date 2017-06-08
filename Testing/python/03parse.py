@@ -189,6 +189,16 @@ data = [i.getData([], anoncontext) for i in qs2]
 data.sort(key=lambda i: i['description'])
 print(list(map(lambda d: d['description'], data)))
 
+path = 'service[name>text=Business Founder]/name'
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = ServiceName.getSubClause(qs, None, accessType)
+qs2 = ServiceName.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+data.sort(key=lambda i: i['description'])
+print(list(map(lambda d: d['description'], data)))
+
 path = 'service[name>text=Business Founder]/implies'
 print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)
