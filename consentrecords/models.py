@@ -235,16 +235,7 @@ class NamedInstance(IInstance):
         return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(deleteTransaction__isnull=True)
 
     def description(self, languageCode=None):
-        enName = None
-        noneName = None
-        for v in self.currentNamesQuerySet:
-            if languageCode == v.languageCode:
-                return v.text
-            elif v.languageCode == 'en':
-                enName = v.text
-            elif not v.languageCode:
-                noneName = v.text
-        return noneName or enName or '(None)'
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def getData(self, fields, context):
         data = self.headData(context)
@@ -2889,8 +2880,12 @@ class DisqualifyingTag(dbmodels.Model, ChildInstance):
     parent = parentField('consentrecords.ExperiencePrompt', 'disqualifyingTags')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTags', db_index=True, on_delete=dbmodels.CASCADE)
 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
+
     def description(self, languageCode=None):
-        return self.service.description(languageCode)
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def select_head_related(querySet):
         return querySet.select_related('service')
@@ -2909,6 +2904,15 @@ class DisqualifyingTag(dbmodels.Model, ChildInstance):
             
         return data
 
+    def select_head_related(querySet):
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
+    def select_related(querySet):
+        return ExperienceService.select_head_related(querySet)
+                 
 class DisqualifyingTagHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('disqualifyingTagHistories')
@@ -3013,9 +3017,28 @@ class Experience(dbmodels.Model, ChildInstance):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
     
+    fieldMap = {'custom organization': 'customOrganization',
+                'custom site': 'customSite',
+                'custom offering': 'customOffering',
+                'start': 'start',
+                'end': 'end',
+                'timeframe': 'timeframe',
+               }
+               
+    elementMap = {'organization': ('organization__', "Organization", 'experiences'),
+                  'site': ('site__', "Site", 'experiences'),
+                  'offering': ('offering__', "Offering", 'experiences'),
+                  'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
+                  'service': ('services__', "ExperienceService", 'parent'),
+                 }
+                 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.offering.names.filter(deleteTransaction__isnull=True)
+
     def description(self, languageCode=None):
         if self.offering_id:
-            return self.offering.description(languageCode)
+            return IInstance.getName(self.currentNamesQuerySet, languageCode)
         elif self.customOffering:
             return self.customOffering
         else:
@@ -3024,10 +3047,15 @@ class Experience(dbmodels.Model, ChildInstance):
     def __str__(self):
         return self.description(None)
     
+    def select_head_related(querySet):
+        return querySet.select_related('offering')\
+                       .prefetch_related(Prefetch('offering__names',
+                                                  queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
     def select_related(querySet):
-        return querySet.select_related('organization')\
+        return Experience.select_head_related(querySet).select_related('organization')\
                        .select_related('site')\
-                       .select_related('offering')\
                        .prefetch_related(Prefetch('customServices', 
                            queryset=ExperienceCustomService.objects.filter(deleteTransaction__isnull=True)))\
                        .prefetch_related(Prefetch('services', 
@@ -3076,31 +3104,6 @@ class Experience(dbmodels.Model, ChildInstance):
         
         return data
 
-    organization = dbmodels.ForeignKey('consentrecords.Organization', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-    customOrganization = dbmodels.CharField(max_length=255, db_index=True, null=True)
-    site = dbmodels.ForeignKey('consentrecords.Site', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-    customSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
-    offering = dbmodels.ForeignKey('consentrecords.Offering', related_name='experiences', db_index=True, null=True, on_delete=dbmodels.CASCADE)
-    customOffering = dbmodels.CharField(max_length=255, db_index=True, null=True)
-    start = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    end = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
-
-    fieldMap = {'custom organization': 'customOrganization',
-                'custom site': 'customSite',
-                'custom offering': 'customOffering',
-                'start': 'start',
-                'end': 'end',
-                'timeframe': 'timeframe',
-               }
-               
-    elementMap = {'organization': ('organization__', "Organization", 'experiences'),
-                  'site': ('site__', "Site", 'experiences'),
-                  'offering': ('offering__', "Offering", 'experiences'),
-                  'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
-                  'service': ('services__', "ExperienceService", 'parent'),
-                 }
-                 
     def getSubClause(qs, user, accessType):
         if accessType == Path:
             return qs, accessType
@@ -3150,6 +3153,12 @@ class ExperienceCustomService(dbmodels.Model, ChildInstance):
             data['name'] = self.name
         return data
         
+    def select_head_related(querySet):
+        return querySet
+        
+    def select_related(querySet):
+        return querySet
+        
     def getSubClause(qs, user, accessType):
         if accessType == Path:
             return qs, accessType
@@ -3173,8 +3182,12 @@ class ExperienceService(dbmodels.Model, ChildInstance):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServices', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
+
     def description(self, languageCode=None):
-        return self.service.description(languageCode)
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def __str__(self):
         return str(self.service)
@@ -3194,6 +3207,15 @@ class ExperienceService(dbmodels.Model, ChildInstance):
                
     elementMap = {'service': ('service__', "Service", 'experienceServices'),
                  }
+                 
+    def select_head_related(querySet):
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
+    def select_related(querySet):
+        return ExperienceService.select_head_related(querySet)
                  
     def getSubClause(qs, user, accessType):
         if accessType == Path:
@@ -3285,9 +3307,13 @@ class ExperiencePromptService(dbmodels.Model, ChildInstance):
     parent = parentField(ExperiencePrompt, 'services')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServices', db_index=True, on_delete=dbmodels.CASCADE)
 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
+
     def description(self, languageCode=None):
-        return self.service.description(languageCode)
-    
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
+        
     def select_head_related(querySet):
         return querySet.select_related('service')
         
@@ -3305,6 +3331,15 @@ class ExperiencePromptService(dbmodels.Model, ChildInstance):
             
         return data
 
+    def select_head_related(querySet):
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
+    def select_related(querySet):
+        return ExperiencePromptService.select_head_related(querySet)
+                 
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptServiceHistories')
