@@ -242,6 +242,42 @@ class NamedInstance(IInstance):
         names = self.currentNamesQuerySet
         data['names'] = [i.getData([], context) for i in names]
         return data
+
+# An instance that is a secure root: User and Organization
+class SecureRootInstance(IInstance):
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousFindFilter(prefix=''):
+        return Q(((prefix + '__id__in') if prefix else 'id__in',
+                  AccessSource.objects.filter(publicAccess__in=["find", "read"])))
+        
+    ### Returns a query clause that limits a set of users to users that can be found 
+    ### without signing in.
+    def anonymousReadFilter(prefix=''):
+        return Q(((prefix + '__id__in') if prefix else 'id__in',
+                  AccessSource.objects.filter(publicAccess__id="read")))
+        
+    def findableQuerySet(qs, user, prefix=''):
+        if not user:
+            return qs.filter(SecureRootInstance.anonymousFindFilter(prefix))
+        elif user.is_administrator:
+            return qs
+        else:
+            privilegeIDs = ["find", "read", "register", "write", "administer"]
+            inClause = (prefix + '__id__in') if prefix else 'id__in'
+            elementClause = AccessSource.objects.filter(\
+                                 Q(publicAccess__in=privilegeIDs) |\
+                                 Q(primaryAdministrator=user) |\
+                                 Q(userAccesses__privilege__in=privilegeIDs,
+                                   userAccesses__deleteTransaction__isnull=True,
+                                   userAccesses__grantee=user) |\
+                                 Q(groupAccesses__privilege__in=privilegeIDs,
+                                   groupAccesses__deleteTransaction__isnull=True,
+                                   groupAccesses__grantee__members__user=user,
+                                   groupAccesses__grantee__members__deleteTransaction__isnull=True))
+            qClause = Q((inClause, elementClause))
+            return qs.filter(qClause)
+
         
 ### An Instance that has no parent
 class RootInstance(IInstance):
@@ -3377,10 +3413,13 @@ class Group(dbmodels.Model, NamedInstance, ChildInstance):
     def __str__(self):
         return self.description()
 
-    def select_related(querySet):
+    def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
                                                   queryset=GroupName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))\
+                                                  to_attr='currentNames'))
+        
+    def select_related(querySet):
+        return Group.select_head_related(querySet)\
                        .prefetch_related(Prefetch('members', 
                                                   queryset=GroupMember.select_related(GroupMember.objects.filter(deleteTransaction__isnull=True)),
                                                   to_attr='fetchedMembers'))
@@ -3536,7 +3575,7 @@ class Notification(dbmodels.Model, ChildInstance):
         if accessType == User:
             return qs, accessType
         else:
-            return User.findableQuerySet(qs, user, 'parent'), User
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
 class NotificationHistory(dbmodels.Model):
     id = idField()
@@ -3578,7 +3617,7 @@ class NotificationArgument(dbmodels.Model, ChildInstance):
         if accessType == User:
             return qs, accessType
         else:
-            return User.findableQuerySet(qs, user, 'parent__parent'), User
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), User
 
 class NotificationArgumentHistory(dbmodels.Model):    
     id = idField()
@@ -3663,7 +3702,7 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
 class OfferingHistory(dbmodels.Model):
     id = idField()
@@ -3692,7 +3731,7 @@ class OfferingName(dbmodels.Model, TranslationInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent'), Path
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
@@ -3712,14 +3751,18 @@ class OfferingService(dbmodels.Model, ChildInstance):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServices', db_index=True, on_delete=dbmodels.CASCADE)
 
+    fieldMap = {'position': 'position',
+               }
+               
+    elementMap = {'service': ('service__', "Service", 'offeringServices'),
+                 }
+                 
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
+
     def description(self, languageCode=None):
-        return self.service.description(languageCode)
-    
-    def select_head_related(querySet):
-        return querySet.select_related('service')
-        
-    def select_related(querySet):
-        return ExperiencePromptService.select_head_related(querySet)
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def __str__(self):
         return str(self.service)
@@ -3732,17 +3775,20 @@ class OfferingService(dbmodels.Model, ChildInstance):
             
         return data
         
-    fieldMap = {'position': 'position',
-               }
-               
-    elementMap = {'service': ('service__', "Service", 'offeringServices'),
-                 }
+    def select_head_related(querySet):
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
+    def select_related(querySet):
+        return ExperienceService.select_head_related(querySet)
                  
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
             return qs, accessType
         else:
-            return Organization.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
@@ -3759,6 +3805,15 @@ class Organization(dbmodels.Model, NamedInstance):
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
     inquiryAccessGroup = dbmodels.ForeignKey('consentrecords.Group', related_name='inquiryAccessGroupOrganizations', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
+    fieldMap = {'web site': 'webSite',
+               }
+               
+    elementMap = {'inquiry access group': ('inquiryAccessGroup__', "Group", 'inquiryAccessGroupOrganizations'),
+                  'group': ('groups__', 'Group', 'parent'),
+                  'name': ('names__', 'OrganizationName', 'parent'),
+                  'site': ('sites__', 'Site', 'parent'),
+                 }
+
     def __str__(self):
         return self.description()
 
@@ -3768,11 +3823,13 @@ class Organization(dbmodels.Model, NamedInstance):
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
-        return Offering.select_head_related(querySet)\
+        return Organization.select_head_related(querySet)\
                        .prefetch_related(Prefetch('sites',
-                                         queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True))))\
+                                         queryset=Site.select_head_related(Site.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentSites'))\
                        .prefetch_related(Prefetch('groups',
-                                         queryset=Group.select_head_related(Group.objects.filter(deleteTransaction__isnull=True))))\
+                                         queryset=Group.select_head_related(Group.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentGroups'))\
                        .select_related('inquiryAccessGroup')
         
     def headData(self, context):
@@ -3790,12 +3847,10 @@ class Organization(dbmodels.Model, NamedInstance):
             if self.webSite:
                 data['web site'] = self.webSite
             
-            data['sites'] = [i.headData(context) for i in \
-                Site.select_related(self.sites.filter(deleteTransaction__isnull=True))]
+            data['sites'] = [i.headData(context) for i in self.currentSites]
             data['sites'].sort(key=lambda s: s['description'])
                 
-            data['groups'] = [i.headData(context) for i in \
-                Group.select_related(self.groups.filter(deleteTransaction__isnull=True))]
+            data['groups'] = [i.headData(context) for i in self.currentGroups]
             data['groups'].sort(key=lambda s: s['description'])
                 
         if context.getPrivilege(self) == 'administer':
@@ -3807,6 +3862,12 @@ class Organization(dbmodels.Model, NamedInstance):
     def fetchPrivilege(self, user):
         return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
     
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user), User
+
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -4467,18 +4528,6 @@ class User(dbmodels.Model, RootInstance):
                    .prefetch_related(Prefetch('notifications',
                                          queryset=Notification.objects.filter(deleteTransaction__isnull=True)))
         
-    ### Returns a query clause that limits a set of users to users that can be found 
-    ### without signing in.
-    def anonymousFindFilter(prefix=''):
-        return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  AccessSource.objects.filter(publicAccess__in=["find", "read"])))
-        
-    ### Returns a query clause that limits a set of users to users that can be found 
-    ### without signing in.
-    def anonymousReadFilter(prefix=''):
-        return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  AccessSource.objects.filter(publicAccess__id="read")))
-        
     def fetchPrivilege(self, user):
         return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
     
@@ -4529,27 +4578,6 @@ class User(dbmodels.Model, RootInstance):
     def is_administrator(self):
         return self.authUser and self.authUser.is_superuser
             
-    def findableQuerySet(qs, user, prefix=''):
-        if not user:
-            return qs.filter(User.anonymousFindFilter(prefix))
-        elif user.is_administrator:
-            return qs
-        else:
-            privilegeIDs = ["find", "read", "register", "write", "administer"]
-            inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = AccessSource.objects.filter(\
-                                 Q(publicAccess__in=privilegeIDs) |\
-                                 Q(primaryAdministrator=user) |\
-                                 Q(userAccesses__privilege__in=privilegeIDs,
-                                   userAccesses__deleteTransaction__isnull=True,
-                                   userAccesses__grantee=user) |\
-                                 Q(groupAccesses__privilege__in=privilegeIDs,
-                                   groupAccesses__deleteTransaction__isnull=True,
-                                   groupAccesses__grantee__members__user=user,
-                                   groupAccesses__grantee__members__deleteTransaction__isnull=True))
-            qClause = Q((inClause, elementClause))
-            return qs.filter(qClause)
-
     fieldMap = {'first name': 'firstName',
                 'last name': 'lastName',
                 'birthday': 'birthday',
@@ -4566,7 +4594,7 @@ class User(dbmodels.Model, RootInstance):
         if accessType == User:
             return qs, accessType
         else:
-            return User.findableQuerySet(qs, user), User
+            return SecureRootInstance.findableQuerySet(qs, user), User
 
     class UserQuerySet(ObjectQuerySet):
         
@@ -4693,7 +4721,7 @@ class UserEmail(dbmodels.Model):
         if accessType == User:
             return qs, accessType
         else:
-            return User.findableQuerySet(qs, user, 'parent'), User
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
 class UserEmailHistory(dbmodels.Model):
     id = idField()
@@ -4726,7 +4754,7 @@ class UserUserAccessRequest(dbmodels.Model, AccessInstance):
         if accessType == User:
             return qs, accessType
         else:
-            return User.findableQuerySet(qs, user, 'parent'), User
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
 class UserUserAccessRequestHistory(dbmodels.Model):
     id = idField()

@@ -11,7 +11,8 @@ path = "user"
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, None)
+qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
 print(qs2)
 
 print("### User by email")
@@ -19,7 +20,8 @@ path = 'user[email>text="michaelcrubenstein@gmail.com"]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, escontext.user).distinct()
+qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
 print(qs2)
 
 print("### User by first name")
@@ -27,7 +29,8 @@ path = 'user[first name="Elizabeth"]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, escontext.user)
+qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
 print(qs2)
 
 print("### User by last name")
@@ -35,15 +38,16 @@ path = 'user[last name="Skavish"]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, escontext.user)
+qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
 print(qs2)
 
 print("### User by birthday")
 path = 'user[birthday<"1964-01-01"]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, escontext.user)
-data = [qsType.headData(i, escontext) for i in qs]
-qs2 = qsType.findableQuerySet(qs, escontext.user).distinct()
+qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
 data = [qsType.headData(i, escontext) for i in qs2]
 data.sort(key=lambda i:i['description'])
 print(data)
@@ -53,7 +57,8 @@ path = 'user[path>screen name=tu28]'
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, None).distinct()
+qs2, accessType = User.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
 data = User.headData(qs2[0], anoncontext)
 print(data)
 
@@ -63,7 +68,8 @@ path = 'user/' + userID
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
 qs = qs.order_by('emails__text')
-qs2 = User.findableQuerySet(qs, None).distinct()
+qs2, accessType = User.getSubClause(qs, None, accessType)
+qs2 = qs2.distinct()
 data = User.headData(qs2[0], anoncontext)
 print(data)
 
@@ -352,5 +358,14 @@ qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
 qs2, accessType = UserUserAccessRequest.getSubClause(qs, escontext.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], context) for i in UserUserAccessRequest.select_related(qs2)]
+print(data)
+
+path = 'organization'
+print("### %s, mrcontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+qs2, accessType = Organization.getSubClause(qs, escontext.user, accessType)
+qs2 = qs2.distinct()
+data = [i.getData([], context) for i in Organization.select_related(qs2)]
 print(data)
 
