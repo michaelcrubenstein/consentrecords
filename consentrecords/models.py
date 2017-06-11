@@ -3866,7 +3866,7 @@ class Organization(dbmodels.Model, NamedInstance):
         if accessType == Organization:
             return qs, accessType
         else:
-            return SecureRootInstance.findableQuerySet(qs, user), User
+            return SecureRootInstance.findableQuerySet(qs, user), Organization
 
 class OrganizationHistory(dbmodels.Model):
     id = idField()
@@ -3887,6 +3887,18 @@ class OrganizationName(dbmodels.Model, TranslationInstance):
 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
 
 class OrganizationNameHistory(dbmodels.Model):
     id = idField()
