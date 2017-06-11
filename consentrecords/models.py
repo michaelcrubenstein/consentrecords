@@ -3410,6 +3410,12 @@ class Group(dbmodels.Model, NamedInstance, ChildInstance):
     deleteTransaction = deleteTransactionField('deletedGroups')
     parent = parentField('consentrecords.Organization', 'groups')
 
+    fieldMap = {}
+               
+    elementMap = {'name': ('names__', "GroupName", 'parent'),
+                  'member': ('members__', "GroupMember", 'parent'),
+                 }
+
     def __str__(self):
         return self.description()
 
@@ -3429,6 +3435,12 @@ class Group(dbmodels.Model, NamedInstance, ChildInstance):
         data['members'] = [i.getData([], context) for i in self.fetchedMembers]
         return data
     
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
 class GroupName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdGroupNames')
@@ -3439,8 +3451,20 @@ class GroupName(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
 class GroupNameHistory(dbmodels.Model):
     id = idField()
