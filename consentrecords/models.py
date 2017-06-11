@@ -3483,6 +3483,11 @@ class GroupMember(dbmodels.Model, ChildInstance):
     parent = parentField(Group, 'members')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='groupMembers', db_index=True, on_delete=dbmodels.CASCADE)
 
+    fieldMap = {}
+               
+    elementMap = {'user': ('user__', 'User', 'groupMembers'),
+                 }
+                 
     def description(self, languageCode=None):
         return self.user.description(languageCode)
         
@@ -3502,6 +3507,12 @@ class GroupMember(dbmodels.Model, ChildInstance):
                 data['user'] = self.user.headData(context)
         
         return data
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
 class GroupMemberHistory(dbmodels.Model):
     id = idField()
@@ -4554,7 +4565,7 @@ class User(dbmodels.Model, RootInstance):
         
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('emails',
-                                                  queryset=UserEmail.objects.filter(delete_transaction__isnull=True),
+                                                  queryset=UserEmail.objects.filter(deleteTransaction__isnull=True),
                                                   to_attr='currentEMails'))
 
     def select_related(querySet):
