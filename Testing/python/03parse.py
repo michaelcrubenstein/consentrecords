@@ -247,6 +247,24 @@ qs2 = ExperienceService.select_related(qs2.distinct())
 data = [i.getData([], anoncontext) for i in qs2]
 print(data)
 
+path = 'path/%s/experience[comment]' % pathID
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = Experience.getSubClause(qs, None, accessType)
+qs2 = Experience.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+print(data)
+
+path = 'path/%s/experience[custom offering=Chem3D Architect]/comment' % pathID
+print("### %s, anoncontext" % path)
+tokens = pathparser._tokenize(path)
+qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
+qs2, accessType = Comment.getSubClause(qs, None, accessType)
+qs2 = Comment.select_related(qs2.distinct())
+data = [i.getData([], anoncontext) for i in qs2]
+print(data)
+
 path = 'service'
 print("### %s, anoncontext" % path)
 tokens = pathparser._tokenize(path)

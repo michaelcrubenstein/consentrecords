@@ -2821,6 +2821,13 @@ class Comment(dbmodels.Model, ChildInstance):
     question = dbmodels.CharField(max_length=1023, db_index=True, null=True)
     asker = dbmodels.ForeignKey('consentrecords.Path', related_name='askedComments', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     
+    fieldMap = {'text': 'text',
+                'question': 'question',
+               }
+               
+    elementMap = {'asker': ('asker__', 'Path', 'askedComments'),
+                 }
+                 
     def description(self, languageCode=None):
         return str(self.transaction.creation_time);
         
@@ -2844,6 +2851,12 @@ class Comment(dbmodels.Model, ChildInstance):
                 data['question'] = self.question
         
         return data
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Path:
+            return qs, accessType
+        else:
+            return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
 class CommentHistory(dbmodels.Model):
     id = idField()
@@ -3066,6 +3079,7 @@ class Experience(dbmodels.Model, ChildInstance):
                   'offering': ('offering__', "Offering", 'experiences'),
                   'custom service': ('customServices__', "ExperienceCustomService", 'parent'),
                   'service': ('services__', "ExperienceService", 'parent'),
+                  'comment': ('comments__', "Comment", 'parent'),
                  }
                  
     @property
@@ -3959,6 +3973,9 @@ class Path(dbmodels.Model, IInstance):
     def __str__(self):
         return self.name or ("%s %s" % (str(self.parent), "Path"))
 
+    def select_head_related(querySet):
+        return querySet
+        
     def select_related(querySet):
         return querySet
         
