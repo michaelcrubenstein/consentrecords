@@ -1,10 +1,21 @@
 import django; django.setup()
+import profile
 from consentrecords.models import *
 from consentrecords import pathparser
 mr = User.objects.filter(emails__text='michaelcrubenstein@gmail.com')[0]
 context = Context('en', mr)
 escontext = Context('en', User.objects.filter(emails__text='elizabethskavish@gmail.com')[0])
 anoncontext = Context('en', None)
+
+def showData(path, context, resultClass, fields=[]):
+    print("### %s, context" % path)
+    tokens = pathparser._tokenize(path)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
+    qs2 = qs2.distinct()
+    data = [i.getData(fields, context) for i in resultClass.select_related(qs2)]
+    print(data)
+    return data
 
 print("### User")
 path = "user"
@@ -131,7 +142,7 @@ print("accessType: %s" % accessType)
 qs2, accessType = Path.getSubClause(qs, None, accessType)
 print("accessType: %s" % accessType)
 qs2 = qs2.distinct()
-data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
+data = [i.getData(['parents'], anoncontext) for i in qs2]
 print(data)
 
 path = 'path[experience[service>service>implies>service>name>text=College]|[offering>service>service>implies>service>name>text=College]]'
@@ -143,7 +154,7 @@ print("accessType: %s" % accessType)
 qs2, accessType = Path.getSubClause(qs, None, accessType)
 print("accessType: %s" % accessType)
 qs2 = qs2.distinct()
-data = [Path.getData(i, ['parents'], anoncontext) for i in qs2]
+data = [i.getData(['parents'], anoncontext) for i in qs2]
 print(data)
                                                                                                                          
 path = 'path[experience[service>service>implies>service>name>text=Job]|[offering>service>service>implies>service>name>text=Job]]'
@@ -397,38 +408,48 @@ data = [i.getData([], context) for i in OrganizationName.select_related(qs2)]
 print(data)
 
 path = 'organization[name>text=theBase]/group'
-print("### %s, escontext" % path)
+print("### %s, context" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = Group.getSubClause(qs, escontext.user, accessType)
+qs2, accessType = Group.getSubClause(qs, context.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], context) for i in Group.select_related(qs2)]
 print(data)
 
 path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/name'
-print("### %s, escontext" % path)
+print("### %s, context" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = GroupName.getSubClause(qs, escontext.user, accessType)
+qs2, accessType = GroupName.getSubClause(qs, context.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], context) for i in GroupName.select_related(qs2)]
 print(data)
 
 path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/member'
-print("### %s, escontext" % path)
+print("### %s, context" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = GroupName.getSubClause(qs, escontext.user, accessType)
+qs2, accessType = GroupName.getSubClause(qs, context.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], context) for i in GroupName.select_related(qs2)]
 print(data)
 
 path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/member/user'
-print("### %s, escontext" % path)
+print("### %s, context" % path)
 tokens = pathparser._tokenize(path)
 qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = User.getSubClause(qs, escontext.user, accessType)
+qs2, accessType = User.getSubClause(qs, context.user, accessType)
 qs2 = qs2.distinct()
 data = [i.getData([], context) for i in User.select_related(qs2)]
 print(data)
 
+path = 'organization[name>text=BCYF]/site'
+data = showData(path, escontext, Site)
+siteID = data[0]['id']
+siteName = data[0]['description']
+
+data = showData('site/%s' % siteID, escontext, Site)
+data = showData('site[name>text=%s]' % siteName, escontext, Site)
+data = showData('site/%s' % siteID, escontext, Site, fields=['offerings'])
+
+data = showData('site[name>text=%s]/name' % siteName, escontext, SiteName)

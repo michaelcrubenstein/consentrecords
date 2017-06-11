@@ -119,7 +119,7 @@ def _filterClause(tokens, user, fieldMap, elementMap, prefix=''):
 
 ### Access type is the type, if any, that the qs has already been filtered.
 def _subTypeParse(qs, tokens, user, qsType, accessType, elementMap):
-    # print('_subTypeParse: %s, %s' % (qsType, tokens))
+    # print('_subTypeParse: %s, %s, %s, %s' % (qsType, tokens, accessType, elementMap))
     if isUUID(tokens[1]):
         return _parse(qs.filter(pk=tokens[1]), tokens[2:], user, qsType, accessType)
     elif tokens[1] in elementMap:
@@ -349,7 +349,7 @@ class ChildInstance(IInstance):
         if privilege:
             data['privilege'] = privilege
         return data
-               
+        
     def fetchPrivilege(self, user):
         return self.parent.fetchPrivilege(user)
     
@@ -3407,6 +3407,8 @@ class ExperiencePromptText(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
@@ -3687,6 +3689,18 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
     minimumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
     maximumGrade = dbmodels.CharField(max_length=255, db_index=True, null=True)
     
+    fieldMap = {'web site': 'webSite',
+                'minimum age': 'minimumAge',
+                'maximum age': 'maximumAge',
+                'minimum grade': 'minimumGrade',
+                'maximum grade': 'maximumGrade',
+               }
+               
+    elementMap = {'name': ('names__', "OfferingName", 'parent'),
+                  'service': ('services__', "OfferingService", 'parent'),
+                  'session': ('sessions__', "Session", 'parent'),
+                 }
+
     def __str__(self):
         return self.description()
 
@@ -3734,18 +3748,6 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
             data['sessions'].sort(key=lambda i: i['description'])
             
         return data
-
-    fieldMap = {'web site': 'webSite',
-                'minimum age': 'minimumAge',
-                'maximum age': 'maximumAge',
-                'minimum grade': 'minimumGrade',
-                'maximum grade': 'maximumGrade',
-               }
-               
-    elementMap = {'name': ('names__', "OfferingName", 'parent'),
-                  'service': ('services__', "OfferingService", 'parent'),
-                  'session': ('sessions__', "Session", 'parent'),
-                 }
 
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
@@ -4466,6 +4468,13 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
     parent = parentField('consentrecords.Organization', 'sites')
     webSite = dbmodels.CharField(max_length=255, db_index=True, null=True)
 
+    fieldMap = {'web site': 'webSite',
+               }
+               
+    elementMap = {'name': ('names__', 'SiteName', 'parent'),
+                  'offering': ('offerings__', 'Offering', 'parent'),
+                 }
+
     def __str__(self):
         return self.description()
 
@@ -4477,7 +4486,11 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
     def select_related(querySet):
         return Site.select_head_related(querySet)\
                        .prefetch_related(Prefetch('addresses',
-                                         queryset=Address.objects.filter(deleteTransaction__isnull=True)))
+                                         queryset=Address.select_related(Address.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentAddresses'))\
+                       .prefetch_related(Prefetch('offerings',
+                                         queryset=Offering.select_head_related(Offering.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentOfferings'))
         
     def getData(self, fields, context):
         data = super(Site, self).getData(fields, context)
@@ -4485,19 +4498,25 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
             if self.webSite:
                 data['web site'] = self.webSite
             
-            qs = self.addresses.filter(deleteTransaction__isnull=True)
-            if qs.count():
+            qs = self.currentAddresses
+            if len(qs):
                 if 'address' in fields:
-                    data['address'] = Address.select_related(qs)[0].getData([], context)
+                    data['address'] = qs[0].getData([], context)
                 else:
-                    data['address'] = Address.select_related(qs)[0].headData(context)
-                
-            data['offerings'] = [i.headData(context) for i in \
-                Offering.select_head_related(self.offerings.filter(deleteTransaction__isnull=True))]
-            data['offerings'].sort(key=lambda s: s['description'])
+                    data['address'] = qs[0].headData(context)
+            
+            if 'offerings' in fields:    
+                data['offerings'] = [i.headData(context) for i in self.currentOfferings]
+                data['offerings'].sort(key=lambda s: s['description'])
                 
         return data
         
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
 class SiteHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteHistories')
@@ -4514,8 +4533,20 @@ class SiteName(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
 class SiteNameHistory(dbmodels.Model):
     id = idField()
@@ -4837,6 +4868,9 @@ class Context:
         else:
             self.authUser = AnonymousUser()
         self._privileges = {}
+        
+    def __str__(self):
+        return "context: %s/%s" % (str(self.user), self.languageCode)
         
     def getPrivilege(self, i):
         if self.is_administrator:
