@@ -282,13 +282,20 @@ class SecureRootInstance(IInstance):
 ### An Instance that has no parent
 class RootInstance(IInstance):
     def headData(self, context):
-        return {'id': self.id.hex, 
+        data = {'id': self.id.hex, 
                 'description': self.description(context.languageCode), 
-                'privilege': context.getPrivilege(self),
                }
+        privilege = context.getPrivilege(self)
+        if privilege:
+            data['privilege'] = privilege
+        return data
                
     def fetchPrivilege(self, user):
         return "read"
+    
+    @property    
+    def privilegeSource(self):
+        return self
         
     def parse(tokens, user):
         d = {'address': Address,
@@ -350,9 +357,10 @@ class ChildInstance(IInstance):
             data['privilege'] = privilege
         return data
         
-    def fetchPrivilege(self, user):
-        return self.parent.fetchPrivilege(user)
-    
+    @property    
+    def privilegeSource(self):
+        return self.parent.privilegeSource
+        
 ### An Instance that is a name and a language code
 class TranslationInstance(ChildInstance):
     def description(self, languageCode=None):
@@ -2909,6 +2917,12 @@ class CommentPromptText(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=1023, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
@@ -3407,6 +3421,10 @@ class ExperiencePromptText(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
     elementMap = {}
                  
     def __str__(self):
@@ -3775,6 +3793,12 @@ class OfferingName(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else self.text
 
@@ -3848,7 +3872,7 @@ class OfferingServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='offeringServiceHistories', db_index=True, null=True, editable=False, on_delete=dbmodels.CASCADE)
 
-class Organization(dbmodels.Model, NamedInstance):    
+class Organization(dbmodels.Model, NamedInstance, RootInstance):    
     id = idField()
     transaction = createTransactionField('createdOrganizations')
     lastTransaction = lastTransactionField('changedOrganizations')
@@ -3883,15 +3907,6 @@ class Organization(dbmodels.Model, NamedInstance):
                                          to_attr='currentGroups'))\
                        .select_related('inquiryAccessGroup')
         
-    def headData(self, context):
-        data = {'id': self.id.hex, 
-                'description': self.description(context.languageCode), 
-               }
-        privilege = context.getPrivilege(self)
-        if privilege:
-            data['privilege'] = privilege
-        return data
-    
     def getData(self, fields, context):
         data = super(Organization, self).getData(fields, context)
         if context.canRead(self):
@@ -3980,6 +3995,10 @@ class Path(dbmodels.Model, IInstance):
         
     def select_related(querySet):
         return querySet
+        
+    @property    
+    def privilegeSource(self):
+        return self.accessSource
         
     def fetchPrivilege(self, user):
         return self.accessSource.fetchPrivilege(user)
@@ -4111,7 +4130,7 @@ class PeriodHistory(dbmodels.Model):
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class Service(dbmodels.Model, NamedInstance):    
+class Service(dbmodels.Model, NamedInstance, RootInstance):    
     id = idField()
     transaction = createTransactionField('createdServices')
     lastTransaction = lastTransactionField('changedServices')
@@ -4141,15 +4160,6 @@ class Service(dbmodels.Model, NamedInstance):
                                                  queryset=ServiceImplication.select_head_related(ServiceImplication.objects.filter(deleteTransaction__isnull=True)),
                                                  to_attr='currentServiceImplications'))
                         
-    def fetchPrivilege(self, user):
-        return "read"
-    
-    def headData(self, context):
-        return {'id': self.id.hex, 
-                'description': self.description(context.languageCode), 
-                'privilege': context.getPrivilege(self),
-               }
-    
     def getData(self, fields, context):
         data = super(Service, self).getData(fields, context)
         
@@ -4449,6 +4459,12 @@ class SessionName(dbmodels.Model, TranslationInstance):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'text': 'text',
+                'language code': 'languageCode',
+               }
+               
+    elementMap = {}
+                 
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
@@ -4556,7 +4572,7 @@ class SiteNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
     
-class Street(dbmodels.Model, IInstance):    
+class Street(dbmodels.Model, ChildInstance):    
     id = idField()
     transaction = createTransactionField('createdStreets')
     lastTransaction = lastTransactionField('changedStreets')
@@ -4573,13 +4589,10 @@ class Street(dbmodels.Model, IInstance):
         return self.text or '(None)'
 
     def headData(self, context):
-        return {'id': self.id.hex, 
-                'description': self.description(context.languageCode), 
-                'parentID': self.parent_id.hex, 
-                'privilege': context.getPrivilege(self.parent),
-                'position': self.position,
-                'text': self.text
-               }
+        data = super(Street, self).headData(context)
+        data['position'] = self.position
+        data['text'] = self.text
+        return data
                
     def getData(self, fieldNames, context):
         return self.headData(context)
@@ -4778,7 +4791,7 @@ class UserHistory(dbmodels.Model):
     birthday = dbmodels.CharField(max_length=10, null=True, editable=False)
 
 ### A Multiple String Value containing an email associated with the specified user.
-class UserEmail(dbmodels.Model):
+class UserEmail(dbmodels.Model, ChildInstance):
     id = idField()
     transaction = createTransactionField('createdUserEmails')
     lastTransaction = lastTransactionField('changedUserEmails')
@@ -4791,17 +4804,17 @@ class UserEmail(dbmodels.Model):
     def description(self, languageCode=None):
         return self.text
     
+    def select_head_related(querySet):
+        return querySet
+        
     def select_related(querySet):
         return querySet
         
     def headData(self, context):
-        return {'id': self.id.hex, 
-                'description': self.description(context.languageCode), 
-                'parentID': self.parent_id.hex, 
-                'privilege': context.getPrivilege(self.parent),
-                'position': self.position,
-                'text': self.text
-               }
+        data = super(UserEmail, self).headData(context)
+        data['position'] = self.position
+        data['text'] = self.text
+        return data
                
     def getData(self, fieldNames, context):
         return self.headData(context)
@@ -4876,9 +4889,11 @@ class Context:
         if self.is_administrator:
             return "administer"
             
-        if i not in self._privileges:
-            self._privileges[i.id] = i.fetchPrivilege(self.user)
-        return self._privileges[i.id]
+        j = i.privilegeSource
+            
+        if j.id not in self._privileges:
+            self._privileges[j.id] = j.fetchPrivilege(self.user)
+        return self._privileges[j.id]
     
     @property
     def is_administrator(self):
