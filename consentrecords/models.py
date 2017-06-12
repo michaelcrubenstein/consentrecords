@@ -3730,9 +3730,11 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
     def select_related(querySet):
         return Offering.select_head_related(querySet)\
                        .prefetch_related(Prefetch('services',
-                                         queryset=OfferingService.objects.filter(deleteTransaction__isnull=True)))\
+                                         queryset=OfferingService.select_head_related(OfferingService.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentServices'))\
                        .prefetch_related(Prefetch('sessions',
-                                         queryset=Session.objects.filter(deleteTransaction__isnull=True)))
+                                         queryset=Session.select_head_related(Session.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentSessions'))
         
     def getData(self, fields, context):
         data = super(Offering, self).getData(fields, context)
@@ -3750,19 +3752,15 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
                 data['maximum grade'] = self.maximumGrade
         
             if 'service' in fields:
-                data['services'] = [i.getData([], context) for i in \
-                    OfferingService.select_related(self.services.filter(deleteTransaction__isnull=True))]
+                data['services'] = [i.getData([], context) for i in self.currentServices]
             else:
-                data['services'] = [i.headData(context) for i in \
-                    OfferingService.select_related(self.services.filter(deleteTransaction__isnull=True))]
+                data['services'] = [i.headData(context) for i in self.currentServices]
             data['services'].sort(key=lambda i: i['description'])
             
             if 'session' in fields:
-                data['sessions'] = [i.getData([], context) for i in \
-                    Session.select_related(self.sessions.filter(deleteTransaction__isnull=True))]
+                data['sessions'] = [i.getData([], context) for i in self.currentSessions]
             else:
-                data['sessions'] = [i.headData(context) for i in \
-                    Session.select_head_related(self.sessions.filter(deleteTransaction__isnull=True))]
+                data['sessions'] = [i.headData(context) for i in self.currentSessions]
             data['sessions'].sort(key=lambda i: i['description'])
             
         return data

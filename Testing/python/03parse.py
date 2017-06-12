@@ -407,3 +407,16 @@ data = showData('site/%s' % siteID, escontext, Site, fields=['offerings'])
 data = showData('site[name>text=%s]/name' % siteName, escontext, SiteName)
 data = showData('site[name>text=%s]/offering' % siteName, escontext, Offering)
 data = showData('organization[name>text=theBase]/site/offering', escontext, Offering)
+offeringID = data[0]['id']
+offeringName = data[0]['description']
+
+data = showData('offering/%s/name' % offeringID, escontext, OfferingName)
+offeringNameID = data[0]['id']
+data = showData('offering name/%s' % offeringNameID, escontext, OfferingName)
+
+data = showData('offering[name>text=%s]/service' % offeringName, escontext, OfferingService)
+offeringServiceID = data[0]['id']
+offeringServiceName = data[0]['service']['description']
+data = showData('offering service/%s' % offeringServiceID, escontext, OfferingService)
+data = showData('offering service[service>name>text=%s]' % offeringServiceName, escontext, OfferingService)
+
