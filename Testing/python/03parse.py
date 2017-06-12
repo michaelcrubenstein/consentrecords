@@ -239,14 +239,8 @@ experienceID = data[0]['id']
 customServiceID = data[0]['services'][0]['id']
 
 path = 'path/%s/experience[service]/service' % pathID
-print("### %s, anoncontext" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
-qs = qs.order_by('position')
-qs2, accessType = ExperienceService.getSubClause(qs, None, accessType)
-qs2 = ExperienceService.select_related(qs2.distinct())
-data = [i.getData([], anoncontext) for i in qs2]
-print(data)
+data = showData('path/%s/experience[service]/service' % pathID, anoncontext, ExperienceService)
+data = showData('path/%s/experience[service>service>implies>service>name>text=Job]' % pathID, anoncontext, Experience)
 
 path = 'experience/%s/service/%s' % (experienceID, customServiceID)
 print("### %s, anoncontext" % path)
