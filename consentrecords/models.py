@@ -2780,6 +2780,14 @@ class Address(dbmodels.Model, ChildInstance):
     state = dbmodels.CharField(max_length=255, db_index=True, null=True)
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True)
     
+    fieldMap = {'city': 'city',
+                'state': 'state',
+                'zip code': 'zipCode',
+               }
+               
+    elementMap = {'street': ('streets__', "Street", 'parent'),
+                 }
+    
     def description(self, language=None):
         streets = ' '.join(map(lambda s: s.text, self.streets.order_by('position')))
         if streets: streets = streets + ' '
@@ -2790,7 +2798,8 @@ class Address(dbmodels.Model, ChildInstance):
 
     def select_related(querySet):
         return querySet.prefetch_related(Prefetch('streets', 
-                           queryset=Street.objects.filter(deleteTransaction__isnull=True)))
+                           queryset=Street.select_related(Street.objects.filter(deleteTransaction__isnull=True)).order_by('position'),
+                           to_attr='currentStreets'))
     
     def getData(self, fields, context):
         data = self.headData(context)
@@ -2801,14 +2810,19 @@ class Address(dbmodels.Model, ChildInstance):
                 data['state'] = self.state
             if self.zipCode:
                 data['zip code'] = self.zipCode
-            qs = self.streets.filter(deleteTransaction__isnull=True).order_by('position')
             if 'street' in fields:
-                data['streets'] = [i.getData([], context) for i in qs]
+                data['streets'] = [i.getData([], context) for i in self.currentStreets]
             else:
-                data['streets'] = [i.headData(context) for i in qs]
+                data['streets'] = [i.headData(context) for i in self.currentStreets]
         
         return data
     
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+
 class AddressHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('addressHistories')
@@ -4559,6 +4573,7 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
                
     elementMap = {'name': ('names__', 'SiteName', 'parent'),
                   'offering': ('offerings__', 'Offering', 'parent'),
+                  'address': ('addresses__', 'Address', 'parent'),
                  }
 
     def __str__(self):
@@ -4652,11 +4667,23 @@ class Street(dbmodels.Model, ChildInstance):
     position = dbmodels.IntegerField()
     text = dbmodels.CharField(max_length=255, null=True)
 
+    fieldMap = {'position': 'position',
+                'text': 'text',
+               }
+               
+    elementMap = {}
+    
     def description(self, languageCode=None):
         return self.text
     
     def __str__(self):
         return self.text or '(None)'
+        
+    def select_head_related(querySet):
+        return querySet
+
+    def select_related(querySet):
+        return querySet
 
     def headData(self, context):
         data = super(Street, self).headData(context)
@@ -4667,6 +4694,12 @@ class Street(dbmodels.Model, ChildInstance):
     def getData(self, fieldNames, context):
         return self.headData(context)
         
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
 class StreetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('streetHistories')
