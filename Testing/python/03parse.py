@@ -389,62 +389,14 @@ qs2 = qs2.distinct()
 data = [i.getData([], context) for i in UserUserAccessRequest.select_related(qs2)]
 print(data)
 
-path = 'organization'
-print("### %s, escontext" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = Organization.getSubClause(qs, escontext.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in Organization.select_related(qs2)]
-print(data)
+showData('organization', escontext, Organization)
+showData('organization[name>text=Beacon Academy]/name', context, OrganizationName)
+showData('organization[name>text=theBase]/group', context, Group)
+showData('organization[name>text=theBase]/group[name>text=theBase Employees]/name', context, GroupName)
+showData('organization[name>text=theBase]/group[name>text=theBase Employees]/member', context, GroupMember)
+showData('organization[name>text=theBase]/group[name>text=theBase Employees]/member/user', context, User)
 
-path = 'organization[name>text=Beacon Academy]/name'
-print("### %s, escontext" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = OrganizationName.getSubClause(qs, escontext.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in OrganizationName.select_related(qs2)]
-print(data)
-
-path = 'organization[name>text=theBase]/group'
-print("### %s, context" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = Group.getSubClause(qs, context.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in Group.select_related(qs2)]
-print(data)
-
-path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/name'
-print("### %s, context" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = GroupName.getSubClause(qs, context.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in GroupName.select_related(qs2)]
-print(data)
-
-path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/member'
-print("### %s, context" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = GroupName.getSubClause(qs, context.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in GroupName.select_related(qs2)]
-print(data)
-
-path = 'organization[name>text=theBase]/group[name>text=theBase Employees]/member/user'
-print("### %s, context" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = User.getSubClause(qs, context.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in User.select_related(qs2)]
-print(data)
-
-path = 'organization[name>text=BCYF]/site'
-data = showData(path, escontext, Site)
+data = showData('organization[name>text=BCYF]/site', escontext, Site)
 siteID = data[0]['id']
 siteName = data[0]['description']
 
@@ -453,3 +405,5 @@ data = showData('site[name>text=%s]' % siteName, escontext, Site)
 data = showData('site/%s' % siteID, escontext, Site, fields=['offerings'])
 
 data = showData('site[name>text=%s]/name' % siteName, escontext, SiteName)
+data = showData('site[name>text=%s]/offering' % siteName, escontext, Offering)
+data = showData('organization[name>text=theBase]/site/offering', escontext, Offering)
