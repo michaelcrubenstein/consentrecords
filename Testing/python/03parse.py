@@ -420,3 +420,15 @@ offeringServiceName = data[0]['service']['description']
 data = showData('offering service/%s' % offeringServiceID, escontext, OfferingService)
 data = showData('offering service[service>name>text=%s]' % offeringServiceName, escontext, OfferingService)
 
+data = showData('offering/%s/session' % offeringID, escontext, Session)
+sessionID = data[0]['id']
+
+data = showData('session/%s/engagement' % sessionID, escontext, Engagement)
+data = showData('session/%s/enrollment' % sessionID, escontext, Enrollment)
+data = showData('session/%s/inquiry' % sessionID, escontext, Inquiry)
+
+data = showData('engagement[user>email>text="michaelcrubenstein@gmail.com"]', context, Engagement)
+data = showData('enrollment[user>email>text="michaelcrubenstein@gmail.com"]', context, Enrollment)
+data = showData('inquiry[user>email>text="testuser5@consentrecords.org"]', context, Inquiry)
+
+

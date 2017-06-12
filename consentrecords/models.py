@@ -2994,6 +2994,13 @@ class Engagement(dbmodels.Model, ChildInstance):
     start = dbmodels.CharField(max_length=10, db_index=True, null=True)
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'start': 'start',
+                'end': 'end',
+               }
+    
+    elementMap = {'user': ('user__', 'User', 'userEngagements'),
+                 }
+
     def description(self, languageCode=None):
         return self.user.description(languageCode)
         
@@ -3018,6 +3025,12 @@ class Engagement(dbmodels.Model, ChildInstance):
         
         return data
 
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+
 class EngagementHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('engagementHistories')
@@ -3035,6 +3048,11 @@ class Enrollment(dbmodels.Model, ChildInstance):
 
     parent = parentField('consentrecords.Session', 'enrollments')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='userEnrollments', db_index=True, on_delete=dbmodels.CASCADE)
+
+    fieldMap = {}
+    
+    elementMap = {'user': ('user__', 'User', 'userEnrollments'),
+                 }
 
     def description(self, languageCode=None):
         return self.user.description(languageCode)
@@ -3056,6 +3074,12 @@ class Enrollment(dbmodels.Model, ChildInstance):
         
         return data
     
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+
 class EnrollmentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('enrollmentHistories')
@@ -3563,6 +3587,11 @@ class Inquiry(dbmodels.Model, ChildInstance):
 
     parent = parentField('consentrecords.Session', 'inquiries')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiries', db_index=True, on_delete=dbmodels.CASCADE)
+    
+    fieldMap = {}
+    
+    elementMap = {'user': ('user__', 'User', 'inquiries'),
+                 }
 
     def description(self, languageCode=None):
         return self.user.description(languageCode)
@@ -3580,6 +3609,12 @@ class Inquiry(dbmodels.Model, ChildInstance):
                 data['user'] = self.user.headData(context)
         
         return data
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
 class InquiryHistory(dbmodels.Model):
     id = idField()
@@ -4119,6 +4154,12 @@ class Period(dbmodels.Model, ChildInstance):
         
         return data
 
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
+
 class PeriodHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('periodHistories')
@@ -4387,6 +4428,19 @@ class Session(dbmodels.Model, NamedInstance, ChildInstance):
     end = dbmodels.CharField(max_length=10, db_index=True, null=True)
     canRegister = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'registration deadline': 'registrationDeadline',
+                'start': 'start',
+                'end': 'end',
+                'can register': 'can register',
+               }
+
+    elementMap = {'name': ('names__', "SessionName", 'parent'),
+                  'engagement': ('engagements__', "Engagement", 'parent'),
+                  'enrollment': ('enrollments__', "Enrollment", 'parent'),
+                  'inquiry': ('inquiry__', "Inquiry", 'parent'),
+                  'period': ('periods__', "Period", 'parent'),
+                 }
+
     def __str__(self):
         return self.description()
 
@@ -4398,13 +4452,17 @@ class Session(dbmodels.Model, NamedInstance, ChildInstance):
     def select_related(querySet):
         return Session.select_head_related(querySet)\
                        .prefetch_related(Prefetch('engagements',
-                                         queryset=Engagement.objects.filter(deleteTransaction__isnull=True)))\
+                                         queryset=Engagement.select_head_related(Engagement.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentEngagements'))\
                        .prefetch_related(Prefetch('enrollments',
-                                         queryset=Enrollment.objects.filter(deleteTransaction__isnull=True)))\
+                                         queryset=Enrollment.select_head_related(Enrollment.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentEnrollments'))\
                        .prefetch_related(Prefetch('inquiries',
-                                         queryset=Inquiry.objects.filter(deleteTransaction__isnull=True)))\
+                                         queryset=Inquiry.select_head_related(Inquiry.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentInquiries'))\
                        .prefetch_related(Prefetch('periods',
-                                         queryset=Period.objects.filter(deleteTransaction__isnull=True)))
+                                         queryset=Period.select_related(Period.objects.filter(deleteTransaction__isnull=True)),
+                                         to_attr='currentPeriods'))
         
     def getData(self, fields, context):
         data = super(Session, self).getData(fields, context)
@@ -4419,24 +4477,26 @@ class Session(dbmodels.Model, NamedInstance, ChildInstance):
             if self.canRegister:
                 data['can register'] = self.canRegister
                 
-            data['engagements'] = [i.headData(context) for i in \
-                Engagement.select_head_related(self.engagements.filter(deleteTransaction__isnull=True))]
+            data['engagements'] = [i.headData(context) for i in self.currentEngagements]
             data['engagements'].sort(key=lambda s: s['description'])
             
-            data['enrollments'] = [i.headData(context) for i in \
-                Enrollment.select_head_related(self.enrollments.filter(deleteTransaction__isnull=True))]
+            data['enrollments'] = [i.headData(context) for i in self.currentEnrollments]
             data['enrollments'].sort(key=lambda s: s['description'])
             
-            data['inquiries'] = [i.headData(context) for i in \
-                Inquiry.select_head_related(self.inquiries.filter(deleteTransaction__isnull=True))]
+            data['inquiries'] = [i.headData(context) for i in self.currentInquiries]
             data['inquiries'].sort(key=lambda s: s['description'])
             
-            data['periods'] = [i.getData(context) for i in \
-                Period.select_related(self.periods.filter(deleteTransaction__isnull=True))]
+            data['periods'] = [i.getData(context) for i in self.currentPeriods]
             data['periods'].sort(key=lambda s: s['description'])
                 
         return data
         
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
+
 class SessionHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionHistories')
@@ -4465,6 +4525,12 @@ class SessionName(dbmodels.Model, TranslationInstance):
                  
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
+
+    def getSubClause(qs, user, accessType):
+        if accessType == Organization:
+            return qs, accessType
+        else:
+            return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
 class SessionNameHistory(dbmodels.Model):
     id = idField()
