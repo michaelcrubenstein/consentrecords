@@ -431,4 +431,4 @@ data = showData('engagement[user>email>text="michaelcrubenstein@gmail.com"]', co
 data = showData('enrollment[user>email>text="michaelcrubenstein@gmail.com"]', context, Enrollment)
 data = showData('inquiry[user>email>text="testuser5@consentrecords.org"]', context, Inquiry)
 
-
+data = showData('period', context, Period)

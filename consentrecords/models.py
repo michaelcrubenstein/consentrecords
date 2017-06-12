@@ -4132,7 +4132,13 @@ class Period(dbmodels.Model, ChildInstance):
     weekday = dbmodels.IntegerField(db_index=True, null=True)
     startTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
     endTime = dbmodels.CharField(max_length=10, db_index=True, null=True)
-
+    
+    fieldMap = {'weekday': 'weekday',
+                'start time': 'startTime',
+                'end time': 'endTime',
+               }
+    elementMap = {}
+    
     def description(self, languageCode=None):
         return self.user.description('%s: %s-%s' % (weekday or 'any day', startTime or '', endTime or ''))
         
