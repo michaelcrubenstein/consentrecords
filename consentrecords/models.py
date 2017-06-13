@@ -239,8 +239,7 @@ class NamedInstance(IInstance):
         
     def getData(self, fields, context):
         data = self.headData(context)
-        names = self.currentNamesQuerySet
-        data['names'] = [i.getData([], context) for i in names]
+        data['names'] = [i.getData([], context) for i in self.currentNamesQuerySet]
         return data
 
 # An instance that is a secure root: User and Organization
@@ -2895,6 +2894,11 @@ class CommentPrompt(dbmodels.Model, NamedInstance, RootInstance):
     lastTransaction = lastTransactionField('changedCommentPrompts')
     deleteTransaction = deleteTransactionField('deletedCommentPrompts')
     
+    fieldMap = {}
+    
+    elementMap = {'translation': ('texts__', 'CommentPromptText', 'parent'),
+                 }
+                 
     @property
     def names(self):
         return self.texts
@@ -2911,10 +2915,12 @@ class CommentPrompt(dbmodels.Model, NamedInstance, RootInstance):
         return CommentPrompt.select_head_related(querySet)
     
     def getData(self, fields, context):
-        data = super(CommentPrompt, self).getData(fields, context)
-        labels = self.currentNames
-        data['texts'] = [i.getData([], context) for i in labels]
+        data = self.headData(context)
+        data['translations'] = [i.getData([], context) for i in self.currentNames]
         return data
+        
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
         
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
@@ -2940,6 +2946,9 @@ class CommentPromptText(dbmodels.Model, TranslationInstance):
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '(None)')
 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class CommentPromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptTextHistories')
@@ -2957,6 +2966,10 @@ class DisqualifyingTag(dbmodels.Model, ChildInstance):
     parent = parentField('consentrecords.ExperiencePrompt', 'disqualifyingTags')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='disqualifyingTags', db_index=True, on_delete=dbmodels.CASCADE)
 
+    fieldMap = {}
+    
+    elementMap = {'service': ('service__', 'Service', 'disqualifyingTags'),
+                 }
     @property
     def currentNamesQuerySet(self):
         return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
@@ -2965,11 +2978,14 @@ class DisqualifyingTag(dbmodels.Model, ChildInstance):
         return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def select_head_related(querySet):
-        return querySet.select_related('service')
-        
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
     def select_related(querySet):
-        return ExperiencePromptService.select_head_related(querySet)
-        
+        return ExperienceService.select_head_related(querySet)
+                 
     def __str__(self):
         return str(self.service)
 
@@ -2981,15 +2997,9 @@ class DisqualifyingTag(dbmodels.Model, ChildInstance):
             
         return data
 
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
-    
-    def select_related(querySet):
-        return ExperienceService.select_head_related(querySet)
-                 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class DisqualifyingTagHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('disqualifyingTagHistories')
@@ -3346,6 +3356,19 @@ class ExperiencePrompt(dbmodels.Model, RootInstance):
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
+    fieldMap = {'name': 'name',
+                'stage': 'stage',
+                'timeframe': 'timeframe',
+               }
+    
+    elementMap = {'service': ('services__', 'ExperiencePromptService', 'parent'),
+                  'organization': ('organization__', 'Organization', 'experiencePrompts'),
+                  'site': ('site__', 'Site', 'experiencePrompts'),
+                  'offering': ('offering__', 'Offering', 'experiencePrompts'),
+                  'domain': ('domain__', 'Service', 'domainExperiencePrompts'),
+                  'disqualifying tag': ('disqualifyingTags__', 'DisqualifyingTag', 'parent'),
+                 }
+
     def description(self, languageCode=None):
         return self.name
     
@@ -3383,10 +3406,13 @@ class ExperiencePrompt(dbmodels.Model, RootInstance):
         if self.domain:
             data['domain'] = self.domain.headData(context)
         data['services'] = [i.headData(context) for i in self.fetchedServices]
-        data['texts'] = [i.getData([], context) for i in self.fetchedTexts]
+        data['translations'] = [i.getData([], context) for i in self.fetchedTexts]
         data['disqualifying tags'] = [i.headData(context) for i in self.fetchedDisqualifyingTags]
         return data
         
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptHistories')
@@ -3408,7 +3434,11 @@ class ExperiencePromptService(dbmodels.Model, ChildInstance):
     
     parent = parentField(ExperiencePrompt, 'services')
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServices', db_index=True, on_delete=dbmodels.CASCADE)
-
+    
+    fieldMap = {}
+    
+    elementMap = {'service': ('service__', 'Service', 'experiencePromptServices'),
+                 }
     @property
     def currentNamesQuerySet(self):
         return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
@@ -3417,8 +3447,11 @@ class ExperiencePromptService(dbmodels.Model, ChildInstance):
         return IInstance.getName(self.currentNamesQuerySet, languageCode)
         
     def select_head_related(querySet):
-        return querySet.select_related('service')
-        
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
     def select_related(querySet):
         return ExperiencePromptService.select_head_related(querySet)
         
@@ -3433,14 +3466,8 @@ class ExperiencePromptService(dbmodels.Model, ChildInstance):
             
         return data
 
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
-    
-    def select_related(querySet):
-        return ExperiencePromptService.select_head_related(querySet)
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
                  
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()

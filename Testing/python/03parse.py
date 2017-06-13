@@ -429,3 +429,20 @@ data = showData('period', context, Period)
 
 data = showData('organization[name>text=theBase]/site/address', escontext, Address)
 data = showData('organization[name>text=theBase]/site/address/street', escontext, Street)
+
+data = showData('comment prompt', escontext, CommentPrompt)
+commentPromptID = data[0]['id']
+data = showData('comment prompt/%s/translation' % commentPromptID, escontext, CommentPromptText)
+
+data = showData('experience prompt', escontext, ExperiencePrompt)
+data = showData('experience prompt/organization', escontext, Organization)
+data = showData('experience prompt/site', escontext, Site)
+data = showData('experience prompt/offering', escontext, Offering)
+data = showData('experience prompt[domain]/domain', escontext, Service)
+data = showData('experience prompt/disqualifying tag', escontext, DisqualifyingTag)
+disqualifyingTagID = data[0]['id']
+data = showData('experience prompt/service[service>name>text=Grade 8]', escontext, ExperiencePromptService)
+
+data = showData('disqualifying tag/%s' % disqualifyingTagID, escontext, DisqualifyingTag)
+data = showData('disqualifying tag[service>name>text=Grade 8]', escontext, DisqualifyingTag)
+
