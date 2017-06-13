@@ -7,13 +7,16 @@ context = Context('en', mr)
 escontext = Context('en', User.objects.filter(emails__text='elizabethskavish@gmail.com')[0])
 anoncontext = Context('en', None)
 
-def showData(path, context, resultClass, fields=[]):
+def getData(path, context, resultClass, fields=[]):
     print("### %s, context" % path)
     tokens = pathparser._tokenize(path)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
     qs2 = qs2.distinct()
-    data = [i.getData(fields, context) for i in resultClass.select_related(qs2)]
+    return [i.getData(fields, context) for i in resultClass.select_related(qs2)]
+    
+def showData(path, context, resultClass, fields=[]):
+    data = getData(path, context, resultClass, fields)
     print(data)
     return data
 
@@ -270,15 +273,16 @@ qs2 = Comment.select_related(qs2.distinct())
 data = [i.getData([], anoncontext) for i in qs2]
 print(data)
 
-path = 'service'
-print("### %s, anoncontext" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, None)
-print("accessType: %s" % accessType)
-qs2, accessType = Service.getSubClause(qs, None, accessType)
-print("accessType: %s" % accessType)
-qs2 = Service.select_related(qs2.distinct())
-data = [i.getData([], anoncontext) for i in qs2]
+data = showData('access source/%s' % userID, context, AccessSource)
+userAccessID = data[0]['user accesses'][0]['id']
+groupAccessID = data[0]['group accesses'][0]['id']
+data = showData('user access/%s' % userAccessID, context, UserAccess)
+data = showData('group access/%s' % groupAccessID, context, UserAccess)
+
+data = showData('access source/%s' % userID, anoncontext, AccessSource)
+data = showData('access source/%s' % userID, escontext, AccessSource)
+
+data = getData('service', anoncontext, Service)
 data.sort(key=lambda i: i['description'])
 print(list(map(lambda d: d['description'], data)))
 
