@@ -316,7 +316,7 @@ def buildSessionCanRegister(sessions, targetType):
 
 def buildAccesses(instances):
     for u in instances:
-        parent = AccessSource.objects.get(pk=u.id)
+        parent = GrantTarget.objects.get(pk=u.id)
         children = u.children.filter(typeID=terms.accessRecord)
         for i in children:
             privilege = getUniqueReferenceDescription(i, 'privilege')
@@ -324,7 +324,7 @@ def buildAccesses(instances):
             for j in i.value_set.filter(field__in=[terms['group'], terms.user]):
                 gs = Group.objects.filter(pk=j.referenceValue.id)
                 if gs.exists():
-                    GroupAccess.objects.get_or_create(id=j.id,
+                    GroupGrant.objects.get_or_create(id=j.id,
                         defaults={'transaction': j.transaction,
                                   'lastTransaction': j.transaction,
                                   'deleteTransaction': j.deleteTransaction,
@@ -334,7 +334,7 @@ def buildAccesses(instances):
                 else:
                     us = User.objects.filter(pk=j.referenceValue.id)
                     if us.exists():
-                        UserAccess.objects.get_or_create(id=j.id,
+                        UserGrant.objects.get_or_create(id=j.id,
                             defaults={'transaction': j.transaction,
                                       'lastTransaction': j.transaction,
                                       'deleteTransaction': j.deleteTransaction,
@@ -431,7 +431,7 @@ if __name__ == "__main__":
                        terms['primary administrator']: 
                            {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
                       }
-        buildRootInstances(users, AccessSource, AccessSourceHistory, uniqueTerms)
+        buildRootInstances(users, GrantTarget, GrantTargetHistory, uniqueTerms)
         
         orgs = Instance.objects.filter(typeID=terms['Organization'])
         buildOrganizations(orgs, Organization)
@@ -444,7 +444,7 @@ if __name__ == "__main__":
                        terms['primary administrator']: 
                            {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
                       }
-        buildRootInstances(orgs, AccessSource, AccessSourceHistory, uniqueTerms)
+        buildRootInstances(orgs, GrantTarget, GrantTargetHistory, uniqueTerms)
         
         groups = Instance.objects.filter(typeID=terms['group'], parent__typeID=terms['Organization'])
         buildGroups(groups, Organization, Group)
@@ -631,11 +631,11 @@ if __name__ == "__main__":
                        terms['primary administrator']: 
                            {'dbField': 'primaryAdministrator', 'f': lambda v: User.objects.get(pk=v.referenceValue.id)},
                       }
-        buildRootInstances(paths, AccessSource, AccessSourceHistory, uniqueTerms)
+        buildRootInstances(paths, GrantTarget, GrantTargetHistory, uniqueTerms)
         
         newPaths = Path.objects.all()
         for p in newPaths:
-            p.accessSource = AccessSource.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
+            p.accessSource = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
             p.save()
         
         buildAccesses(paths)

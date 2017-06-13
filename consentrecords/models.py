@@ -248,13 +248,13 @@ class SecureRootInstance(IInstance):
     ### without signing in.
     def anonymousFindFilter(prefix=''):
         return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  AccessSource.objects.filter(publicAccess__in=["find", "read"])))
+                  GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
         return Q(((prefix + '__id__in') if prefix else 'id__in',
-                  AccessSource.objects.filter(publicAccess__id="read")))
+                  GrantTarget.objects.filter(publicAccess__id="read")))
         
     def findableQuerySet(qs, user, prefix=''):
         if not user:
@@ -264,7 +264,7 @@ class SecureRootInstance(IInstance):
         else:
             privilegeIDs = ["find", "read", "register", "write", "administer"]
             inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = AccessSource.objects.filter(\
+            elementClause = GrantTarget.objects.filter(\
                                  Q(publicAccess__in=privilegeIDs) |\
                                  Q(primaryAdministrator=user) |\
                                  Q(userAccesses__privilege__in=privilegeIDs,
@@ -284,7 +284,7 @@ class SecureRootInstance(IInstance):
             return qs
         else:
             inClause = (prefix + '__id__in') if prefix else 'id__in'
-            elementClause = AccessSource.objects.filter(\
+            elementClause = GrantTarget.objects.filter(\
                                  Q(primaryAdministrator=user) |\
                                  Q(userAccesses__privilege="administer",
                                    userAccesses__deleteTransaction__isnull=True,
@@ -316,7 +316,7 @@ class RootInstance(IInstance):
         return self
         
     def parse(tokens, user):
-        d = {'access source': AccessSource,
+        d = {'access source': GrantTarget,
              'address': Address,
              'comment': Comment,
              'comment prompt': CommentPrompt,
@@ -331,7 +331,7 @@ class RootInstance(IInstance):
              'experience prompt service': ExperiencePromptService,
              'experience prompt translation': ExperiencePromptText,
              'group': Group,
-             'group access': GroupAccess,
+             'group access': GroupGrant,
              'group name': GroupName,
              'group member': GroupMember,
              'inquiry': Inquiry,
@@ -356,7 +356,7 @@ class RootInstance(IInstance):
              'site name': SiteName,
              'street': Street,
              'user': User,
-             'user access': UserAccess,
+             'user access': UserGrant,
              'user email': UserEmail,
              'user user access request': UserUserAccessRequest,
             }
@@ -2716,7 +2716,7 @@ def wrapInstanceQuerySet(t, qs=None):
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
 
-class AccessSource(dbmodels.Model):
+class GrantTarget(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdAccessSources')
     lastTransaction = lastTransactionField('changedAccessSources')
@@ -2729,8 +2729,8 @@ class AccessSource(dbmodels.Model):
                 'primary administrator': 'primaryAdministrator',
                }
                
-    elementMap = {'user access': ('userAccesses__', 'UserAccess', 'parent'),
-                  'group access': ('groupAccesses__', 'GroupAccess', 'parent'),
+    elementMap = {'user access': ('userAccesses__', 'UserGrant', 'parent'),
+                  'group access': ('groupAccesses__', 'GroupGrant', 'parent'),
                  }
                  
     def select_head_related(querySet):
@@ -2739,10 +2739,10 @@ class AccessSource(dbmodels.Model):
     def select_related(querySet):
         return querySet.select_related('primaryAdministrator')\
                        .prefetch_related(Prefetch('userAccesses',
-                                          queryset=UserAccess.select_related(UserAccess.objects.filter(deleteTransaction__isnull=True)),
+                                          queryset=UserGrant.select_related(UserGrant.objects.filter(deleteTransaction__isnull=True)),
                                           to_attr='currentUserAccesses'))\
                        .prefetch_related(Prefetch('groupAccesses',
-                                          queryset=GroupAccess.select_related(GroupAccess.objects.filter(deleteTransaction__isnull=True)),
+                                          queryset=GroupGrant.select_related(GroupGrant.objects.filter(deleteTransaction__isnull=True)),
                                           to_attr='currentGroupAccesses'))
                                           
                  
@@ -2777,27 +2777,27 @@ class AccessSource(dbmodels.Model):
         return data
     
     def getSubClause(qs, user, accessType):
-        if accessType == AccessSource:
+        if accessType == GrantTarget:
             return qs, accessType
         else:
-            return SecureRootInstance.administrableQuerySet(qs, user), AccessSource
+            return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
 
-class AccessSourceHistory(dbmodels.Model):
+class GrantTargetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('accessSourceHistories')
-    instance = historyInstanceField(AccessSource)
+    instance = historyInstanceField(GrantTarget)
 
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administeredHistories', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
 ### A Multiple Picked Value
-class UserAccess(dbmodels.Model, AccessInstance):
+class UserGrant(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdUserAccesses')
     lastTransaction = lastTransactionField('changedUserAccesses')
     deleteTransaction = deleteTransactionField('deletedUserAccesses')
 
-    parent = parentField(AccessSource, 'userAccesses')
+    parent = parentField(GrantTarget, 'userAccesses')
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -2810,27 +2810,27 @@ class UserAccess(dbmodels.Model, AccessInstance):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == AccessSource:
+        if accessType == GrantTarget:
             return qs, accessType
         else:
-            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), AccessSource
+            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
-class UserAccessHistory(dbmodels.Model):
+class UserGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userAccessHistories')
-    instance = historyInstanceField(UserAccess)
+    instance = historyInstanceField(UserGrant)
 
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
 ### A Multiple Picked Value
-class GroupAccess(dbmodels.Model, AccessInstance):
+class GroupGrant(dbmodels.Model, AccessInstance):
     id = idField()
     transaction = createTransactionField('createdGroupAccesses')
     lastTransaction = lastTransactionField('changedGroupAccesses')
     deleteTransaction = deleteTransactionField('deletedGroupAccesses')
 
-    parent = parentField(AccessSource, 'groupAccesses')
+    parent = parentField(GrantTarget, 'groupAccesses')
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -2843,15 +2843,15 @@ class GroupAccess(dbmodels.Model, AccessInstance):
         return self.description()
     
     def getSubClause(qs, user, accessType):
-        if accessType == AccessSource:
+        if accessType == GrantTarget:
             return qs, accessType
         else:
-            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), AccessSource
+            return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
-class GroupAccessHistory(dbmodels.Model):
+class GroupGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupAccessHistories')
-    instance = historyInstanceField(GroupAccess)
+    instance = historyInstanceField(GroupGrant)
 
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
@@ -4094,7 +4094,7 @@ class Organization(dbmodels.Model, NamedInstance, RootInstance):
         return data
         
     def fetchPrivilege(self, user):
-        return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
+        return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
     
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
@@ -4152,7 +4152,7 @@ class Path(dbmodels.Model, IInstance):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    accessSource = dbmodels.ForeignKey('consentrecords.AccessSource', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    accessSource = dbmodels.ForeignKey('consentrecords.GrantTarget', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -4204,13 +4204,13 @@ class Path(dbmodels.Model, IInstance):
     ### without signing in.
     def anonymousFindFilter(prefix=''):
         inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
-        return Q((inClause, AccessSource.objects.filter(publicAccess__in=["find", "read"])))
+        return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
         inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
-        return Q((inClause, AccessSource.objects.filter(publicAccess__id="read")))
+        return Q((inClause, GrantTarget.objects.filter(publicAccess__id="read")))
         
     def findableQuerySet(qs, user, prefix=''):
         if not user:
@@ -4221,7 +4221,7 @@ class Path(dbmodels.Model, IInstance):
             privilegeIDs = ["find", "read", "register", "write", "administer"]
             inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
             return qs.filter(Q((inClause,
-                                AccessSource.objects.filter(\
+                                GrantTarget.objects.filter(\
                              Q(publicAccess__in=privilegeIDs) |\
                              Q(primaryAdministrator=user) |\
                              Q(userAccesses__privilege__in=privilegeIDs,
@@ -4861,7 +4861,7 @@ class User(dbmodels.Model, RootInstance):
                                          queryset=Notification.objects.filter(deleteTransaction__isnull=True)))
         
     def fetchPrivilege(self, user):
-        return AccessSource.objects.get(pk=self.id).fetchPrivilege(user)
+        return GrantTarget.objects.get(pk=self.id).fetchPrivilege(user)
     
     def getData(self, fields, context):
         data = self.headData(context)
