@@ -2779,6 +2779,9 @@ class Address(dbmodels.Model, ChildInstance):
     state = dbmodels.CharField(max_length=255, db_index=True, null=True)
     zipCode = dbmodels.CharField(max_length=255, db_index=True, null=True)
     
+    class Meta:
+        verbose_name_plural = 'Addresses'
+    
     fieldMap = {'city': 'city',
                 'state': 'state',
                 'zip code': 'zipCode',
@@ -3628,6 +3631,9 @@ class Inquiry(dbmodels.Model, ChildInstance):
 
     parent = parentField('consentrecords.Session', 'inquiries')
     user = dbmodels.ForeignKey('consentrecords.User', related_name='inquiries', db_index=True, on_delete=dbmodels.CASCADE)
+    
+    class Meta:
+        verbose_name_plural = 'Inquiries'
     
     fieldMap = {}
     
