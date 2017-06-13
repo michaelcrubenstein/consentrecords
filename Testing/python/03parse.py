@@ -378,14 +378,7 @@ qs2 = qs2.distinct()
 data = [i.getData([], escontext) for i in UserEmail.select_related(qs2)]
 print(data)
 
-path = 'user/%s/user access request' % mr.id.hex
-print("### %s, escontext" % path)
-tokens = pathparser._tokenize(path)
-qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
-qs2, accessType = UserUserAccessRequest.getSubClause(qs, escontext.user, accessType)
-qs2 = qs2.distinct()
-data = [i.getData([], context) for i in UserUserAccessRequest.select_related(qs2)]
-print(data)
+showData('user/%s/user grant request' % mr.id.hex, context, UserUserGrantRequest)
 
 showData('organization', escontext, Organization)
 showData('organization[name>text=Beacon Academy]/name', context, OrganizationName)

@@ -314,7 +314,7 @@ def buildSessionCanRegister(sessions, targetType):
             newItem.canRegister = canRegister
             newItem.save()
 
-def buildAccesses(instances):
+def buildGrants(instances):
     for u in instances:
         parent = GrantTarget.objects.get(pk=u.id)
         children = u.children.filter(typeID=terms.accessRecord)
@@ -342,7 +342,7 @@ def buildAccesses(instances):
                                       'grantee': us[0],
                                       'privilege': privilege})
 
-def buildAccessRequests(instances, parentType, userSourceType):
+def buildGrantRequests(instances, parentType, userSourceType):
     for u in instances:
         parent = parentType.objects.get(pk=u.id)
         for i in u.value_set.filter(field=terms['access request']):
@@ -465,11 +465,11 @@ if __name__ == "__main__":
                       }
         buildHistory(orgs, Organization, OrganizationHistory, uniqueTerms)
         
-        buildAccesses(users)
+        buildGrants(users)
         
-        buildAccesses(orgs)
+        buildGrants(orgs)
         
-        buildAccessRequests(users, User, UserUserAccessRequest)
+        buildGrantRequests(users, User, UserUserGrantRequest)
         
         # Services
         uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
@@ -638,7 +638,7 @@ if __name__ == "__main__":
             p.grantTarget = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
             p.save()
         
-        buildAccesses(paths)
+        buildGrants(paths)
         
         experiences = Instance.objects.filter(typeID=terms['More Experience'])
         uniqueTerms = {terms['Organization']: ForeignKeyTranslator('organization', Organization),

@@ -225,8 +225,8 @@ class UserEmailInline(TabularInline):
     show_change_link = True
     fk_name = 'parent'
     
-class UserUserAccessRequestInline(TabularInline):
-    model = UserUserAccessRequest
+class UserUserGrantRequestInline(TabularInline):
+    model = UserUserGrantRequest
     list_display = ('id', 'grantee', 't_creationTime', 'deleteTransaction')
     fieldsets = (
         (None, {'fields': ('id', 'grantee', 't_creationTime', 'deleteTransaction')}),
@@ -265,7 +265,7 @@ class UserAdmin(ModelAdmin):
     readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 't_creationTime', 'lastTransaction', 'deleteTransaction')
     search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
-    inlines = [UserHistoryInline, UserEmailInline, UserUserAccessRequestInline, NotificationInline, PathInline]
+    inlines = [UserHistoryInline, UserEmailInline, UserUserGrantRequestInline, NotificationInline, PathInline]
 
 admin.site.register(User, UserAdmin)
 

@@ -358,7 +358,7 @@ class RootInstance(IInstance):
              'user': User,
              'user grant': UserGrant,
              'user email': UserEmail,
-             'user user grant request': UserUserAccessRequest,
+             'user user grant request': UserUserGrantRequest,
             }
         if tokens[0] in d:
             qsType = d[tokens[0]]
@@ -4891,9 +4891,9 @@ class User(dbmodels.Model, RootInstance):
                 Notification.select_related(self.notifications.filter(deleteTransaction__isnull=True).order_by('transaction__creation_time'))]
 
         if context.getPrivilege(self) == 'administer':
-            if 'user access request' in fields: 
-                data['user access requests'] = [i.getData([], context) for i in \
-                    UserUserAccessRequest.select_related(self.userAccessRequests.filter(deleteTransaction__isnull=True))]
+            if 'user grant request' in fields: 
+                data['user grant requests'] = [i.getData([], context) for i in \
+                    UserUserGrantRequest.select_related(self.userGrantRequests.filter(deleteTransaction__isnull=True))]
 
         return data
     
@@ -4919,7 +4919,7 @@ class User(dbmodels.Model, RootInstance):
     elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
                   'notification': ('notifications__', "Notification", 'parent'),
                   'path': ('paths__', "Path", 'parent'),
-                  'user access request': ('userAccessRequests__', "UserUserAccessRequest", 'parent'),
+                  'user grant request': ('userGrantRequests__', "UserUserGrantRequest", 'parent'),
                  }
 
     def getSubClause(qs, user, accessType):
@@ -4966,9 +4966,9 @@ class User(dbmodels.Model, RootInstance):
                         raise RuntimeError("Not yet implemented")
                     elif fieldName == 'primary administrator':
                         raise RuntimeError("Not yet implemented")
-                    elif fieldName == 'user access request':
+                    elif fieldName == 'user grant request':
                         raise RuntimeError("Not yet implemented")
-                    elif fieldName == 'group access request':
+                    elif fieldName == 'group grant request':
                         raise RuntimeError("Not yet implemented")
                     elif fieldName == 'notification':
                         raise RuntimeError("Not yet implemented")
@@ -5064,22 +5064,22 @@ class UserEmailHistory(dbmodels.Model):
     position = dbmodels.IntegerField(editable=False)
 
 ### A Multiple Picked Value
-class UserUserAccessRequest(dbmodels.Model, AccessInstance):
+class UserUserGrantRequest(dbmodels.Model, AccessInstance):
     id = idField()
-    transaction = createTransactionField('createdUserUserAccessRequests')
-    lastTransaction = lastTransactionField('changedUserUserAccessRequests')
-    deleteTransaction = deleteTransactionField('deletedUserUserAccessRequests')
+    transaction = createTransactionField('createdUserUserGrantRequests')
+    lastTransaction = lastTransactionField('changedUserUserGrantRequests')
+    deleteTransaction = deleteTransactionField('deletedUserUserGrantRequests')
 
-    parent = parentField(User, 'userAccessRequests')
-    grantee = dbmodels.ForeignKey(User, related_name='userUserAccessRequests', db_index=True, on_delete=dbmodels.CASCADE)
+    parent = parentField(User, 'userGrantRequests')
+    grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequests', db_index=True, on_delete=dbmodels.CASCADE)
 
     def __str__(self):
         return self.description()
     
     fieldMap = {}
                
-    elementMap = {'grantee': ('grantee__', 'User', 'userUserAccessRequests'),
-                  'parent': ('parent__', "User", 'userAccessRequests'),
+    elementMap = {'grantee': ('grantee__', 'User', 'userUserGrantRequests'),
+                  'parent': ('parent__', "User", 'userGrantRequests'),
                  }
 
     def getSubClause(qs, user, accessType):
@@ -5088,12 +5088,12 @@ class UserUserAccessRequest(dbmodels.Model, AccessInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
-class UserUserAccessRequestHistory(dbmodels.Model):
+class UserUserGrantRequestHistory(dbmodels.Model):
     id = idField()
-    transaction = createTransactionField('UserUserAccessRequestHistories')
-    instance = historyInstanceField(UserUserAccessRequest)
+    transaction = createTransactionField('userUserGrantRequestHistories')
+    instance = historyInstanceField(UserUserGrantRequest)
 
-    grantee = dbmodels.ForeignKey(User, related_name='userUserAccessRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
+    grantee = dbmodels.ForeignKey(User, related_name='userUserGrantRequestHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
 
 class Context:
     def __init__(self, languageCode, user):
