@@ -267,13 +267,13 @@ class SecureRootInstance(IInstance):
             elementClause = GrantTarget.objects.filter(\
                                  Q(publicAccess__in=privilegeIDs) |\
                                  Q(primaryAdministrator=user) |\
-                                 Q(userAccesses__privilege__in=privilegeIDs,
-                                   userAccesses__deleteTransaction__isnull=True,
-                                   userAccesses__grantee=user) |\
-                                 Q(groupAccesses__privilege__in=privilegeIDs,
-                                   groupAccesses__deleteTransaction__isnull=True,
-                                   groupAccesses__grantee__members__user=user,
-                                   groupAccesses__grantee__members__deleteTransaction__isnull=True))
+                                 Q(userGrants__privilege__in=privilegeIDs,
+                                   userGrants__deleteTransaction__isnull=True,
+                                   userGrants__grantee=user) |\
+                                 Q(groupGrants__privilege__in=privilegeIDs,
+                                   groupGrants__deleteTransaction__isnull=True,
+                                   groupGrants__grantee__members__user=user,
+                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
             qClause = Q((inClause, elementClause))
             return qs.filter(qClause)
 
@@ -286,13 +286,13 @@ class SecureRootInstance(IInstance):
             inClause = (prefix + '__id__in') if prefix else 'id__in'
             elementClause = GrantTarget.objects.filter(\
                                  Q(primaryAdministrator=user) |\
-                                 Q(userAccesses__privilege="administer",
-                                   userAccesses__deleteTransaction__isnull=True,
-                                   userAccesses__grantee=user) |\
-                                 Q(groupAccesses__privilege="administer",
-                                   groupAccesses__deleteTransaction__isnull=True,
-                                   groupAccesses__grantee__members__user=user,
-                                   groupAccesses__grantee__members__deleteTransaction__isnull=True))
+                                 Q(userGrants__privilege="administer",
+                                   userGrants__deleteTransaction__isnull=True,
+                                   userGrants__grantee=user) |\
+                                 Q(groupGrants__privilege="administer",
+                                   groupGrants__deleteTransaction__isnull=True,
+                                   groupGrants__grantee__members__user=user,
+                                   groupGrants__grantee__members__deleteTransaction__isnull=True))
             qClause = Q((inClause, elementClause))
             return qs.filter(qClause)
 
@@ -316,8 +316,7 @@ class RootInstance(IInstance):
         return self
         
     def parse(tokens, user):
-        d = {'access source': GrantTarget,
-             'address': Address,
+        d = {'address': Address,
              'comment': Comment,
              'comment prompt': CommentPrompt,
              'comment prompt translation': CommentPromptText,
@@ -330,8 +329,9 @@ class RootInstance(IInstance):
              'experience prompt': ExperiencePrompt,
              'experience prompt service': ExperiencePromptService,
              'experience prompt translation': ExperiencePromptText,
+             'grant target': GrantTarget,
              'group': Group,
-             'group access': GroupGrant,
+             'group grant': GroupGrant,
              'group name': GroupName,
              'group member': GroupMember,
              'inquiry': Inquiry,
@@ -356,9 +356,9 @@ class RootInstance(IInstance):
              'site name': SiteName,
              'street': Street,
              'user': User,
-             'user access': UserGrant,
+             'user grant': UserGrant,
              'user email': UserEmail,
-             'user user access request': UserUserAccessRequest,
+             'user user grant request': UserUserAccessRequest,
             }
         if tokens[0] in d:
             qsType = d[tokens[0]]
@@ -2718,9 +2718,9 @@ def wrapInstanceQuerySet(t, qs=None):
 
 class GrantTarget(dbmodels.Model):
     id = idField()
-    transaction = createTransactionField('createdAccessSources')
-    lastTransaction = lastTransactionField('changedAccessSources')
-    deleteTransaction = deleteTransactionField('deletedAccessSources')
+    transaction = createTransactionField('createdGrantTargets')
+    lastTransaction = lastTransactionField('changedGrantTargets')
+    deleteTransaction = deleteTransactionField('deletedGrantTargets')
 
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
     primaryAdministrator = dbmodels.ForeignKey('consentrecords.User', related_name='administered', db_index=True, null=True, on_delete=dbmodels.CASCADE)
@@ -2729,8 +2729,8 @@ class GrantTarget(dbmodels.Model):
                 'primary administrator': 'primaryAdministrator',
                }
                
-    elementMap = {'user access': ('userAccesses__', 'UserGrant', 'parent'),
-                  'group access': ('groupAccesses__', 'GroupGrant', 'parent'),
+    elementMap = {'user access': ('userGrants__', 'UserGrant', 'parent'),
+                  'group access': ('groupGrants__', 'GroupGrant', 'parent'),
                  }
                  
     def select_head_related(querySet):
@@ -2738,12 +2738,12 @@ class GrantTarget(dbmodels.Model):
     
     def select_related(querySet):
         return querySet.select_related('primaryAdministrator')\
-                       .prefetch_related(Prefetch('userAccesses',
+                       .prefetch_related(Prefetch('userGrants',
                                           queryset=UserGrant.select_related(UserGrant.objects.filter(deleteTransaction__isnull=True)),
-                                          to_attr='currentUserAccesses'))\
-                       .prefetch_related(Prefetch('groupAccesses',
+                                          to_attr='currentUserGrant'))\
+                       .prefetch_related(Prefetch('groupGrants',
                                           queryset=GroupGrant.select_related(GroupGrant.objects.filter(deleteTransaction__isnull=True)),
-                                          to_attr='currentGroupAccesses'))
+                                          to_attr='currentGroupGrant'))
                                           
                  
     def fetchPrivilege(self, user):
@@ -2752,8 +2752,8 @@ class GrantTarget(dbmodels.Model):
         elif self.primaryAdministrator_id == user.id:
             return "administer"
         else:
-            f = self.userAccesses.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
-                .union(self.groupAccesses.filter(grantee__members__user=user, deleteTransaction__isnull=True,
+            f = self.userGrants.filter(grantee=user, deleteTransaction__isnull=True).values('privilege')\
+                .union(self.groupGrants.filter(grantee__members__user=user, deleteTransaction__isnull=True,
                                                   grantee__deleteTransaction__isnull=True,
                                                   grantee__members__deleteTransaction__isnull=True).values('privilege'))
             
@@ -2771,8 +2771,8 @@ class GrantTarget(dbmodels.Model):
                 data['public access'] = self.publicAccess
             if self.primaryAdministrator:
                 data['primary administrator'] = self.primaryAdministrator.headData(context)
-            data['user accesses'] = [i.getData([], context) for i in self.currentUserAccesses]
-            data['group accesses'] = [i.getData([], context) for i in self.currentGroupAccesses]
+            data['user grants'] = [i.getData([], context) for i in self.currentUserGrant]
+            data['group grants'] = [i.getData([], context) for i in self.currentGroupGrant]
         
         return data
     
@@ -2784,7 +2784,7 @@ class GrantTarget(dbmodels.Model):
 
 class GrantTargetHistory(dbmodels.Model):
     id = idField()
-    transaction = createTransactionField('accessSourceHistories')
+    transaction = createTransactionField('grantTargetHistories')
     instance = historyInstanceField(GrantTarget)
 
     publicAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
@@ -2793,11 +2793,11 @@ class GrantTargetHistory(dbmodels.Model):
 ### A Multiple Picked Value
 class UserGrant(dbmodels.Model, AccessInstance):
     id = idField()
-    transaction = createTransactionField('createdUserAccesses')
-    lastTransaction = lastTransactionField('changedUserAccesses')
-    deleteTransaction = deleteTransactionField('deletedUserAccesses')
+    transaction = createTransactionField('createdUserGrants')
+    lastTransaction = lastTransactionField('changedUserGrants')
+    deleteTransaction = deleteTransactionField('deletedUserGrants')
 
-    parent = parentField(GrantTarget, 'userAccesses')
+    parent = parentField(GrantTarget, 'userGrants')
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -2817,7 +2817,7 @@ class UserGrant(dbmodels.Model, AccessInstance):
 
 class UserGrantHistory(dbmodels.Model):
     id = idField()
-    transaction = createTransactionField('userAccessHistories')
+    transaction = createTransactionField('userGrantHistories')
     instance = historyInstanceField(UserGrant)
 
     grantee = dbmodels.ForeignKey('consentrecords.User', related_name='granteeHistories', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -2826,11 +2826,11 @@ class UserGrantHistory(dbmodels.Model):
 ### A Multiple Picked Value
 class GroupGrant(dbmodels.Model, AccessInstance):
     id = idField()
-    transaction = createTransactionField('createdGroupAccesses')
-    lastTransaction = lastTransactionField('changedGroupAccesses')
-    deleteTransaction = deleteTransactionField('deletedGroupAccesses')
+    transaction = createTransactionField('createdGroupGrants')
+    lastTransaction = lastTransactionField('changedGroupGrants')
+    deleteTransaction = deleteTransactionField('deletedGroupGrants')
 
-    parent = parentField(GrantTarget, 'groupAccesses')
+    parent = parentField(GrantTarget, 'groupGrants')
     grantee = dbmodels.ForeignKey('consentrecords.Group', related_name='grantees', db_index=True, on_delete=dbmodels.CASCADE)
     privilege = dbmodels.CharField(max_length=10, db_index=True, null=True)
 
@@ -4152,7 +4152,7 @@ class Path(dbmodels.Model, IInstance):
     birthday = dbmodels.CharField(max_length=10, db_index=True, null=True)
     name = dbmodels.CharField(max_length=255, db_index=True, null=True)
     specialAccess = dbmodels.CharField(max_length=10, db_index=True, null=True)
-    accessSource = dbmodels.ForeignKey('consentrecords.GrantTarget', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
+    grantTarget = dbmodels.ForeignKey('consentrecords.GrantTarget', related_name='paths', db_index=True, null=True, on_delete=dbmodels.CASCADE)
     canAnswerExperience = dbmodels.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -4166,10 +4166,10 @@ class Path(dbmodels.Model, IInstance):
         
     @property    
     def privilegeSource(self):
-        return self.accessSource
+        return self.grantTarget
         
     def fetchPrivilege(self, user):
-        return self.accessSource.fetchPrivilege(user)
+        return self.grantTarget.fetchPrivilege(user)
 
     def headData(self, context):
         return {'id': self.id.hex, 
@@ -4203,13 +4203,13 @@ class Path(dbmodels.Model, IInstance):
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousFindFilter(prefix=''):
-        inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+        inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
         return Q((inClause, GrantTarget.objects.filter(publicAccess__in=["find", "read"])))
         
     ### Returns a query clause that limits a set of users to users that can be found 
     ### without signing in.
     def anonymousReadFilter(prefix=''):
-        inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+        inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
         return Q((inClause, GrantTarget.objects.filter(publicAccess__id="read")))
         
     def findableQuerySet(qs, user, prefix=''):
@@ -4219,18 +4219,18 @@ class Path(dbmodels.Model, IInstance):
             return qs
         else:
             privilegeIDs = ["find", "read", "register", "write", "administer"]
-            inClause = (prefix + '__accessSource__in') if prefix else 'accessSource__in'
+            inClause = (prefix + '__grantTarget__in') if prefix else 'grantTarget__in'
             return qs.filter(Q((inClause,
                                 GrantTarget.objects.filter(\
                              Q(publicAccess__in=privilegeIDs) |\
                              Q(primaryAdministrator=user) |\
-                             Q(userAccesses__privilege__in=privilegeIDs,
-                               userAccesses__deleteTransaction__isnull=True,
-                               userAccesses__grantee=user) |\
-                             Q(groupAccesses__privilege__in=privilegeIDs,
-                               groupAccesses__deleteTransaction__isnull=True,
-                               groupAccesses__grantee__members__user=user,
-                               groupAccesses__grantee__members__deleteTransaction__isnull=True)))))
+                             Q(userGrants__privilege__in=privilegeIDs,
+                               userGrants__deleteTransaction__isnull=True,
+                               userGrants__grantee=user) |\
+                             Q(groupGrants__privilege__in=privilegeIDs,
+                               groupGrants__deleteTransaction__isnull=True,
+                               groupGrants__grantee__members__user=user,
+                               groupGrants__grantee__members__deleteTransaction__isnull=True)))))
 
     fieldMap = {'screen name': 'name',
                 'birthday': 'birthday',

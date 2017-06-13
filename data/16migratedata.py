@@ -635,7 +635,7 @@ if __name__ == "__main__":
         
         newPaths = Path.objects.all()
         for p in newPaths:
-            p.accessSource = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
+            p.grantTarget = GrantTarget.objects.get(pk=(p.id if p.specialAccess else p.parent_id))
             p.save()
         
         buildAccesses(paths)
