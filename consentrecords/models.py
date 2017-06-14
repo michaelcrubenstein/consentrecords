@@ -226,6 +226,11 @@ class IInstance():
                 noneName = v.text
         return noneName or enName or '(None)'
     
+    def delete(self, context):
+        if self.deleteTransaction_id:
+            raise RuntimeError('%s is already deleted' % str(self))
+        self.deleteTransaction = contect.transaction
+        self.save()
     
 ### An Instance that has names that vary by languageCode.
 class NamedInstance(IInstance):
@@ -241,6 +246,11 @@ class NamedInstance(IInstance):
         data = self.headData(context)
         data['names'] = [i.getData([], context) for i in self.currentNamesQuerySet]
         return data
+        
+    def delete(self, context):
+        super(NamedInstance, self).delete(context)
+        for name in currentNamesQuerySet:
+            name.delete(context)
 
 # An instance that is a secure root: User and Organization
 class SecureRootInstance(IInstance):
@@ -2764,7 +2774,7 @@ def wrapInstanceQuerySet(t, qs=None):
         
     return ReadInstanceQuerySet(qs) if isGlobal else InstanceQuerySet(qs)
 
-class GrantTarget(dbmodels.Model):
+class GrantTarget(dbmodels.Model, IInstance):
     id = idField()
     transaction = createTransactionField('createdGrantTargets')
     lastTransaction = lastTransactionField('changedGrantTargets')
@@ -2829,7 +2839,13 @@ class GrantTarget(dbmodels.Model):
             return qs, accessType
         else:
             return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
-
+            
+    def delete(self, context):
+        super(GrantTarget, self).delete(context)
+        for i in self.userGrants.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.groupGrants.filter(deleteTransaction__isnull=True):
+            i.delete(context)
 class GrantTargetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('grantTargetHistories')
@@ -2961,6 +2977,11 @@ class Address(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
+    def delete(self, context):
+        super(Address, self).delete(context)
+        for i in self.streets.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+    
 class AddressHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('addressHistories')
@@ -3061,6 +3082,11 @@ class CommentPrompt(dbmodels.Model, NamedInstance, RootInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
         
+    def delete(self, context):
+        super(CommentPrompt, self).delete(context)
+        for i in self.texts.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+    
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptHistories')
@@ -3361,6 +3387,15 @@ class Experience(dbmodels.Model, ChildInstance):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent'), Path
 
+    def delete(self, context):
+        super(Experience, self).delete(context)
+        for i in self.customServices.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.services.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.comments.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+    
 class ExperienceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceHistories')
@@ -3552,6 +3587,11 @@ class ExperiencePrompt(dbmodels.Model, RootInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def delete(self, context):
+        super(ExperiencePrompt, self).delete(context)
+        for i in self.disqualifyingTags.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptHistories')
@@ -3678,6 +3718,13 @@ class Group(dbmodels.Model, NamedInstance, ChildInstance):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
+
+    def delete(self, context):
+        super(Group, self).delete(context)
+        for i in self.names.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.members.filter(deleteTransaction__isnull=True):
+            i.delete(context)
 
 class GroupName(dbmodels.Model, TranslationInstance):
     id = idField()
@@ -3864,6 +3911,11 @@ class Notification(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def delete(self, context):
+        super(Notification, self).delete(context)
+        for i in self.notificationArguments.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+
 class NotificationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('notificationHistories')
@@ -3877,6 +3929,7 @@ class NotificationArgument(dbmodels.Model, ChildInstance):
     transaction = createTransactionField('createdNotificationArguments')
     lastTransaction = lastTransactionField('changedNotificationArguments')
     deleteTransaction = deleteTransactionField('deletedNotificationArguments')
+    
     parent = parentField('consentrecords.Notification', 'notificationArguments')
     position = dbmodels.IntegerField()
     argument = dbmodels.CharField(max_length=255, db_index=True, null=True)
@@ -3988,6 +4041,13 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
             return qs, accessType
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
+
+    def delete(self, context):
+        super(Offering, self).delete(context)
+        for i in self.services.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.sessions.filter(deleteTransaction__isnull=True):
+            i.delete(context)
 
 class OfferingHistory(dbmodels.Model):
     id = idField()
@@ -4150,6 +4210,13 @@ class Organization(dbmodels.Model, NamedInstance, RootInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user), Organization
 
+    def delete(self, context):
+        super(Organization, self).delete(context)
+        for i in self.groups.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.sites.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -4295,6 +4362,13 @@ class Path(dbmodels.Model, IInstance):
         else:
             return Path.findableQuerySet(qs, user), Path
 
+    def delete(self, context):
+        super(Path, self).delete(context)
+        for i in self.experiences.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in GroupTarget.objects.filter(pk=self.id):
+            i.delete(context)
+
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -4365,6 +4439,17 @@ class Service(dbmodels.Model, NamedInstance, RootInstance):
     deleteTransaction = deleteTransactionField('deletedServices')
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True)
 
+    fieldMap = {'stage': 'stage',
+               }
+               
+    elementMap = {'name': ('names__', "ServiceName", 'parent'),
+                  'organization label': ('organizationLabels__', "ServiceOrganizationLabel", 'parent'),
+                  'site label': ('siteLabels__', "ServiceSiteLabel", 'parent'),
+                  'offering label': ('offeringLabels__', "ServiceOfferingLabel", 'parent'),
+                  'implies': ('serviceImplications__', 'ServiceImplication', 'parent'),
+                  'implied by': ('impliedServiceImplications__', 'ServiceImplication', 'impliedService'),
+                 }
+                 
     def __str__(self):
         return self.description()
 
@@ -4465,19 +4550,21 @@ class Service(dbmodels.Model, NamedInstance, RootInstance):
             
         return newIDs
             
-    fieldMap = {'stage': 'stage',
-               }
-               
-    elementMap = {'name': ('names__', "ServiceName", 'parent'),
-                  'organization label': ('organizationLabels__', "ServiceOrganizationLabel", 'parent'),
-                  'site label': ('siteLabels__', "ServiceSiteLabel", 'parent'),
-                  'offering label': ('offeringLabels__', "ServiceOfferingLabel", 'parent'),
-                  'implies': ('serviceImplications__', 'ServiceImplication', 'parent'),
-                  'implied by': ('impliedServiceImplications__', 'serviceImplication', 'impliedService'),
-                 }
-                 
     def getSubClause(qs, user, accessType):
         return qs, accessType
+
+    def delete(self, context):
+        super(Service, self).delete(context)
+        for i in self.organizationLabels.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.siteLabels.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.offeringLabels.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.serviceImplications.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.impliedServiceImplications.filter(deleteTransaction__isnull=True):
+            i.delete(context)
 
 class ServiceHistory(dbmodels.Model):
     id = idField()
@@ -4745,6 +4832,17 @@ class Session(dbmodels.Model, NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def delete(self, context):
+        super(Session, self).delete(context)
+        for i in self.engagements.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.enrollments.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.inquiries.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.periods.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+
 class SessionHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionHistories')
@@ -4846,6 +4944,13 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
 
+    def delete(self, context):
+        super(Site, self).delete(context)
+        for i in self.addresses.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.offerings.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+            
 class SiteHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteHistories')
@@ -5111,6 +5216,18 @@ class User(dbmodels.Model, RootInstance):
                     raise ValueError('unrecognized children path from user: %s' % path)
             else:
                 raise ValueError('unrecognized path from user: %s' % path)
+    def delete(self, context):
+        super(User, self).delete(context)
+        for i in self.emails.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.notifications.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.paths.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in self.userGrantRequests.filter(deleteTransaction__isnull=True):
+            i.delete(context)
+        for i in GrantTarget.objects.filter(pk=self.id, deleteTransaction__isnull=True):
+            i.delete(context)
 
 class UserHistory(dbmodels.Model):
     id = idField()
