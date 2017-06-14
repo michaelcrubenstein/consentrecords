@@ -3902,7 +3902,7 @@ class Notification(dbmodels.Model, ChildInstance):
                 'is fresh': 'isFresh',
                }
                
-    elementMap = {'argument': ('argument__', "NotificationArgument", 'parent'),
+    elementMap = {'argument': ('notificationArguments__', "NotificationArgument", 'parent'),
                  }
 
     def getSubClause(qs, user, accessType):
