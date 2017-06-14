@@ -96,17 +96,6 @@ class ValueAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('id','instance', 'instance_id', 'field', 'stringValue', 'referenceValue', 'languageCode', 'position','transaction', 'deleteTransaction')
     search_fields = (['id', 'instance__id', 'stringValue', 'referenceValue__value__stringValue'])
-    
-class TransactionAdmin(admin.ModelAdmin):
-
-    list_display = ('id', 'user', 'creation_time')
-    fieldsets = (
-        (None, {'fields': ('id', 'user', 'creation_time')}),
-    )
-    readonly_fields = ('id', 'user', 'creation_time')
-    search_fields = ('id', 'user__id', 'user__email')
-    
-    inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline]
 
 class DescriptionAdmin(admin.ModelAdmin):
 
@@ -119,7 +108,6 @@ class DescriptionAdmin(admin.ModelAdmin):
 
 admin.site.register(Instance, InstanceAdmin)
 admin.site.register(Value, ValueAdmin)
-admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Description, DescriptionAdmin)
 
 class TabularInline(admin.TabularInline):
@@ -1280,3 +1268,42 @@ class StreetAdmin(ModelAdmin):
         
 admin.site.register(Street, StreetAdmin)
 
+class TransactionServiceInline(TabularInline):
+    model = Service
+
+    list_display = ('id', '__str__', 'stage', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'stage', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'stage', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'stage', 'transaction__id', 'deleteTransaction__id')
+    
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service'
+    verbose_name_plural = 'Last Modified Services'
+
+class TransactionCreatedServiceInline(TransactionServiceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service'
+    verbose_name_plural = 'Created Services'
+
+class TransactionDeletedServiceInline(TransactionServiceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service'
+    verbose_name_plural = 'Deleted Services'
+
+class TransactionServiceHistoryInline(ServiceHistoryInline):
+    fk_name = 'transaction'
+ 
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'creation_time')
+    fieldsets = (
+        (None, {'fields': ('id', 'user', 'creation_time')}),
+    )
+    readonly_fields = ('id', 'user', 'creation_time')
+    search_fields = ('id', 'user__id', 'user__email')
+    
+    inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
+               TransactionCreatedServiceInline, TransactionServiceInline, TransactionDeletedServiceInline, TransactionServiceHistoryInline]
+
+admin.site.register(Transaction, TransactionAdmin)

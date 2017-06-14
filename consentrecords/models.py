@@ -402,6 +402,54 @@ class TranslationInstance(ChildInstance):
                
     def getData(self, fields, context):
         return self.headData(context)
+    
+    def ValueCheckLanguageCode(self, value):
+        validValues = ['en', 'sp', 'zh']
+        if not value or value in validValues:
+            return
+        else:
+            raise 'the value "%s" is not a valid language. Valid langues are are: %s' % (value, validValues)
+    
+    def ValueCheckText(self, value):
+        return
+    
+    def buildHistory(self, context):
+        return self.historyType.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             text=self.text,
+                                             languageCode=self.languageCode)
+        
+    def update(self, changes, context):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'text' in changes and changes['text'] != self.text:
+            self.ValueCheckText(changes['text'])
+            history = history or self.buildHistory(context)
+            self.text = changes['text'] or None
+        if 'languageCode' in changes and changes['languageCode'] != self.languageCode:
+            self.ValueCheckLanguageCode(changes['languageCode'])
+            history = history or self.buildHistory(context)
+            self.languageCode = changes['languageCode'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+        
+        return {}
+            
+    def create(objects, parent, changes, context):
+        print ("create", changes)
+        newItem = objects.create(transaction=context.transaction,
+                                   lastTransaction=context.transaction,
+                                   parent=parent,
+                                   text=(changes['text'] if 'text' in changes else None),
+                                   languageCode=(changes['languageCode'] if 'languageCode' in changes else None))
+        newIDs = {}
+        if 'clientID' in changes:
+            newIDs[changes['clientID']] = newItem.id.hex
+        return newItem, newIDs                          
         
 
 ### An instance that contains access information.
@@ -4364,7 +4412,59 @@ class Service(dbmodels.Model, NamedInstance, RootInstance):
             data['services'] = [i.headData(context) for i in self.currentServiceImplications]
             data['services'].sort(key=lambda i: i['description'])
         return data
+    
+    def ValueCheckStage(self, value):
+        validValues = ['Certificate', 'Coaching', 'Expert', 'Housing', 'Mentoring', 
+                       'Skills', 'Studying', 'Teaching', 'Training', 'Tutoring', 
+                       'Volunteering', 'Wellness', 'Whatever', 'Working']
+        if not value or value in validValues:
+            return
+        else:
+            raise 'the value "%s" is not a valid stage. Valid stages are: %s' % (value, validValues)
+    
+    def buildHistory(self, context):
+        return ServiceHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             stage=self.stage)
         
+    def update(self, changes, context):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'stage' in changes and changes['stage'] != self.stage:
+            self.ValueCheckStage(changes['stage'])
+            history = history or self.buildHistory(context)
+            self.stage = changes['stage'] or None
+        
+        newIDs = {}
+        
+        key = 'name'
+        subClass = ServiceName   
+        children = self.names
+        
+        if key in changes:
+            if not isinstance(changes[key], list):
+                raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
+            for subChanges in changes[key]:
+                if 'id' in subChanges:
+                    subItem = children.get(pk=subChanges['id'])
+                    if 'delete' in subChanges and subChanges['delete'] == 'delete':
+                        subItem.deleteTransaction = context.transaction
+                        subItem.save()
+                    else:
+                        newIDs.update(subItem.update(subChanges, context))
+                elif 'clientID' in subChanges:
+                    newItem, subNewIDs = subClass.create(self, subChanges, context)
+                    print(newItem, subNewIDs)
+                    newIDs.update(subNewIDs)
+                                                         
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
+        return newIDs
+            
     fieldMap = {'stage': 'stage',
                }
                
@@ -4406,6 +4506,13 @@ class ServiceName(dbmodels.Model, TranslationInstance):
                  
     def getSubClause(qs, user, accessType):
         return qs, accessType
+    
+    def create(parent, changes, context):
+        return TranslationInstance.create(ServiceName.objects, parent, changes, context)
+        
+    @property
+    def historyType(self):
+        return ServiceNameHistory
 
 class ServiceNameHistory(dbmodels.Model):
     id = idField()
@@ -5099,6 +5206,7 @@ class Context:
     def __init__(self, languageCode, user):
         self.languageCode = languageCode
         self.user = user
+        self._transaction = None
         if user:
             qs = AuthUser.objects.filter(email=user.emails.all()[0].text)
             self.authUser = qs[0] if len(qs) else AnonymousUser()
@@ -5122,7 +5230,15 @@ class Context:
     @property
     def is_administrator(self):
         return self.authUser and self.authUser.is_superuser
-            
+    
+    @property
+    def transaction(self):
+        if not self._transaction:
+            if not self.authUser.is_authenticated:
+                raise RuntimeError("transactions cannot be created without authenticated users")
+            self._transaction = Transaction.createTransaction(self.authUser) 
+        return self._transaction
+         
     @property
     def is_staff(self):
         return self.authUser and self.authUser.is_staff
@@ -5130,3 +5246,7 @@ class Context:
     def canRead(self, i):
         privilege = self.getPrivilege(i)
         return privilege in ["read", "write", "administer"]
+    
+    def canWrite(self, i):
+        privilege = self.getPrivilege(i)
+        return privilege in ["write", "administer"]
