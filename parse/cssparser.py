@@ -1,3 +1,5 @@
+import html
+import html.parser
 import logging
 
 class parser:
@@ -98,3 +100,10 @@ class parser:
                 i += 1
 #         logger.error("  return(%s, %s)" % (a, i))
         return a, i
+
+    def tokenizeHTML(path):
+        html_parser = html.parser.HTMLParser()
+        unescaped = html.unescape(path)
+        tokens = parser.tokenize(unescaped)
+        a, remainder = parser.cascade(tokens)
+        return a
