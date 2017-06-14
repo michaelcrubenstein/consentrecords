@@ -2777,8 +2777,8 @@ class GrantTarget(dbmodels.Model):
                 'primary administrator': 'primaryAdministrator',
                }
                
-    elementMap = {'user access': ('userGrants__', 'UserGrant', 'parent'),
-                  'group access': ('groupGrants__', 'GroupGrant', 'parent'),
+    elementMap = {'user grant': ('userGrants__', 'UserGrant', 'parent'),
+                  'group grant': ('groupGrants__', 'GroupGrant', 'parent'),
                  }
                  
     def select_head_related(querySet):
