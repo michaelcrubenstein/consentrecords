@@ -772,11 +772,11 @@ class OfferingNameInline(NameInline):
     
 class OfferingServiceInline(TabularInline):
     model = OfferingService
-    list_display = ('id', '__str__', 'service', 't_creationTime', 'deleteTransaction')
+    list_display = ('id', '__str__', 'position', 'service', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'service', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'position', 'service', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'service', 't_creationTime', 'deleteTransaction')
+    readonly_fields = ('id', 'position', 'service', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'service__id', 'transaction__id', 'deleteTransaction__id')
 
 class SessionInline(TabularInline):
@@ -825,6 +825,30 @@ class OfferingNameAdmin(ModelAdmin):
     inlines = [OfferingNameHistoryInline]
         
 admin.site.register(OfferingName, OfferingNameAdmin)
+
+class OfferingServiceHistoryInline(TabularInline):
+    model = OfferingServiceHistory
+    list_display = ('id', 't_creationTime', 'position', 'service')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'position', 'service')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'position', 'service')
+
+    ordering = ['transaction__creation_time', 'position']
+    show_change_link = True
+    fk_name = 'instance'
+
+class OfferingServiceAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'position', 'service', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'parent', 'position', 'service', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'parent', 'position', 'service', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'service__id', 'transaction__id', 'deleteTransaction__id')
+
+    inlines = [OfferingServiceHistoryInline]
+
+admin.site.register(OfferingService, OfferingServiceAdmin)
 
 class OrganizationHistoryInline(TabularInline):
     model = OrganizationHistory
