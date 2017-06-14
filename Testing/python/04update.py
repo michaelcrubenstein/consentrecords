@@ -2,7 +2,7 @@ import django; django.setup()
 from django.db import transaction
 import profile
 from consentrecords.models import *
-from consentrecords import pathparser
+from parse.cssparser import parser as cssparser
 mr = User.objects.filter(emails__text='michaelcrubenstein@gmail.com')[0]
 es = User.objects.filter(emails__text='elizabethskavish@gmail.com')[0]
 context = Context('en', mr)
@@ -11,7 +11,7 @@ anoncontext = Context('en', None)
 
 def getInstance(path, context, resultClass):
     print("### %s, context" % path)
-    tokens = pathparser._tokenize(path)
+    tokens = cssparser.tokenizeHTML(path)
     qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
     qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
     qs2 = qs2.distinct()
