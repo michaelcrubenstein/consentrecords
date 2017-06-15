@@ -278,7 +278,9 @@ class IInstance():
     def delete(self, context):
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
-        self.deleteTransaction = contect.transaction
+        if not context.canWrite(self):
+            raise PermissionDenied
+        self.deleteTransaction = context.transaction
         self.save()
     
     def createChildren(self, data, key, context, subClass, newIDs={}):
@@ -4631,6 +4633,22 @@ class Period(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = Period.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 weekday=_orNone(data, 'weekday'),
+								 startTime=_orNone(data, 'start time'),
+								 endTime=_orNone(data, 'end time'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class PeriodHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('periodHistories')
