@@ -1319,6 +1319,33 @@ class TransactionDeletedServiceInline(TransactionServiceInline):
 class TransactionServiceHistoryInline(ServiceHistoryInline):
     fk_name = 'transaction'
  
+class TransactionOrganizationInline(TabularInline):
+    model = Organization
+    
+    list_display = ('id', '__str__', 'webSite', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'webSite', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'webSite', 'inquiryAccessGroup', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('names__text', 'id', 'webSite', 'inquiryAccessGroup__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Organization'
+    verbose_name_plural = 'Last Modified Organizations'
+
+class TransactionCreatedOrganizationInline(TransactionOrganizationInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Organization'
+    verbose_name_plural = 'Created Organizations'
+
+class TransactionDeletedOrganizationInline(TransactionOrganizationInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Organization'
+    verbose_name_plural = 'Deleted Organizations'
+
+class TransactionOrganizationHistoryInline(OrganizationHistoryInline):
+    fk_name = 'transaction'
+ 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'creation_time')
     fieldsets = (
@@ -1328,6 +1355,8 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ('id', 'user__id', 'user__email')
     
     inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
-               TransactionCreatedServiceInline, TransactionServiceInline, TransactionDeletedServiceInline, TransactionServiceHistoryInline]
+               TransactionCreatedServiceInline, TransactionServiceInline, TransactionDeletedServiceInline, TransactionServiceHistoryInline,
+               TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionDeletedOrganizationInline, TransactionOrganizationHistoryInline,
+              ]
 
 admin.site.register(Transaction, TransactionAdmin)
