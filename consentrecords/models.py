@@ -4,6 +4,7 @@ from django.db import models as dbmodels
 from django.db.models import F, Q, Prefetch
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 
 import datetime
 import numbers
@@ -17,6 +18,7 @@ import itertools
 from collections import defaultdict
 
 from custom_user.models import AuthUser
+from parse.cssparser import parser as cssparser
 
 # Returns a list containing the first argument. If t is None, then it is an empty list.
 def forceToList(t):
@@ -31,6 +33,53 @@ def combineTerms(t1, t2):
     
 def isUUID(s):
     return re.search('^[a-fA-F0-9]{32}$', s)
+    
+def _orNone(data, key):
+    return data[key] if key in data else None
+    
+def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=None):
+    if key not in data:
+        return None
+    else:
+        path = data[key]
+        tokens = cssparser.tokenizeHTML(path)
+        if thisQS and tokens[0] == 'this':
+            qs, tokens, qsType, accessType = _parse(thisQS, tokens[1:], context.user, thisQSType, None)
+        else:
+            qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+        qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
+        qs2 = qs2.distinct()
+        count = len(qs2)
+        if count == 0:
+            raise ValueError('the path does not yield any items: %s' % path)
+        elif count > 1:
+            raise ValueError('the path does not yield a single item: %s' % path)
+        else:
+            return qs2[0]
+            
+def _newPosition(objects, data, key):
+    qs = objects.filter(deleteTransaction__isnull=True).order_by('position')
+    if key in data:
+        position = int(data[key])
+        if position >= qs.count():
+            return qs.count()
+        else:
+            savedPosition = qs[position].position
+            if position > 0 and qs[position - 1].position < savedPosition - 1:
+                return savedPosition - 1
+            else:
+                startPosition = savedPosition
+                for i in range(position, qs.count()):
+                    if qs[i].position > startPosition + i - position:
+                        break
+                    else:
+                    	qs[i].position = startPosition + i - position + 1
+                    	qs[i].save()
+                return startPosition
+    elif qs.count():
+        return qs.reverse()[0].position + 1
+    else:
+        return 0
             
 def idField():
     return dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -232,6 +281,13 @@ class IInstance():
         self.deleteTransaction = contect.transaction
         self.save()
     
+    def createChildren(self, data, key, context, subClass, newIDs={}):
+        if key in data:
+            if not isinstance(data[key], list):
+                raise ValueError('%s element of data is not a list: %s' % (key, data[key]))
+            for subData in data[key]:
+                subClass.create(self, subData, context, newIDs=newIDs)
+    
 ### An Instance that has names that vary by languageCode.
 class NamedInstance(IInstance):
 
@@ -306,7 +362,6 @@ class SecureRootInstance(IInstance):
             qClause = Q((inClause, elementClause))
             return qs.filter(qClause)
 
-        
 ### An Instance that has no parent
 class RootInstance(IInstance):
     def headData(self, context):
@@ -449,18 +504,16 @@ class TranslationInstance(ChildInstance):
         
         return {}
             
-    def create(objects, parent, changes, context):
-        print ("create", changes)
+    def create(objects, parent, data, context, newIDs={}):
         newItem = objects.create(transaction=context.transaction,
-                                   lastTransaction=context.transaction,
-                                   parent=parent,
-                                   text=(changes['text'] if 'text' in changes else None),
-                                   languageCode=(changes['languageCode'] if 'languageCode' in changes else None))
-        newIDs = {}
-        if 'clientID' in changes:
-            newIDs[changes['clientID']] = newItem.id.hex
-        return newItem, newIDs                          
-        
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 text=_orNone(data, 'text'),
+                                 languageCode=_orNone(data, 'languageCode'),
+                                 )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        return newItem                         
 
 ### An instance that contains access information.
 class AccessInstance(ChildInstance):
@@ -2846,6 +2899,22 @@ class GrantTarget(dbmodels.Model, IInstance):
             i.delete(context)
         for i in self.groupGrants.filter(deleteTransaction__isnull=True):
             i.delete(context)
+    
+    def create(id, data, context, newIDs={}):
+        newItem = GrantTarget.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 id=id,
+                                 publicAccess=_orNone(data, 'public access'),
+                                 primaryAdministrator=_orNone(data, 'primary administrator')
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
+        newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
+        
+        return newItem                          
+        
 class GrantTargetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('grantTargetHistories')
@@ -2879,6 +2948,17 @@ class UserGrant(dbmodels.Model, AccessInstance):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
+    def create(parent, data, context, newIDs={}):
+        newItem = UserGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 grantee=_orNoneForeignKey(data, 'grantee', context, User),
+                                 privilege=_orNone(data, 'privilege'))
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class UserGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userGrantHistories')
@@ -2912,6 +2992,17 @@ class GroupGrant(dbmodels.Model, AccessInstance):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user, 'parent'), GrantTarget
 
+    def create(parent, data, context, newIDs={}):
+        newItem = GroupGrant.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 grantee=_orNoneForeignKey(data, 'grantee', context, Group),
+                                 privilege=_orNone(data, 'privilege'))
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class GroupGrantHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupAccessHistories')
@@ -2982,6 +3073,21 @@ class Address(dbmodels.Model, ChildInstance):
         for i in self.streets.filter(deleteTransaction__isnull=True):
             i.delete(context)
     
+    def create(parent, data, context, newIDs={}):
+        newItem = Address.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 city=_orNone(data, 'city'),
+                                 state=_orNone(data, 'state'),
+                                 zipCode=_orNone(data, 'zip code'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'streets', context, Street, newIDs)
+        
+        return newItem                          
+        
 class AddressHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('addressHistories')
@@ -3726,6 +3832,21 @@ class Group(dbmodels.Model, NamedInstance, ChildInstance):
         for i in self.members.filter(deleteTransaction__isnull=True):
             i.delete(context)
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = Group.objects.create(transaction=context.transaction,
+                                 parent=parent,
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, GroupName, newIDs)
+        newItem.createChildren(data, 'members', context, GroupMember, newIDs)
+        
+        return newItem                          
+        
 class GroupName(dbmodels.Model, TranslationInstance):
     id = idField()
     transaction = createTransactionField('createdGroupNames')
@@ -3751,6 +3872,9 @@ class GroupName(dbmodels.Model, TranslationInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(GroupName.objects, parent, data, context, newIDs)
+        
 class GroupNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupNameHistories')
@@ -3799,6 +3923,20 @@ class GroupMember(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = GroupMember.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class GroupMemberHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupMemberHistories')
@@ -4049,6 +4187,28 @@ class Offering(dbmodels.Model, NamedInstance, ChildInstance):
         for i in self.sessions.filter(deleteTransaction__isnull=True):
             i.delete(context)
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = Offering.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 webSite=_orNone(data, 'web site'),
+								 minimumAge=_orNone(data, 'minimum age'),
+								 maximumAge=_orNone(data, 'maximum age'),
+								 minimumGrade=_orNone(data, 'minimum grade'),
+								 maximumGrade=_orNone(data, 'maximum grade'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, OfferingName, newIDs)
+        newItem.createChildren(data, 'services', context, OfferingService, newIDs)
+        newItem.createChildren(data, 'sessions', context, Session, newIDs)
+        
+        return newItem                          
+        
 class OfferingHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringHistories')
@@ -4084,6 +4244,9 @@ class OfferingName(dbmodels.Model, TranslationInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(OfferingName.objects, parent, data, context, newIDs)
+        
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringNameHistories')
@@ -4141,6 +4304,21 @@ class OfferingService(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = OfferingService.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.services, data, 'position'),
+								 service=_orNoneForeignKey(data, 'service', context, Service),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringServiceHistories')
@@ -4217,6 +4395,33 @@ class Organization(dbmodels.Model, NamedInstance, RootInstance):
         for i in self.sites.filter(deleteTransaction__isnull=True):
             i.delete(context)
 
+    def create(data, context, newIDs={}):
+        if not context.is_administrator:
+           raise PermissionDenied
+           
+        newItem = Organization.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 webSite = _orNone(data, 'web site'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, OrganizationName, newIDs)
+        newItem.createChildren(data, 'groups', context, Group, newIDs)
+        newItem.createChildren(data, 'sites', context, Site, newIDs)
+        
+        if 'grant target' in data:
+            GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
+        else:
+            GrantTarget.create(newItem.id, {}, context, newIDs)
+        
+        if 'inquiry access group' in data:
+            newItem.inquiryAccessGroup = _orNoneForeignKey(data, 'inquiry access group', context, Group, Organization.objects.filter(pk=newItem.id),
+                                                          Organization)
+            newItem.save()
+        
+        return newItem                          
+        
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -4249,6 +4454,9 @@ class OrganizationName(dbmodels.Model, TranslationInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(OrganizationName.objects, parent, data, context, newIDs)
+        
 class OrganizationNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationNameHistories')
@@ -4594,8 +4802,8 @@ class ServiceName(dbmodels.Model, TranslationInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
     
-    def create(parent, changes, context):
-        return TranslationInstance.create(ServiceName.objects, parent, changes, context)
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(ServiceName.objects, parent, data, context, newIDs)
         
     @property
     def historyType(self):
@@ -4843,6 +5051,29 @@ class Session(dbmodels.Model, NamedInstance, ChildInstance):
         for i in self.periods.filter(deleteTransaction__isnull=True):
             i.delete(context)
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = Session.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 registrationDeadline=_orNone(data, 'registration deadline'),
+								 start=_orNone(data, 'start'),
+								 end=_orNone(data, 'end'),
+								 canRegister=_orNone(data, 'can register'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, SessionName, newIDs)
+        newItem.createChildren(data, 'engagements', context, Engagement, newIDs)
+        newItem.createChildren(data, 'enrollments', context, Enrollment, newIDs)
+        newItem.createChildren(data, 'inquiries', context, Inquiry, newIDs)
+        newItem.createChildren(data, 'periods', context, Period, newIDs)
+        
+        return newItem                          
+        
 class SessionHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionHistories')
@@ -4878,6 +5109,9 @@ class SessionName(dbmodels.Model, TranslationInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(SessionName.objects, parent, data, context, newIDs)
+        
 class SessionNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionNameHistories')
@@ -4951,6 +5185,26 @@ class Site(dbmodels.Model, NamedInstance, ChildInstance):
         for i in self.offerings.filter(deleteTransaction__isnull=True):
             i.delete(context)
             
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = Site.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 webSite=_orNone(data, 'web site'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, SiteName, newIDs)
+        newItem.createChildren(data, 'offerings', context, Offering, newIDs)
+        
+        if 'address' in data:
+            Address.create(newItem, data['address'], context, newIDs)
+        
+        return newItem                          
+        
 class SiteHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteHistories')
@@ -4982,6 +5236,9 @@ class SiteName(dbmodels.Model, TranslationInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(SiteName.objects, parent, data, context, newIDs)
+        
 class SiteNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteNameHistories')
@@ -5033,6 +5290,18 @@ class Street(dbmodels.Model, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        newItem = Street.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.streets, data, 'position'),
+                                 text=_orNone(data, 'text'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class StreetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('streetHistories')
