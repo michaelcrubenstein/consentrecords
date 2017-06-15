@@ -313,7 +313,7 @@ class NamedInstance(IInstance):
 
     @property
     def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(deleteTransaction__isnull=True)
+        return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(deleteTransaction=self.deleteTransaction)
 
     def description(self, languageCode=None):
         return IInstance.getName(self.currentNamesQuerySet, languageCode)
@@ -3840,7 +3840,7 @@ class Group(NamedInstance, ChildInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=GroupName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=GroupName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4168,7 +4168,7 @@ class Offering(NamedInstance, ChildInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=OfferingName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=OfferingName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4383,7 +4383,7 @@ class Organization(NamedInstance, RootInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=OrganizationName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=OrganizationName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4714,7 +4714,7 @@ class Service(NamedInstance, RootInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=ServiceName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -5022,7 +5022,7 @@ class Session(NamedInstance, ChildInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=SessionName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=SessionName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -5174,7 +5174,7 @@ class Site(NamedInstance, ChildInstance):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=SiteName.objects.filter(deleteTransaction__isnull=True),
+                                                  queryset=SiteName.objects.filter(deleteTransaction=F('deleteTransaction')),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
