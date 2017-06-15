@@ -277,7 +277,7 @@ class IInstance(dbmodels.Model):
                 noneName = v.text
         return noneName or enName or '(None)'
     
-    def delete(self, context):
+    def markDeleted(self, context):
         if self.deleteTransaction_id:
             raise RuntimeError('%s is already deleted' % str(self))
         if not context.canWrite(self):
@@ -300,7 +300,7 @@ class IInstance(dbmodels.Model):
                 if 'id' in subChanges:
                     subItem = children.get(pk=subChanges['id'])
                     if 'delete' in subChanges and subChanges['delete'] == 'delete':
-                        subItem.delete(context)
+                        subItem.markDeleted(context)
                     else:
                         newIDs.update(subItem.update(subChanges, context))
                 elif 'clientID' in subChanges:
@@ -323,10 +323,10 @@ class NamedInstance(IInstance):
         data['names'] = [i.getData([], context) for i in self.currentNamesQuerySet]
         return data
         
-    def delete(self, context):
-        super(NamedInstance, self).delete(context)
-        for name in currentNamesQuerySet:
-            name.delete(context)
+    def markDeleted(self, context):
+        super(NamedInstance, self).markDeleted(context)
+        for name in self.currentNamesQuerySet:
+            name.markDeleted(context)
 
 # An instance that is a secure root: User and Organization
 class SecureRootInstance(IInstance):
@@ -2928,12 +2928,12 @@ class GrantTarget(IInstance):
         else:
             return SecureRootInstance.administrableQuerySet(qs, user), GrantTarget
             
-    def delete(self, context):
-        super(GrantTarget, self).delete(context)
+    def markDeleted(self, context):
+        super(GrantTarget, self).markDeleted(context)
         for i in self.userGrants.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.groupGrants.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
     
     def create(id, data, context, newIDs={}):
         newItem = GrantTarget.objects.create(transaction=context.transaction,
@@ -3103,10 +3103,10 @@ class Address(ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
-    def delete(self, context):
-        super(Address, self).delete(context)
+    def markDeleted(self, context):
+        super(Address, self).markDeleted(context)
         for i in self.streets.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
     
     def create(parent, data, context, newIDs={}):
         newItem = Address.objects.create(transaction=context.transaction,
@@ -3223,10 +3223,10 @@ class CommentPrompt(NamedInstance, RootInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
         
-    def delete(self, context):
-        super(CommentPrompt, self).delete(context)
+    def markDeleted(self, context):
+        super(CommentPrompt, self).markDeleted(context)
         for i in self.texts.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
     
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
@@ -3528,14 +3528,14 @@ class Experience(ChildInstance):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent'), Path
 
-    def delete(self, context):
-        super(Experience, self).delete(context)
+    def markDeleted(self, context):
+        super(Experience, self).markDeleted(context)
         for i in self.customServices.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.services.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.comments.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
     
 class ExperienceHistory(dbmodels.Model):
     id = idField()
@@ -3728,10 +3728,10 @@ class ExperiencePrompt(RootInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
-    def delete(self, context):
-        super(ExperiencePrompt, self).delete(context)
+    def markDeleted(self, context):
+        super(ExperiencePrompt, self).markDeleted(context)
         for i in self.disqualifyingTags.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
@@ -3860,12 +3860,12 @@ class Group(NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
 
-    def delete(self, context):
-        super(Group, self).delete(context)
+    def markDeleted(self, context):
+        super(Group, self).markDeleted(context)
         for i in self.names.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.members.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -4084,10 +4084,10 @@ class Notification(ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
-    def delete(self, context):
-        super(Notification, self).delete(context)
+    def markDeleted(self, context):
+        super(Notification, self).markDeleted(context)
         for i in self.notificationArguments.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
 class NotificationHistory(dbmodels.Model):
     id = idField()
@@ -4215,12 +4215,12 @@ class Offering(NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent'), Organization
 
-    def delete(self, context):
-        super(Offering, self).delete(context)
+    def markDeleted(self, context):
+        super(Offering, self).markDeleted(context)
         for i in self.services.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.sessions.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -4423,12 +4423,12 @@ class Organization(NamedInstance, RootInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user), Organization
 
-    def delete(self, context):
-        super(Organization, self).delete(context)
+    def markDeleted(self, context):
+        super(Organization, self).markDeleted(context)
         for i in self.groups.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.sites.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
     def create(data, context, newIDs={}):
         if not context.is_administrator:
@@ -4605,12 +4605,12 @@ class Path(IInstance):
         else:
             return Path.findableQuerySet(qs, user), Path
 
-    def delete(self, context):
-        super(Path, self).delete(context)
+    def markDeleted(self, context):
+        super(Path, self).markDeleted(context)
         for i in self.experiences.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in GroupTarget.objects.filter(pk=self.id):
-            i.delete(context)
+            i.markDeleted(context)
 
 class PathHistory(dbmodels.Model):
     id = idField()
@@ -4794,18 +4794,18 @@ class Service(NamedInstance, RootInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
-    def delete(self, context):
-        super(Service, self).delete(context)
+    def markDeleted(self, context):
+        super(Service, self).markDeleted(context)
         for i in self.organizationLabels.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.siteLabels.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.offeringLabels.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.serviceImplications.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.impliedServiceImplications.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
 class ServiceHistory(dbmodels.Model):
     id = idField()
@@ -5073,16 +5073,16 @@ class Session(NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent__parent__parent'), Organization
 
-    def delete(self, context):
-        super(Session, self).delete(context)
+    def markDeleted(self, context):
+        super(Session, self).markDeleted(context)
         for i in self.engagements.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.enrollments.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.inquiries.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.periods.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -5211,12 +5211,12 @@ class Site(NamedInstance, ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), Organization
 
-    def delete(self, context):
-        super(Site, self).delete(context)
+    def markDeleted(self, context):
+        super(Site, self).markDeleted(context)
         for i in self.addresses.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.offerings.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
             
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -5442,18 +5442,18 @@ class User(RootInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user), User
 
-    def delete(self, context):
-        super(User, self).delete(context)
+    def markDeleted(self, context):
+        super(User, self).markDeleted(context)
         for i in self.emails.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.notifications.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.paths.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in self.userGrantRequests.filter(deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
         for i in GrantTarget.objects.filter(pk=self.id, deleteTransaction__isnull=True):
-            i.delete(context)
+            i.markDeleted(context)
 
 class UserHistory(dbmodels.Model):
     id = idField()
