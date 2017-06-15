@@ -53,6 +53,3 @@ with transaction.atomic():
     context = Context('en', mr)
     newItem = Organization.create(data, context, newIDs=newIDs)
     print(str(newItem), newIDs)
-with transaction.atomic():
-    context = Context('en', mr)
-    newItem.markDeleted(context)
