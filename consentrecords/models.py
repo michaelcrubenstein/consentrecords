@@ -532,7 +532,7 @@ class AccessInstance(ChildInstance):
         data = self.headData(context)
         data['grantee'] = self.grantee.headData(context)
         if 'privilege' in self.__dict__:
-            data['grant'] = self.privilege
+            data['privilege'] = self.privilege
         return data
         
     def fetchPrivilege(self, user):
