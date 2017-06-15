@@ -290,6 +290,20 @@ class IInstance():
             for subData in data[key]:
                 subClass.create(self, subData, context, newIDs=newIDs)
     
+    def updateChildren(self, changes, key, context, subClass, children, newIDs={}):
+        if key in changes:
+            if not isinstance(changes[key], list):
+                raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
+            for subChanges in changes[key]:
+                if 'id' in subChanges:
+                    subItem = children.get(pk=subChanges['id'])
+                    if 'delete' in subChanges and subChanges['delete'] == 'delete':
+                        subItem.delete(context)
+                    else:
+                        newIDs.update(subItem.update(subChanges, context))
+                elif 'clientID' in subChanges:
+                    subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
+    
 ### An Instance that has names that vary by languageCode.
 class NamedInstance(IInstance):
 
@@ -4750,25 +4764,7 @@ class Service(dbmodels.Model, NamedInstance, RootInstance):
         
         newIDs = {}
         
-        key = 'name'
-        subClass = ServiceName   
-        children = self.names
-        
-        if key in changes:
-            if not isinstance(changes[key], list):
-                raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
-            for subChanges in changes[key]:
-                if 'id' in subChanges:
-                    subItem = children.get(pk=subChanges['id'])
-                    if 'delete' in subChanges and subChanges['delete'] == 'delete':
-                        subItem.deleteTransaction = context.transaction
-                        subItem.save()
-                    else:
-                        newIDs.update(subItem.update(subChanges, context))
-                elif 'clientID' in subChanges:
-                    newItem, subNewIDs = subClass.create(self, subChanges, context)
-                    print(newItem, subNewIDs)
-                    newIDs.update(subNewIDs)
+        self.updateChildren(changes, 'name', context, ServiceName, self.names, newIDs)
                                                          
         if history:
             self.lastTransaction = context.transaction
