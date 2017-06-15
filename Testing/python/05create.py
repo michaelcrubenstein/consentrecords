@@ -55,4 +55,4 @@ with transaction.atomic():
     print(str(newItem), newIDs)
 with transaction.atomic():
     context = Context('en', mr)
-    newItem.delete(context)
+    newItem.markDeleted(context)
