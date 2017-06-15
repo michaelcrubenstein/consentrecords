@@ -3361,6 +3361,19 @@ class Engagement(ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        newItem = Engagement.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                 start=_orNone(data, 'start'),
+                                 end=_orNone(data, 'end'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class EngagementHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('engagementHistories')
@@ -3410,6 +3423,17 @@ class Enrollment(ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        newItem = Enrollment.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class EnrollmentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('enrollmentHistories')
@@ -4019,6 +4043,17 @@ class Inquiry(ChildInstance):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def create(parent, data, context, newIDs={}):
+        newItem = Inquiry.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 user=_orNoneForeignKey(data, 'user', context, User),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class InquiryHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('inquiryHistories')
