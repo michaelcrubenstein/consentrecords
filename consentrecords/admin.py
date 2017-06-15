@@ -634,6 +634,18 @@ admin.site.register(ExperienceService, ExperienceServiceAdmin)
 class GroupNameInline(NameInline):
     model = GroupName
     
+class GroupMemberInline(TabularInline):
+    model = GroupMember
+    list_display = ('id', 'user', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'user', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'user', 't_creationTime', 'deleteTransaction')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'parent'
+    
 class GroupAdmin(ModelAdmin):
     list_display = ('id', '__str__', 't_creationTime', 'deleteTransaction')
     fieldsets = (
@@ -642,7 +654,7 @@ class GroupAdmin(ModelAdmin):
     readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
     search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
 
-    inlines = [GroupNameInline]
+    inlines = [GroupNameInline, GroupMemberInline]
         
 admin.site.register(Group, GroupAdmin)
 
@@ -669,6 +681,18 @@ class GroupNameAdmin(ModelAdmin):
     inlines = [GroupNameHistoryInline]
         
 admin.site.register(GroupName, GroupNameAdmin)
+
+class GroupMemberHistoryInline(TabularInline):
+    model = GroupMemberHistory
+    list_display = ('id', 't_creationTime', 'user')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'user')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'user')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
 
 class InquiryHistoryInline(TabularInline):
     model = InquiryHistory
@@ -1346,6 +1370,316 @@ class TransactionDeletedOrganizationInline(TransactionOrganizationInline):
 class TransactionOrganizationHistoryInline(OrganizationHistoryInline):
     fk_name = 'transaction'
  
+class TransactionCreatedGroupInline(GroupInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Group'
+    verbose_name_plural = 'Created Groups'
+
+class TransactionDeletedGroupInline(GroupInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Group'
+    verbose_name_plural = 'Deleted Groups'
+
+class TransactionCreatedGroupNameInline(GroupNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Group Name'
+    verbose_name_plural = 'Created Group Names'
+
+class TransactionLastModifiedGroupNameInline(GroupNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Group Name'
+    verbose_name_plural = 'Last Modified Group Names'
+
+class TransactionDeletedGroupNameInline(GroupNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Group Name'
+    verbose_name_plural = 'Deleted Group Names'
+
+class TransactionGroupNameHistoryInline(GroupNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Group Name History'
+    verbose_name_plural = 'Group Name Histories'
+
+class TransactionCreatedGroupMemberInline(GroupMemberInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Group Member'
+    verbose_name_plural = 'Created Group Members'
+
+class TransactionLastModifiedGroupMemberInline(GroupMemberInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Group Member'
+    verbose_name_plural = 'Last Modified Group Members'
+
+class TransactionDeletedGroupMemberInline(GroupMemberInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Group Member'
+    verbose_name_plural = 'Deleted Group Members'
+
+class TransactionGroupMemberHistoryInline(GroupMemberHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Group Member History'
+    verbose_name_plural = 'Group Member Histories'
+
+class TransactionCreatedSiteInline(SiteInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Site'
+    verbose_name_plural = 'Created Sites'
+
+class TransactionLastModifiedSiteInline(SiteInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Site'
+    verbose_name_plural = 'Last Modified Sites'
+
+class TransactionDeletedSiteInline(SiteInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Site'
+    verbose_name_plural = 'Deleted Sites'
+
+class TransactionSiteHistoryInline(SiteHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Site History'
+    verbose_name_plural = 'Site Histories'
+
+class TransactionCreatedSiteNameInline(SiteNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Site Name'
+    verbose_name_plural = 'Created Site Names'
+
+class TransactionLastModifiedSiteNameInline(SiteNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Site Name'
+    verbose_name_plural = 'Last Modified Site Names'
+
+class TransactionDeletedSiteNameInline(SiteNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Site Name'
+    verbose_name_plural = 'Deleted Site Names'
+
+class TransactionSiteNameHistoryInline(SiteNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Site Name History'
+    verbose_name_plural = 'Site Name Histories'
+
+class TransactionCreatedAddressInline(AddressInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Address'
+    verbose_name_plural = 'Created Addresses'
+
+class TransactionLastModifiedAddressInline(AddressInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Address'
+    verbose_name_plural = 'Last Modified Addresses'
+
+class TransactionDeletedAddressInline(AddressInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Address'
+    verbose_name_plural = 'Deleted Addresses'
+
+class TransactionAddressHistoryInline(AddressHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Address History'
+    verbose_name_plural = 'Address Histories'
+
+class TransactionCreatedStreetInline(StreetInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Street'
+    verbose_name_plural = 'Created Streets'
+
+class TransactionLastModifiedStreetInline(StreetInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Street'
+    verbose_name_plural = 'Last Modified Streets'
+
+class TransactionDeletedStreetInline(StreetInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Street'
+    verbose_name_plural = 'Deleted Streets'
+
+class TransactionStreetHistoryInline(StreetHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Street History'
+    verbose_name_plural = 'Street Histories'
+
+class TransactionCreatedOfferingInline(OfferingInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Offering'
+    verbose_name_plural = 'Created Offerings'
+
+class TransactionLastModifiedOfferingInline(OfferingInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Offering'
+    verbose_name_plural = 'Last Modified Offerings'
+
+class TransactionDeletedOfferingInline(OfferingInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Offering'
+    verbose_name_plural = 'Deleted Offerings'
+
+class TransactionOfferingHistoryInline(OfferingHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Offering History'
+    verbose_name_plural = 'Offering Histories'
+
+class TransactionCreatedOfferingNameInline(OfferingNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Offering Name'
+    verbose_name_plural = 'Created Offering Names'
+
+class TransactionLastModifiedOfferingNameInline(OfferingNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Offering Name'
+    verbose_name_plural = 'Last Modified Offering Names'
+
+class TransactionDeletedOfferingNameInline(OfferingNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Offering Name'
+    verbose_name_plural = 'Deleted Offering Names'
+
+class TransactionOfferingNameHistoryInline(OfferingNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Offering Name History'
+    verbose_name_plural = 'Offering Name Histories'
+
+class TransactionCreatedOfferingServiceInline(OfferingServiceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Offering Service'
+    verbose_name_plural = 'Created Offering Services'
+
+class TransactionLastModifiedOfferingServiceInline(OfferingServiceInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Offering Service'
+    verbose_name_plural = 'Last Modified Offering Services'
+
+class TransactionDeletedOfferingServiceInline(OfferingServiceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Offering Service'
+    verbose_name_plural = 'Deleted Offering Services'
+
+class TransactionOfferingServiceHistoryInline(OfferingServiceHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Offering Service History'
+    verbose_name_plural = 'Offering Service Histories'
+
+class TransactionCreatedSessionInline(SessionInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Session'
+    verbose_name_plural = 'Created Sessions'
+
+class TransactionLastModifiedSessionInline(SessionInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Session'
+    verbose_name_plural = 'Last Modified Sessions'
+
+class TransactionDeletedSessionInline(SessionInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Session'
+    verbose_name_plural = 'Deleted Sessions'
+
+class TransactionSessionHistoryInline(SessionHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Session History'
+    verbose_name_plural = 'Session Histories'
+
+class TransactionCreatedSessionNameInline(SessionNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Session Name'
+    verbose_name_plural = 'Created Session Names'
+
+class TransactionLastModifiedSessionNameInline(SessionNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Session Name'
+    verbose_name_plural = 'Last Modified Session Names'
+
+class TransactionDeletedSessionNameInline(SessionNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Session Name'
+    verbose_name_plural = 'Deleted Session Names'
+
+class TransactionSessionNameHistoryInline(SessionNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Session Name History'
+    verbose_name_plural = 'Session Name Histories'
+
+class TransactionCreatedEngagementInline(EngagementInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Engagement'
+    verbose_name_plural = 'Created Engagements'
+
+class TransactionLastModifiedEngagementInline(EngagementInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Engagement'
+    verbose_name_plural = 'Last Modified Engagements'
+
+class TransactionDeletedEngagementInline(EngagementInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Engagement'
+    verbose_name_plural = 'Deleted Engagements'
+
+class TransactionEngagementHistoryInline(EngagementHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Engagement History'
+    verbose_name_plural = 'Engagement Histories'
+
+class TransactionCreatedEnrollmentInline(EnrollmentInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Enrollment'
+    verbose_name_plural = 'Created Enrollments'
+
+class TransactionLastModifiedEnrollmentInline(EnrollmentInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Enrollment'
+    verbose_name_plural = 'Last Modified Enrollments'
+
+class TransactionDeletedEnrollmentInline(EnrollmentInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Enrollment'
+    verbose_name_plural = 'Deleted Enrollments'
+
+class TransactionEnrollmentHistoryInline(EnrollmentHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Enrollment History'
+    verbose_name_plural = 'Enrollment Histories'
+
+class TransactionCreatedInquiryInline(InquiryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Inquiry'
+    verbose_name_plural = 'Created Inquiries'
+
+class TransactionLastModifiedInquiryInline(InquiryInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Inquiry'
+    verbose_name_plural = 'Last Modified Inquiries'
+
+class TransactionDeletedInquiryInline(InquiryInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Inquiry'
+    verbose_name_plural = 'Deleted Inquiries'
+
+class TransactionInquiryHistoryInline(InquiryHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Inquiry History'
+    verbose_name_plural = 'Inquiry Histories'
+
+class TransactionCreatedPeriodInline(PeriodInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Period'
+    verbose_name_plural = 'Created Periods'
+
+class TransactionLastModifiedPeriodInline(PeriodInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Period'
+    verbose_name_plural = 'Last Modified Periods'
+
+class TransactionDeletedPeriodInline(PeriodInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Period'
+    verbose_name_plural = 'Deleted Periods'
+
+class TransactionPeriodHistoryInline(PeriodHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Period History'
+    verbose_name_plural = 'Period Histories'
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'creation_time')
     fieldsets = (
@@ -1354,9 +1688,44 @@ class TransactionAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'user', 'creation_time')
     search_fields = ('id', 'user__id', 'user__email')
     
-    inlines = [InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
-               TransactionCreatedServiceInline, TransactionServiceInline, TransactionDeletedServiceInline, TransactionServiceHistoryInline,
-               TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionDeletedOrganizationInline, TransactionOrganizationHistoryInline,
+    inlines = [\
+               TransactionDeletedServiceInline, 
+               TransactionDeletedOrganizationInline, 
+               TransactionDeletedGroupInline,
+               TransactionDeletedGroupNameInline,
+               TransactionDeletedGroupMemberInline,
+               TransactionDeletedSiteInline, 
+               TransactionDeletedSiteNameInline, 
+               TransactionDeletedAddressInline, 
+               TransactionDeletedStreetInline, 
+               TransactionDeletedOfferingInline, 
+               TransactionDeletedOfferingNameInline, 
+               TransactionDeletedOfferingServiceInline, 
+               TransactionDeletedSessionInline, 
+               TransactionDeletedSessionNameInline, 
+               TransactionDeletedEngagementInline, 
+               TransactionDeletedEnrollmentInline, 
+               TransactionDeletedInquiryInline, 
+               TransactionDeletedPeriodInline, 
+               TransactionCreatedServiceInline, TransactionServiceInline, TransactionServiceHistoryInline,
+               TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionOrganizationHistoryInline,
+               TransactionCreatedGroupInline, 
+               TransactionCreatedGroupNameInline, TransactionLastModifiedGroupNameInline, TransactionGroupNameHistoryInline,
+               TransactionCreatedGroupMemberInline, TransactionLastModifiedGroupMemberInline, TransactionGroupMemberHistoryInline,
+               TransactionCreatedSiteInline, TransactionLastModifiedSiteInline, TransactionSiteHistoryInline,
+               TransactionCreatedSiteNameInline, TransactionLastModifiedSiteNameInline, TransactionSiteNameHistoryInline,
+               TransactionCreatedAddressInline, TransactionLastModifiedAddressInline, TransactionAddressHistoryInline,
+               TransactionCreatedStreetInline, TransactionLastModifiedStreetInline, TransactionStreetHistoryInline,
+               TransactionCreatedOfferingInline, TransactionLastModifiedOfferingInline, TransactionOfferingHistoryInline,
+               TransactionCreatedOfferingNameInline, TransactionLastModifiedOfferingNameInline, TransactionOfferingNameHistoryInline,
+               TransactionCreatedOfferingServiceInline, TransactionLastModifiedOfferingServiceInline, TransactionOfferingServiceHistoryInline,
+               TransactionCreatedSessionInline, TransactionLastModifiedSessionInline, TransactionSessionHistoryInline,
+               TransactionCreatedSessionNameInline, TransactionLastModifiedSessionNameInline, TransactionSessionNameHistoryInline,
+               TransactionCreatedEngagementInline, TransactionLastModifiedEngagementInline, TransactionEngagementHistoryInline,
+               TransactionCreatedEnrollmentInline, TransactionLastModifiedEnrollmentInline, TransactionEnrollmentHistoryInline,
+               TransactionCreatedInquiryInline, TransactionLastModifiedInquiryInline, TransactionInquiryHistoryInline,
+               TransactionCreatedPeriodInline, TransactionLastModifiedPeriodInline, TransactionPeriodHistoryInline,
+               InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
               ]
 
 admin.site.register(Transaction, TransactionAdmin)
