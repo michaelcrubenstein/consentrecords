@@ -1370,6 +1370,26 @@ class TransactionDeletedOrganizationInline(TransactionOrganizationInline):
 class TransactionOrganizationHistoryInline(OrganizationHistoryInline):
     fk_name = 'transaction'
  
+class TransactionCreatedOrganizationNameInline(OrganizationNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Organization Name'
+    verbose_name_plural = 'Created Organization Names'
+
+class TransactionLastModifiedOrganizationNameInline(OrganizationNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Organization Name'
+    verbose_name_plural = 'Last Modified Organization Names'
+
+class TransactionDeletedOrganizationNameInline(OrganizationNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Organization Name'
+    verbose_name_plural = 'Deleted Organization Names'
+
+class TransactionOrganizationNameHistoryInline(OrganizationNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Organization Name History'
+    verbose_name_plural = 'Organization Name Histories'
+
 class TransactionCreatedGroupInline(GroupInline):
     fk_name = 'transaction'
     verbose_name = 'Created Group'
@@ -1691,6 +1711,7 @@ class TransactionAdmin(admin.ModelAdmin):
     inlines = [\
                TransactionDeletedServiceInline, 
                TransactionDeletedOrganizationInline, 
+               TransactionDeletedOrganizationNameInline, 
                TransactionDeletedGroupInline,
                TransactionDeletedGroupNameInline,
                TransactionDeletedGroupMemberInline,
@@ -1709,6 +1730,7 @@ class TransactionAdmin(admin.ModelAdmin):
                TransactionDeletedPeriodInline, 
                TransactionCreatedServiceInline, TransactionServiceInline, TransactionServiceHistoryInline,
                TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionOrganizationHistoryInline,
+               TransactionCreatedOrganizationNameInline, TransactionLastModifiedOrganizationNameInline, TransactionOrganizationNameHistoryInline,
                TransactionCreatedGroupInline, 
                TransactionCreatedGroupNameInline, TransactionLastModifiedGroupNameInline, TransactionGroupNameHistoryInline,
                TransactionCreatedGroupMemberInline, TransactionLastModifiedGroupMemberInline, TransactionGroupMemberHistoryInline,
