@@ -3069,7 +3069,7 @@ class Address(ChildInstance):
                  }
     
     def description(self, language=None):
-        streets = ' '.join(map(lambda s: s.text, self.streets.order_by('position')))
+        streets = ' '.join(map(lambda s: s.text, self.streets.filter(deleteTransaction=self.deleteTransaction).order_by('position')))
         if streets: streets = streets + ' '
         return streets + ('%s, %s  %s' % (self.city or '', self.state or '', self.zipCode or '')) 
         
