@@ -73,8 +73,8 @@ def _newPosition(objects, data, key):
                     if qs[i].position > startPosition + i - position:
                         break
                     else:
-                    	qs[i].position = startPosition + i - position + 1
-                    	qs[i].save()
+                        qs[i].position = startPosition + i - position + 1
+                        qs[i].save()
                 return startPosition
     elif qs.count():
         return qs.reverse()[0].position + 1
@@ -537,6 +537,9 @@ class TranslationInstance(ChildInstance):
         return {}
             
     def create(objects, parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+            raise PermissionError
+            
         newItem = objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -4265,10 +4268,10 @@ class Offering(NamedInstance, ChildInstance):
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  webSite=_orNone(data, 'web site'),
-								 minimumAge=_orNone(data, 'minimum age'),
-								 maximumAge=_orNone(data, 'maximum age'),
-								 minimumGrade=_orNone(data, 'minimum grade'),
-								 maximumGrade=_orNone(data, 'maximum grade'),
+                                 minimumAge=_orNone(data, 'minimum age'),
+                                 maximumAge=_orNone(data, 'maximum age'),
+                                 minimumGrade=_orNone(data, 'minimum grade'),
+                                 maximumGrade=_orNone(data, 'maximum grade'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -4382,7 +4385,7 @@ class OfferingService(ChildInstance):
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  position=_newPosition(parent.services, data, 'position'),
-								 service=_orNoneForeignKey(data, 'service', context, Service),
+                                 service=_orNoneForeignKey(data, 'service', context, Service),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -4709,8 +4712,8 @@ class Period(ChildInstance):
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  weekday=_orNone(data, 'weekday'),
-								 startTime=_orNone(data, 'start time'),
-								 endTime=_orNone(data, 'end time'),
+                                 startTime=_orNone(data, 'start time'),
+                                 endTime=_orNone(data, 'end time'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
@@ -4792,7 +4795,7 @@ class Service(NamedInstance, RootInstance):
             data['services'].sort(key=lambda i: i['description'])
         return data
     
-    def ValueCheckStage(self, value):
+    def ValueCheckStage(value):
         validValues = ['Certificate', 'Coaching', 'Expert', 'Housing', 'Mentoring', 
                        'Skills', 'Studying', 'Teaching', 'Training', 'Tutoring', 
                        'Volunteering', 'Wellness', 'Whatever', 'Working']
@@ -4812,7 +4815,7 @@ class Service(NamedInstance, RootInstance):
         
         history = None
         if 'stage' in changes and changes['stage'] != self.stage:
-            self.ValueCheckStage(changes['stage'])
+            Service.ValueCheckStage(changes['stage'])
             history = history or self.buildHistory(context)
             self.stage = changes['stage'] or None
         
@@ -4842,6 +4845,28 @@ class Service(NamedInstance, RootInstance):
             i.markDeleted(context)
         super(Service, self).markDeleted(context)
 
+    def create(data, context, newIDs={}):
+        if not context.is_administrator:
+           raise PermissionDenied
+        
+        if 'stage' in data:
+            Service.ValueCheckStage(data['stage'])
+             
+        newItem = Service.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 stage = _orNone(data, 'stage'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'names', context, ServiceName, newIDs)
+        newItem.createChildren(data, 'organization labels', context, ServiceOrganizationLabel, newIDs)
+        newItem.createChildren(data, 'site labels', context, ServiceSiteLabel, newIDs)
+        newItem.createChildren(data, 'offering labels', context, ServiceOfferingLabel, newIDs)
+        newItem.createChildren(data, 'services', context, ServiceImplication, newIDs)
+        
+        return newItem                          
+        
 class ServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceHistories')
@@ -4907,6 +4932,9 @@ class ServiceOrganizationLabel(TranslationInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(ServiceOrganizationLabel.objects, parent, data, context, newIDs)
+        
 class ServiceOrganizationLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceOrganizationLabelHistories')
@@ -4937,6 +4965,9 @@ class ServiceSiteLabel(TranslationInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(ServiceSiteLabel.objects, parent, data, context, newIDs)
+        
 class ServiceSiteLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceSiteLabelHistories')
@@ -4967,6 +4998,9 @@ class ServiceOfferingLabel(TranslationInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(ServiceOfferingLabel.objects, parent, data, context, newIDs)
+        
 class ServiceOfferingLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceOfferingLabelHistories')
@@ -5020,6 +5054,20 @@ class ServiceImplication(ChildInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+            raise PermissionError
+            
+        newItem = ServiceImplication.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 impliedService=_orNoneForeignKey(data, 'service', context, Service),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class ServiceImplicationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceImplicationHistories')
@@ -5127,9 +5175,9 @@ class Session(NamedInstance, ChildInstance):
                                  lastTransaction=context.transaction,
                                  parent=parent,
                                  registrationDeadline=_orNone(data, 'registration deadline'),
-								 start=_orNone(data, 'start'),
-								 end=_orNone(data, 'end'),
-								 canRegister=_orNone(data, 'can register'),
+                                 start=_orNone(data, 'start'),
+                                 end=_orNone(data, 'end'),
+                                 canRegister=_orNone(data, 'can register'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex

@@ -1343,6 +1343,106 @@ class TransactionDeletedServiceInline(TransactionServiceInline):
 class TransactionServiceHistoryInline(ServiceHistoryInline):
     fk_name = 'transaction'
  
+class TransactionCreatedServiceNameInline(ServiceNameInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service Name'
+    verbose_name_plural = 'Created Service Names'
+
+class TransactionLastModifiedServiceNameInline(ServiceNameInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service Name'
+    verbose_name_plural = 'Last Modified Service Names'
+
+class TransactionDeletedServiceNameInline(ServiceNameInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service Name'
+    verbose_name_plural = 'Deleted Service Names'
+
+class TransactionServiceNameHistoryInline(ServiceNameHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Service Name History'
+    verbose_name_plural = 'Service Name Histories'
+
+class TransactionCreatedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service Organization Label'
+    verbose_name_plural = 'Created Service Organization Labels'
+
+class TransactionLastModifiedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service Organization Label'
+    verbose_name_plural = 'Last Modified Service Organization Labels'
+
+class TransactionDeletedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service Organization Label'
+    verbose_name_plural = 'Deleted Service Organization Labels'
+
+class TransactionServiceOrganizationLabelHistoryInline(ServiceOrganizationLabelHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Service Organization Label History'
+    verbose_name_plural = 'Service Organization Label Histories'
+
+class TransactionCreatedServiceSiteLabelInline(ServiceSiteLabelInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service Site Label'
+    verbose_name_plural = 'Created Service Site Labels'
+
+class TransactionLastModifiedServiceSiteLabelInline(ServiceSiteLabelInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service Site Label'
+    verbose_name_plural = 'Last Modified Service Site Labels'
+
+class TransactionDeletedServiceSiteLabelInline(ServiceSiteLabelInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service Site Label'
+    verbose_name_plural = 'Deleted Service Site Labels'
+
+class TransactionServiceSiteLabelHistoryInline(ServiceSiteLabelHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Service Site Label History'
+    verbose_name_plural = 'Service Site Label Histories'
+
+class TransactionCreatedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service Offering Label'
+    verbose_name_plural = 'Created Service Offering Labels'
+
+class TransactionLastModifiedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service Offering Label'
+    verbose_name_plural = 'Last Modified Service Offering Labels'
+
+class TransactionDeletedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service Offering Label'
+    verbose_name_plural = 'Deleted Service Offering Labels'
+
+class TransactionServiceOfferingLabelHistoryInline(ServiceOfferingLabelHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Service Offering Label History'
+    verbose_name_plural = 'Service Offering Label Histories'
+
+class TransactionCreatedServiceImplicationInline(ServiceImplicationInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Service Implication'
+    verbose_name_plural = 'Created Service Implications'
+
+class TransactionLastModifiedServiceImplicationInline(ServiceImplicationInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Service Implication'
+    verbose_name_plural = 'Last Modified Service Implications'
+
+class TransactionDeletedServiceImplicationInline(ServiceImplicationInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Service Implication'
+    verbose_name_plural = 'Deleted Service Implications'
+
+class TransactionServiceImplicationHistoryInline(ServiceImplicationHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Service Implication History'
+    verbose_name_plural = 'Service Implication Histories'
+
 class TransactionOrganizationInline(TabularInline):
     model = Organization
     
@@ -1710,6 +1810,11 @@ class TransactionAdmin(admin.ModelAdmin):
     
     inlines = [\
                TransactionDeletedServiceInline, 
+               TransactionDeletedServiceNameInline, 
+               TransactionDeletedServiceOrganizationLabelInline, 
+               TransactionDeletedServiceSiteLabelInline, 
+               TransactionDeletedServiceOfferingLabelInline, 
+               TransactionDeletedServiceImplicationInline, 
                TransactionDeletedOrganizationInline, 
                TransactionDeletedOrganizationNameInline, 
                TransactionDeletedGroupInline,
@@ -1729,6 +1834,11 @@ class TransactionAdmin(admin.ModelAdmin):
                TransactionDeletedInquiryInline, 
                TransactionDeletedPeriodInline, 
                TransactionCreatedServiceInline, TransactionServiceInline, TransactionServiceHistoryInline,
+               TransactionCreatedServiceNameInline, TransactionLastModifiedServiceNameInline, TransactionServiceNameHistoryInline,
+               TransactionCreatedServiceOrganizationLabelInline, TransactionLastModifiedServiceOrganizationLabelInline, TransactionServiceOrganizationLabelHistoryInline,
+               TransactionCreatedServiceSiteLabelInline, TransactionLastModifiedServiceSiteLabelInline, TransactionServiceSiteLabelHistoryInline,
+               TransactionCreatedServiceOfferingLabelInline, TransactionLastModifiedServiceOfferingLabelInline, TransactionServiceOfferingLabelHistoryInline,
+               TransactionCreatedServiceImplicationInline, TransactionLastModifiedServiceImplicationInline, TransactionServiceImplicationHistoryInline,
                TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionOrganizationHistoryInline,
                TransactionCreatedOrganizationNameInline, TransactionLastModifiedOrganizationNameInline, TransactionOrganizationNameHistoryInline,
                TransactionCreatedGroupInline, 
