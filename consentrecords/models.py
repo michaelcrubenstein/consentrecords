@@ -3231,6 +3231,20 @@ class CommentPrompt(NamedInstance, RootInstance):
             i.markDeleted(context)
         super(CommentPrompt, self).markDeleted(context)
     
+    def create(data, context, newIDs={}):
+        if not context.is_administrator:
+           raise PermissionDenied
+        
+        newItem = CommentPrompt.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'translations', context, CommentPromptText, newIDs)
+        
+        return newItem                          
+        
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptHistories')
@@ -3258,6 +3272,9 @@ class CommentPromptText(TranslationInstance):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(CommentPromptText.objects, parent, data, context, newIDs)
+        
 class CommentPromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptTextHistories')

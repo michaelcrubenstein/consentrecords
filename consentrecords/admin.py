@@ -1316,7 +1316,51 @@ class StreetAdmin(ModelAdmin):
         
 admin.site.register(Street, StreetAdmin)
 
-class TransactionServiceInline(TabularInline):
+class LastModifiedCommentPromptInline(TabularInline):
+    model = CommentPrompt
+    
+    list_display = ('id', '__str__', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'transaction__id', 'deleteTransaction__id')
+
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Comment Prompt'
+    verbose_name_plural = 'Last Modified Comment Prompts'
+
+class CreatedCommentPromptInline(LastModifiedCommentPromptInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Comment Prompt'
+    verbose_name_plural = 'Created Comment Prompts'
+
+class DeletedCommentPromptInline(LastModifiedCommentPromptInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Comment Prompt'
+    verbose_name_plural = 'Deleted Comment Prompts'
+
+class CreatedCommentPromptTextInline(CommentPromptTextInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Comment Prompt Text'
+    verbose_name_plural = 'Created Comment Prompt Texts'
+
+class LastModifiedCommentPromptTextInline(CommentPromptTextInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Comment Prompt Text'
+    verbose_name_plural = 'Last Modified Comment Prompt Texts'
+
+class DeletedCommentPromptTextInline(CommentPromptTextInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Comment Prompt Text'
+    verbose_name_plural = 'Deleted Comment Prompt Texts'
+
+class TransactionCommentPromptTextHistoryInline(CommentPromptTextHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Comment Prompt Text History'
+    verbose_name_plural = 'Comment Prompt Text Histories'
+
+class LastModifiedServiceInline(TabularInline):
     model = Service
 
     list_display = ('id', '__str__', 'stage', 't_creationTime', 'deleteTransaction')
@@ -1330,12 +1374,12 @@ class TransactionServiceInline(TabularInline):
     verbose_name = 'Last Modified Service'
     verbose_name_plural = 'Last Modified Services'
 
-class TransactionCreatedServiceInline(TransactionServiceInline):
+class CreatedServiceInline(LastModifiedServiceInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service'
     verbose_name_plural = 'Created Services'
 
-class TransactionDeletedServiceInline(TransactionServiceInline):
+class DeletedServiceInline(LastModifiedServiceInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service'
     verbose_name_plural = 'Deleted Services'
@@ -1343,17 +1387,17 @@ class TransactionDeletedServiceInline(TransactionServiceInline):
 class TransactionServiceHistoryInline(ServiceHistoryInline):
     fk_name = 'transaction'
  
-class TransactionCreatedServiceNameInline(ServiceNameInline):
+class CreatedServiceNameInline(ServiceNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service Name'
     verbose_name_plural = 'Created Service Names'
 
-class TransactionLastModifiedServiceNameInline(ServiceNameInline):
+class LastModifiedServiceNameInline(ServiceNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Service Name'
     verbose_name_plural = 'Last Modified Service Names'
 
-class TransactionDeletedServiceNameInline(ServiceNameInline):
+class DeletedServiceNameInline(ServiceNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service Name'
     verbose_name_plural = 'Deleted Service Names'
@@ -1363,17 +1407,17 @@ class TransactionServiceNameHistoryInline(ServiceNameHistoryInline):
     verbose_name = 'Service Name History'
     verbose_name_plural = 'Service Name Histories'
 
-class TransactionCreatedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+class CreatedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service Organization Label'
     verbose_name_plural = 'Created Service Organization Labels'
 
-class TransactionLastModifiedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+class LastModifiedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Service Organization Label'
     verbose_name_plural = 'Last Modified Service Organization Labels'
 
-class TransactionDeletedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
+class DeletedServiceOrganizationLabelInline(ServiceOrganizationLabelInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service Organization Label'
     verbose_name_plural = 'Deleted Service Organization Labels'
@@ -1383,17 +1427,17 @@ class TransactionServiceOrganizationLabelHistoryInline(ServiceOrganizationLabelH
     verbose_name = 'Service Organization Label History'
     verbose_name_plural = 'Service Organization Label Histories'
 
-class TransactionCreatedServiceSiteLabelInline(ServiceSiteLabelInline):
+class CreatedServiceSiteLabelInline(ServiceSiteLabelInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service Site Label'
     verbose_name_plural = 'Created Service Site Labels'
 
-class TransactionLastModifiedServiceSiteLabelInline(ServiceSiteLabelInline):
+class LastModifiedServiceSiteLabelInline(ServiceSiteLabelInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Service Site Label'
     verbose_name_plural = 'Last Modified Service Site Labels'
 
-class TransactionDeletedServiceSiteLabelInline(ServiceSiteLabelInline):
+class DeletedServiceSiteLabelInline(ServiceSiteLabelInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service Site Label'
     verbose_name_plural = 'Deleted Service Site Labels'
@@ -1403,17 +1447,17 @@ class TransactionServiceSiteLabelHistoryInline(ServiceSiteLabelHistoryInline):
     verbose_name = 'Service Site Label History'
     verbose_name_plural = 'Service Site Label Histories'
 
-class TransactionCreatedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+class CreatedServiceOfferingLabelInline(ServiceOfferingLabelInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service Offering Label'
     verbose_name_plural = 'Created Service Offering Labels'
 
-class TransactionLastModifiedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+class LastModifiedServiceOfferingLabelInline(ServiceOfferingLabelInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Service Offering Label'
     verbose_name_plural = 'Last Modified Service Offering Labels'
 
-class TransactionDeletedServiceOfferingLabelInline(ServiceOfferingLabelInline):
+class DeletedServiceOfferingLabelInline(ServiceOfferingLabelInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service Offering Label'
     verbose_name_plural = 'Deleted Service Offering Labels'
@@ -1423,17 +1467,17 @@ class TransactionServiceOfferingLabelHistoryInline(ServiceOfferingLabelHistoryIn
     verbose_name = 'Service Offering Label History'
     verbose_name_plural = 'Service Offering Label Histories'
 
-class TransactionCreatedServiceImplicationInline(ServiceImplicationInline):
+class CreatedServiceImplicationInline(ServiceImplicationInline):
     fk_name = 'transaction'
     verbose_name = 'Created Service Implication'
     verbose_name_plural = 'Created Service Implications'
 
-class TransactionLastModifiedServiceImplicationInline(ServiceImplicationInline):
+class LastModifiedServiceImplicationInline(ServiceImplicationInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Service Implication'
     verbose_name_plural = 'Last Modified Service Implications'
 
-class TransactionDeletedServiceImplicationInline(ServiceImplicationInline):
+class DeletedServiceImplicationInline(ServiceImplicationInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Service Implication'
     verbose_name_plural = 'Deleted Service Implications'
@@ -1457,12 +1501,12 @@ class TransactionOrganizationInline(TabularInline):
     verbose_name = 'Last Modified Organization'
     verbose_name_plural = 'Last Modified Organizations'
 
-class TransactionCreatedOrganizationInline(TransactionOrganizationInline):
+class CreatedOrganizationInline(TransactionOrganizationInline):
     fk_name = 'transaction'
     verbose_name = 'Created Organization'
     verbose_name_plural = 'Created Organizations'
 
-class TransactionDeletedOrganizationInline(TransactionOrganizationInline):
+class DeletedOrganizationInline(TransactionOrganizationInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Organization'
     verbose_name_plural = 'Deleted Organizations'
@@ -1470,17 +1514,17 @@ class TransactionDeletedOrganizationInline(TransactionOrganizationInline):
 class TransactionOrganizationHistoryInline(OrganizationHistoryInline):
     fk_name = 'transaction'
  
-class TransactionCreatedOrganizationNameInline(OrganizationNameInline):
+class CreatedOrganizationNameInline(OrganizationNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Organization Name'
     verbose_name_plural = 'Created Organization Names'
 
-class TransactionLastModifiedOrganizationNameInline(OrganizationNameInline):
+class LastModifiedOrganizationNameInline(OrganizationNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Organization Name'
     verbose_name_plural = 'Last Modified Organization Names'
 
-class TransactionDeletedOrganizationNameInline(OrganizationNameInline):
+class DeletedOrganizationNameInline(OrganizationNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Organization Name'
     verbose_name_plural = 'Deleted Organization Names'
@@ -1490,27 +1534,27 @@ class TransactionOrganizationNameHistoryInline(OrganizationNameHistoryInline):
     verbose_name = 'Organization Name History'
     verbose_name_plural = 'Organization Name Histories'
 
-class TransactionCreatedGroupInline(GroupInline):
+class CreatedGroupInline(GroupInline):
     fk_name = 'transaction'
     verbose_name = 'Created Group'
     verbose_name_plural = 'Created Groups'
 
-class TransactionDeletedGroupInline(GroupInline):
+class DeletedGroupInline(GroupInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Group'
     verbose_name_plural = 'Deleted Groups'
 
-class TransactionCreatedGroupNameInline(GroupNameInline):
+class CreatedGroupNameInline(GroupNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Group Name'
     verbose_name_plural = 'Created Group Names'
 
-class TransactionLastModifiedGroupNameInline(GroupNameInline):
+class LastModifiedGroupNameInline(GroupNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Group Name'
     verbose_name_plural = 'Last Modified Group Names'
 
-class TransactionDeletedGroupNameInline(GroupNameInline):
+class DeletedGroupNameInline(GroupNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Group Name'
     verbose_name_plural = 'Deleted Group Names'
@@ -1520,17 +1564,17 @@ class TransactionGroupNameHistoryInline(GroupNameHistoryInline):
     verbose_name = 'Group Name History'
     verbose_name_plural = 'Group Name Histories'
 
-class TransactionCreatedGroupMemberInline(GroupMemberInline):
+class CreatedGroupMemberInline(GroupMemberInline):
     fk_name = 'transaction'
     verbose_name = 'Created Group Member'
     verbose_name_plural = 'Created Group Members'
 
-class TransactionLastModifiedGroupMemberInline(GroupMemberInline):
+class LastModifiedGroupMemberInline(GroupMemberInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Group Member'
     verbose_name_plural = 'Last Modified Group Members'
 
-class TransactionDeletedGroupMemberInline(GroupMemberInline):
+class DeletedGroupMemberInline(GroupMemberInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Group Member'
     verbose_name_plural = 'Deleted Group Members'
@@ -1540,17 +1584,17 @@ class TransactionGroupMemberHistoryInline(GroupMemberHistoryInline):
     verbose_name = 'Group Member History'
     verbose_name_plural = 'Group Member Histories'
 
-class TransactionCreatedSiteInline(SiteInline):
+class CreatedSiteInline(SiteInline):
     fk_name = 'transaction'
     verbose_name = 'Created Site'
     verbose_name_plural = 'Created Sites'
 
-class TransactionLastModifiedSiteInline(SiteInline):
+class LastModifiedSiteInline(SiteInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Site'
     verbose_name_plural = 'Last Modified Sites'
 
-class TransactionDeletedSiteInline(SiteInline):
+class DeletedSiteInline(SiteInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Site'
     verbose_name_plural = 'Deleted Sites'
@@ -1560,17 +1604,17 @@ class TransactionSiteHistoryInline(SiteHistoryInline):
     verbose_name = 'Site History'
     verbose_name_plural = 'Site Histories'
 
-class TransactionCreatedSiteNameInline(SiteNameInline):
+class CreatedSiteNameInline(SiteNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Site Name'
     verbose_name_plural = 'Created Site Names'
 
-class TransactionLastModifiedSiteNameInline(SiteNameInline):
+class LastModifiedSiteNameInline(SiteNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Site Name'
     verbose_name_plural = 'Last Modified Site Names'
 
-class TransactionDeletedSiteNameInline(SiteNameInline):
+class DeletedSiteNameInline(SiteNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Site Name'
     verbose_name_plural = 'Deleted Site Names'
@@ -1580,17 +1624,17 @@ class TransactionSiteNameHistoryInline(SiteNameHistoryInline):
     verbose_name = 'Site Name History'
     verbose_name_plural = 'Site Name Histories'
 
-class TransactionCreatedAddressInline(AddressInline):
+class CreatedAddressInline(AddressInline):
     fk_name = 'transaction'
     verbose_name = 'Created Address'
     verbose_name_plural = 'Created Addresses'
 
-class TransactionLastModifiedAddressInline(AddressInline):
+class LastModifiedAddressInline(AddressInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Address'
     verbose_name_plural = 'Last Modified Addresses'
 
-class TransactionDeletedAddressInline(AddressInline):
+class DeletedAddressInline(AddressInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Address'
     verbose_name_plural = 'Deleted Addresses'
@@ -1600,17 +1644,17 @@ class TransactionAddressHistoryInline(AddressHistoryInline):
     verbose_name = 'Address History'
     verbose_name_plural = 'Address Histories'
 
-class TransactionCreatedStreetInline(StreetInline):
+class CreatedStreetInline(StreetInline):
     fk_name = 'transaction'
     verbose_name = 'Created Street'
     verbose_name_plural = 'Created Streets'
 
-class TransactionLastModifiedStreetInline(StreetInline):
+class LastModifiedStreetInline(StreetInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Street'
     verbose_name_plural = 'Last Modified Streets'
 
-class TransactionDeletedStreetInline(StreetInline):
+class DeletedStreetInline(StreetInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Street'
     verbose_name_plural = 'Deleted Streets'
@@ -1620,17 +1664,17 @@ class TransactionStreetHistoryInline(StreetHistoryInline):
     verbose_name = 'Street History'
     verbose_name_plural = 'Street Histories'
 
-class TransactionCreatedOfferingInline(OfferingInline):
+class CreatedOfferingInline(OfferingInline):
     fk_name = 'transaction'
     verbose_name = 'Created Offering'
     verbose_name_plural = 'Created Offerings'
 
-class TransactionLastModifiedOfferingInline(OfferingInline):
+class LastModifiedOfferingInline(OfferingInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Offering'
     verbose_name_plural = 'Last Modified Offerings'
 
-class TransactionDeletedOfferingInline(OfferingInline):
+class DeletedOfferingInline(OfferingInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Offering'
     verbose_name_plural = 'Deleted Offerings'
@@ -1640,17 +1684,17 @@ class TransactionOfferingHistoryInline(OfferingHistoryInline):
     verbose_name = 'Offering History'
     verbose_name_plural = 'Offering Histories'
 
-class TransactionCreatedOfferingNameInline(OfferingNameInline):
+class CreatedOfferingNameInline(OfferingNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Offering Name'
     verbose_name_plural = 'Created Offering Names'
 
-class TransactionLastModifiedOfferingNameInline(OfferingNameInline):
+class LastModifiedOfferingNameInline(OfferingNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Offering Name'
     verbose_name_plural = 'Last Modified Offering Names'
 
-class TransactionDeletedOfferingNameInline(OfferingNameInline):
+class DeletedOfferingNameInline(OfferingNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Offering Name'
     verbose_name_plural = 'Deleted Offering Names'
@@ -1660,17 +1704,17 @@ class TransactionOfferingNameHistoryInline(OfferingNameHistoryInline):
     verbose_name = 'Offering Name History'
     verbose_name_plural = 'Offering Name Histories'
 
-class TransactionCreatedOfferingServiceInline(OfferingServiceInline):
+class CreatedOfferingServiceInline(OfferingServiceInline):
     fk_name = 'transaction'
     verbose_name = 'Created Offering Service'
     verbose_name_plural = 'Created Offering Services'
 
-class TransactionLastModifiedOfferingServiceInline(OfferingServiceInline):
+class LastModifiedOfferingServiceInline(OfferingServiceInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Offering Service'
     verbose_name_plural = 'Last Modified Offering Services'
 
-class TransactionDeletedOfferingServiceInline(OfferingServiceInline):
+class DeletedOfferingServiceInline(OfferingServiceInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Offering Service'
     verbose_name_plural = 'Deleted Offering Services'
@@ -1680,17 +1724,17 @@ class TransactionOfferingServiceHistoryInline(OfferingServiceHistoryInline):
     verbose_name = 'Offering Service History'
     verbose_name_plural = 'Offering Service Histories'
 
-class TransactionCreatedSessionInline(SessionInline):
+class CreatedSessionInline(SessionInline):
     fk_name = 'transaction'
     verbose_name = 'Created Session'
     verbose_name_plural = 'Created Sessions'
 
-class TransactionLastModifiedSessionInline(SessionInline):
+class LastModifiedSessionInline(SessionInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Session'
     verbose_name_plural = 'Last Modified Sessions'
 
-class TransactionDeletedSessionInline(SessionInline):
+class DeletedSessionInline(SessionInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Session'
     verbose_name_plural = 'Deleted Sessions'
@@ -1700,17 +1744,17 @@ class TransactionSessionHistoryInline(SessionHistoryInline):
     verbose_name = 'Session History'
     verbose_name_plural = 'Session Histories'
 
-class TransactionCreatedSessionNameInline(SessionNameInline):
+class CreatedSessionNameInline(SessionNameInline):
     fk_name = 'transaction'
     verbose_name = 'Created Session Name'
     verbose_name_plural = 'Created Session Names'
 
-class TransactionLastModifiedSessionNameInline(SessionNameInline):
+class LastModifiedSessionNameInline(SessionNameInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Session Name'
     verbose_name_plural = 'Last Modified Session Names'
 
-class TransactionDeletedSessionNameInline(SessionNameInline):
+class DeletedSessionNameInline(SessionNameInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Session Name'
     verbose_name_plural = 'Deleted Session Names'
@@ -1720,17 +1764,17 @@ class TransactionSessionNameHistoryInline(SessionNameHistoryInline):
     verbose_name = 'Session Name History'
     verbose_name_plural = 'Session Name Histories'
 
-class TransactionCreatedEngagementInline(EngagementInline):
+class CreatedEngagementInline(EngagementInline):
     fk_name = 'transaction'
     verbose_name = 'Created Engagement'
     verbose_name_plural = 'Created Engagements'
 
-class TransactionLastModifiedEngagementInline(EngagementInline):
+class LastModifiedEngagementInline(EngagementInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Engagement'
     verbose_name_plural = 'Last Modified Engagements'
 
-class TransactionDeletedEngagementInline(EngagementInline):
+class DeletedEngagementInline(EngagementInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Engagement'
     verbose_name_plural = 'Deleted Engagements'
@@ -1740,17 +1784,17 @@ class TransactionEngagementHistoryInline(EngagementHistoryInline):
     verbose_name = 'Engagement History'
     verbose_name_plural = 'Engagement Histories'
 
-class TransactionCreatedEnrollmentInline(EnrollmentInline):
+class CreatedEnrollmentInline(EnrollmentInline):
     fk_name = 'transaction'
     verbose_name = 'Created Enrollment'
     verbose_name_plural = 'Created Enrollments'
 
-class TransactionLastModifiedEnrollmentInline(EnrollmentInline):
+class LastModifiedEnrollmentInline(EnrollmentInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Enrollment'
     verbose_name_plural = 'Last Modified Enrollments'
 
-class TransactionDeletedEnrollmentInline(EnrollmentInline):
+class DeletedEnrollmentInline(EnrollmentInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Enrollment'
     verbose_name_plural = 'Deleted Enrollments'
@@ -1760,17 +1804,17 @@ class TransactionEnrollmentHistoryInline(EnrollmentHistoryInline):
     verbose_name = 'Enrollment History'
     verbose_name_plural = 'Enrollment Histories'
 
-class TransactionCreatedInquiryInline(InquiryInline):
+class CreatedInquiryInline(InquiryInline):
     fk_name = 'transaction'
     verbose_name = 'Created Inquiry'
     verbose_name_plural = 'Created Inquiries'
 
-class TransactionLastModifiedInquiryInline(InquiryInline):
+class LastModifiedInquiryInline(InquiryInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Inquiry'
     verbose_name_plural = 'Last Modified Inquiries'
 
-class TransactionDeletedInquiryInline(InquiryInline):
+class DeletedInquiryInline(InquiryInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Inquiry'
     verbose_name_plural = 'Deleted Inquiries'
@@ -1780,17 +1824,17 @@ class TransactionInquiryHistoryInline(InquiryHistoryInline):
     verbose_name = 'Inquiry History'
     verbose_name_plural = 'Inquiry Histories'
 
-class TransactionCreatedPeriodInline(PeriodInline):
+class CreatedPeriodInline(PeriodInline):
     fk_name = 'transaction'
     verbose_name = 'Created Period'
     verbose_name_plural = 'Created Periods'
 
-class TransactionLastModifiedPeriodInline(PeriodInline):
+class LastModifiedPeriodInline(PeriodInline):
     fk_name = 'lastTransaction'
     verbose_name = 'Last Modified Period'
     verbose_name_plural = 'Last Modified Periods'
 
-class TransactionDeletedPeriodInline(PeriodInline):
+class DeletedPeriodInline(PeriodInline):
     fk_name = 'deleteTransaction'
     verbose_name = 'Deleted Period'
     verbose_name_plural = 'Deleted Periods'
@@ -1809,54 +1853,58 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ('id', 'user__id', 'user__email')
     
     inlines = [\
-               TransactionDeletedServiceInline, 
-               TransactionDeletedServiceNameInline, 
-               TransactionDeletedServiceOrganizationLabelInline, 
-               TransactionDeletedServiceSiteLabelInline, 
-               TransactionDeletedServiceOfferingLabelInline, 
-               TransactionDeletedServiceImplicationInline, 
-               TransactionDeletedOrganizationInline, 
-               TransactionDeletedOrganizationNameInline, 
-               TransactionDeletedGroupInline,
-               TransactionDeletedGroupNameInline,
-               TransactionDeletedGroupMemberInline,
-               TransactionDeletedSiteInline, 
-               TransactionDeletedSiteNameInline, 
-               TransactionDeletedAddressInline, 
-               TransactionDeletedStreetInline, 
-               TransactionDeletedOfferingInline, 
-               TransactionDeletedOfferingNameInline, 
-               TransactionDeletedOfferingServiceInline, 
-               TransactionDeletedSessionInline, 
-               TransactionDeletedSessionNameInline, 
-               TransactionDeletedEngagementInline, 
-               TransactionDeletedEnrollmentInline, 
-               TransactionDeletedInquiryInline, 
-               TransactionDeletedPeriodInline, 
-               TransactionCreatedServiceInline, TransactionServiceInline, TransactionServiceHistoryInline,
-               TransactionCreatedServiceNameInline, TransactionLastModifiedServiceNameInline, TransactionServiceNameHistoryInline,
-               TransactionCreatedServiceOrganizationLabelInline, TransactionLastModifiedServiceOrganizationLabelInline, TransactionServiceOrganizationLabelHistoryInline,
-               TransactionCreatedServiceSiteLabelInline, TransactionLastModifiedServiceSiteLabelInline, TransactionServiceSiteLabelHistoryInline,
-               TransactionCreatedServiceOfferingLabelInline, TransactionLastModifiedServiceOfferingLabelInline, TransactionServiceOfferingLabelHistoryInline,
-               TransactionCreatedServiceImplicationInline, TransactionLastModifiedServiceImplicationInline, TransactionServiceImplicationHistoryInline,
-               TransactionCreatedOrganizationInline, TransactionOrganizationInline, TransactionOrganizationHistoryInline,
-               TransactionCreatedOrganizationNameInline, TransactionLastModifiedOrganizationNameInline, TransactionOrganizationNameHistoryInline,
-               TransactionCreatedGroupInline, 
-               TransactionCreatedGroupNameInline, TransactionLastModifiedGroupNameInline, TransactionGroupNameHistoryInline,
-               TransactionCreatedGroupMemberInline, TransactionLastModifiedGroupMemberInline, TransactionGroupMemberHistoryInline,
-               TransactionCreatedSiteInline, TransactionLastModifiedSiteInline, TransactionSiteHistoryInline,
-               TransactionCreatedSiteNameInline, TransactionLastModifiedSiteNameInline, TransactionSiteNameHistoryInline,
-               TransactionCreatedAddressInline, TransactionLastModifiedAddressInline, TransactionAddressHistoryInline,
-               TransactionCreatedStreetInline, TransactionLastModifiedStreetInline, TransactionStreetHistoryInline,
-               TransactionCreatedOfferingInline, TransactionLastModifiedOfferingInline, TransactionOfferingHistoryInline,
-               TransactionCreatedOfferingNameInline, TransactionLastModifiedOfferingNameInline, TransactionOfferingNameHistoryInline,
-               TransactionCreatedOfferingServiceInline, TransactionLastModifiedOfferingServiceInline, TransactionOfferingServiceHistoryInline,
-               TransactionCreatedSessionInline, TransactionLastModifiedSessionInline, TransactionSessionHistoryInline,
-               TransactionCreatedSessionNameInline, TransactionLastModifiedSessionNameInline, TransactionSessionNameHistoryInline,
-               TransactionCreatedEngagementInline, TransactionLastModifiedEngagementInline, TransactionEngagementHistoryInline,
-               TransactionCreatedEnrollmentInline, TransactionLastModifiedEnrollmentInline, TransactionEnrollmentHistoryInline,
-               TransactionCreatedInquiryInline, TransactionLastModifiedInquiryInline, TransactionInquiryHistoryInline,
-               TransactionCreatedPeriodInline, TransactionLastModifiedPeriodInline, TransactionPeriodHistoryInline,
+               DeletedCommentPromptInline, 
+               DeletedCommentPromptTextInline, 
+               DeletedServiceInline, 
+               DeletedServiceNameInline, 
+               DeletedServiceOrganizationLabelInline, 
+               DeletedServiceSiteLabelInline, 
+               DeletedServiceOfferingLabelInline, 
+               DeletedServiceImplicationInline, 
+               DeletedOrganizationInline, 
+               DeletedOrganizationNameInline, 
+               DeletedGroupInline,
+               DeletedGroupNameInline,
+               DeletedGroupMemberInline,
+               DeletedSiteInline, 
+               DeletedSiteNameInline, 
+               DeletedAddressInline, 
+               DeletedStreetInline, 
+               DeletedOfferingInline, 
+               DeletedOfferingNameInline, 
+               DeletedOfferingServiceInline, 
+               DeletedSessionInline, 
+               DeletedSessionNameInline, 
+               DeletedEngagementInline, 
+               DeletedEnrollmentInline, 
+               DeletedInquiryInline, 
+               DeletedPeriodInline, 
+               CreatedCommentPromptInline, LastModifiedCommentPromptInline,
+               CreatedCommentPromptTextInline, LastModifiedCommentPromptTextInline, TransactionCommentPromptTextHistoryInline,
+               CreatedServiceInline, LastModifiedServiceInline, TransactionServiceHistoryInline,
+               CreatedServiceNameInline, LastModifiedServiceNameInline, TransactionServiceNameHistoryInline,
+               CreatedServiceOrganizationLabelInline, LastModifiedServiceOrganizationLabelInline, TransactionServiceOrganizationLabelHistoryInline,
+               CreatedServiceSiteLabelInline, LastModifiedServiceSiteLabelInline, TransactionServiceSiteLabelHistoryInline,
+               CreatedServiceOfferingLabelInline, LastModifiedServiceOfferingLabelInline, TransactionServiceOfferingLabelHistoryInline,
+               CreatedServiceImplicationInline, LastModifiedServiceImplicationInline, TransactionServiceImplicationHistoryInline,
+               CreatedOrganizationInline, TransactionOrganizationInline, TransactionOrganizationHistoryInline,
+               CreatedOrganizationNameInline, LastModifiedOrganizationNameInline, TransactionOrganizationNameHistoryInline,
+               CreatedGroupInline, 
+               CreatedGroupNameInline, LastModifiedGroupNameInline, TransactionGroupNameHistoryInline,
+               CreatedGroupMemberInline, LastModifiedGroupMemberInline, TransactionGroupMemberHistoryInline,
+               CreatedSiteInline, LastModifiedSiteInline, TransactionSiteHistoryInline,
+               CreatedSiteNameInline, LastModifiedSiteNameInline, TransactionSiteNameHistoryInline,
+               CreatedAddressInline, LastModifiedAddressInline, TransactionAddressHistoryInline,
+               CreatedStreetInline, LastModifiedStreetInline, TransactionStreetHistoryInline,
+               CreatedOfferingInline, LastModifiedOfferingInline, TransactionOfferingHistoryInline,
+               CreatedOfferingNameInline, LastModifiedOfferingNameInline, TransactionOfferingNameHistoryInline,
+               CreatedOfferingServiceInline, LastModifiedOfferingServiceInline, TransactionOfferingServiceHistoryInline,
+               CreatedSessionInline, LastModifiedSessionInline, TransactionSessionHistoryInline,
+               CreatedSessionNameInline, LastModifiedSessionNameInline, TransactionSessionNameHistoryInline,
+               CreatedEngagementInline, LastModifiedEngagementInline, TransactionEngagementHistoryInline,
+               CreatedEnrollmentInline, LastModifiedEnrollmentInline, TransactionEnrollmentHistoryInline,
+               CreatedInquiryInline, LastModifiedInquiryInline, TransactionInquiryHistoryInline,
+               CreatedPeriodInline, LastModifiedPeriodInline, TransactionPeriodHistoryInline,
                InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
               ]
 
