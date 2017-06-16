@@ -17,5 +17,5 @@ def parse(path, context, resultClass):
     
 with transaction.atomic():
     context = Context('en', mr)
-    newItem = parse('service[name>text=Foo Service]', context, Organization)[0]
+    newItem = parse('service[name>text=Foo Service]', context, Service)[0]
     newItem.markDeleted(context)
