@@ -4803,7 +4803,7 @@ class Service(RootInstance, dbmodels.Model):
         if not value or value in validValues:
             return
         else:
-            raise 'the value "%s" is not a valid stage. Valid stages are: %s' % (value, validValues)
+            raise ValueError('the value "%s" is not a valid stage. Valid stages are: %s' % (value, validValues))
     
     def buildHistory(self, context):
         return ServiceHistory.objects.create(transaction=self.lastTransaction,
