@@ -3821,7 +3821,7 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
         
-        newItem.createChildren(data, 'texts', context, ExperiencePromptText, newIDs)
+        newItem.createChildren(data, 'translations', context, ExperiencePromptText, newIDs)
         newItem.createChildren(data, 'services', context, ExperiencePromptService, newIDs)
         newItem.createChildren(data, 'disqualifying tags', context, DisqualifyingTag, newIDs)
         
