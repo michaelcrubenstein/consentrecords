@@ -3695,7 +3695,8 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
                 'timeframe': 'timeframe',
                }
     
-    elementMap = {'service': ('services__', 'ExperiencePromptService', 'parent'),
+    elementMap = {'translation': ('texts__', 'ExperiencePromptText', 'parent'),
+                  'service': ('services__', 'ExperiencePromptService', 'parent'),
                   'organization': ('organization__', 'Organization', 'experiencePrompts'),
                   'site': ('site__', 'Site', 'experiencePrompts'),
                   'offering': ('offering__', 'Offering', 'experiencePrompts'),
@@ -3739,6 +3740,10 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
             data['offering'] = self.offering.headData(context)
         if self.domain:
             data['domain'] = self.domain.headData(context)
+        if self.stage:
+            data['stage'] = self.stage
+        if self.timeframe:
+            data['timeframe'] = self.timeframe
         data['services'] = [i.headData(context) for i in self.fetchedServices]
         data['translations'] = [i.getData([], context) for i in self.fetchedTexts]
         data['disqualifying tags'] = [i.headData(context) for i in self.fetchedDisqualifyingTags]
