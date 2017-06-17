@@ -267,7 +267,7 @@ class IInstance():
         noneName = None
         for v in querySet:
             if languageCode == v.languageCode:
-                return v.text
+                return v.text or ''
             elif v.languageCode == 'en':
                 enName = v.text
             elif not v.languageCode:
