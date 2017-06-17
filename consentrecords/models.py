@@ -3772,6 +3772,7 @@ class ExperiencePromptService(ChildInstance, dbmodels.Model):
     deleteTransaction = deleteTransactionField('deletedExperiencePromptServices')
     
     parent = parentField(ExperiencePrompt, 'services')
+    position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServices', db_index=True, on_delete=dbmodels.CASCADE)
     
     fieldMap = {}
@@ -3800,6 +3801,7 @@ class ExperiencePromptService(ChildInstance, dbmodels.Model):
     def getData(self, fields, context):
         data = self.headData(context)
         if context.canRead(self):
+            data['position'] = self.position
             if self.service:
                 data['service'] = self.service.headData(context)
             
