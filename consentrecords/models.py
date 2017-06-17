@@ -3753,6 +3753,10 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
         return qs, accessType
 
     def markDeleted(self, context):
+        for i in self.texts.filter(deleteTransaction__isnull=True):
+            i.markDeleted(context)
+        for i in self.services.filter(deleteTransaction__isnull=True):
+            i.markDeleted(context)
         for i in self.disqualifyingTags.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
         super(ExperiencePrompt, self).markDeleted(context)
