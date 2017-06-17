@@ -3301,6 +3301,20 @@ class DisqualifyingTag(ChildInstance, dbmodels.Model):
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = DisqualifyingTag.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 service=_orNoneForeignKey(data, 'service', context, Service),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class DisqualifyingTagHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('disqualifyingTagHistories')
@@ -3669,6 +3683,21 @@ class ExperienceService(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = ExperienceService.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.services, data, 'position'),
+                                 service=_orNoneForeignKey(data, 'service', context, Service),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
@@ -3761,6 +3790,43 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         super(ExperiencePrompt, self).markDeleted(context)
 
+    def ValueCheckTimeframe(value):
+        validValues = ['Previous', 'Current', 'Goal']
+        if not value or value in validValues:
+            return
+        else:
+            raise ValuError('the value "%s" is not a valid timeframe. Valid timeframes are: %s' % (value, validValues))
+    
+    def create(data, context, newIDs={}):
+        if not context.is_administrator:
+           raise PermissionDenied
+        
+        if 'name' not in data or not data['name']:
+            raise ValueError('name of experience prompt is not specified')
+        if 'stage' in data:
+            Service.ValueCheckStage(data['stage'])
+        if 'timeframe' in data:
+            ExperiencePrompt.ValueCheckTimeframe(data['timeframe'])
+             
+        newItem = ExperiencePrompt.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 name = _orNone(data, 'name'),
+                                 organization = _orNoneForeignKey(data, 'organization', context, Organization),
+                                 site = _orNoneForeignKey(data, 'site', context, Site),
+                                 offering = _orNoneForeignKey(data, 'offering', context, Offering),
+                                 domain = _orNoneForeignKey(data, 'domain', context, Service),
+                                 stage = _orNone(data, 'stage'),
+                                 timeframe = _orNone(data, 'timeframe'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'texts', context, ExperiencePromptText, newIDs)
+        newItem.createChildren(data, 'services', context, ExperiencePromptService, newIDs)
+        newItem.createChildren(data, 'disqualifying tags', context, DisqualifyingTag, newIDs)
+        
+        return newItem
+
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptHistories')
@@ -3819,6 +3885,21 @@ class ExperiencePromptService(ChildInstance, dbmodels.Model):
     def getSubClause(qs, user, accessType):
         return qs, accessType
                  
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+           
+        newItem = ExperiencePromptService.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.services, data, 'position'),
+                                 service=_orNoneForeignKey(data, 'service', context, Service),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptServiceHistories')
@@ -3845,6 +3926,12 @@ class ExperiencePromptText(TranslationInstance, dbmodels.Model):
     def __str__(self):
         return '%s - %s' % (self.languageCode, self.text) if self.languageCode else (self.text or '')
 
+    def getSubClause(qs, user, accessType):
+        return qs, accessType
+
+    def create(parent, data, context, newIDs={}):
+        return TranslationInstance.create(ExperiencePromptText.objects, parent, data, context, newIDs)
+        
 class ExperiencePromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptTextHistories')
