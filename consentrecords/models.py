@@ -4052,7 +4052,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
                  }
                  
     def description(self, languageCode=None):
-        return self.user.description(languageCode)
+        return self.user.description(languageCode) if self.user else ''
         
     def __str__(self):
         return self.description()
