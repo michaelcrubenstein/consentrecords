@@ -1844,6 +1844,97 @@ class TransactionPeriodHistoryInline(PeriodHistoryInline):
     verbose_name = 'Period History'
     verbose_name_plural = 'Period Histories'
 
+class LastModifiedExperiencePromptInline(TabularInline):
+    model = ExperiencePrompt
+    list_display = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'name', 'organization', 'site', 'offering', 'domain', 'stage', 'timeframe', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'name', 'organization__id', 'organization__names__text', 
+                     'site__id', 'site__names__text', 'offering__id', 'offering__names__text', 
+                     'domain__id', 'domain__names__text', 'stage', 'timeframe', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience Prompt'
+    verbose_name_plural = 'Last Modified Experience Prompts'
+    ordering = ['name', 'transaction__creation_time']
+        
+class CreatedExperiencePromptInline(LastModifiedExperiencePromptInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience Prompt'
+    verbose_name_plural = 'Created Experience Prompts'
+
+class DeletedExperiencePromptInline(LastModifiedExperiencePromptInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience Prompt'
+    verbose_name_plural = 'Deleted Experience Prompts'
+
+class TransactionExperiencePromptHistoryInline(ExperiencePromptHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience Prompt History'
+    verbose_name_plural = 'Experience Prompt Histories'
+
+class CreatedExperiencePromptTextInline(ExperiencePromptTextInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience Prompt Text'
+    verbose_name_plural = 'Created Experience Prompt Texts'
+
+class LastModifiedExperiencePromptTextInline(ExperiencePromptTextInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience Prompt Text'
+    verbose_name_plural = 'Last Modified Experience Prompt Texts'
+
+class DeletedExperiencePromptTextInline(ExperiencePromptTextInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience Prompt Text'
+    verbose_name_plural = 'Deleted Experience Prompt Texts'
+
+class TransactionExperiencePromptTextHistoryInline(ExperiencePromptTextHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience Prompt Text History'
+    verbose_name_plural = 'Experience Prompt Text Histories'
+
+class CreatedExperiencePromptServiceInline(ExperiencePromptServiceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience Prompt Service'
+    verbose_name_plural = 'Created Experience Prompt Services'
+
+class LastModifiedExperiencePromptServiceInline(ExperiencePromptServiceInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience Prompt Service'
+    verbose_name_plural = 'Last Modified Experience Prompt Services'
+
+class DeletedExperiencePromptServiceInline(ExperiencePromptServiceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience Prompt Service'
+    verbose_name_plural = 'Deleted Experience Prompt Services'
+
+class TransactionExperiencePromptServiceHistoryInline(ExperiencePromptServiceHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience Prompt Service History'
+    verbose_name_plural = 'Experience Prompt Service Histories'
+
+class CreatedDisqualifyingTagInline(DisqualifyingTagInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Disqualifying Tag'
+    verbose_name_plural = 'Created Disqualifying Tags'
+
+class LastModifiedDisqualifyingTagInline(DisqualifyingTagInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Disqualifying Tag'
+    verbose_name_plural = 'Last Modified Disqualifying Tags'
+
+class DeletedDisqualifyingTagInline(DisqualifyingTagInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Disqualifying Tag'
+    verbose_name_plural = 'Deleted Disqualifying Tags'
+
+class TransactionDisqualifyingTagHistoryInline(DisqualifyingTagHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Disqualifying Tag History'
+    verbose_name_plural = 'Disqualifying Tag Histories'
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'creation_time')
     fieldsets = (
@@ -1851,6 +1942,8 @@ class TransactionAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('id', 'user', 'creation_time')
     search_fields = ('id', 'user__id', 'user__email')
+    
+    ordering = ['-creation_time']
     
     inlines = [\
                DeletedCommentPromptInline, 
@@ -1879,6 +1972,10 @@ class TransactionAdmin(admin.ModelAdmin):
                DeletedEnrollmentInline, 
                DeletedInquiryInline, 
                DeletedPeriodInline, 
+               DeletedExperiencePromptInline, 
+               DeletedExperiencePromptTextInline, 
+               DeletedExperiencePromptServiceInline, 
+               DeletedDisqualifyingTagInline, 
                CreatedCommentPromptInline, LastModifiedCommentPromptInline,
                CreatedCommentPromptTextInline, LastModifiedCommentPromptTextInline, TransactionCommentPromptTextHistoryInline,
                CreatedServiceInline, LastModifiedServiceInline, TransactionServiceHistoryInline,
@@ -1905,6 +2002,10 @@ class TransactionAdmin(admin.ModelAdmin):
                CreatedEnrollmentInline, LastModifiedEnrollmentInline, TransactionEnrollmentHistoryInline,
                CreatedInquiryInline, LastModifiedInquiryInline, TransactionInquiryHistoryInline,
                CreatedPeriodInline, LastModifiedPeriodInline, TransactionPeriodHistoryInline,
+               CreatedExperiencePromptInline, LastModifiedExperiencePromptInline, TransactionExperiencePromptHistoryInline,
+               CreatedExperiencePromptTextInline, LastModifiedExperiencePromptTextInline, TransactionExperiencePromptTextHistoryInline,
+               CreatedExperiencePromptServiceInline, LastModifiedExperiencePromptServiceInline, TransactionExperiencePromptServiceHistoryInline,
+               CreatedDisqualifyingTagInline, LastModifiedDisqualifyingTagInline, TransactionDisqualifyingTagHistoryInline,
                InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
               ]
 
