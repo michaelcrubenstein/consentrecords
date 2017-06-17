@@ -20,6 +20,8 @@ from collections import defaultdict
 from custom_user.models import AuthUser
 from parse.cssparser import parser as cssparser
 
+_currentChildQ = Q(deleteTransaction__isnull=True)|Q(deleteTransaction=F('parent__deleteTransaction'))
+
 # Returns a list containing the first argument. If t is None, then it is an empty list.
 def forceToList(t):
     return [] if t is None else \
@@ -305,7 +307,7 @@ class IInstance():
     
     @property
     def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(deleteTransaction=self.deleteTransaction)
+        return self.currentNames if 'currentNames' in self.__dict__ else self.names.filter(_currentChildQ)
 
     def description(self, languageCode=None):
         return IInstance.getName(self.currentNamesQuerySet, languageCode)
@@ -3857,7 +3859,7 @@ class Group(ChildInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=GroupName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=GroupName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4198,7 +4200,7 @@ class Offering(ChildInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=OfferingName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=OfferingName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4416,7 +4418,7 @@ class Organization(RootInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=OrganizationName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=OrganizationName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -4750,7 +4752,7 @@ class Service(RootInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=ServiceName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -5105,7 +5107,7 @@ class Session(ChildInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=SessionName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=SessionName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
@@ -5260,7 +5262,7 @@ class Site(ChildInstance, dbmodels.Model):
 
     def select_head_related(querySet):
         return querySet.prefetch_related(Prefetch('names',
-                                                  queryset=SiteName.objects.filter(deleteTransaction=F('deleteTransaction')),
+                                                  queryset=SiteName.objects.filter(_currentChildQ),
                                                   to_attr='currentNames'))
         
     def select_related(querySet):
