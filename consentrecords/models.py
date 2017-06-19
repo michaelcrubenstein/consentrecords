@@ -36,6 +36,9 @@ def combineTerms(t1, t2):
 def isUUID(s):
     return re.search('^[a-fA-F0-9]{32}$', s)
     
+def _isEmail(s):
+    return re.search('^\S+@\S+\.\S\S+$', s)
+    
 def _orNone(data, key):
     return data[key] if key in data else None
     
@@ -58,7 +61,20 @@ def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=N
             raise ValueError('the path does not yield a single item: %s' % path)
         else:
             return qs2[0]
-            
+
+def _getForeignKey(path, context, resultClass):
+    tokens = cssparser.tokenizeHTML(path)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
+    qs2 = qs2.distinct()
+    count = len(qs2)
+    if count == 0:
+        raise ValueError('the path does not yield any items: %s' % path)
+    elif count > 1:
+        raise ValueError('the path does not yield a single item: %s' % path)
+    else:
+        return qs2[0]
+                
 def _newPosition(objects, data, key):
     qs = objects.filter(deleteTransaction__isnull=True).order_by('position')
     if key in data:
@@ -83,6 +99,23 @@ def _newPosition(objects, data, key):
     else:
         return 0
             
+def _valueCheckDate(s):
+    if int(s[0:4]) <= 0 or s[4] != '-' or \
+       int(s[5:7]) <= 0 or int(s[5:7]) > 12:
+        raise ValueError('the date is not in a valid format: %s' % s)
+    elif len(s) == 7:
+        return
+    elif s[7] != '-' or int(s[8:10]) <= 0:
+        raise ValueError('the date is not in a valid format: %s' % s)
+    else:
+        return
+        
+def _valueCheckEnumeration(data, key, validValues):
+    if key not in data or data[key] in validValues:
+        return
+    else:
+        raise ValueError('the value "%s" is not a valid value. Valid values for "%s" are: %s' % (value, key, validValues))
+
 def idField():
     return dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
@@ -3158,6 +3191,22 @@ class Comment(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+        
+        newItem = Comment.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 text = _orNone(data, 'text'),
+                                 question = _orNone(data, 'question'),
+                                 asker = _orNoneForeignKey(data, 'asker', context, Path),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem
+
 class CommentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentHistories')
@@ -3570,6 +3619,38 @@ class Experience(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Experience, self).markDeleted(context)
     
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+        
+        ExperiencePrompt.valueCheckTimeframe(data, 'timeframe')
+        if 'start' in data: _valueCheckDate(data['start'])
+        if 'end' in data: _valueCheckDate(data['end'])
+        if 'start' in data and 'end' in data and data['start'] > data['end']:
+        	raise ValueError('the start date of an experience cannot be after the end date of the experience')
+             
+        newItem = Experience.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 organization = _orNoneForeignKey(data, 'organization', context, Organization),
+                                 customOrganization = _orNone(data, 'custom organization'),
+                                 site = _orNoneForeignKey(data, 'site', context, Site),
+                                 customSite = _orNone(data, 'custom site'),
+                                 offering = _orNoneForeignKey(data, 'offering', context, Offering),
+                                 customOffering = _orNone(data, 'custom offering'),
+                                 timeframe = _orNone(data, 'timeframe'),
+                                 start = _orNone(data, 'start'),
+                                 end = _orNone(data, 'end'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        newItem.createChildren(data, 'services', context, ExperienceService, newIDs)
+        newItem.createChildren(data, 'custom services', context, ExperienceCustomService, newIDs)
+        newItem.createChildren(data, 'comments', context, Comment, newIDs)
+        
+        return newItem
+
 class ExperienceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceHistories')
@@ -3625,6 +3706,24 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         else:
             return Path.findableQuerySet(qs, user, prefix='parent__parent'), Path
 
+    def create(parent, data, context, newIDs={}):
+        if not context.canWrite(parent):
+           raise PermissionDenied
+        
+        if 'name' not in data:
+            raise ValueError('the name of a custom service is required.')
+             
+        newItem = ExperienceCustomService.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.services, data, 'position'),
+                                 name=data['name'],
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class ExperienceCustomServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceCustomServiceHistories')
@@ -3790,12 +3889,9 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         super(ExperiencePrompt, self).markDeleted(context)
 
-    def ValueCheckTimeframe(value):
+    def valueCheckTimeframe(data, key):
         validValues = ['Previous', 'Current', 'Goal']
-        if not value or value in validValues:
-            return
-        else:
-            raise ValuError('the value "%s" is not a valid timeframe. Valid timeframes are: %s' % (value, validValues))
+        _valueCheckEnumeration(data, key, validValues)
     
     def create(data, context, newIDs={}):
         if not context.is_administrator:
@@ -3805,8 +3901,7 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
             raise ValueError('name of experience prompt is not specified')
         if 'stage' in data:
             Service.ValueCheckStage(data['stage'])
-        if 'timeframe' in data:
-            ExperiencePrompt.ValueCheckTimeframe(data['timeframe'])
+        ExperiencePrompt.valueCheckTimeframe(data, 'timeframe')
              
         newItem = ExperiencePrompt.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -4177,6 +4272,18 @@ class Notification(ChildInstance, dbmodels.Model):
     def select_related(querySet):
         return querySet.prefetch_related(Prefetch('notificationArguments', 
                            queryset=NotificationArgument.objects.filter(deleteTransaction__isnull=True).order_by('position')))
+    
+    def getArgumentTypes(self):
+        if self.name == 'crn.FollowerAccept':
+            return [User]
+        elif self.name == 'crn.ExperienceCommentRequested':
+            return [Path, Experience, Comment]
+        elif self.name == 'crn.ExperienceQuestionAnswered':
+            return [Path, Experience]
+        elif self.name == 'crn.ExperienceSuggestion':
+            return [Path, Service]
+        else:
+            return []
         
     def getData(self, fields, context):
         data = self.headData(context)
@@ -4185,17 +4292,8 @@ class Notification(ChildInstance, dbmodels.Model):
         
         arguments = self.notificationArguments.filter(deleteTransaction__isnull=True).order_by('position')
         
-        if self.name == 'crn.FollowerAccept':
-            types = [User]
-        elif self.name == 'crn.ExperienceCommentRequested':
-            types = [Path, Experience, Comment]
-        elif self.name == 'crn.ExperienceQuestionAnswered':
-            types = [Path, Experience]
-        elif self.name == 'crn.ExperienceSuggestion':
-            types = [Path, Service]
-        else:
-            types = []
-            
+        types = self.getArgumentTypes()
+
         data['arguments'] = [types[i].objects.get(id=arguments[i].argument).headData(context) \
                             for i in range(0, min(len(arguments), len(types)))]
         
@@ -4219,6 +4317,27 @@ class Notification(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Notification, self).markDeleted(context)
 
+    def create(data, context, newIDs={}):
+        newItem = Notification.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 name = data['name'],
+                                 isFresh = _orNone(data, 'is fresh'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        types = self.getArgumentTypes()
+        for position in range(0, len(types)):
+            path = data['arguments'][position]
+            fk = _getForeignKey(path, context, NotificationArgument)
+            NotificationArgument.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=newItem,
+                                 position=position,
+                                 argument=fk.id.hex)
+            
+        return newItem                          
+        
 class NotificationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('notificationHistories')
@@ -4744,10 +4863,56 @@ class Path(IInstance, dbmodels.Model):
     def markDeleted(self, context):
         for i in self.experiences.filter(deleteTransaction__isnull=True):
             i.markDeleted(context)
-        for i in GroupTarget.objects.filter(pk=self.id):
+        for i in GrantTarget.objects.filter(pk=self.id):
             i.markDeleted(context)
         super(Path, self).markDeleted(context)
 
+    def valueCheckBirthday(data, key):
+        if key not in data:
+            return
+        return User.valueCheckBirthday(data, key)
+    
+    def valueCheckSpecialAccess(data, key):
+        validValues = ['custom']
+        _valueCheckEnumeration(data, key, validValues)
+    
+    def valueCheckCanAnswerExperience(data, key):
+        validValues = ['yes', 'no']
+        _valueCheckEnumeration(data, key, validValues)
+    
+    def create(parent, data, context, newIDs={}):
+        Path.valueCheckBirthday(data, 'birthday')
+        Path.valueCheckSpecialAccess(data, 'special access')
+        Path.valueCheckCanAnswerExperience(data, 'can answer experience')
+        
+        birthday = data['birthday'] if 'birthday' in data else parent.birthday
+        
+        newItem = Path.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent = parent,
+                                 name = _orNone(data, 'screen name'),
+                                 birthday = birthday,
+                                 specialAccess = _orNone(data, 'special access'),
+                                 canAnswerExperience = _orNone(data, 'can answer experience'),
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        if 'grant target' in data:
+            newGrantTarget = GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
+        else:
+            newGrantTarget = GrantTarget.create(newItem.id, {}, context, newIDs)
+        
+        if newItem.specialAccess == 'custom':
+            newItem.grantTarget = newGrantTarget
+        else:
+            newItem.grantTarget = GrantTarget.objects.get(pk=parent.id)
+        newItem.save()
+        
+        newItem.createChildren(data, 'experiences', context, Experience, newIDs)
+        
+        return newItem                          
+        
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -5546,7 +5711,7 @@ class User(RootInstance, dbmodels.Model):
         if len(qs):
             return qs[0].text
         else:
-            return 'Unbound user: %s %s' % (self.firstName, self.lastName), 
+            return 'Unbound user: %s %s' % (self.firstName, self.lastName)
         
     def __str__(self):
         return self.description()
@@ -5616,7 +5781,6 @@ class User(RootInstance, dbmodels.Model):
     fieldMap = {'first name': 'firstName',
                 'last name': 'lastName',
                 'birthday': 'birthday',
-                'public access': 'publicAccess',
                }
                
     elementMap = {'email': ('emails__', 'UserEmail', 'parent'),
@@ -5644,6 +5808,42 @@ class User(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         super(User, self).markDeleted(context)
 
+    def valueCheckBirthday(data, key):
+        if key not in data:
+            raise ValueError('a user can not be created without specifying a birthday')
+        _valueCheckDate(data[key])
+    
+    def create(data, context, newIDs={}):
+        User.valueCheckBirthday(data, 'birthday')
+        
+        newItem = User.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 firstName = _orNone(data, 'first name'),
+                                 lastName = _orNone(data, 'last name'),
+                                 birthday = data['birthday'],
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        if 'grant target' in data:
+            GrantTarget.create(newItem.id, data['grant target'], context, newIDs)
+        else:
+            GrantTarget.create(newItem.id, {}, context, newIDs)
+        
+        newItem.createChildren(data, 'emails', context, UserEmail, newIDs)
+        if not context.user:
+            context.user = newItem
+            
+        if 'path' in data:
+            Path.create(newItem, data['path'], context, newIDs=newIDs)
+        else:
+            Path.create(newItem, {}, context, newIDs=newIDs)
+        
+        newItem.createChildren(data, 'notifications', context, Notification, newIDs)
+        newItem.createChildren(data, 'user grant requests', context, UserUserGrantRequest, newIDs)
+        
+        return newItem                          
+        
 class UserHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userHistories')
@@ -5694,6 +5894,29 @@ class UserEmail(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def ValueCheckText(data, key):
+        if key in data and data[key]:
+            if _isEmail(data[key]):
+                return
+            else:
+                raise ValueError('the email address "%s" is not a valid email address' % data[key])
+        else:
+            raise ValueError('an email address is required in the "%s" field' % key)
+            
+    def create(parent, data, context, newIDs={}):
+        UserEmail.ValueCheckText(data, 'text')
+        
+        newItem = UserEmail.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 position=_newPosition(parent.emails, data, 'position'),
+                                 text=data['text'],
+                                )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class UserEmailHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userEmailHistories')
@@ -5727,6 +5950,17 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
+    def create(parent, data, context, newIDs={}):
+        newItem = UserUserGrantRequest.objects.create(transaction=context.transaction,
+                                 lastTransaction=context.transaction,
+                                 parent=parent,
+                                 grantee=_orNoneForeignKey(data, 'grantee', context, User),
+                                 )
+        if 'clientID' in data:
+            newIDs[data['clientID']] = newItem.id.hex
+        
+        return newItem                          
+        
 class UserUserGrantRequestHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userUserGrantRequestHistories')
