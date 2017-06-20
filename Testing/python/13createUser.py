@@ -55,3 +55,40 @@ with transaction.atomic():
         context = Context('en', mr)
         newItem = User.create(d, context, newIDs=newIDs)
         print(str(newItem), newIDs)
+
+
+def parse(path, context, resultClass):
+    print("### %s, context" % path)
+    tokens = cssparser.tokenizeHTML(path)
+    qs, tokens, qsType, accessType = RootInstance.parse(tokens, context.user)
+    qs2, accessType = resultClass.getSubClause(qs, context.user, accessType)
+    qs2 = qs2.distinct()
+    return qs2
+
+data = [{'name': 'crn.FollowerAccept',
+         'arguments': ['user[email>text="elizabethskavish@gmail.com"]']
+        },
+        {'name': 'crn.ExperienceCommentRequested',
+         'arguments': ['user[email>text="elizabethskavish@gmail.com"]/path',
+                       'experience/%s' % newIDs['4'],
+                       'comment/%s' % newIDs['6'],
+                      ]
+        },
+        {'name': 'crn.ExperienceQuestionAnswered',
+         'arguments': ['path/%s' % newIDs['3'],
+                       'experience/%s' % newIDs['4'],
+                      ]
+        },
+        {'name': 'crn.ExperienceSuggestion',
+         'arguments': ['user[email>text="elizabethskavish@gmail.com"]/path',
+                       'service[name>text=Job]',
+                      ]
+        },
+       ]
+with transaction.atomic():
+    for d in data:
+        newIDs = {}
+        context = Context('en', mr)
+        user = parse('user[email>text="foouser1@pathadvisor.com"]', context, User)[0]
+        newItem = Notification.create(user, d, context, newIDs=newIDs)
+        print(str(newItem), newIDs)

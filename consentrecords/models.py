@@ -4317,20 +4317,21 @@ class Notification(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Notification, self).markDeleted(context)
 
-    def create(data, context, newIDs={}):
+    def create(parent, data, context, newIDs={}):
         newItem = Notification.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
+                                 parent=parent,
                                  name = data['name'],
                                  isFresh = _orNone(data, 'is fresh'),
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
         
-        types = self.getArgumentTypes()
+        types = newItem.getArgumentTypes()
         for position in range(0, len(types)):
             path = data['arguments'][position]
-            fk = _getForeignKey(path, context, NotificationArgument)
-            NotificationArgument.create(transaction=context.transaction,
+            fk = _getForeignKey(path, context, types[position])
+            NotificationArgument.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=newItem,
                                  position=position,
@@ -5839,7 +5840,6 @@ class User(RootInstance, dbmodels.Model):
         else:
             Path.create(newItem, {}, context, newIDs=newIDs)
         
-        newItem.createChildren(data, 'notifications', context, Notification, newIDs)
         newItem.createChildren(data, 'user grant requests', context, UserUserGrantRequest, newIDs)
         
         return newItem                          

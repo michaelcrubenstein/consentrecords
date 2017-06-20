@@ -281,6 +281,30 @@ class UserEmailAdmin(ModelAdmin):
 
 admin.site.register(UserEmail, UserEmailAdmin)
 
+class UserUserGrantRequestHistoryInline(TabularInline):
+    model = UserUserGrantRequestHistory
+    list_display = ('id', 't_creationTime', 'grantee')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'grantee')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'grantee')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class UserUserGrantRequestAdmin(ModelAdmin):
+    list_display = ('id', 'parent', 'grantee', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('parent', 'parent_id', 'id', 'grantee', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('parent', 'parent_id', 'id', 'grantee', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'grantee', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [UserUserGrantRequestHistoryInline]
+
+admin.site.register(UserUserGrantRequest, UserUserGrantRequestAdmin)
+
 class CommentHistoryInline(TabularInline):
     model = CommentHistory
     list_display = ('id', 't_creationTime', 'text', 'question', 'asker')
@@ -1935,6 +1959,213 @@ class TransactionDisqualifyingTagHistoryInline(DisqualifyingTagHistoryInline):
     verbose_name = 'Disqualifying Tag History'
     verbose_name_plural = 'Disqualifying Tag Histories'
 
+class LastModifiedUserInline(TabularInline):
+    model = User
+
+    list_display = ('id', 'firstName', 'lastName', 'birthday', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'firstName', 'lastName', 'birthday', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'firstName', 'lastName', 'birthday', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'emails__text', 'firstName', 'lastName', 'birthday', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified User'
+    verbose_name_plural = 'Last Modified Users'
+
+class CreatedUserInline(LastModifiedUserInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created User'
+    verbose_name_plural = 'Created Users'
+
+class DeletedUserInline(LastModifiedUserInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted User'
+    verbose_name_plural = 'Deleted Users'
+
+class TransactionUserHistoryInline(UserHistoryInline):
+    fk_name = 'transaction'
+ 
+class CreatedUserEmailInline(UserEmailInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created User Email'
+    verbose_name_plural = 'Created User Emails'
+
+class LastModifiedUserEmailInline(UserEmailInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified User Email'
+    verbose_name_plural = 'Last Modified User Emails'
+
+class DeletedUserEmailInline(UserEmailInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted User Email'
+    verbose_name_plural = 'Deleted User Emails'
+
+class TransactionUserEmailHistoryInline(UserEmailHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'User Email History'
+    verbose_name_plural = 'User Email Histories'
+
+class CreatedUserUserGrantRequestInline(UserUserGrantRequestInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created User User Grant Request'
+    verbose_name_plural = 'Created User User Grant Requests'
+
+class LastModifiedUserUserGrantRequestInline(UserUserGrantRequestInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified User User Grant Request'
+    verbose_name_plural = 'Last Modified User User Grant Requests'
+
+class DeletedUserUserGrantRequestInline(UserUserGrantRequestInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted User User Grant Request'
+    verbose_name_plural = 'Deleted User User Grant Requests'
+
+class TransactionUserUserGrantRequestHistoryInline(UserUserGrantRequestHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'User User Grant Request History'
+    verbose_name_plural = 'User User Grant Request Histories'
+
+class CreatedNotificationInline(NotificationInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Notification'
+    verbose_name_plural = 'Created Notifications'
+
+class LastModifiedNotificationInline(NotificationInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Notification'
+    verbose_name_plural = 'Last Modified Notifications'
+
+class DeletedNotificationInline(NotificationInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Notification'
+    verbose_name_plural = 'Deleted Notifications'
+
+class TransactionNotificationHistoryInline(NotificationHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Notification History'
+    verbose_name_plural = 'Notification Histories'
+
+class CreatedNotificationArgumentInline(NotificationArgumentInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Notification Argument'
+    verbose_name_plural = 'Created Notification Arguments'
+
+class LastModifiedNotificationArgumentInline(NotificationArgumentInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Notification Argument'
+    verbose_name_plural = 'Last Modified Notification Arguments'
+
+class DeletedNotificationArgumentInline(NotificationArgumentInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Notification Argument'
+    verbose_name_plural = 'Deleted Notification Arguments'
+
+class TransactionNotificationArgumentHistoryInline(NotificationArgumentHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Notification Argument History'
+    verbose_name_plural = 'Notification Argument Histories'
+
+class CreatedPathInline(PathInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Path'
+    verbose_name_plural = 'Created Paths'
+
+class LastModifiedPathInline(PathInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Path'
+    verbose_name_plural = 'Last Modified Paths'
+
+class DeletedPathInline(PathInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Path'
+    verbose_name_plural = 'Deleted Paths'
+
+class TransactionPathHistoryInline(PathHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Path History'
+    verbose_name_plural = 'Path Histories'
+
+class CreatedExperienceInline(ExperienceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience'
+    verbose_name_plural = 'Created Experiences'
+
+class LastModifiedExperienceInline(ExperienceInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience'
+    verbose_name_plural = 'Last Modified Experiences'
+
+class DeletedExperienceInline(ExperienceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience'
+    verbose_name_plural = 'Deleted Experiences'
+
+class TransactionExperienceHistoryInline(ExperienceHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience History'
+    verbose_name_plural = 'Experience Histories'
+
+class CreatedExperienceServiceInline(ExperienceServiceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience Service'
+    verbose_name_plural = 'Created Experience Services'
+
+class LastModifiedExperienceServiceInline(ExperienceServiceInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience Service'
+    verbose_name_plural = 'Last Modified Experience Services'
+
+class DeletedExperienceServiceInline(ExperienceServiceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience Service'
+    verbose_name_plural = 'Deleted Experience Services'
+
+class TransactionExperienceServiceHistoryInline(ExperienceServiceHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience Service History'
+    verbose_name_plural = 'Experience Service Histories'
+
+class CreatedExperienceCustomServiceInline(ExperienceCustomServiceInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Experience Custom Service'
+    verbose_name_plural = 'Created Experience Custom Services'
+
+class LastModifiedExperienceCustomServiceInline(ExperienceCustomServiceInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Experience Custom Service'
+    verbose_name_plural = 'Last Modified Experience Custom Services'
+
+class DeletedExperienceCustomServiceInline(ExperienceCustomServiceInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Experience Custom Service'
+    verbose_name_plural = 'Deleted Experience Custom Services'
+
+class TransactionExperienceCustomServiceHistoryInline(ExperienceCustomServiceHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Experience Custom Service History'
+    verbose_name_plural = 'Experience Custom Service Histories'
+
+class CreatedCommentInline(CommentInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Comment'
+    verbose_name_plural = 'Created Comments'
+
+class LastModifiedCommentInline(CommentInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Comment'
+    verbose_name_plural = 'Last Modified Comments'
+
+class DeletedCommentInline(CommentInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Comment'
+    verbose_name_plural = 'Deleted Comments'
+
+class TransactionCommentHistoryInline(CommentHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Comment History'
+    verbose_name_plural = 'Comment Histories'
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'creation_time')
     fieldsets = (
@@ -1976,6 +2207,16 @@ class TransactionAdmin(admin.ModelAdmin):
                DeletedExperiencePromptTextInline, 
                DeletedExperiencePromptServiceInline, 
                DeletedDisqualifyingTagInline, 
+               DeletedUserInline, 
+               DeletedUserEmailInline, 
+               DeletedUserUserGrantRequestInline, 
+               DeletedNotificationInline, 
+               DeletedNotificationArgumentInline, 
+               DeletedPathInline, 
+               DeletedExperienceInline, 
+               DeletedExperienceServiceInline, 
+               DeletedExperienceCustomServiceInline, 
+               DeletedCommentInline, 
                CreatedCommentPromptInline, LastModifiedCommentPromptInline,
                CreatedCommentPromptTextInline, LastModifiedCommentPromptTextInline, TransactionCommentPromptTextHistoryInline,
                CreatedServiceInline, LastModifiedServiceInline, TransactionServiceHistoryInline,
@@ -2006,6 +2247,16 @@ class TransactionAdmin(admin.ModelAdmin):
                CreatedExperiencePromptTextInline, LastModifiedExperiencePromptTextInline, TransactionExperiencePromptTextHistoryInline,
                CreatedExperiencePromptServiceInline, LastModifiedExperiencePromptServiceInline, TransactionExperiencePromptServiceHistoryInline,
                CreatedDisqualifyingTagInline, LastModifiedDisqualifyingTagInline, TransactionDisqualifyingTagHistoryInline,
+               CreatedUserInline, LastModifiedUserInline, TransactionUserHistoryInline,
+               CreatedUserEmailInline, LastModifiedUserEmailInline, TransactionUserEmailHistoryInline,
+               CreatedUserUserGrantRequestInline, LastModifiedUserUserGrantRequestInline, TransactionUserUserGrantRequestHistoryInline,
+               CreatedNotificationInline, LastModifiedNotificationInline, TransactionNotificationHistoryInline,
+               CreatedNotificationArgumentInline, LastModifiedNotificationArgumentInline, TransactionNotificationArgumentHistoryInline,
+               CreatedPathInline, LastModifiedPathInline, TransactionPathHistoryInline,
+               CreatedExperienceInline, LastModifiedExperienceInline, TransactionExperienceHistoryInline,
+               CreatedExperienceServiceInline, LastModifiedExperienceServiceInline, TransactionExperienceServiceHistoryInline,
+               CreatedExperienceCustomServiceInline, LastModifiedExperienceCustomServiceInline, TransactionExperienceCustomServiceHistoryInline,
+               CreatedCommentInline, LastModifiedCommentInline, TransactionCommentHistoryInline,
                InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
               ]
 
