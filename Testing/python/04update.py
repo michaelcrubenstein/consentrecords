@@ -22,14 +22,14 @@ serviceName = getInstance('service/%s/name' % i.id.hex, context, ServiceName)
 
 context = Context('en', mr)
 changes = {'stage': 'Working', 
-           'name': [{'id': serviceName.id.hex, 'text': 'Employment'}, {'clientID': '1', 'text': 'Empleo', 'languageCode': 'sp'}] }
+           'names': [{'id': serviceName.id.hex, 'text': 'Employment'}, {'clientID': '1', 'text': 'Empleo', 'languageCode': 'sp'}] }
 with transaction.atomic():
     newIDs = i.update(changes, context)
     print(context.transaction.id, context.transaction.creation_time, newIDs)
 
 context = Context('en', mr)
 changes = {'stage': '', 
-           'name': [{'id': serviceName.id.hex, 'text': 'Job'}, {'id': newIDs['1'], 'delete': 'delete'}] }
+           'names': [{'id': serviceName.id.hex, 'text': 'Job'}, {'id': newIDs['1'], 'delete': 'delete'}] }
 with transaction.atomic():
     newIDs = i.update(changes, context)
     print(context.transaction.id, context.transaction.creation_time, newIDs)

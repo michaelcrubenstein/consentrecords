@@ -328,6 +328,7 @@ class IInstance():
         if key in changes:
             if not isinstance(changes[key], list):
                 raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
+            print(changes[key])
             for subChanges in changes[key]:
                 if 'id' in subChanges:
                     subItem = children.get(pk=subChanges['id'])
@@ -337,6 +338,8 @@ class IInstance():
                         subItem.update(subChanges, context, newIDs)
                 elif 'clientID' in subChanges:
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
+        else:
+            print('%s not in %s' % (key, changes))
     
     @property
     def currentNamesQuerySet(self):
@@ -544,8 +547,6 @@ class TranslationInstance(ChildInstance):
         if history:
             self.lastTransaction = context.transaction
             self.save()
-        
-        return {}
             
     def create(objects, parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -3305,6 +3306,13 @@ class CommentPrompt(RootInstance, dbmodels.Model):
         
         return newItem                          
         
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        print(changes)
+        self.updateChildren(changes, 'translations', context, CommentPromptText, self.texts, newIDs)
+                                                         
 class CommentPromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptHistories')
