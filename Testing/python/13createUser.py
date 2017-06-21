@@ -55,6 +55,7 @@ with transaction.atomic():
         context = Context('en', mr)
         newItem = User.create(d, context, newIDs=newIDs)
         print(str(newItem), newIDs)
+        userID = newIDs['0']
 
 
 def parse(path, context, resultClass):
@@ -92,3 +93,4 @@ with transaction.atomic():
         user = parse('user[email>text="foouser1@pathadvisor.com"]', context, User)[0]
         newItem = Notification.create(user, d, context, newIDs=newIDs)
         print(str(newItem), newIDs)
+

@@ -1340,6 +1340,66 @@ class StreetAdmin(ModelAdmin):
         
 admin.site.register(Street, StreetAdmin)
 
+class GrantTargetHistoryInline(TabularInline):
+    model = GrantTargetHistory
+    list_display = ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')
+    fieldsets = (
+        (None, {'fields': ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')}),
+    )
+    readonly_fields = ('id', 't_creationTime', 'publicAccess', 'primaryAdministrator')
+
+    ordering = ['transaction__creation_time']
+    show_change_link = True
+    fk_name = 'instance'
+
+class UserGrantInline(TabularInline):
+    model = UserGrant
+    list_display = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'grantee', 'privilege', 'transaction__id', 'deleteTransaction__id')
+
+class GroupGrantInline(TabularInline):
+    model = GroupGrant
+    list_display = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'grantee', 'privilege', 't_creationTime', 'deleteTransaction')
+    search_fields = ('id', 'grantee', 'privilege', 'transaction__id', 'deleteTransaction__id')
+
+class GrantTargetAdmin(ModelAdmin):
+    list_display = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'publicAccess', 'primaryAdministrator', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+
+    inlines = [GrantTargetHistoryInline, UserGrantInline, GroupGrantInline]
+        
+admin.site.register(GrantTarget, GrantTargetAdmin)
+
+class UserGrantHistoryInline(TabularInline):
+    model = UserGrantHistory
+    list_display = ('id', 'grantee', 'privilege', 't_creationTime')
+    fieldsets = (
+        (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime')}),
+    )
+    readonly_fields = ('id', 'grantee', 'privilege', 't_creationTime')
+    search_fields = ('id', 'grantee', 'privilege', 'transaction__id')
+
+class GroupGrantHistoryInline(TabularInline):
+    model = GroupGrantHistory
+    list_display = ('id', 'grantee', 'privilege', 't_creationTime')
+    fieldsets = (
+        (None, {'fields': ('id', 'grantee', 'privilege', 't_creationTime')}),
+    )
+    readonly_fields = ('id', 'grantee', 'privilege', 't_creationTime')
+    search_fields = ('id', 'grantee', 'privilege', 'transaction__id')
+
 class LastModifiedCommentPromptInline(TabularInline):
     model = CommentPrompt
     
@@ -2166,6 +2226,73 @@ class TransactionCommentHistoryInline(CommentHistoryInline):
     verbose_name = 'Comment History'
     verbose_name_plural = 'Comment Histories'
 
+class LastModifiedGrantTargetInline(TabularInline):
+    model = GrantTarget
+
+    list_display = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    fieldsets = (
+        (None, {'fields': ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')}),
+    )
+    readonly_fields = ('id', 'publicAccess', 'primaryAdministrator', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'publicAccess', 'primaryAdministrator__id', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Grant Target'
+    verbose_name_plural = 'Last Modified Grant Targets'
+
+class CreatedGrantTargetInline(LastModifiedGrantTargetInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Grant Target'
+    verbose_name_plural = 'Created Grant Targets'
+
+class DeletedGrantTargetInline(LastModifiedGrantTargetInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Grant Target'
+    verbose_name_plural = 'Deleted Grant Targets'
+
+class TransactionGrantTargetHistoryInline(GrantTargetHistoryInline):
+    fk_name = 'transaction'
+ 
+class CreatedUserGrantInline(UserGrantInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created User Grant'
+    verbose_name_plural = 'Created User Grants'
+
+class LastModifiedUserGrantInline(UserGrantInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified User Grant'
+    verbose_name_plural = 'Last Modified User Grants'
+
+class DeletedUserGrantInline(UserGrantInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted User Grant'
+    verbose_name_plural = 'Deleted User Grants'
+
+class TransactionUserGrantHistoryInline(UserGrantHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'User Grant History'
+    verbose_name_plural = 'User Grant Histories'
+
+class CreatedGroupGrantInline(GroupGrantInline):
+    fk_name = 'transaction'
+    verbose_name = 'Created Group Grant'
+    verbose_name_plural = 'Created Group Grants'
+
+class LastModifiedGroupGrantInline(GroupGrantInline):
+    fk_name = 'lastTransaction'
+    verbose_name = 'Last Modified Group Grant'
+    verbose_name_plural = 'Last Modified Group Grants'
+
+class DeletedGroupGrantInline(GroupGrantInline):
+    fk_name = 'deleteTransaction'
+    verbose_name = 'Deleted Group Grant'
+    verbose_name_plural = 'Deleted Group Grants'
+
+class TransactionGroupGrantHistoryInline(GroupGrantHistoryInline):
+    fk_name = 'transaction'
+    verbose_name = 'Group Grant History'
+    verbose_name_plural = 'Group Grant Histories'
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'creation_time')
     fieldsets = (
@@ -2217,6 +2344,9 @@ class TransactionAdmin(admin.ModelAdmin):
                DeletedExperienceServiceInline, 
                DeletedExperienceCustomServiceInline, 
                DeletedCommentInline, 
+               DeletedGrantTargetInline, 
+               DeletedUserGrantInline, 
+               DeletedGroupGrantInline, 
                CreatedCommentPromptInline, LastModifiedCommentPromptInline,
                CreatedCommentPromptTextInline, LastModifiedCommentPromptTextInline, TransactionCommentPromptTextHistoryInline,
                CreatedServiceInline, LastModifiedServiceInline, TransactionServiceHistoryInline,
@@ -2257,6 +2387,9 @@ class TransactionAdmin(admin.ModelAdmin):
                CreatedExperienceServiceInline, LastModifiedExperienceServiceInline, TransactionExperienceServiceHistoryInline,
                CreatedExperienceCustomServiceInline, LastModifiedExperienceCustomServiceInline, TransactionExperienceCustomServiceHistoryInline,
                CreatedCommentInline, LastModifiedCommentInline, TransactionCommentHistoryInline,
+               CreatedGrantTargetInline, LastModifiedGrantTargetInline, TransactionGrantTargetHistoryInline,
+               CreatedUserGrantInline, LastModifiedUserGrantInline, TransactionUserGrantHistoryInline,
+               CreatedGroupGrantInline, LastModifiedGroupGrantInline, TransactionGroupGrantHistoryInline,
                InstanceInline, DeletedInstanceInline, ValueInline, DeletedValueInline, 
               ]
 

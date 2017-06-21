@@ -334,7 +334,7 @@ class IInstance():
                     if 'delete' in subChanges and subChanges['delete'] == 'delete':
                         subItem.markDeleted(context)
                     else:
-                        newIDs.update(subItem.update(subChanges, context))
+                        subItem.update(subChanges, context, newIDs)
                 elif 'clientID' in subChanges:
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
     
@@ -527,7 +527,7 @@ class TranslationInstance(ChildInstance):
                                              text=self.text,
                                              languageCode=self.languageCode)
         
-    def update(self, changes, context):
+    def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
         
@@ -2959,8 +2959,44 @@ class GrantTarget(IInstance, dbmodels.Model):
         newItem.createChildren(data, 'user grants', context, UserGrant, newIDs)
         newItem.createChildren(data, 'group grants', context, GroupGrant, newIDs)
         
-        return newItem                          
+        return newItem
+    
+    def valueCheckPublicAccess(self, data, key):
+        validValues = ['find', 'read']
+        _valueCheckEnumeration(data, key, validValues)
+    
+    def valueCheckPrimaryAdministrator(self, newValue):
+        pass
         
+    def buildHistory(self, context):
+        return GrantTargetHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             publicAccess=self.publicAccess,
+                                             primaryAdministrator=self.primaryAdministrator)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canAdminister(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'public access' in changes and changes['public access'] != self.publicAccess:
+            self.valueCheckPublicAccess(changes, 'public access')
+            history = history or self.buildHistory(context)
+            self.publicAccess = changes['public access'] or None
+        if 'primary administrator' in changes:
+            newValue = _getForeignKey(changes['primary administrator'], context, User)
+            if newValue != self.primaryAdministrator:
+                 self.valueCheckPrimaryAdministrator(newValue)
+                 history = history or self.buildHistory(context)
+                 self.primaryAdministrator = newValue or None
+        
+        self.updateChildren(changes, 'user grants', context, UserGrant, self.userGrants, newIDs)
+        self.updateChildren(changes, 'group grants', context, GroupGrant, self.groupGrants, newIDs)
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class GrantTargetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('grantTargetHistories')
@@ -3627,7 +3663,7 @@ class Experience(ChildInstance, dbmodels.Model):
         if 'start' in data: _valueCheckDate(data['start'])
         if 'end' in data: _valueCheckDate(data['end'])
         if 'start' in data and 'end' in data and data['start'] > data['end']:
-        	raise ValueError('the start date of an experience cannot be after the end date of the experience')
+            raise ValueError('the start date of an experience cannot be after the end date of the experience')
              
         newItem = Experience.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5074,7 +5110,7 @@ class Service(RootInstance, dbmodels.Model):
                                              instance=self,
                                              stage=self.stage)
         
-    def update(self, changes, context):
+    def update(self, changes, context, newIDs={}):
         if not context.canWrite(self):
             raise RuntimeError('you do not have permission to complete this update')
         
@@ -5084,15 +5120,11 @@ class Service(RootInstance, dbmodels.Model):
             history = history or self.buildHistory(context)
             self.stage = changes['stage'] or None
         
-        newIDs = {}
-        
         self.updateChildren(changes, 'name', context, ServiceName, self.names, newIDs)
                                                          
         if history:
             self.lastTransaction = context.transaction
             self.save()
-            
-        return newIDs
             
     def getSubClause(qs, user, accessType):
         return qs, accessType
@@ -6016,3 +6048,7 @@ class Context:
     def canWrite(self, i):
         privilege = self.getPrivilege(i)
         return privilege in ["write", "administer"]
+
+    def canAdminister(self, i):
+        privilege = self.getPrivilege(i)
+        return privilege == "administer"
