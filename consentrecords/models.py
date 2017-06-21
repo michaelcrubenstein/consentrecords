@@ -328,7 +328,6 @@ class IInstance():
         if key in changes:
             if not isinstance(changes[key], list):
                 raise ValueError('%s element of changes is not a list: %s' % (key, changes[key]))
-            print(changes[key])
             for subChanges in changes[key]:
                 if 'id' in subChanges:
                     subItem = children.get(pk=subChanges['id'])
@@ -338,8 +337,6 @@ class IInstance():
                         subItem.update(subChanges, context, newIDs)
                 elif 'clientID' in subChanges:
                     subItem = subClass.create(self, subChanges, context, newIDs=newIDs)
-        else:
-            print('%s not in %s' % (key, changes))
     
     @property
     def currentNamesQuerySet(self):
@@ -3343,6 +3340,10 @@ class CommentPromptText(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(CommentPromptText.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return CommentPromptTextHistory
+
 class CommentPromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentPromptTextHistories')
@@ -4071,6 +4072,10 @@ class ExperiencePromptText(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ExperiencePromptText.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return ExperiencePromptTextHistory
+
 class ExperiencePromptTextHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptTextHistories')
@@ -4168,6 +4173,10 @@ class GroupName(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(GroupName.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return GroupNameHistory
+
 class GroupNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupNameHistories')
@@ -4579,6 +4588,10 @@ class OfferingName(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(OfferingName.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return OfferingNameHistory
+
 class OfferingNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('offeringNameHistories')
@@ -4757,6 +4770,36 @@ class Organization(RootInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return OrganizationHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             webSite=self.webSite,
+                                             inquiryAccessGroup=self.inquiryAccessGroup)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'web site' in changes and changes['web site'] != self.webSite:
+            history = history or self.buildHistory(context)
+            self.webSite = changes['web site'] or None
+        
+        self.updateChildren(changes, 'names', context, OrganizationName, self.names, newIDs)
+        self.updateChildren(changes, 'groups', context, Group, self.groups, newIDs)
+        self.updateChildren(changes, 'sites', context, Site, self.sites, newIDs)
+                                                         
+        if 'inquiry access group' in changes:
+            newInquiryAccessGroup = _orNoneForeignKey(changes, 'inquiry access group', context, Group, Organization.objects.filter(pk=self.id),
+                                                      Organization)
+            if newInquiryAccessGroup.id != self.inquiryAccessGroup_id:
+                history = history or self.buildHistory(context)
+                self.inquiryAccessGroup = newInquiryAccessGroup
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class OrganizationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationHistories')
@@ -4792,6 +4835,10 @@ class OrganizationName(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(OrganizationName.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return OrganizationNameHistory
+
 class OrganizationNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('organizationNameHistories')
@@ -4957,6 +5004,14 @@ class Path(IInstance, dbmodels.Model):
         newItem.createChildren(data, 'experiences', context, Experience, newIDs)
         
         return newItem                          
+        
+    def buildHistory(self, context):
+        return PathHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             birthday=self.birthday,
+                                             name=self.name,
+                                             specialAccess=self.specialAccess,
+                                             canAnswerExperience=self.canAnswerExperience)
         
 class PathHistory(dbmodels.Model):
     id = idField()
@@ -5128,7 +5183,7 @@ class Service(RootInstance, dbmodels.Model):
             history = history or self.buildHistory(context)
             self.stage = changes['stage'] or None
         
-        self.updateChildren(changes, 'name', context, ServiceName, self.names, newIDs)
+        self.updateChildren(changes, 'names', context, ServiceName, self.names, newIDs)
                                                          
         if history:
             self.lastTransaction = context.transaction
@@ -5242,6 +5297,10 @@ class ServiceOrganizationLabel(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceOrganizationLabel.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return ServiceOrganizationLabelHistory
+
 class ServiceOrganizationLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceOrganizationLabelHistories')
@@ -5275,6 +5334,10 @@ class ServiceSiteLabel(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceSiteLabel.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return ServiceSiteLabelHistory
+
 class ServiceSiteLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceSiteLabelHistories')
@@ -5308,6 +5371,10 @@ class ServiceOfferingLabel(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(ServiceOfferingLabel.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return ServiceOfferingLabelHistory
+
 class ServiceOfferingLabelHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceOfferingLabelHistories')
@@ -5537,6 +5604,10 @@ class SessionName(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(SessionName.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return SessionNameHistory
+
 class SessionNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('sessionNameHistories')
@@ -5667,6 +5738,10 @@ class SiteName(TranslationInstance, dbmodels.Model):
     def create(parent, data, context, newIDs={}):
         return TranslationInstance.create(SiteName.objects, parent, data, context, newIDs)
         
+    @property
+    def historyType(self):
+        return SiteNameHistory
+
 class SiteNameHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteNameHistories')
