@@ -3153,7 +3153,24 @@ class Address(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Address, self).markDeleted(context)
     
+    def valueCheckState(data, key):
+        if key not in data:
+            return
+        if len(data[key]) < 2 or len(data[key]) > 3:
+            raise ValueError("a state must be described by a two or three letter code")
+        
+    def valueCheckZipCode(data, key):
+        if key not in data:
+            return
+        if re.search('^[0-9]{5}$', data[key]):
+            return
+        if re.search('^[0-9]{5}-[0-9]{4}$', data[key]):
+            return
+        raise ValueError('a zip code must be five digits or five digits followed by "-" followed by and four digits')
+        
     def create(parent, data, context, newIDs={}):
+        Address.valueCheckState(data, 'state')
+        Address.valueCheckZipCode(data, 'zip code')
         newItem = Address.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -3168,6 +3185,36 @@ class Address(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return AddressHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             city=self.city,
+                                             state=self.state,
+                                             zipCode=self.zipCode)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'city' in changes and changes['city'] != self.city:
+            history = history or self.buildHistory(context)
+            self.city = changes['city'] or None
+        if 'state' in changes and changes['state'] != self.state:
+            Address.valueCheckState(changes, 'state')
+            history = history or self.buildHistory(context)
+            self.state = changes['state'] or None
+        if 'zip code' in changes and changes['zip code'] != self.state:
+            Address.valueCheckZipCode(changes, 'zip code')
+            history = history or self.buildHistory(context)
+            self.zipCode = changes['zip code'] or None
+        
+        self.updateChildren(changes, 'streets', context, Street, self.streets, newIDs)
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class AddressHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('addressHistories')
@@ -5704,6 +5751,28 @@ class Site(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return SiteHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             webSite=self.webSite)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'web site' in changes and changes['web site'] != self.webSite:
+            history = history or self.buildHistory(context)
+            self.webSite = changes['web site'] or None
+        
+        self.updateChildren(changes, 'names', context, SiteName, self.names, newIDs)
+        self.updateChildren(changes, 'addresses', context, Address, self.addresses, newIDs)
+        self.updateChildren(changes, 'offerings', context, Offering, self.offerings, newIDs)
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class SiteHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('siteHistories')
@@ -5805,6 +5874,25 @@ class Street(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return StreetHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             position=self.position,
+                                             text=self.text)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'text' in changes and changes['text'] != self.text:
+            history = history or self.buildHistory(context)
+            self.text = changes['text'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class StreetHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('streetHistories')
