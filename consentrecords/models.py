@@ -3333,6 +3333,34 @@ class Comment(ChildInstance, dbmodels.Model):
         
         return newItem
 
+    def buildHistory(self, context):
+        return CommentHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             text=self.text,
+                                             question=self.question,
+                                             asker=self.asker)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'text' in changes and changes['text'] != self.text:
+            history = history or self.buildHistory(context)
+            self.text = changes['text'] or None
+        if 'question' in changes and changes['question'] != self.question:
+            history = history or self.buildHistory(context)
+            self.text = changes['question'] or None
+        if 'asker' in changes:
+            newAsker = _orNoneForeignKey(changes, 'asker', context, Path)
+            if newAsker != self.asker:
+                history = history or self.buildHistory(context)
+                self.asker = newAsker
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class CommentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('commentHistories')
@@ -3827,6 +3855,73 @@ class Experience(ChildInstance, dbmodels.Model):
         
         return newItem
 
+    def buildHistory(self, context):
+        return ExperienceHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             organization=self.organization,
+                                             customOrganization=self.customOrganization,
+                                             site=self.site,
+                                             customSite=self.customSite,
+                                             offering=self.offering,
+                                             customOffering=self.customOffering,
+                                             start=self.start,
+                                             end=self.end,
+                                             timeframe=self.timeframe)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        ExperiencePrompt.validateTimeframe(changes, 'timeframe')
+        if 'start' in changes: _validateDate(changes['start'])
+        if 'end' in changes: _validateDate(changes['end'])
+
+        history = None
+        if 'organization' in changes:
+            newValue = _orNoneForeignKey(changes, 'organization', context, Organization)
+            if newValue != self.organization:
+                history = history or self.buildHistory(context)
+                self.organization = newValue
+        if 'custom organization' in changes and changes['custom organization'] != self.customOrganization:
+            history = history or self.buildHistory(context)
+            self.customOrganization = changes['custom organization']
+        if 'site' in changes:
+            newValue = _orNoneForeignKey(changes, 'site', context, Site)
+            if newValue != self.site:
+                history = history or self.buildHistory(context)
+                self.site = newValue
+        if 'custom site' in changes and changes['custom site'] != self.customSite:
+            history = history or self.buildHistory(context)
+            self.customSite = changes['custom site']
+        if 'offering' in changes:
+            newValue = _orNoneForeignKey(changes, 'offering', context, Offering)
+            if newValue != self.offering:
+                history = history or self.buildHistory(context)
+                self.offering = newValue
+        if 'custom offering' in changes and changes['custom offering'] != self.customOffering:
+            history = history or self.buildHistory(context)
+            self.customOffering = changes['custom offering']
+        if 'start' in changes and changes['start'] != self.start:
+            history = history or self.buildHistory(context)
+            self.start = changes['start']
+        if 'end' in changes and changes['end'] != self.end:
+            history = history or self.buildHistory(context)
+            self.end = changes['end']
+        if 'timeframe' in changes and changes['timeframe'] != self.timeframe:
+            history = history or self.buildHistory(context)
+            self.timeframe = changes['timeframe']
+        
+        if self.start and self.end and self.start > self.end:
+            raise ValueError('the start date of an experience cannot be after the end date of the experience')
+
+        self.updateChildren(changes, 'services', context, ExperienceService, self.services, newIDs)
+        self.updateChildren(changes, 'custom services', context, ExperienceCustomService, self.customServices, newIDs)
+        self.updateChildren(changes, 'comments', context, Comment, self.comments, newIDs)
+
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class ExperienceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceHistories')
@@ -3886,7 +3981,7 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         if not context.canWrite(parent):
            raise PermissionDenied
         
-        if 'name' not in data:
+        if 'name' not in data or not data['name']:
             raise ValueError('the name of a custom service is required.')
              
         newItem = ExperienceCustomService.objects.create(transaction=context.transaction,
@@ -3900,6 +3995,27 @@ class ExperienceCustomService(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return ExperienceCustomServiceHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             position=self.position,
+                                             name=self.name)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'name' in changes and changes['name'] != self.name:
+            if not changes['name']:
+                raise ValueError('the name of a custom service is required.')
+            history = history or self.buildHistory(context)
+            self.name = changes['name'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class ExperienceCustomServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceCustomServiceHistories')
@@ -4585,7 +4701,12 @@ class Notification(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Notification, self).markDeleted(context)
 
+    def validateIsFresh(data, key):
+        validValues = ['no', 'yes']
+        _validateEnumeration(data, key, validValues)
+        
     def create(parent, data, context, newIDs={}):
+        Notification.validateIsFresh(data, 'is fresh')
         newItem = Notification.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -4607,6 +4728,26 @@ class Notification(ChildInstance, dbmodels.Model):
             
         return newItem                          
         
+    def buildHistory(self, context):
+        return NotificationHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             name=self.name,
+                                             isFresh=self.isFresh)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'is fresh' in changes and changes['is fresh'] != self.isFresh:
+            Notification.validateIsFresh(changes, 'is fresh')
+            history = history or self.buildHistory(context)
+            self.isFresh = changes['is fresh'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class NotificationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('notificationHistories')
@@ -5227,25 +5368,25 @@ class Path(IInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Path, self).markDeleted(context)
 
-    def valueCheckBirthday(data, key):
+    def validateBirthday(data, key):
         if key not in data:
             return
-        return User.valueCheckBirthday(data, key)
+        return User.validateBirthday(data, key)
     
-    def valueCheckSpecialAccess(data, key):
+    def validateSpecialAccess(data, key):
         validValues = ['custom']
         _validateEnumeration(data, key, validValues)
     
-    def valueCheckCanAnswerExperience(data, key):
+    def validateCanAnswerExperience(data, key):
         validValues = ['yes', 'no']
         _validateEnumeration(data, key, validValues)
     
     def create(parent, data, context, newIDs={}):
-        Path.valueCheckBirthday(data, 'birthday')
-        Path.valueCheckSpecialAccess(data, 'special access')
-        Path.valueCheckCanAnswerExperience(data, 'can answer experience')
+        Path.validateBirthday(data, 'birthday')
+        Path.validateSpecialAccess(data, 'special access')
+        Path.validateCanAnswerExperience(data, 'can answer experience')
         
-        birthday = data['birthday'] if 'birthday' in data else parent.birthday
+        birthday = data['birthday'] if 'birthday' in data else parent.birthday[0:7]
         
         newItem = Path.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5281,6 +5422,42 @@ class Path(IInstance, dbmodels.Model):
                                              specialAccess=self.specialAccess,
                                              canAnswerExperience=self.canAnswerExperience)
         
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+            Path.validateCanAnswerExperience(changes, 'can answer experience')
+        
+        history = None
+        if 'birthday' in changes and changes['birthday'] != self.birthday:
+            _validateDate(changes['birthday'])
+            history = history or self.buildHistory(context)
+            self.birthday = changes['birthday']
+        if 'screen name' in changes and changes['screen name'] != self.name:
+            history = history or self.buildHistory(context)
+            self.name = changes['screen name'] or None
+        if context.canAdminister(self) and 'special access' in changes and changes['special access'] != self.specialAccess:
+            Path.validateSpecialAccess(changes, 'special access')
+            history = history or self.buildHistory(context)
+            self.specialAccess = changes['special access'] or None
+            # Special behavior: Only change special access if the current user can administer
+            # Special behavior: If the specialAccess changes, then change the grantTarget.
+            if self.specialAccess == 'custom':
+                self.grantTarget = GrantTarget.objects.get(pk=self.id)
+            else:
+                self.grantTarget = GrantTarget.objects.get(pk=self.parent.id)
+        if 'can answer experience' in changes and changes['can answer experience'] != self.canAnswerExperience:
+            Path.validateCanAnswerExperience(changes, 'can answer experience')
+            history = history or self.buildHistory(context)
+            self.canAnswerExperience = changes['can answer experience'] or None
+        
+        self.updateChildren(changes, 'experiences', context, Experience, self.experiences, newIDs)
+        # Grant Targets must be explicitly modified.
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class PathHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('pathHistories')
@@ -6347,13 +6524,13 @@ class User(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         super(User, self).markDeleted(context)
 
-    def valueCheckBirthday(data, key):
+    def validateBirthday(data, key):
         if key not in data:
             raise ValueError('a user can not be created without specifying a birthday')
         _validateDate(data[key])
     
     def create(data, context, newIDs={}):
-        User.valueCheckBirthday(data, 'birthday')
+        User.validateBirthday(data, 'birthday')
         
         newItem = User.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -6382,6 +6559,41 @@ class User(RootInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return UserHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             firstName=self.firstName,
+                                             lastName=self.lastName,
+                                             birthday=self.birthday)
+    
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        if 'birthday' in changes:
+            _validateDate(changes['birthday'])
+            
+        history = None
+        if 'first name' in changes and changes['first name'] != self.firstName:
+            history = history or self.buildHistory(context)
+            self.firstName = changes['first name'] or None
+        if 'last name' in changes and changes['last name'] != self.lastName:
+            history = history or self.buildHistory(context)
+            self.lastName = changes['last name'] or None
+        if 'birthday' in changes and changes['birthday'] != self.birthday:
+            history = history or self.buildHistory(context)
+            self.birthday = changes['birthday'] or None
+        
+        self.updateChildren(changes, 'emails', context, UserEmail, self.emails, newIDs)
+        if 'path' in changes:
+            self.paths.all()[0].update(changes['path'], context, newIDs)
+        self.updateChildren(changes, 'user grant requests', context, UserUserGrantRequest, self.userGrantRequests, newIDs)
+        # Grant Targets must be explicitly modified.
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class UserHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userHistories')
@@ -6432,7 +6644,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, 'parent'), User
 
-    def ValueCheckText(data, key):
+    def validateText(data, key):
         if key in data and data[key]:
             if _isEmail(data[key]):
                 return
@@ -6442,7 +6654,7 @@ class UserEmail(ChildInstance, dbmodels.Model):
             raise ValueError('an email address is required in the "%s" field' % key)
             
     def create(parent, data, context, newIDs={}):
-        UserEmail.ValueCheckText(data, 'text')
+        UserEmail.validateText(data, 'text')
         
         newItem = UserEmail.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -6455,6 +6667,26 @@ class UserEmail(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return UserEmailHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             text=self.text,
+                                             position=self.position)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'text' in changes and changes['text'] != self.text:
+            UserEmail.validateText(changes, 'text')
+            history = history or self.buildHistory(context)
+            self.text = changes['text']
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class UserEmailHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userEmailHistories')
@@ -6499,6 +6731,26 @@ class UserUserGrantRequest(AccessInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return UserUserGrantRequestHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             grantee=self.grantee)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canAdminister(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'grantee' in changes:
+            newValue = _orNoneForeignKey(changes, 'grantee', context, User)
+            if newValue != self.grantee:
+                 history = history or self.buildHistory(context)
+                 self.grantee = newValue or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class UserUserGrantRequestHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('userUserGrantRequestHistories')
