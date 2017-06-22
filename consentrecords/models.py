@@ -47,6 +47,8 @@ def _orNoneForeignKey(data, key, context, resultClass, thisQS=None, thisQSType=N
         return None
     else:
         path = data[key]
+        if not path:
+            return None
         tokens = cssparser.tokenizeHTML(path)
         if thisQS and tokens[0] == 'this':
             qs, tokens, qsType, accessType = _parse(thisQS, tokens[1:], context.user, thisQSType, None)
@@ -99,7 +101,7 @@ def _newPosition(objects, data, key):
     else:
         return 0
             
-def _valueCheckDate(s):
+def _validateDate(s):
     if re.search('^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$', s):
         if int(s[5:7]) <= 12 and int(s[8:10]) <= 31:
             return
@@ -109,8 +111,8 @@ def _valueCheckDate(s):
     
     raise ValueError('Invalid date string: %s' % s)
         
-def _valueCheckEnumeration(data, key, validValues):
-    if key not in data or data[key] in validValues:
+def _validateEnumeration(data, key, validValues):
+    if key not in data or not data[key] or data[key] in validValues:
         return
     else:
         raise ValueError('the value "%s" is not a valid value. Valid values for "%s" are: %s' % (value, key, validValues))
@@ -579,6 +581,50 @@ class AccessInstance(ChildInstance):
     def fetchPrivilege(self, user):
         return "administer" if self.parent.fetchPrivilege(user) == "administer" else None
     
+class ServiceLinkInstance(ChildInstance):
+    @property
+    def currentNamesQuerySet(self):
+        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
+
+    def description(self, languageCode=None):
+        return IInstance.getName(self.currentNamesQuerySet, languageCode)
+        
+    def select_head_related(querySet):
+        return querySet.select_related('service')\
+                       .prefetch_related(Prefetch('service__names',
+                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
+                                                  to_attr='currentNames'))
+    
+    def select_related(querySet):
+        return ServiceLinkInstance.select_head_related(querySet)
+                 
+    def buildHistory(self, context):
+        return self.historyType.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             service=self.service)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'service' in changes:
+            newService = _orNoneForeignKey(changes, 'service', context, Service)
+            if newService != self.service:
+                history = history or self.buildHistory(context)
+                self.service = newService
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
+class OrderedServiceLinkInstance(ServiceLinkInstance):
+    def buildHistory(self, context):
+        return self.historyType.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             position=self.position,
+                                             service=self.service)
+
 class Instance(dbmodels.Model):
     id = dbmodels.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     typeID = dbmodels.ForeignKey('consentrecords.Instance', related_name='typeInstances', db_column='typeid', db_index=True, editable=False, on_delete=dbmodels.CASCADE)
@@ -2960,7 +3006,7 @@ class GrantTarget(IInstance, dbmodels.Model):
     
     def valueCheckPublicAccess(self, data, key):
         validValues = ['find', 'read']
-        _valueCheckEnumeration(data, key, validValues)
+        _validateEnumeration(data, key, validValues)
     
     def valueCheckPrimaryAdministrator(self, newValue):
         pass
@@ -3411,22 +3457,7 @@ class DisqualifyingTag(ChildInstance, dbmodels.Model):
     
     elementMap = {'service': ('service__', 'Service', 'disqualifyingTags'),
                  }
-    @property
-    def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
 
-    def description(self, languageCode=None):
-        return IInstance.getName(self.currentNamesQuerySet, languageCode)
-        
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
-    
-    def select_related(querySet):
-        return ExperienceService.select_head_related(querySet)
-                 
     def __str__(self):
         return str(self.service)
 
@@ -3455,6 +3486,10 @@ class DisqualifyingTag(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    @property
+    def historyType(self):
+        return DisqualifyingTagHistory
+
 class DisqualifyingTagHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('disqualifyingTagHistories')
@@ -3537,7 +3572,7 @@ class Engagement(ChildInstance, dbmodels.Model):
         history = None
         if 'user' in changes:
             newUser = _orNoneForeignKey(changes, 'user', context, User)
-            if newUser.id != self.user_id:
+            if newUser != self.user:
                 history = history or self.buildHistory(context)
                 self.user = newUser
         if 'start' in changes and changes['start'] != self.start:
@@ -3625,7 +3660,7 @@ class Enrollment(ChildInstance, dbmodels.Model):
         history = None
         if 'user' in changes:
             newUser = _orNoneForeignKey(changes, 'user', context, User)
-            if newUser.id != self.user_id:
+            if newUser != self.user:
                 history = history or self.buildHistory(context)
                 self.user = newUser
         
@@ -3764,9 +3799,9 @@ class Experience(ChildInstance, dbmodels.Model):
         if not context.canWrite(parent):
            raise PermissionDenied
         
-        ExperiencePrompt.valueCheckTimeframe(data, 'timeframe')
-        if 'start' in data: _valueCheckDate(data['start'])
-        if 'end' in data: _valueCheckDate(data['end'])
+        ExperiencePrompt.validateTimeframe(data, 'timeframe')
+        if 'start' in data: _validateDate(data['start'])
+        if 'end' in data: _validateDate(data['end'])
         if 'start' in data and 'end' in data and data['start'] > data['end']:
             raise ValueError('the start date of an experience cannot be after the end date of the experience')
              
@@ -3872,7 +3907,7 @@ class ExperienceCustomServiceHistory(dbmodels.Model):
     position = dbmodels.IntegerField()
     name = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
 
-class ExperienceService(ChildInstance, dbmodels.Model):
+class ExperienceService(OrderedServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperienceServices')
     lastTransaction = lastTransactionField('changedExperienceServices')
@@ -3882,13 +3917,6 @@ class ExperienceService(ChildInstance, dbmodels.Model):
     position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experienceServices', db_index=True, null=True, on_delete=dbmodels.CASCADE)
 
-    @property
-    def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
-
-    def description(self, languageCode=None):
-        return IInstance.getName(self.currentNamesQuerySet, languageCode)
-        
     def __str__(self):
         return str(self.service)
     
@@ -3907,15 +3935,6 @@ class ExperienceService(ChildInstance, dbmodels.Model):
                
     elementMap = {'service': ('service__', "Service", 'experienceServices'),
                  }
-                 
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
-    
-    def select_related(querySet):
-        return ExperienceService.select_head_related(querySet)
                  
     def getSubClause(qs, user, accessType):
         if accessType == Path:
@@ -3938,6 +3957,10 @@ class ExperienceService(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    @property
+    def historyType(self):
+        return ExperienceServiceHistory
+
 class ExperienceServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experienceServiceHistories')
@@ -4030,9 +4053,9 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
             i.markDeleted(context)
         super(ExperiencePrompt, self).markDeleted(context)
 
-    def valueCheckTimeframe(data, key):
+    def validateTimeframe(data, key):
         validValues = ['Previous', 'Current', 'Goal']
-        _valueCheckEnumeration(data, key, validValues)
+        _validateEnumeration(data, key, validValues)
     
     def create(data, context, newIDs={}):
         if not context.is_administrator:
@@ -4040,9 +4063,8 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
         
         if 'name' not in data or not data['name']:
             raise ValueError('name of experience prompt is not specified')
-        if 'stage' in data:
-            Service.ValueCheckStage(data['stage'])
-        ExperiencePrompt.valueCheckTimeframe(data, 'timeframe')
+        Service.validateStage(data, 'stage')
+        ExperiencePrompt.validateTimeframe(data, 'timeframe')
              
         newItem = ExperiencePrompt.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -4063,6 +4085,66 @@ class ExperiencePrompt(RootInstance, dbmodels.Model):
         
         return newItem
 
+    def buildHistory(self, context):
+        return ExperiencePromptHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             name=self.name,
+                                             organization=self.organization,
+                                             site=self.site,
+                                             offering=self.offering,
+                                             domain=self.domain,
+                                             stage=self.stage,
+                                             timeframe=self.timeframe)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        Service.validateStage(changes, 'stage')
+        ExperiencePrompt.validateTimeframe(changes, 'timeframe')
+
+        history = None
+        if 'name' in changes and changes['name']:
+            if changes['name'] != self.name:
+                history = history or self.buildHistory(context)
+                self.name = changes['name']
+        if 'organization' in changes:
+            newValue = _orNoneForeignKey(changes, 'organization', context, Organization)
+            if newValue != self.organization:
+                history = history or self.buildHistory(context)
+                self.organization = newValue
+        if 'site' in changes:
+            newValue = _orNoneForeignKey(changes, 'site', context, Site)
+            if newValue != self.site:
+                history = history or self.buildHistory(context)
+                self.site = newValue
+        if 'offering' in changes:
+            newValue = _orNoneForeignKey(changes, 'offering', context, Offering)
+            if newValue != self.offering:
+                history = history or self.buildHistory(context)
+                self.offering = newValue
+        if 'domain' in changes:
+            newValue = _orNoneForeignKey(changes, 'domain', context, Service)
+            if newValue != self.domain:
+                history = history or self.buildHistory(context)
+                self.domain = newValue
+        if 'stage' in changes:
+            if changes['stage'] != self.stage:
+                history = history or self.buildHistory(context)
+                self.stage = changes['stage']
+        if 'timeframe' in changes:
+            if changes['timeframe'] != self.timeframe:
+                history = history or self.buildHistory(context)
+                self.timeframe = changes['timeframe']
+        
+        self.updateChildren(changes, 'translations', context, ExperiencePromptText, self.texts, newIDs)
+        self.updateChildren(changes, 'services', context, ExperiencePromptService, self.services, newIDs)
+        self.updateChildren(changes, 'disqualifying tags', context, DisqualifyingTag, self.disqualifyingTags, newIDs)
+
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class ExperiencePromptHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptHistories')
@@ -4076,7 +4158,7 @@ class ExperiencePromptHistory(dbmodels.Model):
     stage = dbmodels.CharField(max_length=20, db_index=True, null=True, editable=False)
     timeframe = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class ExperiencePromptService(ChildInstance, dbmodels.Model):
+class ExperiencePromptService(OrderedServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdExperiencePromptServices')
     lastTransaction = lastTransactionField('changedExperiencePromptServices')
@@ -4090,22 +4172,7 @@ class ExperiencePromptService(ChildInstance, dbmodels.Model):
     
     elementMap = {'service': ('service__', 'Service', 'experiencePromptServices'),
                  }
-    @property
-    def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
-
-    def description(self, languageCode=None):
-        return IInstance.getName(self.currentNamesQuerySet, languageCode)
-        
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
     
-    def select_related(querySet):
-        return ExperiencePromptService.select_head_related(querySet)
-        
     def __str__(self):
         return str(self.service)
 
@@ -4136,11 +4203,16 @@ class ExperiencePromptService(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    @property
+    def historyType(self):
+        return ExperiencePromptServiceHistory
+
 class ExperiencePromptServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('experiencePromptServiceHistories')
     instance = historyInstanceField(ExperiencePromptService)
 
+    position = dbmodels.IntegerField()
     service = dbmodels.ForeignKey('consentrecords.Service', related_name='experiencePromptServiceHistories', db_index=True, editable=True, on_delete=dbmodels.CASCADE)
 
 class ExperiencePromptText(TranslationInstance, dbmodels.Model):    
@@ -4354,7 +4426,7 @@ class GroupMember(ChildInstance, dbmodels.Model):
         history = None
         if 'user' in changes:
             newUser = _orNoneForeignKey(changes, 'user', context, User)
-            if newUser.id != self.user_id:
+            if newUser != self.user:
                 history = history or self.buildHistory(context)
                 self.user = newUser
         
@@ -4432,7 +4504,7 @@ class Inquiry(ChildInstance, dbmodels.Model):
         history = None
         if 'user' in changes:
             newUser = _orNoneForeignKey(changes, 'user', context, User)
-            if newUser.id != self.user_id:
+            if newUser != self.user:
                 history = history or self.buildHistory(context)
                 self.user = newUser
         
@@ -4807,7 +4879,7 @@ class OfferingNameHistory(dbmodels.Model):
     text = dbmodels.CharField(max_length=255, db_index=True, null=True, editable=False)
     languageCode = dbmodels.CharField(max_length=10, db_index=True, null=True, editable=False)
 
-class OfferingService(ChildInstance, dbmodels.Model):
+class OfferingService(OrderedServiceLinkInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdOfferingServices')
     lastTransaction = lastTransactionField('changedOfferingServices')
@@ -4824,12 +4896,6 @@ class OfferingService(ChildInstance, dbmodels.Model):
                  }
                  
     @property
-    def currentNamesQuerySet(self):
-        return self.currentNames if 'currentNames' in self.__dict__ else self.service.names.filter(deleteTransaction__isnull=True)
-
-    def description(self, languageCode=None):
-        return IInstance.getName(self.currentNamesQuerySet, languageCode)
-        
     def __str__(self):
         return str(self.service)
 
@@ -4841,15 +4907,6 @@ class OfferingService(ChildInstance, dbmodels.Model):
             
         return data
         
-    def select_head_related(querySet):
-        return querySet.select_related('service')\
-                       .prefetch_related(Prefetch('service__names',
-                                                  queryset=ServiceName.objects.filter(deleteTransaction__isnull=True),
-                                                  to_attr='currentNames'))
-    
-    def select_related(querySet):
-        return ExperienceService.select_head_related(querySet)
-                 
     def getSubClause(qs, user, accessType):
         if accessType == Organization:
             return qs, accessType
@@ -4871,26 +4928,9 @@ class OfferingService(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
-    def buildHistory(self, context):
-        return OfferingServiceHistory.objects.create(transaction=self.lastTransaction,
-                                             instance=self,
-                                             position=self.position,
-                                             service=self.service)
-        
-    def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
-        
-        history = None
-        if 'service' in changes:
-            newService = _orNoneForeignKey(changes, 'service', context, Service)
-            if newService.id != self.service_id:
-                history = history or self.buildHistory(context)
-                self.service = newService
-        
-        if history:
-            self.lastTransaction = context.transaction
-            self.save()
+    @property
+    def historyType(self):
+        return OfferingServiceHistory
             
 class OfferingServiceHistory(dbmodels.Model):
     id = idField()
@@ -5020,7 +5060,7 @@ class Organization(RootInstance, dbmodels.Model):
         if 'inquiry access group' in changes:
             newInquiryAccessGroup = _orNoneForeignKey(changes, 'inquiry access group', context, Group, Organization.objects.filter(pk=self.id),
                                                       Organization)
-            if newInquiryAccessGroup.id != self.inquiryAccessGroup_id:
+            if newInquiryAccessGroup != self.inquiryAccessGroup:
                 history = history or self.buildHistory(context)
                 self.inquiryAccessGroup = newInquiryAccessGroup
         
@@ -5194,11 +5234,11 @@ class Path(IInstance, dbmodels.Model):
     
     def valueCheckSpecialAccess(data, key):
         validValues = ['custom']
-        _valueCheckEnumeration(data, key, validValues)
+        _validateEnumeration(data, key, validValues)
     
     def valueCheckCanAnswerExperience(data, key):
         validValues = ['yes', 'no']
-        _valueCheckEnumeration(data, key, validValues)
+        _validateEnumeration(data, key, validValues)
     
     def create(parent, data, context, newIDs={}):
         Path.valueCheckBirthday(data, 'birthday')
@@ -5427,14 +5467,11 @@ class Service(RootInstance, dbmodels.Model):
             data['services'].sort(key=lambda i: i['description'])
         return data
     
-    def ValueCheckStage(value):
+    def validateStage(data, key):
         validValues = ['Certificate', 'Coaching', 'Expert', 'Housing', 'Mentoring', 
                        'Skills', 'Studying', 'Teaching', 'Training', 'Tutoring', 
                        'Volunteering', 'Wellness', 'Whatever', 'Working']
-        if not value or value in validValues:
-            return
-        else:
-            raise ValueError('the value "%s" is not a valid stage. Valid stages are: %s' % (value, validValues))
+        _validateEnumeration(data, key, validValues)
     
     def getSubClause(qs, user, accessType):
         return qs, accessType
@@ -5458,8 +5495,7 @@ class Service(RootInstance, dbmodels.Model):
         if not context.is_administrator:
            raise PermissionDenied
         
-        if 'stage' in data:
-            Service.ValueCheckStage(data['stage'])
+        Service.validateStage(data, 'stage')
              
         newItem = Service.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5487,7 +5523,7 @@ class Service(RootInstance, dbmodels.Model):
         
         history = None
         if 'stage' in changes and changes['stage'] != self.stage:
-            Service.ValueCheckStage(changes['stage'])
+            Service.validateStage(changes, 'stage')
             history = history or self.buildHistory(context)
             self.stage = changes['stage'] or None
         
@@ -5725,7 +5761,7 @@ class ServiceImplication(ChildInstance, dbmodels.Model):
         history = None
         if 'service' in changes:
             newService = _orNoneForeignKey(changes, 'service', context, Service)
-            if newService.id != self.impliedService_id:
+            if newService != self.impliedService:
                 history = history or self.buildHistory(context)
                 self.impliedService = newService
         
@@ -5838,11 +5874,11 @@ class Session(ChildInstance, dbmodels.Model):
     def validateDate(data, key):
         if key not in data or not data[key]:
             return
-        _valueCheckDate(data[key])
+        _validateDate(data[key])
     
     def validateCanRegister(data, key):
         validValues = ['no', 'yes']
-        _valueCheckEnumeration(data, key, validValues)
+        _validateEnumeration(data, key, validValues)
     
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
@@ -6314,7 +6350,7 @@ class User(RootInstance, dbmodels.Model):
     def valueCheckBirthday(data, key):
         if key not in data:
             raise ValueError('a user can not be created without specifying a birthday')
-        _valueCheckDate(data[key])
+        _validateDate(data[key])
     
     def create(data, context, newIDs={}):
         User.valueCheckBirthday(data, 'birthday')

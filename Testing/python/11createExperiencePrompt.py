@@ -25,27 +25,64 @@ data = [{'clientID': '0', 'name': 'Beacon Academy Volunteer',
                       'service': 'service[name>text=Volunteer]',
                      }],
        },
-       {'clientID': '0', 'name': 'Grade 7',
+       {'clientID': '4', 'name': 'Grade 7',
         'timeframe': 'Previous',
         'domain': 'service[name>text=Grade 7]',
-        'translations': [{'clientID': '1', 
+        'translations': [{'clientID': '5', 
                           'text': 'Where were you in school for Grade 7?',
                           'languageCode': 'en',
                          },
-                         {'clientID': '2', 
+                         {'clientID': '6', 
                           'text': '¿Dónde estaba usted en la escuela para el grado 7?',
                           'languageCode': 'sp',
                          }],
-        'services': [{'clientID': '3',
+        'services': [{'clientID': '7',
                       'service': 'service[name>text=Grade 7]',
                      }],
-        'disqualifying tags': [{'clientID': '4',
+        'disqualifying tags': [{'clientID': '8',
                       'service': 'service[name>text=Grade 7]',
                      }],
        }]
+
 with transaction.atomic():
+    newIDs = {}
     for d in data:
-        newIDs = {}
         context = Context('en', mr)
         newItem = ExperiencePrompt.create(d, context, newIDs=newIDs)
         print(str(newItem), newIDs)
+        
+with transaction.atomic():
+    data = {'name': 'Foo Experience Prompt',
+            'stage': '',
+			'timeframe': 'Current',
+			'organization': 'organization[name>text=theBase]',
+			'site': '',
+			'domain': 'service[name>text=Job]',
+			'translations': [{'id': newIDs['1'], 
+							  'text': 'Foo prompt English?',
+							  'languageCode': 'en',
+							 },
+							 {'id': newIDs['2'], 
+							  'delete': 'delete',
+							 },
+							 {'clientID': '3.1',
+							  'text': '¿Dónde es el foo?',
+                              'languageCode': 'sp',
+							 }],
+			'services': [{'id': newIDs['3'],
+						  'service': 'service[name>text=Job]',
+						 }],
+           }
+    newIDs2 = {}
+    context = Context('en', mr)
+    i = ExperiencePrompt.objects.filter(pk=newIDs['0'])[0]
+    i.update(data, context, newIDs2)
+    print(i)
+
+with transaction.atomic():
+    context = Context('en', mr)
+    newItem = ExperiencePrompt.objects.filter(pk=newIDs['0'])[0]
+    newItem.markDeleted(context)
+
+    newItem = ExperiencePrompt.objects.filter(pk=newIDs['4'])[0]
+    newItem.markDeleted(context)
