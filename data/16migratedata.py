@@ -398,7 +398,7 @@ def buildComments(instances, parentType, sourceType):
 
 if __name__ == "__main__":
     check = '-check' in sys.argv
-
+    
     try:
         users = Instance.objects.filter(typeID=terms.user)
         for u in users:
@@ -406,7 +406,7 @@ if __name__ == "__main__":
             lastName = getUniqueDatum(u, 'last name')
             birthday = getUniqueDatum(u, 'birthday')
             publicAccess = getUniqueReference(u, 'public access')
-
+            
             print(u.id, transaction, deleteTransaction, firstName, lastName, 
                   birthday, publicAccess)
             newUser, created = User.objects.get_or_create(id=u.id,
@@ -415,7 +415,7 @@ if __name__ == "__main__":
                          'firstName': getUniqueDatum(u, 'first name'),
                          'lastName': getUniqueDatum(u, 'last name'),
                          'birthday': getUniqueDatum(u, 'birthday')})
-            
+        
         # Create the user history
         uniqueTerms = {terms['first name']: {'dbField': 'firstName', 'f': lambda v: v.stringValue},
                        terms['last name']: {'dbField': 'lastName', 'f': lambda v: v.stringValue},
@@ -435,7 +435,7 @@ if __name__ == "__main__":
         
         orgs = Instance.objects.filter(typeID=terms['Organization'])
         buildOrganizations(orgs, Organization)
-
+        
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(orgs, Organization, OrganizationName, OrganizationNameHistory, uniqueTerms)
         
@@ -475,10 +475,10 @@ if __name__ == "__main__":
         uniqueTerms = {terms['Stage']: {'dbField': 'stage', 'f': lambda v: str(v.referenceValue)}}
         services = Instance.objects.filter(typeID=terms['Service'])
         buildRootInstances(services, Service, ServiceHistory, uniqueTerms)
-
+        
         uniqueTerms = {terms['name']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(services, Service, ServiceName, ServiceNameHistory, uniqueTerms)
-
+        
         uniqueTerms = {terms['Organization Label']: {'dbField': 'text', 'f': lambda v: v.stringValue}}
         buildNameElements(services, Service, ServiceOrganizationLabel, ServiceOrganizationLabelHistory, uniqueTerms)
         
@@ -559,7 +559,7 @@ if __name__ == "__main__":
                       }
         buildChildren(engagements, Session, Engagement, EngagementHistory, uniqueTerms,
                       lambda i: i.parent.parent.id)
-                      
+        
         periods = Instance.objects.filter(typeID=terms['Period'], parent__parent__parent__parent__parent__typeID=terms['Site'])
         uniqueTerms = {terms['Weekday']: {'dbField': 'start', 'f': lambda v: str(v.referenceValue)},
                        terms['End Time']: {'dbField': 'end', 'f': lambda v: v.stringValue},
@@ -567,7 +567,7 @@ if __name__ == "__main__":
                       }
         buildChildren(periods, Session, Period, PeriodHistory, uniqueTerms,
                       lambda i: i.parent.id)
-                      
+        
         experiencePrompts = Instance.objects.filter(typeID=terms['Experience Prompt'])
         def findDomainService(v):
             if v.referenceValue.typeID == terms['Domain']:
@@ -596,7 +596,7 @@ if __name__ == "__main__":
         buildSubReferences(experiencePrompts,
                            lambda u: ExperiencePrompt.objects.get(pk=u.id), 
                            ExperiencePromptService, terms['Service'], 'service', Service)
-
+        
         uniqueTerms = {terms['text']: StringValueTranslator('text')}
         buildNameElements(experiencePrompts, ExperiencePrompt, ExperiencePromptText, ExperiencePromptTextHistory, uniqueTerms)
         
@@ -613,7 +613,7 @@ if __name__ == "__main__":
                       }
         buildChildren(notifications, User, Notification, NotificationHistory, uniqueTerms,
                       lambda i: i.parent.id)
-                      
+        
         # Notification Arguments
         uniqueTerms = {terms['argument']: IDTranslator('argument')}
         buildPositionedElements(notifications, Notification, NotificationArgument, NotificationArgumentHistory, uniqueTerms)
@@ -652,7 +652,7 @@ if __name__ == "__main__":
                        terms['Timeframe']: EnumerationTranslator('timeframe'),
                       }
         buildChildren(experiences, Path, Experience, ExperienceHistory, uniqueTerms, lambda i: i.parent.id)
-
+        
         # ExperienceServices
         uniqueTerms = {terms['Service']: ForeignKeyTranslator('service', Service)}
         buildPositionedElements(experiences, Experience, ExperienceService, ExperienceServiceHistory, uniqueTerms)
