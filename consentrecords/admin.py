@@ -272,10 +272,10 @@ class UserEmailHistoryInline(TabularInline):
 class UserEmailAdmin(ModelAdmin):
     list_display = ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')
     fieldsets = (
-        (None, {'fields': ('id', 'position', 'text', 't_creationTime', 'deleteTransaction')}),
+        (None, {'fields': ('id', 'parent', 'position', 'text', 't_creationTime', 'deleteTransaction')}),
     )
-    readonly_fields = ('id', 'position', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
-    search_fields = ('id', 'position', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
+    readonly_fields = ('id', 'parent', 'position', 'text', 't_creationTime', 'lastTransaction', 'deleteTransaction')
+    search_fields = ('id', 'parent__id', 'position', 'text', 'transaction__id', 'lastTransaction__id', 'deleteTransaction__id')
     
     inlines = [UserEmailHistoryInline]
 
