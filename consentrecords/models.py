@@ -3523,6 +3523,36 @@ class Engagement(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return EnrollmentHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             user=self.user,
+                                             start=self.start,
+                                             end=self.end)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'user' in changes:
+            newUser = _orNoneForeignKey(changes, 'user', context, User)
+            if newUser.id != self.user_id:
+                history = history or self.buildHistory(context)
+                self.user = newUser
+        if 'start' in changes and changes['start'] != self.start:
+            Session.validateDate(changes, 'start')
+            history = history or self.buildHistory(context)
+            self.start = changes['start'] or None
+        if 'end' in changes and changes['end'] != self.end:
+            Session.validateDate(changes, 'end')
+            history = history or self.buildHistory(context)
+            self.end = changes['end'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class EngagementHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('engagementHistories')
@@ -3583,6 +3613,26 @@ class Enrollment(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return EnrollmentHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             user=self.user)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'user' in changes:
+            newUser = _orNoneForeignKey(changes, 'user', context, User)
+            if newUser.id != self.user_id:
+                history = history or self.buildHistory(context)
+                self.user = newUser
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class EnrollmentHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('enrollmentHistories')
@@ -4191,6 +4241,13 @@ class Group(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        self.updateChildren(changes, 'names', context, GroupName, self.names, newIDs)
+        self.updateChildren(changes, 'members', context, GroupMember, self.members, newIDs)
+            
 class GroupName(TranslationInstance, dbmodels.Model):
     id = idField()
     transaction = createTransactionField('createdGroupNames')
@@ -4285,6 +4342,26 @@ class GroupMember(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return GroupMemberHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             user=self.user)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'user' in changes:
+            newUser = _orNoneForeignKey(changes, 'user', context, User)
+            if newUser.id != self.user_id:
+                history = history or self.buildHistory(context)
+                self.user = newUser
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class GroupMemberHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('groupMemberHistories')
@@ -4343,6 +4420,26 @@ class Inquiry(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return InquiryHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             user=self.user)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'user' in changes:
+            newUser = _orNoneForeignKey(changes, 'user', context, User)
+            if newUser.id != self.user_id:
+                history = history or self.buildHistory(context)
+                self.user = newUser
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class InquiryHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('inquiryHistories')
@@ -5198,10 +5295,21 @@ class Period(ChildInstance, dbmodels.Model):
         else:
             return SecureRootInstance.findableQuerySet(qs, user, prefix='parent_parent__parent__parent'), Organization
 
+    def validateWeekday(data, key):
+        if key not in data or re.search('^[0-6]$', data[key]):
+            return
+        raise ValueError('the specified weekday is not valid: %s' % data[key])
+    
+    def validateTime(data, key):
+        pass
+    
     def create(parent, data, context, newIDs={}):
         if not context.canWrite(parent):
            raise PermissionDenied
-           
+        
+        Period.validateWeekday(data, 'weekday')
+        Period.validateTime(data, 'start time')
+        Period.validateTime(data, 'end time')
         newItem = Period.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
                                  parent=parent,
@@ -5214,6 +5322,35 @@ class Period(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return PeriodHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             weekday=self.weekday,
+                                             startTime=self.startTime,
+                                             endTime=self.endTime)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'weekday' in changes and changes['weekday'] != self.weekday:
+            Period.validateWeekday(changes, 'weekday')
+            history = history or self.buildHistory(context)
+            self.weekday = changes['weekday'] or None
+        if 'start time' in changes and changes['start time'] != self.startTime:
+            Period.validateTime(changes, 'start time')
+            history = history or self.buildHistory(context)
+            self.startTime = changes['start time'] or None
+        if 'end time' in changes and changes['end time'] != self.endTime:
+            Period.validateTime(changes, 'end time')
+            history = history or self.buildHistory(context)
+            self.endTime = changes['end time'] or None
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class PeriodHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('periodHistories')
@@ -5299,27 +5436,6 @@ class Service(RootInstance, dbmodels.Model):
         else:
             raise ValueError('the value "%s" is not a valid stage. Valid stages are: %s' % (value, validValues))
     
-    def buildHistory(self, context):
-        return ServiceHistory.objects.create(transaction=self.lastTransaction,
-                                             instance=self,
-                                             stage=self.stage)
-        
-    def update(self, changes, context, newIDs={}):
-        if not context.canWrite(self):
-            raise RuntimeError('you do not have permission to complete this update')
-        
-        history = None
-        if 'stage' in changes and changes['stage'] != self.stage:
-            Service.ValueCheckStage(changes['stage'])
-            history = history or self.buildHistory(context)
-            self.stage = changes['stage'] or None
-        
-        self.updateChildren(changes, 'names', context, ServiceName, self.names, newIDs)
-                                                         
-        if history:
-            self.lastTransaction = context.transaction
-            self.save()
-            
     def getSubClause(qs, user, accessType):
         return qs, accessType
 
@@ -5360,6 +5476,31 @@ class Service(RootInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return ServiceHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             stage=self.stage)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'stage' in changes and changes['stage'] != self.stage:
+            Service.ValueCheckStage(changes['stage'])
+            history = history or self.buildHistory(context)
+            self.stage = changes['stage'] or None
+        
+        self.updateChildren(changes, 'names', context, ServiceName, self.names, newIDs)
+        self.updateChildren(changes, 'organization labels', context, ServiceOrganizationLabel, self.organizationLabels, newIDs)
+        self.updateChildren(changes, 'site labels', context, ServiceSiteLabel, self.siteLabels, newIDs)
+        self.updateChildren(changes, 'offering labels', context, ServiceOfferingLabel, self.offeringLabels, newIDs)
+        self.updateChildren(changes, 'services', context, ServiceImplication, self.serviceImplications, newIDs)
+                                                         
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class ServiceHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceHistories')
@@ -5572,6 +5713,26 @@ class ServiceImplication(ChildInstance, dbmodels.Model):
         
         return newItem                          
         
+    def buildHistory(self, context):
+        return ServiceImplicationHistory.objects.create(transaction=self.lastTransaction,
+                                             instance=self,
+                                             impliedService=self.impliedService)
+        
+    def update(self, changes, context, newIDs={}):
+        if not context.canWrite(self):
+            raise RuntimeError('you do not have permission to complete this update')
+        
+        history = None
+        if 'service' in changes:
+            newService = _orNoneForeignKey(changes, 'service', context, Service)
+            if newService.id != self.impliedService_id:
+                history = history or self.buildHistory(context)
+                self.impliedService = newService
+        
+        if history:
+            self.lastTransaction = context.transaction
+            self.save()
+            
 class ServiceImplicationHistory(dbmodels.Model):
     id = idField()
     transaction = createTransactionField('serviceImplicationHistories')
@@ -5674,12 +5835,12 @@ class Session(ChildInstance, dbmodels.Model):
             i.markDeleted(context)
         super(Session, self).markDeleted(context)
 
-    def validateDate(self, data, key):
+    def validateDate(data, key):
         if key not in data or not data[key]:
             return
         _valueCheckDate(data[key])
     
-    def validateCanRegister(self, data, key):
+    def validateCanRegister(data, key):
         validValues = ['no', 'yes']
         _valueCheckEnumeration(data, key, validValues)
     
@@ -5687,10 +5848,10 @@ class Session(ChildInstance, dbmodels.Model):
         if not context.canWrite(parent):
            raise PermissionDenied
         
-        self.validateDate(data, 'registration deadline')
-        self.validateDate(data, 'start')
-        self.validateDate(data, 'end')
-        self.validateCanRegister(data, 'can register')
+        Session.validateDate(data, 'registration deadline')
+        Session.validateDate(data, 'start')
+        Session.validateDate(data, 'end')
+        Session.validateCanRegister(data, 'can register')
            
         newItem = Session.objects.create(transaction=context.transaction,
                                  lastTransaction=context.transaction,
@@ -5725,19 +5886,19 @@ class Session(ChildInstance, dbmodels.Model):
         
         history = None
         if 'registration deadline' in changes and changes['registration deadline'] != self.registrationDeadline:
-            self.validateDate(changes, 'registration deadline')
+            Session.validateDate(changes, 'registration deadline')
             history = history or self.buildHistory(context)
             self.registrationDeadline = changes['registration deadline'] or None
         if 'start' in changes and changes['start'] != self.start:
-            self.validateDate(changes, 'start')
+            Session.validateDate(changes, 'start')
             history = history or self.buildHistory(context)
             self.start = changes['start'] or None
         if 'end' in changes and changes['end'] != self.end:
-            self.validateDate(changes, 'end')
+            Session.validateDate(changes, 'end')
             history = history or self.buildHistory(context)
             self.end = changes['end'] or None
         if 'can register' in changes and changes['can register'] != self.canRegister:
-            self.validateCanRegister(changes, 'can register')
+            Session.validateCanRegister(changes, 'can register')
             history = history or self.buildHistory(context)
             self.canRegister = changes['can register'] or None
         
