@@ -2994,7 +2994,7 @@ class GrantTarget(IInstance, dbmodels.Model):
                                  lastTransaction=context.transaction,
                                  id=id,
                                  publicAccess=_orNone(data, 'public access'),
-                                 primaryAdministrator=_orNone(data, 'primary administrator')
+                                 primaryAdministrator=_orNoneForeignKey(data, 'primary administrator', context, User)
                                 )
         if 'clientID' in data:
             newIDs[data['clientID']] = newItem.id.hex
